@@ -23,6 +23,7 @@ const (
 	formNone formStep = iota
 	formAddCompose
 	formAddDeploy
+	formAddPackage
 )
 
 // Module manages application configuration with the new uix shell contract.
@@ -172,7 +173,7 @@ func (m *Module) renderError() string {
 func (m *Module) renderTable() string {
 	var b strings.Builder
 	b.WriteString(sectionStyle.Render(" Configuration "))
-	b.WriteString(fmt.Sprintf("    Compose: %d  |  Deploy: %d", len(m.cfg.ComposeDirs), len(m.cfg.DeployTargets)))
+	b.WriteString(fmt.Sprintf("    Compose: %d  |  Deploy: %d  |  Package: %d", len(m.cfg.ComposeDirs), len(m.cfg.DeployTargets), len(m.cfg.DeployPackages)))
 	b.WriteString("\n\n")
 	if m.status != "" {
 		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorYellow)).Render(m.status))
@@ -191,6 +192,8 @@ func (m *Module) renderForm() string {
 		labels = []string{"Name", "Path"}
 	case formAddDeploy:
 		labels = []string{"Name", "Container", "HTML Path", "Backup Dir"}
+	case formAddPackage:
+		labels = []string{"Name", "Path"}
 	}
 
 	var b strings.Builder
@@ -231,20 +234,25 @@ func (m *Module) handleConfirm(button string) (tea.Model, tea.Cmd) {
 			return m.startAddCompose()
 		case "Deploy Target":
 			return m.startAddDeploy()
+		case "Deploy Package":
+			return m.startAddPackage()
 		}
 	case "delete":
 		if button == "Delete" {
 			section, idx := m.currentEntry()
+			var err error
 			switch section {
 			case "Compose":
-				config.RemoveComposeDir(m.configPath, idx)
-				m.status = "Deleted compose dir"
+				err = config.RemoveComposeDir(m.configPath, idx)
 			case "Deploy":
-				config.RemoveDeployTarget(m.configPath, idx)
-				m.status = "Deleted deploy target"
+				err = config.RemoveDeployTarget(m.configPath, idx)
 			case "Package":
-				config.RemoveDeployPackage(m.configPath, idx)
-				m.status = "Deleted deploy package"
+				err = config.RemoveDeployPackage(m.configPath, idx)
+			}
+			if err != nil {
+				m.status = "Delete failed: " + err.Error()
+			} else {
+				m.status = "Deleted " + strings.ToLower(section) + " entry"
 			}
 			return m, m.reload()
 		}
@@ -310,6 +318,7 @@ func (m *Module) chooseAddType() (tea.Model, tea.Cmd) {
 			Buttons: []components.ModalButton{
 				{Label: "Compose Dir", Key: "enter"},
 				{Label: "Deploy Target", Key: "enter"},
+				{Label: "Deploy Package", Key: "enter"},
 				{Label: "Cancel", Key: "esc"},
 			},
 		}
@@ -317,15 +326,30 @@ func (m *Module) chooseAddType() (tea.Model, tea.Cmd) {
 }
 
 func (m *Module) confirmDelete() (tea.Model, tea.Cmd) {
-	section, _ := m.currentEntry()
+	section, idx := m.currentEntry()
 	if section == "" {
 		return m, nil
+	}
+	var name string
+	switch section {
+	case "Compose":
+		if idx < len(m.cfg.ComposeDirs) {
+			name = m.cfg.ComposeDirs[idx].Name
+		}
+	case "Deploy":
+		if idx < len(m.cfg.DeployTargets) {
+			name = m.cfg.DeployTargets[idx].Name
+		}
+	case "Package":
+		if idx < len(m.cfg.DeployPackages) {
+			name = m.cfg.DeployPackages[idx].Name
+		}
 	}
 	m.pending = "delete"
 	return m, func() tea.Msg {
 		return uix.ShowModalMsg{
 			Title:   "Confirm Delete",
-			Message: fmt.Sprintf("Delete %s entry?", section),
+			Message: fmt.Sprintf("Delete %s entry: %s?", section, name),
 			Buttons: []components.ModalButton{
 				{Label: "Cancel", Key: "esc"},
 				{Label: "Delete", Key: "enter"},
@@ -367,15 +391,21 @@ func (m *Module) startAddDeploy() (tea.Model, tea.Cmd) {
 	return m, m.focusFormInput(0)
 }
 
+func (m *Module) startAddPackage() (tea.Model, tea.Cmd) {
+	m.formStep = formAddPackage
+	m.formInputs = []textinput.Model{m.newTi("Name", ""), m.newTi("Path", "")}
+	return m, m.focusFormInput(0)
+}
+
 func (m *Module) submitForm() (tea.Model, tea.Cmd) {
 	defer func() { m.formStep = formNone }()
 
 	switch m.formStep {
 	case formAddCompose:
-		name := m.formInputs[0].Value()
-		path := m.formInputs[1].Value()
+		name := strings.TrimSpace(m.formInputs[0].Value())
+		path := strings.TrimSpace(m.formInputs[1].Value())
 		if name == "" || path == "" {
-			m.status = "Name and path required"
+			m.status = "Name and path are required"
 			return m, m.reload()
 		}
 		if err := config.AddComposeDir(m.configPath, name, path); err != nil {
@@ -385,13 +415,16 @@ func (m *Module) submitForm() (tea.Model, tea.Cmd) {
 		}
 
 	case formAddDeploy:
-		name := m.formInputs[0].Value()
-		container := m.formInputs[1].Value()
-		htmlPath := m.formInputs[2].Value()
-		backupDir := m.formInputs[3].Value()
+		name := strings.TrimSpace(m.formInputs[0].Value())
+		container := strings.TrimSpace(m.formInputs[1].Value())
+		htmlPath := strings.TrimSpace(m.formInputs[2].Value())
+		backupDir := strings.TrimSpace(m.formInputs[3].Value())
 		if name == "" || container == "" {
-			m.status = "Name and container required"
+			m.status = "Name and container are required"
 			return m, m.reload()
+		}
+		if htmlPath == "" {
+			htmlPath = "/usr/share/nginx/html"
 		}
 		if backupDir == "" {
 			backupDir = config.DefaultBackupDir(container)
@@ -400,6 +433,19 @@ func (m *Module) submitForm() (tea.Model, tea.Cmd) {
 			m.status = "Failed: " + err.Error()
 		} else {
 			m.status = fmt.Sprintf("Added deploy target: %s", name)
+		}
+
+	case formAddPackage:
+		name := strings.TrimSpace(m.formInputs[0].Value())
+		path := strings.TrimSpace(m.formInputs[1].Value())
+		if name == "" || path == "" {
+			m.status = "Name and path are required"
+			return m, m.reload()
+		}
+		if err := config.AddDeployPackage(m.configPath, name, path); err != nil {
+			m.status = "Failed: " + err.Error()
+		} else {
+			m.status = fmt.Sprintf("Added deploy package: %s", name)
 		}
 	}
 	return m, m.reload()

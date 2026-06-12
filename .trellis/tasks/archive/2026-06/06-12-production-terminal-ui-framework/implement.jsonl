@@ -1,0 +1,5 @@
+{"path":".trellis/spec/backend/uix-framework.md","reason":"Canonical contract for uix shell and dtui module behavior."}
+{"path":".trellis/spec/guides/bubble-tea-tui-guide.md","reason":"Bubble Tea gotchas for focus, filepicker init, key routing, sizing, and tables."}
+{"path":".trellis/spec/backend/coding-standards.md","reason":"Global collaboration, safety, naming, and Git boundaries."}
+{"path":"cli/uix","reason":"Framework implementation target."}
+{"path":"cli/dtui","reason":"Docker TUI application implementation target."}

@@ -12,6 +12,7 @@ import (
 type testModule struct {
 	name      string
 	confirmed string
+	bindings  []HelpBinding
 }
 
 func (m *testModule) Name() string        { return m.name }
@@ -22,11 +23,14 @@ func (m *testModule) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if msg, ok := msg.(ConfirmMsg); ok {
 		m.confirmed = msg.Button
 	}
+	if msg, ok := msg.(tea.KeyMsg); ok && msg.String() == "tab" {
+		m.bindings = []HelpBinding{{Keys: []string{"n"}, Desc: "next state"}}
+	}
 	return m, nil
 }
 func (m *testModule) View() string              { return "test" }
 func (m *testModule) SetSize(width, height int) {}
-func (m *testModule) Bindings() []HelpBinding   { return nil }
+func (m *testModule) Bindings() []HelpBinding   { return m.bindings }
 func (m *testModule) IsRoot() bool              { return true }
 
 func TestRegisterModuleRegistersSlashCommand(t *testing.T) {
@@ -91,6 +95,45 @@ func TestHashModeInitializesFilePicker(t *testing.T) {
 	}
 	if cmd == nil {
 		t.Fatal("expected file picker init command")
+	}
+}
+
+func TestActiveModuleStatusRefreshesAfterModuleUpdate(t *testing.T) {
+	shell := NewShell("test > ")
+	module := &testModule{
+		name:     "demo",
+		bindings: []HelpBinding{{Keys: []string{"o"}, Desc: "open"}},
+	}
+	shell.RegisterModule(module)
+	shell.EnterModule("demo")
+
+	view := shell.statusbar.View()
+	if !strings.Contains(view, "o open") {
+		t.Fatalf("expected initial module help, got %q", view)
+	}
+
+	_, _ = shell.routeToActive(tea.KeyMsg{Type: tea.KeyTab})
+	view = shell.statusbar.View()
+	if !strings.Contains(view, "n next state") {
+		t.Fatalf("expected refreshed module help, got %q", view)
+	}
+	if !strings.Contains(view, "/ 指令") {
+		t.Fatalf("expected global shell help to remain visible, got %q", view)
+	}
+}
+
+func TestActiveModuleStatusFallsBackToGlobalHelp(t *testing.T) {
+	shell := NewShell("test > ")
+	module := &testModule{name: "demo"}
+	shell.RegisterModule(module)
+	shell.EnterModule("demo")
+
+	view := shell.statusbar.View()
+	if strings.Contains(view, " |  | ") {
+		t.Fatalf("expected no empty help separator, got %q", view)
+	}
+	if !strings.Contains(view, "esc 返回") {
+		t.Fatalf("expected global help fallback, got %q", view)
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -24,10 +25,21 @@ type Module struct {
 
 	table   components.Table
 	spinner components.Spinner
+	log     components.LogViewer
 	state   components.StateKind
 	status  string
 
+	historyMode bool
+	tagMode     bool
+	saveMode    bool
+
+	history      []dt.ImageHistoryEntry
+	tagInput     textinput.Model
+	saveInput    textinput.Model
+	pendingRef   string
+
 	pendingRemoveRef string
+	pendingPrune     bool
 }
 
 // New creates a new images module. Docker client is initialized lazily on Init().
@@ -40,28 +52,58 @@ func New() *Module {
 	}
 	t := components.NewTable(cols, nil, 80)
 	sp := components.NewSpinner()
+	lv := components.NewLogViewer(80, 20)
+
+	tagIn := textinput.New()
+	tagIn.Focus()
+	tagIn.Placeholder = "new-tag"
+	tagIn.CharLimit = 128
+
+	saveIn := textinput.New()
+	saveIn.Focus()
+	saveIn.Placeholder = "output.tar"
+	saveIn.CharLimit = 256
+
 	return &Module{
-		width:   80,
-		height:  20,
-		table:   t,
-		spinner: sp,
-		state:   components.StateLoading,
-		status:  "connecting...",
+		width:     80,
+		height:    20,
+		table:     t,
+		spinner:   sp,
+		log:       lv,
+		tagInput:  tagIn,
+		saveInput: saveIn,
+		state:     components.StateLoading,
+		status:    "connecting...",
 	}
 }
 
 func (m *Module) Name() string        { return "images" }
 func (m *Module) Description() string { return "Manage Docker images" }
 func (m *Module) Aliases() []string   { return []string{"img"} }
-func (m *Module) IsRoot() bool        { return true }
+func (m *Module) IsRoot() bool        { return !m.historyMode && !m.tagMode && !m.saveMode }
 
 func (m *Module) Init() tea.Cmd {
 	return tea.Batch(m.spinner.Start(), m.loadImages())
 }
 
 func (m *Module) Bindings() []uix.HelpBinding {
+	if m.historyMode {
+		return []uix.HelpBinding{
+			{Keys: []string{"↑↓"}, Desc: "滚动"},
+			{Keys: []string{"esc"}, Desc: "返回"},
+		}
+	}
+	if m.tagMode || m.saveMode {
+		return []uix.HelpBinding{
+			{Keys: []string{"enter"}, Desc: "确认"},
+			{Keys: []string{"esc"}, Desc: "取消"},
+		}
+	}
 	return []uix.HelpBinding{
 		{Keys: []string{"↑↓"}, Desc: "选择"},
+		{Keys: []string{"h"}, Desc: "历史"},
+		{Keys: []string{"T"}, Desc: "标签"},
+		{Keys: []string{"e"}, Desc: "导出"},
 		{Keys: []string{"x"}, Desc: "删除"},
 		{Keys: []string{"p"}, Desc: "清理"},
 		{Keys: []string{"r"}, Desc: "刷新"},
@@ -76,19 +118,43 @@ func (m *Module) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleRemoveResult(msg)
 	case pruneResultMsg:
 		return m.handlePruneResult(msg)
+	case historyDoneMsg:
+		return m.handleHistoryDone(msg)
+	case tagDoneMsg:
+		return m.handleTagDone(msg)
+	case saveDoneMsg:
+		return m.handleSaveDone(msg)
 	case uix.ConfirmMsg:
 		return m.handleConfirm(msg.Button)
 	case tea.KeyMsg:
+		if m.historyMode {
+			return m.handleHistoryKey(msg)
+		}
+		if m.tagMode {
+			return m.handleTagKey(msg)
+		}
+		if m.saveMode {
+			return m.handleSaveKey(msg)
+		}
 		return m.handleKey(msg)
 	}
 
-	// Forward spinner ticks.
 	var cmd tea.Cmd
 	m.spinner, cmd = m.spinner.Update(msg)
 	return m, cmd
 }
 
 func (m *Module) View() string {
+	if m.historyMode {
+		return m.renderHistory()
+	}
+	if m.tagMode {
+		return m.renderTagForm()
+	}
+	if m.saveMode {
+		return m.renderSaveForm()
+	}
+
 	if m.state == components.StateLoading && len(m.images) == 0 {
 		return m.renderLoading()
 	}
@@ -211,6 +277,18 @@ func (m *Module) handlePruneResult(msg pruneResultMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Module) handleConfirm(button string) (tea.Model, tea.Cmd) {
+	// Handle prune confirmation
+	if m.pendingPrune {
+		m.pendingPrune = false
+		if button != "Prune" {
+			m.status = "cancelled"
+			return m, nil
+		}
+		m.status = "pruning..."
+		m.state = components.StateLoading
+		return m, tea.Batch(m.spinner.Start(), m.pruneImages())
+	}
+	// Handle remove confirmation
 	ref := m.pendingRemoveRef
 	m.pendingRemoveRef = ""
 	if button != "Remove" || ref == "" {
@@ -234,12 +312,16 @@ func (m *Module) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.status = "refreshing..."
 		m.state = components.StateLoading
 		return m, tea.Batch(m.spinner.Start(), m.loadImages())
+	case "h":
+		return m.openHistory()
+	case "T":
+		return m.openTagForm()
+	case "e":
+		return m.openSaveForm()
 	case "x":
 		return m.confirmRemove()
 	case "p":
-		m.status = "pruning..."
-		m.state = components.StateLoading
-		return m, tea.Batch(m.spinner.Start(), m.pruneImages())
+		return m.confirmPrune()
 	}
 	return m, nil
 }
@@ -254,7 +336,6 @@ func (m *Module) confirmRemove() (tea.Model, tea.Cmd) {
 	if !ok {
 		return m, nil
 	}
-	// Find the image by matching the row data.
 	idx := m.table.Cursor()
 	if idx < 0 || idx >= len(m.images) {
 		return m, nil
@@ -270,6 +351,264 @@ func (m *Module) confirmRemove() (tea.Model, tea.Cmd) {
 				{Label: "Remove", Key: "enter"},
 			},
 		}
+	}
+}
+
+func (m *Module) confirmPrune() (tea.Model, tea.Cmd) {
+	if len(m.images) == 0 {
+		return m, nil
+	}
+	m.pendingPrune = true
+	return m, func() tea.Msg {
+		return uix.ShowModalMsg{
+			Title:   "Confirm Prune",
+			Message: "Prune all dangling images? This will remove unused images and reclaim disk space.",
+			Buttons: []components.ModalButton{
+				{Label: "Cancel", Key: "esc"},
+				{Label: "Prune", Key: "enter"},
+			},
+		}
+	}
+}
+
+func (m *Module) openHistory() (tea.Model, tea.Cmd) {
+	if len(m.images) == 0 {
+		return m, nil
+	}
+	idx := m.table.Cursor()
+	if idx < 0 || idx >= len(m.images) {
+		return m, nil
+	}
+	img := m.images[idx]
+	m.historyMode = true
+	m.history = nil
+	m.status = fmt.Sprintf("Loading history for %s...", img.Ref())
+	return m, m.fetchHistory(img.Ref())
+}
+
+func (m *Module) openTagForm() (tea.Model, tea.Cmd) {
+	if len(m.images) == 0 {
+		return m, nil
+	}
+	idx := m.table.Cursor()
+	if idx < 0 || idx >= len(m.images) {
+		return m, nil
+	}
+	img := m.images[idx]
+	m.tagMode = true
+	m.pendingRef = img.Ref()
+	m.tagInput.SetValue("")
+	m.tagInput.Focus()
+	m.status = ""
+	return m, nil
+}
+
+func (m *Module) openSaveForm() (tea.Model, tea.Cmd) {
+	if len(m.images) == 0 {
+		return m, nil
+	}
+	idx := m.table.Cursor()
+	if idx < 0 || idx >= len(m.images) {
+		return m, nil
+	}
+	img := m.images[idx]
+	m.saveMode = true
+	m.pendingRef = img.Ref()
+	m.saveInput.SetValue(img.DefaultSaveFile())
+	m.saveInput.Focus()
+	m.status = ""
+	return m, nil
+}
+
+func (m *Module) handleHistoryKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "esc", "q":
+		m.historyMode = false
+		m.history = nil
+		m.status = ""
+		return m, nil
+	case "up", "k":
+		m.log.ScrollUp()
+	case "down", "j":
+		m.log.ScrollDown()
+	case "pgup":
+		m.log.PageUp()
+	case "pgdown":
+		m.log.PageDown()
+	}
+	return m, nil
+}
+
+func (m *Module) handleTagKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "esc":
+		m.tagMode = false
+		m.pendingRef = ""
+		m.status = "cancelled"
+		return m, nil
+	case "enter":
+		tag := strings.TrimSpace(m.tagInput.Value())
+		if tag == "" {
+			m.status = "Tag cannot be empty"
+			return m, nil
+		}
+		ref := m.pendingRef
+		m.tagMode = false
+		m.pendingRef = ""
+		m.status = fmt.Sprintf("Tagging %s → %s...", ref, tag)
+		m.state = components.StateLoading
+		return m, tea.Batch(m.spinner.Start(), m.tagImage(ref, tag))
+	}
+	var cmd tea.Cmd
+	m.tagInput, cmd = m.tagInput.Update(msg)
+	return m, cmd
+}
+
+func (m *Module) handleSaveKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "esc":
+		m.saveMode = false
+		m.pendingRef = ""
+		m.status = "cancelled"
+		return m, nil
+	case "enter":
+		path := strings.TrimSpace(m.saveInput.Value())
+		if path == "" {
+			m.status = "Path cannot be empty"
+			return m, nil
+		}
+		ref := m.pendingRef
+		m.saveMode = false
+		m.pendingRef = ""
+		m.status = fmt.Sprintf("Saving %s to %s...", ref, path)
+		m.state = components.StateLoading
+		return m, tea.Batch(m.spinner.Start(), m.saveImageCmd(ref, path))
+	}
+	var cmd tea.Cmd
+	m.saveInput, cmd = m.saveInput.Update(msg)
+	return m, cmd
+}
+
+func (m *Module) renderHistory() string {
+	if len(m.history) == 0 {
+		var b strings.Builder
+		b.WriteString(m.spinner.View() + " Loading image history...")
+		panel := components.NewPanel("image history", m.width, m.height)
+		panel.Body = b.String()
+		return panel.View()
+	}
+
+	panel := components.NewPanel("image history", m.width, m.height)
+	panel.Body = m.log.View()
+	panel.Footer = "esc/q back"
+	return panel.View()
+}
+
+func (m *Module) renderTagForm() string {
+	var b strings.Builder
+	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorAccent)).Bold(true)
+
+	b.WriteString(labelStyle.Render("Tag Image") + "\n\n")
+	b.WriteString(fmt.Sprintf("Source: %s\n\n", m.pendingRef))
+	b.WriteString("New tag (repository:tag):\n")
+	b.WriteString(m.tagInput.View() + "\n\n")
+	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorDim)).Render("enter confirm | esc cancel"))
+
+	panel := components.NewPanel("tag image", m.width, m.height)
+	panel.Body = b.String()
+	return panel.View()
+}
+
+func (m *Module) renderSaveForm() string {
+	var b strings.Builder
+	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorAccent)).Bold(true)
+
+	b.WriteString(labelStyle.Render("Export Image") + "\n\n")
+	b.WriteString(fmt.Sprintf("Source: %s\n\n", m.pendingRef))
+	b.WriteString("Output path:\n")
+	b.WriteString(m.saveInput.View() + "\n\n")
+	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorDim)).Render("enter confirm | esc cancel"))
+
+	panel := components.NewPanel("export image", m.width, m.height)
+	panel.Body = b.String()
+	return panel.View()
+}
+
+func (m *Module) handleHistoryDone(msg historyDoneMsg) (tea.Model, tea.Cmd) {
+	m.spinner.Stop()
+	if msg.err != nil {
+		m.historyMode = false
+		m.state = components.StateError
+		m.status = "History failed: " + msg.err.Error()
+		return m, nil
+	}
+	m.history = msg.entries
+	var lines []string
+	for i, entry := range m.history {
+		sizeStr := formatSize(entry.Size)
+		line := fmt.Sprintf("#%-3d  %s  %s", i+1, theme.Truncate(entry.ID, 12), sizeStr)
+		lines = append(lines, line)
+		if entry.CreatedBy != "" {
+			lines = append(lines, "  "+entry.CreatedBy)
+		}
+	}
+	m.log.SetLines(lines)
+	m.status = ""
+	return m, nil
+}
+
+func (m *Module) handleTagDone(msg tagDoneMsg) (tea.Model, tea.Cmd) {
+	m.spinner.Stop()
+	if msg.err != nil {
+		m.state = components.StateError
+		m.status = "Tag failed: " + msg.err.Error()
+		return m, nil
+	}
+	m.status = fmt.Sprintf("Tagged as %s", msg.tag)
+	return m, tea.Batch(m.spinner.Start(), m.loadImages())
+}
+
+func (m *Module) handleSaveDone(msg saveDoneMsg) (tea.Model, tea.Cmd) {
+	m.spinner.Stop()
+	if msg.err != nil {
+		m.state = components.StateError
+		m.status = "Export failed: " + msg.err.Error()
+		return m, nil
+	}
+	m.status = fmt.Sprintf("Image saved to %s", msg.path)
+	return m, nil
+}
+
+func (m *Module) fetchHistory(ref string) tea.Cmd {
+	return func() tea.Msg {
+		client := m.ensureClient()
+		if client == nil {
+			return historyDoneMsg{err: m.clientErr}
+		}
+		entries, err := client.ImageHistory(ref)
+		return historyDoneMsg{entries: entries, err: err}
+	}
+}
+
+func (m *Module) tagImage(source, tag string) tea.Cmd {
+	return func() tea.Msg {
+		client := m.ensureClient()
+		if client == nil {
+			return tagDoneMsg{err: m.clientErr}
+		}
+		err := client.TagImage(source, tag)
+		return tagDoneMsg{tag: tag, err: err}
+	}
+}
+
+func (m *Module) saveImageCmd(ref, path string) tea.Cmd {
+	return func() tea.Msg {
+		client := m.ensureClient()
+		if client == nil {
+			return saveDoneMsg{err: m.clientErr}
+		}
+		err := client.SaveImage(ref, path)
+		return saveDoneMsg{path: path, err: err}
 	}
 }
 
@@ -356,4 +695,34 @@ type pruneResultMsg struct {
 	images    []dt.Image
 	err       error
 	reclaimed uint64
+}
+
+type historyDoneMsg struct {
+	entries []dt.ImageHistoryEntry
+	err     error
+}
+
+type tagDoneMsg struct {
+	tag string
+	err error
+}
+
+type saveDoneMsg struct {
+	path string
+	err  error
+}
+
+// --- Helpers ---
+
+func formatSize(bytes int64) string {
+	const unit = 1024
+	if bytes < unit {
+		return fmt.Sprintf("%dB", bytes)
+	}
+	div, exp := int64(unit), 0
+	for n := bytes / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f%cB", float64(bytes)/float64(div), "KMGTPE"[exp])
 }

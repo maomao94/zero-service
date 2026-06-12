@@ -1,0 +1,8 @@
+{"path":".trellis/tasks/06-12-production-terminal-ui-framework/prd.md","reason":"Parent requirements and cross-child acceptance criteria."}
+{"path":".trellis/tasks/06-12-production-terminal-ui-framework/design.md","reason":"Parent architecture, boundaries, data flow, and safety posture."}
+{"path":".trellis/tasks/06-12-production-terminal-ui-framework/implement.md","reason":"Parent execution order and low-concurrency guardrails."}
+{"path":".trellis/spec/guides/documentation-guide.md","reason":"Documentation hierarchy and duplicate cleanup guidance."}
+{"path":".trellis/spec/backend/uix-framework.md","reason":"Validation commands and user-visible uix/dtui contracts."}
+{"path":"cli/dtui/README.md","reason":"Primary documentation target."}
+{"path":"cli/dtui/build.sh","reason":"Packaging/build script target."}
+{"path":"cli/dtui/main.go","reason":"Source of truth for registered modules."}

@@ -2,7 +2,10 @@ package deploy
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -30,9 +33,11 @@ type Module struct {
 	state    components.StateKind
 	status   string
 	logMode  bool
+	histMode bool
 
 	selectedPath  string
 	pendingTarget config.DeployTarget
+	historyPath   string
 }
 
 // New creates a new deploy module. Docker client is initialized lazily on demand.
@@ -47,40 +52,51 @@ func New(cfg config.Config) *Module {
 	sp := components.NewSpinner()
 	lv := components.NewLogViewer(80, 12)
 	return &Module{
-		width:    80,
-		height:   20,
-		cfg:      cfg,
-		table:    t,
-		spinner:  sp,
-		logView:  lv,
-		state:    components.StateSuccess,
-		status:   "",
+		width:       80,
+		height:      20,
+		cfg:         cfg,
+		table:       t,
+		spinner:     sp,
+		logView:     lv,
+		state:       components.StateSuccess,
+		status:      "",
+		historyPath: config.HistoryPath(),
 	}
 }
 
 func (m *Module) Name() string        { return "deploy" }
 func (m *Module) Description() string { return "Deploy applications to Docker" }
 func (m *Module) Aliases() []string   { return []string{"dep"} }
-func (m *Module) IsRoot() bool        { return !m.logMode }
+func (m *Module) IsRoot() bool        { return !m.logMode && !m.histMode }
 
 func (m *Module) Init() tea.Cmd {
 	return tea.Batch(m.spinner.Start(), m.loadTargets())
 }
 
 func (m *Module) Bindings() []uix.HelpBinding {
+	if m.logMode || m.histMode {
+		return []uix.HelpBinding{
+			{Keys: []string{"↑↓/pg"}, Desc: "scroll"},
+			{Keys: []string{"f"}, Desc: "follow"},
+			{Keys: []string{"esc"}, Desc: "close"},
+		}
+	}
 	return []uix.HelpBinding{
 		{Keys: []string{"↑↓"}, Desc: "选择"},
 		{Keys: []string{"d"}, Desc: "部署"},
 		{Keys: []string{"#"}, Desc: "选择文件"},
+		{Keys: []string{"h"}, Desc: "历史"},
 		{Keys: []string{"l"}, Desc: "日志"},
 		{Keys: []string{"r"}, Desc: "刷新"},
 	}
 }
 
 func (m *Module) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// Log mode handles its own keys.
 	if m.logMode {
 		return m.updateLogMode(msg)
+	}
+	if m.histMode {
+		return m.updateHistMode(msg)
 	}
 
 	switch msg := msg.(type) {
@@ -105,6 +121,9 @@ func (m *Module) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Module) View() string {
 	if m.logMode {
 		return m.renderLogView()
+	}
+	if m.histMode {
+		return m.renderHistoryView()
 	}
 	if m.state == components.StateLoading && len(m.targets) == 0 {
 		return m.renderLoading()
@@ -209,6 +228,44 @@ func (m *Module) renderLogView() string {
 	return panel.View()
 }
 
+func (m *Module) renderHistoryView() string {
+	entries := config.LoadHistory(m.historyPath)
+	var b strings.Builder
+	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorAccent)).Bold(true).Render(" Deploy History "))
+	b.WriteString(fmt.Sprintf(" (%d entries)", len(entries)))
+	b.WriteString("\n\n")
+	if len(entries) == 0 {
+		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorDim)).Render("No deploy history yet."))
+	} else {
+		showCount := len(entries)
+		if showCount > 20 {
+			showCount = 20
+		}
+		for i := len(entries) - 1; i >= len(entries)-showCount; i-- {
+			e := entries[i]
+			statusIcon := lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorGreen)).Render("✓")
+			if !e.Success {
+				statusIcon = lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorRed)).Render("✗")
+			}
+			timeStr := e.Time.Format("01-02 15:04")
+			b.WriteString(fmt.Sprintf("  %s %s  %s  %s\n", statusIcon, timeStr, e.Target, e.Action))
+			if e.Detail != "" {
+				b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorDim)).Render("      " + theme.Truncate(e.Detail, 60)))
+				b.WriteString("\n")
+			}
+			if e.Error != "" {
+				b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorRed)).Render("      " + theme.Truncate(e.Error, 60)))
+				b.WriteString("\n")
+			}
+		}
+	}
+	b.WriteString("\n")
+	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorDim)).Render("esc/q close"))
+	panel := components.NewPanel("deploy history", m.width, m.height)
+	panel.Body = b.String()
+	return panel.View()
+}
+
 // --- Log mode ---
 
 func (m *Module) updateLogMode(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -244,6 +301,17 @@ func (m *Module) updateLogMode(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.logView, cmd = m.logView.Update(msg)
 	return m, cmd
+}
+
+func (m *Module) updateHistMode(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if key, ok := msg.(tea.KeyMsg); ok {
+		switch key.String() {
+		case "esc", "q":
+			m.histMode = false
+			return m, nil
+		}
+	}
+	return m, nil
 }
 
 // --- Message handlers ---
@@ -312,6 +380,9 @@ func (m *Module) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(m.spinner.Start(), m.loadTargets())
 	case "d":
 		return m.startDeploy()
+	case "h":
+		m.histMode = true
+		return m, nil
 	case "l":
 		if m.logView.LineCount() > 0 {
 			m.logMode = true
@@ -374,28 +445,98 @@ func (m *Module) deployCmd(target config.DeployTarget, path string) tea.Cmd {
 	return func() tea.Msg {
 		client := m.ensureClient()
 		if client == nil {
+			config.RecordHistory(m.historyPath, config.HistoryEntry{
+				Time:    time.Now(),
+				Action:  "deploy",
+				Target:  target.Name,
+				Detail:  path,
+				Success: false,
+				Error:   m.clientErr.Error(),
+			})
 			return deployResultMsg{err: m.clientErr}
 		}
 
 		fileType := dt.PathType(path)
 		if fileType == "invalid" {
-			return deployResultMsg{err: fmt.Errorf("invalid path: %s", path)}
+			err := fmt.Errorf("invalid path: %s", path)
+			config.RecordHistory(m.historyPath, config.HistoryEntry{
+				Time:    time.Now(),
+				Action:  "deploy",
+				Target:  target.Name,
+				Detail:  path,
+				Success: false,
+				Error:   err.Error(),
+			})
+			return deployResultMsg{err: err}
+		}
+
+		if err := os.MkdirAll(target.BackupDir, 0755); err != nil {
+			err = fmt.Errorf("backup dir creation failed: %w", err)
+			config.RecordHistory(m.historyPath, config.HistoryEntry{
+				Time:    time.Now(),
+				Action:  "deploy",
+				Target:  target.Name,
+				Detail:  path,
+				Success: false,
+				Error:   err.Error(),
+			})
+			return deployResultMsg{err: err}
+		}
+
+		backupName := time.Now().Format("20060102-150405")
+		backupPath := filepath.Join(target.BackupDir, backupName)
+		if err := client.CopyFromContainer(target.Container, target.HtmlPath, backupPath); err != nil {
+			err = fmt.Errorf("backup failed: %w", err)
+			config.RecordHistory(m.historyPath, config.HistoryEntry{
+				Time:    time.Now(),
+				Action:  "deploy",
+				Target:  target.Name,
+				Detail:  path,
+				Success: false,
+				Error:   err.Error(),
+			})
+			return deployResultMsg{err: err}
 		}
 
 		srcDir := path
 		if fileType == "zip" {
-			tmpDir := target.BackupDir + "/_extract"
+			tmpDir := filepath.Join(target.BackupDir, "_extract")
 			if err := dt.UnzipToDir(path, tmpDir); err != nil {
+				config.RecordHistory(m.historyPath, config.HistoryEntry{
+					Time:    time.Now(),
+					Action:  "deploy",
+					Target:  target.Name,
+					Detail:  path,
+					Success: false,
+					Error:   err.Error(),
+				})
 				return deployResultMsg{err: fmt.Errorf("unzip failed: %w", err)}
 			}
 			srcDir = tmpDir
 		}
 
 		if err := client.CopyToContainer(target.Container, target.HtmlPath, srcDir); err != nil {
+			config.RecordHistory(m.historyPath, config.HistoryEntry{
+				Time:    time.Now(),
+				Action:  "deploy",
+				Target:  target.Name,
+				Detail:  path,
+				Success: false,
+				Error:   err.Error(),
+			})
 			return deployResultMsg{err: fmt.Errorf("copy to container failed: %w", err)}
 		}
 
-		return deployResultMsg{output: fmt.Sprintf("Deployed %s to %s:%s", path, target.Container, target.HtmlPath)}
+		output := fmt.Sprintf("Deployed %s to %s:%s (backup: %s)", path, target.Container, target.HtmlPath, backupPath)
+		config.RecordHistory(m.historyPath, config.HistoryEntry{
+			Time:    time.Now(),
+			Action:  "deploy",
+			Target:  target.Name,
+			Detail:  path,
+			Success: true,
+		})
+		config.CleanOldBackups(target.BackupDir, 5)
+		return deployResultMsg{output: output}
 	}
 }
 

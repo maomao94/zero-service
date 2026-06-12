@@ -28,7 +28,7 @@ type Module struct {
 	state   components.StateKind
 	status  string
 
-	logMode      bool
+	logMode       bool
 	pendingAction string
 }
 
@@ -68,10 +68,18 @@ func (m *Module) Init() tea.Cmd {
 }
 
 func (m *Module) Bindings() []uix.HelpBinding {
+	if m.logMode {
+		return []uix.HelpBinding{
+			{Keys: []string{"↑↓/pg"}, Desc: "scroll"},
+			{Keys: []string{"f"}, Desc: "follow"},
+			{Keys: []string{"esc"}, Desc: "close"},
+		}
+	}
 	return []uix.HelpBinding{
 		{Keys: []string{"↑↓"}, Desc: "选择"},
 		{Keys: []string{"u"}, Desc: "up"},
 		{Keys: []string{"d"}, Desc: "down"},
+		{Keys: []string{"o"}, Desc: "输出"},
 		{Keys: []string{"r"}, Desc: "刷新"},
 		{Keys: []string{"l"}, Desc: "日志"},
 	}
@@ -258,9 +266,11 @@ func (m *Module) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.confirmUp()
 	case "d":
 		return m.confirmDown()
-	case "l":
-		m.logMode = true
-		m.SetSize(m.width, m.height)
+	case "o", "l":
+		if m.log.LineCount() > 0 {
+			m.logMode = true
+			m.SetSize(m.width, m.height)
+		}
 		return m, nil
 	}
 	return m, nil

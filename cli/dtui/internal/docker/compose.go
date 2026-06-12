@@ -155,6 +155,50 @@ func (c *Client) CopyToContainer(containerID, dstPath, srcDir string) error {
 	return c.cli.CopyToContainer(ctx, containerID, dstPath, tarReader, container.CopyToContainerOptions{})
 }
 
+// CopyFromContainer 从容器内拷贝路径到本地目录（用于 deploy 前备份）。
+func (c *Client) CopyFromContainer(containerID, containerPath, hostPath string) error {
+	ctx, cancel := c.withTimeout()
+	defer cancel()
+
+	tarReader, _, err := c.cli.CopyFromContainer(ctx, containerID, containerPath)
+	if err != nil {
+		return fmt.Errorf("从容器拷贝失败: %w", err)
+	}
+	defer tarReader.Close()
+
+	if err := os.MkdirAll(hostPath, 0755); err != nil {
+		return fmt.Errorf("创建备份目录失败: %w", err)
+	}
+
+	tr := tar.NewReader(tarReader)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("读取 tar 失败: %w", err)
+		}
+		target := filepath.Join(hostPath, header.Name)
+		switch header.Typeflag {
+		case tar.TypeDir:
+			os.MkdirAll(target, 0755)
+		case tar.TypeReg:
+			os.MkdirAll(filepath.Dir(target), 0755)
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(f, tr); err != nil {
+				f.Close()
+				return err
+			}
+			f.Close()
+		}
+	}
+	return nil
+}
+
 // packDirToTar 将目录打包为 tar 流（仅包含目录内文件，不含顶层目录名）。
 func packDirToTar(srcDir string) (*io.PipeReader, error) {
 	pr, pw := io.Pipe()

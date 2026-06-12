@@ -245,6 +245,7 @@ func (app *Shell) routeToActive(msg tea.Msg) (tea.Model, tea.Cmd) {
 	model, cmd := app.active.Update(msg)
 	if module, ok := model.(Module); ok {
 		app.active = module
+		app.refreshActiveStatus()
 	}
 	return app, cmd
 }
@@ -292,6 +293,7 @@ func (app *Shell) handleEscape(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	model, cmd := app.active.Update(msg)
 	if module, ok := model.(Module); ok {
 		app.active = module
+		app.refreshActiveStatus()
 	}
 	return app, cmd
 }
@@ -440,10 +442,17 @@ func (app *Shell) EnterModule(name string) tea.Cmd {
 	}
 	app.active = module
 	module.SetSize(app.width, app.bodyHeight)
-	app.statusbar.SetLeft(module.Name())
-	app.statusbar.SetRight(HelpText(module.Bindings()) + " | esc 返回 | / 指令 | @ 引用 | # 文件")
+	app.refreshActiveStatus()
 	app.timeline.Append(RoleModule, "entered module: "+module.Name())
 	return module.Init()
+}
+
+func (app *Shell) refreshActiveStatus() {
+	if app.active == nil {
+		return
+	}
+	app.statusbar.SetLeft(app.active.Name())
+	app.statusbar.SetRight(moduleHelpText(app.active.Bindings()))
 }
 
 func (app *Shell) ShowModal(title, message string, buttons []components.ModalButton) {
@@ -613,4 +622,13 @@ func HelpText(bindings []HelpBinding) string {
 		parts = append(parts, strings.Join(binding.Keys, "/")+" "+binding.Desc)
 	}
 	return strings.Join(parts, " | ")
+}
+
+func moduleHelpText(bindings []HelpBinding) string {
+	help := HelpText(bindings)
+	global := "esc 返回 | / 指令 | @ 引用 | # 文件"
+	if help == "" {
+		return global
+	}
+	return help + " | " + global
 }

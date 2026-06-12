@@ -54,17 +54,25 @@ func (s StatusBar) View() string {
 	if width <= 0 {
 		width = 80
 	}
+	if width < 4 {
+		width = 4
+	}
 
-	// Top border line
 	border := statusbarBorderStyle.Render(strings.Repeat("─", width))
 
-	// Content line: left name + spacer + right help
-	leftText := statusbarLeftStyle.Render(" " + s.left + " ")
-	rightText := statusbarRightStyle.Render(s.right + " ")
+	leftInnerWidth := min(lipgloss.Width(s.left), max(0, width/3))
+	leftText := statusbarLeftStyle.Render(" " + theme.Truncate(s.left, leftInnerWidth) + " ")
+	leftWidth := lipgloss.Width(leftText)
+
+	rightInnerWidth := width - leftWidth - 1 - 2
+	if rightInnerWidth < 0 {
+		rightInnerWidth = 0
+	}
+	rightText := statusbarRightStyle.Render(theme.Truncate(s.right, rightInnerWidth) + " ")
 
 	spacer := width - lipgloss.Width(leftText) - lipgloss.Width(rightText)
-	if spacer < 1 {
-		spacer = 1
+	if spacer < 0 {
+		spacer = 0
 	}
 
 	content := lipgloss.JoinHorizontal(lipgloss.Top,

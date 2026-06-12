@@ -1,0 +1,8 @@
+{"path":".trellis/tasks/06-12-production-terminal-ui-framework/prd.md","reason":"Parent requirements and cross-child acceptance criteria."}
+{"path":".trellis/tasks/06-12-production-terminal-ui-framework/design.md","reason":"Parent architecture, boundaries, data flow, and safety posture."}
+{"path":".trellis/tasks/06-12-production-terminal-ui-framework/implement.md","reason":"Parent execution order and low-concurrency guardrails."}
+{"path":".trellis/spec/backend/uix-framework.md","reason":"Canonical uix shell and component contract."}
+{"path":".trellis/spec/guides/bubble-tea-tui-guide.md","reason":"Bubble Tea routing, focus, filepicker, table, and sizing gotchas."}
+{"path":"cli/uix/app.go","reason":"Shell routing, layout, module lifecycle, and status/help integration."}
+{"path":"cli/uix/components/statusbar.go","reason":"Likely target for visible module command help."}
+{"path":"cli/uix/shell_test.go","reason":"Existing shell tests to extend."}

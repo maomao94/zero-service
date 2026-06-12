@@ -1,0 +1,8 @@
+{"path":".trellis/tasks/06-12-production-terminal-ui-framework/prd.md","reason":"Parent requirements and cross-child acceptance criteria."}
+{"path":".trellis/tasks/06-12-production-terminal-ui-framework/design.md","reason":"Parent architecture, boundaries, data flow, and safety posture."}
+{"path":".trellis/tasks/06-12-production-terminal-ui-framework/implement.md","reason":"Parent execution order and low-concurrency guardrails."}
+{"path":".trellis/spec/backend/uix-framework.md","reason":"Module root/subview, key routing, and lazy-client contracts."}
+{"path":".trellis/spec/guides/bubble-tea-tui-guide.md","reason":"Table, sizing, and key-routing constraints."}
+{"path":"cli/dtui/plugins/containers/plugin.go","reason":"Container production module target."}
+{"path":"cli/dtui/plugins/images/plugin.go","reason":"Image production module target."}
+{"path":"cli/dtui/internal/docker","reason":"Existing Docker operations to expose safely."}

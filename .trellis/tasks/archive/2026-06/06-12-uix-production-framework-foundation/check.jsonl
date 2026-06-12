@@ -1,0 +1,3 @@
+{"path":".trellis/spec/backend/uix-framework.md","reason":"Verify prompt modes, overlays, disabled shell, and module contracts."}
+{"path":"cli/uix/components","reason":"Verify component safe sizing and focused input behavior."}
+{"path":"cli/uix/_example/main.go","reason":"Verify framework example still compiles."}

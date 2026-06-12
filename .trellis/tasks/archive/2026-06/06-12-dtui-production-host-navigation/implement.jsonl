@@ -1,0 +1,8 @@
+{"path":".trellis/tasks/06-12-production-terminal-ui-framework/prd.md","reason":"Parent requirements and cross-child acceptance criteria."}
+{"path":".trellis/tasks/06-12-production-terminal-ui-framework/design.md","reason":"Parent architecture, boundaries, data flow, and safety posture."}
+{"path":".trellis/tasks/06-12-production-terminal-ui-framework/implement.md","reason":"Parent execution order and low-concurrency guardrails."}
+{"path":".trellis/spec/backend/uix-framework.md","reason":"Host/module startup and lazy-client contract."}
+{"path":"cli/dtui/main.go","reason":"Production module wiring target."}
+{"path":"cli/dtui/plugins/containers/plugin.go","reason":"Existing unreachable container module."}
+{"path":"cli/dtui/plugins/config/plugin.go","reason":"Canonical config module candidate."}
+{"path":"cli/dtui/plugins/settings/plugin.go","reason":"Legacy/duplicate config module to evaluate."}

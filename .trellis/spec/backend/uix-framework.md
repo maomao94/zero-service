@@ -2,6 +2,8 @@
 
 > Canonical executable contract for `cli/uix/` and TUI modules hosted by it. Last updated: 2026-06-12 (dtui module rewrite + review fixes).
 
+> **⚠️ 实验性代码**：`cli/uix/`、`cli/dtui/` 及其所有子模块由 AI 自动生成，未经人工审查，存在状态机边界问题、测试盲区和架构缺陷。**生产环境不可用**，仅供实验和参考。正式使用前必须人工逐文件 review 并重写关键逻辑。
+
 ## 1. Scope / Trigger
 
 Read this spec before changing any of:
@@ -339,6 +341,57 @@ func (m *Module) IsRoot() bool {
 }
 ```
 
+### D9: Automatic status/help refresh on module state changes
+
+When a module's `Bindings()` can change dynamically (e.g., after selecting a resource, entering a subview, or completing an action), the shell automatically refreshes the status bar after every `routeToActive()` call and after non-root `esc` handling. Modules do not need to manually emit `StatusMsg` to update help text — the shell reads `Bindings()` and recomposes the status bar (module help + global shell help) automatically.
+
+The shell calls `refreshActiveStatus()` in three places:
+1. After `routeToActive()` returns an updated `Module` model
+2. After `handleEscape()` forwards `esc` to a non-root module
+3. After `EnterModule()` to set initial module help
+
+```go
+// Shell automatically refreshes status after module update
+func (app *Shell) routeToActive(msg tea.Msg) (tea.Model, tea.Cmd) {
+    model, cmd := app.active.Update(msg)
+    if module, ok := model.(Module); ok {
+        app.active = module
+        app.refreshActiveStatus() // reads active.Bindings()
+    }
+    return app, cmd
+}
+```
+
+Modules only need to return updated `Bindings()` from their `Update()` method; the shell handles the rest. For explicit left/right status text overrides (e.g., showing loading state), modules should still use `StatusMsg`.
+
+### D10: Dynamic Bindings() per subview mode
+
+Modules with multiple subviews (detail, log, stats, history, forms) must return different `Bindings()` for each mode. The status bar automatically reflects the current mode's bindings via D9.
+
+```go
+func (m *Module) Bindings() []uix.HelpBinding {
+    if m.detailMode {
+        return []uix.HelpBinding{
+            {Keys: []string{"↑↓"}, Desc: "滚动"},
+            {Keys: []string{"esc"}, Desc: "返回"},
+        }
+    }
+    if m.statsMode {
+        return []uix.HelpBinding{
+            {Keys: []string{"esc"}, Desc: "返回"},
+        }
+    }
+    // Root table mode
+    return []uix.HelpBinding{
+        {Keys: []string{"↑↓"}, Desc: "选择"},
+        {Keys: []string{"i"}, Desc: "详情"},
+        {Keys: []string{"t"}, Desc: "统计"},
+    }
+}
+```
+
+Combined with D8 (`IsRoot()` toggling), this gives users clear, context-aware help text without manual `StatusMsg` management. Subview modes should use non-root `IsRoot()` so `esc` closes the subview before exiting the module.
+
 ## Bubble Tea Gotchas
 
 - `textinput.New()` is unfocused; call `Focus()` in prompt constructors.
@@ -360,6 +413,11 @@ func (m *Module) IsRoot() bool {
 | Real provider logic in `uix` core | Couples shell to LLM runtime | Use `Runner` interface |
 | Module migrated but not registered | Module unreachable from shell | Wire in `main.go` with `app.RegisterModule()` |
 | Config delete misses sections | Partial deletion, data inconsistency | Handle ALL sections in delete/confirm handlers |
+| Module manually sets help on every update | Stale help after state changes; code duplication | Return updated `Bindings()` from `Update()`; shell refreshes status automatically (D9) |
+| Deploy without backup | Data loss on failed deploy | Always backup via `CopyFromContainer` before `CopyToContainer` |
+| Deploy without history | No audit trail for failures | Record success/failure via `config.RecordHistory` after every deploy |
+| Destructive action without confirmation | Accidental data loss | Show `ShowModalMsg` with target identity; require `enter` to confirm |
+| Zip extraction without path validation | Path traversal attack | Validate extracted paths stay within destination directory |
 
 ## Lessons Learned (2026-06-12)
 
@@ -376,3 +434,51 @@ When a config module manages multiple sections (e.g., ComposeDirs + DeployTarget
 - Use v1 path `github.com/NimbleMarkets/ntcharts` (not v2 which uses `charm.land/bubbletea/v2`)
 - Chart components must call `Draw()` after `SetData()`, `SetSize()`, or style changes
 - Sparkline and BarChart satisfy `ChartComponent` interface for polymorphic usage
+
+### Deploy backup-before-copy pattern
+
+Deploy operations must backup current container content before overwriting. Use `CopyFromContainer` to extract the target path to a timestamped backup directory, then proceed with `CopyToContainer`. If backup fails, abort and record failure in history. Old backups auto-clean via `CleanOldBackups(dir, keep)`.
+
+```go
+// Backup → Extract → Copy → Record → Cleanup
+backupPath := filepath.Join(target.BackupDir, time.Now().Format("20060102-150405"))
+if err := client.CopyFromContainer(target.Container, target.HtmlPath, backupPath); err != nil {
+    config.RecordHistory(historyPath, config.HistoryEntry{Success: false, Error: err.Error()})
+    return deployResultMsg{err: fmt.Errorf("backup failed: %w", err)}
+}
+// ... copy to container ...
+config.RecordHistory(historyPath, config.HistoryEntry{Success: true})
+config.CleanOldBackups(target.BackupDir, 5)
+```
+
+### Deploy history recording
+
+All deploy actions (success and failure) must be recorded via `config.RecordHistory`. History entries include: time, action, target name, detail (source path), success flag, and error message. History is capped at 200 entries. The deploy module exposes a history view (`h` key, non-root) showing the last 20 entries with status icons.
+
+### Second confirmation for destructive operations
+
+All destructive operations across modules use the same pattern:
+1. User presses action key (e.g., `x` for delete, `p` for prune, `d` for compose down)
+2. Module sends `uix.ShowModalMsg` with target identity and impact description
+3. User confirms via `enter` or cancels via `esc`
+4. Module receives `uix.ConfirmMsg` and dispatches accordingly
+
+This applies to: container remove, image remove, image prune, compose down, deploy overwrite, backup cleanup, and rollback.
+
+### PathType classification for deploy safety
+
+Deploy source paths must be classified before processing:
+- `"folder"` — directory, copy directly
+- `"zip"` — extract to temp dir first, then copy
+- `"unknown"` — file, treat as single-file deploy
+- `"invalid"` — path doesn't exist, abort with error
+
+```go
+func PathType(path string) string {
+    info, err := os.Stat(path)
+    if err != nil { return "invalid" }
+    if info.IsDir() { return "folder" }
+    if strings.HasSuffix(strings.ToLower(path), ".zip") { return "zip" }
+    return "unknown"
+}
+```

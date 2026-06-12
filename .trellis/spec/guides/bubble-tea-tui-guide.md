@@ -1,5 +1,7 @@
 # Bubble Tea TUI Development Guide
 
+> **⚠️ 实验性**：本指南中的代码示例和模式由 AI 生成，未经人工验证。实际使用前请对照 Bubble Tea 官方文档确认正确性。
+
 ## When to Use This Guide
 
 When working with `cli/dtui/`, `cli/uix/`, or any Bubble Tea + bubbles TUI component.
