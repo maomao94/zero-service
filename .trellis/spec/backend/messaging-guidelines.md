@@ -348,7 +348,7 @@ type Config struct {
 - `RequestReply[T]` is a package-level generic function; it asserts the client implements private `replyHandlerGetter`, looks up the registered `*ReplyRouter[T]`, and calls `router.RequestReply` internally.
 - Protocol packages own payload schema, topic builders, device identifiers, business result codes, and domain errors.
 - Protocol SDKs that use `RequestReply[T]` must register reply routers at `mqttx.NewClient` / `MustNewClient` construction time with `WithReplyRouter`. Do not register request/reply topics through `AddHandler` as ordinary consumers.
-- DJI request/reply topics use `djisdk.MustNewClient(cfg, djisdk.WithPendingTTL(ttl))` which internally creates `mqttx.Client` with DJI reply routers; `services_reply` and `property/set_reply` decode to `*djisdk.ServiceReply` inside `common/djisdk`, then `SendCommand` and `SetProperty` call `mqttx.RequestReply[*ServiceReply]` by topic template.
+- DJI request/reply topics use `djisdk.MustNewClient(cfg, djisdk.WithPendingTTL(ttl))` (production) or `djisdk.NewClient(mqttClient, djisdk.WithPendingTTL(ttl))` (tests/shared connection); both internally register `WithReplyRouter` for `services_reply` and `property/set_reply`. Replies decode to `*djisdk.ServiceReply` inside `common/djisdk`, then `SendCommand` and `SetProperty` call `mqttx.RequestReply[*ServiceReply]` by topic template.
 
 ### 4. Validation & Error Matrix
 - `ReplyRouter` constructed with nil decoder + reply handled -> `ErrNilDecoder`.
@@ -367,6 +367,7 @@ type Config struct {
 ### 5. Good/Base/Bad Cases
 - Good: Protocol package creates a typed `ReplyDecoder`, registers it with `WithReplyRouter`, then calls `mqttx.RequestReply[T](ctx, client, topicTemplate, tid, send)` and receives `T` directly. Protocol-specific error conversion stays outside `mqttx`.
 - Good: DJI service wiring calls `djisdk.MustNewClient(cfg, djisdk.WithPendingTTL(ttl))` which internally creates `mqttx.Client` with DJI reply routers.
+- Good: DJI test code calls `djisdk.NewClient(nil, djisdk.WithPendingTTL(ttl))` to create a Client without MQTT for handler testing.
 - Base: A notification-only consumer uses `AddHandler(topicTemplate, handler)` and receives actual `topic` plus callback `topicTemplate`.
 - Bad: Registering request/reply topics such as DJI `services_reply` or `property/set_reply` with `AddHandlerFunc`, exposing `ReplyRouter.do` publicly, calling `ReplyRouter.do` directly from outside the package, or running custom wildcard matching inside dispatcher.
 
@@ -442,9 +443,10 @@ djiClient := djisdk.MustNewClient(cfg, djisdk.WithPendingTTL(pendingTTL))
 ```
 
 ```go
-// Correct: test code uses NewClient with an externally-created mqttx.Client.
-mqttClient := mqttx.MustNewClient(cfg)
-djiClient := djisdk.NewClient(mqttClient, djisdk.WithPendingTTL(pendingTTL))
+// Correct: test code uses NewClient with nil/fake mqttx.Client.
+djiClient := djisdk.NewClient(nil, djisdk.WithPendingTTL(pendingTTL))
+// Or with a recording mock:
+djiClient := djisdk.NewClient(&recordingMQTTClient{}, djisdk.WithPendingTTL(pendingTTL))
 ```
 
 ```go
