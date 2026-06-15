@@ -565,7 +565,7 @@ SocketIO 推送给前端客户端。不同的 MQTT topic 会映射到不同的 S
 
 ### 11.2 桥接消息格式
 
-桥接的 MQTT 消息会转换为统一的格式，遵循通用的 `event`、`payload`、`reqId` 结构。以下示例基于 IEC 104 协议桥接，详细协议定义请参考 [`iec104-protocol.md`](iec104-protocol.md) 文件：
+桥接的 MQTT 消息会转换为统一的格式，遵循通用的 `event`、`payload`、`reqId` 结构。以下示例基于 IEC 104 协议桥接，详细协议定义请参考 [`iec104-message.md`](iec104-message.md) 文件：
 
 ```json
 {
@@ -624,7 +624,7 @@ SocketIO 推送给前端客户端。不同的 MQTT topic 会映射到不同的 S
 
 ### 11.4 前端处理示例
 
-前端可以通过监听 "mqtt" 事件来处理桥接的消息。以下是处理 IEC 104 协议数据的示例（基于 [`iec104-protocol.md`](iec104-protocol.md) 定义）：
+前端可以通过监听 "mqtt" 事件来处理桥接的消息。以下是处理 IEC 104 协议数据的示例（基于 [`iec104-message.md`](iec104-message.md) 定义）：
 
 ```javascript
 // 监听 MQTT 桥接消息
@@ -632,7 +632,7 @@ socket.on('mqtt', (data) => {
     const message = normalizeSocketPayload(data);
     console.log('收到 MQTT 桥接消息:', message);
 
-    // 处理 IEC 104 协议数据（示例，基于 iec104-protocol.md 定义）
+    // 处理 IEC 104 协议数据（示例，基于 iec104-message.md 定义）
     const payload = message.payload;
     if (payload.asdu === 'M_SP_NA_1') {
         // 处理单点信息

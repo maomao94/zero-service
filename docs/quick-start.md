@@ -100,4 +100,4 @@ grpcurl -plaintext -d '{"name":"test"}' localhost:21006 trigger.Trigger/Ping
 
 ### Q: 如何对接 IEC 104 数据？
 
-参考 [IEC 104 消息对接文档](iec104-protocol.md)。
+参考 [IEC 104 消息对接文档](iec104-message.md)。
