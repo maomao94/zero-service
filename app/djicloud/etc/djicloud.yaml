@@ -14,7 +14,6 @@ MqttConfig:
   Username: "mqtt"
   Password: "password"
   Qos: 0
-AckTimeout: 5s
 PendingTTL: 30s
 DB:
   DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
