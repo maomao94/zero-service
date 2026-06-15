@@ -236,3 +236,50 @@ func BoolsToBitValues(bools []bool) *BitValues {
 	bytes := BoolsToBytes(bools)
 	return BytesToBitValues(bytes, len(bools))
 }
+
+// ------------------------------------------------------
+// 带校验的 uint32 → uint16 / int16 转换
+// ------------------------------------------------------
+
+// Uint32ToUint16Validate 将 uint32 转换为 uint16，超出 [0, 65535] 范围返回 error。
+func Uint32ToUint16Validate(v uint32) (uint16, error) {
+	if v > 65535 {
+		return 0, fmt.Errorf("value %d exceeds uint16 range [0, 65535]", v)
+	}
+	return uint16(v), nil
+}
+
+// Uint32SliceToUint16SliceValidate 批量将 uint32 转换为 uint16。
+// 超出范围时返回第一个出错值的索引（0-based）和 error。
+func Uint32SliceToUint16SliceValidate(values []uint32) ([]uint16, int, error) {
+	result := make([]uint16, len(values))
+	for i, v := range values {
+		if v > 65535 {
+			return nil, i, fmt.Errorf("index %d: value %d exceeds uint16 range [0, 65535]", i, v)
+		}
+		result[i] = uint16(v)
+	}
+	return result, -1, nil
+}
+
+// Uint32ToInt16Validate 将 uint32 转换为有符号 int16，超出 [-32768, 32767] 范围返回 error。
+func Uint32ToInt16Validate(v uint32) (int16, error) {
+	// 有符号范围：0 ~ 32767 直接转，32768 ~ 65535 映射为 -32768 ~ -1
+	if v > 65535 {
+		return 0, fmt.Errorf("value %d exceeds int16 range [-32768, 32767]", v)
+	}
+	return int16(v), nil
+}
+
+// Uint32SliceToInt16SliceValidate 批量将 uint32 转换为有符号 int16。
+// 超出范围时返回第一个出错值的索引（0-based）和 error。
+func Uint32SliceToInt16SliceValidate(values []uint32) ([]int16, int, error) {
+	result := make([]int16, len(values))
+	for i, v := range values {
+		if v > 65535 {
+			return nil, i, fmt.Errorf("index %d: value %d exceeds int16 range [-32768, 32767]", i, v)
+		}
+		result[i] = int16(v)
+	}
+	return result, -1, nil
+}
