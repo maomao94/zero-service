@@ -319,3 +319,36 @@ Refactored common/mqttx request/reply API
 ### Next Steps
 
 - None - task complete
+
+
+## Session 60: 规范 netx client option 构造边界
+
+**Date**: 2026-06-15
+**Task**: 规范 netx client option 构造边界
+**Branch**: `master`
+
+### Summary
+
+将 netx ClientOption 从直接修改 Client 调整为写入 ClientOptions 构造配置，补充自定义 option 单测，并把公共 client option 约定写入后端 code-spec。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ed72990b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
