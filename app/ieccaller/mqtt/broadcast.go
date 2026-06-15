@@ -29,9 +29,13 @@ func NewBroadcast(svcCtx *svc.ServiceContext) *Broadcast {
 }
 
 func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error {
-	logx.WithContext(ctx).Debugf("Consume mqtt broadcast, topic:%s payload:%s", topic, string(payload))
+	logx.WithContext(ctx).Debugw("mqtt broadcast received",
+		logx.Field("topic", topic),
+		logx.Field("topic_template", topicTemplate),
+		logx.Field("payload_size", len(payload)),
+	)
 	if !l.svcCtx.IsBroadcast() {
-		logx.WithContext(ctx).Error("not setting cluster")
+		logx.WithContext(ctx).Error("mqtt broadcast disabled")
 		return nil
 	}
 	broadcastBody := &types.BroadcastBody{}
@@ -40,10 +44,18 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		return err
 	}
 	if broadcastBody.AckTopic == l.svcCtx.BroadcastAckTopic() {
-		logx.WithContext(ctx).Debug("mqtt broadcast, ignore self broadcast")
+		logx.WithContext(ctx).Debugw("mqtt broadcast self ignored",
+			logx.Field("tid", broadcastBody.Tid),
+			logx.Field("method", broadcastBody.Method),
+			logx.Field("ack_topic", broadcastBody.AckTopic),
+		)
 		return nil
 	}
-	logx.WithContext(ctx).Infof("mqtt broadcast, method:%s", broadcastBody.Method)
+	logx.WithContext(ctx).Infow("mqtt broadcast dispatch",
+		logx.Field("tid", broadcastBody.Tid),
+		logx.Field("method", broadcastBody.Method),
+		logx.Field("ack_topic", broadcastBody.AckTopic),
+	)
 	switch broadcastBody.Method {
 	case ieccaller.IecCaller_SendCounterInterrogationCmd_FullMethodName:
 		in := &ieccaller.SendCounterInterrogationCmdReq{}
@@ -53,7 +65,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.WithContext(ctx).Errorf("get client error: %v", err)
+			logBroadcastClientError(ctx, broadcastBody, in.Host, in.Port, err)
 			return nil
 		}
 		if err = cli.SendCounterInterrogationCmd(uint16(in.Coa)); err != nil {
@@ -69,7 +81,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.WithContext(ctx).Errorf("get client error: %v", err)
+			logBroadcastClientError(ctx, broadcastBody, in.Host, in.Port, err)
 			return nil
 		}
 		if err = cli.SendInterrogationCmd(uint16(in.Coa)); err != nil {
@@ -85,7 +97,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.WithContext(ctx).Errorf("get client error: %v", err)
+			logBroadcastClientError(ctx, broadcastBody, in.Host, in.Port, err)
 			return nil
 		}
 		if err = cli.SendReadCmd(uint16(in.Coa), uint(in.Ioa)); err != nil {
@@ -101,7 +113,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.WithContext(ctx).Errorf("get client error: %v", err)
+			logBroadcastClientError(ctx, broadcastBody, in.Host, in.Port, err)
 			return nil
 		}
 		if err = cli.SendTestCmd(uint16(in.Coa)); err != nil {
@@ -117,7 +129,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.WithContext(ctx).Errorf("get client error: %v", err)
+			logBroadcastClientError(ctx, broadcastBody, in.Host, in.Port, err)
 			return nil
 		}
 		if err = cli.SendCmd(uint16(in.Coa), asdu.TypeID(in.TypeId), asdu.InfoObjAddr(in.Ioa), in.Value); err != nil {
@@ -133,7 +145,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.WithContext(ctx).Errorf("get client error: %v", err)
+			logBroadcastClientError(ctx, broadcastBody, in.Host, in.Port, err)
 			return nil
 		}
 		ack, err := cli.SendSingleCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), in.Value, in.WithTime, client.WithAck())
@@ -156,7 +168,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.WithContext(ctx).Errorf("get client error: %v", err)
+			logBroadcastClientError(ctx, broadcastBody, in.Host, in.Port, err)
 			return nil
 		}
 		ack, err := cli.SendDoubleCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), asdu.DoubleCommand(in.Value), in.WithTime, client.WithAck())
@@ -179,7 +191,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.WithContext(ctx).Errorf("get client error: %v", err)
+			logBroadcastClientError(ctx, broadcastBody, in.Host, in.Port, err)
 			return nil
 		}
 		ack, err := cli.SendStepCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), asdu.StepCommand(in.Value), in.WithTime, client.WithAck())
@@ -202,7 +214,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.WithContext(ctx).Errorf("get client error: %v", err)
+			logBroadcastClientError(ctx, broadcastBody, in.Host, in.Port, err)
 			return nil
 		}
 		ack, err := cli.SendSetpointNormalizedCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), int16(in.Value), in.WithTime, client.WithAck())
@@ -225,7 +237,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.WithContext(ctx).Errorf("get client error: %v", err)
+			logBroadcastClientError(ctx, broadcastBody, in.Host, in.Port, err)
 			return nil
 		}
 		ack, err := cli.SendSetpointScaledCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), int16(in.Value), in.WithTime, client.WithAck())
@@ -248,7 +260,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.WithContext(ctx).Errorf("get client error: %v", err)
+			logBroadcastClientError(ctx, broadcastBody, in.Host, in.Port, err)
 			return nil
 		}
 		fv, err := convertor.ToFloat(in.Value)
@@ -276,7 +288,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.WithContext(ctx).Errorf("get client error: %v", err)
+			logBroadcastClientError(ctx, broadcastBody, in.Host, in.Port, err)
 			return nil
 		}
 		ack, err := cli.SendBitstringCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), uint32(in.Value), in.WithTime, client.WithAck())
@@ -303,7 +315,10 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 				for _, key := range in.Keys {
 					if _, exists := l.svcCtx.DevicePointMappingModel.GetCache(ctx, key); exists {
 						if err := l.svcCtx.DevicePointMappingModel.RemoveCache(ctx, key); err != nil {
-							logx.WithContext(ctx).Errorf("Remove cache failed, key: %s, err: %v", key, err)
+							logx.WithContext(ctx).Errorw("mqtt broadcast cache remove failed",
+								logx.Field("key", key),
+								logx.Field("error", err),
+							)
 							continue
 						}
 						clearedCount++
@@ -315,24 +330,47 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 					key := l.svcCtx.DevicePointMappingModel.GenerateCacheKey(info.TagStation, info.Coa, info.Ioa)
 					if _, exists := l.svcCtx.DevicePointMappingModel.GetCache(ctx, key); exists {
 						if err := l.svcCtx.DevicePointMappingModel.RemoveCache(ctx, key); err != nil {
-							logx.WithContext(ctx).Errorf("Remove cache by key info failed, tagStation: %s, coa: %d, ioa: %d, err: %v", info.TagStation, info.Coa, info.Ioa, err)
+							logx.WithContext(ctx).Errorw("mqtt broadcast cache remove failed",
+								logx.Field("tag_station", info.TagStation),
+								logx.Field("coa", info.Coa),
+								logx.Field("ioa", info.Ioa),
+								logx.Field("error", err),
+							)
 							continue
 						}
 						clearedCount++
 					}
 				}
 			}
-			logx.WithContext(ctx).Infof("Broadcast cleared cache count: %d", clearedCount)
+			logx.WithContext(ctx).Infow("mqtt broadcast cache cleared", logx.Field("cleared_count", clearedCount))
 		}
 	default:
-		logx.WithContext(ctx).Errorf("unknown method:%s", broadcastBody.Method)
+		logx.WithContext(ctx).Errorw("mqtt broadcast unknown method",
+			logx.Field("tid", broadcastBody.Tid),
+			logx.Field("method", broadcastBody.Method),
+		)
 	}
 	return nil
 }
 
+func logBroadcastClientError(ctx context.Context, body *types.BroadcastBody, host string, port uint32, err error) {
+	logx.WithContext(ctx).Errorw("mqtt broadcast client get failed",
+		logx.Field("tid", body.Tid),
+		logx.Field("method", body.Method),
+		logx.Field("ack_topic", body.AckTopic),
+		logx.Field("host", host),
+		logx.Field("port", port),
+		logx.Field("error", err),
+	)
+}
+
 func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method string, success bool, responseBody string, ackErr error) {
 	if tId == "" {
-		logx.WithContext(ctx).Debugf("publishAckReply skipped: empty tId, method=%s", method)
+		logx.WithContext(ctx).Debugw("mqtt broadcast ack reply skipped",
+			logx.Field("reason", "empty_tid"),
+			logx.Field("method", method),
+			logx.Field("ack_topic", ackTopic),
+		)
 		return
 	}
 	errorKind := ""
@@ -349,10 +387,21 @@ func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method s
 		default:
 			errorKind = "unknown"
 		}
-		logx.WithContext(ctx).Infof("publishAckReply tId=%s method=%s success=%v errorKind=%s err=%s",
-			tId, method, success, errorKind, errMsg)
+		logx.WithContext(ctx).Infow("mqtt broadcast ack reply prepared",
+			logx.Field("tid", tId),
+			logx.Field("method", method),
+			logx.Field("ack_topic", ackTopic),
+			logx.Field("success", success),
+			logx.Field("error_kind", errorKind),
+			logx.Field("error", errMsg),
+		)
 	} else {
-		logx.WithContext(ctx).Infof("publishAckReply tId=%s method=%s success=true", tId, method)
+		logx.WithContext(ctx).Infow("mqtt broadcast ack reply prepared",
+			logx.Field("tid", tId),
+			logx.Field("method", method),
+			logx.Field("ack_topic", ackTopic),
+			logx.Field("success", true),
+		)
 	}
 	ack := &types.BroadcastAckBody{
 		Tid:          tId,
@@ -364,23 +413,35 @@ func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method s
 	}
 	data, err := jsonx.Marshal(ack)
 	if err != nil {
-		logx.WithContext(ctx).Errorf("marshal ack error: %v", err)
+		logx.WithContext(ctx).Errorw("mqtt broadcast ack marshal failed", logx.Field("error", err))
 		return
 	}
 	if l.svcCtx.MqttClient == nil {
-		logx.WithContext(ctx).Errorf("mqtt broadcast client is nil")
+		logx.WithContext(ctx).Error("mqtt broadcast client is nil")
 		return
 	}
 	pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	if ackTopic == "" {
-		logx.WithContext(ctx).Errorf("broadcast ack topic is empty")
+		logx.WithContext(ctx).Errorw("mqtt broadcast ack topic is empty",
+			logx.Field("tid", tId),
+			logx.Field("method", method),
+		)
 		return
 	}
 	if _, err := l.svcCtx.MqttClient.PublishWithTrace(pushCtx, ackTopic, data); err != nil {
-		logx.WithContext(pushCtx).Errorf("failed to push ack to mqtt: tId=%s method=%s ackTopic=%s err=%v", tId, method, ackTopic, err)
+		logx.WithContext(pushCtx).Errorw("mqtt broadcast ack publish failed",
+			logx.Field("tid", tId),
+			logx.Field("method", method),
+			logx.Field("ack_topic", ackTopic),
+			logx.Field("error", err),
+		)
 	} else {
-		logx.WithContext(pushCtx).Debugf("ack reply sent: tId=%s method=%s ackTopic=%s", tId, method, ackTopic)
+		logx.WithContext(pushCtx).Debugw("mqtt broadcast ack reply sent",
+			logx.Field("tid", tId),
+			logx.Field("method", method),
+			logx.Field("ack_topic", ackTopic),
+		)
 	}
 }
 
