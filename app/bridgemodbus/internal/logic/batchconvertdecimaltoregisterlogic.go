@@ -28,30 +28,27 @@ func NewBatchConvertDecimalToRegisterLogic(ctx context.Context, svcCtx *svc.Serv
 
 // 批量转换十进制数值为Modbus寄存器格式
 func (l *BatchConvertDecimalToRegisterLogic) BatchConvertDecimalToRegister(in *bridgemodbus.BatchConvertDecimalToRegisterReq) (*bridgemodbus.BatchConvertDecimalToRegisterRes, error) {
-	// 检查输入值是否在 16 位寄存器的范围内
-	for i, v := range in.Values {
-		if in.Unsigned {
-			// 无符号整数范围：0-65535
-			if v < 0 || v > 65535 {
-				return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "第 %d 个无符号值 %d 超出 16 位寄存器范围 [0, 65535]", i+1, v)
-			}
-		} else {
-			// 有符号整数范围：-32768-32767
-			if v > 32767 || v < -32768 {
-				return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "第 %d 个有符号值 %d 超出 16 位寄存器范围 [-32768, 32767]", i+1, v)
-			}
+	var uint16Values []uint16
+	if in.Unsigned {
+		// int32 → uint32 → uint16（带范围校验 [0, 65535]）
+		uint32s := make([]uint32, len(in.Values))
+		for i, v := range in.Values {
+			uint32s[i] = uint32(v)
 		}
-	}
-
-	uint16Values := make([]uint16, len(in.Values))
-	for i, v := range in.Values {
-		if in.Unsigned {
-			// 无符号整数直接转换
+		uint16s, errIdx, err := bytex.Uint32SliceToUint16SliceValidate(uint32s)
+		if err != nil {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "第 %d 个无符号值 %d 超出 16 位寄存器范围 [0, 65535]", errIdx+1, in.Values[errIdx])
+		}
+		uint16Values = uint16s
+	} else {
+		// int32 → int16 → uint16（带范围校验 [-32768, 32767]）
+		int16s, errIdx, err := bytex.Int32SliceToInt16SliceValidate(in.Values)
+		if err != nil {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "第 %d 个有符号值 %d 超出 16 位寄存器范围 [-32768, 32767]", errIdx+1, in.Values[errIdx])
+		}
+		uint16Values = make([]uint16, len(int16s))
+		for i, v := range int16s {
 			uint16Values[i] = uint16(v)
-		} else {
-			// 有符号整数先转换为 int16，再转换为 uint16
-			int16Val := int16(v)
-			uint16Values[i] = uint16(int16Val)
 		}
 	}
 	binaryValues := bytex.Uint16SliceToBinaryValues(uint16Values)

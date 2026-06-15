@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"zero-service/common/bytex"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -34,15 +35,16 @@ func (l *MaskWriteRegisterLogic) MaskWriteRegister(in *bridgemodbus.MaskWriteReg
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)
 
-	// 检查值是否超过 16 位寄存器的最大值
-	if in.AndMask > 65535 {
+	andMask, err := bytex.Uint32ToUint16Validate(in.AndMask)
+	if err != nil {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "AND 掩码超过 16 位寄存器的最大值 (65535)")
 	}
-	if in.OrMask > 65535 {
+	orMask, err := bytex.Uint32ToUint16Validate(in.OrMask)
+	if err != nil {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "OR 掩码超过 16 位寄存器的最大值 (65535)")
 	}
 
-	results, err := mbCli.MaskWriteRegister(l.ctx, uint16(in.Address), uint16(in.AndMask), uint16(in.OrMask))
+	results, err := mbCli.MaskWriteRegister(l.ctx, uint16(in.Address), andMask, orMask)
 	if err != nil {
 		return nil, err
 	}

@@ -57,3 +57,12 @@ func (u *IdUtil) SimpleUUID() (string, error) {
 	}
 	return strings.ReplaceAll(uid, "-", ""), nil
 }
+
+// SimpleUUID 生成不带 "-" 的 UUID v4
+func SimpleUUID() (string, error) {
+	uid, err := random.UUIdV4()
+	if err != nil {
+		return "", err
+	}
+	return strings.ReplaceAll(uid, "-", ""), nil
+}

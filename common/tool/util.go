@@ -130,15 +130,6 @@ func GenOssFilename(filename, pathPrefix string) string {
 		path.Ext(filename)
 }
 
-// SimpleUUID 生成不带 "-" 的 UUID v4
-func SimpleUUID() (string, error) {
-	uid, err := random.UUIdV4()
-	if err != nil {
-		return "", err
-	}
-	return strings.ReplaceAll(uid, "-", ""), nil
-}
-
 func GenSecondTS() int64 {
 	return time.Now().Unix() // 示例：1734429580（对应2025-12-17 09:59:40）
 }

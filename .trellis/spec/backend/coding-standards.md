@@ -45,6 +45,54 @@
 - 涉及数据库、Redis、消息队列、MQTT、OSS、Docker、Eino 或 DJI Cloud API 时，优先复用已有 model、client、cache、config、SDK 和 `common/` 封装。
 - 工具函数、复杂协议转换和关键业务分支应有单元测试；生成代码非必要不写自定义测试。
 
+## Go 泛型约定
+
+Go 1.18+ 泛型用于消除重复的类型转换和切片操作。约束类型定义在使用该约束的包中。
+
+### 约束定义
+
+```go
+// 数值类型约束（用于字节/寄存器转换）
+type Integer interface {
+    ~int16 | ~uint16 | ~int32 | ~uint32
+}
+```
+
+### 泛型切片转换
+
+```go
+// ConvertSlice 泛型切片转换，消除 XxxSliceToYyySlice 重复模式
+func ConvertSlice[From Integer, To Integer](values []From, convert func(From) To) []To {
+    result := make([]To, len(values))
+    for i, v := range values {
+        result[i] = convert(v)
+    }
+    return result
+}
+```
+
+Usage:
+
+```go
+// 替代 Uint16SliceToUint32Slice、Int16SliceToInt32Slice 等重复函数
+uint32s := bytex.ConvertSlice(uint16s, func(v uint16) uint32 { return uint32(v) })
+int16s := bytex.ConvertSlice(int32s, func(v int32) int16 { return int16(v) })
+```
+
+### 泛型使用原则
+
+- 泛型用于**消除重复模式**，不是为了炫技。
+- 约束类型放在使用它的包中（如 `bytex.Integer`），不建跨包共享约束文件。
+- 转换函数保持简单：一个 `convert func(From) To` 参数，不加更多泛型层。
+- 泛型函数的调用方负责类型安全（如 `int16(v)` 截断是预期行为）。
+
+## common/ 包复用原则
+
+- 工具函数只在一个 `common/` 包中定义，不在其他包中复制。
+- `common/bytex/` 是字节/寄存器转换的唯一来源（`tool/util.go` 中的重复已清除）。
+- 新增 `common/` 包前先搜索是否已有类似功能。
+- `common/tool/` 是混合工具包，不适合放特定领域的工具函数。
+
 ## 安全规则
 
 - 不新增、打印或记录明文密码、Token、密钥、认证头、证书、数据库连接串、对象存储配置、手机号、身份证号、内网地址或个人本地路径。

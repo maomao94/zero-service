@@ -4,6 +4,20 @@ import (
 	"fmt"
 )
 
+// Integer 数值类型约束，用于泛型切片转换
+type Integer interface {
+	~int16 | ~uint16 | ~int32 | ~uint32
+}
+
+// ConvertSlice 泛型切片转换，将 []From 转换为 []To
+func ConvertSlice[From Integer, To Integer](values []From, convert func(From) To) []To {
+	result := make([]To, len(values))
+	for i, v := range values {
+		result[i] = convert(v)
+	}
+	return result
+}
+
 // 字节 → uint16（核心） → int16（有符号）
 type BinaryValues struct {
 	Hex    []string `json:"hex"`    // 16位十六进制
@@ -59,11 +73,7 @@ func Uint16ToInt16(u uint16) int16 {
 }
 
 func Uint16SliceToInt16Slice(values []uint16) []int16 {
-	intVals := make([]int16, len(values))
-	for i, v := range values {
-		intVals[i] = Uint16ToInt16(v)
-	}
-	return intVals
+	return ConvertSlice(values, Uint16ToInt16)
 }
 
 // ------------------------------
@@ -79,27 +89,15 @@ func Uint16ToInt32(u uint16) int32 {
 }
 
 func Uint16SliceToUint32Slice(values []uint16) []uint32 {
-	res := make([]uint32, len(values))
-	for i, v := range values {
-		res[i] = Uint16ToUint32(v)
-	}
-	return res
+	return ConvertSlice(values, Uint16ToUint32)
 }
 
 func Uint16SliceToInt32Slice(values []uint16) []int32 {
-	res := make([]int32, len(values))
-	for i, v := range values {
-		res[i] = Uint16ToInt32(v)
-	}
-	return res
+	return ConvertSlice(values, Uint16ToInt32)
 }
 
 func Int16SliceToInt32Slice(values []int16) []int32 {
-	res := make([]int32, len(values))
-	for i, v := range values {
-		res[i] = int32(v)
-	}
-	return res
+	return ConvertSlice(values, func(v int16) int32 { return int32(v) })
 }
 
 // ------------------------------
@@ -115,19 +113,11 @@ func Int32ToInt16(i int32) int16 {
 }
 
 func Uint32SliceToUint16Slice(values []uint32) []uint16 {
-	res := make([]uint16, len(values))
-	for i, v := range values {
-		res[i] = Uint32ToUint16(v)
-	}
-	return res
+	return ConvertSlice(values, Uint32ToUint16)
 }
 
 func Int32SliceToInt16Slice(values []int32) []int16 {
-	res := make([]int16, len(values))
-	for i, v := range values {
-		res[i] = Int32ToInt16(v)
-	}
-	return res
+	return ConvertSlice(values, Int32ToInt16)
 }
 
 // ------------------------------
@@ -277,6 +267,31 @@ func Uint32SliceToInt16SliceValidate(values []uint32) ([]int16, int, error) {
 	result := make([]int16, len(values))
 	for i, v := range values {
 		if v > 65535 {
+			return nil, i, fmt.Errorf("index %d: value %d exceeds int16 range [-32768, 32767]", i, v)
+		}
+		result[i] = int16(v)
+	}
+	return result, -1, nil
+}
+
+// ------------------------------------------------------
+// 带校验的 int32 → int16 转换（有符号范围）
+// ------------------------------------------------------
+
+// Int32ToInt16Validate 将 int32 转换为 int16，超出 [-32768, 32767] 范围返回 error。
+func Int32ToInt16Validate(v int32) (int16, error) {
+	if v > 32767 || v < -32768 {
+		return 0, fmt.Errorf("value %d exceeds int16 range [-32768, 32767]", v)
+	}
+	return int16(v), nil
+}
+
+// Int32SliceToInt16SliceValidate 批量将 int32 转换为 int16。
+// 超出范围时返回第一个出错值的索引（0-based）和 error。
+func Int32SliceToInt16SliceValidate(values []int32) ([]int16, int, error) {
+	result := make([]int16, len(values))
+	for i, v := range values {
+		if v > 32767 || v < -32768 {
 			return nil, i, fmt.Errorf("index %d: value %d exceeds int16 range [-32768, 32767]", i, v)
 		}
 		result[i] = int16(v)
