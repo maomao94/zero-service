@@ -487,12 +487,17 @@ func (c *ClientCall) onReadResponse(ctx context.Context, packet *asdu.ASDU) {
 
 func (c *ClientCall) onCommandAck(ctx context.Context, packet *asdu.ASDU) {
 	uid, _ := tool.SimpleUUID()
-	logx.WithContext(ctx).Info("Command ACK received, seq: %s", uid)
-	c.resolveCommandAck(ctx, packet)
-}
-
-func (c *ClientCall) resolveCommandAck(ctx context.Context, packet *asdu.ASDU) {
 	ioa, value := parseCommandAck(packet)
+	logx.WithContext(ctx).Infow("command ack received",
+		logx.Field("seq", uid),
+		logx.Field("type_id", int(packet.Type)),
+		logx.Field("asdu", genASDUName(packet.Type)),
+		logx.Field("coa", uint(packet.CommonAddr)),
+		logx.Field("ioa", uint(ioa)),
+		logx.Field("cot", genCOTName(packet.Coa.Cause)),
+		logx.Field("cot_cause", int(packet.Coa.Cause)),
+		logx.Field("is_negative", packet.Coa.IsNegative),
+	)
 
 	// IEC104 短浮点设点 ACK：格式化为两位小数，避免 float32 二进制误差暴露给调用方
 	cli, err := c.svcCtx.ClientManager.GetClient(c.config.Host, c.config.Port)
@@ -583,7 +588,7 @@ func parseCommandAck(packet *asdu.ASDU) (ioa asdu.InfoObjAddr, value any) {
 }
 
 func (c *ClientCall) onUnknownASDU(ctx context.Context) {
-	logx.WithContext(ctx).Info("Unknown ASDU type")
+	logx.WithContext(ctx).Info("unknown asdu type")
 }
 
 func genASDUName(typeId asdu.TypeID) string {
