@@ -296,6 +296,13 @@ func (svc ServiceContext) PushPbBroadcastWithAck(ctx context.Context, method str
 	}
 
 	tId, _ := tool.SimpleUUID()
+	logx.WithContext(ctx).Debugw("mqtt broadcast request waiting ack",
+		logx.Field("tid", tId),
+		logx.Field("method", method),
+		logx.Field("broadcast_topic", svc.broadcastTopic),
+		logx.Field("ack_topic", svc.broadcastAckTopic),
+		logx.Field("instance_id", svc.broadcastInstanceId),
+	)
 	ack, err := mqttx.RequestReply[*types.BroadcastAckBody](ctx, svc.MqttClient, svc.broadcastAckTopic, tId, func() error {
 		return svc.pushBroadcast(ctx, method, in, tId)
 	})
@@ -319,6 +326,11 @@ func (svc ServiceContext) PushPbBroadcastWithAck(ctx context.Context, method str
 			return fmt.Errorf("broadcast command error: %s", ack.Error)
 		}
 	}
+	logx.WithContext(ctx).Debugw("mqtt broadcast ack matched",
+		logx.Field("tid", tId),
+		logx.Field("method", method),
+		logx.Field("ack_topic", svc.broadcastAckTopic),
+	)
 
 	if err := jsonx.Unmarshal([]byte(ack.ResponseBody), res); err != nil {
 		return fmt.Errorf("unmarshal response error: %w", err)
@@ -350,10 +362,22 @@ func (svc ServiceContext) pushBroadcast(ctx context.Context, method string, in a
 
 	pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
+	logx.WithContext(pushCtx).Debugw("mqtt broadcast request publishing",
+		logx.Field("tid", data.Tid),
+		logx.Field("method", method),
+		logx.Field("broadcast_topic", svc.broadcastTopic),
+		logx.Field("ack_topic", svc.broadcastAckTopic),
+		logx.Field("instance_id", svc.broadcastInstanceId),
+	)
 	if _, err := svc.MqttClient.PublishWithTrace(pushCtx, svc.broadcastTopic, byteData); err != nil {
-		logx.WithContext(pushCtx).Errorf("failed to push broadcast to mqtt: %v", err)
-		return err
+		return fmt.Errorf("publish broadcast to mqtt: %w", err)
 	}
+	logx.WithContext(pushCtx).Debugw("mqtt broadcast request sent",
+		logx.Field("tid", data.Tid),
+		logx.Field("method", method),
+		logx.Field("broadcast_topic", svc.broadcastTopic),
+		logx.Field("ack_topic", svc.broadcastAckTopic),
+	)
 	return nil
 }
 
@@ -391,12 +415,19 @@ func (svc ServiceContext) Close() {
 func decodeBroadcastAck(ctx context.Context, payload []byte, topic string, topicTemplate string) (mqttx.ReplyMessage[*types.BroadcastAckBody], error) {
 	ackBody := &types.BroadcastAckBody{}
 	if err := jsonx.Unmarshal(payload, ackBody); err != nil {
-		logx.WithContext(ctx).Errorf("unmarshal broadcast ack error: topic=%s topicTemplate=%s err=%v", topic, topicTemplate, err)
 		return mqttx.ReplyMessage[*types.BroadcastAckBody]{}, err
 	}
 	if ackBody.Tid == "" {
-		logx.WithContext(ctx).Errorf("broadcast ack tId is empty: topic=%s topicTemplate=%s", topic, topicTemplate)
+		return mqttx.ReplyMessage[*types.BroadcastAckBody]{}, mqttx.ErrEmptyReplyTid
 	}
+	logx.WithContext(ctx).Debugw("mqtt broadcast ack received",
+		logx.Field("tid", ackBody.Tid),
+		logx.Field("method", ackBody.Method),
+		logx.Field("topic", topic),
+		logx.Field("topic_template", topicTemplate),
+		logx.Field("success", ackBody.Success),
+		logx.Field("error_kind", ackBody.ErrorKind),
+	)
 	return mqttx.ReplyMessage[*types.BroadcastAckBody]{
 		Tid:   ackBody.Tid,
 		Value: ackBody,
