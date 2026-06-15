@@ -63,8 +63,8 @@ func (c *topicLogConfig) setLogPayload(enabled bool) {
 	c.logPayload.Store(enabled)
 }
 
-// topicLogManagerOption 日志管理器选项
-type topicLogManagerOption func(*TopicLogManager)
+// TopicLogManagerOption 日志管理器选项
+type TopicLogManagerOption func(*TopicLogManager)
 
 // TopicLogManager 日志管理器
 // 维护各 topic 的日志配置，并控制打印频率
@@ -75,7 +75,7 @@ type TopicLogManager struct {
 }
 
 // NewTopicLogManager 创建日志管理器
-func NewTopicLogManager(opts ...topicLogManagerOption) *TopicLogManager {
+func NewTopicLogManager(opts ...TopicLogManagerOption) *TopicLogManager {
 	m := &TopicLogManager{
 		defaultInterval: 5 * time.Second,
 	}
@@ -86,14 +86,14 @@ func NewTopicLogManager(opts ...topicLogManagerOption) *TopicLogManager {
 }
 
 // WithDefaultLogPayload 设置默认是否打印 payload
-func WithDefaultLogPayload(enabled bool) topicLogManagerOption {
+func WithDefaultLogPayload(enabled bool) TopicLogManagerOption {
 	return func(m *TopicLogManager) {
 		m.defaultLogPayload.Store(enabled)
 	}
 }
 
 // WithDefaultInterval 设置默认日志间隔
-func WithDefaultInterval(interval time.Duration) topicLogManagerOption {
+func WithDefaultInterval(interval time.Duration) TopicLogManagerOption {
 	return func(m *TopicLogManager) {
 		m.defaultInterval = interval
 	}

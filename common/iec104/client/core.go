@@ -54,8 +54,8 @@ type Client struct {
 	cmdReplyPool *CommandReplyPool
 }
 
-// Option 客户端选项
-type Option func(*Client)
+// ClientOption 客户端选项
+type ClientOption func(*Client)
 
 type CommandOption func(*commandOptions)
 
@@ -70,34 +70,34 @@ func WithAck() CommandOption {
 }
 
 // WithASDUHandler 设置ASDU处理器
-func WithASDUHandler(handler ASDUCall) Option {
+func WithASDUHandler(handler ASDUCall) ClientOption {
 	return func(c *Client) {
 		c.asduCall = handler
 	}
 }
 
 // WithMetaData 设置元数据
-func WithMetaData(metaData map[string]any) Option {
+func WithMetaData(metaData map[string]any) ClientOption {
 	return func(c *Client) {
 		c.cfg.MetaData = metaData
 	}
 }
 
 // WithAutoConnect 设置自动重连
-func WithAutoConnect(autoConnect bool) Option {
+func WithAutoConnect(autoConnect bool) ClientOption {
 	return func(c *Client) {
 		c.cfg.AutoConnect = autoConnect
 	}
 }
 
-func MustNewClient(cfg ClientConfig, opts ...Option) *Client {
+func MustNewClient(cfg ClientConfig, opts ...ClientOption) *Client {
 	cli, err := NewClient(cfg, opts...)
 	logx.Must(err)
 	return cli
 }
 
 // NewClient 创建新的104客户端
-func NewClient(cfg ClientConfig, opts ...Option) (*Client, error) {
+func NewClient(cfg ClientConfig, opts ...ClientOption) (*Client, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}

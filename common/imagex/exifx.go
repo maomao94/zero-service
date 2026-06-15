@@ -105,9 +105,9 @@ func ExtractImageMeta(imgPath string, options ...ImageMetaOption) (ImageMeta, er
 
 func buildImageMetaOptions(options ...ImageMetaOption) imageMetaOptions {
 	var opts imageMetaOptions
-	for _, option := range options {
-		if option != nil {
-			option(&opts)
+	for _, opt := range options {
+		if opt != nil {
+			opt(&opts)
 		}
 	}
 	return opts

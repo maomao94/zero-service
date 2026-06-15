@@ -216,3 +216,36 @@ Refactored uix TUI framework: moved CmdBar to bottom, replaced Palette overlay w
 ### Next Steps
 
 - None - task complete
+
+
+## Session 57: Refactor mqttx API: typed RequestReply, Client interface, ClientOptions pattern
+
+**Date**: 2026-06-15
+**Task**: Refactor mqttx API: typed RequestReply, Client interface, ClientOptions pattern
+**Branch**: `master`
+
+### Summary
+
+Refactored common/mqttx request/reply API
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4c336a6a` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
