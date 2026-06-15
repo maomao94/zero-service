@@ -299,27 +299,18 @@ func (svc ServiceContext) PushPbBroadcastWithAck(ctx context.Context, method str
 	if err != nil {
 		return fmt.Errorf("generate broadcast tid failed: %w", err)
 	}
-	logCtx := svc.broadcastLogContext(ctx, tId, method)
-	logx.WithContext(logCtx).Debugf("mqtt broadcast ack wait started: method=%s tid=%s ackTopic=%s", method, tId, svc.broadcastAckTopic)
-	ack, err := mqttx.RequestReply[*types.BroadcastAckBody](logCtx, svc.MqttClient, svc.broadcastAckTopic, tId, func() error {
-		return svc.pushBroadcast(logCtx, method, in, tId)
+	ack, err := mqttx.RequestReply[*types.BroadcastAckBody](ctx, svc.MqttClient, svc.broadcastAckTopic, tId, func() error {
+		return svc.pushBroadcast(ctx, method, in, tId)
 	})
 	if err != nil {
-		logx.WithContext(logCtx).Errorw(fmt.Sprintf("mqtt broadcast ack wait failed: method=%s tid=%s", method, tId), logx.Field("error", err))
 		return err
 	}
 
 	if !ack.Success {
-		logx.WithContext(logCtx).Errorw(fmt.Sprintf("mqtt broadcast ack returned failure: method=%s tid=%s errorKind=%s", method, tId, ack.ErrorKind),
-			logx.Field("error_kind", ack.ErrorKind),
-			logx.Field("error", ack.Error),
-		)
 		return broadcastAckError(ack)
 	}
-	logx.WithContext(logCtx).Debugf("mqtt broadcast ack matched: method=%s tid=%s", method, tId)
 
 	if err := jsonx.Unmarshal([]byte(ack.ResponseBody), res); err != nil {
-		logx.WithContext(logCtx).Errorw(fmt.Sprintf("mqtt broadcast ack response unmarshal failed: method=%s tid=%s", method, tId), logx.Field("error", err))
 		return fmt.Errorf("unmarshal response error: %w", err)
 	}
 	return nil
@@ -349,21 +340,10 @@ func (svc ServiceContext) pushBroadcast(ctx context.Context, method string, in a
 
 	pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	logCtx := svc.broadcastLogContext(pushCtx, data.Tid, method)
-	logx.WithContext(logCtx).Debugw(fmt.Sprintf("mqtt broadcast request publishing: method=%s tid=%s broadcastTopic=%s", method, data.Tid, svc.broadcastTopic), logx.Field("payload_size", len(byteData)))
 	if _, err := svc.MqttClient.PublishWithTrace(pushCtx, svc.broadcastTopic, byteData); err != nil {
-		logx.WithContext(logCtx).Errorw(fmt.Sprintf("mqtt broadcast request publish failed: method=%s tid=%s broadcastTopic=%s", method, data.Tid, svc.broadcastTopic), logx.Field("error", err))
 		return fmt.Errorf("publish broadcast to mqtt: %w", err)
 	}
-	logx.WithContext(logCtx).Debugf("mqtt broadcast request sent: method=%s tid=%s broadcastTopic=%s", method, data.Tid, svc.broadcastTopic)
 	return nil
-}
-
-func (svc ServiceContext) broadcastLogContext(ctx context.Context, tId, method string) context.Context {
-	return logx.ContextWithFields(ctx,
-		logx.Field("tid", tId),
-		logx.Field("method", method),
-	)
 }
 
 func broadcastAckError(ack *types.BroadcastAckBody) error {

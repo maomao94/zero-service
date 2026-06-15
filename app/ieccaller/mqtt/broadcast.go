@@ -29,11 +29,6 @@ func NewBroadcast(svcCtx *svc.ServiceContext) *Broadcast {
 }
 
 func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error {
-	logx.WithContext(ctx).Debugw("mqtt broadcast received",
-		logx.Field("topic", topic),
-		logx.Field("topic_template", topicTemplate),
-		logx.Field("payload_size", len(payload)),
-	)
 	if !l.svcCtx.IsBroadcast() {
 		logx.WithContext(ctx).Error("mqtt broadcast disabled")
 		return nil
@@ -44,7 +39,6 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		return err
 	}
 	if broadcastBody.AckTopic == l.svcCtx.BroadcastAckTopic() {
-		logx.WithContext(ctx).Debugf("mqtt broadcast self ignored: method=%s tid=%s ackTopic=%s", broadcastBody.Method, broadcastBody.Tid, broadcastBody.AckTopic)
 		return nil
 	}
 	logx.WithContext(ctx).Infof("mqtt broadcast dispatch: method=%s tid=%s ackTopic=%s", broadcastBody.Method, broadcastBody.Tid, broadcastBody.AckTopic)
@@ -346,14 +340,13 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 }
 
 func logBroadcastClientError(ctx context.Context, body *types.BroadcastBody, host string, port uint32, err error) {
-	logx.WithContext(ctx).Errorw(fmt.Sprintf("mqtt broadcast client get failed: method=%s tid=%s target=%s:%d ackTopic=%s", body.Method, body.Tid, host, port, body.AckTopic),
+	logx.WithContext(ctx).Debugw(fmt.Sprintf("mqtt broadcast client skipped: method=%s tid=%s target=%s:%d", body.Method, body.Tid, host, port),
 		logx.Field("error", err),
 	)
 }
 
 func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method string, success bool, responseBody string, ackErr error) {
 	if tId == "" {
-		logx.WithContext(ctx).Debugf("mqtt broadcast ack reply skipped: reason=empty_tid method=%s ackTopic=%s", method, ackTopic)
 		return
 	}
 	errorKind := ""
@@ -370,11 +363,6 @@ func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method s
 		default:
 			errorKind = "unknown"
 		}
-		logx.WithContext(ctx).Infow(fmt.Sprintf("mqtt broadcast ack reply prepared: method=%s tid=%s ackTopic=%s success=%v errorKind=%s", method, tId, ackTopic, success, errorKind),
-			logx.Field("error", errMsg),
-		)
-	} else {
-		logx.WithContext(ctx).Infof("mqtt broadcast ack reply prepared: method=%s tid=%s ackTopic=%s success=true", method, tId, ackTopic)
 	}
 	ack := &types.BroadcastAckBody{
 		Tid:          tId,
@@ -403,8 +391,6 @@ func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method s
 		logx.WithContext(pushCtx).Errorw(fmt.Sprintf("mqtt broadcast ack publish failed: method=%s tid=%s ackTopic=%s", method, tId, ackTopic),
 			logx.Field("error", err),
 		)
-	} else {
-		logx.WithContext(pushCtx).Debugf("mqtt broadcast ack reply sent: method=%s tid=%s ackTopic=%s", method, tId, ackTopic)
 	}
 }
 
