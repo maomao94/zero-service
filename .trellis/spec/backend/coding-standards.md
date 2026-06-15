@@ -93,6 +93,52 @@ int16s := bytex.ConvertSlice(int32s, func(v int32) int16 { return int16(v) })
 - 新增 `common/` 包前先搜索是否已有类似功能。
 - `common/tool/` 是混合工具包，不适合放特定领域的工具函数。
 
+### Convention: Client Option 构造配置边界
+
+**What**: 公共 client / SDK 的函数式 option 必须写入 `XxxOptions` 构造配置结构体，而不是直接写入运行态 `XxxClient` 或未导出实现结构体。
+
+**Why**: option 属于构造参数，直接接收 `*Client` 会把配置解析和运行态对象耦合在一起；后续 client 增加连接池、锁、缓存或状态字段时，option 容易绕过构造边界并误改运行态状态。
+
+**Contract**:
+
+```go
+type ClientOptions struct {
+    Engine Engine
+}
+
+type ClientOption func(*ClientOptions)
+
+func NewClient(opts ...ClientOption) *Client {
+    o := &ClientOptions{}
+    for _, opt := range opts {
+        opt(o)
+    }
+    return &Client{engine: o.Engine}
+}
+```
+
+**Good/Base/Bad Cases**:
+
+- Good: `WithEngine(e Engine) ClientOption` 只设置 `ClientOptions.Engine`，`NewClient` 负责把配置映射到 `Client`。
+- Base: 私有下载、请求、传输选项可以使用小写内部配置结构体，例如 `type downloadOptions struct`。
+- Bad: `type ClientOption func(*Client)`，让 option 直接修改运行态 client 内部字段。
+
+**Tests Required**: 修改 option 模式时，至少运行目标包测试并断言默认值、自定义 option、nil/默认 engine 路径行为不变。
+
+**Wrong vs Correct**:
+
+Wrong:
+
+```go
+type ClientOption func(*Client)
+```
+
+Correct:
+
+```go
+type ClientOption func(*ClientOptions)
+```
+
 ## 安全规则
 
 - 不新增、打印或记录明文密码、Token、密钥、认证头、证书、数据库连接串、对象存储配置、手机号、身份证号、内网地址或个人本地路径。

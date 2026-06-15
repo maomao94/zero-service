@@ -67,6 +67,28 @@ func TestNewClient_WithDefaultHeaders(t *testing.T) {
 	}
 }
 
+func TestNewClient_WithCustomClientOption(t *testing.T) {
+	c := NewClient(func(o *ClientOptions) {
+		o.Headers = http.Header{"X-Option": {"value"}}
+		o.MaxResponseBytes = 4
+		o.DownloadBytesLimit = 5
+		o.UploadBytesLimit = 6
+	})
+
+	if c.headers.Get("X-Option") != "value" {
+		t.Fatal("expected custom option header")
+	}
+	if c.maxResponseBytes != 4 {
+		t.Fatalf("expected custom max response bytes, got %d", c.maxResponseBytes)
+	}
+	if c.downloadBytesLimit != 5 {
+		t.Fatalf("expected custom download bytes limit, got %d", c.downloadBytesLimit)
+	}
+	if c.uploadBytesLimit != 6 {
+		t.Fatalf("expected custom upload bytes limit, got %d", c.uploadBytesLimit)
+	}
+}
+
 func TestClient_Do_Get(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {

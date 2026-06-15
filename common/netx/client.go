@@ -20,8 +20,18 @@ const (
 	DefaultUploadBytesLimit = 32 << 20
 )
 
+// ClientOptions 表示 Client 构造配置。
+type ClientOptions struct {
+	Engine             Engine
+	TLSConfig          *tls.Config
+	Headers            http.Header
+	MaxResponseBytes   int64
+	DownloadBytesLimit int64
+	UploadBytesLimit   int64
+}
+
 // ClientOption 函数式客户端配置选项。
-type ClientOption func(*Client)
+type ClientOption func(*ClientOptions)
 
 // Client 是 HTTP 客户端，支持引擎抽象、TLS 配置、请求/响应/下载/上传大小限制等。
 type Client struct {
@@ -35,13 +45,21 @@ type Client struct {
 
 // NewClient 创建 Client，若不指定引擎则使用 DefaultEngine。
 func NewClient(opts ...ClientOption) *Client {
-	c := &Client{
-		maxResponseBytes:   DefaultMaxResponseBytes,
-		downloadBytesLimit: DefaultDownloadBytesLimit,
-		uploadBytesLimit:   DefaultUploadBytesLimit,
+	o := &ClientOptions{
+		MaxResponseBytes:   DefaultMaxResponseBytes,
+		DownloadBytesLimit: DefaultDownloadBytesLimit,
+		UploadBytesLimit:   DefaultUploadBytesLimit,
 	}
 	for _, opt := range opts {
-		opt(c)
+		opt(o)
+	}
+	c := &Client{
+		engine:             o.Engine,
+		tlsConfig:          o.TLSConfig,
+		headers:            o.Headers,
+		maxResponseBytes:   o.MaxResponseBytes,
+		downloadBytesLimit: o.DownloadBytesLimit,
+		uploadBytesLimit:   o.UploadBytesLimit,
 	}
 	if c.engine == nil {
 		c.engine = c.buildEngine()
@@ -55,32 +73,32 @@ func (c *Client) buildEngine() Engine {
 
 // WithEngine 设置底层 HTTP 执行引擎。
 func WithEngine(e Engine) ClientOption {
-	return func(c *Client) { c.engine = e }
+	return func(o *ClientOptions) { o.Engine = e }
 }
 
 // WithTLSConfig 设置 TLS 配置。
 func WithTLSConfig(cfg *tls.Config) ClientOption {
-	return func(c *Client) { c.tlsConfig = cfg }
+	return func(o *ClientOptions) { o.TLSConfig = cfg }
 }
 
 // WithDefaultHeaders 设置全局默认请求头（会 Clone，避免外部修改影响）。
 func WithDefaultHeaders(h http.Header) ClientOption {
-	return func(c *Client) { c.headers = h.Clone() }
+	return func(o *ClientOptions) { o.Headers = h.Clone() }
 }
 
 // WithMaxResponseBytes 设置响应体最大字节数限制，设为 0 则不限制。
 func WithMaxResponseBytes(maxBytes int64) ClientOption {
-	return func(c *Client) { c.maxResponseBytes = maxBytes }
+	return func(o *ClientOptions) { o.MaxResponseBytes = maxBytes }
 }
 
 // WithDownloadBytesLimit 设置下载最大字节数限制，设为 0 则不限制。
 func WithDownloadBytesLimit(maxBytes int64) ClientOption {
-	return func(c *Client) { c.downloadBytesLimit = maxBytes }
+	return func(o *ClientOptions) { o.DownloadBytesLimit = maxBytes }
 }
 
 // WithUploadBytesLimit 设置上传最大字节数限制，设为 0 则不限制。
 func WithUploadBytesLimit(maxBytes int64) ClientOption {
-	return func(c *Client) { c.uploadBytesLimit = maxBytes }
+	return func(o *ClientOptions) { o.UploadBytesLimit = maxBytes }
 }
 
 // Do 执行 HTTP 请求，返回统一的 Response 结构。
