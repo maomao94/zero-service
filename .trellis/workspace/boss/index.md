@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 57
+- **Total Sessions**: 58
 - **Last Active**: 2026-06-15
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~251 | Active |
+| `journal-2.md` | ~288 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 58 | 2026-06-15 | common bytex 重构&统一优化 | `c9cc2b3b`, `c77db92a`, `4801087e`, `e5f3631e`, `649ec086` | `master` |
 | 57 | 2026-06-15 | Refactor mqttx API: typed RequestReply, Client interface, ClientOptions pattern | `4c336a6a` | `master` |
 | 56 | 2026-06-12 | 完善 mqttx reply 路由抽象 | `34bee974` | `master` |
 | 55 | 2026-06-12 | uix/dtui 生产级 TUI 框架实验 | `84cd51a0` | `master` |

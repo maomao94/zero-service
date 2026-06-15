@@ -249,3 +249,40 @@ Refactored common/mqttx request/reply API
 ### Next Steps
 
 - None - task complete
+
+
+## Session 58: common bytex 重构&统一优化
+
+**Date**: 2026-06-15
+**Task**: common bytex 重构&统一优化
+**Branch**: `master`
+
+### Summary
+
+重构 common/bytex 包：新增泛型 ConvertSlice、Int32ToInt16Validate 等 6 个验证函数、README（含背景知识和代码示例）；删除 tool/util.go 167 行重复字节代码；重构 bridgemodbus 5 个 logic 文件使用 bytex 校验函数并包装 ext 错误；新增 bytex-contracts.md spec 合约文档
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c9cc2b3b` | (see git log) |
+| `c77db92a` | (see git log) |
+| `4801087e` | (see git log) |
+| `e5f3631e` | (see git log) |
+| `649ec086` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
