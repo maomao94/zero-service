@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 60
+- **Total Sessions**: 61
 - **Last Active**: 2026-06-15
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~354 | Active |
+| `journal-2.md` | ~388 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 61 | 2026-06-15 | Refactor djsdk request/reply to use mqttx built-in WithReplyRouter | `71e914cc`, `9759c200` | `master` |
 | 60 | 2026-06-15 | 规范 netx client option 构造边界 | `ed72990b` | `master` |
 | 59 | 2026-06-15 | IEC 104 文档拆分优化 | `f5611aa4` | `master` |
 | 58 | 2026-06-15 | common bytex 重构&统一优化 | `c9cc2b3b`, `c77db92a`, `4801087e`, `e5f3631e`, `649ec086` | `master` |

@@ -352,3 +352,37 @@ Refactored common/mqttx request/reply API
 ### Next Steps
 
 - None - task complete
+
+
+## Session 61: Refactor djsdk request/reply to use mqttx built-in WithReplyRouter
+
+**Date**: 2026-06-15
+**Task**: Refactor djsdk request/reply to use mqttx built-in WithReplyRouter
+**Branch**: `master`
+
+### Summary
+
+Replaced antsx.ReplyPool in common/djisdk with mqttx.RequestReply[*ServiceReply] using construction-time WithReplyRouter registration. MustNewClient creates mqttx.Client with DJI reply routers internally; NewClient(mqttClient, opts...) for tests/shared connections. Removed dynamic reply handler registration, SubscribeAll no longer registers reply topics as ordinary handlers. mqttx unchanged.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `71e914cc` | (see git log) |
+| `9759c200` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
