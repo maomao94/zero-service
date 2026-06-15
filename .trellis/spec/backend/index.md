@@ -24,6 +24,7 @@
 | [messaging-guidelines.md](./messaging-guidelines.md) | 改 Kafka/go-queue、MQTT、消息 trace、consumer handler 或消息桥接模块 | 消息队列契约、trace header 传播、消费端上下文恢复、测试断言 |
 | [socketiox-guidelines.md](./socketiox-guidelines.md) | 改 `common/socketiox/` API、Session、房间、事件处理、容器或并发实现 | SocketIO 包 API、并发规则、禁止模式 |
 | [socketiox-contracts.md](./socketiox-contracts.md) | 改 SocketIO 上下行 payload、事件名、`UpSocketMessage`、统计和房间分页协议 | SocketIO 跨层协议契约、payload、错误矩阵、测试断言 |
+| [bytex-contracts.md](./bytex-contracts.md) | 处理 Modbus 寄存器、字节转换、gRPC 类型对齐或线圈/离散输入操作 | bytex 泛型转换、范围校验、BigEndian 字节序、bit 打包、gRPC 错误包装 |
 | [antsx-invoke-guidelines.md](./antsx-invoke-guidelines.md) | 使用或修改 `antsx.Invoke`、`InvokeAllSettled`、Reactor 并行编排 | Invoke 签名、选型、取消、panic 防护、测试断言 |
 | [antsx-promise-guidelines.md](./antsx-promise-guidelines.md) | 使用或修改 `antsx.Promise`、并行组合（All/AllSettled/Race/Any）、`ReplyPool` | Promise 签名、四象限选型、泄漏防护、错误语义、ReplyPool 设计决策、Stats 统计 |
 | [trellis-template-policy.md](./trellis-template-policy.md) | 修改 Trellis 模板、平台适配或用户数据区 | Trellis 模板更新和验证策略 |
@@ -39,6 +40,7 @@
 - [ ] 读 `coding-standards.md`，确认全局协作、安全和命名边界。
 - [ ] 若改 go-zero 服务或契约，读 `go-zero-conventions.md`，确认 `.api` / `.proto` -> `gen.sh` -> Logic 流程。
 - [ ] 若改错误返回，读 `error-handling.md`，不要新建独立错误码体系。
+- [ ] 若改 Modbus/寄存器/字节转换，读 `bytex-contracts.md`，确认范围校验和 gRPC 错误包装。
 - [ ] 若改 Kafka/MQTT/消息 trace，读 `messaging-guidelines.md`，确认 header 传播和 consumer `ctx` 恢复路径。
 - [ ] 若改 SocketIO 协议，先读 `socketiox-guidelines.md`，再读 `socketiox-contracts.md`。
 - [ ] 若新增复用能力，先搜索 `common/` 和相邻服务，必要时读 `../guides/code-reuse-thinking-guide.md`。
