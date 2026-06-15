@@ -3,6 +3,8 @@ package djisdk
 import (
 	"context"
 	"errors"
+
+	"zero-service/common/mqttx"
 )
 
 type publishedMessage struct {
@@ -31,6 +33,24 @@ func (c *recordingMQTTClient) AddHandlerFunc(topic string, fn func(context.Conte
 	}
 	c.handlers[topic] = fn
 	return nil
+}
+
+func (c *recordingMQTTClient) AddHandler(topic string, handler mqttx.ConsumeHandler) error {
+	return c.AddHandlerFunc(topic, handler.Consume)
+}
+
+func (c *recordingMQTTClient) Subscribe(topic string) error {
+	return nil
+}
+
+func (c *recordingMQTTClient) PublishWithTrace(ctx context.Context, topic string, payload []byte) (string, error) {
+	return "", c.Publish(ctx, topic, payload)
+}
+
+func (c *recordingMQTTClient) Close() {}
+
+func (c *recordingMQTTClient) GetClientID() string {
+	return "recording"
 }
 
 var errPublishFailed = errors.New("publish failed")

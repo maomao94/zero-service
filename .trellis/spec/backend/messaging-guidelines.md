@@ -333,7 +333,7 @@ type Config struct {
 - Function adapter: `type ReplyDecoderFunc[T any] func(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[T], error)`
 - Typed request/reply (public): `func RequestReply[T any](ctx context.Context, c Client, topicTemplate string, tid string, send func() error, ttl ...time.Duration) (T, error)`
 - Typed request/reply (router): `func (r *ReplyRouter[T]) RequestReply(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (T, error)`
-- Client interface: `type Client interface { ...; getReplyHandler(topicTemplate string) ConsumeHandler }`（含私有方法，外部包无法实现）
+- Reply handler lookup: `type replyHandlerGetter interface { getReplyHandler(topicTemplate string) ConsumeHandler }`（`mqttx.RequestReply` 内部断言，公共 `Client` 接口不包含私有方法）
 - Client constructor: `func NewClient(cfg MqttConfig, opts ...ClientOption) (Client, error)` / `func MustNewClient(cfg MqttConfig, opts ...ClientOption) Client`
 
 ### 3. Contracts
@@ -345,8 +345,10 @@ type Config struct {
 - Same `topicTemplate` regular handlers run in registration order.
 - For one message, reply router runs before regular handlers on the same `topicTemplate`; `ErrReplyNotMatched` is not logged as an error and does not block regular handlers.
 - `tid` is the canonical unique request/reply message ID, aligned with `antsx.ReplyPool` logs. It is not DJI-specific business meaning.
-- `RequestReply[T]` is a package-level generic function; it looks up the registered `*ReplyRouter[T]` through `Client.getReplyHandler` (private method) and calls `router.RequestReply` internally.
+- `RequestReply[T]` is a package-level generic function; it asserts the client implements private `replyHandlerGetter`, looks up the registered `*ReplyRouter[T]`, and calls `router.RequestReply` internally.
 - Protocol packages own payload schema, topic builders, device identifiers, business result codes, and domain errors.
+- Protocol SDKs that use `RequestReply[T]` must register reply routers at `mqttx.NewClient` / `MustNewClient` construction time with `WithReplyRouter`. Do not register request/reply topics through `AddHandler` as ordinary consumers.
+- DJI request/reply topics use `djisdk.MustNewClient(cfg, djisdk.WithPendingTTL(ttl))` which internally creates `mqttx.Client` with DJI reply routers; `services_reply` and `property/set_reply` decode to `*djisdk.ServiceReply` inside `common/djisdk`, then `SendCommand` and `SetProperty` call `mqttx.RequestReply[*ServiceReply]` by topic template.
 
 ### 4. Validation & Error Matrix
 - `ReplyRouter` constructed with nil decoder + reply handled -> `ErrNilDecoder`.
@@ -355,7 +357,8 @@ type Config struct {
 - Decoded `tid` has pending entry -> `HandleReply` returns `(true, nil)` and resolves waiting `RequestReply`.
 - Decoded `tid` has no pending entry -> `Consume` returns `ErrReplyNotMatched`; dispatcher suppresses it and continues regular handlers.
 - `RequestReply` send function returns error -> pending entry is rejected/cleaned by `antsx.RequestReply`, and the send error is returned.
-- `RequestReply[T]` called with nil client -> zero `T` plus `ErrNoReplyRouter`.
+- `RequestReply[T]` called with nil client or a client implementation that does not provide the internal reply-handler lookup -> zero `T` plus `ErrNoReplyRouter`.
+- `RequestReply[T]` called before the topic template has a registered reply router -> zero `T` plus `ErrNoReplyRouter`; the publish `send` function is not executed.
 - `RequestReply[T]` type parameter does not match the registered `ReplyRouter[T]` -> zero `T` plus `ErrReplyType`.
 - `ReplyRouter.Close()` while requests are pending -> pending `RequestReply` calls return `antsx.ErrReplyClosed`.
 - No reply router and no regular handler for `topicTemplate` -> dispatcher calls `onNoHandler`.
@@ -363,8 +366,9 @@ type Config struct {
 
 ### 5. Good/Base/Bad Cases
 - Good: Protocol package creates a typed `ReplyDecoder`, registers it with `WithReplyRouter`, then calls `mqttx.RequestReply[T](ctx, client, topicTemplate, tid, send)` and receives `T` directly. Protocol-specific error conversion stays outside `mqttx`.
+- Good: DJI service wiring calls `djisdk.MustNewClient(cfg, djisdk.WithPendingTTL(ttl))` which internally creates `mqttx.Client` with DJI reply routers.
 - Base: A notification-only consumer uses `AddHandler(topicTemplate, handler)` and receives actual `topic` plus callback `topicTemplate`.
-- Bad: Registering a `ReplyRouter` through `AddHandler`, exposing `ReplyRouter.do` publicly, calling `ReplyRouter.do` directly from outside the package, or running custom wildcard matching inside dispatcher.
+- Bad: Registering request/reply topics such as DJI `services_reply` or `property/set_reply` with `AddHandlerFunc`, exposing `ReplyRouter.do` publicly, calling `ReplyRouter.do` directly from outside the package, or running custom wildcard matching inside dispatcher.
 
 ### 6. Tests Required
 - Unit: `ReplyDecoderFunc.Decode` returns `ReplyMessage{Tid, Value}` and preserves `topic/topicTemplate` args.
@@ -374,6 +378,8 @@ type Config struct {
 - Unit: `RequestReply[T]` resolves a pending `tid` through the registered router and returns typed `T`.
 - Unit: `RequestReply[T]` returns `ErrNoReplyRouter` when no router is registered for the topic template.
 - Unit: `RequestReply[T]` returns `ErrReplyType` when caller `T` does not match registered router `T`.
+- Unit: protocol SDK request paths assert the expected reply topic template and TTL are passed to `RequestReply[T]`.
+- Unit: protocol SDK subscription helpers assert request/reply topics are not registered as ordinary handlers.
 - Unit: dispatcher calls reply router before regular handlers for the same `topicTemplate`, and still calls regular handlers after `ErrReplyNotMatched`.
 - Unit: same `topicTemplate` regular handlers run in registration order.
 - Unit: `getAllTopicTemplates()` includes regular and reply templates once; do not assert map iteration order.
@@ -431,6 +437,17 @@ client, err := mqttx.NewClient(cfg, mqttx.WithReplyRouter("thing/+/reply", route
 ```
 
 ```go
+// Correct: DJI registers both reply routers while constructing mqttx.Client.
+djiClient := djisdk.MustNewClient(cfg, djisdk.WithPendingTTL(pendingTTL))
+```
+
+```go
+// Correct: test code uses NewClient with an externally-created mqttx.Client.
+mqttClient := mqttx.MustNewClient(cfg)
+djiClient := djisdk.NewClient(mqttClient, djisdk.WithPendingTTL(pendingTTL))
+```
+
+```go
 // Correct: use mqttx.RequestReply[T] as the sole public request/reply entry point.
 ack, err := mqttx.RequestReply[*ProtocolAckType](ctx, client, "thing/+/reply", tid, func() error {
     return publishRequest(ctx, client, tid)
@@ -460,10 +477,13 @@ handlers := manager.getHandlers(topicTemplate)
 
 **Type Erasure Pattern**:
 ```go
-// Client 接口含私有方法，外部包无法实现
+// Client 接口只暴露公共 MQTT 能力，外部包可实现测试 fake。
 type Client interface {
     AddHandler(topicTemplate string, handler ConsumeHandler) error
     // ... 其他公有方法
+}
+
+type replyHandlerGetter interface {
     getReplyHandler(topicTemplate string) ConsumeHandler // 私有
 }
 
@@ -471,10 +491,14 @@ type Client interface {
 type mqttClient struct { ... }
 func (c *mqttClient) getReplyHandler(topicTemplate string) ConsumeHandler { ... }
 
-// 包级泛型函数，通过 Client 接口的私有方法访问路由
+// 包级泛型函数，通过内部接口断言访问路由
 func RequestReply[T any](ctx context.Context, c Client, topicTemplate string, tid string, send func() error, ttl ...time.Duration) (T, error) {
     var zero T
     if c == nil {
+        return zero, ErrNoReplyRouter
+    }
+    getter, ok := c.(replyHandlerGetter)
+    if !ok {
         return zero, ErrNoReplyRouter
     }
     handler := c.getReplyHandler(topicTemplate)

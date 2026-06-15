@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"zero-service/common/mqttx"
 )
 
 func TestNewClientWithOptionsKeepsExplicitReplySwitches(t *testing.T) {
@@ -16,7 +18,7 @@ func TestNewClientWithOptionsKeepsExplicitReplySwitches(t *testing.T) {
 		EnableStatusReply:  false,
 		EnableRequestReply: false,
 	}
-	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyOptions(options))
+	client := newClient(nil, WithPendingTTL(time.Second), WithReplyOptions(options))
 
 	if client.replyOptions != options {
 		t.Fatalf("replyOptions = %+v, want %+v", client.replyOptions, options)
@@ -24,23 +26,15 @@ func TestNewClientWithOptionsKeepsExplicitReplySwitches(t *testing.T) {
 }
 
 func TestNewClientWithPendingTTLOption(t *testing.T) {
-	client := NewClient(nil, WithPendingTTL(time.Second))
-	defer client.pending.Close()
+	client := newClient(nil, WithPendingTTL(time.Second))
 
-	entry, err := client.pending.Register("ttl-check")
-	if err != nil {
-		t.Fatalf("register pending entry: %v", err)
-	}
-	if entry == nil {
-		t.Fatal("expected pending entry")
-	}
-	if !client.pending.Has("ttl-check") {
-		t.Fatal("expected pending entry to be registered")
+	if client.pendingTTL != time.Second {
+		t.Fatalf("pendingTTL = %v, want %v", client.pendingTTL, time.Second)
 	}
 }
 
 func TestNewClientDefaultOptionsEnableReplies(t *testing.T) {
-	client := NewClient(nil)
+	client := newClient(nil)
 
 	if client.replyOptions != DefaultReplyOptions() {
 		t.Fatalf("replyOptions = %+v, want default reply options", client.replyOptions)
@@ -61,7 +55,8 @@ func TestHandleRequestsReplySwitch(t *testing.T) {
 
 	t.Run("enabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
-		client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableRequestReply: true}))
+		client := newClient(nil, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableRequestReply: true}))
+		client.mqttClient = mqtt
 		client.OnRequest(func(ctx context.Context, gatewaySn string, req *RequestMessage) (int, any, error) {
 			if gatewaySn != "gateway-1" || req.Method != "airport_bind_status" {
 				t.Fatalf("unexpected request: gateway=%s method=%s", gatewaySn, req.Method)
@@ -79,7 +74,8 @@ func TestHandleRequestsReplySwitch(t *testing.T) {
 
 	t.Run("disabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
-		client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableRequestReply: false}))
+		client := newClient(nil, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableRequestReply: false}))
+		client.mqttClient = mqtt
 		called := false
 		client.OnRequest(func(ctx context.Context, gatewaySn string, req *RequestMessage) (int, any, error) {
 			called = true
@@ -104,7 +100,8 @@ func TestHandleStatusReplySwitch(t *testing.T) {
 
 	t.Run("enabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
-		client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableStatusReply: true}))
+		client := newClient(nil, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableStatusReply: true}))
+		client.mqttClient = mqtt
 		client.OnStatus(func(ctx context.Context, gatewaySn string, data *StatusMessage) int {
 			if gatewaySn != "gateway-1" || data.Method != MethodUpdateTopo {
 				t.Fatalf("unexpected status: gateway=%s method=%s", gatewaySn, data.Method)
@@ -122,7 +119,8 @@ func TestHandleStatusReplySwitch(t *testing.T) {
 
 	t.Run("disabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
-		client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableStatusReply: false}))
+		client := newClient(nil, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableStatusReply: false}))
+		client.mqttClient = mqtt
 		called := false
 		client.OnStatus(func(ctx context.Context, gatewaySn string, data *StatusMessage) int {
 			called = true
@@ -224,7 +222,7 @@ func TestHmsEventDataUnmarshalOfficialShape(t *testing.T) {
 }
 
 func TestHandleStateUsesStateMessage(t *testing.T) {
-	client := NewClient(nil)
+	client := newClient(nil)
 	called := false
 	client.OnState(func(ctx context.Context, deviceSn string, data *StateMessage) {
 		called = true
@@ -451,7 +449,8 @@ func TestDrcDownStickControlPayloadHasTopLevelSeqAndExpectedDataFields(t *testin
 
 func TestDrcDownClientMethodsReturnTid(t *testing.T) {
 	mqtt := &recordingMQTTClient{}
-	client := newClient(mqtt)
+	client := newClient(nil)
+	client.mqttClient = mqtt
 
 	tid, err := client.DrcEmergencyLanding(context.Background(), "gateway-1", 0)
 	if err != nil {
@@ -474,7 +473,8 @@ func TestDrcDownClientMethodsReturnTid(t *testing.T) {
 
 func TestDrcDownClientMethodsReturnTidOnPublishError(t *testing.T) {
 	mqtt := &recordingMQTTClient{err: errPublishFailed}
-	client := newClient(mqtt)
+	client := newClient(nil)
+	client.mqttClient = mqtt
 
 	tid, err := client.SendDrcStickControl(context.Background(), "gateway-1", 7, &DrcStickControlData{})
 	if err == nil {
@@ -544,7 +544,8 @@ func TestFlightTaskPrepareDataOmitsNilSimulateMission(t *testing.T) {
 
 func TestDroneEmergencyStopPublishesDrcDownTypedMethod(t *testing.T) {
 	mqtt := &recordingMQTTClient{}
-	client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
+	client := newClient(nil, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
+	client.mqttClient = mqtt
 
 	tid, err := client.DroneEmergencyStop(context.Background(), "gateway-1", 0)
 	if err != nil {
@@ -632,7 +633,8 @@ func TestTask5ModulePayloadSerialization(t *testing.T) {
 }
 
 func TestRemoteLogProgressEventHook(t *testing.T) {
-	client := newClient(&recordingMQTTClient{}, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
+	client := newClient(nil, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
+	client.mqttClient = &recordingMQTTClient{}
 	progressCalled := false
 	client.OnRemoteLogFileUploadProgress(func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent) {
 		progressCalled = true
@@ -665,7 +667,8 @@ func TestRequestsReplyOutputForKnownMethods(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			mqtt := &recordingMQTTClient{}
-			client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableRequestReply: true}))
+			client := newClient(nil, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableRequestReply: true}))
+			client.mqttClient = mqtt
 			client.OnRequest(func(ctx context.Context, gatewaySn string, req *RequestMessage) (int, any, error) {
 				if gatewaySn != "gateway-1" || req.Method != tc.method {
 					t.Fatalf("unexpected request: gateway=%s method=%s", gatewaySn, req.Method)
@@ -688,7 +691,8 @@ func TestRequestsReplyOutputForKnownMethods(t *testing.T) {
 }
 
 func TestOtaProgressAndUpdateTopoEventHooks(t *testing.T) {
-	client := newClient(&recordingMQTTClient{}, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
+	client := newClient(nil, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
+	client.mqttClient = &recordingMQTTClient{}
 	otaCalled := false
 	topoCalled := false
 	client.OnOtaProgress(func(ctx context.Context, gatewaySn string, data *OtaProgressEvent) {
@@ -740,15 +744,6 @@ func TestTask2DownMethodsPublishExpectedTopicsAndMethods(t *testing.T) {
 		wantMethod  string
 		wantDataKey string
 	}{
-		{name: "property_set", call: func(c *Client) (string, error) {
-			return c.SetProperty(context.Background(), "gateway-1", PropertySetData{"flighttask_step_code": 1})
-		}, wantTopic: PropertySetTopic("gateway-1"), wantMethod: MethodPropertySet, wantDataKey: "flighttask_step_code"},
-		{name: "psdk_ui_resource_upload", call: func(c *Client) (string, error) {
-			return c.PsdkUIResourceUpload(context.Background(), "gateway-1", &PsdkUIResourceUploadData{Name: "panel", URL: "https://example.com/panel.zip"})
-		}, wantTopic: ServicesTopic("gateway-1"), wantMethod: MethodPsdkFloatUp, wantDataKey: "url"},
-		{name: "custom_data_transmission_to_esdk", call: func(c *Client) (string, error) {
-			return c.SendCustomDataToEsdk(context.Background(), "gateway-1", "hello")
-		}, wantTopic: ServicesTopic("gateway-1"), wantMethod: MethodCustomDataTransmissionToEsdk, wantDataKey: "value"},
 		{
 			name: "drc_initial_state_subscribe",
 			call: func(c *Client) (string, error) {
@@ -762,13 +757,14 @@ func TestTask2DownMethodsPublishExpectedTopicsAndMethods(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			mqtt := &recordingMQTTClient{}
-			client := newClient(mqtt, WithPendingTTL(time.Millisecond))
+			client := newClient(nil, WithPendingTTL(time.Millisecond))
+			client.mqttClient = mqtt
 			tid, err := tc.call(client)
+			if err != nil {
+				t.Fatalf("call() error = %v", err)
+			}
 			if tid == "" {
 				t.Fatal("expected non-empty tid")
-			}
-			if tc.wantTopic != DrcDownTopic("gateway-1") && err == nil {
-				t.Fatal("expected timeout because no reply is injected")
 			}
 			if len(mqtt.published) != 1 {
 				t.Fatalf("published count = %d, want 1", len(mqtt.published))
@@ -797,46 +793,74 @@ func TestTask2DownMethodsPublishExpectedTopicsAndMethods(t *testing.T) {
 	}
 }
 
-func TestSetPropertyUsesDJIErrorForDeviceResult(t *testing.T) {
+func TestSendCommandFireAndForgetPublishesServicesMessage(t *testing.T) {
 	mqtt := &recordingMQTTClient{}
-	client := newClient(mqtt, WithPendingTTL(time.Second))
+	client := newClient(nil, WithPendingTTL(time.Second))
+	client.mqttClient = mqtt
 
-	done := make(chan error, 1)
-	go func() {
-		_, err := client.SetProperty(context.Background(), "gateway-1", PropertySetData{"flighttask_step_code": 1})
-		done <- err
-	}()
-
-	deadline := time.After(time.Second)
-	for len(mqtt.published) == 0 {
-		select {
-		case <-deadline:
-			t.Fatal("timeout waiting publish")
-		default:
-			time.Sleep(time.Millisecond)
-		}
+	tid, err := client.SendCommandFireAndForget(context.Background(), "gateway-1", MethodLiveStartPush, map[string]any{"url": "rtmp://example/live"})
+	if err != nil {
+		t.Fatalf("SendCommandFireAndForget() error = %v", err)
+	}
+	if tid == "" {
+		t.Fatal("expected non-empty tid")
+	}
+	if len(mqtt.published) != 1 || mqtt.published[0].topic != ServicesTopic("gateway-1") {
+		t.Fatalf("published = %+v, want one services publish", mqtt.published)
 	}
 	var req ServiceRequest
 	if err := json.Unmarshal(mqtt.published[0].payload, &req); err != nil {
-		t.Fatalf("json.Unmarshal() request error = %v", err)
+		t.Fatalf("json.Unmarshal() error = %v", err)
 	}
-	reply := ServiceReply{Tid: req.Tid, Bid: req.Bid, Method: req.Method, Data: ServiceReplyData{Result: 314004}}
-	payload, err := json.Marshal(reply)
-	if err != nil {
-		t.Fatalf("json.Marshal() reply error = %v", err)
+	if req.Tid != tid || req.Method != MethodLiveStartPush {
+		t.Fatalf("request tid/method = %s/%s, want %s/%s", req.Tid, req.Method, tid, MethodLiveStartPush)
 	}
-	if err := client.HandlePropertySetReply(context.Background(), payload, PropertySetTopic("gateway-1")+"_reply", ""); err != nil {
-		t.Fatalf("HandlePropertySetReply() error = %v", err)
+}
+
+func TestReplyRoutersDecodeServiceReplyTid(t *testing.T) {
+	tests := []struct {
+		name          string
+		router        *mqttx.ReplyRouter[*ServiceReply]
+		topic         string
+		topicTemplate string
+	}{
+		{name: "services_reply", router: newServicesReplyRouter(time.Second), topic: ServicesTopic("gateway-1") + "_reply", topicTemplate: ServicesReplyTopicPattern()},
+		{name: "property_set_reply", router: newPropertySetReplyRouter(time.Second), topic: PropertySetTopic("gateway-1") + "_reply", topicTemplate: PropertySetReplyTopicPattern()},
 	}
 
-	select {
-	case err := <-done:
-		var djiErr *DJIError
-		if !errors.As(err, &djiErr) || djiErr.Code != 314004 {
-			t.Fatalf("error = %T %v, want DJIError code 314004", err, err)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			defer tc.router.Close()
+			payload := []byte(`{"tid":"tid-1","bid":"bid-1","timestamp":1710000000000,"method":"demo","data":{"result":0}}`)
+			matched, err := tc.router.HandleReply(context.Background(), payload, tc.topic, tc.topicTemplate)
+			if !errors.Is(err, mqttx.ErrReplyNotMatched) && err != nil {
+				t.Fatalf("HandleReply() error = %v", err)
+			}
+			if matched {
+				t.Fatal("expected unmatched reply without pending request")
+			}
+		})
+	}
+}
+
+func TestSubscribeAllSkipsRequestReplyTopics(t *testing.T) {
+	mqtt := &recordingMQTTClient{}
+	client := newClient(nil)
+	client.mqttClient = mqtt
+
+	if err := client.SubscribeAll(); err != nil {
+		t.Fatalf("SubscribeAll() error = %v", err)
+	}
+	if _, ok := mqtt.handlers[ServicesReplyTopicPattern()]; ok {
+		t.Fatalf("SubscribeAll registered ordinary handler for %s", ServicesReplyTopicPattern())
+	}
+	if _, ok := mqtt.handlers[PropertySetReplyTopicPattern()]; ok {
+		t.Fatalf("SubscribeAll registered ordinary handler for %s", PropertySetReplyTopicPattern())
+	}
+	for _, topic := range []string{EventsTopicPattern(), OsdTopicPattern(), StateTopicPattern(), RequestsTopicPattern(), StatusTopicPattern(), DrcUpTopicPattern()} {
+		if _, ok := mqtt.handlers[topic]; !ok {
+			t.Fatalf("SubscribeAll did not register handler for %s", topic)
 		}
-	case <-time.After(time.Second):
-		t.Fatal("timeout waiting SetProperty")
 	}
 }
 

@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"zero-service/common/antsx"
 	"zero-service/common/mqttx"
 
 	"github.com/google/uuid"
@@ -28,11 +27,6 @@ type DrcUpHandler func(ctx context.Context, gatewaySn string, msg *DrcUpMessage,
 // RequestHandler 处理 thing/.../requests 上行。返回值只表达业务处理结果与输出；是否发布 requests_reply 由 Client 的 ReplyOptions 控制。
 // err 非 nil 时若 result 为 0 会视为 PlatformResultHandlerError 再组包，避免启用回复时无响应。
 type RequestHandler func(ctx context.Context, gatewaySn string, req *RequestMessage) (result int, output any, err error)
-
-type mqttClient interface {
-	Publish(ctx context.Context, topic string, payload []byte) error
-	AddHandlerFunc(topic string, fn func(context.Context, []byte, string, string) error) error
-}
 
 type ReplyOptions struct {
 	EnableEventReply   bool
@@ -82,8 +76,8 @@ func defaultClientOptions() clientOptions {
 // **通配订阅** 收设备上行（如 *reply、events、osd、requests、set_reply、drc/up 等）。见 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html)。
 // 含：services、events、property、osd/state、sys、requests、DRC 等，详情见包级 doc.go 与各 Topic 函数注释。
 type Client struct {
-	mqttClient           mqttClient
-	pending              *antsx.ReplyPool[*ServiceReply]
+	mqttClient           mqttx.Client
+	pendingTTL           time.Duration
 	replyOptions         ReplyOptions
 	eventMethodFallbacks map[string]EventMethodFallback
 	onlineChecker        func(gatewaySn string) bool
@@ -104,24 +98,76 @@ type Client struct {
 	onDrcUp              DrcUpHandler
 }
 
+func MustNewClient(config mqttx.MqttConfig, opts ...ClientOption) *Client {
+	opt := defaultClientOptions()
+	for _, o := range opts {
+		if o != nil {
+			o(&opt)
+		}
+	}
+	return &Client{
+		mqttClient:           mqttx.MustNewClient(config, replyRouters(opt.pendingTTL)...),
+		pendingTTL:           opt.pendingTTL,
+		replyOptions:         opt.replyOptions,
+		eventMethodFallbacks: make(map[string]EventMethodFallback),
+	}
+}
+
+func replyRouters(ttl time.Duration) []mqttx.ClientOption {
+	if ttl <= 0 {
+		return nil
+	}
+	return []mqttx.ClientOption{
+		mqttx.WithReplyRouter(ServicesReplyTopicPattern(), newServicesReplyRouter(ttl)),
+		mqttx.WithReplyRouter(PropertySetReplyTopicPattern(), newPropertySetReplyRouter(ttl)),
+	}
+}
+
+// NewClient 使用已有的 mqttx.Client 构造 djisdk.Client，类似 go-zero 的 grpc 传入已有连接。
 func NewClient(mqttClient mqttx.Client, opts ...ClientOption) *Client {
 	return newClient(mqttClient, opts...)
 }
 
-func newClient(mqttClient mqttClient, opts ...ClientOption) *Client {
-	options := defaultClientOptions()
-	for _, opt := range opts {
-		if opt != nil {
-			opt(&options)
+func newClient(mqttClient mqttx.Client, opts ...ClientOption) *Client {
+	opt := defaultClientOptions()
+	for _, o := range opts {
+		if o != nil {
+			o(&opt)
 		}
 	}
-
 	return &Client{
 		mqttClient:           mqttClient,
-		pending:              antsx.NewReplyPool[*ServiceReply](antsx.WithDefaultTTL(options.pendingTTL)),
-		replyOptions:         options.replyOptions,
+		pendingTTL:           opt.pendingTTL,
+		replyOptions:         opt.replyOptions,
 		eventMethodFallbacks: make(map[string]EventMethodFallback),
 	}
+}
+
+func decodeServiceReply(kind string) mqttx.ReplyDecoderFunc[*ServiceReply] {
+	return func(ctx context.Context, payload []byte, topic string, _ string) (mqttx.ReplyMessage[*ServiceReply], error) {
+		var reply ServiceReply
+		if err := json.Unmarshal(payload, &reply); err != nil {
+			logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal %s failed: %v, topic=%s", kind, err, topic)
+			return mqttx.ReplyMessage[*ServiceReply]{}, err
+		}
+		logx.WithContext(ctx).Infof("[dji-sdk] %s %s", kind, logFields("topic", topic, "gateway_sn", extractDeviceSnFromTopic(topic), "method", reply.Method, "tid", reply.Tid, "result", reply.Data.Result))
+		return mqttx.ReplyMessage[*ServiceReply]{Tid: reply.Tid, Value: &reply}, nil
+	}
+}
+
+func newServiceReplyRouter(name string, ttl time.Duration, decoder mqttx.ReplyDecoder[*ServiceReply]) *mqttx.ReplyRouter[*ServiceReply] {
+	if ttl <= 0 {
+		ttl = defaultPendingTTL
+	}
+	return mqttx.NewReplyRouter[*ServiceReply](decoder, mqttx.WithReplyRouterName(name), mqttx.WithReplyRouterTTL(ttl))
+}
+
+func newServicesReplyRouter(ttl time.Duration) *mqttx.ReplyRouter[*ServiceReply] {
+	return newServiceReplyRouter("dji-services-reply", ttl, decodeServiceReply("services_reply"))
+}
+
+func newPropertySetReplyRouter(ttl time.Duration) *mqttx.ReplyRouter[*ServiceReply] {
+	return newServiceReplyRouter("dji-property-set-reply", ttl, decodeServiceReply("property_set_reply"))
 }
 
 func logFields(fields ...any) string {
@@ -140,32 +186,6 @@ func logFields(fields ...any) string {
 }
 
 // ==================== MQTT 回调处理 ====================
-
-// HandleServicesReply 处理 thing/.../services_reply（与 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html) 中 services 请求-应答对）。
-// 将应答按 tid 交还 SendCommand 等挂起的调用方。
-func (c *Client) HandleServicesReply(ctx context.Context, payload []byte, topic string, _ string) error {
-	var reply ServiceReply
-	if err := json.Unmarshal(payload, &reply); err != nil {
-		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal services_reply failed: %v, topic=%s", err, topic)
-		return err
-	}
-	logx.WithContext(ctx).Infof("[dji-sdk] services_reply %s", logFields("topic", topic, "gateway_sn", extractDeviceSnFromTopic(topic), "method", reply.Method, "tid", reply.Tid, "result", reply.Data.Result))
-	c.pending.Resolve(reply.Tid, &reply)
-	return nil
-}
-
-// HandlePropertySetReply 收 **设备 → 云** 的 property/set_reply（[Topic 总览与 Properties](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html) 中与云**下发** property/set 成对）。按 tid 交还 SetProperty 的挂起调用，与 HandleServicesReply、SendCommand 一致，无应用层 On* 回调（与 services_reply 相同）。
-func (c *Client) HandlePropertySetReply(ctx context.Context, payload []byte, topic string, _ string) error {
-	var reply ServiceReply
-	if err := json.Unmarshal(payload, &reply); err != nil {
-		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal property_set_reply failed: %v, topic=%s", err, topic)
-		return err
-	}
-	gatewaySn := extractDeviceSnFromTopic(topic)
-	logx.WithContext(ctx).Infof("[dji-sdk] property_set_reply %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", reply.Method, "tid", reply.Tid, "result", reply.Data.Result))
-	c.pending.Resolve(reply.Tid, &reply)
-	return nil
-}
 
 // HandleEvents 处理 thing/.../events。
 //
@@ -478,9 +498,9 @@ func (c *Client) SendCommand(ctx context.Context, gatewaySn, method string, data
 	topic := ServicesTopic(gatewaySn)
 	logx.WithContext(ctx).Infof("[dji-sdk] send_command %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", method, "tid", tid))
 
-	reply, err := antsx.RequestReply(ctx, c.pending, tid, func() error {
+	reply, err := mqttx.RequestReply[*ServiceReply](ctx, c.mqttClient, ServicesReplyTopicPattern(), tid, func() error {
 		return c.mqttClient.Publish(ctx, topic, payload)
-	})
+	}, c.pendingTTL)
 	if err != nil {
 		return tid, fmt.Errorf("[dji-sdk] command failed: method=%s tid=%s err=%w", method, tid, err)
 	}
@@ -536,9 +556,9 @@ func (c *Client) SetProperty(ctx context.Context, gatewaySn string, properties P
 	topic := PropertySetTopic(gatewaySn)
 	logx.WithContext(ctx).Infof("[dji-sdk] property_set %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", MethodPropertySet, "tid", tid))
 
-	reply, err := antsx.RequestReply(ctx, c.pending, tid, func() error {
+	reply, err := mqttx.RequestReply[*ServiceReply](ctx, c.mqttClient, PropertySetReplyTopicPattern(), tid, func() error {
 		return c.mqttClient.Publish(ctx, topic, payload)
-	})
+	}, c.pendingTTL)
 	if err != nil {
 		return tid, fmt.Errorf("[dji-sdk] property_set failed: tid=%s err=%w", tid, err)
 	}
@@ -1548,14 +1568,12 @@ func (c *Client) HandleDrcUp(ctx context.Context, payload []byte, topic string, 
 // 含 **property/set_reply**（设备对云**下发** property/set 的回执，**非**云发设备）。
 func (c *Client) SubscribeAll() error {
 	topics := map[string]func(context.Context, []byte, string, string) error{
-		ServicesReplyTopicPattern():    c.HandleServicesReply,
-		EventsTopicPattern():           c.HandleEvents,
-		PropertySetReplyTopicPattern(): c.HandlePropertySetReply,
-		OsdTopicPattern():              c.HandleOsd,
-		StateTopicPattern():            c.HandleState,
-		RequestsTopicPattern():         c.HandleRequests,
-		StatusTopicPattern():           c.HandleStatus,
-		DrcUpTopicPattern():            c.HandleDrcUp,
+		EventsTopicPattern():   c.HandleEvents,
+		OsdTopicPattern():      c.HandleOsd,
+		StateTopicPattern():    c.HandleState,
+		RequestsTopicPattern(): c.HandleRequests,
+		StatusTopicPattern():   c.HandleStatus,
+		DrcUpTopicPattern():    c.HandleDrcUp,
 	}
 	for topic, handler := range topics {
 		if err := c.mqttClient.AddHandlerFunc(topic, handler); err != nil {
@@ -1566,39 +1584,6 @@ func (c *Client) SubscribeAll() error {
 	return nil
 }
 
-// SubscribeServicesReply 订阅 services_reply 通配主题。
-// 注册 HandleServicesReply 作为消息回调处理函数。
-//   - 返回值: 订阅失败时返回错误，成功时返回 nil
-func (c *Client) SubscribeServicesReply() error {
-	return c.mqttClient.AddHandlerFunc(ServicesReplyTopicPattern(), c.HandleServicesReply)
-}
-
-// SubscribeEvents 订阅 events 通配主题。
-// 注册 HandleEvents 作为消息回调处理函数。
-//   - 返回值: 订阅失败时返回错误，成功时返回 nil
-func (c *Client) SubscribeEvents() error {
-	return c.mqttClient.AddHandlerFunc(EventsTopicPattern(), c.HandleEvents)
-}
-
-// SubscribePropertySetReply 订阅 [property/set_reply](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/properties.html) 通配主题，注册 HandlePropertySetReply。
-func (c *Client) SubscribePropertySetReply() error {
-	return c.mqttClient.AddHandlerFunc(PropertySetReplyTopicPattern(), c.HandlePropertySetReply)
-}
-
-// SubscribeRequests 订阅 thing/.../requests 通配主题。见 [Requests | organization](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/organization.html)。
-func (c *Client) SubscribeRequests() error {
-	return c.mqttClient.AddHandlerFunc(RequestsTopicPattern(), c.HandleRequests)
-}
-
-// SubscribeDrcUp 订阅 [thing/.../drc/up](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html) 通配主题，注册 [HandleDrcUp]。
-func (c *Client) SubscribeDrcUp() error {
-	return c.mqttClient.AddHandlerFunc(DrcUpTopicPattern(), c.HandleDrcUp)
-}
-
-// ==================== 生命周期 ====================
-
-// Close 关闭客户端，释放资源。
-// 关闭待处理请求注册表，清理所有未完成的等待操作。
 func (c *Client) Close() {
-	c.pending.Close()
+	c.mqttClient.Close()
 }

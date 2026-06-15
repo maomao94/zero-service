@@ -13,7 +13,6 @@ import (
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/djisdk"
 	"zero-service/common/gormx"
-	"zero-service/common/mqttx"
 	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/zeromicro/go-zero/core/collection"
@@ -57,8 +56,7 @@ func initDB(c config.Config) *gormx.DB {
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
-	mqttCli := mqttx.MustNewClient(c.MqttConfig)
-	djiCli := djisdk.NewClient(mqttCli,
+	djiCli := djisdk.MustNewClient(c.MqttConfig,
 		djisdk.WithPendingTTL(c.PendingTTL),
 		djisdk.WithReplyOptions(djisdk.ReplyOptions{
 			EnableEventReply:   c.UpstreamReply.EnableEventsReply,
@@ -153,4 +151,5 @@ func (s *ServiceContext) Close() {
 	if s.DrcManager != nil {
 		s.DrcManager.Close()
 	}
+	s.DjiClient.Close()
 }

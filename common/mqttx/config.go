@@ -3,7 +3,7 @@ package mqttx
 // MqttConfig MQTT 客户端配置
 type MqttConfig struct {
 	// Broker MQTT 服务器地址列表，如 "tcp://localhost:1883"
-	Broker []string `json:",optional"`
+	Broker []string
 	// ClientID 客户端标识，不填则自动生成
 	ClientID string `json:",optional"`
 	// Username 用户名（可选）

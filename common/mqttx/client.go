@@ -43,8 +43,9 @@ type Client interface {
 	PublishWithTrace(ctx context.Context, topic string, payload []byte) (string, error)
 	Close()
 	GetClientID() string
-	// getReplyHandler returns the reply handler for a topic template, or nil.
-	// Private: only accessible within the mqttx package for RequestReply[T].
+}
+
+type replyHandlerGetter interface {
 	getReplyHandler(topicTemplate string) ConsumeHandler
 }
 
