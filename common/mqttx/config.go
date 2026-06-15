@@ -22,14 +22,25 @@ type MqttConfig struct {
 	SubscribeTopics []string `json:",optional"`
 }
 
-// Option 可选配置函数，用于自定义 Client 行为
-type Option func(*Client)
+// ClientOptions holds configuration for creating a Client.
+type ClientOptions struct {
+	onReady      func(Client)
+	replyRouters []replyRouterRegistration
+}
+
+type replyRouterRegistration struct {
+	topicTemplate string
+	handler       ConsumeHandler
+}
+
+// ClientOption configures ClientOptions.
+type ClientOption func(*ClientOptions)
 
 // WithOnReady 设置首次连接成功时的回调（仅执行一次）
 // 通常在此回调中注册消息处理器
-func WithOnReady(fn func(*Client)) Option {
-	return func(c *Client) {
-		c.onReady = fn
+func WithOnReady(fn func(Client)) ClientOption {
+	return func(o *ClientOptions) {
+		o.onReady = fn
 	}
 }
 
@@ -37,10 +48,13 @@ func WithOnReady(fn func(*Client)) Option {
 // topicTemplate may contain MQTT wildcards such as + or #.
 // Unlike AddHandler, this only registers the handler; MQTT subscription is deferred
 // to the connection event via restoreSubscriptions.
-func WithReplyRouter[T any](topicTemplate string, router *ReplyRouter[T]) Option {
-	return func(c *Client) {
+func WithReplyRouter[T any](topicTemplate string, router *ReplyRouter[T]) ClientOption {
+	return func(o *ClientOptions) {
 		if router != nil {
-			c.handlerMgr.addReplyHandler(topicTemplate, router)
+			o.replyRouters = append(o.replyRouters, replyRouterRegistration{
+				topicTemplate: topicTemplate,
+				handler:       router,
+			})
 		}
 	}
 }

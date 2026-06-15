@@ -35,7 +35,7 @@ func TestReplyRouterHandleReplyResolvesPendingTid(t *testing.T) {
 	resultCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 	go func() {
-		result, err := router.do(context.Background(), "tid-1", func() error { return nil })
+		result, err := router.RequestReply(context.Background(), "tid-1", func() error { return nil })
 		if err != nil {
 			errCh <- err
 			return
@@ -43,7 +43,7 @@ func TestReplyRouterHandleReplyResolvesPendingTid(t *testing.T) {
 		resultCh <- result
 	}()
 
-	waitUntil(t, func() bool { return router.Has("tid-1") })
+	waitUntil(t, func() bool { return router.has("tid-1") })
 	resolved, err := router.HandleReply(context.Background(), []byte("{}"), "reply/1", "reply/+")
 	if err != nil {
 		t.Fatalf("HandleReply returned error: %v", err)
@@ -58,9 +58,9 @@ func TestReplyRouterHandleReplyResolvesPendingTid(t *testing.T) {
 			t.Fatalf("expected ok result, got %s", result)
 		}
 	case err := <-errCh:
-		t.Fatalf("do returned error: %v", err)
+		t.Fatalf("RequestReply returned error: %v", err)
 	case <-time.After(time.Second):
-		t.Fatal("timed out waiting for do result")
+		t.Fatal("timed out waiting for RequestReply result")
 	}
 }
 
@@ -110,18 +110,18 @@ func TestReplyRouterHandleReplyErrors(t *testing.T) {
 	})
 }
 
-func TestReplyRouterDoSendFailureCleansPendingTid(t *testing.T) {
+func TestReplyRouterSendFailureCleansPendingTid(t *testing.T) {
 	router := newTestReplyRouter(func(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[string], error) {
 		return ReplyMessage[string]{Tid: "tid-1", Value: "ok"}, nil
 	})
 	defer router.Close()
 	sendErr := errors.New("send failed")
 
-	_, err := router.do(context.Background(), "tid-1", func() error { return sendErr })
+	_, err := router.RequestReply(context.Background(), "tid-1", func() error { return sendErr })
 	if !errors.Is(err, sendErr) {
 		t.Fatalf("expected send error, got %v", err)
 	}
-	if router.Has("tid-1") {
+	if router.has("tid-1") {
 		t.Fatalf("expected failed send to clean pending tid")
 	}
 }
@@ -135,11 +135,11 @@ func TestReplyRouterRejectAndClosePending(t *testing.T) {
 		rejectErr := errors.New("rejected")
 		errCh := make(chan error, 1)
 		go func() {
-			_, err := router.do(context.Background(), "tid-1", func() error { return nil })
+			_, err := router.RequestReply(context.Background(), "tid-1", func() error { return nil })
 			errCh <- err
 		}()
-		waitUntil(t, func() bool { return router.Has("tid-1") })
-		if !router.Reject("tid-1", rejectErr) {
+		waitUntil(t, func() bool { return router.has("tid-1") })
+		if !router.reject("tid-1", rejectErr) {
 			t.Fatalf("expected Reject to return true")
 		}
 		select {
@@ -148,7 +148,7 @@ func TestReplyRouterRejectAndClosePending(t *testing.T) {
 				t.Fatalf("expected reject error, got %v", err)
 			}
 		case <-time.After(time.Second):
-			t.Fatal("timed out waiting for rejected do")
+			t.Fatal("timed out waiting for rejected RequestReply")
 		}
 	})
 
@@ -158,10 +158,10 @@ func TestReplyRouterRejectAndClosePending(t *testing.T) {
 		})
 		errCh := make(chan error, 1)
 		go func() {
-			_, err := router.do(context.Background(), "tid-1", func() error { return nil })
+			_, err := router.RequestReply(context.Background(), "tid-1", func() error { return nil })
 			errCh <- err
 		}()
-		waitUntil(t, func() bool { return router.Has("tid-1") })
+		waitUntil(t, func() bool { return router.has("tid-1") })
 		router.Close()
 		select {
 		case err := <-errCh:
@@ -169,7 +169,7 @@ func TestReplyRouterRejectAndClosePending(t *testing.T) {
 				t.Fatalf("expected ErrReplyClosed, got %v", err)
 			}
 		case <-time.After(time.Second):
-			t.Fatal("timed out waiting for closed do")
+			t.Fatal("timed out waiting for closed RequestReply")
 		}
 	})
 }
@@ -179,25 +179,29 @@ func TestWithReplyRouterRegistersReplyTopic(t *testing.T) {
 		return ReplyMessage[string]{Tid: "tid-1", Value: "ok"}, nil
 	})
 	defer router.Close()
-	c := &Client{handlerMgr: newHandlerManager()}
+	c := &mqttClient{handlerMgr: newHandlerManager()}
 
-	WithReplyRouter("reply/+", router)(c)
+	o := &ClientOptions{}
+	WithReplyRouter("reply/+", router)(o)
+	for _, reg := range o.replyRouters {
+		c.handlerMgr.addReplyHandler(reg.topicTemplate, reg.handler)
+	}
 
 	assertTopicTemplateSet(t, c.handlerMgr.getAllTopicTemplates(), []string{"reply/+"})
 }
 
-func TestClientRequestReplyResolvesPendingTid(t *testing.T) {
+func TestRequestReplyResolvesPendingTid(t *testing.T) {
 	router := newTestReplyRouter(func(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[string], error) {
 		return ReplyMessage[string]{Tid: "tid-1", Value: "ok"}, nil
 	})
 	defer router.Close()
-	c := &Client{handlerMgr: newHandlerManager()}
-	WithReplyRouter("reply/+", router)(c)
+	c := &mqttClient{handlerMgr: newHandlerManager()}
+	c.handlerMgr.addReplyHandler("reply/+", router)
 
-	resultCh := make(chan any, 1)
+	resultCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 	go func() {
-		result, err := c.RequestReply(context.Background(), "reply/+", "tid-1", func() error { return nil })
+		result, err := RequestReply[string](context.Background(), c, "reply/+", "tid-1", func() error { return nil })
 		if err != nil {
 			errCh <- err
 			return
@@ -205,7 +209,7 @@ func TestClientRequestReplyResolvesPendingTid(t *testing.T) {
 		resultCh <- result
 	}()
 
-	waitUntil(t, func() bool { return router.Has("tid-1") })
+	waitUntil(t, func() bool { return router.has("tid-1") })
 	resolved, err := router.HandleReply(context.Background(), []byte("{}"), "reply/1", "reply/+")
 	if err != nil {
 		t.Fatalf("HandleReply returned error: %v", err)
@@ -226,11 +230,21 @@ func TestClientRequestReplyResolvesPendingTid(t *testing.T) {
 	}
 }
 
-func TestClientRequestReplyReturnsNoRouterError(t *testing.T) {
-	c := &Client{handlerMgr: newHandlerManager()}
-	_, err := c.RequestReply(context.Background(), "missing/+", "tid-1", func() error { return nil })
-	if !errors.Is(err, ErrNoReplyRouter) {
-		t.Fatalf("expected ErrNoReplyRouter, got %v", err)
+func TestRequestReplySendFailureCleansPendingTid(t *testing.T) {
+	router := newTestReplyRouter(func(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[string], error) {
+		return ReplyMessage[string]{Tid: "tid-1", Value: "ok"}, nil
+	})
+	defer router.Close()
+	c := &mqttClient{handlerMgr: newHandlerManager()}
+	c.handlerMgr.addReplyHandler("reply/+", router)
+	sendErr := errors.New("send failed")
+
+	_, err := RequestReply[string](context.Background(), c, "reply/+", "tid-1", func() error { return sendErr })
+	if !errors.Is(err, sendErr) {
+		t.Fatalf("expected send error, got %v", err)
+	}
+	if router.has("tid-1") {
+		t.Fatalf("expected failed send to clean pending tid")
 	}
 }
 

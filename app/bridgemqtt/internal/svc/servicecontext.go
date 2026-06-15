@@ -15,7 +15,7 @@ import (
 
 type ServiceContext struct {
 	Config     config.Config
-	MqttClient *mqttx.Client
+	MqttClient mqttx.Client
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -45,7 +45,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		).Conn())
 	}
 	mqttCLi := mqttx.MustNewClient(c.MqttConfig,
-		mqttx.WithOnReady(func(cli *mqttx.Client) {
+		mqttx.WithOnReady(func(cli mqttx.Client) {
 			logx.Infof("[mqtt] OnReady, client=%s", cli.GetClientID())
 			// 注册转发 handler
 			for _, topic := range c.MqttConfig.SubscribeTopics {

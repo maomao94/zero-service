@@ -80,21 +80,10 @@ func NewReplyRouter[T any](decode ReplyDecoder[T], opts ...ReplyRouterOption) *R
 	}
 }
 
-// do registers tid, runs send, then waits for a matching reply.
+// RequestReply registers tid, runs send, then waits for a matching reply.
 // send is responsible for publishing the protocol-specific MQTT request.
-// Callers outside this package should use Client.RequestReply instead.
-func (r *ReplyRouter[T]) do(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (T, error) {
+func (r *ReplyRouter[T]) RequestReply(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (T, error) {
 	return antsx.RequestReply(ctx, r.pool, tid, send, ttl...)
-}
-
-// replyCaller erases the generic type T so Client.RequestReply can dispatch without
-// knowing T at compile time.
-type replyCaller interface {
-	callDo(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (any, error)
-}
-
-func (r *ReplyRouter[T]) callDo(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (any, error) {
-	return r.do(ctx, tid, send, ttl...)
 }
 
 // HandleReply decodes a reply MQTT message and resolves the matching pending request.
@@ -112,7 +101,7 @@ func (r *ReplyRouter[T]) HandleReply(ctx context.Context, payload []byte, topic 
 		return false, ErrEmptyReplyTid
 	}
 
-	return r.Resolve(msg.Tid, msg.Value), nil
+	return r.resolve(msg.Tid, msg.Value), nil
 }
 
 // Consume implements ConsumeHandler.
@@ -129,18 +118,18 @@ func (r *ReplyRouter[T]) Consume(ctx context.Context, payload []byte, topic stri
 	return nil
 }
 
-// Resolve resolves a pending request by tid.
-func (r *ReplyRouter[T]) Resolve(tid string, value T) bool {
+// resolve resolves a pending request by tid.
+func (r *ReplyRouter[T]) resolve(tid string, value T) bool {
 	return r.pool.Resolve(tid, value)
 }
 
-// Reject rejects a pending request by tid.
-func (r *ReplyRouter[T]) Reject(tid string, err error) bool {
+// reject rejects a pending request by tid.
+func (r *ReplyRouter[T]) reject(tid string, err error) bool {
 	return r.pool.Reject(tid, err)
 }
 
-// Has reports whether tid is currently pending.
-func (r *ReplyRouter[T]) Has(tid string) bool {
+// has reports whether tid is currently pending.
+func (r *ReplyRouter[T]) has(tid string) bool {
 	return r.pool.Has(tid)
 }
 

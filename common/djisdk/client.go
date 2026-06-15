@@ -104,7 +104,7 @@ type Client struct {
 	onDrcUp              DrcUpHandler
 }
 
-func NewClient(mqttClient *mqttx.Client, opts ...ClientOption) *Client {
+func NewClient(mqttClient mqttx.Client, opts ...ClientOption) *Client {
 	return newClient(mqttClient, opts...)
 }
 

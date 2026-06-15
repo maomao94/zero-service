@@ -35,7 +35,7 @@ type ServiceContext struct {
 	Config              config.Config
 	ClientManager       *client.ClientManager
 	KafkaASDUPusher     *kq.Pusher
-	MqttClient          *mqttx.Client
+	MqttClient          mqttx.Client
 	StreamEventCli      streamevent.StreamEventClient
 	ChunkAsduPusher     *executorx.ChunkMessagesPusher
 	broadcastInstanceId string
@@ -296,16 +296,11 @@ func (svc ServiceContext) PushPbBroadcastWithAck(ctx context.Context, method str
 	}
 
 	tId, _ := tool.SimpleUUID()
-	raw, err := svc.MqttClient.RequestReply(ctx, svc.broadcastAckTopic, tId, func() error {
+	ack, err := mqttx.RequestReply[*types.BroadcastAckBody](ctx, svc.MqttClient, svc.broadcastAckTopic, tId, func() error {
 		return svc.pushBroadcast(ctx, method, in, tId)
 	})
 	if err != nil {
 		return err
-	}
-
-	ack, ok := raw.(*types.BroadcastAckBody)
-	if !ok {
-		return fmt.Errorf("unexpected broadcast reply type: %T", raw)
 	}
 
 	if !ack.Success {
