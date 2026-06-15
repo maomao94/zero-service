@@ -286,3 +286,36 @@ Refactored common/mqttx request/reply API
 ### Next Steps
 
 - None - task complete
+
+
+## Session 59: IEC 104 文档拆分优化
+
+**Date**: 2026-06-15
+**Task**: IEC 104 文档拆分优化
+**Branch**: `master`
+
+### Summary
+
+将 iec104-protocol.md 拆分为 iec104-message.md（监视方向）和 iec104-command.md（控制方向），精简 iec104.md，更新所有交叉引用
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f5611aa4` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
