@@ -13,11 +13,7 @@ func RequestReply[T any](ctx context.Context, c Client, topicTemplate string, ti
 	if c == nil {
 		return zero, ErrNoReplyRouter
 	}
-	getter, ok := c.(replyHandlerGetter)
-	if !ok {
-		return zero, ErrNoReplyRouter
-	}
-	handler := getter.getReplyHandler(topicTemplate)
+	handler := c.getReplyHandler(topicTemplate)
 	if handler == nil {
 		return zero, ErrNoReplyRouter
 	}
