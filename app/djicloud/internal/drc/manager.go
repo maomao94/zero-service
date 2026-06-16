@@ -11,6 +11,7 @@ import (
 
 	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/threading"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -27,6 +28,11 @@ type SessionEnabledHook func(gatewaySn, sessionID string)
 // SessionDisabledHook 会话停用回调函数签名。
 // 当 DRC 模式通过 Disable 成功停用时调用（幂等跳过不触发）。前端可据此关闭 DRC 按钮。
 type SessionDisabledHook func(gatewaySn, sessionID string)
+
+type heartbeatWorker struct {
+	sessionID string
+	cancel    context.CancelFunc
+}
 
 // ManagerOption 配置 Manager 的函数选项。
 type ManagerOption func(*Manager)
@@ -59,7 +65,7 @@ func WithOnSessionDisabled(hook SessionDisabledHook) ManagerOption {
 // 并发模型：
 //   - m.mu 保护 cache 读写与心跳 goroutine 启停的原子性，防止 Enable/Disable/OnDeviceHeartbeat 交叉操作
 //   - state.mu 保护单个设备的字段级并发读写（Enabled、seq、时间戳等）
-//   - sync.Map(cancels) 用于心跳取消函数的无锁查找，仅在 m.mu 持有时做 Store/Delete
+//   - sync.Map(workers) 跟踪心跳 worker；worker 退出时按身份删除，防止旧 goroutine 误删新会话
 //
 // 设备心跳超时通过 collection.Cache 的 TTL 自动管理：
 //   - 收到设备心跳上行时调用 cache.Set 刷新 TTL
@@ -74,10 +80,10 @@ type Manager struct {
 	// cache 设备 DRC 状态缓存，key=gatewaySn, value=*State, TTL=HeartbeatTimeout。
 	// 条目存在且非过期即表示设备 DRC 存活（收到过心跳且未超时）。
 	cache *collection.Cache
-	// cancels 跟踪正在运行的心跳 goroutine 的取消函数。
-	// key: gatewaySn(string), value: context.CancelFunc。
-	// 仅在持有 m.mu 时做 Store/Delete，cleanLoop 中的 Range+cancel 为安全降级操作。
-	cancels   sync.Map
+	// workers 跟踪正在运行的心跳 goroutine。
+	// key: gatewaySn(string), value: *heartbeatWorker。
+	// 启停路径在持有 m.mu 时做 Store/LoadAndDelete；worker 自清理和 cleanLoop 使用身份比对防止误删新会话。
+	workers   sync.Map
 	djiClient *djisdk.Client
 	config    config.DrcConfig
 
@@ -94,8 +100,9 @@ type Manager struct {
 	onSessionDisabled SessionDisabledHook
 
 	// 全局 ctx，用于派生所有心跳子 ctx 和 clean goroutine
-	ctx    context.Context
-	cancel context.CancelFunc
+	ctx       context.Context
+	cancel    context.CancelFunc
+	closeOnce sync.Once
 }
 
 // EnableOption 配置 Enable 行为的函数选项。
@@ -153,7 +160,7 @@ func (m *Manager) Enable(ctx context.Context, gatewaySn string, opts ...EnableOp
 
 	state := m.loadOrInitState(gatewaySn)
 	state.mu.Lock()
-	if state.Enabled && !state.IsExpired(time.Now(), m.config.HeartbeatTimeout) {
+	if state.isAlive(time.Now(), m.config.HeartbeatTimeout) {
 		logx.WithContext(ctx).Debugf("[drc-manager] enable skipped (already alive): gateway_sn=%s session_id=%s", gatewaySn, state.SessionID)
 		state.mu.Unlock()
 		return nil
@@ -260,7 +267,7 @@ func (m *Manager) GetNextSeq(gatewaySn string) (int, error) {
 	state := val.(*State)
 	state.mu.Lock()
 	defer state.mu.Unlock()
-	if !state.Enabled || state.IsExpired(time.Now(), m.config.HeartbeatTimeout) {
+	if !state.isAlive(time.Now(), m.config.HeartbeatTimeout) {
 		return 0, status.Errorf(codes.FailedPrecondition,
 			"DRC mode not enabled for device=%s, please call DrcModeEnter first", gatewaySn)
 	}
@@ -279,7 +286,7 @@ func (m *Manager) IsAlive(gatewaySn string) bool {
 	state := val.(*State)
 	state.mu.Lock()
 	defer state.mu.Unlock()
-	return state.Enabled && !state.IsExpired(time.Now(), m.config.HeartbeatTimeout)
+	return state.isAlive(time.Now(), m.config.HeartbeatTimeout)
 }
 
 // GetStatus 查询设备 DRC 运行状态快照。
@@ -294,7 +301,7 @@ func (m *Manager) GetStatus(gatewaySn string) (enabled bool, startedAt, lastHb t
 	state.mu.Lock()
 	defer state.mu.Unlock()
 
-	enabled = state.Enabled && !state.IsExpired(time.Now(), m.config.HeartbeatTimeout)
+	enabled = state.isAlive(time.Now(), m.config.HeartbeatTimeout)
 	startedAt = state.StartedAt
 	lastHb = state.LastDeviceHeartbeat
 	nextSeq = state.seq
@@ -302,19 +309,12 @@ func (m *Manager) GetStatus(gatewaySn string) (enabled bool, startedAt, lastHb t
 	return
 }
 
-// Close 停止所有设备的心跳 goroutine 和 cleanLoop。
-// 先取消全局 ctx（通过派生 ctx 传播到所有心跳 goroutine 和 cleanLoop），
-// 再逐个调用心跳取消函数确保立即退出。
+// Close 停止 cleanLoop 和所有设备的心跳 goroutine。
+// 所有心跳 ctx 都由 m.ctx 派生，取消父 ctx 会传播到全部子 ctx。
 func (m *Manager) Close() {
-	m.cancel()
-	var cancels []context.CancelFunc
-	m.cancels.Range(func(key, value any) bool {
-		cancels = append(cancels, value.(context.CancelFunc))
-		return true
+	m.closeOnce.Do(func() {
+		m.cancel()
 	})
-	for _, c := range cancels {
-		c()
-	}
 }
 
 // startHeartbeatLocked 为设备启动心跳 goroutine。
@@ -340,31 +340,33 @@ func (m *Manager) startHeartbeatLocked(gatewaySn, sessionID string) {
 		heartbeatCtx, heartbeatCancel = context.WithCancel(m.ctx)
 	}
 
-	m.cancels.Store(gatewaySn, heartbeatCancel)
-	go m.heartbeatLoop(gatewaySn, sessionID, heartbeatCtx, heartbeatCancel)
+	worker := &heartbeatWorker{sessionID: sessionID, cancel: heartbeatCancel}
+	m.workers.Store(gatewaySn, worker)
+	go m.heartbeatLoop(gatewaySn, heartbeatCtx, worker)
 }
 
 // stopHeartbeatLocked 停止设备的心跳 goroutine。
 // 调用方必须持有 m.mu。
 // 幂等：设备无运行中的 goroutine 时为空操作。
 func (m *Manager) stopHeartbeatLocked(gatewaySn string) {
-	val, ok := m.cancels.Load(gatewaySn)
+	val, ok := m.workers.LoadAndDelete(gatewaySn)
 	if !ok {
 		return
 	}
-	cancel := val.(context.CancelFunc)
-	m.cancels.Delete(gatewaySn)
-	cancel()
+	worker := val.(*heartbeatWorker)
+	worker.cancel()
 }
 
 // heartbeatLoop 设备心跳发送循环。
 // 职责单一：定时从缓存获取 DRC 状态，向设备下发心跳报文。
-// 缓存 miss（TTL 过期）或会话不匹配时直接退出，由 cleanLoop 兜底清理孤儿 goroutine。
-func (m *Manager) heartbeatLoop(gatewaySn, sessionID string, heartbeatCtx context.Context, heartbeatCancel context.CancelFunc) {
+// 缓存 miss（TTL 过期）或会话不匹配时直接退出；退出时只清理自身 worker。
+func (m *Manager) heartbeatLoop(gatewaySn string, heartbeatCtx context.Context, worker *heartbeatWorker) {
 	ticker := time.NewTicker(m.config.HeartbeatInterval)
 	defer ticker.Stop()
-	defer heartbeatCancel()
-	defer m.cancels.Delete(gatewaySn)
+	// 释放子 context 资源；即使父 ctx 或外部 cancel 已触发，重复调用也安全。
+	defer worker.cancel()
+	defer m.deleteHeartbeatWorkerIfCurrent(gatewaySn, worker)
+	sessionID := worker.sessionID
 
 	logx.Debugf("[drc-heartbeat] started: gateway_sn=%s session_id=%s interval=%v", gatewaySn, sessionID, m.config.HeartbeatInterval)
 
@@ -406,7 +408,7 @@ func (m *Manager) isCurrentSessionAlive(gatewaySn, sessionID string) bool {
 	state := val.(*State)
 	state.mu.Lock()
 	defer state.mu.Unlock()
-	return state.Enabled && state.SessionID == sessionID && !state.IsExpired(time.Now(), m.config.HeartbeatTimeout)
+	return state.isCurrentSessionAlive(sessionID, time.Now(), m.config.HeartbeatTimeout)
 }
 
 // expireSession 在 MaxDeadline 到达时由 heartbeatLoop 调用，清除过期会话。
@@ -417,7 +419,6 @@ func (m *Manager) expireSession(gatewaySn, sessionID string) {
 
 	val, ok := m.cache.Get(gatewaySn)
 	if !ok {
-		m.stopHeartbeatLocked(gatewaySn)
 		return
 	}
 	state := val.(*State)
@@ -433,8 +434,8 @@ func (m *Manager) expireSession(gatewaySn, sessionID string) {
 	m.fireSessionExpired(gatewaySn, sessionID, "max_deadline_exceeded")
 }
 
-// cleanLoop 定期扫描心跳 goroutine 与缓存的一致性，清理孤儿 goroutine。
-// 场景：缓存因 TTL 过期被自动驱逐，但 heartbeatLoop 因 tick 间隔恰好越过检查。
+// cleanLoop 定期扫描心跳 worker，清理不再存活的会话。
+// 场景：cache TTL 驱逐存在时间轮精度，或 heartbeat tick 间隔较长，需要兜底清理已过期但仍注册的 worker。
 func (m *Manager) cleanLoop() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -443,19 +444,52 @@ func (m *Manager) cleanLoop() {
 		case <-m.ctx.Done():
 			return
 		case <-ticker.C:
-			logx.Debugf("[drc-clean] scanning for orphan heartbeat goroutines")
-			m.cancels.Range(func(key, value any) bool {
+			logx.Debugf("[drc-clean] scanning heartbeat workers")
+			m.workers.Range(func(key, value any) bool {
 				gatewaySn := key.(string)
-				if _, ok := m.cache.Get(gatewaySn); !ok {
-					logx.Infof("[drc-clean] orphan heartbeat goroutine detected, cancel: %s", gatewaySn)
-					cancel := value.(context.CancelFunc)
-					cancel()
-					m.fireSessionExpired(gatewaySn, "", "heartbeat_timeout")
-				}
+				worker := value.(*heartbeatWorker)
+				m.cleanupHeartbeatWorker(gatewaySn, worker, time.Now())
 				return true
 			})
 		}
 	}
+}
+
+func (m *Manager) cleanupHeartbeatWorker(gatewaySn string, worker *heartbeatWorker, now time.Time) {
+	shouldCancel, deleted, notifyExpired := func() (bool, bool, bool) {
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		val, ok := m.cache.Get(gatewaySn)
+		if ok {
+			state := val.(*State)
+			state.mu.Lock()
+			alive := state.isCurrentSessionAlive(worker.sessionID, now, m.config.HeartbeatTimeout)
+			sameSession := state.SessionID == worker.sessionID
+			notifyExpired := sameSession && state.Enabled
+			state.mu.Unlock()
+			if alive {
+				return false, false, false
+			}
+			if sameSession {
+				m.cache.Del(gatewaySn)
+			}
+			return true, m.deleteHeartbeatWorkerIfCurrent(gatewaySn, worker), notifyExpired
+		}
+		return true, m.deleteHeartbeatWorkerIfCurrent(gatewaySn, worker), true
+	}()
+	if !shouldCancel {
+		return
+	}
+	worker.cancel()
+	if deleted && notifyExpired {
+		m.fireSessionExpired(gatewaySn, worker.sessionID, "heartbeat_timeout")
+	}
+}
+
+// deleteHeartbeatWorkerIfCurrent deletes worker only when it is still the registered worker for gatewaySn.
+// 不能直接 Delete(gatewaySn)：旧 heartbeat goroutine 退出或 cleanLoop 扫描旧 worker 时，可能误删同 gatewaySn 的新会话 worker。
+func (m *Manager) deleteHeartbeatWorkerIfCurrent(gatewaySn string, worker *heartbeatWorker) bool {
+	return m.workers.CompareAndDelete(gatewaySn, worker)
 }
 
 // loadOrInitState 获取设备的 State，优先从 cache 读取，不存在时返回临时零值对象。
@@ -474,7 +508,9 @@ func (m *Manager) loadOrInitState(gatewaySn string) *State {
 // 在 goroutine 中异步执行，避免阻塞调用方持有的锁。
 func (m *Manager) fireSessionExpired(gatewaySn, sessionID, reason string) {
 	if m.onSessionExpired != nil {
-		go m.onSessionExpired(gatewaySn, sessionID, reason)
+		threading.GoSafe(func() {
+			m.onSessionExpired(gatewaySn, sessionID, reason)
+		})
 	}
 }
 
@@ -482,7 +518,9 @@ func (m *Manager) fireSessionExpired(gatewaySn, sessionID, reason string) {
 // 在 goroutine 中异步执行，避免阻塞调用方持有的锁。
 func (m *Manager) fireSessionEnabled(gatewaySn, sessionID string) {
 	if m.onSessionEnabled != nil {
-		go m.onSessionEnabled(gatewaySn, sessionID)
+		threading.GoSafe(func() {
+			m.onSessionEnabled(gatewaySn, sessionID)
+		})
 	}
 }
 
@@ -490,6 +528,8 @@ func (m *Manager) fireSessionEnabled(gatewaySn, sessionID string) {
 // 在 goroutine 中异步执行，避免阻塞调用方持有的锁。
 func (m *Manager) fireSessionDisabled(gatewaySn, sessionID string) {
 	if m.onSessionDisabled != nil {
-		go m.onSessionDisabled(gatewaySn, sessionID)
+		threading.GoSafe(func() {
+			m.onSessionDisabled(gatewaySn, sessionID)
+		})
 	}
 }

@@ -465,6 +465,89 @@ replyHandler := manager.getReplyHandler(topicTemplate)
 handlers := manager.getHandlers(topicTemplate)
 ```
 
+## Scenario: Device heartbeat manager with active cloud heartbeat
+
+### 1. Scope / Trigger
+- Trigger: 新增或修改“设备上报心跳续期 + 云端主动下发心跳/控制报文”的运行时 manager 时必须读取本节。
+- Applies to: 服务内 `internal/**` 的设备会话管理器、DRC/遥控/长连接状态机、MQTT/SDK 心跳 handler、后台 clean loop。
+- Why: 这类模块通常同时持有 TTL cache 和 goroutine worker 两份状态，若删除路径不统一，会出现旧 worker 删除新 worker、cache 与 worker 不一致、context timer 泄漏或过期通知重复。
+
+### 2. Signatures
+- Manager close: `func (m *Manager) Close()` 必须取消 manager 级父 context。
+- Enable/start: `func (m *Manager) Enable(ctx context.Context, deviceID string, opts ...Option) error` 或等价入口必须创建/刷新 state，并启动单设备 worker。
+- Disable/stop: `func (m *Manager) Disable(ctx context.Context, deviceID string) error` 或等价入口必须同时删除 TTL cache 和停止当前 worker。
+- Device heartbeat: `func (m *Manager) OnDeviceHeartbeat(ctx context.Context, deviceID string)` 或等价 handler 必须刷新 `LastHeartbeat` 并 `cache.Set` 续期。
+- Worker state helper: `func (s *State) isAlive(now time.Time, timeout time.Duration) bool`、`func (s *State) isCurrentSessionAlive(sessionID string, now time.Time, timeout time.Duration) bool` 这类 helper 调用方必须已持有 `state.mu`。
+
+### 3. Contracts
+- TTL cache key 使用设备 ID，value 使用单设备 `*State`；`cache.Set(deviceID, state)` 同时表示写入和续期。
+- 每个 worker 必须携带不可复用的 session identity，例如 `sessionID`，不能只用设备 ID 表示 worker 身份。
+- Manager 父 context 只负责全局关闭；单设备 cancel 只负责 disable、re-enable、deadline/TTL cleanup。
+- `Close()` 不遍历逐个 worker cancel；所有 worker context 必须从 manager 父 context 派生，父 cancel 自动传播。
+- worker goroutine 退出时必须释放自己的 child context，并只删除自己对应的 worker；重复调用 `CancelFunc` 是安全的。
+- cache 删除和 worker 删除必须成对审查：主动 disable、绝对 deadline、TTL cleanup、cache miss、自退、re-enable 都要明确清理哪一份状态。
+- 已经拿到 `*State` 指针的并发读者不受 `cache.Del` 影响；删除 cache 前后仍应在同一 session state 上写入 `Enabled=false`，让旧指针读者看到停用状态。
+
+### 4. Validation & Error Matrix
+- Enable on alive state -> 返回成功，不重复启动 worker。
+- Enable on stale/expired state -> 先停止旧 worker，再写入新 state 和新 session worker。
+- Disable on enabled state -> `state.Enabled=false`、`cache.Del(deviceID)`、停止当前 worker、触发 disabled hook。
+- Device heartbeat cache miss -> 只记录/忽略，不重建 state，不通知 expired hook。
+- Device heartbeat max deadline exceeded -> `state.Enabled=false`、`cache.Del`、停止当前 worker、触发 expired hook。
+- Worker tick sees cache miss/stale session/expired -> worker 自退，并只删除自己。
+- Clean loop sees cache miss or same-session expired/disabled -> identity-safe 删除 worker；cache miss/expired 触发 expired hook，disabled 不触发 expired hook。
+- Clean loop sees stale worker while cache has newer session -> 只 cancel 旧 worker，不删除 cache，不 cancel 新 worker。
+
+### 5. Good/Base/Bad Cases
+- Good: `workers` map value 是 `*worker{sessionID, cancel}`，删除用 `CompareAndDelete(deviceID, worker)`；cache TTL 用设备心跳 `Set` 续期，worker cleanup 只按自身 identity 删除。
+- Base: 没有 clean loop，依赖 worker 下一次 tick 自退；只适合 heartbeat interval 很短且可接受短时间 worker 残留的场景，并需在代码注释写明。
+- Bad: `workers` map 只存 `context.CancelFunc`，worker 退出时直接 `Delete(deviceID)`；旧 goroutine 可能删除新会话 worker。
+- Bad: `Close()` 先取消父 context 后又遍历所有 worker cancel，把父子 context 传播和单 worker 停止职责混在一起。
+
+### 6. Tests Required
+- Unit: stale worker cleanup must not delete or cancel current worker for the same device ID.
+- Unit: cache-miss cleanup cancels worker and fires expired hook with the old session ID.
+- Unit: same-session expired cleanup deletes cache, deletes worker, cancels worker, and fires expired hook.
+- Unit: same-session disabled cleanup deletes cache and worker but does not fire expired hook.
+- Unit: manager close relies on parent context; no per-worker cancel iteration is required.
+- Unit: `State` alive helpers are called only while holding `state.mu`; tests should cover alive, expired, disabled, and session mismatch cases.
+- Search assertion: when changing this pattern, search `cache.Del|cache.Set|workers.Store|LoadAndDelete|CompareAndDelete|context.WithDeadline|context.WithCancel` in the target package and inspect all lifecycle paths.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+```go
+// Wrong: value has no worker identity; old goroutine can delete new worker.
+workers.Store(deviceID, cancel)
+defer workers.Delete(deviceID)
+```
+
+```go
+// Wrong: cache.Del does not invalidate already-held *State pointers.
+cache.Del(deviceID)
+// state.Enabled remains true for goroutines that fetched state before Del.
+```
+
+#### Correct
+```go
+type heartbeatWorker struct {
+    sessionID string
+    cancel    context.CancelFunc
+}
+
+worker := &heartbeatWorker{sessionID: sessionID, cancel: cancel}
+workers.Store(deviceID, worker)
+defer workers.CompareAndDelete(deviceID, worker)
+defer worker.cancel() // release child context resources on self-exit
+```
+
+```go
+state.mu.Lock()
+state.Enabled = false
+state.mu.Unlock()
+cache.Del(deviceID)
+```
+
 ### Design Decision: 包级泛型函数 RequestReply[T]，不暴露 ReplyRouter.RequestReply
 
 **Context**: Go 方法不支持类型参数。`Client` 是接口（非泛型），无法写 `Client.RequestReply[T any](...)` 方法。但 `ReplyRouter[T].RequestReply` 返回 `T`，调用方需要类型安全的请求/回复入口。

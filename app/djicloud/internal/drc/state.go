@@ -48,3 +48,15 @@ func (s *State) IsExpired(now time.Time, heartbeatTimeout time.Duration) bool {
 	}
 	return !now.Before(s.LastDeviceHeartbeat.Add(heartbeatTimeout))
 }
+
+// isAlive 判断当前状态是否仍然存活。
+// 调用方必须已持有 s.mu。
+func (s *State) isAlive(now time.Time, heartbeatTimeout time.Duration) bool {
+	return s.Enabled && !s.IsExpired(now, heartbeatTimeout)
+}
+
+// isCurrentSessionAlive 判断指定 sessionID 对应的当前会话是否仍然存活。
+// 调用方必须已持有 s.mu。
+func (s *State) isCurrentSessionAlive(sessionID string, now time.Time, heartbeatTimeout time.Duration) bool {
+	return s.Enabled && s.SessionID == sessionID && !s.IsExpired(now, heartbeatTimeout)
+}
