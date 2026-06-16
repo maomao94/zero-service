@@ -386,3 +386,36 @@ Replaced antsx.ReplyPool in common/djisdk with mqttx.RequestReply[*ServiceReply]
 ### Next Steps
 
 - None - task complete
+
+
+## Session 62: Refactor DRC manager cancel lifecycle
+
+**Date**: 2026-06-16
+**Task**: Refactor DRC manager cancel lifecycle
+**Branch**: `master`
+
+### Summary
+
+Refactored DRC manager with worker identity (CompareAndDelete), simplified Close to parent context, added State isAlive/isCurrentSessionAlive helpers, updated cleanLoop per-worker time and identity-safe cleanup, added code-spec template for device heartbeat manager.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c98ffad1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
