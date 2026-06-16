@@ -11,10 +11,13 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache) func(ctx context.Context, deviceSn string, data *djisdk.OsdMessage) {
+func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache, disableSQLTrace bool) func(ctx context.Context, deviceSn string, data *djisdk.OsdMessage) {
 	return func(ctx context.Context, deviceSn string, data *djisdk.OsdMessage) {
 		if data == nil {
 			return
+		}
+		if disableSQLTrace {
+			ctx = gormx.WithoutSQLTrace(ctx)
 		}
 		logx.WithContext(ctx).Debugf("[dji-cloud] osd: sn=%s tid=%s ts=%d", deviceSn, data.Tid, data.Timestamp)
 

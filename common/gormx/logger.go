@@ -12,9 +12,14 @@ import (
 )
 
 type fullSQLKey struct{}
+type skipSQLTraceKey struct{}
 
 func WithFullSQL(ctx context.Context) context.Context {
 	return context.WithValue(ctx, fullSQLKey{}, true)
+}
+
+func WithoutSQLTrace(ctx context.Context) context.Context {
+	return context.WithValue(ctx, skipSQLTraceKey{}, true)
 }
 
 type LoggerConfig struct {
@@ -83,6 +88,9 @@ func (c *gormLogger) Error(ctx context.Context, msg string, data ...any) {
 
 func (c *gormLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	if c.cfg.LogLevel <= logger.Silent {
+		return
+	}
+	if skip, ok := ctx.Value(skipSQLTraceKey{}).(bool); ok && skip {
 		return
 	}
 

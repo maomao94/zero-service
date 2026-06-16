@@ -35,6 +35,9 @@ UpstreamReply:
   EnableEventsReply: true
   EnableStatusReply: false
   EnableRequestsReply: false
+Telemetry:
+  # OSD 上报频率高，开启后仅通过 context 关闭 OSD 写库产生的 GORM SQL trace 日志。
+  DisableOsdSQLTrace: true
 DangerousOps:
   EnableDroneEmergencyStop: false
 # DRC 平台化功能配置（可选，默认使用 go-zero 默认值）

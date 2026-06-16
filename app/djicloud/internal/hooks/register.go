@@ -11,10 +11,11 @@ import (
 
 // RegisterDjiClientOptions 为 RegisterDjiClient 的依赖，在线缓存由 svc 层创建并注入。
 type RegisterDjiClientOptions struct {
-	DB          *gormx.DB
-	OnlineCache *collection.Cache
-	DrcManager  *drc.Manager
-	PushCli     socketpush.SocketPushClient
+	DB                 *gormx.DB
+	OnlineCache        *collection.Cache
+	DrcManager         *drc.Manager
+	PushCli            socketpush.SocketPushClient
+	DisableOsdSQLTrace bool
 }
 
 func registerEventHandlers(c *djisdk.Client, db *gormx.DB) {
@@ -28,8 +29,8 @@ func registerEventHandlers(c *djisdk.Client, db *gormx.DB) {
 	c.OnRemoteLogFileUploadProgress(NewRemoteLogFileUploadProgressHandler(db))
 }
 
-func registerTelemetryHandlers(c *djisdk.Client, db *gormx.DB, onlineCache *collection.Cache, drcMgr *drc.Manager, pushCli socketpush.SocketPushClient) {
-	c.OnOsd(NewOsdHandler(db, onlineCache))
+func registerTelemetryHandlers(c *djisdk.Client, db *gormx.DB, onlineCache *collection.Cache, drcMgr *drc.Manager, pushCli socketpush.SocketPushClient, disableOsdSQLTrace bool) {
+	c.OnOsd(NewOsdHandler(db, onlineCache, disableOsdSQLTrace))
 	c.OnState(NewStateTelemetryHandler(db, onlineCache))
 	c.OnStatus(NewStatusHandler(db, onlineCache))
 	c.OnDrcUp(NewDrcUpHandler(db, drcMgr, pushCli))
@@ -52,7 +53,7 @@ func RegisterDjiClient(c *djisdk.Client, o RegisterDjiClientOptions) {
 		return
 	}
 	registerEventHandlers(c, o.DB)
-	registerTelemetryHandlers(c, o.DB, o.OnlineCache, o.DrcManager, o.PushCli)
+	registerTelemetryHandlers(c, o.DB, o.OnlineCache, o.DrcManager, o.PushCli, o.DisableOsdSQLTrace)
 	registerRequestHandlers(c)
 	registerOnlineChecker(c, o.OnlineCache)
 }

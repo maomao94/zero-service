@@ -124,7 +124,7 @@ response.TrackId = record.TrackId.String
 | `batch_tenant.go` | 租户感知批量 CRUD |
 | `delete.go` | `SoftDelete`、`UnscopedDelete`、`UnscopedDeleteWithTenant` |
 | `restore.go` | `Restore`、`RestoreWithTenant`、`hasLegacyDeleteFields` |
-| `hook_helpers.go` | `SkipHooksUpdate`、`SkipHooksCreate` |
+| `hook_helpers.go` | `SkipHooksUpdate`、`SkipHooksCreate`（跳过 Model Hook，不跳过 gormx 审计 callback） |
 | `tenant_query.go` | `withTenantQuery`（未导出） |
 | `tenant_scope.go` | `TenantScope` 等 scope 函数、`WithTenantContext` |
 
@@ -217,6 +217,29 @@ func TenantScope(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 对于使用 `SoftDeleteMixin` 的模型，删除审计字段需要在 service 层显式设置。
 
 > 传统软删除模型（`LegacySoftDeleteMixin`——`del_state`/`delete_time`）不受影响，因为 `gorm.io/plugin/soft_delete` 的机制不同。
+
+### Convention: GORM Model Hook 与 gormx Callback 的区别
+
+GORM 有两种扩展机制，`SkipHooks` 只影响前者：
+
+| 机制 | 定义方式 | `SkipHooks: true` 影响 |
+|------|----------|------------------------|
+| **Model Hook** | 模型实现 `BeforeUpdate(tx *gorm.DB) error` 等方法 | 跳过 |
+| **Callback** | `db.Callback().Update().Before("gorm:update").Register(...)` | 不跳过 |
+
+gormx 的 `beforeCreateHook`/`beforeUpdateHook`/`beforeDeleteHook` 是通过 `RegisterCallbacks` 注册的全局 callback，属于基础设施级审计逻辑，不受 `SkipHooks` 控制。
+
+```go
+// SkipHooksUpdate 跳过的是 Model Hook，不是 gormx 审计 callback
+// 使用 SkipHooksUpdate 时，如果 ctx 中有 UserContext 且模型有 update_user 字段，
+// 审计字段仍然会被写入
+gormx.SkipHooksUpdate(db.WithContext(ctx), &model, map[string]any{"name": "new"})
+```
+
+**实践含义**：
+- 需要跳过模型自定义 `BeforeUpdate` 逻辑 → 用 `SkipHooksUpdate`。
+- 需要跳过 gormx 审计 callback → 当前不支持，也不应该跳过（审计是基础设施）。
+- `setSchemaColumn` 会检查模型 schema 是否有目标字段，没有则静默跳过，不会报错。因此 `LegacyBaseModel`（无 `update_user` 字段）的更新不会写审计字段，但 `version + 1` 仍会生效。
 
 ### Gotcha: 软删后再写回需先 Restore
 

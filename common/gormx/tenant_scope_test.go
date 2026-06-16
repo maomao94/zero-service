@@ -359,6 +359,23 @@ func TestHasTenantFieldReturnsTrueForTenantModel(t *testing.T) {
 	}
 }
 
+func TestWithStringUserAndTenantContextSetsAllFields(t *testing.T) {
+	ctx := WithStringUserAndTenantContext(context.Background(), "user-str", "tester", "tenant-1")
+	uc := GetUserContext(ctx)
+	if uc == nil {
+		t.Fatalf("user context should not be nil")
+	}
+	if uc.UserID != "user-str" {
+		t.Fatalf("UserID = %v, want user-str", uc.UserID)
+	}
+	if uc.UserName != "tester" {
+		t.Fatalf("UserName = %q, want tester", uc.UserName)
+	}
+	if uc.TenantID != "tenant-1" {
+		t.Fatalf("TenantID = %q, want tenant-1", uc.TenantID)
+	}
+}
+
 func TestHasTenantFieldReturnsFalseForNoTenantModel(t *testing.T) {
 	db := openTestDB(t, &noTenantModel{})
 	tx := db.Session(&gorm.Session{}).Model(&noTenantModel{})

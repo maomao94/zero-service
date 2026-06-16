@@ -208,7 +208,7 @@ func TestOsdTelemetryDoesNotUpdateDeviceVersions(t *testing.T) {
 	db := newHookTestDB(t)
 	ctx := context.Background()
 
-	NewOsdHandler(db, nil)(ctx, "dock-version", &djisdk.OsdMessage{
+	NewOsdHandler(db, nil, false)(ctx, "dock-version", &djisdk.OsdMessage{
 		Gateway:   "dock-version",
 		Timestamp: 1710000000000,
 		Data:      map[string]any{"firmware_version": "14.03.00.03", "hardware_version": "Dock3"},
@@ -233,7 +233,7 @@ func TestOsdTelemetryDoesNotUpdateDeviceVersions(t *testing.T) {
 func TestTelemetryHandlersSkipNilDB(t *testing.T) {
 	ctx := context.Background()
 
-	NewOsdHandler(nil, nil)(ctx, "dock-nil-db", &djisdk.OsdMessage{
+	NewOsdHandler(nil, nil, false)(ctx, "dock-nil-db", &djisdk.OsdMessage{
 		Gateway:   "dock-nil-db",
 		Timestamp: 1710000000000,
 		Data:      map[string]any{"firmware_version": "14.03.00.03"},
@@ -562,7 +562,7 @@ func TestOsdTelemetryDoesNotOverwriteFirstOnlineAt(t *testing.T) {
 		t.Fatalf("create device error = %v", err)
 	}
 
-	NewOsdHandler(db, nil)(ctx, "dock-first-online", &djisdk.OsdMessage{
+	NewOsdHandler(db, nil, false)(ctx, "dock-first-online", &djisdk.OsdMessage{
 		Gateway:   "dock-first-online",
 		Timestamp: 1710000000000,
 		Data:      map[string]any{"mode_code": 1},
@@ -602,7 +602,7 @@ func TestOsdTelemetryPreservesTopologyAsTypeSource(t *testing.T) {
 		t.Fatalf("create topo error = %v", err)
 	}
 
-	NewOsdHandler(db, nil)(ctx, "payload-osd-1", &djisdk.OsdMessage{
+	NewOsdHandler(db, nil, false)(ctx, "payload-osd-1", &djisdk.OsdMessage{
 		Gateway:   "dock-b",
 		Timestamp: 1710000000000,
 		Data:      map[string]any{"payload_index": "payload-osd-1"},
@@ -636,7 +636,7 @@ func TestOsdTelemetryRejectsMissingGateway(t *testing.T) {
 	db := newHookTestDB(t)
 	ctx := context.Background()
 
-	NewOsdHandler(db, nil)(ctx, "osd-without-gateway", &djisdk.OsdMessage{
+	NewOsdHandler(db, nil, false)(ctx, "osd-without-gateway", &djisdk.OsdMessage{
 		Timestamp: 1710000000000,
 		Data:      map[string]any{"mode_code": 1},
 	})
@@ -660,7 +660,7 @@ func TestHookHandlersDoNotGenerateDialectUpsertSQL(t *testing.T) {
 	})
 
 	ctx := context.Background()
-	NewOsdHandler(db, nil)(ctx, "dock-sql", &djisdk.OsdMessage{
+	NewOsdHandler(db, nil, false)(ctx, "dock-sql", &djisdk.OsdMessage{
 		Gateway:   "dock-sql",
 		Timestamp: 1710000000000,
 		Data:      map[string]any{"mode_code": 1},
@@ -709,7 +709,7 @@ func TestOsdTelemetryStoresOnlyOfficialRawSnapshot(t *testing.T) {
 	db := newHookTestDB(t)
 	ctx := context.Background()
 
-	NewOsdHandler(db, nil)(ctx, "dock-json", &djisdk.OsdMessage{
+	NewOsdHandler(db, nil, false)(ctx, "dock-json", &djisdk.OsdMessage{
 		Gateway:   "dock-json",
 		Timestamp: 1710000000000,
 		Data:      map[string]any{"mode_code": 1, "latitude": 22.1},

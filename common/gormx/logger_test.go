@@ -52,6 +52,20 @@ func TestGormLoggerTraceSkipsSQLWhenSilent(t *testing.T) {
 	}
 }
 
+func TestGormLoggerTraceSkipsSQLWhenContextDisablesTrace(t *testing.T) {
+	l := NewGormLogger(LoggerConfig{LogLevel: logger.Info, SlowThreshold: time.Millisecond})
+	called := false
+
+	l.Trace(WithoutSQLTrace(context.Background()), time.Now().Add(-time.Hour), func() (string, int64) {
+		called = true
+		return "select 1", 1
+	}, errors.New("boom"))
+
+	if called {
+		t.Fatalf("fc should not be called when context disables sql trace")
+	}
+}
+
 func TestGormLoggerTraceCallsSQLWhenErrorLevelHasError(t *testing.T) {
 	l := NewGormLogger(LoggerConfig{LogLevel: logger.Error, SlowThreshold: time.Hour})
 	called := false
@@ -202,6 +216,28 @@ func TestGormLoggerParamsFilterDefaultGormLoggerRedactsQueryParameters(t *testin
 
 	if len(params) != 0 {
 		t.Fatalf("expected params to be redacted, got %#v", params)
+	}
+}
+
+func TestWithFullSQLContextSetsContextValue(t *testing.T) {
+	ctx := WithFullSQL(context.Background())
+	v, ok := ctx.Value(fullSQLKey{}).(bool)
+	if !ok || !v {
+		t.Fatalf("fullSQLKey = %v/%v, want true/true", v, ok)
+	}
+}
+
+func TestQuietGormLoggerSilencesAllOutput(t *testing.T) {
+	l := QuietGormLogger()
+	called := false
+
+	l.Trace(context.Background(), time.Now().Add(-time.Hour), func() (string, int64) {
+		called = true
+		return "select 1", 1
+	}, errors.New("boom"))
+
+	if called {
+		t.Fatalf("fc should not be called for quiet logger")
 	}
 }
 

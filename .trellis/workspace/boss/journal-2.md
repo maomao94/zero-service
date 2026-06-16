@@ -452,3 +452,36 @@ Fixed DJI flight task track_id handling for GaussDB PG empty-string-as-null beha
 ### Next Steps
 
 - None - task complete
+
+
+## Session 64: gormx 包职责整理、bug 修复、spec 更新
+
+**Date**: 2026-06-16
+**Task**: gormx 包职责整理、bug 修复、spec 更新
+**Branch**: `master`
+
+### Summary
+
+拆分 gormx.go 为 config/db/options/open；修复 OpenWithConf 零值、nil 入参、资源泄露；整理 batch.go 混合职责为 delete/restore/hook_helpers/tenant_query；TimeMixin 补 auto 时间标签；LogLevel 加 options 约束；补快速使用 README；更新 database-guidelines.md spec
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f20e477a` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

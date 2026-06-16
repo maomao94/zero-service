@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 63
+- **Total Sessions**: 64
 - **Last Active**: 2026-06-16
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~454 | Active |
+| `journal-2.md` | ~487 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 64 | 2026-06-16 | gormx 包职责整理、bug 修复、spec 更新 | `f20e477a` | `master` |
 | 63 | 2026-06-16 | GaussDB nullable track_id contract | `3f26c748` | `master` |
 | 62 | 2026-06-16 | Refactor DRC manager cancel lifecycle | `c98ffad1` | `master` |
 | 61 | 2026-06-15 | Refactor djsdk request/reply to use mqttx built-in WithReplyRouter | `71e914cc`, `9759c200` | `master` |

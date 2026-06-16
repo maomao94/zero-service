@@ -5,6 +5,27 @@ import (
 	"testing"
 )
 
+func TestUnscopedDeleteHardDeletesRecord(t *testing.T) {
+	db := openTestDB(t, &legacyDeleteTestModel{})
+
+	record := legacyDeleteTestModel{Name: "victim"}
+	if err := db.Create(&record).Error; err != nil {
+		t.Fatalf("create error = %v", err)
+	}
+
+	if err := UnscopedDelete(db, &legacyDeleteTestModel{LegacyBaseModel: LegacyBaseModel{LegacyIDMixin: LegacyIDMixin{Id: record.Id}}}); err != nil {
+		t.Fatalf("unscoped delete error = %v", err)
+	}
+
+	var count int64
+	if err := db.Unscoped().Model(&legacyDeleteTestModel{}).Where("id = ?", record.Id).Count(&count).Error; err != nil {
+		t.Fatalf("count error = %v", err)
+	}
+	if count != 0 {
+		t.Fatalf("count = %d, want 0 after hard delete", count)
+	}
+}
+
 func TestUnscopedDeleteWithTenantHardDeletesRecord(t *testing.T) {
 	db := openTestDB(t, &batchTenantTestModel{})
 	ctx := WithTenantContext(context.Background(), "tenant-1")

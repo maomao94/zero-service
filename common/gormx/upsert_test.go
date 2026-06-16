@@ -110,6 +110,59 @@ func TestUpdateOrCreateUpdatesOnlyRequestedColumnsWhenRecordExists(t *testing.T)
 	}
 }
 
+func TestCreateRecordCreatesSuccessfully(t *testing.T) {
+	gormDB := openTestDB(t, &pageTestModel{})
+	db := &DB{DB: gormDB}
+	ctx := context.Background()
+
+	record := pageTestModel{Name: "new-record"}
+	if err := CreateRecord(ctx, db, &record); err != nil {
+		t.Fatalf("create record error = %v", err)
+	}
+
+	var got pageTestModel
+	if err := gormDB.First(&got, record.ID).Error; err != nil {
+		t.Fatalf("find error = %v", err)
+	}
+	if got.Name != "new-record" {
+		t.Fatalf("name = %q, want new-record", got.Name)
+	}
+}
+
+func TestCreateRecordRejectsNilDB(t *testing.T) {
+	err := CreateRecord(context.Background(), nil, &pageTestModel{Name: "x"})
+	if err == nil || !strings.Contains(err.Error(), "db is nil") {
+		t.Fatalf("error = %v, want db is nil", err)
+	}
+}
+
+func TestGormDBReturnsInnerDB(t *testing.T) {
+	gormDB := openTestDB(t, &pageTestModel{})
+	db := &DB{DB: gormDB}
+
+	got, err := GormDB(db)
+	if err != nil {
+		t.Fatalf("gorm db error = %v", err)
+	}
+	if got != gormDB {
+		t.Fatalf("gorm db should return the inner *gorm.DB")
+	}
+}
+
+func TestGormDBRejectsNilDB(t *testing.T) {
+	_, err := GormDB(nil)
+	if err == nil || !strings.Contains(err.Error(), "db is nil") {
+		t.Fatalf("error = %v, want db is nil", err)
+	}
+}
+
+func TestGormDBRejectsNilInnerDB(t *testing.T) {
+	_, err := GormDB(&DB{})
+	if err == nil || !strings.Contains(err.Error(), "db is nil") {
+		t.Fatalf("error = %v, want db is nil", err)
+	}
+}
+
 func TestUpdateOrCreateRejectsEmptyWhere(t *testing.T) {
 	db := &DB{DB: openTestDB(t, &updateOrCreateTestModel{})}
 

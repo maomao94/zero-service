@@ -24,6 +24,7 @@ type Config struct {
 	DB             gormx.Config        `json:",optional"`
 	PendingTTL     time.Duration       `json:",default=30s"`
 	UpstreamReply  UpstreamReplyConfig `json:",optional"`
+	Telemetry      TelemetryConfig     `json:",optional"`
 	DangerousOps   DangerousOpsConfig  `json:",optional"`
 	DrcConfig      DrcConfig           `json:",optional"`
 	SocketPushConf zrpc.RpcClientConf  `json:",optional"`
@@ -42,6 +43,10 @@ type UpstreamReplyConfig struct {
 	EnableEventsReply   bool `json:",default=true"`
 	EnableStatusReply   bool `json:",default=true"`
 	EnableRequestsReply bool `json:",default=true"`
+}
+
+type TelemetryConfig struct {
+	DisableOsdSQLTrace bool `json:",default=false"`
 }
 
 // DangerousOpsConfig 敏感/危险操作开关配置。

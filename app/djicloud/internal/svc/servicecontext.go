@@ -127,10 +127,11 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	drcMgr := drc.NewManager(djiCli, c.DrcConfig, drcOpts...)
 
 	hooks.RegisterDjiClient(djiCli, hooks.RegisterDjiClientOptions{
-		DB:          db,
-		OnlineCache: onlineCache,
-		DrcManager:  drcMgr,
-		PushCli:     pushCli,
+		DB:                 db,
+		OnlineCache:        onlineCache,
+		DrcManager:         drcMgr,
+		PushCli:            pushCli,
+		DisableOsdSQLTrace: c.Telemetry.DisableOsdSQLTrace,
 	})
 
 	if err := djiCli.SubscribeAll(); err != nil {

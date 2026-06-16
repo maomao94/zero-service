@@ -5,6 +5,45 @@ import (
 	"testing"
 )
 
+func TestGetUserIDReturnsUint(t *testing.T) {
+	ctx := WithUserContext(context.Background(), NewUserContext(uint(42), "tester", "tenant-1"))
+	if got := GetUserID(ctx); got != 42 {
+		t.Fatalf("GetUserID = %d, want 42", got)
+	}
+}
+
+func TestGetUserIDReturnsZeroWhenNoContext(t *testing.T) {
+	if got := GetUserID(context.Background()); got != 0 {
+		t.Fatalf("GetUserID = %d, want 0", got)
+	}
+}
+
+func TestGetUserIDTextReturnsString(t *testing.T) {
+	ctx := WithUserContext(context.Background(), NewStringUserContext("user-abc", "tester", "tenant-1"))
+	if got := GetUserIDText(ctx); got != "user-abc" {
+		t.Fatalf("GetUserIDText = %q, want user-abc", got)
+	}
+}
+
+func TestGetUserIDTextReturnsEmptyWhenNoContext(t *testing.T) {
+	if got := GetUserIDText(context.Background()); got != "" {
+		t.Fatalf("GetUserIDText = %q, want empty", got)
+	}
+}
+
+func TestNewStringUserContextCreatesCorrectly(t *testing.T) {
+	uc := NewStringUserContext("user-x", "tester", "tenant-1")
+	if uc.UserID != "user-x" {
+		t.Fatalf("UserID = %v, want user-x", uc.UserID)
+	}
+	if uc.UserName != "tester" {
+		t.Fatalf("UserName = %q, want tester", uc.UserName)
+	}
+	if uc.TenantID != "tenant-1" {
+		t.Fatalf("TenantID = %q, want tenant-1", uc.TenantID)
+	}
+}
+
 func TestGenericUserContextFillsStringAuditFields(t *testing.T) {
 	db := openTestDB(t, &stringAuditTestModel{})
 	ctx := WithUserAndTenantContext(context.Background(), "8d98c7f4-0d90-4b91-a8e8-768d34da1d6a", "tester", "tenant-a")
