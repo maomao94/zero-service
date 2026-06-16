@@ -485,3 +485,36 @@ Fixed DJI flight task track_id handling for GaussDB PG empty-string-as-null beha
 ### Next Steps
 
 - None - task complete
+
+
+## Session 65: gormx 测试覆盖补充与 Hook/Callback 语义澄清
+
+**Date**: 2026-06-16
+**Task**: gormx 测试覆盖补充与 Hook/Callback 语义澄清
+**Branch**: `master`
+
+### Summary
+
+修复 SkipHooksUpdate 测试验证 callback 行为，补充 22 个 P0/P1 测试覆盖（Transact/WithTenant/UnscopedDelete/SkipHooksCreate/WithFullSQL/CreateRecord/GormDB/ParseDatabaseType/GetDialector/GetUserID 等），更新 database-guidelines 规范新增 GORM Model Hook 与 gormx Callback 区别约定
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5366a1e4` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

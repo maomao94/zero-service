@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 64
+- **Total Sessions**: 65
 - **Last Active**: 2026-06-16
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~487 | Active |
+| `journal-2.md` | ~520 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 65 | 2026-06-16 | gormx 测试覆盖补充与 Hook/Callback 语义澄清 | `5366a1e4` | `master` |
 | 64 | 2026-06-16 | gormx 包职责整理、bug 修复、spec 更新 | `f20e477a` | `master` |
 | 63 | 2026-06-16 | GaussDB nullable track_id contract | `3f26c748` | `master` |
 | 62 | 2026-06-16 | Refactor DRC manager cancel lifecycle | `c98ffad1` | `master` |
