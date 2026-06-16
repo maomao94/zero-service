@@ -59,7 +59,7 @@ func (l *ListFlightTaskProgressLogic) ListFlightTaskProgress(in *djicloud.ListFl
 			ReportedAt:           timeMillis(item.ReportedAt),
 			Status:               item.Status,
 			CurrentStep:          int32(item.CurrentStep),
-			TrackId:              item.TrackId,
+			TrackId:              item.TrackId.String,
 			WaylineId:            int32(item.WaylineId),
 			BreakPointJson:       item.BreakPointJSON,
 			RawJson:              item.RawJSON,

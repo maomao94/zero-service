@@ -32,6 +32,67 @@ sh genModelSql.sh
 - SQL 内容要能和 Trellis task、Backlog 条目或变更说明关联，方便追踪上线影响。
 - 不在 SQL、配置或日志中提交真实账号、密码、连接串、内网地址或对象存储配置。
 
+## Scenario: GaussDB PG 空串即 NULL 字段
+
+### 1. Scope / Trigger
+
+- Trigger: 修改 PostgreSQL/GaussDB 兼容表的可空字符串字段、GORM model、DB schema 或跨层响应映射时必须检查本契约。
+- GaussDB PG 兼容模式可能把 `''` 按 `NULL` 处理；外部协议字段可缺省时，不能用 `not null default:''` 表示"无值"。
+
+### 2. Signatures
+
+- DB column: `track_id varchar(64) NULL`，不要加 `NOT NULL`，不要依赖 `DEFAULT ''`。
+- GORM field: `TrackId sql.NullString \`gorm:"column:track_id;type:varchar(64);index;comment:..."\``。
+- Write mapping: `sql.NullString{String: ext.TrackID, Valid: ext.TrackID != ""}`。
+- Response mapping: protobuf/API `string track_id` 继续返回 `item.TrackId.String`，`NULL` 对外表现为 `""`。
+
+### 3. Contracts
+
+- Request/event field: 外部 `ext.track_id` 类型为 string，可缺省或为空。
+- Storage contract: `ext.track_id == ""` 或字段缺省时，数据库保存 `NULL`。
+- Storage contract: `ext.track_id != ""` 时，数据库保存原字符串。
+- Response contract: 现有 API string 字段不改契约，DB `NULL` 映射为空字符串。
+- Migration contract: 既有 `NOT NULL` 列需要执行 schema 变更允许 NULL，不能只改 GORM tag。
+
+### 4. Validation & Error Matrix
+
+- `track_id NOT NULL` + 上游空/缺省 -> GaussDB 写入 `NULL`，触发 `SQLSTATE 23502`。
+- 同一事务首次写入失败后继续执行 SQL -> 触发 `SQLSTATE 25P02`，这是级联错误，不是根因。
+- GORM string 字段扫描 DB `NULL` -> 可能扫描失败或丢失 NULL 语义；应使用 `sql.NullString`。
+- API 仍要求 string -> 在 Logic/mapper 层显式取 `.String`，不要把 `sql.NullString` 泄漏到 protobuf 响应。
+
+### 5. Good/Base/Bad Cases
+
+- Good: 外部字段可缺省且目标库是 GaussDB PG，model 用 `sql.NullString`，DB 列允许 NULL，响应层转换为空字符串。
+- Base: 外部字段业务上必填，保留 `string` + `not null`，但 handler 必须先校验空值并拒绝写入。
+- Bad: 对可缺省字段使用 `string` + `not null;default:''`，期望空串能绕过非空约束。
+
+### 6. Tests Required
+
+- Model schema test: 断言该字段 `field.NotNull == false` 且 `field.HasDefaultValue == false`。
+- Handler/write test: 断言上游缺省字段不会导致 upsert 报错，且有值时能保存原字符串。
+- Logic/API test: 断言 DB `NULL` 映射到响应 `""`，非空值原样返回。
+- Regression log check: 看到 `23502` 后的 `25P02` 时先查事务内第一条 SQL 错误。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```go
+TrackId string `gorm:"column:track_id;type:varchar(64);index;not null;default:''"`
+
+record.TrackId = ext.TrackID
+```
+
+#### Correct
+
+```go
+TrackId sql.NullString `gorm:"column:track_id;type:varchar(64);index"`
+
+record.TrackId = sql.NullString{String: ext.TrackID, Valid: ext.TrackID != ""}
+response.TrackId = record.TrackId.String
+```
+
 ## 查询和事务
 
 - 简单 CRUD 优先复用生成 model 方法。
@@ -48,6 +109,81 @@ sh genModelSql.sh
 - 将真实数据库连接、远程地址或账号写入示例、日志、文档或提交信息。
 
 ## gormx 包约定与陷阱
+
+### Convention: gormx 文件组织
+
+`common/gormx` 按职责拆分源文件，不再集中在一个大文件：
+
+| 文件 | 职责 |
+| --- | --- |
+| `config.go` | `Config` 结构体，`parseLogLevel` |
+| `db.go` | `DB` 包装类型，事务/租户/迁移方法 |
+| `options.go` | `Option` 和 `dbOptions`，`defaultDBOptions` |
+| `open.go` | `Open`、`OpenWithConf`、`OpenWithDialector`、`OpenWithRawDB` |
+| `batch.go` | 批量 CRUD（`BatchInsert`、`BatchUpdateByIds`、`BatchDeleteByIds`） |
+| `batch_tenant.go` | 租户感知批量 CRUD |
+| `delete.go` | `SoftDelete`、`UnscopedDelete`、`UnscopedDeleteWithTenant` |
+| `restore.go` | `Restore`、`RestoreWithTenant`、`hasLegacyDeleteFields` |
+| `hook_helpers.go` | `SkipHooksUpdate`、`SkipHooksCreate` |
+| `tenant_query.go` | `withTenantQuery`（未导出） |
+| `tenant_scope.go` | `TenantScope` 等 scope 函数、`WithTenantContext` |
+
+新增功能前确认职责落到对应文件，不往不相关的文件里塞函数。
+
+### Convention: OpenWithConf 信任 go-zero tag 默认值
+
+`OpenWithConf` 不做程序化默认值兜底。所有默认值由 go-zero config tag（`default=100`、`default=true` 等）在配置加载阶段填入。
+
+```go
+// Wrong — 零值 Config 直接传给 OpenWithConf
+db, _ := gormx.OpenWithConf(gormx.Config{
+    DataSource: dsn,
+}) // MaxIdleConns=0, SkipDefaultTransaction=false, ParameterizedQueries=false
+
+// Correct — 通过 go-zero 加载配置，tag 默认值已生效
+var c config.Config // go-zero 根据 default= 标签自动填充
+db := gormx.MustOpenWithConf(c.DB)
+
+// Correct — 编程式构造使用 Open + Option
+db, _ := gormx.Open(dsn,
+    gormx.WithMaxIdleConns(100),
+    gormx.WithMaxOpenConns(100),
+)
+```
+
+### Convention: LogLevel 必须使用 options 约束
+
+`Config.LogLevel` tag 包含 `options=[silent,error,warn,info]`。go-zero 加载配置时会校验该字段，不在列表内的值会被拒绝，避免静默接受无效日志级别。
+
+```go
+LogLevel string `json:",optional,default=error,options=[silent,error,warn,info]"`
+```
+
+### Convention: TimeMixin 必须包含自动时间标签
+
+新表 `TimeMixin` 和旧表 `LegacyTimeMixin` 都要有 GORM 自动时间标签，否则 `CreatedAt`/`UpdatedAt` 不会自动填充。
+
+```go
+// Correct
+type TimeMixin struct {
+    CreatedAt time.Time `gorm:"type:timestamp(6);autoCreateTime:milli" json:"created_at"`
+    UpdatedAt time.Time `gorm:"type:timestamp(6);autoUpdateTime:milli" json:"updated_at"`
+}
+```
+
+### Convention: Open* 入口函数必须对指针入参做 nil 校验
+
+`OpenWithDialector(nil)` 和 `OpenWithRawDB(nil, ...)` 必须返回明确错误，不能 panic 或绕过校验进入 `Open`。
+
+```go
+// Correct
+func OpenWithDialector(dialector *gorm.Dialector, opts ...Option) (*DB, error) {
+    if dialector == nil {
+        return nil, errors.New("dialector is required")
+    }
+    // ...
+}
+```
 
 ### Don't: 在 GORM Scope 函数中使用 `HasTenantField`
 
@@ -82,6 +218,25 @@ func TenantScope(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 
 > 传统软删除模型（`LegacySoftDeleteMixin`——`del_state`/`delete_time`）不受影响，因为 `gorm.io/plugin/soft_delete` 的机制不同。
 
+### Gotcha: 软删后再写回需先 Restore
+
+旧表模型（`LegacyBaseModel`，含 `delete_time/del_state`）伪删除后，如果再执行 `UpdateOrCreate`，普通 scoped 查询看不到该记录，可能撞唯一索引。应先调用 `gormx.Restore` 恢复，再走更新逻辑。
+
+```go
+// Correct — restore before upsert
+for _, sub := range topo.SubDevices {
+    if err := gormx.Restore(tx.DB, &DjiDeviceTopo{},
+        "gateway_sn = ? AND sub_device_sn = ?", gatewaySn, sub.SN); err != nil {
+        return err
+    }
+    if err := gormx.UpdateOrCreate(ctx, tx, &DjiDeviceTopo{}, where, &topoRecord, updateData); err != nil {
+        return err
+    }
+}
+```
+
+`Restore` 内部会根据模型判断是旧表（清空 `delete_time/del_state`）还是新表（清空 `deleted_at`），并走正常 update callbacks。
+
 ### Gotcha: 批量 `Create` 中 Hook 仅对首条记录生效
 
 GORM 的 `beforeCreateHook` 在 `Create([]T)` 批量插入时只对第一个元素设置 `tenant_id` 和审计字段：
@@ -94,6 +249,24 @@ INSERT INTO model (tenant_id, create_user, ...) VALUES
 ```
 
 在需要完整审计的批量操作场景，应逐条 create 或使用 `BatchInsertWithTenant` 等封装函数。
+
+### Gotcha: OpenTelemetry 注册失败时资源泄露
+
+`Open()` 在 `registerOpenTelemetry` 失败后必须关闭已打开的底层 `sql.DB`，否则连接泄露。
+
+```go
+// Correct — close opened DB on OpenTelemetry registration failure
+RegisterCallbacks(gormDB)
+if err := registerOpenTelemetry(gormDB, options.openTelemetry); err != nil {
+    closeOpenedDB(gormDB, options.rawDB)
+    return nil, err
+}
+return &DB{DB: gormDB}, nil
+```
+
+### Gotcha: 测试 DB 必须关闭连接
+
+`openTestDB` 等测试 helper 返回的 `sql.DB` 不会随进程退出自动清理（SQLite 内存库除外）。必须调用 `t.Cleanup(func() { _ = sqlDB.Close() })`。
 
 ### API 兼容性: `tracing.WithDBName` → `tracing.WithDBSystem`
 
@@ -116,7 +289,7 @@ INSERT INTO model (tenant_id, create_user, ...) VALUES
 2. 最佳实践默认值（按生产推荐开启）— 用户体验好但需文档说明
 3. 必填所有配置 — 强制用户理解每个选项
 
-**Decision**: 选择方案 2，默认值按生产最佳实践配置，同时提供完整注释说明。
+**Decision**: 选择方案 2，默认值通过 go-zero config tag 的 `default=` 表达，不通过程序化兜底。
 
 **Default Configuration**:
 
@@ -133,7 +306,7 @@ type Config struct {
 
     // 日志：Error 级别 + 参数脱敏
     SlowThreshold             time.Duration `json:",optional,default=200ms"`
-    LogLevel                  string        `json:",optional,default=error"`
+    LogLevel                  string        `json:",optional,default=error,options=[silent,error,warn,info]"`
     ParameterizedQueries      bool          `json:",optional,default=true"`   // 安全：日志不暴露参数值
     IgnoreRecordNotFoundError bool          `json:",optional,default=false"`
 
@@ -174,11 +347,16 @@ db := gormx.MustOpenWithConf(gormx.Config{
     SkipDefaultTransaction: false, // 性能损失：每条写操作多 2 次 DB 往返
 })
 
-// Correct — 只填 DataSource，其他用默认值
+// Correct — 只填 DataSource，其他用 go-zero tag 默认值
 db := gormx.MustOpenWithConf(gormx.Config{
     DataSource: dsn,
-    // 其他配置自动使用生产最佳实践默认值
 })
+
+// Correct — 编程式构造使用 Open + Option
+db, _ := gormx.Open(dsn,
+    gormx.WithMaxIdleConns(50),
+    gormx.WithLogger(mylogger),
+)
 ```
 
 **Extensibility**:

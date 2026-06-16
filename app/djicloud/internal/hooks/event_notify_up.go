@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"zero-service/app/djicloud/model/gormmodel"
@@ -24,6 +25,10 @@ func NewFlightTaskProgressHandler(db *gormx.DB) func(ctx context.Context, gatewa
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] flighttask_progress: sn=%s flight_id=%s state=%d(%s) waypoint=%d media_count=%d percent=%f",
 			gatewaySn, ext.FlightID, ext.WaylineMissionState, waylineMissionStateText(ext.WaylineMissionState), ext.CurrentWaypointIndex, ext.MediaCount, progress.Percent)
+		trackID := sql.NullString{String: ext.TrackID, Valid: ext.TrackID != ""}
+		if trackID.Valid {
+			logx.WithContext(ctx).Errorf("[dji-cloud] flighttask_progress with invalid track_id: sn=%s flight_id=%s track_id is null", gatewaySn, ext.FlightID)
+		}
 		record := gormmodel.DjiDockFlightTask{
 			FlightId:             ext.FlightID,
 			GatewaySn:            gatewaySn,
@@ -33,7 +38,7 @@ func NewFlightTaskProgressHandler(db *gormx.DB) func(ctx context.Context, gatewa
 			CurrentWaypointIndex: ext.CurrentWaypointIndex,
 			MediaCount:           ext.MediaCount,
 			ProgressPercent:      progress.Percent,
-			TrackId:              ext.TrackID,
+			TrackId:              trackID,
 			WaylineId:            ext.WaylineID,
 			BreakPointJSON:       toJSONString(ext.BreakPoint),
 			RawJSON:              toJSONString(data),

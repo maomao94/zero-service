@@ -42,15 +42,15 @@ type DjiDockFlightTask struct {
 	RawJSON    string    `gorm:"column:raw_json;type:jsonb;default:'{}';comment:完整flighttask_progress事件data原始JSON"`
 	ExtJSON    string    `gorm:"column:ext_json;type:jsonb;default:'{}';comment:flighttask_progress.ext原始JSON"`
 
-	Status               string  `gorm:"column:status;type:varchar(64);index;not null;default:'';comment:官方flighttask_progress status字段"`
-	CurrentStep          int     `gorm:"column:current_step;default:0;comment:官方progress.current_step字段"`
-	WaylineMissionState  int     `gorm:"column:wayline_mission_state;default:0;comment:官方ext.wayline_mission_state字段"`
-	CurrentWaypointIndex int     `gorm:"column:current_waypoint_index;default:0;comment:官方ext.current_waypoint_index字段"`
-	MediaCount           int     `gorm:"column:media_count;default:0;comment:官方ext.media_count字段"`
-	ProgressPercent      float64 `gorm:"column:progress_percent;default:0;comment:官方progress.percent字段"`
-	TrackId              string  `gorm:"column:track_id;type:varchar(64);index;not null;default:'';comment:官方ext.track_id字段"`
-	WaylineId            int     `gorm:"column:wayline_id;default:0;comment:官方ext.wayline_id字段"`
-	BreakPointJSON       string  `gorm:"column:break_point_json;type:jsonb;default:'{}';comment:官方ext.break_point原始JSON"`
+	Status               string         `gorm:"column:status;type:varchar(64);index;not null;default:'';comment:官方flighttask_progress status字段"`
+	CurrentStep          int            `gorm:"column:current_step;default:0;comment:官方progress.current_step字段"`
+	WaylineMissionState  int            `gorm:"column:wayline_mission_state;default:0;comment:官方ext.wayline_mission_state字段"`
+	CurrentWaypointIndex int            `gorm:"column:current_waypoint_index;default:0;comment:官方ext.current_waypoint_index字段"`
+	MediaCount           int            `gorm:"column:media_count;default:0;comment:官方ext.media_count字段"`
+	ProgressPercent      float64        `gorm:"column:progress_percent;default:0;comment:官方progress.percent字段"`
+	TrackId              sql.NullString `gorm:"column:track_id;type:varchar(64);index;comment:官方ext.track_id字段"`
+	WaylineId            int            `gorm:"column:wayline_id;default:0;comment:官方ext.wayline_id字段"`
+	BreakPointJSON       string         `gorm:"column:break_point_json;type:jsonb;default:'{}';comment:官方ext.break_point原始JSON"`
 }
 
 func (DjiDockFlightTask) TableName() string { return "dji_dock_flight_task" }
@@ -64,15 +64,15 @@ type DjiDockDeviceFlightTaskState struct {
 	RawJSON    string    `gorm:"column:raw_json;type:jsonb;default:'{}';comment:完整flighttask_progress事件data原始JSON"`
 	ExtJSON    string    `gorm:"column:ext_json;type:jsonb;default:'{}';comment:flighttask_progress.ext原始JSON"`
 
-	Status               string  `gorm:"column:status;type:varchar(64);index;not null;default:'';comment:官方flighttask_progress status字段"`
-	CurrentStep          int     `gorm:"column:current_step;default:0;comment:官方progress.current_step字段"`
-	WaylineMissionState  int     `gorm:"column:wayline_mission_state;default:0;comment:官方ext.wayline_mission_state字段"`
-	CurrentWaypointIndex int     `gorm:"column:current_waypoint_index;default:0;comment:官方ext.current_waypoint_index字段"`
-	MediaCount           int     `gorm:"column:media_count;default:0;comment:官方ext.media_count字段"`
-	ProgressPercent      float64 `gorm:"column:progress_percent;default:0;comment:官方progress.percent字段"`
-	TrackId              string  `gorm:"column:track_id;type:varchar(64);index;not null;default:'';comment:官方ext.track_id字段"`
-	WaylineId            int     `gorm:"column:wayline_id;default:0;comment:官方ext.wayline_id字段"`
-	BreakPointJSON       string  `gorm:"column:break_point_json;type:jsonb;default:'{}';comment:官方ext.break_point原始JSON"`
+	Status               string         `gorm:"column:status;type:varchar(64);index;not null;default:'';comment:官方flighttask_progress status字段"`
+	CurrentStep          int            `gorm:"column:current_step;default:0;comment:官方progress.current_step字段"`
+	WaylineMissionState  int            `gorm:"column:wayline_mission_state;default:0;comment:官方ext.wayline_mission_state字段"`
+	CurrentWaypointIndex int            `gorm:"column:current_waypoint_index;default:0;comment:官方ext.current_waypoint_index字段"`
+	MediaCount           int            `gorm:"column:media_count;default:0;comment:官方ext.media_count字段"`
+	ProgressPercent      float64        `gorm:"column:progress_percent;default:0;comment:官方progress.percent字段"`
+	TrackId              sql.NullString `gorm:"column:track_id;type:varchar(64);index;comment:官方ext.track_id字段"`
+	WaylineId            int            `gorm:"column:wayline_id;default:0;comment:官方ext.wayline_id字段"`
+	BreakPointJSON       string         `gorm:"column:break_point_json;type:jsonb;default:'{}';comment:官方ext.break_point原始JSON"`
 }
 
 func (DjiDockDeviceFlightTaskState) TableName() string {

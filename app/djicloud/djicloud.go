@@ -12,6 +12,8 @@ import (
 	"zero-service/app/djicloud/internal/server"
 	"zero-service/app/djicloud/internal/svc"
 
+	_ "zero-service/common/carbonx"
+
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/zeromicro/go-zero/core/conf"

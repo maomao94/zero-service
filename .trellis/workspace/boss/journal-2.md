@@ -419,3 +419,36 @@ Refactored DRC manager with worker identity (CompareAndDelete), simplified Close
 ### Next Steps
 
 - None - task complete
+
+
+## Session 63: GaussDB nullable track_id contract
+
+**Date**: 2026-06-16
+**Task**: GaussDB nullable track_id contract
+**Branch**: `master`
+
+### Summary
+
+Fixed DJI flight task track_id handling for GaussDB PG empty-string-as-null behavior and captured the executable DB contract in backend specs.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3f26c748` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -31,7 +31,7 @@ func TestOpenWithDialectorCanDisableOpenTelemetry(t *testing.T) {
 	}
 }
 
-func TestOpenWithConfCanDisableOpenTelemetry(t *testing.T) {
+func TestOpenCanDisableOpenTelemetryByConfig(t *testing.T) {
 	dialector := gorm.Dialector(sqlite.Open("file:" + t.Name() + "?mode=memory&cache=shared"))
 	db, err := Open("", func(o *dbOptions) { o.dialector = &dialector }, WithOpenTelemetryConfig(TraceConfig{Disabled: true}))
 	if err != nil {

@@ -500,6 +500,54 @@ func TestStatusUpdateTopoClearsOfflineSubDevices(t *testing.T) {
 	}
 }
 
+func TestStatusUpdateTopoRestoresSoftDeletedSubDevice(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+	softDeleted := gormmodel.DjiDeviceTopo{
+		GatewaySn:     "dock-restore",
+		SubDeviceSn:   "drone-restore",
+		Domain:        gormmodel.DjiDeviceDomainAircraft,
+		SubDeviceType: 60,
+		ThingVersion:  "old",
+	}
+	if err := db.WithContext(ctx).Create(&softDeleted).Error; err != nil {
+		t.Fatalf("create topo error = %v", err)
+	}
+	if err := db.WithContext(ctx).Delete(&softDeleted).Error; err != nil {
+		t.Fatalf("soft delete topo error = %v", err)
+	}
+
+	msg := &djisdk.StatusMessage{
+		Timestamp: 1710000000000,
+		Method:    djisdk.MethodUpdateTopo,
+		Data: map[string]any{
+			"domain":        "3",
+			"type":          119,
+			"sub_type":      0,
+			"device_secret": "secret",
+			"sub_devices": []any{
+				map[string]any{"sn": "drone-restore", "domain": "0", "type": 60, "sub_type": 0, "index": "A", "thing_version": "1.2.3"},
+			},
+		},
+	}
+
+	result := NewStatusHandler(db, nil)(ctx, "dock-restore", msg)
+	if result != djisdk.PlatformResultOK {
+		t.Fatalf("status result = %d, want %d", result, djisdk.PlatformResultOK)
+	}
+
+	var restored struct {
+		SubDeviceIndex string
+		ThingVersion   string
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceTopo{}).Select("sub_device_index", "thing_version").Where("gateway_sn = ? AND sub_device_sn = ?", "dock-restore", "drone-restore").First(&restored).Error; err != nil {
+		t.Fatalf("find restored topo error = %v", err)
+	}
+	if restored.SubDeviceIndex != "A" || restored.ThingVersion != "1.2.3" {
+		t.Fatalf("restored topo index/version = %s/%s, want A/1.2.3", restored.SubDeviceIndex, restored.ThingVersion)
+	}
+}
+
 func TestOsdTelemetryDoesNotOverwriteFirstOnlineAt(t *testing.T) {
 	db := newHookTestDB(t)
 	ctx := context.Background()

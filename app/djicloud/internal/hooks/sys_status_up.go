@@ -63,6 +63,9 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 			}
 
 			for _, sub := range topo.SubDevices {
+				if err := gormx.Restore(tx.DB, &gormmodel.DjiDeviceTopo{}, "gateway_sn = ? AND sub_device_sn = ?", gatewaySn, sub.SN); err != nil {
+					return err
+				}
 				subDomain := sub.Domain
 				topoRecord := gormmodel.DjiDeviceTopo{
 					GatewaySn:        gatewaySn,
