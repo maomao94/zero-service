@@ -12,11 +12,7 @@ func TestQueryPageNormalizesInvalidParams(t *testing.T) {
 	}
 
 	var list []pageTestModel
-	page, err := QueryPage(
-		db.Model(&pageTestModel{}).Order("id ASC"),
-		db.Model(&pageTestModel{}),
-		0, 0, &list,
-	)
+	page, err := QueryPage(db.Model(&pageTestModel{}).Order("id ASC"), 0, 0, &list)
 	if err != nil {
 		t.Fatalf("query page error = %v", err)
 	}
@@ -37,11 +33,7 @@ func TestQueryPageSelectWildcardDoesNotBreakCount(t *testing.T) {
 	}
 
 	var list []pageTestModel
-	page, err := QueryPage(
-		db.Model(&pageTestModel{}).Select("page_test_models.*").Order("id ASC"),
-		db.Model(&pageTestModel{}),
-		1, 1, &list,
-	)
+	page, err := QueryPage(db.Model(&pageTestModel{}).Select("page_test_models.*").Order("id ASC"), 1, 1, &list)
 	if err != nil {
 		t.Fatalf("query page error = %v", err)
 	}
@@ -60,11 +52,7 @@ func TestQueryPageFindSelectPreserved(t *testing.T) {
 	}
 
 	var list []pageTestModel
-	page, err := QueryPage(
-		db.Model(&pageTestModel{}).Select("name"),
-		db.Model(&pageTestModel{}),
-		1, 1, &list,
-	)
+	page, err := QueryPage(db.Model(&pageTestModel{}).Select("name"), 1, 1, &list)
 	if err != nil {
 		t.Fatalf("query page error = %v", err)
 	}
