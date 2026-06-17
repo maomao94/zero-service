@@ -686,3 +686,36 @@ Refactored DRC Manager: 1) delete(m.session) centralized to cleanLoop only (mark
 ### Next Steps
 
 - None - task complete
+
+
+## Session 71: Fix gormx restore delete markers
+
+**Date**: 2026-06-17
+**Task**: Fix gormx restore delete markers
+**Branch**: `master`
+
+### Summary
+
+扩展 gormx.Restore/RestoreWithTenant，按 schema 实际存在的删除标记字段（delete_time/del_state/is_deleted）动态恢复，不再要求两列同时存在。新增 3 个单字段模型测试覆盖 Java 风格 is_deleted 场景。顺手同步 pagination_test.go 签名保持包可编译。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4758ce3c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
