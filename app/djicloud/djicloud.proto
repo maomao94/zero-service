@@ -1556,6 +1556,59 @@ message DeviceTopoInfo {
   string thing_version = 7;
 }
 
+// DeviceTelemetrySnapshotBrief 设备遥测/状态快照摘要。
+// 列表页只返回快照归属和上报时间，完整 raw_json 通过 GetDeviceOsdSnapshot / GetDeviceStateSnapshot 查询。
+message DeviceTelemetrySnapshotBrief {
+  // device_sn 快照对应设备 SN。
+  string device_sn = 1;
+  // gateway_sn 快照上报时关联的网关机巢 SN。
+  string gateway_sn = 2;
+  // reported_at 设备上报时间，毫秒时间戳。
+  int64 reported_at = 3;
+}
+
+// DockFlightTaskStateInfo 机巢当前航线任务状态摘要。
+// 该状态按 gateway_sn 维护；子设备列表项如需展示，表示其所属机巢的当前任务状态。
+message DockFlightTaskStateInfo {
+  // gateway_sn 网关机巢 SN。
+  string gateway_sn = 1;
+  // flight_id 大疆航线任务 ID。
+  string flight_id = 2;
+  // status 官方 flighttask_progress status 字段。
+  string status = 3;
+  // current_step 官方 progress.current_step 字段。
+  int32 current_step = 4;
+  // wayline_mission_state 官方 ext.wayline_mission_state 字段。
+  int32 wayline_mission_state = 5;
+  // current_waypoint_index 官方 ext.current_waypoint_index 字段。
+  int32 current_waypoint_index = 6;
+  // media_count 官方 ext.media_count 字段。
+  int32 media_count = 7;
+  // progress_percent 官方 progress.percent 字段。
+  double progress_percent = 8;
+  // track_id 官方 ext.track_id 字段。
+  string track_id = 9;
+  // wayline_id 官方 ext.wayline_id 字段。
+  int32 wayline_id = 10;
+  // reported_at 设备上报时间，毫秒时间戳。
+  int64 reported_at = 11;
+}
+
+// DeviceListItem 设备列表项。
+// device 保持基础信息；topo/osd/state/flight_task_state 为批量关联补充数据。
+message DeviceListItem {
+  // device 设备基础信息。
+  DeviceInfo device = 1;
+  // topo 与该设备相关的机巢拓扑关系。
+  repeated DeviceTopoInfo topo = 2;
+  // osd 最近一次 OSD 快照摘要，不含 raw_json。
+  DeviceTelemetrySnapshotBrief osd = 3;
+  // state 最近一次 State 快照摘要，不含 raw_json。
+  DeviceTelemetrySnapshotBrief state = 4;
+  // flight_task_state 所属机巢当前航线任务状态摘要。
+  DockFlightTaskStateInfo flight_task_state = 5;
+}
+
 // ListDevicesReq 查询设备列表请求。
 message ListDevicesReq {
   // page 页码，从 1 开始。
@@ -1575,8 +1628,8 @@ message ListDevicesReq {
 message ListDevicesRes {
   // total 当前过滤条件下的总数量，不受 page/page_size 限制。
   int64 total = 1;
-  // list 当前页设备列表。
-  repeated DeviceInfo list = 2;
+  // list 当前页设备列表，包含基础信息和关联快照摘要。
+  repeated DeviceListItem list = 2;
 }
 
 // GetDeviceDetailReq 查询设备详情请求。
