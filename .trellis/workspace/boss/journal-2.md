@@ -652,3 +652,37 @@ Refactored DRC Manager: 1) delete(m.session) centralized to cleanLoop only (mark
 ### Next Steps
 
 - None - task complete
+
+
+## Session 70: 设备遥测数据 SocketIO 推送
+
+**Date**: 2026-06-17
+**Task**: 设备遥测数据 SocketIO 推送
+**Branch**: `master`
+
+### Summary
+
+为 telemetry_up.go 添加 SocketIO 推送功能，OSD 和 State 数据在写入数据库后异步推送到对应房间。更新 docs/socketio.md 添加设备遥测数据推送章节。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `94b3d076` | (see git log) |
+| `170e028b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

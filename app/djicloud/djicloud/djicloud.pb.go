@@ -6754,8 +6754,8 @@ type DeviceTelemetrySnapshotBrief struct {
 	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
 	// gateway_sn 快照上报时关联的网关机巢 SN。
 	GatewaySn string `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
-	// reported_at 设备上报时间，毫秒时间戳。
-	ReportedAt    int64 `protobuf:"varint,3,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	// reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+	ReportedAt    string `protobuf:"bytes,3,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6804,11 +6804,11 @@ func (x *DeviceTelemetrySnapshotBrief) GetGatewaySn() string {
 	return ""
 }
 
-func (x *DeviceTelemetrySnapshotBrief) GetReportedAt() int64 {
+func (x *DeviceTelemetrySnapshotBrief) GetReportedAt() string {
 	if x != nil {
 		return x.ReportedAt
 	}
-	return 0
+	return ""
 }
 
 // DockFlightTaskStateInfo 机巢当前航线任务状态摘要。
@@ -6835,8 +6835,8 @@ type DockFlightTaskStateInfo struct {
 	TrackId string `protobuf:"bytes,9,opt,name=track_id,json=trackId,proto3" json:"track_id,omitempty"`
 	// wayline_id 官方 ext.wayline_id 字段。
 	WaylineId int32 `protobuf:"varint,10,opt,name=wayline_id,json=waylineId,proto3" json:"wayline_id,omitempty"`
-	// reported_at 设备上报时间，毫秒时间戳。
-	ReportedAt    int64 `protobuf:"varint,11,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	// reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+	ReportedAt    string `protobuf:"bytes,11,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6941,11 +6941,11 @@ func (x *DockFlightTaskStateInfo) GetWaylineId() int32 {
 	return 0
 }
 
-func (x *DockFlightTaskStateInfo) GetReportedAt() int64 {
+func (x *DockFlightTaskStateInfo) GetReportedAt() string {
 	if x != nil {
 		return x.ReportedAt
 	}
-	return 0
+	return ""
 }
 
 // DeviceListItem 设备列表项。
@@ -7216,11 +7216,12 @@ func (x *GetDeviceDetailReq) GetDeviceSn() string {
 
 // DeviceOsdSnapshot 设备 OSD 快照。
 type DeviceOsdSnapshot struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DeviceSn      string                 `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
-	GatewaySn     string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
-	RawJson       string                 `protobuf:"bytes,3,opt,name=raw_json,json=rawJson,proto3" json:"raw_json,omitempty"`
-	ReportedAt    int64                  `protobuf:"varint,4,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	DeviceSn  string                 `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	GatewaySn string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	RawJson   string                 `protobuf:"bytes,3,opt,name=raw_json,json=rawJson,proto3" json:"raw_json,omitempty"`
+	// reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+	ReportedAt    string `protobuf:"bytes,4,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7276,11 +7277,11 @@ func (x *DeviceOsdSnapshot) GetRawJson() string {
 	return ""
 }
 
-func (x *DeviceOsdSnapshot) GetReportedAt() int64 {
+func (x *DeviceOsdSnapshot) GetReportedAt() string {
 	if x != nil {
 		return x.ReportedAt
 	}
-	return 0
+	return ""
 }
 
 // DeviceOsdSnapshotRes 设备 OSD 快照响应。
@@ -7330,11 +7331,12 @@ func (x *DeviceOsdSnapshotRes) GetData() *DeviceOsdSnapshot {
 
 // DeviceStateSnapshot 设备 State 快照。
 type DeviceStateSnapshot struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DeviceSn      string                 `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
-	GatewaySn     string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
-	RawJson       string                 `protobuf:"bytes,3,opt,name=raw_json,json=rawJson,proto3" json:"raw_json,omitempty"`
-	ReportedAt    int64                  `protobuf:"varint,4,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	DeviceSn  string                 `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	GatewaySn string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	RawJson   string                 `protobuf:"bytes,3,opt,name=raw_json,json=rawJson,proto3" json:"raw_json,omitempty"`
+	// reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+	ReportedAt    string `protobuf:"bytes,4,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7390,11 +7392,11 @@ func (x *DeviceStateSnapshot) GetRawJson() string {
 	return ""
 }
 
-func (x *DeviceStateSnapshot) GetReportedAt() int64 {
+func (x *DeviceStateSnapshot) GetReportedAt() string {
 	if x != nil {
 		return x.ReportedAt
 	}
-	return 0
+	return ""
 }
 
 // DeviceStateSnapshotRes 设备 State 快照响应。
@@ -7617,10 +7619,11 @@ type HmsAlertInfo struct {
 	Acked          int32                  `protobuf:"varint,11,opt,name=acked,proto3" json:"acked,omitempty"`
 	AckedAt        int64                  `protobuf:"varint,12,opt,name=acked_at,json=ackedAt,proto3" json:"acked_at,omitempty"`
 	AckedBy        string                 `protobuf:"bytes,13,opt,name=acked_by,json=ackedBy,proto3" json:"acked_by,omitempty"`
-	ReportedAt     int64                  `protobuf:"varint,14,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
-	ItemJson       string                 `protobuf:"bytes,15,opt,name=item_json,json=itemJson,proto3" json:"item_json,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+	ReportedAt    string `protobuf:"bytes,14,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	ItemJson      string `protobuf:"bytes,15,opt,name=item_json,json=itemJson,proto3" json:"item_json,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *HmsAlertInfo) Reset() {
@@ -7744,11 +7747,11 @@ func (x *HmsAlertInfo) GetAckedBy() string {
 	return ""
 }
 
-func (x *HmsAlertInfo) GetReportedAt() int64 {
+func (x *HmsAlertInfo) GetReportedAt() string {
 	if x != nil {
 		return x.ReportedAt
 	}
-	return 0
+	return ""
 }
 
 func (x *HmsAlertInfo) GetItemJson() string {
@@ -7766,11 +7769,10 @@ type ListHmsAlertsReq struct {
 	// page_size 每页条数，默认由服务端兜底。
 	PageSize  int64  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	GatewaySn string `protobuf:"bytes,3,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
-	DeviceSn  string `protobuf:"bytes,4,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
 	// level 告警等级过滤，0: 全部，其余值按大疆 HMS level 过滤。
-	Level int32 `protobuf:"varint,5,opt,name=level,proto3" json:"level,omitempty"`
+	Level int32 `protobuf:"varint,4,opt,name=level,proto3" json:"level,omitempty"`
 	// acked_status 确认状态过滤，-1: 全部，0: 未确认，1: 已确认。
-	AckedStatus   int32 `protobuf:"varint,6,opt,name=acked_status,json=ackedStatus,proto3" json:"acked_status,omitempty"`
+	AckedStatus   int32 `protobuf:"varint,5,opt,name=acked_status,json=ackedStatus,proto3" json:"acked_status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7822,13 +7824,6 @@ func (x *ListHmsAlertsReq) GetPageSize() int64 {
 func (x *ListHmsAlertsReq) GetGatewaySn() string {
 	if x != nil {
 		return x.GatewaySn
-	}
-	return ""
-}
-
-func (x *ListHmsAlertsReq) GetDeviceSn() string {
-	if x != nil {
-		return x.DeviceSn
 	}
 	return ""
 }
@@ -7966,15 +7961,16 @@ type FlightTaskProgressInfo struct {
 	MediaCount           int32                  `protobuf:"varint,6,opt,name=media_count,json=mediaCount,proto3" json:"media_count,omitempty"`
 	ProgressPercent      float64                `protobuf:"fixed64,7,opt,name=progress_percent,json=progressPercent,proto3" json:"progress_percent,omitempty"`
 	ExtJson              string                 `protobuf:"bytes,8,opt,name=ext_json,json=extJson,proto3" json:"ext_json,omitempty"`
-	ReportedAt           int64                  `protobuf:"varint,9,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
-	Status               string                 `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
-	CurrentStep          int32                  `protobuf:"varint,11,opt,name=current_step,json=currentStep,proto3" json:"current_step,omitempty"`
-	TrackId              string                 `protobuf:"bytes,12,opt,name=track_id,json=trackId,proto3" json:"track_id,omitempty"`
-	WaylineId            int32                  `protobuf:"varint,13,opt,name=wayline_id,json=waylineId,proto3" json:"wayline_id,omitempty"`
-	BreakPointJson       string                 `protobuf:"bytes,14,opt,name=break_point_json,json=breakPointJson,proto3" json:"break_point_json,omitempty"`
-	RawJson              string                 `protobuf:"bytes,15,opt,name=raw_json,json=rawJson,proto3" json:"raw_json,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+	ReportedAt     string `protobuf:"bytes,9,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	Status         string `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
+	CurrentStep    int32  `protobuf:"varint,11,opt,name=current_step,json=currentStep,proto3" json:"current_step,omitempty"`
+	TrackId        string `protobuf:"bytes,12,opt,name=track_id,json=trackId,proto3" json:"track_id,omitempty"`
+	WaylineId      int32  `protobuf:"varint,13,opt,name=wayline_id,json=waylineId,proto3" json:"wayline_id,omitempty"`
+	BreakPointJson string `protobuf:"bytes,14,opt,name=break_point_json,json=breakPointJson,proto3" json:"break_point_json,omitempty"`
+	RawJson        string `protobuf:"bytes,15,opt,name=raw_json,json=rawJson,proto3" json:"raw_json,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *FlightTaskProgressInfo) Reset() {
@@ -8063,11 +8059,11 @@ func (x *FlightTaskProgressInfo) GetExtJson() string {
 	return ""
 }
 
-func (x *FlightTaskProgressInfo) GetReportedAt() int64 {
+func (x *FlightTaskProgressInfo) GetReportedAt() string {
 	if x != nil {
 		return x.ReportedAt
 	}
-	return 0
+	return ""
 }
 
 func (x *FlightTaskProgressInfo) GetStatus() string {
@@ -8288,8 +8284,8 @@ type FlightTaskProgressLastRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// has_progress 是否已有进度记录。
 	HasProgress bool `protobuf:"varint,1,opt,name=has_progress,json=hasProgress,proto3" json:"has_progress,omitempty"`
-	// reported_at_ms 设备上报时间 Unix 毫秒时间戳。
-	ReportedAtMs int64 `protobuf:"varint,2,opt,name=reported_at_ms,json=reportedAtMs,proto3" json:"reported_at_ms,omitempty"`
+	// reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+	ReportedAt string `protobuf:"bytes,2,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
 	// progress_json flighttask_progress 原始扩展数据 JSON；无记录时为空。
 	ProgressJson  string `protobuf:"bytes,3,opt,name=progress_json,json=progressJson,proto3" json:"progress_json,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -8333,11 +8329,11 @@ func (x *FlightTaskProgressLastRes) GetHasProgress() bool {
 	return false
 }
 
-func (x *FlightTaskProgressLastRes) GetReportedAtMs() int64 {
+func (x *FlightTaskProgressLastRes) GetReportedAt() string {
 	if x != nil {
-		return x.ReportedAtMs
+		return x.ReportedAt
 	}
-	return 0
+	return ""
 }
 
 func (x *FlightTaskProgressLastRes) GetProgressJson() string {
@@ -8397,10 +8393,10 @@ type DrcStatusRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// enabled DRC 模式是否已启用。
 	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	// started_at_millis DRC 模式启用时间，Unix 毫秒时间戳。
-	StartedAtMillis int64 `protobuf:"varint,2,opt,name=started_at_millis,json=startedAtMillis,proto3" json:"started_at_millis,omitempty"`
-	// last_device_heartbeat_millis 最近一次收到设备心跳的时间，Unix 毫秒时间戳。
-	LastDeviceHeartbeatMillis int64 `protobuf:"varint,3,opt,name=last_device_heartbeat_millis,json=lastDeviceHeartbeatMillis,proto3" json:"last_device_heartbeat_millis,omitempty"`
+	// started_at_millis DRC 模式启用时间字符串。
+	StartedAtMillis string `protobuf:"bytes,2,opt,name=started_at_millis,json=startedAtMillis,proto3" json:"started_at_millis,omitempty"`
+	// last_device_heartbeat_millis 最近一次收到设备心跳的时间字符串。
+	LastDeviceHeartbeatMillis string `protobuf:"bytes,3,opt,name=last_device_heartbeat_millis,json=lastDeviceHeartbeatMillis,proto3" json:"last_device_heartbeat_millis,omitempty"`
 	// next_seq 下一个 DRC 指令序号。
 	NextSeq int32 `protobuf:"varint,4,opt,name=next_seq,json=nextSeq,proto3" json:"next_seq,omitempty"`
 	// is_alive 设备是否存活
@@ -8446,18 +8442,18 @@ func (x *DrcStatusRes) GetEnabled() bool {
 	return false
 }
 
-func (x *DrcStatusRes) GetStartedAtMillis() int64 {
+func (x *DrcStatusRes) GetStartedAtMillis() string {
 	if x != nil {
 		return x.StartedAtMillis
 	}
-	return 0
+	return ""
 }
 
-func (x *DrcStatusRes) GetLastDeviceHeartbeatMillis() int64 {
+func (x *DrcStatusRes) GetLastDeviceHeartbeatMillis() string {
 	if x != nil {
 		return x.LastDeviceHeartbeatMillis
 	}
-	return 0
+	return ""
 }
 
 func (x *DrcStatusRes) GetNextSeq() int32 {
@@ -8912,7 +8908,7 @@ const file_djicloud_proto_rawDesc = "" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1d\n" +
 	"\n" +
 	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12\x1f\n" +
-	"\vreported_at\x18\x03 \x01(\x03R\n" +
+	"\vreported_at\x18\x03 \x01(\tR\n" +
 	"reportedAt\"\xa1\x03\n" +
 	"\x17DockFlightTaskStateInfo\x12\x1d\n" +
 	"\n" +
@@ -8929,7 +8925,7 @@ const file_djicloud_proto_rawDesc = "" +
 	"\n" +
 	"wayline_id\x18\n" +
 	" \x01(\x05R\twaylineId\x12\x1f\n" +
-	"\vreported_at\x18\v \x01(\x03R\n" +
+	"\vreported_at\x18\v \x01(\tR\n" +
 	"reportedAt\"\xb3\x02\n" +
 	"\x0eDeviceListItem\x12,\n" +
 	"\x06device\x18\x01 \x01(\v2\x14.djicloud.DeviceInfoR\x06device\x12,\n" +
@@ -8954,7 +8950,7 @@ const file_djicloud_proto_rawDesc = "" +
 	"\n" +
 	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12\x19\n" +
 	"\braw_json\x18\x03 \x01(\tR\arawJson\x12\x1f\n" +
-	"\vreported_at\x18\x04 \x01(\x03R\n" +
+	"\vreported_at\x18\x04 \x01(\tR\n" +
 	"reportedAt\"G\n" +
 	"\x14DeviceOsdSnapshotRes\x12/\n" +
 	"\x04data\x18\x01 \x01(\v2\x1b.djicloud.DeviceOsdSnapshotR\x04data\"\x8d\x01\n" +
@@ -8963,7 +8959,7 @@ const file_djicloud_proto_rawDesc = "" +
 	"\n" +
 	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12\x19\n" +
 	"\braw_json\x18\x03 \x01(\tR\arawJson\x12\x1f\n" +
-	"\vreported_at\x18\x04 \x01(\x03R\n" +
+	"\vreported_at\x18\x04 \x01(\tR\n" +
 	"reportedAt\"K\n" +
 	"\x16DeviceStateSnapshotRes\x121\n" +
 	"\x04data\x18\x01 \x01(\v2\x1d.djicloud.DeviceStateSnapshotR\x04data\"\xd1\x01\n" +
@@ -8994,17 +8990,16 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x05acked\x18\v \x01(\x05R\x05acked\x12\x19\n" +
 	"\backed_at\x18\f \x01(\x03R\aackedAt\x12\x19\n" +
 	"\backed_by\x18\r \x01(\tR\aackedBy\x12\x1f\n" +
-	"\vreported_at\x18\x0e \x01(\x03R\n" +
+	"\vreported_at\x18\x0e \x01(\tR\n" +
 	"reportedAt\x12\x1b\n" +
-	"\titem_json\x18\x0f \x01(\tR\bitemJson\"\xb8\x01\n" +
+	"\titem_json\x18\x0f \x01(\tR\bitemJson\"\x9b\x01\n" +
 	"\x10ListHmsAlertsReq\x12\x12\n" +
 	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x03R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x12\x1b\n" +
-	"\tdevice_sn\x18\x04 \x01(\tR\bdeviceSn\x12\x14\n" +
-	"\x05level\x18\x05 \x01(\x05R\x05level\x12!\n" +
-	"\facked_status\x18\x06 \x01(\x05R\vackedStatus\"T\n" +
+	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x12\x14\n" +
+	"\x05level\x18\x04 \x01(\x05R\x05level\x12!\n" +
+	"\facked_status\x18\x05 \x01(\x05R\vackedStatus\"T\n" +
 	"\x10ListHmsAlertsRes\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x03R\x05total\x12*\n" +
 	"\x04list\x18\x02 \x03(\v2\x16.djicloud.HmsAlertInfoR\x04list\";\n" +
@@ -9022,7 +9017,7 @@ const file_djicloud_proto_rawDesc = "" +
 	"mediaCount\x12)\n" +
 	"\x10progress_percent\x18\a \x01(\x01R\x0fprogressPercent\x12\x19\n" +
 	"\bext_json\x18\b \x01(\tR\aextJson\x12\x1f\n" +
-	"\vreported_at\x18\t \x01(\x03R\n" +
+	"\vreported_at\x18\t \x01(\tR\n" +
 	"reportedAt\x12\x16\n" +
 	"\x06status\x18\n" +
 	" \x01(\tR\x06status\x12!\n" +
@@ -9042,17 +9037,18 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x05total\x18\x01 \x01(\x03R\x05total\x124\n" +
 	"\x04list\x18\x02 \x03(\v2 .djicloud.FlightTaskProgressInfoR\x04list\";\n" +
 	"\x1cGetFlightTaskProgressLastReq\x12\x1b\n" +
-	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\"\x89\x01\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\"\x84\x01\n" +
 	"\x19FlightTaskProgressLastRes\x12!\n" +
-	"\fhas_progress\x18\x01 \x01(\bR\vhasProgress\x12$\n" +
-	"\x0ereported_at_ms\x18\x02 \x01(\x03R\freportedAtMs\x12#\n" +
+	"\fhas_progress\x18\x01 \x01(\bR\vhasProgress\x12\x1f\n" +
+	"\vreported_at\x18\x02 \x01(\tR\n" +
+	"reportedAt\x12#\n" +
 	"\rprogress_json\x18\x03 \x01(\tR\fprogressJson\"0\n" +
 	"\x11QueryDrcStatusReq\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\"\xcb\x01\n" +
 	"\fDrcStatusRes\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12*\n" +
-	"\x11started_at_millis\x18\x02 \x01(\x03R\x0fstartedAtMillis\x12?\n" +
-	"\x1clast_device_heartbeat_millis\x18\x03 \x01(\x03R\x19lastDeviceHeartbeatMillis\x12\x19\n" +
+	"\x11started_at_millis\x18\x02 \x01(\tR\x0fstartedAtMillis\x12?\n" +
+	"\x1clast_device_heartbeat_millis\x18\x03 \x01(\tR\x19lastDeviceHeartbeatMillis\x12\x19\n" +
 	"\bnext_seq\x18\x04 \x01(\x05R\anextSeq\x12\x19\n" +
 	"\bis_alive\x18\x05 \x01(\bR\aisAlive2\xa5:\n" +
 	"\bDjiCloud\x12$\n" +

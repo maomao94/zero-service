@@ -100,6 +100,105 @@ response.TrackId = record.TrackId.String
 - 需要事务时显式说明事务边界、提交条件和回滚条件，不把多个外部系统操作伪装成单数据库事务。
 - Redis/cache 更新要明确缓存 key、TTL、失效策略和数据一致性边界。
 
+## gormx 分页查询
+
+### Convention: 使用 gormx.QueryPage
+
+**What**: 分页查询统一使用 `gormx.QueryPage`，不手动写 Count + Find。
+
+**Why**: `QueryPage` 封装了分页参数归一化、count=0 提前返回、offset/limit 计算，避免重复代码和遗漏边界处理。
+
+**Signature**:
+```go
+func QueryPage[T any](db *gorm.DB, page, pageSize int, dest *[]T) (*PageResult[T], error)
+func QueryPageData[T any](db *gorm.DB, page, pageSize int) ([]T, error)
+```
+
+- `QueryPage` — 完整分页，返回 PageResult（含 total, page, pageSize, totalPages）
+- `QueryPageData` — 仅取数据分页，不计算 total，返回 `[]T`
+
+**Good/Base/Bad Cases**:
+
+- Good: `gormx.QueryPage(db.Order("id DESC"), page, pageSize, &devices)`
+- Base: 手动 Count + Find，但使用 `gormx.NormalizePage` 归一化参数
+- Bad: 手动写 `db.Count().Offset().Limit().Find()`，不处理 count=0
+
+### Convention: 自定义 SQL + JOIN 分页
+
+**What**: 需要 JOIN、表别名、自定义 WHERE 时的分页标准写法。
+
+**Pattern**（以 `dji_hms_alert LEFT JOIN dji_device` 为例）：
+
+```go
+// 1. 建 base：Model 保持 schema 推断，Table 设定别名
+db := l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.DjiHmsAlert{}).
+    Table("dji_hms_alert dha").
+    Joins("LEFT JOIN dji_device dd ON dha.gateway_sn = dd.gateway_sn")
+
+// 2. 条件全部用别名手写 SQL
+if in.GatewaySn != "" {
+    db = db.Where("dd.gateway_sn = ?", in.GatewaySn)
+}
+
+// 3. 分页：WithContext 克隆新 Statement，追加 Order + Select（不影响 countDB）
+queryDB := db.WithContext(l.ctx).
+    Select("dha.*, dd.is_online").
+    Order("dha.reported_at DESC,dha.id DESC")
+countDB := db   // 同一 base，Count 内部自动替换 Select 为 count(*)
+
+pageResult, err := gormx.QueryPage(queryDB, int(in.GetPage()), int(in.GetPageSize()), &alerts)
+```
+
+**Why**: `db.WithContext(l.ctx)` 内部走 `Session({Context: ctx})` → `clone=1` → 创建新的独立 `Statement`。ORDER BY 和自定义 Select 写在新 Statement 上，不影响原 `db`。`Count()` 内部自动替换 Select 为 `count(*)`，无需单独提 countDB。
+
+**注意**:
+- LEFT JOIN 在唯一关联键上不产生重复行，count 无需 GROUP BY
+- 必须显式 `Select("主表.*")`，否则 GORM 会把 JOIN 表的所有列也 SELECT 出来，导致 Scan 异常
+- 别名统一：`Table("dji_hms_alert dha")`（带空格，GORM 输出 `FROM dji_hms_alert dha`，无引号，PG/MySQL/高斯均兼容）
+
+### Gotcha: GORM Statement 共享陷阱
+
+**Symptom**：`db.Order(...)` 后 `countDB := db` 的 count SQL 也带上了 ORDER BY。
+
+**Cause**：GORM 链式调用中，当 `db.clone == 0` 时 `getInstance()` 返回同一 `DB` 对象，共享底层 `Statement`。`Order()` 将 ORDER BY 写入 `Statement.Clauses`，`countDB` 指向的同一 Statement 因此被污染。
+
+```go
+// Wrong — countDB 也被 Order 污染
+db := l.svcCtx.DB.WithContext(l.ctx).Model(&T{})
+queryDB := db.Order("id DESC")  // Statement 共享，Order 写入了 db
+countDB := db                   // 拿到同一个 Statement，含 ORDER BY
+
+// Correct — 用 WithContext 克隆新 Statement
+queryDB := db.WithContext(l.ctx).Order("id DESC")  // 新 Statement，Order 不污染 db
+countDB := db  // 干净的 Statement
+```
+
+**Fix**：用 `db.WithContext(l.ctx)` 替代 `db.Session(&gorm.Session{})` 作为克隆手段。`WithContext` 是 GORM 官方推荐的 Statement 隔离方式，语义清晰。
+
+**Prevention**：凡是对 `db` 链式调用了会修改 Statement 的方法（`Order`、`Select`、`Limit`、`Offset` 等），后续需要 "原始 db" 时，必须先用 `WithContext` 克隆再修改。
+
+**Reference**:
+- `common/gormx/pagination.go`
+- `app/djicloud/internal/logic/listhmsalertslogic.go`
+
+## 时间格式化
+
+### Convention: 使用 carbon 格式化时间
+
+**What**: proto/API 层时间字段统一使用 `string` 类型，格式 `YYYY-MM-DD HH:mm:ss.SSSSSS`，UTC+8 时区。Go 层使用 `carbon.CreateFromStdTime().ToDateTimeMicroString()` 转换。
+
+**Why**: 项目全局默认时区已在 `common/carbonx/carbonx.go` 设置为 `carbon.Shanghai`，统一时间格式避免前端解析歧义。
+
+**Contract**:
+- proto 字段: `string reported_at = N;`
+- 注释: `// reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。`
+- Go 转换: `carbon.CreateFromStdTime(m.ReportedAt).ToDateTimeMicroString()`
+
+**Reference**:
+- `common/carbonx/carbonx.go` - 全局时区配置
+- `app/djicloud/djicloud.proto` - 所有 `reported_at` 字段
+- `app/djicloud/internal/logic/helper.go` - 转换函数示例
+
 ## 常见错误
 
 - 新增功能前未搜索已有 model/client/cache，导致重复封装。

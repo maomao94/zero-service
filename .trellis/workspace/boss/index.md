@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 69
+- **Total Sessions**: 70
 - **Last Active**: 2026-06-17
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~654 | Active |
+| `journal-2.md` | ~688 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 70 | 2026-06-17 | 设备遥测数据 SocketIO 推送 | `94b3d076`, `170e028b` | `master` |
 | 69 | 2026-06-17 | DRC Manager mark-and-sweep refactor + lock ordering fix | `d743d426`, `526b1135` | `master` |
 | 68 | 2026-06-17 | DRC Manager 并发审查与 spec 更新 | `06126419` | `master` |
 | 67 | 2026-06-17 | Record device online refresh affected rows | `4e389d4a` | `master` |

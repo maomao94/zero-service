@@ -25,6 +25,7 @@
 - [antsx-invoke-guidelines.md](./antsx-invoke-guidelines.md) - Antsx 并行任务编排（Invoke/InvokeAllSettled）
 - [antsx-promise-guidelines.md](./antsx-promise-guidelines.md) - Antsx Promise 异步结果容器与组合
 - [antsx-replypool-guidelines.md](./antsx-replypool-guidelines.md) - Antsx ReplyPool 异步请求/应答池
+- [mr-concurrency.md](./mr-concurrency.md) - go-zero mr 并发工具（Finish/MapReduce）分页+并发查询模式
 - [bytex-contracts.md](./bytex-contracts.md) - Modbus 字节/寄存器工具包合约
 
 ### 前端/UI

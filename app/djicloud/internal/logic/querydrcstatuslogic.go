@@ -28,8 +28,8 @@ func (l *QueryDrcStatusLogic) QueryDrcStatus(in *djicloud.QueryDrcStatusReq) (*d
 	enabled, startedAt, lastHb, nextSeq, alive := l.svcCtx.DrcManager.GetStatus(deviceSn)
 	return &djicloud.DrcStatusRes{
 		Enabled:                   enabled,
-		StartedAtMillis:           timeMillis(startedAt),
-		LastDeviceHeartbeatMillis: timeMillis(lastHb),
+		StartedAtMillis:           timeString(startedAt),
+		LastDeviceHeartbeatMillis: timeString(lastHb),
 		NextSeq:                   int32(nextSeq),
 		IsAlive:                   alive,
 	}, nil

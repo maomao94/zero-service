@@ -37,19 +37,34 @@ func NormalizePage(page, pageSize int) (int, int) {
 	return page, pageSize
 }
 
+// QueryPage 分页查询，调用方必须同时提供 count 和查询两个 db。
+func QueryPageData[T any](db *gorm.DB, page, pageSize int) ([]T, error) {
+	page, pageSize = NormalizePage(page, pageSize)
+	offset := (page - 1) * pageSize
+	var dest []T
+	if err := db.Offset(offset).Limit(pageSize).Find(&dest).Error; err != nil {
+		return nil, err
+	}
+	return dest, nil
+}
+
 func QueryPage[T any](db *gorm.DB, page, pageSize int, dest *[]T) (*PageResult[T], error) {
 	page, pageSize = NormalizePage(page, pageSize)
+
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
 		return nil, err
 	}
-
-	offset := (page - 1) * pageSize
-	if err := db.Offset(offset).Limit(pageSize).Find(dest).Error; err != nil {
-		return nil, err
+	if total == 0 {
+		return NewPageResult([]T{}, 0, page, pageSize), nil
 	}
 
-	return NewPageResult(*dest, total, page, pageSize), nil
+	data, err := QueryPageData[T](db, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+	*dest = data
+	return NewPageResult(data, total, page, pageSize), nil
 }
 
 func NewPageResult[T any](data []T, total int64, page, pageSize int) *PageResult[T] {

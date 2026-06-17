@@ -1640,7 +1640,8 @@ message DeviceOsdSnapshot {
   string device_sn = 1;
   string gateway_sn = 2;
   string raw_json = 3;
-  int64 reported_at = 4;
+  // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+  string reported_at = 4;
 }
 
 // DeviceOsdSnapshotRes 设备 OSD 快照响应。
@@ -1653,7 +1654,8 @@ message DeviceStateSnapshot {
   string device_sn = 1;
   string gateway_sn = 2;
   string raw_json = 3;
-  int64 reported_at = 4;
+  // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+  string reported_at = 4;
 }
 
 // DeviceStateSnapshotRes 设备 State 快照响应。
@@ -1690,7 +1692,8 @@ message HmsAlertInfo {
   int32 acked = 11;
   int64 acked_at = 12;
   string acked_by = 13;
-  int64 reported_at = 14;
+  // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+  string reported_at = 14;
   string item_json = 15;
 }
 
@@ -1701,11 +1704,10 @@ message ListHmsAlertsReq {
   // page_size 每页条数，默认由服务端兜底。
   int64 page_size = 2;
   string gateway_sn = 3;
-  string device_sn = 4;
   // level 告警等级过滤，0: 全部，其余值按大疆 HMS level 过滤。
-  int32 level = 5;
+  int32 level = 4;
   // acked_status 确认状态过滤，-1: 全部，0: 未确认，1: 已确认。
-  int32 acked_status = 6;
+  int32 acked_status = 5;
 }
 
 // ListHmsAlertsRes 查询 HMS 告警响应。
@@ -1732,7 +1734,8 @@ message FlightTaskProgressInfo {
   int32 media_count = 6;
   double progress_percent = 7;
   string ext_json = 8;
-  int64 reported_at = 9;
+  // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+  string reported_at = 9;
   string status = 10;
   int32 current_step = 11;
   string track_id = 12;
@@ -1766,8 +1769,8 @@ message GetFlightTaskProgressLastReq { string device_sn = 1; }
 message FlightTaskProgressLastRes {
   // has_progress 是否已有进度记录。
   bool has_progress = 1;
-  // reported_at_ms 设备上报时间 Unix 毫秒时间戳。
-  int64 reported_at_ms = 2;
+  // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+  string reported_at = 2;
   // progress_json flighttask_progress 原始扩展数据 JSON；无记录时为空。
   string progress_json = 3;
 }
@@ -1779,10 +1782,10 @@ message QueryDrcStatusReq { string device_sn = 1; }
 message DrcStatusRes {
   // enabled DRC 模式是否已启用。
   bool enabled = 1;
-  // started_at_millis DRC 模式启用时间，Unix 毫秒时间戳。
-  int64 started_at_millis = 2;
-  // last_device_heartbeat_millis 最近一次收到设备心跳的时间，Unix 毫秒时间戳。
-  int64 last_device_heartbeat_millis = 3;
+  // started_at_millis DRC 模式启用时间字符串。
+  string started_at_millis = 2;
+  // last_device_heartbeat_millis 最近一次收到设备心跳的时间字符串。
+  string last_device_heartbeat_millis = 3;
   // next_seq 下一个 DRC 指令序号。
   int32 next_seq = 4;
   // is_alive 设备是否存活
