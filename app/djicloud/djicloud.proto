@@ -1563,8 +1563,8 @@ message DeviceTelemetrySnapshotBrief {
   string device_sn = 1;
   // gateway_sn 快照上报时关联的网关机巢 SN。
   string gateway_sn = 2;
-  // reported_at 设备上报时间，毫秒时间戳。
-  int64 reported_at = 3;
+  // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+  string reported_at = 3;
 }
 
 // DockFlightTaskStateInfo 机巢当前航线任务状态摘要。
@@ -1590,8 +1590,8 @@ message DockFlightTaskStateInfo {
   string track_id = 9;
   // wayline_id 官方 ext.wayline_id 字段。
   int32 wayline_id = 10;
-  // reported_at 设备上报时间，毫秒时间戳。
-  int64 reported_at = 11;
+  // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+  string reported_at = 11;
 }
 
 // DeviceListItem 设备列表项。
