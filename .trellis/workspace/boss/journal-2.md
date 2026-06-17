@@ -518,3 +518,137 @@ Fixed DJI flight task track_id handling for GaussDB PG empty-string-as-null beha
 ### Next Steps
 
 - None - task complete
+
+
+## Session 66: Optimize DRC Manager locks
+
+**Date**: 2026-06-17
+**Task**: Optimize DRC Manager locks
+**Branch**: `master`
+
+### Summary
+
+Unified State+heartbeatWorker into DeviceSession, fixed lock ordering, optimized cleanup
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `543f096e` | (see git log) |
+| `478a2e1e` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 67: Record device online refresh affected rows
+
+**Date**: 2026-06-17
+**Task**: Record device online refresh affected rows
+**Branch**: `master`
+
+### Summary
+
+Updated device online refresh cron to return and log GORM RowsAffected; verified djicloud svc package tests.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4e389d4a` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 68: DRC Manager 并发审查与 spec 更新
+
+**Date**: 2026-06-17
+**Task**: DRC Manager 并发审查与 spec 更新
+**Branch**: `master`
+
+### Summary
+
+审查 ChatGPT 对 DRC Manager 的 code review，辨别真实问题与误判；修复 OnDeviceHeartbeat TOCTOU 竞态（统一 m.mu.Lock 锁顺序）、重命名 stopHeartbeatWithLocked→cancelHeartbeat、cleanLoop 间隔自适应；更新 drc-concurrency.md 规范反映新设计
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `06126419` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 69: DRC Manager mark-and-sweep refactor + lock ordering fix
+
+**Date**: 2026-06-17
+**Task**: DRC Manager mark-and-sweep refactor + lock ordering fix
+**Branch**: `master`
+
+### Summary
+
+Refactored DRC Manager: 1) delete(m.session) centralized to cleanLoop only (mark-and-sweep); 2) eliminated cross-locking by releasing m.mu.RLock before acquiring session.mu; 3) updated spec with concurrency lessons (anti-pattern: hand-over-hand locking causes priority inversion)
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d743d426` | (see git log) |
+| `526b1135` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

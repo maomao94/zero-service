@@ -2,6 +2,7 @@ package drc
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -39,186 +40,141 @@ func TestNextSeqRequiresAliveState(t *testing.T) {
 	}
 }
 
-func TestHeartbeatCancelDoesNotDisableCurrentSession(t *testing.T) {
-	m := newTestManager(t, time.Second)
-	gatewaySn := "gateway-session"
-
-	if err := m.Enable(context.Background(), gatewaySn, WithMaxTimeout(20*time.Millisecond)); err != nil {
-		t.Fatalf("Enable() first error = %v", err)
-	}
-
-	m.expireSession(gatewaySn, "stale-session")
-
-	if !m.IsAlive(gatewaySn) {
-		t.Fatal("IsAlive() = false, want true after stale session cleanup")
-	}
-}
-
-func TestExpireSessionCacheMissDoesNotDeleteNewerWorker(t *testing.T) {
+func TestExpireSessionDoesNotAffectNewerSession(t *testing.T) {
 	m := newTestManager(t, time.Second)
 	gatewaySn := "gateway-expire-cache-miss"
-	currentCanceled := false
-	currentWorker := &heartbeatWorker{sessionID: "current-session", cancel: func() { currentCanceled = true }}
-	m.workers.Store(gatewaySn, currentWorker)
 
-	m.expireSession(gatewaySn, "old-session")
-
-	if currentCanceled {
-		t.Fatal("expireSession() canceled newer worker after cache miss")
-	}
-	val, ok := m.workers.Load(gatewaySn)
-	if !ok {
-		t.Fatal("expireSession() deleted newer worker after cache miss")
-	}
-	if val != currentWorker {
-		t.Fatalf("workers.Load() = %p, want current worker %p", val, currentWorker)
-	}
-}
-
-func TestHeartbeatWorkerCleanupDoesNotDeleteCurrentWorker(t *testing.T) {
-	m := newTestManager(t, time.Second)
-	gatewaySn := "gateway-worker"
-	oldWorker := &heartbeatWorker{sessionID: "old", cancel: func() {}}
-	currentWorker := &heartbeatWorker{sessionID: "current", cancel: func() {}}
-
-	m.workers.Store(gatewaySn, currentWorker)
-
-	if m.deleteHeartbeatWorkerIfCurrent(gatewaySn, oldWorker) {
-		t.Fatal("deleteHeartbeatWorkerIfCurrent() = true for stale worker, want false")
-	}
-	val, ok := m.workers.Load(gatewaySn)
-	if !ok {
-		t.Fatal("workers.Load() missing current worker after stale cleanup")
-	}
-	if val != currentWorker {
-		t.Fatalf("workers.Load() = %p, want current worker %p", val, currentWorker)
+	// Enable a session
+	if err := m.Enable(context.Background(), gatewaySn); err != nil {
+		t.Fatalf("Enable() error = %v", err)
 	}
 
-	if !m.deleteHeartbeatWorkerIfCurrent(gatewaySn, currentWorker) {
-		t.Fatal("deleteHeartbeatWorkerIfCurrent() = false for current worker, want true")
+	// Get the session
+	m.mu.RLock()
+	session := m.session[gatewaySn]
+	m.mu.RUnlock()
+
+	// Simulate an old session trying to expire
+	m.expireSession(gatewaySn, "old-session-id")
+
+	// Current session should still be alive
+	if !session.Enabled {
+		t.Fatal("expireSession() disabled newer session")
 	}
 }
 
-func TestCleanupHeartbeatWorkerKeepsAliveWorker(t *testing.T) {
+func TestCleanupExpiredStatesKeepsAliveState(t *testing.T) {
 	m := newTestManager(t, time.Second)
 	gatewaySn := "gateway-alive"
-	now := time.Now()
-	canceled := false
-	worker := &heartbeatWorker{sessionID: "alive-session", cancel: func() { canceled = true }}
-	state := &State{
-		GatewaySn:           gatewaySn,
-		Enabled:             true,
-		SessionID:           worker.sessionID,
-		StartedAt:           now,
-		LastDeviceHeartbeat: now,
+	session := &DeviceSession{
+		GatewaySn: gatewaySn,
+		Enabled:   true,
+		SessionID: "alive-session",
+		StartedAt: time.Now(),
 	}
-	m.cache.Set(gatewaySn, state)
-	m.workers.Store(gatewaySn, worker)
+	session.UpdateHeartbeat()
 
-	m.cleanupHeartbeatWorker(gatewaySn, worker, now)
+	m.mu.Lock()
+	m.session[gatewaySn] = session
+	m.mu.Unlock()
 
-	if canceled {
-		t.Fatal("cleanupHeartbeatWorker() canceled alive worker")
-	}
-	if _, ok := m.workers.Load(gatewaySn); !ok {
-		t.Fatal("cleanupHeartbeatWorker() deleted alive worker")
+	m.cleanupExpiredStates()
+
+	m.mu.RLock()
+	_, ok := m.session[gatewaySn]
+	m.mu.RUnlock()
+	if !ok {
+		t.Fatal("cleanupExpiredStates() removed alive session")
 	}
 }
 
-func TestCleanupHeartbeatWorkerRemovesExpiredWorker(t *testing.T) {
+func TestCleanupExpiredStatesRemovesExpiredState(t *testing.T) {
 	m := newTestManager(t, 30*time.Millisecond)
 	gatewaySn := "gateway-expired"
-	now := time.Now()
-	canceled := false
-	worker := &heartbeatWorker{sessionID: "expired-session", cancel: func() { canceled = true }}
-	state := &State{
-		GatewaySn:           gatewaySn,
-		Enabled:             true,
-		SessionID:           worker.sessionID,
-		StartedAt:           now.Add(-time.Second),
-		LastDeviceHeartbeat: now.Add(-time.Second),
+	session := &DeviceSession{
+		GatewaySn: gatewaySn,
+		Enabled:   true,
+		SessionID: "expired-session",
+		StartedAt: time.Now().Add(-time.Second),
 	}
-	m.cache.Set(gatewaySn, state)
-	m.workers.Store(gatewaySn, worker)
+	// 设置心跳为 1 秒前，已经超过 30ms 的超时时间
+	session.lastHeartbeat.Store(time.Now().Add(-time.Second).UnixMilli())
 
-	m.cleanupHeartbeatWorker(gatewaySn, worker, now)
+	m.mu.Lock()
+	m.session[gatewaySn] = session
+	m.mu.Unlock()
 
-	if !canceled {
-		t.Fatal("cleanupHeartbeatWorker() did not cancel expired worker")
-	}
-	if _, ok := m.workers.Load(gatewaySn); ok {
-		t.Fatal("cleanupHeartbeatWorker() kept expired worker")
-	}
-	if _, ok := m.cache.Get(gatewaySn); ok {
-		t.Fatal("cleanupHeartbeatWorker() kept expired cache entry")
+	m.cleanupExpiredStates()
+
+	m.mu.RLock()
+	_, ok := m.session[gatewaySn]
+	m.mu.RUnlock()
+	if ok {
+		t.Fatal("cleanupExpiredStates() kept expired session")
 	}
 }
 
-func TestCleanupHeartbeatWorkerRemovesDisabledCacheEntry(t *testing.T) {
+func TestCleanupExpiredStatesRemovesDisabledState(t *testing.T) {
 	m := newTestManager(t, time.Second)
 	gatewaySn := "gateway-disabled"
-	now := time.Now()
-	canceled := false
-	worker := &heartbeatWorker{sessionID: "disabled-session", cancel: func() { canceled = true }}
-	state := &State{
-		GatewaySn:           gatewaySn,
-		Enabled:             false,
-		SessionID:           worker.sessionID,
-		StartedAt:           now,
-		LastDeviceHeartbeat: now,
+	session := &DeviceSession{
+		GatewaySn: gatewaySn,
+		Enabled:   false,
+		SessionID: "disabled-session",
+		StartedAt: time.Now(),
 	}
-	m.cache.Set(gatewaySn, state)
-	m.workers.Store(gatewaySn, worker)
+	session.UpdateHeartbeat()
 
-	m.cleanupHeartbeatWorker(gatewaySn, worker, now)
+	m.mu.Lock()
+	m.session[gatewaySn] = session
+	m.mu.Unlock()
 
-	if !canceled {
-		t.Fatal("cleanupHeartbeatWorker() did not cancel disabled worker")
-	}
-	if _, ok := m.workers.Load(gatewaySn); ok {
-		t.Fatal("cleanupHeartbeatWorker() kept disabled worker")
-	}
-	if _, ok := m.cache.Get(gatewaySn); ok {
-		t.Fatal("cleanupHeartbeatWorker() kept disabled cache entry")
+	m.cleanupExpiredStates()
+
+	m.mu.RLock()
+	_, ok := m.session[gatewaySn]
+	m.mu.RUnlock()
+	if ok {
+		t.Fatal("cleanupExpiredStates() kept disabled session")
 	}
 }
 
-func TestCleanupHeartbeatWorkerDoesNotCancelNewerWorker(t *testing.T) {
-	m := newTestManager(t, time.Second)
-	gatewaySn := "gateway-newer"
-	now := time.Now()
-	oldCanceled := false
-	currentCanceled := false
-	oldWorker := &heartbeatWorker{sessionID: "old-session", cancel: func() { oldCanceled = true }}
-	currentWorker := &heartbeatWorker{sessionID: "current-session", cancel: func() { currentCanceled = true }}
-	state := &State{
-		GatewaySn:           gatewaySn,
-		Enabled:             true,
-		SessionID:           currentWorker.sessionID,
-		StartedAt:           now,
-		LastDeviceHeartbeat: now,
+func TestCleanupExpiredStatesFiresExpiredHook(t *testing.T) {
+	expired := make(chan string, 1)
+	m := NewManager(nil, config.DrcConfig{
+		HeartbeatInterval: time.Hour,
+		HeartbeatTimeout:  30 * time.Millisecond,
+	}, WithOnSessionExpired(func(_, sessionID, reason string) {
+		expired <- sessionID + ":" + reason
+	}))
+	t.Cleanup(m.Close)
+	gatewaySn := "gateway-expired-hook"
+	session := &DeviceSession{
+		GatewaySn: gatewaySn,
+		Enabled:   true,
+		SessionID: "expired-session",
+		StartedAt: time.Now().Add(-time.Second),
 	}
-	m.cache.Set(gatewaySn, state)
-	m.workers.Store(gatewaySn, currentWorker)
+	session.lastHeartbeat.Store(time.Now().Add(-time.Second).UnixMilli())
 
-	m.cleanupHeartbeatWorker(gatewaySn, oldWorker, now)
+	m.mu.Lock()
+	m.session[gatewaySn] = session
+	m.mu.Unlock()
 
-	if !oldCanceled {
-		t.Fatal("cleanupHeartbeatWorker() did not cancel stale worker")
-	}
-	if currentCanceled {
-		t.Fatal("cleanupHeartbeatWorker() canceled newer worker")
-	}
-	val, ok := m.workers.Load(gatewaySn)
-	if !ok {
-		t.Fatal("cleanupHeartbeatWorker() deleted newer worker")
-	}
-	if val != currentWorker {
-		t.Fatalf("workers.Load() = %p, want current worker %p", val, currentWorker)
+	m.cleanupExpiredStates()
+
+	select {
+	case got := <-expired:
+		want := "expired-session:heartbeat_timeout"
+		if got != want {
+			t.Fatalf("expired hook = %q, want %q", got, want)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("expired hook was not called")
 	}
 }
 
-func TestCleanupHeartbeatWorkerFiresExpiredHookForCacheMiss(t *testing.T) {
+func TestCleanupExpiredStatesDoesNotFireHookForDisabledState(t *testing.T) {
 	expired := make(chan string, 1)
 	m := NewManager(nil, config.DrcConfig{
 		HeartbeatInterval: time.Hour,
@@ -227,19 +183,128 @@ func TestCleanupHeartbeatWorkerFiresExpiredHookForCacheMiss(t *testing.T) {
 		expired <- sessionID + ":" + reason
 	}))
 	t.Cleanup(m.Close)
-	gatewaySn := "gateway-cache-miss"
-	worker := &heartbeatWorker{sessionID: "missing-session", cancel: func() {}}
-	m.workers.Store(gatewaySn, worker)
+	gatewaySn := "gateway-disabled-hook"
+	session := &DeviceSession{
+		GatewaySn: gatewaySn,
+		Enabled:   false,
+		SessionID: "disabled-session",
+		StartedAt: time.Now(),
+	}
+	session.UpdateHeartbeat()
 
-	m.cleanupHeartbeatWorker(gatewaySn, worker, time.Now())
+	m.mu.Lock()
+	m.session[gatewaySn] = session
+	m.mu.Unlock()
+
+	m.cleanupExpiredStates()
 
 	select {
 	case got := <-expired:
-		want := "missing-session:heartbeat_timeout"
-		if got != want {
-			t.Fatalf("expired hook = %q, want %q", got, want)
-		}
-	case <-time.After(time.Second):
-		t.Fatal("expired hook was not called")
+		t.Fatalf("expired hook was called for disabled session: %q", got)
+	case <-time.After(100 * time.Millisecond):
+		// expected: disabled session does not trigger expired hook
 	}
+}
+
+func TestDisableStopsHeartbeatGoroutineImmediately(t *testing.T) {
+	m := newTestManager(t, time.Second)
+	gatewaySn := "gateway-disable-stop"
+
+	if err := m.Enable(context.Background(), gatewaySn); err != nil {
+		t.Fatalf("Enable() error = %v", err)
+	}
+
+	m.mu.RLock()
+	session := m.session[gatewaySn]
+	m.mu.RUnlock()
+
+	session.mu.Lock()
+	cancel := session.heartbeatCancel
+	session.mu.Unlock()
+	if cancel == nil {
+		t.Fatal("heartbeatCancel should be set after Enable")
+	}
+
+	if err := m.Disable(context.Background(), gatewaySn); err != nil {
+		t.Fatalf("Disable() error = %v", err)
+	}
+
+	session.mu.Lock()
+	cancelAfter := session.heartbeatCancel
+	session.mu.Unlock()
+	if cancelAfter != nil {
+		t.Fatal("heartbeatCancel should be nil after Disable")
+	}
+}
+
+func TestConcurrentDisableAndOnDeviceHeartbeat(t *testing.T) {
+	m := newTestManager(t, time.Second)
+	gatewaySn := "gateway-concurrent"
+
+	if err := m.Enable(context.Background(), gatewaySn); err != nil {
+		t.Fatalf("Enable() error = %v", err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 100; i++ {
+			m.OnDeviceHeartbeat(context.Background(), gatewaySn)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		time.Sleep(time.Millisecond)
+		_ = m.Disable(context.Background(), gatewaySn)
+	}()
+
+	wg.Wait()
+
+	m.mu.RLock()
+	session, ok := m.session[gatewaySn]
+	m.mu.RUnlock()
+	if ok {
+		session.mu.Lock()
+		alive := session.IsAlive(m.config.HeartbeatTimeout)
+		session.mu.Unlock()
+		if alive {
+			t.Fatal("session should not be alive after Disable")
+		}
+	}
+}
+
+func TestConcurrentEnableDisableOnDeviceHeartbeat(t *testing.T) {
+	m := newTestManager(t, time.Second)
+	gatewaySn := "gateway-stress"
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 50; i++ {
+			_ = m.Enable(context.Background(), gatewaySn)
+			time.Sleep(time.Millisecond)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 50; i++ {
+			_ = m.Disable(context.Background(), gatewaySn)
+			time.Sleep(time.Millisecond)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 200; i++ {
+			m.OnDeviceHeartbeat(context.Background(), gatewaySn)
+		}
+	}()
+
+	wg.Wait()
 }

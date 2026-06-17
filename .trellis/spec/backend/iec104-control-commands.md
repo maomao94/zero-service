@@ -1015,7 +1015,8 @@ message PbDevicePointMapping {
 
 - [go-zero-conventions.md](./go-zero-conventions.md) — gen.sh 流程、ServiceContext、Logic 入口
 - [error-handling.md](./error-handling.md) — `tool.NewErrorByPbCodeWrap` 用法
-- [IEC 104 消息对接文档](../../../docs/iec104-protocol.md) — **唯一权威协议文档**（v1.4.0），全量 typeId 对照表、控制命令 gRPC 接口
+- [IEC 104 控制命令文档](../../../docs/iec104-command.md) — 控制命令 gRPC 接口、typeId 对照
+- [IEC 104 消息对接文档](../../../docs/iec104-message.md) — 消息协议、全量 typeId 对照表
 - [IEC 104 数采平台架构](../../../docs/iec104.md) — 服务组件、数据流
 
-> **Warning**: `common/iec104/IEC-104-doc.md` 已废弃删除，不再维护。所有协议文档以 `docs/iec104-protocol.md` 为准。
+> **Warning**: `common/iec104/IEC-104-doc.md` 已废弃删除，不再维护。所有协议文档以 `docs/iec104-command.md` 和 `docs/iec104-message.md` 为准。

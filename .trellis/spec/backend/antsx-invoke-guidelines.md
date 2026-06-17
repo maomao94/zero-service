@@ -15,6 +15,7 @@ func Invoke[T any](ctx context.Context, tasks ...Task[T]) ([]T, error)
 func InvokeWithReactor[T any](ctx context.Context, r *Reactor, tasks ...Task[T]) ([]T, error)
 func InvokeAllSettled[T any](ctx context.Context, tasks ...Task[T]) []SettledResult[T]
 func InvokeAllSettledWithReactor[T any](ctx context.Context, r *Reactor, tasks ...Task[T]) []SettledResult[T]
+func InvokeCallback[T, U any](ctx context.Context, tasks []Task[T], callback func([]T) (U, error)) (U, error)
 
 type Task[T any] struct {
     Name    string
@@ -38,6 +39,7 @@ Contracts:
 | 需要全部成功，并控制并发数 | `InvokeWithReactor` |
 | 需要所有结果，失败互不影响 | `InvokeAllSettled` |
 | 需要所有结果，并控制并发数 | `InvokeAllSettledWithReactor` |
+| 全部成功后聚合转换为另一类型 | `InvokeCallback` |
 | 单任务 | 直接用 `Invoke` 单任务路径，不需要协程池 |
 
 ## 错误和取消语义

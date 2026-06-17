@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 65
-- **Last Active**: 2026-06-16
+- **Total Sessions**: 69
+- **Last Active**: 2026-06-17
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~520 | Active |
+| `journal-2.md` | ~654 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,10 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 69 | 2026-06-17 | DRC Manager mark-and-sweep refactor + lock ordering fix | `d743d426`, `526b1135` | `master` |
+| 68 | 2026-06-17 | DRC Manager 并发审查与 spec 更新 | `06126419` | `master` |
+| 67 | 2026-06-17 | Record device online refresh affected rows | `4e389d4a` | `master` |
+| 66 | 2026-06-17 | Optimize DRC Manager locks | `543f096e`, `478a2e1e` | `master` |
 | 65 | 2026-06-16 | gormx 测试覆盖补充与 Hook/Callback 语义澄清 | `5366a1e4` | `master` |
 | 64 | 2026-06-16 | gormx 包职责整理、bug 修复、spec 更新 | `f20e477a` | `master` |
 | 63 | 2026-06-16 | GaussDB nullable track_id contract | `3f26c748` | `master` |

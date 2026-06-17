@@ -27,7 +27,11 @@ func NewDeviceOnlineRefreshCron(db *gormx.DB) *DeviceOnlineRefreshCron {
 
 func (c *DeviceOnlineRefreshCron) Start() {
 	_, err := c.cron.AddFunc("*/15 * * * * *", func() {
-		c.refreshExpiredDevicesOnline(context.Background(), time.Now())
+		rowsAffected, err := c.refreshExpiredDevicesOnline(context.Background(), time.Now())
+		if err != nil {
+			return
+		}
+		logx.Debugf("[dji-cloud] refresh expired devices online success, rows affected: %d", rowsAffected)
 	})
 	logx.Must(err)
 	c.cron.Start()
@@ -37,12 +41,13 @@ func (c *DeviceOnlineRefreshCron) Stop() {
 	c.cron.Stop()
 }
 
-func (c *DeviceOnlineRefreshCron) refreshExpiredDevicesOnline(ctx context.Context, now time.Time) {
-	err := c.db.WithContext(gormx.WithoutSQLTrace(gormx.WithFullSQL(ctx))).Model(&gormmodel.DjiDevice{}).
+func (c *DeviceOnlineRefreshCron) refreshExpiredDevicesOnline(ctx context.Context, now time.Time) (int64, error) {
+	result := c.db.WithContext(gormx.WithoutSQLTrace(gormx.WithFullSQL(ctx))).Model(&gormmodel.DjiDevice{}).
 		Where("is_online = ? AND last_online_at < ?", true, now.Add(-deviceOnlineTTL)).
-		Updates(map[string]any{"is_online": false, "update_time": now}).Error
-	if err != nil {
-		logx.WithContext(ctx).Errorf("[dji-cloud] refresh expired devices online failed: %v", err)
+		Updates(map[string]any{"is_online": false, "update_time": now})
+	if result.Error != nil {
+		logx.WithContext(ctx).Errorf("[dji-cloud] refresh expired devices online failed: %v", result.Error)
+		return 0, result.Error
 	}
-	logx.Debugf("[dji-cloud] refresh expired devices online success")
+	return result.RowsAffected, nil
 }
