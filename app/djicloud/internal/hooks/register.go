@@ -30,8 +30,8 @@ func registerEventHandlers(c *djisdk.Client, db *gormx.DB) {
 }
 
 func registerTelemetryHandlers(c *djisdk.Client, db *gormx.DB, onlineCache *collection.Cache, drcMgr *drc.Manager, pushCli socketpush.SocketPushClient, disableOsdSQLTrace bool) {
-	c.OnOsd(NewOsdHandler(db, onlineCache, disableOsdSQLTrace))
-	c.OnState(NewStateTelemetryHandler(db, onlineCache))
+	c.OnOsd(NewOsdHandler(db, onlineCache, pushCli, disableOsdSQLTrace))
+	c.OnState(NewStateTelemetryHandler(db, onlineCache, pushCli))
 	c.OnStatus(NewStatusHandler(db, onlineCache))
 	c.OnDrcUp(NewDrcUpHandler(db, drcMgr, pushCli))
 }

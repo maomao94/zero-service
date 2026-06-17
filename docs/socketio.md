@@ -903,7 +903,128 @@ socket.on('drc:heart_beat', (data) => {
 5. **事件顺序**：`drc:session_enabled` 一定在 `drc:heart_beat` 之前到达；`drc:session_disabled` 或 `drc:session_expired` 到达后不会再有 `drc:heart_beat`。
 6. **方向转换**：前端控制设备时通常是 `SocketIO __up__ 或业务接口 -> djicloud -> DJI services/drc/down`；设备状态展示到前端时通常是 `DJI events/osd/state/drc/up -> djicloud -> SocketIO 自定义下行事件`。
 
-## 13. 后端推送 API 参考
+## 13. 设备遥测数据推送
+
+### 13.1 概述
+
+设备遥测数据（OSD 和 State）在写入数据库的同时，会通过 SocketIO 实时推送到前端。前端可以通过加入对应的房间来订阅特定设备的遥测数据流。
+
+### 13.2 房间规则
+
+| 房间名格式 | 说明 |
+|-----------|------|
+| `thing/product/{deviceSn}/osd` | 设备 OSD 遥测数据，`deviceSn` 为设备序列号 |
+| `thing/product/{deviceSn}/state` | 设备 State 状态数据，`deviceSn` 为设备序列号 |
+
+房间命名与 MQTT topic 格式保持一致。前端通过 `__join_room_up__` 事件加入对应设备的房间，退出时通过 `__leave_room_up__` 离开。
+
+### 13.3 事件列表
+
+| 事件名 | 触发时机 | 方向 | 说明 |
+|--------|---------|------|------|
+| `telemetry:osd` | OSD 数据上报（0.5HZ） | 设备 → 云 → 浏览器 | 设备遥测数据（位置、电量、速度等） |
+| `telemetry:state` | State 数据上报（状态变化时） | 设备 → 云 → 浏览器 | 设备状态变更（固件版本、硬件版本等） |
+
+### 13.4 数据结构
+
+#### 13.4.1 telemetry:osd
+
+设备 OSD 遥测数据，Payload 为 DJI OSD 协议的原始 JSON。
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| 原始字段 | - | DJI OSD 协议数据（位置、电量、速度、高度等） |
+
+**示例**：
+```json
+{
+  "event": "telemetry:osd",
+  "payload": {
+    "latitude": 31.2304,
+    "longitude": 121.4737,
+    "altitude": 100.5,
+    "battery": 85,
+    "speed": 5.2,
+    "heading": 180
+  },
+  "reqId": "a1b2c3d4e5f67890abcdef1234567890"
+}
+```
+
+#### 13.4.2 telemetry:state
+
+设备 State 状态数据，Payload 为 DJI State 协议的原始 JSON。
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| 原始字段 | - | DJI State 协议数据（固件版本、硬件版本等） |
+
+**示例**：
+```json
+{
+  "event": "telemetry:state",
+  "payload": {
+    "firmware_version": "v01.02.0300",
+    "hardware_version": "v01.00.0000",
+    "device_sn": "4TADLBC00100XXXX"
+  },
+  "reqId": "b2c3d4e5f6a78901bcdef12345678901"
+}
+```
+
+### 13.5 前端对接示例
+
+```javascript
+// 加入设备 OSD 房间（进入设备监控页面时）
+function joinOsdRoom(deviceSn) {
+  socket.emit('__join_room_up__', {
+    reqId: crypto.randomUUID(),
+    room: `thing/product/${deviceSn}/osd`
+  });
+}
+
+// 离开设备 OSD 房间（退出设备监控页面时）
+function leaveOsdRoom(deviceSn) {
+  socket.emit('__leave_room_up__', {
+    reqId: crypto.randomUUID(),
+    room: `thing/product/${deviceSn}/osd`
+  });
+}
+
+// 加入设备 State 房间
+function joinStateRoom(deviceSn) {
+  socket.emit('__join_room_up__', {
+    reqId: crypto.randomUUID(),
+    room: `thing/product/${deviceSn}/state`
+  });
+}
+
+// 监听设备 OSD 数据
+socket.on('telemetry:osd', (data) => {
+  const message = normalizeSocketPayload(data);
+  console.log('收到设备 OSD 数据:', message.payload);
+  // 更新设备位置、电量、速度等 UI
+  updateDeviceOsdDisplay(message.payload);
+});
+
+// 监听设备 State 数据
+socket.on('telemetry:state', (data) => {
+  const message = normalizeSocketPayload(data);
+  console.log('收到设备 State 数据:', message.payload);
+  // 更新设备固件版本、硬件版本等 UI
+  updateDeviceStateDisplay(message.payload);
+});
+```
+
+### 13.6 注意事项
+
+1. **房间生命周期**：前端应在进入设备监控页面时加入房间，退出时离开。未加入房间则无法收到任何遥测数据。
+2. **数据频率**：OSD 数据频率为 0.5HZ（每 2 秒一次），State 数据在状态变化时上报，前端监听时应避免在每次收到时执行重渲染，建议仅用于数据展示更新。
+3. **房间命名**：房间名格式与 MQTT topic 一致：`thing/product/{deviceSn}/osd` 和 `thing/product/{deviceSn}/state`。
+4. **数据格式**：Payload 为 DJI 协议的原始 JSON，前端需要根据具体字段进行解析和展示。
+5. **方向说明**：遥测数据推送属于下行方向（设备 → 云 → 浏览器），与 DRC 心跳推送模式一致。
+
+## 14. 后端推送 API 参考
 
 后端服务通过 gRPC 调用 socketpush 向前端推送消息，以下为核心接口：
 
@@ -923,10 +1044,11 @@ socket.on('drc:heart_beat', (data) => {
 
 协议定义：[`socketpush.proto`](../socketapp/socketpush/socketpush.proto) | [`socketgtw.proto`](../socketapp/socketgtw/socketgtw.proto)
 
-## 14. 版本历史
+## 15. 版本历史
 
 | 版本  | 日期         | 说明                                        |
 |-----|------------|-------------------------------------------|
+| 2.8 | 2026-06-17 | 添加设备遥测数据推送章节（房间规则、事件列表、数据结构、前端示例） |
 | 2.7 | 2026-05-25 | 补充 up/down 方向锚点、DJI 与 SocketIO 桥接方向、下行解析和推送语义说明；修正 `StatDown.socketId` 字段名 |
 | 2.6 | 2026-05-09 | 添加 DRC 远程控制对接指导（房间规则、事件列表、数据结构、前端示例） |
 | 2.5 | 2026-03-19 | 添加架构概览、服务端配置参考、GenToken 接口说明、后端推送 API 参考 |

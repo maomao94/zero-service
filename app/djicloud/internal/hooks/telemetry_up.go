@@ -6,12 +6,15 @@ import (
 	"zero-service/app/djicloud/model/gormmodel"
 	"zero-service/common/djisdk"
 	"zero-service/common/gormx"
+	"zero-service/common/tool"
+	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/threading"
 )
 
-func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache, disableSQLTrace bool) func(ctx context.Context, deviceSn string, data *djisdk.OsdMessage) {
+func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache, pushCli socketpush.SocketPushClient, disableSQLTrace bool) func(ctx context.Context, deviceSn string, data *djisdk.OsdMessage) {
 	return func(ctx context.Context, deviceSn string, data *djisdk.OsdMessage) {
 		if data == nil {
 			return
@@ -66,10 +69,27 @@ func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache, disableSQLTrace 
 		if err := gormx.UpdateOrCreate(ctx, db, &gormmodel.DjiDeviceOsdSnapshot{}, map[string]any{"device_sn": deviceSn}, &snapshot, snapshotUpdateData); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert osd snapshot failed: %v", err)
 		}
+
+		if pushCli != nil {
+			pushCtx := context.WithoutCancel(ctx)
+			threading.GoSafe(func() {
+				reqId, _ := tool.SimpleUUID()
+				room := "thing/product/" + deviceSn + "/osd"
+				_, err := pushCli.BroadcastRoom(pushCtx, &socketpush.BroadcastRoomReq{
+					ReqId:   reqId,
+					Room:    room,
+					Event:   "telemetry:osd",
+					Payload: toJSONString(data.Data),
+				})
+				if err != nil {
+					logx.WithContext(pushCtx).Errorf("[dji-cloud] socket push osd failed: sn=%s err=%v", deviceSn, err)
+				}
+			})
+		}
 	}
 }
 
-func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache) func(ctx context.Context, deviceSn string, data *djisdk.StateMessage) {
+func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache, pushCli socketpush.SocketPushClient) func(ctx context.Context, deviceSn string, data *djisdk.StateMessage) {
 	return func(ctx context.Context, deviceSn string, data *djisdk.StateMessage) {
 		if data == nil {
 			return
@@ -118,6 +138,23 @@ func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache) func(ctx contex
 		}
 		if err := gormx.UpdateOrCreate(ctx, db, &gormmodel.DjiDeviceStateSnapshot{}, map[string]any{"device_sn": deviceSn}, &snapshot, snapshotUpdateData); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert state snapshot failed: %v", err)
+		}
+
+		if pushCli != nil {
+			pushCtx := context.WithoutCancel(ctx)
+			threading.GoSafe(func() {
+				reqId, _ := tool.SimpleUUID()
+				room := "thing/product/" + deviceSn + "/state"
+				_, err := pushCli.BroadcastRoom(pushCtx, &socketpush.BroadcastRoomReq{
+					ReqId:   reqId,
+					Room:    room,
+					Event:   "telemetry:state",
+					Payload: toJSONString(data.Data),
+				})
+				if err != nil {
+					logx.WithContext(pushCtx).Errorf("[dji-cloud] socket push state failed: sn=%s err=%v", deviceSn, err)
+				}
+			})
 		}
 	}
 }
