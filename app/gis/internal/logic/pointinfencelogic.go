@@ -27,12 +27,16 @@ func NewPointInFenceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Poin
 	}
 }
 
-// 点是否命中电子围栏（单个）
+// PointInFence 判断点是否在单个电子围栏内（射线法 point-in-polygon）。
+// 围栏来源：优先使用请求中的顶点列表，其次按 fence_id 从 store 加载。
 func (l *PointInFenceLogic) PointInFence(in *gis.PointInFenceReq) (*gis.PointInFenceRes, error) {
 	var err error
 	err = ValidatePoints(in.Point)
 	if err != nil {
 		return nil, err
+	}
+	if in.Fence == nil {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "fence")
 	}
 	var polygon orb.Polygon
 	if len(in.Fence.Points) > 0 {
@@ -42,12 +46,12 @@ func (l *PointInFenceLogic) PointInFence(in *gis.PointInFenceReq) (*gis.PointInF
 			return nil, err
 		}
 	} else if in.Fence.Id != "" {
-		// TODO: 从数据库/缓存加载多边形（示例逻辑）
-		// polygon, err = l.loadPolygonByFenceId(in.FenceId)
-		// if err != nil {
-		// 	return nil, err
-		// }
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "FenceId加载逻辑未实现")
+		pts, err := l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, in.Fence.Id)
+		if err != nil {
+			l.Logger.Errorf("加载围栏多边形失败, fenceId=%s, err=%v", in.Fence.Id, err)
+			return nil, err
+		}
+		polygon = orb.Polygon{orb.Ring(pts)}
 	} else {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "Points或FenceId")
 	}

@@ -27,7 +27,7 @@ func NewTransformCoordLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Tr
 	}
 }
 
-// 单个坐标转换
+// TransformCoord 单点坐标系转换（WGS84 / GCJ02 / BD09 互转）。
 func (l *TransformCoordLogic) TransformCoord(in *gis.TransformCoordReq) (*gis.TransformCoordRes, error) {
 	if err := l.validateReq(in); err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "坐标转换请求参数无效")
@@ -72,21 +72,18 @@ func (l *TransformCoordLogic) validateReq(in *gis.TransformCoordReq) error {
 	return nil
 }
 
+// doTransformCoord 执行坐标系转换。
+// 转换链：WGS84 ↔ GCJ02 ↔ BD09。WGS84 与 BD09 之间需中转 GCJ02。
 func doTransformCoord(lon, lat float64, source, target gis.CoordType) (float64, float64) {
 	switch {
-	// WGS84(1) ↔ GCJ02(2)
 	case source == gis.CoordType_COORD_TYPE_WGS84 && target == gis.CoordType_COORD_TYPE_GCJ02:
 		return coordtransform.WGS84toGCJ02(lon, lat)
 	case source == gis.CoordType_COORD_TYPE_GCJ02 && target == gis.CoordType_COORD_TYPE_WGS84:
 		return coordtransform.GCJ02toWGS84(lon, lat)
-
-	// GCJ02(2) ↔ BD09(3)
 	case source == gis.CoordType_COORD_TYPE_GCJ02 && target == gis.CoordType_COORD_TYPE_BD09:
 		return coordtransform.GCJ02toBD09(lon, lat)
 	case source == gis.CoordType_COORD_TYPE_BD09 && target == gis.CoordType_COORD_TYPE_GCJ02:
 		return coordtransform.BD09toGCJ02(lon, lat)
-
-	// WGS84(1) ↔ BD09(3)（中转GCJ02）
 	case source == gis.CoordType_COORD_TYPE_WGS84 && target == gis.CoordType_COORD_TYPE_BD09:
 		gcjLon, gcjLat := coordtransform.WGS84toGCJ02(lon, lat)
 		return coordtransform.GCJ02toBD09(gcjLon, gcjLat)

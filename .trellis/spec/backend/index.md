@@ -22,6 +22,7 @@
 
 ### 领域模块
 
+- [gisx-guidelines.md](./gisx-guidelines.md) - GIS 服务架构、gisx 包边界、坐标系约定、算法说明、FenceStore 模式、常见陷阱
 - [drc-concurrency.md](./drc-concurrency.md) - DRC Manager 锁模型、锁顺序、字段保护、heartbeatCancel 所有权
 - [antsx-invoke-guidelines.md](./antsx-invoke-guidelines.md) - Antsx 并行任务编排（Invoke/InvokeAllSettled）
 - [antsx-promise-guidelines.md](./antsx-promise-guidelines.md) - Antsx Promise 异步结果容器与组合

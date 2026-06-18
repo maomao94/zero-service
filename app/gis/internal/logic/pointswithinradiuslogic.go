@@ -5,6 +5,8 @@ import (
 
 	"zero-service/app/gis/gis"
 	"zero-service/app/gis/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/geo"
@@ -25,11 +27,13 @@ func NewPointsWithinRadiusLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 	}
 }
 
-// 获取半径内的点
+// PointsWithinRadius 筛选出距中心点距离 ≤ radius_meters 的所有点，返回命中点的索引。
 func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusReq) (*gis.PointsWithinRadiusRes, error) {
-	// 校验中心点和点列表
 	if err := ValidatePoints(append([]*gis.Point{in.Center}, in.Points...)...); err != nil {
 		return nil, err
+	}
+	if in.RadiusMeters <= 0 {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "radius_meters必须大于0")
 	}
 	center := orb.Point{in.Center.Lon, in.Center.Lat}
 	hits := make([]int32, 0)
@@ -40,34 +44,6 @@ func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusR
 			hits = append(hits, int32(i))
 		}
 	}
-	//type indexedPoint struct {
-	//	idx int32
-	//	pt  orb.Point
-	//}
-	//hits, err := mr.MapReduce[indexedPoint, int32, []int32](
-	//	func(source chan<- indexedPoint) { // generate
-	//		for i, p := range in.Points {
-	//			source <- indexedPoint{
-	//				idx: int32(i),
-	//				pt:  orb.Point{p.Lon, p.Lat},
-	//			}
-	//		}
-	//	},
-	//	func(p indexedPoint, writer mr.Writer[int32], cancel func(error)) { // mapper
-	//		if geo.Distance(center, p.pt) <= in.RadiusMeters {
-	//			writer.Write(p.idx)
-	//		}
-	//	}, func(pipe <-chan int32, writer mr.Writer[[]int32], cancel func(error)) {
-	//		var result []int32
-	//		for idx := range pipe {
-	//			result = append(result, idx)
-	//		}
-	//		writer.Write(result)
-	//	},
-	//)
-	//if err != nil {
-	//	return nil, err
-	//}
 	return &gis.PointsWithinRadiusRes{
 		HitIndexes: hits,
 	}, nil

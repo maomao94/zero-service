@@ -25,7 +25,8 @@ func NewPointInFencesLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Poi
 	}
 }
 
-// 点是否命中电子围栏（多个围栏）
+// PointInFences 批量判断点是否命中多个围栏，返回所有命中的围栏 ID。
+// 逐围栏执行 point-in-polygon 检测，单个围栏加载失败时跳过并继续。
 func (l *PointInFencesLogic) PointInFences(in *gis.PointInFencesReq) (*gis.PointInFencesRes, error) {
 	if err := ValidatePoints(in.Point); err != nil {
 		return nil, err
@@ -48,8 +49,12 @@ func (l *PointInFencesLogic) PointInFences(in *gis.PointInFencesReq) (*gis.Point
 				continue
 			}
 		} else if fence.Id != "" {
-			// TODO: 从数据库/缓存加载多边形
-			continue
+			pts, err := l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, fence.Id)
+			if err != nil {
+				l.Logger.Errorf("加载围栏多边形失败, fenceId=%s, err=%v", fence.Id, err)
+				continue
+			}
+			polygon = orb.Polygon{orb.Ring(pts)}
 		}
 
 		if planar.PolygonContains(polygon, point) {

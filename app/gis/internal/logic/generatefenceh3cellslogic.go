@@ -28,8 +28,10 @@ func NewGenerateFenceH3CellsLogic(ctx context.Context, svcCtx *svc.ServiceContex
 	}
 }
 
-// 一次性生成围栏 H3 cells（小围栏）
+// GenerateFenceH3Cells 生成覆盖围栏多边形的 H3 六边形索引。
+// 算法：将多边形转换为 H3 GeoPolygon，调用 PolygonToCellsExperimental 获取所有重叠 cell。
 func (l *GenerateFenceH3CellsLogic) GenerateFenceH3Cells(in *gis.GenFenceH3CellsReq) (*gis.GenFenceH3CellsRes, error) {
+	// 获取多边形：优先使用请求中的顶点，其次从 store 按 ID 加载
 	var polygon orb.Polygon
 	var err error
 
@@ -40,17 +42,21 @@ func (l *GenerateFenceH3CellsLogic) GenerateFenceH3Cells(in *gis.GenFenceH3Cells
 			return nil, err
 		}
 	} else if in.FenceId != "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "FenceId加载逻辑未实现")
+		pts, err := l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, in.FenceId)
+		if err != nil {
+			l.Logger.Errorf("加载围栏多边形失败, fenceId=%s, err=%v", in.FenceId, err)
+			return nil, err
+		}
+		polygon = orb.Polygon{orb.Ring(pts)}
 	} else {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "points 或 fence_id")
 	}
 
 	resolution := in.Resolution
-	if resolution <= 0 {
-		resolution = 9 // 使用默认分辨率9
+	if resolution == 0 {
+		resolution = 9
 	}
 
-	// 验证分辨率范围
 	if resolution > 15 {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "H3分辨率必须在0-15之间")
 	}
@@ -71,7 +77,7 @@ func (l *GenerateFenceH3CellsLogic) GenerateFenceH3Cells(in *gis.GenFenceH3Cells
 	for i, c := range cell {
 		cellStrings[i] = c.String()
 	}
-	// 返回结果
+
 	return &gis.GenFenceH3CellsRes{
 		H3Indexes: cellStrings,
 	}, nil

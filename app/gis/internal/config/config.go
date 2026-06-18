@@ -1,6 +1,10 @@
 package config
 
-import "github.com/zeromicro/go-zero/zrpc"
+import (
+	"zero-service/common/gormx"
+
+	"github.com/zeromicro/go-zero/zrpc"
+)
 
 type Config struct {
 	zrpc.RpcServerConf
@@ -13,4 +17,5 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
+	DB gormx.Config `json:",optional"`
 }

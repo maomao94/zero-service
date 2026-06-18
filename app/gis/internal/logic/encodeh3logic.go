@@ -26,16 +26,20 @@ func NewEncodeH3Logic(ctx context.Context, svcCtx *svc.ServiceContext) *EncodeH3
 	}
 }
 
+// EncodeH3 将经纬度编码为指定分辨率的 H3 六边形索引。
 func (l *EncodeH3Logic) EncodeH3(in *gis.EncodeH3Req) (*gis.EncodeH3Res, error) {
-	if in.Point == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "point")
+	if err := ValidatePoints(in.Point); err != nil {
+		return nil, err
 	}
-	if in.Resolution > 15 {
+	resolution := int(in.Resolution)
+	if resolution <= 0 {
+		resolution = 9
+	} else if resolution > 15 {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "h3分辨率必须为0-15")
 	}
 
 	latLng := h3.NewLatLng(in.Point.Lat, in.Point.Lon)
-	cell, err := h3.LatLngToCell(latLng, int(in.Resolution))
+	cell, err := h3.LatLngToCell(latLng, resolution)
 	if err != nil {
 		return nil, err
 	}

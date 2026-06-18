@@ -26,13 +26,16 @@ func NewEncodeGeoHashLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Enc
 	}
 }
 
+// EncodeGeoHash 将经纬度编码为指定精度的 geohash 字符串。
 func (l *EncodeGeoHashLogic) EncodeGeoHash(in *gis.EncodeGeoHashReq) (*gis.EncodeGeoHashRes, error) {
-	if in.Point == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "point")
+	if err := ValidatePoints(in.Point); err != nil {
+		return nil, err
 	}
 	precision := int(in.Precision)
 	if precision <= 0 {
 		precision = 7
+	} else if precision > 12 {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "geohash精度最大为12")
 	}
 	hash := geohash.EncodeWithPrecision(in.Point.Lat, in.Point.Lon, uint(precision))
 	return &gis.EncodeGeoHashRes{

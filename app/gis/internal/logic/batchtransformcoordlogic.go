@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"fmt"
 
 	"zero-service/app/gis/gis"
 
@@ -27,10 +26,14 @@ func NewBatchTransformCoordLogic(ctx context.Context, svcCtx *svc.ServiceContext
 	}
 }
 
-// 批量坐标转换
+// BatchTransformCoord 批量坐标系转换，逐点调用 doTransformCoord。
+// 若 source == target 直接拷贝返回，避免无意义计算。
 func (l *BatchTransformCoordLogic) BatchTransformCoord(in *gis.BatchTransformCoordReq) (*gis.BatchTransformCoordRes, error) {
-	if in.Points == nil || len(in.Points) == 0 {
+	if len(in.Points) == 0 {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "points")
+	}
+	if err := ValidatePoints(in.Points...); err != nil {
+		return nil, err
 	}
 
 	if in.SourceType == in.TargetType {
@@ -48,15 +51,8 @@ func (l *BatchTransformCoordLogic) BatchTransformCoord(in *gis.BatchTransformCoo
 
 	resPoints := make([]*gis.Point, len(in.Points))
 	for i, p := range in.Points {
-		res, err := NewTransformCoordLogic(l.ctx, l.svcCtx).TransformCoord(&gis.TransformCoordReq{
-			Point:      p,
-			SourceType: in.SourceType,
-			TargetType: in.TargetType,
-		})
-		if err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM, err, fmt.Sprintf("坐标转换第 %d 个点失败", i))
-		}
-		resPoints[i] = res.TransformedPoint
+		lon, lat := doTransformCoord(p.Lon, p.Lat, in.SourceType, in.TargetType)
+		resPoints[i] = &gis.Point{Lat: lat, Lon: lon}
 	}
 
 	return &gis.BatchTransformCoordRes{

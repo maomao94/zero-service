@@ -25,9 +25,9 @@ service Gis {
   rpc EncodeH3 (EncodeH3Req) returns (EncodeH3Res);
   // 解码 h3
   rpc DecodeH3 (DecodeH3Req) returns (DecodeH3Res);
-  // 一次性生成围栏 cells（小围栏）
+  // 生成围栏 geohash cells（纯计算）
   rpc GenerateFenceCells (GenFenceCellsReq) returns (GenFenceCellsRes);
-  // 一次性生成围栏 H3 cells（小围栏）
+  // 生成围栏 H3 cells（纯计算）
   rpc GenerateFenceH3Cells (GenFenceH3CellsReq) returns (GenFenceH3CellsRes);
   // 获取半径内的点
   rpc PointsWithinRadius (PointsWithinRadiusReq) returns (PointsWithinRadiusRes);
@@ -47,18 +47,28 @@ service Gis {
   rpc BatchTransformCoord (BatchTransformCoordReq) returns (BatchTransformCoordRes);
   // 计算点集合的最优路径
   rpc RoutePoints(RoutePointsReq) returns (RoutePointsRes);
+  // 新增电子围栏（计算 H3/geohash cells 并持久化）
+  rpc CreateFence (CreateFenceReq) returns (CreateFenceRes);
+  // 更新电子围栏（重新计算 cells）
+  rpc UpdateFence (UpdateFenceReq) returns (UpdateFenceRes);
+  // 删除电子围栏
+  rpc DeleteFence (DeleteFenceReq) returns (DeleteFenceRes);
+  // 围栏列表（分页）
+  rpc ListFences (ListFencesReq) returns (ListFencesRes);
+  // 围栏详情
+  rpc GetFence (GetFenceReq) returns (GetFenceRes);
 }
 
 
 // 常用对象
 message Fence {
   string id = 1;
-  repeated Point points = 2; // polygon
+  repeated Point points = 2;
 }
 
 message Point {
-  double lat = 1; // 纬度
-  double lon = 2; // 经度
+  double lat = 1;
+  double lon = 2;
 }
 
 message PointPair {
@@ -76,7 +86,7 @@ message Res {
 
 message EncodeGeoHashReq {
   Point point = 1;
-  uint32 precision = 2; // 默认 7 max-12
+  uint32 precision = 2;           // 默认 7，max 12
 }
 
 message EncodeGeoHashRes {
@@ -88,60 +98,60 @@ message DecodeGeoHashReq {
 }
 
 message DecodeGeoHashRes {
-  Point point = 1; // 中心点
-  double latMin = 2; // 最小纬度
-  double latMax = 3; // 最大纬度
-  double lonMin = 4; // 最小经度
-  double lonMax = 5; // 最大经度
+  Point point = 1;                // 中心点
+  double lat_min = 2;
+  double lat_max = 3;
+  double lon_min = 4;
+  double lon_max = 5;
 }
 
 message EncodeH3Req {
   Point point = 1;
-  uint32 resolution = 2; // H3 分辨率 0-15, 默认 9
+  uint32 resolution = 2;         // H3 分辨率 0-15，默认 9
 }
 
 message EncodeH3Res {
-  string h3Index = 1;    // 返回 H3 cell string
+  string h3_index = 1;
 }
 
 message DecodeH3Req {
-  string h3Index = 1;
+  string h3_index = 1;
 }
 
 message DecodeH3Res {
-  Point center = 1;                // 六边形中心点
-  repeated Point boundary = 2;     // 六边形顶点
+  Point center = 1;
+  repeated Point boundary = 2;
 }
 
 message GenFenceCellsReq {
-  string fenceId = 1;          // 可选：已有 fence ID
-  repeated Point points = 2;   // polygon 顶点（当 fenceId 不存在时直接传 polygon）
-  uint32 precision = 3;        // geohash 精度，默认 7
-  bool includeNeighbors = 4;   // 是否扩展周边格子（默认 false）
+  string fence_id = 1;            // 可选：已有围栏 ID
+  repeated Point points = 2;     // polygon 顶点
+  uint32 precision = 3;          // geohash 精度，默认 7
+  bool include_neighbors = 4;    // 是否扩展周边格子
 }
 
 message GenFenceCellsRes {
-  repeated string geohashes = 1; // geohash 列表（去重后的前缀）
+  repeated string geohashes = 1;
 }
 
 message GenFenceH3CellsReq {
-  string fenceId = 1;          // 可选：已有 fence ID
-  repeated Point points = 2;   // polygon 顶点（当 fenceId 不存在时直接传 polygon）
-  uint32 resolution = 3;       // H3 分辨率 0-15, 默认 9
+  string fence_id = 1;            // 可选：已有围栏 ID
+  repeated Point points = 2;     // polygon 顶点
+  uint32 resolution = 3;         // H3 分辨率 0-15，默认 9
 }
 
 message GenFenceH3CellsRes {
-  repeated string h3Indexes = 1; // H3 cell 列表（去重）
+  repeated string h3_indexes = 1;
 }
 
 message PointsWithinRadiusReq {
-  Point center = 1;            // 中心点
-  repeated Point points = 2;   // 待检测的点列表
-  double radiusMeters = 3;     // 半径（米）
+  Point center = 1;
+  repeated Point points = 2;
+  double radius_meters = 3;
 }
 
 message PointsWithinRadiusRes {
-  repeated int32 hitIndexes = 1;   // 命中的点在输入列表中的索引
+  repeated int32 hit_indexes = 1;
 }
 
 message PointInFenceReq {
@@ -159,7 +169,7 @@ message PointInFencesReq {
 }
 
 message PointInFencesRes {
-  repeated string hitFenceIds = 1; // 命中的 fence ID 列表
+  repeated string hit_fence_ids = 1;
 }
 
 message DistanceReq {
@@ -185,35 +195,98 @@ message NearbyFencesReq {
 }
 
 message NearbyFencesRes {
-  repeated string fenceIds = 1; // 粗过滤候选
+  repeated string fence_ids = 1;
 }
 
 message TransformCoordReq {
-  Point point = 1;             // 待转换的点
-  CoordType sourceType = 2;   // 源坐标系（必填）
-  CoordType targetType = 3;   // 目标坐标系（必填）
+  Point point = 1;
+  CoordType source_type = 2;
+  CoordType target_type = 3;
 }
 
 message TransformCoordRes {
-  Point transformedPoint = 1; // 转换后的点
+  Point transformed_point = 1;
 }
 
 message BatchTransformCoordReq {
-  repeated Point points = 1;   // 待转换的点列表（必填）
-  CoordType sourceType = 2;   // 源坐标系（必填）
-  CoordType targetType = 3;   // 目标坐标系（必填）
+  repeated Point points = 1;
+  CoordType source_type = 2;
+  CoordType target_type = 3;
 }
 
 message BatchTransformCoordRes {
-  repeated Point transformedPoints = 1; // 转换后的点列表（与输入顺序一致）
+  repeated Point transformed_points = 1;
 }
 
 message RoutePointsReq {
-  Point start = 1;              // 起点
-  repeated Point points = 2;    // 待巡检点列表
+  Point start = 1;
+  repeated Point points = 2;
 }
 
 message RoutePointsRes {
-  repeated int32 visitOrder = 1;  // 按索引顺序访问的点列表
-  double totalDistanceMeters = 2; // 总距离（米）
+  repeated int32 visit_order = 1;
+  double total_distance_meters = 2;
+}
+
+message CreateFenceReq {
+  string name = 1;
+  repeated Point points = 2;     // 多边形顶点（至少 3 个点）
+  uint32 h3_resolution = 3;      // H3 分辨率 0-15，默认 9
+  uint32 geohash_precision = 4;  // geohash 精度 1-12，默认 7
+}
+
+message CreateFenceRes {
+  string fence_id = 1;
+  repeated string h3_cells = 2;
+  repeated string geohashes = 3;
+}
+
+message UpdateFenceReq {
+  string fence_id = 1;
+  string name = 2;
+  repeated Point points = 3;
+  uint32 h3_resolution = 4;
+  uint32 geohash_precision = 5;
+}
+
+message UpdateFenceRes {
+  repeated string h3_cells = 1;
+  repeated string geohashes = 2;
+}
+
+message DeleteFenceReq {
+  string fence_id = 1;
+}
+
+message DeleteFenceRes {}
+
+message ListFencesReq {
+  int64 page = 1;
+  int64 page_size = 2;           // 默认 20，最大 200
+  string name = 3;               // 可选：按名称模糊搜索
+}
+
+message ListFencesRes {
+  repeated FenceDetail list = 1;
+  int64 total = 2;
+}
+
+message GetFenceReq {
+  string fence_id = 1;
+}
+
+message GetFenceRes {
+  FenceDetail fence = 1;
+}
+
+message FenceDetail {
+  string fence_id = 1;
+  string name = 2;
+  repeated Point points = 3;
+  int32 h3_resolution = 4;
+  int32 geohash_precision = 5;
+  repeated string h3_cells = 6;
+  repeated string geohashes = 7;
+  int64 created_at = 8;          // 毫秒时间戳
+  int64 updated_at = 9;          // 毫秒时间戳
 }

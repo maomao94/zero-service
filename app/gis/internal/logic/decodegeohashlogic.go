@@ -26,7 +26,7 @@ func NewDecodeGeoHashLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Dec
 	}
 }
 
-// 解码 geohash -> 经纬度
+// DecodeGeoHash 将 geohash 字符串解码为中心点坐标及边界框（bounding box）。
 func (l *DecodeGeoHashLogic) DecodeGeoHash(in *gis.DecodeGeoHashReq) (*gis.DecodeGeoHashRes, error) {
 	if in.Geohash == "" {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "geohash")

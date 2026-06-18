@@ -8,10 +8,9 @@ import (
 	"github.com/uber/h3-go/v4"
 )
 
-// polygonToH3GeoPolygon 将orb.Polygon转换为H3库需要的GeoPolygon格式
-// 严格按照用户要求处理多边形结构：
-// - ring[0]: 电子围栏外环
-// - ring[1...]: 电子围栏的洞
+// OrbPolygonToH3GeoPolygon 将 orb.Polygon 转换为 H3 PolygonToCells 所需的 GeoPolygon 格式。
+// 多边形结构约定：polygon[0] 为外环，polygon[1:] 为洞（hole）。
+// 外环至少需要 3 个顶点；无效洞（< 3 点）会被静默跳过。
 func OrbPolygonToH3GeoPolygon(polygon orb.Polygon) (h3.GeoPolygon, error) {
 	var geoPolygon h3.GeoPolygon
 
@@ -40,13 +39,15 @@ func OrbPolygonToH3GeoPolygon(polygon orb.Polygon) (h3.GeoPolygon, error) {
 	return geoPolygon, nil
 }
 
-// isPointsEqual 检查两个orb.Point是否相等（用于验证多边形闭合性）
+// IsOrbPointsEqual 判断两个坐标点是否相等（浮点精度容差 1e-9，约 0.1mm）。
+// 主要用于检测 ring 首尾是否闭合。
 func IsOrbPointsEqual(p1, p2 orb.Point) bool {
-	// 考虑浮点精度问题的坐标比较
 	const epsilon = 1e-9
 	return math.Abs(p1[0]-p2[0]) < epsilon && math.Abs(p1[1]-p2[1]) < epsilon
 }
 
+// OrbRingToH3LatLng 将 orb.Ring（经度在前 [lon, lat]）转换为 H3 的 []LatLng（纬度在前）。
+// 若 ring 未闭合（首尾不相等），自动追加首点使其闭合。
 func OrbRingToH3LatLng(ring orb.Ring) []h3.LatLng {
 	if !IsOrbPointsEqual(ring[0], ring[len(ring)-1]) {
 		ring = append(ring, ring[0])

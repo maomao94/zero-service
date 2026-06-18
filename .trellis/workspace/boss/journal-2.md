@@ -719,3 +719,38 @@ Refactored DRC Manager: 1) delete(m.session) centralized to cleanLoop only (mark
 ### Next Steps
 
 - None - task complete
+
+
+## Session 72: GIS 服务完整开发：围栏 CRUD + 空间计算 + 存储层
+
+**Date**: 2026-06-18
+**Task**: GIS 服务完整开发：围栏 CRUD + 空间计算 + 存储层
+**Branch**: `master`
+
+### Summary
+
+完成 app/gis 服务全量开发：proto 定义（snake_case）、围栏 CRUD（CreateFence/UpdateFence/DeleteFence/ListFences/GetFence）、纯计算接口（Distance/H3/Geohash/RoutePoints）、围栏判断（PointInFence/NearbyFences）；新增 common/gisx 通用包（坐标校验、几何相交、FenceStore 接口）；GormFenceStore 实现 + 可选 DB 注入；单测覆盖 gisx 全部工具函数；补充 trellis spec。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `203979bf` | (see git log) |
+| `10451445` | (see git log) |
+| `7190a411` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

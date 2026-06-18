@@ -29,7 +29,7 @@ func NewBatchDistanceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Bat
 	}
 }
 
-// 批量计算两点之间的距离（米）
+// BatchDistance 批量计算点对之间的大圆距离（Haversine 公式，单位：米）。
 func (l *BatchDistanceLogic) BatchDistance(in *gis.BatchDistanceReq) (*gis.BatchDistanceRes, error) {
 	if len(in.Pairs) == 0 {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "pairs")

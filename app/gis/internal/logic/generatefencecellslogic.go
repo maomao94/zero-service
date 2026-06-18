@@ -2,18 +2,18 @@ package logic
 
 import (
 	"context"
-	"fmt"
 	"math"
+
 	"zero-service/app/gis/gis"
 
 	"zero-service/app/gis/internal/svc"
+	"zero-service/common/gisx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
 	"github.com/mmcloughlin/geohash"
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/planar"
-	"github.com/twpayne/go-geom"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -31,14 +31,22 @@ func NewGenerateFenceCellsLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 	}
 }
 
-// 一次性生成围栏 cells（小围栏）
+// GenerateFenceCells 生成覆盖围栏多边形的 geohash cells。
+// 算法流程：
+//  1. 获取多边形（请求传入或从 store 加载）
+//  2. 计算多边形 bbox，以半步长遍历 bbox 内所有候选 geohash
+//  3. 精过滤：geohash 格子中心在多边形内 或 格子与多边形边界相交
+//  4. 可选：扩展命中格子的 8 邻居（用于模糊匹配场景）
 func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *gis.GenFenceCellsReq) (*gis.GenFenceCellsRes, error) {
-	// 默认精度 9
+	// 参数校验与默认值
 	precision := int(in.Precision)
 	if precision <= 0 {
-		precision = 9
+		precision = 7
+	} else if precision > 12 {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "geohash精度最大为12")
 	}
-	// 2. 构建多边形（校验有效性）
+
+	// 构建多边形：优先使用请求中的顶点，其次从 store 按 ID 加载
 	var polygon orb.Polygon
 	var err error
 	if len(in.Points) > 0 {
@@ -48,60 +56,64 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *gis.GenFenceCellsReq) (
 			return nil, err
 		}
 	} else if in.FenceId != "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "FenceId加载逻辑未实现")
+		pts, err := l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, in.FenceId)
+		if err != nil {
+			l.Logger.Errorf("加载围栏多边形失败, fenceId=%s, err=%v", in.FenceId, err)
+			return nil, err
+		}
+		polygon = orb.Polygon{orb.Ring(pts)}
 	} else {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "points 或 fence_id")
 	}
 
-	// 计算多边形边界框（用于遍历范围）
+	// 计算多边形 bbox 作为扫描范围
 	bbox := polygon.Bound()
 	latMin, latMax := bbox.Min.Y(), bbox.Max.Y()
 	lonMin, lonMax := bbox.Min.X(), bbox.Max.X()
 	l.Logger.Debugf("围栏边界框: 纬度[%v,%v], 经度[%v,%v]", latMin, latMax, lonMin, lonMax)
 
-	// 初始化变量与步长计算（步长减半避免遗漏）
-	geohashSet := make(map[string]struct{}, 1024) // 预设容量减少扩容
-	centerLat := (latMin + latMax) / 2            // 用区域中心纬度计算步长更准确
-	latStep, lonStep := geohashCellSize(precision, centerLat)
-	latStep /= 2 // 步长减半，确保覆盖所有可能格子
+	// 计算扫描步长：取格子尺寸的一半，确保不遗漏边界格子
+	geohashSet := make(map[string]struct{}, 1024)
+	centerLat := (latMin + latMax) / 2
+	lonStep, latStep := geohashCellSize(precision, centerLat)
+	latStep /= 2
 	lonStep /= 2
-	epsilon := 1e-8 // 浮点数精度补偿（约0.01米误差）
+	epsilon := 1e-8
 
-	// 遍历边界框生成候选geohash并过滤
+	// 以半步长遍历 bbox，对每个采样点生成 geohash 并判定是否与围栏相交
 	for lat := latMin; lat <= latMax+epsilon; lat += latStep {
 		for lon := lonMin; lon <= lonMax+epsilon; lon += lonStep {
-			// 生成当前点的geohash
 			hash := geohash.EncodeWithPrecision(lat, lon, uint(precision))
 			if len(hash) != precision {
 				l.Logger.Errorf("无效geohash生成: %s（精度不匹配）", hash)
 				continue
 			}
 
-			// 生成geohash格子的多边形（用于相交判断）
+			// 构造 geohash 格子的矩形多边形，用于相交判定
 			box := geohash.BoundingBox(hash)
 			cellOrb := orb.Polygon{
-				orb.Ring{ // 直接构建ring，减少内存分配
-					{box.MinLng, box.MinLat}, // 左下
-					{box.MinLng, box.MaxLat}, // 左上
-					{box.MaxLng, box.MaxLat}, // 右上
-					{box.MaxLng, box.MinLat}, // 右下
-					{box.MinLng, box.MinLat}, // 闭合
+				orb.Ring{
+					{box.MinLng, box.MinLat},
+					{box.MinLng, box.MaxLat},
+					{box.MaxLng, box.MaxLat},
+					{box.MaxLng, box.MinLat},
+					{box.MinLng, box.MinLat},
 				},
 			}
 
-			// 精过滤：格子中心在多边形内 或 格子与多边形相交
+			// 精过滤：格子中心点在多边形内 或 格子边界与多边形相交
 			cLat, cLon := geohash.DecodeCenter(hash)
 			isInside := planar.PolygonContains(polygon, orb.Point{cLon, cLat})
-			isIntersect := PolygonIntersect(polygon, cellOrb)
+			isIntersect := gisx.PolygonIntersect(polygon, cellOrb)
 
 			if isInside || isIntersect {
 				geohashSet[hash] = struct{}{}
 				l.Logger.Debugf("命中有效格子: %s（中心在内部: %v, 相交: %v）", hash, isInside, isIntersect)
 
-				// 8. 处理邻居格子（过滤无效邻居）
+				// 若开启邻居扩展，将命中格子的 8 邻域一并纳入
 				if in.IncludeNeighbors {
 					for _, neighbor := range geohash.Neighbors(hash) {
-						if len(neighbor) == precision { // 确保邻居精度匹配
+						if len(neighbor) == precision {
 							geohashSet[neighbor] = struct{}{}
 						}
 					}
@@ -110,181 +122,71 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *gis.GenFenceCellsReq) (
 		}
 	}
 
-	// 9. 转换结果并返回
 	result := make([]string, 0, len(geohashSet))
 	for h := range geohashSet {
 		result = append(result, h)
 	}
-	l.Logger.Infof("生成围栏geohash完成，共%d个格子", len(result))
 
+	l.Logger.Infof("生成围栏geohash完成，共%d个格子", len(result))
 	return &gis.GenFenceCellsRes{
 		Geohashes: result,
 	}, nil
 }
 
-// 将orb.Polygon转换为go-geom.Polygon（适配库函数）
-func orbToGeomPolygon(orbPoly orb.Polygon) *geom.Polygon {
-	if len(orbPoly) == 0 {
-		return nil
-	}
+// computeGeohashCells 计算覆盖多边形的 geohash cells（不含邻居扩展）。
+// 与 GenerateFenceCells 逻辑一致，用于 CreateFence/UpdateFence 内部调用。
+func computeGeohashCells(polygon orb.Polygon, precision int) []string {
+	bbox := polygon.Bound()
+	latMin, latMax := bbox.Min.Y(), bbox.Max.Y()
+	lonMin, lonMax := bbox.Min.X(), bbox.Max.X()
 
-	// go-geom的多边形格式：外层是多边形，内层是环（每个环是[]Coord）
-	geomRings := make([][]geom.Coord, 0, len(orbPoly))
-	for _, ring := range orbPoly {
-		geomRing := make([]geom.Coord, 0, len(ring))
-		for _, point := range ring {
-			// orb的点格式是 [lon, lat]，与go-geom的[x, y]一致
-			geomRing = append(geomRing, geom.Coord{point[0], point[1]})
-		}
-		geomRings = append(geomRings, geomRing)
-	}
+	geohashSet := make(map[string]struct{}, 1024)
+	centerLat := (latMin + latMax) / 2
+	lonStep, latStep := geohashCellSize(precision, centerLat)
+	latStep /= 2
+	lonStep /= 2
+	epsilon := 1e-8
 
-	// 创建go-geom多边形（使用XY坐标类型，WGS84坐标系）
-	return geom.NewPolygon(geom.XY).MustSetCoords(geomRings)
-}
+	for lat := latMin; lat <= latMax+epsilon; lat += latStep {
+		for lon := lonMin; lon <= lonMax+epsilon; lon += lonStep {
+			hash := geohash.EncodeWithPrecision(lat, lon, uint(precision))
+			if len(hash) != precision {
+				continue
+			}
 
-// 计算geohash格子尺寸（度）
-func geohashCellSize(precision int, lat float64) (widthDeg, heightDeg float64) {
-	latHeights := []float64{5000e3, 1250e3, 156e3, 39.1e3, 4.89e3, 1.22e3, 153, 38.2, 4.77, 1.19, 0.149, 0.0372}
-	lonWidths := []float64{5000e3, 625e3, 156e3, 39.1e3, 4.89e3, 1.22e3, 153, 38.2, 4.77, 1.19, 0.149, 0.0372}
+			box := geohash.BoundingBox(hash)
+			cellOrb := orb.Polygon{
+				orb.Ring{
+					{box.MinLng, box.MinLat},
+					{box.MinLng, box.MaxLat},
+					{box.MaxLng, box.MaxLat},
+					{box.MaxLng, box.MinLat},
+					{box.MinLng, box.MinLat},
+				},
+			}
 
-	latIdx := precision - 1
-	heightDeg = latHeights[latIdx] / 110540                             // 纬度1度≈110.54km
-	widthDeg = lonWidths[latIdx] / (111320 * math.Cos(lat*math.Pi/180)) // 经度1度随纬度变化
+			cLat, cLon := geohash.DecodeCenter(hash)
+			isInside := planar.PolygonContains(polygon, orb.Point{cLon, cLat})
+			isIntersect := gisx.PolygonIntersect(polygon, cellOrb)
 
-	return widthDeg, heightDeg
-}
-
-// ---------------------------------------------
-// 线段相交判断
-// ---------------------------------------------
-
-// SegmentIntersect 判断两条线段是否相交（含端点接触与共线重叠）
-func SegmentIntersect(a1, a2, b1, b2 orb.Point) bool {
-	// 快速排除 --- bbox 不重叠
-	if math.Max(a1.X(), a2.X()) < math.Min(b1.X(), b2.X()) ||
-		math.Max(b1.X(), b2.X()) < math.Min(a1.X(), a2.X()) ||
-		math.Max(a1.Y(), a2.Y()) < math.Min(b1.Y(), b2.Y()) ||
-		math.Max(b1.Y(), b2.Y()) < math.Min(a1.Y(), a2.Y()) {
-		return false
-	}
-
-	// 方向判断（叉积）
-	d1 := cross(b1, b2, a1)
-	d2 := cross(b1, b2, a2)
-	d3 := cross(a1, a2, b1)
-	d4 := cross(a1, a2, b2)
-
-	// 一般相交（跨立相交）
-	if (d1 > 0 && d2 < 0 || d1 < 0 && d2 > 0) &&
-		(d3 > 0 && d4 < 0 || d3 < 0 && d4 > 0) {
-		return true
-	}
-
-	// 特殊情况：共线
-	if d1 == 0 && onSegment(b1, b2, a1) {
-		return true
-	}
-	if d2 == 0 && onSegment(b1, b2, a2) {
-		return true
-	}
-	if d3 == 0 && onSegment(a1, a2, b1) {
-		return true
-	}
-	if d4 == 0 && onSegment(a1, a2, b2) {
-		return true
-	}
-
-	return false
-}
-
-// 叉积 (b - a) × (c - a)
-func cross(a, b, c orb.Point) float64 {
-	return (b.X()-a.X())*(c.Y()-a.Y()) - (b.Y()-a.Y())*(c.X()-a.X())
-}
-
-// onSegment 判断点 c 是否在线段 ab 上（仅在保证共线后使用）
-func onSegment(a, b, c orb.Point) bool {
-	return c.X() >= math.Min(a.X(), b.X()) &&
-		c.X() <= math.Max(a.X(), b.X()) &&
-		c.Y() >= math.Min(a.Y(), b.Y()) &&
-		c.Y() <= math.Max(a.Y(), b.Y())
-}
-
-// ---------------------------------------------
-// Ring 相交判断
-// ---------------------------------------------
-
-// RingIntersect 判断两个 ring 的边界是否相交
-func RingIntersect(r1, r2 orb.Ring) bool {
-	n1 := len(r1)
-	n2 := len(r2)
-
-	for i := 0; i < n1; i++ {
-		a1 := r1[i]
-		a2 := r1[(i+1)%n1]
-
-		for j := 0; j < n2; j++ {
-			b1 := r2[j]
-			b2 := r2[(j+1)%n2]
-
-			if SegmentIntersect(a1, a2, b1, b2) {
-				return true
+			if isInside || isIntersect {
+				geohashSet[hash] = struct{}{}
 			}
 		}
 	}
-	return false
+
+	result := make([]string, 0, len(geohashSet))
+	for h := range geohashSet {
+		result = append(result, h)
+	}
+	return result
 }
 
-// ---------------------------------------------
-// Polygon 相交判断（包含 + 边界）
-// ---------------------------------------------
-
-// PolygonIntersect 判断两个多边形是否相交
-// p1、p2 都为 orb.Polygon（外圈 r[0]）
-func PolygonIntersect(p1, p2 orb.Polygon) bool {
-	r1 := p1[0]
-	r2 := p2[0]
-
-	// 1. 顶点包含（内部包含情况）
-	for _, pt := range r1 {
-		if planar.PolygonContains(p2, pt) {
-			return true
-		}
-	}
-	for _, pt := range r2 {
-		if planar.PolygonContains(p1, pt) {
-			return true
-		}
-	}
-
-	// 2. 边界相交（交叉情况）
-	if RingIntersect(r1, r2) {
-		return true
-	}
-
-	return false
-}
-
-func pbPointToOrbPolygon(points []*gis.Point) (orb.Polygon, error) {
-	if len(points) < 3 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "多边形至少需要3个点")
-	}
-
-	var ring orb.Ring
-	for i, p := range points {
-		if p.Lon < -180 || p.Lon > 180 || p.Lat < -90 || p.Lat > 90 {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, fmt.Sprintf("第 %d 个点经纬度超出有效范围（经度-180~180，纬度-90~90）", i))
-		}
-		ring = append(ring, orb.Point{p.Lon, p.Lat})
-	}
-
-	// 确保首尾闭合，考虑浮点误差
-	first, last := ring[0], ring[len(ring)-1]
-	const epsilon = 1e-8
-	if math.Abs(first[0]-last[0]) > epsilon || math.Abs(first[1]-last[1]) > epsilon {
-		ring = append(ring, first)
-	}
-
-	return orb.Polygon{ring}, nil
+// geohashCellSize 根据 geohash 位划分精确计算单个格子的经纬度跨度（单位：度）。
+// 返回值：widthDeg 为经度方向跨度，heightDeg 为纬度方向跨度。
+func geohashCellSize(precision int, _ float64) (widthDeg, heightDeg float64) {
+	totalBits := precision * 5
+	lonBits := (totalBits + 1) / 2
+	latBits := totalBits / 2
+	return 360 / math.Pow(2, float64(lonBits)), 180 / math.Pow(2, float64(latBits))
 }

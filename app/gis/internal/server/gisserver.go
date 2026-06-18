@@ -52,13 +52,13 @@ func (s *GisServer) DecodeH3(ctx context.Context, in *gis.DecodeH3Req) (*gis.Dec
 	return l.DecodeH3(in)
 }
 
-// 一次性生成围栏 cells（小围栏）
+// 生成围栏 geohash cells（纯计算）
 func (s *GisServer) GenerateFenceCells(ctx context.Context, in *gis.GenFenceCellsReq) (*gis.GenFenceCellsRes, error) {
 	l := logic.NewGenerateFenceCellsLogic(ctx, s.svcCtx)
 	return l.GenerateFenceCells(in)
 }
 
-// 一次性生成围栏 H3 cells（小围栏）
+// 生成围栏 H3 cells（纯计算）
 func (s *GisServer) GenerateFenceH3Cells(ctx context.Context, in *gis.GenFenceH3CellsReq) (*gis.GenFenceH3CellsRes, error) {
 	l := logic.NewGenerateFenceH3CellsLogic(ctx, s.svcCtx)
 	return l.GenerateFenceH3Cells(in)
@@ -116,4 +116,34 @@ func (s *GisServer) BatchTransformCoord(ctx context.Context, in *gis.BatchTransf
 func (s *GisServer) RoutePoints(ctx context.Context, in *gis.RoutePointsReq) (*gis.RoutePointsRes, error) {
 	l := logic.NewRoutePointsLogic(ctx, s.svcCtx)
 	return l.RoutePoints(in)
+}
+
+// 新增电子围栏（计算 H3/geohash cells 并持久化）
+func (s *GisServer) CreateFence(ctx context.Context, in *gis.CreateFenceReq) (*gis.CreateFenceRes, error) {
+	l := logic.NewCreateFenceLogic(ctx, s.svcCtx)
+	return l.CreateFence(in)
+}
+
+// 更新电子围栏（重新计算 cells）
+func (s *GisServer) UpdateFence(ctx context.Context, in *gis.UpdateFenceReq) (*gis.UpdateFenceRes, error) {
+	l := logic.NewUpdateFenceLogic(ctx, s.svcCtx)
+	return l.UpdateFence(in)
+}
+
+// 删除电子围栏
+func (s *GisServer) DeleteFence(ctx context.Context, in *gis.DeleteFenceReq) (*gis.DeleteFenceRes, error) {
+	l := logic.NewDeleteFenceLogic(ctx, s.svcCtx)
+	return l.DeleteFence(in)
+}
+
+// 围栏列表（分页）
+func (s *GisServer) ListFences(ctx context.Context, in *gis.ListFencesReq) (*gis.ListFencesRes, error) {
+	l := logic.NewListFencesLogic(ctx, s.svcCtx)
+	return l.ListFences(in)
+}
+
+// 围栏详情
+func (s *GisServer) GetFence(ctx context.Context, in *gis.GetFenceReq) (*gis.GetFenceRes, error) {
+	l := logic.NewGetFenceLogic(ctx, s.svcCtx)
+	return l.GetFence(in)
 }
