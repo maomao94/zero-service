@@ -67,7 +67,7 @@ err := gormx.BatchUpdateByIds(db.DB, &Device{}, []gormx.Ups{{"id": 1, "name": "n
 Upsert：
 
 ```go
-err := gormx.UpdateOrCreate(ctx, db, &Device{},
+err := gormx.UpdateOrCreate(db.WithContext(ctx), &Device{},
 	map[string]any{"device_sn": sn},
 	&Device{DeviceSn: sn, Name: name},
 	map[string]any{"name": name},
@@ -93,8 +93,8 @@ err := gormx.Restore(db.DB, &Device{}, "id = ?", id)
 租户表使用带 tenant 的版本，防止跨租户恢复或硬删：
 
 ```go
-err := gormx.RestoreWithTenant(ctx, db.DB, &Device{}, "id = ?", id)
-err := gormx.UnscopedDeleteWithTenant(ctx, db.DB, &Device{}, "id = ?", id)
+err := gormx.RestoreWithTenant(db.DB.WithContext(ctx), &Device{}, "id = ?", id)
+err := gormx.UnscopedDeleteWithTenant(db.DB.WithContext(ctx), &Device{}, "id = ?", id)
 ```
 
 ## 日志与追踪

@@ -10,7 +10,8 @@
 - [error-handling.md](./error-handling.md) - 错误处理策略和错误码规范
 - [logging-guidelines.md](./logging-guidelines.md) - 日志级别、格式和上下文传递
 - [quality-guidelines.md](./quality-guidelines.md) - 代码质量和审查标准
-- [database-guidelines.md](./database-guidelines.md) - 数据库操作和 Model 层规范
+- [database-guidelines.md](./database-guidelines.md) - 数据库操作、Model 层规范、常见 GORM 场景
+- [gormx-guidelines.md](./gormx-guidelines.md) - gormx 封装包约定：调用签名、配置默认值、陷阱
 
 ### 通信与协议
 

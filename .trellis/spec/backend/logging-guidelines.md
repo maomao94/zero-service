@@ -86,7 +86,7 @@ DB:
 if disableSQLTrace {
     ctx = gormx.WithoutSQLTrace(ctx)
 }
-if err := gormx.UpdateOrCreate(ctx, db, model, where, createData, updateData); err != nil {
+if err := gormx.UpdateOrCreate(db.WithContext(ctx), model, where, createData, updateData); err != nil {
     logx.WithContext(ctx).Errorf("upsert failed: %v", err)
 }
 ```
