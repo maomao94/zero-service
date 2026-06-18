@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"errors"
 
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/mr"
+	"gorm.io/gorm"
 )
 
 type ListDevicesLogic struct {
@@ -30,10 +32,11 @@ func NewListDevicesLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ListD
 
 // ListDevices 查询设备列表，包含机巢、无人机、负载等设备。
 func (l *ListDevicesLogic) ListDevices(in *djicloud.ListDevicesReq) (*djicloud.ListDevicesRes, error) {
-	db := l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.DjiDevice{})
+	baseDB := l.svcCtx.DB.WithContext(l.ctx)
+	db := baseDB.Model(&gormmodel.DjiDevice{})
 	if in.GatewaySn != "" {
 		db = db.Where("gateway_sn = ? OR device_sn IN (?)", in.GatewaySn,
-			l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.DjiDeviceTopo{}).
+			l.svcCtx.DB.Model(&gormmodel.DjiDeviceTopo{}).
 				Select("sub_device_sn").
 				Where("gateway_sn = ?", in.GatewaySn),
 		)
@@ -64,8 +67,11 @@ func (l *ListDevicesLogic) ListDevices(in *djicloud.ListDevicesReq) (*djicloud.L
 		if err := mr.Finish(
 			func() error {
 				var v gormmodel.DjiDeviceOsdSnapshot
-				if err := l.svcCtx.DB.WithContext(l.ctx).
+				if err := baseDB.
 					Where("device_sn = ?", sn).First(&v).Error; err != nil {
+					if errors.Is(err, gorm.ErrRecordNotFound) {
+						return nil
+					}
 					return err
 				}
 				osd = &v
@@ -73,34 +79,39 @@ func (l *ListDevicesLogic) ListDevices(in *djicloud.ListDevicesReq) (*djicloud.L
 			},
 			func() error {
 				var v gormmodel.DjiDeviceStateSnapshot
-				if err := l.svcCtx.DB.WithContext(l.ctx).
+				if err := baseDB.
 					Where("device_sn = ?", sn).First(&v).Error; err != nil {
+					if errors.Is(err, gorm.ErrRecordNotFound) {
+						return nil
+					}
 					return err
 				}
 				state = &v
 				return nil
 			},
 			func() error {
-				l.svcCtx.DB.WithContext(l.ctx).
+				return baseDB.
 					Where("gateway_sn = ? OR sub_device_sn = ?", sn, sn).
 					Order("update_time DESC, id DESC").
-					Find(&topos)
-				return err
+					Find(&topos).Error
 			},
 			func() error {
 				if gw == "" {
 					return nil
 				}
 				var v gormmodel.DjiDockDeviceFlightTaskState
-				if err := l.svcCtx.DB.WithContext(l.ctx).
+				if err := baseDB.
 					Where("gateway_sn = ?", gw).First(&v).Error; err != nil {
+					if errors.Is(err, gorm.ErrRecordNotFound) {
+						return nil
+					}
 					return err
 				}
 				task = &v
 				return nil
 			},
 		); err != nil {
-			logx.WithContext(l.ctx).Errorf("[list-devices] query associated data failed: sn=%s err=%v", sn, err)
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询设备列表失败")
 		}
 
 		if osd != nil {

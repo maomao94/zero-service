@@ -100,6 +100,64 @@ response.TrackId = record.TrackId.String
 - 需要事务时显式说明事务边界、提交条件和回滚条件，不把多个外部系统操作伪装成单数据库事务。
 - Redis/cache 更新要明确缓存 key、TTL、失效策略和数据一致性边界。
 
+### Scenario: GORM ErrRecordNotFound 按业务场景处理
+
+#### 1. Scope / Trigger
+
+- Trigger: 使用 GORM `First` / `Last` / `Take` 查询单条记录，或列表接口补充 OSD、State、Topo、Task 等关联数据时，必须判断记录缺失是业务错误还是正常缺省。
+
+#### 2. Signatures
+
+- Error sentinel: `gorm.ErrRecordNotFound`。
+- Check pattern: `errors.Is(err, gorm.ErrRecordNotFound)`，不要直接依赖字符串或只用 `err == gorm.ErrRecordNotFound`。
+- GORM logger config: `IgnoreRecordNotFoundError bool` 只控制 SQL trace 是否打印 record-not-found，不改变 `db.First(&v).Error` 的返回值。
+
+#### 3. Contracts
+
+- 必需主记录缺失：例如详情页按 ID/SN 查询主资源，返回 `extproto.Code__1_02_RECORD_NOT_EXIST` 或相邻 Logic 约定的结构化不存在错误。
+- 可选关联数据缺失：例如列表项补充遥测快照、状态快照、任务状态，返回空字段并继续组装主列表，不打 error 日志。
+- 真实数据库错误：连接、SQL、扫描、权限等非 `ErrRecordNotFound` 错误继续返回或包装，不能吞掉。
+
+#### 4. Validation & Error Matrix
+
+- 主资源 `First` 返回 `ErrRecordNotFound` -> 返回记录不存在业务错误。
+- 可选关联 `First` 返回 `ErrRecordNotFound` -> 返回 `nil`，对应响应字段保持空。
+- 任意查询返回非 `ErrRecordNotFound` -> 保留原始错误，按调用边界包装或记录。
+- 仅设置 `IgnoreRecordNotFoundError=true` -> 只减少 GORM SQL 日志，业务层 `err` 仍需显式处理。
+
+#### 5. Good/Base/Bad Cases
+
+- Good: 列表接口主查询成功后，关联快照查不到时跳过该字段，避免 `[list-devices] query associated data failed: err=record not found` 这类噪声日志。
+- Base: 必需详情接口查不到主记录时返回结构化不存在错误，让调用方明确资源不存在。
+- Bad: 全局忽略所有 `ErrRecordNotFound`，导致真正缺失的主资源被误当成功；或完全不处理，导致可选关联缺失刷 error 日志。
+
+#### 6. Tests Required
+
+- Logic test: 主记录缺失时断言返回记录不存在错误码。
+- Logic test: 可选关联缺失时断言接口仍成功，关联响应字段为空，且不产生业务 error。
+- Logger/config test: 如变更 GORM logger，断言 `IgnoreRecordNotFoundError` 只影响日志输出，不改变查询错误返回。
+
+#### 7. Wrong vs Correct
+
+##### Wrong
+
+```go
+if err := db.Where("device_sn = ?", sn).First(&state).Error; err != nil {
+    return err // 可选关联缺失也会触发业务 error 日志
+}
+```
+
+##### Correct
+
+```go
+if err := db.Where("device_sn = ?", sn).First(&state).Error; err != nil {
+    if errors.Is(err, gorm.ErrRecordNotFound) {
+        return nil
+    }
+    return err
+}
+```
+
 ## gormx 分页查询
 
 ### Convention: 使用 gormx.QueryPage
