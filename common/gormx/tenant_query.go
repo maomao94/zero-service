@@ -1,13 +1,9 @@
 package gormx
 
-import (
-	"context"
+import "gorm.io/gorm"
 
-	"gorm.io/gorm"
-)
-
-func withTenantQuery(ctx context.Context, db *gorm.DB) *gorm.DB {
-	if tenantID := GetTenantID(ctx); tenantID != "" {
+func withTenantQueryFromDB(db *gorm.DB) *gorm.DB {
+	if tenantID := GetTenantID(db.Statement.Context); tenantID != "" {
 		return db.Where("tenant_id = ?", tenantID)
 	}
 	return db

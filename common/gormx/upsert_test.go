@@ -1,7 +1,6 @@
 package gormx
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -22,7 +21,7 @@ func (updateOrCreateTestModel) TableName() string {
 func TestUpsertRejectsNilData(t *testing.T) {
 	db := &DB{DB: openTestDB(t, &pageTestModel{})}
 
-	err := Upsert(context.Background(), db, nil, Columns("name"), []string{"name"})
+	err := Upsert(db, nil, Columns("name"), []string{"name"})
 	if err == nil || !strings.Contains(err.Error(), "data is nil") {
 		t.Fatalf("error = %v, want data is nil", err)
 	}
@@ -31,7 +30,7 @@ func TestUpsertRejectsNilData(t *testing.T) {
 func TestUpsertRejectsEmptyConflictColumns(t *testing.T) {
 	db := &DB{DB: openTestDB(t, &pageTestModel{})}
 
-	err := Upsert(context.Background(), db, &pageTestModel{Name: "tom"}, nil, []string{"name"})
+	err := Upsert(db, &pageTestModel{Name: "tom"}, nil, []string{"name"})
 	if err == nil || !strings.Contains(err.Error(), "conflict columns is empty") {
 		t.Fatalf("error = %v, want conflict columns is empty", err)
 	}
@@ -44,7 +43,7 @@ func TestUpsertDoesNothingWhenUpdateColumnsEmpty(t *testing.T) {
 		t.Fatalf("create error = %v", err)
 	}
 
-	err := Upsert(context.Background(), db, &pageTestModel{ID: 1, Name: "new"}, []clause.Column{{Name: "id"}}, nil)
+	err := Upsert(db, &pageTestModel{ID: 1, Name: "new"}, []clause.Column{{Name: "id"}}, nil)
 	if err != nil {
 		t.Fatalf("upsert error = %v", err)
 	}
@@ -62,7 +61,6 @@ func TestUpdateOrCreateCreatesWhenRecordMissing(t *testing.T) {
 	db := &DB{DB: openTestDB(t, &updateOrCreateTestModel{})}
 
 	err := UpdateOrCreate(
-		context.Background(),
 		db,
 		&updateOrCreateTestModel{},
 		map[string]any{"code": "A"},
@@ -90,7 +88,6 @@ func TestUpdateOrCreateUpdatesOnlyRequestedColumnsWhenRecordExists(t *testing.T)
 	}
 
 	err := UpdateOrCreate(
-		context.Background(),
 		db,
 		&updateOrCreateTestModel{},
 		map[string]any{"code": "A"},
@@ -113,10 +110,9 @@ func TestUpdateOrCreateUpdatesOnlyRequestedColumnsWhenRecordExists(t *testing.T)
 func TestCreateRecordCreatesSuccessfully(t *testing.T) {
 	gormDB := openTestDB(t, &pageTestModel{})
 	db := &DB{DB: gormDB}
-	ctx := context.Background()
 
 	record := pageTestModel{Name: "new-record"}
-	if err := CreateRecord(ctx, db, &record); err != nil {
+	if err := CreateRecord(db, &record); err != nil {
 		t.Fatalf("create record error = %v", err)
 	}
 
@@ -130,7 +126,7 @@ func TestCreateRecordCreatesSuccessfully(t *testing.T) {
 }
 
 func TestCreateRecordRejectsNilDB(t *testing.T) {
-	err := CreateRecord(context.Background(), nil, &pageTestModel{Name: "x"})
+	err := CreateRecord(nil, &pageTestModel{Name: "x"})
 	if err == nil || !strings.Contains(err.Error(), "db is nil") {
 		t.Fatalf("error = %v, want db is nil", err)
 	}
@@ -166,7 +162,7 @@ func TestGormDBRejectsNilInnerDB(t *testing.T) {
 func TestUpdateOrCreateRejectsEmptyWhere(t *testing.T) {
 	db := &DB{DB: openTestDB(t, &updateOrCreateTestModel{})}
 
-	err := UpdateOrCreate(context.Background(), db, &updateOrCreateTestModel{}, nil, &updateOrCreateTestModel{}, map[string]any{"name": "updated"})
+	err := UpdateOrCreate(db, &updateOrCreateTestModel{}, nil, &updateOrCreateTestModel{}, map[string]any{"name": "updated"})
 	if err == nil || !strings.Contains(err.Error(), "where is empty") {
 		t.Fatalf("error = %v, want where is empty", err)
 	}

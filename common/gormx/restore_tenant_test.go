@@ -18,7 +18,7 @@ func TestRestoreWithTenantRestoresSoftDeletedRecord(t *testing.T) {
 		t.Fatalf("delete error = %v", err)
 	}
 
-	if err := RestoreWithTenant(ctx, db, &batchTenantSoftDeleteTestModel{}, "id = ?", record.ID); err != nil {
+	if err := RestoreWithTenant(db.WithContext(ctx), &batchTenantSoftDeleteTestModel{}, "id = ?", record.ID); err != nil {
 		t.Fatalf("restore error = %v", err)
 	}
 
@@ -44,7 +44,7 @@ func TestRestoreWithTenantDoesNotAffectOtherTenant(t *testing.T) {
 		t.Fatalf("delete error = %v", err)
 	}
 
-	if err := RestoreWithTenant(ctx2, db, &batchTenantSoftDeleteTestModel{}, "id = ?", record1.ID); err != nil {
+	if err := RestoreWithTenant(db.WithContext(ctx2), &batchTenantSoftDeleteTestModel{}, "id = ?", record1.ID); err != nil {
 		t.Fatalf("restore error = %v", err)
 	}
 

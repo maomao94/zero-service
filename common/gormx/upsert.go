@@ -1,7 +1,6 @@
 package gormx
 
 import (
-	"context"
 	"errors"
 
 	"gorm.io/gorm"
@@ -23,7 +22,7 @@ func Columns(names ...string) []clause.Column {
 	return columns
 }
 
-func Upsert(ctx context.Context, db *DB, data any, columns []clause.Column, updateColumns []string) error {
+func Upsert(db *DB, data any, columns []clause.Column, updateColumns []string) error {
 	if db == nil {
 		return errors.New("gormx db is nil")
 	}
@@ -39,10 +38,10 @@ func Upsert(ctx context.Context, db *DB, data any, columns []clause.Column, upda
 	} else {
 		conflict.DoUpdates = clause.AssignmentColumns(updateColumns)
 	}
-	return db.WithContext(ctx).Clauses(conflict).Create(data).Error
+	return db.Clauses(conflict).Create(data).Error
 }
 
-func UpdateOrCreate(ctx context.Context, db *DB, model any, where map[string]any, createData any, updateData map[string]any) error {
+func UpdateOrCreate(db *DB, model any, where map[string]any, createData any, updateData map[string]any) error {
 	if db == nil {
 		return errors.New("gormx db is nil")
 	}
@@ -56,7 +55,7 @@ func UpdateOrCreate(ctx context.Context, db *DB, model any, where map[string]any
 		return errors.New("gormx update or create where is empty")
 	}
 
-	tx := db.WithContext(ctx).Model(model).Where(where).Updates(updateData)
+	tx := db.Model(model).Where(where).Updates(updateData)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -64,10 +63,10 @@ func UpdateOrCreate(ctx context.Context, db *DB, model any, where map[string]any
 		return nil
 	}
 
-	if err := db.WithContext(ctx).Create(createData).Error; err == nil {
+	if err := db.Create(createData).Error; err == nil {
 		return nil
 	} else {
-		tx = db.WithContext(ctx).Model(model).Where(where).Updates(updateData)
+		tx = db.Model(model).Where(where).Updates(updateData)
 		if tx.Error != nil {
 			return tx.Error
 		}
@@ -78,11 +77,11 @@ func UpdateOrCreate(ctx context.Context, db *DB, model any, where map[string]any
 	}
 }
 
-func CreateRecord(ctx context.Context, db *DB, data any) error {
+func CreateRecord(db *DB, data any) error {
 	if db == nil {
 		return errors.New("gormx db is nil")
 	}
-	return db.WithContext(ctx).Create(data).Error
+	return db.Create(data).Error
 }
 
 func GormDB(db *DB) (*gorm.DB, error) {

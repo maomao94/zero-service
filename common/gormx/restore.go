@@ -1,7 +1,6 @@
 package gormx
 
 import (
-	"context"
 	"reflect"
 
 	"gorm.io/gorm"
@@ -18,8 +17,8 @@ func Restore(db *gorm.DB, model any, conds ...any) error {
 	return q.Update("deleted_at", nil).Error
 }
 
-func RestoreWithTenant(ctx context.Context, db *gorm.DB, model any, conds ...any) error {
-	q := withTenantQuery(ctx, db.WithContext(ctx).Unscoped().Model(model))
+func RestoreWithTenant(db *gorm.DB, model any, conds ...any) error {
+	q := withTenantQueryFromDB(db.Unscoped().Model(model))
 	if len(conds) > 0 {
 		q = q.Where(conds[0], conds[1:]...)
 	}

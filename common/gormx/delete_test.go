@@ -35,7 +35,7 @@ func TestUnscopedDeleteWithTenantHardDeletesRecord(t *testing.T) {
 		t.Fatalf("create error = %v", err)
 	}
 
-	if err := UnscopedDeleteWithTenant(ctx, db, &batchTenantTestModel{}, "id = ?", record.ID); err != nil {
+	if err := UnscopedDeleteWithTenant(db.WithContext(ctx), &batchTenantTestModel{}, "id = ?", record.ID); err != nil {
 		t.Fatalf("unscoped delete error = %v", err)
 	}
 
@@ -58,7 +58,7 @@ func TestUnscopedDeleteWithTenantDoesNotAffectOtherTenant(t *testing.T) {
 		t.Fatalf("create error = %v", err)
 	}
 
-	if err := UnscopedDeleteWithTenant(ctx2, db, &batchTenantTestModel{}, "id = ?", record1.ID); err != nil {
+	if err := UnscopedDeleteWithTenant(db.WithContext(ctx2), &batchTenantTestModel{}, "id = ?", record1.ID); err != nil {
 		t.Fatalf("unscoped delete error = %v", err)
 	}
 

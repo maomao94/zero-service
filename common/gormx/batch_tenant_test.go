@@ -15,7 +15,7 @@ func TestBatchInsertWithTenantSetsTenantID(t *testing.T) {
 		{Name: "a"},
 		{Name: "b"},
 	}
-	if err := BatchInsertWithTenant(ctx, db, records); err != nil {
+	if err := BatchInsertWithTenant(db.WithContext(ctx), records); err != nil {
 		t.Fatalf("batch insert error = %v", err)
 	}
 
@@ -32,7 +32,7 @@ func TestBatchInsertWithTenantEmptySlice(t *testing.T) {
 	db := openTestDB(t, &batchTenantTestModel{})
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 
-	if err := BatchInsertWithTenant(ctx, db, []batchTenantTestModel{}); err != nil {
+	if err := BatchInsertWithTenant(db.WithContext(ctx), []batchTenantTestModel{}); err != nil {
 		t.Fatalf("batch insert error = %v", err)
 	}
 }
@@ -49,7 +49,7 @@ func TestBatchUpdateByIdsWithTenantUpdatesRecords(t *testing.T) {
 	updates := []Ups{
 		{"id": record.ID, "name": "new"},
 	}
-	if err := BatchUpdateByIdsWithTenant(ctx, db, &batchTenantTestModel{}, updates); err != nil {
+	if err := BatchUpdateByIdsWithTenant(db.WithContext(ctx), &batchTenantTestModel{}, updates); err != nil {
 		t.Fatalf("batch update error = %v", err)
 	}
 
@@ -66,7 +66,7 @@ func TestBatchUpdateByIdsWithTenantEmptySlice(t *testing.T) {
 	db := openTestDB(t, &batchTenantTestModel{})
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 
-	if err := BatchUpdateByIdsWithTenant(ctx, db, &batchTenantTestModel{}, []Ups{}); err != nil {
+	if err := BatchUpdateByIdsWithTenant(db.WithContext(ctx), &batchTenantTestModel{}, []Ups{}); err != nil {
 		t.Fatalf("batch update error = %v", err)
 	}
 }
@@ -84,7 +84,7 @@ func TestBatchDeleteByIdsWithTenantDeletesRecords(t *testing.T) {
 	}
 
 	ids := []int64{int64(records[0].ID)}
-	if err := BatchDeleteByIdsWithTenant(ctx, db, &batchTenantTestModel{}, ids); err != nil {
+	if err := BatchDeleteByIdsWithTenant(db.WithContext(ctx), &batchTenantTestModel{}, ids); err != nil {
 		t.Fatalf("batch delete error = %v", err)
 	}
 
@@ -101,7 +101,7 @@ func TestBatchDeleteByIdsWithTenantEmptySlice(t *testing.T) {
 	db := openTestDB(t, &batchTenantTestModel{})
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 
-	if err := BatchDeleteByIdsWithTenant(ctx, db, &batchTenantTestModel{}, []int64{}); err != nil {
+	if err := BatchDeleteByIdsWithTenant(db.WithContext(ctx), &batchTenantTestModel{}, []int64{}); err != nil {
 		t.Fatalf("batch delete error = %v", err)
 	}
 }
@@ -117,7 +117,7 @@ func TestBatchDeleteByConditionWithTenantDeletesMatchingRecords(t *testing.T) {
 		t.Fatalf("create error = %v", err)
 	}
 
-	if err := BatchDeleteByConditionWithTenant(ctx, db, &batchTenantTestModel{}, func(db *gorm.DB) *gorm.DB {
+	if err := BatchDeleteByConditionWithTenant(db.WithContext(ctx), &batchTenantTestModel{}, func(db *gorm.DB) *gorm.DB {
 		return db.Where("name = ?", "delete")
 	}); err != nil {
 		t.Fatalf("batch delete error = %v", err)
@@ -143,7 +143,7 @@ func TestBatchUpdateByIdsWithTenantDoesNotAffectOtherTenant(t *testing.T) {
 	}
 
 	updates := []Ups{{"id": record1.ID, "name": "hacked"}}
-	if err := BatchUpdateByIdsWithTenant(ctx2, db, &batchTenantTestModel{}, updates); err != nil {
+	if err := BatchUpdateByIdsWithTenant(db.WithContext(ctx2), &batchTenantTestModel{}, updates); err != nil {
 		t.Fatalf("batch update error = %v", err)
 	}
 
@@ -167,7 +167,7 @@ func TestBatchDeleteByIdsWithTenantDoesNotAffectOtherTenant(t *testing.T) {
 	}
 
 	ids := []int64{int64(record1.ID)}
-	if err := BatchDeleteByIdsWithTenant(ctx2, db, &batchTenantTestModel{}, ids); err != nil {
+	if err := BatchDeleteByIdsWithTenant(db.WithContext(ctx2), &batchTenantTestModel{}, ids); err != nil {
 		t.Fatalf("batch delete error = %v", err)
 	}
 
