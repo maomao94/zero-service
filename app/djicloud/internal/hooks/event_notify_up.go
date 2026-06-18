@@ -60,7 +60,7 @@ func NewFlightTaskProgressHandler(db *gormx.DB) func(ctx context.Context, gatewa
 			"reported_at":            record.ReportedAt,
 		}
 		if err := db.Transact(func(tx *gormx.DB) error {
-			if err := gormx.UpdateOrCreate(ctx, tx, &gormmodel.DjiDockFlightTask{}, map[string]any{"gateway_sn": gatewaySn, "flight_id": ext.FlightID}, &record, updateData); err != nil {
+			if err := gormx.UpdateOrCreate(tx.WithContext(ctx), &gormmodel.DjiDockFlightTask{}, map[string]any{"gateway_sn": gatewaySn, "flight_id": ext.FlightID}, &record, updateData); err != nil {
 				return err
 			}
 			deviceState := gormmodel.DjiDockDeviceFlightTaskState{
@@ -94,7 +94,7 @@ func NewFlightTaskProgressHandler(db *gormx.DB) func(ctx context.Context, gatewa
 				"ext_json":               deviceState.ExtJSON,
 				"reported_at":            deviceState.ReportedAt,
 			}
-			return gormx.UpdateOrCreate(ctx, tx, &gormmodel.DjiDockDeviceFlightTaskState{}, map[string]any{"gateway_sn": gatewaySn}, &deviceState, deviceStateUpdateData)
+			return gormx.UpdateOrCreate(tx.WithContext(ctx), &gormmodel.DjiDockDeviceFlightTaskState{}, map[string]any{"gateway_sn": gatewaySn}, &deviceState, deviceStateUpdateData)
 		}); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert flight task progress state failed: %v", err)
 		}
@@ -109,7 +109,7 @@ func NewFlightTaskReadyHandler(db *gormx.DB) func(ctx context.Context, gatewaySn
 		logx.WithContext(ctx).Infof("[dji-cloud] flighttask_ready: sn=%s flight_ids=%v count=%d", gatewaySn, data.FlightIDs, len(data.FlightIDs))
 		flightIdJSON := toJSONString(data.FlightIDs)
 		rawJSON := toJSONString(data)
-		if err := gormx.CreateRecord(ctx, db, &gormmodel.DjiFlightTaskReady{
+		if err := gormx.CreateRecord(db.WithContext(ctx), &gormmodel.DjiFlightTaskReady{
 			GatewaySn:    gatewaySn,
 			FlightIdJSON: flightIdJSON,
 			RawJSON:      rawJSON,
@@ -127,7 +127,7 @@ func NewReturnHomeInfoHandler(db *gormx.DB) func(ctx context.Context, gatewaySn 
 			return
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] return_home_info: sn=%s %+v", gatewaySn, *data)
-		if err := gormx.CreateRecord(ctx, db, &gormmodel.DjiReturnHomeEvent{
+		if err := gormx.CreateRecord(db.WithContext(ctx), &gormmodel.DjiReturnHomeEvent{
 			FlightId:              data.FlightID,
 			GatewaySn:             gatewaySn,
 			ReportedAt:            time.Now(),
@@ -157,7 +157,7 @@ func NewHmsEventNotifyHandler(db *gormx.DB) func(ctx context.Context, gatewaySn 
 		for _, item := range data.List {
 			logx.WithContext(ctx).Infof("[dji-cloud] hms item: level=%d module=%d in_the_sky=%d code=%s device_type=%s imminent=%d component_index=%d sensor_index=%d",
 				item.Level, item.Module, item.InTheSky, item.Code, item.DeviceType, item.Imminent, item.Args.ComponentIndex, item.Args.SensorIndex)
-			if err := gormx.CreateRecord(ctx, db, &gormmodel.DjiHmsAlert{
+			if err := gormx.CreateRecord(db.WithContext(ctx), &gormmodel.DjiHmsAlert{
 				GatewaySn:      gatewaySn,
 				Level:          item.Level,
 				Module:         item.Module,
@@ -182,7 +182,7 @@ func NewRemoteLogFileUploadProgressHandler(db *gormx.DB) func(ctx context.Contex
 			return
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] remote_log_fileupload_progress: sn=%s file_count=%d", gatewaySn, len(data.Files))
-		if err := gormx.CreateRecord(ctx, db, &gormmodel.DjiRemoteLogEvent{
+		if err := gormx.CreateRecord(db.WithContext(ctx), &gormmodel.DjiRemoteLogEvent{
 			GatewaySn:  gatewaySn,
 			Method:     "fileupload_progress",
 			RawJSON:    toJSONString(data),

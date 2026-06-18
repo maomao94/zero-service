@@ -44,7 +44,7 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 				DeviceSn:  gatewaySn,
 				GatewaySn: gatewaySn,
 			}
-			if err := gormx.UpdateOrCreate(ctx, tx, &gormmodel.DjiDevice{}, map[string]any{"device_sn": gatewaySn}, &gatewayDevice, map[string]any{"gateway_sn": gatewaySn}); err != nil {
+			if err := gormx.UpdateOrCreate(tx.WithContext(ctx), &gormmodel.DjiDevice{}, map[string]any{"device_sn": gatewaySn}, &gatewayDevice, map[string]any{"gateway_sn": gatewaySn}); err != nil {
 				return err
 			}
 
@@ -83,7 +83,7 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 					"sub_device_index":    topoRecord.SubDeviceIndex,
 					"thing_version":       topoRecord.ThingVersion,
 				}
-				if err := gormx.UpdateOrCreate(ctx, tx, &gormmodel.DjiDeviceTopo{}, map[string]any{"gateway_sn": gatewaySn, "sub_device_sn": sub.SN}, &topoRecord, topoUpdateData); err != nil {
+				if err := gormx.UpdateOrCreate(tx.WithContext(ctx), &gormmodel.DjiDeviceTopo{}, map[string]any{"gateway_sn": gatewaySn, "sub_device_sn": sub.SN}, &topoRecord, topoUpdateData); err != nil {
 					return err
 				}
 
@@ -91,7 +91,7 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 					DeviceSn:  sub.SN,
 					GatewaySn: gatewaySn,
 				}
-				if err := gormx.UpdateOrCreate(ctx, tx, &gormmodel.DjiDevice{}, map[string]any{"device_sn": sub.SN}, &subDevice, map[string]any{"gateway_sn": gatewaySn}); err != nil {
+				if err := gormx.UpdateOrCreate(tx.WithContext(ctx), &gormmodel.DjiDevice{}, map[string]any{"device_sn": sub.SN}, &subDevice, map[string]any{"gateway_sn": gatewaySn}); err != nil {
 					return err
 				}
 			}

@@ -38,7 +38,7 @@ func NewDrcUpHandler(db *gormx.DB, drcMgr *drc.Manager, pushCli socketpush.Socke
 		if msg.Method != djisdk.MethodDrcHeartBeat && msg.Method != djisdk.MethodDrcOsdInfoPush &&
 			msg.Method != djisdk.MethodDrcHsiInfoPush && msg.Method != djisdk.MethodDrcDelayInfoPush &&
 			msg.Method != djisdk.MethodDrcInitialStateSubscribe {
-			if err := gormx.CreateRecord(ctx, db, &gormmodel.DjiDrcUpEvent{
+			if err := gormx.CreateRecord(db.WithContext(ctx), &gormmodel.DjiDrcUpEvent{
 				GatewaySn:  gatewaySn,
 				Method:     msg.Method,
 				RawJSON:    toJSONString(parsed),
