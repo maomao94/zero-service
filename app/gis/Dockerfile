@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine3.22 AS builder
+FROM golang:1.26-alpine3.22 AS builder
 
 LABEL stage=gobuilder
 
@@ -29,7 +29,7 @@ COPY . .
 
 RUN go build -o gis ./app/gis && chmod +x gis
 
-FROM golang:1.25-alpine3.22
+FROM golang:1.26-alpine3.22
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /usr/share/zoneinfo/Asia/Shanghai
 ENV TZ=Asia/Shanghai
