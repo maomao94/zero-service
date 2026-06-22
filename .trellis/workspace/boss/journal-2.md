@@ -788,3 +788,37 @@ PointsWithinRadius 精简返回(Index+Distance取代Point);新增EncodeGeoHashMu
 ### Next Steps
 
 - None - task complete
+
+
+## Session 74: 实现 GIS proto 优化：Proto 同步 + H3 召回索引 + NearbyFences 精判
+
+**Date**: 2026-06-22
+**Task**: 实现 GIS proto 优化：Proto 同步 + H3 召回索引 + NearbyFences 精判
+**Branch**: `master`
+
+### Summary
+
+完成 PRD 全部 7 项验收标准：解码接口精度/分辨率返回、FenceId 字段命名同步、int32→uint32 类型修正、纯计算 RPC 移除 fence_id、gen.sh 重新生成。新增 H3 固定召回索引 h3_r9 和按 km 召回圈数计算逻辑。NearbyFences 调整为 H3 候选+多边形精判完整链路。更新 spec 文档(gisx-guidelines.md)。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4ba3fcda` | (see git log) |
+| `7da01af3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

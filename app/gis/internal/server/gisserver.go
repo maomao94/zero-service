@@ -23,11 +23,6 @@ func NewGisServer(svcCtx *svc.ServiceContext) *GisServer {
 	}
 }
 
-func (s *GisServer) Ping(ctx context.Context, in *gis.Req) (*gis.Res, error) {
-	l := logic.NewPingLogic(ctx, s.svcCtx)
-	return l.Ping(in)
-}
-
 // 编码 geohash
 func (s *GisServer) EncodeGeoHash(ctx context.Context, in *gis.EncodeGeoHashReq) (*gis.EncodeGeoHashRes, error) {
 	l := logic.NewEncodeGeoHashLogic(ctx, s.svcCtx)

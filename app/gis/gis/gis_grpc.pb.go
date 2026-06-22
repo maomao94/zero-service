@@ -19,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Gis_Ping_FullMethodName                 = "/gis.Gis/Ping"
 	Gis_EncodeGeoHash_FullMethodName        = "/gis.Gis/EncodeGeoHash"
 	Gis_EncodeGeoHashMulti_FullMethodName   = "/gis.Gis/EncodeGeoHashMulti"
 	Gis_DecodeGeoHash_FullMethodName        = "/gis.Gis/DecodeGeoHash"
@@ -52,7 +51,6 @@ const (
 //
 // GIS 相关服务
 type GisClient interface {
-	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
 	// 编码 geohash
 	EncodeGeoHash(ctx context.Context, in *EncodeGeoHashReq, opts ...grpc.CallOption) (*EncodeGeoHashRes, error)
 	// 多精度编码 geohash
@@ -109,16 +107,6 @@ type gisClient struct {
 
 func NewGisClient(cc grpc.ClientConnInterface) GisClient {
 	return &gisClient{cc}
-}
-
-func (c *gisClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Res)
-	err := c.cc.Invoke(ctx, Gis_Ping_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *gisClient) EncodeGeoHash(ctx context.Context, in *EncodeGeoHashReq, opts ...grpc.CallOption) (*EncodeGeoHashRes, error) {
@@ -367,7 +355,6 @@ func (c *gisClient) GetFence(ctx context.Context, in *GetFenceReq, opts ...grpc.
 //
 // GIS 相关服务
 type GisServer interface {
-	Ping(context.Context, *Req) (*Res, error)
 	// 编码 geohash
 	EncodeGeoHash(context.Context, *EncodeGeoHashReq) (*EncodeGeoHashRes, error)
 	// 多精度编码 geohash
@@ -426,9 +413,6 @@ type GisServer interface {
 // pointer dereference when methods are called.
 type UnimplementedGisServer struct{}
 
-func (UnimplementedGisServer) Ping(context.Context, *Req) (*Res, error) {
-	return nil, status.Error(codes.Unimplemented, "method Ping not implemented")
-}
 func (UnimplementedGisServer) EncodeGeoHash(context.Context, *EncodeGeoHashReq) (*EncodeGeoHashRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method EncodeGeoHash not implemented")
 }
@@ -520,24 +504,6 @@ func RegisterGisServer(s grpc.ServiceRegistrar, srv GisServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&Gis_ServiceDesc, srv)
-}
-
-func _Gis_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Req)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GisServer).Ping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Gis_Ping_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GisServer).Ping(ctx, req.(*Req))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Gis_EncodeGeoHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -979,10 +945,6 @@ var Gis_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "gis.Gis",
 	HandlerType: (*GisServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Ping",
-			Handler:    _Gis_Ping_Handler,
-		},
 		{
 			MethodName: "EncodeGeoHash",
 			Handler:    _Gis_EncodeGeoHash_Handler,

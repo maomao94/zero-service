@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 73
+- **Total Sessions**: 74
 - **Last Active**: 2026-06-22
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~790 | Active |
+| `journal-2.md` | ~824 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 74 | 2026-06-22 | 实现 GIS proto 优化：Proto 同步 + H3 召回索引 + NearbyFences 精判 | `4ba3fcda`, `7da01af3` | `master` |
 | 73 | 2026-06-22 | GIS H3 与半径命中接口优化 | `f7b56fb1`, `636e7d2a` | `master` |
 | 72 | 2026-06-18 | GIS 服务完整开发：围栏 CRUD + 空间计算 + 存储层 | `203979bf`, `10451445`, `7190a411` | `master` |
 | 71 | 2026-06-17 | Fix gormx restore delete markers | `4758ce3c` | `master` |
