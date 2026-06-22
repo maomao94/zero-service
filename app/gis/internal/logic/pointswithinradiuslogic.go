@@ -27,7 +27,7 @@ func NewPointsWithinRadiusLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 	}
 }
 
-// PointsWithinRadius 筛选出距中心点距离 ≤ radius_meters 的所有点，返回命中点的索引。
+// PointsWithinRadius 筛选出距中心点距离 ≤ radius_meters 的所有点，返回命中点的索引和距离。
 func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusReq) (*gis.PointsWithinRadiusRes, error) {
 	if err := ValidatePoints(append([]*gis.Point{in.Center}, in.Points...)...); err != nil {
 		return nil, err
@@ -36,15 +36,18 @@ func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusR
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "radius_meters必须大于0")
 	}
 	center := orb.Point{in.Center.Lon, in.Center.Lat}
-	hits := make([]int32, 0)
+	hits := make([]*gis.RadiusHit, 0)
 	for i, p := range in.Points {
 		orbP := orb.Point{p.Lon, p.Lat}
 		distance := geo.Distance(center, orbP)
 		if distance <= in.RadiusMeters {
-			hits = append(hits, int32(i))
+			hits = append(hits, &gis.RadiusHit{
+				Index:           int32(i),
+				DistanceMeters:  distance,
+			})
 		}
 	}
 	return &gis.PointsWithinRadiusRes{
-		HitIndexes: hits,
+		Hits: hits,
 	}, nil
 }

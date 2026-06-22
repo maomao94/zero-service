@@ -10,7 +10,32 @@ import (
 	"zero-service/third_party/extproto"
 
 	"github.com/paulmach/orb"
+	"github.com/uber/h3-go/v4"
 )
+
+// ValidateH3Resolution 校验 H3 分辨率，返回 int 类型或 nil。
+func ValidateH3Resolution(resolution uint32) (int, error) {
+	r := int(resolution)
+	if r > 15 {
+		return 0, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "H3分辨率必须为0-15")
+	}
+	return r, nil
+}
+
+// ValidateGeoHashPrecision 校验 geohash 精度，返回 int 类型或 nil。
+func ValidateGeoHashPrecision(precision uint32) (int, error) {
+	p := int(precision)
+	if p < 1 || p > 12 {
+		return 0, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "geohash精度必须为1-12")
+	}
+	return p, nil
+}
+
+// EncodeH3Cell 将经纬度编码为 H3 cell。
+func EncodeH3Cell(point *gis.Point, resolution int) (h3.Cell, error) {
+	latLng := h3.NewLatLng(point.Lat, point.Lon)
+	return h3.LatLngToCell(latLng, resolution)
+}
 
 // ValidatePoints 批量校验 pb Point 列表：非空、非 nil、经纬度范围合法。
 func ValidatePoints(points ...*gis.Point) error {

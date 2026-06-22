@@ -50,18 +50,28 @@ type FenceStore interface {
 
 ### RPC 分类
 
-| 类别 | 示例 | 特点 |
-|------|------|------|
-| 纯计算 | `Distance`, `EncodeH3`, `GenerateFenceCells`, `RoutePoints` | 无 DB 依赖，无状态 |
-| 围栏 CRUD | `CreateFence`, `UpdateFence`, `DeleteFence`, `ListFences`, `GetFence` | 依赖 FenceStore |
-| 围栏判断 | `PointInFence`, `PointInFences`, `NearbyFences` | 支持直传 polygon 或 fenceId 两种模式 |
-| 坐标转换 | `TransformCoord`, `BatchTransformCoord` | WGS84/GCJ02/BD09 互转 |
+ | 类别 | 示例 | 特点 |
+ |------|------|------|
+ | 纯计算 | `Distance`, `EncodeH3`, `EncodeGeoHash`, `GenerateFenceCells`, `RoutePoints` | 无 DB 依赖，无状态 |
+ | 多精度编码 | `EncodeH3Multi`, `EncodeGeoHashMulti` | 单点 multi-resolution 编码，repeated 入参 |
+ | GridDisk 邻域查询 | `GridDisk` (h3_index), `GridDiskByPoint` (经纬度) | 两个独立 RPC 分别处理 origin 输入形式 |
+ | 围栏 CRUD | `CreateFence`, `UpdateFence`, `DeleteFence`, `ListFences`, `GetFence` | 依赖 FenceStore |
+ | 围栏判断 | `PointInFence`, `PointInFences`, `NearbyFences` | 支持直传 polygon 或 fenceId 两种模式 |
+ | 坐标转换 | `TransformCoord`, `BatchTransformCoord` | WGS84/GCJ02/BD09 互转 |
 
 ### logic 层 helper 模式
 
 `logic/helper.go` 存放 pb↔领域类型的转换和通用校验：
 - `ValidatePoints` — pb Point 批量校验（非空、非 nil、经纬度范围）
+- `ValidateH3Resolution` — 校验 H3 分辨率 0-15，返回 int
+- `ValidateGeoHashPrecision` — 校验 geohash 精度 1-12，返回 int
+- `EncodeH3Cell` — 将 pb Point 编码为 H3 cell
 - `pbPointToOrbPolygon` — pb Point 切片→orb.Polygon（单外环，自动闭合）
+
+校验规则：
+- `ValidateH3Resolution(0)` 合法返回 0（H3 官方分辨率 0 允许），不默认置为 9
+- `ValidateGeoHashPrecision` 要求 1-12，不允许 0
+- `EncodeH3Cell` 依赖 `h3.LatLngToCell`，调用方需自行校验 resolution 后再调用
 
 反模式：不要把 pb 类型的转换函数放到 `common/gisx/`。
 
@@ -128,6 +138,71 @@ func geohashCellSize(precision int, lat float64) (widthDeg, heightDeg float64)
 
 线段相交使用跨立实验（cross product straddle test），含退化情况（共线、端点接触）。
 
+### GridDisk 圈层查询
+
+两个独立 RPC 分别处理不同的 origin 输入形式，不在单个 request 中塞多个主输入字段：
+
+```proto
+message GridDiskReq {
+  string h3_index = 1;     // H3 origin index
+  uint32 k = 2;            // 周围圈数，默认 1；0 表示只返回 origin
+}
+
+message GridDiskByPointReq {
+  Point point = 1;
+  uint32 resolution = 2;   // H3 分辨率 0-15，默认 9
+  uint32 k = 3;            // 周围圈数，默认 1；0 表示只返回 origin
+}
+
+message GridDiskRes {
+  string origin = 1;
+  repeated GridDiskCell cells = 2;
+}
+
+message GridDiskCell {
+  string h3_index = 1;
+  uint32 ring = 2;         // H3 圈数：0=origin，1=第一圈，依此类推；不是米级距离
+}
+```
+
+响应字段用 `ring` 而非 `distance`，H3 网格圈数不是米级距离，调用方不会误解。
+
+k=0 传透到 `GridDiskDistances(origin, 0)` 只返回 origin；不做 `if k <= 0 { k = 1 }` 覆盖。
+
+### 多精度编码（EncodeH3Multi / EncodeGeoHashMulti）
+
+单点 multi-resolution 编码模式：
+
+```proto
+message EncodeH3MultiReq {
+  Point point = 1;
+  repeated uint32 resolutions = 2; // H3 分辨率 0-15，必填
+}
+
+message EncodeH3MultiRes {
+  repeated H3Index h3_indexes = 1; // 按 resolutions 顺序对齐
+}
+```
+
+- `resolutions` / `precisions` 必填，为空时返回参数缺失错误
+- 返回顺序与请求顺序保持一致，不去重
+- 响应结构复用 `H3Index` / `GeoHashIndex`（resolution + value）
+
+### PointsWithinRadius 响应精简
+
+```proto
+message RadiusHit {
+  int32 index = 1;
+  double distance_meters = 2;
+}
+
+message PointsWithinRadiusRes {
+  repeated RadiusHit hits = 1;
+}
+```
+
+不再返回 Point 坐标，避免响应体膨胀。用 orb `geo.Distance` 算精确球面距离。
+
 ### 路径优化（RoutePoints）
 
 近似求解开放式 TSP：
@@ -150,6 +225,7 @@ func geohashCellSize(precision int, lat float64) (widthDeg, heightDeg float64)
 - 精度/分辨率参数提供默认值说明：`uint32 h3_resolution = 3; // 默认 9`
 - 时间字段用毫秒时间戳：`int64 created_at = 8;`
 - 专有名词作为原子词：`geohashes`（不是 `geo_hashes`），`geohash_precision`
+- Circle 语义不叫 `distance`：H3 GridDisk 返回的层数用 `ring` 表达，`distance` 只用于米级球面距离（`distance_meters`）
 
 ## 常见陷阱
 
@@ -162,6 +238,9 @@ func geohashCellSize(precision int, lat float64) (widthDeg, heightDeg float64)
 | 批量接口漏校验 | BatchXxx 必须与单点版本保持相同的入参校验 | `logic/batchtransformcoordlogic.go` |
 | 2-opt 开放路径边界 | 末端无后继边，`j+1 >= n` 时跳过 | `logic/routepointslogic.go` |
 | polygon holes 死代码 | 当前 proto 只支持单环，OrbPolygonToH3GeoPolygon 的 holes 循环不会执行 | `common/gisx/gisx.go` |
+| `h3.CellFromString` 无 error | `CellFromString` 返回单值（非 `Cell, error`），需用 `.IsValid()` 检查无效 index | `logic/griddisklogic.go` |
+| `h3.GridDiskDistances` 返回 `[][]Cell` | 返回值是 `[][]Cell`（按环分层），不是 `[]DistanceEntry`。用 `ringNum, ringCells := range result` 遍历 | `logic/griddisklogic.go` |
+| `resolutions` 必填不默认 | `EncodeH3Multi` 的 `resolutions` 空时返回参数错误，不设默认值；单精度由 `EncodeH3` 承担 | `logic/encodeh3multilogic.go` |
 
 ## 单测覆盖
 

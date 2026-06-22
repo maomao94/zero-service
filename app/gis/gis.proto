@@ -19,12 +19,20 @@ service Gis {
   rpc Ping (Req) returns (Res);
   // 编码 geohash
   rpc EncodeGeoHash (EncodeGeoHashReq) returns (EncodeGeoHashRes);
+  // 多精度编码 geohash
+  rpc EncodeGeoHashMulti (EncodeGeoHashMultiReq) returns (EncodeGeoHashMultiRes);
   // 解码 geohash -> 经纬度
   rpc DecodeGeoHash (DecodeGeoHashReq) returns (DecodeGeoHashRes);
   // 编码 h3
   rpc EncodeH3 (EncodeH3Req) returns (EncodeH3Res);
+  // 多分辨率编码 h3
+  rpc EncodeH3Multi (EncodeH3MultiReq) returns (EncodeH3MultiRes);
   // 解码 h3
   rpc DecodeH3 (DecodeH3Req) returns (DecodeH3Res);
+  // H3 gridDisk：按 H3 origin 获取周围 k 圈内的 cells
+  rpc GridDisk (GridDiskReq) returns (GridDiskRes);
+  // H3 gridDisk：按坐标编码 origin 后获取周围 k 圈内的 cells
+  rpc GridDiskByPoint (GridDiskByPointReq) returns (GridDiskRes);
   // 生成围栏 geohash cells（纯计算）
   rpc GenerateFenceCells (GenFenceCellsReq) returns (GenFenceCellsRes);
   // 生成围栏 H3 cells（纯计算）
@@ -93,6 +101,20 @@ message EncodeGeoHashRes {
   string geohash = 1;
 }
 
+message GeoHashIndex {
+  uint32 precision = 1;
+  string geohash = 2;
+}
+
+message EncodeGeoHashMultiReq {
+  Point point = 1;
+  repeated uint32 precisions = 2; // geohash 精度 1-12，必填
+}
+
+message EncodeGeoHashMultiRes {
+  repeated GeoHashIndex geohashes = 1;
+}
+
 message DecodeGeoHashReq {
   string geohash = 1;
 }
@@ -114,6 +136,20 @@ message EncodeH3Res {
   string h3_index = 1;
 }
 
+message H3Index {
+  uint32 resolution = 1;
+  string h3_index = 2;
+}
+
+message EncodeH3MultiReq {
+  Point point = 1;
+  repeated uint32 resolutions = 2; // H3 分辨率 0-15，必填
+}
+
+message EncodeH3MultiRes {
+  repeated H3Index h3_indexes = 1;
+}
+
 message DecodeH3Req {
   string h3_index = 1;
 }
@@ -121,6 +157,27 @@ message DecodeH3Req {
 message DecodeH3Res {
   Point center = 1;
   repeated Point boundary = 2;
+}
+
+message GridDiskReq {
+  string h3_index = 1;     // H3 origin index
+  uint32 k = 2;            // 周围圈数，默认 1；0 表示只返回 origin
+}
+
+message GridDiskByPointReq {
+  Point point = 1;
+  uint32 resolution = 2;   // H3 分辨率 0-15，默认 9
+  uint32 k = 3;            // 周围圈数，默认 1；0 表示只返回 origin
+}
+
+message GridDiskCell {
+  string h3_index = 1;
+  uint32 ring = 2;         // H3 圈数：0=origin，1=第一圈，依此类推；不是米级距离
+}
+
+message GridDiskRes {
+  string origin = 1;
+  repeated GridDiskCell cells = 2;
 }
 
 message GenFenceCellsReq {
@@ -150,8 +207,13 @@ message PointsWithinRadiusReq {
   double radius_meters = 3;
 }
 
+message RadiusHit {
+  int32 index = 1;
+  double distance_meters = 2;
+}
+
 message PointsWithinRadiusRes {
-  repeated int32 hit_indexes = 1;
+  repeated RadiusHit hits = 1;
 }
 
 message PointInFenceReq {

@@ -34,6 +34,12 @@ func (s *GisServer) EncodeGeoHash(ctx context.Context, in *gis.EncodeGeoHashReq)
 	return l.EncodeGeoHash(in)
 }
 
+// 多精度编码 geohash
+func (s *GisServer) EncodeGeoHashMulti(ctx context.Context, in *gis.EncodeGeoHashMultiReq) (*gis.EncodeGeoHashMultiRes, error) {
+	l := logic.NewEncodeGeoHashMultiLogic(ctx, s.svcCtx)
+	return l.EncodeGeoHashMulti(in)
+}
+
 // 解码 geohash -> 经纬度
 func (s *GisServer) DecodeGeoHash(ctx context.Context, in *gis.DecodeGeoHashReq) (*gis.DecodeGeoHashRes, error) {
 	l := logic.NewDecodeGeoHashLogic(ctx, s.svcCtx)
@@ -46,10 +52,28 @@ func (s *GisServer) EncodeH3(ctx context.Context, in *gis.EncodeH3Req) (*gis.Enc
 	return l.EncodeH3(in)
 }
 
+// 多分辨率编码 h3
+func (s *GisServer) EncodeH3Multi(ctx context.Context, in *gis.EncodeH3MultiReq) (*gis.EncodeH3MultiRes, error) {
+	l := logic.NewEncodeH3MultiLogic(ctx, s.svcCtx)
+	return l.EncodeH3Multi(in)
+}
+
 // 解码 h3
 func (s *GisServer) DecodeH3(ctx context.Context, in *gis.DecodeH3Req) (*gis.DecodeH3Res, error) {
 	l := logic.NewDecodeH3Logic(ctx, s.svcCtx)
 	return l.DecodeH3(in)
+}
+
+// H3 gridDisk：按 H3 origin 获取周围 k 圈内的 cells
+func (s *GisServer) GridDisk(ctx context.Context, in *gis.GridDiskReq) (*gis.GridDiskRes, error) {
+	l := logic.NewGridDiskLogic(ctx, s.svcCtx)
+	return l.GridDisk(in)
+}
+
+// H3 gridDisk：按坐标编码 origin 后获取周围 k 圈内的 cells
+func (s *GisServer) GridDiskByPoint(ctx context.Context, in *gis.GridDiskByPointReq) (*gis.GridDiskRes, error) {
+	l := logic.NewGridDiskByPointLogic(ctx, s.svcCtx)
+	return l.GridDiskByPoint(in)
 }
 
 // 生成围栏 geohash cells（纯计算）
