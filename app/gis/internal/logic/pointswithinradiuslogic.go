@@ -51,7 +51,7 @@ func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusR
 	}
 	centerJson, _ := json.Marshal(in.Center)
 	duration := timex.Since(startTime)
-	l.Logger.WithDuration(duration).Infof("获取半径内的点 center:%s, points: %d, hit count: %d", string(centerJson), len(in.Points), len(hits))
+	l.Logger.WithDuration(duration).Infof("获取半径内的点 center: %s, points: %d, hit count: %d", string(centerJson), len(in.Points), len(hits))
 	return &gis.PointsWithinRadiusRes{
 		Hits: hits,
 	}, nil
