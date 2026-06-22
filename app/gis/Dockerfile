@@ -18,7 +18,8 @@ RUN set -x \
     && if [ -n "$HTTPS_PROXY" ]; then export https_proxy=$HTTPS_PROXY; fi \
     && apk update --no-cache \
     && apk add --no-cache \
-        tzdata make gcc libtool musl-dev
+        tzdata make gcc libtool musl-dev pkgconf geos-dev \
+    && geos-config --version
 
 WORKDIR /build
 
@@ -30,6 +31,7 @@ COPY . .
 RUN go build -o gis ./app/gis && chmod +x gis
 
 FROM golang:1.26-alpine3.22
+RUN apk add --no-cache geos
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /usr/share/zoneinfo/Asia/Shanghai
 ENV TZ=Asia/Shanghai

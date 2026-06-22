@@ -4,18 +4,20 @@
 
 ## common/gisx/ 包边界
 
-| 可以放 | 不可以放 |
-|--------|----------|
-| 纯几何计算（坐标校验、线段相交、多边形相交） | 引用 `app/*/` 下的 pb 类型 |
-| orb/H3 类型转换（OrbPolygonToH3GeoPolygon） | 引用 gRPC generated 代码 |
-| `FenceStore` 接口定义 + `NoopFenceStore` | 具体 store 实现（放 `app/gis/model/`） |
-| `FenceInfo` 通用结构体 | 业务错误码 (`extproto`) |
+ | 可以放 | 不可以放 |
+ |--------|----------|
+ | 纯几何计算（坐标校验、线段相交、多边形相交） | 引用 `app/*/` 下的 pb 类型 |
+ | orb/H3 类型转换（OrbPolygonToH3GeoPolygon） | 引用 gRPC generated 代码 |
+ | GEOS 工具层（go-geos 封装，见下文 GEOS 工具层章节，位于 `common/gisx/geos` 子包） | 让 `app/gis/internal/logic` 直接依赖 `github.com/twpayne/go-geos` |
+ | `FenceStore` 接口定义 + `NoopFenceStore` | 具体 store 实现（放 `app/gis/model/`） |
+ | `FenceInfo` 通用结构体 | 业务错误码 (`extproto`) |
 
-参考文件：
-- `common/gisx/validate.go` — 坐标校验
-- `common/gisx/intersect.go` — 几何相交判断（跨立实验算法）
-- `common/gisx/gisx.go` — H3 多边形转换、ring 自动闭合
-- `common/gisx/store.go` — FenceStore 接口定义
+ 参考文件：
+ - `common/gisx/validate.go` — 坐标校验
+ - `common/gisx/gisx.go` — H3 多边形转换、ring 自动闭合
+ - `common/gisx/store.go` — FenceStore 接口定义
+ - `common/gisx/geos/*.go` — GEOS 工具层（独立子包 `geos`，零 orb 依赖）
+ - `common/gisx/geos/orbconv/*.go` — orb 类型转换层
 
 ## 坐标系约定
 
@@ -29,6 +31,93 @@
 | pb `Point` | `lat`, `lon` 独立字段 | `&gis.Point{Lat: 39.9, Lon: 116.4}` |
 
 pb→orb 转换时必须翻转：`orb.Point{p.Lon, p.Lat}`。
+
+## GEOS 工具层约定
+
+`common/gisx/geos` 子包（包名 `geos`）薄封装 `github.com/twpayne/go-geos`。GEOS 是 CGO 动态库依赖，不是纯 Go 包。
+
+### 架构
+
+```
+common/gisx/geos/               ← 零 orb 依赖，直接使用 *gogeos.Geom
+├── context.go                  # GEOSVersion / safeRun / errNil
+├── construct.go                # NewPoint/LineString/LinearRing/Polygon/BoundsRect
+├── convert.go                  # WKT/WKB/GeoJSON 互转
+├── predicate.go                # 11 谓词（Intersects/Contains/Covers/...）
+├── prepared.go                 # PreparedGeom + 12 方法
+├── overlay.go                  # Overlay/Valid/Measure/Simplify/Transform/Meta
+├── relation.go                 # DE-9IM/Hausdorff/NearestPoints
+├── introspect.go               # IsEmpty/Simple/Closed/Ring/HasZ
+├── strtree.go                  # STRtree R-Tree
+└── geos_test.go                # 45+ 测试
+
+common/gisx/geos/orbconv/       ← orb 转换 + 便捷包装
+├── orbconv.go                  # 5 转换 + 6 便捷谓词
+└── orbconv_test.go             # 12+ 测试
+```
+
+### 核心原则
+
+- **Context 私有**：`getDefaultContext()`（sync.Once 单例）包内私有，业务层不感知
+- **panic → error**：所有 GEOS 调用经过 `safeRun`/`safeRunErr`，统一 recover
+- **无包装层**：直接使用 `*gogeos.Geom`，不自建 `Geometry` 包装类型
+- **无冗余字段**：`PreparedGeom`、`STRtree` 不存储 Context 引用
+
+### Docker / CGO 依赖
+
+`app/gis/Dockerfile` 两阶段：
+- builder：`CGO_ENABLED=1`，安装 `pkgconf geos-dev`，执行 `geos-config --version`
+- runtime：安装 `geos`（不要用 `geos-dev`）
+
+反模式：builder 只装 `geos` 缺少头文件；runtime 不装 `geos` 二进制找不到动态库。
+
+### 对外 API 边界
+
+- 业务层推荐通过 `orbconv` 使用（接受 `orb` 类型）
+- 纯坐标场景直接使用 `geos.NewPoint/NewPolygon` 等
+- `app/gis/internal/logic` **不直接** import `github.com/twpayne/go-geos`
+- `Close()` 置空 Go 引用帮助 GC，go-geos 通过 `runtime.AddCleanup` 管理 C 内存
+
+### safeRun 机制
+
+所有公开函数必须通过 `safeRun(func() (T, error))` 执行业务逻辑。go-geos 非法调用会 panic，`safeRun` 统一 recover 转 error，前缀 `geos: `。
+
+构造函数（需 `*gogeos.Context`）在 `safeRun` 闭包内调用 `getDefaultContext()`：
+```go
+func NewPoint(x, y float64) (*gogeos.Geom, error) {
+    return safeRun(func() (*gogeos.Geom, error) {
+        return getDefaultContext().NewPointFromXY(x, y), nil
+    })
+}
+```
+
+### 谓词语义
+
+- `Covers`/`IntersectsXY`（PreparedGeom）：**边界点算命中**，围栏场景用这个
+- `Contains`/`ContainsXY`：OGC 严格语义，边界点不算
+- `Intersects`：任意公共点（含边界接触）
+
+### PreparedGeom 使用
+
+```go
+prep, _ := geos.NewPreparedGeom(fenceGeom)
+defer prep.Close()
+for _, pt := range points {
+    hit, _ := prep.IntersectsXY(pt.Lon, pt.Lat)
+}
+```
+
+单次判断用普通谓词，避免预处理开销。
+
+### STRtree
+
+go-geos 标注 STRtree "currently broken"（`Nearest` segfault）。本封装只暴露 Insert/Query/Iterate/Remove。查询只做空间过滤，业务层需精判。
+
+### 距离计算
+
+GEOS `Distance` 是**平面笛卡尔距离**（单位=坐标单位）。经纬度场景结果无物理意义（度），应使用 `orb/geo.Distance`（Haversine 球面距离，米）。
+
+`HausdorffDistance`/`FrechetDistance` 用于形状比较（不依赖球面）。
 
 ## FenceStore 接口模式
 
@@ -104,6 +193,8 @@ app/gis/model/
 
 ## 算法说明
 
+> GEOS 工具层 API 和约定见上方 [GEOS 工具层约定](#geos-工具层约定) 章节。以下为 geohash/H3 算法说明。
+
 ### Geohash 网格扫描（GenerateFenceCells / computeGeohashCells）
 
 算法：bbox 半步长网格扫描 + 双重过滤。本接口为纯计算，不再支持按 `fence_id` 从 store 加载围栏。
@@ -111,7 +202,7 @@ app/gis/model/
 1. 计算多边形 bounding box
 2. 以 `geohashCellSize / 2` 为步长遍历 bbox（半步长确保不遗漏边界格子）
 3. 对每个采样点生成 geohash，构造格子矩形多边形
-4. 精过滤：格子中心在围栏内 **或** 格子与围栏边界相交
+4. 精过滤：格子中心在围栏内 **或** 格子与围栏边界相交（相交判断已迁移到 `orbconv.IntersectsOrb`）
 5. 可选：扩展命中格子的 8 邻居
 
 参考：`app/gis/internal/logic/generatefencecellslogic.go`。
@@ -182,14 +273,6 @@ graph LR
 注意：
 - `km` 只控制 H3 召回圈的广度，不控制精判后的结果范围。
 - 如果围栏入库时没有生成 `h3_r9` cells（例如为回填的老数据），`NearbyFences` 查不到该围栏。
-
-### 多边形相交判断（PolygonIntersect）
-
-两阶段策略（`common/gisx/intersect.go`）：
-1. 顶点包含：任一多边形的顶点在另一多边形内部（覆盖完全包含）
-2. 边界相交：两外环的边存在线段交点（覆盖交叉穿越）
-
-线段相交使用跨立实验（cross product straddle test），含退化情况（共线、端点接触）。
 
 ### GridDisk 圈层查询
 
@@ -305,5 +388,25 @@ message PointsWithinRadiusRes {
 - `IsOrbPointsEqual` 浮点精度
 - `OrbRingToH3LatLng` 自动闭合
 - `OrbPolygonToH3GeoPolygon` 正常/带洞/异常
-- `SegmentIntersect` 交叉/平行/共线/端点
-- `RingIntersect` / `PolygonIntersect` 相交/包含/远离
+
+`common/gisx/geos/geos_test.go` 必须覆盖：
+- GEOSVersion 非空
+- 构造：Point/Polygon/BoundsRect/LineString/LinearRing
+- WKT/WKB/GeoJSON 往返 + 无效输入
+- 全部 11 谓词 + Contains vs Covers 边界语义
+- PreparedGeom 全部 12 方法
+- Overlay（Intersection/Union/Difference/SymDifference）面积校验
+- Valid/IsValidReason/MakeValid（bowtie 自相交场景）
+- Buffer/Simplify/ConvexHull/ConcaveHull 面积校验
+- Area/Length/Distance/Centroid/PointOnSurface 精度校验
+- Relate/Hausdorff/Frechet/DistanceWithin/NearestPoints
+- SRID/SetSRID/Precision/Normalize/Reverse 基本功能
+- STRtree Insert/Query/Iterate/Remove
+- safeRun panic recover（无效 WKT→error）
+
+`common/gisx/geos/orbconv/orbconv_test.go` 必须覆盖：
+- PolygonToGeom/GeomToPolygon/PointToGeom/RingToGeom/GeomToRing 往返
+- IntersectsOrb/ContainsOrb/CoversOrb 重叠+远离
+- CoversPointOrb/ContainsPointOrb 边界语义
+- ValidOrb
+- nil 输入返回 nil

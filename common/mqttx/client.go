@@ -43,6 +43,9 @@ type Client interface {
 	PublishWithTrace(ctx context.Context, topic string, payload []byte) (string, error)
 	Close()
 	GetClientID() string
+}
+
+type replyHandlerGetter interface {
 	getReplyHandler(topicTemplate string) ConsumeHandler
 }
 

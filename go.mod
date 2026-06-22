@@ -60,7 +60,7 @@ require (
 	github.com/taosdata/driver-go/v3 v3.8.0
 	github.com/teambition/rrule-go v1.8.2
 	github.com/tidwall/gjson v1.19.0
-	github.com/twpayne/go-geom v1.6.1
+	github.com/twpayne/go-geos v0.20.4
 	github.com/u2takey/ffmpeg-go v0.5.0
 	github.com/uber/h3-go/v4 v4.5.0
 	github.com/wendy512/go-iecp5 v1.2.6

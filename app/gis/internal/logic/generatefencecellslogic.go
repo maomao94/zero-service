@@ -7,7 +7,7 @@ import (
 	"zero-service/app/gis/gis"
 
 	"zero-service/app/gis/internal/svc"
-	"zero-service/common/gisx"
+	"zero-service/common/gisx/geos/orbconv"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -94,7 +94,11 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *gis.GenFenceCellsReq) (
 			// 精过滤：格子中心点在多边形内 或 格子边界与多边形相交
 			cLat, cLon := geohash.DecodeCenter(hash)
 			isInside := planar.PolygonContains(polygon, orb.Point{cLon, cLat})
-			isIntersect := gisx.PolygonIntersect(polygon, cellOrb)
+			isIntersect, ierr := orbconv.IntersectsOrb(polygon, cellOrb)
+			if ierr != nil {
+				l.Logger.Errorf("GEOS intersect 失败: %v", ierr)
+				continue
+			}
 
 			if isInside || isIntersect {
 				geohashSet[hash] = struct{}{}
@@ -157,7 +161,10 @@ func computeGeohashCells(polygon orb.Polygon, precision int) []string {
 
 			cLat, cLon := geohash.DecodeCenter(hash)
 			isInside := planar.PolygonContains(polygon, orb.Point{cLon, cLat})
-			isIntersect := gisx.PolygonIntersect(polygon, cellOrb)
+			isIntersect, ierr := orbconv.IntersectsOrb(polygon, cellOrb)
+			if ierr != nil {
+				continue
+			}
 
 			if isInside || isIntersect {
 				geohashSet[hash] = struct{}{}
