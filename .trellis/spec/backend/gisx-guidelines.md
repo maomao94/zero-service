@@ -63,13 +63,146 @@ common/gisx/geos/orbconv/       ← orb 转换 + 便捷包装
 - **无包装层**：直接使用 `*gogeos.Geom`，不自建 `Geometry` 包装类型
 - **无冗余字段**：`PreparedGeom`、`STRtree` 不存储 Context 引用
 
-### Docker / CGO 依赖
+### Docker / CGO 镜像构建契约
 
-`app/gis/Dockerfile` 两阶段：
-- builder：`CGO_ENABLED=1`，安装 `pkgconf geos-dev`，执行 `geos-config --version`
-- runtime：安装 `geos`（不要用 `geos-dev`）
+#### 1. Scope / Trigger
+- 修改 `app/gis/Dockerfile`、`.dockerignore`、`app/gis/deploy.sh`
+- 升级 `geos` 版本、切换 Go 版本、新增 C 依赖
+- 增加多架构构建（amd64/arm64）
+- 构建耗时异常（>60s 无缓存命中）
 
-反模式：builder 只装 `geos` 缺少头文件；runtime 不装 `geos` 二进制找不到动态库。
+#### 2. 签名（关键文件路径）
+| 文件 | 职责 |
+|------|------|
+| `app/gis/Dockerfile` | 两阶段构建（builder + runtime） |
+| `.dockerignore`（仓库根） | 控制 Docker build context |
+| `app/gis/deploy.sh` | 构建 → save → scp → load 部署链路 |
+
+#### 3. 契约
+
+**builder 阶段**
+```dockerfile
+# builder — 编译环境
+FROM golang:1.26-alpine3.22 AS builder        # musl libc
+ENV CGO_ENABLED=1                              # GEOS 必须
+ARG GOPROXY=https://goproxy.cn,direct
+ENV GOPROXY=$GOPROXY                           # 必须 ENV 导出，ARG 不持久
+
+RUN apk add --no-cache \
+    tzdata ca-certificates make gcc musl-dev pkgconf geos-dev \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \  # apk add tzdata 之后
+    && geos-config --version                              # 校验头文件
+
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+
+COPY . .
+ARG TARGETARCH  # BuildKit 内置：amd64 / arm64
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,id=go-build-${TARGETARCH},target=/root/.cache/go-build \
+    go build -trimpath -ldflags="-s -w" -o /out/gis ./app/gis
+```
+
+**runtime 阶段**
+```dockerfile
+FROM alpine:3.22  # 与 builder 同 musl libc，~7MB
+RUN apk add --no-cache geos  # 只装运行库
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /usr/share/zoneinfo/Asia/Shanghai
+```
+
+**构建环境**
+- `deploy.sh` 必须 `DOCKER_BUILDKIT=1`，否则 cache mount 不生效
+- `.dockerignore` 必配，最少排除 `.git`、`logs`、`*.tar`、`env/`、`.trellis`、`.opencode`
+
+**多架构**
+```bash
+# 单架构（deploy.sh 内置支持）: ./deploy.sh dev linux/arm64
+# 多架构（需手动 buildx --push）:
+docker buildx build --platform linux/amd64,linux/arm64 \
+    -t registry.example.com/zero-service-gis:latest -f app/gis/Dockerfile --push .
+```
+
+#### 4. 校验矩阵
+| 检查项 | 通过条件 | 检测方法 |
+|--------|---------|---------|
+| CGO 头文件 | `geos-config --version` 输出有效版本 | 构建日志 |
+| GEOS 运行库 | 容器内 `ldd /app/gis \| grep geos` 有匹配 | `docker run --rm <img> ldd /app/gis` |
+| 时区 | `date` 输出 CST | `docker run --rm <img> date` |
+| CA 证书 | HTTPS 请求不报证书错误 | 服务启动后对外请求正常 |
+| musl 兼容 | `ldd` 无 "not found" | `docker run --rm <img> ldd /app/gis` |
+| BuildKit | `RUN --mount` 不报错 | 构建日志无 mount 错误 |
+| GEOS 版本 | 启动日志输出版本 | `docker logs <container> \| grep "GEOS Version"` |
+
+#### 5. Good / Base / Bad
+
+**Good（当前实现）**
+```dockerfile
+# builder: golang:1.26-alpine3.22, CGO_ENABLED=1, geos-dev
+# runtime: alpine:3.22, 只装 geos
+# cache: id=go-build-${TARGETARCH} 多架构隔离
+# binary: -trimpath -ldflags="-s -w"
+```
+
+**Base（可用但不优）**
+```dockerfile
+# builder 和 runtime 都用 golang:alpine（共享层，镜像大）
+# cache mount 不用 id 区分架构（单架构可用，多架构冲突）
+```
+
+**Bad（反模式）**
+
+| 反模式 | 后果 |
+|--------|------|
+| `ENV GOARCH=amd64` 写死 | ARM 构建失败 |
+| runtime 用 `golang:1.26-alpine3.22` | 镜像膨胀（~350MB vs ~10MB） |
+| runtime 用 `debian/ubuntu` | musl vs glibc 不兼容 |
+| builder 只装 `geos` 没 `geos-dev` | 编译缺头文件 |
+| runtime 装 `geos-dev` | 带入 gcc/musl-dev，增大攻击面 |
+| `COPY --from=builder /build/gis`（路径含空格等） | 用 `/out/` 目录隔离，避免路径穿越 |
+| `GOPROXY` 只设 `ARG` 不设 `ENV` | go 命令用不到代理 |
+| 没 `.dockerignore` | `.git`（数百 MB）进 context |
+| 没 `DOCKER_BUILDKIT=1` | cache mount 静默失败 |
+| `ln -snf` 在 `apk add tzdata` 前 | 冷构建 zoneinfo 不存在 |
+| runtime 重装 `tzdata ca-certificates` | 应用从 builder 复制，减少安装 |
+
+#### 6. 测试验证
+
+- [ ] 本地 `bash -n app/gis/deploy.sh` 语法检查
+- [ ] `go build ./app/gis/... && go vet ./app/gis/...` 编译+静态检查
+- [ ] `DOCKER_BUILDKIT=1 docker build -f app/gis/Dockerfile .` 构建成功
+- [ ] `docker run --rm <img> sh -c "./gis -f etc/gis.yaml" 2>&1 | head -5` 输出 GEOS 版本
+- [ ] `docker run --rm <img> ldd /app/gis | grep -i geos` GEOS 动态库可链接
+- [ ] `docker run --rm <img> date` 输出 CST 时区
+- [ ] 二次构建耗时 <30s（cache mount 命中）
+
+#### 7. Wrong vs Correct
+
+**Wrong — runtime 用 debian**
+```dockerfile
+FROM debian:bookworm-slim       # glibc
+RUN apt-get install -y libgeos3 # 动态库路径不同
+```
+→ 二进制链接 musl，debian 无 musl，无法运行
+
+**Correct — runtime 用 alpine**
+```dockerfile
+FROM alpine:3.22
+RUN apk add --no-cache geos
+```
+
+**Wrong — 时区写在 apk add 前**
+```dockerfile
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime  # 文件还不存在
+RUN apk add --no-cache tzdata
+```
+
+**Correct — 时区写在 apk add tzdata 后**
+```dockerfile
+RUN apk add --no-cache tzdata ... \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+```
 
 ### 对外 API 边界
 

@@ -3,7 +3,13 @@
 set -e
 
 # === 参数 ===
+# 用法: ./deploy.sh [环境] [平台]
+# 示例:
+#   ./deploy.sh dev              # 默认当前架构
+#   ./deploy.sh dev linux/arm64  # 构建 ARM64 单架构
+# 注意: 多架构镜像（逗号分隔）不能 save 成 tar，需手动 buildx --push 到 registry
 ENVIRONMENT=${1:-dev}
+PLATFORM=${2:-}
 ENV_FILE="env/${ENVIRONMENT}.env"
 
 # === 日志函数 ===
@@ -48,7 +54,17 @@ log "开始编译..."
 # === 本地构建镜像 ===
 log "本地构建镜像: ${IMAGE_NAME}:${LOCAL_IMAGE_TAG}"
 #docker build -t ${IMAGE_NAME}:${LOCAL_IMAGE_TAG} .
-docker build -t ${IMAGE_NAME}:${LOCAL_IMAGE_TAG} -f ./Dockerfile ../../
+PLATFORM_ARG=""
+if [ -n "$PLATFORM" ]; then
+    PLATFORM_ARG="--platform=${PLATFORM}"
+    log "目标平台: ${PLATFORM}"
+fi
+DOCKER_BUILDKIT=1 docker build \
+    --progress=plain \
+    ${PLATFORM_ARG} \
+    $( [ -n "$HTTP_PROXY" ] && echo "--build-arg HTTP_PROXY=$HTTP_PROXY" ) \
+    $( [ -n "$HTTPS_PROXY" ] && echo "--build-arg HTTPS_PROXY=$HTTPS_PROXY" ) \
+    -t ${IMAGE_NAME}:${LOCAL_IMAGE_TAG} -f ./Dockerfile ../../
 
 # 获取本地新镜像ID
 LOCAL_IMAGE_ID=$(docker image inspect -f '{{.Id}}' ${IMAGE_NAME}:${LOCAL_IMAGE_TAG})
@@ -169,8 +185,6 @@ sshpass -p "$REMOTE_PASSWD" ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REM
   rm -f ${REMOTE_PATH}/${TAR_NAME}
 EOF
 
-# === 清理本地 app 目录 ===
-rm -rf app/
 # === 清理本地 tar 文件 ===
 rm -f ${TAR_NAME}
 log "${ENVIRONMENT} 环境部署完成 ✅"

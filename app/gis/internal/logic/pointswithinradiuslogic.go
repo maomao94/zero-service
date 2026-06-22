@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"encoding/json"
 
 	"zero-service/app/gis/gis"
 	"zero-service/app/gis/internal/svc"
@@ -42,11 +43,13 @@ func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusR
 		distance := geo.Distance(center, orbP)
 		if distance <= in.RadiusMeters {
 			hits = append(hits, &gis.RadiusHit{
-				Index:           int32(i),
-				DistanceMeters:  distance,
+				Index:          int32(i),
+				DistanceMeters: distance,
 			})
 		}
 	}
+	points, _ := json.Marshal(in.Points)
+	l.Logger.Infof("获取半径内的点 points: %d, hit count: %d", len(points), len(hits))
 	return &gis.PointsWithinRadiusRes{
 		Hits: hits,
 	}, nil
