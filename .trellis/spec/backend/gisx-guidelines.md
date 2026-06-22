@@ -42,6 +42,15 @@ type FenceStore interface {
 }
 ```
 
+### 召回索引自动生成规则
+
+store 层实现（`GormFenceStore`）在 `CreateFence` / `UpdateFence` 内部自动做以下工作：
+
+- 根据 `points` 和 `h3RecallResolution=9` 生成 `h3_r9` 召回 cells
+- 与业务 `h3` / `geohash` cells 一起写入 `gis_fence_cell` 表
+- `h3_r9` cells 不暴露给 logic 层，不出现在 `FenceInfo.H3Cells` 中
+- `FindNearbyFenceIds` 固定查询 `cell_type = "h3_r9"`，不和 `h3` 混查
+
 注入规则（`app/gis/internal/svc/servicecontext.go`）：
 - 配置了 `DB.DataSource` → 使用 `model.NewGormFenceStore(db)`
 - 未配置 → 使用 `&gisx.NoopFenceStore{}`
@@ -56,7 +65,7 @@ type FenceStore interface {
  | 多精度编码 | `EncodeH3Multi`, `EncodeGeoHashMulti` | 单点 multi-resolution 编码，repeated 入参 |
  | GridDisk 邻域查询 | `GridDisk` (h3_index), `GridDiskByPoint` (经纬度) | 两个独立 RPC 分别处理 origin 输入形式 |
  | 围栏 CRUD | `CreateFence`, `UpdateFence`, `DeleteFence`, `ListFences`, `GetFence` | 依赖 FenceStore |
- | 围栏判断 | `PointInFence`, `PointInFences`, `NearbyFences` | 支持直传 polygon 或 fenceId 两种模式 |
+ | 围栏判断 | `PointInFence`, `PointInFences`, `NearbyFences` | 支持直传 polygon 或 fenceId 两种模式；`NearbyFences` 新增 H3 召回 + polygon 精判链路 |
  | 坐标转换 | `TransformCoord`, `BatchTransformCoord` | WGS84/GCJ02/BD09 互转 |
 
 ### logic 层 helper 模式
@@ -120,15 +129,59 @@ func geohashCellSize(precision int, lat float64) (widthDeg, heightDeg float64)
 
 **调用方必须按 `lonStep, latStep := geohashCellSize(...)` 接收**，不要反写成 `latStep, lonStep`。
 
-### Nearby geohash 查询
+### H3 召回索引（推荐，替代 Nearby geohash 查询）
 
-`FindNearbyFenceIds` 是 geohash 粗过滤，不是精确距离判断。查询时必须兼容入库 geohash 精度与本次查询精度不同的情况：
+`FindNearbyFenceIds` 使用固定的 `h3_r9` 召回索引做粗过滤。设计要点：
+
+- 召回索引精度固定为 **H3 resolution = 9**（`cell_type = "h3_r9"`），不按 `km` 动态选择。
+- `CreateFence` / `UpdateFence` 在 store 层根据多边形自动生成 `h3_r9` 召回 cells，logic 层不感知内部召回索引。
+- 查询链路：`LatLngToCell(point, 9)` → `GridDisk(origin, k)` → `cell_type = "h3_r9" AND cell_id IN ?`。
+- `km` 只换算 H3 网格圈数 `k`：`k = ceil(km / 0.2)`（基于 res=9 平均边长约 200m），最小 1。
+- `FenceInfo.H3Cells` 业务上暴露 `cell_type = "h3"`，不暴露内部 `h3_r9`。
+- 未来升级召回精度时，新增 `cell_type = "h3_r10"` 重建索引，再切换查询条件；不改主表结构。
+
+参考文件：`app/gis/model/fencestore.go`，常量定义：
+
+```go
+const (
+    h3RecallResolution    = 9
+    h3RecallCellType      = "h3_r9"
+    h3RecallAverageEdgeKm = 0.2  // res=9 平均边长 km
+)
+```
+
+优势：
+- 查询 resolution 和入库 resolution 始终对齐，不会因精度不一致漏查候选。
+- 按 km 变 resolution 的老方案不准确且不可靠，已在本轮废弃。
+
+### 老方案（已废弃）：Nearby geohash 查询
+
+> 该方案已被 H3 召回索引替代，旧代码保留但不应在新路径中使用。
+
+`FindNearbyFenceIds` 曾使用 geohash 粗过滤，查询时必须兼容入库 geohash 精度与本次查询精度不同的情况：
 
 - 同精度：查询候选 geohash 和 8 邻居的 exact match
 - 入库更粗：最多回退 2 级前缀 exact match（再粗则空间跨度过大，不适合作"附近"过滤）
 - 入库更细：查询候选 geohash 的 `LIKE prefix%`
 
 否则 `CreateFence` 默认 precision=7、`NearbyFences` 按 km 选择 precision=4/5/6 时会漏查候选围栏。
+
+### NearbyFences 完整链路（H3 召回 + 多边形精判）
+
+```mermaid
+graph LR
+  A[point + km] --> B[H3 LatLngToCell res=9]
+  B --> C[GridDisk origin_k]
+  C --> D[查 cell_type=h3_r9 AND cell_id IN ...]
+  D --> E[候选 fence_id 列表]
+  E --> F[LoadFencePolygon 加载各候选多边形]
+  F --> G[planar.PolygonContains 精判]
+  G --> H[返回真正命中的 fence_id 列表]
+```
+
+注意：
+- `km` 只控制 H3 召回圈的广度，不控制精判后的结果范围。
+- 如果围栏入库时没有生成 `h3_r9` cells（例如为回填的老数据），`NearbyFences` 查不到该围栏。
 
 ### 多边形相交判断（PolygonIntersect）
 
@@ -234,7 +287,9 @@ message PointsWithinRadiusRes {
 |------|------|----------|
 | 坐标顺序混淆 | orb 用 [lon,lat]，H3 用 {lat,lng}，pb 用独立字段 | `logic/helper.go` |
 | geohashCellSize 返回值 | 第一个是 widthDeg(lon)，第二个是 heightDeg(lat)，按 geohash 位数算角度跨度，不用米制经验表 | `logic/generatefencecellslogic.go` |
-| Nearby geohash 精度不一致 | 查询必须兼容入库更粗/更细的 geohash cell（前缀最多回退 2 级），否则按 km 查询会漏候选 | `model/fencestore.go` |
+| H3 召回精度不一致 | 查询 resolution 必须和入库 `h3_r9` 一致，否则 `GridDisk` 查不到对应 cells；已按固定 res=9 消除了此问题 | `model/fencestore.go` |
+| 老数据缺少 h3_r9 cells | 未回填的旧围栏没有 `h3_r9` 行，`NearbyFences` 查不到；旧代码保留的 geohash 查询也不应该再被用作唯一召回路径 | `model/fencestore.go` |
+| km 只控制候选广度 | `NearbyFences` 的 `km` 只影响 H3 候选集大小，不决定最终结果；polygon 精判后只返回真正命中的围栏 | `logic/nearbyfenceslogic.go` |
 | uint32 默认值判断 | `resolution == 0` 而非 `<= 0`（unsigned 不会负） | `logic/generatefenceh3cellslogic.go` |
 | 批量接口漏校验 | BatchXxx 必须与单点版本保持相同的入参校验 | `logic/batchtransformcoordlogic.go` |
 | 2-opt 开放路径边界 | 末端无后继边，`j+1 >= n` 时跳过 | `logic/routepointslogic.go` |
