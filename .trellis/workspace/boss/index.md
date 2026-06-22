@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 75
+- **Total Sessions**: 76
 - **Last Active**: 2026-06-22
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~859 | Active |
+| `journal-2.md` | ~892 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 76 | 2026-06-22 | optimize-gis-docker-build | `045bd11d` | `master` |
 | 75 | 2026-06-22 | 引入 go-geos 并完善 common/gisx/geos 工具层 | `60fefa17`, `86c62057`, `356cc83b` | `master` |
 | 74 | 2026-06-22 | 实现 GIS proto 优化：Proto 同步 + H3 召回索引 + NearbyFences 精判 | `4ba3fcda`, `7da01af3` | `master` |
 | 73 | 2026-06-22 | GIS H3 与半径命中接口优化 | `f7b56fb1`, `636e7d2a` | `master` |

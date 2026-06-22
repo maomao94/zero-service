@@ -857,3 +857,36 @@ PointsWithinRadius 精简返回(Index+Distance取代Point);新增EncodeGeoHashMu
 ### Next Steps
 
 - None - task complete
+
+
+## Session 76: optimize-gis-docker-build
+
+**Date**: 2026-06-22
+**Task**: optimize-gis-docker-build
+**Branch**: `master`
+
+### Summary
+
+优化 GIS Docker 镜像构建：Dockerfile 改为两阶段 CGO/GEOS 最佳实践，集成 BuildKit cache mount，移除 GOARCH 硬编码支持多架构，新增 .dockerignore，优化 deploy.sh 平台参数和代理传参。gis.go 输出 GEOS 版本。更新 gisx-guidelines.md Docker/CGO 契约。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `045bd11d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -2,8 +2,6 @@ package logic
 
 import (
 	"context"
-	"encoding/json"
-
 	"zero-service/app/gis/gis"
 	"zero-service/app/gis/internal/svc"
 	"zero-service/common/tool"
@@ -12,6 +10,7 @@ import (
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/geo"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/timex"
 )
 
 type PointsWithinRadiusLogic struct {
@@ -30,6 +29,7 @@ func NewPointsWithinRadiusLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 
 // PointsWithinRadius 筛选出距中心点距离 ≤ radius_meters 的所有点，返回命中点的索引和距离。
 func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusReq) (*gis.PointsWithinRadiusRes, error) {
+	startTime := timex.Now()
 	if err := ValidatePoints(append([]*gis.Point{in.Center}, in.Points...)...); err != nil {
 		return nil, err
 	}
@@ -48,8 +48,8 @@ func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusR
 			})
 		}
 	}
-	points, _ := json.Marshal(in.Points)
-	l.Logger.Infof("获取半径内的点 points: %d, hit count: %d", len(points), len(hits))
+	duration := timex.Since(startTime)
+	l.Logger.WithDuration(duration).Infof("获取半径内的点 points: %d, hit count: %d", len(in.Points), len(hits))
 	return &gis.PointsWithinRadiusRes{
 		Hits: hits,
 	}, nil
