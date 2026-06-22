@@ -40,25 +40,25 @@ func (s *GisServer) EncodeGeoHashMulti(ctx context.Context, in *gis.EncodeGeoHas
 	return l.EncodeGeoHashMulti(in)
 }
 
-// 解码 geohash -> 经纬度
+// 解码 geohash -> 经纬度 + 格网边界
 func (s *GisServer) DecodeGeoHash(ctx context.Context, in *gis.DecodeGeoHashReq) (*gis.DecodeGeoHashRes, error) {
 	l := logic.NewDecodeGeoHashLogic(ctx, s.svcCtx)
 	return l.DecodeGeoHash(in)
 }
 
-// 编码 h3
+// 编码 H3
 func (s *GisServer) EncodeH3(ctx context.Context, in *gis.EncodeH3Req) (*gis.EncodeH3Res, error) {
 	l := logic.NewEncodeH3Logic(ctx, s.svcCtx)
 	return l.EncodeH3(in)
 }
 
-// 多分辨率编码 h3
+// 多分辨率编码 H3
 func (s *GisServer) EncodeH3Multi(ctx context.Context, in *gis.EncodeH3MultiReq) (*gis.EncodeH3MultiRes, error) {
 	l := logic.NewEncodeH3MultiLogic(ctx, s.svcCtx)
 	return l.EncodeH3Multi(in)
 }
 
-// 解码 h3
+// 解码 H3 index -> 中心点 + 边界多边形
 func (s *GisServer) DecodeH3(ctx context.Context, in *gis.DecodeH3Req) (*gis.DecodeH3Res, error) {
 	l := logic.NewDecodeH3Logic(ctx, s.svcCtx)
 	return l.DecodeH3(in)
@@ -76,13 +76,13 @@ func (s *GisServer) GridDiskByPoint(ctx context.Context, in *gis.GridDiskByPoint
 	return l.GridDiskByPoint(in)
 }
 
-// 生成围栏 geohash cells（纯计算）
+// 计算多边形围栏覆盖的 geohash cells（纯计算，不持久化）
 func (s *GisServer) GenerateFenceCells(ctx context.Context, in *gis.GenFenceCellsReq) (*gis.GenFenceCellsRes, error) {
 	l := logic.NewGenerateFenceCellsLogic(ctx, s.svcCtx)
 	return l.GenerateFenceCells(in)
 }
 
-// 生成围栏 H3 cells（纯计算）
+// 计算多边形围栏覆盖的 H3 cells（纯计算，不持久化）
 func (s *GisServer) GenerateFenceH3Cells(ctx context.Context, in *gis.GenFenceH3CellsReq) (*gis.GenFenceH3CellsRes, error) {
 	l := logic.NewGenerateFenceH3CellsLogic(ctx, s.svcCtx)
 	return l.GenerateFenceH3Cells(in)
@@ -136,7 +136,7 @@ func (s *GisServer) BatchTransformCoord(ctx context.Context, in *gis.BatchTransf
 	return l.BatchTransformCoord(in)
 }
 
-// 计算点集合的最优路径
+// 计算点集合的近似最优访问路径（开放式 TSP）
 func (s *GisServer) RoutePoints(ctx context.Context, in *gis.RoutePointsReq) (*gis.RoutePointsRes, error) {
 	l := logic.NewRoutePointsLogic(ctx, s.svcCtx)
 	return l.RoutePoints(in)

@@ -9,7 +9,6 @@ import (
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
-	"github.com/paulmach/orb"
 	"github.com/uber/h3-go/v4"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -31,25 +30,14 @@ func NewGenerateFenceH3CellsLogic(ctx context.Context, svcCtx *svc.ServiceContex
 // GenerateFenceH3Cells 生成覆盖围栏多边形的 H3 六边形索引。
 // 算法：将多边形转换为 H3 GeoPolygon，调用 PolygonToCellsExperimental 获取所有重叠 cell。
 func (l *GenerateFenceH3CellsLogic) GenerateFenceH3Cells(in *gis.GenFenceH3CellsReq) (*gis.GenFenceH3CellsRes, error) {
-	// 获取多边形：优先使用请求中的顶点，其次从 store 按 ID 加载
-	var polygon orb.Polygon
-	var err error
-
-	if len(in.Points) > 0 {
-		polygon, err = pbPointToOrbPolygon(in.Points)
-		if err != nil {
-			l.Logger.Error("构建多边形失败: ", err)
-			return nil, err
-		}
-	} else if in.FenceId != "" {
-		pts, err := l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, in.FenceId)
-		if err != nil {
-			l.Logger.Errorf("加载围栏多边形失败, fenceId=%s, err=%v", in.FenceId, err)
-			return nil, err
-		}
-		polygon = orb.Polygon{orb.Ring(pts)}
-	} else {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "points 或 fence_id")
+	// 本接口为纯计算，仅支持请求中直接传入顶点
+	if len(in.Points) < 3 {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "围栏至少需要3个顶点")
+	}
+	polygon, err := pbPointToOrbPolygon(in.Points)
+	if err != nil {
+		l.Logger.Error("构建多边形失败: ", err)
+		return nil, err
 	}
 
 	resolution := in.Resolution

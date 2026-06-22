@@ -97,7 +97,7 @@ app/gis/model/
 
 ### Geohash 网格扫描（GenerateFenceCells / computeGeohashCells）
 
-算法：bbox 半步长网格扫描 + 双重过滤。
+算法：bbox 半步长网格扫描 + 双重过滤。本接口为纯计算，不再支持按 `fence_id` 从 store 加载围栏。
 
 1. 计算多边形 bounding box
 2. 以 `geohashCellSize / 2` 为步长遍历 bbox（半步长确保不遗漏边界格子）
@@ -217,6 +217,7 @@ message PointsWithinRadiusRes {
 
 直接调用 `h3.PolygonToCellsExperimental` 计算所有与多边形重叠的六边形 cell。
 需先通过 `gisx.OrbPolygonToH3GeoPolygon` 转换坐标格式。
+`GenerateFenceH3Cells` 为纯计算接口，不支持按 `fence_id` 从 store 加载围栏。
 
 ## Proto 规范
 

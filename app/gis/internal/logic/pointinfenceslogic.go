@@ -36,7 +36,7 @@ func (l *PointInFencesLogic) PointInFences(in *gis.PointInFencesReq) (*gis.Point
 	point := orb.Point{in.Point.Lon, in.Point.Lat}
 
 	for key, fence := range in.Fences {
-		if len(fence.Points) == 0 && fence.Id == "" {
+		if len(fence.Points) == 0 && fence.FenceId == "" {
 			continue
 		}
 
@@ -45,23 +45,23 @@ func (l *PointInFencesLogic) PointInFences(in *gis.PointInFencesReq) (*gis.Point
 		if len(fence.Points) > 0 {
 			polygon, err = pbPointToOrbPolygon(fence.Points)
 			if err != nil {
-				l.Logger.Error("构建多边形失败, fenceId=", fence.Id, err)
+				l.Logger.Error("构建多边形失败, fenceId=", fence.FenceId, err)
 				continue
 			}
-		} else if fence.Id != "" {
-			pts, err := l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, fence.Id)
+		} else if fence.FenceId != "" {
+			pts, err := l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, fence.FenceId)
 			if err != nil {
-				l.Logger.Errorf("加载围栏多边形失败, fenceId=%s, err=%v", fence.Id, err)
+				l.Logger.Errorf("加载围栏多边形失败, fenceId=%s, err=%v", fence.FenceId, err)
 				continue
 			}
 			polygon = orb.Polygon{orb.Ring(pts)}
 		}
 
 		if planar.PolygonContains(polygon, point) {
-			if len(fence.Id) == 0 {
-				fence.Id = strconv.Itoa(key)
+			if len(fence.FenceId) == 0 {
+				fence.FenceId = strconv.Itoa(key)
 			}
-			hitFenceIds = append(hitFenceIds, fence.Id)
+			hitFenceIds = append(hitFenceIds, fence.FenceId)
 		}
 	}
 

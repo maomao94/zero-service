@@ -40,9 +40,10 @@ func (l *DecodeGeoHashLogic) DecodeGeoHash(in *gis.DecodeGeoHashReq) (*gis.Decod
 			Lat: lat,
 			Lon: lon,
 		},
-		LatMin: box.MinLat,
-		LatMax: box.MaxLat,
-		LonMin: box.MinLng,
-		LonMax: box.MaxLng,
+		Precision: uint32(len(in.Geohash)),
+		LatMin:    box.MinLat,
+		LatMax:    box.MaxLat,
+		LonMin:    box.MinLng,
+		LonMax:    box.MaxLng,
 	}, nil
 }

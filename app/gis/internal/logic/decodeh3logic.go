@@ -56,6 +56,7 @@ func (l *DecodeH3Logic) DecodeH3(in *gis.DecodeH3Req) (*gis.DecodeH3Res, error) 
 			Lat: latLng.Lat,
 			Lon: latLng.Lng,
 		},
-		Boundary: boundary,
+		Boundary:   boundary,
+		Resolution: uint32(cell.Resolution()),
 	}, nil
 }

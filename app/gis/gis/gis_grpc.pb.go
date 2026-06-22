@@ -57,21 +57,21 @@ type GisClient interface {
 	EncodeGeoHash(ctx context.Context, in *EncodeGeoHashReq, opts ...grpc.CallOption) (*EncodeGeoHashRes, error)
 	// 多精度编码 geohash
 	EncodeGeoHashMulti(ctx context.Context, in *EncodeGeoHashMultiReq, opts ...grpc.CallOption) (*EncodeGeoHashMultiRes, error)
-	// 解码 geohash -> 经纬度
+	// 解码 geohash -> 经纬度 + 格网边界
 	DecodeGeoHash(ctx context.Context, in *DecodeGeoHashReq, opts ...grpc.CallOption) (*DecodeGeoHashRes, error)
-	// 编码 h3
+	// 编码 H3
 	EncodeH3(ctx context.Context, in *EncodeH3Req, opts ...grpc.CallOption) (*EncodeH3Res, error)
-	// 多分辨率编码 h3
+	// 多分辨率编码 H3
 	EncodeH3Multi(ctx context.Context, in *EncodeH3MultiReq, opts ...grpc.CallOption) (*EncodeH3MultiRes, error)
-	// 解码 h3
+	// 解码 H3 index -> 中心点 + 边界多边形
 	DecodeH3(ctx context.Context, in *DecodeH3Req, opts ...grpc.CallOption) (*DecodeH3Res, error)
 	// H3 gridDisk：按 H3 origin 获取周围 k 圈内的 cells
 	GridDisk(ctx context.Context, in *GridDiskReq, opts ...grpc.CallOption) (*GridDiskRes, error)
 	// H3 gridDisk：按坐标编码 origin 后获取周围 k 圈内的 cells
 	GridDiskByPoint(ctx context.Context, in *GridDiskByPointReq, opts ...grpc.CallOption) (*GridDiskRes, error)
-	// 生成围栏 geohash cells（纯计算）
+	// 计算多边形围栏覆盖的 geohash cells（纯计算，不持久化）
 	GenerateFenceCells(ctx context.Context, in *GenFenceCellsReq, opts ...grpc.CallOption) (*GenFenceCellsRes, error)
-	// 生成围栏 H3 cells（纯计算）
+	// 计算多边形围栏覆盖的 H3 cells（纯计算，不持久化）
 	GenerateFenceH3Cells(ctx context.Context, in *GenFenceH3CellsReq, opts ...grpc.CallOption) (*GenFenceH3CellsRes, error)
 	// 获取半径内的点
 	PointsWithinRadius(ctx context.Context, in *PointsWithinRadiusReq, opts ...grpc.CallOption) (*PointsWithinRadiusRes, error)
@@ -89,7 +89,7 @@ type GisClient interface {
 	TransformCoord(ctx context.Context, in *TransformCoordReq, opts ...grpc.CallOption) (*TransformCoordRes, error)
 	// 批量坐标转换
 	BatchTransformCoord(ctx context.Context, in *BatchTransformCoordReq, opts ...grpc.CallOption) (*BatchTransformCoordRes, error)
-	// 计算点集合的最优路径
+	// 计算点集合的近似最优访问路径（开放式 TSP）
 	RoutePoints(ctx context.Context, in *RoutePointsReq, opts ...grpc.CallOption) (*RoutePointsRes, error)
 	// 新增电子围栏（计算 H3/geohash cells 并持久化）
 	CreateFence(ctx context.Context, in *CreateFenceReq, opts ...grpc.CallOption) (*CreateFenceRes, error)
@@ -372,21 +372,21 @@ type GisServer interface {
 	EncodeGeoHash(context.Context, *EncodeGeoHashReq) (*EncodeGeoHashRes, error)
 	// 多精度编码 geohash
 	EncodeGeoHashMulti(context.Context, *EncodeGeoHashMultiReq) (*EncodeGeoHashMultiRes, error)
-	// 解码 geohash -> 经纬度
+	// 解码 geohash -> 经纬度 + 格网边界
 	DecodeGeoHash(context.Context, *DecodeGeoHashReq) (*DecodeGeoHashRes, error)
-	// 编码 h3
+	// 编码 H3
 	EncodeH3(context.Context, *EncodeH3Req) (*EncodeH3Res, error)
-	// 多分辨率编码 h3
+	// 多分辨率编码 H3
 	EncodeH3Multi(context.Context, *EncodeH3MultiReq) (*EncodeH3MultiRes, error)
-	// 解码 h3
+	// 解码 H3 index -> 中心点 + 边界多边形
 	DecodeH3(context.Context, *DecodeH3Req) (*DecodeH3Res, error)
 	// H3 gridDisk：按 H3 origin 获取周围 k 圈内的 cells
 	GridDisk(context.Context, *GridDiskReq) (*GridDiskRes, error)
 	// H3 gridDisk：按坐标编码 origin 后获取周围 k 圈内的 cells
 	GridDiskByPoint(context.Context, *GridDiskByPointReq) (*GridDiskRes, error)
-	// 生成围栏 geohash cells（纯计算）
+	// 计算多边形围栏覆盖的 geohash cells（纯计算，不持久化）
 	GenerateFenceCells(context.Context, *GenFenceCellsReq) (*GenFenceCellsRes, error)
-	// 生成围栏 H3 cells（纯计算）
+	// 计算多边形围栏覆盖的 H3 cells（纯计算，不持久化）
 	GenerateFenceH3Cells(context.Context, *GenFenceH3CellsReq) (*GenFenceH3CellsRes, error)
 	// 获取半径内的点
 	PointsWithinRadius(context.Context, *PointsWithinRadiusReq) (*PointsWithinRadiusRes, error)
@@ -404,7 +404,7 @@ type GisServer interface {
 	TransformCoord(context.Context, *TransformCoordReq) (*TransformCoordRes, error)
 	// 批量坐标转换
 	BatchTransformCoord(context.Context, *BatchTransformCoordReq) (*BatchTransformCoordRes, error)
-	// 计算点集合的最优路径
+	// 计算点集合的近似最优访问路径（开放式 TSP）
 	RoutePoints(context.Context, *RoutePointsReq) (*RoutePointsRes, error)
 	// 新增电子围栏（计算 H3/geohash cells 并持久化）
 	CreateFence(context.Context, *CreateFenceReq) (*CreateFenceRes, error)

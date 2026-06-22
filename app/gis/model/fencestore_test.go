@@ -2,30 +2,26 @@ package model
 
 import "testing"
 
-func TestGeohashLookupKeys(t *testing.T) {
-	exactMatches, likePatterns := geohashLookupKeys([]string{"wx4g0"})
-
-	wantExact := map[string]bool{
-		"wx4":   false,
-		"wx4g":  false,
-		"wx4g0": false,
+func TestKmToH3RecallK(t *testing.T) {
+	if h3RecallResolution != 9 {
+		t.Fatalf("h3RecallResolution = %d, want 9", h3RecallResolution)
 	}
-	for _, match := range exactMatches {
-		if _, ok := wantExact[match]; ok {
-			wantExact[match] = true
-		}
-	}
-	for match, found := range wantExact {
-		if !found {
-			t.Fatalf("missing exact match %q in %v", match, exactMatches)
-		}
+	if h3RecallCellType != "h3_r9" {
+		t.Fatalf("h3RecallCellType = %q, want h3_r9", h3RecallCellType)
 	}
 
-	wantPattern := "wx4g0%"
-	for _, pattern := range likePatterns {
-		if pattern == wantPattern {
-			return
-		}
+	k := kmToH3RecallK(1)
+	if k != 5 {
+		t.Fatalf("k = %d, want 5", k)
 	}
-	t.Fatalf("missing like pattern %q in %v", wantPattern, likePatterns)
+
+	k = kmToH3RecallK(50)
+	if k != 250 {
+		t.Fatalf("k = %d, want 250", k)
+	}
+
+	k = kmToH3RecallK(0)
+	if k != 1 {
+		t.Fatalf("k = %d, want 1", k)
+	}
 }

@@ -74,70 +74,17 @@ func (CoordType) EnumDescriptor() ([]byte, []int) {
 	return file_gis_proto_rawDescGZIP(), []int{0}
 }
 
-// 常用对象
-type Fence struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Points        []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Fence) Reset() {
-	*x = Fence{}
-	mi := &file_gis_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Fence) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Fence) ProtoMessage() {}
-
-func (x *Fence) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Fence.ProtoReflect.Descriptor instead.
-func (*Fence) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Fence) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *Fence) GetPoints() []*Point {
-	if x != nil {
-		return x.Points
-	}
-	return nil
-}
-
 type Point struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Lat           float64                `protobuf:"fixed64,1,opt,name=lat,proto3" json:"lat,omitempty"`
-	Lon           float64                `protobuf:"fixed64,2,opt,name=lon,proto3" json:"lon,omitempty"`
+	Lat           float64                `protobuf:"fixed64,1,opt,name=lat,proto3" json:"lat,omitempty"` // 纬度（-90 到 90），proto 统一先纬度后经度
+	Lon           float64                `protobuf:"fixed64,2,opt,name=lon,proto3" json:"lon,omitempty"` // 经度（-180 到 180）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Point) Reset() {
 	*x = Point{}
-	mi := &file_gis_proto_msgTypes[1]
+	mi := &file_gis_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -149,7 +96,7 @@ func (x *Point) String() string {
 func (*Point) ProtoMessage() {}
 
 func (x *Point) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[1]
+	mi := &file_gis_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -162,7 +109,7 @@ func (x *Point) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Point.ProtoReflect.Descriptor instead.
 func (*Point) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{1}
+	return file_gis_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Point) GetLat() float64 {
@@ -189,7 +136,7 @@ type PointPair struct {
 
 func (x *PointPair) Reset() {
 	*x = PointPair{}
-	mi := &file_gis_proto_msgTypes[2]
+	mi := &file_gis_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -201,7 +148,7 @@ func (x *PointPair) String() string {
 func (*PointPair) ProtoMessage() {}
 
 func (x *PointPair) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[2]
+	mi := &file_gis_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -214,7 +161,7 @@ func (x *PointPair) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PointPair.ProtoReflect.Descriptor instead.
 func (*PointPair) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{2}
+	return file_gis_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *PointPair) GetA() *Point {
@@ -227,6 +174,58 @@ func (x *PointPair) GetA() *Point {
 func (x *PointPair) GetB() *Point {
 	if x != nil {
 		return x.B
+	}
+	return nil
+}
+
+type Fence struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FenceId       string                 `protobuf:"bytes,1,opt,name=fence_id,json=fenceId,proto3" json:"fence_id,omitempty"` // 围栏 ID
+	Points        []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"`                  // 多边形顶点（至少 3 个点）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Fence) Reset() {
+	*x = Fence{}
+	mi := &file_gis_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Fence) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Fence) ProtoMessage() {}
+
+func (x *Fence) ProtoReflect() protoreflect.Message {
+	mi := &file_gis_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Fence.ProtoReflect.Descriptor instead.
+func (*Fence) Descriptor() ([]byte, []int) {
+	return file_gis_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Fence) GetFenceId() string {
+	if x != nil {
+		return x.FenceId
+	}
+	return ""
+}
+
+func (x *Fence) GetPoints() []*Point {
+	if x != nil {
+		return x.Points
 	}
 	return nil
 }
@@ -321,8 +320,8 @@ func (x *Res) GetPong() string {
 
 type EncodeGeoHashReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
-	Precision     uint32                 `protobuf:"varint,2,opt,name=precision,proto3" json:"precision,omitempty"` // 默认 7，max 12
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`          // 待编码的经纬度点
+	Precision     uint32                 `protobuf:"varint,2,opt,name=precision,proto3" json:"precision,omitempty"` // geohash 精度 1-12；proto 侧无默认值，由 logic 层默认 7
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -373,7 +372,7 @@ func (x *EncodeGeoHashReq) GetPrecision() uint32 {
 
 type EncodeGeoHashRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Geohash       string                 `protobuf:"bytes,1,opt,name=geohash,proto3" json:"geohash,omitempty"`
+	Geohash       string                 `protobuf:"bytes,1,opt,name=geohash,proto3" json:"geohash,omitempty"` // geohash 编码字符串（长度等于 precision）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -417,8 +416,8 @@ func (x *EncodeGeoHashRes) GetGeohash() string {
 
 type GeoHashIndex struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Precision     uint32                 `protobuf:"varint,1,opt,name=precision,proto3" json:"precision,omitempty"`
-	Geohash       string                 `protobuf:"bytes,2,opt,name=geohash,proto3" json:"geohash,omitempty"`
+	Precision     uint32                 `protobuf:"varint,1,opt,name=precision,proto3" json:"precision,omitempty"` // geohash 编码精度
+	Geohash       string                 `protobuf:"bytes,2,opt,name=geohash,proto3" json:"geohash,omitempty"`      // geohash 编码字符串
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -469,8 +468,8 @@ func (x *GeoHashIndex) GetGeohash() string {
 
 type EncodeGeoHashMultiReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
-	Precisions    []uint32               `protobuf:"varint,2,rep,packed,name=precisions,proto3" json:"precisions,omitempty"` // geohash 精度 1-12，必填
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`                   // 待编码的经纬度点
+	Precisions    []uint32               `protobuf:"varint,2,rep,packed,name=precisions,proto3" json:"precisions,omitempty"` // geohash 精度列表（取值 1-12），必填，返回顺序与输入一致
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -521,7 +520,7 @@ func (x *EncodeGeoHashMultiReq) GetPrecisions() []uint32 {
 
 type EncodeGeoHashMultiRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Geohashes     []*GeoHashIndex        `protobuf:"bytes,1,rep,name=geohashes,proto3" json:"geohashes,omitempty"`
+	Geohashes     []*GeoHashIndex        `protobuf:"bytes,1,rep,name=geohashes,proto3" json:"geohashes,omitempty"` // 多精度编码结果列表，按请求 precisions 顺序对齐
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -565,7 +564,7 @@ func (x *EncodeGeoHashMultiRes) GetGeohashes() []*GeoHashIndex {
 
 type DecodeGeoHashReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Geohash       string                 `protobuf:"bytes,1,opt,name=geohash,proto3" json:"geohash,omitempty"`
+	Geohash       string                 `protobuf:"bytes,1,opt,name=geohash,proto3" json:"geohash,omitempty"` // geohash 编码字符串
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -609,11 +608,12 @@ func (x *DecodeGeoHashReq) GetGeohash() string {
 
 type DecodeGeoHashRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"` // 中心点
-	LatMin        float64                `protobuf:"fixed64,2,opt,name=lat_min,json=latMin,proto3" json:"lat_min,omitempty"`
-	LatMax        float64                `protobuf:"fixed64,3,opt,name=lat_max,json=latMax,proto3" json:"lat_max,omitempty"`
-	LonMin        float64                `protobuf:"fixed64,4,opt,name=lon_min,json=lonMin,proto3" json:"lon_min,omitempty"`
-	LonMax        float64                `protobuf:"fixed64,5,opt,name=lon_max,json=lonMax,proto3" json:"lon_max,omitempty"`
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`                   // 中心点（格网中心经纬度）
+	Precision     uint32                 `protobuf:"varint,2,opt,name=precision,proto3" json:"precision,omitempty"`          // geohash 编码精度（对应输入 geohash 长度），取值 1-12
+	LatMin        float64                `protobuf:"fixed64,3,opt,name=lat_min,json=latMin,proto3" json:"lat_min,omitempty"` // 格子纬度下界
+	LatMax        float64                `protobuf:"fixed64,4,opt,name=lat_max,json=latMax,proto3" json:"lat_max,omitempty"` // 格子纬度上界
+	LonMin        float64                `protobuf:"fixed64,5,opt,name=lon_min,json=lonMin,proto3" json:"lon_min,omitempty"` // 格子经度下界
+	LonMax        float64                `protobuf:"fixed64,6,opt,name=lon_max,json=lonMax,proto3" json:"lon_max,omitempty"` // 格子经度上界
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -655,6 +655,13 @@ func (x *DecodeGeoHashRes) GetPoint() *Point {
 	return nil
 }
 
+func (x *DecodeGeoHashRes) GetPrecision() uint32 {
+	if x != nil {
+		return x.Precision
+	}
+	return 0
+}
+
 func (x *DecodeGeoHashRes) GetLatMin() float64 {
 	if x != nil {
 		return x.LatMin
@@ -685,8 +692,8 @@ func (x *DecodeGeoHashRes) GetLonMax() float64 {
 
 type EncodeH3Req struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
-	Resolution    uint32                 `protobuf:"varint,2,opt,name=resolution,proto3" json:"resolution,omitempty"` // H3 分辨率 0-15，默认 9
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`            // 待编码的经纬度点
+	Resolution    uint32                 `protobuf:"varint,2,opt,name=resolution,proto3" json:"resolution,omitempty"` // H3 分辨率 0-15；proto 侧无默认值，由 logic 层默认 9
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -737,7 +744,7 @@ func (x *EncodeH3Req) GetResolution() uint32 {
 
 type EncodeH3Res struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	H3Index       string                 `protobuf:"bytes,1,opt,name=h3_index,json=h3Index,proto3" json:"h3_index,omitempty"`
+	H3Index       string                 `protobuf:"bytes,1,opt,name=h3_index,json=h3Index,proto3" json:"h3_index,omitempty"` // H3 index（十六进制字符串）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -781,8 +788,8 @@ func (x *EncodeH3Res) GetH3Index() string {
 
 type H3Index struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Resolution    uint32                 `protobuf:"varint,1,opt,name=resolution,proto3" json:"resolution,omitempty"`
-	H3Index       string                 `protobuf:"bytes,2,opt,name=h3_index,json=h3Index,proto3" json:"h3_index,omitempty"`
+	Resolution    uint32                 `protobuf:"varint,1,opt,name=resolution,proto3" json:"resolution,omitempty"`         // H3 分辨率
+	H3Index       string                 `protobuf:"bytes,2,opt,name=h3_index,json=h3Index,proto3" json:"h3_index,omitempty"` // H3 index（十六进制字符串）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -833,8 +840,8 @@ func (x *H3Index) GetH3Index() string {
 
 type EncodeH3MultiReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
-	Resolutions   []uint32               `protobuf:"varint,2,rep,packed,name=resolutions,proto3" json:"resolutions,omitempty"` // H3 分辨率 0-15，必填
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`                     // 待编码的经纬度点
+	Resolutions   []uint32               `protobuf:"varint,2,rep,packed,name=resolutions,proto3" json:"resolutions,omitempty"` // H3 分辨率列表（取值 0-15），必填，返回顺序与输入一致
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -885,7 +892,7 @@ func (x *EncodeH3MultiReq) GetResolutions() []uint32 {
 
 type EncodeH3MultiRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	H3Indexes     []*H3Index             `protobuf:"bytes,1,rep,name=h3_indexes,json=h3Indexes,proto3" json:"h3_indexes,omitempty"`
+	H3Indexes     []*H3Index             `protobuf:"bytes,1,rep,name=h3_indexes,json=h3Indexes,proto3" json:"h3_indexes,omitempty"` // 多分辨率编码结果列表，按请求 resolutions 顺序对齐
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -929,7 +936,7 @@ func (x *EncodeH3MultiRes) GetH3Indexes() []*H3Index {
 
 type DecodeH3Req struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	H3Index       string                 `protobuf:"bytes,1,opt,name=h3_index,json=h3Index,proto3" json:"h3_index,omitempty"`
+	H3Index       string                 `protobuf:"bytes,1,opt,name=h3_index,json=h3Index,proto3" json:"h3_index,omitempty"` // H3 index（十六进制字符串）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -973,8 +980,9 @@ func (x *DecodeH3Req) GetH3Index() string {
 
 type DecodeH3Res struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Center        *Point                 `protobuf:"bytes,1,opt,name=center,proto3" json:"center,omitempty"`
-	Boundary      []*Point               `protobuf:"bytes,2,rep,name=boundary,proto3" json:"boundary,omitempty"`
+	Center        *Point                 `protobuf:"bytes,1,opt,name=center,proto3" json:"center,omitempty"`          // H3 格子中心点经纬度
+	Boundary      []*Point               `protobuf:"bytes,2,rep,name=boundary,proto3" json:"boundary,omitempty"`      // H3 格子边界顶点（六边形，6 个点，按顺序闭合）
+	Resolution    uint32                 `protobuf:"varint,3,opt,name=resolution,proto3" json:"resolution,omitempty"` // H3 分辨率 0-15（对应输入 H3 index 的分辨率）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1023,10 +1031,17 @@ func (x *DecodeH3Res) GetBoundary() []*Point {
 	return nil
 }
 
+func (x *DecodeH3Res) GetResolution() uint32 {
+	if x != nil {
+		return x.Resolution
+	}
+	return 0
+}
+
 type GridDiskReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	H3Index       string                 `protobuf:"bytes,1,opt,name=h3_index,json=h3Index,proto3" json:"h3_index,omitempty"` // H3 origin index
-	K             uint32                 `protobuf:"varint,2,opt,name=k,proto3" json:"k,omitempty"`                           // 周围圈数，默认 1；0 表示只返回 origin
+	K             uint32                 `protobuf:"varint,2,opt,name=k,proto3" json:"k,omitempty"`                           // 周围圈数，0 表示只返回 origin，1 表示返回 origin + 第一圈，依此类推
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1077,9 +1092,9 @@ func (x *GridDiskReq) GetK() uint32 {
 
 type GridDiskByPointReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`            // 经纬度点（将编码为 H3 origin）
 	Resolution    uint32                 `protobuf:"varint,2,opt,name=resolution,proto3" json:"resolution,omitempty"` // H3 分辨率 0-15，默认 9
-	K             uint32                 `protobuf:"varint,3,opt,name=k,proto3" json:"k,omitempty"`                   // 周围圈数，默认 1；0 表示只返回 origin
+	K             uint32                 `protobuf:"varint,3,opt,name=k,proto3" json:"k,omitempty"`                   // 周围圈数，0 表示只返回 origin，1 表示返回 origin + 第一圈，依此类推
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1137,8 +1152,8 @@ func (x *GridDiskByPointReq) GetK() uint32 {
 
 type GridDiskCell struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	H3Index       string                 `protobuf:"bytes,1,opt,name=h3_index,json=h3Index,proto3" json:"h3_index,omitempty"`
-	Ring          uint32                 `protobuf:"varint,2,opt,name=ring,proto3" json:"ring,omitempty"` // H3 圈数：0=origin，1=第一圈，依此类推；不是米级距离
+	H3Index       string                 `protobuf:"bytes,1,opt,name=h3_index,json=h3Index,proto3" json:"h3_index,omitempty"` // H3 index
+	Ring          uint32                 `protobuf:"varint,2,opt,name=ring,proto3" json:"ring,omitempty"`                     // 所在圈数：0=origin，1=第一圈，依此类推；不是米级距离
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1189,8 +1204,8 @@ func (x *GridDiskCell) GetRing() uint32 {
 
 type GridDiskRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Origin        string                 `protobuf:"bytes,1,opt,name=origin,proto3" json:"origin,omitempty"`
-	Cells         []*GridDiskCell        `protobuf:"bytes,2,rep,name=cells,proto3" json:"cells,omitempty"`
+	Origin        string                 `protobuf:"bytes,1,opt,name=origin,proto3" json:"origin,omitempty"` // H3 origin index（请求的 h3_index 或由 point 编码所得）
+	Cells         []*GridDiskCell        `protobuf:"bytes,2,rep,name=cells,proto3" json:"cells,omitempty"`   // 周围 cells 列表，按 ring 递增顺序排列
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1241,10 +1256,9 @@ func (x *GridDiskRes) GetCells() []*GridDiskCell {
 
 type GenFenceCellsReq struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
-	FenceId          string                 `protobuf:"bytes,1,opt,name=fence_id,json=fenceId,proto3" json:"fence_id,omitempty"`                             // 可选：已有围栏 ID
-	Points           []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"`                                              // polygon 顶点
-	Precision        uint32                 `protobuf:"varint,3,opt,name=precision,proto3" json:"precision,omitempty"`                                       // geohash 精度，默认 7
-	IncludeNeighbors bool                   `protobuf:"varint,4,opt,name=include_neighbors,json=includeNeighbors,proto3" json:"include_neighbors,omitempty"` // 是否扩展周边格子
+	Points           []*Point               `protobuf:"bytes,1,rep,name=points,proto3" json:"points,omitempty"`                                              // 多边形顶点（至少 3 个点，自动首尾闭合）
+	Precision        uint32                 `protobuf:"varint,2,opt,name=precision,proto3" json:"precision,omitempty"`                                       // geohash 精度 1-12，默认 7
+	IncludeNeighbors bool                   `protobuf:"varint,3,opt,name=include_neighbors,json=includeNeighbors,proto3" json:"include_neighbors,omitempty"` // 是否扩展周边 8 邻居格子
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -1279,13 +1293,6 @@ func (*GenFenceCellsReq) Descriptor() ([]byte, []int) {
 	return file_gis_proto_rawDescGZIP(), []int{23}
 }
 
-func (x *GenFenceCellsReq) GetFenceId() string {
-	if x != nil {
-		return x.FenceId
-	}
-	return ""
-}
-
 func (x *GenFenceCellsReq) GetPoints() []*Point {
 	if x != nil {
 		return x.Points
@@ -1309,7 +1316,7 @@ func (x *GenFenceCellsReq) GetIncludeNeighbors() bool {
 
 type GenFenceCellsRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Geohashes     []string               `protobuf:"bytes,1,rep,name=geohashes,proto3" json:"geohashes,omitempty"`
+	Geohashes     []string               `protobuf:"bytes,1,rep,name=geohashes,proto3" json:"geohashes,omitempty"` // 围栏覆盖的 geohash cells
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1353,9 +1360,8 @@ func (x *GenFenceCellsRes) GetGeohashes() []string {
 
 type GenFenceH3CellsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FenceId       string                 `protobuf:"bytes,1,opt,name=fence_id,json=fenceId,proto3" json:"fence_id,omitempty"` // 可选：已有围栏 ID
-	Points        []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"`                  // polygon 顶点
-	Resolution    uint32                 `protobuf:"varint,3,opt,name=resolution,proto3" json:"resolution,omitempty"`         // H3 分辨率 0-15，默认 9
+	Points        []*Point               `protobuf:"bytes,1,rep,name=points,proto3" json:"points,omitempty"`          // 多边形顶点（至少 3 个点，自动首尾闭合）
+	Resolution    uint32                 `protobuf:"varint,2,opt,name=resolution,proto3" json:"resolution,omitempty"` // H3 分辨率 0-15，默认 9
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1390,13 +1396,6 @@ func (*GenFenceH3CellsReq) Descriptor() ([]byte, []int) {
 	return file_gis_proto_rawDescGZIP(), []int{25}
 }
 
-func (x *GenFenceH3CellsReq) GetFenceId() string {
-	if x != nil {
-		return x.FenceId
-	}
-	return ""
-}
-
 func (x *GenFenceH3CellsReq) GetPoints() []*Point {
 	if x != nil {
 		return x.Points
@@ -1413,7 +1412,7 @@ func (x *GenFenceH3CellsReq) GetResolution() uint32 {
 
 type GenFenceH3CellsRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	H3Indexes     []string               `protobuf:"bytes,1,rep,name=h3_indexes,json=h3Indexes,proto3" json:"h3_indexes,omitempty"`
+	H3Indexes     []string               `protobuf:"bytes,1,rep,name=h3_indexes,json=h3Indexes,proto3" json:"h3_indexes,omitempty"` // 围栏覆盖的 H3 cells
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1457,9 +1456,9 @@ func (x *GenFenceH3CellsRes) GetH3Indexes() []string {
 
 type PointsWithinRadiusReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Center        *Point                 `protobuf:"bytes,1,opt,name=center,proto3" json:"center,omitempty"`
-	Points        []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"`
-	RadiusMeters  float64                `protobuf:"fixed64,3,opt,name=radius_meters,json=radiusMeters,proto3" json:"radius_meters,omitempty"`
+	Center        *Point                 `protobuf:"bytes,1,opt,name=center,proto3" json:"center,omitempty"`                                   // 中心点
+	Points        []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"`                                   // 待检查的点集合
+	RadiusMeters  float64                `protobuf:"fixed64,3,opt,name=radius_meters,json=radiusMeters,proto3" json:"radius_meters,omitempty"` // 半径（米）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1517,8 +1516,8 @@ func (x *PointsWithinRadiusReq) GetRadiusMeters() float64 {
 
 type RadiusHit struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	Index          int32                  `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
-	DistanceMeters float64                `protobuf:"fixed64,2,opt,name=distance_meters,json=distanceMeters,proto3" json:"distance_meters,omitempty"`
+	Index          int32                  `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`                                          // 命中点在输入 points 中的下标
+	DistanceMeters float64                `protobuf:"fixed64,2,opt,name=distance_meters,json=distanceMeters,proto3" json:"distance_meters,omitempty"` // 命中点到中心点的球面距离（米）
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -1569,7 +1568,7 @@ func (x *RadiusHit) GetDistanceMeters() float64 {
 
 type PointsWithinRadiusRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Hits          []*RadiusHit           `protobuf:"bytes,1,rep,name=hits,proto3" json:"hits,omitempty"`
+	Hits          []*RadiusHit           `protobuf:"bytes,1,rep,name=hits,proto3" json:"hits,omitempty"` // 半径内的命中结果列表，不返回点坐标以减小响应体
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1613,8 +1612,8 @@ func (x *PointsWithinRadiusRes) GetHits() []*RadiusHit {
 
 type PointInFenceReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
-	Fence         *Fence                 `protobuf:"bytes,2,opt,name=fence,proto3" json:"fence,omitempty"`
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"` // 待检查的点
+	Fence         *Fence                 `protobuf:"bytes,2,opt,name=fence,proto3" json:"fence,omitempty"` // 围栏多边形
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1665,7 +1664,7 @@ func (x *PointInFenceReq) GetFence() *Fence {
 
 type PointInFenceRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Hit           bool                   `protobuf:"varint,1,opt,name=hit,proto3" json:"hit,omitempty"`
+	Hit           bool                   `protobuf:"varint,1,opt,name=hit,proto3" json:"hit,omitempty"` // true：点在围栏内；false：点在围栏外
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1709,8 +1708,8 @@ func (x *PointInFenceRes) GetHit() bool {
 
 type PointInFencesReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
-	Fences        []*Fence               `protobuf:"bytes,2,rep,name=fences,proto3" json:"fences,omitempty"`
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`   // 待检查的点
+	Fences        []*Fence               `protobuf:"bytes,2,rep,name=fences,proto3" json:"fences,omitempty"` // 多个待判断的围栏
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1761,7 +1760,7 @@ func (x *PointInFencesReq) GetFences() []*Fence {
 
 type PointInFencesRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	HitFenceIds   []string               `protobuf:"bytes,1,rep,name=hit_fence_ids,json=hitFenceIds,proto3" json:"hit_fence_ids,omitempty"`
+	HitFenceIds   []string               `protobuf:"bytes,1,rep,name=hit_fence_ids,json=hitFenceIds,proto3" json:"hit_fence_ids,omitempty"` // 命中的围栏 ID 列表（点在其中至少一个围栏内）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1805,8 +1804,8 @@ func (x *PointInFencesRes) GetHitFenceIds() []string {
 
 type DistanceReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	A             *Point                 `protobuf:"bytes,1,opt,name=a,proto3" json:"a,omitempty"`
-	B             *Point                 `protobuf:"bytes,2,opt,name=b,proto3" json:"b,omitempty"`
+	A             *Point                 `protobuf:"bytes,1,opt,name=a,proto3" json:"a,omitempty"` // 点 A
+	B             *Point                 `protobuf:"bytes,2,opt,name=b,proto3" json:"b,omitempty"` // 点 B
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1857,7 +1856,7 @@ func (x *DistanceReq) GetB() *Point {
 
 type DistanceRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Meters        float64                `protobuf:"fixed64,1,opt,name=meters,proto3" json:"meters,omitempty"`
+	Meters        float64                `protobuf:"fixed64,1,opt,name=meters,proto3" json:"meters,omitempty"` // A、B 两点的球面距离（米）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1901,7 +1900,7 @@ func (x *DistanceRes) GetMeters() float64 {
 
 type BatchDistanceReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Pairs         []*PointPair           `protobuf:"bytes,1,rep,name=pairs,proto3" json:"pairs,omitempty"`
+	Pairs         []*PointPair           `protobuf:"bytes,1,rep,name=pairs,proto3" json:"pairs,omitempty"` // 待计算的点对列表
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1945,7 +1944,7 @@ func (x *BatchDistanceReq) GetPairs() []*PointPair {
 
 type BatchDistanceRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Meters        []float64              `protobuf:"fixed64,1,rep,packed,name=meters,proto3" json:"meters,omitempty"`
+	Meters        []float64              `protobuf:"fixed64,1,rep,packed,name=meters,proto3" json:"meters,omitempty"` // 每对点的球面距离（米），顺序与 pairs 对齐
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1989,8 +1988,8 @@ func (x *BatchDistanceRes) GetMeters() []float64 {
 
 type NearbyFencesReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
-	Km            float64                `protobuf:"fixed64,2,opt,name=km,proto3" json:"km,omitempty"`
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"` // 参考点
+	Km            float64                `protobuf:"fixed64,2,opt,name=km,proto3" json:"km,omitempty"`     // 搜索半径（公里），将自动选择合适的 geohash/H3 精度进行粗过滤
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2041,7 +2040,7 @@ func (x *NearbyFencesReq) GetKm() float64 {
 
 type NearbyFencesRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FenceIds      []string               `protobuf:"bytes,1,rep,name=fence_ids,json=fenceIds,proto3" json:"fence_ids,omitempty"`
+	FenceIds      []string               `protobuf:"bytes,1,rep,name=fence_ids,json=fenceIds,proto3" json:"fence_ids,omitempty"` // 附近围栏 ID 列表（粗过滤结果，非精确距离判断）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2086,8 +2085,8 @@ func (x *NearbyFencesRes) GetFenceIds() []string {
 type TransformCoordReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
-	SourceType    CoordType              `protobuf:"varint,2,opt,name=source_type,json=sourceType,proto3,enum=gis.CoordType" json:"source_type,omitempty"`
-	TargetType    CoordType              `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=gis.CoordType" json:"target_type,omitempty"`
+	SourceType    CoordType              `protobuf:"varint,2,opt,name=source_type,json=sourceType,proto3,enum=gis.CoordType" json:"source_type,omitempty"` // 源坐标系
+	TargetType    CoordType              `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=gis.CoordType" json:"target_type,omitempty"` // 目标坐标系
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2145,7 +2144,7 @@ func (x *TransformCoordReq) GetTargetType() CoordType {
 
 type TransformCoordRes struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
-	TransformedPoint *Point                 `protobuf:"bytes,1,opt,name=transformed_point,json=transformedPoint,proto3" json:"transformed_point,omitempty"`
+	TransformedPoint *Point                 `protobuf:"bytes,1,opt,name=transformed_point,json=transformedPoint,proto3" json:"transformed_point,omitempty"` // 转换后的坐标点
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -2190,8 +2189,8 @@ func (x *TransformCoordRes) GetTransformedPoint() *Point {
 type BatchTransformCoordReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Points        []*Point               `protobuf:"bytes,1,rep,name=points,proto3" json:"points,omitempty"`
-	SourceType    CoordType              `protobuf:"varint,2,opt,name=source_type,json=sourceType,proto3,enum=gis.CoordType" json:"source_type,omitempty"`
-	TargetType    CoordType              `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=gis.CoordType" json:"target_type,omitempty"`
+	SourceType    CoordType              `protobuf:"varint,2,opt,name=source_type,json=sourceType,proto3,enum=gis.CoordType" json:"source_type,omitempty"` // 源坐标系
+	TargetType    CoordType              `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=gis.CoordType" json:"target_type,omitempty"` // 目标坐标系
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2249,7 +2248,7 @@ func (x *BatchTransformCoordReq) GetTargetType() CoordType {
 
 type BatchTransformCoordRes struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	TransformedPoints []*Point               `protobuf:"bytes,1,rep,name=transformed_points,json=transformedPoints,proto3" json:"transformed_points,omitempty"`
+	TransformedPoints []*Point               `protobuf:"bytes,1,rep,name=transformed_points,json=transformedPoints,proto3" json:"transformed_points,omitempty"` // 转换后的坐标点列表，顺序与请求对齐
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -2293,8 +2292,8 @@ func (x *BatchTransformCoordRes) GetTransformedPoints() []*Point {
 
 type RoutePointsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Start         *Point                 `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
-	Points        []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"`
+	Start         *Point                 `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`   // 起点
+	Points        []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"` // 待排序途经点（不含起点）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2345,8 +2344,8 @@ func (x *RoutePointsReq) GetPoints() []*Point {
 
 type RoutePointsRes struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
-	VisitOrder          []int32                `protobuf:"varint,1,rep,packed,name=visit_order,json=visitOrder,proto3" json:"visit_order,omitempty"`
-	TotalDistanceMeters float64                `protobuf:"fixed64,2,opt,name=total_distance_meters,json=totalDistanceMeters,proto3" json:"total_distance_meters,omitempty"`
+	VisitOrder          []int32                `protobuf:"varint,1,rep,packed,name=visit_order,json=visitOrder,proto3" json:"visit_order,omitempty"`                        // 途经点访问顺序（按 points 在请求中的下标排列）
+	TotalDistanceMeters float64                `protobuf:"fixed64,2,opt,name=total_distance_meters,json=totalDistanceMeters,proto3" json:"total_distance_meters,omitempty"` // 从起点按 visit_order 访问所有途经点的总距离（米）
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -2397,8 +2396,8 @@ func (x *RoutePointsRes) GetTotalDistanceMeters() float64 {
 
 type CreateFenceReq struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
-	Name             string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Points           []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"`                                              // 多边形顶点（至少 3 个点）
+	Name             string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`                                                  // 围栏名称
+	Points           []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"`                                              // 多边形顶点（至少 3 个点，自动首尾闭合）
 	H3Resolution     uint32                 `protobuf:"varint,3,opt,name=h3_resolution,json=h3Resolution,proto3" json:"h3_resolution,omitempty"`             // H3 分辨率 0-15，默认 9
 	GeohashPrecision uint32                 `protobuf:"varint,4,opt,name=geohash_precision,json=geohashPrecision,proto3" json:"geohash_precision,omitempty"` // geohash 精度 1-12，默认 7
 	unknownFields    protoimpl.UnknownFields
@@ -2465,9 +2464,9 @@ func (x *CreateFenceReq) GetGeohashPrecision() uint32 {
 
 type CreateFenceRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FenceId       string                 `protobuf:"bytes,1,opt,name=fence_id,json=fenceId,proto3" json:"fence_id,omitempty"`
-	H3Cells       []string               `protobuf:"bytes,2,rep,name=h3_cells,json=h3Cells,proto3" json:"h3_cells,omitempty"`
-	Geohashes     []string               `protobuf:"bytes,3,rep,name=geohashes,proto3" json:"geohashes,omitempty"`
+	FenceId       string                 `protobuf:"bytes,1,opt,name=fence_id,json=fenceId,proto3" json:"fence_id,omitempty"` // 新创建围栏的 ID
+	H3Cells       []string               `protobuf:"bytes,2,rep,name=h3_cells,json=h3Cells,proto3" json:"h3_cells,omitempty"` // 围栏覆盖的 H3 cells
+	Geohashes     []string               `protobuf:"bytes,3,rep,name=geohashes,proto3" json:"geohashes,omitempty"`            // 围栏覆盖的 geohash cells
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2525,11 +2524,11 @@ func (x *CreateFenceRes) GetGeohashes() []string {
 
 type UpdateFenceReq struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
-	FenceId          string                 `protobuf:"bytes,1,opt,name=fence_id,json=fenceId,proto3" json:"fence_id,omitempty"`
-	Name             string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Points           []*Point               `protobuf:"bytes,3,rep,name=points,proto3" json:"points,omitempty"`
-	H3Resolution     uint32                 `protobuf:"varint,4,opt,name=h3_resolution,json=h3Resolution,proto3" json:"h3_resolution,omitempty"`
-	GeohashPrecision uint32                 `protobuf:"varint,5,opt,name=geohash_precision,json=geohashPrecision,proto3" json:"geohash_precision,omitempty"`
+	FenceId          string                 `protobuf:"bytes,1,opt,name=fence_id,json=fenceId,proto3" json:"fence_id,omitempty"`                             // 待更新围栏 ID
+	Name             string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                                                  // 新名称（空字符串表示不更新）
+	Points           []*Point               `protobuf:"bytes,3,rep,name=points,proto3" json:"points,omitempty"`                                              // 新多边形顶点（至少 3 个点，自动首尾闭合）
+	H3Resolution     uint32                 `protobuf:"varint,4,opt,name=h3_resolution,json=h3Resolution,proto3" json:"h3_resolution,omitempty"`             // H3 分辨率 0-15，默认 9
+	GeohashPrecision uint32                 `protobuf:"varint,5,opt,name=geohash_precision,json=geohashPrecision,proto3" json:"geohash_precision,omitempty"` // geohash 精度 1-12，默认 7
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -2601,8 +2600,8 @@ func (x *UpdateFenceReq) GetGeohashPrecision() uint32 {
 
 type UpdateFenceRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	H3Cells       []string               `protobuf:"bytes,1,rep,name=h3_cells,json=h3Cells,proto3" json:"h3_cells,omitempty"`
-	Geohashes     []string               `protobuf:"bytes,2,rep,name=geohashes,proto3" json:"geohashes,omitempty"`
+	H3Cells       []string               `protobuf:"bytes,1,rep,name=h3_cells,json=h3Cells,proto3" json:"h3_cells,omitempty"` // 更新后的围栏覆盖 H3 cells
+	Geohashes     []string               `protobuf:"bytes,2,rep,name=geohashes,proto3" json:"geohashes,omitempty"`            // 更新后的围栏覆盖 geohash cells
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2733,8 +2732,8 @@ func (*DeleteFenceRes) Descriptor() ([]byte, []int) {
 
 type ListFencesReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Page          int64                  `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize      int64                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"` // 默认 20，最大 200
+	Page          int64                  `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`                         // 页码，从 1 开始
+	PageSize      int64                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"` // 每页条数，默认 20，最大 200
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`                          // 可选：按名称模糊搜索
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2793,8 +2792,8 @@ func (x *ListFencesReq) GetName() string {
 
 type ListFencesRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	List          []*FenceDetail         `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
-	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	List          []*FenceDetail         `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`    // 围栏列表
+	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"` // 总条数
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2933,15 +2932,15 @@ func (x *GetFenceRes) GetFence() *FenceDetail {
 
 type FenceDetail struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
-	FenceId          string                 `protobuf:"bytes,1,opt,name=fence_id,json=fenceId,proto3" json:"fence_id,omitempty"`
-	Name             string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Points           []*Point               `protobuf:"bytes,3,rep,name=points,proto3" json:"points,omitempty"`
-	H3Resolution     int32                  `protobuf:"varint,4,opt,name=h3_resolution,json=h3Resolution,proto3" json:"h3_resolution,omitempty"`
-	GeohashPrecision int32                  `protobuf:"varint,5,opt,name=geohash_precision,json=geohashPrecision,proto3" json:"geohash_precision,omitempty"`
-	H3Cells          []string               `protobuf:"bytes,6,rep,name=h3_cells,json=h3Cells,proto3" json:"h3_cells,omitempty"`
-	Geohashes        []string               `protobuf:"bytes,7,rep,name=geohashes,proto3" json:"geohashes,omitempty"`
-	CreatedAt        int64                  `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"` // 毫秒时间戳
-	UpdatedAt        int64                  `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"` // 毫秒时间戳
+	FenceId          string                 `protobuf:"bytes,1,opt,name=fence_id,json=fenceId,proto3" json:"fence_id,omitempty"`                             // 围栏 ID
+	Name             string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                                                  // 围栏名称
+	Points           []*Point               `protobuf:"bytes,3,rep,name=points,proto3" json:"points,omitempty"`                                              // 多边形顶点
+	H3Resolution     uint32                 `protobuf:"varint,4,opt,name=h3_resolution,json=h3Resolution,proto3" json:"h3_resolution,omitempty"`             // H3 分辨率
+	GeohashPrecision uint32                 `protobuf:"varint,5,opt,name=geohash_precision,json=geohashPrecision,proto3" json:"geohash_precision,omitempty"` // geohash 精度
+	H3Cells          []string               `protobuf:"bytes,6,rep,name=h3_cells,json=h3Cells,proto3" json:"h3_cells,omitempty"`                             // 围栏覆盖的 H3 cells
+	Geohashes        []string               `protobuf:"bytes,7,rep,name=geohashes,proto3" json:"geohashes,omitempty"`                                        // 围栏覆盖的 geohash cells
+	CreatedAt        int64                  `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`                      // 创建时间（毫秒时间戳）
+	UpdatedAt        int64                  `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`                      // 更新时间（毫秒时间戳）
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -2997,14 +2996,14 @@ func (x *FenceDetail) GetPoints() []*Point {
 	return nil
 }
 
-func (x *FenceDetail) GetH3Resolution() int32 {
+func (x *FenceDetail) GetH3Resolution() uint32 {
 	if x != nil {
 		return x.H3Resolution
 	}
 	return 0
 }
 
-func (x *FenceDetail) GetGeohashPrecision() int32 {
+func (x *FenceDetail) GetGeohashPrecision() uint32 {
 	if x != nil {
 		return x.GeohashPrecision
 	}
@@ -3043,11 +3042,7 @@ var File_gis_proto protoreflect.FileDescriptor
 
 const file_gis_proto_rawDesc = "" +
 	"\n" +
-	"\tgis.proto\x12\x03gis\";\n" +
-	"\x05Fence\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\"\n" +
-	"\x06points\x18\x02 \x03(\v2\n" +
-	".gis.PointR\x06points\"+\n" +
+	"\tgis.proto\x12\x03gis\"+\n" +
 	"\x05Point\x12\x10\n" +
 	"\x03lat\x18\x01 \x01(\x01R\x03lat\x12\x10\n" +
 	"\x03lon\x18\x02 \x01(\x01R\x03lon\"?\n" +
@@ -3055,7 +3050,11 @@ const file_gis_proto_rawDesc = "" +
 	"\x01a\x18\x01 \x01(\v2\n" +
 	".gis.PointR\x01a\x12\x18\n" +
 	"\x01b\x18\x02 \x01(\v2\n" +
-	".gis.PointR\x01b\"\x19\n" +
+	".gis.PointR\x01b\"F\n" +
+	"\x05Fence\x12\x19\n" +
+	"\bfence_id\x18\x01 \x01(\tR\afenceId\x12\"\n" +
+	"\x06points\x18\x02 \x03(\v2\n" +
+	".gis.PointR\x06points\"\x19\n" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
@@ -3078,14 +3077,15 @@ const file_gis_proto_rawDesc = "" +
 	"\x15EncodeGeoHashMultiRes\x12/\n" +
 	"\tgeohashes\x18\x01 \x03(\v2\x11.gis.GeoHashIndexR\tgeohashes\",\n" +
 	"\x10DecodeGeoHashReq\x12\x18\n" +
-	"\ageohash\x18\x01 \x01(\tR\ageohash\"\x98\x01\n" +
+	"\ageohash\x18\x01 \x01(\tR\ageohash\"\xb6\x01\n" +
 	"\x10DecodeGeoHashRes\x12 \n" +
 	"\x05point\x18\x01 \x01(\v2\n" +
-	".gis.PointR\x05point\x12\x17\n" +
-	"\alat_min\x18\x02 \x01(\x01R\x06latMin\x12\x17\n" +
-	"\alat_max\x18\x03 \x01(\x01R\x06latMax\x12\x17\n" +
-	"\alon_min\x18\x04 \x01(\x01R\x06lonMin\x12\x17\n" +
-	"\alon_max\x18\x05 \x01(\x01R\x06lonMax\"O\n" +
+	".gis.PointR\x05point\x12\x1c\n" +
+	"\tprecision\x18\x02 \x01(\rR\tprecision\x12\x17\n" +
+	"\alat_min\x18\x03 \x01(\x01R\x06latMin\x12\x17\n" +
+	"\alat_max\x18\x04 \x01(\x01R\x06latMax\x12\x17\n" +
+	"\alon_min\x18\x05 \x01(\x01R\x06lonMin\x12\x17\n" +
+	"\alon_max\x18\x06 \x01(\x01R\x06lonMax\"O\n" +
 	"\vEncodeH3Req\x12 \n" +
 	"\x05point\x18\x01 \x01(\v2\n" +
 	".gis.PointR\x05point\x12\x1e\n" +
@@ -3107,12 +3107,15 @@ const file_gis_proto_rawDesc = "" +
 	"\n" +
 	"h3_indexes\x18\x01 \x03(\v2\f.gis.H3IndexR\th3Indexes\"(\n" +
 	"\vDecodeH3Req\x12\x19\n" +
-	"\bh3_index\x18\x01 \x01(\tR\ah3Index\"Y\n" +
+	"\bh3_index\x18\x01 \x01(\tR\ah3Index\"y\n" +
 	"\vDecodeH3Res\x12\"\n" +
 	"\x06center\x18\x01 \x01(\v2\n" +
 	".gis.PointR\x06center\x12&\n" +
 	"\bboundary\x18\x02 \x03(\v2\n" +
-	".gis.PointR\bboundary\"6\n" +
+	".gis.PointR\bboundary\x12\x1e\n" +
+	"\n" +
+	"resolution\x18\x03 \x01(\rR\n" +
+	"resolution\"6\n" +
 	"\vGridDiskReq\x12\x19\n" +
 	"\bh3_index\x18\x01 \x01(\tR\ah3Index\x12\f\n" +
 	"\x01k\x18\x02 \x01(\rR\x01k\"d\n" +
@@ -3128,21 +3131,19 @@ const file_gis_proto_rawDesc = "" +
 	"\x04ring\x18\x02 \x01(\rR\x04ring\"N\n" +
 	"\vGridDiskRes\x12\x16\n" +
 	"\x06origin\x18\x01 \x01(\tR\x06origin\x12'\n" +
-	"\x05cells\x18\x02 \x03(\v2\x11.gis.GridDiskCellR\x05cells\"\x9c\x01\n" +
-	"\x10GenFenceCellsReq\x12\x19\n" +
-	"\bfence_id\x18\x01 \x01(\tR\afenceId\x12\"\n" +
-	"\x06points\x18\x02 \x03(\v2\n" +
+	"\x05cells\x18\x02 \x03(\v2\x11.gis.GridDiskCellR\x05cells\"\x81\x01\n" +
+	"\x10GenFenceCellsReq\x12\"\n" +
+	"\x06points\x18\x01 \x03(\v2\n" +
 	".gis.PointR\x06points\x12\x1c\n" +
-	"\tprecision\x18\x03 \x01(\rR\tprecision\x12+\n" +
-	"\x11include_neighbors\x18\x04 \x01(\bR\x10includeNeighbors\"0\n" +
+	"\tprecision\x18\x02 \x01(\rR\tprecision\x12+\n" +
+	"\x11include_neighbors\x18\x03 \x01(\bR\x10includeNeighbors\"0\n" +
 	"\x10GenFenceCellsRes\x12\x1c\n" +
-	"\tgeohashes\x18\x01 \x03(\tR\tgeohashes\"s\n" +
-	"\x12GenFenceH3CellsReq\x12\x19\n" +
-	"\bfence_id\x18\x01 \x01(\tR\afenceId\x12\"\n" +
-	"\x06points\x18\x02 \x03(\v2\n" +
+	"\tgeohashes\x18\x01 \x03(\tR\tgeohashes\"X\n" +
+	"\x12GenFenceH3CellsReq\x12\"\n" +
+	"\x06points\x18\x01 \x03(\v2\n" +
 	".gis.PointR\x06points\x12\x1e\n" +
 	"\n" +
-	"resolution\x18\x03 \x01(\rR\n" +
+	"resolution\x18\x02 \x01(\rR\n" +
 	"resolution\"3\n" +
 	"\x12GenFenceH3CellsRes\x12\x1d\n" +
 	"\n" +
@@ -3257,8 +3258,8 @@ const file_gis_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\"\n" +
 	"\x06points\x18\x03 \x03(\v2\n" +
 	".gis.PointR\x06points\x12#\n" +
-	"\rh3_resolution\x18\x04 \x01(\x05R\fh3Resolution\x12+\n" +
-	"\x11geohash_precision\x18\x05 \x01(\x05R\x10geohashPrecision\x12\x19\n" +
+	"\rh3_resolution\x18\x04 \x01(\rR\fh3Resolution\x12+\n" +
+	"\x11geohash_precision\x18\x05 \x01(\rR\x10geohashPrecision\x12\x19\n" +
 	"\bh3_cells\x18\x06 \x03(\tR\ah3Cells\x12\x1c\n" +
 	"\tgeohashes\x18\a \x03(\tR\tgeohashes\x12\x1d\n" +
 	"\n" +
@@ -3315,9 +3316,9 @@ var file_gis_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_gis_proto_msgTypes = make([]protoimpl.MessageInfo, 57)
 var file_gis_proto_goTypes = []any{
 	(CoordType)(0),                 // 0: gis.CoordType
-	(*Fence)(nil),                  // 1: gis.Fence
-	(*Point)(nil),                  // 2: gis.Point
-	(*PointPair)(nil),              // 3: gis.PointPair
+	(*Point)(nil),                  // 1: gis.Point
+	(*PointPair)(nil),              // 2: gis.PointPair
+	(*Fence)(nil),                  // 3: gis.Fence
 	(*Req)(nil),                    // 4: gis.Req
 	(*Res)(nil),                    // 5: gis.Res
 	(*EncodeGeoHashReq)(nil),       // 6: gis.EncodeGeoHashReq
@@ -3374,48 +3375,48 @@ var file_gis_proto_goTypes = []any{
 	(*FenceDetail)(nil),            // 57: gis.FenceDetail
 }
 var file_gis_proto_depIdxs = []int32{
-	2,  // 0: gis.Fence.points:type_name -> gis.Point
-	2,  // 1: gis.PointPair.a:type_name -> gis.Point
-	2,  // 2: gis.PointPair.b:type_name -> gis.Point
-	2,  // 3: gis.EncodeGeoHashReq.point:type_name -> gis.Point
-	2,  // 4: gis.EncodeGeoHashMultiReq.point:type_name -> gis.Point
+	1,  // 0: gis.PointPair.a:type_name -> gis.Point
+	1,  // 1: gis.PointPair.b:type_name -> gis.Point
+	1,  // 2: gis.Fence.points:type_name -> gis.Point
+	1,  // 3: gis.EncodeGeoHashReq.point:type_name -> gis.Point
+	1,  // 4: gis.EncodeGeoHashMultiReq.point:type_name -> gis.Point
 	8,  // 5: gis.EncodeGeoHashMultiRes.geohashes:type_name -> gis.GeoHashIndex
-	2,  // 6: gis.DecodeGeoHashRes.point:type_name -> gis.Point
-	2,  // 7: gis.EncodeH3Req.point:type_name -> gis.Point
-	2,  // 8: gis.EncodeH3MultiReq.point:type_name -> gis.Point
+	1,  // 6: gis.DecodeGeoHashRes.point:type_name -> gis.Point
+	1,  // 7: gis.EncodeH3Req.point:type_name -> gis.Point
+	1,  // 8: gis.EncodeH3MultiReq.point:type_name -> gis.Point
 	15, // 9: gis.EncodeH3MultiRes.h3_indexes:type_name -> gis.H3Index
-	2,  // 10: gis.DecodeH3Res.center:type_name -> gis.Point
-	2,  // 11: gis.DecodeH3Res.boundary:type_name -> gis.Point
-	2,  // 12: gis.GridDiskByPointReq.point:type_name -> gis.Point
+	1,  // 10: gis.DecodeH3Res.center:type_name -> gis.Point
+	1,  // 11: gis.DecodeH3Res.boundary:type_name -> gis.Point
+	1,  // 12: gis.GridDiskByPointReq.point:type_name -> gis.Point
 	22, // 13: gis.GridDiskRes.cells:type_name -> gis.GridDiskCell
-	2,  // 14: gis.GenFenceCellsReq.points:type_name -> gis.Point
-	2,  // 15: gis.GenFenceH3CellsReq.points:type_name -> gis.Point
-	2,  // 16: gis.PointsWithinRadiusReq.center:type_name -> gis.Point
-	2,  // 17: gis.PointsWithinRadiusReq.points:type_name -> gis.Point
+	1,  // 14: gis.GenFenceCellsReq.points:type_name -> gis.Point
+	1,  // 15: gis.GenFenceH3CellsReq.points:type_name -> gis.Point
+	1,  // 16: gis.PointsWithinRadiusReq.center:type_name -> gis.Point
+	1,  // 17: gis.PointsWithinRadiusReq.points:type_name -> gis.Point
 	29, // 18: gis.PointsWithinRadiusRes.hits:type_name -> gis.RadiusHit
-	2,  // 19: gis.PointInFenceReq.point:type_name -> gis.Point
-	1,  // 20: gis.PointInFenceReq.fence:type_name -> gis.Fence
-	2,  // 21: gis.PointInFencesReq.point:type_name -> gis.Point
-	1,  // 22: gis.PointInFencesReq.fences:type_name -> gis.Fence
-	2,  // 23: gis.DistanceReq.a:type_name -> gis.Point
-	2,  // 24: gis.DistanceReq.b:type_name -> gis.Point
-	3,  // 25: gis.BatchDistanceReq.pairs:type_name -> gis.PointPair
-	2,  // 26: gis.NearbyFencesReq.point:type_name -> gis.Point
-	2,  // 27: gis.TransformCoordReq.point:type_name -> gis.Point
+	1,  // 19: gis.PointInFenceReq.point:type_name -> gis.Point
+	3,  // 20: gis.PointInFenceReq.fence:type_name -> gis.Fence
+	1,  // 21: gis.PointInFencesReq.point:type_name -> gis.Point
+	3,  // 22: gis.PointInFencesReq.fences:type_name -> gis.Fence
+	1,  // 23: gis.DistanceReq.a:type_name -> gis.Point
+	1,  // 24: gis.DistanceReq.b:type_name -> gis.Point
+	2,  // 25: gis.BatchDistanceReq.pairs:type_name -> gis.PointPair
+	1,  // 26: gis.NearbyFencesReq.point:type_name -> gis.Point
+	1,  // 27: gis.TransformCoordReq.point:type_name -> gis.Point
 	0,  // 28: gis.TransformCoordReq.source_type:type_name -> gis.CoordType
 	0,  // 29: gis.TransformCoordReq.target_type:type_name -> gis.CoordType
-	2,  // 30: gis.TransformCoordRes.transformed_point:type_name -> gis.Point
-	2,  // 31: gis.BatchTransformCoordReq.points:type_name -> gis.Point
+	1,  // 30: gis.TransformCoordRes.transformed_point:type_name -> gis.Point
+	1,  // 31: gis.BatchTransformCoordReq.points:type_name -> gis.Point
 	0,  // 32: gis.BatchTransformCoordReq.source_type:type_name -> gis.CoordType
 	0,  // 33: gis.BatchTransformCoordReq.target_type:type_name -> gis.CoordType
-	2,  // 34: gis.BatchTransformCoordRes.transformed_points:type_name -> gis.Point
-	2,  // 35: gis.RoutePointsReq.start:type_name -> gis.Point
-	2,  // 36: gis.RoutePointsReq.points:type_name -> gis.Point
-	2,  // 37: gis.CreateFenceReq.points:type_name -> gis.Point
-	2,  // 38: gis.UpdateFenceReq.points:type_name -> gis.Point
+	1,  // 34: gis.BatchTransformCoordRes.transformed_points:type_name -> gis.Point
+	1,  // 35: gis.RoutePointsReq.start:type_name -> gis.Point
+	1,  // 36: gis.RoutePointsReq.points:type_name -> gis.Point
+	1,  // 37: gis.CreateFenceReq.points:type_name -> gis.Point
+	1,  // 38: gis.UpdateFenceReq.points:type_name -> gis.Point
 	57, // 39: gis.ListFencesRes.list:type_name -> gis.FenceDetail
 	57, // 40: gis.GetFenceRes.fence:type_name -> gis.FenceDetail
-	2,  // 41: gis.FenceDetail.points:type_name -> gis.Point
+	1,  // 41: gis.FenceDetail.points:type_name -> gis.Point
 	4,  // 42: gis.Gis.Ping:input_type -> gis.Req
 	6,  // 43: gis.Gis.EncodeGeoHash:input_type -> gis.EncodeGeoHashReq
 	9,  // 44: gis.Gis.EncodeGeoHashMulti:input_type -> gis.EncodeGeoHashMultiReq

@@ -4,14 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 
 	"zero-service/app/gis/model/gormmodel"
 	"zero-service/common/gisx"
 	"zero-service/common/gormx"
 
-	"github.com/mmcloughlin/geohash"
 	"github.com/paulmach/orb"
+	"github.com/uber/h3-go/v4"
 	"gorm.io/gorm"
+)
+
+const (
+	h3CellType             = "h3"
+	geohashCellType        = "geohash"
+	h3RecallResolution     = 9
+	h3RecallCellType       = "h3_r9"
+	h3RecallAverageEdgeKm  = 0.2
+	h3PolygonMaxCellBudget = 1000
 )
 
 // GormFenceStore 基于 GORM 的 FenceStore 实现
@@ -28,6 +38,10 @@ func (s *GormFenceStore) CreateFence(ctx context.Context, fenceId, name string, 
 	if err != nil {
 		return fmt.Errorf("序列化多边形顶点失败: %w", err)
 	}
+	recallH3Cells, err := computeH3RecallCells(points)
+	if err != nil {
+		return fmt.Errorf("生成召回 H3 cells 失败: %w", err)
+	}
 
 	fence := &gormmodel.GisFence{
 		FenceId:          fenceId,
@@ -43,7 +57,7 @@ func (s *GormFenceStore) CreateFence(ctx context.Context, fenceId, name string, 
 		return fmt.Errorf("创建围栏记录失败: %w", err)
 	}
 
-	if err := s.batchInsertCells(tx, fenceId, h3Cells, geohashCells); err != nil {
+	if err := s.batchInsertCells(tx, fenceId, h3Cells, geohashCells, recallH3Cells); err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -65,21 +79,24 @@ func (s *GormFenceStore) LoadFencePolygon(ctx context.Context, fenceId string) (
 }
 
 func (s *GormFenceStore) FindNearbyFenceIds(ctx context.Context, lat, lon, km float64) ([]string, error) {
-	precision := kmToGeohashPrecision(km)
-	hash := geohash.EncodeWithPrecision(lat, lon, uint(precision))
-
-	candidates := []string{hash}
-	for _, n := range geohash.Neighbors(hash) {
-		candidates = append(candidates, n)
+	k := kmToH3RecallK(km)
+	origin, err := h3.LatLngToCell(h3.NewLatLng(lat, lon), h3RecallResolution)
+	if err != nil {
+		return nil, err
 	}
-	exactMatches, likePatterns := geohashLookupKeys(candidates)
+	candidates, err := h3.GridDisk(origin, k)
+	if err != nil {
+		return nil, err
+	}
+	cellIds := make([]string, 0, len(candidates))
+	for _, cell := range candidates {
+		cellIds = append(cellIds, cell.String())
+	}
 
 	var cellRecords []gormmodel.GisFenceCell
-	query := s.db.DB.WithContext(ctx).Where("cell_type = ? AND cell_id IN ?", "geohash", exactMatches)
-	for _, pattern := range likePatterns {
-		query = query.Or("cell_type = ? AND cell_id LIKE ?", "geohash", pattern)
-	}
-	if err := query.Find(&cellRecords).Error; err != nil {
+	if err := s.db.DB.WithContext(ctx).
+		Where("cell_type = ? AND cell_id IN ?", h3RecallCellType, cellIds).
+		Find(&cellRecords).Error; err != nil {
 		return nil, err
 	}
 
@@ -120,6 +137,10 @@ func (s *GormFenceStore) UpdateFence(ctx context.Context, fenceId, name string, 
 	if err != nil {
 		return fmt.Errorf("序列化多边形顶点失败: %w", err)
 	}
+	recallH3Cells, err := computeH3RecallCells(points)
+	if err != nil {
+		return fmt.Errorf("生成召回 H3 cells 失败: %w", err)
+	}
 
 	tx := s.db.DB.WithContext(ctx).Begin()
 
@@ -141,7 +162,7 @@ func (s *GormFenceStore) UpdateFence(ctx context.Context, fenceId, name string, 
 		return fmt.Errorf("清理旧 cells 失败: %w", err)
 	}
 
-	if err := s.batchInsertCells(tx, fenceId, h3Cells, geohashCells); err != nil {
+	if err := s.batchInsertCells(tx, fenceId, h3Cells, geohashCells, recallH3Cells); err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -165,13 +186,16 @@ func (s *GormFenceStore) RemoveFence(ctx context.Context, fenceId string) error 
 	return tx.Commit().Error
 }
 
-func (s *GormFenceStore) batchInsertCells(tx *gorm.DB, fenceId string, h3Cells, geohashCells []string) error {
-	cells := make([]gormmodel.GisFenceCell, 0, len(h3Cells)+len(geohashCells))
+func (s *GormFenceStore) batchInsertCells(tx *gorm.DB, fenceId string, h3Cells, geohashCells, recallH3Cells []string) error {
+	cells := make([]gormmodel.GisFenceCell, 0, len(h3Cells)+len(geohashCells)+len(recallH3Cells))
 	for _, c := range h3Cells {
-		cells = append(cells, gormmodel.GisFenceCell{FenceId: fenceId, CellId: c, CellType: "h3"})
+		cells = append(cells, gormmodel.GisFenceCell{FenceId: fenceId, CellId: c, CellType: h3CellType})
 	}
 	for _, c := range geohashCells {
-		cells = append(cells, gormmodel.GisFenceCell{FenceId: fenceId, CellId: c, CellType: "geohash"})
+		cells = append(cells, gormmodel.GisFenceCell{FenceId: fenceId, CellId: c, CellType: geohashCellType})
+	}
+	for _, c := range recallH3Cells {
+		cells = append(cells, gormmodel.GisFenceCell{FenceId: fenceId, CellId: c, CellType: h3RecallCellType})
 	}
 
 	if len(cells) > 0 {
@@ -275,9 +299,9 @@ func (s *GormFenceStore) batchLoadCells(ctx context.Context, fenceIds []string) 
 	for _, c := range cells {
 		fc := result[c.FenceId]
 		switch c.CellType {
-		case "h3":
+		case h3CellType:
 			fc.h3 = append(fc.h3, c.CellId)
-		case "geohash":
+		case geohashCellType:
 			fc.geohash = append(fc.geohash, c.CellId)
 		}
 		result[c.FenceId] = fc
@@ -290,38 +314,37 @@ func (s *GormFenceStore) loadCellsByFenceId(ctx context.Context, fenceId string)
 	s.db.DB.WithContext(ctx).Where("fence_id = ?", fenceId).Find(&cells)
 	for _, c := range cells {
 		switch c.CellType {
-		case "h3":
+		case h3CellType:
 			h3Cells = append(h3Cells, c.CellId)
-		case "geohash":
+		case geohashCellType:
 			geohashes = append(geohashes, c.CellId)
 		}
 	}
 	return
 }
 
-func geohashLookupKeys(candidates []string) ([]string, []string) {
-	exactSet := make(map[string]struct{}, len(candidates)*3)
-	likeSet := make(map[string]struct{}, len(candidates))
-	for _, candidate := range candidates {
-		// 同精度 exact match
-		exactSet[candidate] = struct{}{}
-		// 入库精度更细时，LIKE 匹配多余尾串
-		likeSet[candidate+"%"] = struct{}{}
-		// 入库精度更粗时，最多回退 2 级前缀（超过则空间跨度过大，不适合"附近"过滤）
-		for i := len(candidate) - 1; i >= max(1, len(candidate)-2); i-- {
-			exactSet[candidate[:i]] = struct{}{}
-		}
+func computeH3RecallCells(points []orb.Point) ([]string, error) {
+	geoPolygon, err := gisx.OrbPolygonToH3GeoPolygon(orb.Polygon{points})
+	if err != nil {
+		return nil, err
 	}
+	cells, err := h3.PolygonToCellsExperimental(geoPolygon, h3RecallResolution, h3.ContainmentOverlapping, h3PolygonMaxCellBudget)
+	if err != nil {
+		return nil, err
+	}
+	cellStrings := make([]string, len(cells))
+	for i, c := range cells {
+		cellStrings[i] = c.String()
+	}
+	return cellStrings, nil
+}
 
-	exactMatches := make([]string, 0, len(exactSet))
-	for key := range exactSet {
-		exactMatches = append(exactMatches, key)
+func kmToH3RecallK(km float64) int {
+	k := int(math.Ceil(km / h3RecallAverageEdgeKm))
+	if k < 1 {
+		k = 1
 	}
-	likePatterns := make([]string, 0, len(likeSet))
-	for key := range likeSet {
-		likePatterns = append(likePatterns, key)
-	}
-	return exactMatches, likePatterns
+	return k
 }
 
 func kmToGeohashPrecision(km float64) int {

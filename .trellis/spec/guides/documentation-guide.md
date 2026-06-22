@@ -39,13 +39,13 @@ Level 2: docs/*.md
 ## 文档清理规则
 
 **应该删除的文档**：
-- 外部工具指南（如 mattpocock-skills-guide.md）
-- QA checklist（如 ai-solo-smoke-checklist.md）
+- 外部工具指南
+- QA checklist
 - 内容已迁移到新位置的旧文件
 
 **应该保留的文档**：
-- 与项目核心功能相关的指南（如 kml-kmz-guide.md 与 DJI 场景相关）
-- 项目配置文件（如 AGENTS.md）
+- 与项目核心功能相关的指南（如 `docs/kml-kmz-guide.md` 与 DJI 场景相关）
+- 项目配置文件（如 `AGENTS.md`）
 
 ## 模块成熟度标注
 

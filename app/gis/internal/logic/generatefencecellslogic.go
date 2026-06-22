@@ -46,24 +46,14 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *gis.GenFenceCellsReq) (
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "geohash精度最大为12")
 	}
 
-	// 构建多边形：优先使用请求中的顶点，其次从 store 按 ID 加载
-	var polygon orb.Polygon
-	var err error
-	if len(in.Points) > 0 {
-		polygon, err = pbPointToOrbPolygon(in.Points)
-		if err != nil {
-			l.Logger.Error("构建多边形失败: ", err)
-			return nil, err
-		}
-	} else if in.FenceId != "" {
-		pts, err := l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, in.FenceId)
-		if err != nil {
-			l.Logger.Errorf("加载围栏多边形失败, fenceId=%s, err=%v", in.FenceId, err)
-			return nil, err
-		}
-		polygon = orb.Polygon{orb.Ring(pts)}
-	} else {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "points 或 fence_id")
+	// 构建多边形：本接口为纯计算，仅支持请求中直接传入顶点
+	if len(in.Points) < 3 {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "围栏至少需要3个顶点")
+	}
+	polygon, err := pbPointToOrbPolygon(in.Points)
+	if err != nil {
+		l.Logger.Error("构建多边形失败: ", err)
+		return nil, err
 	}
 
 	// 计算多边形 bbox 作为扫描范围
