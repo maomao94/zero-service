@@ -39,8 +39,8 @@ func (l *NearbyFencesLogic) NearbyFences(in *gis.NearbyFencesReq) (*gis.NearbyFe
 
 	fenceIds, err := l.svcCtx.FenceStore.FindNearbyFenceIds(l.ctx, in.Point.Lon, in.Point.Lat, in.Km)
 	if err != nil {
-		l.Logger.Infof("FenceStore.FindNearbyFenceIds 不可用: %v", err)
-		return &gis.NearbyFencesRes{}, nil
+		l.Logger.Errorf("FenceStore.FindNearbyFenceIds 失败: %v", err)
+		return nil, err
 	}
 
 	point := orb.Point{in.Point.Lon, in.Point.Lat}

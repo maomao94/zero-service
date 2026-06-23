@@ -5,11 +5,8 @@ import (
 
 	"zero-service/app/gis/gis"
 	"zero-service/app/gis/internal/svc"
-	"zero-service/common/gisx"
 	"zero-service/common/tool"
-	"zero-service/third_party/extproto"
 
-	"github.com/uber/h3-go/v4"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -28,49 +25,26 @@ func NewCreateFenceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Creat
 }
 
 // CreateFence 新增电子围栏。
-// 流程：校验参数 → 构建多边形 → 计算 H3 cells → 计算 geohash cells → 生成 ID → 持久化。
+// 流程：校验参数 → 构建多边形 → 计算 H3 + geohash cells → 生成 ID → 持久化。
 func (l *CreateFenceLogic) CreateFence(in *gis.CreateFenceReq) (*gis.CreateFenceRes, error) {
-	if err := ValidatePoints(in.Points...); err != nil {
-		return nil, err
-	}
-	if len(in.Points) < 3 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "多边形至少需要3个点")
-	}
-
 	polygon, err := pbPointToOrbPolygon(in.Points)
 	if err != nil {
 		return nil, err
 	}
 
-	resolution := int(in.H3Resolution)
-	if resolution <= 0 {
-		resolution = 9
-	} else if resolution > 15 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "H3分辨率必须在0-15之间")
+	resolution, err := resolveH3Resolution(in.H3Resolution)
+	if err != nil {
+		return nil, err
 	}
-
-	geoPolygon, err := gisx.OrbPolygonToH3GeoPolygon(polygon)
+	geohashPrecision, err := resolveGeohashPrecision(in.GeohashPrecision)
 	if err != nil {
 		return nil, err
 	}
 
-	cells, err := h3.PolygonToCellsExperimental(geoPolygon, resolution, h3.ContainmentOverlapping, 1000)
+	cellStrings, geohashes, err := computeFenceCells(polygon, resolution, geohashPrecision)
 	if err != nil {
 		return nil, err
 	}
-
-	cellStrings := make([]string, len(cells))
-	for i, c := range cells {
-		cellStrings[i] = c.String()
-	}
-
-	geohashPrecision := int(in.GeohashPrecision)
-	if geohashPrecision <= 0 {
-		geohashPrecision = 7
-	} else if geohashPrecision > 12 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "geohash精度最大为12")
-	}
-	geohashes := computeGeohashCells(polygon, geohashPrecision)
 
 	fenceId, err := tool.SimpleUUID()
 	if err != nil {

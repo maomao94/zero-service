@@ -12,6 +12,7 @@ import (
 
 	"github.com/paulmach/orb"
 	"github.com/uber/h3-go/v4"
+	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
 )
 
@@ -243,7 +244,9 @@ func (s *GormFenceStore) ListFences(ctx context.Context, page, pageSize int64, n
 	list := make([]gisx.FenceInfo, len(fences))
 	for i, f := range fences {
 		var poly orb.Polygon
-		_ = json.Unmarshal([]byte(f.Points), &poly)
+		if err := json.Unmarshal([]byte(f.Points), &poly); err != nil {
+			logx.Errorf("解析围栏顶点JSON失败, fenceId=%s, err=%v", f.FenceId, err)
+		}
 		cells := cellMap[f.FenceId]
 		list[i] = gisx.FenceInfo{
 			FenceId:          f.FenceId,
@@ -267,7 +270,9 @@ func (s *GormFenceStore) GetFence(ctx context.Context, fenceId string) (*gisx.Fe
 	}
 
 	var poly orb.Polygon
-	_ = json.Unmarshal([]byte(fence.Points), &poly)
+	if err := json.Unmarshal([]byte(fence.Points), &poly); err != nil {
+		return nil, fmt.Errorf("解析围栏顶点JSON失败: %w", err)
+	}
 
 	h3Cells, geohashes := s.loadCellsByFenceId(ctx, fenceId)
 

@@ -180,8 +180,8 @@ func (x *PointPair) GetB() *Point {
 
 type Fence struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FenceId       string                 `protobuf:"bytes,1,opt,name=fence_id,json=fenceId,proto3" json:"fence_id,omitempty"` // 围栏 ID
-	Points        []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"`                  // 多边形顶点（至少 3 个点）
+	FenceId       string                 `protobuf:"bytes,1,opt,name=fence_id,json=fenceId,proto3" json:"fence_id,omitempty"` // 围栏 ID（从 store 查询判断时必填）
+	Points        []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"`                  // 多边形顶点（主动判断时必填，至少 3 个点）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

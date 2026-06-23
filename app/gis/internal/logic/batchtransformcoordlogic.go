@@ -35,6 +35,12 @@ func (l *BatchTransformCoordLogic) BatchTransformCoord(in *gis.BatchTransformCoo
 	if err := ValidatePoints(in.Points...); err != nil {
 		return nil, err
 	}
+	if err := validateCoordType(in.SourceType); err != nil {
+		return nil, err
+	}
+	if err := validateCoordType(in.TargetType); err != nil {
+		return nil, err
+	}
 
 	if in.SourceType == in.TargetType {
 		resPoints := make([]*gis.Point, len(in.Points))

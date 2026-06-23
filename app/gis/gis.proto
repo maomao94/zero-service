@@ -42,9 +42,9 @@ service Gis {
 
   // 获取半径内的点
   rpc PointsWithinRadius (PointsWithinRadiusReq) returns (PointsWithinRadiusRes);
-  // 点是否命中电子围栏（单个）
+  // 点是否命中电子围栏（单个）。支持两种模式：上送 points 主动判断，或上送 fence_id 从 store 查询判断。
   rpc PointInFence (PointInFenceReq) returns (PointInFenceRes);
-  // 点是否命中电子围栏（多个围栏）
+  // 点是否命中电子围栏（多个围栏）。支持两种模式：上送 points 主动判断，或上送 fence_id 从 store 查询判断。
   rpc PointInFences (PointInFencesReq) returns (PointInFencesRes);
 
   // 计算两个点之间的距离（米）
@@ -88,8 +88,8 @@ message PointPair {
 }
 
 message Fence {
-  string fence_id = 1;          // 围栏 ID
-  repeated Point points = 2;    // 多边形顶点（至少 3 个点）
+  string fence_id = 1;          // 围栏 ID（从 store 查询判断时必填）
+  repeated Point points = 2;    // 多边形顶点（主动判断时必填，至少 3 个点）
 }
 
 // ────────────────────── Geohash 编码/解码 ──────────────────────

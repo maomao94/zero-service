@@ -89,13 +89,13 @@ func (s *GisServer) PointsWithinRadius(ctx context.Context, in *gis.PointsWithin
 	return l.PointsWithinRadius(in)
 }
 
-// 点是否命中电子围栏（单个）
+// 点是否命中电子围栏（单个）。支持两种模式：上送 points 主动判断，或上送 fence_id 从 store 查询判断。
 func (s *GisServer) PointInFence(ctx context.Context, in *gis.PointInFenceReq) (*gis.PointInFenceRes, error) {
 	l := logic.NewPointInFenceLogic(ctx, s.svcCtx)
 	return l.PointInFence(in)
 }
 
-// 点是否命中电子围栏（多个围栏）
+// 点是否命中电子围栏（多个围栏）。支持两种模式：上送 points 主动判断，或上送 fence_id 从 store 查询判断。
 func (s *GisServer) PointInFences(ctx context.Context, in *gis.PointInFencesReq) (*gis.PointInFencesRes, error) {
 	l := logic.NewPointInFencesLogic(ctx, s.svcCtx)
 	return l.PointInFences(in)

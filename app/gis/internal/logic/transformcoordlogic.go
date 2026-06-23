@@ -2,7 +2,7 @@ package logic
 
 import (
 	"context"
-	"fmt"
+
 	"zero-service/app/gis/gis"
 
 	"zero-service/app/gis/internal/svc"
@@ -55,21 +55,13 @@ func (l *TransformCoordLogic) validateReq(in *gis.TransformCoordReq) error {
 	if in.Point == nil {
 		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "point")
 	}
-	if in.Point.Lat < -90 || in.Point.Lat > 90 {
-		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, fmt.Sprintf("invalid lat: %v (valid -90~90)", in.Point.Lat))
+	if err := ValidatePoints(in.Point); err != nil {
+		return err
 	}
-	if in.Point.Lon < -180 || in.Point.Lon > 180 {
-		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, fmt.Sprintf("invalid lon: %v (valid -180~180)", in.Point.Lon))
+	if err := validateCoordType(in.SourceType); err != nil {
+		return err
 	}
-	sourceVal := uint32(in.SourceType)
-	if sourceVal < 1 || sourceVal > 3 {
-		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, fmt.Sprintf("invalid source_type: %v (only support 1=WGS84, 2=GCJ02, 3=BD09)", sourceVal))
-	}
-	targetVal := uint32(in.TargetType)
-	if targetVal < 1 || targetVal > 3 {
-		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, fmt.Sprintf("invalid target_type: %v (only support 1=WGS84, 2=GCJ02, 3=BD09)", targetVal))
-	}
-	return nil
+	return validateCoordType(in.TargetType)
 }
 
 // doTransformCoord 执行坐标系转换。
