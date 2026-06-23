@@ -39,8 +39,8 @@ func (l *PointInFenceLogic) PointInFence(in *gis.PointInFenceReq) (*gis.PointInF
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "fence")
 	}
 	var polygon orb.Polygon
-	if len(in.Fence.Points) > 0 {
-		polygon, err = pbPointToOrbPolygon(in.Fence.Points)
+	if in.Fence.Polygon != nil {
+		polygon, err = pbPolygonToOrbPolygon(in.Fence.Polygon)
 		if err != nil {
 			l.Logger.Error("构建多边形失败: ", err)
 			return nil, err
@@ -52,7 +52,7 @@ func (l *PointInFenceLogic) PointInFence(in *gis.PointInFenceReq) (*gis.PointInF
 			return nil, err
 		}
 	} else {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "Points或FenceId")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "polygon或FenceId")
 	}
 	point := orb.Point{in.Point.Lon, in.Point.Lat}
 	hit := planar.PolygonContains(polygon, point)

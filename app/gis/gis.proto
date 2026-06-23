@@ -42,9 +42,9 @@ service Gis {
 
   // 获取半径内的点
   rpc PointsWithinRadius (PointsWithinRadiusReq) returns (PointsWithinRadiusRes);
-  // 点是否命中电子围栏（单个）。支持两种模式：上送 points 主动判断，或上送 fence_id 从 store 查询判断。
+  // 点是否命中电子围栏（单个）。支持两种模式：上送 polygon 主动判断，或上送 fence_id 从 store 查询判断。
   rpc PointInFence (PointInFenceReq) returns (PointInFenceRes);
-  // 点是否命中电子围栏（多个围栏）。支持两种模式：上送 points 主动判断，或上送 fence_id 从 store 查询判断。
+  // 点是否命中电子围栏（多个围栏）。支持两种模式：上送 polygon 主动判断，或上送 fence_id 从 store 查询判断。
   rpc PointInFences (PointInFencesReq) returns (PointInFencesRes);
 
   // 计算两个点之间的距离（米）
@@ -87,9 +87,18 @@ message PointPair {
   Point b = 2;
 }
 
+message Ring {
+  repeated Point points = 1;    // 环顶点（至少 3 个点，自动首尾闭合）
+}
+
+message Polygon {
+  Ring outer = 1;               // 外环，定义围栏边界
+  repeated Ring holes = 2;      // 洞/内环，命中判断和 cells 覆盖时从外环中排除。洞必须完全在外环内部，超出或洞相交会被拒绝。
+}
+
 message Fence {
   string fence_id = 1;          // 围栏 ID（从 store 查询判断时必填）
-  repeated Point points = 2;    // 多边形顶点（主动判断时必填，至少 3 个点）
+  Polygon polygon = 2;          // 围栏多边形（主动判断时必填；outer 为外环，holes 为排除区域）
 }
 
 // ────────────────────── Geohash 编码/解码 ──────────────────────
@@ -191,7 +200,7 @@ message GridDiskRes {
 // ────────────────────── 围栏格子计算（纯计算）──────────────────────
 
 message GenFenceCellsReq {
-  repeated Point points = 1;      // 多边形顶点（至少 3 个点，自动首尾闭合）
+  Polygon polygon = 1;            // 围栏多边形；outer 为外环，holes 为排除区域
   uint32 precision = 2;           // geohash 精度 1-12，默认 7
   bool include_neighbors = 3;     // 是否扩展周边 8 邻居格子
 }
@@ -201,7 +210,7 @@ message GenFenceCellsRes {
 }
 
 message GenFenceH3CellsReq {
-  repeated Point points = 1;      // 多边形顶点（至少 3 个点，自动首尾闭合）
+  Polygon polygon = 1;            // 围栏多边形；outer 为外环，holes 为排除区域
   uint32 resolution = 2;          // H3 分辨率 0-15，默认 9
 }
 
@@ -314,7 +323,7 @@ message RoutePointsRes {
 
 message CreateFenceReq {
   string name = 1;               // 围栏名称
-  repeated Point points = 2;     // 多边形顶点（至少 3 个点，自动首尾闭合）
+  Polygon polygon = 2;           // 围栏多边形；outer 为外环，holes 为排除区域
   uint32 h3_resolution = 3;      // H3 分辨率 0-15，默认 9
   uint32 geohash_precision = 4;  // geohash 精度 1-12，默认 7
 }
@@ -328,7 +337,7 @@ message CreateFenceRes {
 message UpdateFenceReq {
   string fence_id = 1;           // 待更新围栏 ID
   string name = 2;               // 新名称（空字符串表示不更新）
-  repeated Point points = 3;     // 新多边形顶点（至少 3 个点，自动首尾闭合）
+  Polygon polygon = 3;           // 新围栏多边形；outer 为外环，holes 为排除区域
   uint32 h3_resolution = 4;      // H3 分辨率 0-15，默认 9
   uint32 geohash_precision = 5;  // geohash 精度 1-12，默认 7
 }
@@ -366,7 +375,7 @@ message GetFenceRes {
 message FenceDetail {
   string fence_id = 1;          // 围栏 ID
   string name = 2;              // 围栏名称
-  repeated Point points = 3;    // 多边形顶点
+  Polygon polygon = 3;          // 围栏多边形；outer 为外环，holes 为排除区域
   uint32 h3_resolution = 4;     // H3 分辨率
   uint32 geohash_precision = 5; // geohash 精度
   repeated string h3_cells = 6; // 围栏覆盖的 H3 cells

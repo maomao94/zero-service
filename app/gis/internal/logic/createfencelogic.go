@@ -27,7 +27,7 @@ func NewCreateFenceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Creat
 // CreateFence 新增电子围栏。
 // 流程：校验参数 → 构建多边形 → 计算 H3 + geohash cells → 生成 ID → 持久化。
 func (l *CreateFenceLogic) CreateFence(in *gis.CreateFenceReq) (*gis.CreateFenceRes, error) {
-	polygon, err := pbPointToOrbPolygon(in.Points)
+	polygon, err := pbPolygonToOrbPolygon(in.Polygon)
 	if err != nil {
 		return nil, err
 	}

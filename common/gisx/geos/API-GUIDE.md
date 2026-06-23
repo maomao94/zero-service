@@ -369,13 +369,18 @@ GEOSGeometry* GEOSConvexHull_r(ctx, g);
 ```c
 char GEOSisValid_r(ctx, g);
 const char* GEOSisValidReason_r(ctx, g);  // 有效时返回空字符串
-GEOSGeometry* GEOSMakeValid_r(ctx, g);     // 可能返回 MultiPolygon
+GEOSGeometry* GEOSMakeValid_r(ctx, g);     // 可能返回 MultiPolygon/GeometryCollection/退化类型
 ```
 
 `GEOSisValidReason_r` 返回字符串如：
 - `"Self-intersection at or near point 2 2"`
 - `"Hole lies outside shell"`
 - `"Interior is disconnected"`
+- `"Holes are nested"` — 洞中套洞
+
+`GEOSMakeValid_r` 对无效 Polygon **不会返回单一 Polygon**（总是 MultiPolygon/GeometryCollection/退化）。详见 `README.md` 的 [MakeValid 行为参考（11 场景实测）](README.md#makevalid-行为参考11-种-polygon-输入全覆盖实测)。
+
+> **业务层推荐 `orbconv.MakeValidOrb(poly)`**：处理 MultiPolygon→取子0、退化类型→拒绝，返回单一 `orb.Polygon`。
 
 ### 6.8 缓冲、简化、变换
 

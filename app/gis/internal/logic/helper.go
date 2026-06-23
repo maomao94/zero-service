@@ -10,6 +10,8 @@ import (
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
+	"github.com/zeromicro/go-zero/core/logx"
+
 	"github.com/mmcloughlin/geohash"
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/planar"
@@ -188,20 +190,85 @@ func ValidatePoints(points ...*gis.Point) error {
 	return nil
 }
 
-// pbPointToOrbPolygon 将 pb Point 切片转换为 orb.Polygon（单外环，无洞）。
-// 步骤：校验点数 → 坐标范围检查 → 构建 ring → 自动闭合（gisx.EnsurePolygonClosed）。
-func pbPointToOrbPolygon(points []*gis.Point) (orb.Polygon, error) {
+func pbRingToOrbRing(points []*gis.Point, name string) (orb.Ring, error) {
 	if len(points) < 3 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "多边形至少需要3个点")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, name+"至少需要3个点")
 	}
 
 	var ring orb.Ring
 	for i, p := range points {
+		if p == nil {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, fmt.Sprintf("第 %d 个 point", i))
+		}
 		if err := gisx.ValidateCoordinate(p.Lon, p.Lat, i); err != nil {
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, err.Error())
 		}
 		ring = append(ring, orb.Point{p.Lon, p.Lat})
 	}
+	return ring, nil
+}
 
-	return gisx.EnsurePolygonClosed(orb.Polygon{ring})
+// pbPolygonToOrbPolygon 将 pb Polygon 转换为 orb.Polygon。
+// polygon[0] 为外环，polygon[1:] 为洞。有洞时校验有效性，无效直接拒绝。
+func pbPolygonToOrbPolygon(polygon *gis.Polygon) (orb.Polygon, error) {
+	if polygon == nil || polygon.Outer == nil {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "polygon.outer")
+	}
+
+	outer, err := pbRingToOrbRing(polygon.Outer.Points, "外环")
+	if err != nil {
+		return nil, err
+	}
+
+	orbPolygon := orb.Polygon{outer}
+	for i, hole := range polygon.Holes {
+		if hole == nil {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, fmt.Sprintf("第 %d 个 hole", i))
+		}
+		ring, err := pbRingToOrbRing(hole.Points, fmt.Sprintf("第 %d 个 hole", i))
+		if err != nil {
+			return nil, err
+		}
+		orbPolygon = append(orbPolygon, ring)
+	}
+
+	closed, err := gisx.EnsurePolygonClosed(orbPolygon)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(closed) > 1 {
+		valid, err := orbconv.ValidOrb(closed)
+		if err != nil {
+			logx.Errorf("GEOS 校验异常: %v", err)
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID,
+				"多边形有效性校验异常，请检查围栏顶点")
+		}
+		if !valid {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID,
+				"多边形无效：洞超出外环或洞之间相交，请检查围栏顶点")
+		}
+	}
+	return closed, nil
+}
+
+func orbPolygonToPbPolygon(polygon orb.Polygon) *gis.Polygon {
+	pbPolygon := &gis.Polygon{}
+	if len(polygon) == 0 {
+		return pbPolygon
+	}
+	pbPolygon.Outer = &gis.Ring{Points: orbRingToPbPoints(polygon[0])}
+	pbPolygon.Holes = make([]*gis.Ring, 0, len(polygon)-1)
+	for _, ring := range polygon[1:] {
+		pbPolygon.Holes = append(pbPolygon.Holes, &gis.Ring{Points: orbRingToPbPoints(ring)})
+	}
+	return pbPolygon
+}
+
+func orbRingToPbPoints(ring orb.Ring) []*gis.Point {
+	points := make([]*gis.Point, len(ring))
+	for i, p := range ring {
+		points[i] = &gis.Point{Lat: p.Y(), Lon: p.X()}
+	}
+	return points
 }

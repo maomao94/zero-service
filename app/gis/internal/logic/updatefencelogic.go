@@ -32,7 +32,7 @@ func (l *UpdateFenceLogic) UpdateFence(in *gis.UpdateFenceReq) (*gis.UpdateFence
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "fenceId")
 	}
 
-	polygon, err := pbPointToOrbPolygon(in.Points)
+	polygon, err := pbPolygonToOrbPolygon(in.Polygon)
 	if err != nil {
 		return nil, err
 	}

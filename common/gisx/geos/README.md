@@ -27,9 +27,10 @@ common/gisx/geos/               ← 纯 GEOS 封装（零 orb 依赖）
 ├── introspect.go               # 5 几何内省（空/简/闭/环/Z）
 ├── strtree.go                  # STRtree R-Tree 空间索引
 ├── doc.go                      # 包级 Go Doc
-├── API-GUIDE.md                # 实战指南
+├── API-GUIDE.md                # GEOS C 库深度解析
+├── README.md
 ├── geos_test.go                # 55+ 测试用例
-└── README.md
+└── raw_makevalid_test.go       # MakeValid 11 场景全覆盖实测 + sub[1] 分析
 
 common/gisx/geos/orbconv/       ← orb 转换 + 便捷包装
 ├── orbconv.go                  # 14 转换 + 6 便捷谓词
@@ -202,7 +203,9 @@ for _, cell := range cells {
 |------|------|------|
 | `IsValid(g)` | 是否有效几何 | 检查自相交、环方向等 |
 | `IsValidReason(g)` | 无效原因 | 有效时返回空字符串 |
-| `MakeValid(g)` | 修复无效几何 | 自相交可能拆为 MultiPolygon→只取第一个 |
+| `MakeValid(g)` | 修复无效几何 | 返回 MultiPolygon/退化类型，详见下方 MakeValid 行为参考 |
+
+> **业务层推荐 `orbconv.MakeValidOrb(poly)`**：自动处理 MultiPolygon→取子0、退化类型→拒绝，返回单一 `orb.Polygon`。详见 [orbconv.MakeValidOrb](#orbconvmakevalidorb--从-makevalid-结果中提取有效-polygon)。
 
 ### 简化 & 缓冲
 
@@ -359,8 +362,13 @@ ok, _ := orbconv.IntersectsOrb(fenceA, fenceB)
 
 ```go
 if valid, _ := orbconv.ValidOrb(fence); !valid {
-    // 修复自相交
-    fixed := geos.MakeValid(g)
+    // 尝试自动修复（合并重叠洞、修复自相交）
+    fixed, err := orbconv.MakeValidOrb(fence)
+    if err != nil {
+        // 无法修复（退化类型等）→ 拒绝
+        return err
+    }
+    fence = fixed
 }
 ```
 
@@ -370,6 +378,103 @@ if valid, _ := orbconv.ValidOrb(fence); !valid {
 // 简化（保留拓扑）
 simplified := geos.TopologyPreserveSimplify(g, 0.001)
 ```
+
+---
+
+## Geometry TypeID 枚举
+
+GEOS 用整数标识几何类型，`gogeos.TypeID` 定义如下：
+
+| TypeID | 常量 | 含义 | 示例 |
+|--------|------|------|------|
+| `0` | `TypeIDPoint` | 点 | `(116.4, 39.9)` |
+| `1` | `TypeIDLineString` | 线串 | 路径、道路线 |
+| `2` | `TypeIDLinearRing` | 闭合环 | 多边形的一个环 |
+| `3` | `TypeIDPolygon` | 多边形 | 一个外环 + 零或多个洞 |
+| `4` | `TypeIDMultiPoint` | 多点集合 | 多个离散点 |
+| `5` | `TypeIDMultiLineString` | 多线集合 | 多条不相连的线 |
+| `6` | `TypeIDMultiPolygon` | 多多边形集合 | 多个不相连的多边形（如北京+上海两片服务区） |
+| `7` | `TypeIDGeometryCollection` | 混合几何集合 | 点+线+多边形的混合体 |
+
+## MakeValid 行为参考（11 种 Polygon 输入全覆盖实测）
+
+`geos.MakeValid` 对 Polygon 输入的输出类型和结构取决于无效原因。以下为 `common/gisx/geos/raw_makevalid_test.go` 实测数据：
+
+### 有效 Polygon
+
+| 场景 | IsValid | MakeValid 输出 | sub[0] 结构 |
+|------|---------|---------------|-------------|
+| 无洞 | true | Polygon (tid=3, sub=1) | 外环5点 + 0洞 |
+| 单洞 | true | Polygon (tid=3, sub=1) | 外环5点 + 1洞(5点) |
+| 多洞不重叠 | true | Polygon (tid=3, sub=1) | 外环5点 + 2洞(各5点) |
+
+### 无效 Polygon
+
+| 场景 | IsValid | Reason | MakeValid 输出 | sub[0] | sub[1] | sub[2] |
+|------|---------|--------|---------------|--------|--------|--------|
+| **重叠洞** | false | Self-intersection | MultiPolygon (tid=6, sub=2) | **外环5点+1洞(9点)** ← 洞已合并 | 外环5点+0洞 ← 冗余碎片 |
+| 洞包含洞 | false | Holes are nested | MultiPolygon (tid=6, sub=2) | 外环5点+0洞 | 外环5点+1洞(5点) |
+| 三洞链式重叠 | false | Self-intersection | MultiPolygon (tid=6, sub=3) | **外环5点+1洞** | 外环7点+0洞 | 外环7点+0洞 |
+| 洞超出外环 | false | Self-intersection | MultiPolygon (tid=6, sub=2) | **外环9点+0洞** ← 被重绘 | 外环5点+0洞 ← 越界部分 |
+| 洞完全在外 | false | Hole lies outside shell | MultiPolygon (tid=6, sub=2) | 外环5点+0洞 | 外环5点+0洞 ← 越界部分 |
+| 自相交(蝴蝶结) | false | Self-intersection | MultiPolygon (tid=6, sub=2) | 外环4点+0洞 | 外环4点+0洞 |
+| **洞碰外环边** | false | Self-intersection | **GeometryCollection (tid=7, sub=2)** | Polygon 外环7点 | **LineString** |
+| 退化三点共线 | false | Self-intersection | **MultiLineString (tid=5, sub=2)** | LineString | LineString |
+
+### 关键结论
+
+**重叠洞时 `geos.MakeValid` 其实已经正确修复了——sub[0] 就是合并洞后的有效多边形。**但结果不是单一 `Polygon`，而是 `MultiPolygon`，因为 GEOS 会多输出一个冗余碎片（sub[1]，已被 sub[0] 的洞所排除的区域），也可能修改外环（洞超出外环、自相交等）。
+
+---
+
+## orbconv.MakeValidOrb — 从 MakeValid 结果中提取有效 Polygon
+
+`geos.MakeValid` 对无效 Polygon 永远返回 MultiPolygon/GeometryCollection/退化类型，不会返回单一 Polygon。`MakeValidOrb` 做一件事：**把 GEOS 已经合法化的几何体提取为 `orb.Polygon`**。
+
+核心逻辑：GEOS 重绘的外环就是合法多边形，不需要跟原始做任何比较。
+
+```go
+func MakeValidOrb(poly orb.Polygon) (orb.Polygon, error) {
+    g := PolygonToGeom(poly)
+    fixed := geos.MakeValid(g)
+
+    switch fixed.TypeID() {
+    case Polygon:
+        return GeomToPolygon(fixed)           // 有效 → 直接返回
+
+    case MultiPolygon:
+        return GeomToPolygon(fixed.Geometry(0))  // 取子0 → 外环重绘/洞合并都是合法修复
+
+    default:
+        return error                           // 退化类型 → 拒绝
+    }
+}
+```
+
+**各场景对应的结果**：
+
+| 原始场景 | MakeValid 类型 | 子0 的结果 | 接受/拒绝 |
+|---------|---------------|-----------|:---:|
+| 有效无洞/单洞/多洞 | Polygon | 原样 | ✅ |
+| 重叠洞 | MultiPolygon | 外环不变 + 洞合并 | ✅ |
+| 洞包含洞 | MultiPolygon | 外环不变(无洞) | ✅ |
+| 洞超出外环 | MultiPolygon | 外环重绘(带凹口合法) | ✅ |
+| 洞完全在外 | MultiPolygon | 外环不变(无洞) | ✅ |
+| 三洞重叠 | MultiPolygon | 外环不变 + 洞合并 | ✅ |
+| 自相交蝴蝶结 | MultiPolygon | 三角形 | ✅ |
+| 洞碰外环边 | GeometryCollection | — | ❌ |
+| 退化三点共线 | MultiLineString | — | ❌ |
+
+**MultiPolygon 场景下 sub[1] 的真实数据**（取 sub[0] 丢弃的是什么）：
+
+| 场景 | sub[0] 保留 | sub[1] 丢弃 |
+|------|------------|------------|
+| **重叠洞** | 外环5点 + 1个合并洞（L形） | 方块 x[4-6] y[4-6]，**重叠区域**，已被 sub[0] 的合并洞排除 → 丢弃无意义 |
+| **洞超出外环** | 外环9点（带凹口）、无洞 | 方块 x[10-15] y[2-8]，**越界部分**，sub[0] 已通过凹口绕过 → 丢弃无意义 |
+| **洞完全在外** | 外环5点、无洞（原样） | 方块 x[15-20] y[15-20]，**洞本身**，在原始 bbox 外毫无意义 → 丢弃无意义 |
+| **自相交蝴蝶结** | 上半三角 x[0-4] y[0-2] | 下半三角 x[0-4] y[2-4]，**另一半**，原始无效无法保留全量 → 取一半合法 |
+
+**设计原则**：GEOS 已经做了合法化，信任它的结果。sub[1] 在所有场景下要么是冗余碎片、要么是越界无意义区域、要么是拆分碎片但原始本就无效。取 sub[0] 丢弃 sub[1+] 是正确的。
 
 ---
 

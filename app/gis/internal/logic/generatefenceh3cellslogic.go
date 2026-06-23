@@ -28,7 +28,7 @@ func NewGenerateFenceH3CellsLogic(ctx context.Context, svcCtx *svc.ServiceContex
 // GenerateFenceH3Cells 生成覆盖围栏多边形的 H3 六边形索引。
 // 算法：将多边形转换为 H3 GeoPolygon，调用 PolygonToCellsExperimental 获取所有重叠 cell。
 func (l *GenerateFenceH3CellsLogic) GenerateFenceH3Cells(in *gis.GenFenceH3CellsReq) (*gis.GenFenceH3CellsRes, error) {
-	polygon, err := pbPointToOrbPolygon(in.Points)
+	polygon, err := pbPolygonToOrbPolygon(in.Polygon)
 	if err != nil {
 		l.Logger.Error("构建多边形失败: ", err)
 		return nil, err

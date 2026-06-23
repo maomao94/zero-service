@@ -32,7 +32,7 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *gis.GenFenceCellsReq) (
 		return nil, err
 	}
 
-	polygon, err := pbPointToOrbPolygon(in.Points)
+	polygon, err := pbPolygonToOrbPolygon(in.Polygon)
 	if err != nil {
 		l.Logger.Error("构建多边形失败: ", err)
 		return nil, err

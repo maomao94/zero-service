@@ -73,9 +73,9 @@ type GisClient interface {
 	GenerateFenceH3Cells(ctx context.Context, in *GenFenceH3CellsReq, opts ...grpc.CallOption) (*GenFenceH3CellsRes, error)
 	// 获取半径内的点
 	PointsWithinRadius(ctx context.Context, in *PointsWithinRadiusReq, opts ...grpc.CallOption) (*PointsWithinRadiusRes, error)
-	// 点是否命中电子围栏（单个）。支持两种模式：上送 points 主动判断，或上送 fence_id 从 store 查询判断。
+	// 点是否命中电子围栏（单个）。支持两种模式：上送 polygon 主动判断，或上送 fence_id 从 store 查询判断。
 	PointInFence(ctx context.Context, in *PointInFenceReq, opts ...grpc.CallOption) (*PointInFenceRes, error)
-	// 点是否命中电子围栏（多个围栏）。支持两种模式：上送 points 主动判断，或上送 fence_id 从 store 查询判断。
+	// 点是否命中电子围栏（多个围栏）。支持两种模式：上送 polygon 主动判断，或上送 fence_id 从 store 查询判断。
 	PointInFences(ctx context.Context, in *PointInFencesReq, opts ...grpc.CallOption) (*PointInFencesRes, error)
 	// 计算两个点之间的距离（米）
 	Distance(ctx context.Context, in *DistanceReq, opts ...grpc.CallOption) (*DistanceRes, error)
@@ -377,9 +377,9 @@ type GisServer interface {
 	GenerateFenceH3Cells(context.Context, *GenFenceH3CellsReq) (*GenFenceH3CellsRes, error)
 	// 获取半径内的点
 	PointsWithinRadius(context.Context, *PointsWithinRadiusReq) (*PointsWithinRadiusRes, error)
-	// 点是否命中电子围栏（单个）。支持两种模式：上送 points 主动判断，或上送 fence_id 从 store 查询判断。
+	// 点是否命中电子围栏（单个）。支持两种模式：上送 polygon 主动判断，或上送 fence_id 从 store 查询判断。
 	PointInFence(context.Context, *PointInFenceReq) (*PointInFenceRes, error)
-	// 点是否命中电子围栏（多个围栏）。支持两种模式：上送 points 主动判断，或上送 fence_id 从 store 查询判断。
+	// 点是否命中电子围栏（多个围栏）。支持两种模式：上送 polygon 主动判断，或上送 fence_id 从 store 查询判断。
 	PointInFences(context.Context, *PointInFencesReq) (*PointInFencesRes, error)
 	// 计算两个点之间的距离（米）
 	Distance(context.Context, *DistanceReq) (*DistanceRes, error)

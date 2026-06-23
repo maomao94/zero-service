@@ -43,8 +43,8 @@ func (l *PointInFencesLogic) PointInFences(in *gis.PointInFencesReq) (*gis.Point
 		var polygon orb.Polygon
 		var err error
 
-		if len(fence.Points) > 0 {
-			polygon, err = pbPointToOrbPolygon(fence.Points)
+		if fence.Polygon != nil {
+			polygon, err = pbPolygonToOrbPolygon(fence.Polygon)
 			if err != nil {
 				l.Logger.Error("构建多边形失败, fenceId=", fence.FenceId, err)
 				continue

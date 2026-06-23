@@ -526,6 +526,50 @@ func ValidOrb(poly orb.Polygon) (bool, error) {
 	return geos.IsValid(g)
 }
 
+// MakeValidOrb 调用 GEOS MakeValid 修复无效多边形，返回有效的 orb.Polygon。
+//
+// GEOS MakeValid 对不同无效原因的 Polygon 返回不同类型（11 种场景实测）：
+//   有效-无洞          → Polygon (3)   原样返回
+//   有效-单洞          → Polygon (3)   原样返回
+//   有效-多洞不重叠     → Polygon (3)   原样返回
+//   无效-重叠洞         → MultiPolygon (6)  子0=外环不变+洞合并    取子0
+//   无效-洞包含洞       → MultiPolygon (6)  子0=外环不变(无洞)     取子0
+//   无效-洞超出外环     → MultiPolygon (6)  子0=外环重绘(掏了凹口)  取子0
+//   无效-洞完全在外     → MultiPolygon (6)  子0=外环不变(无洞)     取子0
+//   无效-自相交(蝴蝶结)  → MultiPolygon (6)  子0=三角形            取子0
+//   无效-三洞重叠       → MultiPolygon (6)  子0=外环不变+洞合并    取子0
+//   无效-洞碰外环边     → GeometryCollection (7)  拒绝
+//   退化-三点共线       → MultiLineString (5)     拒绝
+//
+// 策略：GEOS 已经合法化了几何体，直接取子多边形 0 作为结果。
+// 不跟原始多边形做外环点数或 bbox 比较——重绘本身就是合法的修复。
+// 仅拒绝无法表示为 Polygon 的类型（GeometryCollection、退化类型）。
+func MakeValidOrb(poly orb.Polygon) (orb.Polygon, error) {
+	g, err := PolygonToGeom(poly)
+	if err != nil || g == nil {
+		return nil, err
+	}
+	fixed, err := geos.MakeValid(g)
+	if err != nil {
+		return nil, err
+	}
+	switch fixed.TypeID() {
+	case gogeos.TypeIDPolygon:
+		return GeomToPolygon(fixed)
+	case gogeos.TypeIDMultiPolygon:
+		sub0, err := GeomToPolygon(fixed.Geometry(0))
+		if err != nil {
+			return nil, err
+		}
+		if len(sub0) == 0 {
+			return nil, fmt.Errorf("MakeValid 子多边形 0 为空")
+		}
+		return sub0, nil
+	default:
+		return nil, fmt.Errorf("MakeValid 返回不支持的类型: %d", fixed.TypeID())
+	}
+}
+
 // both 将两个 orb.Polygon 分别转为 GEOS Geom，用于二元几何运算。
 // 如果任一转换失败，返回错误。
 func both(a, b orb.Polygon) (*gogeos.Geom, *gogeos.Geom, error) {
