@@ -376,28 +376,38 @@ store 层实现（`GormFenceStore`）在 `CreateFence` / `UpdateFence` 内部自
  | 多精度编码 | `EncodeH3Multi`, `EncodeGeoHashMulti` | 单点 multi-resolution 编码，repeated 入参 |
  | GridDisk 邻域查询 | `GridDisk` (h3_index), `GridDiskByPoint` (经纬度) | 两个独立 RPC 分别处理 origin 输入形式 |
  | 围栏 CRUD | `CreateFence`, `UpdateFence`, `DeleteFence`, `ListFences`, `GetFence` | 依赖 FenceStore |
- | 围栏判断 | `PointInFence`, `PointInFences`, `NearbyFences` | 支持直传 polygon 或 fenceId 两种模式；`NearbyFences` 新增 H3 召回 + polygon 精判链路 |
+ | 围栏判断 | `PointInFence`, `PointInFences`, `NearbyFences` | 支持两种模式：上送 points 主动判断，或上送 fence_id 从 store 加载判断；`PointInFences` 命中但 fence_id 为空时不加入结果；`NearbyFences` 使用 H3 召回 + polygon 精判，store 错误直接返回 |
  | 坐标转换 | `TransformCoord`, `BatchTransformCoord` | WGS84/GCJ02/BD09 互转 |
 
 ### logic 层 helper 模式
 
 `logic/helper.go` 存放 pb↔领域类型的转换和通用校验：
+
+**导出函数（供外部 RPC 调用方使用）：**
 - `ValidatePoints` — pb Point 批量校验（非空、非 nil、经纬度范围）
-- `ValidateH3Resolution` — 校验 H3 分辨率 0-15，返回 int
+- `ValidateH3Resolution` — 校验 H3 分辨率 0-15，返回 int。**不设默认值**，传入 0 合法返回 0
 - `ValidateGeoHashPrecision` — 校验 geohash 精度 1-12，返回 int
 - `EncodeH3Cell` — 将 pb Point 编码为 H3 cell
-- `pbPointToOrbPolygon` — pb Point 切片→orb.Polygon（单外环，自动闭合）
 
-校验规则：
-- `ValidateH3Resolution(0)` 合法返回 0（H3 官方分辨率 0 允许），不默认置为 9
-- `ValidateGeoHashPrecision` 要求 1-12，不允许 0
-- `EncodeH3Cell` 依赖 `h3.LatLngToCell`，调用方需自行校验 resolution 后再调用
+**内部辅助函数（供 logic 内复用，消除重复校验/计算）：**
+- `resolveH3Resolution` — 校验 H3 分辨率，0 时默认 9。注释注明 proto3 零值歧义
+- `resolveGeohashPrecision` — 校验 geohash 精度，0 时默认 7
+- `computeFenceCells` — 计算多边形覆盖的 H3 cells + geohash cells（CreateFence/UpdateFence 共用）
+- `scanGeohashCells` — geohash bbox 扫描核心算法（GenerateFenceCells 和 computeGeohashCells 共用）。支持 `includeNeighbors` 控制邻居扩展，GEOS 错误返回 error
+- `computeGeohashCells` — 调用 `scanGeohashCells`，不含邻居扩展。**GEOS 错误静默返回 nil**（向后兼容）
+- `geohashCellSize` — 按 geohash 位划分计算格子经纬度跨度
+- `validateCoordType` — 校验坐标系类型 1-3（TransformCoord 和 BatchTransformCoord 共用）
+- `pbPointToOrbPolygon` — pb Point 切片→orb.Polygon（含点数校验 + 坐标校验 + 自动闭合）
 
-反模式：不要把 pb 类型的转换函数放到 `common/gisx/`。
+**反模式：**
+- 不要在 logic 文件内联解析/校验 H3 分辨率或 geohash 精度；应使用 `resolveH3Resolution` / `resolveGeohashPrecision`
+- 不要让创建/更新围栏重复写 H3 cells + geohash cells 计算；使用 `computeFenceCells`
+- 不要在 inline 做 geohash bbox 扫描；调用 `scanGeohashCells`
+- 不要把 pb 类型的转换函数放到 `common/gisx/`
 
 ### 批量接口校验规则
 
-单点接口和批量接口必须保持相同的校验逻辑。每个入参 Point 都要经过 `ValidatePoints` 校验经纬度范围。
+单点接口和批量接口必须保持相同的校验逻辑。每个入参 Point 都要经过 `ValidatePoints` 校验经纬度范围。批量坐标转换的 `source_type`/`target_type` 校验与单点版本一致，使用共享的 `validateCoordType`。
 
 参考：`batchtransformcoordlogic.go`、`batchdistancelogic.go`。
 
@@ -417,7 +427,9 @@ app/gis/model/
 
 > GEOS 工具层 API 和约定见上方 [GEOS 工具层约定](#geos-工具层约定) 章节。以下为 geohash/H3 算法说明。
 
-### Geohash 网格扫描（GenerateFenceCells / computeGeohashCells）
+### Geohash 网格扫描（scanGeohashCells / computeGeohashCells / GenerateFenceCells）
+
+核心算法集中在 `helper.go` 的 `scanGeohashCells`，`computeGeohashCells`（不带邻居）和 `GenerateFenceCells`（支持 `includeNeighbors`）均委托它。
 
 算法：bbox 半步长网格扫描 + 双重过滤。本接口为纯计算，不再支持按 `fence_id` 从 store 加载围栏。
 
@@ -495,6 +507,7 @@ graph LR
 注意：
 - `km` 只控制 H3 召回圈的广度，不控制精判后的结果范围。
 - 如果围栏入库时没有生成 `h3_r9` cells（例如为回填的老数据），`NearbyFences` 查不到该围栏。
+- store 错误直接返回给调用方（不再静默返回空结果），调用方可区分"附近无围栏"和"查询失败"。
 
 ### GridDisk 圈层查询
 
@@ -591,18 +604,20 @@ message PointsWithinRadiusRes {
 | 陷阱 | 说明 | 参考文件 |
 |------|------|----------|
 | 坐标顺序混淆 | orb 用 [lon,lat]，H3 用 {lat,lng}，pb 用独立字段 | `logic/helper.go` |
-| geohashCellSize 返回值 | 第一个是 widthDeg(lon)，第二个是 heightDeg(lat)，按 geohash 位数算角度跨度，不用米制经验表 | `logic/generatefencecellslogic.go` |
+| geohashCellSize 返回值 | 第一个是 widthDeg(lon)，第二个是 heightDeg(lat)，按 geohash 位数算角度跨度，不用米制经验表 | `logic/helper.go` |
 | H3 召回精度不一致 | 查询 resolution 必须和入库 `h3_r9` 一致，否则 `GridDisk` 查不到对应 cells；已按固定 res=9 消除了此问题 | `model/fencestore.go` |
 | 老数据缺少 h3_r9 cells | 未回填的旧围栏没有 `h3_r9` 行，`NearbyFences` 查不到；旧代码保留的 geohash 查询也不应该再被用作唯一召回路径 | `model/fencestore.go` |
 | km 只控制候选广度 | `NearbyFences` 的 `km` 只影响 H3 候选集大小，不决定最终结果；polygon 精判后只返回真正命中的围栏 | `logic/nearbyfenceslogic.go` |
-| uint32 默认值判断 | `resolution == 0` 而非 `<= 0`（unsigned 不会负） | `logic/generatefenceh3cellslogic.go` |
-| 批量接口漏校验 | BatchXxx 必须与单点版本保持相同的入参校验 | `logic/batchtransformcoordlogic.go` |
+| 批量接口漏校验 | BatchXxx 必须与单点版本保持相同的入参校验，包括 coord_type 等 | `logic/batchtransformcoordlogic.go` |
 | 2-opt 开放路径边界 | 末端无后继边，`j+1 >= n` 时跳过 | `logic/routepointslogic.go` |
 | polygon holes | `FenceInfo.Polygon` 使用 `orb.Polygon`（`polygon[0]`=外环, `polygon[1:]`=洞），`OrbPolygonToH3GeoPolygon` 的 holes 循环对洞生效 | `common/gisx/store.go`, `common/gisx/gisx.go` |
 | `h3.CellFromString` 无 error | `CellFromString` 返回单值（非 `Cell, error`），需用 `.IsValid()` 检查无效 index | `logic/griddisklogic.go` |
 | `h3.GridDiskDistances` 返回 `[][]Cell` | 返回值是 `[][]Cell`（按环分层），不是 `[]DistanceEntry`。用 `ringNum, ringCells := range result` 遍历 | `logic/griddisklogic.go` |
 | `resolutions` 必填不默认 | `EncodeH3Multi` 的 `resolutions` 空时返回参数错误，不设默认值；单精度由 `EncodeH3` 承担 | `logic/encodeh3multilogic.go` |
 | **GEOS 闭合三层设计** | orb 应用层 `EnsureRingClosed`/`EnsurePolygonClosed` 自动闭合（精确 ==），orbconv 层 `ringToCoords` 纯转换不校验，GEOS 层原生校验不闭合就 panic。调用方应确保传入前已闭合 | `common/gisx/gisx.go`, `common/gisx/geos/orbconv/orbconv.go` |
+| JSON 反序列化错误 | `ListFences` 遇到坏 JSON 仍保留记录（空多边形 + 记日志），`GetFence` 直接返回 error；不可静默丢弃两条链路行为不一致 | `model/fencestore.go` |
+| polygon 校验重复 | `pbPointToOrbPolygon` 已含点数 + 坐标双重校验，调用方不应再单独做 `len(points) < 3` 或 `ValidatePoints` | `logic/helper.go` |
+| H3 resolution / geohash precision 内联 | 不要在 logic 文件内联默认值和上限校验，使用 `resolveH3Resolution` / `resolveGeohashPrecision` | `logic/helper.go` |
 
 ## 单测覆盖
 
