@@ -84,7 +84,7 @@ common/gisx/geos/orbconv/       ← orb 转换 + 便捷包装
 | orbconv 转换层 | **纯数据转换**，不校验不修改闭合 | `ringToCoords()` → `[][]float64` |
 | GEOS C 层 (`construct.go`) | **原生校验**，不闭合 panic → `safeRun` 捕获转 error | `NewLinearRing` / `NewPolygon` 直接透传坐标 |
 
-**调用链**：`pbPointToOrbPolygon` → `EnsurePolygonClosed`（自动闭合）→ `PolygonToGeom` / `RingToGeom` → `ringToCoords`（纯转换）→ `NewLinearRing`（GEOS 校验）。
+**调用链**：`pbPolygonToOrbPolygon` → `EnsurePolygonClosed`（自动闭合）→ `PolygonToGeom` / `RingToGeom` → `ringToCoords`（纯转换）→ `NewLinearRing`（GEOS 校验）。
 
 **关键规则**：GEOS 要求首尾精确相等（`==` 比较，不容差），`IsRingClosed`/`EnsureRingClosed` 统一使用精确 `==`，确保通过 GEOS 校验。
 
@@ -397,7 +397,7 @@ store 层实现（`GormFenceStore`）在 `CreateFence` / `UpdateFence` 内部自
 - `computeGeohashCells` — 调用 `scanGeohashCells`，不含邻居扩展。**GEOS 错误静默返回 nil**（向后兼容）
 - `geohashCellSize` — 按 geohash 位划分计算格子经纬度跨度
 - `validateCoordType` — 校验坐标系类型 1-3（TransformCoord 和 BatchTransformCoord 共用）
-- `pbPointToOrbPolygon` — pb Point 切片→orb.Polygon（含点数校验 + 坐标校验 + 自动闭合）
+- `pbPolygonToOrbPolygon` — pb Point 切片→orb.Polygon（含点数校验 + 坐标校验 + 自动闭合 + 洞 GEOS 有效性校验）
 
 **反模式：**
 - 不要在 logic 文件内联解析/校验 H3 分辨率或 geohash 精度；应使用 `resolveH3Resolution` / `resolveGeohashPrecision`
@@ -598,6 +598,15 @@ message PointsWithinRadiusRes {
 - 时间字段用毫秒时间戳：`int64 created_at = 8;`
 - 专有名词作为原子词：`geohashes`（不是 `geo_hashes`），`geohash_precision`
 - Circle 语义不叫 `distance`：H3 GridDisk 返回的层数用 `ring` 表达，`distance` 只用于米级球面距离（`distance_meters`）
+- 多边形几何用 `Polygon`/`Ring` 结构表达，不在 fence 消息中直接内联 `repeated Point points`：
+
+```proto
+message Ring { repeated Point points = 1; }
+message Polygon { Ring outer = 1; repeated Ring holes = 2; }
+message Fence { string fence_id = 1; Polygon polygon = 2; }
+```
+
+`Polygon.outer` 必填（外环），`Polygon.holes` 可选（洞/内环），命中判断和 cells 覆盖时从外环中排除。
 
 ## 常见陷阱
 
@@ -610,13 +619,16 @@ message PointsWithinRadiusRes {
 | km 只控制候选广度 | `NearbyFences` 的 `km` 只影响 H3 候选集大小，不决定最终结果；polygon 精判后只返回真正命中的围栏 | `logic/nearbyfenceslogic.go` |
 | 批量接口漏校验 | BatchXxx 必须与单点版本保持相同的入参校验，包括 coord_type 等 | `logic/batchtransformcoordlogic.go` |
 | 2-opt 开放路径边界 | 末端无后继边，`j+1 >= n` 时跳过 | `logic/routepointslogic.go` |
-| polygon holes | `FenceInfo.Polygon` 使用 `orb.Polygon`（`polygon[0]`=外环, `polygon[1:]`=洞），`OrbPolygonToH3GeoPolygon` 的 holes 循环对洞生效 | `common/gisx/store.go`, `common/gisx/gisx.go` |
+| polygon holes | `FenceInfo.Polygon` 使用 `orb.Polygon`（`polygon[0]`=外环, `polygon[1:]`=洞）。proto 对应 `Polygon`/`Ring` 结构，`helper.go` 中 `pbPolygonToOrbPolygon` 转换 + 严格校验（`ValidOrb`），无效直接拒绝。`planar.PolygonContains` 原生处理洞排除 | `common/gisx/store.go`, `common/gisx/gisx.go`, `logic/helper.go` |
+| polygon 洞有效性校验 | `pbPolygonToOrbPolygon` 对带洞的多边形（`len(closed)>1`）会自动调用 `orbconv.ValidOrb`（GEOS 校验），洞超出外环或洞重叠立即拒绝。调用方不需要额外做 GEOS 校验 | `logic/helper.go` |
+| GEOS MakeValid 不可直接用于单多边形修复 | `geos.MakeValid` 对任何无效 Polygon **不会返回单一 Polygon**（总是 MultiPolygon/GeometryCollection/退化）。需要 `orbconv.MakeValidOrb` 提取子多边形 0。详见 `common/gisx/geos/README.md` MakeValid 行为参考 | `common/gisx/geos/orbconv/orbconv.go`, `common/gisx/geos/raw_makevalid_test.go` |
+| pbPointToOrbPolygon 已废弃 | 旧 `pbPointToOrbPolygon` 已被 `pbPolygonToOrbPolygon` 取代；调用方使用 `pbPolygonToOrbPolygon(in.Polygon)` 而非 `pbPolygonToOrbPolygon(in.Points)`（旧字段已不存在） | `logic/helper.go` |
 | `h3.CellFromString` 无 error | `CellFromString` 返回单值（非 `Cell, error`），需用 `.IsValid()` 检查无效 index | `logic/griddisklogic.go` |
 | `h3.GridDiskDistances` 返回 `[][]Cell` | 返回值是 `[][]Cell`（按环分层），不是 `[]DistanceEntry`。用 `ringNum, ringCells := range result` 遍历 | `logic/griddisklogic.go` |
 | `resolutions` 必填不默认 | `EncodeH3Multi` 的 `resolutions` 空时返回参数错误，不设默认值；单精度由 `EncodeH3` 承担 | `logic/encodeh3multilogic.go` |
 | **GEOS 闭合三层设计** | orb 应用层 `EnsureRingClosed`/`EnsurePolygonClosed` 自动闭合（精确 ==），orbconv 层 `ringToCoords` 纯转换不校验，GEOS 层原生校验不闭合就 panic。调用方应确保传入前已闭合 | `common/gisx/gisx.go`, `common/gisx/geos/orbconv/orbconv.go` |
 | JSON 反序列化错误 | `ListFences` 遇到坏 JSON 仍保留记录（空多边形 + 记日志），`GetFence` 直接返回 error；不可静默丢弃两条链路行为不一致 | `model/fencestore.go` |
-| polygon 校验重复 | `pbPointToOrbPolygon` 已含点数 + 坐标双重校验，调用方不应再单独做 `len(points) < 3` 或 `ValidatePoints` | `logic/helper.go` |
+| polygon 校验重复 | `pbPolygonToOrbPolygon` 已含点数 + 坐标 + 洞有效性三重校验，调用方不应再单独做 `len(points) < 3` 或 `ValidatePoints` | `logic/helper.go` |
 | H3 resolution / geohash precision 内联 | 不要在 logic 文件内联默认值和上限校验，使用 `resolveH3Resolution` / `resolveGeohashPrecision` | `logic/helper.go` |
 
 ## 单测覆盖
@@ -641,6 +653,8 @@ message PointsWithinRadiusRes {
 - 全部 11 谓词 + Contains vs Covers 边界语义
 - PreparedGeom 全部 11 方法 + Close
 - Overlay（Intersection/Union/Difference/SymDifference）面积校验
+- Valid/IsValidReason/MakeValid（包括 11 种 Polygon 无效场景回归验证，见 `raw_makevalid_test.go`）
+- Buffer/Simplify/TopologyPreserveSimplify/ConvexHull/ConcaveHull
 - Valid/IsValidReason/MakeValid（bowtie 自相交场景）
 - Buffer/Simplify/TopologyPreserveSimplify/ConvexHull/ConcaveHull
 - Area/Length/Distance/Centroid/PointOnSurface 精度校验
