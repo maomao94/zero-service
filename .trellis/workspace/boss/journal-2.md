@@ -890,3 +890,36 @@ PointsWithinRadius 精简返回(Index+Distance取代Point);新增EncodeGeoHashMu
 ### Next Steps
 
 - None - task complete
+
+
+## Session 77: gisx全量代码审查与修复
+
+**Date**: 2026-06-23
+**Task**: gisx全量代码审查与修复
+**Branch**: `master`
+
+### Summary
+
+common/gisx 包全量审查：修复 NewPreparedGeom safeRun 保护缺失、coordss→rings 重命名、ErrNotSupported 使用、OffsetCurve 参数化、新增 H3LatLngsToOrbRing/H3LatLngsToOrbPolygon 反向转换。文档更新 API-GUIDE/README/db/spec 补全并发模型说明和 H3 反向转换。85+ 测试全部通过。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `25950fc7` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
