@@ -55,4 +55,12 @@ func zeroValue[T any]() T {
 	return z
 }
 
-var errNil = fmt.Errorf("geometry 为 nil")
+// oneAttr 是内部辅助函数，用于单个几何的属性查询（bool/float64/int 等）。
+// 统一处理 nil 检查和 panic 捕获。
+func oneAttr[T any](g *gogeos.Geom, fn func(*gogeos.Geom) T) (T, error) {
+	if g == nil {
+		var zero T
+		return zero, errNil
+	}
+	return safeRun(func() (T, error) { return fn(g), nil })
+}

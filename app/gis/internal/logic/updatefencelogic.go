@@ -9,7 +9,6 @@ import (
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
-	"github.com/paulmach/orb"
 	"github.com/uber/h3-go/v4"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -76,12 +75,7 @@ func (l *UpdateFenceLogic) UpdateFence(in *gis.UpdateFenceReq) (*gis.UpdateFence
 	}
 	geohashes := computeGeohashCells(polygon, geohashPrecision)
 
-	orbPoints := make([]orb.Point, len(in.Points))
-	for i, p := range in.Points {
-		orbPoints[i] = orb.Point{p.Lon, p.Lat}
-	}
-
-	if err := l.svcCtx.FenceStore.UpdateFence(l.ctx, in.FenceId, in.Name, orbPoints, resolution, geohashPrecision, cellStrings, geohashes); err != nil {
+	if err := l.svcCtx.FenceStore.UpdateFence(l.ctx, in.FenceId, in.Name, polygon, resolution, geohashPrecision, cellStrings, geohashes); err != nil {
 		l.Logger.Errorf("更新围栏失败, fenceId=%s, err=%v", in.FenceId, err)
 		return nil, err
 	}

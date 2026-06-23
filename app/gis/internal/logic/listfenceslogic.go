@@ -3,6 +3,8 @@ package logic
 import (
 	"context"
 
+	"github.com/paulmach/orb"
+
 	"zero-service/app/gis/gis"
 	"zero-service/app/gis/internal/svc"
 	"zero-service/common/gisx"
@@ -44,8 +46,12 @@ func (l *ListFencesLogic) ListFences(in *gis.ListFencesReq) (*gis.ListFencesRes,
 
 // fenceInfoToDetail 将 store 层的 FenceInfo 转换为 pb FenceDetail 响应。
 func fenceInfoToDetail(f *gisx.FenceInfo) *gis.FenceDetail {
-	points := make([]*gis.Point, len(f.Points))
-	for i, p := range f.Points {
+	exteriorRing := orb.Ring(nil)
+	if len(f.Polygon) > 0 {
+		exteriorRing = f.Polygon[0]
+	}
+	points := make([]*gis.Point, len(exteriorRing))
+	for i, p := range exteriorRing {
 		points[i] = &gis.Point{Lat: p.Y(), Lon: p.X()}
 	}
 	return &gis.FenceDetail{

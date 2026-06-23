@@ -76,8 +76,8 @@ func (CoordType) EnumDescriptor() ([]byte, []int) {
 
 type Point struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Lat           float64                `protobuf:"fixed64,1,opt,name=lat,proto3" json:"lat,omitempty"` // 纬度（-90 到 90），proto 统一先纬度后经度
-	Lon           float64                `protobuf:"fixed64,2,opt,name=lon,proto3" json:"lon,omitempty"` // 经度（-180 到 180）
+	Lon           float64                `protobuf:"fixed64,1,opt,name=lon,proto3" json:"lon,omitempty"` // 经度（-180 到 180）
+	Lat           float64                `protobuf:"fixed64,2,opt,name=lat,proto3" json:"lat,omitempty"` // 纬度（-90 到 90）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -112,16 +112,16 @@ func (*Point) Descriptor() ([]byte, []int) {
 	return file_gis_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Point) GetLat() float64 {
+func (x *Point) GetLon() float64 {
 	if x != nil {
-		return x.Lat
+		return x.Lon
 	}
 	return 0
 }
 
-func (x *Point) GetLon() float64 {
+func (x *Point) GetLat() float64 {
 	if x != nil {
-		return x.Lon
+		return x.Lat
 	}
 	return 0
 }
@@ -522,10 +522,10 @@ type DecodeGeoHashRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`                   // 中心点（格网中心经纬度）
 	Precision     uint32                 `protobuf:"varint,2,opt,name=precision,proto3" json:"precision,omitempty"`          // geohash 编码精度（对应输入 geohash 长度），取值 1-12
-	LatMin        float64                `protobuf:"fixed64,3,opt,name=lat_min,json=latMin,proto3" json:"lat_min,omitempty"` // 格子纬度下界
-	LatMax        float64                `protobuf:"fixed64,4,opt,name=lat_max,json=latMax,proto3" json:"lat_max,omitempty"` // 格子纬度上界
-	LonMin        float64                `protobuf:"fixed64,5,opt,name=lon_min,json=lonMin,proto3" json:"lon_min,omitempty"` // 格子经度下界
-	LonMax        float64                `protobuf:"fixed64,6,opt,name=lon_max,json=lonMax,proto3" json:"lon_max,omitempty"` // 格子经度上界
+	LonMin        float64                `protobuf:"fixed64,3,opt,name=lon_min,json=lonMin,proto3" json:"lon_min,omitempty"` // 格子经度下界
+	LonMax        float64                `protobuf:"fixed64,4,opt,name=lon_max,json=lonMax,proto3" json:"lon_max,omitempty"` // 格子经度上界
+	LatMin        float64                `protobuf:"fixed64,5,opt,name=lat_min,json=latMin,proto3" json:"lat_min,omitempty"` // 格子纬度下界
+	LatMax        float64                `protobuf:"fixed64,6,opt,name=lat_max,json=latMax,proto3" json:"lat_max,omitempty"` // 格子纬度上界
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -574,20 +574,6 @@ func (x *DecodeGeoHashRes) GetPrecision() uint32 {
 	return 0
 }
 
-func (x *DecodeGeoHashRes) GetLatMin() float64 {
-	if x != nil {
-		return x.LatMin
-	}
-	return 0
-}
-
-func (x *DecodeGeoHashRes) GetLatMax() float64 {
-	if x != nil {
-		return x.LatMax
-	}
-	return 0
-}
-
 func (x *DecodeGeoHashRes) GetLonMin() float64 {
 	if x != nil {
 		return x.LonMin
@@ -598,6 +584,20 @@ func (x *DecodeGeoHashRes) GetLonMin() float64 {
 func (x *DecodeGeoHashRes) GetLonMax() float64 {
 	if x != nil {
 		return x.LonMax
+	}
+	return 0
+}
+
+func (x *DecodeGeoHashRes) GetLatMin() float64 {
+	if x != nil {
+		return x.LatMin
+	}
+	return 0
+}
+
+func (x *DecodeGeoHashRes) GetLatMax() float64 {
+	if x != nil {
+		return x.LatMax
 	}
 	return 0
 }
@@ -2956,8 +2956,8 @@ const file_gis_proto_rawDesc = "" +
 	"\n" +
 	"\tgis.proto\x12\x03gis\"+\n" +
 	"\x05Point\x12\x10\n" +
-	"\x03lat\x18\x01 \x01(\x01R\x03lat\x12\x10\n" +
-	"\x03lon\x18\x02 \x01(\x01R\x03lon\"?\n" +
+	"\x03lon\x18\x01 \x01(\x01R\x03lon\x12\x10\n" +
+	"\x03lat\x18\x02 \x01(\x01R\x03lat\"?\n" +
 	"\tPointPair\x12\x18\n" +
 	"\x01a\x18\x01 \x01(\v2\n" +
 	".gis.PointR\x01a\x12\x18\n" +
@@ -2990,10 +2990,10 @@ const file_gis_proto_rawDesc = "" +
 	"\x05point\x18\x01 \x01(\v2\n" +
 	".gis.PointR\x05point\x12\x1c\n" +
 	"\tprecision\x18\x02 \x01(\rR\tprecision\x12\x17\n" +
-	"\alat_min\x18\x03 \x01(\x01R\x06latMin\x12\x17\n" +
-	"\alat_max\x18\x04 \x01(\x01R\x06latMax\x12\x17\n" +
-	"\alon_min\x18\x05 \x01(\x01R\x06lonMin\x12\x17\n" +
-	"\alon_max\x18\x06 \x01(\x01R\x06lonMax\"O\n" +
+	"\alon_min\x18\x03 \x01(\x01R\x06lonMin\x12\x17\n" +
+	"\alon_max\x18\x04 \x01(\x01R\x06lonMax\x12\x17\n" +
+	"\alat_min\x18\x05 \x01(\x01R\x06latMin\x12\x17\n" +
+	"\alat_max\x18\x06 \x01(\x01R\x06latMax\"O\n" +
 	"\vEncodeH3Req\x12 \n" +
 	"\x05point\x18\x01 \x01(\v2\n" +
 	".gis.PointR\x05point\x12\x1e\n" +

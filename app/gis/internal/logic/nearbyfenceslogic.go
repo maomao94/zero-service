@@ -37,7 +37,7 @@ func (l *NearbyFencesLogic) NearbyFences(in *gis.NearbyFencesReq) (*gis.NearbyFe
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "km必须大于0")
 	}
 
-	fenceIds, err := l.svcCtx.FenceStore.FindNearbyFenceIds(l.ctx, in.Point.Lat, in.Point.Lon, in.Km)
+	fenceIds, err := l.svcCtx.FenceStore.FindNearbyFenceIds(l.ctx, in.Point.Lon, in.Point.Lat, in.Km)
 	if err != nil {
 		l.Logger.Infof("FenceStore.FindNearbyFenceIds 不可用: %v", err)
 		return &gis.NearbyFencesRes{}, nil
@@ -46,12 +46,12 @@ func (l *NearbyFencesLogic) NearbyFences(in *gis.NearbyFencesReq) (*gis.NearbyFe
 	point := orb.Point{in.Point.Lon, in.Point.Lat}
 	hitFenceIds := make([]string, 0, len(fenceIds))
 	for _, fenceId := range fenceIds {
-		pts, err := l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, fenceId)
+		polygon, err := l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, fenceId)
 		if err != nil {
 			l.Logger.Errorf("加载围栏多边形失败, fenceId=%s, err=%v", fenceId, err)
 			continue
 		}
-		if planar.PolygonContains(orb.Polygon{orb.Ring(pts)}, point) {
+		if planar.PolygonContains(polygon, point) {
 			hitFenceIds = append(hitFenceIds, fenceId)
 		}
 	}

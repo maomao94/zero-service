@@ -9,7 +9,6 @@ import (
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
-	"github.com/paulmach/orb"
 	"github.com/uber/h3-go/v4"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -78,12 +77,7 @@ func (l *CreateFenceLogic) CreateFence(in *gis.CreateFenceReq) (*gis.CreateFence
 		return nil, err
 	}
 
-	orbPoints := make([]orb.Point, len(in.Points))
-	for i, p := range in.Points {
-		orbPoints[i] = orb.Point{p.Lon, p.Lat}
-	}
-
-	if err := l.svcCtx.FenceStore.CreateFence(l.ctx, fenceId, in.Name, orbPoints, resolution, geohashPrecision, cellStrings, geohashes); err != nil {
+	if err := l.svcCtx.FenceStore.CreateFence(l.ctx, fenceId, in.Name, polygon, resolution, geohashPrecision, cellStrings, geohashes); err != nil {
 		l.Logger.Errorf("创建围栏失败, err=%v", err)
 		return nil, err
 	}

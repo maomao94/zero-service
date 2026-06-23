@@ -33,12 +33,12 @@ func NewGormFenceStore(db *gormx.DB) *GormFenceStore {
 	return &GormFenceStore{db: db}
 }
 
-func (s *GormFenceStore) CreateFence(ctx context.Context, fenceId, name string, points []orb.Point, h3Resolution, geohashPrecision int, h3Cells, geohashCells []string) error {
-	pointsJSON, err := json.Marshal(points)
+func (s *GormFenceStore) CreateFence(ctx context.Context, fenceId, name string, polygon orb.Polygon, h3Resolution, geohashPrecision int, h3Cells, geohashCells []string) error {
+	pointsJSON, err := json.Marshal(polygon)
 	if err != nil {
 		return fmt.Errorf("序列化多边形顶点失败: %w", err)
 	}
-	recallH3Cells, err := computeH3RecallCells(points)
+	recallH3Cells, err := computeH3RecallCells(polygon)
 	if err != nil {
 		return fmt.Errorf("生成召回 H3 cells 失败: %w", err)
 	}
@@ -65,20 +65,20 @@ func (s *GormFenceStore) CreateFence(ctx context.Context, fenceId, name string, 
 	return tx.Commit().Error
 }
 
-func (s *GormFenceStore) LoadFencePolygon(ctx context.Context, fenceId string) ([]orb.Point, error) {
+func (s *GormFenceStore) LoadFencePolygon(ctx context.Context, fenceId string) (orb.Polygon, error) {
 	var fence gormmodel.GisFence
 	if err := s.db.DB.WithContext(ctx).Where("fence_id = ?", fenceId).First(&fence).Error; err != nil {
 		return nil, fmt.Errorf("围栏不存在: %s", fenceId)
 	}
 
-	var points []orb.Point
-	if err := json.Unmarshal([]byte(fence.Points), &points); err != nil {
+	var polygon orb.Polygon
+	if err := json.Unmarshal([]byte(fence.Points), &polygon); err != nil {
 		return nil, fmt.Errorf("解析围栏顶点失败: %w", err)
 	}
-	return points, nil
+	return polygon, nil
 }
 
-func (s *GormFenceStore) FindNearbyFenceIds(ctx context.Context, lat, lon, km float64) ([]string, error) {
+func (s *GormFenceStore) FindNearbyFenceIds(ctx context.Context, lon, lat, km float64) ([]string, error) {
 	k := kmToH3RecallK(km)
 	origin, err := h3.LatLngToCell(h3.NewLatLng(lat, lon), h3RecallResolution)
 	if err != nil {
@@ -132,12 +132,12 @@ func (s *GormFenceStore) FindFenceIdsByCellIds(ctx context.Context, cellIDs []st
 	return ids, nil
 }
 
-func (s *GormFenceStore) UpdateFence(ctx context.Context, fenceId, name string, points []orb.Point, h3Resolution, geohashPrecision int, h3Cells, geohashCells []string) error {
-	pointsJSON, err := json.Marshal(points)
+func (s *GormFenceStore) UpdateFence(ctx context.Context, fenceId, name string, polygon orb.Polygon, h3Resolution, geohashPrecision int, h3Cells, geohashCells []string) error {
+	pointsJSON, err := json.Marshal(polygon)
 	if err != nil {
 		return fmt.Errorf("序列化多边形顶点失败: %w", err)
 	}
-	recallH3Cells, err := computeH3RecallCells(points)
+	recallH3Cells, err := computeH3RecallCells(polygon)
 	if err != nil {
 		return fmt.Errorf("生成召回 H3 cells 失败: %w", err)
 	}
@@ -242,13 +242,13 @@ func (s *GormFenceStore) ListFences(ctx context.Context, page, pageSize int64, n
 
 	list := make([]gisx.FenceInfo, len(fences))
 	for i, f := range fences {
-		var pts []orb.Point
-		_ = json.Unmarshal([]byte(f.Points), &pts)
+		var poly orb.Polygon
+		_ = json.Unmarshal([]byte(f.Points), &poly)
 		cells := cellMap[f.FenceId]
 		list[i] = gisx.FenceInfo{
 			FenceId:          f.FenceId,
 			Name:             f.Name,
-			Points:           pts,
+			Polygon:          poly,
 			H3Resolution:     f.H3Resolution,
 			GeohashPrecision: f.GeohashPrecision,
 			H3Cells:          cells.h3,
@@ -266,15 +266,15 @@ func (s *GormFenceStore) GetFence(ctx context.Context, fenceId string) (*gisx.Fe
 		return nil, fmt.Errorf("围栏不存在: %s", fenceId)
 	}
 
-	var pts []orb.Point
-	_ = json.Unmarshal([]byte(fence.Points), &pts)
+	var poly orb.Polygon
+	_ = json.Unmarshal([]byte(fence.Points), &poly)
 
 	h3Cells, geohashes := s.loadCellsByFenceId(ctx, fenceId)
 
 	return &gisx.FenceInfo{
 		FenceId:          fence.FenceId,
 		Name:             fence.Name,
-		Points:           pts,
+		Polygon:          poly,
 		H3Resolution:     fence.H3Resolution,
 		GeohashPrecision: fence.GeohashPrecision,
 		H3Cells:          h3Cells,
@@ -323,8 +323,8 @@ func (s *GormFenceStore) loadCellsByFenceId(ctx context.Context, fenceId string)
 	return
 }
 
-func computeH3RecallCells(points []orb.Point) ([]string, error) {
-	geoPolygon, err := gisx.OrbPolygonToH3GeoPolygon(orb.Polygon{points})
+func computeH3RecallCells(polygon orb.Polygon) ([]string, error) {
+	geoPolygon, err := gisx.OrbPolygonToH3GeoPolygon(polygon)
 	if err != nil {
 		return nil, err
 	}

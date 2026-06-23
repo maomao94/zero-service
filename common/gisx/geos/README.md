@@ -1,6 +1,6 @@
 # geos — GEOS 几何引擎 Go 封装
 
-基于 [go-geos v0.20.4](https://github.com/twpayne/go-geos) 的 Go 封装包，向上暴露 ~66 个函数，覆盖 GEOS C 库 80%+ 可实施 API。
+基于 [go-geos v0.20.4](https://github.com/twpayne/go-geos) 的 Go 封装包，向上暴露 ~100 个函数，覆盖 GEOS C 库 80%+ 可实施 API。
 
 ## 设计原则
 
@@ -10,26 +10,30 @@
 | **orb 转换独立** | `geos/orbconv` 子包负责 `orb` ↔ GEOS 互转 |
 | **panic → error** | 统一通过 `safeRun`/`safeRunErr` 捕获 panic 并返回 error |
 | **Context 私有** | `getDefaultContext()`（sync.Once 单例）包内私有，不对外暴露 |
+| **并发安全** | 所有函数线程安全；单例 Context 内部有 sync.Mutex，高并发场景建议每个 goroutine 独立 Context |
 
 ## 包结构
 
 ```
 common/gisx/geos/               ← 纯 GEOS 封装（零 orb 依赖）
 ├── context.go                  # GEOSVersion / safeRun panic recover
-├── construct.go                # 5 几何构造（Point/Ring/Polygon/...）
+├── construct.go                # 12 几何构造（Point/Ring/Polygon/Multi*/空几何）
 ├── convert.go                  # 6 格式互转（WKT/WKB/GeoJSON）
+├── extract.go                  # 7 数据提取函数（通用泛型提取器）
 ├── predicate.go                # 11 空间谓词
-├── prepared.go                 # PreparedGeom + 12 加速谓词
+├── prepared.go                 # PreparedGeom + 11 加速谓词
 ├── overlay.go                  # Overlay / Valid / Measure / Simplify / Transform / Meta
 ├── relation.go                 # DE-9IM / 距离 / 最近点
-├── introspect.go               # 6 几何内省（空/简/闭/环/Z）
+├── introspect.go               # 5 几何内省（空/简/闭/环/Z）
 ├── strtree.go                  # STRtree R-Tree 空间索引
-├── geos_test.go                # 45+ 测试用例
+├── doc.go                      # 包级 Go Doc
+├── API-GUIDE.md                # 实战指南
+├── geos_test.go                # 55+ 测试用例
 └── README.md
 
 common/gisx/geos/orbconv/       ← orb 转换 + 便捷包装
-├── orbconv.go                  # 6 转换 + 6 便捷谓词
-└── orbconv_test.go             # 12+ 测试用例
+├── orbconv.go                  # 14 转换 + 6 便捷谓词
+└── orbconv_test.go             # 18+ 测试用例
 ```
 
 ## 快速开始
@@ -99,7 +103,30 @@ for _, cell := range cells {
 | `NewLineString(coords [][]float64)` | 创建线 | 不要求闭合，至少 2 点 |
 | `NewLinearRing(coords [][]float64)` | 创建环 | 自动闭合首尾，GEOS 要求闭合环 |
 | `NewPolygon(coordss [][][]float64)` | 创建多边形 | `coordss[0]`=外环，`coordss[1:]`=洞 |
+| `NewMultiPolygon(geomss [][][][]float64)` | 创建多面 | 多个独立多边形的集合 |
+| `NewCollectionFromGeoms(typeID, geoms)` | 组装集合 | 通用 Multi* 组装器，单元素不包装 |
 | `NewBoundsRect(minX, minY, maxX, maxY)` | 创建矩形 | 从 bbox 构造 Polygon |
+| `NewEmptyPoint()` | 空点 | 无坐标的占位点 |
+| `NewEmptyLineString()` | 空线 | 无坐标的占位线 |
+| `NewEmptyPolygon()` | 空面 | 无坐标的占位面 |
+| `NewEmptyCollection(typeID)` | 空集合 | 指定子类型的空集合 |
+
+### 数据提取（extract.go）
+
+不依赖 orb，直接从 `*gogeos.Geom` 获取原生坐标数据。
+
+| 函数 | 功能 | 返回 |
+|------|------|------|
+| `ExtractPoint(g)` | 提取点坐标 | `(x, y float64, err)` |
+| `ExtractCoords(g)` | 提取坐标序列 | `[][]float64` |
+| `ExtractPolygonCoords(g)` | 提取多边形（外环+洞） | `PolygonData` |
+| `ExtractPoints(g)` | 提取所有点（自动识别类型） | `[][]float64` |
+| `ExtractPolygonOrMultiCoords(g)` | 提取多边形（自动处理 Multi） | `[]PolygonData` |
+| **`ExtractMulti[T](g, fn)`** | **泛型集合提取器** | `[]T` |
+| `ExtractMultiSafe[T](g, fn)` | 安全版本（跳过不匹配子几何） | `[]T` |
+
+`PolygonData` 是 `[][][]float64`，约定与 `orb.Polygon` 一致：`[0]`=外环，`[1:]`=洞。
+泛型 `ExtractMulti` 拒绝处理 `GeometryCollection`（提示使用 `ExtractMultiSafe`）。
 
 ### 格式转换
 
@@ -215,7 +242,7 @@ for _, cell := range cells {
 | `LineMerge(g)` | 合并线段 | 合并相连线段 |
 | `Node(g)` | noding | 所有边交点被分割 |
 | `MinimumRotatedRectangle(g)` | 最小外接旋转矩形 | 可旋转的定向外接矩形 |
-| `OffsetCurve(g, width, quadsegs)` | 偏移曲线 | 线平移 |
+| `OffsetCurve(g, width, quadsegs, joinStyle, mitreLimit)` | 偏移曲线 | 线平移；joinStyle=BufJoinStyleRound, mitreLimit=5.0 推荐 |
 | `EndPoint(g)` | 线终点 | 返回 `*gogeos.Geom` |
 | `StartPoint(g)` | 线起点 | 返回 `*gogeos.Geom` |
 
@@ -280,10 +307,19 @@ import "zero-service/common/gisx/geos/orbconv"
 | 函数 | 功能 |
 |------|------|
 | `PointToGeom(orb.Point)` | orb Point → GEOS Point |
+| `GeomToPoint(*gogeos.Geom)` | GEOS Point → orb Point |
+| `LineStringToGeom(orb.LineString)` | orb LineString → GEOS LineString |
+| `GeomToLineString(*gogeos.Geom)` | GEOS LineString → orb LineString |
 | `RingToGeom(orb.Ring)` | orb Ring → GEOS LinearRing（自动闭合） |
-| `PolygonToGeom(orb.Polygon)` | orb Polygon → GEOS Polygon |
 | `GeomToRing(*gogeos.Geom)` | GEOS LineString/LinearRing → orb Ring |
-| `GeomToPolygon(*gogeos.Geom)` | GEOS Polygon/MultiPolygon → orb Polygon |
+| `PolygonToGeom(orb.Polygon)` | orb Polygon → GEOS Polygon |
+| `GeomToPolygon(*gogeos.Geom)` | GEOS Polygon → orb Polygon |
+| `MultiPolygonToGeom(orb.MultiPolygon)` | orb MultiPolygon → GEOS MultiPolygon |
+| `GeomToMultiPolygon(*gogeos.Geom)` | GEOS MultiPolygon → orb MultiPolygon |
+| `MultiPointToGeom(orb.MultiPoint)` | orb MultiPoint → GEOS MultiPoint |
+| `GeomToMultiPoint(*gogeos.Geom)` | GEOS MultiPoint → orb MultiPoint |
+| `MultiLineStringToGeom(orb.MultiLineString)` | orb MultiLineString → GEOS MultiLineString |
+| `GeomToMultiLineString(*gogeos.Geom)` | GEOS MultiLineString → orb MultiLineString |
 
 ### 便捷谓词（接受 orb 类型）
 

@@ -46,12 +46,11 @@ func (l *PointInFenceLogic) PointInFence(in *gis.PointInFenceReq) (*gis.PointInF
 			return nil, err
 		}
 	} else if in.Fence.FenceId != "" {
-		pts, err := l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, in.Fence.FenceId)
+		polygon, err = l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, in.Fence.FenceId)
 		if err != nil {
 			l.Logger.Errorf("加载围栏多边形失败, fenceId=%s, err=%v", in.Fence.FenceId, err)
 			return nil, err
 		}
-		polygon = orb.Polygon{orb.Ring(pts)}
 	} else {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "Points或FenceId")
 	}

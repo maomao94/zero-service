@@ -78,8 +78,8 @@ service Gis {
 // ────────────────────── 基础几何类型 ──────────────────────
 
 message Point {
-  double lat = 1; // 纬度（-90 到 90），proto 统一先纬度后经度
-  double lon = 2; // 经度（-180 到 180）
+  double lon = 1; // 经度（-180 到 180）
+  double lat = 2; // 纬度（-90 到 90）
 }
 
 message PointPair {
@@ -124,10 +124,10 @@ message DecodeGeoHashReq {
 message DecodeGeoHashRes {
   Point point = 1;             // 中心点（格网中心经纬度）
   uint32 precision = 2;        // geohash 编码精度（对应输入 geohash 长度），取值 1-12
-  double lat_min = 3;          // 格子纬度下界
-  double lat_max = 4;          // 格子纬度上界
-  double lon_min = 5;          // 格子经度下界
-  double lon_max = 6;          // 格子经度上界
+  double lon_min = 3;          // 格子经度下界
+  double lon_max = 4;          // 格子经度上界
+  double lat_min = 5;          // 格子纬度下界
+  double lat_max = 6;          // 格子纬度上界
 }
 
 // ────────────────────── H3 编码/解码 ──────────────────────

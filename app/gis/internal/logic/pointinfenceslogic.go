@@ -49,12 +49,11 @@ func (l *PointInFencesLogic) PointInFences(in *gis.PointInFencesReq) (*gis.Point
 				continue
 			}
 		} else if fence.FenceId != "" {
-			pts, err := l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, fence.FenceId)
+			polygon, err = l.svcCtx.FenceStore.LoadFencePolygon(l.ctx, fence.FenceId)
 			if err != nil {
 				l.Logger.Errorf("加载围栏多边形失败, fenceId=%s, err=%v", fence.FenceId, err)
 				continue
 			}
-			polygon = orb.Polygon{orb.Ring(pts)}
 		}
 
 		if planar.PolygonContains(polygon, point) {
