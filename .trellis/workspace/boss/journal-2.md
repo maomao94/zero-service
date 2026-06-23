@@ -957,3 +957,36 @@ common/gisx 包全量审查：修复 NewPreparedGeom safeRun 保护缺失、coor
 ### Next Steps
 
 - None - task complete
+
+
+## Session 79: GIS proto 围栏支持洞 — 协议改造 + GEOS MakeValid 行为实测 + 严格校验
+
+**Date**: 2026-06-23
+**Task**: GIS proto 围栏支持洞 — 协议改造 + GEOS MakeValid 行为实测 + 严格校验
+**Branch**: `master`
+
+### Summary
+
+1. gis.proto 新增 Ring/Polygon 类型，围栏 CRUD/命中判断全部切到 polygon 字段。2. helper.go pbPolygonToOrbPolygon 严格校验（ValidOrb），无效拒绝。3. orbconv 新增 MakeValidOrb/ValidOrb。4. raw_makevalid_test.go 11 场景 MakeValid 行为实测 + sub[1] 分析。5. README/API-GUIDE/spec 同步。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a8d97684` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

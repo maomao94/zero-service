@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 78
+- **Total Sessions**: 79
 - **Last Active**: 2026-06-23
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~959 | Active |
+| `journal-2.md` | ~992 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 79 | 2026-06-23 | GIS proto 围栏支持洞 — 协议改造 + GEOS MakeValid 行为实测 + 严格校验 | `a8d97684` | `master` |
 | 78 | 2026-06-23 | app/gis gRPC 业务逻辑优化 | `6314e4e3`, `ef9b0b1a` | `master` |
 | 77 | 2026-06-23 | gisx全量代码审查与修复 | `25950fc7` | `master` |
 | 76 | 2026-06-22 | optimize-gis-docker-build | `045bd11d` | `master` |
