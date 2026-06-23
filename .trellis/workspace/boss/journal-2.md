@@ -923,3 +923,37 @@ common/gisx 包全量审查：修复 NewPreparedGeom safeRun 保护缺失、coor
 ### Next Steps
 
 - None - task complete
+
+
+## Session 78: app/gis gRPC 业务逻辑优化
+
+**Date**: 2026-06-23
+**Task**: app/gis gRPC 业务逻辑优化
+**Branch**: `master`
+
+### Summary
+
+审查并优化 app/gis/ 下 10 项 gRPC 业务逻辑：提取公共 helper 方法 (resolveH3Resolution, resolveGeohashPrecision, computeFenceCells, scanGeohashCells, validateCoordType)，消除 CreateFence/UpdateFence 重复计算，统一 BatchTransformCoord 校验，修复 PointInFences fence_id 处理，GEOS 错误不再静默吞，JSON 反序列化错误处理，更新 gisx spec。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6314e4e3` | (see git log) |
+| `ef9b0b1a` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
