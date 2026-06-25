@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 81
+- **Total Sessions**: 82
 - **Last Active**: 2026-06-25
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~1061 | Active |
+| `journal-2.md` | ~1094 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 82 | 2026-06-25 | fix: remove unnecessary root spec/index.md | `0fa6c712` | `master` |
 | 81 | 2026-06-25 | 蛙跳机巢模型调整 + djisdk/djicloud Trellis Spec 引导 | `ec11745f`, `7bd977e3`, `e145fe4e` | `master` |
 | 80 | 2026-06-25 | Remove UpdateOrCreate/CreateRecord/GormDB; refactor hooks to use raw FirstOrCreate+Assign | `be2c2efe`, `1a49a680` | `master` |
 | 79 | 2026-06-23 | GIS proto 围栏支持洞 — 协议改造 + GEOS MakeValid 行为实测 + 严格校验 | `a8d97684` | `master` |

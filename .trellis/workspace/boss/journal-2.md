@@ -1059,3 +1059,36 @@ Removed UpdateOrCreate, CreateRecord, GormDB from common/gormx/upsert.go. Refact
 ### Next Steps
 
 - None - task complete
+
+
+## Session 82: fix: remove unnecessary root spec/index.md
+
+**Date**: 2026-06-25
+**Task**: fix: remove unnecessary root spec/index.md
+**Branch**: `master`
+
+### Summary
+
+根 spec/index.md 不符合 Trellis 规范（各层各自维护 index.md），删除。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0fa6c712` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
