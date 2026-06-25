@@ -33,7 +33,7 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 			logx.WithContext(ctx).Errorf("[dji-cloud] status unmarshal topo failed: %v", err)
 			return djisdk.PlatformResultHandlerError
 		}
-
+		now := reportTime(data.Timestamp)
 		if db == nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] status update topo skipped: db is nil")
 			return djisdk.PlatformResultOK
@@ -41,8 +41,10 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 
 		if err := db.WithContext(ctx).Transact(func(tx *gormx.DB) error {
 			gatewayDevice := gormmodel.DjiDevice{
-				DeviceSn:  gatewaySn,
-				GatewaySn: gatewaySn,
+				DeviceSn:     gatewaySn,
+				GatewaySn:    gatewaySn,
+				IsOnline:     true,
+				LastOnlineAt: sqlNullTime(now),
 			}
 			if err := gormx.UpdateOrCreate(tx.WithContext(ctx), &gormmodel.DjiDevice{}, map[string]any{"device_sn": gatewaySn}, &gatewayDevice, map[string]any{"gateway_sn": gatewaySn}); err != nil {
 				return err

@@ -365,16 +365,20 @@ func TestStatusUpdateTopoStoresTypeOnlyInTopo(t *testing.T) {
 
 	var dock struct {
 		GatewaySn    string
+		IsOnline     bool
 		LastOnlineAt sql.NullTime
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn", "last_online_at").Where("device_sn = ?", "dock3-1").First(&dock).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn", "is_online", "last_online_at").Where("device_sn = ?", "dock3-1").First(&dock).Error; err != nil {
 		t.Fatalf("find dock error = %v", err)
 	}
 	if dock.GatewaySn != "dock3-1" {
 		t.Fatalf("dock GatewaySn = %s, want dock3-1", dock.GatewaySn)
 	}
-	if dock.LastOnlineAt.Valid {
-		t.Fatalf("dock LastOnlineAt = %v, want empty because status does not handle online", dock.LastOnlineAt)
+	if !dock.LastOnlineAt.Valid || dock.LastOnlineAt.Time.IsZero() {
+		t.Fatalf("dock LastOnlineAt = %v, want set because status handler now sets online on first create", dock.LastOnlineAt)
+	}
+	if !dock.IsOnline {
+		t.Fatalf("dock IsOnline = false, want true because status handler sets online on first create")
 	}
 	var aircraft struct {
 		GatewaySn string
