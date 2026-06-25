@@ -990,3 +990,37 @@ common/gisx 包全量审查：修复 NewPreparedGeom safeRun 保护缺失、coor
 ### Next Steps
 
 - None - task complete
+
+
+## Session 80: Remove UpdateOrCreate/CreateRecord/GormDB; refactor hooks to use raw FirstOrCreate+Assign
+
+**Date**: 2026-06-25
+**Task**: Remove UpdateOrCreate/CreateRecord/GormDB; refactor hooks to use raw FirstOrCreate+Assign
+**Branch**: `master`
+
+### Summary
+
+Removed UpdateOrCreate, CreateRecord, GormDB from common/gormx/upsert.go. Refactored 9 hooks call sites in app/djicloud/internal/hooks/ to use GORM native Where().Assign().FirstOrCreate() and db.Create(). Removed corresponding tests. Updated common/gormx/README.md and .trellis/spec/backend/ specs accordingly.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `be2c2efe` | (see git log) |
+| `1a49a680` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
