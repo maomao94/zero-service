@@ -15,6 +15,6 @@
 //   - **DRC**（[Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html)：**drc/down** 云发杆量/心跳等、**drc/up** 避障/回传等以 [DRC 上云](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html) 分节为准；**drc_mode_enter** 等走 **services** / **services_reply**）：
 //     杆量/虚拟摇杆 (stick_control) 的实时下行由 gRPC **SendDrcStickControl** 经 djisdk 发 drc/down；[避障信息上报](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E9%81%BF%E9%9A%9C%E4%BF%A1%E6%81%AF%E4%B8%8A%E6%8A%A5) 等不在该 RPC
 //
-// 向 djisdk.Client 注册时优先使用本包 RegisterDjiClient，见 register.go。
+// 向 djisdk.Client 注册时优先使用本包 WithDjiClientOptions，见 register.go。
 
 package hooks

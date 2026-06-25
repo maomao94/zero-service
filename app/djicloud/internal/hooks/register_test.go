@@ -52,13 +52,18 @@ func TestRegisterDjiClientRegistersHandlersAndOnlineChecker(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewCache online error = %v", err)
 	}
-	client := djisdk.NewClient(nil, djisdk.WithPendingTTL(time.Second), djisdk.WithReplyOptions(djisdk.ReplyOptions{}))
 	db := newHookTestDB(t)
-
-	RegisterDjiClient(client, RegisterDjiClientOptions{
+	handlerOpts := WithDjiClientOptions(RegisterDjiClientOptions{
 		DB:          db,
 		OnlineCache: onlineCache,
 	})
+	allOpts := []djisdk.ClientOption{
+		djisdk.WithPendingTTL(time.Second),
+		djisdk.WithReplyOptions(djisdk.ReplyOptions{}),
+	}
+	allOpts = append(allOpts, handlerOpts...)
+	client := djisdk.NewClient(nil, allOpts...)
+	client.SetDrcUpHandler(NewDrcUpHandler(db, nil, nil))
 
 	ctx := context.Background()
 	statusPayload := []byte(`{"tid":"tid-1","bid":"bid-1","timestamp":1710000000000,"method":"update_topo","data":{"sub_devices":[]}}`)
@@ -107,9 +112,13 @@ func TestRegisterDjiClientRegistersHandlersAndOnlineChecker(t *testing.T) {
 }
 
 func TestRegisterDjiClientWithoutOnlineCacheHandlesUpstreamWithoutOnlineChecker(t *testing.T) {
-	client := djisdk.NewClient(nil, djisdk.WithPendingTTL(time.Second), djisdk.WithReplyOptions(djisdk.ReplyOptions{}))
-
-	RegisterDjiClient(client, RegisterDjiClientOptions{})
+	handlerOpts := WithDjiClientOptions(RegisterDjiClientOptions{})
+	allOpts := []djisdk.ClientOption{
+		djisdk.WithPendingTTL(time.Second),
+		djisdk.WithReplyOptions(djisdk.ReplyOptions{}),
+	}
+	allOpts = append(allOpts, handlerOpts...)
+	client := djisdk.NewClient(nil, allOpts...)
 
 	requestsPayload := []byte(`{"tid":"tid-1","bid":"bid-1","timestamp":1710000000000,"method":"airport_bind_status","data":{"status":1}}`)
 	if err := client.HandleRequests(context.Background(), requestsPayload, "thing/product/gateway-1/requests", ""); err != nil {

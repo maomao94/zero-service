@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"zero-service/app/djicloud/internal/drc"
 	"zero-service/common/djisdk"
 	"zero-service/common/gormx"
 	"zero-service/socketapp/socketpush/socketpush"
@@ -9,51 +8,54 @@ import (
 	"github.com/zeromicro/go-zero/core/collection"
 )
 
-// RegisterDjiClientOptions 为 RegisterDjiClient 的依赖，在线缓存由 svc 层创建并注入。
 type RegisterDjiClientOptions struct {
 	DB                 *gormx.DB
 	OnlineCache        *collection.Cache
-	DrcManager         *drc.Manager
 	PushCli            socketpush.SocketPushClient
 	DisableOsdSQLTrace bool
 }
 
-func registerEventHandlers(c *djisdk.Client, db *gormx.DB) {
-	c.OnFlightTaskProgress(NewFlightTaskProgressHandler(db))
-	c.OnFlightTaskReady(NewFlightTaskReadyHandler(db))
-	c.OnReturnHomeInfo(NewReturnHomeInfoHandler(db))
-	c.OnCustomDataTransmissionFromPsdk(HandleCustomDataFromPsdkEvent)
-	c.OnCustomDataTransmissionFromEsdk(HandleCustomDataFromEsdkEvent)
-	c.OnOtaProgress(HandleOtaProgressEvent)
-	c.OnHmsEventNotify(NewHmsEventNotifyHandler(db))
-	c.OnRemoteLogFileUploadProgress(NewRemoteLogFileUploadProgressHandler(db))
-}
-
-func registerTelemetryHandlers(c *djisdk.Client, db *gormx.DB, onlineCache *collection.Cache, drcMgr *drc.Manager, pushCli socketpush.SocketPushClient, disableOsdSQLTrace bool) {
-	c.OnOsd(NewOsdHandler(db, onlineCache, pushCli, disableOsdSQLTrace))
-	c.OnState(NewStateTelemetryHandler(db, onlineCache, pushCli))
-	c.OnStatus(NewStatusHandler(db, onlineCache))
-	c.OnDrcUp(NewDrcUpHandler(db, drcMgr, pushCli))
-}
-
-func registerRequestHandlers(c *djisdk.Client) {
-	c.OnRequest(NewDeviceRequestHandler())
-}
-
-func registerOnlineChecker(c *djisdk.Client, onlineCache *collection.Cache) {
-	if onlineCache == nil {
-		return
+func eventHandlerOptions(db *gormx.DB) []djisdk.ClientOption {
+	return []djisdk.ClientOption{
+		djisdk.WithFlightTaskProgressHandler(NewFlightTaskProgressHandler(db)),
+		djisdk.WithFlightTaskReadyHandler(NewFlightTaskReadyHandler(db)),
+		djisdk.WithReturnHomeInfoHandler(NewReturnHomeInfoHandler(db)),
+		djisdk.WithCustomDataFromPsdkHandler(HandleCustomDataFromPsdkEvent),
+		djisdk.WithCustomDataFromEsdkHandler(HandleCustomDataFromEsdkEvent),
+		djisdk.WithOtaProgressHandler(HandleOtaProgressEvent),
+		djisdk.WithHmsEventNotifyHandler(NewHmsEventNotifyHandler(db)),
+		djisdk.WithRemoteLogFileUploadProgressHandler(NewRemoteLogFileUploadProgressHandler(db)),
 	}
-	c.SetOnlineChecker(func(gatewaySn string) bool { return IsOnline(onlineCache, gatewaySn) })
 }
 
-// RegisterDjiClient 向 djisdk 注册本包内全部 MQTT 上行处理与在线检查。
-func RegisterDjiClient(c *djisdk.Client, o RegisterDjiClientOptions) {
-	if c == nil {
-		return
+func telemetryHandlerOptions(db *gormx.DB, onlineCache *collection.Cache, pushCli socketpush.SocketPushClient, disableOsdSQLTrace bool) []djisdk.ClientOption {
+	return []djisdk.ClientOption{
+		djisdk.WithOsdHandler(NewOsdHandler(db, onlineCache, pushCli, disableOsdSQLTrace)),
+		djisdk.WithStateHandler(NewStateTelemetryHandler(db, onlineCache, pushCli)),
+		djisdk.WithStatusHandler(NewStatusHandler(db, onlineCache)),
 	}
-	registerEventHandlers(c, o.DB)
-	registerTelemetryHandlers(c, o.DB, o.OnlineCache, o.DrcManager, o.PushCli, o.DisableOsdSQLTrace)
-	registerRequestHandlers(c)
-	registerOnlineChecker(c, o.OnlineCache)
+}
+
+func requestHandlerOptions() []djisdk.ClientOption {
+	return []djisdk.ClientOption{
+		djisdk.WithRequestHandler(NewDeviceRequestHandler()),
+	}
+}
+
+func onlineCheckerOption(onlineCache *collection.Cache) djisdk.ClientOption {
+	return djisdk.WithOnlineChecker(func(gatewaySn string) bool { return IsOnline(onlineCache, gatewaySn) })
+}
+
+// WithDjiClientOptions 返回向 djisdk.Client 注入本包内全部 MQTT 上行处理与在线检查的 ClientOption 列表。
+func WithDjiClientOptions(o RegisterDjiClientOptions) []djisdk.ClientOption {
+	var opts []djisdk.ClientOption
+	if o.DB != nil {
+		opts = append(opts, eventHandlerOptions(o.DB)...)
+		opts = append(opts, telemetryHandlerOptions(o.DB, o.OnlineCache, o.PushCli, o.DisableOsdSQLTrace)...)
+	}
+	opts = append(opts, requestHandlerOptions()...)
+	if o.OnlineCache != nil {
+		opts = append(opts, onlineCheckerOption(o.OnlineCache))
+	}
+	return opts
 }

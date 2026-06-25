@@ -49,6 +49,24 @@ type ClientOption func(*clientOptions)
 type clientOptions struct {
 	pendingTTL   time.Duration
 	replyOptions ReplyOptions
+
+	eventMethodFallbacks map[string]EventMethodFallback
+
+	onFlightTaskProgress               func(ctx context.Context, gatewaySn string, data *FlightTaskProgressEvent)
+	onFlightTaskReady                  func(ctx context.Context, gatewaySn string, data *FlightTaskReadyEvent)
+	onReturnHomeInfo                   func(ctx context.Context, gatewaySn string, data *ReturnHomeInfoEvent)
+	onCustomDataTransmissionFromPsdk   func(ctx context.Context, gatewaySn string, data *CustomDataFromPsdkEvent)
+	onCustomDataTransmissionFromEsdk   func(ctx context.Context, gatewaySn string, data *CustomDataFromEsdkEvent)
+	onHmsEventNotify                   func(ctx context.Context, gatewaySn string, data *HmsEventData)
+	onRemoteLogFileUploadProgress      func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent)
+	onOtaProgress                      func(ctx context.Context, gatewaySn string, data *OtaProgressEvent)
+	onUpdateTopo                       func(ctx context.Context, gatewaySn string, data *TopoUpdateData)
+	onOsd                              func(ctx context.Context, deviceSn string, data *OsdMessage)
+	onState                            func(ctx context.Context, deviceSn string, data *StateMessage)
+	onStatus                           StatusHandler
+	onRequest                          RequestHandler
+	onDrcUp                            DrcUpHandler
+	onlineChecker                      func(gatewaySn string) bool
 }
 
 func WithPendingTTL(ttl time.Duration) ClientOption {
@@ -65,10 +83,110 @@ func WithReplyOptions(replyOptions ReplyOptions) ClientOption {
 	}
 }
 
+func WithEventFallback(method string, handler EventMethodFallback) ClientOption {
+	return func(options *clientOptions) {
+		if options.eventMethodFallbacks == nil {
+			options.eventMethodFallbacks = make(map[string]EventMethodFallback)
+		}
+		options.eventMethodFallbacks[method] = handler
+	}
+}
+
+func WithFlightTaskProgressHandler(handler func(ctx context.Context, gatewaySn string, data *FlightTaskProgressEvent)) ClientOption {
+	return func(options *clientOptions) {
+		options.onFlightTaskProgress = handler
+	}
+}
+
+func WithFlightTaskReadyHandler(handler func(ctx context.Context, gatewaySn string, data *FlightTaskReadyEvent)) ClientOption {
+	return func(options *clientOptions) {
+		options.onFlightTaskReady = handler
+	}
+}
+
+func WithReturnHomeInfoHandler(handler func(ctx context.Context, gatewaySn string, data *ReturnHomeInfoEvent)) ClientOption {
+	return func(options *clientOptions) {
+		options.onReturnHomeInfo = handler
+	}
+}
+
+func WithCustomDataFromPsdkHandler(handler func(ctx context.Context, gatewaySn string, data *CustomDataFromPsdkEvent)) ClientOption {
+	return func(options *clientOptions) {
+		options.onCustomDataTransmissionFromPsdk = handler
+	}
+}
+
+func WithCustomDataFromEsdkHandler(handler func(ctx context.Context, gatewaySn string, data *CustomDataFromEsdkEvent)) ClientOption {
+	return func(options *clientOptions) {
+		options.onCustomDataTransmissionFromEsdk = handler
+	}
+}
+
+func WithHmsEventNotifyHandler(handler func(ctx context.Context, gatewaySn string, data *HmsEventData)) ClientOption {
+	return func(options *clientOptions) {
+		options.onHmsEventNotify = handler
+	}
+}
+
+func WithRemoteLogFileUploadProgressHandler(handler func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent)) ClientOption {
+	return func(options *clientOptions) {
+		options.onRemoteLogFileUploadProgress = handler
+	}
+}
+
+func WithOtaProgressHandler(handler func(ctx context.Context, gatewaySn string, data *OtaProgressEvent)) ClientOption {
+	return func(options *clientOptions) {
+		options.onOtaProgress = handler
+	}
+}
+
+func WithUpdateTopoHandler(handler func(ctx context.Context, gatewaySn string, data *TopoUpdateData)) ClientOption {
+	return func(options *clientOptions) {
+		options.onUpdateTopo = handler
+	}
+}
+
+func WithOsdHandler(handler func(ctx context.Context, deviceSn string, data *OsdMessage)) ClientOption {
+	return func(options *clientOptions) {
+		options.onOsd = handler
+	}
+}
+
+func WithStateHandler(handler func(ctx context.Context, deviceSn string, data *StateMessage)) ClientOption {
+	return func(options *clientOptions) {
+		options.onState = handler
+	}
+}
+
+func WithStatusHandler(handler StatusHandler) ClientOption {
+	return func(options *clientOptions) {
+		options.onStatus = handler
+	}
+}
+
+func WithRequestHandler(handler RequestHandler) ClientOption {
+	return func(options *clientOptions) {
+		options.onRequest = handler
+	}
+}
+
+func WithDrcUpHandler(handler DrcUpHandler) ClientOption {
+	return func(options *clientOptions) {
+		options.onDrcUp = handler
+	}
+}
+
+func WithOnlineChecker(checker func(gatewaySn string) bool) ClientOption {
+	return func(options *clientOptions) {
+		options.onlineChecker = checker
+	}
+}
+
 func defaultClientOptions() clientOptions {
 	return clientOptions{
-		pendingTTL:   defaultPendingTTL,
-		replyOptions: DefaultReplyOptions(),
+		pendingTTL:          defaultPendingTTL,
+		replyOptions:        DefaultReplyOptions(),
+		eventMethodFallbacks: make(map[string]EventMethodFallback),
 	}
 }
 
@@ -105,12 +223,7 @@ func MustNewClient(config mqttx.MqttConfig, opts ...ClientOption) *Client {
 			o(&opt)
 		}
 	}
-	return &Client{
-		mqttClient:           mqttx.MustNewClient(config, replyRouters(opt.pendingTTL)...),
-		pendingTTL:           opt.pendingTTL,
-		replyOptions:         opt.replyOptions,
-		eventMethodFallbacks: make(map[string]EventMethodFallback),
-	}
+	return buildClient(mqttx.MustNewClient(config, replyRouters(opt.pendingTTL)...), &opt)
 }
 
 func replyRouters(ttl time.Duration) []mqttx.ClientOption {
@@ -123,23 +236,40 @@ func replyRouters(ttl time.Duration) []mqttx.ClientOption {
 	}
 }
 
-// NewClient 使用已有的 mqttx.Client 构造 djisdk.Client，类似 go-zero 的 grpc 传入已有连接。
 func NewClient(mqttClient mqttx.Client, opts ...ClientOption) *Client {
-	return newClient(mqttClient, opts...)
-}
-
-func newClient(mqttClient mqttx.Client, opts ...ClientOption) *Client {
 	opt := defaultClientOptions()
 	for _, o := range opts {
 		if o != nil {
 			o(&opt)
 		}
 	}
+	return buildClient(mqttClient, &opt)
+}
+
+func buildClient(mqttClient mqttx.Client, opt *clientOptions) *Client {
+	if opt.eventMethodFallbacks == nil {
+		opt.eventMethodFallbacks = make(map[string]EventMethodFallback)
+	}
 	return &Client{
-		mqttClient:           mqttClient,
-		pendingTTL:           opt.pendingTTL,
-		replyOptions:         opt.replyOptions,
-		eventMethodFallbacks: make(map[string]EventMethodFallback),
+		mqttClient:                          mqttClient,
+		pendingTTL:                          opt.pendingTTL,
+		replyOptions:                        opt.replyOptions,
+		eventMethodFallbacks:                opt.eventMethodFallbacks,
+		onFlightTaskProgress:                opt.onFlightTaskProgress,
+		onFlightTaskReady:                   opt.onFlightTaskReady,
+		onReturnHomeInfo:                    opt.onReturnHomeInfo,
+		onCustomDataTransmissionFromPsdk:    opt.onCustomDataTransmissionFromPsdk,
+		onCustomDataTransmissionFromEsdk:    opt.onCustomDataTransmissionFromEsdk,
+		onHmsEventNotify:                    opt.onHmsEventNotify,
+		onRemoteLogFileUploadProgress:       opt.onRemoteLogFileUploadProgress,
+		onOtaProgress:                       opt.onOtaProgress,
+		onUpdateTopo:                        opt.onUpdateTopo,
+		onOsd:                               opt.onOsd,
+		onState:                             opt.onState,
+		onStatus:                            opt.onStatus,
+		onRequest:                           opt.onRequest,
+		onDrcUp:                             opt.onDrcUp,
+		onlineChecker:                       opt.onlineChecker,
 	}
 }
 
@@ -349,123 +479,11 @@ func (c *Client) replyEvent(ctx context.Context, gatewaySn, tid, bid, method str
 	return c.mqttClient.Publish(ctx, topic, data)
 }
 
-// OnEvent 按 method 注册 **扩展/兜底**（未在 tryDispatchEventNotify 中预置的 method、或同 method 不挂 On* 时）。
-// 与 tryDispatchEventNotify 中各 On* 二选一：后者存在时优先生效，见 EventMethodFallback。
-func (c *Client) OnEvent(method string, handler EventMethodFallback) {
-	c.eventMethodFallbacks[method] = handler
-}
+// replyEvent 向设备发送事件回复消息。
 
-// OnFlightTaskProgress 注册航线任务进度上报钩子。
-// 方向 up：设备→云平台。对应 method: flighttask_progress。
-// 机巢执行航线任务时主动定频上报进度，钩子只负责通知，业务端自行决定如何处理。
-//   - handler: 回调函数，携带已解析的 FlightTaskProgressEvent 结构体
-func (c *Client) OnFlightTaskProgress(handler func(ctx context.Context, gatewaySn string, data *FlightTaskProgressEvent)) {
-	c.onFlightTaskProgress = handler
-}
-
-// OnFlightTaskReady 注册任务就绪通知钩子。
-// 方向 up：设备→云平台。对应 method: flighttask_ready。
-// 机巢中有任务满足就绪条件时主动上报，钩子只负责通知。
-//   - handler: 回调函数，携带已解析的 FlightTaskReadyEvent 结构体
-func (c *Client) OnFlightTaskReady(handler func(ctx context.Context, gatewaySn string, data *FlightTaskReadyEvent)) {
-	c.onFlightTaskReady = handler
-}
-
-// OnReturnHomeInfo 注册返航信息上报钩子。
-// 方向 up：设备→云平台。对应 method: return_home_info。
-// 设备返航时主动上报规划路径信息，钩子只负责通知。
-//   - handler: 回调函数，携带已解析的 ReturnHomeInfoEvent 结构体
-func (c *Client) OnReturnHomeInfo(handler func(ctx context.Context, gatewaySn string, data *ReturnHomeInfoEvent)) {
-	c.onReturnHomeInfo = handler
-}
-
-// OnCustomDataTransmissionFromPsdk 注册 PSDK 自定义数据上报钩子。
-// 方向 up：设备→云平台。对应 method: custom_data_transmission_from_psdk。
-// PSDK 负载设备有自定义数据上报时通过 events topic 推送，钩子只负责通知。
-//   - handler: 回调函数，携带已解析的 CustomDataFromPsdkEvent 结构体
-func (c *Client) OnCustomDataTransmissionFromPsdk(handler func(ctx context.Context, gatewaySn string, data *CustomDataFromPsdkEvent)) {
-	c.onCustomDataTransmissionFromPsdk = handler
-}
-
-// OnCustomDataTransmissionFromEsdk 注册 ESDK 自定义数据上报钩子。
-// 方向 up：设备→云平台。对应 method: custom_data_transmission_from_esdk。
-// ESDK 负载设备有自定义数据上报时通过 events topic 推送，钩子只负责通知。
-//   - handler: 回调函数，携带已解析的 CustomDataFromEsdkEvent 结构体
-func (c *Client) OnCustomDataTransmissionFromEsdk(handler func(ctx context.Context, gatewaySn string, data *CustomDataFromEsdkEvent)) {
-	c.onCustomDataTransmissionFromEsdk = handler
-}
-
-// OnHmsEventNotify 注册 HMS 健康告警上报钩子。
-// 方向 up：设备→云平台。对应 method: hms。
-// 设备上报健康管理系统告警和状态事件时触发，钩子只负责通知。
-//   - handler: 回调函数，携带已解析的 HmsEventData 结构体
-func (c *Client) OnHmsEventNotify(handler func(ctx context.Context, gatewaySn string, data *HmsEventData)) {
-	c.onHmsEventNotify = handler
-}
-
-// OnRemoteLogFileUploadProgress 注册远程日志文件上传进度上报钩子。
-// 方向 up：设备→云平台。对应 method: fileupload_progress。
-// 设备上报远程日志文件的上传进度，钩子只负责通知。
-//   - handler: 回调函数，携带已解析的 RemoteLogFileUploadProgressEvent 结构体
-func (c *Client) OnRemoteLogFileUploadProgress(handler func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent)) {
-	c.onRemoteLogFileUploadProgress = handler
-}
-
-// OnOtaProgress 注册 OTA 固件升级进度上报钩子。
-// 方向 up：设备→云平台。对应 method: ota_progress。
-// 设备在固件升级过程中周期性上报升级进度，钩子只负责通知。
-//   - handler: 回调函数，携带已解析的 OtaProgressEvent 结构体
-func (c *Client) OnOtaProgress(handler func(ctx context.Context, gatewaySn string, data *OtaProgressEvent)) {
-	c.onOtaProgress = handler
-}
-
-// OnUpdateTopo 注册设备拓扑更新上报钩子。
-// Topic: sys/product/{gateway_sn}/status（设备管理 Status topic，非 events）。
-// 方向 up：设备→云平台。对应 method: update_topo。
-// 设备（机巢）上线或在网期间拓扑变更时，通过 status 通道上报自身及子设备拓扑信息，钩子只负责通知。
-//   - handler: 回调函数，携带已解析的 TopoUpdateData 结构体
-func (c *Client) OnUpdateTopo(handler func(ctx context.Context, gatewaySn string, data *TopoUpdateData)) {
-	c.onUpdateTopo = handler
-}
-
-// OnOsd 注册设备 OSD 遥测数据上报钩子。
-// Topic: thing/product/{device_sn}/osd
-// 方向 up：设备→云平台。
-// 设备定期推送 pushMode=0 的物模型遥测数据（飞行姿态、GPS 坐标、电池电量等），钩子只负责通知。
-//   - handler: 回调函数，携带设备 SN 和已解析的 OsdMessage 结构体
-func (c *Client) OnOsd(handler func(ctx context.Context, deviceSn string, data *OsdMessage)) {
-	c.onOsd = handler
-}
-
-// OnState 注册设备状态上报钩子。
-// Topic: thing/product/{device_sn}/state
-// 方向 up：设备→云平台。
-// 设备在状态变化时上报 pushMode=1 的物模型状态，如固件/硬件版本、设备能力集、机巢/负载状态等，钩子只负责通知。
-//   - handler: 回调函数，携带设备 SN 和已解析的 StateMessage 结构体
-func (c *Client) OnState(handler func(ctx context.Context, deviceSn string, data *StateMessage)) {
-	c.onState = handler
-}
-
-// OnStatus 注册 sys/.../status 上行业务处理器；回调会始终参与分发，status_reply 是否发送由 ReplyOptions.EnableStatusReply 控制。
-func (c *Client) OnStatus(handler StatusHandler) {
-	c.onStatus = handler
-}
-
-// OnRequest 注册 thing/.../requests 上行业务处理器；回调会始终参与分发，requests_reply 是否发送由 ReplyOptions.EnableRequestReply 控制。
-func (c *Client) OnRequest(handler RequestHandler) {
-	c.onRequest = handler
-}
-
-// OnDrcUp 注册 **thing/.../drc/up** 设备→云 处理；由 [HandleDrcUp]、[SubscribeAll] 调用。未注册时仅打 Info 日志。
-func (c *Client) OnDrcUp(handler DrcUpHandler) {
+// SetDrcUpHandler 注册 thing/.../drc/up 设备→云 处理（因 drc.Manager 依赖 Client，需在 drc.Manager 创建后设置）。
+func (c *Client) SetDrcUpHandler(handler DrcUpHandler) {
 	c.onDrcUp = handler
-}
-
-// SetOnlineChecker 设置设备在线状态检查函数。
-// 设置后，SendCommand 在发送命令前会先调用此函数检查设备是否在线，离线则快速拒绝。
-//   - checker: 在线检查函数，接收 gatewaySn，返回 true 表示在线
-func (c *Client) SetOnlineChecker(checker func(gatewaySn string) bool) {
-	c.onlineChecker = checker
 }
 
 // ==================== 基础命令发送 ====================
