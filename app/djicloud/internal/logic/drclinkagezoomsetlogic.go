@@ -26,7 +26,7 @@ func NewDrcLinkageZoomSetLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 
 func (l *DrcLinkageZoomSetLogic) DrcLinkageZoomSet(in *djicloud.DrcLinkageZoomSetReq) (*djicloud.DrcLinkageZoomSetRes, error) {
 	deviceSn := in.GetDeviceSn()
-	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
 		return nil, err
 	}

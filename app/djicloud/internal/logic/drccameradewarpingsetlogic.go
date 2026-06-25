@@ -26,7 +26,7 @@ func NewDrcCameraDewarpingSetLogic(ctx context.Context, svcCtx *svc.ServiceConte
 
 func (l *DrcCameraDewarpingSetLogic) DrcCameraDewarpingSet(in *djicloud.DrcCameraDewarpingSetReq) (*djicloud.DrcCameraDewarpingSetRes, error) {
 	deviceSn := in.GetDeviceSn()
-	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
 		return nil, err
 	}

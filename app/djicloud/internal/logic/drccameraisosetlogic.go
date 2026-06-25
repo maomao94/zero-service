@@ -26,7 +26,7 @@ func NewDrcCameraIsoSetLogic(ctx context.Context, svcCtx *svc.ServiceContext) *D
 
 func (l *DrcCameraIsoSetLogic) DrcCameraIsoSet(in *djicloud.DrcCameraIsoSetReq) (*djicloud.DrcCameraIsoSetRes, error) {
 	deviceSn := in.GetDeviceSn()
-	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
 		return nil, err
 	}

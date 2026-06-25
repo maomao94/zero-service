@@ -26,7 +26,7 @@ func NewDrcCameraApertureValueSetLogic(ctx context.Context, svcCtx *svc.ServiceC
 
 func (l *DrcCameraApertureValueSetLogic) DrcCameraApertureValueSet(in *djicloud.DrcCameraApertureValueSetReq) (*djicloud.DrcCameraApertureValueSetRes, error) {
 	deviceSn := in.GetDeviceSn()
-	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
 		return nil, err
 	}

@@ -1092,3 +1092,39 @@ Removed UpdateOrCreate, CreateRecord, GormDB from common/gormx/upsert.go. Refact
 ### Next Steps
 
 - None - task complete
+
+
+## Session 83: djsdk client option重构 + drc manager移入djsdk
+
+**Date**: 2026-06-25
+**Task**: djsdk client option重构 + drc manager移入djsdk
+**Branch**: `master`
+
+### Summary
+
+1. common/djisdk/client.go: 所有OnXxx setter改为WithXxx Option模式, 移除EventMethodFallback回调, 新增WithDrcConfig及session hooks, 抽取applyOptions消除构造重复, HandleDrcUp内部桥接心跳通知, HandleEvents未匹配method打payload
+2. common/djisdk/drc.go: 新建, 将drc.Manager+DeviceSession整体移入djsdk包, 消除循环依赖, drcManager直接调用Client.SendDrcHeartBeat
+3. app/djicloud/internal/hooks/register.go: RegisterDjiClient改为WithDjiClientOptions返回[]ClientOption, drcHandlerOptions独立分组, DrcManager从Options移除
+4. app/djicloud/internal/svc/servicecontext.go: 移除DrcManager字段, session hooks以closure注入WithDrcSessionXxx, 初始化流程pushCli→djiOpts→MustNewClient
+5. 18个logic文件: DrcManager→DjiClient, drc.WithMaxTimeout→djisdk.WithDrcMaxTimeout
+6. .trellis/spec: 同步更新djisdk-guidelines/djicloud-hooks-guidelines/drc-concurrency三个spec
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"zero-service/app/djicloud/djicloud"
-	"zero-service/app/djicloud/internal/drc"
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/common/djisdk"
 
@@ -45,7 +44,7 @@ func (l *DrcModeEnterLogic) DrcModeEnter(in *djicloud.DrcModeEnterReq) (*djiclou
 	if maxCtrlMs > 0 {
 		maxTimeout = time.Duration(maxCtrlMs) * time.Millisecond
 	}
-	if err := l.svcCtx.DrcManager.Enable(l.ctx, deviceSn, drc.WithMaxTimeout(maxTimeout)); err != nil {
+	if err := l.svcCtx.DjiClient.EnableDrc(l.ctx, deviceSn, djisdk.WithDrcMaxTimeout(maxTimeout)); err != nil {
 		l.Errorf("[drc] manager enable failed device_sn=%s: %v", deviceSn, err)
 		return nil, err
 	}

@@ -23,7 +23,7 @@ func TestDrcUpDoesNotRefreshOnline(t *testing.T) {
 	}
 	parsed := &djisdk.DrcHeartBeatUpData{Timestamp: 123450}
 
-	if err := NewDrcUpHandler(nil, nil, nil)(context.Background(), "gateway-1", msg, parsed); err != nil {
+	if err := NewDrcUpHandler(nil, nil)(context.Background(), "gateway-1", msg, parsed); err != nil {
 		t.Fatalf("NewDrcUpHandler() error = %v", err)
 	}
 

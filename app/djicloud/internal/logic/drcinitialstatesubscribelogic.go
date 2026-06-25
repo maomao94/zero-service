@@ -25,7 +25,7 @@ func NewDrcInitialStateSubscribeLogic(ctx context.Context, svcCtx *svc.ServiceCo
 
 func (l *DrcInitialStateSubscribeLogic) DrcInitialStateSubscribe(in *djicloud.DrcInitialStateSubscribeReq) (*djicloud.DrcInitialStateSubscribeRes, error) {
 	deviceSn := in.GetDeviceSn()
-	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
 		return nil, err
 	}

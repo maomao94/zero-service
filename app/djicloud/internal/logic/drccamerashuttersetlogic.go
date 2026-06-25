@@ -26,7 +26,7 @@ func NewDrcCameraShutterSetLogic(ctx context.Context, svcCtx *svc.ServiceContext
 
 func (l *DrcCameraShutterSetLogic) DrcCameraShutterSet(in *djicloud.DrcCameraShutterSetReq) (*djicloud.DrcCameraShutterSetRes, error) {
 	deviceSn := in.GetDeviceSn()
-	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
 		return nil, err
 	}

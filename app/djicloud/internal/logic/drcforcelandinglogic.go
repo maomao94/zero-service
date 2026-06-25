@@ -25,7 +25,7 @@ func NewDrcForceLandingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *D
 
 func (l *DrcForceLandingLogic) DrcForceLanding(in *djicloud.DrcForceLandingReq) (*djicloud.DrcForceLandingRes, error) {
 	deviceSn := in.GetDeviceSn()
-	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
 		return nil, err
 	}

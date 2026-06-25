@@ -36,6 +36,12 @@ func telemetryHandlerOptions(db *gormx.DB, onlineCache *collection.Cache, pushCl
 	}
 }
 
+func drcHandlerOptions(db *gormx.DB, pushCli socketpush.SocketPushClient) []djisdk.ClientOption {
+	return []djisdk.ClientOption{
+		djisdk.WithDrcUpHandler(NewDrcUpHandler(db, pushCli)),
+	}
+}
+
 func requestHandlerOptions() []djisdk.ClientOption {
 	return []djisdk.ClientOption{
 		djisdk.WithRequestHandler(NewDeviceRequestHandler()),
@@ -52,6 +58,7 @@ func WithDjiClientOptions(o RegisterDjiClientOptions) []djisdk.ClientOption {
 	if o.DB != nil {
 		opts = append(opts, eventHandlerOptions(o.DB)...)
 		opts = append(opts, telemetryHandlerOptions(o.DB, o.OnlineCache, o.PushCli, o.DisableOsdSQLTrace)...)
+		opts = append(opts, drcHandlerOptions(o.DB, o.PushCli)...)
 	}
 	opts = append(opts, requestHandlerOptions()...)
 	if o.OnlineCache != nil {

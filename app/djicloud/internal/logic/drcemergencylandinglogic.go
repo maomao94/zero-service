@@ -25,7 +25,7 @@ func NewDrcEmergencyLandingLogic(ctx context.Context, svcCtx *svc.ServiceContext
 
 func (l *DrcEmergencyLandingLogic) DrcEmergencyLanding(in *djicloud.DrcEmergencyLandingReq) (*djicloud.DrcEmergencyLandingRes, error) {
 	deviceSn := in.GetDeviceSn()
-	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
 		return nil, err
 	}

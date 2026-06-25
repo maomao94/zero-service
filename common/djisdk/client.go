@@ -45,6 +45,9 @@ type clientOptions struct {
 	pendingTTL   time.Duration
 	replyOptions ReplyOptions
 
+	drcConfig    DrcConfig
+	drcManagerOpts []drcManagerOption
+
 	onFlightTaskProgress               func(ctx context.Context, gatewaySn string, data *FlightTaskProgressEvent)
 	onFlightTaskReady                  func(ctx context.Context, gatewaySn string, data *FlightTaskReadyEvent)
 	onReturnHomeInfo                   func(ctx context.Context, gatewaySn string, data *ReturnHomeInfoEvent)
@@ -166,6 +169,30 @@ func WithOnlineChecker(checker func(gatewaySn string) bool) ClientOption {
 	}
 }
 
+func WithDrcConfig(cfg DrcConfig) ClientOption {
+	return func(options *clientOptions) {
+		options.drcConfig = cfg
+	}
+}
+
+func WithDrcSessionEnabled(hook DrcSessionEnabledHook) ClientOption {
+	return func(options *clientOptions) {
+		options.drcManagerOpts = append(options.drcManagerOpts, withDrcOnSessionEnabled(hook))
+	}
+}
+
+func WithDrcSessionDisabled(hook DrcSessionDisabledHook) ClientOption {
+	return func(options *clientOptions) {
+		options.drcManagerOpts = append(options.drcManagerOpts, withDrcOnSessionDisabled(hook))
+	}
+}
+
+func WithDrcSessionExpired(hook DrcSessionExpiredHook) ClientOption {
+	return func(options *clientOptions) {
+		options.drcManagerOpts = append(options.drcManagerOpts, withDrcOnSessionExpired(hook))
+	}
+}
+
 func defaultClientOptions() clientOptions {
 	return clientOptions{
 		pendingTTL:   defaultPendingTTL,
@@ -196,6 +223,7 @@ type Client struct {
 	onStatus             StatusHandler
 	onRequest            RequestHandler
 	onDrcUp              DrcUpHandler
+	drcManager           *drcManager
 }
 
 func applyOptions(opts ...ClientOption) clientOptions {
@@ -229,7 +257,7 @@ func NewClient(mqttClient mqttx.Client, opts ...ClientOption) *Client {
 }
 
 func buildClient(mqttClient mqttx.Client, opt *clientOptions) *Client {
-	return &Client{
+	c := &Client{
 		mqttClient:                          mqttClient,
 		pendingTTL:                          opt.pendingTTL,
 		replyOptions:                        opt.replyOptions,
@@ -249,6 +277,10 @@ func buildClient(mqttClient mqttx.Client, opt *clientOptions) *Client {
 		onDrcUp:                             opt.onDrcUp,
 		onlineChecker:                       opt.onlineChecker,
 	}
+	if opt.drcConfig.HeartbeatInterval > 0 {
+		c.drcManager = newDrcManager(c, opt.drcConfig, opt.drcManagerOpts...)
+	}
+	return c
 }
 
 func decodeServiceReply(kind string) mqttx.ReplyDecoderFunc[*ServiceReply] {
@@ -449,11 +481,6 @@ func (c *Client) replyEvent(ctx context.Context, gatewaySn, tid, bid, method str
 }
 
 // replyEvent 向设备发送事件回复消息。
-
-// SetDrcUpHandler 注册 thing/.../drc/up 设备→云 处理（因 drc.Manager 依赖 Client，需在 drc.Manager 创建后设置）。
-func (c *Client) SetDrcUpHandler(handler DrcUpHandler) {
-	c.onDrcUp = handler
-}
 
 // ==================== 基础命令发送 ====================
 
@@ -1560,6 +1587,9 @@ func (c *Client) HandleDrcUp(ctx context.Context, payload []byte, topic string, 
 	} else {
 		logx.WithContext(ctx).Infof("[dji-sdk] drc_up %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid, "ts", msg.Timestamp, "summary", sum))
 	}
+	if c.drcManager != nil && msg.Method == MethodDrcHeartBeat {
+		c.drcManager.OnDeviceHeartbeat(ctx, gatewaySn)
+	}
 	if c.onDrcUp == nil {
 		return nil
 	}
@@ -1589,5 +1619,42 @@ func (c *Client) SubscribeAll() error {
 }
 
 func (c *Client) Close() {
+	if c.drcManager != nil {
+		c.drcManager.Close()
+	}
 	c.mqttClient.Close()
+}
+
+// ==================== DRC Manager API ====================
+
+func (c *Client) EnableDrc(ctx context.Context, gatewaySn string, opts ...DrcEnableOption) error {
+	if c.drcManager == nil {
+		return fmt.Errorf("[dji-sdk] DrcManager not configured, use WithDrcConfig option")
+	}
+	var o drcEnableOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
+	return c.drcManager.Enable(ctx, gatewaySn, o.maxTimeout)
+}
+
+func (c *Client) DisableDrc(ctx context.Context, gatewaySn string) error {
+	if c.drcManager == nil {
+		return fmt.Errorf("[dji-sdk] DrcManager not configured, use WithDrcConfig option")
+	}
+	return c.drcManager.Disable(ctx, gatewaySn)
+}
+
+func (c *Client) DrcNextSeq(gatewaySn string) (int, error) {
+	if c.drcManager == nil {
+		return 0, fmt.Errorf("[dji-sdk] DrcManager not configured, use WithDrcConfig option")
+	}
+	return c.drcManager.GetNextSeq(gatewaySn)
+}
+
+func (c *Client) DrcStatus(gatewaySn string) (enabled bool, startedAt, lastHb time.Time, nextSeq int, alive bool) {
+	if c.drcManager == nil {
+		return
+	}
+	return c.drcManager.GetStatus(gatewaySn)
 }

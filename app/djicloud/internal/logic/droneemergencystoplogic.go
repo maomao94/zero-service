@@ -33,7 +33,7 @@ func (l *DroneEmergencyStopLogic) DroneEmergencyStop(in *djicloud.DroneEmergency
 	}
 
 	deviceSn := in.GetDeviceSn()
-	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "获取序列号失败")
 	}

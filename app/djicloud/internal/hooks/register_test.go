@@ -63,7 +63,6 @@ func TestRegisterDjiClientRegistersHandlersAndOnlineChecker(t *testing.T) {
 	}
 	allOpts = append(allOpts, handlerOpts...)
 	client := djisdk.NewClient(nil, allOpts...)
-	client.SetDrcUpHandler(NewDrcUpHandler(db, nil, nil))
 
 	ctx := context.Background()
 	statusPayload := []byte(`{"tid":"tid-1","bid":"bid-1","timestamp":1710000000000,"method":"update_topo","data":{"sub_devices":[]}}`)
@@ -1032,7 +1031,7 @@ func TestDrcUpPersistsStickControlEvent(t *testing.T) {
 	db := newHookTestDB(t)
 	ctx := context.Background()
 
-	err := NewDrcUpHandler(db, nil, nil)(ctx, "dock-drc", &djisdk.DrcUpMessage{Method: djisdk.MethodStickControl, Timestamp: 1710000000000}, &djisdk.DrcStickControlAckData{Result: 0})
+	err := NewDrcUpHandler(db, nil)(ctx, "dock-drc", &djisdk.DrcUpMessage{Method: djisdk.MethodStickControl, Timestamp: 1710000000000}, &djisdk.DrcStickControlAckData{Result: 0})
 	if err != nil {
 		t.Fatalf("handler error = %v", err)
 	}
@@ -1049,7 +1048,7 @@ func TestDrcUpPersistsStickControlEvent(t *testing.T) {
 }
 
 func TestDrcUpHandlerIgnoresNilMessage(t *testing.T) {
-	if err := NewDrcUpHandler(nil, nil, nil)(context.Background(), "dock-nil", nil, nil); err != nil {
+	if err := NewDrcUpHandler(nil, nil)(context.Background(), "dock-nil", nil, nil); err != nil {
 		t.Fatalf("handler error = %v", err)
 	}
 }

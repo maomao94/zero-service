@@ -26,7 +26,7 @@ func NewDrcNightLightsStateSetLogic(ctx context.Context, svcCtx *svc.ServiceCont
 
 func (l *DrcNightLightsStateSetLogic) DrcNightLightsStateSet(in *djicloud.DrcNightLightsStateSetReq) (*djicloud.DrcNightLightsStateSetRes, error) {
 	deviceSn := in.GetDeviceSn()
-	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
 		return nil, err
 	}

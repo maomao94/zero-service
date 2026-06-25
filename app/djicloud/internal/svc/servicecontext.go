@@ -7,7 +7,6 @@ import (
 	"zero-service/common/tool"
 
 	"zero-service/app/djicloud/internal/config"
-	"zero-service/app/djicloud/internal/drc"
 	"zero-service/app/djicloud/internal/hooks"
 	"zero-service/app/djicloud/model/gormmodel"
 	interceptor "zero-service/common/Interceptor/rpcclient"
@@ -29,7 +28,6 @@ type ServiceContext struct {
 	DjiClient   *djisdk.Client
 	DB          *gormx.DB
 	OnlineCache *collection.Cache
-	DrcManager  *drc.Manager
 }
 
 func initDB(c config.Config) *gormx.DB {
@@ -56,27 +54,11 @@ func initDB(c config.Config) *gormx.DB {
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
-	djiOpts := []djisdk.ClientOption{
-		djisdk.WithPendingTTL(c.PendingTTL),
-		djisdk.WithReplyOptions(djisdk.ReplyOptions{
-			EnableEventReply:   c.UpstreamReply.EnableEventsReply,
-			EnableStatusReply:  c.UpstreamReply.EnableStatusReply,
-			EnableRequestReply: c.UpstreamReply.EnableRequestsReply,
-		}),
-	}
 
 	db := initDB(c)
 
 	onlineCache, err := collection.NewCache(dockOnlineTTL, collection.WithName("dock-online-cache"))
 	logx.Must(err)
-
-	djiOpts = append(djiOpts, hooks.WithDjiClientOptions(hooks.RegisterDjiClientOptions{
-		DB:                 db,
-		OnlineCache:        onlineCache,
-		PushCli:            nil,
-		DisableOsdSQLTrace: c.Telemetry.DisableOsdSQLTrace,
-	})...)
-	djiCli := djisdk.MustNewClient(c.MqttConfig, djiOpts...)
 
 	// 初始化 SocketPush 客户端（可选，未配置时不推送）
 	var pushCli socketpush.SocketPushClient
@@ -89,52 +71,70 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		).Conn())
 	}
 
-	// 初始化 DRC 管理器
-	var drcOpts []drc.ManagerOption
-	if pushCli != nil {
-		drcOpts = append(drcOpts, drc.WithOnSessionEnabled(func(gatewaySn, sessionID string) {
-			reqId, _ := tool.SimpleUUID()
-			room := "drc:heartbeat:" + gatewaySn
-			_, err := pushCli.BroadcastRoom(context.Background(), &socketpush.BroadcastRoomReq{
-				ReqId:   reqId,
-				Room:    room,
-				Event:   "drc:session_enabled",
-				Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s"}`, gatewaySn, sessionID),
-			})
-			if err != nil {
-				logx.Errorf("[drc-manager] socket push session_enabled failed: sn=%s err=%v", gatewaySn, err)
-			}
-		}))
-		drcOpts = append(drcOpts, drc.WithOnSessionDisabled(func(gatewaySn, sessionID string) {
-			reqId, _ := tool.SimpleUUID()
-			room := "drc:heartbeat:" + gatewaySn
-			_, err := pushCli.BroadcastRoom(context.Background(), &socketpush.BroadcastRoomReq{
-				ReqId:   reqId,
-				Room:    room,
-				Event:   "drc:session_disabled",
-				Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s"}`, gatewaySn, sessionID),
-			})
-			if err != nil {
-				logx.Errorf("[drc-manager] socket push session_disabled failed: sn=%s err=%v", gatewaySn, err)
-			}
-		}))
-		drcOpts = append(drcOpts, drc.WithOnSessionExpired(func(gatewaySn, sessionID, reason string) {
-			reqId, _ := tool.SimpleUUID()
-			room := "drc:heartbeat:" + gatewaySn
-			_, err := pushCli.BroadcastRoom(context.Background(), &socketpush.BroadcastRoomReq{
-				ReqId:   reqId,
-				Room:    room,
-				Event:   "drc:session_expired",
-				Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s","reason":"%s"}`, gatewaySn, sessionID, reason),
-			})
-			if err != nil {
-				logx.Errorf("[drc-manager] socket push session_expired failed: sn=%s err=%v", gatewaySn, err)
-			}
-		}))
+	djiOpts := []djisdk.ClientOption{
+		djisdk.WithPendingTTL(c.PendingTTL),
+		djisdk.WithReplyOptions(djisdk.ReplyOptions{
+			EnableEventReply:   c.UpstreamReply.EnableEventsReply,
+			EnableStatusReply:  c.UpstreamReply.EnableStatusReply,
+			EnableRequestReply: c.UpstreamReply.EnableRequestsReply,
+		}),
+		djisdk.WithDrcConfig(djisdk.DrcConfig{
+			HeartbeatInterval: c.DrcConfig.HeartbeatInterval,
+			HeartbeatTimeout:  c.DrcConfig.HeartbeatTimeout,
+		}),
 	}
-	drcMgr := drc.NewManager(djiCli, c.DrcConfig, drcOpts...)
 
-	djiCli.SetDrcUpHandler(hooks.NewDrcUpHandler(db, drcMgr, pushCli))
+	if pushCli != nil {
+		djiOpts = append(djiOpts,
+			djisdk.WithDrcSessionEnabled(func(gatewaySn, sessionID string) {
+				reqId, _ := tool.SimpleUUID()
+				room := "drc:heartbeat:" + gatewaySn
+				_, err := pushCli.BroadcastRoom(context.Background(), &socketpush.BroadcastRoomReq{
+					ReqId:   reqId,
+					Room:    room,
+					Event:   "drc:session_enabled",
+					Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s"}`, gatewaySn, sessionID),
+				})
+				if err != nil {
+					logx.Errorf("[drc-manager] socket push session_enabled failed: sn=%s err=%v", gatewaySn, err)
+				}
+			}),
+			djisdk.WithDrcSessionDisabled(func(gatewaySn, sessionID string) {
+				reqId, _ := tool.SimpleUUID()
+				room := "drc:heartbeat:" + gatewaySn
+				_, err := pushCli.BroadcastRoom(context.Background(), &socketpush.BroadcastRoomReq{
+					ReqId:   reqId,
+					Room:    room,
+					Event:   "drc:session_disabled",
+					Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s"}`, gatewaySn, sessionID),
+				})
+				if err != nil {
+					logx.Errorf("[drc-manager] socket push session_disabled failed: sn=%s err=%v", gatewaySn, err)
+				}
+			}),
+			djisdk.WithDrcSessionExpired(func(gatewaySn, sessionID, reason string) {
+				reqId, _ := tool.SimpleUUID()
+				room := "drc:heartbeat:" + gatewaySn
+				_, err := pushCli.BroadcastRoom(context.Background(), &socketpush.BroadcastRoomReq{
+					ReqId:   reqId,
+					Room:    room,
+					Event:   "drc:session_expired",
+					Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s","reason":"%s"}`, gatewaySn, sessionID, reason),
+				})
+				if err != nil {
+					logx.Errorf("[drc-manager] socket push session_expired failed: sn=%s err=%v", gatewaySn, err)
+				}
+			}),
+		)
+	}
+
+	djiOpts = append(djiOpts, hooks.WithDjiClientOptions(hooks.RegisterDjiClientOptions{
+		DB:                 db,
+		OnlineCache:        onlineCache,
+		PushCli:            pushCli,
+		DisableOsdSQLTrace: c.Telemetry.DisableOsdSQLTrace,
+	})...)
+	djiCli := djisdk.MustNewClient(c.MqttConfig, djiOpts...)
 
 	if err := djiCli.SubscribeAll(); err != nil {
 		logx.Errorf("[dji-cloud] subscribe topics failed: %v", err)
@@ -145,14 +145,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		DjiClient:   djiCli,
 		DB:          db,
 		OnlineCache: onlineCache,
-		DrcManager:  drcMgr,
 	}
 }
 
-// Close 释放 ServiceContext 持有的资源。
 func (s *ServiceContext) Close() {
-	if s.DrcManager != nil {
-		s.DrcManager.Close()
-	}
 	s.DjiClient.Close()
 }

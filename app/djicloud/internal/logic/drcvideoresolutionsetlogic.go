@@ -27,7 +27,7 @@ func NewDrcVideoResolutionSetLogic(ctx context.Context, svcCtx *svc.ServiceConte
 
 func (l *DrcVideoResolutionSetLogic) DrcVideoResolutionSet(in *djicloud.DrcVideoResolutionSetReq) (*djicloud.DrcVideoResolutionSetRes, error) {
 	deviceSn := in.GetDeviceSn()
-	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
 		return nil, err
 	}

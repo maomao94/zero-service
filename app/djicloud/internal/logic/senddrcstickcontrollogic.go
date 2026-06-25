@@ -26,7 +26,7 @@ func NewSendDrcStickControlLogic(ctx context.Context, svcCtx *svc.ServiceContext
 
 func (l *SendDrcStickControlLogic) SendDrcStickControl(in *djicloud.DrcStickControlReq) (*djicloud.DrcStickControlRes, error) {
 	deviceSn := in.GetDeviceSn()
-	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
 		return nil, err
 	}
