@@ -14,12 +14,13 @@
 | `topic.go` | MQTT Topic 构造函数和通配符 Pattern 函数 |
 | `error.go` | `DJIError` 类型 + `IsDJIError` 断言 |
 | `error_descriptions.go` | 错误码中文描述映射表 |
+| `drc.go` | DRC 会话管理器、DeviceSession、DrcConfig、SessionHook |
 
 ## Client 构造
 
 ### 工厂方法
 
-两个构造入口（`client.go:101-114`）：
+两个构造入口（`client.go:239-257`）：
 
 ```go
 // 自建 MQTT 连接
@@ -31,134 +32,127 @@ c := djisdk.NewClient(existingMqttClient, opts...)
 
 `MustNewClient` 在 MQTT 连接失败时 panic，调用方不能优雅降级。
 
+构造函数使用 `applyOptions(opts...) → buildClient()` 模式，避免重复解析 options。
+
 ### Option 列表
 
 | Option | 类型 | 说明 |
 |--------|------|------|
 | `WithPendingTTL(ttl)` | `time.Duration` | services_reply 等待超时（默认 30s） |
 | `WithReplyOptions(ro)` | `ReplyOptions` | 全局开关 events_reply/status_reply/requests_reply |
+| `WithOnlineChecker(checker)` | `func(gatewaySn string) bool` | 命令发送前在线预检 |
+| `WithDrcConfig(cfg)` | `DrcConfig` | 启用 DRC 会话管理（心跳间隔、超时） |
+| `WithDrcSessionEnabled(hook)` | `DrcSessionEnabledHook` | DRC 会话启用回调 |
+| `WithDrcSessionDisabled(hook)` | `DrcSessionDisabledHook` | DRC 会话停用回调 |
+| `WithDrcSessionExpired(hook)` | `DrcSessionExpiredHook` | DRC 会话过期回调 |
 
-## Handler 注册即事件分发
+## Handler 注册（Option 模式）
 
-### Handler 类型签名
+Handler **不再通过 Setter 方法注册**，统一使用 `WithXxx` option 在构造时注入。注册是 last-wins，不支持并发注册。
 
-| Handler | 签名 | 方向 | 对应 Topic |
-|---------|------|------|-----------|
-| `OnFlightTaskProgress` | `func(ctx, gatewaySn, *FlightTaskProgressEvent)` | up | events |
-| `OnFlightTaskReady` | `func(ctx, gatewaySn, *FlightTaskReadyEvent)` | up | events |
-| `OnReturnHomeInfo` | `func(ctx, gatewaySn, *ReturnHomeInfoEvent)` | up | events |
-| `OnCustomDataFromPsdk` | `func(ctx, gatewaySn, *CustomDataFromPsdkEvent)` | up | events |
-| `OnCustomDataFromEsdk` | `func(ctx, gatewaySn, *CustomDataFromEsdkEvent)` | up | events |
-| `OnHmsEventNotify` | `func(ctx, gatewaySn, *HmsEventData)` | up | events |
-| `OnRemoteLogFileUploadProgress` | `func(ctx, gatewaySn, *RemoteLogFileUploadProgressEvent)` | up | events |
-| `OnOtaProgress` | `func(ctx, gatewaySn, *OtaProgressEvent)` | up | events |
-| `OnTopoUpdate` | `func(ctx, gatewaySn, *TopoUpdateData)` | up | events |
-| `OnOsd` | `func(ctx, deviceSn, *OsdMessage)` | up | osd |
-| `OnState` | `func(ctx, deviceSn, *StateMessage)` | up | state |
-| `OnStatus` | `StatusHandler` 见下 | up | status |
-| `OnRequest` | `RequestHandler` 见下 | up | requests |
-| `OnDrcUp` | `DrcUpHandler` 见下 | up | drc/up |
-| `OnEvent(method, EventMethodFallback)` | 见下 | up | events(兜底) |
+### Handler Option 列表
+
+| Option | Handler 签名 | 方向 | 对应 Topic |
+|--------|-------------|------|-----------|
+| `WithFlightTaskProgressHandler` | `func(ctx, gatewaySn, *FlightTaskProgressEvent)` | up | events |
+| `WithFlightTaskReadyHandler` | `func(ctx, gatewaySn, *FlightTaskReadyEvent)` | up | events |
+| `WithReturnHomeInfoHandler` | `func(ctx, gatewaySn, *ReturnHomeInfoEvent)` | up | events |
+| `WithCustomDataFromPsdkHandler` | `func(ctx, gatewaySn, *CustomDataFromPsdkEvent)` | up | events |
+| `WithCustomDataFromEsdkHandler` | `func(ctx, gatewaySn, *CustomDataFromEsdkEvent)` | up | events |
+| `WithHmsEventNotifyHandler` | `func(ctx, gatewaySn, *HmsEventData)` | up | events |
+| `WithRemoteLogFileUploadProgressHandler` | `func(ctx, gatewaySn, *RemoteLogFileUploadProgressEvent)` | up | events |
+| `WithOtaProgressHandler` | `func(ctx, gatewaySn, *OtaProgressEvent)` | up | events |
+| `WithUpdateTopoHandler` | `func(ctx, gatewaySn, *TopoUpdateData)` | up | status |
+| `WithOsdHandler` | `func(ctx, deviceSn, *OsdMessage)` | up | osd |
+| `WithStateHandler` | `func(ctx, deviceSn, *StateMessage)` | up | state |
+| `WithStatusHandler` | `StatusHandler` | up | status |
+| `WithRequestHandler` | `RequestHandler` | up | requests |
+| `WithDrcUpHandler` | `DrcUpHandler` | up | drc/up |
 
 有返回值的 Handler：
 - `StatusHandler` `func(ctx, gatewaySn, *StatusMessage) int` — 返回 result 码，ReplyOptions 控制是否发 status_reply
 - `RequestHandler` `func(ctx, gatewaySn, *RequestMessage) (result int, output any, err error)` — 返回 result + output，ReplyOptions 控制是否发 requests_reply
 - `DrcUpHandler` `func(ctx, gatewaySn, *DrcUpMessage, parsed any) error` — parsed 已由 DrcUnmarshalUpData 反序列化为具体类型或 `DrcUnknownUpData`
-- `EventMethodFallback` `func(ctx, *EventMessage) (result int, err error)` — 未命中预置 On* 时调用
 
-### 事件分发层级
+### 事件分发
 
-`HandleEvents`（`client.go:195-224`）的三级分发：
+`HandleEvents`（`client.go`）：
+1. **预置 On\* 分支**（`tryDispatchEventNotify`）：switch on method，命中已注册的 On* handler 则执行
+2. **默认行为**：未命中时打印 `logx.Infof("[dji-sdk] no handler for event method=%s, payload=%s")`，不做回调
 
-1. **预置 On\* 分支**（`tryDispatchEventNotify`，`client.go:230-343`）：switch on method，命中已注册的 On* handler 则执行，返回 handled=true
-2. **EventMethodFallback 兜底**（`eventMethodFallbacks[method]`）：预置未命中时调用注册的 fallback
-3. **静默丢弃**：预置未命中且无 fallback 时不做任何操作
+添加新事件类型需要：增加 method 常量（`method.go`）、增加 option 函数（`client.go`）、增加 handler 字段（`clientOptions` + `Client`）、增加 `case` 分支（`tryDispatchEventNotify`）、在 `buildClient` 中映射。
 
-添加新事件类型需要：增加 method 常量（`method.go`）、增加 handler 字段 + setter（`client.go`）、增加 `case` 分支（`tryDispatchEventNotify`）。
+### 注册示例
 
-### 注册时机
+```go
+opts := []djisdk.ClientOption{
+    djisdk.WithPendingTTL(30 * time.Second),
+    djisdk.WithFlightTaskProgressHandler(myProgressHandler),
+    djisdk.WithOsdHandler(myOsdHandler),
+    djisdk.WithDrcConfig(djisdk.DrcConfig{
+        HeartbeatInterval: 2 * time.Second,
+        HeartbeatTimeout:  300 * time.Second,
+    }),
+    djisdk.WithDrcSessionEnabled(func(gatewaySn, sessionID string) { ... }),
+}
+c := djisdk.MustNewClient(mqttConfig, opts...)
+```
 
-Handler 通过 Setter 赋值（不是通过 interface 或 map），注册是最后一次写入生效（last-wins），不支持并发注册。所有注册应在 `SubscribeAll` 之前完成。
+## DRC 会话管理
+
+DRC Manager 已内置于 Client（`drc.go`），构造时通过 `WithDrcConfig` + SessionHook 激活。
+
+### 暴露的 API（在 Client 上）
+
+| 方法 | 说明 |
+|------|------|
+| `EnableDrc(ctx, gatewaySn, opts...)` | 启用设备 DRC 模式，支持 `WithDrcMaxTimeout(d)` |
+| `DisableDrc(ctx, gatewaySn)` | 停用设备 DRC 模式 |
+| `DrcNextSeq(gatewaySn)` | 获取递增序号（杆量控制用） |
+| `DrcStatus(gatewaySn)` | 查询设备 DRC 状态快照 |
+
+**无 manager 时调用上述方法返回错误**，不静默通过。
+
+### 心跳桥接
+
+`HandleDrcUp` 收到 `heart_beat` 上行时，自动调用 `drcManager.OnDeviceHeartbeat()` 刷新存活时间，再调用外部 `onDrcUp` handler。业务方只需通过 `WithDrcUpHandler` 注册持久化/推送逻辑，无需手动管理心跳通知。
+
+### 并发模型
+
+详见 `drc-concurrency.md`：mark-and-sweep 模式 + 无交叉加锁 + atomic 字段保护。
 
 ## 命令下发
 
 ### 阻塞模式（SendCommand）
 
-`client.go:484-513`：
-
 ```go
 tid, err := c.SendCommand(ctx, gatewaySn, method, data)
-// tid 可用于追踪；err 包含 DJI 设备返回的 error code
 ```
 
-流程：生成 UUID (tid/bid) → 构建 ServiceRequest → Publish 到 services topic → 通过 mqttx.RequestReply 阻塞等待 services_reply → 超时或非 0 result 返回 error。
+流程：生成 UUID (tid/bid) → 构建 ServiceRequest → Publish 到 services topic → 通过 mqttx.RequestReply 阻塞等待 services_reply。
 
 ### 即发即忘（SendCommandFireAndForget）
 
-`client.go:523-540`：不发 services_reply，不等待，只返回可能的 Publish 错误。用于不需要确认的场景。
+不等待应答，只返回可能的 Publish 错误。
 
 ### DRC 下行（publishDrcDown）
 
-`client.go:1078-1089`：发布到 drc/down topic，即发即忘，无 services_reply。用于杆量控制、心跳、紧急停桨。
-
-### 属性设置（SetProperty）
-
-`client.go:546-571`：类似 SendCommand，但使用 property/set 主题 + property/set_reply 应答。
-
-参考文件：
-- `common/djisdk/client.go:484-571`
+发布到 drc/down topic，即发即忘。用于杆量控制、心跳、紧急停桨。
 
 ### 在线预检查
 
-通过 `SetOnlineChecker` 设置后，`SendCommand` 每次调用前检查 `onlineChecker(gatewaySn)`，离线时快速拒绝。
-
-## DRC 协议处理
-
-### 上行反序列化（protocol_drc.go）
-
-`DrcUnmarshalUpData(method, data)` 按 method 分派到具体类型：
-- `heart_beat` → `DrcHeartBeatUpData`
-- `drc_initial_state_subscribe` → `DrcInitialStateSubscribeUpData`
-- `hsi_info_push` → `DrcHsiInfoPushData`
-- `delay_info_push` → `DrcDelayInfoPushData`
-- `osd_info_push` → `DrcOsdInfoPushData`
-- 未知 method → `DrcUnknownUpData`
-
-### JSON key 兼容
-
-`DrcHsiInfoPushData` 自定义 `UnmarshalJSON` 处理 `around_distance`/`around_distances` 字段名差异。
-
-## Topic 函数（topic.go）
-
-每个 Topic 通道有一对函数：
-
-```go
-// 用于 Publish 下发（指定 gatewaySn）
-topic := djisdk.ServicesTopic(gatewaySn)  // → "thing/product/{gateway_sn}/services"
-
-// 用于 Subscribe 通配模式（固定 Pattern）
-pattern := djisdk.ServicesReplyTopicPattern()  // → "thing/product/+/services_reply"
-```
-
-支持的 Topic 组：`services`、`services_reply`、`events`、`events_reply`、`property/set`、`property/set_reply`、`osd`、`state`、`status`、`status_reply`、`requests`、`requests_reply`、`drc/down`、`drc/up`。
+通过 `WithOnlineChecker` 设置后，`SendCommand` 每次调用前检查 `onlineChecker(gatewaySn)`。
 
 ## 错误处理
 
 - `djisdk.NewDJIError(code)` — 通过 protobuf 枚举名 + 中文描述构造 `DJIError`
-- `djisdk.IsDJIError(err)` — 类型断言，返回 `(bool, *DJIError)`
-- `PlatformResultOK(0)` / `PlatformResultHandlerError(1)` / `PlatformResultTimeout(2)` — status_reply/events_reply/requests_reply 的 data.result 取值。
-  - `PlatformResultTimeout(2)` **只能用于**实际超时场景，不能做其他占位（与 DJI 协议约定对齐）。
-
-参考文件：
-- `common/djisdk/error.go`
-- `common/djisdk/error_descriptions.go`
-- `common/djisdk/protocol.go:7-11`
+- `djisdk.IsDJIError(err)` — 类型断言
+- `PlatformResultOK(0)` / `PlatformResultHandlerError(1)` / `PlatformResultTimeout(2)` — reply 包的 result 取值。
 
 ## 常见陷阱
 
-1. **`tryDispatchEventNotify` 是 switch + 函数指针**：添加事件类型要改 3 处（method 常量、handler 字段 + setter、case 分支），容易遗漏。记得同时更新 `doc.go` 的协议方向说明。
-2. **`MustNewClient` panic**：调用方如果无法接受 panic，应自行处理 MQTT 连接失败逻辑或使用 `NewClient` 复用已有连接。
-3. **`OnUpdateTopo` 已废弃**：`client.go:430-432` 保留 `OnUpdateTopo` 作为 `OnTopoUpdate` 的别名，新代码请用后者。
-4. **EventMethodFallback 只在预置 On* 未注册时生效**：预置 On* 注册后 EventMethodFallback 不会执行。
-5. **ReplyOptions 是全局开关**：不影响 handler 本身的执行，只控制是否发布对应的 \_reply 消息。
-6. **Handler 注册不是 goroutine safe**：所有 Setter 直接赋值函数指针字段，不支持并发注册。
+1. **添加事件类型要改 4 处**：method 常量、option 函数、handler 字段（clientOptions + Client）、case 分支、buildClient 映射。
+2. **`MustNewClient` panic**：无法接受 panic 的场景使用 `NewClient` 复用已有连接。
+3. **ReplyOptions 是全局开关**：不影响 handler 执行，只控制是否发布 _reply 消息。
+4. **DRC 心跳通知由 Client 内部处理**：`WithDrcUpHandler` 只需注册业务逻辑（DB+推送），不需要手动调用 `OnDeviceHeartbeat`。
+5. **无 DrcConfig 时 DRC API 返回错误**：不会静默跳过，调用方需处理错误或确保配置正确。
