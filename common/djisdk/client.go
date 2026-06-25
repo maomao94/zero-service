@@ -13,11 +13,6 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-// EventMethodFallback 在 thing/.../events 上，对「本 Client 已注册的某个 method 字符串」的兜底处理。
-// 当 **没有** 命中 SDK 预置的**通知型** method 分支（见 tryDispatchEventNotify）时才会调用，见 OnEvent 与 eventMethodFallbacks。
-// need_reply=1 时，result 会写入 events_reply 的 data.result；err 非 nil 且 result 为 0 时视为 PlatformResultHandlerError。
-type EventMethodFallback func(ctx context.Context, event *EventMessage) (result int, err error)
-
 // StatusHandler 处理 sys/.../status 上行。返回值只表达业务处理结果；是否发布 status_reply 由 Client 的 ReplyOptions 控制。
 type StatusHandler func(ctx context.Context, gatewaySn string, data *StatusMessage) int
 
@@ -50,8 +45,6 @@ type clientOptions struct {
 	pendingTTL   time.Duration
 	replyOptions ReplyOptions
 
-	eventMethodFallbacks map[string]EventMethodFallback
-
 	onFlightTaskProgress               func(ctx context.Context, gatewaySn string, data *FlightTaskProgressEvent)
 	onFlightTaskReady                  func(ctx context.Context, gatewaySn string, data *FlightTaskReadyEvent)
 	onReturnHomeInfo                   func(ctx context.Context, gatewaySn string, data *ReturnHomeInfoEvent)
@@ -80,15 +73,6 @@ func WithPendingTTL(ttl time.Duration) ClientOption {
 func WithReplyOptions(replyOptions ReplyOptions) ClientOption {
 	return func(options *clientOptions) {
 		options.replyOptions = replyOptions
-	}
-}
-
-func WithEventFallback(method string, handler EventMethodFallback) ClientOption {
-	return func(options *clientOptions) {
-		if options.eventMethodFallbacks == nil {
-			options.eventMethodFallbacks = make(map[string]EventMethodFallback)
-		}
-		options.eventMethodFallbacks[method] = handler
 	}
 }
 
@@ -184,9 +168,8 @@ func WithOnlineChecker(checker func(gatewaySn string) bool) ClientOption {
 
 func defaultClientOptions() clientOptions {
 	return clientOptions{
-		pendingTTL:          defaultPendingTTL,
-		replyOptions:        DefaultReplyOptions(),
-		eventMethodFallbacks: make(map[string]EventMethodFallback),
+		pendingTTL:   defaultPendingTTL,
+		replyOptions: DefaultReplyOptions(),
 	}
 }
 
@@ -194,11 +177,10 @@ func defaultClientOptions() clientOptions {
 // **通配订阅** 收设备上行（如 *reply、events、osd、requests、set_reply、drc/up 等）。见 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html)。
 // 含：services、events、property、osd/state、sys、requests、DRC 等，详情见包级 doc.go 与各 Topic 函数注释。
 type Client struct {
-	mqttClient           mqttx.Client
-	pendingTTL           time.Duration
-	replyOptions         ReplyOptions
-	eventMethodFallbacks map[string]EventMethodFallback
-	onlineChecker        func(gatewaySn string) bool
+	mqttClient   mqttx.Client
+	pendingTTL   time.Duration
+	replyOptions ReplyOptions
+	onlineChecker func(gatewaySn string) bool
 
 	onFlightTaskProgress func(ctx context.Context, gatewaySn string, data *FlightTaskProgressEvent)
 	onFlightTaskReady    func(ctx context.Context, gatewaySn string, data *FlightTaskReadyEvent)
@@ -216,13 +198,18 @@ type Client struct {
 	onDrcUp              DrcUpHandler
 }
 
-func MustNewClient(config mqttx.MqttConfig, opts ...ClientOption) *Client {
+func applyOptions(opts ...ClientOption) clientOptions {
 	opt := defaultClientOptions()
 	for _, o := range opts {
 		if o != nil {
 			o(&opt)
 		}
 	}
+	return opt
+}
+
+func MustNewClient(config mqttx.MqttConfig, opts ...ClientOption) *Client {
+	opt := applyOptions(opts...)
 	return buildClient(mqttx.MustNewClient(config, replyRouters(opt.pendingTTL)...), &opt)
 }
 
@@ -237,24 +224,15 @@ func replyRouters(ttl time.Duration) []mqttx.ClientOption {
 }
 
 func NewClient(mqttClient mqttx.Client, opts ...ClientOption) *Client {
-	opt := defaultClientOptions()
-	for _, o := range opts {
-		if o != nil {
-			o(&opt)
-		}
-	}
+	opt := applyOptions(opts...)
 	return buildClient(mqttClient, &opt)
 }
 
 func buildClient(mqttClient mqttx.Client, opt *clientOptions) *Client {
-	if opt.eventMethodFallbacks == nil {
-		opt.eventMethodFallbacks = make(map[string]EventMethodFallback)
-	}
 	return &Client{
 		mqttClient:                          mqttClient,
 		pendingTTL:                          opt.pendingTTL,
 		replyOptions:                        opt.replyOptions,
-		eventMethodFallbacks:                opt.eventMethodFallbacks,
 		onFlightTaskProgress:                opt.onFlightTaskProgress,
 		onFlightTaskReady:                   opt.onFlightTaskReady,
 		onReturnHomeInfo:                    opt.onReturnHomeInfo,
@@ -319,9 +297,9 @@ func logFields(fields ...any) string {
 
 // HandleEvents 处理 thing/.../events。
 //
-//	① 先走 tryDispatchEventNotify：SDK 预置的**通知类** method（进度、HMS 等），设备侧多 **need_reply=0**；
-//	② 未命中再跑 OnEvent 的 EventMethodFallback（扩展 method 或需自定义 events_reply 的 result 时）；
-//	最后若 need_reply=1，用合并后的 result 发 events_reply（① 中成功一般为 0，非 0 多为本 SDK 解包 data 失败）。
+//	先走 tryDispatchEventNotify：SDK 预置的通知类 method（进度、HMS 等），设备侧多 need_reply=0；
+//	未命中则打印 payload 日志（默认行为），可通过新增 option 配置回调；
+//	若 need_reply=1，用 result 发 events_reply（成功为 0，失败为 1）。
 func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string, _ string) error {
 	var event EventMessage
 	if err := json.Unmarshal(payload, &event); err != nil {
@@ -332,16 +310,7 @@ func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string,
 
 	handled, replyResult := c.tryDispatchEventNotify(ctx, event.Gateway, event.Method, payload)
 	if !handled {
-		if h, ok := c.eventMethodFallbacks[event.Method]; ok {
-			var err error
-			replyResult, err = h(ctx, &event)
-			if err != nil {
-				logx.WithContext(ctx).Errorf("[dji-sdk] event fallback error: method=%s err=%v", event.Method, err)
-				if replyResult == PlatformResultOK {
-					replyResult = PlatformResultHandlerError
-				}
-			}
-		}
+		logx.WithContext(ctx).Infof("[dji-sdk] no handler for event method=%s, payload=%s", event.Method, string(payload))
 	}
 
 	if event.NeedReply == 1 && c.replyOptions.EnableEventReply {
