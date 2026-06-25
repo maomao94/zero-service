@@ -223,7 +223,7 @@ func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string,
 	return nil
 }
 
-// tryDispatchEventNotify 仅处理本 SDK 已**按 method 建模**的若干**设备上行通知**（OnFlightTaskProgress/Ready、HMS 等）：
+// tryDispatchEventNotify 仅处理本 SDK 已**按 method 建模**的若干**设备上行通知**（OnFlightTaskProgress/Ready、HMS、OTA、日志等）。
 // 与协议一致时，这些多为**只上报、不要求 events_reply**（need_reply=0），回调侧只做落库/推送等。
 // 返回的 result 供极少数「仍带 need_reply=1」或解包 data 失败时写回 events_reply；成功时恒为 PlatformResultOK。
 // 返回 handled=true 表示本 method 已由本分支处理，**不再**调用 eventMethodFallbacks。未注册的 method 走 OnEvent 兜底。
@@ -315,18 +315,6 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 			c.onOtaProgress(ctx, gatewaySn, &msg.Data)
 			return true, PlatformResultOK
 		}
-	case MethodUpdateTopo:
-		if c.onTopoUpdate != nil {
-			var msg struct {
-				Data TopoUpdateData `json:"data"`
-			}
-			if err := json.Unmarshal(raw, &msg); err != nil {
-				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal TopoUpdateData failed: %v", err)
-				return true, PlatformResultHandlerError
-			}
-			c.onTopoUpdate(ctx, gatewaySn, &msg.Data)
-			return true, PlatformResultOK
-		}
 	case MethodCustomDataTransmissionFromEsdk:
 		if c.onCustomDataFromEsdk != nil {
 			var msg struct {
@@ -415,20 +403,29 @@ func (c *Client) OnHmsEventNotify(handler func(ctx context.Context, gatewaySn st
 	c.onHmsEventNotify = handler
 }
 
+// OnRemoteLogFileUploadProgress 注册远程日志文件上传进度上报钩子。
+// 方向 up：设备→云平台。对应 method: fileupload_progress。
+// 设备上报远程日志文件的上传进度，钩子只负责通知。
+//   - handler: 回调函数，携带已解析的 RemoteLogFileUploadProgressEvent 结构体
 func (c *Client) OnRemoteLogFileUploadProgress(handler func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent)) {
 	c.onRemoteLogProgress = handler
 }
 
+// OnOtaProgress 注册 OTA 固件升级进度上报钩子。
+// 方向 up：设备→云平台。对应 method: ota_progress。
+// 设备在固件升级过程中周期性上报升级进度，钩子只负责通知。
+//   - handler: 回调函数，携带已解析的 OtaProgressEvent 结构体
 func (c *Client) OnOtaProgress(handler func(ctx context.Context, gatewaySn string, data *OtaProgressEvent)) {
 	c.onOtaProgress = handler
 }
 
+// OnTopoUpdate 注册设备拓扑更新上报钩子。
+// Topic: sys/product/{gateway_sn}/status（设备管理 Status topic，非 events）。
+// 方向 up：设备→云平台。对应 method: update_topo。
+// 设备（机巢）上线或在网期间拓扑变更时，通过 status 通道上报自身及子设备拓扑信息，钩子只负责通知。
+//   - handler: 回调函数，携带已解析的 TopoUpdateData 结构体
 func (c *Client) OnTopoUpdate(handler func(ctx context.Context, gatewaySn string, data *TopoUpdateData)) {
 	c.onTopoUpdate = handler
-}
-
-func (c *Client) OnUpdateTopo(handler func(ctx context.Context, gatewaySn string, data *TopoUpdateData)) {
-	c.OnTopoUpdate(handler)
 }
 
 // OnOsd 注册设备 OSD 遥测数据上报钩子。
@@ -1451,7 +1448,7 @@ func (c *Client) HandleState(ctx context.Context, payload []byte, topic string, 
 	return nil
 }
 
-// HandleStatus 处理 sys/product/+/status；先执行业务分发，再按 ReplyOptions.EnableStatusReply 决定是否发布 status_reply。
+// HandleStatus 处理 sys/product/+/status；先按 method 预分发已知强类型，再交给 OnStatus 全局回调，最后按 ReplyOptions 决定是否发布 status_reply。
 func (c *Client) HandleStatus(ctx context.Context, payload []byte, topic string, _ string) error {
 	var msg StatusMessage
 	if err := json.Unmarshal(payload, &msg); err != nil {
@@ -1461,8 +1458,8 @@ func (c *Client) HandleStatus(ctx context.Context, payload []byte, topic string,
 	gatewaySn := extractDeviceSnFromTopic(topic)
 	logx.WithContext(ctx).Infof("[dji-sdk] status %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid))
 
-	result := PlatformResultOK
-	if c.onStatus != nil {
+	handled, result := c.tryDispatchStatusNotify(ctx, gatewaySn, msg.Method, payload)
+	if !handled && c.onStatus != nil {
 		result = c.onStatus(ctx, gatewaySn, &msg)
 	}
 	if !c.replyOptions.EnableStatusReply {
@@ -1470,6 +1467,26 @@ func (c *Client) HandleStatus(ctx context.Context, payload []byte, topic string,
 		return nil
 	}
 	return c.replyStatus(ctx, gatewaySn, msg.Tid, msg.Bid, result)
+}
+
+// tryDispatchStatusNotify 处理本 SDK 已按 method 建模的 status 上行（如 update_topo）。
+// 返回 handled=true 表示已由强类型分支处理，不再调用 OnStatus；result 供写 status_reply。
+func (c *Client) tryDispatchStatusNotify(ctx context.Context, gatewaySn, method string, raw []byte) (handled bool, result int) {
+	switch method {
+	case MethodUpdateTopo:
+		if c.onTopoUpdate != nil {
+			var msg struct {
+				Data TopoUpdateData `json:"data"`
+			}
+			if err := json.Unmarshal(raw, &msg); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal TopoUpdateData failed: %v", err)
+				return true, PlatformResultHandlerError
+			}
+			c.onTopoUpdate(ctx, gatewaySn, &msg.Data)
+			return true, PlatformResultOK
+		}
+	}
+	return false, PlatformResultOK
 }
 
 // replyStatus 向 [status_reply](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/device.html) 发报文，data.result 同 EventReplyData 简形时与 events_reply 的 result 语义一致，特殊 method 以协议为准。

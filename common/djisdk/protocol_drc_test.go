@@ -701,7 +701,7 @@ func TestOtaProgressAndUpdateTopoEventHooks(t *testing.T) {
 			t.Fatalf("unexpected ota progress event: gateway=%s data=%+v", gatewaySn, data)
 		}
 	})
-	client.OnUpdateTopo(func(ctx context.Context, gatewaySn string, data *TopoUpdateData) {
+	client.OnTopoUpdate(func(ctx context.Context, gatewaySn string, data *TopoUpdateData) {
 		topoCalled = true
 		if gatewaySn != "gateway-1" || data.Type != 3 || len(data.SubDevices) != 1 || data.SubDevices[0].SN != "payload-1" {
 			t.Fatalf("unexpected topo event: gateway=%s data=%+v", gatewaySn, data)
@@ -713,8 +713,8 @@ func TestOtaProgressAndUpdateTopoEventHooks(t *testing.T) {
 		t.Fatalf("HandleEvents(ota) error = %v", err)
 	}
 	topoPayload := []byte(`{"tid":"tid-4","bid":"bid-4","gateway":"gateway-1","timestamp":1710000000000,"method":"update_topo","data":{"type":3,"sub_type":0,"device_secret":"secret","sub_devices":[{"sn":"payload-1","type":2,"sub_type":1,"index":"0"}]}}`)
-	if err := client.HandleEvents(context.Background(), topoPayload, EventsTopic("gateway-1"), ""); err != nil {
-		t.Fatalf("HandleEvents(topo) error = %v", err)
+	if err := client.HandleStatus(context.Background(), topoPayload, StatusTopic("gateway-1"), ""); err != nil {
+		t.Fatalf("HandleStatus(topo) error = %v", err)
 	}
 	if !otaCalled || !topoCalled {
 		t.Fatalf("hooks called ota=%v topo=%v", otaCalled, topoCalled)
