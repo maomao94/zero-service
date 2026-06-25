@@ -26,7 +26,7 @@ type DrcUpHandler func(ctx context.Context, gatewaySn string, msg *DrcUpMessage,
 
 // RequestHandler 处理 thing/.../requests 上行。返回值只表达业务处理结果与输出；是否发布 requests_reply 由 Client 的 ReplyOptions 控制。
 // err 非 nil 时若 result 为 0 会视为 PlatformResultHandlerError 再组包，避免启用回复时无响应。
-type RequestHandler func(ctx context.Context, gatewaySn string, req *RequestMessage) (result int, output any, err error)
+type RequestHandler func(ctx context.Context, gatewaySn string, msg *RequestMessage) (result int, output any, err error)
 
 type ReplyOptions struct {
 	EnableEventReply   bool

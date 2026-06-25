@@ -40,7 +40,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0
 	github.com/hibiken/asynq v0.26.0
 	github.com/jinzhu/copier v0.4.0
-	github.com/larksuite/oapi-sdk-go/v3 v3.9.6
+	github.com/larksuite/oapi-sdk-go/v3 v3.9.7
 	github.com/lib/pq v1.12.3
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2
 	github.com/minio/minio-go/v7 v7.2.0
@@ -57,7 +57,7 @@ require (
 	github.com/shopspring/decimal v1.4.0
 	github.com/songzhibin97/gkit v1.3.0
 	github.com/spf13/cast v1.10.0
-	github.com/taosdata/driver-go/v3 v3.8.0
+	github.com/taosdata/driver-go/v3 v3.8.1
 	github.com/teambition/rrule-go v1.8.2
 	github.com/tidwall/gjson v1.19.0
 	github.com/twpayne/go-geos v0.20.4
@@ -82,7 +82,7 @@ require (
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/driver/sqlite v1.6.0
-	gorm.io/gorm v1.31.1
+	gorm.io/gorm v1.31.2
 	gorm.io/plugin/opentelemetry v0.1.16
 	gorm.io/plugin/soft_delete v1.2.1
 	modernc.org/sqlite v1.53.0
