@@ -1024,3 +1024,38 @@ Removed UpdateOrCreate, CreateRecord, GormDB from common/gormx/upsert.go. Refact
 ### Next Steps
 
 - None - task complete
+
+
+## Session 81: 蛙跳机巢模型调整 + djisdk/djicloud Trellis Spec 引导
+
+**Date**: 2026-06-25
+**Task**: 蛙跳机巢模型调整 + djisdk/djicloud Trellis Spec 引导
+**Branch**: `master`
+
+### Summary
+
+1. 蛙跳场景：update_topo handler 中 Domain=0/1 跳过 GatewaySn 覆盖，ListDevicesReq 拆出 topo_gateway_sn 字段。\n2. Trellis Spec 引导：新建 djisdk-guidelines.md、djicloud-hooks-guidelines.md、djicloud-models.md，补充 spec/index.md 根导航。\n3. 3 个未完成测试为预存 SQLite 环境问题，非本次引入。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ec11745f` | (see git log) |
+| `7bd977e3` | (see git log) |
+| `e145fe4e` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
