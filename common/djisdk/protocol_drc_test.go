@@ -701,7 +701,7 @@ func TestOtaProgressAndUpdateTopoEventHooks(t *testing.T) {
 			t.Fatalf("unexpected ota progress event: gateway=%s data=%+v", gatewaySn, data)
 		}
 	})
-	client.OnTopoUpdate(func(ctx context.Context, gatewaySn string, data *TopoUpdateData) {
+	client.OnUpdateTopo(func(ctx context.Context, gatewaySn string, data *TopoUpdateData) {
 		topoCalled = true
 		if gatewaySn != "gateway-1" || data.Type != 3 || len(data.SubDevices) != 1 || data.SubDevices[0].SN != "payload-1" {
 			t.Fatalf("unexpected topo event: gateway=%s data=%+v", gatewaySn, data)

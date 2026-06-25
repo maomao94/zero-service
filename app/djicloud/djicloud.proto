@@ -1509,7 +1509,7 @@ message DeviceOnlineRes {
 }
 
 // ==================== 设备管理（Device）消息 ====================
-// update_topo 为 sys/product/{gateway_sn}/status 上行，由 common/djisdk.OnTopoUpdate 处理。
+// update_topo 为 sys/product/{gateway_sn}/status 上行，由 common/djisdk.OnUpdateTopo 处理。
 
 // DeviceInfo 设备基础信息。
 // firmware_version 与 hardware_version 从 DJI state 物模型快照中提取，对应 pushMode=1 的状态数据；空上报不会覆盖已有非空版本。

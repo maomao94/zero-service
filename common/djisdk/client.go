@@ -85,12 +85,12 @@ type Client struct {
 	onFlightTaskProgress func(ctx context.Context, gatewaySn string, data *FlightTaskProgressEvent)
 	onFlightTaskReady    func(ctx context.Context, gatewaySn string, data *FlightTaskReadyEvent)
 	onReturnHomeInfo     func(ctx context.Context, gatewaySn string, data *ReturnHomeInfoEvent)
-	onCustomDataFromPsdk func(ctx context.Context, gatewaySn string, data *CustomDataFromPsdkEvent)
-	onCustomDataFromEsdk func(ctx context.Context, gatewaySn string, data *CustomDataFromEsdkEvent)
-	onHmsEventNotify     func(ctx context.Context, gatewaySn string, data *HmsEventData)
-	onRemoteLogProgress  func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent)
-	onOtaProgress        func(ctx context.Context, gatewaySn string, data *OtaProgressEvent)
-	onTopoUpdate         func(ctx context.Context, gatewaySn string, data *TopoUpdateData)
+	onCustomDataTransmissionFromPsdk func(ctx context.Context, gatewaySn string, data *CustomDataFromPsdkEvent)
+	onCustomDataTransmissionFromEsdk func(ctx context.Context, gatewaySn string, data *CustomDataFromEsdkEvent)
+	onHmsEventNotify                func(ctx context.Context, gatewaySn string, data *HmsEventData)
+	onRemoteLogFileUploadProgress   func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent)
+	onOtaProgress                   func(ctx context.Context, gatewaySn string, data *OtaProgressEvent)
+	onUpdateTopo                    func(ctx context.Context, gatewaySn string, data *TopoUpdateData)
 	onOsd                func(ctx context.Context, deviceSn string, data *OsdMessage)
 	onState              func(ctx context.Context, deviceSn string, data *StateMessage)
 	onStatus             StatusHandler
@@ -268,7 +268,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 			return true, PlatformResultOK
 		}
 	case MethodCustomDataTransmissionFromPsdk:
-		if c.onCustomDataFromPsdk != nil {
+		if c.onCustomDataTransmissionFromPsdk != nil {
 			var msg struct {
 				Data CustomDataFromPsdkEvent `json:"data"`
 			}
@@ -276,7 +276,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal CustomDataFromPsdkEvent failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.onCustomDataFromPsdk(ctx, gatewaySn, &msg.Data)
+			c.onCustomDataTransmissionFromPsdk(ctx, gatewaySn, &msg.Data)
 			return true, PlatformResultOK
 		}
 	case MethodHmsEventNotify:
@@ -292,7 +292,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 			return true, PlatformResultOK
 		}
 	case MethodRemoteLogFileUploadProgress:
-		if c.onRemoteLogProgress != nil {
+		if c.onRemoteLogFileUploadProgress != nil {
 			var msg struct {
 				Data RemoteLogFileUploadProgressEvent `json:"data"`
 			}
@@ -300,7 +300,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal RemoteLogFileUploadProgressEvent failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.onRemoteLogProgress(ctx, gatewaySn, &msg.Data)
+			c.onRemoteLogFileUploadProgress(ctx, gatewaySn, &msg.Data)
 			return true, PlatformResultOK
 		}
 	case MethodOtaProgress:
@@ -316,7 +316,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 			return true, PlatformResultOK
 		}
 	case MethodCustomDataTransmissionFromEsdk:
-		if c.onCustomDataFromEsdk != nil {
+		if c.onCustomDataTransmissionFromEsdk != nil {
 			var msg struct {
 				Data CustomDataFromEsdkEvent `json:"data"`
 			}
@@ -324,7 +324,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal CustomDataFromEsdkEvent failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.onCustomDataFromEsdk(ctx, gatewaySn, &msg.Data)
+			c.onCustomDataTransmissionFromEsdk(ctx, gatewaySn, &msg.Data)
 			return true, PlatformResultOK
 		}
 	}
@@ -379,20 +379,20 @@ func (c *Client) OnReturnHomeInfo(handler func(ctx context.Context, gatewaySn st
 	c.onReturnHomeInfo = handler
 }
 
-// OnCustomDataFromPsdk 注册 PSDK 自定义数据上报钩子。
+// OnCustomDataTransmissionFromPsdk 注册 PSDK 自定义数据上报钩子。
 // 方向 up：设备→云平台。对应 method: custom_data_transmission_from_psdk。
 // PSDK 负载设备有自定义数据上报时通过 events topic 推送，钩子只负责通知。
 //   - handler: 回调函数，携带已解析的 CustomDataFromPsdkEvent 结构体
-func (c *Client) OnCustomDataFromPsdk(handler func(ctx context.Context, gatewaySn string, data *CustomDataFromPsdkEvent)) {
-	c.onCustomDataFromPsdk = handler
+func (c *Client) OnCustomDataTransmissionFromPsdk(handler func(ctx context.Context, gatewaySn string, data *CustomDataFromPsdkEvent)) {
+	c.onCustomDataTransmissionFromPsdk = handler
 }
 
-// OnCustomDataFromEsdk 注册 ESDK 自定义数据上报钩子。
+// OnCustomDataTransmissionFromEsdk 注册 ESDK 自定义数据上报钩子。
 // 方向 up：设备→云平台。对应 method: custom_data_transmission_from_esdk。
 // ESDK 负载设备有自定义数据上报时通过 events topic 推送，钩子只负责通知。
 //   - handler: 回调函数，携带已解析的 CustomDataFromEsdkEvent 结构体
-func (c *Client) OnCustomDataFromEsdk(handler func(ctx context.Context, gatewaySn string, data *CustomDataFromEsdkEvent)) {
-	c.onCustomDataFromEsdk = handler
+func (c *Client) OnCustomDataTransmissionFromEsdk(handler func(ctx context.Context, gatewaySn string, data *CustomDataFromEsdkEvent)) {
+	c.onCustomDataTransmissionFromEsdk = handler
 }
 
 // OnHmsEventNotify 注册 HMS 健康告警上报钩子。
@@ -408,7 +408,7 @@ func (c *Client) OnHmsEventNotify(handler func(ctx context.Context, gatewaySn st
 // 设备上报远程日志文件的上传进度，钩子只负责通知。
 //   - handler: 回调函数，携带已解析的 RemoteLogFileUploadProgressEvent 结构体
 func (c *Client) OnRemoteLogFileUploadProgress(handler func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent)) {
-	c.onRemoteLogProgress = handler
+	c.onRemoteLogFileUploadProgress = handler
 }
 
 // OnOtaProgress 注册 OTA 固件升级进度上报钩子。
@@ -419,13 +419,13 @@ func (c *Client) OnOtaProgress(handler func(ctx context.Context, gatewaySn strin
 	c.onOtaProgress = handler
 }
 
-// OnTopoUpdate 注册设备拓扑更新上报钩子。
+// OnUpdateTopo 注册设备拓扑更新上报钩子。
 // Topic: sys/product/{gateway_sn}/status（设备管理 Status topic，非 events）。
 // 方向 up：设备→云平台。对应 method: update_topo。
 // 设备（机巢）上线或在网期间拓扑变更时，通过 status 通道上报自身及子设备拓扑信息，钩子只负责通知。
 //   - handler: 回调函数，携带已解析的 TopoUpdateData 结构体
-func (c *Client) OnTopoUpdate(handler func(ctx context.Context, gatewaySn string, data *TopoUpdateData)) {
-	c.onTopoUpdate = handler
+func (c *Client) OnUpdateTopo(handler func(ctx context.Context, gatewaySn string, data *TopoUpdateData)) {
+	c.onUpdateTopo = handler
 }
 
 // OnOsd 注册设备 OSD 遥测数据上报钩子。
@@ -569,7 +569,7 @@ func (c *Client) SetProperty(ctx context.Context, gatewaySn string, properties P
 
 // ==================== 设备管理（Device） ====================
 
-// 设备拓扑 update_topo 为 status 上行，由 OnTopoUpdate/OnStatus 处理。
+// 设备拓扑 update_topo 为 status 上行，由 OnUpdateTopo/OnStatus 处理。
 
 // ==================== 组织管理（Organization） ====================
 
@@ -1279,7 +1279,7 @@ func (c *Client) PsdkUIResourceUpload(ctx context.Context, gatewaySn string, dat
 // ==================== PSDK 互联互通（PSDK Transmit） ====================
 
 // SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
-// 下行对应 custom_data_transmission_to_psdk；上行 custom_data_transmission_from_psdk 由 OnCustomDataFromPsdk 处理。
+// 下行对应 custom_data_transmission_to_psdk；上行 custom_data_transmission_from_psdk 由 OnCustomDataTransmissionFromPsdk 处理。
 func (c *Client) SendCustomDataToPsdk(ctx context.Context, gatewaySn, value string) (string, error) {
 	data := &CustomDataTransmissionData{
 		Value: value,
@@ -1474,7 +1474,7 @@ func (c *Client) HandleStatus(ctx context.Context, payload []byte, topic string,
 func (c *Client) tryDispatchStatusNotify(ctx context.Context, gatewaySn, method string, raw []byte) (handled bool, result int) {
 	switch method {
 	case MethodUpdateTopo:
-		if c.onTopoUpdate != nil {
+		if c.onUpdateTopo != nil {
 			var msg struct {
 				Data TopoUpdateData `json:"data"`
 			}
@@ -1482,7 +1482,7 @@ func (c *Client) tryDispatchStatusNotify(ctx context.Context, gatewaySn, method 
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal TopoUpdateData failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.onTopoUpdate(ctx, gatewaySn, &msg.Data)
+			c.onUpdateTopo(ctx, gatewaySn, &msg.Data)
 			return true, PlatformResultOK
 		}
 	}
