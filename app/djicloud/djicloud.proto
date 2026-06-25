@@ -1519,6 +1519,8 @@ message DeviceInfo {
   // device_sn 设备 SN，机巢/无人机/负载设备唯一标识。
   string device_sn = 2;
   // gateway_sn 最近一次上报关联的网关机巢 SN；机巢自身等于 device_sn。
+  // 对飞机及挂载负载域（Domain=0/1）仅由 OSD/State 上行更新（反映设备当前通信通道），
+  // update_topo 上行不覆盖此字段，绑定关系以 DeviceTopoInfo 为准。
   // 蛙跳场景下，一架飞机可能存在多个机巢绑定关系，完整绑定关系以 DeviceTopoInfo 为准。
   string gateway_sn = 3;
   // alias 设备别名。
@@ -1615,9 +1617,11 @@ message ListDevicesReq {
   int64 page = 1;
   // page_size 每页条数，默认由服务端兜底。
   int64 page_size = 2;
-  // gateway_sn 按机巢拓扑过滤，空表示不过滤。
-  // 查询子设备时会同时匹配设备最近一次 gateway_sn 和 dji_device_topo 中的历史/当前绑定关系，兼容蛙跳。
+  // gateway_sn 按设备最新归属机巢过滤（DjiDevice.gateway_sn），空表示不过滤。
   string gateway_sn = 3;
+  // topo_gateway_sn 按拓扑绑定关系过滤（DjiDeviceTopo.gateway_sn），空表示不过滤。
+  // 适配蛙跳场景：飞机与多个机巢对频绑定后，通过此字段查询所有绑定到该机巢的设备。
+  string topo_gateway_sn = 6;
   // online_status 在线状态过滤，0: 全部，1: 在线，2: 离线。
   int32 online_status = 4;
   // keyword 按 SN/别名模糊查询。

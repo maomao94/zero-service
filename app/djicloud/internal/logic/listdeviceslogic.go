@@ -35,10 +35,13 @@ func (l *ListDevicesLogic) ListDevices(in *djicloud.ListDevicesReq) (*djicloud.L
 	baseDB := l.svcCtx.DB.WithContext(l.ctx)
 	db := baseDB.Model(&gormmodel.DjiDevice{})
 	if in.GatewaySn != "" {
-		db = db.Where("gateway_sn = ? OR device_sn IN (?)", in.GatewaySn,
+		db = db.Where("gateway_sn = ?", in.GatewaySn)
+	}
+	if in.TopoGatewaySn != "" {
+		db = db.Where("device_sn IN (?)",
 			l.svcCtx.DB.Model(&gormmodel.DjiDeviceTopo{}).
 				Select("sub_device_sn").
-				Where("gateway_sn = ?", in.GatewaySn),
+				Where("gateway_sn = ?", in.TopoGatewaySn),
 		)
 	}
 	if in.OnlineStatus == 1 || in.OnlineStatus == 2 {

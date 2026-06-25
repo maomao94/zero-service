@@ -90,11 +90,16 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 					return err
 				}
 
-				subDevice := gormmodel.DjiDevice{
-					DeviceSn:  sub.SN,
-					GatewaySn: gatewaySn,
+				updateData := map[string]any{}
+				subDevice := gormmodel.DjiDevice{DeviceSn: sub.SN}
+				if sub.Domain == gormmodel.DjiDeviceDomainAircraft || sub.Domain == gormmodel.DjiDeviceDomainPayload {
+					// 蛙跳场景：飞机及挂载负载（domain=0/1）可能被多个机巢绑定，
+					// GatewaySn 由 OSD/State 更新，不从 update_topo 覆盖，绑定关系由 DjiDeviceTopo 维护。
+				} else {
+					updateData["gateway_sn"] = gatewaySn
+					subDevice.GatewaySn = gatewaySn
 				}
-				if err := c.Where(map[string]any{"device_sn": sub.SN}).Assign(map[string]any{"gateway_sn": gatewaySn}).FirstOrCreate(&subDevice).Error; err != nil {
+				if err := c.Where(map[string]any{"device_sn": sub.SN}).Assign(updateData).FirstOrCreate(&subDevice).Error; err != nil {
 					return err
 				}
 			}

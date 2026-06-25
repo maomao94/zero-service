@@ -23,8 +23,11 @@ const (
 //   - 固件版本、硬件版本从 state 物模型快照中提取，对应 DJI 物模型 pushMode=1 的状态数据，空值不上屏覆盖；
 //   - 在线状态由 osd 上行刷新，内存缓存用于高频在线判断，数据库保存最新在线快照并按 LastOnlineAt 懒过期清理。
 //
-// 蛙跳场景：同一架飞机可能先后或同时与多个机巢建立拓扑关系，多机巢绑定关系不放在本表表达，而由 DjiDeviceTopo 按 gateway_sn + sub_device_sn 保存；本表 GatewaySn 仅表示最近一次上报归属的机巢，用于快速展示和控制路由兜底。
-// 在线状态：数据库默认 IsOnline=false，表示离线或尚未收到在线上报；收到设备 osd 有效上行后置为 true，status/update_topo 与 state 仅维护设备归属和状态快照。
+	// 蛙跳场景：同一架飞机可能先后或同时与多个机巢建立拓扑关系，多机巢绑定关系不放在本表表达，而由 DjiDeviceTopo 按 gateway_sn + sub_device_sn 保存；
+	// 本表 GatewaySn 对飞机及挂载负载域（Domain=0/1）仅由 OSD/State 上行更新（反映设备当前通信通道），
+	// update_topo 上行不覆盖其 GatewaySn，绑定关系由 DjiDeviceTopo 维护；
+	// 对机巢/遥控器等非 0/1 域，GatewaySn 由 update_topo 和 OSD/State 共同维护。用于快速展示和控制路由兜底。
+	// 在线状态：数据库默认 IsOnline=false，表示离线或尚未收到在线上报；收到设备 osd 有效上行后置为 true，status/update_topo 与 state 仅维护设备归属和状态快照。
 // 使用场景：设备列表、机巢详情、无人机详情、设备在线判断、后续设备分组/别名管理。
 type DjiDevice struct {
 	gormx.LegacyBaseModel

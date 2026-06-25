@@ -386,8 +386,8 @@ func TestStatusUpdateTopoStoresTypeOnlyInTopo(t *testing.T) {
 	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn").Where("device_sn = ?", "m4d-1").First(&aircraft).Error; err != nil {
 		t.Fatalf("find aircraft error = %v", err)
 	}
-	if aircraft.GatewaySn != "dock3-1" {
-		t.Fatalf("aircraft GatewaySn = %s, want dock3-1", aircraft.GatewaySn)
+	if aircraft.GatewaySn != "" {
+		t.Fatalf("aircraft GatewaySn = %s, want empty (蛙跳场景 update_topo 不覆盖飞机 gateway_sn)", aircraft.GatewaySn)
 	}
 	var topo struct {
 		Domain         string
