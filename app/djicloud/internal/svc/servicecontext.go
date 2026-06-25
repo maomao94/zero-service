@@ -56,19 +56,27 @@ func initDB(c config.Config) *gormx.DB {
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
-	djiCli := djisdk.MustNewClient(c.MqttConfig,
+	djiOpts := []djisdk.ClientOption{
 		djisdk.WithPendingTTL(c.PendingTTL),
 		djisdk.WithReplyOptions(djisdk.ReplyOptions{
 			EnableEventReply:   c.UpstreamReply.EnableEventsReply,
 			EnableStatusReply:  c.UpstreamReply.EnableStatusReply,
 			EnableRequestReply: c.UpstreamReply.EnableRequestsReply,
 		}),
-	)
+	}
+
+	db := initDB(c)
 
 	onlineCache, err := collection.NewCache(dockOnlineTTL, collection.WithName("dock-online-cache"))
 	logx.Must(err)
 
-	db := initDB(c)
+	djiOpts = append(djiOpts, hooks.WithDjiClientOptions(hooks.RegisterDjiClientOptions{
+		DB:                 db,
+		OnlineCache:        onlineCache,
+		PushCli:            nil,
+		DisableOsdSQLTrace: c.Telemetry.DisableOsdSQLTrace,
+	})...)
+	djiCli := djisdk.MustNewClient(c.MqttConfig, djiOpts...)
 
 	// 初始化 SocketPush 客户端（可选，未配置时不推送）
 	var pushCli socketpush.SocketPushClient
@@ -126,13 +134,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 	drcMgr := drc.NewManager(djiCli, c.DrcConfig, drcOpts...)
 
-	hooks.RegisterDjiClient(djiCli, hooks.RegisterDjiClientOptions{
-		DB:                 db,
-		OnlineCache:        onlineCache,
-		DrcManager:         drcMgr,
-		PushCli:            pushCli,
-		DisableOsdSQLTrace: c.Telemetry.DisableOsdSQLTrace,
-	})
+	djiCli.SetDrcUpHandler(hooks.NewDrcUpHandler(db, drcMgr, pushCli))
 
 	if err := djiCli.SubscribeAll(); err != nil {
 		logx.Errorf("[dji-cloud] subscribe topics failed: %v", err)
