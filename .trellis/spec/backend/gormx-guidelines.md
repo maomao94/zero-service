@@ -34,22 +34,20 @@ func (db *DB) AutoMigrate(dst ...any) error
 
 ### 工具函数不再接受 ctx 参数
 
-工具函数（`UpdateOrCreate`、`CreateRecord`、`Upsert`、`BatchInsertWithTenant` 等）不接受 `ctx context.Context` 参数。ctx 通过调用方在传 db 前调用 `.WithContext(ctx)` 传递，函数内部从 `db.Statement.Context` 获取。`gorm.DB.Statement.Context` 是 GORM 存放上下文的规范位置。
+工具函数（`Upsert`、`BatchInsertWithTenant` 等）不接受 `ctx context.Context` 参数。ctx 通过调用方在传 db 前调用 `.WithContext(ctx)` 传递，函数内部从 `db.Statement.Context` 获取。`gorm.DB.Statement.Context` 是 GORM 存放上下文的规范位置。
 
 ```go
 ctx := gormx.WithUserAndTenantContext(context.Background(), uid, "alice", "tenant-a")
 
-// Before: gormx.UpdateOrCreate(ctx, db, model, where, create, update)
-// After:  gormx.UpdateOrCreate(db.WithContext(ctx), model, where, create, update)
+// Before: gormx.Upsert(ctx, db, data, columns, updateColumns)
+// After:  gormx.Upsert(db.WithContext(ctx), data, columns, updateColumns)
 ```
 
-**12 个改动函数及新旧签名**（源文件：`upsert.go`、`batch_tenant.go`、`delete.go`、`restore.go`）：
+**10 个改动函数及新旧签名**（源文件：`batch_tenant.go`、`delete.go`、`restore.go`）：
 
 | 函数 | 旧签名 | 新签名 |
 | --- | --- | --- |
 | `Upsert` | `(ctx, db, data, columns, updateColumns)` | `(db, data, columns, updateColumns)` |
-| `UpdateOrCreate` | `(ctx, db, model, where, create, update)` | `(db, model, where, create, update)` |
-| `CreateRecord` | `(ctx, db, data)` | `(db, data)` |
 | `BatchInsertWithTenant` | `(ctx, db, values)` | `(db, values)` |
 | `BatchUpdateByIdsWithTenant` | `(ctx, db, model, updates)` | `(db, model, updates)` |
 | `BatchDeleteByIdsWithTenant` | `(ctx, db, model, ids)` | `(db, model, ids)` |
@@ -200,11 +198,11 @@ func TenantScope(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 
 ### Gotcha: 软删后再写回需先 Restore
 
-旧表模型（`LegacyBaseModel`，含 `delete_time/del_state`）伪删除后，`UpdateOrCreate` 查不到该记录，可能撞唯一索引。先调用 `gormx.Restore` 恢复：
+旧表模型（`LegacyBaseModel`，含 `delete_time/del_state`）伪删除后，`FirstOrCreate` 查不到该记录，可能撞唯一索引。先调用 `gormx.Restore` 恢复：
 
 ```go
 gormx.Restore(tx.DB, &DjiDeviceTopo{}, "gateway_sn = ? AND sub_device_sn = ?", gatewaySn, sub.SN)
-gormx.UpdateOrCreate(tx.WithContext(ctx), &DjiDeviceTopo{}, where, &topoRecord, updateData)
+tx.WithContext(ctx).Where(where).Assign(updateData).FirstOrCreate(&topoRecord)
 ```
 
 `Restore` 内部根据模型判断是旧表（清空 `delete_time/del_state`）还是新表（清空 `deleted_at`），走正常 update callbacks。

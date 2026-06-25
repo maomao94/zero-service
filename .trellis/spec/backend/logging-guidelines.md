@@ -48,7 +48,7 @@
 
 - `gormx.WithoutSQLTrace(ctx)` 只影响 GORM logger 的 `Trace` 输出，包括正常 SQL、慢 SQL、record not found 和 SQL error trace。
 - 业务层 `logx.WithContext(ctx).Errorf(...)` 不受影响，调用方仍需在边界层记录业务失败。
-- 高频路径必须在进入 DB helper 前包裹 context，例如 OSD 写库调用 `UpdateOrCreate` 前处理。
+- 高频路径必须在进入 DB helper 前包裹 context，例如 OSD 写库调用 `FirstOrCreate` 前处理。
 - 服务级配置默认保持旧行为；只有配置显式开启时才对目标高频路径使用该 context。
 
 ### 4. Validation & Error Matrix
@@ -86,7 +86,7 @@ DB:
 if disableSQLTrace {
     ctx = gormx.WithoutSQLTrace(ctx)
 }
-if err := gormx.UpdateOrCreate(db.WithContext(ctx), model, where, createData, updateData); err != nil {
-    logx.WithContext(ctx).Errorf("upsert failed: %v", err)
+if err := db.WithContext(ctx).Where(where).Assign(updateData).FirstOrCreate(createData).Error; err != nil {
+	logx.WithContext(ctx).Errorf("upsert failed: %v", err)
 }
 ```

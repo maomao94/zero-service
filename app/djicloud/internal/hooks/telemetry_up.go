@@ -51,7 +51,9 @@ func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache, pushCli socketpu
 			logx.WithContext(ctx).Errorf("[dji-cloud] osd storage skipped: db is nil")
 			return
 		}
-		if err := gormx.UpdateOrCreate(db.WithContext(ctx), &gormmodel.DjiDevice{}, map[string]any{"device_sn": deviceSn}, &device, updateData); err != nil {
+		c := db.WithContext(ctx)
+		deviceWhere := map[string]any{"device_sn": deviceSn}
+		if err := c.Where(deviceWhere).Assign(updateData).FirstOrCreate(&device).Error; err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert osd device online failed: %v", err)
 		}
 
@@ -66,7 +68,7 @@ func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache, pushCli socketpu
 			"raw_json":    snapshot.RawJSON,
 			"reported_at": snapshot.ReportedAt,
 		}
-		if err := gormx.UpdateOrCreate(db.WithContext(ctx), &gormmodel.DjiDeviceOsdSnapshot{}, map[string]any{"device_sn": deviceSn}, &snapshot, snapshotUpdateData); err != nil {
+		if err := c.Where(deviceWhere).Assign(snapshotUpdateData).FirstOrCreate(&snapshot).Error; err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert osd snapshot failed: %v", err)
 		}
 
@@ -121,7 +123,9 @@ func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache, pushCli socketp
 			logx.WithContext(ctx).Errorf("[dji-cloud] state storage skipped: db is nil")
 			return
 		}
-		if err := gormx.UpdateOrCreate(db.WithContext(ctx), &gormmodel.DjiDevice{}, map[string]any{"device_sn": deviceSn}, &device, updateData); err != nil {
+		c := db.WithContext(ctx)
+		deviceWhere := map[string]any{"device_sn": deviceSn}
+		if err := c.Where(deviceWhere).Assign(updateData).FirstOrCreate(&device).Error; err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert state device failed: %v", err)
 		}
 
@@ -136,7 +140,7 @@ func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache, pushCli socketp
 			"raw_json":    snapshot.RawJSON,
 			"reported_at": snapshot.ReportedAt,
 		}
-		if err := gormx.UpdateOrCreate(db.WithContext(ctx), &gormmodel.DjiDeviceStateSnapshot{}, map[string]any{"device_sn": deviceSn}, &snapshot, snapshotUpdateData); err != nil {
+		if err := c.Where(deviceWhere).Assign(snapshotUpdateData).FirstOrCreate(&snapshot).Error; err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert state snapshot failed: %v", err)
 		}
 

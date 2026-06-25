@@ -38,13 +38,13 @@ func NewDrcUpHandler(db *gormx.DB, drcMgr *drc.Manager, pushCli socketpush.Socke
 		if msg.Method != djisdk.MethodDrcHeartBeat && msg.Method != djisdk.MethodDrcOsdInfoPush &&
 			msg.Method != djisdk.MethodDrcHsiInfoPush && msg.Method != djisdk.MethodDrcDelayInfoPush &&
 			msg.Method != djisdk.MethodDrcInitialStateSubscribe {
-			if err := gormx.CreateRecord(db.WithContext(ctx), &gormmodel.DjiDrcUpEvent{
+			if err := db.WithContext(ctx).Create(&gormmodel.DjiDrcUpEvent{
 				GatewaySn:  gatewaySn,
 				Method:     msg.Method,
 				RawJSON:    toJSONString(parsed),
 				Summary:    djisdk.DrcUpPayloadSummary(parsed),
 				ReportedAt: reportedAt,
-			}); err != nil {
+			}).Error; err != nil {
 				logx.WithContext(ctx).Errorf("[dji-cloud] create drc/up event failed: %v", err)
 			}
 		}

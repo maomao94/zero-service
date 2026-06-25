@@ -64,14 +64,12 @@ err := gormx.BatchInsert(db.DB, devices, 100)
 err := gormx.BatchUpdateByIds(db.DB, &Device{}, []gormx.Ups{{"id": 1, "name": "new"}})
 ```
 
-Upsert：
+Upsert（WHERE 匹配 → Assign 强更新 → 未命中则 Create）：
 
 ```go
-err := gormx.UpdateOrCreate(db.WithContext(ctx), &Device{},
-	map[string]any{"device_sn": sn},
-	&Device{DeviceSn: sn, Name: name},
-	map[string]any{"name": name},
-)
+err := db.WithContext(ctx).Where(map[string]any{"device_sn": sn}).
+	Assign(map[string]any{"name": name}).
+	FirstOrCreate(&Device{DeviceSn: sn, Name: name}).Error
 ```
 
 分页：
