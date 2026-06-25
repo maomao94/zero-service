@@ -23,6 +23,9 @@
 ### 领域模块
 
 - [gisx-guidelines.md](./gisx-guidelines.md) - GIS 服务架构、gisx 包边界、坐标系约定、算法说明、FenceStore 模式、常见陷阱
+- [djisdk-guidelines.md](./djisdk-guidelines.md) - common/djisdk 包：Client 构造、Handler 注册、事件分发、命令发送、DRC 协议、Topic 函数、错误处理
+- [djicloud-hooks-guidelines.md](./djicloud-hooks-guidelines.md) - app/djicloud MQTT 上行处理：update_topo 蛙跳策略、OSD/State 处理、事件落库、DRC up、设备在线管理
+- [djicloud-models.md](./djicloud-models.md) - app/djicloud GORM 模型：11 张表的写策略（Upsert vs Insert-only）、DjiDevice 在线语义、蛙跳 topo 设计
 - [drc-concurrency.md](./drc-concurrency.md) - DRC Manager 锁模型、锁顺序、字段保护、heartbeatCancel 所有权
 - [antsx-invoke-guidelines.md](./antsx-invoke-guidelines.md) - Antsx 并行任务编排（Invoke/InvokeAllSettled）
 - [antsx-promise-guidelines.md](./antsx-promise-guidelines.md) - Antsx Promise 异步结果容器与组合
