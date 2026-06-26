@@ -39,7 +39,6 @@ const (
 type Client interface {
 	AddHandler(topicTemplate string, handler ConsumeHandler) error
 	AddHandlerFunc(topicTemplate string, fn func(context.Context, []byte, string, string) error) error
-	Subscribe(topicTemplate string) error
 	Publish(ctx context.Context, topic string, payload []byte) error
 	PublishWithTrace(ctx context.Context, topic string, payload []byte) (string, error)
 	Close()
@@ -174,7 +173,7 @@ func (c *mqttClient) connect() error {
 
 // onConnect 连接成功回调
 func (c *mqttClient) onConnect(_ mqtt.Client) {
-	logx.Infof("[mqtt] Connection successful, client=%s", c.cfg.ClientID)
+	logx.Infof("[mqtt] connected client=%s", c.cfg.ClientID)
 
 	// 首次连接执行 onReady 回调
 	if !c.ready && c.onReady != nil {
@@ -183,16 +182,16 @@ func (c *mqttClient) onConnect(_ mqtt.Client) {
 	}
 
 	// 恢复订阅
-	if err := c.restoreSubscriptions(); err != nil {
-		logx.Errorf("[mqtt] Failed to restore subscriptions: %v", err)
+	if result, err := c.restoreSubscriptions(); err != nil {
+		logx.Errorf("[mqtt] restore subscriptions failed err=%v", err)
 	} else {
-		logx.Info("[mqtt] All subscriptions restored")
+		logx.Infof("[mqtt] restore subscriptions done subscribed=%d skipped=%d", result.subscribed, result.skipped)
 	}
 }
 
 // onConnectionLost 连接丢失回调
 func (c *mqttClient) onConnectionLost(_ mqtt.Client, err error) {
-	logx.Errorf("[mqtt] Connection lost: %v (auto-reconnecting)", err)
+	logx.Errorf("[mqtt] connection lost err=%v", err)
 	c.mu.Lock()
 	c.subscribed = make(map[string]struct{}) // 重连后需要重新订阅
 	c.mu.Unlock()
@@ -200,7 +199,7 @@ func (c *mqttClient) onConnectionLost(_ mqtt.Client, err error) {
 
 // defaultHandler 默认消息处理器（无自定义处理器时）
 func (c *mqttClient) defaultHandler(_ mqtt.Client, msg mqtt.Message) {
-	logx.Errorf("[mqtt] No handler for topic %s", msg.Topic())
+	logx.Errorf("[mqtt] no handler topic=%s", msg.Topic())
 }
 
 // AddHandler 为订阅主题模板添加消息处理器
@@ -218,7 +217,8 @@ func (c *mqttClient) AddHandler(topicTemplate string, handler ConsumeHandler) er
 	c.mu.Unlock()
 
 	if needSubscribe && c.client.IsConnected() {
-		return c.subscribe(topicTemplate)
+		_, err := c.subscribe(topicTemplate)
+		return err
 	}
 	return nil
 }
@@ -228,36 +228,28 @@ func (c *mqttClient) AddHandlerFunc(topicTemplate string, fn func(context.Contex
 	return c.AddHandler(topicTemplate, ConsumeHandlerFunc(fn))
 }
 
-// Subscribe 手动订阅主题模板
-func (c *mqttClient) Subscribe(topicTemplate string) error {
-	if !c.client.IsConnected() {
-		return errors.New("[mqtt] cannot subscribe: client not connected")
-	}
-	return c.subscribe(topicTemplate)
-}
-
 // subscribe 内部订阅实现
-func (c *mqttClient) subscribe(topicTemplate string) error {
+func (c *mqttClient) subscribe(topicTemplate string) (bool, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	if c.isSubscribed(topicTemplate) {
-		return nil
+		return false, nil
 	}
 
 	token := c.client.Subscribe(topicTemplate, c.qos, c.messageHandler(topicTemplate))
 	timeout := time.Duration(c.cfg.Timeout) * time.Millisecond
 
 	if !token.WaitTimeout(timeout) {
-		return fmt.Errorf("[mqtt] subscribe to %s timeout after %v", topicTemplate, timeout)
+		return false, fmt.Errorf("[mqtt] subscribe to %s timeout after %v", topicTemplate, timeout)
 	}
 	if err := token.Error(); err != nil {
-		return err
+		return false, err
 	}
 
 	c.subscribed[topicTemplate] = struct{}{}
-	logx.Infof("[mqtt] Subscribed to %s", topicTemplate)
-	return nil
+	logx.Infof("[mqtt] subscribed topic=%s", topicTemplate)
+	return true, nil
 }
 
 // isSubscribed 检查是否已订阅
@@ -267,19 +259,32 @@ func (c *mqttClient) isSubscribed(topicTemplate string) bool {
 }
 
 // restoreSubscriptions 恢复所有订阅（连接重连后）
-func (c *mqttClient) restoreSubscriptions() error {
+func (c *mqttClient) restoreSubscriptions() (restoreSubscriptionsResult, error) {
 	topicTemplates := c.handlerMgr.getAllTopicTemplates()
 	topicTemplates = append(topicTemplates, c.cfg.SubscribeTopics...)
 	topicTemplates = uniqueTopics(topicTemplates)
 
 	var lastErr error
+	result := restoreSubscriptionsResult{}
 	for _, topicTemplate := range topicTemplates {
-		if err := c.subscribe(topicTemplate); err != nil {
-			logx.Errorf("[mqtt] failed to subscribe to %s: %v", topicTemplate, err)
+		subscribed, err := c.subscribe(topicTemplate)
+		if err != nil {
+			logx.Errorf("[mqtt] subscribe failed topic=%s err=%v", topicTemplate, err)
 			lastErr = err
+			continue
+		}
+		if subscribed {
+			result.subscribed++
+		} else {
+			result.skipped++
 		}
 	}
-	return lastErr
+	return result, lastErr
+}
+
+type restoreSubscriptionsResult struct {
+	subscribed int
+	skipped    int
 }
 
 func uniqueTopics(topics []string) []string {
@@ -397,7 +402,7 @@ func (c *mqttClient) Close() {
 	}
 	c.handlerMgr.closeReplyHandlers()
 	c.subscribed = make(map[string]struct{})
-	logx.Info("[mqtt] Connection closed")
+	logx.Info("[mqtt] connection closed")
 }
 
 // GetClientID 获取客户端 ID
