@@ -1242,3 +1242,39 @@ Spec 整理：
 ### Next Steps
 
 - None - task complete
+
+
+## Session 87: mqttx 日志优化与订阅治理
+
+**Date**: 2026-06-26
+**Task**: mqttx 日志优化与订阅治理
+**Branch**: `master`
+
+### Summary
+
+统一 [mqtt] 日志格式为小写动作词+key=value，删除冗余 Subscribe 接口和 AutoSubscribe 配置，ready 改为 atomic.Bool，逐条订阅日志保持 Info 级，restore 日志加 subscribed/skipped 计数，dispatcher [mqttx] 前缀收敛为 [mqtt]，同步刷新 spec 文件
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `270c0607` | (see git log) |
+| `159146b0` | (see git log) |
+| `2cdd98b8` | (see git log) |
+| `4aa40262` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
