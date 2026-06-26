@@ -52,7 +52,7 @@ type Config struct {
 
 - `PendingTTL`: 0 使用默认 30s（`> 0` 才覆写）
 - `Reply`: 值类型，零值 `{false,false,false}` 表示全部禁用；yaml 加载时 go-zero 根据字段 tag 填充
-- `Drc`: 值类型。零值（`HeartbeatInterval=0`）不创建 drcManager；yaml 配置后 `buildClient` 自动启用
+- `Drc`: 值类型。零值（`HeartbeatInterval=0`）不创建 drcManager；yaml 配置后 `buildClient` 自动启用。`Drc.Address` 为 DRC 公网 MQTT Broker 地址（机巢公网可达），留空则复用 `MqttConfig.Broker[0]`
 - 应用层 `config.Config` 直接内嵌 `Dji djisdk.Config`，一行传参：`djisdk.MustNewClient(c.Dji, handlerOpts...)`
 
 ### Option 列表（配置类）
@@ -131,6 +131,14 @@ c := djisdk.MustNewClient(djisdk.Config{MqttConfig: mqttCfg, Reply: djisdk.Defau
 ## DRC 会话管理
 
 DRC Manager 内置于 Client（`drc.go`），通过 `Config.Drc`（值类型）或 `WithDrcConfig` option 激活。
+
+### DrcConfig 字段
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `HeartbeatInterval` | `time.Duration` | 心跳间隔（默认 2s） |
+| `HeartbeatTimeout` | `time.Duration` | 心跳超时（默认 300s） |
+| `Address` | `string` | DRC 公网 Broker 地址（如 `public.example.com:1883`），机巢需公网可达。留空则复用主 `MqttConfig.Broker[0]`。见 `app/djicloud/internal/logic/drchelper.go:toDrcMqttBroker`
 
 ### 暴露的 API（在 Client 上）
 

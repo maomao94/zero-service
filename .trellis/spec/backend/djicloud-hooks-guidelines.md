@@ -51,6 +51,19 @@ djiCli := djisdk.MustNewClient(c.MqttConfig, djiOpts...)
 
 **规则**：DB / OnlineCache / PushCli 都由 svc 层创建后注入，hooks 包内不持有全局变量。
 
+## DRC Mode Enter 流程
+
+`drcmodeenterlogic.go` 通过 `drchelper.go:toDrcMqttBroker` 构建 DRC Broker 连接信息下发机巢：
+
+```
+Config.Dji.Drc.Address (公网地址，优先)
+  → 回退到 Config.Dji.MqttConfig.Broker[0] (内网地址，机巢可能不可达)
+```
+
+- DRC 地址须为机巢公网可达的 IP 或域名，否则机巢返回 `514304 (连接失败)`
+- `toDrcMqttBroker(cfg, drcAddress)` — `drcAddress` 非空时优先使用，空时回退到 `cfg.Broker[0]`
+- ClientID 每次重新生成（`dji-cloud-drc-{uuid}`），不复用主 MQTT ClientID
+
 ## DRC Up 处理（mqtt_drc_up.go）
 
 DRC 心跳通知已由 `djisdk.Client.HandleDrcUp` 内部处理（调用 `drcManager.OnDeviceHeartbeat`）。hooks 层的 `NewDrcUpHandler` 只需负责：

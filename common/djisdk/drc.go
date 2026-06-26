@@ -16,6 +16,9 @@ import (
 type DrcConfig struct {
 	HeartbeatInterval time.Duration `json:",default=2s"`
 	HeartbeatTimeout  time.Duration `json:",default=300s"`
+	// Address DRC 通道的公网 MQTT Broker 地址，格式 host:port，如 "public.example.com:1883"
+	// 机巢需通过公网连接 DRC Broker，不填则复用主 MQTT Broker 地址（内网环境不可达）。
+	Address string `json:",optional"`
 }
 
 const (

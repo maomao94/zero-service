@@ -30,7 +30,7 @@ func NewDrcModeEnterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DrcM
 func (l *DrcModeEnterLogic) DrcModeEnter(in *djicloud.DrcModeEnterReq) (*djicloud.CommonRes, error) {
 	deviceSn := in.GetDeviceSn()
 	data := &djisdk.DrcModeEnterData{
-		MqttBroker:   toDrcMqttBroker(l.svcCtx.Config.Dji.MqttConfig),
+		MqttBroker:   toDrcMqttBroker(l.svcCtx.Config.Dji.MqttConfig, l.svcCtx.Config.Dji.Drc.Address),
 		OsdFrequency: int(in.GetOsdFrequency()),
 		HsiFrequency: int(in.GetHsiFrequency()),
 	}

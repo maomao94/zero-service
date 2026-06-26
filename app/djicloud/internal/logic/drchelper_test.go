@@ -15,7 +15,7 @@ func TestToDrcMqttBroker_Tcp(t *testing.T) {
 		Username: "user",
 		Password: "pass",
 	}
-	got := toDrcMqttBroker(cfg)
+	got := toDrcMqttBroker(cfg, "")
 	// DRC 必须使用独立 MQTT 连接，ClientID 每次重新生成，不复用主 MQTT ClientID
 	if got.ClientID == cfg.ClientID {
 		t.Errorf("DRC ClientID must be independent, got reused main client_id=%q", got.ClientID)
@@ -40,7 +40,7 @@ func TestToDrcMqttBroker_TlsTcps(t *testing.T) {
 		Username: "user2",
 		Password: "pass2",
 	}
-	got := toDrcMqttBroker(cfg)
+	got := toDrcMqttBroker(cfg, "")
 	if got.Address != "mqtt.example.com:8883" {
 		t.Errorf("Address = %q, want %q", got.Address, "mqtt.example.com:8883")
 	}
@@ -53,7 +53,7 @@ func TestToDrcMqttBroker_TlsMqtts(t *testing.T) {
 	cfg := mqttx.MqttConfig{
 		Broker: []string{"mqtts://mqtt.example.com:8883"},
 	}
-	got := toDrcMqttBroker(cfg)
+	got := toDrcMqttBroker(cfg, "")
 	if got.Address != "mqtt.example.com:8883" {
 		t.Errorf("Address = %q, want %q", got.Address, "mqtt.example.com:8883")
 	}
@@ -66,7 +66,7 @@ func TestToDrcMqttBroker_NoScheme(t *testing.T) {
 	cfg := mqttx.MqttConfig{
 		Broker: []string{"mqtt.example.com:1883"},
 	}
-	got := toDrcMqttBroker(cfg)
+	got := toDrcMqttBroker(cfg, "")
 	if got.Address != "mqtt.example.com:1883" {
 		t.Errorf("Address = %q, want %q", got.Address, "mqtt.example.com:1883")
 	}
@@ -81,7 +81,7 @@ func TestToDrcMqttBroker_EmptyBroker(t *testing.T) {
 		Username: "user",
 		Password: "pass",
 	}
-	got := toDrcMqttBroker(cfg)
+	got := toDrcMqttBroker(cfg, "")
 	if got.Address != "" {
 		t.Errorf("Address = %q, want empty", got.Address)
 	}
@@ -98,7 +98,7 @@ func TestToDrcMqttBroker_Passthrough(t *testing.T) {
 		Username: "custom-user",
 		Password: "custom-pass",
 	}
-	got := toDrcMqttBroker(cfg)
+	got := toDrcMqttBroker(cfg, "")
 	// DRC 必须使用独立 MQTT 连接，ClientID 每次重新生成
 	if got.ClientID == cfg.ClientID {
 		t.Errorf("DRC ClientID must be independent, got reused main client_id=%q", got.ClientID)
@@ -108,6 +108,54 @@ func TestToDrcMqttBroker_Passthrough(t *testing.T) {
 	}
 	if got.Password != "custom-pass" {
 		t.Errorf("Password = %q", got.Password)
+	}
+}
+
+func TestToDrcMqttBroker_DrcAddressOverride(t *testing.T) {
+	cfg := mqttx.MqttConfig{
+		Broker:   []string{"tcp://10.10.1.103:1883"},
+		Username: "user",
+		Password: "pass",
+	}
+	got := toDrcMqttBroker(cfg, "public.example.com:1883")
+	if got.Address != "public.example.com:1883" {
+		t.Errorf("Address = %q, want %q", got.Address, "public.example.com:1883")
+	}
+	if got.EnableTLS {
+		t.Error("EnableTLS = true, want false for bare drc address")
+	}
+	if got.Username != "user" {
+		t.Errorf("Username = %q", got.Username)
+	}
+	if got.Password != "pass" {
+		t.Errorf("Password = %q", got.Password)
+	}
+}
+
+func TestToDrcMqttBroker_DrcAddressOverrideWithScheme(t *testing.T) {
+	cfg := mqttx.MqttConfig{
+		Broker:   []string{"tcp://10.10.1.103:1883"},
+		Username: "user",
+		Password: "pass",
+	}
+	got := toDrcMqttBroker(cfg, "tcps://public.example.com:8883")
+	if got.Address != "public.example.com:8883" {
+		t.Errorf("Address = %q, want %q", got.Address, "public.example.com:8883")
+	}
+	if !got.EnableTLS {
+		t.Error("EnableTLS = false, want true for tcps:// drc address")
+	}
+}
+
+func TestToDrcMqttBroker_DrcAddressEmptyFallsBack(t *testing.T) {
+	cfg := mqttx.MqttConfig{
+		Broker:   []string{"tcp://mqtt.internal:1883"},
+		Username: "user",
+		Password: "pass",
+	}
+	got := toDrcMqttBroker(cfg, "")
+	if got.Address != "mqtt.internal:1883" {
+		t.Errorf("Address = %q, want fallback to broker %q", got.Address, "mqtt.internal:1883")
 	}
 }
 
