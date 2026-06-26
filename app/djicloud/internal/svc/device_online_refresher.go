@@ -31,7 +31,7 @@ func (c *DeviceOnlineRefreshCron) Start() {
 		if err != nil {
 			return
 		}
-		logx.Debugf("[dji-cloud] refresh expired devices online success, rows affected: %d", rowsAffected)
+		logx.Infof("[dji-cloud] refresh expired devices online success, rows affected: %d", rowsAffected)
 	})
 	logx.Must(err)
 	c.cron.Start()
