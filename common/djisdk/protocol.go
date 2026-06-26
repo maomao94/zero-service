@@ -525,7 +525,7 @@ type DrcMqttBroker struct {
 	// ExpireTime 连接过期时间，Unix 秒级时间戳。必填。
 	ExpireTime int64 `json:"expire_time"`
 	// EnableTLS 是否启用 TLS 加密连接，默认 false。
-	EnableTLS bool `json:"enable_tls,omitempty"`
+	EnableTLS bool `json:"enable_tls"`
 }
 
 // DrcModeExitData 指令飞行模式退出数据，无额外参数。
