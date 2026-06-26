@@ -1,6 +1,7 @@
 Name: djicloud.rpc
 ListenOn: 0.0.0.0:21012
 Timeout: 10000
+Mode: dev
 Log:
   Encoding: plain
   #  Mode: file

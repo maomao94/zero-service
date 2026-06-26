@@ -16,13 +16,17 @@ func TestToDrcMqttBroker_Tcp(t *testing.T) {
 		Password: "pass",
 	}
 	got := toDrcMqttBroker(cfg)
+	// DRC 必须使用独立 MQTT 连接，ClientID 每次重新生成，不复用主 MQTT ClientID
+	if got.ClientID == cfg.ClientID {
+		t.Errorf("DRC ClientID must be independent, got reused main client_id=%q", got.ClientID)
+	}
 	assertDrcBroker(t, got, djisdk.DrcMqttBroker{
 		Address:    "mqtt.example.com:1883",
-		ClientID:   "client-1",
+		ClientID:   got.ClientID,
 		Username:   "user",
 		Password:   "pass",
 		EnableTLS:  false,
-		ExpireTime: got.ExpireTime, // assert separately
+		ExpireTime: got.ExpireTime,
 	})
 	if got.ExpireTime < time.Now().Add(6*24*time.Hour).Unix() {
 		t.Errorf("ExpireTime too early: got %d, want at least 7 days from now", got.ExpireTime)
@@ -81,8 +85,9 @@ func TestToDrcMqttBroker_EmptyBroker(t *testing.T) {
 	if got.Address != "" {
 		t.Errorf("Address = %q, want empty", got.Address)
 	}
-	if got.ClientID != "client-empty" {
-		t.Errorf("ClientID = %q, want %q", got.ClientID, "client-empty")
+	// DRC 必须使用独立 MQTT 连接，ClientID 每次重新生成
+	if got.ClientID == cfg.ClientID {
+		t.Errorf("DRC ClientID must be independent, got reused main client_id=%q", got.ClientID)
 	}
 }
 
@@ -94,8 +99,9 @@ func TestToDrcMqttBroker_Passthrough(t *testing.T) {
 		Password: "custom-pass",
 	}
 	got := toDrcMqttBroker(cfg)
-	if got.ClientID != "custom-client" {
-		t.Errorf("ClientID = %q", got.ClientID)
+	// DRC 必须使用独立 MQTT 连接，ClientID 每次重新生成
+	if got.ClientID == cfg.ClientID {
+		t.Errorf("DRC ClientID must be independent, got reused main client_id=%q", got.ClientID)
 	}
 	if got.Username != "custom-user" {
 		t.Errorf("Username = %q", got.Username)

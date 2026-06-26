@@ -85,7 +85,7 @@ func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string,
 	}
 
 	if event.NeedReply == 1 && c.reply.EnableEventReply {
-		return c.replyEvent(ctx, event.Gateway, event.Tid, event.Bid, event.Method, replyResult)
+		return c.eventReply(ctx, event.Gateway, event.Tid, event.Bid, event.Method, replyResult)
 	}
 	if event.NeedReply == 1 {
 		logx.WithContext(ctx).Infof("[dji-sdk] skip event reply: gateway=%s method=%s tid=%s", event.Gateway, event.Method, event.Tid)
@@ -95,9 +95,9 @@ func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string,
 
 // tryDispatchEventNotify 仅处理本 SDK 已**按 method 建模**的若干**设备上行通知**（OnFlightTaskProgress/Ready、HMS、OTA、日志等）。
 // 与协议一致时，这些多为**只上报、不要求 events_reply**（need_reply=0），回调侧只做落库/推送等。
-// 返回的 result 供极少数「仍带 need_reply=1」或解包 data 失败时写回 events_reply；成功时恒为 PlatformResultOK。
+// handler 返回 error 时统一打印日志；若 error 为 *PlatformError 则取其 Code 作为 events_reply 的 result，否则默认 PlatformResultHandlerError。
 // 返回 handled=true 表示本 method 已由本分支处理，**不再**调用 eventMethodFallbacks。未注册的 method 走 OnEvent 兜底。
-func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method string, raw []byte) (handled bool, result int) {
+func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method string, raw []byte) (handled bool, result PlatformResult) {
 	switch method {
 	case MethodFlightTaskProgress:
 		if c.handlers.onFlightTaskProgress != nil {
@@ -110,7 +110,10 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal FlightTaskProgressEvent failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.handlers.onFlightTaskProgress(ctx, gatewaySn, &msg.Data.Output)
+			if err := c.handlers.onFlightTaskProgress(ctx, gatewaySn, &msg.Data.Output); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] onFlightTaskProgress error: sn=%s err=%v", gatewaySn, err)
+				return true, ResultFromError(err)
+			}
 			return true, PlatformResultOK
 		}
 	case MethodFlightTaskReady:
@@ -122,7 +125,10 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal FlightTaskReadyEvent failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.handlers.onFlightTaskReady(ctx, gatewaySn, &msg.Data)
+			if err := c.handlers.onFlightTaskReady(ctx, gatewaySn, &msg.Data); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] onFlightTaskReady error: sn=%s err=%v", gatewaySn, err)
+				return true, ResultFromError(err)
+			}
 			return true, PlatformResultOK
 		}
 	case MethodReturnHomeInfo:
@@ -134,7 +140,10 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal ReturnHomeInfoEvent failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.handlers.onReturnHomeInfo(ctx, gatewaySn, &msg.Data)
+			if err := c.handlers.onReturnHomeInfo(ctx, gatewaySn, &msg.Data); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] onReturnHomeInfo error: sn=%s err=%v", gatewaySn, err)
+				return true, ResultFromError(err)
+			}
 			return true, PlatformResultOK
 		}
 	case MethodCustomDataTransmissionFromPsdk:
@@ -146,7 +155,10 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal CustomDataFromPsdkEvent failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.handlers.onCustomDataTransmissionFromPsdk(ctx, gatewaySn, &msg.Data)
+			if err := c.handlers.onCustomDataTransmissionFromPsdk(ctx, gatewaySn, &msg.Data); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] onCustomDataTransmissionFromPsdk error: sn=%s err=%v", gatewaySn, err)
+				return true, ResultFromError(err)
+			}
 			return true, PlatformResultOK
 		}
 	case MethodHmsEventNotify:
@@ -158,7 +170,10 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal HmsEventData failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.handlers.onHmsEventNotify(ctx, gatewaySn, &msg.Data)
+			if err := c.handlers.onHmsEventNotify(ctx, gatewaySn, &msg.Data); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] onHmsEventNotify error: sn=%s err=%v", gatewaySn, err)
+				return true, ResultFromError(err)
+			}
 			return true, PlatformResultOK
 		}
 	case MethodRemoteLogFileUploadProgress:
@@ -170,7 +185,10 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal RemoteLogFileUploadProgressEvent failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.handlers.onRemoteLogFileUploadProgress(ctx, gatewaySn, &msg.Data)
+			if err := c.handlers.onRemoteLogFileUploadProgress(ctx, gatewaySn, &msg.Data); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] onRemoteLogFileUploadProgress error: sn=%s err=%v", gatewaySn, err)
+				return true, ResultFromError(err)
+			}
 			return true, PlatformResultOK
 		}
 	case MethodOtaProgress:
@@ -182,7 +200,10 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal OtaProgressEvent failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.handlers.onOtaProgress(ctx, gatewaySn, &msg.Data)
+			if err := c.handlers.onOtaProgress(ctx, gatewaySn, &msg.Data); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] onOtaProgress error: sn=%s err=%v", gatewaySn, err)
+				return true, ResultFromError(err)
+			}
 			return true, PlatformResultOK
 		}
 	case MethodCustomDataTransmissionFromEsdk:
@@ -194,14 +215,17 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal CustomDataFromEsdkEvent failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.handlers.onCustomDataTransmissionFromEsdk(ctx, gatewaySn, &msg.Data)
+			if err := c.handlers.onCustomDataTransmissionFromEsdk(ctx, gatewaySn, &msg.Data); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] onCustomDataTransmissionFromEsdk error: sn=%s err=%v", gatewaySn, err)
+				return true, ResultFromError(err)
+			}
 			return true, PlatformResultOK
 		}
 	}
-	return false, PlatformResultOK
+	return false, PlatformResultHandlerError
 }
 
-// replyEvent 向设备发送事件回复消息。
+// eventReply 向设备发送事件回复消息。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
 //   - tid: 事务 ID
@@ -209,7 +233,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 //   - method: 事件方法名
 //   - result: 回复结果码，0 表示成功
 //   - 返回值: 序列化或发送失败时返回错误，成功时返回 nil
-func (c *Client) replyEvent(ctx context.Context, gatewaySn, tid, bid, method string, result int) error {
+func (c *Client) eventReply(ctx context.Context, gatewaySn, tid, bid, method string, result PlatformResult) error {
 	reply := NewEventReply(tid, bid, method, result)
 	data, err := json.Marshal(reply)
 	if err != nil {
@@ -247,7 +271,9 @@ func (c *Client) HandleOsd(ctx context.Context, payload []byte, topic string, _ 
 		return err
 	}
 	deviceSn := extractDeviceSnFromTopic(topic)
-	c.handlers.onOsd(ctx, deviceSn, &msg)
+	if err := c.handlers.onOsd(ctx, deviceSn, &msg); err != nil {
+		logx.WithContext(ctx).Errorf("[dji-sdk] onOsd error: sn=%s err=%v", deviceSn, err)
+	}
 	return nil
 }
 
@@ -267,7 +293,9 @@ func (c *Client) HandleState(ctx context.Context, payload []byte, topic string, 
 		return err
 	}
 	deviceSn := extractDeviceSnFromTopic(topic)
-	c.handlers.onState(ctx, deviceSn, &msg)
+	if err := c.handlers.onState(ctx, deviceSn, &msg); err != nil {
+		logx.WithContext(ctx).Errorf("[dji-sdk] onState error: sn=%s err=%v", deviceSn, err)
+	}
 	return nil
 }
 
@@ -283,18 +311,21 @@ func (c *Client) HandleStatus(ctx context.Context, payload []byte, topic string,
 
 	handled, result := c.tryDispatchStatusNotify(ctx, gatewaySn, msg.Method, payload)
 	if !handled && c.handlers.onStatus != nil {
-		result = c.handlers.onStatus(ctx, gatewaySn, &msg)
+		if err := c.handlers.onStatus(ctx, gatewaySn, &msg); err != nil {
+			logx.WithContext(ctx).Errorf("[dji-sdk] onStatus error: sn=%s method=%s err=%v", gatewaySn, msg.Method, err)
+			result = ResultFromError(err)
+		}
 	}
 	if !c.reply.EnableStatusReply {
 		logx.WithContext(ctx).Infof("[dji-sdk] skip status reply: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
 		return nil
 	}
-	return c.replyStatus(ctx, gatewaySn, msg.Tid, msg.Bid, result)
+	return c.statusReply(ctx, gatewaySn, msg.Tid, msg.Bid, result)
 }
 
 // tryDispatchStatusNotify 处理本 SDK 已按 method 建模的 status 上行（如 update_topo）。
 // 返回 handled=true 表示已由强类型分支处理，不再调用 OnStatus；result 供写 status_reply。
-func (c *Client) tryDispatchStatusNotify(ctx context.Context, gatewaySn, method string, raw []byte) (handled bool, result int) {
+func (c *Client) tryDispatchStatusNotify(ctx context.Context, gatewaySn, method string, raw []byte) (handled bool, result PlatformResult) {
 	switch method {
 	case MethodUpdateTopo:
 		if c.handlers.onUpdateTopo != nil {
@@ -305,20 +336,23 @@ func (c *Client) tryDispatchStatusNotify(ctx context.Context, gatewaySn, method 
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal TopoUpdateData failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.handlers.onUpdateTopo(ctx, gatewaySn, &msg.Data)
+			if err := c.handlers.onUpdateTopo(ctx, gatewaySn, &msg.Data); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] onUpdateTopo error: sn=%s err=%v", gatewaySn, err)
+				return true, ResultFromError(err)
+			}
 			return true, PlatformResultOK
 		}
 	}
-	return false, PlatformResultOK
+	return false, PlatformResultHandlerError
 }
 
-// replyStatus 向 [status_reply](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/device.html) 发报文，data.result 同 EventReplyData 简形时与 events_reply 的 result 语义一致，特殊 method 以协议为准。
-func (c *Client) replyStatus(ctx context.Context, gatewaySn, tid, bid string, result int) error {
+// statusReply 向 [status_reply](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/device.html) 发报文，data.result 同 EventReplyData 简形时与 events_reply 的 result 语义一致，特殊 method 以协议为准。
+func (c *Client) statusReply(ctx context.Context, gatewaySn, tid, bid string, result PlatformResult) error {
 	reply := StatusReply{
 		Tid:       tid,
 		Bid:       bid,
 		Timestamp: time.Now().UnixMilli(),
-		Data:      EventReplyData{Result: result},
+		Data:      EventReplyData{Result: int(result)},
 	}
 	data, err := json.Marshal(reply)
 	if err != nil {
@@ -344,30 +378,31 @@ func (c *Client) HandleRequests(ctx context.Context, payload []byte, topic strin
 			logx.WithContext(ctx).Infof("[dji-sdk] skip request reply: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
 			return nil
 		}
-		return c.replyToRequest(ctx, gatewaySn, &msg, PlatformResultHandlerError, nil)
+		return c.requestsReply(ctx, gatewaySn, &msg, PlatformResultHandlerError, nil)
 	}
-	result, output, err := c.handlers.onRequest(ctx, gatewaySn, &msg)
+	output, err := c.handlers.onRequest(ctx, gatewaySn, &msg)
+	var result PlatformResult
 	if err != nil {
 		logx.WithContext(ctx).Errorf("[dji-sdk] request handler error: method=%s err=%v", msg.Method, err)
-		if result == PlatformResultOK {
-			result = PlatformResultHandlerError
-		}
+		result = ResultFromError(err)
+	} else {
+		result = PlatformResultOK
 	}
 	if !c.reply.EnableRequestReply {
 		logx.WithContext(ctx).Infof("[dji-sdk] skip request reply: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
 		return nil
 	}
-	return c.replyToRequest(ctx, gatewaySn, &msg, result, output)
+	return c.requestsReply(ctx, gatewaySn, &msg, result, output)
 }
 
-// replyToRequest 向 thing/.../requests_reply 发报文，Envelope 复用 RequestReply（data 内 result、output 与 services_reply 常见同形，以协议为准）。
-func (c *Client) replyToRequest(ctx context.Context, gatewaySn string, req *RequestMessage, result int, output any) error {
+// requestsReply 向 thing/.../requests_reply 发报文，Envelope 复用 RequestReply（data 内 result、output 与 services_reply 常见同形，以协议为准）。
+func (c *Client) requestsReply(ctx context.Context, gatewaySn string, req *RequestMessage, result PlatformResult, output any) error {
 	reply := RequestReply{
 		Tid:       req.Tid,
 		Bid:       req.Bid,
 		Timestamp: time.Now().UnixMilli(),
 		Method:    req.Method,
-		Data:      ServiceReplyData{Result: result, Output: output},
+		Data:      ServiceReplyData{Result: int(result), Output: output},
 	}
 	data, err := json.Marshal(reply)
 	if err != nil {

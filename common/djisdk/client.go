@@ -16,11 +16,11 @@ import (
 // **通配订阅** 收设备上行（如 *reply、events、osd、requests、set_reply、drc/up 等）。见 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html)。
 // 含：services、events、property、osd/state、sys、requests、DRC 等，详情见包级 doc.go 与各 Topic 函数注释。
 type Client struct {
-	mqttClient   mqttx.Client
-	handlers     handlers
-	pendingTTL   time.Duration
-	reply        ReplyConfig
-	drcManager   *drcManager
+	mqttClient mqttx.Client
+	handlers   handlers
+	pendingTTL time.Duration
+	reply      ReplyConfig
+	drcManager *drcManager
 }
 
 // Config bundles SDK-level configuration for MustNewClient (go-zero style).
@@ -29,8 +29,8 @@ type Client struct {
 type Config struct {
 	MqttConfig mqttx.MqttConfig
 	PendingTTL time.Duration `json:",default=30s"`
-	Reply      ReplyConfig   `json:",optional"`
-	Drc        DrcConfig     `json:",optional"`
+	Reply      ReplyConfig
+	Drc        DrcConfig
 }
 
 func MustNewClient(cfg Config, opts ...ClientOption) *Client {
@@ -55,10 +55,10 @@ func NewClient(mqttClient mqttx.Client, opts ...ClientOption) *Client {
 
 func buildClient(mqttClient mqttx.Client, opt *clientOptions) *Client {
 	c := &Client{
-		mqttClient:   mqttClient,
-		handlers:     opt.handlers,
-		pendingTTL:   opt.pendingTTL,
-		reply:        opt.reply,
+		mqttClient: mqttClient,
+		handlers:   opt.handlers,
+		pendingTTL: opt.pendingTTL,
+		reply:      opt.reply,
 	}
 	if opt.drcConfig.HeartbeatInterval > 0 {
 		c.drcManager = newDrcManager(c, opt.drcConfig, opt.drcManagerOpts...)

@@ -140,6 +140,7 @@ type StatusMessage struct {
 	Data any `json:"data"`
 }
 
+// RequestReply 云平台对设备 requests 的应答报文，发布到 thing/.../requests_reply。
 type RequestReply struct {
 	Tid       string           `json:"tid"`
 	Bid       string           `json:"bid"`
@@ -148,6 +149,7 @@ type RequestReply struct {
 	Data      ServiceReplyData `json:"data"`
 }
 
+// StatusReply 云平台对设备 sys/.../status 的应答报文，发布到 status_reply。
 type StatusReply struct {
 	Tid       string         `json:"tid"`
 	Bid       string         `json:"bid"`

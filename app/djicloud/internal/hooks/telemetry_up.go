@@ -14,10 +14,10 @@ import (
 	"github.com/zeromicro/go-zero/core/threading"
 )
 
-func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache, pushCli socketpush.SocketPushClient, disableSQLTrace bool) func(ctx context.Context, deviceSn string, data *djisdk.OsdMessage) {
-	return func(ctx context.Context, deviceSn string, data *djisdk.OsdMessage) {
+func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache, pushCli socketpush.SocketPushClient, disableSQLTrace bool) func(ctx context.Context, deviceSn string, data *djisdk.OsdMessage) error {
+	return func(ctx context.Context, deviceSn string, data *djisdk.OsdMessage) error {
 		if data == nil {
-			return
+			return nil
 		}
 		if disableSQLTrace {
 			ctx = gormx.WithoutSQLTrace(ctx)
@@ -27,7 +27,7 @@ func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache, pushCli socketpu
 		gatewaySn := data.Gateway
 		if gatewaySn == "" {
 			logx.WithContext(ctx).Errorf("[dji-cloud] invalid osd payload: missing gateway, sn=%s tid=%s", deviceSn, data.Tid)
-			return
+			return nil
 		}
 		if onlineCache != nil {
 			onlineCache.Set(deviceSn, OnlineValue)
@@ -49,7 +49,7 @@ func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache, pushCli socketpu
 		}
 		if db == nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] osd storage skipped: db is nil")
-			return
+			return nil
 		}
 		c := db.WithContext(ctx)
 		deviceWhere := map[string]any{"device_sn": deviceSn}
@@ -88,20 +88,21 @@ func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache, pushCli socketpu
 				}
 			})
 		}
+		return nil
 	}
 }
 
-func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache, pushCli socketpush.SocketPushClient) func(ctx context.Context, deviceSn string, data *djisdk.StateMessage) {
-	return func(ctx context.Context, deviceSn string, data *djisdk.StateMessage) {
+func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache, pushCli socketpush.SocketPushClient) func(ctx context.Context, deviceSn string, data *djisdk.StateMessage) error {
+	return func(ctx context.Context, deviceSn string, data *djisdk.StateMessage) error {
 		if data == nil {
-			return
+			return nil
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] state: sn=%s tid=%s ts=%d", deviceSn, data.Tid, data.Timestamp)
 
 		gatewaySn := data.Gateway
 		if gatewaySn == "" {
 			logx.WithContext(ctx).Errorf("[dji-cloud] invalid state payload: missing gateway, sn=%s tid=%s", deviceSn, data.Tid)
-			return
+			return nil
 		}
 		now := reportTime(data.Timestamp)
 		versions := extractDeviceVersions(data.Data)
@@ -121,7 +122,7 @@ func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache, pushCli socketp
 		}
 		if db == nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] state storage skipped: db is nil")
-			return
+			return nil
 		}
 		c := db.WithContext(ctx)
 		deviceWhere := map[string]any{"device_sn": deviceSn}
@@ -160,5 +161,6 @@ func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache, pushCli socketp
 				}
 			})
 		}
+		return nil
 	}
 }

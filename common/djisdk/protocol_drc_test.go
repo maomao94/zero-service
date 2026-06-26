@@ -56,11 +56,11 @@ func TestHandleRequestsReplySwitch(t *testing.T) {
 	t.Run("enabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
 		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: true}),
-			WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (int, any, error) {
+			WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (any, error) {
 				if gatewaySn != "gateway-1" || req.Method != "airport_bind_status" {
 					t.Fatalf("unexpected request: gateway=%s method=%s", gatewaySn, req.Method)
 				}
-				return PlatformResultOK, map[string]any{"accepted": true}, nil
+				return map[string]any{"accepted": true}, nil
 			}),
 		)
 		client.mqttClient = mqtt
@@ -77,9 +77,9 @@ func TestHandleRequestsReplySwitch(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
 		called := false
 		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: false}),
-			WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (int, any, error) {
+			WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (any, error) {
 				called = true
-				return PlatformResultOK, nil, nil
+				return nil, nil
 			}),
 		)
 		client.mqttClient = mqtt
@@ -103,11 +103,11 @@ func TestHandleStatusReplySwitch(t *testing.T) {
 	t.Run("enabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
 		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableStatusReply: true}),
-			WithStatusHandler(func(ctx context.Context, gatewaySn string, data *StatusMessage) int {
+			WithStatusHandler(func(ctx context.Context, gatewaySn string, data *StatusMessage) error {
 				if gatewaySn != "gateway-1" || data.Method != MethodUpdateTopo {
 					t.Fatalf("unexpected status: gateway=%s method=%s", gatewaySn, data.Method)
 				}
-				return PlatformResultOK
+				return nil
 			}),
 		)
 		client.mqttClient = mqtt
@@ -124,9 +124,9 @@ func TestHandleStatusReplySwitch(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
 		called := false
 		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableStatusReply: false}),
-			WithStatusHandler(func(ctx context.Context, gatewaySn string, data *StatusMessage) int {
+			WithStatusHandler(func(ctx context.Context, gatewaySn string, data *StatusMessage) error {
 				called = true
-				return PlatformResultOK
+				return nil
 			}),
 		)
 		client.mqttClient = mqtt
@@ -227,11 +227,12 @@ func TestHmsEventDataUnmarshalOfficialShape(t *testing.T) {
 
 func TestHandleStateUsesStateMessage(t *testing.T) {
 	called := false
-	client := NewClient(nil, WithStateHandler(func(ctx context.Context, deviceSn string, data *StateMessage) {
+	client := NewClient(nil, WithStateHandler(func(ctx context.Context, deviceSn string, data *StateMessage) error {
 		called = true
 		if deviceSn != "gateway-1" || data.Tid != "tid-state" {
 			t.Fatalf("unexpected state callback: sn=%s data=%+v", deviceSn, data)
 		}
+		return nil
 	}))
 
 	payload := []byte(`{"tid":"tid-state","bid":"bid-state","timestamp":1710000000000,"data":{"mode_code":1}}`)
@@ -638,11 +639,12 @@ func TestTask5ModulePayloadSerialization(t *testing.T) {
 func TestRemoteLogProgressEventHook(t *testing.T) {
 	progressCalled := false
 	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(DefaultReplyConfig()),
-		WithRemoteLogFileUploadProgressHandler(func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent) {
+		WithRemoteLogFileUploadProgressHandler(func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent) error {
 			progressCalled = true
 			if gatewaySn != "gateway-1" || len(data.Files) != 1 || data.Files[0].Progress != 50 {
 				t.Fatalf("unexpected progress event: gateway=%s data=%+v", gatewaySn, data)
 			}
+			return nil
 		}),
 	)
 	client.mqttClient = &recordingMQTTClient{}
@@ -672,11 +674,11 @@ func TestRequestsReplyOutputForKnownMethods(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mqtt := &recordingMQTTClient{}
 			client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: true}),
-				WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (int, any, error) {
+				WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (any, error) {
 					if gatewaySn != "gateway-1" || req.Method != tc.method {
 						t.Fatalf("unexpected request: gateway=%s method=%s", gatewaySn, req.Method)
 					}
-					return PlatformResultOK, tc.output, nil
+					return tc.output, nil
 				}),
 			)
 			client.mqttClient = mqtt
@@ -699,17 +701,19 @@ func TestOtaProgressAndUpdateTopoEventHooks(t *testing.T) {
 	otaCalled := false
 	topoCalled := false
 	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(DefaultReplyConfig()),
-		WithOtaProgressHandler(func(ctx context.Context, gatewaySn string, data *OtaProgressEvent) {
+		WithOtaProgressHandler(func(ctx context.Context, gatewaySn string, data *OtaProgressEvent) error {
 			otaCalled = true
 			if gatewaySn != "gateway-1" || len(data.Devices) != 1 || data.Devices[0].SN != "dock-1" || data.Devices[0].Progress != 42 {
 				t.Fatalf("unexpected ota progress event: gateway=%s data=%+v", gatewaySn, data)
 			}
+			return nil
 		}),
-		WithUpdateTopoHandler(func(ctx context.Context, gatewaySn string, data *TopoUpdateData) {
+		WithUpdateTopoHandler(func(ctx context.Context, gatewaySn string, data *TopoUpdateData) error {
 			topoCalled = true
 			if gatewaySn != "gateway-1" || data.Type != 3 || len(data.SubDevices) != 1 || data.SubDevices[0].SN != "payload-1" {
 				t.Fatalf("unexpected topo event: gateway=%s data=%+v", gatewaySn, data)
 			}
+			return nil
 		}),
 	)
 	client.mqttClient = &recordingMQTTClient{}

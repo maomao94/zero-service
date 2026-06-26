@@ -366,9 +366,8 @@ func TestStatusUpdateTopoStoresTypeOnlyInTopo(t *testing.T) {
 		},
 	}
 
-	result := NewStatusHandler(db, onlineCache)(ctx, "dock3-1", msg)
-	if result != djisdk.PlatformResultOK {
-		t.Fatalf("status result = %d, want %d", result, djisdk.PlatformResultOK)
+	if err := NewStatusHandler(db, onlineCache)(ctx, "dock3-1", msg); err != nil {
+		t.Fatalf("status handler error = %v, want nil", err)
 	}
 
 	var dock struct {
@@ -449,9 +448,8 @@ func TestStatusUpdateTopoClearsOnlyMissingSubDevices(t *testing.T) {
 		},
 	}
 
-	result := NewStatusHandler(db, nil)(ctx, "dock-diff", msg)
-	if result != djisdk.PlatformResultOK {
-		t.Fatalf("status result = %d, want %d", result, djisdk.PlatformResultOK)
+	if err := NewStatusHandler(db, nil)(ctx, "dock-diff", msg); err != nil {
+		t.Fatalf("status handler error = %v, want nil", err)
 	}
 
 	var oldCount int64
@@ -498,9 +496,8 @@ func TestStatusUpdateTopoClearsOfflineSubDevices(t *testing.T) {
 		},
 	}
 
-	result := NewStatusHandler(db, nil)(ctx, "dock-offline", msg)
-	if result != djisdk.PlatformResultOK {
-		t.Fatalf("status result = %d, want %d", result, djisdk.PlatformResultOK)
+	if err := NewStatusHandler(db, nil)(ctx, "dock-offline", msg); err != nil {
+		t.Fatalf("status handler error = %v, want nil", err)
 	}
 
 	var count int64
@@ -543,9 +540,8 @@ func TestStatusUpdateTopoRestoresSoftDeletedSubDevice(t *testing.T) {
 		},
 	}
 
-	result := NewStatusHandler(db, nil)(ctx, "dock-restore", msg)
-	if result != djisdk.PlatformResultOK {
-		t.Fatalf("status result = %d, want %d", result, djisdk.PlatformResultOK)
+	if err := NewStatusHandler(db, nil)(ctx, "dock-restore", msg); err != nil {
+		t.Fatalf("status handler error = %v, want nil", err)
 	}
 
 	var restored struct {
@@ -697,7 +693,7 @@ func TestHookHandlersDoNotGenerateDialectUpsertSQL(t *testing.T) {
 			WaylineID:            9,
 		},
 	})
-	result := NewStatusHandler(db, nil)(ctx, "dock-sql", &djisdk.StatusMessage{
+	if err := NewStatusHandler(db, nil)(ctx, "dock-sql", &djisdk.StatusMessage{
 		Method:    djisdk.MethodUpdateTopo,
 		Timestamp: 1710000000000,
 		Data: map[string]any{
@@ -705,9 +701,8 @@ func TestHookHandlersDoNotGenerateDialectUpsertSQL(t *testing.T) {
 				map[string]any{"sn": "drone-sql", "domain": "0", "type": 60, "sub_type": 0, "index": "A"},
 			},
 		},
-	})
-	if result != djisdk.PlatformResultOK {
-		t.Fatalf("status result = %d, want %d", result, djisdk.PlatformResultOK)
+	}); err != nil {
+		t.Fatalf("status handler error = %v, want nil", err)
 	}
 
 	for _, sql := range sqls {
@@ -1021,9 +1016,9 @@ func TestRemoteLogProgressPersistsEventWithMethod(t *testing.T) {
 
 func TestDeviceRequestHandlerReturnsErrorOnNilReq(t *testing.T) {
 	handler := NewDeviceRequestHandler()
-	result, _, _ := handler(context.Background(), "dock-nil", nil)
-	if result != djisdk.PlatformResultHandlerError {
-		t.Fatalf("result = %d, want PlatformResultHandlerError for nil request", result)
+	_, err := handler(context.Background(), "dock-nil", nil)
+	if err == nil {
+		t.Fatal("expected error for nil request")
 	}
 }
 
@@ -1066,12 +1061,9 @@ func TestDeviceRequestHandlerReturnsMethodSpecificOutput(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.method, func(t *testing.T) {
-			result, output, err := handler(context.Background(), "dock-req", &djisdk.RequestMessage{Method: tc.method})
+			output, err := handler(context.Background(), "dock-req", &djisdk.RequestMessage{Method: tc.method})
 			if err != nil {
 				t.Fatalf("handler error = %v", err)
-			}
-			if result != djisdk.PlatformResultOK {
-				t.Fatalf("result = %d, want OK", result)
 			}
 			if output == nil || !strings.Contains(asJSON(t, output), tc.want) {
 				t.Fatalf("output = %#v, want key %s", output, tc.want)

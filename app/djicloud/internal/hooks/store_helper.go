@@ -49,16 +49,6 @@ func extractDeviceVersions(v any) deviceVersions {
 	}
 }
 
-func appendVersionUpdateColumns(columns []string, versions deviceVersions) []string {
-	if versions.FirmwareVersion != "" {
-		columns = append(columns, "firmware_version")
-	}
-	if versions.HardwareVersion != "" {
-		columns = append(columns, "hardware_version")
-	}
-	return columns
-}
-
 func waylineMissionStateText(state int) string {
 	switch state {
 	case 0:

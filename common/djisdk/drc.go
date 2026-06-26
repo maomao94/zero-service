@@ -247,6 +247,8 @@ func (m *drcManager) startHeartbeat(session *drcDeviceSession) {
 	go m.heartbeatLoop(session.GatewaySn, session.SessionID, heartbeatCtx)
 }
 
+// heartbeatLoop 定期经 drc/down 发送 heart_beat，保持 DRC 链路存活。
+// 会话过期或为非活跃 session 时自动退出，不重复发心跳。
 func (m *drcManager) heartbeatLoop(gatewaySn, sessionID string, heartbeatCtx context.Context) {
 	ticker := time.NewTicker(m.config.HeartbeatInterval)
 	defer ticker.Stop()
@@ -321,6 +323,7 @@ func (m *drcManager) expireSession(gatewaySn, sessionID string) {
 	m.fireSessionExpired(gatewaySn, sessionID, "max_deadline_exceeded")
 }
 
+// cleanLoop 定期扫描 session map，清理超时未心跳的过期状态。
 func (m *drcManager) cleanLoop() {
 	interval := m.config.HeartbeatTimeout / 2
 	if interval < 5*time.Second {
@@ -342,6 +345,7 @@ func (m *drcManager) cleanLoop() {
 	}
 }
 
+// cleanupExpiredStates 扫描并删除超时 session，对 enabled 但已过期的 session 触发 onSessionExpired 回调。
 func (m *drcManager) cleanupExpiredStates() int {
 	expired := make(map[string]*drcDeviceSession)
 

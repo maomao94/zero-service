@@ -6,16 +6,17 @@ import (
 )
 
 // StatusHandler 处理 sys/.../status 上行。
-// result 表达业务处理结果，供 status_reply 使用；err 非 nil 时统一打印错误日志。
+// 返回 error 统一打印日志；若 error 为 *PlatformError 则取其 Code 作为 status_reply 的 result，否则默认 PlatformResultHandlerError。
 // 是否发布 status_reply 由 Client 的 ReplyConfig 控制。
-type StatusHandler func(ctx context.Context, gatewaySn string, data *StatusMessage) (result PlatformResult, err error)
+type StatusHandler func(ctx context.Context, gatewaySn string, data *StatusMessage) error
 
 // DrcUpHandler 处理 thing/product/{gateway_sn}/drc/up 设备上行报文；parsed 为 DrcUnmarshalUpData 解析结果，未知 method 时为 *DrcUnknownUpData。
 type DrcUpHandler func(ctx context.Context, gatewaySn string, msg *DrcUpMessage, parsed any) error
 
-// RequestHandler 处理 thing/.../requests 上行。返回值只表达业务处理结果与输出；是否发布 requests_reply 由 Client 的 ReplyConfig 控制。
-// err 非 nil 时若 result 为 PlatformResultOK 会视为 PlatformResultHandlerError 再组包，避免启用回复时无响应。
-type RequestHandler func(ctx context.Context, gatewaySn string, msg *RequestMessage) (result PlatformResult, output any, err error)
+// RequestHandler 处理 thing/.../requests 上行。output 供 requests_reply 的 data.output 使用。
+// 返回 error 统一打印日志；若 error 为 *PlatformError 则取其 Code 作为 requests_reply 的 result，否则默认 PlatformResultHandlerError。
+// 是否发布 requests_reply 由 Client 的 ReplyConfig 控制。
+type RequestHandler func(ctx context.Context, gatewaySn string, msg *RequestMessage) (output any, err error)
 
 type ReplyConfig struct {
 	EnableEventReply   bool `json:",default=true"`
@@ -187,6 +188,7 @@ func defaultClientOptions() clientOptions {
 	return clientOptions{
 		pendingTTL: defaultPendingTTL,
 		reply:      DefaultReplyConfig(),
+		drcConfig:  DefaultDrcConfig(),
 	}
 }
 

@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"zero-service/app/djicloud/model/gormmodel"
 	"zero-service/common/djisdk"
@@ -13,30 +14,30 @@ import (
 )
 
 func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
-	return func(ctx context.Context, gatewaySn string, data *djisdk.StatusMessage) int {
+	return func(ctx context.Context, gatewaySn string, data *djisdk.StatusMessage) error {
 		if data == nil {
-			return djisdk.PlatformResultOK
+			return nil
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] status: sn=%s method=%s", gatewaySn, data.Method)
 
 		if data.Method != djisdk.MethodUpdateTopo {
-			return djisdk.PlatformResultOK
+			return nil
 		}
 
 		raw, err := json.Marshal(data.Data)
 		if err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] status marshal data failed: %v", err)
-			return djisdk.PlatformResultHandlerError
+			return &djisdk.PlatformError{Code: djisdk.PlatformResultHandlerError, Err: fmt.Errorf("status marshal data failed: %w", err)}
 		}
 		var topo djisdk.TopoUpdateData
 		if err := json.Unmarshal(raw, &topo); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] status unmarshal topo failed: %v", err)
-			return djisdk.PlatformResultHandlerError
+			return &djisdk.PlatformError{Code: djisdk.PlatformResultHandlerError, Err: fmt.Errorf("status unmarshal topo failed: %w", err)}
 		}
 		now := reportTime(data.Timestamp)
 		if db == nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] status update topo skipped: db is nil")
-			return djisdk.PlatformResultOK
+			return nil
 		}
 
 		if err := db.WithContext(ctx).Transact(func(tx *gormx.DB) error {
@@ -106,10 +107,10 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 			return nil
 		}); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] status update topo failed: %v", err)
-			return djisdk.PlatformResultHandlerError
+			return &djisdk.PlatformError{Code: djisdk.PlatformResultHandlerError, Err: fmt.Errorf("status update topo failed: %w", err)}
 		}
 
 		logx.WithContext(ctx).Infof("[dji-cloud] topo update: sn=%s sub_devices=%d", gatewaySn, len(topo.SubDevices))
-		return djisdk.PlatformResultOK
+		return nil
 	}
 }

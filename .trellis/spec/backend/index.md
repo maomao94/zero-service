@@ -23,6 +23,7 @@
 ### 领域模块
 
 - [gisx-guidelines.md](./gisx-guidelines.md) - GIS 服务架构、gisx 包边界、坐标系约定、算法说明、FenceStore 模式、常见陷阱
+- [drone-station-sdk-template.md](./drone-station-sdk-template.md) - 机巢 SDK 开发模板：对接新厂商机巢的完整开发指南
 - [djisdk-guidelines.md](./djisdk-guidelines.md) - common/djisdk 包：Client 构造、Handler 注册、事件分发、命令发送、DRC 协议、Topic 函数、错误处理
 - [djicloud-hooks-guidelines.md](./djicloud-hooks-guidelines.md) - app/djicloud MQTT 上行处理：update_topo 蛙跳策略、OSD/State 处理、事件落库、DRC up、设备在线管理
 - [djicloud-models.md](./djicloud-models.md) - app/djicloud GORM 模型：11 张表的写策略（Upsert vs Insert-only）、DjiDevice 在线语义、蛙跳 topo 设计

@@ -1128,3 +1128,37 @@ Removed UpdateOrCreate, CreateRecord, GormDB from common/gormx/upsert.go. Refact
 ### Next Steps
 
 - None - task complete
+
+
+## Session 84: djisdk 代码审阅优化 & SDK 模板 spec
+
+**Date**: 2026-06-26
+**Task**: djisdk 代码审阅优化 & SDK 模板 spec
+**Branch**: `master`
+
+### Summary
+
+审阅优化: 删除 dead code (appendVersionUpdateColumns), 修复 drchelper ClientID 独立生成, 补充 doc 注释 (protocol.go/drc.go/error_descriptions.go). 创建 drone-station-sdk-template.md 机巢 SDK 开发模板 spec. go build + go vet + go test 通过.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6d088653` | (see git log) |
+| `907d64c7` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

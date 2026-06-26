@@ -12,16 +12,16 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-func NewFlightTaskProgressHandler(db *gormx.DB) func(ctx context.Context, gatewaySn string, data *djisdk.FlightTaskProgressEvent) {
-	return func(ctx context.Context, gatewaySn string, data *djisdk.FlightTaskProgressEvent) {
+func NewFlightTaskProgressHandler(db *gormx.DB) func(ctx context.Context, gatewaySn string, data *djisdk.FlightTaskProgressEvent) error {
+	return func(ctx context.Context, gatewaySn string, data *djisdk.FlightTaskProgressEvent) error {
 		if data == nil {
-			return
+			return nil
 		}
 		ext := data.Ext
 		progress := data.Progress
 		if gatewaySn == "" || ext.FlightID == "" {
 			logx.WithContext(ctx).Errorf("[dji-cloud] skip flighttask_progress with empty identity: sn=%s flight_id=%s", gatewaySn, ext.FlightID)
-			return
+			return nil
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] flighttask_progress: sn=%s flight_id=%s state=%d(%s) waypoint=%d media_count=%d percent=%f",
 			gatewaySn, ext.FlightID, ext.WaylineMissionState, waylineMissionStateText(ext.WaylineMissionState), ext.CurrentWaypointIndex, ext.MediaCount, progress.Percent)
@@ -99,13 +99,14 @@ func NewFlightTaskProgressHandler(db *gormx.DB) func(ctx context.Context, gatewa
 		}); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert flight task progress state failed: %v", err)
 		}
+		return nil
 	}
 }
 
-func NewFlightTaskReadyHandler(db *gormx.DB) func(ctx context.Context, gatewaySn string, data *djisdk.FlightTaskReadyEvent) {
-	return func(ctx context.Context, gatewaySn string, data *djisdk.FlightTaskReadyEvent) {
+func NewFlightTaskReadyHandler(db *gormx.DB) func(ctx context.Context, gatewaySn string, data *djisdk.FlightTaskReadyEvent) error {
+	return func(ctx context.Context, gatewaySn string, data *djisdk.FlightTaskReadyEvent) error {
 		if data == nil {
-			return
+			return nil
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] flighttask_ready: sn=%s flight_ids=%v count=%d", gatewaySn, data.FlightIDs, len(data.FlightIDs))
 		flightIdJSON := toJSONString(data.FlightIDs)
@@ -119,13 +120,14 @@ func NewFlightTaskReadyHandler(db *gormx.DB) func(ctx context.Context, gatewaySn
 		}).Error; err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] create flight task ready event failed: %v", err)
 		}
+		return nil
 	}
 }
 
-func NewReturnHomeInfoHandler(db *gormx.DB) func(ctx context.Context, gatewaySn string, data *djisdk.ReturnHomeInfoEvent) {
-	return func(ctx context.Context, gatewaySn string, data *djisdk.ReturnHomeInfoEvent) {
+func NewReturnHomeInfoHandler(db *gormx.DB) func(ctx context.Context, gatewaySn string, data *djisdk.ReturnHomeInfoEvent) error {
+	return func(ctx context.Context, gatewaySn string, data *djisdk.ReturnHomeInfoEvent) error {
 		if data == nil {
-			return
+			return nil
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] return_home_info: sn=%s %+v", gatewaySn, *data)
 		if err := db.WithContext(ctx).Create(&gormmodel.DjiReturnHomeEvent{
@@ -139,20 +141,22 @@ func NewReturnHomeInfoHandler(db *gormx.DB) func(ctx context.Context, gatewaySn 
 		}).Error; err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] create return home event failed: %v", err)
 		}
+		return nil
 	}
 }
 
-func HandleCustomDataFromPsdkEvent(ctx context.Context, gatewaySn string, data *djisdk.CustomDataFromPsdkEvent) {
+func HandleCustomDataFromPsdkEvent(ctx context.Context, gatewaySn string, data *djisdk.CustomDataFromPsdkEvent) error {
 	if data == nil {
-		return
+		return nil
 	}
 	logx.WithContext(ctx).Infof("[dji-cloud] custom_data_from_psdk: sn=%s value=%s", gatewaySn, data.Value)
+	return nil
 }
 
-func NewHmsEventNotifyHandler(db *gormx.DB) func(ctx context.Context, gatewaySn string, data *djisdk.HmsEventData) {
-	return func(ctx context.Context, gatewaySn string, data *djisdk.HmsEventData) {
+func NewHmsEventNotifyHandler(db *gormx.DB) func(ctx context.Context, gatewaySn string, data *djisdk.HmsEventData) error {
+	return func(ctx context.Context, gatewaySn string, data *djisdk.HmsEventData) error {
 		if data == nil {
-			return
+			return nil
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] hms: sn=%s items=%d", gatewaySn, len(data.List))
 		for _, item := range data.List {
@@ -174,13 +178,14 @@ func NewHmsEventNotifyHandler(db *gormx.DB) func(ctx context.Context, gatewaySn 
 				logx.WithContext(ctx).Errorf("[dji-cloud] create hms alert failed: %v", err)
 			}
 		}
+		return nil
 	}
 }
 
-func NewRemoteLogFileUploadProgressHandler(db *gormx.DB) func(ctx context.Context, gatewaySn string, data *djisdk.RemoteLogFileUploadProgressEvent) {
-	return func(ctx context.Context, gatewaySn string, data *djisdk.RemoteLogFileUploadProgressEvent) {
+func NewRemoteLogFileUploadProgressHandler(db *gormx.DB) func(ctx context.Context, gatewaySn string, data *djisdk.RemoteLogFileUploadProgressEvent) error {
+	return func(ctx context.Context, gatewaySn string, data *djisdk.RemoteLogFileUploadProgressEvent) error {
 		if data == nil {
-			return
+			return nil
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] remote_log_fileupload_progress: sn=%s file_count=%d", gatewaySn, len(data.Files))
 		if err := db.WithContext(ctx).Create(&gormmodel.DjiRemoteLogEvent{
@@ -192,27 +197,30 @@ func NewRemoteLogFileUploadProgressHandler(db *gormx.DB) func(ctx context.Contex
 		}).Error; err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] create remote log progress event failed: %v", err)
 		}
+		return nil
 	}
 }
 
 // HandleOtaProgressEvent 处理固件升级进度事件（OTA Progress）。
 // 对应 DJI Cloud API event method: ota_progress（Events, up）。
-func HandleOtaProgressEvent(ctx context.Context, gatewaySn string, data *djisdk.OtaProgressEvent) {
+func HandleOtaProgressEvent(ctx context.Context, gatewaySn string, data *djisdk.OtaProgressEvent) error {
 	if data == nil {
-		return
+		return nil
 	}
 	logx.WithContext(ctx).Infof("[dji-cloud] ota_progress: sn=%s device_count=%d", gatewaySn, len(data.Devices))
 	for _, dev := range data.Devices {
 		logx.WithContext(ctx).Infof("[dji-cloud] ota_progress device: sn=%s model=%s status=%d progress=%d result=%d",
 			dev.SN, dev.DeviceModel, dev.Status, dev.Progress, dev.Result)
 	}
+	return nil
 }
 
 // HandleCustomDataFromEsdkEvent 处理 ESDK 自定义数据上报事件。
 // 对应 DJI Cloud API event method: custom_data_transmission_from_esdk（Events, up）。
-func HandleCustomDataFromEsdkEvent(ctx context.Context, gatewaySn string, data *djisdk.CustomDataFromEsdkEvent) {
+func HandleCustomDataFromEsdkEvent(ctx context.Context, gatewaySn string, data *djisdk.CustomDataFromEsdkEvent) error {
 	if data == nil {
-		return
+		return nil
 	}
 	logx.WithContext(ctx).Infof("[dji-cloud] custom_data_from_esdk: sn=%s value=%s", gatewaySn, data.Value)
+	return nil
 }

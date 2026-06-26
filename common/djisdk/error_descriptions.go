@@ -1,5 +1,7 @@
 package djisdk
 
+// djiErrorDescriptions 提供 DJI 设备错误码的中文描述，作为 protobuf 枚举名之外的补充信息。
+// key 与 dji_error_code.DJIErrorCode 枚举值对齐；不在该表中时回退使用枚举名。
 var djiErrorDescriptions = map[int32]string{
 	312014: "设备升级中，请勿重复操作",
 	312015: "机场：{dock_org_name} 业务繁忙无法进行设备升级，请等待机场处于空闲中后再试",

@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 83
-- **Last Active**: 2026-06-25
+- **Total Sessions**: 84
+- **Last Active**: 2026-06-26
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~1130 | Active |
+| `journal-2.md` | ~1164 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 84 | 2026-06-26 | djisdk 代码审阅优化 & SDK 模板 spec | `6d088653`, `907d64c7` | `master` |
 | 83 | 2026-06-25 | djsdk client option重构 + drc manager移入djsdk | - | `master` |
 | 82 | 2026-06-25 | fix: remove unnecessary root spec/index.md | `0fa6c712` | `master` |
 | 81 | 2026-06-25 | 蛙跳机巢模型调整 + djisdk/djicloud Trellis Spec 引导 | `ec11745f`, `7bd977e3`, `e145fe4e` | `master` |

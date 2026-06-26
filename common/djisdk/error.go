@@ -57,3 +57,12 @@ func (e *PlatformError) Error() string {
 }
 
 func (e *PlatformError) Unwrap() error { return e.Err }
+
+// ResultFromError 从 error 中提取 PlatformResult 码。若 err 为 *PlatformError 则取其 Code，否则默认 PlatformResultHandlerError。
+func ResultFromError(err error) PlatformResult {
+	var pe *PlatformError
+	if errors.As(err, &pe) {
+		return pe.Code
+	}
+	return PlatformResultHandlerError
+}
