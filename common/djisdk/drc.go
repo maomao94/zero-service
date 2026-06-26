@@ -170,7 +170,7 @@ func (m *drcManager) OnDeviceHeartbeat(ctx context.Context, gatewaySn string) {
 	session, ok := m.session[gatewaySn]
 	m.mu.RUnlock()
 	if !ok {
-		logx.WithContext(ctx).Infof("[dji-sdk] drc_manager device heartbeat received but state not found (not enabled): %s", gatewaySn)
+		logx.WithContext(ctx).Infof("[dji-sdk] drc_manager device heartbeat received but state not found (not enabled): gateway_sn=%s", gatewaySn)
 		return
 	}
 
@@ -265,7 +265,7 @@ func (m *drcManager) heartbeatLoop(gatewaySn, sessionID string, heartbeatCtx con
 			return
 		case <-ticker.C:
 			if !m.isCurrentSessionAlive(gatewaySn, sessionID) {
-				logx.Infof("[dji-sdk] drc_heartbeat stale session or not alive, stop: gateway_sn=%s session_id=%s", gatewaySn, sessionID)
+				logx.Infof("[dji-sdk] drc_heartbeat stale session or not alive: gateway_sn=%s session_id=%s", gatewaySn, sessionID)
 				return
 			}
 			if m.client == nil {

@@ -126,7 +126,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	djiCli := djisdk.MustNewClient(c.Dji, handlerOpts...)
 
 	if err := djiCli.SubscribeAll(); err != nil {
-		logx.Errorf("[dji-cloud] subscribe topics failed: %v", err)
+		logx.Errorf("[dji-cloud] subscribe topics failed err=%v", err)
 	}
 
 	return &ServiceContext{

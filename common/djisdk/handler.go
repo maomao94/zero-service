@@ -517,6 +517,6 @@ func (c *Client) SubscribeAll() error {
 			return fmt.Errorf("[dji-sdk] subscribe %s failed: %w", topic, err)
 		}
 	}
-	logx.Info("[dji-sdk] subscribed all wildcard topics")
+	logx.Infof("[dji-sdk] subscribe all done topics=%d", len(topics))
 	return nil
 }
