@@ -84,7 +84,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 					Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s"}`, gatewaySn, sessionID),
 				})
 				if err != nil {
-					logx.Errorf("[drc-manager] socket push session_enabled failed: sn=%s err=%v", gatewaySn, err)
+					logx.Errorf("[dji-sdk] drc_manager socket push session_enabled failed: sn=%s err=%v", gatewaySn, err)
 				}
 			}),
 			djisdk.WithDrcSessionDisabled(func(gatewaySn, sessionID string) {
@@ -97,7 +97,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 					Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s"}`, gatewaySn, sessionID),
 				})
 				if err != nil {
-					logx.Errorf("[drc-manager] socket push session_disabled failed: sn=%s err=%v", gatewaySn, err)
+					logx.Errorf("[dji-sdk] drc_manager socket push session_disabled failed: sn=%s err=%v", gatewaySn, err)
 				}
 			}),
 			djisdk.WithDrcSessionExpired(func(gatewaySn, sessionID, reason string) {
@@ -110,7 +110,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 					Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s","reason":"%s"}`, gatewaySn, sessionID, reason),
 				})
 				if err != nil {
-					logx.Errorf("[drc-manager] socket push session_expired failed: sn=%s err=%v", gatewaySn, err)
+					logx.Errorf("[dji-sdk] drc_manager socket push session_expired failed: sn=%s err=%v", gatewaySn, err)
 				}
 			}),
 		)

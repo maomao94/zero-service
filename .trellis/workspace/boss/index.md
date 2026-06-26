@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 84
+- **Total Sessions**: 86
 - **Last Active**: 2026-06-26
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~1164 | Active |
+| `journal-2.md` | ~1244 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,8 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 86 | 2026-06-26 | 统一 DRC 日志前缀规范 | `7dd0d12f` | `master` |
+| 85 | 2026-06-26 | SDK 日志优化与 Spec 整理 | `27ca68e3`, `968e1a3c`, `5a26b9f8` | `master` |
 | 84 | 2026-06-26 | djisdk 代码审阅优化 & SDK 模板 spec | `6d088653`, `907d64c7` | `master` |
 | 83 | 2026-06-25 | djsdk client option重构 + drc manager移入djsdk | - | `master` |
 | 82 | 2026-06-25 | fix: remove unnecessary root spec/index.md | `0fa6c712` | `master` |

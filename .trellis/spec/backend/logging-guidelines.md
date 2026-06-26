@@ -32,6 +32,58 @@
 - 对流式、采集、消息消费路径逐条打印成功日志，造成噪声和性能压力。
 - 调试时本能 "加更多日志"，但正确方向是 "减少日志 + 精确错误分类"。
 
+## Scenario: 协议层上下文注入
+
+### 1. Scope / Trigger
+
+MQTT 协议层（`common/mqttx` → `common/djisdk`）收到设备上行消息时，将协议字段注入 `context.Context`，使下游 handler 和业务日志自动携带设备标识、事务 ID 和时间戳，无需逐行拼接。
+
+### 2. Signatures
+
+两层上下文注入：
+
+**mqttx 基础层**（`processMessage`, `common/mqttx/client.go`）：所有 MQTT 消费入口注入：
+```go
+ctx = logx.ContextWithFields(ctx,
+    logx.Field("client", c.GetClientID()),
+    logx.Field("topic", msg.Topic()),
+    logx.Field("topic_template", topicTemplate),
+    logx.Field("payload_bytes", len(payload)),
+    logx.Field("payload_size", tool.DecimalBytes(int64(len(payload)), 1)),
+)
+```
+
+**djisdk 协议层**（`handler.go`）：各上行 handler 注入协议字段：
+
+| Handler | 字段 |
+|---------|------|
+| `HandleEvents` | `gateway_sn`, `method`, `tid`, `bid`, `need_reply`, `ts`, `ts_fmt` |
+| `HandleStatus` | `gateway_sn`, `method`, `tid`, `bid`, `ts`, `ts_fmt` |
+| `HandleRequests` | `gateway_sn`, `method`, `tid`, `bid`, `ts`, `ts_fmt` |
+| `HandleDrcUp` | `gateway_sn`, `method`, `tid`, `bid`, `ts`, `ts_fmt` |
+| `HandleOsd` | `device_sn`, `tid`, `bid`, `ts`, `ts_fmt` |
+| `HandleState` | `device_sn`, `tid`, `bid`, `ts`, `ts_fmt` |
+
+时间戳使用 `github.com/dromara/carbon/v2` 格式化，`ts_fmt` 格式为 `"2006-01-02 15:04:05.000"`（`ToDateTimeMilliString`）。
+
+### 3. Contracts
+
+- 协议字段只注入 `ctx`，**不**写入消息文本——消息文本只保留 `"[dji-sdk] events"` 形式的纯动作标识
+- `logx.WithContext(enhancedCtx)` 的 logx 输出会自动附加上下文字段，结构化格式（JSON）和文本格式均可查看
+- 错误信息按需显式包含 `sn=`/`method=` 便于 grep，即使这些字段已在 ctx 中
+- `tsFields` 辅助函数在 `timestamp <= 0` 时返回 nil，不会注入 1970 年时间
+
+### 4. Validation
+
+- 搜索 `logx.ContextWithFields` 确认每个 handler 都注入了协议字段
+- 搜索 `payload=%s` 或 `string(payload)` 确认无明文 payload 泄露
+- 新增 handler 必须按照上述模式注入上下文，**禁止**在消息文本中重复 ctx 已携带的字段
+
+### 5. Tests
+
+- `TestLogFieldsDoesNotIncludePayloadOrSensitiveData` 验证 `logFields` 不泄露敏感字段
+- 各 handler 的 test 验证 handler 被调用（隐含 ctx 传播），不校验 ctx 内字段
+
 ## Scenario: 高频路径按 context 关闭 GORM SQL trace
 
 ### 1. Scope / Trigger

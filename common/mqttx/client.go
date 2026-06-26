@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	tool "zero-service/common/tool"
 	tracex "zero-service/common/trace"
 
 	"github.com/duke-git/lancet/v2/random"
@@ -308,10 +309,16 @@ func (c *mqttClient) processMessage(msg mqtt.Message, topicTemplate string) {
 	// 启动追踪 span
 	ctx, span := c.startSpan(ctx, msg, topicTemplate)
 	defer span.End()
-	ctx = logx.ContextWithFields(ctx, logx.Field("client", c.GetClientID()))
+	ctx = logx.ContextWithFields(ctx,
+		logx.Field("client", c.GetClientID()),
+		logx.Field("topic", msg.Topic()),
+		logx.Field("topic_template", topicTemplate),
+		logx.Field("payload_bytes", len(payload)),
+		logx.Field("payload_size", tool.DecimalBytes(int64(len(payload)), 1)),
+	)
 
 	if len(payload) == 0 {
-		logx.WithContext(ctx).Errorf("[mqtt] empty payload")
+		logx.WithContext(ctx).Error("[mqtt] empty payload")
 		return
 	}
 

@@ -87,7 +87,7 @@ func (c *Client) SendCommand(ctx context.Context, gatewaySn, method string, data
 	req := NewServiceRequest(tid, bid, method, data)
 	payload, err := json.Marshal(req)
 	if err != nil {
-		return "", fmt.Errorf("[dji-sdk] marshal request failed: %w", err)
+		return "", fmt.Errorf("[dji-sdk] marshal request failed: gateway_sn=%s, %w", gatewaySn, err)
 	}
 
 	topic := ServicesTopic(gatewaySn)
@@ -97,7 +97,7 @@ func (c *Client) SendCommand(ctx context.Context, gatewaySn, method string, data
 		return c.mqttClient.Publish(ctx, topic, payload)
 	}, c.pendingTTL)
 	if err != nil {
-		return tid, fmt.Errorf("[dji-sdk] command failed: method=%s tid=%s err=%w", method, tid, err)
+		return tid, fmt.Errorf("[dji-sdk] command failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, method, tid, err)
 	}
 
 	if reply.Data.Result != 0 {
@@ -122,14 +122,14 @@ func (c *Client) SendCommandFireAndForget(ctx context.Context, gatewaySn, method
 	req := NewServiceRequest(tid, bid, method, data)
 	payload, err := json.Marshal(req)
 	if err != nil {
-		return "", fmt.Errorf("[dji-sdk] marshal request failed: %w", err)
+		return "", fmt.Errorf("[dji-sdk] marshal request failed: gateway_sn=%s, %w", gatewaySn, err)
 	}
 
 	topic := ServicesTopic(gatewaySn)
 	logx.WithContext(ctx).Infof("[dji-sdk] send_command_fire_and_forget %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", method, "tid", tid))
 
 	if err := c.mqttClient.Publish(ctx, topic, payload); err != nil {
-		return tid, fmt.Errorf("[dji-sdk] publish failed: method=%s tid=%s err=%w", method, tid, err)
+		return tid, fmt.Errorf("[dji-sdk] publish failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, method, tid, err)
 	}
 	return tid, nil
 }
@@ -145,7 +145,7 @@ func (c *Client) SetProperty(ctx context.Context, gatewaySn string, properties P
 	req := NewServiceRequest(tid, bid, MethodPropertySet, properties)
 	payload, err := json.Marshal(req)
 	if err != nil {
-		return "", fmt.Errorf("[dji-sdk] marshal property_set failed: %w", err)
+		return "", fmt.Errorf("[dji-sdk] marshal property_set failed: gateway_sn=%s, %w", gatewaySn, err)
 	}
 
 	topic := PropertySetTopic(gatewaySn)
@@ -155,7 +155,7 @@ func (c *Client) SetProperty(ctx context.Context, gatewaySn string, properties P
 		return c.mqttClient.Publish(ctx, topic, payload)
 	}, c.pendingTTL)
 	if err != nil {
-		return tid, fmt.Errorf("[dji-sdk] property_set failed: tid=%s err=%w", tid, err)
+		return tid, fmt.Errorf("[dji-sdk] property_set failed: gateway_sn=%s tid=%s err=%w", gatewaySn, tid, err)
 	}
 
 	if reply.Data.Result != 0 {
@@ -673,12 +673,12 @@ func (c *Client) SendDrcStickControl(ctx context.Context, gatewaySn string, seq 
 func (c *Client) publishDrcDown(ctx context.Context, gatewaySn string, msg *DrcDownMessage) (string, error) {
 	payload, err := json.Marshal(msg)
 	if err != nil {
-		return msg.Tid, fmt.Errorf("[dji-sdk] marshal drc/down failed: method=%s tid=%s err=%w", msg.Method, msg.Tid, err)
+		return msg.Tid, fmt.Errorf("[dji-sdk] marshal drc/down failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, msg.Method, msg.Tid, err)
 	}
 	topic := DrcDownTopic(gatewaySn)
 	logx.WithContext(ctx).Infof("[dji-sdk] drc_down %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid, "seq", msg.Seq))
 	if err := c.mqttClient.Publish(ctx, topic, payload); err != nil {
-		return msg.Tid, fmt.Errorf("[dji-sdk] publish drc/down failed: method=%s tid=%s err=%w", msg.Method, msg.Tid, err)
+		return msg.Tid, fmt.Errorf("[dji-sdk] publish drc/down failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, msg.Method, msg.Tid, err)
 	}
 	return msg.Tid, nil
 }

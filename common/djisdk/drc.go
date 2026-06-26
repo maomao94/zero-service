@@ -40,8 +40,8 @@ func (c DrcConfig) normalized() DrcConfig {
 	return c
 }
 
-type DrcSessionExpiredHook  func(gatewaySn, sessionID, reason string)
-type DrcSessionEnabledHook  func(gatewaySn, sessionID string)
+type DrcSessionExpiredHook func(gatewaySn, sessionID, reason string)
+type DrcSessionEnabledHook func(gatewaySn, sessionID string)
 type DrcSessionDisabledHook func(gatewaySn, sessionID string)
 
 type DrcEnableOption func(*drcEnableOptions)
@@ -97,7 +97,7 @@ func newDrcManager(client *Client, cfg DrcConfig, opts ...drcManagerOption) *drc
 		o(m)
 	}
 	go m.cleanLoop()
-	logx.Infof("[drc-manager] initialized: heartbeat_interval=%v heartbeat_timeout=%v", cfg.HeartbeatInterval, cfg.HeartbeatTimeout)
+	logx.Infof("[dji-sdk] drc_manager initialized: heartbeat_interval=%v heartbeat_timeout=%v", cfg.HeartbeatInterval, cfg.HeartbeatTimeout)
 	return m
 }
 
@@ -114,12 +114,12 @@ func (m *drcManager) Enable(ctx context.Context, gatewaySn string, maxTimeout ti
 	defer session.mu.Unlock()
 
 	if session.IsAlive(m.config.HeartbeatTimeout) {
-		logx.WithContext(ctx).Debugf("[drc-manager] enable skipped (already alive): gateway_sn=%s session_id=%s", gatewaySn, session.SessionID)
+		logx.WithContext(ctx).Debugf("[dji-sdk] drc_manager enable skipped (already alive): gateway_sn=%s session_id=%s", gatewaySn, session.SessionID)
 		return nil
 	}
 
 	if session.heartbeatCancel != nil {
-		logx.WithContext(ctx).Debugf("[drc-manager] stopping stale heartbeat before re-enable: gateway_sn=%s", gatewaySn)
+		logx.WithContext(ctx).Debugf("[dji-sdk] drc_manager stopping stale heartbeat before re-enable: gateway_sn=%s", gatewaySn)
 		session.heartbeatCancel()
 		session.heartbeatCancel = nil
 	}
@@ -137,7 +137,7 @@ func (m *drcManager) Enable(ctx context.Context, gatewaySn string, maxTimeout ti
 	m.session[gatewaySn] = session
 
 	m.startHeartbeat(session)
-	logx.WithContext(ctx).Infof("[drc-manager] enabled: gateway_sn=%s session_id=%s max_timeout=%v", gatewaySn, session.SessionID, maxTimeout)
+	logx.WithContext(ctx).Infof("[dji-sdk] drc_manager enabled: gateway_sn=%s session_id=%s max_timeout=%v", gatewaySn, session.SessionID, maxTimeout)
 	m.fireSessionEnabled(gatewaySn, session.SessionID)
 	return nil
 }
@@ -147,20 +147,20 @@ func (m *drcManager) Disable(ctx context.Context, gatewaySn string) error {
 	session, ok := m.session[gatewaySn]
 	m.mu.RUnlock()
 	if !ok {
-		logx.WithContext(ctx).Debugf("[drc-manager] disable skipped (already disabled): gateway_sn=%s", gatewaySn)
+		logx.WithContext(ctx).Debugf("[dji-sdk] drc_manager disable skipped (already disabled): gateway_sn=%s", gatewaySn)
 		return nil
 	}
 
 	session.mu.Lock()
 	defer session.mu.Unlock()
 	if !session.Enabled {
-		logx.WithContext(ctx).Debugf("[drc-manager] disable skipped (already disabled): gateway_sn=%s", gatewaySn)
+		logx.WithContext(ctx).Debugf("[dji-sdk] drc_manager disable skipped (already disabled): gateway_sn=%s", gatewaySn)
 		return nil
 	}
 	sessionID := session.SessionID
 	session.Enabled = false
 	m.cancelHeartbeat(session)
-	logx.WithContext(ctx).Infof("[drc-manager] disabled: gateway_sn=%s session_id=%s", gatewaySn, sessionID)
+	logx.WithContext(ctx).Infof("[dji-sdk] drc_manager disabled: gateway_sn=%s session_id=%s", gatewaySn, sessionID)
 	m.fireSessionDisabled(gatewaySn, sessionID)
 	return nil
 }
@@ -170,7 +170,7 @@ func (m *drcManager) OnDeviceHeartbeat(ctx context.Context, gatewaySn string) {
 	session, ok := m.session[gatewaySn]
 	m.mu.RUnlock()
 	if !ok {
-		logx.WithContext(ctx).Infof("[drc-manager] device heartbeat received but state not found (not enabled): %s", gatewaySn)
+		logx.WithContext(ctx).Infof("[dji-sdk] drc_manager device heartbeat received but state not found (not enabled): %s", gatewaySn)
 		return
 	}
 
@@ -189,7 +189,7 @@ func (m *drcManager) OnDeviceHeartbeat(ctx context.Context, gatewaySn string) {
 	}
 	session.UpdateHeartbeat()
 	session.mu.Unlock()
-	logx.WithContext(ctx).Debugf("[drc-manager] device heartbeat refreshed: gateway_sn=%s", gatewaySn)
+	logx.WithContext(ctx).Debugf("[dji-sdk] drc_manager device heartbeat refreshed: gateway_sn=%s", gatewaySn)
 }
 
 func (m *drcManager) GetNextSeq(gatewaySn string) (int, error) {
@@ -253,19 +253,19 @@ func (m *drcManager) heartbeatLoop(gatewaySn, sessionID string, heartbeatCtx con
 	ticker := time.NewTicker(m.config.HeartbeatInterval)
 	defer ticker.Stop()
 
-	logx.Debugf("[drc-heartbeat] started: gateway_sn=%s session_id=%s interval=%v", gatewaySn, sessionID, m.config.HeartbeatInterval)
+	logx.Debugf("[dji-sdk] drc_heartbeat started: gateway_sn=%s session_id=%s interval=%v", gatewaySn, sessionID, m.config.HeartbeatInterval)
 
 	for {
 		select {
 		case <-heartbeatCtx.Done():
-			logx.Infof("[drc-heartbeat] context done: gateway_sn=%s session_id=%s reason=%v", gatewaySn, sessionID, heartbeatCtx.Err())
+			logx.Infof("[dji-sdk] drc_heartbeat context done: gateway_sn=%s session_id=%s reason=%v", gatewaySn, sessionID, heartbeatCtx.Err())
 			if heartbeatCtx.Err() == context.DeadlineExceeded {
 				m.expireSession(gatewaySn, sessionID)
 			}
 			return
 		case <-ticker.C:
 			if !m.isCurrentSessionAlive(gatewaySn, sessionID) {
-				logx.Infof("[drc-heartbeat] stale session or not alive, stop: gateway_sn=%s session_id=%s", gatewaySn, sessionID)
+				logx.Infof("[dji-sdk] drc_heartbeat stale session or not alive, stop: gateway_sn=%s session_id=%s", gatewaySn, sessionID)
 				return
 			}
 			if m.client == nil {
@@ -275,9 +275,9 @@ func (m *drcManager) heartbeatLoop(gatewaySn, sessionID string, heartbeatCtx con
 			_, err := m.client.SendDrcHeartBeat(sendCtx, gatewaySn, time.Now().UnixMilli())
 			cancel()
 			if err != nil {
-				logx.Errorf("[drc-heartbeat] send failed: gateway_sn=%s err=%v", gatewaySn, err)
+				logx.Errorf("[dji-sdk] drc_heartbeat send failed: gateway_sn=%s err=%v", gatewaySn, err)
 			} else {
-				logx.Debugf("[drc-heartbeat] sent: gateway_sn=%s", gatewaySn)
+				logx.Debugf("[dji-sdk] drc_heartbeat sent: gateway_sn=%s", gatewaySn)
 			}
 		}
 	}
@@ -340,7 +340,7 @@ func (m *drcManager) cleanLoop() {
 			return
 		case <-ticker.C:
 			count := m.cleanupExpiredStates()
-			logx.Debugf("[drc-clean] cleaned %d expired states", count)
+			logx.Debugf("[dji-sdk] drc_clean cleaned %d expired states", count)
 		}
 	}
 }

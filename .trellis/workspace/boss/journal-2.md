@@ -1162,3 +1162,83 @@ Removed UpdateOrCreate, CreateRecord, GormDB from common/gormx/upsert.go. Refact
 ### Next Steps
 
 - None - task complete
+
+
+## Session 85: SDK 日志优化与 Spec 整理
+
+**Date**: 2026-06-26
+**Task**: SDK 日志优化与 Spec 整理
+**Branch**: `master`
+
+### Summary
+
+优化 common/djisdk 和 common/mqttx 所有 MQTT handler 入口：
+- mqttx 基础层注入 client/topic/topic_template/payload_bytes/payload_size
+- djisdk 协议层注入 gateway_sn/method/tid/bid/ts/ts_fmt/need_reply，用 carbon 格式化 ts_fmt
+- entry log 消息文本精简，字段放在 ctx 结构化输出
+- 修复 event_notify_up 的 value=%s 明文泄露
+- 补齐 ESDK entry 日志
+
+Spec 整理：
+- logging-guidelines.md: 新增协议层上下文注入 Scenario
+- djisdk-guidelines.md: 事件分发 + 常见陷阱更新
+- 修正 Config struct tags、handler 数量、BaseModel 位置
+- 删除 uix-framework.md IEC104 复制残留
+- gormx-guidelines.md 补全遗漏文件
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `27ca68e3` | (see git log) |
+| `968e1a3c` | (see git log) |
+| `5a26b9f8` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 86: 统一 DRC 日志前缀规范
+
+**Date**: 2026-06-26
+**Task**: 统一 DRC 日志前缀规范
+**Branch**: `master`
+
+### Summary
+
+统一 djisdk DRC manager/heartbeat/clean 日志首级前缀为 [dji-sdk]，补充 djisdk spec 中的日志前缀约定，并验证目标包测试通过。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7dd0d12f` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

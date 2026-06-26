@@ -121,7 +121,7 @@ func (h *MqttStreamHandler) logPushResult(ctx context.Context, pushType, reqId, 
 	if err != nil {
 		result = "fail"
 	}
-	logx.WithContext(ctx).WithDuration(startTime).Infof(
+	logx.WithContext(ctx).WithDuration(timex.Since(startTime)).Infof(
 		"push mqtt to %s, reqId: %s, topic: %s, topicTemplate: %s, time: %s - %s",
 		pushType, reqId, topic, topicTemplate, sendTime, result,
 	)

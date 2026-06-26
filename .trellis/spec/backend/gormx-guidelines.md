@@ -19,6 +19,17 @@
 | `tenant_query.go` | `withTenantQueryFromDB`（未导出） |
 | `tenant_scope.go` | `TenantScope` 等 scope 函数 |
 | `pagination.go` | `QueryPage`、`QueryPageData`、`CursorPage`、`NormalizePage` |
+| `callbacks.go` | 全局 GORM 回调：审计用户注入（`Create`/`Update`）、`RegisterGlobalCallbacks` |
+| `model.go` | `IDModel`/`StringIDModel`、`TimeMixin`/`SoftDeleteMixin`/`VersionMixin`/`TenantMixin` |
+| `model_audit.go` | `BaseModel`（嵌入 `IDModel`+`AuditMixin`+版本+软删+时间）、`AuditModel` |
+| `model_audit_mixins.go` | `CreatedByMixin`/`UpdatedByMixin`/`DeletedByMixin`、`AuditMixin` |
+| `model_legacy.go` | `LegacyBaseModel`、`LegacyIDMixin`、`LegacySoftDeleteMixin`（int64 ID，旧风格） |
+| `model_tenant.go` | `TenantModel`/`TenantStringIDModel`/`TenantTimeModel`（多租户模型） |
+| `driver.go` | 数据库驱动工具 |
+| `upsert.go` | `Upsert` / `UpsertInBatches` 批量合并写入 |
+| `trace.go` | GORM 链路追踪回调 |
+| `logger.go` | `gormLogger` 自定义日志器，支持 `WithoutSQLTrace` context 标记 |
+| `user_context.go` | `AuditUserValue`/`AuditUserID`/`SetAuditUser`，租户上下文提取 |
 
 ## 调用约定
 

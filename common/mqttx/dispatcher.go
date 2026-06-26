@@ -116,7 +116,7 @@ func newMessageDispatcher(m *handlerManager, metrics *stat.Metrics) *messageDisp
 		manager: m,
 		metrics: metrics,
 		onNoHandler: func(ctx context.Context, payload []byte, topic, topicTemplate string) {
-			logx.WithContext(ctx).Infof("[mqttx] no handler registered for topic=%s template=%s", topic, topicTemplate)
+			logx.WithContext(ctx).Info("[mqttx] no handler registered")
 		},
 	}
 }
@@ -144,13 +144,13 @@ func (d *messageDispatcher) dispatch(ctx context.Context, payload []byte, topic,
 	if replyHandler != nil {
 		err := replyHandler.Consume(ctx, payload, topic, topicTemplate)
 		if err != nil && !errors.Is(err, ErrReplyNotMatched) {
-			logx.WithContext(ctx).Errorf("[mqttx] reply handler error for %s: %v", topicTemplate, err)
+			logx.WithContext(ctx).Errorf("[mqttx] reply handler error: %v", err)
 		}
 	}
 
 	for _, handler := range handlers {
 		if err := handler.Consume(ctx, payload, topic, topicTemplate); err != nil {
-			logx.WithContext(ctx).Errorf("[mqttx] handler error for %s: %v", topicTemplate, err)
+			logx.WithContext(ctx).Errorf("[mqttx] handler error: %v", err)
 		}
 	}
 }

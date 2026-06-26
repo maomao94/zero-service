@@ -9,8 +9,20 @@ import (
 
 	"zero-service/common/mqttx"
 
+	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 )
+
+// tsFields 返回设备时间戳字段（原始 ms 和格式化字符串）。
+func tsFields(ms int64) []logx.LogField {
+	if ms <= 0 {
+		return nil
+	}
+	return []logx.LogField{
+		logx.Field("ts", ms),
+		logx.Field("ts_fmt", carbon.CreateFromTimestampMilli(ms).ToDateTimeMilliString()),
+	}
+}
 
 func logFields(fields ...any) string {
 	if len(fields) == 0 {
@@ -69,7 +81,7 @@ func newPropertySetReplyRouter(ttl time.Duration) *mqttx.ReplyRouter[*ServiceRep
 // HandleEvents 处理 thing/.../events。
 //
 //	先走 tryDispatchEventNotify：SDK 预置的通知类 method（进度、HMS 等），设备侧多 need_reply=0；
-//	未命中则打印 payload 日志（默认行为），可通过新增 option 配置回调；
+//	未命中则打印 method 和 payload 字节数，不输出原始 payload；
 //	若 need_reply=1，用 result 发 events_reply（成功为 0，失败为 1）。
 func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string, _ string) error {
 	var event EventMessage
@@ -77,18 +89,27 @@ func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string,
 		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal events failed: %v, topic=%s", err, topic)
 		return err
 	}
-	logx.WithContext(ctx).Infof("[dji-sdk] events %s", logFields("topic", topic, "gateway_sn", event.Gateway, "method", event.Method, "tid", event.Tid, "need_reply", event.NeedReply))
 
-	handled, replyResult := c.tryDispatchEventNotify(ctx, event.Gateway, event.Method, payload)
+	eventCtx := logx.ContextWithFields(ctx,
+		logx.Field("gateway_sn", event.Gateway),
+		logx.Field("method", event.Method),
+		logx.Field("tid", event.Tid),
+		logx.Field("bid", event.Bid),
+		logx.Field("need_reply", event.NeedReply),
+	)
+	eventCtx = logx.ContextWithFields(eventCtx, tsFields(event.Timestamp)...)
+	logx.WithContext(eventCtx).Info("[dji-sdk] events")
+
+	handled, replyResult := c.tryDispatchEventNotify(eventCtx, event.Gateway, event.Method, payload)
 	if !handled {
-		logx.WithContext(ctx).Infof("[dji-sdk] no handler for event method=%s, payload=%s", event.Method, string(payload))
+		logx.WithContext(eventCtx).Infof("[dji-sdk] no handler for event method=%s", event.Method)
 	}
 
 	if event.NeedReply == 1 && c.reply.EnableEventReply {
-		return c.eventReply(ctx, event.Gateway, event.Tid, event.Bid, event.Method, replyResult)
+		return c.eventReply(eventCtx, event.Gateway, event.Tid, event.Bid, event.Method, replyResult)
 	}
 	if event.NeedReply == 1 {
-		logx.WithContext(ctx).Infof("[dji-sdk] skip event reply: gateway=%s method=%s tid=%s", event.Gateway, event.Method, event.Tid)
+		logx.WithContext(eventCtx).Infof("[dji-sdk] skip event reply: gateway=%s method=%s tid=%s", event.Gateway, event.Method, event.Tid)
 	}
 	return nil
 }
@@ -271,8 +292,15 @@ func (c *Client) HandleOsd(ctx context.Context, payload []byte, topic string, _ 
 		return err
 	}
 	deviceSn := extractDeviceSnFromTopic(topic)
-	if err := c.handlers.onOsd(ctx, deviceSn, &msg); err != nil {
-		logx.WithContext(ctx).Errorf("[dji-sdk] onOsd error: sn=%s err=%v", deviceSn, err)
+
+	osdCtx := logx.ContextWithFields(ctx,
+		logx.Field("device_sn", deviceSn),
+		logx.Field("tid", msg.Tid),
+		logx.Field("bid", msg.Bid),
+	)
+	osdCtx = logx.ContextWithFields(osdCtx, tsFields(msg.Timestamp)...)
+	if err := c.handlers.onOsd(osdCtx, deviceSn, &msg); err != nil {
+		logx.WithContext(osdCtx).Errorf("[dji-sdk] onOsd error: sn=%s err=%v", deviceSn, err)
 	}
 	return nil
 }
@@ -293,8 +321,15 @@ func (c *Client) HandleState(ctx context.Context, payload []byte, topic string, 
 		return err
 	}
 	deviceSn := extractDeviceSnFromTopic(topic)
-	if err := c.handlers.onState(ctx, deviceSn, &msg); err != nil {
-		logx.WithContext(ctx).Errorf("[dji-sdk] onState error: sn=%s err=%v", deviceSn, err)
+
+	stateCtx := logx.ContextWithFields(ctx,
+		logx.Field("device_sn", deviceSn),
+		logx.Field("tid", msg.Tid),
+		logx.Field("bid", msg.Bid),
+	)
+	stateCtx = logx.ContextWithFields(stateCtx, tsFields(msg.Timestamp)...)
+	if err := c.handlers.onState(stateCtx, deviceSn, &msg); err != nil {
+		logx.WithContext(stateCtx).Errorf("[dji-sdk] onState error: sn=%s err=%v", deviceSn, err)
 	}
 	return nil
 }
@@ -307,20 +342,28 @@ func (c *Client) HandleStatus(ctx context.Context, payload []byte, topic string,
 		return err
 	}
 	gatewaySn := extractDeviceSnFromTopic(topic)
-	logx.WithContext(ctx).Infof("[dji-sdk] status %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid))
 
-	handled, result := c.tryDispatchStatusNotify(ctx, gatewaySn, msg.Method, payload)
+	statusCtx := logx.ContextWithFields(ctx,
+		logx.Field("gateway_sn", gatewaySn),
+		logx.Field("method", msg.Method),
+		logx.Field("tid", msg.Tid),
+		logx.Field("bid", msg.Bid),
+	)
+	statusCtx = logx.ContextWithFields(statusCtx, tsFields(msg.Timestamp)...)
+	logx.WithContext(statusCtx).Info("[dji-sdk] status")
+
+	handled, result := c.tryDispatchStatusNotify(statusCtx, gatewaySn, msg.Method, payload)
 	if !handled && c.handlers.onStatus != nil {
-		if err := c.handlers.onStatus(ctx, gatewaySn, &msg); err != nil {
-			logx.WithContext(ctx).Errorf("[dji-sdk] onStatus error: sn=%s method=%s err=%v", gatewaySn, msg.Method, err)
+		if err := c.handlers.onStatus(statusCtx, gatewaySn, &msg); err != nil {
+			logx.WithContext(statusCtx).Errorf("[dji-sdk] onStatus error: sn=%s method=%s err=%v", gatewaySn, msg.Method, err)
 			result = ResultFromError(err)
 		}
 	}
 	if !c.reply.EnableStatusReply {
-		logx.WithContext(ctx).Infof("[dji-sdk] skip status reply: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
+		logx.WithContext(statusCtx).Infof("[dji-sdk] skip status reply: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
 		return nil
 	}
-	return c.statusReply(ctx, gatewaySn, msg.Tid, msg.Bid, result)
+	return c.statusReply(statusCtx, gatewaySn, msg.Tid, msg.Bid, result)
 }
 
 // tryDispatchStatusNotify 处理本 SDK 已按 method 建模的 status 上行（如 update_topo）。
@@ -371,28 +414,36 @@ func (c *Client) HandleRequests(ctx context.Context, payload []byte, topic strin
 		return err
 	}
 	gatewaySn := extractDeviceSnFromTopic(topic)
-	logx.WithContext(ctx).Infof("[dji-sdk] requests %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid))
+
+	reqCtx := logx.ContextWithFields(ctx,
+		logx.Field("gateway_sn", gatewaySn),
+		logx.Field("method", msg.Method),
+		logx.Field("tid", msg.Tid),
+		logx.Field("bid", msg.Bid),
+	)
+	reqCtx = logx.ContextWithFields(reqCtx, tsFields(msg.Timestamp)...)
+	logx.WithContext(reqCtx).Info("[dji-sdk] requests")
 
 	if c.handlers.onRequest == nil {
 		if !c.reply.EnableRequestReply {
-			logx.WithContext(ctx).Infof("[dji-sdk] skip request reply: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
+			logx.WithContext(reqCtx).Infof("[dji-sdk] skip request reply: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
 			return nil
 		}
-		return c.requestsReply(ctx, gatewaySn, &msg, PlatformResultHandlerError, nil)
+		return c.requestsReply(reqCtx, gatewaySn, &msg, PlatformResultHandlerError, nil)
 	}
-	output, err := c.handlers.onRequest(ctx, gatewaySn, &msg)
+	output, err := c.handlers.onRequest(reqCtx, gatewaySn, &msg)
 	var result PlatformResult
 	if err != nil {
-		logx.WithContext(ctx).Errorf("[dji-sdk] request handler error: method=%s err=%v", msg.Method, err)
+		logx.WithContext(reqCtx).Errorf("[dji-sdk] request handler error: method=%s err=%v", msg.Method, err)
 		result = ResultFromError(err)
 	} else {
 		result = PlatformResultOK
 	}
 	if !c.reply.EnableRequestReply {
-		logx.WithContext(ctx).Infof("[dji-sdk] skip request reply: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
+		logx.WithContext(reqCtx).Infof("[dji-sdk] skip request reply: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
 		return nil
 	}
-	return c.requestsReply(ctx, gatewaySn, &msg, result, output)
+	return c.requestsReply(reqCtx, gatewaySn, &msg, result, output)
 }
 
 // requestsReply 向 thing/.../requests_reply 发报文，Envelope 复用 RequestReply（data 内 result、output 与 services_reply 常见同形，以协议为准）。
@@ -420,24 +471,32 @@ func (c *Client) HandleDrcUp(ctx context.Context, payload []byte, topic string, 
 		return err
 	}
 	gatewaySn := extractDeviceSnFromTopic(topic)
+
+	drcCtx := logx.ContextWithFields(ctx,
+		logx.Field("gateway_sn", gatewaySn),
+		logx.Field("method", msg.Method),
+		logx.Field("tid", msg.Tid),
+		logx.Field("bid", msg.Bid),
+	)
+	drcCtx = logx.ContextWithFields(drcCtx, tsFields(msg.Timestamp)...)
 	parsed, perr := DrcUnmarshalUpData(msg.Method, msg.Data)
 	if perr != nil {
-		logx.WithContext(ctx).Errorf("[dji-sdk] drc/up data parse: method=%s err=%v", msg.Method, perr)
+		logx.WithContext(drcCtx).Errorf("[dji-sdk] drc/up data parse: method=%s err=%v", msg.Method, perr)
 		return perr
 	}
 	sum := DrcUpPayloadSummary(parsed)
 	if sum == "" {
-		logx.WithContext(ctx).Infof("[dji-sdk] drc_up %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid, "ts", msg.Timestamp))
+		logx.WithContext(drcCtx).Info("[dji-sdk] drc_up")
 	} else {
-		logx.WithContext(ctx).Infof("[dji-sdk] drc_up %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid, "ts", msg.Timestamp, "summary", sum))
+		logx.WithContext(drcCtx).Infof("[dji-sdk] drc_up summary=%s", sum)
 	}
 	if c.drcManager != nil && msg.Method == MethodDrcHeartBeat {
-		c.drcManager.OnDeviceHeartbeat(ctx, gatewaySn)
+		c.drcManager.OnDeviceHeartbeat(drcCtx, gatewaySn)
 	}
 	if c.handlers.onDrcUp == nil {
 		return nil
 	}
-	return c.handlers.onDrcUp(ctx, gatewaySn, msg, parsed)
+	return c.handlers.onDrcUp(drcCtx, gatewaySn, msg, parsed)
 }
 
 // ==================== 订阅管理 ====================

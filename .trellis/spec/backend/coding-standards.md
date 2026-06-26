@@ -4,7 +4,7 @@
 
 ## 技术栈摘要
 
-- Go 1.25+，go-zero，gRPC，grpc-gateway，Protocol Buffers，go-zero `.api`。
+- Go 1.26，go-zero，gRPC，grpc-gateway，Protocol Buffers，go-zero `.api`。
 - AI 相关服务使用 CloudWeGo Eino / Eino ADK / MCP / OpenAI-compatible API。
 - 契约变更先改 `.api` / `.proto`，再执行服务目录的 `gen.sh`，详细流程见 [`go-zero-conventions.md`](./go-zero-conventions.md)。
 
