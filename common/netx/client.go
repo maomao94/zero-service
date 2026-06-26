@@ -265,9 +265,17 @@ func (c *Client) buildResponse(resp *http.Response, err error, start time.Time) 
 		data, readErr = io.ReadAll(resp.Body)
 	}
 	if readErr != nil {
+		respErr := readErr
+		statusCode := http.StatusBadGateway
+		if !strings.Contains(readErr.Error(), "request body too large") {
+			statusCode = classifyNetErr(readErr)
+			respErr = fmt.Errorf("read response body: %w", readErr)
+		} else {
+			respErr = fmt.Errorf("%w: limit %d bytes", ErrResponseTooLarge, c.maxResponseBytes)
+		}
 		return &Response{
-			StatusCode:    http.StatusBadGateway,
-			Err:           fmt.Errorf("%w: limit %d bytes", ErrResponseTooLarge, c.maxResponseBytes),
+			StatusCode:    statusCode,
+			Err:           respErr,
 			CostMs:        costMs,
 			CostFormatted: costFormatted,
 		}, nil
