@@ -84,6 +84,59 @@ ctx = logx.ContextWithFields(ctx,
 - `TestLogFieldsDoesNotIncludePayloadOrSensitiveData` 验证 `logFields` 不泄露敏感字段
 - 各 handler 的 test 验证 handler 被调用（隐含 ctx 传播），不校验 ctx 内字段
 
+## Scenario: MQTT 客户端生命周期与订阅日志
+
+### 1. Scope / Trigger
+
+`common/mqttx/client.go` 和 `common/mqttx/dispatcher.go` 中 `[mqtt]` 前缀日志。涉及连接/断连/订阅恢复/消息分发。
+
+### 2. Signatures
+
+统一格式：**小写动作词 + `key=value`**，不使用 `:` 分隔符。
+
+连接与断连：
+
+```go
+logx.Infof("[mqtt] connected client=%s", c.cfg.ClientID)
+logx.Errorf("[mqtt] connection lost err=%v", err)
+logx.Info("[mqtt] connection closed")
+```
+
+订阅恢复（批量摘要，`subscribe()` 单条也用 Info 级）：
+
+```go
+logx.Infof("[mqtt] subscribed topic=%s", topicTemplate)
+logx.Errorf("[mqtt] subscribe failed topic=%s err=%v", topicTemplate, err)
+logx.Infof("[mqtt] restore subscriptions done subscribed=%d skipped=%d", result.subscribed, result.skipped)
+```
+
+消息分发（dispatcher.go，无上下文额外字段，ctx 已带 client/topic/topic_template/payload_bytes）：
+
+```go
+logx.WithContext(ctx).Info("[mqtt] no handler registered")
+logx.WithContext(ctx).Errorf("[mqtt] reply handler error err=%v", err)
+logx.WithContext(ctx).Errorf("[mqtt] handler error err=%v", err)
+```
+
+### 3. Contracts
+
+- 所有 `[mqtt]` 前缀日志统一用小写动作词（`connected` 非 `Connection successful`，`subscribed` 非 `Subscribed to`）
+- `err=` 总是紧跟 `failed` 错误原因，例如 `subscribe failed topic=%s err=%v`
+- 单条 `subscribed topic=%s` 打印在 `subscribe()` 内部（Info 级），调用方不得重复打印
+- `restore subscriptions done` 为批量摘要，仅 `onConnect` 中打印一次
+- `connection lost` 只打 error，不追加 `auto_reconnect=true`——重连由 Paho 内置，语义可由配置推断
+- `no handler` 出现在未注册 handler 的 topic 收到消息时（`defaultHandler`），`no handler registered` 出现在 dispatcher 找不到 handler（`dispatcher.go`）
+
+### 4. Good/Base/Bad Cases
+
+- Good：`[mqtt] connected client=dji-cloud-001`
+- Good：`[mqtt] subscribed topic=thing/product/+/events`（单条，调用方可 grep topic 定位）
+- Good：`[mqtt] restore subscriptions done subscribed=2 skipped=0`（批量摘要，可直接判断恢复是否完整）
+- Bad：`[mqtt] Connection successful, client=dji-cloud-001`（大小写混用）
+- Bad：`[mqtt] Subscribed to thing/product/+/events`（大写动作词 + `to` 介词冗余）
+- Bad：`[mqtt] Restored subscriptions subscribed=2 skipped=0`（大写 + 过去式）
+- Bad：`[mqtt] connection lost err=... auto_reconnect=true`（追加可推断字段）
+
 ## Scenario: 高频路径按 context 关闭 GORM SQL trace
 
 ### 1. Scope / Trigger

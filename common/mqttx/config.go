@@ -16,8 +16,6 @@ type MqttConfig struct {
 	Timeout int64 `json:",default=30000"`
 	// KeepAlive 心跳间隔（毫秒），默认 60000
 	KeepAlive int64 `json:",default=60000"`
-	// AutoSubscribe 添加处理器时是否自动订阅，默认 true
-	AutoSubscribe bool `json:",default=true"`
 	// SubscribeTopics 初始化时需要订阅的主题列表
 	SubscribeTopics []string `json:",optional"`
 }

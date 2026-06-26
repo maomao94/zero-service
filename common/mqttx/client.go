@@ -202,8 +202,8 @@ func (c *mqttClient) defaultHandler(_ mqtt.Client, msg mqtt.Message) {
 	logx.Errorf("[mqtt] no handler topic=%s", msg.Topic())
 }
 
-// AddHandler 为订阅主题模板添加消息处理器
-// 如果 AutoSubscribe=true 且已连接，会自动订阅该主题。
+// AddHandler 为订阅主题模板添加消息处理器。
+// 如果已连接且 topic 尚未订阅，会自动订阅。
 // reply router 请使用 WithReplyRouter，不要把 ReplyRouter 传入此方法。
 func (c *mqttClient) AddHandler(topicTemplate string, handler ConsumeHandler) error {
 	if handler == nil {
@@ -213,7 +213,7 @@ func (c *mqttClient) AddHandler(topicTemplate string, handler ConsumeHandler) er
 	c.handlerMgr.addHandler(topicTemplate, handler)
 
 	c.mu.Lock()
-	needSubscribe := c.cfg.AutoSubscribe && !c.isSubscribed(topicTemplate)
+	needSubscribe := !c.isSubscribed(topicTemplate)
 	c.mu.Unlock()
 
 	if needSubscribe && c.client.IsConnected() {

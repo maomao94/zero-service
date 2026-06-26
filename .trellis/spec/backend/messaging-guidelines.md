@@ -326,7 +326,7 @@ type Config struct {
 ### 2. Signatures
 - Handler: `Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error`
 - Handler registration: `func (c Client) AddHandler(topicTemplate string, handler ConsumeHandler) error` / `func (c Client) AddHandlerFunc(topicTemplate string, fn func(context.Context, []byte, string, string) error) error`（`Client` 是接口，`mqttClient` 是未导出实现）
-- Subscription is automatic: `AddHandler` with `AutoSubscribe=true` (default) and `onConnect -> restoreSubscriptions` cover all subscription paths. There is no public `Subscribe` method.
+- Subscription is automatic: `AddHandler` subscribes when connected, and `onConnect -> restoreSubscriptions` covers reconnection. There is no public `Subscribe` method.
 - Reply registration: `func WithReplyRouter[T any](topicTemplate string, router *ReplyRouter[T]) ClientOption`
 - Reply message: `type ReplyMessage[T any] struct { Tid string; Value T }`
 - Reply decoder: `type ReplyDecoder[T any] interface { Decode(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[T], error) }`
@@ -655,11 +655,10 @@ func NewClient(cfg MqttConfig, opts ...ClientOption) (Client, error) {
 `WithOnReady(fn func(Client))` 注册的回调只在 MQTT 首次连接成功时执行一次。断线重连时不会再次触发，因为 handler 注册是持久化的（`handlerMgr` 保留在内存中）。重连后 `restoreSubscriptions` 负责重新订阅 topic。
 
 ```go
-// 实现方式：ready bool 标志位
-if !c.ready && c.onReady != nil {
+// 实现方式：atomic.Bool + CompareAndSwap 保证极速重连时也只执行一次
+if c.ready.CompareAndSwap(false, true) && c.onReady != nil {
     c.onReady(c)
-    c.ready = true
 }
 ```
 
-不要用 `sync.Once` 代替 `ready bool`，因为并发场景简单且标志位更直观。
+`ready` 字段类型为 `atomic.Bool`，不使用 `sync.Once`——`onReady` 本身需要访问 `c`，`sync.Once.Do` 闭包捕获时机复杂，atomic CAS 更直接。
