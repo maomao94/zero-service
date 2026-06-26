@@ -43,3 +43,17 @@ func IsDJIError(err error) (*DJIError, bool) {
 	}
 	return nil, false
 }
+
+// PlatformError 携带 reply result 码的业务错误，供 on* handler 在 need_reply=1 时精确控制 events_reply/status_reply 的 data.result。
+// Code 为 PlatformResult 枚举值；Err 为底层错误信息。
+// 未包装为 PlatformError 的普通 error 默认按 PlatformResultHandlerError 回复。
+type PlatformError struct {
+	Code PlatformResult
+	Err  error
+}
+
+func (e *PlatformError) Error() string {
+	return fmt.Sprintf("[dji-sdk] platform error: code=%d err=%v", e.Code, e.Err)
+}
+
+func (e *PlatformError) Unwrap() error { return e.Err }

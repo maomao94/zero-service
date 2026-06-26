@@ -135,7 +135,9 @@ func (d *messageDispatcher) dispatch(ctx context.Context, payload []byte, topic,
 	replyHandler := d.manager.getReplyHandler(topicTemplate)
 	handlers := d.manager.getHandlers(topicTemplate)
 	if replyHandler == nil && len(handlers) == 0 {
-		d.onNoHandler(ctx, payload, topic, topicTemplate)
+		if d.onNoHandler != nil {
+			d.onNoHandler(ctx, payload, topic, topicTemplate)
+		}
 		return
 	}
 
@@ -155,5 +157,8 @@ func (d *messageDispatcher) dispatch(ctx context.Context, payload []byte, topic,
 
 // SetNoHandlerHandler 设置无处理器时的回调
 func (d *messageDispatcher) SetNoHandlerHandler(fn func(ctx context.Context, payload []byte, topic, topicTemplate string)) {
+	if fn == nil {
+		return
+	}
 	d.onNoHandler = fn
 }

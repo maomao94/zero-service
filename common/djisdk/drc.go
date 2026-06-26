@@ -14,8 +14,30 @@ import (
 )
 
 type DrcConfig struct {
-	HeartbeatInterval time.Duration
-	HeartbeatTimeout  time.Duration
+	HeartbeatInterval time.Duration `json:",default=2s"`
+	HeartbeatTimeout  time.Duration `json:",default=300s"`
+}
+
+const (
+	defaultHeartbeatInterval = 2 * time.Second
+	defaultHeartbeatTimeout  = 300 * time.Second
+)
+
+func DefaultDrcConfig() DrcConfig {
+	return DrcConfig{
+		HeartbeatInterval: defaultHeartbeatInterval,
+		HeartbeatTimeout:  defaultHeartbeatTimeout,
+	}
+}
+
+func (c DrcConfig) normalized() DrcConfig {
+	if c.HeartbeatInterval <= 0 {
+		c.HeartbeatInterval = defaultHeartbeatInterval
+	}
+	if c.HeartbeatTimeout <= 0 {
+		c.HeartbeatTimeout = defaultHeartbeatTimeout
+	}
+	return c
 }
 
 type DrcSessionExpiredHook  func(gatewaySn, sessionID, reason string)
@@ -62,6 +84,7 @@ type drcManager struct {
 }
 
 func newDrcManager(client *Client, cfg DrcConfig, opts ...drcManagerOption) *drcManager {
+	cfg = cfg.normalized()
 	ctx, cancel := context.WithCancel(context.Background())
 	m := &drcManager{
 		session: make(map[string]*drcDeviceSession),

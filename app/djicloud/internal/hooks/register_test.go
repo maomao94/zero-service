@@ -59,7 +59,7 @@ func TestRegisterDjiClientRegistersHandlersAndOnlineChecker(t *testing.T) {
 	})
 	allOpts := []djisdk.ClientOption{
 		djisdk.WithPendingTTL(time.Second),
-		djisdk.WithReplyOptions(djisdk.ReplyOptions{}),
+		djisdk.WithReplyConfig(djisdk.ReplyConfig{}),
 	}
 	allOpts = append(allOpts, handlerOpts...)
 	client := djisdk.NewClient(nil, allOpts...)
@@ -114,7 +114,7 @@ func TestRegisterDjiClientWithoutOnlineCacheHandlesUpstreamWithoutOnlineChecker(
 	handlerOpts := WithDjiClientOptions(RegisterDjiClientOptions{})
 	allOpts := []djisdk.ClientOption{
 		djisdk.WithPendingTTL(time.Second),
-		djisdk.WithReplyOptions(djisdk.ReplyOptions{}),
+		djisdk.WithReplyConfig(djisdk.ReplyConfig{}),
 	}
 	allOpts = append(allOpts, handlerOpts...)
 	client := djisdk.NewClient(nil, allOpts...)

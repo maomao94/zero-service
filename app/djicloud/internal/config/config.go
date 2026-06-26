@@ -1,10 +1,8 @@
 package config
 
 import (
-	"time"
-
+	"zero-service/common/djisdk"
 	"zero-service/common/gormx"
-	"zero-service/common/mqttx"
 
 	"github.com/zeromicro/go-zero/zrpc"
 )
@@ -20,29 +18,11 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	MqttConfig     mqttx.MqttConfig
+	Dji            djisdk.Config       `json:",optional"`
 	DB             gormx.Config        `json:",optional"`
-	PendingTTL     time.Duration       `json:",default=30s"`
-	UpstreamReply  UpstreamReplyConfig `json:",optional"`
 	Telemetry      TelemetryConfig     `json:",optional"`
 	DangerousOps   DangerousOpsConfig  `json:",optional"`
-	DrcConfig      DrcConfig           `json:",optional"`
 	SocketPushConf zrpc.RpcClientConf  `json:",optional"`
-}
-
-// DrcConfig DRC 平台化功能配置。
-type DrcConfig struct {
-	// HeartbeatInterval 心跳发送间隔，默认 2s。
-	HeartbeatInterval time.Duration `json:",default=2s"`
-	// HeartbeatTimeout 设备心跳超时时间，超过此时间未收到设备心跳则判定离线，默认 300s。
-	// 同时作为 cache TTL，收到设备心跳时自动续期。
-	HeartbeatTimeout time.Duration `json:",default=300s"`
-}
-
-type UpstreamReplyConfig struct {
-	EnableEventsReply   bool `json:",default=true"`
-	EnableStatusReply   bool `json:",default=true"`
-	EnableRequestsReply bool `json:",default=true"`
 }
 
 type TelemetryConfig struct {

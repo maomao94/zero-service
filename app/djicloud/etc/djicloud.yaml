@@ -7,14 +7,22 @@ Log:
   Path: /opt/logs/djicloud
   Level: info
   KeepDays: 300
-MqttConfig:
-  Broker:
-    - tcp://127.0.0.1:1883
-  ClientID: dji-cloud-001
-  Username: "mqtt"
-  Password: "password"
-  Qos: 0
-PendingTTL: 30s
+Dji:
+  MqttConfig:
+    Broker:
+      - tcp://127.0.0.1:1883
+    ClientID: dji-cloud-001
+    Username: "mqtt"
+    Password: "password"
+    Qos: 0
+  PendingTTL: 30s
+  Reply:
+    EnableEventReply: true
+    EnableStatusReply: false
+    EnableRequestReply: false
+  Drc:
+    HeartbeatInterval: 2s
+    HeartbeatTimeout: 300s
 DB:
   DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
   # 最大空闲连接数，默认 10。
@@ -31,19 +39,11 @@ DB:
   IgnoreRecordNotFoundError: false
   # 是否按字段名显式查询，默认 false。
   QueryFields: false
-UpstreamReply:
-  EnableEventsReply: true
-  EnableStatusReply: false
-  EnableRequestsReply: false
 Telemetry:
   # OSD 上报频率高，开启后仅通过 context 关闭 OSD 写库产生的 GORM SQL trace 日志。
   DisableOsdSQLTrace: true
 DangerousOps:
   EnableDroneEmergencyStop: false
-# DRC 平台化功能配置（可选，默认使用 go-zero 默认值）
-DrcConfig:
-  HeartbeatInterval: 2s    # 心跳发送间隔，默认 2s
-  HeartbeatTimeout: 300s   # 设备心跳超时时间，默认 300s（超过此时间未收到心跳则判定离线）
 # SocketPush 配置（可选，未配置则不推送）
 SocketPushConf:
   Endpoints:

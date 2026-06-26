@@ -12,7 +12,7 @@
 // 行为约定：
 //   - 简单 result 码：0 表示成功；1 表示云侧未实现/内部错误；2 按大疆常见约定表示超时，禁止挪作非超时占位
 //   - events：通知型 method 优先由 tryDispatchEventNotify 分发到强类型 On* handler；未命中预置分支时才进入 OnEvent 兜底
-//   - status：设备上报 sys/product/.../status 后，云平台按 ReplyOptions 决定是否回 status_reply，result 由 StatusHandler 返回
+//   - status：设备上报 sys/product/.../status 后，云平台按 ReplyConfig 决定是否回 status_reply，result 由 StatusHandler 返回
 //   - requests：设备通过 thing/product/.../requests 主动向云拉取平台侧数据，云通过 requests_reply 返回 result 与 data.output
 //   - property：云平台向 gateway_sn 标识的目标设备 Publish property/set，设备 Publish property/set_reply 回云；只读物模型上报仍走 osd/state
 //   - drc：drc/down 与 drc/up 是实时控制专用通道；进入/退出 DRC 模式、飞行控制权等服务调用走 services/services_reply，二者不要混用

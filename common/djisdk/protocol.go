@@ -2,12 +2,14 @@ package djisdk
 
 import "time"
 
-// 平台在 status_reply、events_reply、requests_reply 等 data 内 result 的辅助码（与 6 位业务 error code 不同；简单枚举时与上云约定对齐）。
+// PlatformResult 平台在 status_reply、events_reply、requests_reply 等 data 内 result 的辅助码（与 6 位业务 error code 不同；简单枚举时与上云约定对齐）。
 // 大疆侧常见：0=成功；**2 常表示超时**（见 [错误码](https://developer.dji.com/doc/cloud-api-tutorial/cn/error-code.html) 及各 MQTT 协议 data 说明），故 **禁止将 2 用作与超时无关的占位**（如未注册 handler 应使用 1 或其它与文档一致的值）。
+type PlatformResult int
+
 const (
-	PlatformResultOK           = 0
-	PlatformResultHandlerError = 1 // 云侧未实现/未注册 handler、解包失败、非超时类内部错误
-	PlatformResultTimeout      = 2 // 与文档中 result=2 表示**超时** 对齐；仅在实际超时或协议明确要求填 2 时使用
+	PlatformResultOK           PlatformResult = iota // 0 成功
+	PlatformResultHandlerError                       // 1 云侧未实现/未注册 handler、解包失败、非超时类内部错误
+	PlatformResultTimeout                            // 2 与文档中 result=2 表示**超时** 对齐；仅在实际超时或协议明确要求填 2 时使用
 )
 
 // ==================== 公共消息结构 ====================
@@ -165,13 +167,13 @@ func NewServiceRequest(tid, bid, method string, data any) *ServiceRequest {
 }
 
 // NewEventReply 创建事件应答消息，自动填充当前毫秒时间戳。
-func NewEventReply(tid, bid, method string, result int) *EventReply {
+func NewEventReply(tid, bid, method string, result PlatformResult) *EventReply {
 	return &EventReply{
 		Tid:       tid,
 		Bid:       bid,
 		Timestamp: time.Now().UnixMilli(),
 		Method:    method,
-		Data:      EventReplyData{Result: result},
+		Data:      EventReplyData{Result: int(result)},
 	}
 }
 

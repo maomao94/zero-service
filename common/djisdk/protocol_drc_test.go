@@ -13,15 +13,15 @@ import (
 )
 
 func TestNewClientWithOptionsKeepsExplicitReplySwitches(t *testing.T) {
-	options := ReplyOptions{
+	options := ReplyConfig{
 		EnableEventReply:   false,
 		EnableStatusReply:  false,
 		EnableRequestReply: false,
 	}
-	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyOptions(options))
+	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(options))
 
-	if client.replyOptions != options {
-		t.Fatalf("replyOptions = %+v, want %+v", client.replyOptions, options)
+	if client.reply != options {
+		t.Fatalf("replyOptions = %+v, want %+v", client.reply, options)
 	}
 }
 
@@ -36,16 +36,16 @@ func TestNewClientWithPendingTTLOption(t *testing.T) {
 func TestNewClientDefaultOptionsEnableReplies(t *testing.T) {
 	client := NewClient(nil, nil)
 
-	if client.replyOptions != DefaultReplyOptions() {
-		t.Fatalf("replyOptions = %+v, want default reply options", client.replyOptions)
+	if client.reply != DefaultReplyConfig() {
+		t.Fatalf("replyOptions = %+v, want default reply options", client.reply)
 	}
 }
 
-func TestDefaultReplyOptionsEnableReplies(t *testing.T) {
-	options := DefaultReplyOptions()
+func TestDefaultReplyConfigEnableReplies(t *testing.T) {
+	options := DefaultReplyConfig()
 
 	if !options.EnableEventReply || !options.EnableStatusReply || !options.EnableRequestReply {
-		t.Fatalf("DefaultReplyOptions() = %+v, want all replies enabled", options)
+		t.Fatalf("DefaultReplyConfig() = %+v, want all replies enabled", options)
 	}
 }
 
@@ -55,7 +55,7 @@ func TestHandleRequestsReplySwitch(t *testing.T) {
 
 	t.Run("enabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
-		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableRequestReply: true}),
+		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: true}),
 			WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (int, any, error) {
 				if gatewaySn != "gateway-1" || req.Method != "airport_bind_status" {
 					t.Fatalf("unexpected request: gateway=%s method=%s", gatewaySn, req.Method)
@@ -76,7 +76,7 @@ func TestHandleRequestsReplySwitch(t *testing.T) {
 	t.Run("disabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
 		called := false
-		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableRequestReply: false}),
+		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: false}),
 			WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (int, any, error) {
 				called = true
 				return PlatformResultOK, nil, nil
@@ -102,7 +102,7 @@ func TestHandleStatusReplySwitch(t *testing.T) {
 
 	t.Run("enabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
-		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableStatusReply: true}),
+		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableStatusReply: true}),
 			WithStatusHandler(func(ctx context.Context, gatewaySn string, data *StatusMessage) int {
 				if gatewaySn != "gateway-1" || data.Method != MethodUpdateTopo {
 					t.Fatalf("unexpected status: gateway=%s method=%s", gatewaySn, data.Method)
@@ -123,7 +123,7 @@ func TestHandleStatusReplySwitch(t *testing.T) {
 	t.Run("disabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
 		called := false
-		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableStatusReply: false}),
+		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableStatusReply: false}),
 			WithStatusHandler(func(ctx context.Context, gatewaySn string, data *StatusMessage) int {
 				called = true
 				return PlatformResultOK
@@ -547,7 +547,7 @@ func TestFlightTaskPrepareDataOmitsNilSimulateMission(t *testing.T) {
 
 func TestDroneEmergencyStopPublishesDrcDownTypedMethod(t *testing.T) {
 	mqtt := &recordingMQTTClient{}
-	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
+	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(DefaultReplyConfig()))
 	client.mqttClient = mqtt
 
 	tid, err := client.DroneEmergencyStop(context.Background(), "gateway-1", 0)
@@ -637,7 +637,7 @@ func TestTask5ModulePayloadSerialization(t *testing.T) {
 
 func TestRemoteLogProgressEventHook(t *testing.T) {
 	progressCalled := false
-	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()),
+	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(DefaultReplyConfig()),
 		WithRemoteLogFileUploadProgressHandler(func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent) {
 			progressCalled = true
 			if gatewaySn != "gateway-1" || len(data.Files) != 1 || data.Files[0].Progress != 50 {
@@ -671,7 +671,7 @@ func TestRequestsReplyOutputForKnownMethods(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			mqtt := &recordingMQTTClient{}
-			client := NewClient(nil, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableRequestReply: true}),
+			client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: true}),
 				WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (int, any, error) {
 					if gatewaySn != "gateway-1" || req.Method != tc.method {
 						t.Fatalf("unexpected request: gateway=%s method=%s", gatewaySn, req.Method)
@@ -698,7 +698,7 @@ func TestRequestsReplyOutputForKnownMethods(t *testing.T) {
 func TestOtaProgressAndUpdateTopoEventHooks(t *testing.T) {
 	otaCalled := false
 	topoCalled := false
-	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()),
+	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(DefaultReplyConfig()),
 		WithOtaProgressHandler(func(ctx context.Context, gatewaySn string, data *OtaProgressEvent) {
 			otaCalled = true
 			if gatewaySn != "gateway-1" || len(data.Devices) != 1 || data.Devices[0].SN != "dock-1" || data.Devices[0].Progress != 42 {

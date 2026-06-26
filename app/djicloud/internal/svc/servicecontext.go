@@ -71,21 +71,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		).Conn())
 	}
 
-	djiOpts := []djisdk.ClientOption{
-		djisdk.WithPendingTTL(c.PendingTTL),
-		djisdk.WithReplyOptions(djisdk.ReplyOptions{
-			EnableEventReply:   c.UpstreamReply.EnableEventsReply,
-			EnableStatusReply:  c.UpstreamReply.EnableStatusReply,
-			EnableRequestReply: c.UpstreamReply.EnableRequestsReply,
-		}),
-		djisdk.WithDrcConfig(djisdk.DrcConfig{
-			HeartbeatInterval: c.DrcConfig.HeartbeatInterval,
-			HeartbeatTimeout:  c.DrcConfig.HeartbeatTimeout,
-		}),
-	}
-
+	var handlerOpts []djisdk.ClientOption
 	if pushCli != nil {
-		djiOpts = append(djiOpts,
+		handlerOpts = append(handlerOpts,
 			djisdk.WithDrcSessionEnabled(func(gatewaySn, sessionID string) {
 				reqId, _ := tool.SimpleUUID()
 				room := "drc:heartbeat:" + gatewaySn
@@ -128,13 +116,14 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		)
 	}
 
-	djiOpts = append(djiOpts, hooks.WithDjiClientOptions(hooks.RegisterDjiClientOptions{
+	handlerOpts = append(handlerOpts, hooks.WithDjiClientOptions(hooks.RegisterDjiClientOptions{
 		DB:                 db,
 		OnlineCache:        onlineCache,
 		PushCli:            pushCli,
 		DisableOsdSQLTrace: c.Telemetry.DisableOsdSQLTrace,
 	})...)
-	djiCli := djisdk.MustNewClient(c.MqttConfig, djiOpts...)
+
+	djiCli := djisdk.MustNewClient(c.Dji, handlerOpts...)
 
 	if err := djiCli.SubscribeAll(); err != nil {
 		logx.Errorf("[dji-cloud] subscribe topics failed: %v", err)
