@@ -1,7 +1,10 @@
 package netx
 
 import (
+	"context"
 	"encoding/xml"
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -137,5 +140,91 @@ func TestResponseDecodeHelpers(t *testing.T) {
 	var unsupported sample
 	if err := (&Response{StatusCode: 200, Success: true, Headers: http.Header{"Content-Type": {"application/octet-stream"}}, Data: []byte("raw")}).Decode(&unsupported); err == nil {
 		t.Fatal("expected unsupported decode error")
+	}
+}
+
+func TestClassifyNetErr(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want int
+	}{
+		{"deadline exceeded", context.DeadlineExceeded, http.StatusGatewayTimeout},
+		{"canceled", context.Canceled, http.StatusBadRequest},
+		{"generic network error", errors.New("connection refused"), http.StatusServiceUnavailable},
+		{"wrapped deadline", fmt.Errorf("ctx: %w", context.DeadlineExceeded), http.StatusGatewayTimeout},
+		{"wrapped canceled", fmt.Errorf("ctx: %w", context.Canceled), http.StatusBadRequest},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := classifyNetErr(tt.err)
+			if got != tt.want {
+				t.Fatalf("classifyNetErr(%v) = %d, want %d", tt.err, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestResponse_XML_Error(t *testing.T) {
+	resp := &Response{Err: ErrResponseTooLarge}
+	err := resp.XML(&struct{}{})
+	if err == nil {
+		t.Fatal("expected error for response with Err")
+	}
+}
+
+func TestResponse_Text_Error(t *testing.T) {
+	resp := &Response{Err: ErrResponseTooLarge}
+	_, err := resp.Text()
+	if err == nil {
+		t.Fatal("expected error for response with Err")
+	}
+}
+
+func TestResponseDecode_TextString(t *testing.T) {
+	resp := &Response{
+		StatusCode: 200,
+		Success:    true,
+		Headers:    http.Header{"Content-Type": {"text/plain"}},
+		Data:       []byte("hello text"),
+	}
+	var s string
+	if err := resp.Decode(&s); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if s != "hello text" {
+		t.Fatalf("expected 'hello text', got %q", s)
+	}
+}
+
+func TestResponseDecode_TextNonStringTarget(t *testing.T) {
+	resp := &Response{
+		StatusCode: 200,
+		Success:    true,
+		Headers:    http.Header{"Content-Type": {"text/plain"}},
+		Data:       []byte("hello text"),
+	}
+	var n int
+	if err := resp.Decode(&n); err == nil {
+		t.Fatal("expected error for text decode with non-string target")
+	}
+}
+
+func TestResponseDecode_XMLByContent(t *testing.T) {
+	resp := &Response{
+		StatusCode: 200,
+		Success:    true,
+		Data:       []byte(`<sample><name>xml</name></sample>`),
+	}
+	type sample struct {
+		XMLName xml.Name `xml:"sample"`
+		Name    string   `xml:"name"`
+	}
+	var s sample
+	if err := resp.Decode(&s); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if s.Name != "xml" {
+		t.Fatalf("expected xml, got %q", s.Name)
 	}
 }

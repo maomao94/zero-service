@@ -153,6 +153,7 @@ func WithJSONBody(v any) RequestOption {
 }
 
 // WithBodyReader 设置 Body 为 io.Reader 流式读取，适用于大文件或流式数据。
+// 调用方负责关闭 reader（如 *os.File），Client.Do 不会自动关闭。
 func WithBodyReader(reader io.Reader) RequestOption {
 	return func(r *Request) {
 		if reader == nil {

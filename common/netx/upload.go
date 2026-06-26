@@ -14,10 +14,18 @@ import (
 // Upload 流式上传文件到指定 URL，支持同时发送额外表单字段。
 func (c *Client) Upload(ctx context.Context, url string, files []FileUpload, fields map[string]string, opts ...RequestOption) (*Response, error) {
 	reader, writer := io.Pipe()
-	multipartWriter := multipart.NewWriter(writer)
+
+	var baseWriter io.Writer = writer
+	var counter *countingWriter
+	if c.uploadBytesLimit > 0 {
+		counter = &countingWriter{w: writer, limit: c.uploadBytesLimit}
+		baseWriter = counter
+	}
+	multipartWriter := multipart.NewWriter(baseWriter)
+
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- streamMultipart(writer, multipartWriter, files, fields, c.uploadBytesLimit)
+		errCh <- streamMultipart(writer, multipartWriter, files, fields, counter)
 	}()
 	req := NewRequest(url, http.MethodPost, opts...)
 	req.BodyReader = reader
@@ -30,14 +38,14 @@ func (c *Client) Upload(ctx context.Context, url string, files []FileUpload, fie
 		return nil, err
 	}
 	if streamErr := <-errCh; streamErr != nil && resp.Err == nil {
-		resp.Success = false
 		resp.StatusCode = http.StatusBadGateway
+		resp.Success = false
 		resp.Err = streamErr
 	}
 	return resp, nil
 }
 
-func streamMultipart(pipeWriter *io.PipeWriter, multipartWriter *multipart.Writer, files []FileUpload, fields map[string]string, maxBytes int64) error {
+func streamMultipart(pipeWriter *io.PipeWriter, multipartWriter *multipart.Writer, files []FileUpload, fields map[string]string, counter *countingWriter) error {
 	var err error
 	defer func() {
 		if err != nil {
@@ -46,32 +54,29 @@ func streamMultipart(pipeWriter *io.PipeWriter, multipartWriter *multipart.Write
 		}
 		_ = pipeWriter.Close()
 	}()
-	var written int64
+
 	for _, f := range files {
 		part, partErr := multipartWriter.CreateFormFile(f.FieldName, f.FileName)
 		if partErr != nil {
 			err = fmt.Errorf("create form file: %w", partErr)
 			return err
 		}
-		writer := io.Writer(part)
-		if maxBytes > 0 {
-			remaining := maxBytes - written
-			if remaining <= 0 {
-				err = fmt.Errorf("%w: limit %d bytes", ErrUploadTooLarge, maxBytes)
-				return err
-			}
-			writer = &limitedWriter{w: part, n: remaining, limit: maxBytes}
-		}
-		n, partErr := io.Copy(writer, f.Content)
-		written += n
-		if partErr != nil {
+		if _, partErr = io.Copy(part, f.Content); partErr != nil {
 			err = fmt.Errorf("copy file content: %w", partErr)
+			return err
+		}
+		if counter != nil && counter.exceeded {
+			err = fmt.Errorf("%w: limit %d bytes", ErrUploadTooLarge, counter.limit)
 			return err
 		}
 	}
 	for k, v := range fields {
 		if fieldErr := multipartWriter.WriteField(k, v); fieldErr != nil {
 			err = fmt.Errorf("write field: %w", fieldErr)
+			return err
+		}
+		if counter != nil && counter.exceeded {
+			err = fmt.Errorf("%w: limit %d bytes", ErrUploadTooLarge, counter.limit)
 			return err
 		}
 	}
@@ -82,26 +87,20 @@ func streamMultipart(pipeWriter *io.PipeWriter, multipartWriter *multipart.Write
 	return nil
 }
 
-type limitedWriter struct {
-	w     io.Writer
-	n     int64
-	limit int64
+type countingWriter struct {
+	w        io.Writer
+	written  int64
+	limit    int64
+	exceeded bool
 }
 
-func (w *limitedWriter) Write(p []byte) (int, error) {
-	if w.n <= 0 {
-		return 0, fmt.Errorf("%w: limit %d bytes", ErrUploadTooLarge, w.limit)
+func (cw *countingWriter) Write(p []byte) (int, error) {
+	n, err := cw.w.Write(p)
+	cw.written += int64(n)
+	if cw.written > cw.limit {
+		cw.exceeded = true
+		return n, fmt.Errorf("%w: limit %d bytes", ErrUploadTooLarge, cw.limit)
 	}
-	if int64(len(p)) > w.n {
-		n, err := w.w.Write(p[:w.n])
-		if err != nil {
-			return n, err
-		}
-		w.n -= int64(n)
-		return n, fmt.Errorf("%w: limit %d bytes", ErrUploadTooLarge, w.limit)
-	}
-	n, err := w.w.Write(p)
-	w.n -= int64(n)
 	return n, err
 }
 

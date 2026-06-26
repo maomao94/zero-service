@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/zeromicro/go-zero/rest/httpc"
 )
@@ -88,5 +89,60 @@ func TestNewClient_WithHttpcAndTLS(t *testing.T) {
 	}
 	if !resp.Success {
 		t.Errorf("expected success, error: %s", resp.Err)
+	}
+}
+
+func TestNewTransport_WithTLSConfig(t *testing.T) {
+	cfg := &tls.Config{InsecureSkipVerify: true}
+	transport := NewTransport(WithTransportTLS(cfg))
+	if transport.TLSClientConfig != cfg {
+		t.Fatal("expected TLS config to be set on transport")
+	}
+}
+
+func TestNewTransport_NoTLSConfig(t *testing.T) {
+	transport := NewTransport()
+	if transport.TLSClientConfig != nil {
+		t.Fatal("expected nil TLS config by default")
+	}
+}
+
+func TestDefaultEngine_Do(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("engine"))
+	}))
+	defer ts.Close()
+
+	eng := &DefaultEngine{client: NewHTTPClient()}
+	httpReq, _ := http.NewRequest(http.MethodGet, ts.URL, nil)
+	resp, err := eng.Do(httpReq)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+}
+
+func TestNewTransport_DefaultResponseHeaderTimeout(t *testing.T) {
+	transport := NewTransport()
+	if transport.ResponseHeaderTimeout != 0 {
+		t.Fatalf("expected default ResponseHeaderTimeout 0 (unlimited), got %v", transport.ResponseHeaderTimeout)
+	}
+}
+
+func TestNewTransport_CustomResponseHeaderTimeout(t *testing.T) {
+	transport := NewTransport(WithTransportResponseHeaderTimeout(5 * time.Second))
+	if transport.ResponseHeaderTimeout != 5*time.Second {
+		t.Fatalf("expected 5s, got %v", transport.ResponseHeaderTimeout)
+	}
+}
+
+func TestNewTransport_DisableResponseHeaderTimeout(t *testing.T) {
+	transport := NewTransport(WithTransportResponseHeaderTimeout(0))
+	if transport.ResponseHeaderTimeout != 0 {
+		t.Fatalf("expected 0 (disabled), got %v", transport.ResponseHeaderTimeout)
 	}
 }

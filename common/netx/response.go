@@ -1,6 +1,7 @@
 package netx
 
 import (
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -17,6 +18,20 @@ var (
 	// ErrUploadTooLarge 表示上传内容超过了配置的大小限制。
 	ErrUploadTooLarge = errors.New("upload body too large")
 )
+
+// classifyNetErr 将网络层错误映射到语义对齐的 HTTP 状态码：
+//   - context.DeadlineExceeded → 504 Gateway Timeout
+//   - context.Canceled        → 400 Bad Request（调用方主动取消）
+//   - 其他网络错误             → 503 Service Unavailable
+func classifyNetErr(err error) int {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return http.StatusGatewayTimeout
+	}
+	if errors.Is(err, context.Canceled) {
+		return http.StatusBadRequest
+	}
+	return http.StatusServiceUnavailable
+}
 
 // Response 封装 HTTP 响应结果，包含状态码、响应头、响应体、耗时和错误信息。
 type Response struct {

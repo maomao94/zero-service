@@ -36,10 +36,8 @@ func WithDownloadRange(start, end int64) DownloadOption {
 	}
 }
 
-// Download 下载 URL 内容，返回 io.ReadCloser。调用方需自行关闭。
-func (c *Client) Download(ctx context.Context, url string, opts ...DownloadOption) (io.ReadCloser, error) {
-	dl := resolveDownloadOptions(opts)
-	reqOpts := dl.requestOptions()
+// downloadRaw 发送下载请求，返回原始响应体 reader（不应用大小限制）。
+func (c *Client) downloadRaw(ctx context.Context, url string, reqOpts ...RequestOption) (io.ReadCloser, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -61,7 +59,24 @@ func (c *Client) Download(ctx context.Context, url string, opts ...DownloadOptio
 	return resp.Body, nil
 }
 
-// DownloadFile 下载 URL 内容并保存到本地文件。
+// Download 下载 URL 内容，返回 io.ReadCloser。调用方需自行关闭。
+// 受 client 级 downloadBytesLimit 及 WithDownloadMaxBytes 选项限制。
+func (c *Client) Download(ctx context.Context, url string, opts ...DownloadOption) (io.ReadCloser, error) {
+	dl := downloadOptions{maxBytes: c.downloadBytesLimit}
+	for _, opt := range opts {
+		opt(&dl)
+	}
+	body, err := c.downloadRaw(ctx, url, dl.requestOptions()...)
+	if err != nil {
+		return nil, err
+	}
+	if dl.maxBytes > 0 {
+		body = http.MaxBytesReader(nil, body, dl.maxBytes)
+	}
+	return body, nil
+}
+
+// DownloadFile 下载 URL 内容并保存到本地文件（原子写入：先写临时文件，成功后再 rename）。
 func (c *Client) DownloadFile(ctx context.Context, url, destPath string, opts ...DownloadOption) error {
 	body, err := c.Download(ctx, url, opts...)
 	if err != nil {
@@ -72,46 +87,40 @@ func (c *Client) DownloadFile(ctx context.Context, url, destPath string, opts ..
 	if err = os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("create directory: %w", err)
 	}
-	f, err := os.Create(destPath)
+	tmpPath := destPath + ".tmp"
+	f, err := os.Create(tmpPath)
 	if err != nil {
-		return fmt.Errorf("create file: %w", err)
+		return fmt.Errorf("create temp file: %w", err)
 	}
-	defer f.Close()
 	if _, err = io.Copy(f, body); err != nil {
+		f.Close()
+		os.Remove(tmpPath)
 		return fmt.Errorf("write file: %w", err)
+	}
+	if err = f.Close(); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("close file: %w", err)
+	}
+	if err = os.Rename(tmpPath, destPath); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("rename file: %w", err)
 	}
 	return nil
 }
 
-// DownloadBytes 下载 URL 内容并返回字节数据。
+// DownloadBytes 下载 URL 内容并返回字节数据。超过限制时返回错误。
 func (c *Client) DownloadBytes(ctx context.Context, url string, opts ...DownloadOption) ([]byte, error) {
-	dl := downloadOptions{maxBytes: c.downloadBytesLimit}
-	for _, opt := range opts {
-		opt(&dl)
-	}
 	body, err := c.Download(ctx, url, opts...)
 	if err != nil {
 		return nil, err
 	}
 	defer body.Close()
-	data, err := readLimitedBody(body, dl.maxBytes)
-	if err != nil {
-		return nil, fmt.Errorf("download body too large: limit %d bytes", dl.maxBytes)
-	}
-	return data, nil
+	return io.ReadAll(body)
 }
 
 // DownloadBytes 使用默认 Client 下载 URL 内容并返回字节数据（包级别便捷函数）。
 func DownloadBytes(ctx context.Context, url string, opts ...DownloadOption) ([]byte, error) {
 	return defaultClient.DownloadBytes(ctx, url, opts...)
-}
-
-func resolveDownloadOptions(opts []DownloadOption) downloadOptions {
-	var dl downloadOptions
-	for _, opt := range opts {
-		opt(&dl)
-	}
-	return dl
 }
 
 func (dl downloadOptions) requestOptions() []RequestOption {

@@ -131,3 +131,86 @@ func TestClient_Do_RequestBuilderJSONFormRawReaderAndHeaderOverride(t *testing.T
 		t.Fatalf("expected reader body, got %q", gotReaderBody)
 	}
 }
+
+func TestWithBody_Clone(t *testing.T) {
+	original := []byte("original")
+	req := NewRequest("http://example.com", http.MethodPost, WithBody(original))
+	original[0] = 'X'
+	if req.Body[0] != 'o' {
+		t.Fatalf("expected body to be cloned, got %q", string(req.Body))
+	}
+}
+
+func TestWithBodyReader_NilDoesNothing(t *testing.T) {
+	req := NewRequest("http://example.com", http.MethodPost, WithBodyReader(nil))
+	if req.BodyReader != nil {
+		t.Fatal("expected nil BodyReader for nil input")
+	}
+	if req.bodyKind == bodyKindReader {
+		t.Fatal("expected bodyKind not set for nil reader")
+	}
+}
+
+func TestWithQueryParams_Clone(t *testing.T) {
+	original := url.Values{"key": {"original"}}
+	req := NewRequest("http://example.com", http.MethodGet, WithQueryParams(original))
+	original.Set("key", "mutated")
+	original.Add("extra", "val")
+	if req.QueryParams.Get("key") != "original" {
+		t.Fatalf("expected cloned query param, got %q", req.QueryParams.Get("key"))
+	}
+	if _, ok := req.QueryParams["extra"]; ok {
+		t.Fatal("expected extra key not to leak into request")
+	}
+}
+
+func TestRequest_BuilderHeadersMap(t *testing.T) {
+	req := NewRequest("http://example.com", http.MethodGet).HeadersMap(http.Header{"X-Bulk": {"v1", "v2"}})
+	if len(req.Headers["X-Bulk"]) != 2 {
+		t.Fatalf("expected 2 values, got %d", len(req.Headers["X-Bulk"]))
+	}
+	if req.Headers.Get("X-Bulk") != "v1" {
+		t.Fatalf("expected v1, got %q", req.Headers.Get("X-Bulk"))
+	}
+}
+
+func TestRequest_BuilderQueries(t *testing.T) {
+	req := NewRequest("http://example.com", http.MethodGet).Queries(url.Values{"a": {"1"}, "b": {"2"}})
+	if req.QueryParams.Get("a") != "1" {
+		t.Fatalf("expected a=1, got %q", req.QueryParams.Get("a"))
+	}
+	if req.QueryParams.Get("b") != "2" {
+		t.Fatalf("expected b=2, got %q", req.QueryParams.Get("b"))
+	}
+}
+
+func TestRequest_BuilderRaw(t *testing.T) {
+	req := NewRequest("http://example.com", http.MethodPost).Raw([]byte("raw"))
+	if string(req.Body) != "raw" {
+		t.Fatalf("expected raw body, got %q", string(req.Body))
+	}
+	if req.bodyKind != bodyKindRaw {
+		t.Fatalf("expected bodyKindRaw, got %d", req.bodyKind)
+	}
+}
+
+func TestRequest_BuilderForm(t *testing.T) {
+	req := NewRequest("http://example.com", http.MethodPost).Form(url.Values{"k": {"v"}})
+	if req.FormData.Get("k") != "v" {
+		t.Fatalf("expected k=v, got %q", req.FormData.Get("k"))
+	}
+	if req.bodyKind != bodyKindForm {
+		t.Fatalf("expected bodyKindForm, got %d", req.bodyKind)
+	}
+}
+
+func TestRequest_BuilderReader(t *testing.T) {
+	r := &blockingReader{data: []byte("data")}
+	req := NewRequest("http://example.com", http.MethodPost).Reader(r)
+	if req.BodyReader != r {
+		t.Fatal("expected reader to be set")
+	}
+	if req.bodyKind != bodyKindReader {
+		t.Fatalf("expected bodyKindReader, got %d", req.bodyKind)
+	}
+}

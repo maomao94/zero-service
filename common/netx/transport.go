@@ -24,22 +24,38 @@ func (e *DefaultEngine) Do(req *http.Request) (*http.Response, error) {
 }
 
 // TransportOption 用于配置 http.Transport 和 http.Client 的创建。
-type TransportOption func(*transportConfig)
+type TransportOption func(transportConfig) transportConfig
 
 type transportConfig struct {
-	tlsConfig *tls.Config
+	tlsConfig             *tls.Config
+	responseHeaderTimeout time.Duration
 }
 
 // WithTransportTLS 设置 Transport TLS 配置。
 func WithTransportTLS(cfg *tls.Config) TransportOption {
-	return func(c *transportConfig) { c.tlsConfig = cfg }
+	return func(c transportConfig) transportConfig {
+		c.tlsConfig = cfg
+		return c
+	}
+}
+
+// WithTransportResponseHeaderTimeout 设置等待服务器返回响应头的超时时间。
+// 默认不限制（0），由调用方通过 context deadline 控制整体超时。
+// 若调用方可能传 context.Background() 且希望有兜底保护，可显式设置此值。
+func WithTransportResponseHeaderTimeout(d time.Duration) TransportOption {
+	return func(c transportConfig) transportConfig {
+		c.responseHeaderTimeout = d
+		return c
+	}
 }
 
 // NewTransport 创建配置好的 http.Transport，内置合理的连接池和超时参数。
+// ResponseHeaderTimeout 默认为 0（不限制），避免误伤下载等慢响应场景；
+// 如需兜底保护，使用 WithTransportResponseHeaderTimeout 显式设置。
 func NewTransport(opts ...TransportOption) *http.Transport {
-	cfg := &transportConfig{}
+	cfg := transportConfig{}
 	for _, opt := range opts {
-		opt(cfg)
+		cfg = opt(cfg)
 	}
 	transport := &http.Transport{
 		Proxy:                 http.ProxyFromEnvironment,
@@ -50,6 +66,7 @@ func NewTransport(opts ...TransportOption) *http.Transport {
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
+		ResponseHeaderTimeout: cfg.responseHeaderTimeout,
 	}
 	if cfg.tlsConfig != nil {
 		transport.TLSClientConfig = cfg.tlsConfig

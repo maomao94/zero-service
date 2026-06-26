@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"io"
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
 	"strings"
@@ -374,8 +375,11 @@ func TestClient_Do_UsesContextTimeoutWithoutHTTPClientTimeout(t *testing.T) {
 	if resp.Success {
 		t.Fatal("expected timeout response")
 	}
-	if resp.StatusCode != http.StatusRequestTimeout {
-		t.Fatalf("expected 408 timeout status, got %d", resp.StatusCode)
+	if resp.Err == nil {
+		t.Fatal("expected error for timeout")
+	}
+	if resp.StatusCode != http.StatusGatewayTimeout {
+		t.Fatalf("expected 504 gateway timeout, got %d", resp.StatusCode)
 	}
 }
 
@@ -399,8 +403,11 @@ func TestClient_Do_RespectsExistingContextDeadline(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if resp.StatusCode != http.StatusRequestTimeout {
-		t.Fatalf("expected timeout status, got %d", resp.StatusCode)
+	if resp.Err == nil {
+		t.Fatal("expected error for timeout")
+	}
+	if resp.StatusCode != http.StatusGatewayTimeout {
+		t.Fatalf("expected 504 gateway timeout, got %d", resp.StatusCode)
 	}
 	select {
 	case <-sawDone:
@@ -453,6 +460,9 @@ func TestClient_Do_UsesConfiguredResponseLimit(t *testing.T) {
 	}
 	if resp.Success {
 		t.Fatal("expected response limit failure")
+	}
+	if resp.StatusCode != http.StatusBadGateway {
+		t.Fatalf("expected 502 for oversized body, got %d", resp.StatusCode)
 	}
 	if resp.Err == nil || !strings.Contains(resp.Err.Error(), "response body too large") {
 		t.Fatalf("expected response limit error, got %q", resp.Err)
@@ -797,5 +807,251 @@ func TestSendRequest_EmptyURL(t *testing.T) {
 	_, err := SendRequest(ctx(t), &Request{})
 	if err == nil {
 		t.Fatal("expected error for empty URL")
+	}
+}
+
+func TestClient_Do_NilContext(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	}))
+	defer ts.Close()
+
+	c := NewClient()
+	resp, err := c.Do(nil, NewRequest(ts.URL, http.MethodGet))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatal("expected success with nil context fallback")
+	}
+}
+
+func TestClient_Do_ResponseHeaders(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Custom-Resp", "value123")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	c := NewClient()
+	resp, err := c.Get(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Headers == nil {
+		t.Fatal("expected non-nil response headers")
+	}
+	if resp.Headers.Get("X-Custom-Resp") != "value123" {
+		t.Fatalf("expected X-Custom-Resp=value123, got %q", resp.Headers.Get("X-Custom-Resp"))
+	}
+}
+
+func TestClient_Do_RequestHeaderOverridesClientHeader(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer override" {
+			t.Errorf("expected override, got %q", r.Header.Get("Authorization"))
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	c := NewClient(WithDefaultHeaders(http.Header{
+		"Authorization": {"Bearer default"},
+	}))
+	resp, err := c.Get(ctx(t), ts.URL, WithHeader("Authorization", "Bearer override"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatal("expected success")
+	}
+}
+
+func TestClient_Do_NetworkError_503(t *testing.T) {
+	c := NewClient()
+	resp, err := c.Get(ctx(t), "http://127.0.0.1:1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for unreachable host")
+	}
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("expected 503 service unavailable, got %d", resp.StatusCode)
+	}
+}
+
+func TestClient_Do_ContextCanceled_400(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+			return
+		case <-time.After(2 * time.Second):
+			w.WriteHeader(http.StatusOK)
+		}
+	}))
+	defer ts.Close()
+
+	reqCtx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		cancel()
+	}()
+	c := NewClient()
+	resp, err := c.Get(reqCtx, ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure for canceled context")
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400 bad request for cancel, got %d", resp.StatusCode)
+	}
+}
+
+func TestPackagePut(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("expected PUT, got %s", r.Method)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	resp, err := Put(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Errorf("expected success")
+	}
+}
+
+func TestPackageDelete(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Errorf("expected DELETE, got %s", r.Method)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	resp, err := Delete(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Errorf("expected success")
+	}
+}
+
+func TestPackagePatch(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPatch {
+			t.Errorf("expected PATCH, got %s", r.Method)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	resp, err := Patch(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Errorf("expected success")
+	}
+}
+
+func TestPackageHead(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodHead {
+			t.Errorf("expected HEAD, got %s", r.Method)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	resp, err := Head(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Errorf("expected success")
+	}
+}
+
+func TestPackageOptions(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodOptions {
+			t.Errorf("expected OPTIONS, got %s", r.Method)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	resp, err := Options(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Errorf("expected success")
+	}
+}
+
+func TestClient_Do_InvalidURL(t *testing.T) {
+	c := NewClient()
+	_, err := c.Do(ctx(t), NewRequest("://invalid-url", http.MethodGet))
+	if err == nil {
+		t.Fatal("expected error for invalid URL")
+	}
+}
+
+func TestNewClient_WithHTTPClientOption(t *testing.T) {
+	var gotRedirect int
+	c := NewClient(
+		WithHTTPClientOption(func(hc *http.Client) {
+			hc.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+				gotRedirect++
+				return http.ErrUseLastResponse
+			}
+		}),
+	)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/redirect" {
+			http.Redirect(w, r, "/target", http.StatusFound)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	resp, err := c.Get(ctx(t), ts.URL+"/redirect")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if gotRedirect == 0 {
+		t.Fatal("expected CheckRedirect to be called")
+	}
+	if resp.StatusCode != http.StatusFound {
+		t.Fatalf("expected 302 (redirect not followed), got %d", resp.StatusCode)
+	}
+}
+
+func TestNewClient_WithHTTPClientOption_Jar(t *testing.T) {
+	c := NewClient(
+		WithHTTPClientOption(func(hc *http.Client) {
+			hc.Jar, _ = cookiejar.New(nil)
+		}),
+	)
+	eng, ok := c.engine.(*DefaultEngine)
+	if !ok {
+		t.Fatal("expected DefaultEngine")
+	}
+	if eng.client.Jar == nil {
+		t.Fatal("expected cookie jar to be set")
 	}
 }

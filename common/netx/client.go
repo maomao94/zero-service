@@ -28,6 +28,7 @@ type ClientOptions struct {
 	MaxResponseBytes   int64
 	DownloadBytesLimit int64
 	UploadBytesLimit   int64
+	HTTPClientOptions  []func(*http.Client)
 }
 
 // ClientOption 函数式客户端配置选项。
@@ -62,13 +63,17 @@ func NewClient(opts ...ClientOption) *Client {
 		uploadBytesLimit:   o.UploadBytesLimit,
 	}
 	if c.engine == nil {
-		c.engine = c.buildEngine()
+		c.engine = c.buildEngine(o.HTTPClientOptions)
 	}
 	return c
 }
 
-func (c *Client) buildEngine() Engine {
-	return &DefaultEngine{client: newHTTPClient(WithTransportTLS(c.tlsConfig))}
+func (c *Client) buildEngine(httpClientOpts []func(*http.Client)) Engine {
+	httpClient := newHTTPClient(WithTransportTLS(c.tlsConfig))
+	for _, fn := range httpClientOpts {
+		fn(httpClient)
+	}
+	return &DefaultEngine{client: httpClient}
 }
 
 // WithEngine 设置底层 HTTP 执行引擎。
@@ -99,6 +104,12 @@ func WithDownloadBytesLimit(maxBytes int64) ClientOption {
 // WithUploadBytesLimit 设置上传最大字节数限制，设为 0 则不限制。
 func WithUploadBytesLimit(maxBytes int64) ClientOption {
 	return func(o *ClientOptions) { o.UploadBytesLimit = maxBytes }
+}
+
+// WithHTTPClientOption 透传配置到底层 http.Client（仅在未自定义 Engine 时生效）。
+// 可用于设置 CheckRedirect、Jar、Timeout 等标准库 http.Client 字段。
+func WithHTTPClientOption(fn func(*http.Client)) ClientOption {
+	return func(o *ClientOptions) { o.HTTPClientOptions = append(o.HTTPClientOptions, fn) }
 }
 
 // Do 执行 HTTP 请求，返回统一的 Response 结构。
@@ -238,16 +249,21 @@ func (c *Client) Options(ctx context.Context, url string, opts ...RequestOption)
 func (c *Client) buildResponse(resp *http.Response, err error, start time.Time) (*Response, error) {
 	costMs, costFormatted := elapsedSince(start)
 	if err != nil {
-		result := &Response{CostMs: costMs, CostFormatted: costFormatted, Err: err}
-		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) || strings.Contains(err.Error(), "context deadline exceeded") {
-			result.StatusCode = http.StatusRequestTimeout
-		} else {
-			result.StatusCode = http.StatusBadGateway
-		}
-		return result, nil
+		return &Response{
+			StatusCode:    classifyNetErr(err),
+			CostMs:        costMs,
+			CostFormatted: costFormatted,
+			Err:           err,
+		}, nil
 	}
 	defer resp.Body.Close()
-	data, readErr := readLimitedBody(resp.Body, c.maxResponseBytes)
+	var data []byte
+	var readErr error
+	if c.maxResponseBytes > 0 {
+		data, readErr = io.ReadAll(http.MaxBytesReader(nil, resp.Body, c.maxResponseBytes))
+	} else {
+		data, readErr = io.ReadAll(resp.Body)
+	}
 	if readErr != nil {
 		return &Response{
 			StatusCode:    http.StatusBadGateway,

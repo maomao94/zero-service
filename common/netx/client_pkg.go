@@ -40,6 +40,8 @@ func Options(ctx context.Context, url string, opts ...RequestOption) (*Response,
 }
 
 // SendRequest 使用默认 Client（或通过 ClientOption 自定义）执行请求。
+// 不带 opts 时直接复用 defaultClient（连接池复用）；
+// 带 opts 时每次新建 Client（含新 Transport/连接池），高频调用应自行创建并持有 Client 实例。
 func SendRequest(ctx context.Context, req *Request, opts ...ClientOption) (*Response, error) {
 	if len(opts) == 0 {
 		return defaultClient.Do(ctx, req)
