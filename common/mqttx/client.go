@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	tool "zero-service/common/tool"
@@ -58,7 +59,7 @@ type mqttClient struct {
 	dispatcher *messageDispatcher
 	subscribed map[string]struct{}
 	onReady    func(Client)
-	ready      bool
+	ready      atomic.Bool
 	qos        byte
 	mu         sync.RWMutex
 	tracer     oteltrace.Tracer
@@ -176,9 +177,8 @@ func (c *mqttClient) onConnect(_ mqtt.Client) {
 	logx.Infof("[mqtt] connected client=%s", c.cfg.ClientID)
 
 	// 首次连接执行 onReady 回调
-	if !c.ready && c.onReady != nil {
+	if c.ready.CompareAndSwap(false, true) && c.onReady != nil {
 		c.onReady(c)
-		c.ready = true
 	}
 
 	// 恢复订阅

@@ -325,8 +325,8 @@ type Config struct {
 
 ### 2. Signatures
 - Handler: `Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error`
-- Handler registration: `func (c Client) AddHandler(topicTemplate string, handler ConsumeHandler) error`（`Client` 是接口，`mqttClient` 是未导出实现）
-- Manual subscription: `func (c Client) Subscribe(topicTemplate string) error`
+- Handler registration: `func (c Client) AddHandler(topicTemplate string, handler ConsumeHandler) error` / `func (c Client) AddHandlerFunc(topicTemplate string, fn func(context.Context, []byte, string, string) error) error`（`Client` 是接口，`mqttClient` 是未导出实现）
+- Subscription is automatic: `AddHandler` with `AutoSubscribe=true` (default) and `onConnect -> restoreSubscriptions` cover all subscription paths. There is no public `Subscribe` method.
 - Reply registration: `func WithReplyRouter[T any](topicTemplate string, router *ReplyRouter[T]) ClientOption`
 - Reply message: `type ReplyMessage[T any] struct { Tid string; Value T }`
 - Reply decoder: `type ReplyDecoder[T any] interface { Decode(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[T], error) }`
