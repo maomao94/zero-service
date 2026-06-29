@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 94
+- **Total Sessions**: 95
 - **Last Active**: 2026-06-29
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~1526 | Active |
+| `journal-2.md` | ~1560 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 95 | 2026-06-29 | Spec tidy + online_cache fix | `8501b986`, `7f93301b` | `master` |
 | 94 | 2026-06-29 | 项目文档全面优化与 Trellis spec 更新 | `7b071f14`, `0ad71a25` | `master` |
 | 93 | 2026-06-29 | DRC 回调重构 + Spec Bootstrap | - | `master` |
 | 92 | 2026-06-29 | 统一日志规范：Errorf/Errorw 选择标准 + 全量格式修复 | `ec1e1f5e`, `861a4c1d`, `1be64754`, `8bd51df3`, `6eca5889` | `master` |
