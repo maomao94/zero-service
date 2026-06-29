@@ -1,6 +1,8 @@
 # djisdk 包规范（DJI MQTT SDK）
 
-> `common/djisdk/` 封装大疆上云 MQTT 协议，提供云平台侧的 Client 类型：MQTT 连接管理、Topic 通配订阅、设备上行分发（事件/遥测/状态/请求/DRC）、下行命令发送（services/property/drc/down）和应答路由。
+> `common/djisdk/` 封装大疆上云 MQTT 协议，提供云平台侧的 Client 类型。
+>
+> **对接新厂商机巢** 请先读 [机巢 SDK 开发模板](./drone-station-sdk-template.md)，本 spec 为 DJI 专项维护指南。
 
 ## 文件组织
 
@@ -230,6 +232,55 @@ tid, err := l.svcCtx.DjiClient.SomeMethod(l.ctx, ...)
 if err != nil {
     return errRes(tid, err), nil
 }
+```
+
+## 注释规约
+
+> 详细模板见 [机巢 SDK 开发模板 - 代码注释规约](./drone-station-sdk-template.md#五代码注释规约)，下面为 DJI 专项要点。
+
+### Topic 函数
+
+统一三段式：`// 路径格式:` / `// 方向:` / `// 用途:`。不论公有私有，格式一致。
+
+```go
+// ServicesTopic 返回云平台下发服务调用的 Topic。
+// 路径格式: thing/product/{gateway_sn}/services
+// 方向: 云平台 → 设备
+// 用途: 云平台向网关设备下发服务指令（如航线任务下发、设备控制、固件升级等）。
+func ServicesTopic(gatewaySn string) string { ... }
+```
+
+### Method 常量
+
+每个常量两行注释：名称描述 + 方向描述。不得单行省略。
+
+```go
+// MethodLiveStartPush 开始直播推流（Live Start Push）
+// 云平台 → 设备（Services），控制设备开始向指定地址推送直播流
+MethodLiveStartPush = "live_start_push"
+```
+
+### 分组注释
+
+每组分节用 `====` 分隔，必须含 `参考`（链接）、`Topic`、`方向`。
+
+```go
+// ==================== 直播功能（Live） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/.../live.html
+// Topic: thing/product/{gateway_sn}/services
+// 方向: 云平台 → 设备（Services），视频直播流控制
+```
+
+### Handle 函数
+
+统一格式：一行功能描述。
+
+```go
+// HandleEvents 处理 thing/.../events 上行事件。
+//   - ctx: 请求上下文
+//   - payload: MQTT 消息原始字节
+//   - topic: 消息来源的 MQTT 主题
+func (c *Client) HandleEvents(...) { ... }
 ```
 
 ## 常见陷阱

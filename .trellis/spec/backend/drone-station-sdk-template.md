@@ -490,25 +490,149 @@ func (l *FlightTaskPrepareLogic) FlightTaskPrepare(in *pb.FlightTaskPrepareReq) 
 - `hooks/register_test.go`：使用 `setupSQLiteDB` 的集成测试，覆盖 handler 闭包的 DB 读写行为
 - `hooks/<topic>_up_test.go`：Mock MQTT payload，验证解析、DB 落库、缓存刷新
 
-## 五、对接新机巢 Checklist
+## 五、代码注释规约
+
+### 文件级注释（`doc.go`）
+
+见 Step 11 包文档模板。
+
+### Topic 函数注释
+
+每个 Topic 函数注释 **必须** 包含三段：`路径格式`、`方向`、`用途`。
+
+```go
+// OsdTopic 返回设备遥测数据（OSD）上报 Topic。
+// 路径格式: thing/product/{device_sn}/osd
+// 方向: 设备 → 云平台
+// 用途: 设备定期推送定频遥测数据。
+func OsdTopic(deviceSn string) string { ... }
+
+// OsdTopicPattern 返回 OSD Topic 的通配订阅模式。
+// 路径格式: thing/product/+/osd
+// 方向: 设备 → 云平台（云平台侧订阅）
+// 用途: 云平台使用该模式订阅所有设备的遥测数据。
+func OsdTopicPattern() string { ... }
+```
+
+### Method 常量注释
+
+每个常量 **必须** 包含两行：名称描述 + 方向描述。
+
+```go
+const (
+    // MethodFlightTaskPrepare 航线任务准备（Flighttask Prepare）
+    // 云平台 → 设备（Services），下发航线任务准备指令，设备进行航线预检查
+    MethodFlightTaskPrepare = "flighttask_prepare"
+
+    // MethodFlightTaskReady 航线任务就绪通知（Flighttask Ready）
+    // 设备 → 云平台（Events），设备通知云平台航线任务已准备就绪可执行
+    MethodFlightTaskReady = "flighttask_ready"
+)
+```
+
+### 分组注释
+
+每个功能模块用 `====` 分隔线标注，必须包含 `参考`（API 文档链接）、`Topic`、`方向`：
+
+```go
+// ==================== 航线功能（Wayline） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/.../wayline.html
+// Topic: thing/product/{gateway_sn}/services | events
+// 方向: services 为云平台 → 设备（下发指令），events 为设备 → 云平台（上报进度）。
+```
+
+### Handle 函数注释
+
+统一格式：一行功能描述 + 最多三行参数说明。
+
+```go
+// HandleEvents 处理 thing/.../events 上行事件。
+//   - ctx: 请求上下文
+//   - payload: MQTT 消息原始字节
+//   - topic: 消息来源的 MQTT 主题
+func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string, _ string) error {
+```
+
+`HandleOsd`、`HandleState`、`HandleStatus`、`HandleRequests`、`HandleDrcUp` 等全部统一此格式。
+
+## 六、SDK 内部错误日志
+
+**原则**：SDK 发命令出错时，SDK 层自己打 `logx.ErrorContextf` 日志，调用方（gRPC Logic）只判断 `err`，不重复打印。
+
+### client.go 实现
+
+所有下发方法（`SendCommand`、`SendCommandFireAndForget`、`publishDrcDown`、属性设置等）在返回 `error` 前 **必须** 调用 `logx.WithContext(ctx).Errorf`：
+
+```go
+// SendCommand — 超时/网络错误路径
+reply, err := mqttx.RequestReply(...)
+if err != nil {
+    err = fmt.Errorf("[sdk] command failed: sn=%s method=%s err=%w", gatewaySn, method, err)
+    logx.WithContext(ctx).Errorf("%v", err)
+    return tid, err
+}
+
+// SendCommand — 设备拒绝路径
+if reply.Data.Result != 0 {
+    err = NewVendorError(reply.Data.Result)
+    logx.WithContext(ctx).Errorf("[sdk] command rejected: sn=%s method=%s err=%v", ...)
+    return tid, err
+}
+```
+
+### 调用方（Logic 层）
+
+只需判断 err，不写 `l.Errorf`：
+
+```go
+tid, err := l.svcCtx.DjiClient.FlightTaskPrepare(l.ctx, in.DeviceSn, data)
+if err != nil {
+    return errRes(tid, err), nil // 不打印 Errorf
+}
+```
+
+## 七、命名规约（四层对齐）
+
+以厂商 **原始 method 字面值** 为唯一锚点，四层命名字面一致可追踪：
+
+| 层 | 规则 | 示例 |
+|---|---|---|
+| 厂商 method 值 | 原始 snake_case | `flighttask_undo` |
+| SDK 常量 | `Method` + CamelCase | `MethodFlightTaskUndo` |
+| SDK 客户端方法 | 常量去 `Method` 前缀 | `FlightTaskUndo` |
+| Proto RPC | = 客户端方法名 | `FlightTaskUndo` |
+| Proto Message | RPC 名 + `Req`/`Res` | `FlightTaskUndoReq` |
+
+**禁止**引入与厂商原始 method 不一致的别名（如 `CancelFlightTask` 替代 `FlightTaskUndo`、`FloatUp` 替代 `UIResourceUpload`）。
+
+协议无关的平台自有接口（`IsDeviceOnline`、`ListDevices` 等）不适用此规则，用业务命名即可。
+
+## 八、对接新机巢 Checklist
 
 - [ ] **Step 1**: 创建 `common/<vendor>-sdk/`，复制模板文件结构
 - [ ] **Step 2**: 实现 `protocol.go`（消息结构体）、`topic.go`（Topic 函数）、`method.go`（方法常量）
 - [ ] **Step 3**: 实现 `option.go`（Config、handlers、WithXxx）、`client.go`（构造 + 命令方法）
 - [ ] **Step 4**: 实现 `handler.go`（上行分发 + SubscribeAll）
 - [ ] **Step 5**: 实现 `error.go`（厂商错误码映射）
-- [ ] **Step 6**: `go build ./common/<vendor>-sdk/...` 通过
-- [ ] **Step 7**: 创建 `app/<vendor>cloud/`，实现 proto + hooks + logic + server
-- [ ] **Step 8**: `go build ./app/<vendor>cloud/...` 通过
-- [ ] **Step 9**: 编写 SDK 层 + 应用层单元/集成测试
-- [ ] **Step 10**: 创建 spec `<vendor>cloud-*.md` 到 `.trellis/spec/backend/`
+- [ ] **Step 6**: 按「五、代码注释规约」统一所有注释格式（Topic 三段式、Method 两行式、分组三要素、Handle 统一格式）
+- [ ] **Step 7**: 按「六、SDK 内部错误日志」在 client.go 下发方法中加入 `logx.ErrorContextf`，调用方 Logic 删掉冗余 `l.Errorf`
+- [ ] **Step 8**: 按「七、命名规约」检查四层命名以厂商 method 值为锚点对齐
+- [ ] **Step 9**: `go build ./common/<vendor>-sdk/...` 通过
+- [ ] **Step 10**: 创建 `app/<vendor>cloud/`，实现 proto + hooks + logic + server
+- [ ] **Step 11**: `go build ./app/<vendor>cloud/...` 通过
+- [ ] **Step 12**: 编写 SDK 层 + 应用层单元/集成测试
+- [ ] **Step 13**: 创建 spec `<vendor>cloud-*.md` 到 `.trellis/spec/backend/`
 
-## 六、常见陷阱
+## 九、常见陷阱
 
 1. **Data 字段类型**：使用 `any` 而非 `map[string]any`，由 handler 按 method 强转，避免协议升级时字段遗漏
 2. **Config 零值语义**：`ReplyConfig` 零值 `{false,false,false}` 全部禁用 _reply；`DrcConfig` 零值不创建 drcManager
 3. **handlers 聚合**：新增 handler 改 2 处（struct 加字段 + WithXxx 函数），不要同时改 Client/clientOptions
 4. **goroutine 泄漏**：DRC/心跳等后台 goroutine 需要 CancelFunc 清理 + closeOnce 防重
-5. **日志前缀**：SDK 层使用 `[<vendor>-sdk]` 前缀，应用层使用 `[<vendor>-cloud]` 前缀
+5. **日志前缀不一致**：SDK 层统一用 `[<vendor>-sdk]` 首级前缀，应用层用 `[<vendor>-cloud]`，不要混用或私有化前缀
 6. **need_reply 处理**：`need_reply=1` 时必须回复 _reply，`need_reply=0` 时跳过
 7. **onlineChecker 非阻塞**：仅做轻量缓存查询，不做网络 IO
+8. **Topic 函数注释缺段**：每个 Topic/Pattern 函数必须含 `路径格式`、`方向`、`用途` 三段注释，不可遗漏
+9. **Method 常量缺方向**：每个常量必须有第二行注释标明方向（`// 云平台 → 设备（Services）` 或 `// 设备 → 云平台（Events）`）
+10. **调用方冗余 Errorf**：SDK 内部已打 `logx.ErrorContextf`，Logic 层调用方不要再写 `l.Errorf`，只判断 err 即可
+11. **命名别名**：不得在四层链中引入与厂商原始 method 不一致的别名，必须字面一致可追踪
