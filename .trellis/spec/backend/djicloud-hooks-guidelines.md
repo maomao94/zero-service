@@ -13,7 +13,7 @@
 | `mqtt_request_up.go` | `thing/.../requests` | 设备主动请求（组织绑定、飞行区查询），返回安全默认值 |
 | `mqtt_drc_up.go` | `thing/.../drc/up` | DRC 上行（非高频 → 落库，心跳 → WebSocket 推送） |
 | `store_helper.go` | — | 工具函数：时间转换、JSON 序列化、版本提取、任务状态文本 |
-| `online_cache.go` | — | 在线缓存辅助函数 `IsOnline`、`OnlineValue` |
+| `online_cache.go` | — | 在线缓存辅助函数 `IsOnline`、`OnlineValue`，同时用于设备和网关的在线态判断 |
 
 ## 注册模式（Option 模式）
 
