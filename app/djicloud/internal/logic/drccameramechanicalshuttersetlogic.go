@@ -32,7 +32,6 @@ func (l *DrcCameraMechanicalShutterSetLogic) DrcCameraMechanicalShutterSet(in *d
 	}
 	data := &djisdk.DrcCameraMechanicalShutterSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), MechanicalShutterState: int(in.GetDewarpingState())}
 	if _, err := l.svcCtx.DjiClient.DrcCameraMechanicalShutterSet(l.ctx, deviceSn, seq, data); err != nil {
-		l.Errorf("[drc] camera mechanical shutter set failed device_sn=%s: %v", deviceSn, err)
 		return nil, err
 	}
 	return &djicloud.DrcCameraMechanicalShutterSetRes{Seq: int32(seq)}, nil

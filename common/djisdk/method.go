@@ -95,17 +95,17 @@ const (
 	// 云平台 → 设备（Services），下发航线任务执行指令，执行已准备的航线
 	MethodFlightTaskExecute = "flighttask_execute"
 
-	// MethodFlightTaskCancel 航线任务取消（Flighttask Undo）
+	// MethodFlightTaskUndo 航线任务取消（Flighttask Undo）
 	// 云平台 → 设备（Services），取消未结束或未执行的航线任务
-	MethodFlightTaskCancel = "flighttask_undo"
+	MethodFlightTaskUndo = "flighttask_undo"
 
 	// MethodFlightTaskPause 航线任务暂停（Flighttask Pause）
 	// 云平台 → 设备（Services），暂停当前正在执行的航线任务
 	MethodFlightTaskPause = "flighttask_pause"
 
-	// MethodFlightTaskResume 航线任务恢复（Flighttask Recovery）
+	// MethodFlightTaskRecovery 航线任务恢复（Flighttask Recovery）
 	// 云平台 → 设备（Services），恢复已暂停的航线任务
-	MethodFlightTaskResume = "flighttask_recovery"
+	MethodFlightTaskRecovery = "flighttask_recovery"
 
 	// MethodFlightTaskStop 航线任务停止（Flighttask Stop）
 	// 云平台 → 设备（Services），强制停止当前航线任务
@@ -434,9 +434,9 @@ const (
 // Topic: thing/product/{gateway_sn}/services | events
 
 const (
-	// MethodPsdkFloatUp PSDK UI 资源上传（PSDK UI Resource Upload）
+	// MethodPsdkUIResourceUpload PSDK UI 资源上传（PSDK UI Resource Upload）
 	// 云平台 → 设备（Services），上传 PSDK 浮窗 UI 资源文件
-	MethodPsdkFloatUp = "psdk_ui_resource_upload"
+	MethodPsdkUIResourceUpload = "psdk_ui_resource_upload"
 
 	// MethodCustomDataTransmissionToPsdk 自定义数据透传至 PSDK（Custom Data Transmission To PSDK）
 	// 云平台 → 设备（Services），将自定义消息透传推送到 PSDK 负载设备

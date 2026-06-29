@@ -29,7 +29,6 @@ func (l *FlyToPointStopLogic) FlyToPointStop(in *djicloud.FlyToPointStopReq) (*d
 		FlyToID: in.GetFlyToId(),
 	})
 	if err != nil {
-		l.Errorf("[drc] fly to point stop failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

@@ -27,7 +27,6 @@ func NewDroneOpenLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DroneOp
 func (l *DroneOpenLogic) DroneOpen(in *djicloud.DroneOpenReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DroneOpen(l.ctx, in.DeviceSn)
 	if err != nil {
-		l.Errorf("[remote-debug] drone open failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

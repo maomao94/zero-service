@@ -40,7 +40,6 @@ func (l *RemoteLogFileUploadUpdateLogic) RemoteLogFileUploadUpdate(in *djicloud.
 	data := &djisdk.RemoteLogFileUploadUpdateData{Files: files}
 	tid, err := l.svcCtx.DjiClient.RemoteLogFileUploadUpdate(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[remote-log] file upload update failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

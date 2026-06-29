@@ -29,7 +29,6 @@ func (l *MediaHighestPriorityUploadFlighttaskLogic) MediaHighestPriorityUploadFl
 	data := &djisdk.MediaHighestPriorityUploadFlighttaskData{FlightID: in.FlightId}
 	tid, err := l.svcCtx.DjiClient.MediaHighestPriorityUploadFlighttask(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[media] highest priority upload flighttask failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

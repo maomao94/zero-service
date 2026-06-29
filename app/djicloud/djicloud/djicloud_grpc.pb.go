@@ -23,7 +23,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	DjiCloud_Ping_FullMethodName                                 = "/djicloud.DjiCloud/Ping"
-	DjiCloud_SetProperty_FullMethodName                          = "/djicloud.DjiCloud/SetProperty"
+	DjiCloud_PropertySet_FullMethodName                          = "/djicloud.DjiCloud/PropertySet"
 	DjiCloud_LiveStartPush_FullMethodName                        = "/djicloud.DjiCloud/LiveStartPush"
 	DjiCloud_LiveStopPush_FullMethodName                         = "/djicloud.DjiCloud/LiveStopPush"
 	DjiCloud_LiveSetQuality_FullMethodName                       = "/djicloud.DjiCloud/LiveSetQuality"
@@ -34,9 +34,9 @@ const (
 	DjiCloud_MediaHighestPriorityUploadFlighttask_FullMethodName = "/djicloud.DjiCloud/MediaHighestPriorityUploadFlighttask"
 	DjiCloud_FlightTaskPrepare_FullMethodName                    = "/djicloud.DjiCloud/FlightTaskPrepare"
 	DjiCloud_FlightTaskExecute_FullMethodName                    = "/djicloud.DjiCloud/FlightTaskExecute"
-	DjiCloud_CancelFlightTask_FullMethodName                     = "/djicloud.DjiCloud/CancelFlightTask"
+	DjiCloud_FlightTaskUndo_FullMethodName                       = "/djicloud.DjiCloud/FlightTaskUndo"
 	DjiCloud_PauseFlightTask_FullMethodName                      = "/djicloud.DjiCloud/PauseFlightTask"
-	DjiCloud_ResumeFlightTask_FullMethodName                     = "/djicloud.DjiCloud/ResumeFlightTask"
+	DjiCloud_FlightTaskRecovery_FullMethodName                   = "/djicloud.DjiCloud/FlightTaskRecovery"
 	DjiCloud_StopFlightTask_FullMethodName                       = "/djicloud.DjiCloud/StopFlightTask"
 	DjiCloud_ReturnHome_FullMethodName                           = "/djicloud.DjiCloud/ReturnHome"
 	DjiCloud_ReturnHomeCancelAutoReturn_FullMethodName           = "/djicloud.DjiCloud/ReturnHomeCancelAutoReturn"
@@ -88,15 +88,15 @@ const (
 	DjiCloud_CameraIrMeteringArea_FullMethodName                 = "/djicloud.DjiCloud/CameraIrMeteringArea"
 	DjiCloud_FlightAreasUpdate_FullMethodName                    = "/djicloud.DjiCloud/FlightAreasUpdate"
 	DjiCloud_PsdkUIResourceUpload_FullMethodName                 = "/djicloud.DjiCloud/PsdkUIResourceUpload"
-	DjiCloud_SendCustomDataToPsdk_FullMethodName                 = "/djicloud.DjiCloud/SendCustomDataToPsdk"
-	DjiCloud_SendCustomDataToEsdk_FullMethodName                 = "/djicloud.DjiCloud/SendCustomDataToEsdk"
+	DjiCloud_CustomDataTransmissionToPsdk_FullMethodName         = "/djicloud.DjiCloud/CustomDataTransmissionToPsdk"
+	DjiCloud_CustomDataTransmissionToEsdk_FullMethodName         = "/djicloud.DjiCloud/CustomDataTransmissionToEsdk"
 	DjiCloud_UnlockLicenseSwitch_FullMethodName                  = "/djicloud.DjiCloud/UnlockLicenseSwitch"
 	DjiCloud_UnlockLicenseUpdate_FullMethodName                  = "/djicloud.DjiCloud/UnlockLicenseUpdate"
 	DjiCloud_UnlockLicenseList_FullMethodName                    = "/djicloud.DjiCloud/UnlockLicenseList"
 	DjiCloud_DrcModeEnter_FullMethodName                         = "/djicloud.DjiCloud/DrcModeEnter"
 	DjiCloud_DrcModeExit_FullMethodName                          = "/djicloud.DjiCloud/DrcModeExit"
 	DjiCloud_DroneEmergencyStop_FullMethodName                   = "/djicloud.DjiCloud/DroneEmergencyStop"
-	DjiCloud_SendDrcStickControl_FullMethodName                  = "/djicloud.DjiCloud/SendDrcStickControl"
+	DjiCloud_StickControl_FullMethodName                         = "/djicloud.DjiCloud/StickControl"
 	DjiCloud_DrcForceLanding_FullMethodName                      = "/djicloud.DjiCloud/DrcForceLanding"
 	DjiCloud_DrcEmergencyLanding_FullMethodName                  = "/djicloud.DjiCloud/DrcEmergencyLanding"
 	DjiCloud_DrcLinkageZoomSet_FullMethodName                    = "/djicloud.DjiCloud/DrcLinkageZoomSet"
@@ -132,10 +132,10 @@ const (
 type DjiCloudClient interface {
 	// Ping 健康检查接口，用于验证服务可用性。
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
-	// SetProperty 设置设备属性。
+	// PropertySet 设置设备属性。
 	// 通过 property/set 主题向设备下发属性设置命令。
 	// properties 为 JSON 格式的键值对字符串。
-	SetProperty(ctx context.Context, in *SetPropertyReq, opts ...grpc.CallOption) (*CommonRes, error)
+	PropertySet(ctx context.Context, in *PropertySetReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// LiveStartPush 开始直播推流。
 	// 对应 DJI Cloud API method: live_start_push，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -182,7 +182,7 @@ type DjiCloudClient interface {
 	// CancelFlightTask 取消航线任务。
 	// 对应 DJI Cloud API method: flighttask_undo，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	CancelFlightTask(ctx context.Context, in *CancelFlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error)
+	FlightTaskUndo(ctx context.Context, in *FlightTaskUndoReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// PauseFlightTask 暂停航线任务。
 	// 对应 DJI Cloud API method: flighttask_pause，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -190,7 +190,7 @@ type DjiCloudClient interface {
 	// ResumeFlightTask 恢复已暂停的航线任务。
 	// 对应 DJI Cloud API method: flighttask_recovery，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	ResumeFlightTask(ctx context.Context, in *ResumeFlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error)
+	FlightTaskRecovery(ctx context.Context, in *FlightTaskRecoveryReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// StopFlightTask 强制停止当前航线任务。
 	// 对应 DJI Cloud API method: flighttask_stop，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -416,10 +416,10 @@ type DjiCloudClient interface {
 	// Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），
 	// 将自定义消息透传推送到 PSDK 负载设备，等待设备 ACK 后返回结果。
 	// 上行方向（设备→云平台）通过 events topic 的 custom_data_transmission_from_psdk 事件钩子处理。
-	SendCustomDataToPsdk(ctx context.Context, in *CustomDataToPsdkReq, opts ...grpc.CallOption) (*CommonRes, error)
+	CustomDataTransmissionToPsdk(ctx context.Context, in *CustomDataTransmissionToPsdkReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// SendCustomDataToEsdk 自定义数据透传至 ESDK 设备。
 	// 对应 DJI Cloud API method: custom_data_transmission_to_esdk，方向 down（云平台→设备）。
-	SendCustomDataToEsdk(ctx context.Context, in *CustomDataToEsdkReq, opts ...grpc.CallOption) (*CommonRes, error)
+	CustomDataTransmissionToEsdk(ctx context.Context, in *CustomDataTransmissionToEsdkReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// UnlockLicenseSwitch 启用或禁用设备的单个解禁证书。
 	// 对应 DJI Cloud API method: unlock_license_switch，方向 down（云平台→设备）。
 	UnlockLicenseSwitch(ctx context.Context, in *UnlockLicenseSwitchReq, opts ...grpc.CallOption) (*CommonRes, error)
@@ -447,7 +447,7 @@ type DjiCloudClient interface {
 	// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
 	// Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；无 services_reply。
 	// seq 由平台内部管理，无需调用方传入。
-	SendDrcStickControl(ctx context.Context, in *DrcStickControlReq, opts ...grpc.CallOption) (*DrcStickControlRes, error)
+	StickControl(ctx context.Context, in *StickControlReq, opts ...grpc.CallOption) (*StickControlRes, error)
 	// DrcForceLanding 强制降落。
 	// 对应 DJI Cloud API method: drc_force_landing，Topic: drc/down，方向 down（云平台→设备）。
 	DrcForceLanding(ctx context.Context, in *DrcForceLandingReq, opts ...grpc.CallOption) (*DrcForceLandingRes, error)
@@ -533,10 +533,10 @@ func (c *djiCloudClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOpt
 	return out, nil
 }
 
-func (c *djiCloudClient) SetProperty(ctx context.Context, in *SetPropertyReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) PropertySet(ctx context.Context, in *PropertySetReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiCloud_SetProperty_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DjiCloud_PropertySet_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -643,10 +643,10 @@ func (c *djiCloudClient) FlightTaskExecute(ctx context.Context, in *FlightTaskEx
 	return out, nil
 }
 
-func (c *djiCloudClient) CancelFlightTask(ctx context.Context, in *CancelFlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) FlightTaskUndo(ctx context.Context, in *FlightTaskUndoReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiCloud_CancelFlightTask_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DjiCloud_FlightTaskUndo_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -663,10 +663,10 @@ func (c *djiCloudClient) PauseFlightTask(ctx context.Context, in *PauseFlightTas
 	return out, nil
 }
 
-func (c *djiCloudClient) ResumeFlightTask(ctx context.Context, in *ResumeFlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) FlightTaskRecovery(ctx context.Context, in *FlightTaskRecoveryReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiCloud_ResumeFlightTask_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DjiCloud_FlightTaskRecovery_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1183,20 +1183,20 @@ func (c *djiCloudClient) PsdkUIResourceUpload(ctx context.Context, in *PsdkUIRes
 	return out, nil
 }
 
-func (c *djiCloudClient) SendCustomDataToPsdk(ctx context.Context, in *CustomDataToPsdkReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) CustomDataTransmissionToPsdk(ctx context.Context, in *CustomDataTransmissionToPsdkReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiCloud_SendCustomDataToPsdk_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DjiCloud_CustomDataTransmissionToPsdk_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *djiCloudClient) SendCustomDataToEsdk(ctx context.Context, in *CustomDataToEsdkReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) CustomDataTransmissionToEsdk(ctx context.Context, in *CustomDataTransmissionToEsdkReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiCloud_SendCustomDataToEsdk_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DjiCloud_CustomDataTransmissionToEsdk_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1263,10 +1263,10 @@ func (c *djiCloudClient) DroneEmergencyStop(ctx context.Context, in *DroneEmerge
 	return out, nil
 }
 
-func (c *djiCloudClient) SendDrcStickControl(ctx context.Context, in *DrcStickControlReq, opts ...grpc.CallOption) (*DrcStickControlRes, error) {
+func (c *djiCloudClient) StickControl(ctx context.Context, in *StickControlReq, opts ...grpc.CallOption) (*StickControlRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DrcStickControlRes)
-	err := c.cc.Invoke(ctx, DjiCloud_SendDrcStickControl_FullMethodName, in, out, cOpts...)
+	out := new(StickControlRes)
+	err := c.cc.Invoke(ctx, DjiCloud_StickControl_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1513,10 +1513,10 @@ func (c *djiCloudClient) QueryDrcStatus(ctx context.Context, in *QueryDrcStatusR
 type DjiCloudServer interface {
 	// Ping 健康检查接口，用于验证服务可用性。
 	Ping(context.Context, *Req) (*Res, error)
-	// SetProperty 设置设备属性。
+	// PropertySet 设置设备属性。
 	// 通过 property/set 主题向设备下发属性设置命令。
 	// properties 为 JSON 格式的键值对字符串。
-	SetProperty(context.Context, *SetPropertyReq) (*CommonRes, error)
+	PropertySet(context.Context, *PropertySetReq) (*CommonRes, error)
 	// LiveStartPush 开始直播推流。
 	// 对应 DJI Cloud API method: live_start_push，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -1563,7 +1563,7 @@ type DjiCloudServer interface {
 	// CancelFlightTask 取消航线任务。
 	// 对应 DJI Cloud API method: flighttask_undo，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	CancelFlightTask(context.Context, *CancelFlightTaskReq) (*CommonRes, error)
+	FlightTaskUndo(context.Context, *FlightTaskUndoReq) (*CommonRes, error)
 	// PauseFlightTask 暂停航线任务。
 	// 对应 DJI Cloud API method: flighttask_pause，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -1571,7 +1571,7 @@ type DjiCloudServer interface {
 	// ResumeFlightTask 恢复已暂停的航线任务。
 	// 对应 DJI Cloud API method: flighttask_recovery，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	ResumeFlightTask(context.Context, *ResumeFlightTaskReq) (*CommonRes, error)
+	FlightTaskRecovery(context.Context, *FlightTaskRecoveryReq) (*CommonRes, error)
 	// StopFlightTask 强制停止当前航线任务。
 	// 对应 DJI Cloud API method: flighttask_stop，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -1797,10 +1797,10 @@ type DjiCloudServer interface {
 	// Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），
 	// 将自定义消息透传推送到 PSDK 负载设备，等待设备 ACK 后返回结果。
 	// 上行方向（设备→云平台）通过 events topic 的 custom_data_transmission_from_psdk 事件钩子处理。
-	SendCustomDataToPsdk(context.Context, *CustomDataToPsdkReq) (*CommonRes, error)
+	CustomDataTransmissionToPsdk(context.Context, *CustomDataTransmissionToPsdkReq) (*CommonRes, error)
 	// SendCustomDataToEsdk 自定义数据透传至 ESDK 设备。
 	// 对应 DJI Cloud API method: custom_data_transmission_to_esdk，方向 down（云平台→设备）。
-	SendCustomDataToEsdk(context.Context, *CustomDataToEsdkReq) (*CommonRes, error)
+	CustomDataTransmissionToEsdk(context.Context, *CustomDataTransmissionToEsdkReq) (*CommonRes, error)
 	// UnlockLicenseSwitch 启用或禁用设备的单个解禁证书。
 	// 对应 DJI Cloud API method: unlock_license_switch，方向 down（云平台→设备）。
 	UnlockLicenseSwitch(context.Context, *UnlockLicenseSwitchReq) (*CommonRes, error)
@@ -1828,7 +1828,7 @@ type DjiCloudServer interface {
 	// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
 	// Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；无 services_reply。
 	// seq 由平台内部管理，无需调用方传入。
-	SendDrcStickControl(context.Context, *DrcStickControlReq) (*DrcStickControlRes, error)
+	StickControl(context.Context, *StickControlReq) (*StickControlRes, error)
 	// DrcForceLanding 强制降落。
 	// 对应 DJI Cloud API method: drc_force_landing，Topic: drc/down，方向 down（云平台→设备）。
 	DrcForceLanding(context.Context, *DrcForceLandingReq) (*DrcForceLandingRes, error)
@@ -1907,8 +1907,8 @@ type UnimplementedDjiCloudServer struct{}
 func (UnimplementedDjiCloudServer) Ping(context.Context, *Req) (*Res, error) {
 	return nil, status.Error(codes.Unimplemented, "method Ping not implemented")
 }
-func (UnimplementedDjiCloudServer) SetProperty(context.Context, *SetPropertyReq) (*CommonRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method SetProperty not implemented")
+func (UnimplementedDjiCloudServer) PropertySet(context.Context, *PropertySetReq) (*CommonRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method PropertySet not implemented")
 }
 func (UnimplementedDjiCloudServer) LiveStartPush(context.Context, *LiveStartPushReq) (*CommonRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method LiveStartPush not implemented")
@@ -1940,14 +1940,14 @@ func (UnimplementedDjiCloudServer) FlightTaskPrepare(context.Context, *FlightTas
 func (UnimplementedDjiCloudServer) FlightTaskExecute(context.Context, *FlightTaskExecuteReq) (*CommonRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method FlightTaskExecute not implemented")
 }
-func (UnimplementedDjiCloudServer) CancelFlightTask(context.Context, *CancelFlightTaskReq) (*CommonRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method CancelFlightTask not implemented")
+func (UnimplementedDjiCloudServer) FlightTaskUndo(context.Context, *FlightTaskUndoReq) (*CommonRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method FlightTaskUndo not implemented")
 }
 func (UnimplementedDjiCloudServer) PauseFlightTask(context.Context, *PauseFlightTaskReq) (*CommonRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method PauseFlightTask not implemented")
 }
-func (UnimplementedDjiCloudServer) ResumeFlightTask(context.Context, *ResumeFlightTaskReq) (*CommonRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method ResumeFlightTask not implemented")
+func (UnimplementedDjiCloudServer) FlightTaskRecovery(context.Context, *FlightTaskRecoveryReq) (*CommonRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method FlightTaskRecovery not implemented")
 }
 func (UnimplementedDjiCloudServer) StopFlightTask(context.Context, *StopFlightTaskReq) (*CommonRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method StopFlightTask not implemented")
@@ -2102,11 +2102,11 @@ func (UnimplementedDjiCloudServer) FlightAreasUpdate(context.Context, *FlightAre
 func (UnimplementedDjiCloudServer) PsdkUIResourceUpload(context.Context, *PsdkUIResourceUploadReq) (*CommonRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method PsdkUIResourceUpload not implemented")
 }
-func (UnimplementedDjiCloudServer) SendCustomDataToPsdk(context.Context, *CustomDataToPsdkReq) (*CommonRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method SendCustomDataToPsdk not implemented")
+func (UnimplementedDjiCloudServer) CustomDataTransmissionToPsdk(context.Context, *CustomDataTransmissionToPsdkReq) (*CommonRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method CustomDataTransmissionToPsdk not implemented")
 }
-func (UnimplementedDjiCloudServer) SendCustomDataToEsdk(context.Context, *CustomDataToEsdkReq) (*CommonRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method SendCustomDataToEsdk not implemented")
+func (UnimplementedDjiCloudServer) CustomDataTransmissionToEsdk(context.Context, *CustomDataTransmissionToEsdkReq) (*CommonRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method CustomDataTransmissionToEsdk not implemented")
 }
 func (UnimplementedDjiCloudServer) UnlockLicenseSwitch(context.Context, *UnlockLicenseSwitchReq) (*CommonRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method UnlockLicenseSwitch not implemented")
@@ -2126,8 +2126,8 @@ func (UnimplementedDjiCloudServer) DrcModeExit(context.Context, *DrcModeExitReq)
 func (UnimplementedDjiCloudServer) DroneEmergencyStop(context.Context, *DroneEmergencyStopReq) (*DroneEmergencyStopRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method DroneEmergencyStop not implemented")
 }
-func (UnimplementedDjiCloudServer) SendDrcStickControl(context.Context, *DrcStickControlReq) (*DrcStickControlRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method SendDrcStickControl not implemented")
+func (UnimplementedDjiCloudServer) StickControl(context.Context, *StickControlReq) (*StickControlRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method StickControl not implemented")
 }
 func (UnimplementedDjiCloudServer) DrcForceLanding(context.Context, *DrcForceLandingReq) (*DrcForceLandingRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method DrcForceLanding not implemented")
@@ -2237,20 +2237,20 @@ func _DjiCloud_Ping_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DjiCloud_SetProperty_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetPropertyReq)
+func _DjiCloud_PropertySet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PropertySetReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DjiCloudServer).SetProperty(ctx, in)
+		return srv.(DjiCloudServer).PropertySet(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DjiCloud_SetProperty_FullMethodName,
+		FullMethod: DjiCloud_PropertySet_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).SetProperty(ctx, req.(*SetPropertyReq))
+		return srv.(DjiCloudServer).PropertySet(ctx, req.(*PropertySetReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2435,20 +2435,20 @@ func _DjiCloud_FlightTaskExecute_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DjiCloud_CancelFlightTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CancelFlightTaskReq)
+func _DjiCloud_FlightTaskUndo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FlightTaskUndoReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DjiCloudServer).CancelFlightTask(ctx, in)
+		return srv.(DjiCloudServer).FlightTaskUndo(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DjiCloud_CancelFlightTask_FullMethodName,
+		FullMethod: DjiCloud_FlightTaskUndo_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).CancelFlightTask(ctx, req.(*CancelFlightTaskReq))
+		return srv.(DjiCloudServer).FlightTaskUndo(ctx, req.(*FlightTaskUndoReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2471,20 +2471,20 @@ func _DjiCloud_PauseFlightTask_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DjiCloud_ResumeFlightTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResumeFlightTaskReq)
+func _DjiCloud_FlightTaskRecovery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FlightTaskRecoveryReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DjiCloudServer).ResumeFlightTask(ctx, in)
+		return srv.(DjiCloudServer).FlightTaskRecovery(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DjiCloud_ResumeFlightTask_FullMethodName,
+		FullMethod: DjiCloud_FlightTaskRecovery_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).ResumeFlightTask(ctx, req.(*ResumeFlightTaskReq))
+		return srv.(DjiCloudServer).FlightTaskRecovery(ctx, req.(*FlightTaskRecoveryReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3407,38 +3407,38 @@ func _DjiCloud_PsdkUIResourceUpload_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DjiCloud_SendCustomDataToPsdk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CustomDataToPsdkReq)
+func _DjiCloud_CustomDataTransmissionToPsdk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CustomDataTransmissionToPsdkReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DjiCloudServer).SendCustomDataToPsdk(ctx, in)
+		return srv.(DjiCloudServer).CustomDataTransmissionToPsdk(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DjiCloud_SendCustomDataToPsdk_FullMethodName,
+		FullMethod: DjiCloud_CustomDataTransmissionToPsdk_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).SendCustomDataToPsdk(ctx, req.(*CustomDataToPsdkReq))
+		return srv.(DjiCloudServer).CustomDataTransmissionToPsdk(ctx, req.(*CustomDataTransmissionToPsdkReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DjiCloud_SendCustomDataToEsdk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CustomDataToEsdkReq)
+func _DjiCloud_CustomDataTransmissionToEsdk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CustomDataTransmissionToEsdkReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DjiCloudServer).SendCustomDataToEsdk(ctx, in)
+		return srv.(DjiCloudServer).CustomDataTransmissionToEsdk(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DjiCloud_SendCustomDataToEsdk_FullMethodName,
+		FullMethod: DjiCloud_CustomDataTransmissionToEsdk_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).SendCustomDataToEsdk(ctx, req.(*CustomDataToEsdkReq))
+		return srv.(DjiCloudServer).CustomDataTransmissionToEsdk(ctx, req.(*CustomDataTransmissionToEsdkReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3551,20 +3551,20 @@ func _DjiCloud_DroneEmergencyStop_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DjiCloud_SendDrcStickControl_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DrcStickControlReq)
+func _DjiCloud_StickControl_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StickControlReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DjiCloudServer).SendDrcStickControl(ctx, in)
+		return srv.(DjiCloudServer).StickControl(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DjiCloud_SendDrcStickControl_FullMethodName,
+		FullMethod: DjiCloud_StickControl_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).SendDrcStickControl(ctx, req.(*DrcStickControlReq))
+		return srv.(DjiCloudServer).StickControl(ctx, req.(*StickControlReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3995,8 +3995,8 @@ var DjiCloud_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DjiCloud_Ping_Handler,
 		},
 		{
-			MethodName: "SetProperty",
-			Handler:    _DjiCloud_SetProperty_Handler,
+			MethodName: "PropertySet",
+			Handler:    _DjiCloud_PropertySet_Handler,
 		},
 		{
 			MethodName: "LiveStartPush",
@@ -4039,16 +4039,16 @@ var DjiCloud_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DjiCloud_FlightTaskExecute_Handler,
 		},
 		{
-			MethodName: "CancelFlightTask",
-			Handler:    _DjiCloud_CancelFlightTask_Handler,
+			MethodName: "FlightTaskUndo",
+			Handler:    _DjiCloud_FlightTaskUndo_Handler,
 		},
 		{
 			MethodName: "PauseFlightTask",
 			Handler:    _DjiCloud_PauseFlightTask_Handler,
 		},
 		{
-			MethodName: "ResumeFlightTask",
-			Handler:    _DjiCloud_ResumeFlightTask_Handler,
+			MethodName: "FlightTaskRecovery",
+			Handler:    _DjiCloud_FlightTaskRecovery_Handler,
 		},
 		{
 			MethodName: "StopFlightTask",
@@ -4255,12 +4255,12 @@ var DjiCloud_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DjiCloud_PsdkUIResourceUpload_Handler,
 		},
 		{
-			MethodName: "SendCustomDataToPsdk",
-			Handler:    _DjiCloud_SendCustomDataToPsdk_Handler,
+			MethodName: "CustomDataTransmissionToPsdk",
+			Handler:    _DjiCloud_CustomDataTransmissionToPsdk_Handler,
 		},
 		{
-			MethodName: "SendCustomDataToEsdk",
-			Handler:    _DjiCloud_SendCustomDataToEsdk_Handler,
+			MethodName: "CustomDataTransmissionToEsdk",
+			Handler:    _DjiCloud_CustomDataTransmissionToEsdk_Handler,
 		},
 		{
 			MethodName: "UnlockLicenseSwitch",
@@ -4287,8 +4287,8 @@ var DjiCloud_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DjiCloud_DroneEmergencyStop_Handler,
 		},
 		{
-			MethodName: "SendDrcStickControl",
-			Handler:    _DjiCloud_SendDrcStickControl_Handler,
+			MethodName: "StickControl",
+			Handler:    _DjiCloud_StickControl_Handler,
 		},
 		{
 			MethodName: "DrcForceLanding",

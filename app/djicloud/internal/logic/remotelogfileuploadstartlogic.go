@@ -40,7 +40,6 @@ func (l *RemoteLogFileUploadStartLogic) RemoteLogFileUploadStart(in *djicloud.Re
 	data := &djisdk.RemoteLogFileUploadStartData{Files: files}
 	tid, err := l.svcCtx.DjiClient.RemoteLogFileUploadStart(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[remote-log] file upload start failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

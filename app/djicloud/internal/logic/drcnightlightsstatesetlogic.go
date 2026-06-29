@@ -32,7 +32,6 @@ func (l *DrcNightLightsStateSetLogic) DrcNightLightsStateSet(in *djicloud.DrcNig
 	}
 	data := &djisdk.DrcNightLightsStateSetData{NightLightsState: int(in.GetNightLightsState())}
 	if _, err := l.svcCtx.DjiClient.DrcNightLightsStateSet(l.ctx, deviceSn, seq, data); err != nil {
-		l.Errorf("[drc] night lights state set failed device_sn=%s: %v", deviceSn, err)
 		return nil, err
 	}
 	return &djicloud.DrcNightLightsStateSetRes{Seq: int32(seq)}, nil

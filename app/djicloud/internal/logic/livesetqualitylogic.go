@@ -31,7 +31,6 @@ func (l *LiveSetQualityLogic) LiveSetQuality(in *djicloud.LiveSetQualityReq) (*d
 	}
 	tid, err := l.svcCtx.DjiClient.LiveSetQuality(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[live] live set quality failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

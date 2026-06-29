@@ -31,7 +31,6 @@ func (l *CameraVideoStorageSetLogic) CameraVideoStorageSet(in *djicloud.CameraVi
 	}
 	tid, err := l.svcCtx.DjiClient.CameraVideoStorageSet(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[camera] camera video storage set failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

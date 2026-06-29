@@ -27,7 +27,6 @@ func NewDroneCloseLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DroneC
 func (l *DroneCloseLogic) DroneClose(in *djicloud.DroneCloseReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DroneClose(l.ctx, in.DeviceSn)
 	if err != nil {
-		l.Errorf("[remote-debug] drone close failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

@@ -36,7 +36,6 @@ func (l *DrcModeEnterLogic) DrcModeEnter(in *djicloud.DrcModeEnterReq) (*djiclou
 	}
 	tid, err := l.svcCtx.DjiClient.DrcModeEnter(l.ctx, deviceSn, data)
 	if err != nil {
-		l.Errorf("[drc] mode enter failed device_sn=%s: %v", deviceSn, err)
 		return errRes(tid, err), nil
 	}
 	maxCtrlMs := in.GetMaxControlTimeMillis()
@@ -45,7 +44,6 @@ func (l *DrcModeEnterLogic) DrcModeEnter(in *djicloud.DrcModeEnterReq) (*djiclou
 		maxTimeout = time.Duration(maxCtrlMs) * time.Millisecond
 	}
 	if err := l.svcCtx.DjiClient.EnableDrc(l.ctx, deviceSn, djisdk.WithDrcMaxTimeout(maxTimeout)); err != nil {
-		l.Errorf("[drc] manager enable failed device_sn=%s: %v", deviceSn, err)
 		return nil, err
 	}
 	return okRes(tid), nil

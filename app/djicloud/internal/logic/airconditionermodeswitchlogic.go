@@ -27,7 +27,6 @@ func NewAirConditionerModeSwitchLogic(ctx context.Context, svcCtx *svc.ServiceCo
 func (l *AirConditionerModeSwitchLogic) AirConditionerModeSwitch(in *djicloud.AirConditionerModeSwitchReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.AirConditionerModeSwitch(l.ctx, in.DeviceSn, int(in.Action))
 	if err != nil {
-		l.Errorf("[remote-debug] air conditioner mode switch failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

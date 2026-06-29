@@ -31,7 +31,6 @@ func (l *GimbalResetLogic) GimbalReset(in *djicloud.GimbalResetReq) (*djicloud.C
 	}
 	tid, err := l.svcCtx.DjiClient.GimbalReset(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[camera] gimbal reset failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

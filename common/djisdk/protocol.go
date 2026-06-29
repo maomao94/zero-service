@@ -259,9 +259,9 @@ type FlightTaskPauseData struct {
 	WaylineID int `json:"wayline_id,omitempty"`
 }
 
-// FlightTaskResumeData 航线任务恢复数据。
+// FlightTaskRecoveryData 航线任务恢复数据。
 // 对应 DJI Cloud API method: flighttask_recovery 的 data 载荷。
-type FlightTaskResumeData struct {
+type FlightTaskRecoveryData struct {
 	// FlightID 航线任务 ID。必填。
 	FlightID string `json:"flight_id"`
 	// WaylineID 航线 ID，用于标识恢复的航线。可选。
@@ -494,7 +494,7 @@ type DebugProgressDetail struct {
 }
 
 // ==================== 六、物模型属性（Property） ====================
-// PropertySetData **仅用于云 → 设备** 的 `property/set` 载荷；由云平台/本服务 SetProperty 随 MethodPropertySet 一同下发。键为物模型可写属性名。
+// PropertySetData **仅用于云 → 设备** 的 `property/set` 载荷；由云平台/本服务 PropertySet 随 MethodPropertySet 一同下发。键为物模型可写属性名。
 // 设备只读/遥测等场景见 **thing/.../state、osd** 等，勿与本「写属性」混用方向。
 type PropertySetData map[string]any
 
@@ -587,7 +587,7 @@ type FlyToWaypoint struct {
 }
 
 // DrcStickControlData 与 DRC 杆量控制 stick_control 的 data 体一致。
-// 由 SendDrcStickControl 放入 DrcDownMessage 后在 drc/down 上发布；seq 位于 DrcDownMessage 顶层。
+// 由 StickControl 放入 DrcDownMessage 后在 drc/down 上发布；seq 位于 DrcDownMessage 顶层。
 type DrcStickControlData struct {
 	Roll        float64 `json:"roll"`
 	Pitch       float64 `json:"pitch"`

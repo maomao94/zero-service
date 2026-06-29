@@ -44,8 +44,8 @@ func replyRouters(ttl time.Duration) []mqttx.ClientOption {
 		return nil
 	}
 	return []mqttx.ClientOption{
-		mqttx.WithReplyRouter(ServicesReplyTopicPattern(), newServicesReplyRouter(ttl)),
-		mqttx.WithReplyRouter(PropertySetReplyTopicPattern(), newPropertySetReplyRouter(ttl)),
+		mqttx.WithReplyRouter(servicesReplyTopicPattern(), newServicesReplyRouter(ttl)),
+		mqttx.WithReplyRouter(propertySetReplyTopicPattern(), newPropertySetReplyRouter(ttl)),
 	}
 }
 

@@ -33,7 +33,6 @@ func (l *ReturnSpecificHomeLogic) ReturnSpecificHome(in *djicloud.ReturnSpecific
 	}
 	tid, err := l.svcCtx.DjiClient.ReturnSpecificHome(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[flight-control] return specific home failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

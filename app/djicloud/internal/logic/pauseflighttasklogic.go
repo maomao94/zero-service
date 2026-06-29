@@ -31,7 +31,6 @@ func (l *PauseFlightTaskLogic) PauseFlightTask(in *djicloud.PauseFlightTaskReq) 
 		WaylineID: int(in.GetWaylineId()),
 	})
 	if err != nil {
-		l.Errorf("[flight-task] pause flight task failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

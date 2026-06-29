@@ -27,7 +27,6 @@ func NewBatteryMaintenanceSwitchLogic(ctx context.Context, svcCtx *svc.ServiceCo
 func (l *BatteryMaintenanceSwitchLogic) BatteryMaintenanceSwitch(in *djicloud.BatteryStoreModeReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.BatteryMaintenanceSwitch(l.ctx, in.DeviceSn, int(in.Enable))
 	if err != nil {
-		l.Errorf("[remote-debug] battery maintenance switch failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

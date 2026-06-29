@@ -32,7 +32,6 @@ func (l *DrcLinkageZoomSetLogic) DrcLinkageZoomSet(in *djicloud.DrcLinkageZoomSe
 	}
 	data := &djisdk.DrcLinkageZoomSetData{PayloadIndex: in.GetPayloadIndex(), State: in.GetState()}
 	if _, err := l.svcCtx.DjiClient.DrcLinkageZoomSet(l.ctx, deviceSn, seq, data); err != nil {
-		l.Errorf("[drc] linkage zoom set failed device_sn=%s: %v", deviceSn, err)
 		return nil, err
 	}
 	return &djicloud.DrcLinkageZoomSetRes{Seq: int32(seq)}, nil

@@ -30,7 +30,6 @@ func (l *DrcInitialStateSubscribeLogic) DrcInitialStateSubscribe(in *djicloud.Dr
 		return nil, err
 	}
 	if _, err := l.svcCtx.DjiClient.DrcInitialStateSubscribe(l.ctx, deviceSn, seq); err != nil {
-		l.Errorf("[drc] initial state subscribe failed device_sn=%s: %v", deviceSn, err)
 		return nil, err
 	}
 	return &djicloud.DrcInitialStateSubscribeRes{Seq: int32(seq)}, nil

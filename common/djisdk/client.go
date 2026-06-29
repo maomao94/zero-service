@@ -93,15 +93,19 @@ func (c *Client) SendCommand(ctx context.Context, gatewaySn, method string, data
 	topic := ServicesTopic(gatewaySn)
 	logx.WithContext(ctx).Infof("[dji-sdk] send_command %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", method, "tid", tid))
 
-	reply, err := mqttx.RequestReply[*ServiceReply](ctx, c.mqttClient, ServicesReplyTopicPattern(), tid, func() error {
+	reply, err := mqttx.RequestReply[*ServiceReply](ctx, c.mqttClient, servicesReplyTopicPattern(), tid, func() error {
 		return c.mqttClient.Publish(ctx, topic, payload)
 	}, c.pendingTTL)
 	if err != nil {
-		return tid, fmt.Errorf("[dji-sdk] command failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, method, tid, err)
+		err = fmt.Errorf("[dji-sdk] command failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, method, tid, err)
+		logx.WithContext(ctx).Errorf("%v", err)
+		return tid, err
 	}
 
 	if reply.Data.Result != 0 {
-		return tid, NewDJIError(reply.Data.Result)
+		err = NewDJIError(reply.Data.Result)
+		logx.WithContext(ctx).Errorf("[dji-sdk] command rejected: gateway_sn=%s method=%s tid=%s err=%v", gatewaySn, method, tid, err)
+		return tid, err
 	}
 
 	return tid, nil
@@ -122,23 +126,27 @@ func (c *Client) SendCommandFireAndForget(ctx context.Context, gatewaySn, method
 	req := NewServiceRequest(tid, bid, method, data)
 	payload, err := json.Marshal(req)
 	if err != nil {
-		return "", fmt.Errorf("[dji-sdk] marshal request failed: gateway_sn=%s, %w", gatewaySn, err)
+		err = fmt.Errorf("[dji-sdk] marshal request failed: gateway_sn=%s, %w", gatewaySn, err)
+		logx.WithContext(ctx).Errorf("%v", err)
+		return "", err
 	}
 
 	topic := ServicesTopic(gatewaySn)
 	logx.WithContext(ctx).Infof("[dji-sdk] send_command_fire_and_forget %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", method, "tid", tid))
 
 	if err := c.mqttClient.Publish(ctx, topic, payload); err != nil {
-		return tid, fmt.Errorf("[dji-sdk] publish failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, method, tid, err)
+		err = fmt.Errorf("[dji-sdk] publish failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, method, tid, err)
+		logx.WithContext(ctx).Errorf("%v", err)
+		return tid, err
 	}
 	return tid, nil
 }
 
 // ==================== 设备属性（Properties） ====================
 
-// SetProperty 设置设备属性。
+// PropertySet 设置设备属性（对应 DJI method: property_set）。
 // 通过 property/set 主题向设备下发可写物模型属性，并等待 property/set_reply。
-func (c *Client) SetProperty(ctx context.Context, gatewaySn string, properties PropertySetData) (string, error) {
+func (c *Client) PropertySet(ctx context.Context, gatewaySn string, properties PropertySetData) (string, error) {
 	tid := uuid.New().String()
 	bid := uuid.New().String()
 
@@ -151,15 +159,19 @@ func (c *Client) SetProperty(ctx context.Context, gatewaySn string, properties P
 	topic := PropertySetTopic(gatewaySn)
 	logx.WithContext(ctx).Infof("[dji-sdk] property_set %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", MethodPropertySet, "tid", tid))
 
-	reply, err := mqttx.RequestReply[*ServiceReply](ctx, c.mqttClient, PropertySetReplyTopicPattern(), tid, func() error {
+	reply, err := mqttx.RequestReply[*ServiceReply](ctx, c.mqttClient, propertySetReplyTopicPattern(), tid, func() error {
 		return c.mqttClient.Publish(ctx, topic, payload)
 	}, c.pendingTTL)
 	if err != nil {
-		return tid, fmt.Errorf("[dji-sdk] property_set failed: gateway_sn=%s tid=%s err=%w", gatewaySn, tid, err)
+		err = fmt.Errorf("[dji-sdk] property_set failed: gateway_sn=%s tid=%s err=%w", gatewaySn, tid, err)
+		logx.WithContext(ctx).Errorf("%v", err)
+		return tid, err
 	}
 
 	if reply.Data.Result != 0 {
-		return tid, NewDJIError(reply.Data.Result)
+		err = NewDJIError(reply.Data.Result)
+		logx.WithContext(ctx).Errorf("[dji-sdk] property_set rejected: gateway_sn=%s tid=%s err=%v", gatewaySn, tid, err)
+		return tid, err
 	}
 
 	return tid, nil
@@ -279,14 +291,14 @@ func (c *Client) FlightTaskExecute(ctx context.Context, gatewaySn, flightID stri
 	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskExecute, &FlightTaskExecuteData{FlightID: flightID})
 }
 
-// CancelFlightTask 取消指定的飞行任务。
+// FlightTaskUndo 取消指定的飞行任务（对应 DJI method: flighttask_undo）。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
 //   - flightIDs: 要取消的飞行任务 ID 列表
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
-func (c *Client) CancelFlightTask(ctx context.Context, gatewaySn string, flightIDs []string) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskCancel, &FlightTaskCancelData{FlightIDs: flightIDs})
+func (c *Client) FlightTaskUndo(ctx context.Context, gatewaySn string, flightIDs []string) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskUndo, &FlightTaskCancelData{FlightIDs: flightIDs})
 }
 
 // PauseFlightTask 暂停当前正在执行的飞行任务。
@@ -299,14 +311,14 @@ func (c *Client) PauseFlightTask(ctx context.Context, gatewaySn string, data *Fl
 	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskPause, data)
 }
 
-// ResumeFlightTask 恢复已暂停的飞行任务。
+// FlightTaskRecovery 恢复已暂停的飞行任务（对应 DJI method: flighttask_recovery）。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
 //   - data: 恢复参数（含 flight_id 和可选的 wayline_id）
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
-func (c *Client) ResumeFlightTask(ctx context.Context, gatewaySn string, data *FlightTaskResumeData) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskResume, data)
+func (c *Client) FlightTaskRecovery(ctx context.Context, gatewaySn string, data *FlightTaskRecoveryData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskRecovery, data)
 }
 
 // StopFlightTask 强制停止当前航线任务。
@@ -608,7 +620,7 @@ func (c *Client) PayloadAuthorityGrab(ctx context.Context, gatewaySn string) (st
 	return c.SendCommand(ctx, gatewaySn, MethodPayloadAuthorityGrab, &PayloadAuthorityGrabData{})
 }
 
-// DrcModeEnter 进入指令飞行（DRC）模式；经 **thing/.../services** 发 **drc_mode_enter** method，**services_reply** 为应答，非 drc/* topic。进入后在 **drc/down** 可发杆量（见 SendDrcStickControl）。见 [DRC 文档](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html)。
+// DrcModeEnter 进入指令飞行（DRC）模式；经 **thing/.../services** 发 **drc_mode_enter** method，**services_reply** 为应答，非 drc/* topic。进入后在 **drc/down** 可发杆量（见 StickControl）。见 [DRC 文档](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html)。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
 //   - data: DRC 模式进入参数，包含 MQTT Broker 连接信息等
@@ -659,13 +671,13 @@ func (c *Client) TakeoffToPoint(ctx context.Context, gatewaySn string, data *Tak
 	return c.SendCommand(ctx, gatewaySn, MethodTakeoffToPoint, data)
 }
 
-// SendDrcStickControl 经 drc/down 即发即忘地下发 stick_control 杆量。
+// StickControl 经 drc/down 即发即忘地下发 stick_control 杆量（对应 DJI method: stick_control）。
 // seq 位于顶层，data 包含 roll、pitch、throttle、yaw、gimbal_pitch，不等待 services_reply。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
 //   - data: 杆量数据（DrcStickControlData）
 //   - 返回值: 序列化或发布失败时的错误信息
-func (c *Client) SendDrcStickControl(ctx context.Context, gatewaySn string, seq int, data *DrcStickControlData) (string, error) {
+func (c *Client) StickControl(ctx context.Context, gatewaySn string, seq int, data *DrcStickControlData) (string, error) {
 	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodStickControl, data, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
@@ -673,12 +685,16 @@ func (c *Client) SendDrcStickControl(ctx context.Context, gatewaySn string, seq 
 func (c *Client) publishDrcDown(ctx context.Context, gatewaySn string, msg *DrcDownMessage) (string, error) {
 	payload, err := json.Marshal(msg)
 	if err != nil {
-		return msg.Tid, fmt.Errorf("[dji-sdk] marshal drc/down failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, msg.Method, msg.Tid, err)
+		err = fmt.Errorf("[dji-sdk] marshal drc/down failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, msg.Method, msg.Tid, err)
+		logx.WithContext(ctx).Errorf("%v", err)
+		return msg.Tid, err
 	}
 	topic := DrcDownTopic(gatewaySn)
 	logx.WithContext(ctx).Infof("[dji-sdk] drc_down %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid, "seq", msg.Seq))
 	if err := c.mqttClient.Publish(ctx, topic, payload); err != nil {
-		return msg.Tid, fmt.Errorf("[dji-sdk] publish drc/down failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, msg.Method, msg.Tid, err)
+		err = fmt.Errorf("[dji-sdk] publish drc/down failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, msg.Method, msg.Tid, err)
+		logx.WithContext(ctx).Errorf("%v", err)
+		return msg.Tid, err
 	}
 	return msg.Tid, nil
 }
@@ -871,14 +887,14 @@ func (c *Client) FlightAreasUpdate(ctx context.Context, gatewaySn string, data *
 
 // PsdkUIResourceUpload 上传 PSDK UI 资源。
 func (c *Client) PsdkUIResourceUpload(ctx context.Context, gatewaySn string, data *PsdkUIResourceUploadData) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodPsdkFloatUp, data)
+	return c.SendCommand(ctx, gatewaySn, MethodPsdkUIResourceUpload, data)
 }
 
 // ==================== PSDK 互联互通（PSDK Transmit） ====================
 
-// SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
-// 下行对应 custom_data_transmission_to_psdk；上行 custom_data_transmission_from_psdk 由 OnCustomDataTransmissionFromPsdk 处理。
-func (c *Client) SendCustomDataToPsdk(ctx context.Context, gatewaySn, value string) (string, error) {
+	// CustomDataTransmissionToPsdk 自定义数据透传至 PSDK 负载设备。
+	// 下行对应 custom_data_transmission_to_psdk；上行 custom_data_transmission_from_psdk 由 OnCustomDataTransmissionFromPsdk 处理。
+	func (c *Client) CustomDataTransmissionToPsdk(ctx context.Context, gatewaySn, value string) (string, error) {
 	data := &CustomDataTransmissionData{
 		Value: value,
 	}
@@ -887,8 +903,8 @@ func (c *Client) SendCustomDataToPsdk(ctx context.Context, gatewaySn, value stri
 
 // ==================== ESDK 互联互通（ESDK Transmit） ====================
 
-// SendCustomDataToEsdk 自定义数据透传至 ESDK 设备。
-func (c *Client) SendCustomDataToEsdk(ctx context.Context, gatewaySn, value string) (string, error) {
+// CustomDataTransmissionToEsdk 自定义数据透传至 ESDK 设备。
+func (c *Client) CustomDataTransmissionToEsdk(ctx context.Context, gatewaySn, value string) (string, error) {
 	data := &CustomDataToEsdkData{Value: value}
 	return c.SendCommand(ctx, gatewaySn, MethodCustomDataTransmissionToEsdk, data)
 }

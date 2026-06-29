@@ -40,7 +40,6 @@ func (l *FlyToPointLogic) FlyToPoint(in *djicloud.FlyToPointReq) (*djicloud.Comm
 	}
 	tid, err := l.svcCtx.DjiClient.FlyToPoint(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[drc] fly to point failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

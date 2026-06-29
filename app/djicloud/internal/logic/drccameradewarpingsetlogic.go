@@ -32,7 +32,6 @@ func (l *DrcCameraDewarpingSetLogic) DrcCameraDewarpingSet(in *djicloud.DrcCamer
 	}
 	data := &djisdk.DrcCameraDewarpingSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), DewarpingState: int(in.GetDewarpingState())}
 	if _, err := l.svcCtx.DjiClient.DrcCameraDewarpingSet(l.ctx, deviceSn, seq, data); err != nil {
-		l.Errorf("[drc] camera dewarping set failed device_sn=%s: %v", deviceSn, err)
 		return nil, err
 	}
 	return &djicloud.DrcCameraDewarpingSetRes{Seq: int32(seq)}, nil

@@ -27,7 +27,6 @@ func NewBatteryStoreModeSwitchLogic(ctx context.Context, svcCtx *svc.ServiceCont
 func (l *BatteryStoreModeSwitchLogic) BatteryStoreModeSwitch(in *djicloud.BatteryStoreModeReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.BatteryStoreModeSwitch(l.ctx, in.DeviceSn, int(in.Enable))
 	if err != nil {
-		l.Errorf("[remote-debug] battery store mode switch failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

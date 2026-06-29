@@ -31,7 +31,6 @@ func (l *CameraScreenSplitLogic) CameraScreenSplit(in *djicloud.CameraScreenSpli
 	}
 	tid, err := l.svcCtx.DjiClient.CameraScreenSplit(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[camera] camera screen split failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

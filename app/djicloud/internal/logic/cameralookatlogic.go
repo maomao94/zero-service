@@ -33,7 +33,6 @@ func (l *CameraLookAtLogic) CameraLookAt(in *djicloud.CameraLookAtReq) (*djiclou
 	}
 	tid, err := l.svcCtx.DjiClient.CameraLookAt(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[camera] camera look at failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

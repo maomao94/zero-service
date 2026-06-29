@@ -480,7 +480,7 @@ func TestDrcDownClientMethodsReturnTidOnPublishError(t *testing.T) {
 	client := NewClient(nil, nil)
 	client.mqttClient = mqtt
 
-	tid, err := client.SendDrcStickControl(context.Background(), "gateway-1", 7, &DrcStickControlData{})
+	tid, err := client.StickControl(context.Background(), "gateway-1", 7, &DrcStickControlData{})
 	if err == nil {
 		t.Fatal("expected publish error")
 	}
@@ -834,8 +834,8 @@ func TestReplyRoutersDecodeServiceReplyTid(t *testing.T) {
 		topic         string
 		topicTemplate string
 	}{
-		{name: "services_reply", router: newServicesReplyRouter(time.Second), topic: ServicesTopic("gateway-1") + "_reply", topicTemplate: ServicesReplyTopicPattern()},
-		{name: "property_set_reply", router: newPropertySetReplyRouter(time.Second), topic: PropertySetTopic("gateway-1") + "_reply", topicTemplate: PropertySetReplyTopicPattern()},
+		{name: "services_reply", router: newServicesReplyRouter(time.Second), topic: ServicesTopic("gateway-1") + "_reply", topicTemplate: servicesReplyTopicPattern()},
+		{name: "property_set_reply", router: newPropertySetReplyRouter(time.Second), topic: PropertySetTopic("gateway-1") + "_reply", topicTemplate: propertySetReplyTopicPattern()},
 	}
 
 	for _, tc := range tests {
@@ -858,11 +858,11 @@ func TestSubscribeAllSkipsRequestReplyTopics(t *testing.T) {
 	if err := client.SubscribeAll(); err != nil {
 		t.Fatalf("SubscribeAll() error = %v", err)
 	}
-	if _, ok := mqtt.handlers[ServicesReplyTopicPattern()]; ok {
-		t.Fatalf("SubscribeAll registered ordinary handler for %s", ServicesReplyTopicPattern())
+	if _, ok := mqtt.handlers[servicesReplyTopicPattern()]; ok {
+		t.Fatalf("SubscribeAll registered ordinary handler for %s", servicesReplyTopicPattern())
 	}
-	if _, ok := mqtt.handlers[PropertySetReplyTopicPattern()]; ok {
-		t.Fatalf("SubscribeAll registered ordinary handler for %s", PropertySetReplyTopicPattern())
+	if _, ok := mqtt.handlers[propertySetReplyTopicPattern()]; ok {
+		t.Fatalf("SubscribeAll registered ordinary handler for %s", propertySetReplyTopicPattern())
 	}
 	for _, topic := range []string{EventsTopicPattern(), OsdTopicPattern(), StateTopicPattern(), RequestsTopicPattern(), StatusTopicPattern(), DrcUpTopicPattern()} {
 		if _, ok := mqtt.handlers[topic]; !ok {

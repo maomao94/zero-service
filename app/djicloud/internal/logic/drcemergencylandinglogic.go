@@ -30,7 +30,6 @@ func (l *DrcEmergencyLandingLogic) DrcEmergencyLanding(in *djicloud.DrcEmergency
 		return nil, err
 	}
 	if _, err := l.svcCtx.DjiClient.DrcEmergencyLanding(l.ctx, deviceSn, seq); err != nil {
-		l.Errorf("[drc] emergency landing failed device_sn=%s: %v", deviceSn, err)
 		return nil, err
 	}
 	return &djicloud.DrcEmergencyLandingRes{Seq: int32(seq)}, nil

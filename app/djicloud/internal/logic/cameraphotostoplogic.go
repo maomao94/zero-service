@@ -26,7 +26,6 @@ func NewCameraPhotoStopLogic(ctx context.Context, svcCtx *svc.ServiceContext) *C
 func (l *CameraPhotoStopLogic) CameraPhotoStop(in *djicloud.CameraPhotoStopReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.CameraPhotoStop(l.ctx, in.DeviceSn, in.PayloadIndex)
 	if err != nil {
-		l.Errorf("[camera] camera photo stop failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

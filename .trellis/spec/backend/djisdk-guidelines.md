@@ -197,6 +197,41 @@ tid, err := c.SendCommand(ctx, gatewaySn, method, data)
 
 不要恢复迁移前的 `[drc-manager]`、`[drc-heartbeat]`、`[drc-clean]` 首级前缀；否则同一 SDK 包的日志检索口径会分裂。
 
+## 命名规约
+
+### Method 常量 → 客户端方法 → Proto RPC
+
+四层命名以 **DJI 原始 method 字面值** 为锚点对齐：
+
+| 层 | 示例 |
+|---|---|
+| DJI method 值 | `flighttask_undo` |
+| SDK 常量 | `MethodFlightTaskUndo` |
+| SDK 客户端方法 | `FlightTaskUndo` |
+| Proto RPC | `FlightTaskUndo` |
+| Proto Message | `FlightTaskUndoReq` |
+
+规则：
+- `Method` 常量名 = `Method` + DJI method CamelCase（去掉下划线，首字母大写）
+- 客户端方法名 = 常量名去掉 `Method` 前缀
+- Proto RPC 名 = 客户端方法名
+- Proto Message 名 = RPC 名 + `Req`/`Res`
+
+不得在约定层引入与 DJI 原始 method 不一致的别名（如用 `Cancel` 代替 `Undo`、用 `FloatUp` 代替 `UIResourceUpload`）。
+
+例外：平台自有接口（非 DJI 标准 method）不受此约束，用易于理解的业务命名即可。
+
+## SDK 内部错误日志
+
+`client.go` 中所有下发方法（`SendCommand`、`SendCommandFireAndForget`、`PropertySet`、`publishDrcDown` 等）在返回 `error` 前，必须使用 `logx.WithContext(ctx).Errorf` 记录一条错误日志。这样应用层逻辑文件无需重复调用 `l.Errorf`，只需：
+
+```go
+tid, err := l.svcCtx.DjiClient.SomeMethod(l.ctx, ...)
+if err != nil {
+    return errRes(tid, err), nil
+}
+```
+
 ## 常见陷阱
 
 1. **添加事件类型改 2 处**：`handlers` struct 加字段 + `WithXxx` option 函数

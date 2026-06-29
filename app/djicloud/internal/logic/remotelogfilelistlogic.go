@@ -32,7 +32,6 @@ func (l *RemoteLogFileListLogic) RemoteLogFileList(in *djicloud.RemoteLogFileLis
 	}
 	tid, err := l.svcCtx.DjiClient.RemoteLogFileList(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[remote-log] file list failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

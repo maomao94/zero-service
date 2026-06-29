@@ -30,7 +30,6 @@ func (l *CameraRecordingStopLogic) CameraRecordingStop(in *djicloud.CameraRecord
 	}
 	tid, err := l.svcCtx.DjiClient.CameraRecordingStop(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[camera] camera recording stop failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

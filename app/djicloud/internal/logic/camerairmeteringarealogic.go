@@ -34,7 +34,6 @@ func (l *CameraIrMeteringAreaLogic) CameraIrMeteringArea(in *djicloud.CameraIrMe
 	}
 	tid, err := l.svcCtx.DjiClient.CameraIrMeteringArea(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[camera] camera ir metering area failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

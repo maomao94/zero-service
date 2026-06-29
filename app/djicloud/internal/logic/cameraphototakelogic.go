@@ -30,7 +30,6 @@ func (l *CameraPhotoTakeLogic) CameraPhotoTake(in *djicloud.CameraPhotoTakeReq) 
 	}
 	tid, err := l.svcCtx.DjiClient.CameraPhotoTake(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[camera] camera photo take failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

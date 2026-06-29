@@ -32,7 +32,6 @@ func (l *DrcCameraShutterSetLogic) DrcCameraShutterSet(in *djicloud.DrcCameraShu
 	}
 	data := &djisdk.DrcCameraShutterSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), ShutterValue: int(in.GetShutterValue())}
 	if _, err := l.svcCtx.DjiClient.DrcCameraShutterSet(l.ctx, deviceSn, seq, data); err != nil {
-		l.Errorf("[drc] camera shutter set failed device_sn=%s: %v", deviceSn, err)
 		return nil, err
 	}
 	return &djicloud.DrcCameraShutterSetRes{Seq: int32(seq)}, nil

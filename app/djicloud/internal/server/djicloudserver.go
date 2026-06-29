@@ -29,10 +29,10 @@ func (s *DjiCloudServer) Ping(ctx context.Context, in *djicloud.Req) (*djicloud.
 	return l.Ping(in)
 }
 
-// SetProperty 设置设备属性。
-func (s *DjiCloudServer) SetProperty(ctx context.Context, in *djicloud.SetPropertyReq) (*djicloud.CommonRes, error) {
-	l := logic.NewSetPropertyLogic(ctx, s.svcCtx)
-	return l.SetProperty(in)
+// PropertySet 设置设备属性。
+func (s *DjiCloudServer) PropertySet(ctx context.Context, in *djicloud.PropertySetReq) (*djicloud.CommonRes, error) {
+	l := logic.NewPropertySetLogic(ctx, s.svcCtx)
+	return l.PropertySet(in)
 }
 
 // LiveStartPush 开始直播推流。
@@ -95,10 +95,10 @@ func (s *DjiCloudServer) FlightTaskExecute(ctx context.Context, in *djicloud.Fli
 	return l.FlightTaskExecute(in)
 }
 
-// CancelFlightTask 取消航线任务。
-func (s *DjiCloudServer) CancelFlightTask(ctx context.Context, in *djicloud.CancelFlightTaskReq) (*djicloud.CommonRes, error) {
-	l := logic.NewCancelFlightTaskLogic(ctx, s.svcCtx)
-	return l.CancelFlightTask(in)
+// FlightTaskUndo 取消航线任务。
+func (s *DjiCloudServer) FlightTaskUndo(ctx context.Context, in *djicloud.FlightTaskUndoReq) (*djicloud.CommonRes, error) {
+	l := logic.NewFlightTaskUndoLogic(ctx, s.svcCtx)
+	return l.FlightTaskUndo(in)
 }
 
 // PauseFlightTask 暂停航线任务。
@@ -107,10 +107,10 @@ func (s *DjiCloudServer) PauseFlightTask(ctx context.Context, in *djicloud.Pause
 	return l.PauseFlightTask(in)
 }
 
-// ResumeFlightTask 恢复已暂停的航线任务。
-func (s *DjiCloudServer) ResumeFlightTask(ctx context.Context, in *djicloud.ResumeFlightTaskReq) (*djicloud.CommonRes, error) {
-	l := logic.NewResumeFlightTaskLogic(ctx, s.svcCtx)
-	return l.ResumeFlightTask(in)
+// FlightTaskRecovery 恢复已暂停的航线任务。
+func (s *DjiCloudServer) FlightTaskRecovery(ctx context.Context, in *djicloud.FlightTaskRecoveryReq) (*djicloud.CommonRes, error) {
+	l := logic.NewFlightTaskRecoveryLogic(ctx, s.svcCtx)
+	return l.FlightTaskRecovery(in)
 }
 
 // StopFlightTask 强制停止当前航线任务。
@@ -419,16 +419,16 @@ func (s *DjiCloudServer) PsdkUIResourceUpload(ctx context.Context, in *djicloud.
 	return l.PsdkUIResourceUpload(in)
 }
 
-// SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
-func (s *DjiCloudServer) SendCustomDataToPsdk(ctx context.Context, in *djicloud.CustomDataToPsdkReq) (*djicloud.CommonRes, error) {
-	l := logic.NewSendCustomDataToPsdkLogic(ctx, s.svcCtx)
-	return l.SendCustomDataToPsdk(in)
+// CustomDataTransmissionToPsdk 自定义数据透传至 PSDK 负载设备。
+func (s *DjiCloudServer) CustomDataTransmissionToPsdk(ctx context.Context, in *djicloud.CustomDataTransmissionToPsdkReq) (*djicloud.CommonRes, error) {
+	l := logic.NewCustomDataTransmissionToPsdkLogic(ctx, s.svcCtx)
+	return l.CustomDataTransmissionToPsdk(in)
 }
 
-// SendCustomDataToEsdk 自定义数据透传至 ESDK 设备。
-func (s *DjiCloudServer) SendCustomDataToEsdk(ctx context.Context, in *djicloud.CustomDataToEsdkReq) (*djicloud.CommonRes, error) {
-	l := logic.NewSendCustomDataToEsdkLogic(ctx, s.svcCtx)
-	return l.SendCustomDataToEsdk(in)
+// CustomDataTransmissionToEsdk 自定义数据透传至 ESDK 设备。
+func (s *DjiCloudServer) CustomDataTransmissionToEsdk(ctx context.Context, in *djicloud.CustomDataTransmissionToEsdkReq) (*djicloud.CommonRes, error) {
+	l := logic.NewCustomDataTransmissionToEsdkLogic(ctx, s.svcCtx)
+	return l.CustomDataTransmissionToEsdk(in)
 }
 
 // UnlockLicenseSwitch 启用或禁用设备的单个解禁证书。
@@ -467,10 +467,10 @@ func (s *DjiCloudServer) DroneEmergencyStop(ctx context.Context, in *djicloud.Dr
 	return l.DroneEmergencyStop(in)
 }
 
-// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
-func (s *DjiCloudServer) SendDrcStickControl(ctx context.Context, in *djicloud.DrcStickControlReq) (*djicloud.DrcStickControlRes, error) {
-	l := logic.NewSendDrcStickControlLogic(ctx, s.svcCtx)
-	return l.SendDrcStickControl(in)
+// StickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
+func (s *DjiCloudServer) StickControl(ctx context.Context, in *djicloud.StickControlReq) (*djicloud.StickControlRes, error) {
+	l := logic.NewStickControlLogic(ctx, s.svcCtx)
+	return l.StickControl(in)
 }
 
 // DrcForceLanding 强制降落。

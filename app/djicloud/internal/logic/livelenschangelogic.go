@@ -32,7 +32,6 @@ func (l *LiveLensChangeLogic) LiveLensChange(in *djicloud.LiveLensChangeReq) (*d
 	}
 	tid, err := l.svcCtx.DjiClient.LiveLensChange(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[live] live lens change failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

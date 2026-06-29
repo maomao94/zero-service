@@ -27,7 +27,6 @@ func NewCoverOpenLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CoverOp
 func (l *CoverOpenLogic) CoverOpen(in *djicloud.CoverOpenReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.CoverOpen(l.ctx, in.DeviceSn)
 	if err != nil {
-		l.Errorf("[remote-debug] cover open failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

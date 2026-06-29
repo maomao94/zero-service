@@ -29,7 +29,6 @@ func NewConfigUpdateLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Conf
 func (l *ConfigUpdateLogic) ConfigUpdate(in *djicloud.ConfigUpdateReq) (*djicloud.CommonRes, error) {
 	var config map[string]any
 	if err := json.Unmarshal([]byte(in.Config), &config); err != nil {
-		l.Errorf("[config] unmarshal config failed: %v", err)
 		return &djicloud.CommonRes{Code: -1, Message: "invalid config JSON: " + err.Error()}, nil
 	}
 
@@ -39,7 +38,6 @@ func (l *ConfigUpdateLogic) ConfigUpdate(in *djicloud.ConfigUpdateReq) (*djiclou
 	}
 	tid, err := l.svcCtx.DjiClient.ConfigUpdate(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		l.Errorf("[config] config update failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

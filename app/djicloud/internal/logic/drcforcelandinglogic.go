@@ -30,7 +30,6 @@ func (l *DrcForceLandingLogic) DrcForceLanding(in *djicloud.DrcForceLandingReq) 
 		return nil, err
 	}
 	if _, err := l.svcCtx.DjiClient.DrcForceLanding(l.ctx, deviceSn, seq); err != nil {
-		l.Errorf("[drc] force landing failed device_sn=%s: %v", deviceSn, err)
 		return nil, err
 	}
 	return &djicloud.DrcForceLandingRes{Seq: int32(seq)}, nil

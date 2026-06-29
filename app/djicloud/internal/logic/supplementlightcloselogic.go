@@ -27,7 +27,6 @@ func NewSupplementLightCloseLogic(ctx context.Context, svcCtx *svc.ServiceContex
 func (l *SupplementLightCloseLogic) SupplementLightClose(in *djicloud.SupplementLightCloseReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.SupplementLightClose(l.ctx, in.DeviceSn)
 	if err != nil {
-		l.Errorf("[remote-debug] supplement light close failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

@@ -27,7 +27,6 @@ func NewDroneEmergencyStopLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 
 func (l *DroneEmergencyStopLogic) DroneEmergencyStop(in *djicloud.DroneEmergencyStopReq) (*djicloud.DroneEmergencyStopRes, error) {
 	if !l.svcCtx.Config.DangerousOps.EnableDroneEmergencyStop {
-		l.Errorf("[drc] drone emergency stop blocked: disabled in config")
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_03_FORBIDDEN,
 			"emergency stop is disabled, enable it in config DangerousOps.EnableDroneEmergencyStop")
 	}
@@ -38,7 +37,6 @@ func (l *DroneEmergencyStopLogic) DroneEmergencyStop(in *djicloud.DroneEmergency
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "获取序列号失败")
 	}
 	if _, err := l.svcCtx.DjiClient.DroneEmergencyStop(l.ctx, deviceSn, seq); err != nil {
-		l.Errorf("[drc] drone emergency stop failed device_sn=%s: %v", deviceSn, err)
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "无人机紧急停桨失败")
 	}
 	return &djicloud.DroneEmergencyStopRes{Seq: int32(seq)}, nil

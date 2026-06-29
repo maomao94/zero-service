@@ -34,7 +34,6 @@ func (l *DrcVideoResolutionSetLogic) DrcVideoResolutionSet(in *djicloud.DrcVideo
 	videoRes, _ := strconv.Atoi(in.GetVideoResolution())
 	data := &djisdk.DrcVideoResolutionSetData{PayloadIndex: in.GetPayloadIndex(), VideoResolution: videoRes}
 	if _, err := l.svcCtx.DjiClient.DrcVideoResolutionSet(l.ctx, deviceSn, seq, data); err != nil {
-		l.Errorf("[drc] video resolution set failed device_sn=%s: %v", deviceSn, err)
 		return nil, err
 	}
 	return &djicloud.DrcVideoResolutionSetRes{Seq: int32(seq)}, nil

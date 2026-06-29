@@ -27,7 +27,6 @@ func NewDebugModeOpenLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Deb
 func (l *DebugModeOpenLogic) DebugModeOpen(in *djicloud.DebugModeOpenReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DebugModeOpen(l.ctx, in.DeviceSn)
 	if err != nil {
-		l.Errorf("[remote-debug] debug mode open failed: %v", err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

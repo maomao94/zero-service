@@ -32,7 +32,6 @@ func (l *DrcCameraApertureValueSetLogic) DrcCameraApertureValueSet(in *djicloud.
 	}
 	data := &djisdk.DrcCameraApertureValueSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), ApertureValue: int(in.GetApertureValue())}
 	if _, err := l.svcCtx.DjiClient.DrcCameraApertureValueSet(l.ctx, deviceSn, seq, data); err != nil {
-		l.Errorf("[drc] camera aperture value set failed device_sn=%s: %v", deviceSn, err)
 		return nil, err
 	}
 	return &djicloud.DrcCameraApertureValueSetRes{Seq: int32(seq)}, nil

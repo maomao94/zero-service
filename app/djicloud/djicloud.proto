@@ -19,10 +19,10 @@ service DjiCloud {
   // ==================== 属性设置（Properties） ====================
   // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/properties.html
 
-  // SetProperty 设置设备属性。
+  // PropertySet 设置设备属性。
   // 通过 property/set 主题向设备下发属性设置命令。
   // properties 为 JSON 格式的键值对字符串。
-  rpc SetProperty(SetPropertyReq) returns (CommonRes);
+  rpc PropertySet(PropertySetReq) returns (CommonRes);
 
   // ==================== 设备管理（Device） ====================
   // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/device.html
@@ -94,20 +94,20 @@ service DjiCloud {
   // flight_id 须与同一次航线任务准备（FlightTaskPrepare）中的 flight_id 一致。
   rpc FlightTaskExecute(FlightTaskExecuteReq) returns (CommonRes);
 
-  // CancelFlightTask 取消航线任务。
+  // FlightTaskUndo 取消航线任务。
   // 对应 DJI Cloud API method: flighttask_undo，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc CancelFlightTask(CancelFlightTaskReq) returns (CommonRes);
+  rpc FlightTaskUndo(FlightTaskUndoReq) returns (CommonRes);
 
   // PauseFlightTask 暂停航线任务。
   // 对应 DJI Cloud API method: flighttask_pause，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
   rpc PauseFlightTask(PauseFlightTaskReq) returns (CommonRes);
 
-  // ResumeFlightTask 恢复已暂停的航线任务。
+  // FlightTaskRecovery 恢复已暂停的航线任务。
   // 对应 DJI Cloud API method: flighttask_recovery，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc ResumeFlightTask(ResumeFlightTaskReq) returns (CommonRes);
+  rpc FlightTaskRecovery(FlightTaskRecoveryReq) returns (CommonRes);
 
   // StopFlightTask 强制停止当前航线任务。
   // 对应 DJI Cloud API method: flighttask_stop，
@@ -412,19 +412,19 @@ service DjiCloud {
   // ==================== PSDK 互联互通（PSDK Transmit） ====================
   // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html
 
-  // SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
+  // CustomDataTransmissionToPsdk 自定义数据透传至 PSDK 负载设备。
   // 对应 DJI Cloud API method: custom_data_transmission_to_psdk，
   // Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），
   // 将自定义消息透传推送到 PSDK 负载设备，等待设备 ACK 后返回结果。
   // 上行方向（设备→云平台）通过 events topic 的 custom_data_transmission_from_psdk 事件钩子处理。
-  rpc SendCustomDataToPsdk(CustomDataToPsdkReq) returns (CommonRes);
+  rpc CustomDataTransmissionToPsdk(CustomDataTransmissionToPsdkReq) returns (CommonRes);
 
   // ==================== ESDK 互联互通（ESDK Transmit） ====================
   // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/esdk-transmit-custom-data.html
 
-  // SendCustomDataToEsdk 自定义数据透传至 ESDK 设备。
+  // CustomDataTransmissionToEsdk 自定义数据透传至 ESDK 设备。
   // 对应 DJI Cloud API method: custom_data_transmission_to_esdk，方向 down（云平台→设备）。
-  rpc SendCustomDataToEsdk(CustomDataToEsdkReq) returns (CommonRes);
+  rpc CustomDataTransmissionToEsdk(CustomDataTransmissionToEsdkReq) returns (CommonRes);
 
   // ==================== 远程解禁（Flysafe） ====================
   // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/flysafe.html
@@ -474,10 +474,10 @@ service DjiCloud {
   // 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
   rpc DroneEmergencyStop(DroneEmergencyStopReq) returns (DroneEmergencyStopRes);
 
-  // SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
+  // StickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
   // Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；无 services_reply。
   // seq 由平台内部管理，无需调用方传入。
-  rpc SendDrcStickControl(DrcStickControlReq) returns (DrcStickControlRes);
+  rpc StickControl(StickControlReq) returns (StickControlRes);
 
   // DrcForceLanding 强制降落。
   // 对应 DJI Cloud API method: drc_force_landing，Topic: drc/down，方向 down（云平台→设备）。
@@ -598,8 +598,8 @@ message CommonRes {
 
 // ==================== 属性设置（Properties）请求消息 ====================
 
-// SetPropertyReq 设备属性设置请求。
-message SetPropertyReq {
+// PropertySetReq 设备属性设置请求。
+message PropertySetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;
   // properties JSON 格式的属性键值对字符串。
@@ -755,9 +755,9 @@ message FlightTaskExecuteReq {
   string flight_id = 2;
 }
 
-// CancelFlightTaskReq 取消航线任务请求。
+// FlightTaskUndoReq 取消航线任务请求。
 // 对应 DJI Cloud API method: flighttask_undo（Services, down）。
-message CancelFlightTaskReq {
+message FlightTaskUndoReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;
   // flight_ids 待取消的航线任务 ID 列表。
@@ -775,9 +775,9 @@ message PauseFlightTaskReq {
   int32 wayline_id = 3;
 }
 
-// ResumeFlightTaskReq 恢复航线任务请求。
+// FlightTaskRecoveryReq 恢复航线任务请求。
 // 对应 DJI Cloud API method: flighttask_recovery（Services, down）。
-message ResumeFlightTaskReq {
+message FlightTaskRecoveryReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;
   // flight_id 航线任务 ID。必填。
@@ -1231,9 +1231,9 @@ message PsdkUIResourceUploadReq {
   string fingerprint = 4;
 }
 
-// CustomDataToPsdkReq PSDK 自定义数据透传请求。
+// CustomDataTransmissionToPsdkReq PSDK 自定义数据透传请求。
 // 对应 DJI Cloud API method: custom_data_transmission_to_psdk（Services, down）。
-message CustomDataToPsdkReq {
+message CustomDataTransmissionToPsdkReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;
   // value 自定义透传数据内容，长度应小于 256 字符。
@@ -1242,9 +1242,9 @@ message CustomDataToPsdkReq {
 
 // ==================== ESDK 互联互通（ESDK Transmit）消息 ====================
 
-// CustomDataToEsdkReq ESDK 自定义数据透传请求。
+// CustomDataTransmissionToEsdkReq ESDK 自定义数据透传请求。
 // 对应 DJI Cloud API method: custom_data_transmission_to_esdk（Services, down）。
-message CustomDataToEsdkReq {
+message CustomDataTransmissionToEsdkReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;
   // value 自定义透传数据内容，长度应小于 256 字符。
@@ -1312,10 +1312,10 @@ message DrcModeExitReq { string device_sn = 1; }
 // DroneEmergencyStopReq 紧急停桨请求。
 message DroneEmergencyStopReq { string device_sn = 1; }
 
-// DrcStickControlReq DRC 杆量控制（method stick_control）请求，与 SendDrcStickControl 对应。
+// StickControlReq DRC 杆量控制（method stick_control）请求，与 StickControl 对应。
 // 经 thing/.../drc/down 下发；seq 由平台内部管理，无需调用方传入。
 // 文档: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6
-message DrcStickControlReq {
+message StickControlReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;
   // roll 左右平移速度（m/s），俯视机头朝前时：正值为向左、负值为向右。
@@ -1452,8 +1452,8 @@ message DrcCameraDewarpingSetReq {
 // DroneEmergencyStopRes 紧急停桨响应，返回已下发的 DRC 指令序号。
 message DroneEmergencyStopRes { int32 seq = 1; }
 
-// DrcStickControlRes 杆量控制响应，返回已下发的 DRC 指令序号。
-message DrcStickControlRes { int32 seq = 1; }
+// StickControlRes 杆量控制响应，返回已下发的 DRC 指令序号。
+message StickControlRes { int32 seq = 1; }
 
 // DrcForceLandingRes 强制降落响应，返回已下发的 DRC 指令序号。
 message DrcForceLandingRes { int32 seq = 1; }

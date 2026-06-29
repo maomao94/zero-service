@@ -54,11 +54,11 @@ func ServicesTopic(gatewaySn string) string {
 	return fmt.Sprintf("thing/product/%s/services", gatewaySn)
 }
 
-// ServicesReplyTopicPattern 返回 ServicesReply Topic 的通配订阅模式。
+// servicesReplyTopicPattern 返回 ServicesReply Topic 的通配订阅模式。
 // 路径格式: thing/product/+/services_reply
 // 方向: 设备 → 云平台（云平台侧订阅）
 // 用途: 云平台使用该模式订阅所有网关设备的服务调用响应。
-func ServicesReplyTopicPattern() string {
+func servicesReplyTopicPattern() string {
 	return "thing/product/+/services_reply"
 }
 
@@ -110,14 +110,16 @@ func RequestsReplyTopic(gatewaySn string) string {
 
 // PropertySetTopic 返回**云平台向设备**下发属性修改的 Topic（仅云→设备，勿反向理解）。
 // 路径格式: thing/product/{gateway_sn}/property/set
-// 由 SetProperty 使用 ServiceRequest+MethodPropertySet 发布，载荷为待写入属性，见 SetProperty。
+// 由 PropertySet 使用 ServiceRequest+MethodPropertySet 发布，载荷为待写入属性，见 PropertySet。
 func PropertySetTopic(gatewaySn string) string {
 	return fmt.Sprintf("thing/product/%s/property/set", gatewaySn)
 }
 
-// PropertySetReplyTopicPattern 返回**设备对 property/set 的应答**通配（设备 → 云，云侧订阅）。
+// propertySetReplyTopicPattern 返回 property/set_reply Topic 的通配订阅模式。
 // 路径格式: thing/product/+/property/set_reply
-func PropertySetReplyTopicPattern() string {
+// 方向: 设备 → 云平台（云平台侧订阅）
+// 用途: 云平台使用该模式订阅所有网关设备对属性写入的执行结果。
+func propertySetReplyTopicPattern() string {
 	return "thing/product/+/property/set_reply"
 }
 

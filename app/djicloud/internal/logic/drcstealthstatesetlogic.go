@@ -32,7 +32,6 @@ func (l *DrcStealthStateSetLogic) DrcStealthStateSet(in *djicloud.DrcStealthStat
 	}
 	data := &djisdk.DrcStealthStateSetData{StealthState: int(in.GetStealthState())}
 	if _, err := l.svcCtx.DjiClient.DrcStealthStateSet(l.ctx, deviceSn, seq, data); err != nil {
-		l.Errorf("[drc] stealth state set failed device_sn=%s: %v", deviceSn, err)
 		return nil, err
 	}
 	return &djicloud.DrcStealthStateSetRes{Seq: int32(seq)}, nil
