@@ -6,23 +6,25 @@ package djisdk
 
 const (
 	// MethodPropertySet 设置设备属性。
+	// 云平台 → 设备（Services），下发属性设置命令，设备通过 property/set_reply 回执。
 	MethodPropertySet = "property_set"
 )
 
 // ==================== 设备管理（Device） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/device.html
 // Topic: sys/product/{gateway_sn}/status
-// Direction: up，设备拓扑更新由 status hooks 处理。
+// 方向: 设备 → 云平台，设备拓扑更新由 status hooks 处理。
 
 const (
 	// MethodUpdateTopo 设备拓扑更新上行。
+	// 设备 → 云平台（Status），设备上报拓扑结构变更。
 	MethodUpdateTopo = "update_topo"
 )
 
 // ==================== 组织管理（Organization） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/organization.html
 // Topic: thing/product/{gateway_sn}/requests
-// Direction: up，组织管理请求由 request hooks 处理。
+// 方向: 设备 → 云平台，组织管理请求由 request hooks 处理。
 
 const (
 	// MethodAirportOrganizationBind 机场组织绑定请求上行。
@@ -84,7 +86,7 @@ const (
 // ==================== 航线功能（Wayline） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/wayline.html
 // Topic: thing/product/{gateway_sn}/services | events
-// 方向: 云平台 <-> 设备
+// 方向: 云平台 → 设备（services）与 设备 → 云平台（events）
 
 const (
 	// MethodFlightTaskPrepare 航线任务准备（Flighttask Prepare）
@@ -235,7 +237,7 @@ const (
 // ==================== 固件升级（Firmware） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/firmware.html
 // Topic: thing/product/{gateway_sn}/services | events
-// OTA 固件升级管理
+// 方向: services 为云平台 → 设备（下发升级任务），events 为设备 → 云平台（上报升级进度）。
 
 const (
 	// MethodOtaCreate 创建固件升级任务（OTA Create）
@@ -311,9 +313,11 @@ const (
 	MethodDrcModeExit = "drc_mode_exit"
 
 	// MethodStickControl DRC 杆量控制，使用 drc/down 即发即忘下发，设备可经 drc/up 回执。
+	// 云平台 → 设备（drc/down 即发即忘），实时杆量/虚拟摇杆控制。
 	MethodStickControl = "stick_control"
 
 	// MethodDroneEmergencyStop 飞行器紧急停桨，通过 drc/down 即发即忘地下发 DRC 通道急停。
+	// 云平台 → 设备（drc/down 即发即忘），紧急停止飞行器所有电机。
 	MethodDroneEmergencyStop = "drone_emergency_stop"
 
 	// --- Flyto 指令（Flyto Commands） ---
@@ -336,12 +340,16 @@ const (
 // --- DRC 通道 method（drc/down 与 drc/up，与 services 通道独立）---
 const (
 	// MethodDrcHeartBeat DRC 心跳，drc/down 下发，drc/up 回传。
+	// 云平台 → 设备（drc/down）与 设备 → 云平台（drc/up），双向心跳维持 DRC 会话。
 	MethodDrcHeartBeat = "heart_beat"
 	// MethodDrcHsiInfoPush 设备经 drc/up 上报避障/水平态势。
+	// 设备 → 云平台（drc/up），上报无人机水平态势感知信息。
 	MethodDrcHsiInfoPush = "hsi_info_push"
 	// MethodDrcDelayInfoPush 设备经 drc/up 上报图传链路时延。
+	// 设备 → 云平台（drc/up），上报图传链路的网络时延信息。
 	MethodDrcDelayInfoPush = "delay_info_push"
 	// MethodDrcOsdInfoPush 设备经 drc/up 上报高频 OSD。
+	// 设备 → 云平台（drc/up），上报 DRC 模式下高频遥测数据。
 	MethodDrcOsdInfoPush = "osd_info_push"
 )
 
@@ -419,12 +427,15 @@ const (
 // ==================== 自定义飞行区（Custom Fly Region） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/custom-fly-region.html
 // Topic: thing/product/{gateway_sn}/services
+// 方向: 云平台 → 设备（Services），触发飞行区文件更新等控制指令。
 
 const (
 	// MethodFlightAreasUpdate 触发自定义飞行区文件更新。
+	// 云平台 → 设备（Services），下发飞行区配置文件引用，触发设备拉取更新。
 	MethodFlightAreasUpdate = "flight_areas_update"
 
 	// MethodFlightAreasGet 自定义飞行区文件获取请求上行。
+	// 设备 → 云平台（Requests），设备主动请求获取自定义飞行区文件。
 	MethodFlightAreasGet = "flight_areas_get"
 )
 
@@ -432,6 +443,7 @@ const (
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk.html
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html
 // Topic: thing/product/{gateway_sn}/services | events
+// 方向: services 为云平台 → 设备（下发 UI 资源、透传数据），events 为设备 → 云平台（上报自定义数据）。
 
 const (
 	// MethodPsdkUIResourceUpload PSDK UI 资源上传（PSDK UI Resource Upload）
@@ -450,75 +462,96 @@ const (
 // ==================== ESDK 互联互通（ESDK Transmit） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/esdk-transmit-custom-data.html
 // Topic: thing/product/{gateway_sn}/services | events
+// 方向: services 为云平台 → 设备（下发透传数据），events 为设备 → 云平台（上报自定义数据）。
 
 const (
 	// MethodCustomDataTransmissionToEsdk 自定义数据透传至 ESDK。
+	// 云平台 → 设备（Services），将自定义消息透传推送到 ESDK 设备。
 	MethodCustomDataTransmissionToEsdk = "custom_data_transmission_to_esdk"
 
 	// MethodCustomDataTransmissionFromEsdk ESDK 自定义数据上报。
+	// 设备 → 云平台（Events），ESDK 设备向云平台上报自定义消息。
 	MethodCustomDataTransmissionFromEsdk = "custom_data_transmission_from_esdk"
 )
 
 // ==================== 远程解禁（Flysafe） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/flysafe.html
 // Topic: thing/product/{gateway_sn}/services
+// 方向: 云平台 → 设备（Services），管理设备解禁证书。
 
 const (
 	// MethodUnlockLicenseSwitch 启用或禁用设备的单个解禁证书。
+	// 云平台 → 设备（Services），控制指定解禁证书的启用/禁用状态。
 	MethodUnlockLicenseSwitch = "unlock_license_switch"
 
 	// MethodUnlockLicenseUpdate 更新设备的解禁证书。
+	// 云平台 → 设备（Services），下发最新解禁证书文件。
 	MethodUnlockLicenseUpdate = "unlock_license_update"
 
 	// MethodUnlockLicenseList 获取设备的解禁证书列表。
+	// 云平台 → 设备（Services），查询设备当前的解禁证书列表。
 	MethodUnlockLicenseList = "unlock_license_list"
 )
 
 // ==================== AirSense ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/airsense.html
-// 该模块当前仅包含设备上行告警事件。
+// 方向: 设备 → 云平台（Events），设备上行告警事件，无下行接口。
 
 // ==================== 远程控制（Remote Control） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/remote-control.html
 // Topic: thing/product/{gateway_sn}/services
+// 方向: 云平台 → 设备（Services），强制降落、参数设置等远程控制指令。
 
 const (
 	// MethodDrcForceLanding 强制降落。
+	// 云平台 → 设备（drc/down 即发即忘），控制飞行器执行强制降落。
 	MethodDrcForceLanding = "drc_force_landing"
 
 	// MethodDrcEmergencyLanding 紧急降落。
+	// 云平台 → 设备（drc/down 即发即忘），控制飞行器执行紧急降落。
 	MethodDrcEmergencyLanding = "drc_emergency_landing"
 
 	// MethodDrcLinkageZoomSet 设置红外联动变焦状态。
+	// 云平台 → 设备（drc/down 即发即忘），控制红外相机联动变焦开关。
 	MethodDrcLinkageZoomSet = "drc_linkage_zoom_set"
 
 	// MethodDrcVideoResolutionSet 设置视频分辨率。
+	// 云平台 → 设备（drc/down 即发即忘），设置 DRC 通道视频分辨率参数。
 	MethodDrcVideoResolutionSet = "drc_video_resolution_set"
 
 	// MethodDrcIntervalPhotoSet 设置定时拍参数。
+	// 云平台 → 设备（drc/down 即发即忘），设置定时拍照的间隔参数。
 	MethodDrcIntervalPhotoSet = "drc_interval_photo_set"
 
 	// MethodDrcInitialStateSubscribe 订阅 DRC 初始状态。
+	// 云平台 → 设备（drc/down 即发即忘），订阅设备 DRC 初始状态信息。
 	MethodDrcInitialStateSubscribe = "drc_initial_state_subscribe"
 
 	// MethodDrcNightLightsStateSet 设置夜航灯状态。
+	// 云平台 → 设备（drc/down 即发即忘），控制夜航灯的开关状态。
 	MethodDrcNightLightsStateSet = "drc_night_lights_state_set"
 
 	// MethodDrcStealthStateSet 设置隐蔽模式状态。
+	// 云平台 → 设备（drc/down 即发即忘），控制隐蔽模式的开关状态。
 	MethodDrcStealthStateSet = "drc_stealth_state_set"
 
 	// MethodDrcCameraApertureValueSet 设置相机光圈。
+	// 云平台 → 设备（drc/down 即发即忘），设置相机光圈值参数。
 	MethodDrcCameraApertureValueSet = "drc_camera_aperture_value_set"
 
 	// MethodDrcCameraShutterSet 设置相机快门。
+	// 云平台 → 设备（drc/down 即发即忘），设置相机快门值参数。
 	MethodDrcCameraShutterSet = "drc_camera_shutter_set"
 
 	// MethodDrcCameraIsoSet 设置相机 ISO。
+	// 云平台 → 设备（drc/down 即发即忘），设置相机 ISO 感光度参数。
 	MethodDrcCameraIsoSet = "drc_camera_iso_set"
 
 	// MethodDrcCameraMechanicalShutterSet 设置机械快门。
+	// 云平台 → 设备（drc/down 即发即忘），控制机械快门的开关状态。
 	MethodDrcCameraMechanicalShutterSet = "drc_camera_mechanical_shutter_set"
 
 	// MethodDrcCameraDewarpingSet 设置镜头去畸变。
+	// 云平台 → 设备（drc/down 即发即忘），控制镜头去畸变功能的开关状态。
 	MethodDrcCameraDewarpingSet = "drc_camera_dewarping_set"
 )

@@ -78,11 +78,14 @@ func newPropertySetReplyRouter(ttl time.Duration) *mqttx.ReplyRouter[*ServiceRep
 
 // ==================== MQTT 回调处理 ====================
 
-// HandleEvents 处理 thing/.../events。
-//
-//	先走 tryDispatchEventNotify：SDK 预置的通知类 method（进度、HMS 等），设备侧多 need_reply=0；
-//	未命中则打印 method 和 payload 字节数，不输出原始 payload；
-//	若 need_reply=1，用 result 发 events_reply（成功为 0，失败为 1）。
+// HandleEvents 处理 thing/.../events 上行事件。
+// 先走 tryDispatchEventNotify：SDK 预置的通知类 method（进度、HMS 等），设备侧多 need_reply=0；
+// 未命中则打印 method 和 payload 字节数，不输出原始 payload；
+// 若 need_reply=1，用 result 发 events_reply（成功为 0，失败为 1）。
+//   - ctx: 请求上下文
+//   - payload: MQTT 消息原始字节
+//   - topic: 消息来源的 MQTT 主题
+//   - 返回值: 解析或分发失败时返回错误
 func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string, _ string) error {
 	var event EventMessage
 	if err := json.Unmarshal(payload, &event); err != nil {
@@ -334,7 +337,9 @@ func (c *Client) HandleState(ctx context.Context, payload []byte, topic string, 
 	return nil
 }
 
-// HandleStatus 处理 sys/product/+/status；先按 method 预分发已知强类型，再交给 OnStatus 全局回调，最后按 ReplyConfig 决定是否发布 status_reply。
+// HandleStatus 处理 sys/product/+/status 上下线/拓扑上报。
+// 先按 method 预分发已知强类型（如 update_topo），再交给 OnStatus 全局回调，
+// 最后按 ReplyConfig 决定是否发布 status_reply。
 func (c *Client) HandleStatus(ctx context.Context, payload []byte, topic string, _ string) error {
 	var msg StatusMessage
 	if err := json.Unmarshal(payload, &msg); err != nil {
@@ -405,7 +410,8 @@ func (c *Client) statusReply(ctx context.Context, gatewaySn, tid, bid string, re
 	return c.mqttClient.Publish(ctx, topic, data)
 }
 
-// HandleRequests 处理 thing/product/+/requests；先执行业务分发，再按 ReplyConfig.EnableRequestReply 决定是否发布 requests_reply。
+// HandleRequests 处理 thing/product/+/requests 设备上行请求。
+// 先执行业务分发，再按 ReplyConfig.EnableRequestReply 决定是否发布 requests_reply。
 // 未注册 OnRequest 且启用回复时回 PlatformResultHandlerError（1），2 保留为 PlatformResultTimeout。
 func (c *Client) HandleRequests(ctx context.Context, payload []byte, topic string, _ string) error {
 	var msg RequestMessage
@@ -464,6 +470,9 @@ func (c *Client) requestsReply(ctx context.Context, gatewaySn string, req *Reque
 
 // HandleDrcUp 处理 thing/product/{gateway_sn}/drc/up 设备上行。
 // 已知 method 解析为强类型，未知 method 保留 raw data 后继续调用 OnDrcUp。
+//   - ctx: 请求上下文
+//   - payload: MQTT 消息原始字节
+//   - topic: 消息来源的 MQTT 主题
 func (c *Client) HandleDrcUp(ctx context.Context, payload []byte, topic string, _ string) error {
 	msg, err := DrcUpMessageFromJSON(payload)
 	if err != nil {
@@ -501,8 +510,8 @@ func (c *Client) HandleDrcUp(ctx context.Context, payload []byte, topic string, 
 
 // ==================== 订阅管理 ====================
 
-// SubscribeAll 以**云侧**身份通配订阅设备上行（*reply、events、osd、state、status、requests、**drc/up** 等），并注册处理函数，表见 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html)。
-// 含 **property/set_reply**（设备对云**下发** property/set 的回执，**非**云发设备）。
+// SubscribeAll 以云侧身份通配订阅设备上行频道（events、osd、state、status、requests、drc/up），
+// 并注册对应处理函数。含 property/set_reply 应答路由，见 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html)。
 func (c *Client) SubscribeAll() error {
 	topics := map[string]func(context.Context, []byte, string, string) error{
 		EventsTopicPattern():   c.HandleEvents,
