@@ -15,7 +15,7 @@ type DJIError struct {
 }
 
 func (e *DJIError) Error() string {
-	return fmt.Sprintf("[dji-sdk] device error: code=%d name=%s message=%s", e.Code, e.Name, e.Message)
+	return fmt.Sprintf("dji error: code=%d name=%s message=%s", e.Code, e.Name, e.Message)
 }
 
 // NewDJIError 根据设备返回的 result code 构造结构化错误。
@@ -53,7 +53,7 @@ type PlatformError struct {
 }
 
 func (e *PlatformError) Error() string {
-	return fmt.Sprintf("[dji-sdk] platform error: code=%d err=%v", e.Code, e.Err)
+	return fmt.Sprintf("platform error: code=%d err=%v", e.Code, e.Err)
 }
 
 func (e *PlatformError) Unwrap() error { return e.Err }

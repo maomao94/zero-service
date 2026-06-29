@@ -151,7 +151,7 @@ func (c *client) Send(ctx context.Context, msg []byte) error {
 func (c *client) SendJSON(ctx context.Context, data any) error {
 	raw, err := json.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("[wsx] marshal json: %w", err)
+		return fmt.Errorf("marshal json: %w", err)
 	}
 	return c.write(ctx, websocket.TextMessage, raw)
 }

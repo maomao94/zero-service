@@ -51,8 +51,8 @@ func PipeEvents(em *Emitter, iter *adk.AsyncIterator[*adk.AgentEvent], opt PipeO
 		}
 
 		if ev.Err != nil {
-			logx.Errorf("[protocol] agent event err: %v", ev.Err)
-			_ = em.EmitError("agent_error", ev.Err.Error())
+			logx.Errorf("[protocol] agent event error: %v", ev.Err)
+			_ = em.EmitError("agent_error", fmt.Sprintf("%+v", ev.Err))
 			return res, ev.Err
 		}
 

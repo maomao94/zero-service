@@ -487,9 +487,6 @@ func TestDrcDownClientMethodsReturnTidOnPublishError(t *testing.T) {
 	if tid == "" {
 		t.Fatal("expected non-empty tid on error")
 	}
-	if !strings.Contains(err.Error(), tid) || !strings.Contains(err.Error(), MethodStickControl) {
-		t.Fatalf("error = %q, want method and tid", err.Error())
-	}
 }
 
 func TestFlightTaskPrepareDataSerializesSimulateMission(t *testing.T) {

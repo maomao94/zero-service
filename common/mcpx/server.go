@@ -86,14 +86,13 @@ func (s *McpServer) Server() *sdkmcp.Server {
 
 // Start 启动 HTTP 服务器。
 func (s *McpServer) Start() {
-	logx.Infof("Starting MCP server %s v%s on %s:%d",
-		s.conf.Mcp.Name, s.conf.Mcp.Version, s.conf.Host, s.conf.Port)
+	logx.Infow("[mcpx] starting MCP server", logx.Field("name", s.conf.Mcp.Name), logx.Field("version", s.conf.Mcp.Version), logx.Field("host", s.conf.Host), logx.Field("port", s.conf.Port))
 	s.httpServer.Start()
 }
 
 // Stop 停止 HTTP 服务器。
 func (s *McpServer) Stop() {
-	logx.Info("Stopping MCP server")
+	logx.Info("[mcpx] stopping MCP server")
 	s.httpServer.Stop()
 }
 
@@ -102,7 +101,7 @@ func (s *McpServer) Stop() {
 // 无需自定义 auth 桥接，直接使用 SDK 的 SSEHandler。
 func (s *McpServer) setupSSETransport() {
 	handler := sdkmcp.NewSSEHandler(func(r *http.Request) *sdkmcp.Server {
-		logx.WithContext(r.Context()).Infof("New SSE connection from %s", r.RemoteAddr)
+		logx.WithContext(r.Context()).Infow("[mcpx] new SSE connection", logx.Field("remote", r.RemoteAddr))
 		return s.sdkServer
 	}, nil)
 
@@ -112,7 +111,7 @@ func (s *McpServer) setupSSETransport() {
 // setupStreamableTransport 配置 Streamable HTTP transport（2025-03-26 spec）。
 func (s *McpServer) setupStreamableTransport() {
 	handler := sdkmcp.NewStreamableHTTPHandler(func(r *http.Request) *sdkmcp.Server {
-		logx.WithContext(r.Context()).Infof("New streamable connection from %s", r.RemoteAddr)
+		logx.WithContext(r.Context()).Infow("[mcpx] new streamable connection", logx.Field("remote", r.RemoteAddr))
 		return s.sdkServer
 	}, nil)
 

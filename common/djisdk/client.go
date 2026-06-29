@@ -78,7 +78,9 @@ func buildClient(mqttClient mqttx.Client, opt *clientOptions) *Client {
 //   - 返回值 err: 发送失败、等待超时或设备返回错误时的错误信息
 func (c *Client) SendCommand(ctx context.Context, gatewaySn, method string, data any) (string, error) {
 	if c.handlers.onlineChecker != nil && !c.handlers.onlineChecker(gatewaySn) {
-		return "", fmt.Errorf("[dji-sdk] device offline: sn=%s, command rejected", gatewaySn)
+		err := fmt.Errorf("device offline, command rejected")
+		logDjiSDKError(ctx, "command rejected", gatewaySn, method, "", err)
+		return "", err
 	}
 
 	tid := uuid.New().String()
@@ -87,7 +89,9 @@ func (c *Client) SendCommand(ctx context.Context, gatewaySn, method string, data
 	req := NewServiceRequest(tid, bid, method, data)
 	payload, err := json.Marshal(req)
 	if err != nil {
-		return "", fmt.Errorf("[dji-sdk] marshal request failed: gateway_sn=%s, %w", gatewaySn, err)
+		err = fmt.Errorf("marshal request failed: %w", err)
+		logDjiSDKError(ctx, "marshal request failed", gatewaySn, method, tid, err)
+		return "", err
 	}
 
 	topic := ServicesTopic(gatewaySn)
@@ -97,14 +101,14 @@ func (c *Client) SendCommand(ctx context.Context, gatewaySn, method string, data
 		return c.mqttClient.Publish(ctx, topic, payload)
 	}, c.pendingTTL)
 	if err != nil {
-		err = fmt.Errorf("[dji-sdk] command failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, method, tid, err)
-		logx.WithContext(ctx).Errorf("%v", err)
+		err = fmt.Errorf("command failed: %w", err)
+		logDjiSDKError(ctx, "command failed", gatewaySn, method, tid, err)
 		return tid, err
 	}
 
 	if reply.Data.Result != 0 {
 		err = NewDJIError(reply.Data.Result)
-		logx.WithContext(ctx).Errorf("[dji-sdk] command rejected: gateway_sn=%s method=%s tid=%s err=%v", gatewaySn, method, tid, err)
+		logDjiSDKError(ctx, "command rejected", gatewaySn, method, tid, err)
 		return tid, err
 	}
 
@@ -126,8 +130,8 @@ func (c *Client) SendCommandFireAndForget(ctx context.Context, gatewaySn, method
 	req := NewServiceRequest(tid, bid, method, data)
 	payload, err := json.Marshal(req)
 	if err != nil {
-		err = fmt.Errorf("[dji-sdk] marshal request failed: gateway_sn=%s, %w", gatewaySn, err)
-		logx.WithContext(ctx).Errorf("%v", err)
+		err = fmt.Errorf("marshal request failed: %w", err)
+		logDjiSDKError(ctx, "marshal request failed", gatewaySn, method, tid, err)
 		return "", err
 	}
 
@@ -135,8 +139,8 @@ func (c *Client) SendCommandFireAndForget(ctx context.Context, gatewaySn, method
 	logx.WithContext(ctx).Infof("[dji-sdk] send_command_fire_and_forget %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", method, "tid", tid))
 
 	if err := c.mqttClient.Publish(ctx, topic, payload); err != nil {
-		err = fmt.Errorf("[dji-sdk] publish failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, method, tid, err)
-		logx.WithContext(ctx).Errorf("%v", err)
+		err = fmt.Errorf("publish failed: %w", err)
+		logDjiSDKError(ctx, "publish failed", gatewaySn, method, tid, err)
 		return tid, err
 	}
 	return tid, nil
@@ -153,7 +157,9 @@ func (c *Client) PropertySet(ctx context.Context, gatewaySn string, properties P
 	req := NewServiceRequest(tid, bid, MethodPropertySet, properties)
 	payload, err := json.Marshal(req)
 	if err != nil {
-		return "", fmt.Errorf("[dji-sdk] marshal property_set failed: gateway_sn=%s, %w", gatewaySn, err)
+		err = fmt.Errorf("marshal property_set failed: %w", err)
+		logDjiSDKError(ctx, "marshal property_set failed", gatewaySn, MethodPropertySet, tid, err)
+		return "", err
 	}
 
 	topic := PropertySetTopic(gatewaySn)
@@ -163,14 +169,14 @@ func (c *Client) PropertySet(ctx context.Context, gatewaySn string, properties P
 		return c.mqttClient.Publish(ctx, topic, payload)
 	}, c.pendingTTL)
 	if err != nil {
-		err = fmt.Errorf("[dji-sdk] property_set failed: gateway_sn=%s tid=%s err=%w", gatewaySn, tid, err)
-		logx.WithContext(ctx).Errorf("%v", err)
+		err = fmt.Errorf("property_set failed: %w", err)
+		logDjiSDKError(ctx, "property_set failed", gatewaySn, MethodPropertySet, tid, err)
 		return tid, err
 	}
 
 	if reply.Data.Result != 0 {
 		err = NewDJIError(reply.Data.Result)
-		logx.WithContext(ctx).Errorf("[dji-sdk] property_set rejected: gateway_sn=%s tid=%s err=%v", gatewaySn, tid, err)
+		logDjiSDKError(ctx, "property_set rejected", gatewaySn, MethodPropertySet, tid, err)
 		return tid, err
 	}
 
@@ -685,18 +691,31 @@ func (c *Client) StickControl(ctx context.Context, gatewaySn string, seq int, da
 func (c *Client) publishDrcDown(ctx context.Context, gatewaySn string, msg *DrcDownMessage) (string, error) {
 	payload, err := json.Marshal(msg)
 	if err != nil {
-		err = fmt.Errorf("[dji-sdk] marshal drc/down failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, msg.Method, msg.Tid, err)
-		logx.WithContext(ctx).Errorf("%v", err)
+		err = fmt.Errorf("marshal drc/down failed: %w", err)
+		logDjiSDKError(ctx, "marshal drc/down failed", gatewaySn, msg.Method, msg.Tid, err)
 		return msg.Tid, err
 	}
 	topic := DrcDownTopic(gatewaySn)
 	logx.WithContext(ctx).Infof("[dji-sdk] drc_down %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid, "seq", msg.Seq))
 	if err := c.mqttClient.Publish(ctx, topic, payload); err != nil {
-		err = fmt.Errorf("[dji-sdk] publish drc/down failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, msg.Method, msg.Tid, err)
-		logx.WithContext(ctx).Errorf("%v", err)
+		err = fmt.Errorf("publish drc/down failed: %w", err)
+		logDjiSDKError(ctx, "publish drc/down failed", gatewaySn, msg.Method, msg.Tid, err)
 		return msg.Tid, err
 	}
 	return msg.Tid, nil
+}
+
+func logDjiSDKError(ctx context.Context, msg, gatewaySn, method, tid string, err error) {
+	fields := []logx.LogField{
+		logx.Field("gateway_sn", gatewaySn),
+	}
+	if method != "" {
+		fields = append(fields, logx.Field("method", method))
+	}
+	if tid != "" {
+		fields = append(fields, logx.Field("tid", tid))
+	}
+	logx.WithContext(ctx).Errorw("[dji-sdk] "+msg+": "+err.Error(), fields...)
 }
 
 // SendDrcHeartBeat 经 drc/down 即发即忘地下发 heart_beat 心跳。
@@ -892,9 +911,9 @@ func (c *Client) PsdkUIResourceUpload(ctx context.Context, gatewaySn string, dat
 
 // ==================== PSDK 互联互通（PSDK Transmit） ====================
 
-	// CustomDataTransmissionToPsdk 自定义数据透传至 PSDK 负载设备。
-	// 下行对应 custom_data_transmission_to_psdk；上行 custom_data_transmission_from_psdk 由 OnCustomDataTransmissionFromPsdk 处理。
-	func (c *Client) CustomDataTransmissionToPsdk(ctx context.Context, gatewaySn, value string) (string, error) {
+// CustomDataTransmissionToPsdk 自定义数据透传至 PSDK 负载设备。
+// 下行对应 custom_data_transmission_to_psdk；上行 custom_data_transmission_from_psdk 由 OnCustomDataTransmissionFromPsdk 处理。
+func (c *Client) CustomDataTransmissionToPsdk(ctx context.Context, gatewaySn, value string) (string, error) {
 	data := &CustomDataTransmissionData{
 		Value: value,
 	}
@@ -1021,7 +1040,9 @@ func (c *Client) Close() {
 
 func (c *Client) EnableDrc(ctx context.Context, gatewaySn string, opts ...DrcEnableOption) error {
 	if c.drcManager == nil {
-		return fmt.Errorf("[dji-sdk] DrcManager not configured, use WithDrcConfig option")
+		err := fmt.Errorf("drcManager not configured, use WithDrcConfig option")
+		logDjiSDKError(ctx, "drc_manager not configured", gatewaySn, "", "", err)
+		return err
 	}
 	var o drcEnableOptions
 	for _, opt := range opts {
@@ -1032,14 +1053,18 @@ func (c *Client) EnableDrc(ctx context.Context, gatewaySn string, opts ...DrcEna
 
 func (c *Client) DisableDrc(ctx context.Context, gatewaySn string) error {
 	if c.drcManager == nil {
-		return fmt.Errorf("[dji-sdk] DrcManager not configured, use WithDrcConfig option")
+		err := fmt.Errorf("drcManager not configured, use WithDrcConfig option")
+		logDjiSDKError(ctx, "drc_manager not configured", gatewaySn, "", "", err)
+		return err
 	}
 	return c.drcManager.Disable(ctx, gatewaySn)
 }
 
 func (c *Client) DrcNextSeq(gatewaySn string) (int, error) {
 	if c.drcManager == nil {
-		return 0, fmt.Errorf("[dji-sdk] DrcManager not configured, use WithDrcConfig option")
+		err := fmt.Errorf("drcManager not configured, use WithDrcConfig option")
+		logx.Errorw("[dji-sdk] drc_manager not configured", logx.Field("gateway_sn", gatewaySn))
+		return 0, err
 	}
 	return c.drcManager.GetNextSeq(gatewaySn)
 }

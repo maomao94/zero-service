@@ -38,12 +38,12 @@ func (m *ClientManager) RegisterClient(client *Client) {
 	defer m.clientsLock.Unlock()
 
 	if _, exists := m.clients[key]; exists {
-		logx.Errorf("Client already registered: %s:%d", client.GetHost(), client.GetPort())
+		logx.Errorw("client already registered", logx.Field("host", client.GetHost()), logx.Field("port", client.GetPort()))
 		return
 	}
 
 	m.clients[key] = client
-	logx.Infof("Registered new client: %s:%d", client.GetHost(), client.GetPort())
+	logx.Infof("registered new client: %s:%d", client.GetHost(), client.GetPort())
 }
 
 func (m *ClientManager) UnregisterClient(client *Client) {

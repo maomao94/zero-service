@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/threading"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -43,9 +42,9 @@ func (c DrcConfig) normalized() DrcConfig {
 	return c
 }
 
-type DrcSessionExpiredHook func(gatewaySn, sessionID, reason string)
-type DrcSessionEnabledHook func(gatewaySn, sessionID string)
-type DrcSessionDisabledHook func(gatewaySn, sessionID string)
+type DrcSessionExpiredHook func(ctx context.Context, gatewaySn, sessionID, reason string)
+type DrcSessionEnabledHook func(ctx context.Context, gatewaySn, sessionID string)
+type DrcSessionDisabledHook func(ctx context.Context, gatewaySn, sessionID string)
 
 type DrcEnableOption func(*drcEnableOptions)
 
@@ -110,13 +109,13 @@ func (m *drcManager) Close() {
 
 func (m *drcManager) Enable(ctx context.Context, gatewaySn string, maxTimeout time.Duration) error {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 
 	session := m.loadOrInitSession(gatewaySn)
 	session.mu.Lock()
-	defer session.mu.Unlock()
 
 	if session.IsAlive(m.config.HeartbeatTimeout) {
+		session.mu.Unlock()
+		m.mu.Unlock()
 		logx.WithContext(ctx).Debugf("[dji-sdk] drc_manager enable skipped (already alive): gateway_sn=%s session_id=%s", gatewaySn, session.SessionID)
 		return nil
 	}
@@ -140,8 +139,12 @@ func (m *drcManager) Enable(ctx context.Context, gatewaySn string, maxTimeout ti
 	m.session[gatewaySn] = session
 
 	m.startHeartbeat(session)
-	logx.WithContext(ctx).Infof("[dji-sdk] drc_manager enabled: gateway_sn=%s session_id=%s max_timeout=%v", gatewaySn, session.SessionID, maxTimeout)
-	m.fireSessionEnabled(gatewaySn, session.SessionID)
+	sessionID := session.SessionID
+	session.mu.Unlock()
+	m.mu.Unlock()
+
+	logx.WithContext(ctx).Infof("[dji-sdk] drc_manager enabled: gateway_sn=%s session_id=%s max_timeout=%v", gatewaySn, sessionID, maxTimeout)
+	m.fireSessionEnabled(ctx, gatewaySn, sessionID)
 	return nil
 }
 
@@ -155,16 +158,18 @@ func (m *drcManager) Disable(ctx context.Context, gatewaySn string) error {
 	}
 
 	session.mu.Lock()
-	defer session.mu.Unlock()
 	if !session.Enabled {
+		session.mu.Unlock()
 		logx.WithContext(ctx).Debugf("[dji-sdk] drc_manager disable skipped (already disabled): gateway_sn=%s", gatewaySn)
 		return nil
 	}
 	sessionID := session.SessionID
 	session.Enabled = false
 	m.cancelHeartbeat(session)
+	session.mu.Unlock()
+
 	logx.WithContext(ctx).Infof("[dji-sdk] drc_manager disabled: gateway_sn=%s session_id=%s", gatewaySn, sessionID)
-	m.fireSessionDisabled(gatewaySn, sessionID)
+	m.fireSessionDisabled(ctx, gatewaySn, sessionID)
 	return nil
 }
 
@@ -187,7 +192,7 @@ func (m *drcManager) OnDeviceHeartbeat(ctx context.Context, gatewaySn string) {
 		session.Enabled = false
 		m.cancelHeartbeat(session)
 		session.mu.Unlock()
-		m.fireSessionExpired(gatewaySn, sessionID, "max_deadline_exceeded")
+		m.fireSessionExpired(ctx, gatewaySn, sessionID, "max_deadline_exceeded")
 		return
 	}
 	session.UpdateHeartbeat()
@@ -278,7 +283,7 @@ func (m *drcManager) heartbeatLoop(gatewaySn, sessionID string, heartbeatCtx con
 			_, err := m.client.SendDrcHeartBeat(sendCtx, gatewaySn, time.Now().UnixMilli())
 			cancel()
 			if err != nil {
-				logx.Errorf("[dji-sdk] drc_heartbeat send failed: gateway_sn=%s err=%v", gatewaySn, err)
+				logx.Errorw("[dji-sdk] drc_heartbeat send failed: "+err.Error(), logx.Field("gateway_sn", gatewaySn))
 			} else {
 				logx.Debugf("[dji-sdk] drc_heartbeat sent: gateway_sn=%s", gatewaySn)
 			}
@@ -323,7 +328,7 @@ func (m *drcManager) expireSession(gatewaySn, sessionID string) {
 	session.Enabled = false
 	session.heartbeatCancel = nil
 	session.mu.Unlock()
-	m.fireSessionExpired(gatewaySn, sessionID, "max_deadline_exceeded")
+	m.fireSessionExpired(m.ctx, gatewaySn, sessionID, "max_deadline_exceeded")
 }
 
 // cleanLoop 定期扫描 session map，清理超时未心跳的过期状态。
@@ -375,7 +380,7 @@ func (m *drcManager) cleanupExpiredStates() int {
 
 	for gw, session := range expired {
 		m.cancelHeartbeat(session)
-		m.fireSessionExpired(gw, session.SessionID, "heartbeat_timeout")
+		m.fireSessionExpired(m.ctx, gw, session.SessionID, "heartbeat_timeout")
 	}
 	return count
 }
@@ -391,21 +396,21 @@ func (m *drcManager) loadOrInitSession(gatewaySn string) *drcDeviceSession {
 
 // ==================== hooks ====================
 
-func (m *drcManager) fireSessionExpired(gatewaySn, sessionID, reason string) {
+func (m *drcManager) fireSessionExpired(ctx context.Context, gatewaySn, sessionID, reason string) {
 	if m.onSessionExpired != nil {
-		threading.GoSafe(func() { m.onSessionExpired(gatewaySn, sessionID, reason) })
+		m.onSessionExpired(ctx, gatewaySn, sessionID, reason)
 	}
 }
 
-func (m *drcManager) fireSessionEnabled(gatewaySn, sessionID string) {
+func (m *drcManager) fireSessionEnabled(ctx context.Context, gatewaySn, sessionID string) {
 	if m.onSessionEnabled != nil {
-		threading.GoSafe(func() { m.onSessionEnabled(gatewaySn, sessionID) })
+		m.onSessionEnabled(ctx, gatewaySn, sessionID)
 	}
 }
 
-func (m *drcManager) fireSessionDisabled(gatewaySn, sessionID string) {
+func (m *drcManager) fireSessionDisabled(ctx context.Context, gatewaySn, sessionID string) {
 	if m.onSessionDisabled != nil {
-		threading.GoSafe(func() { m.onSessionDisabled(gatewaySn, sessionID) })
+		m.onSessionDisabled(ctx, gatewaySn, sessionID)
 	}
 }
 

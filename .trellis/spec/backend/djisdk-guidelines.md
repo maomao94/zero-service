@@ -191,11 +191,17 @@ tid, err := c.SendCommand(ctx, gatewaySn, method, data)
 
 ## 日志前缀
 
-`common/djisdk/` 内所有 SDK 层日志和错误文本使用 `[dji-sdk]` 作为首级前缀，动作维度放在前缀后，例如：
+`common/djisdk/` 内所有 SDK 层日志使用 `[dji-sdk]` 作为首级前缀，动作维度放在前缀后，例如：
 
 - `client.go` / `handler.go`: `[dji-sdk] send_command`、`[dji-sdk] drc_up`
 - `drc.go`: `[dji-sdk] drc_manager ...`、`[dji-sdk] drc_heartbeat ...`、`[dji-sdk] drc_clean ...`
 - 应用层注册的 DRC hook 如果记录 SDK 回调失败，也保持 `[dji-sdk] drc_manager ...`，例如 `app/djicloud/internal/svc/servicecontext.go`
+
+`[dji-sdk]` 前缀 **只出现在日志消息中**，不出现在返回给调用方的错误值里：
+- `fmt.Errorf` 构造的错误字符串不带 `[dji-sdk]`
+- `DJIError.Error()` / `PlatformError.Error()` 不带 `[dji-sdk]`
+
+不需要也出现在错误值里，因为错误值可能被 `logDjiSDKError` 追加到日志消息中，导致双重前缀。
 
 不要恢复迁移前的 `[drc-manager]`、`[drc-heartbeat]`、`[drc-clean]` 首级前缀；否则同一 SDK 包的日志检索口径会分裂。
 
@@ -225,13 +231,43 @@ tid, err := c.SendCommand(ctx, gatewaySn, method, data)
 
 ## SDK 内部错误日志
 
-`client.go` 中所有下发方法（`SendCommand`、`SendCommandFireAndForget`、`PropertySet`、`publishDrcDown` 等）在返回 `error` 前，必须使用 `logx.WithContext(ctx).Errorf` 记录一条错误日志。这样应用层逻辑文件无需重复调用 `l.Errorf`，只需：
+`client.go` 中所有下发方法（`SendCommand`、`SendCommandFireAndForget`、`PropertySet`、`publishDrcDown`、`EnableDrc`、`DisableDrc` 等）在返回 `error` 前，必须使用 `logDjiSDKError` 记录一条错误日志。这样应用层逻辑文件无需重复调用 `l.Errorf`，只需：
 
 ```go
 tid, err := l.svcCtx.DjiClient.SomeMethod(l.ctx, ...)
 if err != nil {
     return errRes(tid, err), nil
 }
+```
+
+### logDjiSDKError 签名
+
+```go
+func logDjiSDKError(ctx context.Context, msg, gatewaySn, method, tid string, err error)
+```
+
+内部行为：
+- 使用 `logx.WithContext(ctx).Errorw` 输出，`[dji-sdk]` 前缀由函数内部添加
+- `gateway_sn` 始终作为结构化字段
+- `method` / `tid` 非空时也作为结构化字段
+- `err.Error()` 追加到消息文本（`"[dji-sdk] "+msg+": "+err.Error()`）
+
+### fmt.Errorf 约定
+
+`logDjiSDKError` 的 `err` 参数对应的 `fmt.Errorf` 应保持简洁：
+
+- 不包含 `[dji-sdk]` 前缀（由 `logDjiSDKError` 统一加）
+- 不包含 `gateway_sn=`、`method=`、`tid=` 等字段（由 `Errorw` 结构化字段提供）
+- 只描述失败原因和保留 `%w` 链
+
+```go
+// Good — 简洁，字段由 Errorw 提供
+err = fmt.Errorf("command failed: %w", err)
+logDjiSDKError(ctx, "command failed", gatewaySn, method, tid, err)
+
+// Bad — 前缀冗余，字段重复
+err = fmt.Errorf("[dji-sdk] command failed: gateway_sn=%s method=%s tid=%s err=%w", gatewaySn, method, tid, err)
+logx.WithContext(ctx).Errorf("%v", err)
 ```
 
 ## 注释规约
@@ -294,3 +330,5 @@ func (c *Client) HandleEvents(...) { ... }
 7. **上下文注入**：每个 handler 入口解析协议消息后必须调用 `logx.ContextWithFields` 注入 `gateway_sn`/`method`/`tid`/`bid`/`ts`/`ts_fmt`；消息文本保持干净（`"[dji-sdk] events"`），不重复 ctx 已有字段。时间戳使用 `tsFields` 辅助函数
 8. **禁止 payload 明文**：`logFields` 已是当前唯一拼接函数；新增日志禁止打印完整 `payload`、`raw` 或 `value` 原文
 9. **DRC 日志前缀不要私有化**：`drc.go` 内部组件用 `[dji-sdk] drc_manager` / `drc_heartbeat` / `drc_clean`，不要用 `[drc-manager]` 这类首级前缀
+10. **`fmt.Errorf` 字符串不带 `[dji-sdk]` 前缀和字段**：前缀由 `logDjiSDKError` 统一加，`gateway_sn`/`method`/`tid` 由 `Errorw` 结构化字段提供。错误值本身保持简洁，只描述原因
+11. **`DJIError.Error()` / `PlatformError.Error()` 不带 `[dji-sdk]`**：这些错误值可能被 `logDjiSDKError` 追加到日志消息，有前缀会导致双重 `[dji-sdk]` 输出

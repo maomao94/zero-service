@@ -352,7 +352,7 @@ func (c *Client) CallTool(ctx context.Context, name string, args map[string]any)
 	c.mu.RUnlock()
 	if !ok {
 		c.metrics.AddDrop()
-		return "", fmt.Errorf("[mcpx] tool %q not found", name)
+		return "", fmt.Errorf("tool %q not found", name)
 	}
 
 	result, err := conn.callTool(ctx, name, args)
@@ -375,10 +375,10 @@ func (c *Client) CallToolWithProgress(ctx context.Context, req *CallToolWithProg
 	c.mu.RUnlock()
 	if !ok {
 		c.metrics.AddDrop()
-		return "", fmt.Errorf("[mcpx] tool %q not found", req.Name)
+		return "", fmt.Errorf("tool %q not found", req.Name)
 	}
 
-	logx.Infof("[mcpx] CallToolWithProgress: name=%s, token=%s, hasCallback=%v", req.Name, req.Token, req.OnProgress != nil)
+	logx.Infof("[mcpx] callToolWithProgress: name=%s, token=%s, hasCallback=%v", req.Name, req.Token, req.OnProgress != nil)
 
 	result, err := conn.callToolWithProgress(ctx, req)
 	if err != nil {
@@ -396,7 +396,7 @@ func (c *Client) GetPrompt(ctx context.Context, name string, args map[string]str
 	conn, ok := c.promptRoutes[name]
 	c.mu.RUnlock()
 	if !ok {
-		return nil, fmt.Errorf("[mcpx] prompt %q not found", name)
+		return nil, fmt.Errorf("prompt %q not found", name)
 	}
 
 	return conn.getPrompt(ctx, name, args)
@@ -408,7 +408,7 @@ func (c *Client) ReadResource(ctx context.Context, uri string) (*mcp.ReadResourc
 	conn, ok := c.resourceRoutes[uri]
 	c.mu.RUnlock()
 	if !ok {
-		return nil, fmt.Errorf("[mcpx] resource %q not found", uri)
+		return nil, fmt.Errorf("resource %q not found", uri)
 	}
 
 	return conn.readResource(ctx, uri)
@@ -778,7 +778,7 @@ func (conn *Connection) callTool(ctx context.Context, name string, args map[stri
 	session := conn.session
 	conn.mu.RUnlock()
 	if session == nil {
-		return "", fmt.Errorf("[mcpx] %s not connected", conn.name)
+		return "", fmt.Errorf("%s not connected", conn.name)
 	}
 
 	realName := stripServerPrefix(name)
@@ -791,7 +791,7 @@ func (conn *Connection) callTool(ctx context.Context, name string, args map[stri
 	params.SetMeta(meta)
 	result, err := session.CallTool(ctx, params)
 	if err != nil {
-		return "", fmt.Errorf("[mcpx] call %q on %s: %w", realName, conn.name, err)
+		return "", fmt.Errorf("call %q on %s: %w", realName, conn.name, err)
 	}
 
 	return conn.formatToolResult(result), nil
@@ -803,7 +803,7 @@ func (conn *Connection) callToolWithProgress(ctx context.Context, req *CallToolW
 	session := conn.session
 	conn.mu.RUnlock()
 	if session == nil {
-		return "", fmt.Errorf("[mcpx] %s not connected", conn.name)
+		return "", fmt.Errorf("%s not connected", conn.name)
 	}
 
 	realName := stripServerPrefix(req.Name)
@@ -843,7 +843,7 @@ func (conn *Connection) callToolWithProgress(ctx context.Context, req *CallToolW
 	}
 	result, err := session.CallTool(ctx, params)
 	if err != nil {
-		return "", fmt.Errorf("[mcpx] call %q on %s: %w", realName, conn.name, err)
+		return "", fmt.Errorf("call %q on %s: %w", realName, conn.name, err)
 	}
 
 	return conn.formatToolResult(result), nil
@@ -855,7 +855,7 @@ func (conn *Connection) getPrompt(ctx context.Context, name string, args map[str
 	session := conn.session
 	conn.mu.RUnlock()
 	if session == nil {
-		return nil, fmt.Errorf("[mcpx] %s not connected", conn.name)
+		return nil, fmt.Errorf("%s not connected", conn.name)
 	}
 
 	realName := name
@@ -867,7 +867,7 @@ func (conn *Connection) getPrompt(ctx context.Context, name string, args map[str
 
 	result, err := session.GetPrompt(ctx, params)
 	if err != nil {
-		return nil, fmt.Errorf("[mcpx] get prompt %q on %s: %w", realName, conn.name, err)
+		return nil, fmt.Errorf("get prompt %q on %s: %w", realName, conn.name, err)
 	}
 
 	return result, nil
@@ -879,14 +879,14 @@ func (conn *Connection) readResource(ctx context.Context, uri string) (*mcp.Read
 	session := conn.session
 	conn.mu.RUnlock()
 	if session == nil {
-		return nil, fmt.Errorf("[mcpx] %s not connected", conn.name)
+		return nil, fmt.Errorf("%s not connected", conn.name)
 	}
 
 	params := &mcp.ReadResourceParams{URI: uri}
 
 	result, err := session.ReadResource(ctx, params)
 	if err != nil {
-		return nil, fmt.Errorf("[mcpx] read resource %q on %s: %w", uri, conn.name, err)
+		return nil, fmt.Errorf("read resource %q on %s: %w", uri, conn.name, err)
 	}
 
 	return result, nil

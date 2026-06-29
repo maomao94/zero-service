@@ -159,7 +159,7 @@ func (s *Screenshotter) GenerateTempFilePath(baseDir, ext string) string {
 func ensureDir(filePath string) error {
 	dir := filepath.Dir(filePath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("MkdirAll failed: %w", err)
+		return fmt.Errorf("mkdirAll failed: %w", err)
 	}
 	return nil
 }
@@ -179,7 +179,7 @@ func validateFile(filePath string) error {
 // cleanupFile 清理无效文件
 func cleanupFile(filePath string) {
 	if err := os.Remove(filePath); err != nil {
-		logx.Errorf("清理无效文件失败: %s, 错误: %v", filePath, err)
+		logx.Errorw("清理无效文件失败: "+err.Error(), logx.Field("path", filePath))
 	}
 }
 

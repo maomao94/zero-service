@@ -150,7 +150,7 @@ func (p *ProgressSender) Start() {
 				Message:       event.Message,
 			})
 			if notifyErr != nil {
-				logx.WithContext(p.ctx).Errorf("[mcpx] progress notify error: token=%s, err=%v", event.Token, notifyErr)
+				logx.WithContext(p.ctx).Errorw("[mcpx] progress notify error: "+notifyErr.Error(), logx.Field("token", event.Token))
 			}
 		}
 	})

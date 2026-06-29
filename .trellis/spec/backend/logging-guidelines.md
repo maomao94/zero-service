@@ -32,6 +32,79 @@
 - 对流式、采集、消息消费路径逐条打印成功日志，造成噪声和性能压力。
 - 调试时本能 "加更多日志"，但正确方向是 "减少日志 + 精确错误分类"。
 
+## Scenario: Errorf vs Errorw 选择标准
+
+### 1. 决策树
+
+```
+有链路追踪价值的结构化字段（gateway_sn/method/tid/room/host/port/name）？
+├── 是 → Errorw + 仅传必要的 Field
+└── 否 → Errorf
+```
+
+| 条件 | 使用 | 示例 |
+|------|------|------|
+| 有 `gateway_sn`/`method`/`tid`/`room` 等可索引字段 | `Errorw` | `logDjiSDKError(ctx, "command rejected", gatewaySn, method, tid, err)` |
+| 仅错误文本，无额外字段 | `Errorf` | `logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal osd failed: %v", err)` |
+| ctx 已注入相同字段 | `Errorf`（不再传 Field） | ctx 已有 `socketId`，则 `Errorf("...failed: %v", err)` |
+| 中间件/拦截器级（asynq/Interceptor） | `Errorf` 保留 `%+v` | `logx.WithContext(ctx).Errorf("rpc error: %+v", err)` |
+
+### 2. `%+v` vs `%v` vs `err.Error()` 选择
+
+| 场景 | 格式 | 原因 |
+|------|------|------|
+| 中间件/拦截器（error 来源不确定，可能有 `pkg/errors` 堆栈） | `%+v` | 保留完整堆栈链 |
+| SDK 层错误（`fmt.Errorf` 刚创建，无堆栈） | `err.Error()` | `%+v` 无额外信息 |
+| handler 内错误（marshaling/callback 返回） | `%v` | gRPC/DB/SDK 错误，无 `pkg/errors` 堆栈 |
+| `errors.New` / 纯字符串错误 | `%v` | 无堆栈 |
+
+### 3. Field 权限
+
+**Field 只放有链路追踪价值的值**：
+- ✅ `gateway_sn`、`method`、`tid`、`device_sn`、`room`、`host`、`port`、`name`、`version`
+- ❌ 纯计数（如 `len(dst)`、`rowsAffected`）→ 放消息文本
+- ❌ ctx 已注入的字段 → 不重复传
+
+### 4. 日志前缀
+
+所有 `common/` 包统一使用 **`[小写包名]`** 前缀：
+
+| 包 | 前缀 |
+|------|------|
+| `djisdk` | `[dji-sdk]` |
+| `mqttx` | `[mqtt]` |
+| `socketiox` | `[socketio]` |
+| `nacosx` | `[nacos]` |
+| `mcpx` | `[mcpx]` |
+| `app/djicloud` | `[dji-cloud]` |
+
+前缀 **只出现在日志消息中**，不出现在 `fmt.Errorf` / `DJIError.Error()` / `PlatformError.Error()` 返回的错误值里。
+
+### 5. 反模式（本 session 已修复）
+
+```go
+// Bad — Errorw 没有字段，应降级为 Errorf
+logx.WithContext(ctx).Errorw("[dji-sdk] unmarshal failed: "+err.Error())
+
+// Bad — fmt.Errorf 带 [xxx] 前缀
+fmt.Errorf("[dji-sdk] command failed: %w", err)
+
+// Bad — Errorw 传 ctx 已有的字段
+logx.WithContext(connectCtx).Errorw("...", logx.Field("conn", socket.Id))  // connectCtx 已有 socketId
+
+// Bad — 纯计数值放 Field
+logx.Infow("auto migrate success", logx.Field("tables", len(dst)))
+
+// Good — Errorf 用于无字段错误
+logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal osd failed: %v", err)
+
+// Good — 干净的错误值
+fmt.Errorf("command failed: %w", err)
+
+// Good — 纯计数放消息文本
+logx.Infof("auto migrate %d tables success", len(dst))
+```
+
 ## Scenario: 协议层上下文注入
 
 ### 1. Scope / Trigger
@@ -70,7 +143,7 @@ ctx = logx.ContextWithFields(ctx,
 
 - 协议字段只注入 `ctx`，**不**写入消息文本——消息文本只保留 `"[dji-sdk] events"` 形式的纯动作标识
 - `logx.WithContext(enhancedCtx)` 的 logx 输出会自动附加上下文字段，结构化格式（JSON）和文本格式均可查看
-- 错误信息按需显式包含 `sn=`/`method=` 便于 grep，即使这些字段已在 ctx 中
+- 错误只在消息文本描述"发生了什么"；`gateway_sn`/`device_sn`/`method` 等已在 ctx 中，不重复写入消息也不重复传 Field
 - `tsFields` 辅助函数在 `timestamp <= 0` 时返回 nil，不会注入 1970 年时间
 
 ### 4. Validation
@@ -92,50 +165,49 @@ ctx = logx.ContextWithFields(ctx,
 
 ### 2. Signatures
 
-统一格式：**小写动作词 + `key=value`**，不使用 `:` 分隔符。
+统一格式：**小写动作词**。
 
 连接与断连：
 
 ```go
 logx.Infof("[mqtt] connected client=%s", c.cfg.ClientID)
-logx.Errorf("[mqtt] connection lost err=%v", err)
+logx.Errorw("[mqtt] connection lost: "+err.Error())
 logx.Info("[mqtt] connection closed")
 ```
 
-订阅恢复（批量摘要，`subscribe()` 单条也用 Info 级）：
+订阅恢复：
 
 ```go
 logx.Infof("[mqtt] subscribed topic=%s", topicTemplate)
-logx.Errorf("[mqtt] subscribe failed topic=%s err=%v", topicTemplate, err)
+logx.Errorw("[mqtt] subscribe failed: "+err.Error())
 logx.Infof("[mqtt] restore subscriptions done subscribed=%d skipped=%d", result.subscribed, result.skipped)
 ```
 
-消息分发（dispatcher.go，无上下文额外字段，ctx 已带 client/topic/topic_template/payload_bytes）：
+消息分发（dispatcher.go，ctx 已带 client/topic/topic_template/payload_bytes）：
 
 ```go
 logx.WithContext(ctx).Info("[mqtt] no handler registered")
-logx.WithContext(ctx).Errorf("[mqtt] reply handler error err=%v", err)
-logx.WithContext(ctx).Errorf("[mqtt] handler error err=%v", err)
+logx.WithContext(ctx).Errorw("[mqtt] reply handler error: "+err.Error())
+logx.WithContext(ctx).Errorw("[mqtt] handler error: "+err.Error())
 ```
 
 ### 3. Contracts
 
-- 所有 `[mqtt]` 前缀日志统一用小写动作词（`connected` 非 `Connection successful`，`subscribed` 非 `Subscribed to`）
-- `err=` 总是紧跟 `failed` 错误原因，例如 `subscribe failed topic=%s err=%v`
+- 所有 `[mqtt]` 前缀日志统一用小写动作词
+- 错误使用 `Errorw("action: "+err.Error())` 格式，有结构化字段时追加 Field
+- `err=` 作为结构化字段的用法已废弃，改为拼入消息文本
 - 单条 `subscribed topic=%s` 打印在 `subscribe()` 内部（Info 级），调用方不得重复打印
 - `restore subscriptions done` 为批量摘要，仅 `onConnect` 中打印一次
-- `connection lost` 只打 error，不追加 `auto_reconnect=true`——重连由 Paho 内置，语义可由配置推断
-- `no handler` 出现在未注册 handler 的 topic 收到消息时（`defaultHandler`），`no handler registered` 出现在 dispatcher 找不到 handler（`dispatcher.go`）
 
 ### 4. Good/Base/Bad Cases
 
 - Good：`[mqtt] connected client=dji-cloud-001`
-- Good：`[mqtt] subscribed topic=thing/product/+/events`（单条，调用方可 grep topic 定位）
-- Good：`[mqtt] restore subscriptions done subscribed=2 skipped=0`（批量摘要，可直接判断恢复是否完整）
-- Bad：`[mqtt] Connection successful, client=dji-cloud-001`（大小写混用）
-- Bad：`[mqtt] Subscribed to thing/product/+/events`（大写动作词 + `to` 介词冗余）
-- Bad：`[mqtt] Restored subscriptions subscribed=2 skipped=0`（大写 + 过去式）
-- Bad：`[mqtt] connection lost err=... auto_reconnect=true`（追加可推断字段）
+- Good：`[mqtt] subscribed topic=thing/product/+/events`
+- Good：`[mqtt] restore subscriptions done subscribed=2 skipped=0`
+- Good：`[mqtt] connection lost: dial tcp 1.2.3.4:1883: connection refused`
+- Bad：`[mqtt] Connection successful, client=dji-cloud-001`（大写动作词）
+- Bad：`[mqtt] connection lost err=dial tcp...`（err= 应拼入消息文本）
+- Bad：`fmt.Errorf("[mqtt] connect failed: %w", err)`（fmt.Errorf 不带 `[xxx]` 前缀）
 
 ## Scenario: 高频路径按 context 关闭 GORM SQL trace
 

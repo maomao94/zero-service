@@ -66,9 +66,9 @@ func RegisterService(opts *Options) error {
 			Ephemeral:   true,
 		})
 		if err != nil {
-			logx.Info("deregister service error: ", err.Error())
+			logx.Infow("[nacos] deregister service error: "+err.Error())
 		} else {
-			logx.Info("deregistered service from nacos server.")
+			logx.Info("[nacos] deregistered service")
 		}
 	})
 

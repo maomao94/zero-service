@@ -53,7 +53,7 @@ func decodeServiceReply(kind string) mqttx.ReplyDecoderFunc[*ServiceReply] {
 	return func(ctx context.Context, payload []byte, topic string, _ string) (mqttx.ReplyMessage[*ServiceReply], error) {
 		var reply ServiceReply
 		if err := json.Unmarshal(payload, &reply); err != nil {
-			logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal %s failed: %v, topic=%s", kind, err, topic)
+			logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal failed: %v", err)
 			return mqttx.ReplyMessage[*ServiceReply]{}, err
 		}
 		logx.WithContext(ctx).Infof("[dji-sdk] %s %s", kind, logFields("topic", topic, "gateway_sn", extractDeviceSnFromTopic(topic), "method", reply.Method, "tid", reply.Tid, "result", reply.Data.Result))
@@ -89,7 +89,7 @@ func newPropertySetReplyRouter(ttl time.Duration) *mqttx.ReplyRouter[*ServiceRep
 func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string, _ string) error {
 	var event EventMessage
 	if err := json.Unmarshal(payload, &event); err != nil {
-		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal events failed: %v, topic=%s", err, topic)
+		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal events failed: %v", err)
 		return err
 	}
 
@@ -135,7 +135,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				return true, PlatformResultHandlerError
 			}
 			if err := c.handlers.onFlightTaskProgress(ctx, gatewaySn, &msg.Data.Output); err != nil {
-				logx.WithContext(ctx).Errorf("[dji-sdk] onFlightTaskProgress error: sn=%s err=%v", gatewaySn, err)
+				logx.WithContext(ctx).Errorf("[dji-sdk] onFlightTaskProgress error: %v", err)
 				return true, ResultFromError(err)
 			}
 			return true, PlatformResultOK
@@ -150,7 +150,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				return true, PlatformResultHandlerError
 			}
 			if err := c.handlers.onFlightTaskReady(ctx, gatewaySn, &msg.Data); err != nil {
-				logx.WithContext(ctx).Errorf("[dji-sdk] onFlightTaskReady error: sn=%s err=%v", gatewaySn, err)
+				logx.WithContext(ctx).Errorf("[dji-sdk] onFlightTaskReady error: %v", err)
 				return true, ResultFromError(err)
 			}
 			return true, PlatformResultOK
@@ -165,7 +165,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				return true, PlatformResultHandlerError
 			}
 			if err := c.handlers.onReturnHomeInfo(ctx, gatewaySn, &msg.Data); err != nil {
-				logx.WithContext(ctx).Errorf("[dji-sdk] onReturnHomeInfo error: sn=%s err=%v", gatewaySn, err)
+				logx.WithContext(ctx).Errorf("[dji-sdk] onReturnHomeInfo error: %v", err)
 				return true, ResultFromError(err)
 			}
 			return true, PlatformResultOK
@@ -180,7 +180,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				return true, PlatformResultHandlerError
 			}
 			if err := c.handlers.onCustomDataTransmissionFromPsdk(ctx, gatewaySn, &msg.Data); err != nil {
-				logx.WithContext(ctx).Errorf("[dji-sdk] onCustomDataTransmissionFromPsdk error: sn=%s err=%v", gatewaySn, err)
+				logx.WithContext(ctx).Errorf("[dji-sdk] onCustomDataTransmissionFromPsdk error: %v", err)
 				return true, ResultFromError(err)
 			}
 			return true, PlatformResultOK
@@ -195,7 +195,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				return true, PlatformResultHandlerError
 			}
 			if err := c.handlers.onHmsEventNotify(ctx, gatewaySn, &msg.Data); err != nil {
-				logx.WithContext(ctx).Errorf("[dji-sdk] onHmsEventNotify error: sn=%s err=%v", gatewaySn, err)
+				logx.WithContext(ctx).Errorf("[dji-sdk] onHmsEventNotify error: %v", err)
 				return true, ResultFromError(err)
 			}
 			return true, PlatformResultOK
@@ -210,7 +210,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				return true, PlatformResultHandlerError
 			}
 			if err := c.handlers.onRemoteLogFileUploadProgress(ctx, gatewaySn, &msg.Data); err != nil {
-				logx.WithContext(ctx).Errorf("[dji-sdk] onRemoteLogFileUploadProgress error: sn=%s err=%v", gatewaySn, err)
+				logx.WithContext(ctx).Errorf("[dji-sdk] onRemoteLogFileUploadProgress error: %v", err)
 				return true, ResultFromError(err)
 			}
 			return true, PlatformResultOK
@@ -225,7 +225,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				return true, PlatformResultHandlerError
 			}
 			if err := c.handlers.onOtaProgress(ctx, gatewaySn, &msg.Data); err != nil {
-				logx.WithContext(ctx).Errorf("[dji-sdk] onOtaProgress error: sn=%s err=%v", gatewaySn, err)
+				logx.WithContext(ctx).Errorf("[dji-sdk] onOtaProgress error: %v", err)
 				return true, ResultFromError(err)
 			}
 			return true, PlatformResultOK
@@ -240,7 +240,7 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 				return true, PlatformResultHandlerError
 			}
 			if err := c.handlers.onCustomDataTransmissionFromEsdk(ctx, gatewaySn, &msg.Data); err != nil {
-				logx.WithContext(ctx).Errorf("[dji-sdk] onCustomDataTransmissionFromEsdk error: sn=%s err=%v", gatewaySn, err)
+				logx.WithContext(ctx).Errorf("[dji-sdk] onCustomDataTransmissionFromEsdk error: %v", err)
 				return true, ResultFromError(err)
 			}
 			return true, PlatformResultOK
@@ -261,7 +261,7 @@ func (c *Client) eventReply(ctx context.Context, gatewaySn, tid, bid, method str
 	reply := NewEventReply(tid, bid, method, result)
 	data, err := json.Marshal(reply)
 	if err != nil {
-		return fmt.Errorf("[dji-sdk] marshal event_reply failed: %w", err)
+		return fmt.Errorf("marshal event_reply failed: %w", err)
 	}
 	topic := EventsReplyTopic(gatewaySn)
 	return c.mqttClient.Publish(ctx, topic, data)
@@ -291,7 +291,7 @@ func (c *Client) HandleOsd(ctx context.Context, payload []byte, topic string, _ 
 	}
 	var msg OsdMessage
 	if err := json.Unmarshal(payload, &msg); err != nil {
-		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal osd failed: %v, topic=%s", err, topic)
+		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal osd failed: %v", err)
 		return err
 	}
 	deviceSn := extractDeviceSnFromTopic(topic)
@@ -303,7 +303,7 @@ func (c *Client) HandleOsd(ctx context.Context, payload []byte, topic string, _ 
 	)
 	osdCtx = logx.ContextWithFields(osdCtx, tsFields(msg.Timestamp)...)
 	if err := c.handlers.onOsd(osdCtx, deviceSn, &msg); err != nil {
-		logx.WithContext(osdCtx).Errorf("[dji-sdk] onOsd error: sn=%s err=%v", deviceSn, err)
+		logx.WithContext(osdCtx).Errorf("[dji-sdk] onOsd error: %v", err)
 	}
 	return nil
 }
@@ -320,7 +320,7 @@ func (c *Client) HandleState(ctx context.Context, payload []byte, topic string, 
 	}
 	var msg StateMessage
 	if err := json.Unmarshal(payload, &msg); err != nil {
-		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal state failed: %v, topic=%s", err, topic)
+		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal state failed: %v", err)
 		return err
 	}
 	deviceSn := extractDeviceSnFromTopic(topic)
@@ -332,7 +332,7 @@ func (c *Client) HandleState(ctx context.Context, payload []byte, topic string, 
 	)
 	stateCtx = logx.ContextWithFields(stateCtx, tsFields(msg.Timestamp)...)
 	if err := c.handlers.onState(stateCtx, deviceSn, &msg); err != nil {
-		logx.WithContext(stateCtx).Errorf("[dji-sdk] onState error: sn=%s err=%v", deviceSn, err)
+		logx.WithContext(stateCtx).Errorf("[dji-sdk] onState error: %v", err)
 	}
 	return nil
 }
@@ -343,7 +343,7 @@ func (c *Client) HandleState(ctx context.Context, payload []byte, topic string, 
 func (c *Client) HandleStatus(ctx context.Context, payload []byte, topic string, _ string) error {
 	var msg StatusMessage
 	if err := json.Unmarshal(payload, &msg); err != nil {
-		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal status failed: %v, topic=%s", err, topic)
+		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal status failed: %v", err)
 		return err
 	}
 	gatewaySn := extractDeviceSnFromTopic(topic)
@@ -360,7 +360,7 @@ func (c *Client) HandleStatus(ctx context.Context, payload []byte, topic string,
 	handled, result := c.tryDispatchStatusNotify(statusCtx, gatewaySn, msg.Method, payload)
 	if !handled && c.handlers.onStatus != nil {
 		if err := c.handlers.onStatus(statusCtx, gatewaySn, &msg); err != nil {
-			logx.WithContext(statusCtx).Errorf("[dji-sdk] onStatus error: sn=%s method=%s err=%v", gatewaySn, msg.Method, err)
+			logx.WithContext(statusCtx).Errorf("[dji-sdk] onStatus error: %v", err)
 			result = ResultFromError(err)
 		}
 	}
@@ -385,7 +385,7 @@ func (c *Client) tryDispatchStatusNotify(ctx context.Context, gatewaySn, method 
 				return true, PlatformResultHandlerError
 			}
 			if err := c.handlers.onUpdateTopo(ctx, gatewaySn, &msg.Data); err != nil {
-				logx.WithContext(ctx).Errorf("[dji-sdk] onUpdateTopo error: sn=%s err=%v", gatewaySn, err)
+				logx.WithContext(ctx).Errorf("[dji-sdk] onUpdateTopo error: %v", err)
 				return true, ResultFromError(err)
 			}
 			return true, PlatformResultOK
@@ -404,7 +404,7 @@ func (c *Client) statusReply(ctx context.Context, gatewaySn, tid, bid string, re
 	}
 	data, err := json.Marshal(reply)
 	if err != nil {
-		return fmt.Errorf("[dji-sdk] marshal status_reply failed: %w", err)
+		return fmt.Errorf("marshal status_reply failed: %w", err)
 	}
 	topic := StatusReplyTopic(gatewaySn)
 	return c.mqttClient.Publish(ctx, topic, data)
@@ -416,7 +416,7 @@ func (c *Client) statusReply(ctx context.Context, gatewaySn, tid, bid string, re
 func (c *Client) HandleRequests(ctx context.Context, payload []byte, topic string, _ string) error {
 	var msg RequestMessage
 	if err := json.Unmarshal(payload, &msg); err != nil {
-		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal requests failed: %v, topic=%s", err, topic)
+		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal requests failed: %v", err)
 		return err
 	}
 	gatewaySn := extractDeviceSnFromTopic(topic)
@@ -440,7 +440,7 @@ func (c *Client) HandleRequests(ctx context.Context, payload []byte, topic strin
 	output, err := c.handlers.onRequest(reqCtx, gatewaySn, &msg)
 	var result PlatformResult
 	if err != nil {
-		logx.WithContext(reqCtx).Errorf("[dji-sdk] request handler error: method=%s err=%v", msg.Method, err)
+		logx.WithContext(reqCtx).Errorf("[dji-sdk] request handler error: %v", err)
 		result = ResultFromError(err)
 	} else {
 		result = PlatformResultOK
@@ -463,7 +463,7 @@ func (c *Client) requestsReply(ctx context.Context, gatewaySn string, req *Reque
 	}
 	data, err := json.Marshal(reply)
 	if err != nil {
-		return fmt.Errorf("[dji-sdk] marshal requests_reply failed: %w", err)
+		return fmt.Errorf("marshal requests_reply failed: %w", err)
 	}
 	return c.mqttClient.Publish(ctx, RequestsReplyTopic(gatewaySn), data)
 }
@@ -476,7 +476,7 @@ func (c *Client) requestsReply(ctx context.Context, gatewaySn string, req *Reque
 func (c *Client) HandleDrcUp(ctx context.Context, payload []byte, topic string, _ string) error {
 	msg, err := DrcUpMessageFromJSON(payload)
 	if err != nil {
-		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal drc/up failed: %v, topic=%s", err, topic)
+		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal drc/up failed: %v", err)
 		return err
 	}
 	gatewaySn := extractDeviceSnFromTopic(topic)
@@ -490,7 +490,7 @@ func (c *Client) HandleDrcUp(ctx context.Context, payload []byte, topic string, 
 	drcCtx = logx.ContextWithFields(drcCtx, tsFields(msg.Timestamp)...)
 	parsed, perr := DrcUnmarshalUpData(msg.Method, msg.Data)
 	if perr != nil {
-		logx.WithContext(drcCtx).Errorf("[dji-sdk] drc/up data parse: method=%s err=%v", msg.Method, perr)
+		logx.WithContext(drcCtx).Errorf("[dji-sdk] drc/up data parse: %v", perr)
 		return perr
 	}
 	sum := DrcUpPayloadSummary(parsed)
@@ -523,7 +523,7 @@ func (c *Client) SubscribeAll() error {
 	}
 	for topic, handler := range topics {
 		if err := c.mqttClient.AddHandlerFunc(topic, handler); err != nil {
-			return fmt.Errorf("[dji-sdk] subscribe %s failed: %w", topic, err)
+			return fmt.Errorf("subscribe failed: %w", err)
 		}
 	}
 	logx.Infof("[dji-sdk] subscribe all done topics=%d", len(topics))

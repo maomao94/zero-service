@@ -144,13 +144,13 @@ func (d *messageDispatcher) dispatch(ctx context.Context, payload []byte, topic,
 	if replyHandler != nil {
 		err := replyHandler.Consume(ctx, payload, topic, topicTemplate)
 		if err != nil && !errors.Is(err, ErrReplyNotMatched) {
-			logx.WithContext(ctx).Errorf("[mqtt] reply handler error err=%v", err)
+			logx.WithContext(ctx).Errorf("[mqtt] reply handler error: %v", err)
 		}
 	}
 
 	for _, handler := range handlers {
 		if err := handler.Consume(ctx, payload, topic, topicTemplate); err != nil {
-			logx.WithContext(ctx).Errorf("[mqtt] handler error err=%v", err)
+			logx.WithContext(ctx).Errorf("[mqtt] handler error: %v", err)
 		}
 	}
 }

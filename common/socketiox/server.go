@@ -152,18 +152,18 @@ func sendResponse(session *Session, payload *socketio.EventPayload, code int, ms
 func parseRoomPayload(ctx context.Context, session *Session, payload *socketio.EventPayload, socketId string) (*SocketUpRoomReq, bool) {
 	handlerPayload := extractPayload(payload)
 	if handlerPayload == nil {
-		logx.WithContext(ctx).Errorf("[socketio] failed to marshal data for event: conn=%s", socketId)
+		logx.WithContext(ctx).Error("[socketio] failed to marshal data for event")
 		sendErrorResponse(session, payload, CodeParamErr, "数据格式错误", "")
 		return nil, false
 	}
 	var upReq SocketUpRoomReq
 	if err := jsonx.Unmarshal(handlerPayload, &upReq); err != nil {
-		logx.WithContext(ctx).Errorf("[socketio] failed to parse request: conn=%s, err=%v, raw_data=%s", socketId, err, string(handlerPayload))
+		logx.WithContext(ctx).Errorf("[socketio] failed to parse request: %v", err)
 		sendErrorResponse(session, payload, CodeParamErr, "参数解析失败", upReq.ReqId)
 		return nil, false
 	}
 	if len(upReq.ReqId) == 0 || len(upReq.Room) == 0 {
-		logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socketId)
+		logx.WithContext(ctx).Error("[socketio] missing required fields")
 		sendErrorResponse(session, payload, CodeParamErr, "reqId|room为必填项", upReq.ReqId)
 		return nil, false
 	}
@@ -173,18 +173,18 @@ func parseRoomPayload(ctx context.Context, session *Session, payload *socketio.E
 func parseRoomsPagePayload(ctx context.Context, session *Session, payload *socketio.EventPayload, socketId string) (*SocketRoomsPageReq, bool) {
 	handlerPayload := extractPayload(payload)
 	if handlerPayload == nil {
-		logx.WithContext(ctx).Errorf("[socketio] failed to marshal data for event: conn=%s", socketId)
+		logx.WithContext(ctx).Error("[socketio] failed to marshal data for event")
 		sendErrorResponse(session, payload, CodeParamErr, "数据格式错误", "")
 		return nil, false
 	}
 	var req SocketRoomsPageReq
 	if err := jsonx.Unmarshal(handlerPayload, &req); err != nil {
-		logx.WithContext(ctx).Errorf("[socketio] failed to parse rooms page request: conn=%s, err=%v, raw_data=%s", socketId, err, string(handlerPayload))
+		logx.WithContext(ctx).Errorf("[socketio] failed to parse rooms page request: %v", err)
 		sendErrorResponse(session, payload, CodeParamErr, "参数解析失败", req.ReqId)
 		return nil, false
 	}
 	if len(req.ReqId) == 0 {
-		logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socketId)
+		logx.WithContext(ctx).Error("[socketio] missing required fields")
 		sendErrorResponse(session, payload, CodeParamErr, "reqId为必填项", req.ReqId)
 		return nil, false
 	}
@@ -247,24 +247,24 @@ func buildRoomsPageRes(rooms []string, page, pageSize int) SocketRoomsPageRes {
 func parseUpPayload(ctx context.Context, session *Session, payload *socketio.EventPayload, socketId string, requirePayload bool) (*SocketUpReq, bool) {
 	handlerPayload := extractPayload(payload)
 	if handlerPayload == nil {
-		logx.WithContext(ctx).Errorf("[socketio] failed to marshal data for event: conn=%s", socketId)
+		logx.WithContext(ctx).Error("[socketio] failed to marshal data for event")
 		sendErrorResponse(session, payload, CodeParamErr, "数据格式错误", "")
 		return nil, false
 	}
 	logx.WithContext(ctx).Debugf("[socketio] received event from conn: %s, payload: %s", socketId, string(handlerPayload))
 	var upReq SocketUpReq
 	if err := jsonx.Unmarshal(handlerPayload, &upReq); err != nil {
-		logx.WithContext(ctx).Errorf("[socketio] failed to parse request: conn=%s, err=%v, raw_data=%s", socketId, err, string(handlerPayload))
+		logx.WithContext(ctx).Errorf("[socketio] failed to parse request: %v", err)
 		sendErrorResponse(session, payload, CodeParamErr, "参数解析失败", upReq.ReqId)
 		return nil, false
 	}
 	if len(upReq.ReqId) == 0 {
-		logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socketId)
+		logx.WithContext(ctx).Error("[socketio] missing required fields")
 		sendErrorResponse(session, payload, CodeParamErr, "reqId为必填项", upReq.ReqId)
 		return nil, false
 	}
 	if requirePayload && upReq.Payload == nil {
-		logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socketId)
+		logx.WithContext(ctx).Error("[socketio] missing required fields")
 		sendErrorResponse(session, payload, CodeParamErr, "payload为必填项", upReq.ReqId)
 		return nil, false
 	}
@@ -499,7 +499,7 @@ func (srv *Server) bindEvents() {
 		if srv.tokenValidator != nil {
 			valid := srv.tokenValidator(token)
 			if !valid {
-				logx.Errorf("[socketio] token validation failed: token_present=%t", token != "")
+				logx.Errorw("[socketio] token validation failed", logx.Field("token_present", token != ""))
 				return false
 			}
 		}
@@ -539,12 +539,12 @@ func (srv *Server) bindEvents() {
 			rooms, err := srv.connectHook(connectCtx, session)
 			if err != nil {
 				session.roomLoadError = err.Error()
-				logx.WithContext(connectCtx).Errorf("[socketio] failed to load rooms: conn=%s, err=%v", socket.Id, err)
+				logx.WithContext(connectCtx).Errorf("[socketio] failed to load rooms: %v", err)
 			} else {
 				for _, r := range rooms {
 					if err := session.JoinRoom(r); err != nil {
 						session.roomLoadError = err.Error()
-						logx.WithContext(connectCtx).Errorf("[socketio] failed to join initial room: conn=%s, room=%s, err=%v", socket.Id, r, err)
+						logx.WithContext(connectCtx).Errorw("[socketio] failed to join initial room: "+ err.Error(), logx.Field("room", r))
 					}
 				}
 			}
@@ -610,19 +610,19 @@ func (srv *Server) bindEvents() {
 			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 			handlerPayload := extractPayload(payload)
 			if handlerPayload == nil {
-				logx.WithContext(ctx).Errorf("[socketio] failed to marshal data for event %s: conn=%s", EventUp, socket.Id)
+				logx.WithContext(ctx).Errorw("[socketio] failed to marshal data", logx.Field("event", EventUp))
 				sendErrorResponse(session, payload, CodeParamErr, "数据格式错误", "")
 				return
 			}
 			logx.WithContext(ctx).Debugf("[socketio] received event: %s from conn: %s, payload: %s", EventUp, socket.Id, string(handlerPayload))
 			var upReq SocketUpReq
 			if err := jsonx.Unmarshal(handlerPayload, &upReq); err != nil {
-				logx.WithContext(ctx).Errorf("[socketio] failed to parse request: conn=%s, err=%v, raw_data=%s", socket.Id, err, string(handlerPayload))
+				logx.WithContext(ctx).Errorf("[socketio] failed to parse request: %v", err)
 				sendErrorResponse(session, payload, CodeParamErr, "参数解析失败", upReq.ReqId)
 				return
 			}
 			if len(upReq.ReqId) == 0 || upReq.Payload == nil {
-				logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socket.Id)
+				logx.WithContext(ctx).Error("[socketio] missing required fields")
 				sendErrorResponse(session, payload, CodeParamErr, "reqId|payload为必填项", upReq.ReqId)
 				return
 			}
@@ -632,7 +632,7 @@ func (srv *Server) bindEvents() {
 				if upHandler := srv.eventHandlers[EventUp]; upHandler != nil {
 					downPayload, err := upHandler.Handle(ctx, EventUp, payload)
 					if err != nil {
-						logx.WithContext(ctx).Errorf("[socketio] failed to process request: conn=%s, err=%v", socket.Id, err)
+						logx.WithContext(ctx).Errorf("[socketio] failed to process request: %v", err)
 						if ack != nil {
 							ack(string(buildRespJson(CodeBizErr, "业务处理失败", nil, upReq.ReqId)))
 						} else {
@@ -676,14 +676,14 @@ func (srv *Server) bindEvents() {
 				return
 			}
 			if len(upReq.Room) == 0 || len(upReq.Event) == 0 {
-				logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socket.Id)
+				logx.WithContext(ctx).Error("[socketio] missing required fields")
 				sendErrorResponse(session, payload, CodeParamErr, "room|event为必填项", upReq.ReqId)
 				return
 			}
 			threading.GoSafe(func() {
 				err := srv.BroadcastRoom(upReq.Room, upReq.Event, upReq.Payload, upReq.ReqId)
 				if err != nil {
-					logx.WithContext(ctx).Errorf("[socketio] failed to broadcast room: conn=%s, err=%v", socket.Id, err)
+					logx.WithContext(ctx).Errorf("[socketio] failed to broadcast room: %v", err)
 					sendResponse(session, payload, CodeBizErr, "业务处理失败", nil, upReq.ReqId)
 				} else {
 					sendResponse(session, payload, CodeSuccess, "处理成功", nil, upReq.ReqId)
@@ -701,14 +701,14 @@ func (srv *Server) bindEvents() {
 				return
 			}
 			if len(upReq.Event) == 0 {
-				logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socket.Id)
+				logx.WithContext(ctx).Error("[socketio] missing required fields")
 				sendErrorResponse(session, payload, CodeParamErr, "event为必填项", upReq.ReqId)
 				return
 			}
 			threading.GoSafe(func() {
 				err := srv.BroadcastGlobal(upReq.Event, upReq.Payload, upReq.ReqId)
 				if err != nil {
-					logx.WithContext(ctx).Errorf("[socketio] failed to broadcast global: conn=%s, err=%v", socket.Id, err)
+					logx.WithContext(ctx).Errorf("[socketio] failed to broadcast global: %v", err)
 					sendResponse(session, payload, CodeBizErr, "业务处理失败", nil, upReq.ReqId)
 				} else {
 					sendResponse(session, payload, CodeSuccess, "处理成功", nil, upReq.ReqId)
@@ -733,7 +733,7 @@ func (srv *Server) bindEvents() {
 			srv.lock.RUnlock()
 			if ok && srv.disconnectHook != nil {
 				if err := srv.disconnectHook(ctx, deleteSession, reason); err != nil {
-					logx.WithContext(ctx).Errorf("[socketio] disconnect hook failed: conn=%s, err=%v", socket.Id, err)
+					logx.WithContext(ctx).Errorf("[socketio] disconnect hook failed: %v", err)
 				}
 			}
 			logx.Infof("[socketio] disconnecting: conn=%s, reason=%s", socket.Id, reason)
@@ -760,7 +760,7 @@ func (srv *Server) bindEvents() {
 					default:
 						b, err := json.Marshal(data)
 						if err != nil {
-							logx.WithContext(ctx).Errorf("[socketio] failed to marshal data for event %s: conn=%s, err=%v", currentEvent, socket.Id, err)
+							logx.WithContext(ctx).Errorw("[socketio] failed to marshal data: "+ err.Error(), logx.Field("event", currentEvent))
 							return
 						}
 						handlerPayload = b
@@ -821,7 +821,7 @@ func (srv *Server) statLoop() {
 			srv.lock.RUnlock()
 			sockets := srv.Io.Sockets()
 			if len(sockets) != len(sessions) {
-				logx.Errorf("[socketio] session count mismatch: sessions=%d, sockets=%d", len(sessions), len(sockets))
+				logx.Errorf("[socketio] session count mismatch: sessions=%d sockets=%d", len(sessions), len(sockets))
 			}
 			logx.Statf("[socketio] total sessions: %d", len(sessions))
 			for _, sess := range sessions {
@@ -902,7 +902,7 @@ func (srv *Server) JoinRoom(socketId string, room string) {
 	srv.lock.RUnlock()
 	if ok {
 		if err := session.JoinRoom(room); err != nil {
-			logx.Errorf("[socketio] join room failed: socketId=%s, room=%s, err=%v", socketId, room, err)
+			logx.Errorw("[socketio] join room failed: "+ err.Error(), logx.Field("socketId", socketId), logx.Field("room", room))
 		}
 	}
 }
@@ -913,7 +913,7 @@ func (srv *Server) LeaveRoom(socketId string, room string) {
 	srv.lock.RUnlock()
 	if ok {
 		if err := session.LeaveRoom(room); err != nil {
-			logx.Errorf("[socketio] leave room failed: socketId=%s, room=%s, err=%v", socketId, room, err)
+			logx.Errorw("[socketio] leave room failed: "+ err.Error(), logx.Field("socketId", socketId), logx.Field("room", room))
 		}
 	}
 }

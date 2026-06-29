@@ -270,7 +270,7 @@ mqtt:  case IecCaller_SendDoubleCommand_FullMethodName: ... cli.SendDoubleCmd(ct
 ### 1. Scope / Trigger
 
 - Trigger: 集群部署下，ACK 型控制命令的 broadcast 分支通过 MQTT 发布，owner 实例通过 per-instance ACK topic 回传结果。
-- Scope: ServiceContext 的 MQTT 初始化、`PushPbBroadcastWithAck`、`BroadcastReplyPool`；`mqtt/broadcast.go` 消费者用 `client.WithAck()` 执行并 `publishAckReply`；`mqtt/broadcast_ack.go` 消费 ACK 并 resolve replypool。
+- Scope: ServiceContext 的 MQTT 初始化、`PushPbBroadcastWithAck`、`BroadcastReplyPool`；`mqtt/broadcast.go` 消费者用 `client.WithAck()` 执行并 `publishAckReply`，ACK 消费 resolve replypool 也在同一文件中。
 
 ### 2. Signatures
 
@@ -325,7 +325,7 @@ func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method s
 - **Why**：OTel trace 在无 gRPC context 时不生成，以 trace ID 做 reply pool key 会断裂。UUID 保证唯一且可靠。
 - `PushPbBroadcastWithAck` → `tool.SimpleUUID()` → 注册 replypool + 写入 `BroadcastBody.Tid`
 - `publishAckReply` → 参数接收 tId → 写入 `BroadcastAckBody.Tid`
-- `broadcast_ack.go` → 读取 `ackBody.Tid` → `Resolve(tId, ackBody)`
+- `broadcast.go` → 读取 `ackBody.Tid` → `Resolve(tId, ackBody)`
 
 **ACK topic 路由契约**：
 - Originator 将自身 `AckTopic`（`iec/broadcast-ack/{myId}`）写入 `BroadcastBody.AckTopic`
@@ -380,7 +380,7 @@ func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method s
 4. owner 实例(B): GetClient(成功) → cli.SendXxxCmd(WithAck()) → Await → ack.Value
 5. owner 实例(B): publishAckReply(ctx, "uuid-A", ".../A", method, true, resJson, nil)
 6. PublishWithTrace → iec/broadcast-ack/A
-7. origin 实例(A): broadcast_ack.go → Consume → ackBody.Tid="uuid-A"
+7. origin 实例(A): broadcast.go → Consume → ackBody.Tid="uuid-A"
 8. Resolve("uuid-A", ackBody) → PushPbBroadcastWithAck: Await → success
 9. unmarshal → return typed res
 ```

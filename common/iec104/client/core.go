@@ -163,7 +163,7 @@ func (c *Client) initClient104() (*cs104.Client, error) {
 
 func (c *Client) Start() {
 	if err := c.Connect(); err != nil {
-		logx.Errorf("IEC104 client %s:%d start failed: %v", c.cfg.Host, c.cfg.Port, err)
+		logx.Errorw("iec104 client start failed: "+err.Error(), logx.Field("host", c.cfg.Host), logx.Field("port", c.cfg.Port))
 	}
 }
 
@@ -368,7 +368,7 @@ func (c *Client) onConnectionEvent(event ConnectionEvent) {
 	default:
 		eventName = "Unknown"
 	}
-	logx.Infof("IEC104 client %s:%d %s", c.cfg.Host, c.cfg.Port, eventName)
+	logx.Infow("iec104 client event", logx.Field("host", c.cfg.Host), logx.Field("port", c.cfg.Port), logx.Field("event", eventName))
 }
 
 // newClientOption 创建客户端选项

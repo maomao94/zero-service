@@ -81,7 +81,7 @@ func TestRegisterDjiClientRegistersHandlersAndOnlineChecker(t *testing.T) {
 	}
 	if _, err := client.SendCommand(ctx, "offline-gateway", djisdk.MethodReturnHome, nil); err == nil {
 		t.Fatal("expected offline checker to reject unknown gateway")
-	} else if err.Error() != "[dji-sdk] device offline: sn=offline-gateway, command rejected" {
+	} else if err.Error() != "device offline: gateway_sn=offline-gateway command rejected" {
 		t.Fatalf("SendCommand() error = %v, want offline checker rejection", err)
 	}
 

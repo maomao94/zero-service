@@ -20,7 +20,7 @@ func NewSchedulerServer(server *asynq.Scheduler) *SchedulerServer {
 
 func (q *SchedulerServer) Start() {
 	if err := q.Scheduler.Run(); err != nil {
-		logx.Errorf("asynq cronServer run err:%+v", err)
+		logx.Errorf("asynq cronServer run error: %+v", err)
 		panic(err)
 	}
 }
@@ -44,7 +44,7 @@ func NewScheduler(addr, pass string, db int) *asynq.Scheduler {
 			Location: location,
 			PostEnqueueFunc: func(info *asynq.TaskInfo, err error) {
 				if err != nil {
-					logx.Errorf("asynq scheduler err:%+v", err)
+					logx.Errorf("asynq scheduler error: %+v", err)
 				}
 			},
 			Logger: &BaseLogger{},
@@ -55,7 +55,7 @@ func (q *SchedulerServer) RegisterTest() {
 	task := asynq.NewTask(SchedulerDeferTask, []byte("test"), asynq.Retention(7*24*time.Hour))
 	entryID, err := q.Scheduler.Register("*/1 * * * *", task)
 	if err != nil {
-		logx.Errorf("asynq scheduleDelayTask err:%+v,task:%+v", err, task)
+		logx.Errorf("asynq scheduleDelayTask error: %+v", err)
 	}
 	logx.Infow(fmt.Sprintf("asynq scheduleDelayTask registered %s", entryID), logx.Field("type", SchedulerDeferTask))
 }

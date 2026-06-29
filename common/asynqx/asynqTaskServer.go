@@ -27,7 +27,7 @@ func NewTaskServer(server *asynq.Server, mux *asynq.ServeMux) *TaskServer {
 
 func (q *TaskServer) Start() {
 	if err := q.asynqServer.Run(q.mux); err != nil {
-		logx.Errorf("asynq taskServer run err:%+v", err)
+		logx.Errorf("asynq taskServer run error: %+v", err)
 		panic(err)
 	}
 }
@@ -77,7 +77,7 @@ func LoggingMiddleware(h asynq.Handler) asynq.Handler {
 		err := h.ProcessTask(ctx, t)
 		duration := timex.Since(startTime)
 		if err != nil {
-			logx.WithContext(ctx).WithDuration(duration).Errorf("asynq processing error %+v", err)
+			logx.WithContext(ctx).WithDuration(duration).Errorf("asynq processing error: %+v", err)
 			return err
 		}
 		logx.WithContext(ctx).WithDuration(duration).Debug("asynq processing success")

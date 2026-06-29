@@ -83,7 +83,7 @@ func (m *PoolManager) AddPool(ctx context.Context, modbusCode string, conf *Modb
 		return nil, fmt.Errorf("modbusCode 不能为空")
 	}
 	if conf == nil {
-		return nil, fmt.Errorf("ModbusClientConf 不能为空")
+		return nil, fmt.Errorf("modbusClientConf 不能为空")
 	}
 	if poolSize <= 0 {
 		return nil, fmt.Errorf("poolSize 必须大于 0（当前：%d）", poolSize)
@@ -94,7 +94,7 @@ func (m *PoolManager) AddPool(ctx context.Context, modbusCode string, conf *Modb
 
 	// 若已存在相同 modbusCode，先关闭旧池避免泄漏
 	if pool, exists := m.pools[modbusCode]; exists {
-		logx.Errorf("modbusCode [%s] 已存在（地址：%s）", modbusCode, conf.Address)
+		logx.Errorw("modbusCode 已存在", logx.Field("code", modbusCode), logx.Field("address", conf.Address))
 		return pool, nil
 	}
 

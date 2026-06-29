@@ -78,7 +78,7 @@ func NewChatModel(ctx context.Context, cfg Config) (model.BaseChatModel, error) 
 	case ProviderClaude:
 		return newClaude(ctx, cfg)
 	default:
-		logx.Errorf("unsupported provider: %s", cfg.Provider)
+		logx.Errorw("unsupported provider", logx.Field("provider", cfg.Provider))
 		return nil, fmt.Errorf("unsupported provider: %s", cfg.Provider)
 	}
 }

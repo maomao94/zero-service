@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 91
+- **Total Sessions**: 93
 - **Last Active**: 2026-06-29
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~1424 | Active |
+| `journal-2.md` | ~1492 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,8 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 93 | 2026-06-29 | DRC 回调重构 + Spec Bootstrap | - | `master` |
+| 92 | 2026-06-29 | 统一日志规范：Errorf/Errorw 选择标准 + 全量格式修复 | `ec1e1f5e`, `861a4c1d`, `1be64754`, `8bd51df3`, `6eca5889` | `master` |
 | 91 | 2026-06-29 | DJI SDK naming alignment + comment standardization + spec enrichment | `98d02441`, `86718417`, `34892f0d` | `master` |
 | 90 | 2026-06-29 | gormx 模型重构: 移除 VersionMixin 与清理死代码 | `eaa6157d`, `dfa51a79`, `b449e33e` | `master` |
 | 89 | 2026-06-26 | DJI DRC 公网地址配置与 Spec Bootstrap | `8cbb1ce6` | `master` |

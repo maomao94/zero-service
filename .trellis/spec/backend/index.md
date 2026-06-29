@@ -9,6 +9,8 @@
 - [directory-structure.md](./directory-structure.md) - 项目目录结构和模块划分
 - [error-handling.md](./error-handling.md) - 错误处理策略和错误码规范
 - [logging-guidelines.md](./logging-guidelines.md) - 日志级别、格式和上下文传递
+- [ctxprop-guidelines.md](./ctxprop-guidelines.md) - gRPC/JWT/MCP 跨边界上下文传播
+- [netx-guidelines.md](./netx-guidelines.md) - netx HTTP 客户端：Engine 抽象、Request 链式构建、下载/上传、OTel 追踪
 - [quality-guidelines.md](./quality-guidelines.md) - 代码质量和审查标准
 - [database-guidelines.md](./database-guidelines.md) - 数据库操作、Model 层规范、常见 GORM 场景
 - [gormx-guidelines.md](./gormx-guidelines.md) - gormx 封装包约定：调用签名、配置默认值、陷阱
@@ -18,6 +20,8 @@
 - [socketiox-guidelines.md](./socketiox-guidelines.md) - SocketIO 包 API、Session、房间、并发规则
 - [socketiox-contracts.md](./socketiox-contracts.md) - SocketIO 事件名、payload、跨层协议契约
 - [messaging-guidelines.md](./messaging-guidelines.md) - 消息队列和异步通信规范
+- [mqttx-guidelines.md](./mqttx-guidelines.md) - mqttx MQTT 客户端：Client 接口、ReplyRouter 模式、handler 注册、OTel
+- [wsx-guidelines.md](./wsx-guidelines.md) - wsx WebSocket 客户端：状态机、自动重连、认证/心跳、并发安全
 - [iec104-control-commands.md](./iec104-control-commands.md) - IEC104 控制命令协议
 
 ### 领域模块

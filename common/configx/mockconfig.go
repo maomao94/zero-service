@@ -92,7 +92,7 @@ func (mc *MockConfig) initTemplates() {
 
 			tmpl, err := template.New(scene).Funcs(mc.funcMap()).Parse(tmplStr)
 			if err != nil {
-				logx.Errorf("template parse error key=%s scene=%s: %v", key, scene, err)
+				logx.Errorw("template parse error: "+err.Error(), logx.Field("key", key), logx.Field("scene", scene))
 				continue
 			}
 

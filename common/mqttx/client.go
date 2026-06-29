@@ -81,14 +81,14 @@ func MustNewClient(cfg MqttConfig, opts ...ClientOption) Client {
 // 会自动连接 MQTT 服务器，重连由底层库处理
 func NewClient(cfg MqttConfig, opts ...ClientOption) (Client, error) {
 	if len(cfg.Broker) == 0 {
-		return nil, errors.New("[mqtt] no broker addresses provided")
+		return nil, errors.New("no broker addresses provided")
 	}
 
 	// 未指定 ClientID 时自动生成
 	if len(cfg.ClientID) == 0 {
 		uid, err := random.UUIdV4()
 		if err != nil {
-			return nil, fmt.Errorf("[mqtt] generate clientID failed: %w", err)
+			return nil, fmt.Errorf("generate clientID failed: %w", err)
 		}
 		cfg.ClientID = strings.ReplaceAll(uid, "-", "")
 	}
@@ -163,10 +163,10 @@ func (c *mqttClient) connect() error {
 	token := c.client.Connect()
 
 	if !token.WaitTimeout(time.Duration(c.cfg.Timeout) * time.Millisecond) {
-		return fmt.Errorf("[mqtt] connect timeout after %dms", c.cfg.Timeout)
+		return fmt.Errorf("connect timeout after %dms", c.cfg.Timeout)
 	}
 	if err := token.Error(); err != nil {
-		return fmt.Errorf("[mqtt] connect failed: %w", err)
+		return fmt.Errorf("connect failed: %w", err)
 	}
 
 	return nil
@@ -183,7 +183,7 @@ func (c *mqttClient) onConnect(_ mqtt.Client) {
 
 	// 恢复订阅
 	if result, err := c.restoreSubscriptions(); err != nil {
-		logx.Errorf("[mqtt] restore subscriptions failed err=%v", err)
+		logx.Errorf("[mqtt] restore subscriptions failed: %v", err)
 	} else {
 		logx.Infof("[mqtt] restore subscriptions done subscribed=%d skipped=%d", result.subscribed, result.skipped)
 	}
@@ -191,7 +191,7 @@ func (c *mqttClient) onConnect(_ mqtt.Client) {
 
 // onConnectionLost 连接丢失回调
 func (c *mqttClient) onConnectionLost(_ mqtt.Client, err error) {
-	logx.Errorf("[mqtt] connection lost err=%v", err)
+	logx.Errorf("[mqtt] connection lost: %v", err)
 	c.mu.Lock()
 	c.subscribed = make(map[string]struct{}) // 重连后需要重新订阅
 	c.mu.Unlock()
@@ -207,7 +207,7 @@ func (c *mqttClient) defaultHandler(_ mqtt.Client, msg mqtt.Message) {
 // reply router 请使用 WithReplyRouter，不要把 ReplyRouter 传入此方法。
 func (c *mqttClient) AddHandler(topicTemplate string, handler ConsumeHandler) error {
 	if handler == nil {
-		return errors.New("[mqtt] handler cannot be nil")
+		return errors.New("handler cannot be nil")
 	}
 
 	c.handlerMgr.addHandler(topicTemplate, handler)
@@ -241,7 +241,7 @@ func (c *mqttClient) subscribe(topicTemplate string) (bool, error) {
 	timeout := time.Duration(c.cfg.Timeout) * time.Millisecond
 
 	if !token.WaitTimeout(timeout) {
-		return false, fmt.Errorf("[mqtt] subscribe to %s timeout after %v", topicTemplate, timeout)
+		return false, fmt.Errorf("subscribe timeout after %v", timeout)
 	}
 	if err := token.Error(); err != nil {
 		return false, err
@@ -269,7 +269,7 @@ func (c *mqttClient) restoreSubscriptions() (restoreSubscriptionsResult, error) 
 	for _, topicTemplate := range topicTemplates {
 		subscribed, err := c.subscribe(topicTemplate)
 		if err != nil {
-			logx.Errorf("[mqtt] subscribe failed topic=%s err=%v", topicTemplate, err)
+			logx.Errorf("[mqtt] subscribe failed: %v", err)
 			lastErr = err
 			continue
 		}
@@ -370,7 +370,7 @@ func (c *mqttClient) PublishWithTrace(ctx context.Context, topic string, payload
 	tracex.Inject(ctx, tracex.NewCarrier(msg.Headers))
 	jsonBytes, err := json.Marshal(msg)
 	if err != nil {
-		return "", fmt.Errorf("[mqtt] marshal trace message failed: %w", err)
+		return "", fmt.Errorf("marshal trace message failed: %w", err)
 	}
 	if err := c.Publish(ctx, topic, jsonBytes); err != nil {
 		return "", err
@@ -381,14 +381,14 @@ func (c *mqttClient) PublishWithTrace(ctx context.Context, topic string, payload
 // Publish 发布消息到指定主题
 func (c *mqttClient) Publish(ctx context.Context, topic string, payload []byte) error {
 	if !c.client.IsConnected() {
-		return errors.New("[mqtt] cannot publish: client not connected")
+		return errors.New("cannot publish: client not connected")
 	}
 
 	timeout := time.Duration(c.cfg.Timeout) * time.Millisecond
 	token := c.client.Publish(topic, c.qos, false, payload)
 
 	if !token.WaitTimeout(timeout) {
-		return fmt.Errorf("[mqtt] publish to %s timeout after %v", topic, timeout)
+		return fmt.Errorf("publish timeout after %v", timeout)
 	}
 	return token.Error()
 }

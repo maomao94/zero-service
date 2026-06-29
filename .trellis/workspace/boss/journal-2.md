@@ -1422,3 +1422,71 @@ Align proto/SDK naming 4-layer with DJI method values. Move error logging into S
 ### Next Steps
 
 - None - task complete
+
+
+## Session 92: 统一日志规范：Errorf/Errorw 选择标准 + 全量格式修复
+
+**Date**: 2026-06-29
+**Task**: 统一日志规范：Errorf/Errorw 选择标准 + 全量格式修复
+**Branch**: `master`
+
+### Summary
+
+建立 Errorf vs Errorw 选择标准（有可索引 Field→Errorw，否则→Errorf）；fmt.Errorf 不带 [xxx] 前缀；error 放入消息文本而非单独 Field；中间件/拦截器保留 %+v 堆栈；9 包前缀统一为 [小写包名]；更新 logging-guidelines.md 和 djisdk-guidelines.md
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ec1e1f5e` | (see git log) |
+| `861a4c1d` | (see git log) |
+| `1be64754` | (see git log) |
+| `8bd51df3` | (see git log) |
+| `6eca5889` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 93: DRC 回调重构 + Spec Bootstrap
+
+**Date**: 2026-06-29
+**Task**: DRC 回调重构 + Spec Bootstrap
+**Branch**: `master`
+
+### Summary
+
+DRC 回调重构：Hook 函数添加 ctx 参数，回调改同步（SDK 释放锁后调用，业务层自行 threading.GoSafe）+ Spec Bootstrap：修复 iec104 文件引用，新增 mqttx/netx/wsx/ctxprop 4 个 spec 文件，更新 backend/index.md
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

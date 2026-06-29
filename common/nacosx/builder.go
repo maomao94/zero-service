@@ -98,7 +98,7 @@ func (b *builder) Build(url resolver.Target, conn resolver.ClientConn, opts reso
 					GroupName:   tgt.GroupName,
 				})
 				if err != nil {
-					logx.Errorf("failed to pull nacos service instances: %v", err)
+					logx.Errorf("[nacos] failed to pull nacos service instances: %v", err)
 					continue
 				}
 
@@ -121,16 +121,16 @@ func extractHealthyGRPCInstances(instances []model.Instance) []string {
 	addrs := make([]string, 0, len(instances))
 	for _, s := range instances {
 		if s.Metadata == nil || s.Metadata["gRPC_port"] == "" {
-			logx.Errorf("[Nacos] 忽略实例: %s:%d (无gRPC_port配置)", s.Ip, s.Port)
+			logx.Errorw("[nacos] 忽略实例: 无gRPC_port配置", logx.Field("ip", s.Ip), logx.Field("port", s.Port))
 			continue
 		}
 
 		if !s.Healthy || !s.Enable {
-			logx.Debugf("[Nacos] 忽略实例: %s:%s (健康: %t, 启用: %t)",
+			logx.Debugf("[nacos] 忽略实例: %s:%s (健康: %t, 启用: %t)",
 				s.Ip, s.Metadata["gRPC_port"], s.Healthy, s.Enable)
 			continue
 		}
-		logx.Debugf("[Nacos] 发现健康实例: %s|%s:%s (权重: %.1f)",
+		logx.Debugf("[nacos] 发现健康实例: %s|%s:%s (权重: %.1f)",
 			s.InstanceId, s.Ip, s.Metadata["gRPC_port"], s.Weight)
 		addrs = append(addrs, fmt.Sprintf("%s:%s", s.Ip, s.Metadata["gRPC_port"]))
 	}

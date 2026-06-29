@@ -17,6 +17,7 @@ import (
 	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/service"
+	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 )
@@ -74,44 +75,53 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	var handlerOpts []djisdk.ClientOption
 	if pushCli != nil {
 		handlerOpts = append(handlerOpts,
-			djisdk.WithDrcSessionEnabled(func(gatewaySn, sessionID string) {
-				reqId, _ := tool.SimpleUUID()
-				room := "drc:heartbeat:" + gatewaySn
-				_, err := pushCli.BroadcastRoom(context.Background(), &socketpush.BroadcastRoomReq{
-					ReqId:   reqId,
-					Room:    room,
-					Event:   "drc:session_enabled",
-					Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s"}`, gatewaySn, sessionID),
+			djisdk.WithDrcSessionEnabled(func(ctx context.Context, gatewaySn, sessionID string) {
+				threading.GoSafe(func() {
+					ctx := context.WithoutCancel(ctx)
+					reqId, _ := tool.SimpleUUID()
+					room := "drc:heartbeat:" + gatewaySn
+					_, err := pushCli.BroadcastRoom(ctx, &socketpush.BroadcastRoomReq{
+						ReqId:   reqId,
+						Room:    room,
+						Event:   "drc:session_enabled",
+						Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s"}`, gatewaySn, sessionID),
+					})
+					if err != nil {
+						logx.Errorw("[dji-sdk] drc_manager socket push session_enabled failed: "+err.Error(), logx.Field("gateway_sn", gatewaySn))
+					}
 				})
-				if err != nil {
-					logx.Errorf("[dji-sdk] drc_manager socket push session_enabled failed: sn=%s err=%v", gatewaySn, err)
-				}
 			}),
-			djisdk.WithDrcSessionDisabled(func(gatewaySn, sessionID string) {
-				reqId, _ := tool.SimpleUUID()
-				room := "drc:heartbeat:" + gatewaySn
-				_, err := pushCli.BroadcastRoom(context.Background(), &socketpush.BroadcastRoomReq{
-					ReqId:   reqId,
-					Room:    room,
-					Event:   "drc:session_disabled",
-					Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s"}`, gatewaySn, sessionID),
+			djisdk.WithDrcSessionDisabled(func(ctx context.Context, gatewaySn, sessionID string) {
+				threading.GoSafe(func() {
+					ctx := context.WithoutCancel(ctx)
+					reqId, _ := tool.SimpleUUID()
+					room := "drc:heartbeat:" + gatewaySn
+					_, err := pushCli.BroadcastRoom(ctx, &socketpush.BroadcastRoomReq{
+						ReqId:   reqId,
+						Room:    room,
+						Event:   "drc:session_disabled",
+						Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s"}`, gatewaySn, sessionID),
+					})
+					if err != nil {
+						logx.Errorw("[dji-sdk] drc_manager socket push session_disabled failed: "+err.Error(), logx.Field("gateway_sn", gatewaySn))
+					}
 				})
-				if err != nil {
-					logx.Errorf("[dji-sdk] drc_manager socket push session_disabled failed: sn=%s err=%v", gatewaySn, err)
-				}
 			}),
-			djisdk.WithDrcSessionExpired(func(gatewaySn, sessionID, reason string) {
-				reqId, _ := tool.SimpleUUID()
-				room := "drc:heartbeat:" + gatewaySn
-				_, err := pushCli.BroadcastRoom(context.Background(), &socketpush.BroadcastRoomReq{
-					ReqId:   reqId,
-					Room:    room,
-					Event:   "drc:session_expired",
-					Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s","reason":"%s"}`, gatewaySn, sessionID, reason),
+			djisdk.WithDrcSessionExpired(func(ctx context.Context, gatewaySn, sessionID, reason string) {
+				threading.GoSafe(func() {
+					ctx := context.WithoutCancel(ctx)
+					reqId, _ := tool.SimpleUUID()
+					room := "drc:heartbeat:" + gatewaySn
+					_, err := pushCli.BroadcastRoom(ctx, &socketpush.BroadcastRoomReq{
+						ReqId:   reqId,
+						Room:    room,
+						Event:   "drc:session_expired",
+						Payload: fmt.Sprintf(`{"gateway_sn":"%s","session_id":"%s","reason":"%s"}`, gatewaySn, sessionID, reason),
+					})
+					if err != nil {
+						logx.Errorw("[dji-sdk] drc_manager socket push session_expired failed: "+err.Error(), logx.Field("gateway_sn", gatewaySn))
+					}
 				})
-				if err != nil {
-					logx.Errorf("[dji-sdk] drc_manager socket push session_expired failed: sn=%s err=%v", gatewaySn, err)
-				}
 			}),
 		)
 	}
@@ -126,7 +136,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	djiCli := djisdk.MustNewClient(c.Dji, handlerOpts...)
 
 	if err := djiCli.SubscribeAll(); err != nil {
-		logx.Errorf("[dji-cloud] subscribe topics failed err=%v", err)
+		logx.Errorf("[dji-cloud] subscribe topics failed: %v", err)
 	}
 
 	return &ServiceContext{

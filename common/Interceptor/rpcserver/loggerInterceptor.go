@@ -15,7 +15,7 @@ func LoggerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo,
 	ctx = ctxprop.ExtractFromGrpcMD(ctx)
 	resp, err = handler(ctx, req)
 	if err != nil {
-		logx.WithContext(ctx).Errorf("【RPC-SRV-ERR】 %+v", err)
+		logx.WithContext(ctx).Errorf("rpc error: %+v", err)
 	}
 	return resp, err
 }
@@ -27,7 +27,7 @@ func StreamLoggerInterceptor(srv any, ss grpc.ServerStream, info *grpc.StreamSer
 	ctx := ctxprop.ExtractFromGrpcMD(ss.Context())
 	err := handler(srv, &wrappedStream{ServerStream: ss, ctx: ctx})
 	if err != nil {
-		logx.WithContext(ctx).Errorf("【RPC-SRV-ERR】 %+v", err)
+		logx.WithContext(ctx).Errorf("rpc error: %+v", err)
 	}
 	return err
 }

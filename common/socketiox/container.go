@@ -108,7 +108,7 @@ func (p *SocketContainer) syncClientMap(addrs []string, c zrpc.RpcClientConf) {
 			p.ClientMap[addr] = newSocketClient(addr, c)
 		}
 	}
-	logx.Infof("[SocketContainer] update: total=%d", len(p.ClientMap))
+	logx.Infof("[socketio] update: total=%d", len(p.ClientMap))
 }
 
 func (p *SocketContainer) getConn4Etcd(c zrpc.RpcClientConf) error {
@@ -215,7 +215,7 @@ func (p *SocketContainer) getConn4Nacos(c zrpc.RpcClientConf) error {
 					GroupName:   tgt.GroupName,
 				})
 				if err != nil {
-					logx.Errorf("failed to pull nacos service instances: %v", err)
+					logx.Errorf("[socketio] failed to pull nacos service instances: %v", err)
 					continue
 				}
 
@@ -256,7 +256,7 @@ func (p *SocketContainer) populateClientMap(ctx context.Context, c zrpc.RpcClien
 		case addrs := <-input:
 			p.updateClientMap(addrs, c)
 		case <-ctx.Done():
-			logx.Info("[Nacos] Watch has been finished")
+			logx.Info("[socketio] nacos watch finished")
 			return
 		}
 	}
@@ -274,25 +274,25 @@ func extractHealthyGRPCInstances(instances []model.Instance) []string {
 
 	for _, s := range instances {
 		if s.Metadata == nil || s.Metadata["gRPC_port"] == "" {
-			logx.Debugf("[SocketContainer] NACOS 忽略实例: %s:%d (无gRPC_port配置)", s.Ip, s.Port)
+			logx.Debugf("[socketio] nacos 忽略实例: %s:%d (无gRPC_port配置)", s.Ip, s.Port)
 			ignoredCount++
 			continue
 		}
 
 		if !s.Healthy || !s.Enable {
-			logx.Debugf("[SocketContainer] NACOS 忽略实例: %s:%s (健康: %t, 启用: %t)",
+			logx.Debugf("[socketio] nacos 忽略实例: %s:%s (健康: %t, 启用: %t)",
 				s.Ip, s.Metadata["gRPC_port"], s.Healthy, s.Enable)
 			ignoredCount++
 			continue
 		}
-		logx.Debugf("[SocketContainer] NACOS 发现健康实例: %s|%s:%s (权重: %.1f)",
+		logx.Debugf("[socketio] nacos 发现健康实例: %s|%s:%s (权重: %.1f)",
 			s.InstanceId, s.Ip, s.Metadata["gRPC_port"], s.Weight)
 		addrs = append(addrs, fmt.Sprintf("%s:%s", s.Ip, s.Metadata["gRPC_port"]))
 		healthyCount++
 	}
 
 	if len(instances) > 0 {
-		logx.Infof("[SocketContainer] NACOS 实例扫描 Figure: 总实例数=%d, 健康实例数=%d, 忽略实例数=%d", len(instances), healthyCount, ignoredCount)
+		logx.Infof("[socketio] nacos 实例扫描: 总实例数=%d, 健康实例数=%d, 忽略实例数=%d", len(instances), healthyCount, ignoredCount)
 	}
 	return addrs
 }
