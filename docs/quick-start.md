@@ -4,13 +4,12 @@
 
 | 依赖 | 版本 | 说明 |
 |------|------|------|
-| Go | 1.25+ | 主要开发语言 |
-| Redis | 6.0+ | 任务队列、缓存 |
-| Kafka | 3.0+ | 消息队列（数采场景） |
-| MySQL/PostgreSQL | - | 关系数据库（按需） |
-| TDengine | 3.0+ | 时序数据库（数采场景） |
-| Docker | 20.10+ | 容器部署（可选） |
-| Nacos | 2.0+ | 服务发现（集群部署） |
+| Go | 1.25+ | 编译运行 |
+| Redis | 6.0+ | 任务队列、缓存（trigger 必需，其他可选） |
+| Kafka | 3.0+ | 消息队列（iecstash 必需，其他可选） |
+| MySQL/PostgreSQL | - | 关系数据库（djicloud 必需，其他可选） |
+| TDengine | 3.0+ | 时序数据库（数采场景可选） |
+| Nacos | 2.0+ | 服务发现（集群部署可选） |
 
 ## 安装
 
@@ -20,84 +19,70 @@ cd zero-service
 go mod tidy
 ```
 
-## 启动单个服务
+## 启动
 
-### Trigger 任务调度服务
+各服务可独立运行，按需启动。以 trigger 为例：
 
 ```bash
 cd app/trigger
 go run trigger.go -f etc/trigger.yaml
 ```
 
-### IEC 104 主站
+其他服务：
 
-```bash
-cd app/ieccaller
-go run ieccaller.go -f etc/ieccaller.yaml
-```
+| 服务 | 目录 | 启动命令 |
+|------|------|----------|
+| ieccaller | `app/ieccaller/` | `go run ieccaller.go -f etc/ieccaller.yaml` |
+| iecstash | `app/iecstash/` | `go run iecstash.go -f etc/iecstash.yaml` |
+| djicloud | `app/djicloud/` | `go run djicloud.go -f etc/djicloud.yaml` |
+| gtw | `gtw/` | `go run gtw.go -f etc/gtw.yaml` |
+| socketgtw | `socketapp/socketgtw/` | `go run socketgtw.go -f etc/socketgtw.yaml` |
 
-### DJI 云平台服务
+> 配置文件位于各服务 `etc/` 目录。端口分配见 [服务端口清单](service-ports.md)。
 
-```bash
-cd app/djicloud
-go run djicloud.go -f etc/djicloud.yaml
-```
-
-### BFF 网关
-
-```bash
-cd gtw
-go run gtw.go -f etc/gtw.yaml
-```
-
-## Docker Compose 启动
+## Docker Compose
 
 ```bash
 cd deploy
-# 按需修改 docker-compose.yml 和环境变量
 docker-compose up -d
 ```
 
-默认包含：Kafka、Filebeat、ieccaller、bridgegtw、bridgedump、iecstash、Kafdrop。
+默认启动：Kafka、Filebeat、ieccaller、iecstash、Kafdrop。按需修改 `docker-compose.yml`。
 
-## 配置说明
+## 验证
 
-各服务配置文件位于 `app/{service}/etc/` 或网关自身 `etc/` 目录。
+```bash
+# gRPC 服务健康检查
+grpcurl -plaintext localhost:21006 list
 
-典型配置项：
-- 服务监听地址和端口
-- Redis / Kafka / 数据库连接
-- Nacos 服务注册配置
-- 协议特定配置（IEC 104 从站列表、MQTT Broker 等）
+# HTTP 网关
+curl http://localhost:11001/health
+```
 
 ## 常见问题
 
-### Q: 如何只启动一个服务？
+### 服务运行需要哪些外部依赖？
 
-进入服务目录，`go run` 指定配置文件即可。各服务可独立运行。
+| 服务 | 最少依赖 |
+|------|----------|
+| trigger | Redis |
+| ieccaller | Kafka（或 MQTT/gRPC 下游） |
+| iecstash | Kafka |
+| djicloud | PostgreSQL + MQTT Broker |
+| gtw | 无（纯代理转发） |
+| file | OSS（MinIO/阿里/腾讯） |
+| bridgemodbus | Modbus 设备 |
+| bridgemqtt | MQTT Broker |
+| gis / podengine | 无 |
 
-### Q: 没有 Kafka/TDengine 能运行吗？
+### 如何查看完整端口分配？
 
-部分服务可以：
-- **trigger**：只需要 Redis
-- **file**：只需要 OSS 配置
-- **gis/alarm/podengine**：独立运行
-- **ieccaller**：需要 Kafka 或 MQTT 或 gRPC 下游
+参考 [服务端口清单](service-ports.md)。规则：HTTP `1xxxx`，gRPC `2xxxx`。
 
-### Q: 如何查看服务端口？
+### 如何对接 IEC 104 数据？
 
-参考 [服务端口清单](service-ports.md)。
+参考 [IEC 104 消息对接](iec104-message.md)。
 
-### Q: 如何调试 gRPC 服务？
+### 如何配置数据库？
 
-```bash
-# 列出服务
-grpcurl -plaintext localhost:21006 list
-
-# 调用方法
-grpcurl -plaintext -d '{"name":"test"}' localhost:21006 trigger.Trigger/Ping
-```
-
-### Q: 如何对接 IEC 104 数据？
-
-参考 [IEC 104 消息对接文档](iec104-message.md)。
+参考各服务 `etc/` 目录下的示例配置。DJI 云平台配置见 [DJI 云平台文档](djicloud.md)。

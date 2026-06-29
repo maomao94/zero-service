@@ -24,98 +24,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Req 健康检查请求。
-type Req struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// ping 请求标识，任意字符串。
-	Ping          string `protobuf:"bytes,1,opt,name=ping,proto3" json:"ping,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Req) Reset() {
-	*x = Req{}
-	mi := &file_djicloud_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Req) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Req) ProtoMessage() {}
-
-func (x *Req) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Req.ProtoReflect.Descriptor instead.
-func (*Req) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Req) GetPing() string {
-	if x != nil {
-		return x.Ping
-	}
-	return ""
-}
-
-// Res 健康检查响应。
-type Res struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// pong 响应标识，回传请求中的 ping 内容。
-	Pong          string `protobuf:"bytes,1,opt,name=pong,proto3" json:"pong,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Res) Reset() {
-	*x = Res{}
-	mi := &file_djicloud_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Res) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Res) ProtoMessage() {}
-
-func (x *Res) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Res.ProtoReflect.Descriptor instead.
-func (*Res) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *Res) GetPong() string {
-	if x != nil {
-		return x.Pong
-	}
-	return ""
-}
-
 // CommonRes 通用响应，用于返回命令执行结果。
 type CommonRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -133,7 +41,7 @@ type CommonRes struct {
 
 func (x *CommonRes) Reset() {
 	*x = CommonRes{}
-	mi := &file_djicloud_proto_msgTypes[2]
+	mi := &file_djicloud_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -145,7 +53,7 @@ func (x *CommonRes) String() string {
 func (*CommonRes) ProtoMessage() {}
 
 func (x *CommonRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[2]
+	mi := &file_djicloud_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -158,7 +66,7 @@ func (x *CommonRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommonRes.ProtoReflect.Descriptor instead.
 func (*CommonRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{2}
+	return file_djicloud_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *CommonRes) GetCode() int32 {
@@ -202,7 +110,7 @@ type PropertySetReq struct {
 
 func (x *PropertySetReq) Reset() {
 	*x = PropertySetReq{}
-	mi := &file_djicloud_proto_msgTypes[3]
+	mi := &file_djicloud_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -214,7 +122,7 @@ func (x *PropertySetReq) String() string {
 func (*PropertySetReq) ProtoMessage() {}
 
 func (x *PropertySetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[3]
+	mi := &file_djicloud_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -227,7 +135,7 @@ func (x *PropertySetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PropertySetReq.ProtoReflect.Descriptor instead.
 func (*PropertySetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{3}
+	return file_djicloud_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *PropertySetReq) GetDeviceSn() string {
@@ -263,7 +171,7 @@ type LiveStartPushReq struct {
 
 func (x *LiveStartPushReq) Reset() {
 	*x = LiveStartPushReq{}
-	mi := &file_djicloud_proto_msgTypes[4]
+	mi := &file_djicloud_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -275,7 +183,7 @@ func (x *LiveStartPushReq) String() string {
 func (*LiveStartPushReq) ProtoMessage() {}
 
 func (x *LiveStartPushReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[4]
+	mi := &file_djicloud_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -288,7 +196,7 @@ func (x *LiveStartPushReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiveStartPushReq.ProtoReflect.Descriptor instead.
 func (*LiveStartPushReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{4}
+	return file_djicloud_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *LiveStartPushReq) GetDeviceSn() string {
@@ -339,7 +247,7 @@ type LiveStopPushReq struct {
 
 func (x *LiveStopPushReq) Reset() {
 	*x = LiveStopPushReq{}
-	mi := &file_djicloud_proto_msgTypes[5]
+	mi := &file_djicloud_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -351,7 +259,7 @@ func (x *LiveStopPushReq) String() string {
 func (*LiveStopPushReq) ProtoMessage() {}
 
 func (x *LiveStopPushReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[5]
+	mi := &file_djicloud_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -364,7 +272,7 @@ func (x *LiveStopPushReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiveStopPushReq.ProtoReflect.Descriptor instead.
 func (*LiveStopPushReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{5}
+	return file_djicloud_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *LiveStopPushReq) GetDeviceSn() string {
@@ -396,7 +304,7 @@ type LiveSetQualityReq struct {
 
 func (x *LiveSetQualityReq) Reset() {
 	*x = LiveSetQualityReq{}
-	mi := &file_djicloud_proto_msgTypes[6]
+	mi := &file_djicloud_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -408,7 +316,7 @@ func (x *LiveSetQualityReq) String() string {
 func (*LiveSetQualityReq) ProtoMessage() {}
 
 func (x *LiveSetQualityReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[6]
+	mi := &file_djicloud_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -421,7 +329,7 @@ func (x *LiveSetQualityReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiveSetQualityReq.ProtoReflect.Descriptor instead.
 func (*LiveSetQualityReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{6}
+	return file_djicloud_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *LiveSetQualityReq) GetDeviceSn() string {
@@ -461,7 +369,7 @@ type LiveLensChangeReq struct {
 
 func (x *LiveLensChangeReq) Reset() {
 	*x = LiveLensChangeReq{}
-	mi := &file_djicloud_proto_msgTypes[7]
+	mi := &file_djicloud_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -473,7 +381,7 @@ func (x *LiveLensChangeReq) String() string {
 func (*LiveLensChangeReq) ProtoMessage() {}
 
 func (x *LiveLensChangeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[7]
+	mi := &file_djicloud_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -486,7 +394,7 @@ func (x *LiveLensChangeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiveLensChangeReq.ProtoReflect.Descriptor instead.
 func (*LiveLensChangeReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{7}
+	return file_djicloud_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *LiveLensChangeReq) GetDeviceSn() string {
@@ -526,7 +434,7 @@ type LiveCameraChangeReq struct {
 
 func (x *LiveCameraChangeReq) Reset() {
 	*x = LiveCameraChangeReq{}
-	mi := &file_djicloud_proto_msgTypes[8]
+	mi := &file_djicloud_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -538,7 +446,7 @@ func (x *LiveCameraChangeReq) String() string {
 func (*LiveCameraChangeReq) ProtoMessage() {}
 
 func (x *LiveCameraChangeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[8]
+	mi := &file_djicloud_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -551,7 +459,7 @@ func (x *LiveCameraChangeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiveCameraChangeReq.ProtoReflect.Descriptor instead.
 func (*LiveCameraChangeReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{8}
+	return file_djicloud_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *LiveCameraChangeReq) GetDeviceSn() string {
@@ -588,7 +496,7 @@ type MediaFlighttaskReq struct {
 
 func (x *MediaFlighttaskReq) Reset() {
 	*x = MediaFlighttaskReq{}
-	mi := &file_djicloud_proto_msgTypes[9]
+	mi := &file_djicloud_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -600,7 +508,7 @@ func (x *MediaFlighttaskReq) String() string {
 func (*MediaFlighttaskReq) ProtoMessage() {}
 
 func (x *MediaFlighttaskReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[9]
+	mi := &file_djicloud_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -613,7 +521,7 @@ func (x *MediaFlighttaskReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MediaFlighttaskReq.ProtoReflect.Descriptor instead.
 func (*MediaFlighttaskReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{9}
+	return file_djicloud_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *MediaFlighttaskReq) GetDeviceSn() string {
@@ -643,7 +551,7 @@ type MediaFastUploadReq struct {
 
 func (x *MediaFastUploadReq) Reset() {
 	*x = MediaFastUploadReq{}
-	mi := &file_djicloud_proto_msgTypes[10]
+	mi := &file_djicloud_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -655,7 +563,7 @@ func (x *MediaFastUploadReq) String() string {
 func (*MediaFastUploadReq) ProtoMessage() {}
 
 func (x *MediaFastUploadReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[10]
+	mi := &file_djicloud_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -668,7 +576,7 @@ func (x *MediaFastUploadReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MediaFastUploadReq.ProtoReflect.Descriptor instead.
 func (*MediaFastUploadReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{10}
+	return file_djicloud_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *MediaFastUploadReq) GetDeviceSn() string {
@@ -699,7 +607,7 @@ type FlightTaskFileRef struct {
 
 func (x *FlightTaskFileRef) Reset() {
 	*x = FlightTaskFileRef{}
-	mi := &file_djicloud_proto_msgTypes[11]
+	mi := &file_djicloud_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -711,7 +619,7 @@ func (x *FlightTaskFileRef) String() string {
 func (*FlightTaskFileRef) ProtoMessage() {}
 
 func (x *FlightTaskFileRef) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[11]
+	mi := &file_djicloud_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -724,7 +632,7 @@ func (x *FlightTaskFileRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlightTaskFileRef.ProtoReflect.Descriptor instead.
 func (*FlightTaskFileRef) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{11}
+	return file_djicloud_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *FlightTaskFileRef) GetUrl() string {
@@ -757,7 +665,7 @@ type FlightTaskPrepareSimulateMission struct {
 
 func (x *FlightTaskPrepareSimulateMission) Reset() {
 	*x = FlightTaskPrepareSimulateMission{}
-	mi := &file_djicloud_proto_msgTypes[12]
+	mi := &file_djicloud_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -769,7 +677,7 @@ func (x *FlightTaskPrepareSimulateMission) String() string {
 func (*FlightTaskPrepareSimulateMission) ProtoMessage() {}
 
 func (x *FlightTaskPrepareSimulateMission) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[12]
+	mi := &file_djicloud_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -782,7 +690,7 @@ func (x *FlightTaskPrepareSimulateMission) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlightTaskPrepareSimulateMission.ProtoReflect.Descriptor instead.
 func (*FlightTaskPrepareSimulateMission) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{12}
+	return file_djicloud_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *FlightTaskPrepareSimulateMission) GetIsEnable() bool {
@@ -824,7 +732,7 @@ type FlightTaskPrepareBreakPoint struct {
 
 func (x *FlightTaskPrepareBreakPoint) Reset() {
 	*x = FlightTaskPrepareBreakPoint{}
-	mi := &file_djicloud_proto_msgTypes[13]
+	mi := &file_djicloud_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -836,7 +744,7 @@ func (x *FlightTaskPrepareBreakPoint) String() string {
 func (*FlightTaskPrepareBreakPoint) ProtoMessage() {}
 
 func (x *FlightTaskPrepareBreakPoint) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[13]
+	mi := &file_djicloud_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -849,7 +757,7 @@ func (x *FlightTaskPrepareBreakPoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlightTaskPrepareBreakPoint.ProtoReflect.Descriptor instead.
 func (*FlightTaskPrepareBreakPoint) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{13}
+	return file_djicloud_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *FlightTaskPrepareBreakPoint) GetIndex() int32 {
@@ -912,7 +820,7 @@ type FlightTaskPrepareReq struct {
 
 func (x *FlightTaskPrepareReq) Reset() {
 	*x = FlightTaskPrepareReq{}
-	mi := &file_djicloud_proto_msgTypes[14]
+	mi := &file_djicloud_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -924,7 +832,7 @@ func (x *FlightTaskPrepareReq) String() string {
 func (*FlightTaskPrepareReq) ProtoMessage() {}
 
 func (x *FlightTaskPrepareReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[14]
+	mi := &file_djicloud_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -937,7 +845,7 @@ func (x *FlightTaskPrepareReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlightTaskPrepareReq.ProtoReflect.Descriptor instead.
 func (*FlightTaskPrepareReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{14}
+	return file_djicloud_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *FlightTaskPrepareReq) GetDeviceSn() string {
@@ -1031,7 +939,7 @@ type FlightTaskExecuteReq struct {
 
 func (x *FlightTaskExecuteReq) Reset() {
 	*x = FlightTaskExecuteReq{}
-	mi := &file_djicloud_proto_msgTypes[15]
+	mi := &file_djicloud_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1043,7 +951,7 @@ func (x *FlightTaskExecuteReq) String() string {
 func (*FlightTaskExecuteReq) ProtoMessage() {}
 
 func (x *FlightTaskExecuteReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[15]
+	mi := &file_djicloud_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1056,7 +964,7 @@ func (x *FlightTaskExecuteReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlightTaskExecuteReq.ProtoReflect.Descriptor instead.
 func (*FlightTaskExecuteReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{15}
+	return file_djicloud_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *FlightTaskExecuteReq) GetDeviceSn() string {
@@ -1087,7 +995,7 @@ type FlightTaskUndoReq struct {
 
 func (x *FlightTaskUndoReq) Reset() {
 	*x = FlightTaskUndoReq{}
-	mi := &file_djicloud_proto_msgTypes[16]
+	mi := &file_djicloud_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1099,7 +1007,7 @@ func (x *FlightTaskUndoReq) String() string {
 func (*FlightTaskUndoReq) ProtoMessage() {}
 
 func (x *FlightTaskUndoReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[16]
+	mi := &file_djicloud_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1112,7 +1020,7 @@ func (x *FlightTaskUndoReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlightTaskUndoReq.ProtoReflect.Descriptor instead.
 func (*FlightTaskUndoReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{16}
+	return file_djicloud_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *FlightTaskUndoReq) GetDeviceSn() string {
@@ -1145,7 +1053,7 @@ type PauseFlightTaskReq struct {
 
 func (x *PauseFlightTaskReq) Reset() {
 	*x = PauseFlightTaskReq{}
-	mi := &file_djicloud_proto_msgTypes[17]
+	mi := &file_djicloud_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1157,7 +1065,7 @@ func (x *PauseFlightTaskReq) String() string {
 func (*PauseFlightTaskReq) ProtoMessage() {}
 
 func (x *PauseFlightTaskReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[17]
+	mi := &file_djicloud_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1170,7 +1078,7 @@ func (x *PauseFlightTaskReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PauseFlightTaskReq.ProtoReflect.Descriptor instead.
 func (*PauseFlightTaskReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{17}
+	return file_djicloud_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *PauseFlightTaskReq) GetDeviceSn() string {
@@ -1210,7 +1118,7 @@ type FlightTaskRecoveryReq struct {
 
 func (x *FlightTaskRecoveryReq) Reset() {
 	*x = FlightTaskRecoveryReq{}
-	mi := &file_djicloud_proto_msgTypes[18]
+	mi := &file_djicloud_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1222,7 +1130,7 @@ func (x *FlightTaskRecoveryReq) String() string {
 func (*FlightTaskRecoveryReq) ProtoMessage() {}
 
 func (x *FlightTaskRecoveryReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[18]
+	mi := &file_djicloud_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1235,7 +1143,7 @@ func (x *FlightTaskRecoveryReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlightTaskRecoveryReq.ProtoReflect.Descriptor instead.
 func (*FlightTaskRecoveryReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{18}
+	return file_djicloud_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *FlightTaskRecoveryReq) GetDeviceSn() string {
@@ -1275,7 +1183,7 @@ type StopFlightTaskReq struct {
 
 func (x *StopFlightTaskReq) Reset() {
 	*x = StopFlightTaskReq{}
-	mi := &file_djicloud_proto_msgTypes[19]
+	mi := &file_djicloud_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1287,7 +1195,7 @@ func (x *StopFlightTaskReq) String() string {
 func (*StopFlightTaskReq) ProtoMessage() {}
 
 func (x *StopFlightTaskReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[19]
+	mi := &file_djicloud_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1300,7 +1208,7 @@ func (x *StopFlightTaskReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopFlightTaskReq.ProtoReflect.Descriptor instead.
 func (*StopFlightTaskReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{19}
+	return file_djicloud_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *StopFlightTaskReq) GetDeviceSn() string {
@@ -1334,7 +1242,7 @@ type ReturnHomeReq struct {
 
 func (x *ReturnHomeReq) Reset() {
 	*x = ReturnHomeReq{}
-	mi := &file_djicloud_proto_msgTypes[20]
+	mi := &file_djicloud_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1346,7 +1254,7 @@ func (x *ReturnHomeReq) String() string {
 func (*ReturnHomeReq) ProtoMessage() {}
 
 func (x *ReturnHomeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[20]
+	mi := &file_djicloud_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1359,7 +1267,7 @@ func (x *ReturnHomeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReturnHomeReq.ProtoReflect.Descriptor instead.
 func (*ReturnHomeReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{20}
+	return file_djicloud_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ReturnHomeReq) GetDeviceSn() string {
@@ -1379,7 +1287,7 @@ type ReturnHomeCancelAutoReturnReq struct {
 
 func (x *ReturnHomeCancelAutoReturnReq) Reset() {
 	*x = ReturnHomeCancelAutoReturnReq{}
-	mi := &file_djicloud_proto_msgTypes[21]
+	mi := &file_djicloud_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1391,7 +1299,7 @@ func (x *ReturnHomeCancelAutoReturnReq) String() string {
 func (*ReturnHomeCancelAutoReturnReq) ProtoMessage() {}
 
 func (x *ReturnHomeCancelAutoReturnReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[21]
+	mi := &file_djicloud_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1404,7 +1312,7 @@ func (x *ReturnHomeCancelAutoReturnReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReturnHomeCancelAutoReturnReq.ProtoReflect.Descriptor instead.
 func (*ReturnHomeCancelAutoReturnReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{21}
+	return file_djicloud_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ReturnHomeCancelAutoReturnReq) GetDeviceSn() string {
@@ -1432,7 +1340,7 @@ type ReturnSpecificHomeReq struct {
 
 func (x *ReturnSpecificHomeReq) Reset() {
 	*x = ReturnSpecificHomeReq{}
-	mi := &file_djicloud_proto_msgTypes[22]
+	mi := &file_djicloud_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1444,7 +1352,7 @@ func (x *ReturnSpecificHomeReq) String() string {
 func (*ReturnSpecificHomeReq) ProtoMessage() {}
 
 func (x *ReturnSpecificHomeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[22]
+	mi := &file_djicloud_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1457,7 +1365,7 @@ func (x *ReturnSpecificHomeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReturnSpecificHomeReq.ProtoReflect.Descriptor instead.
 func (*ReturnSpecificHomeReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{22}
+	return file_djicloud_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ReturnSpecificHomeReq) GetDeviceSn() string {
@@ -1498,7 +1406,7 @@ type DebugModeOpenReq struct {
 
 func (x *DebugModeOpenReq) Reset() {
 	*x = DebugModeOpenReq{}
-	mi := &file_djicloud_proto_msgTypes[23]
+	mi := &file_djicloud_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1510,7 +1418,7 @@ func (x *DebugModeOpenReq) String() string {
 func (*DebugModeOpenReq) ProtoMessage() {}
 
 func (x *DebugModeOpenReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[23]
+	mi := &file_djicloud_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1523,7 +1431,7 @@ func (x *DebugModeOpenReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DebugModeOpenReq.ProtoReflect.Descriptor instead.
 func (*DebugModeOpenReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{23}
+	return file_djicloud_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *DebugModeOpenReq) GetDeviceSn() string {
@@ -1543,7 +1451,7 @@ type DebugModeCloseReq struct {
 
 func (x *DebugModeCloseReq) Reset() {
 	*x = DebugModeCloseReq{}
-	mi := &file_djicloud_proto_msgTypes[24]
+	mi := &file_djicloud_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1555,7 +1463,7 @@ func (x *DebugModeCloseReq) String() string {
 func (*DebugModeCloseReq) ProtoMessage() {}
 
 func (x *DebugModeCloseReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[24]
+	mi := &file_djicloud_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1568,7 +1476,7 @@ func (x *DebugModeCloseReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DebugModeCloseReq.ProtoReflect.Descriptor instead.
 func (*DebugModeCloseReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{24}
+	return file_djicloud_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *DebugModeCloseReq) GetDeviceSn() string {
@@ -1588,7 +1496,7 @@ type CoverOpenReq struct {
 
 func (x *CoverOpenReq) Reset() {
 	*x = CoverOpenReq{}
-	mi := &file_djicloud_proto_msgTypes[25]
+	mi := &file_djicloud_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1600,7 +1508,7 @@ func (x *CoverOpenReq) String() string {
 func (*CoverOpenReq) ProtoMessage() {}
 
 func (x *CoverOpenReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[25]
+	mi := &file_djicloud_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1613,7 +1521,7 @@ func (x *CoverOpenReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CoverOpenReq.ProtoReflect.Descriptor instead.
 func (*CoverOpenReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{25}
+	return file_djicloud_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *CoverOpenReq) GetDeviceSn() string {
@@ -1633,7 +1541,7 @@ type CoverCloseReq struct {
 
 func (x *CoverCloseReq) Reset() {
 	*x = CoverCloseReq{}
-	mi := &file_djicloud_proto_msgTypes[26]
+	mi := &file_djicloud_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1645,7 +1553,7 @@ func (x *CoverCloseReq) String() string {
 func (*CoverCloseReq) ProtoMessage() {}
 
 func (x *CoverCloseReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[26]
+	mi := &file_djicloud_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1658,7 +1566,7 @@ func (x *CoverCloseReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CoverCloseReq.ProtoReflect.Descriptor instead.
 func (*CoverCloseReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{26}
+	return file_djicloud_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *CoverCloseReq) GetDeviceSn() string {
@@ -1678,7 +1586,7 @@ type CoverForceCloseReq struct {
 
 func (x *CoverForceCloseReq) Reset() {
 	*x = CoverForceCloseReq{}
-	mi := &file_djicloud_proto_msgTypes[27]
+	mi := &file_djicloud_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1690,7 +1598,7 @@ func (x *CoverForceCloseReq) String() string {
 func (*CoverForceCloseReq) ProtoMessage() {}
 
 func (x *CoverForceCloseReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[27]
+	mi := &file_djicloud_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1703,7 +1611,7 @@ func (x *CoverForceCloseReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CoverForceCloseReq.ProtoReflect.Descriptor instead.
 func (*CoverForceCloseReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{27}
+	return file_djicloud_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *CoverForceCloseReq) GetDeviceSn() string {
@@ -1723,7 +1631,7 @@ type DroneOpenReq struct {
 
 func (x *DroneOpenReq) Reset() {
 	*x = DroneOpenReq{}
-	mi := &file_djicloud_proto_msgTypes[28]
+	mi := &file_djicloud_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1735,7 +1643,7 @@ func (x *DroneOpenReq) String() string {
 func (*DroneOpenReq) ProtoMessage() {}
 
 func (x *DroneOpenReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[28]
+	mi := &file_djicloud_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1748,7 +1656,7 @@ func (x *DroneOpenReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DroneOpenReq.ProtoReflect.Descriptor instead.
 func (*DroneOpenReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{28}
+	return file_djicloud_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *DroneOpenReq) GetDeviceSn() string {
@@ -1768,7 +1676,7 @@ type DroneCloseReq struct {
 
 func (x *DroneCloseReq) Reset() {
 	*x = DroneCloseReq{}
-	mi := &file_djicloud_proto_msgTypes[29]
+	mi := &file_djicloud_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1780,7 +1688,7 @@ func (x *DroneCloseReq) String() string {
 func (*DroneCloseReq) ProtoMessage() {}
 
 func (x *DroneCloseReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[29]
+	mi := &file_djicloud_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1793,7 +1701,7 @@ func (x *DroneCloseReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DroneCloseReq.ProtoReflect.Descriptor instead.
 func (*DroneCloseReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{29}
+	return file_djicloud_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *DroneCloseReq) GetDeviceSn() string {
@@ -1813,7 +1721,7 @@ type DeviceRebootReq struct {
 
 func (x *DeviceRebootReq) Reset() {
 	*x = DeviceRebootReq{}
-	mi := &file_djicloud_proto_msgTypes[30]
+	mi := &file_djicloud_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1825,7 +1733,7 @@ func (x *DeviceRebootReq) String() string {
 func (*DeviceRebootReq) ProtoMessage() {}
 
 func (x *DeviceRebootReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[30]
+	mi := &file_djicloud_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1838,7 +1746,7 @@ func (x *DeviceRebootReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceRebootReq.ProtoReflect.Descriptor instead.
 func (*DeviceRebootReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{30}
+	return file_djicloud_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *DeviceRebootReq) GetDeviceSn() string {
@@ -1858,7 +1766,7 @@ type ChargeOpenReq struct {
 
 func (x *ChargeOpenReq) Reset() {
 	*x = ChargeOpenReq{}
-	mi := &file_djicloud_proto_msgTypes[31]
+	mi := &file_djicloud_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1870,7 +1778,7 @@ func (x *ChargeOpenReq) String() string {
 func (*ChargeOpenReq) ProtoMessage() {}
 
 func (x *ChargeOpenReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[31]
+	mi := &file_djicloud_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1883,7 +1791,7 @@ func (x *ChargeOpenReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChargeOpenReq.ProtoReflect.Descriptor instead.
 func (*ChargeOpenReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{31}
+	return file_djicloud_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ChargeOpenReq) GetDeviceSn() string {
@@ -1903,7 +1811,7 @@ type ChargeCloseReq struct {
 
 func (x *ChargeCloseReq) Reset() {
 	*x = ChargeCloseReq{}
-	mi := &file_djicloud_proto_msgTypes[32]
+	mi := &file_djicloud_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1915,7 +1823,7 @@ func (x *ChargeCloseReq) String() string {
 func (*ChargeCloseReq) ProtoMessage() {}
 
 func (x *ChargeCloseReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[32]
+	mi := &file_djicloud_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1928,7 +1836,7 @@ func (x *ChargeCloseReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChargeCloseReq.ProtoReflect.Descriptor instead.
 func (*ChargeCloseReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{32}
+	return file_djicloud_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ChargeCloseReq) GetDeviceSn() string {
@@ -1948,7 +1856,7 @@ type DroneFormatReq struct {
 
 func (x *DroneFormatReq) Reset() {
 	*x = DroneFormatReq{}
-	mi := &file_djicloud_proto_msgTypes[33]
+	mi := &file_djicloud_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1960,7 +1868,7 @@ func (x *DroneFormatReq) String() string {
 func (*DroneFormatReq) ProtoMessage() {}
 
 func (x *DroneFormatReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[33]
+	mi := &file_djicloud_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1973,7 +1881,7 @@ func (x *DroneFormatReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DroneFormatReq.ProtoReflect.Descriptor instead.
 func (*DroneFormatReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{33}
+	return file_djicloud_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *DroneFormatReq) GetDeviceSn() string {
@@ -1993,7 +1901,7 @@ type DeviceFormatReq struct {
 
 func (x *DeviceFormatReq) Reset() {
 	*x = DeviceFormatReq{}
-	mi := &file_djicloud_proto_msgTypes[34]
+	mi := &file_djicloud_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2005,7 +1913,7 @@ func (x *DeviceFormatReq) String() string {
 func (*DeviceFormatReq) ProtoMessage() {}
 
 func (x *DeviceFormatReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[34]
+	mi := &file_djicloud_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2018,7 +1926,7 @@ func (x *DeviceFormatReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceFormatReq.ProtoReflect.Descriptor instead.
 func (*DeviceFormatReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{34}
+	return file_djicloud_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *DeviceFormatReq) GetDeviceSn() string {
@@ -2038,7 +1946,7 @@ type SupplementLightOpenReq struct {
 
 func (x *SupplementLightOpenReq) Reset() {
 	*x = SupplementLightOpenReq{}
-	mi := &file_djicloud_proto_msgTypes[35]
+	mi := &file_djicloud_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2050,7 +1958,7 @@ func (x *SupplementLightOpenReq) String() string {
 func (*SupplementLightOpenReq) ProtoMessage() {}
 
 func (x *SupplementLightOpenReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[35]
+	mi := &file_djicloud_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2063,7 +1971,7 @@ func (x *SupplementLightOpenReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SupplementLightOpenReq.ProtoReflect.Descriptor instead.
 func (*SupplementLightOpenReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{35}
+	return file_djicloud_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *SupplementLightOpenReq) GetDeviceSn() string {
@@ -2083,7 +1991,7 @@ type SupplementLightCloseReq struct {
 
 func (x *SupplementLightCloseReq) Reset() {
 	*x = SupplementLightCloseReq{}
-	mi := &file_djicloud_proto_msgTypes[36]
+	mi := &file_djicloud_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2095,7 +2003,7 @@ func (x *SupplementLightCloseReq) String() string {
 func (*SupplementLightCloseReq) ProtoMessage() {}
 
 func (x *SupplementLightCloseReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[36]
+	mi := &file_djicloud_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2108,7 +2016,7 @@ func (x *SupplementLightCloseReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SupplementLightCloseReq.ProtoReflect.Descriptor instead.
 func (*SupplementLightCloseReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{36}
+	return file_djicloud_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *SupplementLightCloseReq) GetDeviceSn() string {
@@ -2131,7 +2039,7 @@ type BatteryStoreModeReq struct {
 
 func (x *BatteryStoreModeReq) Reset() {
 	*x = BatteryStoreModeReq{}
-	mi := &file_djicloud_proto_msgTypes[37]
+	mi := &file_djicloud_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2143,7 +2051,7 @@ func (x *BatteryStoreModeReq) String() string {
 func (*BatteryStoreModeReq) ProtoMessage() {}
 
 func (x *BatteryStoreModeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[37]
+	mi := &file_djicloud_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2156,7 +2064,7 @@ func (x *BatteryStoreModeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatteryStoreModeReq.ProtoReflect.Descriptor instead.
 func (*BatteryStoreModeReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{37}
+	return file_djicloud_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *BatteryStoreModeReq) GetDeviceSn() string {
@@ -2186,7 +2094,7 @@ type AlarmStateSwitchReq struct {
 
 func (x *AlarmStateSwitchReq) Reset() {
 	*x = AlarmStateSwitchReq{}
-	mi := &file_djicloud_proto_msgTypes[38]
+	mi := &file_djicloud_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2198,7 +2106,7 @@ func (x *AlarmStateSwitchReq) String() string {
 func (*AlarmStateSwitchReq) ProtoMessage() {}
 
 func (x *AlarmStateSwitchReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[38]
+	mi := &file_djicloud_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2211,7 +2119,7 @@ func (x *AlarmStateSwitchReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AlarmStateSwitchReq.ProtoReflect.Descriptor instead.
 func (*AlarmStateSwitchReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{38}
+	return file_djicloud_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *AlarmStateSwitchReq) GetDeviceSn() string {
@@ -2241,7 +2149,7 @@ type AirConditionerModeSwitchReq struct {
 
 func (x *AirConditionerModeSwitchReq) Reset() {
 	*x = AirConditionerModeSwitchReq{}
-	mi := &file_djicloud_proto_msgTypes[39]
+	mi := &file_djicloud_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2253,7 +2161,7 @@ func (x *AirConditionerModeSwitchReq) String() string {
 func (*AirConditionerModeSwitchReq) ProtoMessage() {}
 
 func (x *AirConditionerModeSwitchReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[39]
+	mi := &file_djicloud_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2266,7 +2174,7 @@ func (x *AirConditionerModeSwitchReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AirConditionerModeSwitchReq.ProtoReflect.Descriptor instead.
 func (*AirConditionerModeSwitchReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{39}
+	return file_djicloud_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *AirConditionerModeSwitchReq) GetDeviceSn() string {
@@ -2298,7 +2206,7 @@ type OtaDevice struct {
 
 func (x *OtaDevice) Reset() {
 	*x = OtaDevice{}
-	mi := &file_djicloud_proto_msgTypes[40]
+	mi := &file_djicloud_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2310,7 +2218,7 @@ func (x *OtaDevice) String() string {
 func (*OtaDevice) ProtoMessage() {}
 
 func (x *OtaDevice) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[40]
+	mi := &file_djicloud_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2323,7 +2231,7 @@ func (x *OtaDevice) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OtaDevice.ProtoReflect.Descriptor instead.
 func (*OtaDevice) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{40}
+	return file_djicloud_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *OtaDevice) GetSn() string {
@@ -2361,7 +2269,7 @@ type OtaCreateReq struct {
 
 func (x *OtaCreateReq) Reset() {
 	*x = OtaCreateReq{}
-	mi := &file_djicloud_proto_msgTypes[41]
+	mi := &file_djicloud_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2373,7 +2281,7 @@ func (x *OtaCreateReq) String() string {
 func (*OtaCreateReq) ProtoMessage() {}
 
 func (x *OtaCreateReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[41]
+	mi := &file_djicloud_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2386,7 +2294,7 @@ func (x *OtaCreateReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OtaCreateReq.ProtoReflect.Descriptor instead.
 func (*OtaCreateReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{41}
+	return file_djicloud_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *OtaCreateReq) GetDeviceSn() string {
@@ -2418,7 +2326,7 @@ type RemoteLogFileListReq struct {
 
 func (x *RemoteLogFileListReq) Reset() {
 	*x = RemoteLogFileListReq{}
-	mi := &file_djicloud_proto_msgTypes[42]
+	mi := &file_djicloud_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2430,7 +2338,7 @@ func (x *RemoteLogFileListReq) String() string {
 func (*RemoteLogFileListReq) ProtoMessage() {}
 
 func (x *RemoteLogFileListReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[42]
+	mi := &file_djicloud_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2443,7 +2351,7 @@ func (x *RemoteLogFileListReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoteLogFileListReq.ProtoReflect.Descriptor instead.
 func (*RemoteLogFileListReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{42}
+	return file_djicloud_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *RemoteLogFileListReq) GetDeviceSn() string {
@@ -2488,7 +2396,7 @@ type RemoteLogFile struct {
 
 func (x *RemoteLogFile) Reset() {
 	*x = RemoteLogFile{}
-	mi := &file_djicloud_proto_msgTypes[43]
+	mi := &file_djicloud_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2500,7 +2408,7 @@ func (x *RemoteLogFile) String() string {
 func (*RemoteLogFile) ProtoMessage() {}
 
 func (x *RemoteLogFile) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[43]
+	mi := &file_djicloud_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2513,7 +2421,7 @@ func (x *RemoteLogFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoteLogFile.ProtoReflect.Descriptor instead.
 func (*RemoteLogFile) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{43}
+	return file_djicloud_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *RemoteLogFile) GetDeviceSn() string {
@@ -2571,7 +2479,7 @@ type RemoteLogFileUploadReq struct {
 
 func (x *RemoteLogFileUploadReq) Reset() {
 	*x = RemoteLogFileUploadReq{}
-	mi := &file_djicloud_proto_msgTypes[44]
+	mi := &file_djicloud_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2583,7 +2491,7 @@ func (x *RemoteLogFileUploadReq) String() string {
 func (*RemoteLogFileUploadReq) ProtoMessage() {}
 
 func (x *RemoteLogFileUploadReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[44]
+	mi := &file_djicloud_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2596,7 +2504,7 @@ func (x *RemoteLogFileUploadReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoteLogFileUploadReq.ProtoReflect.Descriptor instead.
 func (*RemoteLogFileUploadReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{44}
+	return file_djicloud_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *RemoteLogFileUploadReq) GetDeviceSn() string {
@@ -2628,7 +2536,7 @@ type ConfigUpdateReq struct {
 
 func (x *ConfigUpdateReq) Reset() {
 	*x = ConfigUpdateReq{}
-	mi := &file_djicloud_proto_msgTypes[45]
+	mi := &file_djicloud_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2640,7 +2548,7 @@ func (x *ConfigUpdateReq) String() string {
 func (*ConfigUpdateReq) ProtoMessage() {}
 
 func (x *ConfigUpdateReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[45]
+	mi := &file_djicloud_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2653,7 +2561,7 @@ func (x *ConfigUpdateReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigUpdateReq.ProtoReflect.Descriptor instead.
 func (*ConfigUpdateReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{45}
+	return file_djicloud_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *ConfigUpdateReq) GetDeviceSn() string {
@@ -2687,7 +2595,7 @@ type FlightAuthorityGrabReq struct {
 
 func (x *FlightAuthorityGrabReq) Reset() {
 	*x = FlightAuthorityGrabReq{}
-	mi := &file_djicloud_proto_msgTypes[46]
+	mi := &file_djicloud_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2699,7 +2607,7 @@ func (x *FlightAuthorityGrabReq) String() string {
 func (*FlightAuthorityGrabReq) ProtoMessage() {}
 
 func (x *FlightAuthorityGrabReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[46]
+	mi := &file_djicloud_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2712,7 +2620,7 @@ func (x *FlightAuthorityGrabReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlightAuthorityGrabReq.ProtoReflect.Descriptor instead.
 func (*FlightAuthorityGrabReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{46}
+	return file_djicloud_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *FlightAuthorityGrabReq) GetDeviceSn() string {
@@ -2732,7 +2640,7 @@ type PayloadAuthorityGrabReq struct {
 
 func (x *PayloadAuthorityGrabReq) Reset() {
 	*x = PayloadAuthorityGrabReq{}
-	mi := &file_djicloud_proto_msgTypes[47]
+	mi := &file_djicloud_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2744,7 +2652,7 @@ func (x *PayloadAuthorityGrabReq) String() string {
 func (*PayloadAuthorityGrabReq) ProtoMessage() {}
 
 func (x *PayloadAuthorityGrabReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[47]
+	mi := &file_djicloud_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2757,7 +2665,7 @@ func (x *PayloadAuthorityGrabReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PayloadAuthorityGrabReq.ProtoReflect.Descriptor instead.
 func (*PayloadAuthorityGrabReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{47}
+	return file_djicloud_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *PayloadAuthorityGrabReq) GetDeviceSn() string {
@@ -2784,7 +2692,7 @@ type FlyToPointReq struct {
 
 func (x *FlyToPointReq) Reset() {
 	*x = FlyToPointReq{}
-	mi := &file_djicloud_proto_msgTypes[48]
+	mi := &file_djicloud_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2796,7 +2704,7 @@ func (x *FlyToPointReq) String() string {
 func (*FlyToPointReq) ProtoMessage() {}
 
 func (x *FlyToPointReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[48]
+	mi := &file_djicloud_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2809,7 +2717,7 @@ func (x *FlyToPointReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlyToPointReq.ProtoReflect.Descriptor instead.
 func (*FlyToPointReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{48}
+	return file_djicloud_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *FlyToPointReq) GetDeviceSn() string {
@@ -2855,7 +2763,7 @@ type Waypoint struct {
 
 func (x *Waypoint) Reset() {
 	*x = Waypoint{}
-	mi := &file_djicloud_proto_msgTypes[49]
+	mi := &file_djicloud_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2867,7 +2775,7 @@ func (x *Waypoint) String() string {
 func (*Waypoint) ProtoMessage() {}
 
 func (x *Waypoint) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[49]
+	mi := &file_djicloud_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2880,7 +2788,7 @@ func (x *Waypoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Waypoint.ProtoReflect.Descriptor instead.
 func (*Waypoint) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{49}
+	return file_djicloud_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *Waypoint) GetLatitude() float64 {
@@ -2918,7 +2826,7 @@ type FlyToPointStopReq struct {
 
 func (x *FlyToPointStopReq) Reset() {
 	*x = FlyToPointStopReq{}
-	mi := &file_djicloud_proto_msgTypes[50]
+	mi := &file_djicloud_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2930,7 +2838,7 @@ func (x *FlyToPointStopReq) String() string {
 func (*FlyToPointStopReq) ProtoMessage() {}
 
 func (x *FlyToPointStopReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[50]
+	mi := &file_djicloud_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2943,7 +2851,7 @@ func (x *FlyToPointStopReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlyToPointStopReq.ProtoReflect.Descriptor instead.
 func (*FlyToPointStopReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{50}
+	return file_djicloud_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *FlyToPointStopReq) GetDeviceSn() string {
@@ -2989,7 +2897,7 @@ type TakeoffToPointReq struct {
 
 func (x *TakeoffToPointReq) Reset() {
 	*x = TakeoffToPointReq{}
-	mi := &file_djicloud_proto_msgTypes[51]
+	mi := &file_djicloud_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3001,7 +2909,7 @@ func (x *TakeoffToPointReq) String() string {
 func (*TakeoffToPointReq) ProtoMessage() {}
 
 func (x *TakeoffToPointReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[51]
+	mi := &file_djicloud_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3014,7 +2922,7 @@ func (x *TakeoffToPointReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TakeoffToPointReq.ProtoReflect.Descriptor instead.
 func (*TakeoffToPointReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{51}
+	return file_djicloud_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *TakeoffToPointReq) GetDeviceSn() string {
@@ -3102,7 +3010,7 @@ type CameraModeSwitchReq struct {
 
 func (x *CameraModeSwitchReq) Reset() {
 	*x = CameraModeSwitchReq{}
-	mi := &file_djicloud_proto_msgTypes[52]
+	mi := &file_djicloud_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3114,7 +3022,7 @@ func (x *CameraModeSwitchReq) String() string {
 func (*CameraModeSwitchReq) ProtoMessage() {}
 
 func (x *CameraModeSwitchReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[52]
+	mi := &file_djicloud_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3127,7 +3035,7 @@ func (x *CameraModeSwitchReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraModeSwitchReq.ProtoReflect.Descriptor instead.
 func (*CameraModeSwitchReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{52}
+	return file_djicloud_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *CameraModeSwitchReq) GetDeviceSn() string {
@@ -3164,7 +3072,7 @@ type CameraPhotoTakeReq struct {
 
 func (x *CameraPhotoTakeReq) Reset() {
 	*x = CameraPhotoTakeReq{}
-	mi := &file_djicloud_proto_msgTypes[53]
+	mi := &file_djicloud_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3176,7 +3084,7 @@ func (x *CameraPhotoTakeReq) String() string {
 func (*CameraPhotoTakeReq) ProtoMessage() {}
 
 func (x *CameraPhotoTakeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[53]
+	mi := &file_djicloud_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3189,7 +3097,7 @@ func (x *CameraPhotoTakeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraPhotoTakeReq.ProtoReflect.Descriptor instead.
 func (*CameraPhotoTakeReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{53}
+	return file_djicloud_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *CameraPhotoTakeReq) GetDeviceSn() string {
@@ -3219,7 +3127,7 @@ type CameraPhotoStopReq struct {
 
 func (x *CameraPhotoStopReq) Reset() {
 	*x = CameraPhotoStopReq{}
-	mi := &file_djicloud_proto_msgTypes[54]
+	mi := &file_djicloud_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3231,7 +3139,7 @@ func (x *CameraPhotoStopReq) String() string {
 func (*CameraPhotoStopReq) ProtoMessage() {}
 
 func (x *CameraPhotoStopReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[54]
+	mi := &file_djicloud_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3244,7 +3152,7 @@ func (x *CameraPhotoStopReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraPhotoStopReq.ProtoReflect.Descriptor instead.
 func (*CameraPhotoStopReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{54}
+	return file_djicloud_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *CameraPhotoStopReq) GetDeviceSn() string {
@@ -3274,7 +3182,7 @@ type CameraRecordingStartReq struct {
 
 func (x *CameraRecordingStartReq) Reset() {
 	*x = CameraRecordingStartReq{}
-	mi := &file_djicloud_proto_msgTypes[55]
+	mi := &file_djicloud_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3286,7 +3194,7 @@ func (x *CameraRecordingStartReq) String() string {
 func (*CameraRecordingStartReq) ProtoMessage() {}
 
 func (x *CameraRecordingStartReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[55]
+	mi := &file_djicloud_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3299,7 +3207,7 @@ func (x *CameraRecordingStartReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraRecordingStartReq.ProtoReflect.Descriptor instead.
 func (*CameraRecordingStartReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{55}
+	return file_djicloud_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *CameraRecordingStartReq) GetDeviceSn() string {
@@ -3329,7 +3237,7 @@ type CameraRecordingStopReq struct {
 
 func (x *CameraRecordingStopReq) Reset() {
 	*x = CameraRecordingStopReq{}
-	mi := &file_djicloud_proto_msgTypes[56]
+	mi := &file_djicloud_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3341,7 +3249,7 @@ func (x *CameraRecordingStopReq) String() string {
 func (*CameraRecordingStopReq) ProtoMessage() {}
 
 func (x *CameraRecordingStopReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[56]
+	mi := &file_djicloud_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3354,7 +3262,7 @@ func (x *CameraRecordingStopReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraRecordingStopReq.ProtoReflect.Descriptor instead.
 func (*CameraRecordingStopReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{56}
+	return file_djicloud_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *CameraRecordingStopReq) GetDeviceSn() string {
@@ -3388,7 +3296,7 @@ type CameraFocalLengthSetReq struct {
 
 func (x *CameraFocalLengthSetReq) Reset() {
 	*x = CameraFocalLengthSetReq{}
-	mi := &file_djicloud_proto_msgTypes[57]
+	mi := &file_djicloud_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3400,7 +3308,7 @@ func (x *CameraFocalLengthSetReq) String() string {
 func (*CameraFocalLengthSetReq) ProtoMessage() {}
 
 func (x *CameraFocalLengthSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[57]
+	mi := &file_djicloud_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3413,7 +3321,7 @@ func (x *CameraFocalLengthSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraFocalLengthSetReq.ProtoReflect.Descriptor instead.
 func (*CameraFocalLengthSetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{57}
+	return file_djicloud_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *CameraFocalLengthSetReq) GetDeviceSn() string {
@@ -3459,7 +3367,7 @@ type GimbalResetReq struct {
 
 func (x *GimbalResetReq) Reset() {
 	*x = GimbalResetReq{}
-	mi := &file_djicloud_proto_msgTypes[58]
+	mi := &file_djicloud_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3471,7 +3379,7 @@ func (x *GimbalResetReq) String() string {
 func (*GimbalResetReq) ProtoMessage() {}
 
 func (x *GimbalResetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[58]
+	mi := &file_djicloud_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3484,7 +3392,7 @@ func (x *GimbalResetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GimbalResetReq.ProtoReflect.Descriptor instead.
 func (*GimbalResetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{58}
+	return file_djicloud_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *GimbalResetReq) GetDeviceSn() string {
@@ -3529,7 +3437,7 @@ type CameraAimReq struct {
 
 func (x *CameraAimReq) Reset() {
 	*x = CameraAimReq{}
-	mi := &file_djicloud_proto_msgTypes[59]
+	mi := &file_djicloud_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3541,7 +3449,7 @@ func (x *CameraAimReq) String() string {
 func (*CameraAimReq) ProtoMessage() {}
 
 func (x *CameraAimReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[59]
+	mi := &file_djicloud_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3554,7 +3462,7 @@ func (x *CameraAimReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraAimReq.ProtoReflect.Descriptor instead.
 func (*CameraAimReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{59}
+	return file_djicloud_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *CameraAimReq) GetDeviceSn() string {
@@ -3618,7 +3526,7 @@ type CameraPointFocusActionReq struct {
 
 func (x *CameraPointFocusActionReq) Reset() {
 	*x = CameraPointFocusActionReq{}
-	mi := &file_djicloud_proto_msgTypes[60]
+	mi := &file_djicloud_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3630,7 +3538,7 @@ func (x *CameraPointFocusActionReq) String() string {
 func (*CameraPointFocusActionReq) ProtoMessage() {}
 
 func (x *CameraPointFocusActionReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[60]
+	mi := &file_djicloud_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3643,7 +3551,7 @@ func (x *CameraPointFocusActionReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraPointFocusActionReq.ProtoReflect.Descriptor instead.
 func (*CameraPointFocusActionReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{60}
+	return file_djicloud_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *CameraPointFocusActionReq) GetDeviceSn() string {
@@ -3696,7 +3604,7 @@ type CameraScreenSplitReq struct {
 
 func (x *CameraScreenSplitReq) Reset() {
 	*x = CameraScreenSplitReq{}
-	mi := &file_djicloud_proto_msgTypes[61]
+	mi := &file_djicloud_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3708,7 +3616,7 @@ func (x *CameraScreenSplitReq) String() string {
 func (*CameraScreenSplitReq) ProtoMessage() {}
 
 func (x *CameraScreenSplitReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[61]
+	mi := &file_djicloud_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3721,7 +3629,7 @@ func (x *CameraScreenSplitReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraScreenSplitReq.ProtoReflect.Descriptor instead.
 func (*CameraScreenSplitReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{61}
+	return file_djicloud_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *CameraScreenSplitReq) GetDeviceSn() string {
@@ -3760,7 +3668,7 @@ type CameraPhotoStorageSetReq struct {
 
 func (x *CameraPhotoStorageSetReq) Reset() {
 	*x = CameraPhotoStorageSetReq{}
-	mi := &file_djicloud_proto_msgTypes[62]
+	mi := &file_djicloud_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3772,7 +3680,7 @@ func (x *CameraPhotoStorageSetReq) String() string {
 func (*CameraPhotoStorageSetReq) ProtoMessage() {}
 
 func (x *CameraPhotoStorageSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[62]
+	mi := &file_djicloud_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3785,7 +3693,7 @@ func (x *CameraPhotoStorageSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraPhotoStorageSetReq.ProtoReflect.Descriptor instead.
 func (*CameraPhotoStorageSetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{62}
+	return file_djicloud_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *CameraPhotoStorageSetReq) GetDeviceSn() string {
@@ -3824,7 +3732,7 @@ type CameraVideoStorageSetReq struct {
 
 func (x *CameraVideoStorageSetReq) Reset() {
 	*x = CameraVideoStorageSetReq{}
-	mi := &file_djicloud_proto_msgTypes[63]
+	mi := &file_djicloud_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3836,7 +3744,7 @@ func (x *CameraVideoStorageSetReq) String() string {
 func (*CameraVideoStorageSetReq) ProtoMessage() {}
 
 func (x *CameraVideoStorageSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[63]
+	mi := &file_djicloud_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3849,7 +3757,7 @@ func (x *CameraVideoStorageSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraVideoStorageSetReq.ProtoReflect.Descriptor instead.
 func (*CameraVideoStorageSetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{63}
+	return file_djicloud_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *CameraVideoStorageSetReq) GetDeviceSn() string {
@@ -3894,7 +3802,7 @@ type CameraLookAtReq struct {
 
 func (x *CameraLookAtReq) Reset() {
 	*x = CameraLookAtReq{}
-	mi := &file_djicloud_proto_msgTypes[64]
+	mi := &file_djicloud_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3906,7 +3814,7 @@ func (x *CameraLookAtReq) String() string {
 func (*CameraLookAtReq) ProtoMessage() {}
 
 func (x *CameraLookAtReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[64]
+	mi := &file_djicloud_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3919,7 +3827,7 @@ func (x *CameraLookAtReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraLookAtReq.ProtoReflect.Descriptor instead.
 func (*CameraLookAtReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{64}
+	return file_djicloud_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *CameraLookAtReq) GetDeviceSn() string {
@@ -3985,7 +3893,7 @@ type CameraScreenDragReq struct {
 
 func (x *CameraScreenDragReq) Reset() {
 	*x = CameraScreenDragReq{}
-	mi := &file_djicloud_proto_msgTypes[65]
+	mi := &file_djicloud_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3997,7 +3905,7 @@ func (x *CameraScreenDragReq) String() string {
 func (*CameraScreenDragReq) ProtoMessage() {}
 
 func (x *CameraScreenDragReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[65]
+	mi := &file_djicloud_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4010,7 +3918,7 @@ func (x *CameraScreenDragReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraScreenDragReq.ProtoReflect.Descriptor instead.
 func (*CameraScreenDragReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{65}
+	return file_djicloud_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *CameraScreenDragReq) GetDeviceSn() string {
@@ -4072,7 +3980,7 @@ type CameraIrMeteringPointReq struct {
 
 func (x *CameraIrMeteringPointReq) Reset() {
 	*x = CameraIrMeteringPointReq{}
-	mi := &file_djicloud_proto_msgTypes[66]
+	mi := &file_djicloud_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4084,7 +3992,7 @@ func (x *CameraIrMeteringPointReq) String() string {
 func (*CameraIrMeteringPointReq) ProtoMessage() {}
 
 func (x *CameraIrMeteringPointReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[66]
+	mi := &file_djicloud_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4097,7 +4005,7 @@ func (x *CameraIrMeteringPointReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraIrMeteringPointReq.ProtoReflect.Descriptor instead.
 func (*CameraIrMeteringPointReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{66}
+	return file_djicloud_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *CameraIrMeteringPointReq) GetDeviceSn() string {
@@ -4149,7 +4057,7 @@ type CameraIrMeteringAreaReq struct {
 
 func (x *CameraIrMeteringAreaReq) Reset() {
 	*x = CameraIrMeteringAreaReq{}
-	mi := &file_djicloud_proto_msgTypes[67]
+	mi := &file_djicloud_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4161,7 +4069,7 @@ func (x *CameraIrMeteringAreaReq) String() string {
 func (*CameraIrMeteringAreaReq) ProtoMessage() {}
 
 func (x *CameraIrMeteringAreaReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[67]
+	mi := &file_djicloud_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4174,7 +4082,7 @@ func (x *CameraIrMeteringAreaReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraIrMeteringAreaReq.ProtoReflect.Descriptor instead.
 func (*CameraIrMeteringAreaReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{67}
+	return file_djicloud_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *CameraIrMeteringAreaReq) GetDeviceSn() string {
@@ -4233,7 +4141,7 @@ type FlightAreasUpdateReq struct {
 
 func (x *FlightAreasUpdateReq) Reset() {
 	*x = FlightAreasUpdateReq{}
-	mi := &file_djicloud_proto_msgTypes[68]
+	mi := &file_djicloud_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4245,7 +4153,7 @@ func (x *FlightAreasUpdateReq) String() string {
 func (*FlightAreasUpdateReq) ProtoMessage() {}
 
 func (x *FlightAreasUpdateReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[68]
+	mi := &file_djicloud_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4258,7 +4166,7 @@ func (x *FlightAreasUpdateReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlightAreasUpdateReq.ProtoReflect.Descriptor instead.
 func (*FlightAreasUpdateReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{68}
+	return file_djicloud_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *FlightAreasUpdateReq) GetDeviceSn() string {
@@ -4292,7 +4200,7 @@ type PsdkUIResourceUploadReq struct {
 
 func (x *PsdkUIResourceUploadReq) Reset() {
 	*x = PsdkUIResourceUploadReq{}
-	mi := &file_djicloud_proto_msgTypes[69]
+	mi := &file_djicloud_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4304,7 +4212,7 @@ func (x *PsdkUIResourceUploadReq) String() string {
 func (*PsdkUIResourceUploadReq) ProtoMessage() {}
 
 func (x *PsdkUIResourceUploadReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[69]
+	mi := &file_djicloud_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4317,7 +4225,7 @@ func (x *PsdkUIResourceUploadReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PsdkUIResourceUploadReq.ProtoReflect.Descriptor instead.
 func (*PsdkUIResourceUploadReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{69}
+	return file_djicloud_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *PsdkUIResourceUploadReq) GetDeviceSn() string {
@@ -4362,7 +4270,7 @@ type CustomDataTransmissionToPsdkReq struct {
 
 func (x *CustomDataTransmissionToPsdkReq) Reset() {
 	*x = CustomDataTransmissionToPsdkReq{}
-	mi := &file_djicloud_proto_msgTypes[70]
+	mi := &file_djicloud_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4374,7 +4282,7 @@ func (x *CustomDataTransmissionToPsdkReq) String() string {
 func (*CustomDataTransmissionToPsdkReq) ProtoMessage() {}
 
 func (x *CustomDataTransmissionToPsdkReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[70]
+	mi := &file_djicloud_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4387,7 +4295,7 @@ func (x *CustomDataTransmissionToPsdkReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CustomDataTransmissionToPsdkReq.ProtoReflect.Descriptor instead.
 func (*CustomDataTransmissionToPsdkReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{70}
+	return file_djicloud_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *CustomDataTransmissionToPsdkReq) GetDeviceSn() string {
@@ -4418,7 +4326,7 @@ type CustomDataTransmissionToEsdkReq struct {
 
 func (x *CustomDataTransmissionToEsdkReq) Reset() {
 	*x = CustomDataTransmissionToEsdkReq{}
-	mi := &file_djicloud_proto_msgTypes[71]
+	mi := &file_djicloud_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4430,7 +4338,7 @@ func (x *CustomDataTransmissionToEsdkReq) String() string {
 func (*CustomDataTransmissionToEsdkReq) ProtoMessage() {}
 
 func (x *CustomDataTransmissionToEsdkReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[71]
+	mi := &file_djicloud_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4443,7 +4351,7 @@ func (x *CustomDataTransmissionToEsdkReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CustomDataTransmissionToEsdkReq.ProtoReflect.Descriptor instead.
 func (*CustomDataTransmissionToEsdkReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{71}
+	return file_djicloud_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *CustomDataTransmissionToEsdkReq) GetDeviceSn() string {
@@ -4475,7 +4383,7 @@ type UnlockLicenseSwitchReq struct {
 
 func (x *UnlockLicenseSwitchReq) Reset() {
 	*x = UnlockLicenseSwitchReq{}
-	mi := &file_djicloud_proto_msgTypes[72]
+	mi := &file_djicloud_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4487,7 +4395,7 @@ func (x *UnlockLicenseSwitchReq) String() string {
 func (*UnlockLicenseSwitchReq) ProtoMessage() {}
 
 func (x *UnlockLicenseSwitchReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[72]
+	mi := &file_djicloud_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4500,7 +4408,7 @@ func (x *UnlockLicenseSwitchReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnlockLicenseSwitchReq.ProtoReflect.Descriptor instead.
 func (*UnlockLicenseSwitchReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{72}
+	return file_djicloud_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *UnlockLicenseSwitchReq) GetDeviceSn() string {
@@ -4537,7 +4445,7 @@ type UnlockLicenseFileRef struct {
 
 func (x *UnlockLicenseFileRef) Reset() {
 	*x = UnlockLicenseFileRef{}
-	mi := &file_djicloud_proto_msgTypes[73]
+	mi := &file_djicloud_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4549,7 +4457,7 @@ func (x *UnlockLicenseFileRef) String() string {
 func (*UnlockLicenseFileRef) ProtoMessage() {}
 
 func (x *UnlockLicenseFileRef) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[73]
+	mi := &file_djicloud_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4562,7 +4470,7 @@ func (x *UnlockLicenseFileRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnlockLicenseFileRef.ProtoReflect.Descriptor instead.
 func (*UnlockLicenseFileRef) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{73}
+	return file_djicloud_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *UnlockLicenseFileRef) GetUrl() string {
@@ -4592,7 +4500,7 @@ type UnlockLicenseUpdateReq struct {
 
 func (x *UnlockLicenseUpdateReq) Reset() {
 	*x = UnlockLicenseUpdateReq{}
-	mi := &file_djicloud_proto_msgTypes[74]
+	mi := &file_djicloud_proto_msgTypes[72]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4604,7 +4512,7 @@ func (x *UnlockLicenseUpdateReq) String() string {
 func (*UnlockLicenseUpdateReq) ProtoMessage() {}
 
 func (x *UnlockLicenseUpdateReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[74]
+	mi := &file_djicloud_proto_msgTypes[72]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4617,7 +4525,7 @@ func (x *UnlockLicenseUpdateReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnlockLicenseUpdateReq.ProtoReflect.Descriptor instead.
 func (*UnlockLicenseUpdateReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{74}
+	return file_djicloud_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *UnlockLicenseUpdateReq) GetDeviceSn() string {
@@ -4647,7 +4555,7 @@ type UnlockLicenseListReq struct {
 
 func (x *UnlockLicenseListReq) Reset() {
 	*x = UnlockLicenseListReq{}
-	mi := &file_djicloud_proto_msgTypes[75]
+	mi := &file_djicloud_proto_msgTypes[73]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4659,7 +4567,7 @@ func (x *UnlockLicenseListReq) String() string {
 func (*UnlockLicenseListReq) ProtoMessage() {}
 
 func (x *UnlockLicenseListReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[75]
+	mi := &file_djicloud_proto_msgTypes[73]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4672,7 +4580,7 @@ func (x *UnlockLicenseListReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnlockLicenseListReq.ProtoReflect.Descriptor instead.
 func (*UnlockLicenseListReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{75}
+	return file_djicloud_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *UnlockLicenseListReq) GetDeviceSn() string {
@@ -4709,7 +4617,7 @@ type DrcModeEnterReq struct {
 
 func (x *DrcModeEnterReq) Reset() {
 	*x = DrcModeEnterReq{}
-	mi := &file_djicloud_proto_msgTypes[76]
+	mi := &file_djicloud_proto_msgTypes[74]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4721,7 +4629,7 @@ func (x *DrcModeEnterReq) String() string {
 func (*DrcModeEnterReq) ProtoMessage() {}
 
 func (x *DrcModeEnterReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[76]
+	mi := &file_djicloud_proto_msgTypes[74]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4734,7 +4642,7 @@ func (x *DrcModeEnterReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcModeEnterReq.ProtoReflect.Descriptor instead.
 func (*DrcModeEnterReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{76}
+	return file_djicloud_proto_rawDescGZIP(), []int{74}
 }
 
 func (x *DrcModeEnterReq) GetDeviceSn() string {
@@ -4775,7 +4683,7 @@ type DrcModeExitReq struct {
 
 func (x *DrcModeExitReq) Reset() {
 	*x = DrcModeExitReq{}
-	mi := &file_djicloud_proto_msgTypes[77]
+	mi := &file_djicloud_proto_msgTypes[75]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4787,7 +4695,7 @@ func (x *DrcModeExitReq) String() string {
 func (*DrcModeExitReq) ProtoMessage() {}
 
 func (x *DrcModeExitReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[77]
+	mi := &file_djicloud_proto_msgTypes[75]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4800,7 +4708,7 @@ func (x *DrcModeExitReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcModeExitReq.ProtoReflect.Descriptor instead.
 func (*DrcModeExitReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{77}
+	return file_djicloud_proto_rawDescGZIP(), []int{75}
 }
 
 func (x *DrcModeExitReq) GetDeviceSn() string {
@@ -4820,7 +4728,7 @@ type DroneEmergencyStopReq struct {
 
 func (x *DroneEmergencyStopReq) Reset() {
 	*x = DroneEmergencyStopReq{}
-	mi := &file_djicloud_proto_msgTypes[78]
+	mi := &file_djicloud_proto_msgTypes[76]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4832,7 +4740,7 @@ func (x *DroneEmergencyStopReq) String() string {
 func (*DroneEmergencyStopReq) ProtoMessage() {}
 
 func (x *DroneEmergencyStopReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[78]
+	mi := &file_djicloud_proto_msgTypes[76]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4845,7 +4753,7 @@ func (x *DroneEmergencyStopReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DroneEmergencyStopReq.ProtoReflect.Descriptor instead.
 func (*DroneEmergencyStopReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{78}
+	return file_djicloud_proto_rawDescGZIP(), []int{76}
 }
 
 func (x *DroneEmergencyStopReq) GetDeviceSn() string {
@@ -4878,7 +4786,7 @@ type StickControlReq struct {
 
 func (x *StickControlReq) Reset() {
 	*x = StickControlReq{}
-	mi := &file_djicloud_proto_msgTypes[79]
+	mi := &file_djicloud_proto_msgTypes[77]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4890,7 +4798,7 @@ func (x *StickControlReq) String() string {
 func (*StickControlReq) ProtoMessage() {}
 
 func (x *StickControlReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[79]
+	mi := &file_djicloud_proto_msgTypes[77]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4903,7 +4811,7 @@ func (x *StickControlReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StickControlReq.ProtoReflect.Descriptor instead.
 func (*StickControlReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{79}
+	return file_djicloud_proto_rawDescGZIP(), []int{77}
 }
 
 func (x *StickControlReq) GetDeviceSn() string {
@@ -4958,7 +4866,7 @@ type DrcForceLandingReq struct {
 
 func (x *DrcForceLandingReq) Reset() {
 	*x = DrcForceLandingReq{}
-	mi := &file_djicloud_proto_msgTypes[80]
+	mi := &file_djicloud_proto_msgTypes[78]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4970,7 +4878,7 @@ func (x *DrcForceLandingReq) String() string {
 func (*DrcForceLandingReq) ProtoMessage() {}
 
 func (x *DrcForceLandingReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[80]
+	mi := &file_djicloud_proto_msgTypes[78]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4983,7 +4891,7 @@ func (x *DrcForceLandingReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcForceLandingReq.ProtoReflect.Descriptor instead.
 func (*DrcForceLandingReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{80}
+	return file_djicloud_proto_rawDescGZIP(), []int{78}
 }
 
 func (x *DrcForceLandingReq) GetDeviceSn() string {
@@ -5003,7 +4911,7 @@ type DrcEmergencyLandingReq struct {
 
 func (x *DrcEmergencyLandingReq) Reset() {
 	*x = DrcEmergencyLandingReq{}
-	mi := &file_djicloud_proto_msgTypes[81]
+	mi := &file_djicloud_proto_msgTypes[79]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5015,7 +4923,7 @@ func (x *DrcEmergencyLandingReq) String() string {
 func (*DrcEmergencyLandingReq) ProtoMessage() {}
 
 func (x *DrcEmergencyLandingReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[81]
+	mi := &file_djicloud_proto_msgTypes[79]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5028,7 +4936,7 @@ func (x *DrcEmergencyLandingReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcEmergencyLandingReq.ProtoReflect.Descriptor instead.
 func (*DrcEmergencyLandingReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{81}
+	return file_djicloud_proto_rawDescGZIP(), []int{79}
 }
 
 func (x *DrcEmergencyLandingReq) GetDeviceSn() string {
@@ -5053,7 +4961,7 @@ type DrcLinkageZoomSetReq struct {
 
 func (x *DrcLinkageZoomSetReq) Reset() {
 	*x = DrcLinkageZoomSetReq{}
-	mi := &file_djicloud_proto_msgTypes[82]
+	mi := &file_djicloud_proto_msgTypes[80]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5065,7 +4973,7 @@ func (x *DrcLinkageZoomSetReq) String() string {
 func (*DrcLinkageZoomSetReq) ProtoMessage() {}
 
 func (x *DrcLinkageZoomSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[82]
+	mi := &file_djicloud_proto_msgTypes[80]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5078,7 +4986,7 @@ func (x *DrcLinkageZoomSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcLinkageZoomSetReq.ProtoReflect.Descriptor instead.
 func (*DrcLinkageZoomSetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{82}
+	return file_djicloud_proto_rawDescGZIP(), []int{80}
 }
 
 func (x *DrcLinkageZoomSetReq) GetDeviceSn() string {
@@ -5117,7 +5025,7 @@ type DrcVideoResolutionSetReq struct {
 
 func (x *DrcVideoResolutionSetReq) Reset() {
 	*x = DrcVideoResolutionSetReq{}
-	mi := &file_djicloud_proto_msgTypes[83]
+	mi := &file_djicloud_proto_msgTypes[81]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5129,7 +5037,7 @@ func (x *DrcVideoResolutionSetReq) String() string {
 func (*DrcVideoResolutionSetReq) ProtoMessage() {}
 
 func (x *DrcVideoResolutionSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[83]
+	mi := &file_djicloud_proto_msgTypes[81]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5142,7 +5050,7 @@ func (x *DrcVideoResolutionSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcVideoResolutionSetReq.ProtoReflect.Descriptor instead.
 func (*DrcVideoResolutionSetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{83}
+	return file_djicloud_proto_rawDescGZIP(), []int{81}
 }
 
 func (x *DrcVideoResolutionSetReq) GetDeviceSn() string {
@@ -5181,7 +5089,7 @@ type DrcIntervalPhotoSetReq struct {
 
 func (x *DrcIntervalPhotoSetReq) Reset() {
 	*x = DrcIntervalPhotoSetReq{}
-	mi := &file_djicloud_proto_msgTypes[84]
+	mi := &file_djicloud_proto_msgTypes[82]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5193,7 +5101,7 @@ func (x *DrcIntervalPhotoSetReq) String() string {
 func (*DrcIntervalPhotoSetReq) ProtoMessage() {}
 
 func (x *DrcIntervalPhotoSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[84]
+	mi := &file_djicloud_proto_msgTypes[82]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5206,7 +5114,7 @@ func (x *DrcIntervalPhotoSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcIntervalPhotoSetReq.ProtoReflect.Descriptor instead.
 func (*DrcIntervalPhotoSetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{84}
+	return file_djicloud_proto_rawDescGZIP(), []int{82}
 }
 
 func (x *DrcIntervalPhotoSetReq) GetDeviceSn() string {
@@ -5240,7 +5148,7 @@ type DrcInitialStateSubscribeReq struct {
 
 func (x *DrcInitialStateSubscribeReq) Reset() {
 	*x = DrcInitialStateSubscribeReq{}
-	mi := &file_djicloud_proto_msgTypes[85]
+	mi := &file_djicloud_proto_msgTypes[83]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5252,7 +5160,7 @@ func (x *DrcInitialStateSubscribeReq) String() string {
 func (*DrcInitialStateSubscribeReq) ProtoMessage() {}
 
 func (x *DrcInitialStateSubscribeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[85]
+	mi := &file_djicloud_proto_msgTypes[83]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5265,7 +5173,7 @@ func (x *DrcInitialStateSubscribeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcInitialStateSubscribeReq.ProtoReflect.Descriptor instead.
 func (*DrcInitialStateSubscribeReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{85}
+	return file_djicloud_proto_rawDescGZIP(), []int{83}
 }
 
 func (x *DrcInitialStateSubscribeReq) GetDeviceSn() string {
@@ -5288,7 +5196,7 @@ type DrcNightLightsStateSetReq struct {
 
 func (x *DrcNightLightsStateSetReq) Reset() {
 	*x = DrcNightLightsStateSetReq{}
-	mi := &file_djicloud_proto_msgTypes[86]
+	mi := &file_djicloud_proto_msgTypes[84]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5300,7 +5208,7 @@ func (x *DrcNightLightsStateSetReq) String() string {
 func (*DrcNightLightsStateSetReq) ProtoMessage() {}
 
 func (x *DrcNightLightsStateSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[86]
+	mi := &file_djicloud_proto_msgTypes[84]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5313,7 +5221,7 @@ func (x *DrcNightLightsStateSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcNightLightsStateSetReq.ProtoReflect.Descriptor instead.
 func (*DrcNightLightsStateSetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{86}
+	return file_djicloud_proto_rawDescGZIP(), []int{84}
 }
 
 func (x *DrcNightLightsStateSetReq) GetDeviceSn() string {
@@ -5343,7 +5251,7 @@ type DrcStealthStateSetReq struct {
 
 func (x *DrcStealthStateSetReq) Reset() {
 	*x = DrcStealthStateSetReq{}
-	mi := &file_djicloud_proto_msgTypes[87]
+	mi := &file_djicloud_proto_msgTypes[85]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5355,7 +5263,7 @@ func (x *DrcStealthStateSetReq) String() string {
 func (*DrcStealthStateSetReq) ProtoMessage() {}
 
 func (x *DrcStealthStateSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[87]
+	mi := &file_djicloud_proto_msgTypes[85]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5368,7 +5276,7 @@ func (x *DrcStealthStateSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcStealthStateSetReq.ProtoReflect.Descriptor instead.
 func (*DrcStealthStateSetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{87}
+	return file_djicloud_proto_rawDescGZIP(), []int{85}
 }
 
 func (x *DrcStealthStateSetReq) GetDeviceSn() string {
@@ -5402,7 +5310,7 @@ type DrcCameraApertureValueSetReq struct {
 
 func (x *DrcCameraApertureValueSetReq) Reset() {
 	*x = DrcCameraApertureValueSetReq{}
-	mi := &file_djicloud_proto_msgTypes[88]
+	mi := &file_djicloud_proto_msgTypes[86]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5414,7 +5322,7 @@ func (x *DrcCameraApertureValueSetReq) String() string {
 func (*DrcCameraApertureValueSetReq) ProtoMessage() {}
 
 func (x *DrcCameraApertureValueSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[88]
+	mi := &file_djicloud_proto_msgTypes[86]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5427,7 +5335,7 @@ func (x *DrcCameraApertureValueSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcCameraApertureValueSetReq.ProtoReflect.Descriptor instead.
 func (*DrcCameraApertureValueSetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{88}
+	return file_djicloud_proto_rawDescGZIP(), []int{86}
 }
 
 func (x *DrcCameraApertureValueSetReq) GetDeviceSn() string {
@@ -5475,7 +5383,7 @@ type DrcCameraShutterSetReq struct {
 
 func (x *DrcCameraShutterSetReq) Reset() {
 	*x = DrcCameraShutterSetReq{}
-	mi := &file_djicloud_proto_msgTypes[89]
+	mi := &file_djicloud_proto_msgTypes[87]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5487,7 +5395,7 @@ func (x *DrcCameraShutterSetReq) String() string {
 func (*DrcCameraShutterSetReq) ProtoMessage() {}
 
 func (x *DrcCameraShutterSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[89]
+	mi := &file_djicloud_proto_msgTypes[87]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5500,7 +5408,7 @@ func (x *DrcCameraShutterSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcCameraShutterSetReq.ProtoReflect.Descriptor instead.
 func (*DrcCameraShutterSetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{89}
+	return file_djicloud_proto_rawDescGZIP(), []int{87}
 }
 
 func (x *DrcCameraShutterSetReq) GetDeviceSn() string {
@@ -5548,7 +5456,7 @@ type DrcCameraIsoSetReq struct {
 
 func (x *DrcCameraIsoSetReq) Reset() {
 	*x = DrcCameraIsoSetReq{}
-	mi := &file_djicloud_proto_msgTypes[90]
+	mi := &file_djicloud_proto_msgTypes[88]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5560,7 +5468,7 @@ func (x *DrcCameraIsoSetReq) String() string {
 func (*DrcCameraIsoSetReq) ProtoMessage() {}
 
 func (x *DrcCameraIsoSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[90]
+	mi := &file_djicloud_proto_msgTypes[88]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5573,7 +5481,7 @@ func (x *DrcCameraIsoSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcCameraIsoSetReq.ProtoReflect.Descriptor instead.
 func (*DrcCameraIsoSetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{90}
+	return file_djicloud_proto_rawDescGZIP(), []int{88}
 }
 
 func (x *DrcCameraIsoSetReq) GetDeviceSn() string {
@@ -5621,7 +5529,7 @@ type DrcCameraMechanicalShutterSetReq struct {
 
 func (x *DrcCameraMechanicalShutterSetReq) Reset() {
 	*x = DrcCameraMechanicalShutterSetReq{}
-	mi := &file_djicloud_proto_msgTypes[91]
+	mi := &file_djicloud_proto_msgTypes[89]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5633,7 +5541,7 @@ func (x *DrcCameraMechanicalShutterSetReq) String() string {
 func (*DrcCameraMechanicalShutterSetReq) ProtoMessage() {}
 
 func (x *DrcCameraMechanicalShutterSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[91]
+	mi := &file_djicloud_proto_msgTypes[89]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5646,7 +5554,7 @@ func (x *DrcCameraMechanicalShutterSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcCameraMechanicalShutterSetReq.ProtoReflect.Descriptor instead.
 func (*DrcCameraMechanicalShutterSetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{91}
+	return file_djicloud_proto_rawDescGZIP(), []int{89}
 }
 
 func (x *DrcCameraMechanicalShutterSetReq) GetDeviceSn() string {
@@ -5694,7 +5602,7 @@ type DrcCameraDewarpingSetReq struct {
 
 func (x *DrcCameraDewarpingSetReq) Reset() {
 	*x = DrcCameraDewarpingSetReq{}
-	mi := &file_djicloud_proto_msgTypes[92]
+	mi := &file_djicloud_proto_msgTypes[90]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5706,7 +5614,7 @@ func (x *DrcCameraDewarpingSetReq) String() string {
 func (*DrcCameraDewarpingSetReq) ProtoMessage() {}
 
 func (x *DrcCameraDewarpingSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[92]
+	mi := &file_djicloud_proto_msgTypes[90]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5719,7 +5627,7 @@ func (x *DrcCameraDewarpingSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcCameraDewarpingSetReq.ProtoReflect.Descriptor instead.
 func (*DrcCameraDewarpingSetReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{92}
+	return file_djicloud_proto_rawDescGZIP(), []int{90}
 }
 
 func (x *DrcCameraDewarpingSetReq) GetDeviceSn() string {
@@ -5760,7 +5668,7 @@ type DroneEmergencyStopRes struct {
 
 func (x *DroneEmergencyStopRes) Reset() {
 	*x = DroneEmergencyStopRes{}
-	mi := &file_djicloud_proto_msgTypes[93]
+	mi := &file_djicloud_proto_msgTypes[91]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5772,7 +5680,7 @@ func (x *DroneEmergencyStopRes) String() string {
 func (*DroneEmergencyStopRes) ProtoMessage() {}
 
 func (x *DroneEmergencyStopRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[93]
+	mi := &file_djicloud_proto_msgTypes[91]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5785,7 +5693,7 @@ func (x *DroneEmergencyStopRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DroneEmergencyStopRes.ProtoReflect.Descriptor instead.
 func (*DroneEmergencyStopRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{93}
+	return file_djicloud_proto_rawDescGZIP(), []int{91}
 }
 
 func (x *DroneEmergencyStopRes) GetSeq() int32 {
@@ -5805,7 +5713,7 @@ type StickControlRes struct {
 
 func (x *StickControlRes) Reset() {
 	*x = StickControlRes{}
-	mi := &file_djicloud_proto_msgTypes[94]
+	mi := &file_djicloud_proto_msgTypes[92]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5817,7 +5725,7 @@ func (x *StickControlRes) String() string {
 func (*StickControlRes) ProtoMessage() {}
 
 func (x *StickControlRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[94]
+	mi := &file_djicloud_proto_msgTypes[92]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5830,7 +5738,7 @@ func (x *StickControlRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StickControlRes.ProtoReflect.Descriptor instead.
 func (*StickControlRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{94}
+	return file_djicloud_proto_rawDescGZIP(), []int{92}
 }
 
 func (x *StickControlRes) GetSeq() int32 {
@@ -5850,7 +5758,7 @@ type DrcForceLandingRes struct {
 
 func (x *DrcForceLandingRes) Reset() {
 	*x = DrcForceLandingRes{}
-	mi := &file_djicloud_proto_msgTypes[95]
+	mi := &file_djicloud_proto_msgTypes[93]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5862,7 +5770,7 @@ func (x *DrcForceLandingRes) String() string {
 func (*DrcForceLandingRes) ProtoMessage() {}
 
 func (x *DrcForceLandingRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[95]
+	mi := &file_djicloud_proto_msgTypes[93]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5875,7 +5783,7 @@ func (x *DrcForceLandingRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcForceLandingRes.ProtoReflect.Descriptor instead.
 func (*DrcForceLandingRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{95}
+	return file_djicloud_proto_rawDescGZIP(), []int{93}
 }
 
 func (x *DrcForceLandingRes) GetSeq() int32 {
@@ -5895,7 +5803,7 @@ type DrcEmergencyLandingRes struct {
 
 func (x *DrcEmergencyLandingRes) Reset() {
 	*x = DrcEmergencyLandingRes{}
-	mi := &file_djicloud_proto_msgTypes[96]
+	mi := &file_djicloud_proto_msgTypes[94]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5907,7 +5815,7 @@ func (x *DrcEmergencyLandingRes) String() string {
 func (*DrcEmergencyLandingRes) ProtoMessage() {}
 
 func (x *DrcEmergencyLandingRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[96]
+	mi := &file_djicloud_proto_msgTypes[94]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5920,7 +5828,7 @@ func (x *DrcEmergencyLandingRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcEmergencyLandingRes.ProtoReflect.Descriptor instead.
 func (*DrcEmergencyLandingRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{96}
+	return file_djicloud_proto_rawDescGZIP(), []int{94}
 }
 
 func (x *DrcEmergencyLandingRes) GetSeq() int32 {
@@ -5940,7 +5848,7 @@ type DrcInitialStateSubscribeRes struct {
 
 func (x *DrcInitialStateSubscribeRes) Reset() {
 	*x = DrcInitialStateSubscribeRes{}
-	mi := &file_djicloud_proto_msgTypes[97]
+	mi := &file_djicloud_proto_msgTypes[95]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5952,7 +5860,7 @@ func (x *DrcInitialStateSubscribeRes) String() string {
 func (*DrcInitialStateSubscribeRes) ProtoMessage() {}
 
 func (x *DrcInitialStateSubscribeRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[97]
+	mi := &file_djicloud_proto_msgTypes[95]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5965,7 +5873,7 @@ func (x *DrcInitialStateSubscribeRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcInitialStateSubscribeRes.ProtoReflect.Descriptor instead.
 func (*DrcInitialStateSubscribeRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{97}
+	return file_djicloud_proto_rawDescGZIP(), []int{95}
 }
 
 func (x *DrcInitialStateSubscribeRes) GetSeq() int32 {
@@ -5985,7 +5893,7 @@ type DrcLinkageZoomSetRes struct {
 
 func (x *DrcLinkageZoomSetRes) Reset() {
 	*x = DrcLinkageZoomSetRes{}
-	mi := &file_djicloud_proto_msgTypes[98]
+	mi := &file_djicloud_proto_msgTypes[96]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5997,7 +5905,7 @@ func (x *DrcLinkageZoomSetRes) String() string {
 func (*DrcLinkageZoomSetRes) ProtoMessage() {}
 
 func (x *DrcLinkageZoomSetRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[98]
+	mi := &file_djicloud_proto_msgTypes[96]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6010,7 +5918,7 @@ func (x *DrcLinkageZoomSetRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcLinkageZoomSetRes.ProtoReflect.Descriptor instead.
 func (*DrcLinkageZoomSetRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{98}
+	return file_djicloud_proto_rawDescGZIP(), []int{96}
 }
 
 func (x *DrcLinkageZoomSetRes) GetSeq() int32 {
@@ -6030,7 +5938,7 @@ type DrcVideoResolutionSetRes struct {
 
 func (x *DrcVideoResolutionSetRes) Reset() {
 	*x = DrcVideoResolutionSetRes{}
-	mi := &file_djicloud_proto_msgTypes[99]
+	mi := &file_djicloud_proto_msgTypes[97]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6042,7 +5950,7 @@ func (x *DrcVideoResolutionSetRes) String() string {
 func (*DrcVideoResolutionSetRes) ProtoMessage() {}
 
 func (x *DrcVideoResolutionSetRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[99]
+	mi := &file_djicloud_proto_msgTypes[97]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6055,7 +5963,7 @@ func (x *DrcVideoResolutionSetRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcVideoResolutionSetRes.ProtoReflect.Descriptor instead.
 func (*DrcVideoResolutionSetRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{99}
+	return file_djicloud_proto_rawDescGZIP(), []int{97}
 }
 
 func (x *DrcVideoResolutionSetRes) GetSeq() int32 {
@@ -6075,7 +5983,7 @@ type DrcIntervalPhotoSetRes struct {
 
 func (x *DrcIntervalPhotoSetRes) Reset() {
 	*x = DrcIntervalPhotoSetRes{}
-	mi := &file_djicloud_proto_msgTypes[100]
+	mi := &file_djicloud_proto_msgTypes[98]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6087,7 +5995,7 @@ func (x *DrcIntervalPhotoSetRes) String() string {
 func (*DrcIntervalPhotoSetRes) ProtoMessage() {}
 
 func (x *DrcIntervalPhotoSetRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[100]
+	mi := &file_djicloud_proto_msgTypes[98]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6100,7 +6008,7 @@ func (x *DrcIntervalPhotoSetRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcIntervalPhotoSetRes.ProtoReflect.Descriptor instead.
 func (*DrcIntervalPhotoSetRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{100}
+	return file_djicloud_proto_rawDescGZIP(), []int{98}
 }
 
 func (x *DrcIntervalPhotoSetRes) GetSeq() int32 {
@@ -6120,7 +6028,7 @@ type DrcNightLightsStateSetRes struct {
 
 func (x *DrcNightLightsStateSetRes) Reset() {
 	*x = DrcNightLightsStateSetRes{}
-	mi := &file_djicloud_proto_msgTypes[101]
+	mi := &file_djicloud_proto_msgTypes[99]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6132,7 +6040,7 @@ func (x *DrcNightLightsStateSetRes) String() string {
 func (*DrcNightLightsStateSetRes) ProtoMessage() {}
 
 func (x *DrcNightLightsStateSetRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[101]
+	mi := &file_djicloud_proto_msgTypes[99]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6145,7 +6053,7 @@ func (x *DrcNightLightsStateSetRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcNightLightsStateSetRes.ProtoReflect.Descriptor instead.
 func (*DrcNightLightsStateSetRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{101}
+	return file_djicloud_proto_rawDescGZIP(), []int{99}
 }
 
 func (x *DrcNightLightsStateSetRes) GetSeq() int32 {
@@ -6165,7 +6073,7 @@ type DrcStealthStateSetRes struct {
 
 func (x *DrcStealthStateSetRes) Reset() {
 	*x = DrcStealthStateSetRes{}
-	mi := &file_djicloud_proto_msgTypes[102]
+	mi := &file_djicloud_proto_msgTypes[100]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6177,7 +6085,7 @@ func (x *DrcStealthStateSetRes) String() string {
 func (*DrcStealthStateSetRes) ProtoMessage() {}
 
 func (x *DrcStealthStateSetRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[102]
+	mi := &file_djicloud_proto_msgTypes[100]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6190,7 +6098,7 @@ func (x *DrcStealthStateSetRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcStealthStateSetRes.ProtoReflect.Descriptor instead.
 func (*DrcStealthStateSetRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{102}
+	return file_djicloud_proto_rawDescGZIP(), []int{100}
 }
 
 func (x *DrcStealthStateSetRes) GetSeq() int32 {
@@ -6210,7 +6118,7 @@ type DrcCameraApertureValueSetRes struct {
 
 func (x *DrcCameraApertureValueSetRes) Reset() {
 	*x = DrcCameraApertureValueSetRes{}
-	mi := &file_djicloud_proto_msgTypes[103]
+	mi := &file_djicloud_proto_msgTypes[101]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6222,7 +6130,7 @@ func (x *DrcCameraApertureValueSetRes) String() string {
 func (*DrcCameraApertureValueSetRes) ProtoMessage() {}
 
 func (x *DrcCameraApertureValueSetRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[103]
+	mi := &file_djicloud_proto_msgTypes[101]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6235,7 +6143,7 @@ func (x *DrcCameraApertureValueSetRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcCameraApertureValueSetRes.ProtoReflect.Descriptor instead.
 func (*DrcCameraApertureValueSetRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{103}
+	return file_djicloud_proto_rawDescGZIP(), []int{101}
 }
 
 func (x *DrcCameraApertureValueSetRes) GetSeq() int32 {
@@ -6255,7 +6163,7 @@ type DrcCameraShutterSetRes struct {
 
 func (x *DrcCameraShutterSetRes) Reset() {
 	*x = DrcCameraShutterSetRes{}
-	mi := &file_djicloud_proto_msgTypes[104]
+	mi := &file_djicloud_proto_msgTypes[102]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6267,7 +6175,7 @@ func (x *DrcCameraShutterSetRes) String() string {
 func (*DrcCameraShutterSetRes) ProtoMessage() {}
 
 func (x *DrcCameraShutterSetRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[104]
+	mi := &file_djicloud_proto_msgTypes[102]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6280,7 +6188,7 @@ func (x *DrcCameraShutterSetRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcCameraShutterSetRes.ProtoReflect.Descriptor instead.
 func (*DrcCameraShutterSetRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{104}
+	return file_djicloud_proto_rawDescGZIP(), []int{102}
 }
 
 func (x *DrcCameraShutterSetRes) GetSeq() int32 {
@@ -6300,7 +6208,7 @@ type DrcCameraIsoSetRes struct {
 
 func (x *DrcCameraIsoSetRes) Reset() {
 	*x = DrcCameraIsoSetRes{}
-	mi := &file_djicloud_proto_msgTypes[105]
+	mi := &file_djicloud_proto_msgTypes[103]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6312,7 +6220,7 @@ func (x *DrcCameraIsoSetRes) String() string {
 func (*DrcCameraIsoSetRes) ProtoMessage() {}
 
 func (x *DrcCameraIsoSetRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[105]
+	mi := &file_djicloud_proto_msgTypes[103]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6325,7 +6233,7 @@ func (x *DrcCameraIsoSetRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcCameraIsoSetRes.ProtoReflect.Descriptor instead.
 func (*DrcCameraIsoSetRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{105}
+	return file_djicloud_proto_rawDescGZIP(), []int{103}
 }
 
 func (x *DrcCameraIsoSetRes) GetSeq() int32 {
@@ -6345,7 +6253,7 @@ type DrcCameraMechanicalShutterSetRes struct {
 
 func (x *DrcCameraMechanicalShutterSetRes) Reset() {
 	*x = DrcCameraMechanicalShutterSetRes{}
-	mi := &file_djicloud_proto_msgTypes[106]
+	mi := &file_djicloud_proto_msgTypes[104]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6357,7 +6265,7 @@ func (x *DrcCameraMechanicalShutterSetRes) String() string {
 func (*DrcCameraMechanicalShutterSetRes) ProtoMessage() {}
 
 func (x *DrcCameraMechanicalShutterSetRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[106]
+	mi := &file_djicloud_proto_msgTypes[104]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6370,7 +6278,7 @@ func (x *DrcCameraMechanicalShutterSetRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcCameraMechanicalShutterSetRes.ProtoReflect.Descriptor instead.
 func (*DrcCameraMechanicalShutterSetRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{106}
+	return file_djicloud_proto_rawDescGZIP(), []int{104}
 }
 
 func (x *DrcCameraMechanicalShutterSetRes) GetSeq() int32 {
@@ -6390,7 +6298,7 @@ type DrcCameraDewarpingSetRes struct {
 
 func (x *DrcCameraDewarpingSetRes) Reset() {
 	*x = DrcCameraDewarpingSetRes{}
-	mi := &file_djicloud_proto_msgTypes[107]
+	mi := &file_djicloud_proto_msgTypes[105]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6402,7 +6310,7 @@ func (x *DrcCameraDewarpingSetRes) String() string {
 func (*DrcCameraDewarpingSetRes) ProtoMessage() {}
 
 func (x *DrcCameraDewarpingSetRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[107]
+	mi := &file_djicloud_proto_msgTypes[105]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6415,7 +6323,7 @@ func (x *DrcCameraDewarpingSetRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcCameraDewarpingSetRes.ProtoReflect.Descriptor instead.
 func (*DrcCameraDewarpingSetRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{107}
+	return file_djicloud_proto_rawDescGZIP(), []int{105}
 }
 
 func (x *DrcCameraDewarpingSetRes) GetSeq() int32 {
@@ -6435,7 +6343,7 @@ type IsDeviceOnlineReq struct {
 
 func (x *IsDeviceOnlineReq) Reset() {
 	*x = IsDeviceOnlineReq{}
-	mi := &file_djicloud_proto_msgTypes[108]
+	mi := &file_djicloud_proto_msgTypes[106]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6447,7 +6355,7 @@ func (x *IsDeviceOnlineReq) String() string {
 func (*IsDeviceOnlineReq) ProtoMessage() {}
 
 func (x *IsDeviceOnlineReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[108]
+	mi := &file_djicloud_proto_msgTypes[106]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6460,7 +6368,7 @@ func (x *IsDeviceOnlineReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IsDeviceOnlineReq.ProtoReflect.Descriptor instead.
 func (*IsDeviceOnlineReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{108}
+	return file_djicloud_proto_rawDescGZIP(), []int{106}
 }
 
 func (x *IsDeviceOnlineReq) GetDeviceSn() string {
@@ -6481,7 +6389,7 @@ type DeviceOnlineRes struct {
 
 func (x *DeviceOnlineRes) Reset() {
 	*x = DeviceOnlineRes{}
-	mi := &file_djicloud_proto_msgTypes[109]
+	mi := &file_djicloud_proto_msgTypes[107]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6493,7 +6401,7 @@ func (x *DeviceOnlineRes) String() string {
 func (*DeviceOnlineRes) ProtoMessage() {}
 
 func (x *DeviceOnlineRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[109]
+	mi := &file_djicloud_proto_msgTypes[107]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6506,7 +6414,7 @@ func (x *DeviceOnlineRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceOnlineRes.ProtoReflect.Descriptor instead.
 func (*DeviceOnlineRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{109}
+	return file_djicloud_proto_rawDescGZIP(), []int{107}
 }
 
 func (x *DeviceOnlineRes) GetIsOnline() bool {
@@ -6549,7 +6457,7 @@ type DeviceInfo struct {
 
 func (x *DeviceInfo) Reset() {
 	*x = DeviceInfo{}
-	mi := &file_djicloud_proto_msgTypes[110]
+	mi := &file_djicloud_proto_msgTypes[108]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6561,7 +6469,7 @@ func (x *DeviceInfo) String() string {
 func (*DeviceInfo) ProtoMessage() {}
 
 func (x *DeviceInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[110]
+	mi := &file_djicloud_proto_msgTypes[108]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6574,7 +6482,7 @@ func (x *DeviceInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceInfo.ProtoReflect.Descriptor instead.
 func (*DeviceInfo) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{110}
+	return file_djicloud_proto_rawDescGZIP(), []int{108}
 }
 
 func (x *DeviceInfo) GetId() int64 {
@@ -6671,7 +6579,7 @@ type DeviceTopoInfo struct {
 
 func (x *DeviceTopoInfo) Reset() {
 	*x = DeviceTopoInfo{}
-	mi := &file_djicloud_proto_msgTypes[111]
+	mi := &file_djicloud_proto_msgTypes[109]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6683,7 +6591,7 @@ func (x *DeviceTopoInfo) String() string {
 func (*DeviceTopoInfo) ProtoMessage() {}
 
 func (x *DeviceTopoInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[111]
+	mi := &file_djicloud_proto_msgTypes[109]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6696,7 +6604,7 @@ func (x *DeviceTopoInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceTopoInfo.ProtoReflect.Descriptor instead.
 func (*DeviceTopoInfo) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{111}
+	return file_djicloud_proto_rawDescGZIP(), []int{109}
 }
 
 func (x *DeviceTopoInfo) GetGatewaySn() string {
@@ -6764,7 +6672,7 @@ type DeviceTelemetrySnapshotBrief struct {
 
 func (x *DeviceTelemetrySnapshotBrief) Reset() {
 	*x = DeviceTelemetrySnapshotBrief{}
-	mi := &file_djicloud_proto_msgTypes[112]
+	mi := &file_djicloud_proto_msgTypes[110]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6776,7 +6684,7 @@ func (x *DeviceTelemetrySnapshotBrief) String() string {
 func (*DeviceTelemetrySnapshotBrief) ProtoMessage() {}
 
 func (x *DeviceTelemetrySnapshotBrief) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[112]
+	mi := &file_djicloud_proto_msgTypes[110]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6789,7 +6697,7 @@ func (x *DeviceTelemetrySnapshotBrief) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceTelemetrySnapshotBrief.ProtoReflect.Descriptor instead.
 func (*DeviceTelemetrySnapshotBrief) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{112}
+	return file_djicloud_proto_rawDescGZIP(), []int{110}
 }
 
 func (x *DeviceTelemetrySnapshotBrief) GetDeviceSn() string {
@@ -6845,7 +6753,7 @@ type DockFlightTaskStateInfo struct {
 
 func (x *DockFlightTaskStateInfo) Reset() {
 	*x = DockFlightTaskStateInfo{}
-	mi := &file_djicloud_proto_msgTypes[113]
+	mi := &file_djicloud_proto_msgTypes[111]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6857,7 +6765,7 @@ func (x *DockFlightTaskStateInfo) String() string {
 func (*DockFlightTaskStateInfo) ProtoMessage() {}
 
 func (x *DockFlightTaskStateInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[113]
+	mi := &file_djicloud_proto_msgTypes[111]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6870,7 +6778,7 @@ func (x *DockFlightTaskStateInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DockFlightTaskStateInfo.ProtoReflect.Descriptor instead.
 func (*DockFlightTaskStateInfo) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{113}
+	return file_djicloud_proto_rawDescGZIP(), []int{111}
 }
 
 func (x *DockFlightTaskStateInfo) GetGatewaySn() string {
@@ -6970,7 +6878,7 @@ type DeviceListItem struct {
 
 func (x *DeviceListItem) Reset() {
 	*x = DeviceListItem{}
-	mi := &file_djicloud_proto_msgTypes[114]
+	mi := &file_djicloud_proto_msgTypes[112]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6982,7 +6890,7 @@ func (x *DeviceListItem) String() string {
 func (*DeviceListItem) ProtoMessage() {}
 
 func (x *DeviceListItem) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[114]
+	mi := &file_djicloud_proto_msgTypes[112]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6995,7 +6903,7 @@ func (x *DeviceListItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceListItem.ProtoReflect.Descriptor instead.
 func (*DeviceListItem) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{114}
+	return file_djicloud_proto_rawDescGZIP(), []int{112}
 }
 
 func (x *DeviceListItem) GetDevice() *DeviceInfo {
@@ -7055,7 +6963,7 @@ type ListDevicesReq struct {
 
 func (x *ListDevicesReq) Reset() {
 	*x = ListDevicesReq{}
-	mi := &file_djicloud_proto_msgTypes[115]
+	mi := &file_djicloud_proto_msgTypes[113]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7067,7 +6975,7 @@ func (x *ListDevicesReq) String() string {
 func (*ListDevicesReq) ProtoMessage() {}
 
 func (x *ListDevicesReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[115]
+	mi := &file_djicloud_proto_msgTypes[113]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7080,7 +6988,7 @@ func (x *ListDevicesReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDevicesReq.ProtoReflect.Descriptor instead.
 func (*ListDevicesReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{115}
+	return file_djicloud_proto_rawDescGZIP(), []int{113}
 }
 
 func (x *ListDevicesReq) GetPage() int64 {
@@ -7138,7 +7046,7 @@ type ListDevicesRes struct {
 
 func (x *ListDevicesRes) Reset() {
 	*x = ListDevicesRes{}
-	mi := &file_djicloud_proto_msgTypes[116]
+	mi := &file_djicloud_proto_msgTypes[114]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7150,7 +7058,7 @@ func (x *ListDevicesRes) String() string {
 func (*ListDevicesRes) ProtoMessage() {}
 
 func (x *ListDevicesRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[116]
+	mi := &file_djicloud_proto_msgTypes[114]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7163,7 +7071,7 @@ func (x *ListDevicesRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDevicesRes.ProtoReflect.Descriptor instead.
 func (*ListDevicesRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{116}
+	return file_djicloud_proto_rawDescGZIP(), []int{114}
 }
 
 func (x *ListDevicesRes) GetTotal() int64 {
@@ -7190,7 +7098,7 @@ type GetDeviceDetailReq struct {
 
 func (x *GetDeviceDetailReq) Reset() {
 	*x = GetDeviceDetailReq{}
-	mi := &file_djicloud_proto_msgTypes[117]
+	mi := &file_djicloud_proto_msgTypes[115]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7202,7 +7110,7 @@ func (x *GetDeviceDetailReq) String() string {
 func (*GetDeviceDetailReq) ProtoMessage() {}
 
 func (x *GetDeviceDetailReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[117]
+	mi := &file_djicloud_proto_msgTypes[115]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7215,7 +7123,7 @@ func (x *GetDeviceDetailReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceDetailReq.ProtoReflect.Descriptor instead.
 func (*GetDeviceDetailReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{117}
+	return file_djicloud_proto_rawDescGZIP(), []int{115}
 }
 
 func (x *GetDeviceDetailReq) GetDeviceSn() string {
@@ -7239,7 +7147,7 @@ type DeviceOsdSnapshot struct {
 
 func (x *DeviceOsdSnapshot) Reset() {
 	*x = DeviceOsdSnapshot{}
-	mi := &file_djicloud_proto_msgTypes[118]
+	mi := &file_djicloud_proto_msgTypes[116]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7251,7 +7159,7 @@ func (x *DeviceOsdSnapshot) String() string {
 func (*DeviceOsdSnapshot) ProtoMessage() {}
 
 func (x *DeviceOsdSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[118]
+	mi := &file_djicloud_proto_msgTypes[116]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7264,7 +7172,7 @@ func (x *DeviceOsdSnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceOsdSnapshot.ProtoReflect.Descriptor instead.
 func (*DeviceOsdSnapshot) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{118}
+	return file_djicloud_proto_rawDescGZIP(), []int{116}
 }
 
 func (x *DeviceOsdSnapshot) GetDeviceSn() string {
@@ -7305,7 +7213,7 @@ type DeviceOsdSnapshotRes struct {
 
 func (x *DeviceOsdSnapshotRes) Reset() {
 	*x = DeviceOsdSnapshotRes{}
-	mi := &file_djicloud_proto_msgTypes[119]
+	mi := &file_djicloud_proto_msgTypes[117]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7317,7 +7225,7 @@ func (x *DeviceOsdSnapshotRes) String() string {
 func (*DeviceOsdSnapshotRes) ProtoMessage() {}
 
 func (x *DeviceOsdSnapshotRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[119]
+	mi := &file_djicloud_proto_msgTypes[117]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7330,7 +7238,7 @@ func (x *DeviceOsdSnapshotRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceOsdSnapshotRes.ProtoReflect.Descriptor instead.
 func (*DeviceOsdSnapshotRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{119}
+	return file_djicloud_proto_rawDescGZIP(), []int{117}
 }
 
 func (x *DeviceOsdSnapshotRes) GetData() *DeviceOsdSnapshot {
@@ -7354,7 +7262,7 @@ type DeviceStateSnapshot struct {
 
 func (x *DeviceStateSnapshot) Reset() {
 	*x = DeviceStateSnapshot{}
-	mi := &file_djicloud_proto_msgTypes[120]
+	mi := &file_djicloud_proto_msgTypes[118]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7366,7 +7274,7 @@ func (x *DeviceStateSnapshot) String() string {
 func (*DeviceStateSnapshot) ProtoMessage() {}
 
 func (x *DeviceStateSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[120]
+	mi := &file_djicloud_proto_msgTypes[118]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7379,7 +7287,7 @@ func (x *DeviceStateSnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceStateSnapshot.ProtoReflect.Descriptor instead.
 func (*DeviceStateSnapshot) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{120}
+	return file_djicloud_proto_rawDescGZIP(), []int{118}
 }
 
 func (x *DeviceStateSnapshot) GetDeviceSn() string {
@@ -7420,7 +7328,7 @@ type DeviceStateSnapshotRes struct {
 
 func (x *DeviceStateSnapshotRes) Reset() {
 	*x = DeviceStateSnapshotRes{}
-	mi := &file_djicloud_proto_msgTypes[121]
+	mi := &file_djicloud_proto_msgTypes[119]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7432,7 +7340,7 @@ func (x *DeviceStateSnapshotRes) String() string {
 func (*DeviceStateSnapshotRes) ProtoMessage() {}
 
 func (x *DeviceStateSnapshotRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[121]
+	mi := &file_djicloud_proto_msgTypes[119]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7445,7 +7353,7 @@ func (x *DeviceStateSnapshotRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceStateSnapshotRes.ProtoReflect.Descriptor instead.
 func (*DeviceStateSnapshotRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{121}
+	return file_djicloud_proto_rawDescGZIP(), []int{119}
 }
 
 func (x *DeviceStateSnapshotRes) GetData() *DeviceStateSnapshot {
@@ -7468,7 +7376,7 @@ type DeviceDetailRes struct {
 
 func (x *DeviceDetailRes) Reset() {
 	*x = DeviceDetailRes{}
-	mi := &file_djicloud_proto_msgTypes[122]
+	mi := &file_djicloud_proto_msgTypes[120]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7480,7 +7388,7 @@ func (x *DeviceDetailRes) String() string {
 func (*DeviceDetailRes) ProtoMessage() {}
 
 func (x *DeviceDetailRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[122]
+	mi := &file_djicloud_proto_msgTypes[120]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7493,7 +7401,7 @@ func (x *DeviceDetailRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceDetailRes.ProtoReflect.Descriptor instead.
 func (*DeviceDetailRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{122}
+	return file_djicloud_proto_rawDescGZIP(), []int{120}
 }
 
 func (x *DeviceDetailRes) GetDevice() *DeviceInfo {
@@ -7534,7 +7442,7 @@ type GetDeviceOsdSnapshotReq struct {
 
 func (x *GetDeviceOsdSnapshotReq) Reset() {
 	*x = GetDeviceOsdSnapshotReq{}
-	mi := &file_djicloud_proto_msgTypes[123]
+	mi := &file_djicloud_proto_msgTypes[121]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7546,7 +7454,7 @@ func (x *GetDeviceOsdSnapshotReq) String() string {
 func (*GetDeviceOsdSnapshotReq) ProtoMessage() {}
 
 func (x *GetDeviceOsdSnapshotReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[123]
+	mi := &file_djicloud_proto_msgTypes[121]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7559,7 +7467,7 @@ func (x *GetDeviceOsdSnapshotReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceOsdSnapshotReq.ProtoReflect.Descriptor instead.
 func (*GetDeviceOsdSnapshotReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{123}
+	return file_djicloud_proto_rawDescGZIP(), []int{121}
 }
 
 func (x *GetDeviceOsdSnapshotReq) GetDeviceSn() string {
@@ -7579,7 +7487,7 @@ type GetDeviceStateSnapshotReq struct {
 
 func (x *GetDeviceStateSnapshotReq) Reset() {
 	*x = GetDeviceStateSnapshotReq{}
-	mi := &file_djicloud_proto_msgTypes[124]
+	mi := &file_djicloud_proto_msgTypes[122]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7591,7 +7499,7 @@ func (x *GetDeviceStateSnapshotReq) String() string {
 func (*GetDeviceStateSnapshotReq) ProtoMessage() {}
 
 func (x *GetDeviceStateSnapshotReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[124]
+	mi := &file_djicloud_proto_msgTypes[122]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7604,7 +7512,7 @@ func (x *GetDeviceStateSnapshotReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceStateSnapshotReq.ProtoReflect.Descriptor instead.
 func (*GetDeviceStateSnapshotReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{124}
+	return file_djicloud_proto_rawDescGZIP(), []int{122}
 }
 
 func (x *GetDeviceStateSnapshotReq) GetDeviceSn() string {
@@ -7639,7 +7547,7 @@ type HmsAlertInfo struct {
 
 func (x *HmsAlertInfo) Reset() {
 	*x = HmsAlertInfo{}
-	mi := &file_djicloud_proto_msgTypes[125]
+	mi := &file_djicloud_proto_msgTypes[123]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7651,7 +7559,7 @@ func (x *HmsAlertInfo) String() string {
 func (*HmsAlertInfo) ProtoMessage() {}
 
 func (x *HmsAlertInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[125]
+	mi := &file_djicloud_proto_msgTypes[123]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7664,7 +7572,7 @@ func (x *HmsAlertInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HmsAlertInfo.ProtoReflect.Descriptor instead.
 func (*HmsAlertInfo) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{125}
+	return file_djicloud_proto_rawDescGZIP(), []int{123}
 }
 
 func (x *HmsAlertInfo) GetId() int64 {
@@ -7790,7 +7698,7 @@ type ListHmsAlertsReq struct {
 
 func (x *ListHmsAlertsReq) Reset() {
 	*x = ListHmsAlertsReq{}
-	mi := &file_djicloud_proto_msgTypes[126]
+	mi := &file_djicloud_proto_msgTypes[124]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7802,7 +7710,7 @@ func (x *ListHmsAlertsReq) String() string {
 func (*ListHmsAlertsReq) ProtoMessage() {}
 
 func (x *ListHmsAlertsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[126]
+	mi := &file_djicloud_proto_msgTypes[124]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7815,7 +7723,7 @@ func (x *ListHmsAlertsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListHmsAlertsReq.ProtoReflect.Descriptor instead.
 func (*ListHmsAlertsReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{126}
+	return file_djicloud_proto_rawDescGZIP(), []int{124}
 }
 
 func (x *ListHmsAlertsReq) GetPage() int64 {
@@ -7866,7 +7774,7 @@ type ListHmsAlertsRes struct {
 
 func (x *ListHmsAlertsRes) Reset() {
 	*x = ListHmsAlertsRes{}
-	mi := &file_djicloud_proto_msgTypes[127]
+	mi := &file_djicloud_proto_msgTypes[125]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7878,7 +7786,7 @@ func (x *ListHmsAlertsRes) String() string {
 func (*ListHmsAlertsRes) ProtoMessage() {}
 
 func (x *ListHmsAlertsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[127]
+	mi := &file_djicloud_proto_msgTypes[125]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7891,7 +7799,7 @@ func (x *ListHmsAlertsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListHmsAlertsRes.ProtoReflect.Descriptor instead.
 func (*ListHmsAlertsRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{127}
+	return file_djicloud_proto_rawDescGZIP(), []int{125}
 }
 
 func (x *ListHmsAlertsRes) GetTotal() int64 {
@@ -7919,7 +7827,7 @@ type AckHmsAlertReq struct {
 
 func (x *AckHmsAlertReq) Reset() {
 	*x = AckHmsAlertReq{}
-	mi := &file_djicloud_proto_msgTypes[128]
+	mi := &file_djicloud_proto_msgTypes[126]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7931,7 +7839,7 @@ func (x *AckHmsAlertReq) String() string {
 func (*AckHmsAlertReq) ProtoMessage() {}
 
 func (x *AckHmsAlertReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[128]
+	mi := &file_djicloud_proto_msgTypes[126]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7944,7 +7852,7 @@ func (x *AckHmsAlertReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AckHmsAlertReq.ProtoReflect.Descriptor instead.
 func (*AckHmsAlertReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{128}
+	return file_djicloud_proto_rawDescGZIP(), []int{126}
 }
 
 func (x *AckHmsAlertReq) GetId() int64 {
@@ -7986,7 +7894,7 @@ type FlightTaskProgressInfo struct {
 
 func (x *FlightTaskProgressInfo) Reset() {
 	*x = FlightTaskProgressInfo{}
-	mi := &file_djicloud_proto_msgTypes[129]
+	mi := &file_djicloud_proto_msgTypes[127]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7998,7 +7906,7 @@ func (x *FlightTaskProgressInfo) String() string {
 func (*FlightTaskProgressInfo) ProtoMessage() {}
 
 func (x *FlightTaskProgressInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[129]
+	mi := &file_djicloud_proto_msgTypes[127]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8011,7 +7919,7 @@ func (x *FlightTaskProgressInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlightTaskProgressInfo.ProtoReflect.Descriptor instead.
 func (*FlightTaskProgressInfo) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{129}
+	return file_djicloud_proto_rawDescGZIP(), []int{127}
 }
 
 func (x *FlightTaskProgressInfo) GetId() int64 {
@@ -8134,7 +8042,7 @@ type ListFlightTaskProgressReq struct {
 
 func (x *ListFlightTaskProgressReq) Reset() {
 	*x = ListFlightTaskProgressReq{}
-	mi := &file_djicloud_proto_msgTypes[130]
+	mi := &file_djicloud_proto_msgTypes[128]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8146,7 +8054,7 @@ func (x *ListFlightTaskProgressReq) String() string {
 func (*ListFlightTaskProgressReq) ProtoMessage() {}
 
 func (x *ListFlightTaskProgressReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[130]
+	mi := &file_djicloud_proto_msgTypes[128]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8159,7 +8067,7 @@ func (x *ListFlightTaskProgressReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFlightTaskProgressReq.ProtoReflect.Descriptor instead.
 func (*ListFlightTaskProgressReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{130}
+	return file_djicloud_proto_rawDescGZIP(), []int{128}
 }
 
 func (x *ListFlightTaskProgressReq) GetPage() int64 {
@@ -8203,7 +8111,7 @@ type ListFlightTaskProgressRes struct {
 
 func (x *ListFlightTaskProgressRes) Reset() {
 	*x = ListFlightTaskProgressRes{}
-	mi := &file_djicloud_proto_msgTypes[131]
+	mi := &file_djicloud_proto_msgTypes[129]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8215,7 +8123,7 @@ func (x *ListFlightTaskProgressRes) String() string {
 func (*ListFlightTaskProgressRes) ProtoMessage() {}
 
 func (x *ListFlightTaskProgressRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[131]
+	mi := &file_djicloud_proto_msgTypes[129]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8228,7 +8136,7 @@ func (x *ListFlightTaskProgressRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFlightTaskProgressRes.ProtoReflect.Descriptor instead.
 func (*ListFlightTaskProgressRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{131}
+	return file_djicloud_proto_rawDescGZIP(), []int{129}
 }
 
 func (x *ListFlightTaskProgressRes) GetTotal() int64 {
@@ -8255,7 +8163,7 @@ type GetFlightTaskProgressLastReq struct {
 
 func (x *GetFlightTaskProgressLastReq) Reset() {
 	*x = GetFlightTaskProgressLastReq{}
-	mi := &file_djicloud_proto_msgTypes[132]
+	mi := &file_djicloud_proto_msgTypes[130]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8267,7 +8175,7 @@ func (x *GetFlightTaskProgressLastReq) String() string {
 func (*GetFlightTaskProgressLastReq) ProtoMessage() {}
 
 func (x *GetFlightTaskProgressLastReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[132]
+	mi := &file_djicloud_proto_msgTypes[130]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8280,7 +8188,7 @@ func (x *GetFlightTaskProgressLastReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFlightTaskProgressLastReq.ProtoReflect.Descriptor instead.
 func (*GetFlightTaskProgressLastReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{132}
+	return file_djicloud_proto_rawDescGZIP(), []int{130}
 }
 
 func (x *GetFlightTaskProgressLastReq) GetDeviceSn() string {
@@ -8305,7 +8213,7 @@ type FlightTaskProgressLastRes struct {
 
 func (x *FlightTaskProgressLastRes) Reset() {
 	*x = FlightTaskProgressLastRes{}
-	mi := &file_djicloud_proto_msgTypes[133]
+	mi := &file_djicloud_proto_msgTypes[131]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8317,7 +8225,7 @@ func (x *FlightTaskProgressLastRes) String() string {
 func (*FlightTaskProgressLastRes) ProtoMessage() {}
 
 func (x *FlightTaskProgressLastRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[133]
+	mi := &file_djicloud_proto_msgTypes[131]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8330,7 +8238,7 @@ func (x *FlightTaskProgressLastRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlightTaskProgressLastRes.ProtoReflect.Descriptor instead.
 func (*FlightTaskProgressLastRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{133}
+	return file_djicloud_proto_rawDescGZIP(), []int{131}
 }
 
 func (x *FlightTaskProgressLastRes) GetHasProgress() bool {
@@ -8364,7 +8272,7 @@ type QueryDrcStatusReq struct {
 
 func (x *QueryDrcStatusReq) Reset() {
 	*x = QueryDrcStatusReq{}
-	mi := &file_djicloud_proto_msgTypes[134]
+	mi := &file_djicloud_proto_msgTypes[132]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8376,7 +8284,7 @@ func (x *QueryDrcStatusReq) String() string {
 func (*QueryDrcStatusReq) ProtoMessage() {}
 
 func (x *QueryDrcStatusReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[134]
+	mi := &file_djicloud_proto_msgTypes[132]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8389,7 +8297,7 @@ func (x *QueryDrcStatusReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryDrcStatusReq.ProtoReflect.Descriptor instead.
 func (*QueryDrcStatusReq) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{134}
+	return file_djicloud_proto_rawDescGZIP(), []int{132}
 }
 
 func (x *QueryDrcStatusReq) GetDeviceSn() string {
@@ -8418,7 +8326,7 @@ type DrcStatusRes struct {
 
 func (x *DrcStatusRes) Reset() {
 	*x = DrcStatusRes{}
-	mi := &file_djicloud_proto_msgTypes[135]
+	mi := &file_djicloud_proto_msgTypes[133]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8430,7 +8338,7 @@ func (x *DrcStatusRes) String() string {
 func (*DrcStatusRes) ProtoMessage() {}
 
 func (x *DrcStatusRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[135]
+	mi := &file_djicloud_proto_msgTypes[133]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8443,7 +8351,7 @@ func (x *DrcStatusRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcStatusRes.ProtoReflect.Descriptor instead.
 func (*DrcStatusRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{135}
+	return file_djicloud_proto_rawDescGZIP(), []int{133}
 }
 
 func (x *DrcStatusRes) GetEnabled() bool {
@@ -8485,11 +8393,7 @@ var File_djicloud_proto protoreflect.FileDescriptor
 
 const file_djicloud_proto_rawDesc = "" +
 	"\n" +
-	"\x0edjicloud.proto\x12\bdjicloud\"\x19\n" +
-	"\x03Req\x12\x12\n" +
-	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
-	"\x03Res\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong\"l\n" +
+	"\x0edjicloud.proto\x12\bdjicloud\"l\n" +
 	"\tCommonRes\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\x05R\x04code\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x10\n" +
@@ -9062,9 +8966,8 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x11started_at_millis\x18\x02 \x01(\tR\x0fstartedAtMillis\x12?\n" +
 	"\x1clast_device_heartbeat_millis\x18\x03 \x01(\tR\x19lastDeviceHeartbeatMillis\x12\x19\n" +
 	"\bnext_seq\x18\x04 \x01(\x05R\anextSeq\x12\x19\n" +
-	"\bis_alive\x18\x05 \x01(\bR\aisAlive2\xc0:\n" +
-	"\bDjiCloud\x12$\n" +
-	"\x04Ping\x12\r.djicloud.Req\x1a\r.djicloud.Res\x12<\n" +
+	"\bis_alive\x18\x05 \x01(\bR\aisAlive2\x9a:\n" +
+	"\bDjiCloud\x12<\n" +
 	"\vPropertySet\x12\x18.djicloud.PropertySetReq\x1a\x13.djicloud.CommonRes\x12@\n" +
 	"\rLiveStartPush\x12\x1a.djicloud.LiveStartPushReq\x1a\x13.djicloud.CommonRes\x12>\n" +
 	"\fLiveStopPush\x12\x19.djicloud.LiveStopPushReq\x1a\x13.djicloud.CommonRes\x12B\n" +
@@ -9182,366 +9085,362 @@ func file_djicloud_proto_rawDescGZIP() []byte {
 	return file_djicloud_proto_rawDescData
 }
 
-var file_djicloud_proto_msgTypes = make([]protoimpl.MessageInfo, 136)
+var file_djicloud_proto_msgTypes = make([]protoimpl.MessageInfo, 134)
 var file_djicloud_proto_goTypes = []any{
-	(*Req)(nil),                              // 0: djicloud.Req
-	(*Res)(nil),                              // 1: djicloud.Res
-	(*CommonRes)(nil),                        // 2: djicloud.CommonRes
-	(*PropertySetReq)(nil),                   // 3: djicloud.PropertySetReq
-	(*LiveStartPushReq)(nil),                 // 4: djicloud.LiveStartPushReq
-	(*LiveStopPushReq)(nil),                  // 5: djicloud.LiveStopPushReq
-	(*LiveSetQualityReq)(nil),                // 6: djicloud.LiveSetQualityReq
-	(*LiveLensChangeReq)(nil),                // 7: djicloud.LiveLensChangeReq
-	(*LiveCameraChangeReq)(nil),              // 8: djicloud.LiveCameraChangeReq
-	(*MediaFlighttaskReq)(nil),               // 9: djicloud.MediaFlighttaskReq
-	(*MediaFastUploadReq)(nil),               // 10: djicloud.MediaFastUploadReq
-	(*FlightTaskFileRef)(nil),                // 11: djicloud.FlightTaskFileRef
-	(*FlightTaskPrepareSimulateMission)(nil), // 12: djicloud.FlightTaskPrepareSimulateMission
-	(*FlightTaskPrepareBreakPoint)(nil),      // 13: djicloud.FlightTaskPrepareBreakPoint
-	(*FlightTaskPrepareReq)(nil),             // 14: djicloud.FlightTaskPrepareReq
-	(*FlightTaskExecuteReq)(nil),             // 15: djicloud.FlightTaskExecuteReq
-	(*FlightTaskUndoReq)(nil),                // 16: djicloud.FlightTaskUndoReq
-	(*PauseFlightTaskReq)(nil),               // 17: djicloud.PauseFlightTaskReq
-	(*FlightTaskRecoveryReq)(nil),            // 18: djicloud.FlightTaskRecoveryReq
-	(*StopFlightTaskReq)(nil),                // 19: djicloud.StopFlightTaskReq
-	(*ReturnHomeReq)(nil),                    // 20: djicloud.ReturnHomeReq
-	(*ReturnHomeCancelAutoReturnReq)(nil),    // 21: djicloud.ReturnHomeCancelAutoReturnReq
-	(*ReturnSpecificHomeReq)(nil),            // 22: djicloud.ReturnSpecificHomeReq
-	(*DebugModeOpenReq)(nil),                 // 23: djicloud.DebugModeOpenReq
-	(*DebugModeCloseReq)(nil),                // 24: djicloud.DebugModeCloseReq
-	(*CoverOpenReq)(nil),                     // 25: djicloud.CoverOpenReq
-	(*CoverCloseReq)(nil),                    // 26: djicloud.CoverCloseReq
-	(*CoverForceCloseReq)(nil),               // 27: djicloud.CoverForceCloseReq
-	(*DroneOpenReq)(nil),                     // 28: djicloud.DroneOpenReq
-	(*DroneCloseReq)(nil),                    // 29: djicloud.DroneCloseReq
-	(*DeviceRebootReq)(nil),                  // 30: djicloud.DeviceRebootReq
-	(*ChargeOpenReq)(nil),                    // 31: djicloud.ChargeOpenReq
-	(*ChargeCloseReq)(nil),                   // 32: djicloud.ChargeCloseReq
-	(*DroneFormatReq)(nil),                   // 33: djicloud.DroneFormatReq
-	(*DeviceFormatReq)(nil),                  // 34: djicloud.DeviceFormatReq
-	(*SupplementLightOpenReq)(nil),           // 35: djicloud.SupplementLightOpenReq
-	(*SupplementLightCloseReq)(nil),          // 36: djicloud.SupplementLightCloseReq
-	(*BatteryStoreModeReq)(nil),              // 37: djicloud.BatteryStoreModeReq
-	(*AlarmStateSwitchReq)(nil),              // 38: djicloud.AlarmStateSwitchReq
-	(*AirConditionerModeSwitchReq)(nil),      // 39: djicloud.AirConditionerModeSwitchReq
-	(*OtaDevice)(nil),                        // 40: djicloud.OtaDevice
-	(*OtaCreateReq)(nil),                     // 41: djicloud.OtaCreateReq
-	(*RemoteLogFileListReq)(nil),             // 42: djicloud.RemoteLogFileListReq
-	(*RemoteLogFile)(nil),                    // 43: djicloud.RemoteLogFile
-	(*RemoteLogFileUploadReq)(nil),           // 44: djicloud.RemoteLogFileUploadReq
-	(*ConfigUpdateReq)(nil),                  // 45: djicloud.ConfigUpdateReq
-	(*FlightAuthorityGrabReq)(nil),           // 46: djicloud.FlightAuthorityGrabReq
-	(*PayloadAuthorityGrabReq)(nil),          // 47: djicloud.PayloadAuthorityGrabReq
-	(*FlyToPointReq)(nil),                    // 48: djicloud.FlyToPointReq
-	(*Waypoint)(nil),                         // 49: djicloud.Waypoint
-	(*FlyToPointStopReq)(nil),                // 50: djicloud.FlyToPointStopReq
-	(*TakeoffToPointReq)(nil),                // 51: djicloud.TakeoffToPointReq
-	(*CameraModeSwitchReq)(nil),              // 52: djicloud.CameraModeSwitchReq
-	(*CameraPhotoTakeReq)(nil),               // 53: djicloud.CameraPhotoTakeReq
-	(*CameraPhotoStopReq)(nil),               // 54: djicloud.CameraPhotoStopReq
-	(*CameraRecordingStartReq)(nil),          // 55: djicloud.CameraRecordingStartReq
-	(*CameraRecordingStopReq)(nil),           // 56: djicloud.CameraRecordingStopReq
-	(*CameraFocalLengthSetReq)(nil),          // 57: djicloud.CameraFocalLengthSetReq
-	(*GimbalResetReq)(nil),                   // 58: djicloud.GimbalResetReq
-	(*CameraAimReq)(nil),                     // 59: djicloud.CameraAimReq
-	(*CameraPointFocusActionReq)(nil),        // 60: djicloud.CameraPointFocusActionReq
-	(*CameraScreenSplitReq)(nil),             // 61: djicloud.CameraScreenSplitReq
-	(*CameraPhotoStorageSetReq)(nil),         // 62: djicloud.CameraPhotoStorageSetReq
-	(*CameraVideoStorageSetReq)(nil),         // 63: djicloud.CameraVideoStorageSetReq
-	(*CameraLookAtReq)(nil),                  // 64: djicloud.CameraLookAtReq
-	(*CameraScreenDragReq)(nil),              // 65: djicloud.CameraScreenDragReq
-	(*CameraIrMeteringPointReq)(nil),         // 66: djicloud.CameraIrMeteringPointReq
-	(*CameraIrMeteringAreaReq)(nil),          // 67: djicloud.CameraIrMeteringAreaReq
-	(*FlightAreasUpdateReq)(nil),             // 68: djicloud.FlightAreasUpdateReq
-	(*PsdkUIResourceUploadReq)(nil),          // 69: djicloud.PsdkUIResourceUploadReq
-	(*CustomDataTransmissionToPsdkReq)(nil),  // 70: djicloud.CustomDataTransmissionToPsdkReq
-	(*CustomDataTransmissionToEsdkReq)(nil),  // 71: djicloud.CustomDataTransmissionToEsdkReq
-	(*UnlockLicenseSwitchReq)(nil),           // 72: djicloud.UnlockLicenseSwitchReq
-	(*UnlockLicenseFileRef)(nil),             // 73: djicloud.UnlockLicenseFileRef
-	(*UnlockLicenseUpdateReq)(nil),           // 74: djicloud.UnlockLicenseUpdateReq
-	(*UnlockLicenseListReq)(nil),             // 75: djicloud.UnlockLicenseListReq
-	(*DrcModeEnterReq)(nil),                  // 76: djicloud.DrcModeEnterReq
-	(*DrcModeExitReq)(nil),                   // 77: djicloud.DrcModeExitReq
-	(*DroneEmergencyStopReq)(nil),            // 78: djicloud.DroneEmergencyStopReq
-	(*StickControlReq)(nil),                  // 79: djicloud.StickControlReq
-	(*DrcForceLandingReq)(nil),               // 80: djicloud.DrcForceLandingReq
-	(*DrcEmergencyLandingReq)(nil),           // 81: djicloud.DrcEmergencyLandingReq
-	(*DrcLinkageZoomSetReq)(nil),             // 82: djicloud.DrcLinkageZoomSetReq
-	(*DrcVideoResolutionSetReq)(nil),         // 83: djicloud.DrcVideoResolutionSetReq
-	(*DrcIntervalPhotoSetReq)(nil),           // 84: djicloud.DrcIntervalPhotoSetReq
-	(*DrcInitialStateSubscribeReq)(nil),      // 85: djicloud.DrcInitialStateSubscribeReq
-	(*DrcNightLightsStateSetReq)(nil),        // 86: djicloud.DrcNightLightsStateSetReq
-	(*DrcStealthStateSetReq)(nil),            // 87: djicloud.DrcStealthStateSetReq
-	(*DrcCameraApertureValueSetReq)(nil),     // 88: djicloud.DrcCameraApertureValueSetReq
-	(*DrcCameraShutterSetReq)(nil),           // 89: djicloud.DrcCameraShutterSetReq
-	(*DrcCameraIsoSetReq)(nil),               // 90: djicloud.DrcCameraIsoSetReq
-	(*DrcCameraMechanicalShutterSetReq)(nil), // 91: djicloud.DrcCameraMechanicalShutterSetReq
-	(*DrcCameraDewarpingSetReq)(nil),         // 92: djicloud.DrcCameraDewarpingSetReq
-	(*DroneEmergencyStopRes)(nil),            // 93: djicloud.DroneEmergencyStopRes
-	(*StickControlRes)(nil),                  // 94: djicloud.StickControlRes
-	(*DrcForceLandingRes)(nil),               // 95: djicloud.DrcForceLandingRes
-	(*DrcEmergencyLandingRes)(nil),           // 96: djicloud.DrcEmergencyLandingRes
-	(*DrcInitialStateSubscribeRes)(nil),      // 97: djicloud.DrcInitialStateSubscribeRes
-	(*DrcLinkageZoomSetRes)(nil),             // 98: djicloud.DrcLinkageZoomSetRes
-	(*DrcVideoResolutionSetRes)(nil),         // 99: djicloud.DrcVideoResolutionSetRes
-	(*DrcIntervalPhotoSetRes)(nil),           // 100: djicloud.DrcIntervalPhotoSetRes
-	(*DrcNightLightsStateSetRes)(nil),        // 101: djicloud.DrcNightLightsStateSetRes
-	(*DrcStealthStateSetRes)(nil),            // 102: djicloud.DrcStealthStateSetRes
-	(*DrcCameraApertureValueSetRes)(nil),     // 103: djicloud.DrcCameraApertureValueSetRes
-	(*DrcCameraShutterSetRes)(nil),           // 104: djicloud.DrcCameraShutterSetRes
-	(*DrcCameraIsoSetRes)(nil),               // 105: djicloud.DrcCameraIsoSetRes
-	(*DrcCameraMechanicalShutterSetRes)(nil), // 106: djicloud.DrcCameraMechanicalShutterSetRes
-	(*DrcCameraDewarpingSetRes)(nil),         // 107: djicloud.DrcCameraDewarpingSetRes
-	(*IsDeviceOnlineReq)(nil),                // 108: djicloud.IsDeviceOnlineReq
-	(*DeviceOnlineRes)(nil),                  // 109: djicloud.DeviceOnlineRes
-	(*DeviceInfo)(nil),                       // 110: djicloud.DeviceInfo
-	(*DeviceTopoInfo)(nil),                   // 111: djicloud.DeviceTopoInfo
-	(*DeviceTelemetrySnapshotBrief)(nil),     // 112: djicloud.DeviceTelemetrySnapshotBrief
-	(*DockFlightTaskStateInfo)(nil),          // 113: djicloud.DockFlightTaskStateInfo
-	(*DeviceListItem)(nil),                   // 114: djicloud.DeviceListItem
-	(*ListDevicesReq)(nil),                   // 115: djicloud.ListDevicesReq
-	(*ListDevicesRes)(nil),                   // 116: djicloud.ListDevicesRes
-	(*GetDeviceDetailReq)(nil),               // 117: djicloud.GetDeviceDetailReq
-	(*DeviceOsdSnapshot)(nil),                // 118: djicloud.DeviceOsdSnapshot
-	(*DeviceOsdSnapshotRes)(nil),             // 119: djicloud.DeviceOsdSnapshotRes
-	(*DeviceStateSnapshot)(nil),              // 120: djicloud.DeviceStateSnapshot
-	(*DeviceStateSnapshotRes)(nil),           // 121: djicloud.DeviceStateSnapshotRes
-	(*DeviceDetailRes)(nil),                  // 122: djicloud.DeviceDetailRes
-	(*GetDeviceOsdSnapshotReq)(nil),          // 123: djicloud.GetDeviceOsdSnapshotReq
-	(*GetDeviceStateSnapshotReq)(nil),        // 124: djicloud.GetDeviceStateSnapshotReq
-	(*HmsAlertInfo)(nil),                     // 125: djicloud.HmsAlertInfo
-	(*ListHmsAlertsReq)(nil),                 // 126: djicloud.ListHmsAlertsReq
-	(*ListHmsAlertsRes)(nil),                 // 127: djicloud.ListHmsAlertsRes
-	(*AckHmsAlertReq)(nil),                   // 128: djicloud.AckHmsAlertReq
-	(*FlightTaskProgressInfo)(nil),           // 129: djicloud.FlightTaskProgressInfo
-	(*ListFlightTaskProgressReq)(nil),        // 130: djicloud.ListFlightTaskProgressReq
-	(*ListFlightTaskProgressRes)(nil),        // 131: djicloud.ListFlightTaskProgressRes
-	(*GetFlightTaskProgressLastReq)(nil),     // 132: djicloud.GetFlightTaskProgressLastReq
-	(*FlightTaskProgressLastRes)(nil),        // 133: djicloud.FlightTaskProgressLastRes
-	(*QueryDrcStatusReq)(nil),                // 134: djicloud.QueryDrcStatusReq
-	(*DrcStatusRes)(nil),                     // 135: djicloud.DrcStatusRes
+	(*CommonRes)(nil),                        // 0: djicloud.CommonRes
+	(*PropertySetReq)(nil),                   // 1: djicloud.PropertySetReq
+	(*LiveStartPushReq)(nil),                 // 2: djicloud.LiveStartPushReq
+	(*LiveStopPushReq)(nil),                  // 3: djicloud.LiveStopPushReq
+	(*LiveSetQualityReq)(nil),                // 4: djicloud.LiveSetQualityReq
+	(*LiveLensChangeReq)(nil),                // 5: djicloud.LiveLensChangeReq
+	(*LiveCameraChangeReq)(nil),              // 6: djicloud.LiveCameraChangeReq
+	(*MediaFlighttaskReq)(nil),               // 7: djicloud.MediaFlighttaskReq
+	(*MediaFastUploadReq)(nil),               // 8: djicloud.MediaFastUploadReq
+	(*FlightTaskFileRef)(nil),                // 9: djicloud.FlightTaskFileRef
+	(*FlightTaskPrepareSimulateMission)(nil), // 10: djicloud.FlightTaskPrepareSimulateMission
+	(*FlightTaskPrepareBreakPoint)(nil),      // 11: djicloud.FlightTaskPrepareBreakPoint
+	(*FlightTaskPrepareReq)(nil),             // 12: djicloud.FlightTaskPrepareReq
+	(*FlightTaskExecuteReq)(nil),             // 13: djicloud.FlightTaskExecuteReq
+	(*FlightTaskUndoReq)(nil),                // 14: djicloud.FlightTaskUndoReq
+	(*PauseFlightTaskReq)(nil),               // 15: djicloud.PauseFlightTaskReq
+	(*FlightTaskRecoveryReq)(nil),            // 16: djicloud.FlightTaskRecoveryReq
+	(*StopFlightTaskReq)(nil),                // 17: djicloud.StopFlightTaskReq
+	(*ReturnHomeReq)(nil),                    // 18: djicloud.ReturnHomeReq
+	(*ReturnHomeCancelAutoReturnReq)(nil),    // 19: djicloud.ReturnHomeCancelAutoReturnReq
+	(*ReturnSpecificHomeReq)(nil),            // 20: djicloud.ReturnSpecificHomeReq
+	(*DebugModeOpenReq)(nil),                 // 21: djicloud.DebugModeOpenReq
+	(*DebugModeCloseReq)(nil),                // 22: djicloud.DebugModeCloseReq
+	(*CoverOpenReq)(nil),                     // 23: djicloud.CoverOpenReq
+	(*CoverCloseReq)(nil),                    // 24: djicloud.CoverCloseReq
+	(*CoverForceCloseReq)(nil),               // 25: djicloud.CoverForceCloseReq
+	(*DroneOpenReq)(nil),                     // 26: djicloud.DroneOpenReq
+	(*DroneCloseReq)(nil),                    // 27: djicloud.DroneCloseReq
+	(*DeviceRebootReq)(nil),                  // 28: djicloud.DeviceRebootReq
+	(*ChargeOpenReq)(nil),                    // 29: djicloud.ChargeOpenReq
+	(*ChargeCloseReq)(nil),                   // 30: djicloud.ChargeCloseReq
+	(*DroneFormatReq)(nil),                   // 31: djicloud.DroneFormatReq
+	(*DeviceFormatReq)(nil),                  // 32: djicloud.DeviceFormatReq
+	(*SupplementLightOpenReq)(nil),           // 33: djicloud.SupplementLightOpenReq
+	(*SupplementLightCloseReq)(nil),          // 34: djicloud.SupplementLightCloseReq
+	(*BatteryStoreModeReq)(nil),              // 35: djicloud.BatteryStoreModeReq
+	(*AlarmStateSwitchReq)(nil),              // 36: djicloud.AlarmStateSwitchReq
+	(*AirConditionerModeSwitchReq)(nil),      // 37: djicloud.AirConditionerModeSwitchReq
+	(*OtaDevice)(nil),                        // 38: djicloud.OtaDevice
+	(*OtaCreateReq)(nil),                     // 39: djicloud.OtaCreateReq
+	(*RemoteLogFileListReq)(nil),             // 40: djicloud.RemoteLogFileListReq
+	(*RemoteLogFile)(nil),                    // 41: djicloud.RemoteLogFile
+	(*RemoteLogFileUploadReq)(nil),           // 42: djicloud.RemoteLogFileUploadReq
+	(*ConfigUpdateReq)(nil),                  // 43: djicloud.ConfigUpdateReq
+	(*FlightAuthorityGrabReq)(nil),           // 44: djicloud.FlightAuthorityGrabReq
+	(*PayloadAuthorityGrabReq)(nil),          // 45: djicloud.PayloadAuthorityGrabReq
+	(*FlyToPointReq)(nil),                    // 46: djicloud.FlyToPointReq
+	(*Waypoint)(nil),                         // 47: djicloud.Waypoint
+	(*FlyToPointStopReq)(nil),                // 48: djicloud.FlyToPointStopReq
+	(*TakeoffToPointReq)(nil),                // 49: djicloud.TakeoffToPointReq
+	(*CameraModeSwitchReq)(nil),              // 50: djicloud.CameraModeSwitchReq
+	(*CameraPhotoTakeReq)(nil),               // 51: djicloud.CameraPhotoTakeReq
+	(*CameraPhotoStopReq)(nil),               // 52: djicloud.CameraPhotoStopReq
+	(*CameraRecordingStartReq)(nil),          // 53: djicloud.CameraRecordingStartReq
+	(*CameraRecordingStopReq)(nil),           // 54: djicloud.CameraRecordingStopReq
+	(*CameraFocalLengthSetReq)(nil),          // 55: djicloud.CameraFocalLengthSetReq
+	(*GimbalResetReq)(nil),                   // 56: djicloud.GimbalResetReq
+	(*CameraAimReq)(nil),                     // 57: djicloud.CameraAimReq
+	(*CameraPointFocusActionReq)(nil),        // 58: djicloud.CameraPointFocusActionReq
+	(*CameraScreenSplitReq)(nil),             // 59: djicloud.CameraScreenSplitReq
+	(*CameraPhotoStorageSetReq)(nil),         // 60: djicloud.CameraPhotoStorageSetReq
+	(*CameraVideoStorageSetReq)(nil),         // 61: djicloud.CameraVideoStorageSetReq
+	(*CameraLookAtReq)(nil),                  // 62: djicloud.CameraLookAtReq
+	(*CameraScreenDragReq)(nil),              // 63: djicloud.CameraScreenDragReq
+	(*CameraIrMeteringPointReq)(nil),         // 64: djicloud.CameraIrMeteringPointReq
+	(*CameraIrMeteringAreaReq)(nil),          // 65: djicloud.CameraIrMeteringAreaReq
+	(*FlightAreasUpdateReq)(nil),             // 66: djicloud.FlightAreasUpdateReq
+	(*PsdkUIResourceUploadReq)(nil),          // 67: djicloud.PsdkUIResourceUploadReq
+	(*CustomDataTransmissionToPsdkReq)(nil),  // 68: djicloud.CustomDataTransmissionToPsdkReq
+	(*CustomDataTransmissionToEsdkReq)(nil),  // 69: djicloud.CustomDataTransmissionToEsdkReq
+	(*UnlockLicenseSwitchReq)(nil),           // 70: djicloud.UnlockLicenseSwitchReq
+	(*UnlockLicenseFileRef)(nil),             // 71: djicloud.UnlockLicenseFileRef
+	(*UnlockLicenseUpdateReq)(nil),           // 72: djicloud.UnlockLicenseUpdateReq
+	(*UnlockLicenseListReq)(nil),             // 73: djicloud.UnlockLicenseListReq
+	(*DrcModeEnterReq)(nil),                  // 74: djicloud.DrcModeEnterReq
+	(*DrcModeExitReq)(nil),                   // 75: djicloud.DrcModeExitReq
+	(*DroneEmergencyStopReq)(nil),            // 76: djicloud.DroneEmergencyStopReq
+	(*StickControlReq)(nil),                  // 77: djicloud.StickControlReq
+	(*DrcForceLandingReq)(nil),               // 78: djicloud.DrcForceLandingReq
+	(*DrcEmergencyLandingReq)(nil),           // 79: djicloud.DrcEmergencyLandingReq
+	(*DrcLinkageZoomSetReq)(nil),             // 80: djicloud.DrcLinkageZoomSetReq
+	(*DrcVideoResolutionSetReq)(nil),         // 81: djicloud.DrcVideoResolutionSetReq
+	(*DrcIntervalPhotoSetReq)(nil),           // 82: djicloud.DrcIntervalPhotoSetReq
+	(*DrcInitialStateSubscribeReq)(nil),      // 83: djicloud.DrcInitialStateSubscribeReq
+	(*DrcNightLightsStateSetReq)(nil),        // 84: djicloud.DrcNightLightsStateSetReq
+	(*DrcStealthStateSetReq)(nil),            // 85: djicloud.DrcStealthStateSetReq
+	(*DrcCameraApertureValueSetReq)(nil),     // 86: djicloud.DrcCameraApertureValueSetReq
+	(*DrcCameraShutterSetReq)(nil),           // 87: djicloud.DrcCameraShutterSetReq
+	(*DrcCameraIsoSetReq)(nil),               // 88: djicloud.DrcCameraIsoSetReq
+	(*DrcCameraMechanicalShutterSetReq)(nil), // 89: djicloud.DrcCameraMechanicalShutterSetReq
+	(*DrcCameraDewarpingSetReq)(nil),         // 90: djicloud.DrcCameraDewarpingSetReq
+	(*DroneEmergencyStopRes)(nil),            // 91: djicloud.DroneEmergencyStopRes
+	(*StickControlRes)(nil),                  // 92: djicloud.StickControlRes
+	(*DrcForceLandingRes)(nil),               // 93: djicloud.DrcForceLandingRes
+	(*DrcEmergencyLandingRes)(nil),           // 94: djicloud.DrcEmergencyLandingRes
+	(*DrcInitialStateSubscribeRes)(nil),      // 95: djicloud.DrcInitialStateSubscribeRes
+	(*DrcLinkageZoomSetRes)(nil),             // 96: djicloud.DrcLinkageZoomSetRes
+	(*DrcVideoResolutionSetRes)(nil),         // 97: djicloud.DrcVideoResolutionSetRes
+	(*DrcIntervalPhotoSetRes)(nil),           // 98: djicloud.DrcIntervalPhotoSetRes
+	(*DrcNightLightsStateSetRes)(nil),        // 99: djicloud.DrcNightLightsStateSetRes
+	(*DrcStealthStateSetRes)(nil),            // 100: djicloud.DrcStealthStateSetRes
+	(*DrcCameraApertureValueSetRes)(nil),     // 101: djicloud.DrcCameraApertureValueSetRes
+	(*DrcCameraShutterSetRes)(nil),           // 102: djicloud.DrcCameraShutterSetRes
+	(*DrcCameraIsoSetRes)(nil),               // 103: djicloud.DrcCameraIsoSetRes
+	(*DrcCameraMechanicalShutterSetRes)(nil), // 104: djicloud.DrcCameraMechanicalShutterSetRes
+	(*DrcCameraDewarpingSetRes)(nil),         // 105: djicloud.DrcCameraDewarpingSetRes
+	(*IsDeviceOnlineReq)(nil),                // 106: djicloud.IsDeviceOnlineReq
+	(*DeviceOnlineRes)(nil),                  // 107: djicloud.DeviceOnlineRes
+	(*DeviceInfo)(nil),                       // 108: djicloud.DeviceInfo
+	(*DeviceTopoInfo)(nil),                   // 109: djicloud.DeviceTopoInfo
+	(*DeviceTelemetrySnapshotBrief)(nil),     // 110: djicloud.DeviceTelemetrySnapshotBrief
+	(*DockFlightTaskStateInfo)(nil),          // 111: djicloud.DockFlightTaskStateInfo
+	(*DeviceListItem)(nil),                   // 112: djicloud.DeviceListItem
+	(*ListDevicesReq)(nil),                   // 113: djicloud.ListDevicesReq
+	(*ListDevicesRes)(nil),                   // 114: djicloud.ListDevicesRes
+	(*GetDeviceDetailReq)(nil),               // 115: djicloud.GetDeviceDetailReq
+	(*DeviceOsdSnapshot)(nil),                // 116: djicloud.DeviceOsdSnapshot
+	(*DeviceOsdSnapshotRes)(nil),             // 117: djicloud.DeviceOsdSnapshotRes
+	(*DeviceStateSnapshot)(nil),              // 118: djicloud.DeviceStateSnapshot
+	(*DeviceStateSnapshotRes)(nil),           // 119: djicloud.DeviceStateSnapshotRes
+	(*DeviceDetailRes)(nil),                  // 120: djicloud.DeviceDetailRes
+	(*GetDeviceOsdSnapshotReq)(nil),          // 121: djicloud.GetDeviceOsdSnapshotReq
+	(*GetDeviceStateSnapshotReq)(nil),        // 122: djicloud.GetDeviceStateSnapshotReq
+	(*HmsAlertInfo)(nil),                     // 123: djicloud.HmsAlertInfo
+	(*ListHmsAlertsReq)(nil),                 // 124: djicloud.ListHmsAlertsReq
+	(*ListHmsAlertsRes)(nil),                 // 125: djicloud.ListHmsAlertsRes
+	(*AckHmsAlertReq)(nil),                   // 126: djicloud.AckHmsAlertReq
+	(*FlightTaskProgressInfo)(nil),           // 127: djicloud.FlightTaskProgressInfo
+	(*ListFlightTaskProgressReq)(nil),        // 128: djicloud.ListFlightTaskProgressReq
+	(*ListFlightTaskProgressRes)(nil),        // 129: djicloud.ListFlightTaskProgressRes
+	(*GetFlightTaskProgressLastReq)(nil),     // 130: djicloud.GetFlightTaskProgressLastReq
+	(*FlightTaskProgressLastRes)(nil),        // 131: djicloud.FlightTaskProgressLastRes
+	(*QueryDrcStatusReq)(nil),                // 132: djicloud.QueryDrcStatusReq
+	(*DrcStatusRes)(nil),                     // 133: djicloud.DrcStatusRes
 }
 var file_djicloud_proto_depIdxs = []int32{
-	11,  // 0: djicloud.FlightTaskPrepareReq.file:type_name -> djicloud.FlightTaskFileRef
-	13,  // 1: djicloud.FlightTaskPrepareReq.break_point:type_name -> djicloud.FlightTaskPrepareBreakPoint
-	12,  // 2: djicloud.FlightTaskPrepareReq.simulate_mission:type_name -> djicloud.FlightTaskPrepareSimulateMission
-	40,  // 3: djicloud.OtaCreateReq.devices:type_name -> djicloud.OtaDevice
-	43,  // 4: djicloud.RemoteLogFileUploadReq.files:type_name -> djicloud.RemoteLogFile
-	49,  // 5: djicloud.FlyToPointReq.points:type_name -> djicloud.Waypoint
-	11,  // 6: djicloud.FlightAreasUpdateReq.file:type_name -> djicloud.FlightTaskFileRef
-	73,  // 7: djicloud.UnlockLicenseUpdateReq.file:type_name -> djicloud.UnlockLicenseFileRef
-	110, // 8: djicloud.DeviceListItem.device:type_name -> djicloud.DeviceInfo
-	111, // 9: djicloud.DeviceListItem.topo:type_name -> djicloud.DeviceTopoInfo
-	112, // 10: djicloud.DeviceListItem.osd:type_name -> djicloud.DeviceTelemetrySnapshotBrief
-	112, // 11: djicloud.DeviceListItem.state:type_name -> djicloud.DeviceTelemetrySnapshotBrief
-	113, // 12: djicloud.DeviceListItem.flight_task_state:type_name -> djicloud.DockFlightTaskStateInfo
-	114, // 13: djicloud.ListDevicesRes.list:type_name -> djicloud.DeviceListItem
-	118, // 14: djicloud.DeviceOsdSnapshotRes.data:type_name -> djicloud.DeviceOsdSnapshot
-	120, // 15: djicloud.DeviceStateSnapshotRes.data:type_name -> djicloud.DeviceStateSnapshot
-	110, // 16: djicloud.DeviceDetailRes.device:type_name -> djicloud.DeviceInfo
-	118, // 17: djicloud.DeviceDetailRes.osd:type_name -> djicloud.DeviceOsdSnapshot
-	120, // 18: djicloud.DeviceDetailRes.state:type_name -> djicloud.DeviceStateSnapshot
-	111, // 19: djicloud.DeviceDetailRes.topo:type_name -> djicloud.DeviceTopoInfo
-	125, // 20: djicloud.ListHmsAlertsRes.list:type_name -> djicloud.HmsAlertInfo
-	129, // 21: djicloud.ListFlightTaskProgressRes.list:type_name -> djicloud.FlightTaskProgressInfo
-	0,   // 22: djicloud.DjiCloud.Ping:input_type -> djicloud.Req
-	3,   // 23: djicloud.DjiCloud.PropertySet:input_type -> djicloud.PropertySetReq
-	4,   // 24: djicloud.DjiCloud.LiveStartPush:input_type -> djicloud.LiveStartPushReq
-	5,   // 25: djicloud.DjiCloud.LiveStopPush:input_type -> djicloud.LiveStopPushReq
-	6,   // 26: djicloud.DjiCloud.LiveSetQuality:input_type -> djicloud.LiveSetQualityReq
-	7,   // 27: djicloud.DjiCloud.LiveLensChange:input_type -> djicloud.LiveLensChangeReq
-	8,   // 28: djicloud.DjiCloud.LiveCameraChange:input_type -> djicloud.LiveCameraChangeReq
-	9,   // 29: djicloud.DjiCloud.MediaUploadFlighttaskMediaPrioritize:input_type -> djicloud.MediaFlighttaskReq
-	10,  // 30: djicloud.DjiCloud.MediaFastUpload:input_type -> djicloud.MediaFastUploadReq
-	9,   // 31: djicloud.DjiCloud.MediaHighestPriorityUploadFlighttask:input_type -> djicloud.MediaFlighttaskReq
-	14,  // 32: djicloud.DjiCloud.FlightTaskPrepare:input_type -> djicloud.FlightTaskPrepareReq
-	15,  // 33: djicloud.DjiCloud.FlightTaskExecute:input_type -> djicloud.FlightTaskExecuteReq
-	16,  // 34: djicloud.DjiCloud.FlightTaskUndo:input_type -> djicloud.FlightTaskUndoReq
-	17,  // 35: djicloud.DjiCloud.PauseFlightTask:input_type -> djicloud.PauseFlightTaskReq
-	18,  // 36: djicloud.DjiCloud.FlightTaskRecovery:input_type -> djicloud.FlightTaskRecoveryReq
-	19,  // 37: djicloud.DjiCloud.StopFlightTask:input_type -> djicloud.StopFlightTaskReq
-	20,  // 38: djicloud.DjiCloud.ReturnHome:input_type -> djicloud.ReturnHomeReq
-	21,  // 39: djicloud.DjiCloud.ReturnHomeCancelAutoReturn:input_type -> djicloud.ReturnHomeCancelAutoReturnReq
-	22,  // 40: djicloud.DjiCloud.ReturnSpecificHome:input_type -> djicloud.ReturnSpecificHomeReq
-	23,  // 41: djicloud.DjiCloud.DebugModeOpen:input_type -> djicloud.DebugModeOpenReq
-	24,  // 42: djicloud.DjiCloud.DebugModeClose:input_type -> djicloud.DebugModeCloseReq
-	25,  // 43: djicloud.DjiCloud.CoverOpen:input_type -> djicloud.CoverOpenReq
-	26,  // 44: djicloud.DjiCloud.CoverClose:input_type -> djicloud.CoverCloseReq
-	27,  // 45: djicloud.DjiCloud.CoverForceClose:input_type -> djicloud.CoverForceCloseReq
-	28,  // 46: djicloud.DjiCloud.DroneOpen:input_type -> djicloud.DroneOpenReq
-	29,  // 47: djicloud.DjiCloud.DroneClose:input_type -> djicloud.DroneCloseReq
-	30,  // 48: djicloud.DjiCloud.DeviceReboot:input_type -> djicloud.DeviceRebootReq
-	31,  // 49: djicloud.DjiCloud.ChargeOpen:input_type -> djicloud.ChargeOpenReq
-	32,  // 50: djicloud.DjiCloud.ChargeClose:input_type -> djicloud.ChargeCloseReq
-	33,  // 51: djicloud.DjiCloud.DroneFormat:input_type -> djicloud.DroneFormatReq
-	34,  // 52: djicloud.DjiCloud.DeviceFormat:input_type -> djicloud.DeviceFormatReq
-	35,  // 53: djicloud.DjiCloud.SupplementLightOpen:input_type -> djicloud.SupplementLightOpenReq
-	36,  // 54: djicloud.DjiCloud.SupplementLightClose:input_type -> djicloud.SupplementLightCloseReq
-	37,  // 55: djicloud.DjiCloud.BatteryStoreModeSwitch:input_type -> djicloud.BatteryStoreModeReq
-	38,  // 56: djicloud.DjiCloud.AlarmStateSwitch:input_type -> djicloud.AlarmStateSwitchReq
-	39,  // 57: djicloud.DjiCloud.AirConditionerModeSwitch:input_type -> djicloud.AirConditionerModeSwitchReq
-	37,  // 58: djicloud.DjiCloud.BatteryMaintenanceSwitch:input_type -> djicloud.BatteryStoreModeReq
-	41,  // 59: djicloud.DjiCloud.OtaCreate:input_type -> djicloud.OtaCreateReq
-	42,  // 60: djicloud.DjiCloud.RemoteLogFileList:input_type -> djicloud.RemoteLogFileListReq
-	44,  // 61: djicloud.DjiCloud.RemoteLogFileUploadStart:input_type -> djicloud.RemoteLogFileUploadReq
-	44,  // 62: djicloud.DjiCloud.RemoteLogFileUploadUpdate:input_type -> djicloud.RemoteLogFileUploadReq
-	44,  // 63: djicloud.DjiCloud.RemoteLogFileUploadCancel:input_type -> djicloud.RemoteLogFileUploadReq
-	45,  // 64: djicloud.DjiCloud.ConfigUpdate:input_type -> djicloud.ConfigUpdateReq
-	46,  // 65: djicloud.DjiCloud.FlightAuthorityGrab:input_type -> djicloud.FlightAuthorityGrabReq
-	47,  // 66: djicloud.DjiCloud.PayloadAuthorityGrab:input_type -> djicloud.PayloadAuthorityGrabReq
-	48,  // 67: djicloud.DjiCloud.FlyToPoint:input_type -> djicloud.FlyToPointReq
-	50,  // 68: djicloud.DjiCloud.FlyToPointStop:input_type -> djicloud.FlyToPointStopReq
-	51,  // 69: djicloud.DjiCloud.TakeoffToPoint:input_type -> djicloud.TakeoffToPointReq
-	52,  // 70: djicloud.DjiCloud.CameraModeSwitch:input_type -> djicloud.CameraModeSwitchReq
-	53,  // 71: djicloud.DjiCloud.CameraPhotoTake:input_type -> djicloud.CameraPhotoTakeReq
-	54,  // 72: djicloud.DjiCloud.CameraPhotoStop:input_type -> djicloud.CameraPhotoStopReq
-	55,  // 73: djicloud.DjiCloud.CameraRecordingStart:input_type -> djicloud.CameraRecordingStartReq
-	56,  // 74: djicloud.DjiCloud.CameraRecordingStop:input_type -> djicloud.CameraRecordingStopReq
-	57,  // 75: djicloud.DjiCloud.CameraFocalLengthSet:input_type -> djicloud.CameraFocalLengthSetReq
-	58,  // 76: djicloud.DjiCloud.GimbalReset:input_type -> djicloud.GimbalResetReq
-	59,  // 77: djicloud.DjiCloud.CameraAim:input_type -> djicloud.CameraAimReq
-	60,  // 78: djicloud.DjiCloud.CameraPointFocusAction:input_type -> djicloud.CameraPointFocusActionReq
-	61,  // 79: djicloud.DjiCloud.CameraScreenSplit:input_type -> djicloud.CameraScreenSplitReq
-	62,  // 80: djicloud.DjiCloud.CameraPhotoStorageSet:input_type -> djicloud.CameraPhotoStorageSetReq
-	63,  // 81: djicloud.DjiCloud.CameraVideoStorageSet:input_type -> djicloud.CameraVideoStorageSetReq
-	64,  // 82: djicloud.DjiCloud.CameraLookAt:input_type -> djicloud.CameraLookAtReq
-	65,  // 83: djicloud.DjiCloud.CameraScreenDrag:input_type -> djicloud.CameraScreenDragReq
-	66,  // 84: djicloud.DjiCloud.CameraIrMeteringPoint:input_type -> djicloud.CameraIrMeteringPointReq
-	67,  // 85: djicloud.DjiCloud.CameraIrMeteringArea:input_type -> djicloud.CameraIrMeteringAreaReq
-	68,  // 86: djicloud.DjiCloud.FlightAreasUpdate:input_type -> djicloud.FlightAreasUpdateReq
-	69,  // 87: djicloud.DjiCloud.PsdkUIResourceUpload:input_type -> djicloud.PsdkUIResourceUploadReq
-	70,  // 88: djicloud.DjiCloud.CustomDataTransmissionToPsdk:input_type -> djicloud.CustomDataTransmissionToPsdkReq
-	71,  // 89: djicloud.DjiCloud.CustomDataTransmissionToEsdk:input_type -> djicloud.CustomDataTransmissionToEsdkReq
-	72,  // 90: djicloud.DjiCloud.UnlockLicenseSwitch:input_type -> djicloud.UnlockLicenseSwitchReq
-	74,  // 91: djicloud.DjiCloud.UnlockLicenseUpdate:input_type -> djicloud.UnlockLicenseUpdateReq
-	75,  // 92: djicloud.DjiCloud.UnlockLicenseList:input_type -> djicloud.UnlockLicenseListReq
-	76,  // 93: djicloud.DjiCloud.DrcModeEnter:input_type -> djicloud.DrcModeEnterReq
-	77,  // 94: djicloud.DjiCloud.DrcModeExit:input_type -> djicloud.DrcModeExitReq
-	78,  // 95: djicloud.DjiCloud.DroneEmergencyStop:input_type -> djicloud.DroneEmergencyStopReq
-	79,  // 96: djicloud.DjiCloud.StickControl:input_type -> djicloud.StickControlReq
-	80,  // 97: djicloud.DjiCloud.DrcForceLanding:input_type -> djicloud.DrcForceLandingReq
-	81,  // 98: djicloud.DjiCloud.DrcEmergencyLanding:input_type -> djicloud.DrcEmergencyLandingReq
-	82,  // 99: djicloud.DjiCloud.DrcLinkageZoomSet:input_type -> djicloud.DrcLinkageZoomSetReq
-	83,  // 100: djicloud.DjiCloud.DrcVideoResolutionSet:input_type -> djicloud.DrcVideoResolutionSetReq
-	84,  // 101: djicloud.DjiCloud.DrcIntervalPhotoSet:input_type -> djicloud.DrcIntervalPhotoSetReq
-	85,  // 102: djicloud.DjiCloud.DrcInitialStateSubscribe:input_type -> djicloud.DrcInitialStateSubscribeReq
-	86,  // 103: djicloud.DjiCloud.DrcNightLightsStateSet:input_type -> djicloud.DrcNightLightsStateSetReq
-	87,  // 104: djicloud.DjiCloud.DrcStealthStateSet:input_type -> djicloud.DrcStealthStateSetReq
-	88,  // 105: djicloud.DjiCloud.DrcCameraApertureValueSet:input_type -> djicloud.DrcCameraApertureValueSetReq
-	89,  // 106: djicloud.DjiCloud.DrcCameraShutterSet:input_type -> djicloud.DrcCameraShutterSetReq
-	90,  // 107: djicloud.DjiCloud.DrcCameraIsoSet:input_type -> djicloud.DrcCameraIsoSetReq
-	91,  // 108: djicloud.DjiCloud.DrcCameraMechanicalShutterSet:input_type -> djicloud.DrcCameraMechanicalShutterSetReq
-	92,  // 109: djicloud.DjiCloud.DrcCameraDewarpingSet:input_type -> djicloud.DrcCameraDewarpingSetReq
-	108, // 110: djicloud.DjiCloud.IsDeviceOnline:input_type -> djicloud.IsDeviceOnlineReq
-	115, // 111: djicloud.DjiCloud.ListDevices:input_type -> djicloud.ListDevicesReq
-	117, // 112: djicloud.DjiCloud.GetDeviceDetail:input_type -> djicloud.GetDeviceDetailReq
-	123, // 113: djicloud.DjiCloud.GetDeviceOsdSnapshot:input_type -> djicloud.GetDeviceOsdSnapshotReq
-	124, // 114: djicloud.DjiCloud.GetDeviceStateSnapshot:input_type -> djicloud.GetDeviceStateSnapshotReq
-	126, // 115: djicloud.DjiCloud.ListHmsAlerts:input_type -> djicloud.ListHmsAlertsReq
-	128, // 116: djicloud.DjiCloud.AckHmsAlert:input_type -> djicloud.AckHmsAlertReq
-	130, // 117: djicloud.DjiCloud.ListFlightTaskProgress:input_type -> djicloud.ListFlightTaskProgressReq
-	132, // 118: djicloud.DjiCloud.GetFlightTaskProgressLast:input_type -> djicloud.GetFlightTaskProgressLastReq
-	134, // 119: djicloud.DjiCloud.QueryDrcStatus:input_type -> djicloud.QueryDrcStatusReq
-	1,   // 120: djicloud.DjiCloud.Ping:output_type -> djicloud.Res
-	2,   // 121: djicloud.DjiCloud.PropertySet:output_type -> djicloud.CommonRes
-	2,   // 122: djicloud.DjiCloud.LiveStartPush:output_type -> djicloud.CommonRes
-	2,   // 123: djicloud.DjiCloud.LiveStopPush:output_type -> djicloud.CommonRes
-	2,   // 124: djicloud.DjiCloud.LiveSetQuality:output_type -> djicloud.CommonRes
-	2,   // 125: djicloud.DjiCloud.LiveLensChange:output_type -> djicloud.CommonRes
-	2,   // 126: djicloud.DjiCloud.LiveCameraChange:output_type -> djicloud.CommonRes
-	2,   // 127: djicloud.DjiCloud.MediaUploadFlighttaskMediaPrioritize:output_type -> djicloud.CommonRes
-	2,   // 128: djicloud.DjiCloud.MediaFastUpload:output_type -> djicloud.CommonRes
-	2,   // 129: djicloud.DjiCloud.MediaHighestPriorityUploadFlighttask:output_type -> djicloud.CommonRes
-	2,   // 130: djicloud.DjiCloud.FlightTaskPrepare:output_type -> djicloud.CommonRes
-	2,   // 131: djicloud.DjiCloud.FlightTaskExecute:output_type -> djicloud.CommonRes
-	2,   // 132: djicloud.DjiCloud.FlightTaskUndo:output_type -> djicloud.CommonRes
-	2,   // 133: djicloud.DjiCloud.PauseFlightTask:output_type -> djicloud.CommonRes
-	2,   // 134: djicloud.DjiCloud.FlightTaskRecovery:output_type -> djicloud.CommonRes
-	2,   // 135: djicloud.DjiCloud.StopFlightTask:output_type -> djicloud.CommonRes
-	2,   // 136: djicloud.DjiCloud.ReturnHome:output_type -> djicloud.CommonRes
-	2,   // 137: djicloud.DjiCloud.ReturnHomeCancelAutoReturn:output_type -> djicloud.CommonRes
-	2,   // 138: djicloud.DjiCloud.ReturnSpecificHome:output_type -> djicloud.CommonRes
-	2,   // 139: djicloud.DjiCloud.DebugModeOpen:output_type -> djicloud.CommonRes
-	2,   // 140: djicloud.DjiCloud.DebugModeClose:output_type -> djicloud.CommonRes
-	2,   // 141: djicloud.DjiCloud.CoverOpen:output_type -> djicloud.CommonRes
-	2,   // 142: djicloud.DjiCloud.CoverClose:output_type -> djicloud.CommonRes
-	2,   // 143: djicloud.DjiCloud.CoverForceClose:output_type -> djicloud.CommonRes
-	2,   // 144: djicloud.DjiCloud.DroneOpen:output_type -> djicloud.CommonRes
-	2,   // 145: djicloud.DjiCloud.DroneClose:output_type -> djicloud.CommonRes
-	2,   // 146: djicloud.DjiCloud.DeviceReboot:output_type -> djicloud.CommonRes
-	2,   // 147: djicloud.DjiCloud.ChargeOpen:output_type -> djicloud.CommonRes
-	2,   // 148: djicloud.DjiCloud.ChargeClose:output_type -> djicloud.CommonRes
-	2,   // 149: djicloud.DjiCloud.DroneFormat:output_type -> djicloud.CommonRes
-	2,   // 150: djicloud.DjiCloud.DeviceFormat:output_type -> djicloud.CommonRes
-	2,   // 151: djicloud.DjiCloud.SupplementLightOpen:output_type -> djicloud.CommonRes
-	2,   // 152: djicloud.DjiCloud.SupplementLightClose:output_type -> djicloud.CommonRes
-	2,   // 153: djicloud.DjiCloud.BatteryStoreModeSwitch:output_type -> djicloud.CommonRes
-	2,   // 154: djicloud.DjiCloud.AlarmStateSwitch:output_type -> djicloud.CommonRes
-	2,   // 155: djicloud.DjiCloud.AirConditionerModeSwitch:output_type -> djicloud.CommonRes
-	2,   // 156: djicloud.DjiCloud.BatteryMaintenanceSwitch:output_type -> djicloud.CommonRes
-	2,   // 157: djicloud.DjiCloud.OtaCreate:output_type -> djicloud.CommonRes
-	2,   // 158: djicloud.DjiCloud.RemoteLogFileList:output_type -> djicloud.CommonRes
-	2,   // 159: djicloud.DjiCloud.RemoteLogFileUploadStart:output_type -> djicloud.CommonRes
-	2,   // 160: djicloud.DjiCloud.RemoteLogFileUploadUpdate:output_type -> djicloud.CommonRes
-	2,   // 161: djicloud.DjiCloud.RemoteLogFileUploadCancel:output_type -> djicloud.CommonRes
-	2,   // 162: djicloud.DjiCloud.ConfigUpdate:output_type -> djicloud.CommonRes
-	2,   // 163: djicloud.DjiCloud.FlightAuthorityGrab:output_type -> djicloud.CommonRes
-	2,   // 164: djicloud.DjiCloud.PayloadAuthorityGrab:output_type -> djicloud.CommonRes
-	2,   // 165: djicloud.DjiCloud.FlyToPoint:output_type -> djicloud.CommonRes
-	2,   // 166: djicloud.DjiCloud.FlyToPointStop:output_type -> djicloud.CommonRes
-	2,   // 167: djicloud.DjiCloud.TakeoffToPoint:output_type -> djicloud.CommonRes
-	2,   // 168: djicloud.DjiCloud.CameraModeSwitch:output_type -> djicloud.CommonRes
-	2,   // 169: djicloud.DjiCloud.CameraPhotoTake:output_type -> djicloud.CommonRes
-	2,   // 170: djicloud.DjiCloud.CameraPhotoStop:output_type -> djicloud.CommonRes
-	2,   // 171: djicloud.DjiCloud.CameraRecordingStart:output_type -> djicloud.CommonRes
-	2,   // 172: djicloud.DjiCloud.CameraRecordingStop:output_type -> djicloud.CommonRes
-	2,   // 173: djicloud.DjiCloud.CameraFocalLengthSet:output_type -> djicloud.CommonRes
-	2,   // 174: djicloud.DjiCloud.GimbalReset:output_type -> djicloud.CommonRes
-	2,   // 175: djicloud.DjiCloud.CameraAim:output_type -> djicloud.CommonRes
-	2,   // 176: djicloud.DjiCloud.CameraPointFocusAction:output_type -> djicloud.CommonRes
-	2,   // 177: djicloud.DjiCloud.CameraScreenSplit:output_type -> djicloud.CommonRes
-	2,   // 178: djicloud.DjiCloud.CameraPhotoStorageSet:output_type -> djicloud.CommonRes
-	2,   // 179: djicloud.DjiCloud.CameraVideoStorageSet:output_type -> djicloud.CommonRes
-	2,   // 180: djicloud.DjiCloud.CameraLookAt:output_type -> djicloud.CommonRes
-	2,   // 181: djicloud.DjiCloud.CameraScreenDrag:output_type -> djicloud.CommonRes
-	2,   // 182: djicloud.DjiCloud.CameraIrMeteringPoint:output_type -> djicloud.CommonRes
-	2,   // 183: djicloud.DjiCloud.CameraIrMeteringArea:output_type -> djicloud.CommonRes
-	2,   // 184: djicloud.DjiCloud.FlightAreasUpdate:output_type -> djicloud.CommonRes
-	2,   // 185: djicloud.DjiCloud.PsdkUIResourceUpload:output_type -> djicloud.CommonRes
-	2,   // 186: djicloud.DjiCloud.CustomDataTransmissionToPsdk:output_type -> djicloud.CommonRes
-	2,   // 187: djicloud.DjiCloud.CustomDataTransmissionToEsdk:output_type -> djicloud.CommonRes
-	2,   // 188: djicloud.DjiCloud.UnlockLicenseSwitch:output_type -> djicloud.CommonRes
-	2,   // 189: djicloud.DjiCloud.UnlockLicenseUpdate:output_type -> djicloud.CommonRes
-	2,   // 190: djicloud.DjiCloud.UnlockLicenseList:output_type -> djicloud.CommonRes
-	2,   // 191: djicloud.DjiCloud.DrcModeEnter:output_type -> djicloud.CommonRes
-	2,   // 192: djicloud.DjiCloud.DrcModeExit:output_type -> djicloud.CommonRes
-	93,  // 193: djicloud.DjiCloud.DroneEmergencyStop:output_type -> djicloud.DroneEmergencyStopRes
-	94,  // 194: djicloud.DjiCloud.StickControl:output_type -> djicloud.StickControlRes
-	95,  // 195: djicloud.DjiCloud.DrcForceLanding:output_type -> djicloud.DrcForceLandingRes
-	96,  // 196: djicloud.DjiCloud.DrcEmergencyLanding:output_type -> djicloud.DrcEmergencyLandingRes
-	98,  // 197: djicloud.DjiCloud.DrcLinkageZoomSet:output_type -> djicloud.DrcLinkageZoomSetRes
-	99,  // 198: djicloud.DjiCloud.DrcVideoResolutionSet:output_type -> djicloud.DrcVideoResolutionSetRes
-	100, // 199: djicloud.DjiCloud.DrcIntervalPhotoSet:output_type -> djicloud.DrcIntervalPhotoSetRes
-	97,  // 200: djicloud.DjiCloud.DrcInitialStateSubscribe:output_type -> djicloud.DrcInitialStateSubscribeRes
-	101, // 201: djicloud.DjiCloud.DrcNightLightsStateSet:output_type -> djicloud.DrcNightLightsStateSetRes
-	102, // 202: djicloud.DjiCloud.DrcStealthStateSet:output_type -> djicloud.DrcStealthStateSetRes
-	103, // 203: djicloud.DjiCloud.DrcCameraApertureValueSet:output_type -> djicloud.DrcCameraApertureValueSetRes
-	104, // 204: djicloud.DjiCloud.DrcCameraShutterSet:output_type -> djicloud.DrcCameraShutterSetRes
-	105, // 205: djicloud.DjiCloud.DrcCameraIsoSet:output_type -> djicloud.DrcCameraIsoSetRes
-	106, // 206: djicloud.DjiCloud.DrcCameraMechanicalShutterSet:output_type -> djicloud.DrcCameraMechanicalShutterSetRes
-	107, // 207: djicloud.DjiCloud.DrcCameraDewarpingSet:output_type -> djicloud.DrcCameraDewarpingSetRes
-	109, // 208: djicloud.DjiCloud.IsDeviceOnline:output_type -> djicloud.DeviceOnlineRes
-	116, // 209: djicloud.DjiCloud.ListDevices:output_type -> djicloud.ListDevicesRes
-	122, // 210: djicloud.DjiCloud.GetDeviceDetail:output_type -> djicloud.DeviceDetailRes
-	119, // 211: djicloud.DjiCloud.GetDeviceOsdSnapshot:output_type -> djicloud.DeviceOsdSnapshotRes
-	121, // 212: djicloud.DjiCloud.GetDeviceStateSnapshot:output_type -> djicloud.DeviceStateSnapshotRes
-	127, // 213: djicloud.DjiCloud.ListHmsAlerts:output_type -> djicloud.ListHmsAlertsRes
-	2,   // 214: djicloud.DjiCloud.AckHmsAlert:output_type -> djicloud.CommonRes
-	131, // 215: djicloud.DjiCloud.ListFlightTaskProgress:output_type -> djicloud.ListFlightTaskProgressRes
-	133, // 216: djicloud.DjiCloud.GetFlightTaskProgressLast:output_type -> djicloud.FlightTaskProgressLastRes
-	135, // 217: djicloud.DjiCloud.QueryDrcStatus:output_type -> djicloud.DrcStatusRes
-	120, // [120:218] is the sub-list for method output_type
-	22,  // [22:120] is the sub-list for method input_type
+	9,   // 0: djicloud.FlightTaskPrepareReq.file:type_name -> djicloud.FlightTaskFileRef
+	11,  // 1: djicloud.FlightTaskPrepareReq.break_point:type_name -> djicloud.FlightTaskPrepareBreakPoint
+	10,  // 2: djicloud.FlightTaskPrepareReq.simulate_mission:type_name -> djicloud.FlightTaskPrepareSimulateMission
+	38,  // 3: djicloud.OtaCreateReq.devices:type_name -> djicloud.OtaDevice
+	41,  // 4: djicloud.RemoteLogFileUploadReq.files:type_name -> djicloud.RemoteLogFile
+	47,  // 5: djicloud.FlyToPointReq.points:type_name -> djicloud.Waypoint
+	9,   // 6: djicloud.FlightAreasUpdateReq.file:type_name -> djicloud.FlightTaskFileRef
+	71,  // 7: djicloud.UnlockLicenseUpdateReq.file:type_name -> djicloud.UnlockLicenseFileRef
+	108, // 8: djicloud.DeviceListItem.device:type_name -> djicloud.DeviceInfo
+	109, // 9: djicloud.DeviceListItem.topo:type_name -> djicloud.DeviceTopoInfo
+	110, // 10: djicloud.DeviceListItem.osd:type_name -> djicloud.DeviceTelemetrySnapshotBrief
+	110, // 11: djicloud.DeviceListItem.state:type_name -> djicloud.DeviceTelemetrySnapshotBrief
+	111, // 12: djicloud.DeviceListItem.flight_task_state:type_name -> djicloud.DockFlightTaskStateInfo
+	112, // 13: djicloud.ListDevicesRes.list:type_name -> djicloud.DeviceListItem
+	116, // 14: djicloud.DeviceOsdSnapshotRes.data:type_name -> djicloud.DeviceOsdSnapshot
+	118, // 15: djicloud.DeviceStateSnapshotRes.data:type_name -> djicloud.DeviceStateSnapshot
+	108, // 16: djicloud.DeviceDetailRes.device:type_name -> djicloud.DeviceInfo
+	116, // 17: djicloud.DeviceDetailRes.osd:type_name -> djicloud.DeviceOsdSnapshot
+	118, // 18: djicloud.DeviceDetailRes.state:type_name -> djicloud.DeviceStateSnapshot
+	109, // 19: djicloud.DeviceDetailRes.topo:type_name -> djicloud.DeviceTopoInfo
+	123, // 20: djicloud.ListHmsAlertsRes.list:type_name -> djicloud.HmsAlertInfo
+	127, // 21: djicloud.ListFlightTaskProgressRes.list:type_name -> djicloud.FlightTaskProgressInfo
+	1,   // 22: djicloud.DjiCloud.PropertySet:input_type -> djicloud.PropertySetReq
+	2,   // 23: djicloud.DjiCloud.LiveStartPush:input_type -> djicloud.LiveStartPushReq
+	3,   // 24: djicloud.DjiCloud.LiveStopPush:input_type -> djicloud.LiveStopPushReq
+	4,   // 25: djicloud.DjiCloud.LiveSetQuality:input_type -> djicloud.LiveSetQualityReq
+	5,   // 26: djicloud.DjiCloud.LiveLensChange:input_type -> djicloud.LiveLensChangeReq
+	6,   // 27: djicloud.DjiCloud.LiveCameraChange:input_type -> djicloud.LiveCameraChangeReq
+	7,   // 28: djicloud.DjiCloud.MediaUploadFlighttaskMediaPrioritize:input_type -> djicloud.MediaFlighttaskReq
+	8,   // 29: djicloud.DjiCloud.MediaFastUpload:input_type -> djicloud.MediaFastUploadReq
+	7,   // 30: djicloud.DjiCloud.MediaHighestPriorityUploadFlighttask:input_type -> djicloud.MediaFlighttaskReq
+	12,  // 31: djicloud.DjiCloud.FlightTaskPrepare:input_type -> djicloud.FlightTaskPrepareReq
+	13,  // 32: djicloud.DjiCloud.FlightTaskExecute:input_type -> djicloud.FlightTaskExecuteReq
+	14,  // 33: djicloud.DjiCloud.FlightTaskUndo:input_type -> djicloud.FlightTaskUndoReq
+	15,  // 34: djicloud.DjiCloud.PauseFlightTask:input_type -> djicloud.PauseFlightTaskReq
+	16,  // 35: djicloud.DjiCloud.FlightTaskRecovery:input_type -> djicloud.FlightTaskRecoveryReq
+	17,  // 36: djicloud.DjiCloud.StopFlightTask:input_type -> djicloud.StopFlightTaskReq
+	18,  // 37: djicloud.DjiCloud.ReturnHome:input_type -> djicloud.ReturnHomeReq
+	19,  // 38: djicloud.DjiCloud.ReturnHomeCancelAutoReturn:input_type -> djicloud.ReturnHomeCancelAutoReturnReq
+	20,  // 39: djicloud.DjiCloud.ReturnSpecificHome:input_type -> djicloud.ReturnSpecificHomeReq
+	21,  // 40: djicloud.DjiCloud.DebugModeOpen:input_type -> djicloud.DebugModeOpenReq
+	22,  // 41: djicloud.DjiCloud.DebugModeClose:input_type -> djicloud.DebugModeCloseReq
+	23,  // 42: djicloud.DjiCloud.CoverOpen:input_type -> djicloud.CoverOpenReq
+	24,  // 43: djicloud.DjiCloud.CoverClose:input_type -> djicloud.CoverCloseReq
+	25,  // 44: djicloud.DjiCloud.CoverForceClose:input_type -> djicloud.CoverForceCloseReq
+	26,  // 45: djicloud.DjiCloud.DroneOpen:input_type -> djicloud.DroneOpenReq
+	27,  // 46: djicloud.DjiCloud.DroneClose:input_type -> djicloud.DroneCloseReq
+	28,  // 47: djicloud.DjiCloud.DeviceReboot:input_type -> djicloud.DeviceRebootReq
+	29,  // 48: djicloud.DjiCloud.ChargeOpen:input_type -> djicloud.ChargeOpenReq
+	30,  // 49: djicloud.DjiCloud.ChargeClose:input_type -> djicloud.ChargeCloseReq
+	31,  // 50: djicloud.DjiCloud.DroneFormat:input_type -> djicloud.DroneFormatReq
+	32,  // 51: djicloud.DjiCloud.DeviceFormat:input_type -> djicloud.DeviceFormatReq
+	33,  // 52: djicloud.DjiCloud.SupplementLightOpen:input_type -> djicloud.SupplementLightOpenReq
+	34,  // 53: djicloud.DjiCloud.SupplementLightClose:input_type -> djicloud.SupplementLightCloseReq
+	35,  // 54: djicloud.DjiCloud.BatteryStoreModeSwitch:input_type -> djicloud.BatteryStoreModeReq
+	36,  // 55: djicloud.DjiCloud.AlarmStateSwitch:input_type -> djicloud.AlarmStateSwitchReq
+	37,  // 56: djicloud.DjiCloud.AirConditionerModeSwitch:input_type -> djicloud.AirConditionerModeSwitchReq
+	35,  // 57: djicloud.DjiCloud.BatteryMaintenanceSwitch:input_type -> djicloud.BatteryStoreModeReq
+	39,  // 58: djicloud.DjiCloud.OtaCreate:input_type -> djicloud.OtaCreateReq
+	40,  // 59: djicloud.DjiCloud.RemoteLogFileList:input_type -> djicloud.RemoteLogFileListReq
+	42,  // 60: djicloud.DjiCloud.RemoteLogFileUploadStart:input_type -> djicloud.RemoteLogFileUploadReq
+	42,  // 61: djicloud.DjiCloud.RemoteLogFileUploadUpdate:input_type -> djicloud.RemoteLogFileUploadReq
+	42,  // 62: djicloud.DjiCloud.RemoteLogFileUploadCancel:input_type -> djicloud.RemoteLogFileUploadReq
+	43,  // 63: djicloud.DjiCloud.ConfigUpdate:input_type -> djicloud.ConfigUpdateReq
+	44,  // 64: djicloud.DjiCloud.FlightAuthorityGrab:input_type -> djicloud.FlightAuthorityGrabReq
+	45,  // 65: djicloud.DjiCloud.PayloadAuthorityGrab:input_type -> djicloud.PayloadAuthorityGrabReq
+	46,  // 66: djicloud.DjiCloud.FlyToPoint:input_type -> djicloud.FlyToPointReq
+	48,  // 67: djicloud.DjiCloud.FlyToPointStop:input_type -> djicloud.FlyToPointStopReq
+	49,  // 68: djicloud.DjiCloud.TakeoffToPoint:input_type -> djicloud.TakeoffToPointReq
+	50,  // 69: djicloud.DjiCloud.CameraModeSwitch:input_type -> djicloud.CameraModeSwitchReq
+	51,  // 70: djicloud.DjiCloud.CameraPhotoTake:input_type -> djicloud.CameraPhotoTakeReq
+	52,  // 71: djicloud.DjiCloud.CameraPhotoStop:input_type -> djicloud.CameraPhotoStopReq
+	53,  // 72: djicloud.DjiCloud.CameraRecordingStart:input_type -> djicloud.CameraRecordingStartReq
+	54,  // 73: djicloud.DjiCloud.CameraRecordingStop:input_type -> djicloud.CameraRecordingStopReq
+	55,  // 74: djicloud.DjiCloud.CameraFocalLengthSet:input_type -> djicloud.CameraFocalLengthSetReq
+	56,  // 75: djicloud.DjiCloud.GimbalReset:input_type -> djicloud.GimbalResetReq
+	57,  // 76: djicloud.DjiCloud.CameraAim:input_type -> djicloud.CameraAimReq
+	58,  // 77: djicloud.DjiCloud.CameraPointFocusAction:input_type -> djicloud.CameraPointFocusActionReq
+	59,  // 78: djicloud.DjiCloud.CameraScreenSplit:input_type -> djicloud.CameraScreenSplitReq
+	60,  // 79: djicloud.DjiCloud.CameraPhotoStorageSet:input_type -> djicloud.CameraPhotoStorageSetReq
+	61,  // 80: djicloud.DjiCloud.CameraVideoStorageSet:input_type -> djicloud.CameraVideoStorageSetReq
+	62,  // 81: djicloud.DjiCloud.CameraLookAt:input_type -> djicloud.CameraLookAtReq
+	63,  // 82: djicloud.DjiCloud.CameraScreenDrag:input_type -> djicloud.CameraScreenDragReq
+	64,  // 83: djicloud.DjiCloud.CameraIrMeteringPoint:input_type -> djicloud.CameraIrMeteringPointReq
+	65,  // 84: djicloud.DjiCloud.CameraIrMeteringArea:input_type -> djicloud.CameraIrMeteringAreaReq
+	66,  // 85: djicloud.DjiCloud.FlightAreasUpdate:input_type -> djicloud.FlightAreasUpdateReq
+	67,  // 86: djicloud.DjiCloud.PsdkUIResourceUpload:input_type -> djicloud.PsdkUIResourceUploadReq
+	68,  // 87: djicloud.DjiCloud.CustomDataTransmissionToPsdk:input_type -> djicloud.CustomDataTransmissionToPsdkReq
+	69,  // 88: djicloud.DjiCloud.CustomDataTransmissionToEsdk:input_type -> djicloud.CustomDataTransmissionToEsdkReq
+	70,  // 89: djicloud.DjiCloud.UnlockLicenseSwitch:input_type -> djicloud.UnlockLicenseSwitchReq
+	72,  // 90: djicloud.DjiCloud.UnlockLicenseUpdate:input_type -> djicloud.UnlockLicenseUpdateReq
+	73,  // 91: djicloud.DjiCloud.UnlockLicenseList:input_type -> djicloud.UnlockLicenseListReq
+	74,  // 92: djicloud.DjiCloud.DrcModeEnter:input_type -> djicloud.DrcModeEnterReq
+	75,  // 93: djicloud.DjiCloud.DrcModeExit:input_type -> djicloud.DrcModeExitReq
+	76,  // 94: djicloud.DjiCloud.DroneEmergencyStop:input_type -> djicloud.DroneEmergencyStopReq
+	77,  // 95: djicloud.DjiCloud.StickControl:input_type -> djicloud.StickControlReq
+	78,  // 96: djicloud.DjiCloud.DrcForceLanding:input_type -> djicloud.DrcForceLandingReq
+	79,  // 97: djicloud.DjiCloud.DrcEmergencyLanding:input_type -> djicloud.DrcEmergencyLandingReq
+	80,  // 98: djicloud.DjiCloud.DrcLinkageZoomSet:input_type -> djicloud.DrcLinkageZoomSetReq
+	81,  // 99: djicloud.DjiCloud.DrcVideoResolutionSet:input_type -> djicloud.DrcVideoResolutionSetReq
+	82,  // 100: djicloud.DjiCloud.DrcIntervalPhotoSet:input_type -> djicloud.DrcIntervalPhotoSetReq
+	83,  // 101: djicloud.DjiCloud.DrcInitialStateSubscribe:input_type -> djicloud.DrcInitialStateSubscribeReq
+	84,  // 102: djicloud.DjiCloud.DrcNightLightsStateSet:input_type -> djicloud.DrcNightLightsStateSetReq
+	85,  // 103: djicloud.DjiCloud.DrcStealthStateSet:input_type -> djicloud.DrcStealthStateSetReq
+	86,  // 104: djicloud.DjiCloud.DrcCameraApertureValueSet:input_type -> djicloud.DrcCameraApertureValueSetReq
+	87,  // 105: djicloud.DjiCloud.DrcCameraShutterSet:input_type -> djicloud.DrcCameraShutterSetReq
+	88,  // 106: djicloud.DjiCloud.DrcCameraIsoSet:input_type -> djicloud.DrcCameraIsoSetReq
+	89,  // 107: djicloud.DjiCloud.DrcCameraMechanicalShutterSet:input_type -> djicloud.DrcCameraMechanicalShutterSetReq
+	90,  // 108: djicloud.DjiCloud.DrcCameraDewarpingSet:input_type -> djicloud.DrcCameraDewarpingSetReq
+	106, // 109: djicloud.DjiCloud.IsDeviceOnline:input_type -> djicloud.IsDeviceOnlineReq
+	113, // 110: djicloud.DjiCloud.ListDevices:input_type -> djicloud.ListDevicesReq
+	115, // 111: djicloud.DjiCloud.GetDeviceDetail:input_type -> djicloud.GetDeviceDetailReq
+	121, // 112: djicloud.DjiCloud.GetDeviceOsdSnapshot:input_type -> djicloud.GetDeviceOsdSnapshotReq
+	122, // 113: djicloud.DjiCloud.GetDeviceStateSnapshot:input_type -> djicloud.GetDeviceStateSnapshotReq
+	124, // 114: djicloud.DjiCloud.ListHmsAlerts:input_type -> djicloud.ListHmsAlertsReq
+	126, // 115: djicloud.DjiCloud.AckHmsAlert:input_type -> djicloud.AckHmsAlertReq
+	128, // 116: djicloud.DjiCloud.ListFlightTaskProgress:input_type -> djicloud.ListFlightTaskProgressReq
+	130, // 117: djicloud.DjiCloud.GetFlightTaskProgressLast:input_type -> djicloud.GetFlightTaskProgressLastReq
+	132, // 118: djicloud.DjiCloud.QueryDrcStatus:input_type -> djicloud.QueryDrcStatusReq
+	0,   // 119: djicloud.DjiCloud.PropertySet:output_type -> djicloud.CommonRes
+	0,   // 120: djicloud.DjiCloud.LiveStartPush:output_type -> djicloud.CommonRes
+	0,   // 121: djicloud.DjiCloud.LiveStopPush:output_type -> djicloud.CommonRes
+	0,   // 122: djicloud.DjiCloud.LiveSetQuality:output_type -> djicloud.CommonRes
+	0,   // 123: djicloud.DjiCloud.LiveLensChange:output_type -> djicloud.CommonRes
+	0,   // 124: djicloud.DjiCloud.LiveCameraChange:output_type -> djicloud.CommonRes
+	0,   // 125: djicloud.DjiCloud.MediaUploadFlighttaskMediaPrioritize:output_type -> djicloud.CommonRes
+	0,   // 126: djicloud.DjiCloud.MediaFastUpload:output_type -> djicloud.CommonRes
+	0,   // 127: djicloud.DjiCloud.MediaHighestPriorityUploadFlighttask:output_type -> djicloud.CommonRes
+	0,   // 128: djicloud.DjiCloud.FlightTaskPrepare:output_type -> djicloud.CommonRes
+	0,   // 129: djicloud.DjiCloud.FlightTaskExecute:output_type -> djicloud.CommonRes
+	0,   // 130: djicloud.DjiCloud.FlightTaskUndo:output_type -> djicloud.CommonRes
+	0,   // 131: djicloud.DjiCloud.PauseFlightTask:output_type -> djicloud.CommonRes
+	0,   // 132: djicloud.DjiCloud.FlightTaskRecovery:output_type -> djicloud.CommonRes
+	0,   // 133: djicloud.DjiCloud.StopFlightTask:output_type -> djicloud.CommonRes
+	0,   // 134: djicloud.DjiCloud.ReturnHome:output_type -> djicloud.CommonRes
+	0,   // 135: djicloud.DjiCloud.ReturnHomeCancelAutoReturn:output_type -> djicloud.CommonRes
+	0,   // 136: djicloud.DjiCloud.ReturnSpecificHome:output_type -> djicloud.CommonRes
+	0,   // 137: djicloud.DjiCloud.DebugModeOpen:output_type -> djicloud.CommonRes
+	0,   // 138: djicloud.DjiCloud.DebugModeClose:output_type -> djicloud.CommonRes
+	0,   // 139: djicloud.DjiCloud.CoverOpen:output_type -> djicloud.CommonRes
+	0,   // 140: djicloud.DjiCloud.CoverClose:output_type -> djicloud.CommonRes
+	0,   // 141: djicloud.DjiCloud.CoverForceClose:output_type -> djicloud.CommonRes
+	0,   // 142: djicloud.DjiCloud.DroneOpen:output_type -> djicloud.CommonRes
+	0,   // 143: djicloud.DjiCloud.DroneClose:output_type -> djicloud.CommonRes
+	0,   // 144: djicloud.DjiCloud.DeviceReboot:output_type -> djicloud.CommonRes
+	0,   // 145: djicloud.DjiCloud.ChargeOpen:output_type -> djicloud.CommonRes
+	0,   // 146: djicloud.DjiCloud.ChargeClose:output_type -> djicloud.CommonRes
+	0,   // 147: djicloud.DjiCloud.DroneFormat:output_type -> djicloud.CommonRes
+	0,   // 148: djicloud.DjiCloud.DeviceFormat:output_type -> djicloud.CommonRes
+	0,   // 149: djicloud.DjiCloud.SupplementLightOpen:output_type -> djicloud.CommonRes
+	0,   // 150: djicloud.DjiCloud.SupplementLightClose:output_type -> djicloud.CommonRes
+	0,   // 151: djicloud.DjiCloud.BatteryStoreModeSwitch:output_type -> djicloud.CommonRes
+	0,   // 152: djicloud.DjiCloud.AlarmStateSwitch:output_type -> djicloud.CommonRes
+	0,   // 153: djicloud.DjiCloud.AirConditionerModeSwitch:output_type -> djicloud.CommonRes
+	0,   // 154: djicloud.DjiCloud.BatteryMaintenanceSwitch:output_type -> djicloud.CommonRes
+	0,   // 155: djicloud.DjiCloud.OtaCreate:output_type -> djicloud.CommonRes
+	0,   // 156: djicloud.DjiCloud.RemoteLogFileList:output_type -> djicloud.CommonRes
+	0,   // 157: djicloud.DjiCloud.RemoteLogFileUploadStart:output_type -> djicloud.CommonRes
+	0,   // 158: djicloud.DjiCloud.RemoteLogFileUploadUpdate:output_type -> djicloud.CommonRes
+	0,   // 159: djicloud.DjiCloud.RemoteLogFileUploadCancel:output_type -> djicloud.CommonRes
+	0,   // 160: djicloud.DjiCloud.ConfigUpdate:output_type -> djicloud.CommonRes
+	0,   // 161: djicloud.DjiCloud.FlightAuthorityGrab:output_type -> djicloud.CommonRes
+	0,   // 162: djicloud.DjiCloud.PayloadAuthorityGrab:output_type -> djicloud.CommonRes
+	0,   // 163: djicloud.DjiCloud.FlyToPoint:output_type -> djicloud.CommonRes
+	0,   // 164: djicloud.DjiCloud.FlyToPointStop:output_type -> djicloud.CommonRes
+	0,   // 165: djicloud.DjiCloud.TakeoffToPoint:output_type -> djicloud.CommonRes
+	0,   // 166: djicloud.DjiCloud.CameraModeSwitch:output_type -> djicloud.CommonRes
+	0,   // 167: djicloud.DjiCloud.CameraPhotoTake:output_type -> djicloud.CommonRes
+	0,   // 168: djicloud.DjiCloud.CameraPhotoStop:output_type -> djicloud.CommonRes
+	0,   // 169: djicloud.DjiCloud.CameraRecordingStart:output_type -> djicloud.CommonRes
+	0,   // 170: djicloud.DjiCloud.CameraRecordingStop:output_type -> djicloud.CommonRes
+	0,   // 171: djicloud.DjiCloud.CameraFocalLengthSet:output_type -> djicloud.CommonRes
+	0,   // 172: djicloud.DjiCloud.GimbalReset:output_type -> djicloud.CommonRes
+	0,   // 173: djicloud.DjiCloud.CameraAim:output_type -> djicloud.CommonRes
+	0,   // 174: djicloud.DjiCloud.CameraPointFocusAction:output_type -> djicloud.CommonRes
+	0,   // 175: djicloud.DjiCloud.CameraScreenSplit:output_type -> djicloud.CommonRes
+	0,   // 176: djicloud.DjiCloud.CameraPhotoStorageSet:output_type -> djicloud.CommonRes
+	0,   // 177: djicloud.DjiCloud.CameraVideoStorageSet:output_type -> djicloud.CommonRes
+	0,   // 178: djicloud.DjiCloud.CameraLookAt:output_type -> djicloud.CommonRes
+	0,   // 179: djicloud.DjiCloud.CameraScreenDrag:output_type -> djicloud.CommonRes
+	0,   // 180: djicloud.DjiCloud.CameraIrMeteringPoint:output_type -> djicloud.CommonRes
+	0,   // 181: djicloud.DjiCloud.CameraIrMeteringArea:output_type -> djicloud.CommonRes
+	0,   // 182: djicloud.DjiCloud.FlightAreasUpdate:output_type -> djicloud.CommonRes
+	0,   // 183: djicloud.DjiCloud.PsdkUIResourceUpload:output_type -> djicloud.CommonRes
+	0,   // 184: djicloud.DjiCloud.CustomDataTransmissionToPsdk:output_type -> djicloud.CommonRes
+	0,   // 185: djicloud.DjiCloud.CustomDataTransmissionToEsdk:output_type -> djicloud.CommonRes
+	0,   // 186: djicloud.DjiCloud.UnlockLicenseSwitch:output_type -> djicloud.CommonRes
+	0,   // 187: djicloud.DjiCloud.UnlockLicenseUpdate:output_type -> djicloud.CommonRes
+	0,   // 188: djicloud.DjiCloud.UnlockLicenseList:output_type -> djicloud.CommonRes
+	0,   // 189: djicloud.DjiCloud.DrcModeEnter:output_type -> djicloud.CommonRes
+	0,   // 190: djicloud.DjiCloud.DrcModeExit:output_type -> djicloud.CommonRes
+	91,  // 191: djicloud.DjiCloud.DroneEmergencyStop:output_type -> djicloud.DroneEmergencyStopRes
+	92,  // 192: djicloud.DjiCloud.StickControl:output_type -> djicloud.StickControlRes
+	93,  // 193: djicloud.DjiCloud.DrcForceLanding:output_type -> djicloud.DrcForceLandingRes
+	94,  // 194: djicloud.DjiCloud.DrcEmergencyLanding:output_type -> djicloud.DrcEmergencyLandingRes
+	96,  // 195: djicloud.DjiCloud.DrcLinkageZoomSet:output_type -> djicloud.DrcLinkageZoomSetRes
+	97,  // 196: djicloud.DjiCloud.DrcVideoResolutionSet:output_type -> djicloud.DrcVideoResolutionSetRes
+	98,  // 197: djicloud.DjiCloud.DrcIntervalPhotoSet:output_type -> djicloud.DrcIntervalPhotoSetRes
+	95,  // 198: djicloud.DjiCloud.DrcInitialStateSubscribe:output_type -> djicloud.DrcInitialStateSubscribeRes
+	99,  // 199: djicloud.DjiCloud.DrcNightLightsStateSet:output_type -> djicloud.DrcNightLightsStateSetRes
+	100, // 200: djicloud.DjiCloud.DrcStealthStateSet:output_type -> djicloud.DrcStealthStateSetRes
+	101, // 201: djicloud.DjiCloud.DrcCameraApertureValueSet:output_type -> djicloud.DrcCameraApertureValueSetRes
+	102, // 202: djicloud.DjiCloud.DrcCameraShutterSet:output_type -> djicloud.DrcCameraShutterSetRes
+	103, // 203: djicloud.DjiCloud.DrcCameraIsoSet:output_type -> djicloud.DrcCameraIsoSetRes
+	104, // 204: djicloud.DjiCloud.DrcCameraMechanicalShutterSet:output_type -> djicloud.DrcCameraMechanicalShutterSetRes
+	105, // 205: djicloud.DjiCloud.DrcCameraDewarpingSet:output_type -> djicloud.DrcCameraDewarpingSetRes
+	107, // 206: djicloud.DjiCloud.IsDeviceOnline:output_type -> djicloud.DeviceOnlineRes
+	114, // 207: djicloud.DjiCloud.ListDevices:output_type -> djicloud.ListDevicesRes
+	120, // 208: djicloud.DjiCloud.GetDeviceDetail:output_type -> djicloud.DeviceDetailRes
+	117, // 209: djicloud.DjiCloud.GetDeviceOsdSnapshot:output_type -> djicloud.DeviceOsdSnapshotRes
+	119, // 210: djicloud.DjiCloud.GetDeviceStateSnapshot:output_type -> djicloud.DeviceStateSnapshotRes
+	125, // 211: djicloud.DjiCloud.ListHmsAlerts:output_type -> djicloud.ListHmsAlertsRes
+	0,   // 212: djicloud.DjiCloud.AckHmsAlert:output_type -> djicloud.CommonRes
+	129, // 213: djicloud.DjiCloud.ListFlightTaskProgress:output_type -> djicloud.ListFlightTaskProgressRes
+	131, // 214: djicloud.DjiCloud.GetFlightTaskProgressLast:output_type -> djicloud.FlightTaskProgressLastRes
+	133, // 215: djicloud.DjiCloud.QueryDrcStatus:output_type -> djicloud.DrcStatusRes
+	119, // [119:216] is the sub-list for method output_type
+	22,  // [22:119] is the sub-list for method input_type
 	22,  // [22:22] is the sub-list for extension type_name
 	22,  // [22:22] is the sub-list for extension extendee
 	0,   // [0:22] is the sub-list for field type_name
@@ -9558,7 +9457,7 @@ func file_djicloud_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_djicloud_proto_rawDesc), len(file_djicloud_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   136,
+			NumMessages:   134,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

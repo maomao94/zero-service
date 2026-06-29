@@ -23,12 +23,6 @@ func NewDjiCloudServer(svcCtx *svc.ServiceContext) *DjiCloudServer {
 	}
 }
 
-// Ping 健康检查接口，用于验证服务可用性。
-func (s *DjiCloudServer) Ping(ctx context.Context, in *djicloud.Req) (*djicloud.Res, error) {
-	l := logic.NewPingLogic(ctx, s.svcCtx)
-	return l.Ping(in)
-}
-
 // PropertySet 设置设备属性。
 func (s *DjiCloudServer) PropertySet(ctx context.Context, in *djicloud.PropertySetReq) (*djicloud.CommonRes, error) {
 	l := logic.NewPropertySetLogic(ctx, s.svcCtx)

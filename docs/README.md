@@ -7,7 +7,7 @@
 | [快速开始](quick-start.md) | 环境要求、安装、启动示例、常见问题 |
 | [架构概览](architecture.md) | 系统架构、模块依赖、数据流、技术选型 |
 | [服务端口清单](service-ports.md) | 各微服务默认端口、协议和用途 |
-| [错误码规范](error-codes.md) | google.rpc.Code 与 HTTP/gRPC 错误码映射 |
+| [错误码规范](error-codes.md) | HTTP/gRPC 状态码映射、自定义 detail.reason 编码规则 |
 
 ## 核心服务
 

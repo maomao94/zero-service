@@ -22,7 +22,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DjiCloud_Ping_FullMethodName                                 = "/djicloud.DjiCloud/Ping"
 	DjiCloud_PropertySet_FullMethodName                          = "/djicloud.DjiCloud/PropertySet"
 	DjiCloud_LiveStartPush_FullMethodName                        = "/djicloud.DjiCloud/LiveStartPush"
 	DjiCloud_LiveStopPush_FullMethodName                         = "/djicloud.DjiCloud/LiveStopPush"
@@ -130,8 +129,6 @@ const (
 // 封装 DJI Dock/设备云端控制、状态接入与云平台组合能力。
 // 通过 MQTT 主题对接机巢网关（gateway_sn），可并行管理多台设备。
 type DjiCloudClient interface {
-	// Ping 健康检查接口，用于验证服务可用性。
-	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
 	// PropertySet 设置设备属性。
 	// 通过 property/set 主题向设备下发属性设置命令。
 	// properties 为 JSON 格式的键值对字符串。
@@ -179,7 +176,7 @@ type DjiCloudClient interface {
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// flight_id 须与同一次航线任务准备（FlightTaskPrepare）中的 flight_id 一致。
 	FlightTaskExecute(ctx context.Context, in *FlightTaskExecuteReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// CancelFlightTask 取消航线任务。
+	// FlightTaskUndo 取消航线任务。
 	// 对应 DJI Cloud API method: flighttask_undo，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	FlightTaskUndo(ctx context.Context, in *FlightTaskUndoReq, opts ...grpc.CallOption) (*CommonRes, error)
@@ -187,7 +184,7 @@ type DjiCloudClient interface {
 	// 对应 DJI Cloud API method: flighttask_pause，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	PauseFlightTask(ctx context.Context, in *PauseFlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// ResumeFlightTask 恢复已暂停的航线任务。
+	// FlightTaskRecovery 恢复已暂停的航线任务。
 	// 对应 DJI Cloud API method: flighttask_recovery，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	FlightTaskRecovery(ctx context.Context, in *FlightTaskRecoveryReq, opts ...grpc.CallOption) (*CommonRes, error)
@@ -411,13 +408,13 @@ type DjiCloudClient interface {
 	// 对应 DJI Cloud API method: psdk_ui_resource_upload，
 	// Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	PsdkUIResourceUpload(ctx context.Context, in *PsdkUIResourceUploadReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
+	// CustomDataTransmissionToPsdk 自定义数据透传至 PSDK 负载设备。
 	// 对应 DJI Cloud API method: custom_data_transmission_to_psdk，
 	// Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），
 	// 将自定义消息透传推送到 PSDK 负载设备，等待设备 ACK 后返回结果。
 	// 上行方向（设备→云平台）通过 events topic 的 custom_data_transmission_from_psdk 事件钩子处理。
 	CustomDataTransmissionToPsdk(ctx context.Context, in *CustomDataTransmissionToPsdkReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// SendCustomDataToEsdk 自定义数据透传至 ESDK 设备。
+	// CustomDataTransmissionToEsdk 自定义数据透传至 ESDK 设备。
 	// 对应 DJI Cloud API method: custom_data_transmission_to_esdk，方向 down（云平台→设备）。
 	CustomDataTransmissionToEsdk(ctx context.Context, in *CustomDataTransmissionToEsdkReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// UnlockLicenseSwitch 启用或禁用设备的单个解禁证书。
@@ -444,7 +441,7 @@ type DjiCloudClient interface {
 	// 对应 DJI Cloud API method: drone_emergency_stop（drc/down），仅表示已发布到 MQTT，不等待 services_reply。
 	// 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
 	DroneEmergencyStop(ctx context.Context, in *DroneEmergencyStopReq, opts ...grpc.CallOption) (*DroneEmergencyStopRes, error)
-	// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
+	// StickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
 	// Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；无 services_reply。
 	// seq 由平台内部管理，无需调用方传入。
 	StickControl(ctx context.Context, in *StickControlReq, opts ...grpc.CallOption) (*StickControlRes, error)
@@ -521,16 +518,6 @@ type djiCloudClient struct {
 
 func NewDjiCloudClient(cc grpc.ClientConnInterface) DjiCloudClient {
 	return &djiCloudClient{cc}
-}
-
-func (c *djiCloudClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Res)
-	err := c.cc.Invoke(ctx, DjiCloud_Ping_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *djiCloudClient) PropertySet(ctx context.Context, in *PropertySetReq, opts ...grpc.CallOption) (*CommonRes, error) {
@@ -1511,8 +1498,6 @@ func (c *djiCloudClient) QueryDrcStatus(ctx context.Context, in *QueryDrcStatusR
 // 封装 DJI Dock/设备云端控制、状态接入与云平台组合能力。
 // 通过 MQTT 主题对接机巢网关（gateway_sn），可并行管理多台设备。
 type DjiCloudServer interface {
-	// Ping 健康检查接口，用于验证服务可用性。
-	Ping(context.Context, *Req) (*Res, error)
 	// PropertySet 设置设备属性。
 	// 通过 property/set 主题向设备下发属性设置命令。
 	// properties 为 JSON 格式的键值对字符串。
@@ -1560,7 +1545,7 @@ type DjiCloudServer interface {
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// flight_id 须与同一次航线任务准备（FlightTaskPrepare）中的 flight_id 一致。
 	FlightTaskExecute(context.Context, *FlightTaskExecuteReq) (*CommonRes, error)
-	// CancelFlightTask 取消航线任务。
+	// FlightTaskUndo 取消航线任务。
 	// 对应 DJI Cloud API method: flighttask_undo，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	FlightTaskUndo(context.Context, *FlightTaskUndoReq) (*CommonRes, error)
@@ -1568,7 +1553,7 @@ type DjiCloudServer interface {
 	// 对应 DJI Cloud API method: flighttask_pause，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	PauseFlightTask(context.Context, *PauseFlightTaskReq) (*CommonRes, error)
-	// ResumeFlightTask 恢复已暂停的航线任务。
+	// FlightTaskRecovery 恢复已暂停的航线任务。
 	// 对应 DJI Cloud API method: flighttask_recovery，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	FlightTaskRecovery(context.Context, *FlightTaskRecoveryReq) (*CommonRes, error)
@@ -1792,13 +1777,13 @@ type DjiCloudServer interface {
 	// 对应 DJI Cloud API method: psdk_ui_resource_upload，
 	// Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	PsdkUIResourceUpload(context.Context, *PsdkUIResourceUploadReq) (*CommonRes, error)
-	// SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
+	// CustomDataTransmissionToPsdk 自定义数据透传至 PSDK 负载设备。
 	// 对应 DJI Cloud API method: custom_data_transmission_to_psdk，
 	// Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），
 	// 将自定义消息透传推送到 PSDK 负载设备，等待设备 ACK 后返回结果。
 	// 上行方向（设备→云平台）通过 events topic 的 custom_data_transmission_from_psdk 事件钩子处理。
 	CustomDataTransmissionToPsdk(context.Context, *CustomDataTransmissionToPsdkReq) (*CommonRes, error)
-	// SendCustomDataToEsdk 自定义数据透传至 ESDK 设备。
+	// CustomDataTransmissionToEsdk 自定义数据透传至 ESDK 设备。
 	// 对应 DJI Cloud API method: custom_data_transmission_to_esdk，方向 down（云平台→设备）。
 	CustomDataTransmissionToEsdk(context.Context, *CustomDataTransmissionToEsdkReq) (*CommonRes, error)
 	// UnlockLicenseSwitch 启用或禁用设备的单个解禁证书。
@@ -1825,7 +1810,7 @@ type DjiCloudServer interface {
 	// 对应 DJI Cloud API method: drone_emergency_stop（drc/down），仅表示已发布到 MQTT，不等待 services_reply。
 	// 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
 	DroneEmergencyStop(context.Context, *DroneEmergencyStopReq) (*DroneEmergencyStopRes, error)
-	// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
+	// StickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
 	// Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；无 services_reply。
 	// seq 由平台内部管理，无需调用方传入。
 	StickControl(context.Context, *StickControlReq) (*StickControlRes, error)
@@ -1904,9 +1889,6 @@ type DjiCloudServer interface {
 // pointer dereference when methods are called.
 type UnimplementedDjiCloudServer struct{}
 
-func (UnimplementedDjiCloudServer) Ping(context.Context, *Req) (*Res, error) {
-	return nil, status.Error(codes.Unimplemented, "method Ping not implemented")
-}
 func (UnimplementedDjiCloudServer) PropertySet(context.Context, *PropertySetReq) (*CommonRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method PropertySet not implemented")
 }
@@ -2217,24 +2199,6 @@ func RegisterDjiCloudServer(s grpc.ServiceRegistrar, srv DjiCloudServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&DjiCloud_ServiceDesc, srv)
-}
-
-func _DjiCloud_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Req)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DjiCloudServer).Ping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DjiCloud_Ping_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).Ping(ctx, req.(*Req))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_PropertySet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -3990,10 +3954,6 @@ var DjiCloud_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "djicloud.DjiCloud",
 	HandlerType: (*DjiCloudServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Ping",
-			Handler:    _DjiCloud_Ping_Handler,
-		},
 		{
 			MethodName: "PropertySet",
 			Handler:    _DjiCloud_PropertySet_Handler,

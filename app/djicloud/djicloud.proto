@@ -13,8 +13,6 @@ option java_outer_classname = "DjiCloudProto";
 // 封装 DJI Dock/设备云端控制、状态接入与云平台组合能力。
 // 通过 MQTT 主题对接机巢网关（gateway_sn），可并行管理多台设备。
 service DjiCloud {
-  // Ping 健康检查接口，用于验证服务可用性。
-  rpc Ping(Req) returns (Res);
 
   // ==================== 属性设置（Properties） ====================
   // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/properties.html
@@ -571,18 +569,6 @@ service DjiCloud {
 }
 
 // ==================== 通用消息 ====================
-
-// Req 健康检查请求。
-message Req {
-  // ping 请求标识，任意字符串。
-  string ping = 1;
-}
-
-// Res 健康检查响应。
-message Res {
-  // pong 响应标识，回传请求中的 ping 内容。
-  string pong = 1;
-}
 
 // CommonRes 通用响应，用于返回命令执行结果。
 message CommonRes {
