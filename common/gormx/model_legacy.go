@@ -39,18 +39,16 @@ func (m *LegacySoftDeleteMixin) IsDeleted() bool {
 	return m.DelState == LegacyDelStateDeleted || m.DeleteTime.Valid
 }
 
-// LegacyBaseModel 组合旧表 int64 主键、旧时间字段、旧软删除字段和版本字段。
+// LegacyBaseModel 组合旧表 int64 主键、旧时间字段、旧软删除字段。
 type LegacyBaseModel struct {
 	LegacyIDMixin
 	LegacyTimeMixin
 	LegacySoftDeleteMixin
-	VersionMixin
 }
 
-// LegacyStringBaseModel 组合旧表 string 主键、旧时间字段、旧软删除字段和版本字段。
+// LegacyStringBaseModel 组合旧表 string 主键、旧时间字段、旧软删除字段。
 type LegacyStringBaseModel struct {
 	LegacyStringIDMixin
 	LegacyTimeMixin
 	LegacySoftDeleteMixin
-	VersionMixin
 }

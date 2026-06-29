@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestTenantModelWorksWithGormDefaultMigrate(t *testing.T) {
-	type tenantDefaultMigrateTestModel struct {
+func TestTenantMixinAutoFillsWithCallbacks(t *testing.T) {
+	type tenantMigrateTestModel struct {
 		ID uint `gorm:"primarykey"`
 		TenantMixin
 		AuditMixin
@@ -15,14 +15,14 @@ func TestTenantModelWorksWithGormDefaultMigrate(t *testing.T) {
 		Name string `gorm:"column:name"`
 	}
 
-	db := openTestDB(t, &tenantDefaultMigrateTestModel{})
+	db := openTestDB(t, &tenantMigrateTestModel{})
 	ctx := WithUserAndTenantContext(context.Background(), uint(7), "tester", "tenant-b")
-	record := tenantDefaultMigrateTestModel{Name: "model"}
+	record := tenantMigrateTestModel{Name: "model"}
 	if err := db.WithContext(ctx).Create(&record).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
 
-	var got tenantDefaultMigrateTestModel
+	var got tenantMigrateTestModel
 	if err := db.First(&got, "id = ?", record.ID).Error; err != nil {
 		t.Fatalf("find error = %v", err)
 	}

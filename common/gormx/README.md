@@ -17,15 +17,36 @@ if err != nil {
 
 ## 模型选择
 
-- 新表默认用 `BaseModel`：uint 主键、审计字段、版本、标准 `deleted_at` 软删和时间字段。
-- string 主键用 `StringBaseModel` 或 `StringIDModel`。
-- 租户表用 `TenantModel`、`TenantStringIDModel` 或手动嵌入 `TenantMixin`。
-- 旧表用 `LegacyBaseModel`：`id/create_time/update_time/delete_time/del_state/version`。
+gormx 提供原子级 mixin，按需组合；不再提供固定的复合 BaseModel。
+
+- `IDModel` / `StringIDModel` — uint / string 主键。
+- `TimeMixin` — `created_at` / `updated_at`（自动填充）。
+- `SoftDeleteMixin` — 标准 `deleted_at` 软删除。
+- `VersionMixin` — `optimisticlock.Version` 乐观锁，**默认不要加**。每次 UPDATE 会附加 `WHERE version = ?` 并自增 version，影响写入性能。仅用于高并发编辑场景（如多人同时修改同一配置），IoT 数据流、日志表、事件表不要加。
+- `TenantMixin` — `tenant_id` 租户隔离字段。
+- `AuditMixin` / `StringAuditMixin` — 创建/更新/删除审计（uint / string 类型用户 ID）。
+- `AuditWithoutDeleteMixin` / `StringAuditWithoutDeleteMixin` — 仅创建/更新审计，无删除审计。
+- `LegacyIDMixin` / `LegacyStringIDMixin` — 旧表 int64 / string 主键。
+- `LegacyTimeMixin` — 旧表 `create_time` / `update_time`。
+- `LegacySoftDeleteMixin` — 旧表 `delete_time` / `del_state` 软删除。
+- `LegacyBaseModel` — 旧表默认组合（int64 id + legacy 时间 + legacy 软删）。
+- `LegacyStringBaseModel` — 同上，string 主键。
 
 ```go
+// 典型组合方式
 type Device struct {
-	gormx.TenantModel
+	gormx.IDModel
+	gormx.TimeMixin
+	gormx.SoftDeleteMixin
+	gormx.AuditMixin
 	Name string `gorm:"column:name"`
+}
+
+// 需要乐观锁时显式嵌入
+type Config struct {
+	gormx.LegacyBaseModel
+	gormx.VersionMixin
+	Key string `gorm:"column:key"`
 }
 ```
 

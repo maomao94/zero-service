@@ -80,15 +80,15 @@ func NewReplyRouter[T any](decode ReplyDecoder[T], opts ...ReplyRouterOption) *R
 	}
 }
 
-// RequestReply registers tid, runs send, then waits for a matching reply.
+// requestReply registers tid, runs send, then waits for a matching reply.
 // send is responsible for publishing the protocol-specific MQTT request.
-func (r *ReplyRouter[T]) RequestReply(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (T, error) {
+func (r *ReplyRouter[T]) requestReply(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (T, error) {
 	return antsx.RequestReply(ctx, r.pool, tid, send, ttl...)
 }
 
-// HandleReply decodes a reply MQTT message and resolves the matching pending request.
+// handleReply decodes a reply MQTT message and resolves the matching pending request.
 // The returned bool reports whether a pending request was actually resolved.
-func (r *ReplyRouter[T]) HandleReply(ctx context.Context, payload []byte, topic string, topicTemplate string) (bool, error) {
+func (r *ReplyRouter[T]) handleReply(ctx context.Context, payload []byte, topic string, topicTemplate string) (bool, error) {
 	if r.decode == nil {
 		return false, ErrNilDecoder
 	}
@@ -108,7 +108,7 @@ func (r *ReplyRouter[T]) HandleReply(ctx context.Context, payload []byte, topic 
 // Returns nil when the reply matched a pending request, ErrReplyNotMatched when the message
 // was decoded but no pending entry existed, or the decode error otherwise.
 func (r *ReplyRouter[T]) Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error {
-	resolved, err := r.HandleReply(ctx, payload, topic, topicTemplate)
+	resolved, err := r.handleReply(ctx, payload, topic, topicTemplate)
 	if err != nil {
 		return err
 	}

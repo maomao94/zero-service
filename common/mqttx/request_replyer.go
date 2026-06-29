@@ -25,5 +25,5 @@ func RequestReply[T any](ctx context.Context, c Client, topicTemplate string, ti
 	if !ok {
 		return zero, ErrReplyType
 	}
-	return router.RequestReply(ctx, tid, send, ttl...)
+	return router.requestReply(ctx, tid, send, ttl...)
 }

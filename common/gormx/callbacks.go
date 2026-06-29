@@ -30,34 +30,25 @@ func beforeCreateHook(db *gorm.DB) {
 
 func beforeUpdateHook(db *gorm.DB) {
 	userCtx := GetUserContext(db.Statement.Context)
-	if userCtx != nil {
-		if userID := userCtx.AuditUserValue(); userID != nil {
-			setSchemaColumn(db, "update_user", userID)
-			setSchemaColumn(db, "update_name", userCtx.UserName)
-		}
+	if userCtx == nil {
+		return
 	}
-
-	if hasSchemaField(db, "version") {
-		db.Statement.SetColumn("version", gorm.Expr("version + 1"))
+	if userID := userCtx.AuditUserValue(); userID != nil {
+		setSchemaColumn(db, "update_user", userID)
+		setSchemaColumn(db, "update_name", userCtx.UserName)
 	}
+	// version 由 gorm.io/plugin/optimisticlock 的 Version 类型自动处理
 }
 
 func beforeDeleteHook(db *gorm.DB) {
 	userCtx := GetUserContext(db.Statement.Context)
-	if userCtx != nil {
-		if userID := userCtx.AuditUserValue(); userID != nil {
-			setSchemaColumn(db, "delete_user", userID)
-			setSchemaColumn(db, "delete_name", userCtx.UserName)
-		}
+	if userCtx == nil {
+		return
 	}
-}
-
-func hasSchemaField(db *gorm.DB, field string) bool {
-	if db.Statement == nil || db.Statement.Schema == nil {
-		return false
+	if userID := userCtx.AuditUserValue(); userID != nil {
+		setSchemaColumn(db, "delete_user", userID)
+		setSchemaColumn(db, "delete_name", userCtx.UserName)
 	}
-	_, ok := db.Statement.Schema.FieldsByDBName[field]
-	return ok
 }
 
 func setSchemaColumn(db *gorm.DB, column string, value any) {

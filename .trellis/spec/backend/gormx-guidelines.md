@@ -20,11 +20,9 @@
 | `tenant_scope.go` | `TenantScope` 等 scope 函数 |
 | `pagination.go` | `QueryPage`、`QueryPageData`、`CursorPage`、`NormalizePage` |
 | `callbacks.go` | 全局 GORM 回调：审计用户注入（`Create`/`Update`）、`RegisterGlobalCallbacks` |
-| `model.go` | `IDModel`/`StringIDModel`、`TimeMixin`/`SoftDeleteMixin`/`VersionMixin`/`TenantMixin` |
-| `model_audit.go` | `BaseModel`（嵌入 `IDModel`+`AuditMixin`+版本+软删+时间）、`AuditModel` |
-| `model_audit_mixins.go` | `CreatedByMixin`/`UpdatedByMixin`/`DeletedByMixin`、`AuditMixin` |
-| `model_legacy.go` | `LegacyBaseModel`、`LegacyIDMixin`、`LegacySoftDeleteMixin`（int64 ID，旧风格） |
-| `model_tenant.go` | `TenantModel`/`TenantStringIDModel`/`TenantTimeModel`（多租户模型） |
+| `model.go` | 原子 mixin：`IDModel`/`StringIDModel`（uint/string 主键）、`TimeMixin`（created_at/updated_at）、`SoftDeleteMixin`（deleted_at）、`VersionMixin`（乐观锁，按需嵌入）、`TenantMixin`（tenant_id） |
+| `model_audit.go` | 审计 mixin：`AuditMixin`（uint 用户）、`StringAuditMixin`（string 用户）、`AuditWithoutDeleteMixin`、`StringAuditWithoutDeleteMixin` |
+| `model_legacy.go` | Legacy mixin + `LegacyBaseModel`/`LegacyStringBaseModel`（int64/string 主键 + create_time/update_time + delete_time/del_state，**不含 VersionMixin**） |
 | `driver.go` | 数据库驱动工具 |
 | `upsert.go` | `Upsert` / `UpsertInBatches` 批量合并写入 |
 | `trace.go` | GORM 链路追踪回调 |
@@ -154,18 +152,63 @@ if err := registerOpenTelemetry(gormDB, options.openTelemetry); err != nil {
 
 `gorm.io/plugin/opentelemetry v0.1.16` 移除了 `tracing.WithDBName`，升级时需改为 `tracing.WithDBSystem`（设置 `db.system` 而非数据库名称）。
 
-## 模型与审计
+## 模型
 
-### `TimeMixin` 必须包含自动时间标签
+### Mixin 组合方式
+
+gormx 不再提供固定的复合 BaseModel。模型由原子 mixin 按需组合：
 
 ```go
-type TimeMixin struct {
-    CreatedAt time.Time `gorm:"type:timestamp(6);autoCreateTime:milli" json:"created_at"`
-    UpdatedAt time.Time `gorm:"type:timestamp(6);autoUpdateTime:milli" json:"updated_at"`
+// 典型——含审计+软删
+type Device struct {
+    gormx.IDModel
+    gormx.TimeMixin
+    gormx.SoftDeleteMixin
+    gormx.AuditMixin
+    Name string `gorm:"column:name"`
+}
+
+// 租户表——嵌入 TenantMixin
+type TenantDevice struct {
+    gormx.IDModel
+    gormx.TenantMixin
+    gormx.TimeMixin
+    Name string `gorm:"column:name"`
+}
+
+// 机巢 IoT 数据——不要加 VersionMixin
+type DjiDeviceOsdSnapshot struct {
+    gormx.LegacyBaseModel
+    DeviceSn string `gorm:"column:device_sn;uniqueIndex"`
+    RawJSON  string `gorm:"column:raw_json;type:jsonb"`
 }
 ```
 
-新表 `BaseModel` 已内嵌 `TimeMixin` 且标签正确，旧表 `LegacyBaseModel` 使用 `create_time/update_time` 非 GORM 自动标签，由 `RegisterCallbacks` 在 `BeforeCreate`/`BeforeUpdate` 中手动写入。
+### `VersionMixin` 性能影响
+
+`VersionMixin` 使用 `optimisticlock.Version`，每次 UPDATE 自动附加 `WHERE version = ?` 并自增 version。高频写入场景下每个 UPDATE 多一次 version 比较+自增，影响吞吐。**仅用于高并发编辑场景**（多人同时改同一配置），IoT 数据流、日志表、事件表不要加。
+
+```go
+// Good: 配置表（多人并发编辑）→ 显式嵌入
+type ModbusSlaveConfig struct {
+    gormx.LegacyBaseModel
+    gormx.VersionMixin
+    ...
+}
+
+// Good: IoT 快照表（单写高频更新）→ 不加 version
+type DjiDeviceOsdSnapshot struct {
+    gormx.LegacyBaseModel  // 不含 VersionMixin
+    ...
+}
+```
+
+### ID 字段约定
+
+- 旧表（`LegacyIDMixin` / `LegacyStringIDMixin`）：`Id` + `gorm:"column:id;primaryKey"`
+- 新表（`IDModel` / `StringIDModel`）：`Id` + `gorm:"primarykey"`
+- `TenantMixin`：`TenantID`（Go 复合缩写惯例）
+- GORM 仅对全大写 `ID` 自动识别为主键，`Id` 需要显式 `primarykey` tag
 
 ### GORM Model Hook 与 gormx Callback 的区别
 
@@ -204,8 +247,6 @@ func TenantScope(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 ### Don't: 依赖 Hooks 为 `SoftDeleteMixin` 模型设置删除审计字段
 
 `SoftDeleteMixin` 使用 `gorm.DeletedAt`，GORM 内置软删除走 `db.Session(NewDB: true)` → 新 Session 丢弃 `beforeDeleteHook` 的 `SetColumn` 值。删除审计字段需要在 service 层显式设置。`LegacySoftDeleteMixin`（`del_state`/`delete_time`）不受影响，因 `soft_delete` 插件机制不同。
-
-源文件：`callbacks.go`、`model_audit.go`。
 
 ### Gotcha: 软删后再写回需先 Restore
 

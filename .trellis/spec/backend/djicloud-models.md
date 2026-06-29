@@ -18,7 +18,7 @@
 | `dji_return_home_event` | `DjiReturnHomeEvent` | Insert-only | auto increment |
 | `dji_drc_up_event` | `DjiDrcUpEvent` | Insert-only | auto increment |
 
-所有模型嵌入 `gormx.LegacyBaseModel`（`id` int64 + `create_time` + `update_time` + 软删除 `delete_at`）。
+所有模型嵌入 `gormx.LegacyBaseModel`（int64 `id` + `create_time`/`update_time` + 软删除 `delete_time`/`del_state`，**不含 VersionMixin**）。
 
 ## 关键模型详解
 

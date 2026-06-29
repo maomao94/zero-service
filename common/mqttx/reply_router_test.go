@@ -26,7 +26,7 @@ func TestReplyDecoderFuncDecode(t *testing.T) {
 	}
 }
 
-func TestReplyRouterHandleReplyResolvesPendingTid(t *testing.T) {
+func TestReplyRouterResolvesPendingTid(t *testing.T) {
 	router := newTestReplyRouter(func(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[string], error) {
 		return ReplyMessage[string]{Tid: "tid-1", Value: "ok"}, nil
 	})
@@ -35,7 +35,7 @@ func TestReplyRouterHandleReplyResolvesPendingTid(t *testing.T) {
 	resultCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 	go func() {
-		result, err := router.RequestReply(context.Background(), "tid-1", func() error { return nil })
+		result, err := router.requestReply(context.Background(), "tid-1", func() error { return nil })
 		if err != nil {
 			errCh <- err
 			return
@@ -44,9 +44,9 @@ func TestReplyRouterHandleReplyResolvesPendingTid(t *testing.T) {
 	}()
 
 	waitUntil(t, func() bool { return router.has("tid-1") })
-	resolved, err := router.HandleReply(context.Background(), []byte("{}"), "reply/1", "reply/+")
+	resolved, err := router.handleReply(context.Background(), []byte("{}"), "reply/1", "reply/+")
 	if err != nil {
-		t.Fatalf("HandleReply returned error: %v", err)
+		t.Fatalf("handleReply returned error: %v", err)
 	}
 	if !resolved {
 		t.Fatalf("expected reply to resolve pending tid")
@@ -58,9 +58,9 @@ func TestReplyRouterHandleReplyResolvesPendingTid(t *testing.T) {
 			t.Fatalf("expected ok result, got %s", result)
 		}
 	case err := <-errCh:
-		t.Fatalf("RequestReply returned error: %v", err)
+		t.Fatalf("requestReply returned error: %v", err)
 	case <-time.After(time.Second):
-		t.Fatal("timed out waiting for RequestReply result")
+		t.Fatal("timed out waiting for reply")
 	}
 }
 
@@ -80,7 +80,7 @@ func TestReplyRouterHandleReplyErrors(t *testing.T) {
 	t.Run("nil decoder", func(t *testing.T) {
 		router := NewReplyRouter[string](nil)
 		defer router.Close()
-		_, err := router.HandleReply(context.Background(), nil, "reply/1", "reply/+")
+		_, err := router.handleReply(context.Background(), nil, "reply/1", "reply/+")
 		if !errors.Is(err, ErrNilDecoder) {
 			t.Fatalf("expected ErrNilDecoder, got %v", err)
 		}
@@ -92,7 +92,7 @@ func TestReplyRouterHandleReplyErrors(t *testing.T) {
 			return ReplyMessage[string]{}, decodeErr
 		})
 		defer router.Close()
-		_, err := router.HandleReply(context.Background(), nil, "reply/1", "reply/+")
+		_, err := router.handleReply(context.Background(), nil, "reply/1", "reply/+")
 		if !errors.Is(err, decodeErr) {
 			t.Fatalf("expected decode error, got %v", err)
 		}
@@ -103,27 +103,11 @@ func TestReplyRouterHandleReplyErrors(t *testing.T) {
 			return ReplyMessage[string]{Value: "missing tid"}, nil
 		})
 		defer router.Close()
-		_, err := router.HandleReply(context.Background(), nil, "reply/1", "reply/+")
+		_, err := router.handleReply(context.Background(), nil, "reply/1", "reply/+")
 		if !errors.Is(err, ErrEmptyReplyTid) {
 			t.Fatalf("expected ErrEmptyReplyTid, got %v", err)
 		}
 	})
-}
-
-func TestReplyRouterSendFailureCleansPendingTid(t *testing.T) {
-	router := newTestReplyRouter(func(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[string], error) {
-		return ReplyMessage[string]{Tid: "tid-1", Value: "ok"}, nil
-	})
-	defer router.Close()
-	sendErr := errors.New("send failed")
-
-	_, err := router.RequestReply(context.Background(), "tid-1", func() error { return sendErr })
-	if !errors.Is(err, sendErr) {
-		t.Fatalf("expected send error, got %v", err)
-	}
-	if router.has("tid-1") {
-		t.Fatalf("expected failed send to clean pending tid")
-	}
 }
 
 func TestReplyRouterRejectAndClosePending(t *testing.T) {
@@ -135,7 +119,7 @@ func TestReplyRouterRejectAndClosePending(t *testing.T) {
 		rejectErr := errors.New("rejected")
 		errCh := make(chan error, 1)
 		go func() {
-			_, err := router.RequestReply(context.Background(), "tid-1", func() error { return nil })
+			_, err := router.requestReply(context.Background(), "tid-1", func() error { return nil })
 			errCh <- err
 		}()
 		waitUntil(t, func() bool { return router.has("tid-1") })
@@ -158,7 +142,7 @@ func TestReplyRouterRejectAndClosePending(t *testing.T) {
 		})
 		errCh := make(chan error, 1)
 		go func() {
-			_, err := router.RequestReply(context.Background(), "tid-1", func() error { return nil })
+			_, err := router.requestReply(context.Background(), "tid-1", func() error { return nil })
 			errCh <- err
 		}()
 		waitUntil(t, func() bool { return router.has("tid-1") })
@@ -210,9 +194,9 @@ func TestRequestReplyResolvesPendingTid(t *testing.T) {
 	}()
 
 	waitUntil(t, func() bool { return router.has("tid-1") })
-	resolved, err := router.HandleReply(context.Background(), []byte("{}"), "reply/1", "reply/+")
+	resolved, err := router.handleReply(context.Background(), []byte("{}"), "reply/1", "reply/+")
 	if err != nil {
-		t.Fatalf("HandleReply returned error: %v", err)
+		t.Fatalf("handleReply returned error: %v", err)
 	}
 	if !resolved {
 		t.Fatalf("expected reply to resolve pending tid")

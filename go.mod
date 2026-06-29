@@ -316,6 +316,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.2 // indirect
 	gorm.io/driver/clickhouse v0.7.0 // indirect
+	gorm.io/plugin/optimisticlock v1.1.3 // indirect
 	gotest.tools/v3 v3.5.2 // indirect
 	k8s.io/api v0.34.3 // indirect
 	k8s.io/apimachinery v0.34.3 // indirect

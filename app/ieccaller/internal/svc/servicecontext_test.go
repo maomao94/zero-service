@@ -10,30 +10,30 @@ import (
 )
 
 func TestDecodeBroadcastAck(t *testing.T) {
-	router := mqttx.NewReplyRouter(mqttx.ReplyDecoderFunc[*types.BroadcastAckBody](decodeBroadcastAck))
+	decoder := mqttx.ReplyDecoderFunc[*types.BroadcastAckBody](decodeBroadcastAck)
 
-	resolved, err := router.HandleReply(context.Background(), []byte(`{"tId":"tid-1","method":"method","success":true,"responseBody":"{}"}`), "reply/topic", "reply/+")
+	msg, err := decoder.Decode(context.Background(), []byte(`{"tId":"tid-1","method":"method","success":true,"responseBody":"{}"}`), "reply/topic", "reply/+")
 	if err != nil {
-		t.Fatalf("HandleReply returned error: %v", err)
+		t.Fatalf("Decode returned error: %v", err)
 	}
-	if resolved {
-		t.Fatal("expected no pending request to resolve")
+	if msg.Tid != "tid-1" || msg.Value == nil || !msg.Value.Success {
+		t.Fatalf("unexpected decoded message: %+v", msg)
 	}
 }
 
 func TestDecodeBroadcastAckRejectsInvalidPayload(t *testing.T) {
-	router := mqttx.NewReplyRouter(mqttx.ReplyDecoderFunc[*types.BroadcastAckBody](decodeBroadcastAck))
+	decoder := mqttx.ReplyDecoderFunc[*types.BroadcastAckBody](decodeBroadcastAck)
 
-	_, err := router.HandleReply(context.Background(), []byte(`{`), "reply/topic", "reply/+")
+	_, err := decoder.Decode(context.Background(), []byte(`{`), "reply/topic", "reply/+")
 	if err == nil {
 		t.Fatal("expected invalid JSON error")
 	}
 }
 
 func TestDecodeBroadcastAckRejectsEmptyTid(t *testing.T) {
-	router := mqttx.NewReplyRouter(mqttx.ReplyDecoderFunc[*types.BroadcastAckBody](decodeBroadcastAck))
+	decoder := mqttx.ReplyDecoderFunc[*types.BroadcastAckBody](decodeBroadcastAck)
 
-	_, err := router.HandleReply(context.Background(), []byte(`{"method":"method","success":true,"responseBody":"{}"}`), "reply/topic", "reply/+")
+	_, err := decoder.Decode(context.Background(), []byte(`{"method":"method","success":true,"responseBody":"{}"}`), "reply/topic", "reply/+")
 	if !errors.Is(err, mqttx.ErrEmptyReplyTid) {
 		t.Fatalf("expected ErrEmptyReplyTid, got %v", err)
 	}

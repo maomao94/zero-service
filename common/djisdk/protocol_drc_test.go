@@ -842,12 +842,9 @@ func TestReplyRoutersDecodeServiceReplyTid(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer tc.router.Close()
 			payload := []byte(`{"tid":"tid-1","bid":"bid-1","timestamp":1710000000000,"method":"demo","data":{"result":0}}`)
-			matched, err := tc.router.HandleReply(context.Background(), payload, tc.topic, tc.topicTemplate)
-			if !errors.Is(err, mqttx.ErrReplyNotMatched) && err != nil {
-				t.Fatalf("HandleReply() error = %v", err)
-			}
-			if matched {
-				t.Fatal("expected unmatched reply without pending request")
+			err := tc.router.Consume(context.Background(), payload, tc.topic, tc.topicTemplate)
+			if !errors.Is(err, mqttx.ErrReplyNotMatched) {
+				t.Fatalf("Consume() error = %v, want ErrReplyNotMatched", err)
 			}
 		})
 	}

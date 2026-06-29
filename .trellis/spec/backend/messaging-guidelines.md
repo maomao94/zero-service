@@ -332,7 +332,7 @@ type Config struct {
 - Reply decoder: `type ReplyDecoder[T any] interface { Decode(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[T], error) }`
 - Function adapter: `type ReplyDecoderFunc[T any] func(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[T], error)`
 - Typed request/reply (public): `func RequestReply[T any](ctx context.Context, c Client, topicTemplate string, tid string, send func() error, ttl ...time.Duration) (T, error)`
-- Typed request/reply (router): `func (r *ReplyRouter[T]) RequestReply(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (T, error)`
+- Typed request/reply (router internal): `func (r *ReplyRouter[T]) requestReply(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (T, error)`
 - Reply handler lookup: `type replyHandlerGetter interface { getReplyHandler(topicTemplate string) ConsumeHandler }`（`mqttx.RequestReply` 内部断言，公共 `Client` 接口不包含私有方法）
 - Client constructor: `func NewClient(cfg MqttConfig, opts ...ClientOption) (Client, error)` / `func MustNewClient(cfg MqttConfig, opts ...ClientOption) Client`
 
@@ -353,8 +353,8 @@ type Config struct {
 ### 4. Validation & Error Matrix
 - `ReplyRouter` constructed with nil decoder + reply handled -> `ErrNilDecoder`.
 - Decoder returns empty `ReplyMessage.Tid` -> `ErrEmptyReplyTid` (`ErrEmptyReplyID` may exist only as compatibility alias).
-- Decoder returns error -> propagate decoder error from `HandleReply`/`Consume`.
-- Decoded `tid` has pending entry -> `HandleReply` returns `(true, nil)` and resolves waiting `RequestReply`.
+- Decoder returns error -> propagate decoder error from `Consume`.
+- Decoded `tid` has pending entry -> `Consume` returns nil and resolves waiting `RequestReply`.
 - Decoded `tid` has no pending entry -> `Consume` returns `ErrReplyNotMatched`; dispatcher suppresses it and continues regular handlers.
 - `RequestReply` send function returns error -> pending entry is rejected/cleaned by `antsx.RequestReply`, and the send error is returned.
 - `RequestReply[T]` called with nil client or a client implementation that does not provide the internal reply-handler lookup -> zero `T` plus `ErrNoReplyRouter`.
@@ -369,11 +369,11 @@ type Config struct {
 - Good: DJI service wiring calls `djisdk.MustNewClient(cfg, djisdk.WithPendingTTL(ttl))` which internally creates `mqttx.Client` with DJI reply routers.
 - Good: DJI test code calls `djisdk.NewClient(nil, djisdk.WithPendingTTL(ttl))` to create a Client without MQTT for handler testing.
 - Base: A notification-only consumer uses `AddHandler(topicTemplate, handler)` and receives actual `topic` plus callback `topicTemplate`.
-- Bad: Registering request/reply topics such as DJI `services_reply` or `property/set_reply` with `AddHandlerFunc`, exposing `ReplyRouter.do` publicly, calling `ReplyRouter.do` directly from outside the package, or running custom wildcard matching inside dispatcher.
+- Bad: Registering request/reply topics such as DJI `services_reply` or `property/set_reply` with `AddHandlerFunc`, exposing `ReplyRouter.requestReply` publicly, calling router internals directly from outside the package, or running custom wildcard matching inside dispatcher.
 
 ### 6. Tests Required
 - Unit: `ReplyDecoderFunc.Decode` returns `ReplyMessage{Tid, Value}` and preserves `topic/topicTemplate` args.
-- Unit: `ReplyRouter.HandleReply` resolves a pending `tid` and returns matched status.
+- Unit: `ReplyRouter` resolves a pending `tid` through its internal reply handling path.
 - Unit: nil decoder, decoder error, empty `Tid`, unmatched `tid`, send failure cleanup, reject, and close-pending behavior.
 - Unit: `WithReplyRouter` adds reply topic template to `getAllTopicTemplates()`.
 - Unit: `RequestReply[T]` resolves a pending `tid` through the registered router and returns typed `T`.
@@ -416,9 +416,9 @@ type ReplyMessage[T any] struct {
 ```
 
 ```go
-// Wrong: calling ReplyRouter.do directly from outside the package.
-// do is private; use mqttx.RequestReply[T] instead.
-ack, err := router.do(ctx, tid, send)
+// Wrong: calling router internals directly from outside the package.
+// requestReply is private; use mqttx.RequestReply[T] instead.
+ack, err := router.requestReply(ctx, tid, send)
 ```
 
 #### Correct
@@ -586,7 +586,7 @@ func RequestReply[T any](ctx context.Context, c Client, topicTemplate string, ti
     if !ok {
         return zero, ErrNoReplyRouter
     }
-    handler := c.getReplyHandler(topicTemplate)
+    handler := getter.getReplyHandler(topicTemplate)
     if handler == nil {
         return zero, ErrNoReplyRouter
     }
@@ -594,7 +594,7 @@ func RequestReply[T any](ctx context.Context, c Client, topicTemplate string, ti
     if !ok {
         return zero, ErrReplyType
     }
-    return router.RequestReply(ctx, tid, send, ttl...)
+    return router.requestReply(ctx, tid, send, ttl...)
 }
 ```
 

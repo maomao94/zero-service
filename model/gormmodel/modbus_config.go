@@ -8,6 +8,7 @@ import (
 // ModbusSlaveConfig Modbus从站配置表
 type ModbusSlaveConfig struct {
 	gormx.LegacyBaseModel
+	gormx.VersionMixin
 	ModbusCode              string         `gorm:"column:modbus_code;type:varchar(128);uniqueIndex;comment:Modbus配置唯一编码（如：modbus-192.168.1.100）"`
 	SlaveAddress            string         `gorm:"column:slave_address;type:varchar(64);comment:TCP设备地址（格式：IP:Port，对应结构体Address）"`
 	Slave                   int64          `gorm:"column:slave;comment:Modbus从站地址（Slave ID/Unit ID，对应结构体Slave）"`

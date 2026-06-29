@@ -161,8 +161,11 @@ func TestBeforeUpdateHookIncrementsVersion(t *testing.T) {
 		t.Fatalf("create error = %v", err)
 	}
 
-	// Update multiple times
+	// Update multiple times — re-read between updates to refresh version
 	for i := 0; i < 3; i++ {
+		if err := db.First(&record, record.ID).Error; err != nil {
+			t.Fatalf("re-find error on iteration %d: %v", i, err)
+		}
 		if err := db.WithContext(ctx).Model(&record).Update("name", "updated").Error; err != nil {
 			t.Fatalf("update error = %v", err)
 		}
@@ -173,8 +176,8 @@ func TestBeforeUpdateHookIncrementsVersion(t *testing.T) {
 		t.Fatalf("find error = %v", err)
 	}
 
-	if got.Version != 3 { // 0 (create) + 3 (updates)
-		t.Fatalf("version = %d, want 3", got.Version)
+	if got.Version.Int64 != 4 { // 1 (create by plugin) + 3 (updates)
+		t.Fatalf("version = %d, want 4", got.Version.Int64)
 	}
 }
 
@@ -221,6 +224,38 @@ func TestBeforeUpdateHookFillsDeleteFieldsOnSoftDelete(t *testing.T) {
 	}
 	if got.DeletedAt.Time.IsZero() {
 		t.Fatalf("record should be soft-deleted (deleted_at set)")
+	}
+}
+
+func TestBeforeUpdateHookVersionConflict(t *testing.T) {
+	db := openTestDB(t, &callbackTestModel{})
+
+	ctx := WithUserAndTenantContext(context.Background(), "user-1", "tester", "tenant-1")
+	record := callbackTestModel{Name: "test"}
+	if err := db.WithContext(ctx).Create(&record).Error; err != nil {
+		t.Fatalf("create error = %v", err)
+	}
+
+	// 第一次更新：正常通过，version 从 1 → 2
+	if err := db.WithContext(ctx).Model(&record).Update("name", "v1").Error; err != nil {
+		t.Fatalf("first update error = %v", err)
+	}
+
+	// record 还在内存中是旧版本 (1)，但 DB 已经是 2
+	// 用 record 再更新 → 乐观锁应拦截，WHERE version = 1 不命中
+	if err := db.WithContext(ctx).Model(&record).Update("name", "v2").Error; err != nil {
+		t.Fatalf("second update should not return error: %v", err)
+	}
+
+	var got callbackTestModel
+	if err := db.First(&got, record.ID).Error; err != nil {
+		t.Fatalf("find error = %v", err)
+	}
+	if got.Name != "v1" {
+		t.Fatalf("name = %q, want v1 (second update should have been rejected)", got.Name)
+	}
+	if got.Version.Int64 != 2 {
+		t.Fatalf("version = %d, want 2", got.Version.Int64)
 	}
 }
 
