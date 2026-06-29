@@ -70,7 +70,7 @@ type Engine interface {
 - `HTTPCEngine` —— `httpc.Service` 封装，自带 Otel 追踪/熔断/日志。
 - 自定义 —— 实现 `Do` 方法即可注入 mock 或第三方客户端。
 
-参考文件：`common/netx/transport.go:12-15`
+参考文件：`common/netx/transport.go`
 
 ## 请求构建
 
@@ -97,11 +97,11 @@ resp, err := cli.Do(ctx, req)
 
 Builder 方法 `.Header()` / `.Query()` / `.JSON()` / `.Form()` / `.Raw()` / `.Reader()` 返回 `*Request` 自身，支持无限链式调用。内部委托对应的 `RequestOption`。
 
-参考文件：`common/netx/request.go:59-100`
+参考文件：`common/netx/request.go`
 
 ### Body 来源优先级
 
-`buildBody` 选择顺序（`client.go:145`）：
+`buildBody` 选择顺序（`client.go`）：
 1. `FormData` / `bodyKindForm` → `application/x-www-form-urlencoded`
 2. `BodyReader` / `bodyKindReader` → 流式，调用方负责关闭
 3. `bodyKindJSON` → 自动 `application/json`
@@ -124,7 +124,7 @@ if err := resp.JSON(&result); err != nil { ... }   // 或 resp.XML / resp.Text /
 
 - `resp.Err` 携带网络错误或 `ErrResponseTooLarge`
 - `resp.CostMs` / `resp.CostFormatted` 记录完整请求耗时
-- `classifyNetErr` 将网络错误映射为 HTTP 语义状态码（`client.go:26`）
+- `classifyNetErr` 将网络错误映射为 HTTP 语义状态码（`response.go`）
 - 网络错误不返回 `error` 而是放到 `resp.Err`——调用方需检查 `resp.Success`
 
 ## 上传
@@ -147,8 +147,8 @@ resp, err := cli.Upload(ctx, url, files, fields,
 ```
 
 - 使用 `io.Pipe` + goroutine 流式写入，**不缓冲全量**到内存
-- `uploadBytesLimit` 通过 `countingWriter` 在流写入时拦截（`upload.go:84-97`）
-- stream goroutine panic 会被 recover 并传播到 resp.Err（`upload.go:27-31`）
+- `uploadBytesLimit` 通过 `countingWriter` 在流写入时拦截（`upload.go`）
+- stream goroutine panic 会被 recover 并传播到 resp.Err（`upload.go`）
 
 ## 下载
 
@@ -172,9 +172,9 @@ data, err := cli.DownloadBytes(ctx, url,
 )
 ```
 
-- `DownloadFile` 先写 `.tmp`，成功后 `os.Rename`，失败自动清理（`download.go:90-108`）
+- `DownloadFile` 先写 `.tmp`，成功后 `os.Rename`，失败自动清理（`download.go`）
 - 调用方**必须 `Close`** `Download` 返回的 `io.ReadCloser`，否则连接泄漏
-- `WithDownloadRange(start, end)` 设置 `Range` 请求头（`download.go:126-135`）
+- `WithDownloadRange(start, end)` 设置 `Range` 请求头（`download.go`）
 
 ## 大小限制
 
@@ -197,7 +197,7 @@ data, err := netx.DownloadBytes(ctx, url)
 resp, err := netx.SendRequest(ctx, req, netx.WithEngine(customEngine))
 ```
 
-`SendRequest` 不带 `opts` 时复用全局 `defaultClient` 的连接池；带 `opts` 时每次新建 `Client`，高频调用应自行持有 `Client` 实例。参考：`client_pkg.go:45-51`
+`SendRequest` 不带 `opts` 时复用全局 `defaultClient` 的连接池；带 `opts` 时每次新建 `Client`，高频调用应自行持有 `Client` 实例。参考：`client_pkg.go`
 
 ## 常见反模式
 
@@ -238,16 +238,11 @@ defer body.Close()                              // ✅
 
 ## 参考文件
 
-- `common/netx/client.go:16-21` — 默认常量定义
-- `common/netx/client.go:38-45` — Client 结构体
-- `common/netx/client.go:79-113` — ClientOption 列表
-- `common/netx/client.go:116-143` — Do 方法完整流程
-- `common/netx/request.go:24-35` — Request 结构体
-- `common/netx/request.go:59-100` — 链式 Builder 方法
-- `common/netx/response.go:37-45` — Response 结构体
-- `common/netx/upload.go:15-50` — 流式上传实现
-- `common/netx/download.go:80-109` — 原子下载文件
-- `common/netx/transport.go:12-15` — Engine 接口
-- `common/netx/transport.go:86-103` — httpc 集成
-- `app/trigger/internal/svc/servicecontext.go:73-82` — 生产环境 httpc Engine 使用示例
-- `app/file/internal/svc/servicecontext.go:57-66` — 文件服务 httpc Engine 使用示例
+- `common/netx/client.go` — 默认常量定义、Client 结构体、ClientOption 列表、Do 方法完整流程
+- `common/netx/request.go` — Request 结构体、链式 Builder 方法
+- `common/netx/response.go` — Response 结构体
+- `common/netx/upload.go` — 流式上传实现
+- `common/netx/download.go` — 原子下载文件
+- `common/netx/transport.go` — Engine 接口、httpc 集成
+- `app/trigger/internal/svc/servicecontext.go` — 生产环境 httpc Engine 使用示例
+- `app/file/internal/svc/servicecontext.go` — 文件服务 httpc Engine 使用示例

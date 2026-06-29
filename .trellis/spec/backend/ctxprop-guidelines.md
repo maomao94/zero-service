@@ -104,4 +104,4 @@ gRPC metadata key 强制小写。`ctxdata.PropField.GrpcHeader` 应使用 `kebab
 - `common/ctxprop/ctx.go` — MCP _meta 处理
 - `common/ctxdata/ctxData.go` — PropFields 定义
 - `common/trace/carrier.go` — OTel trace 载体
-- `app/djicloud/internal/svc/servicecontext.go:68` — gRPC 拦截器实际使用示例
+- `app/djicloud/internal/svc/servicecontext.go` — gRPC 拦截器实际使用示例

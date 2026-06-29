@@ -38,10 +38,6 @@
 - [mr-concurrency.md](./mr-concurrency.md) - go-zero mr 并发工具（Finish/MapReduce）分页+并发查询模式
 - [bytex-contracts.md](./bytex-contracts.md) - Modbus 字节/寄存器工具包合约
 
-### 前端/UI
-
-- [uix-framework.md](./uix-framework.md) - UIX 框架规范
-
 ### 元规范
 
 - [trellis-template-policy.md](./trellis-template-policy.md) - Trellis 模板策略

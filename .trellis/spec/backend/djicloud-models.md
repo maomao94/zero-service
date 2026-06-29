@@ -22,7 +22,7 @@
 
 ## 关键模型详解
 
-### DjiDevice（dji_device.go:29-41）— 设备主表
+### DjiDevice（dji_device.go）— 设备主表
 
 ```go
 type DjiDevice struct {
@@ -49,9 +49,9 @@ type DjiDevice struct {
 - 收到有效 OSD 后置为 true
 - Cron 每 15s 按 `last_online_at < now-60s` 置为 false
 
-**`TouchOnline(now)`** 方法（`dji_device.go:44-50`）：设置 `is_online=true`，首次时设 `first_online_at`，每次更新 `last_online_at`。
+**`TouchOnline(now)`** 方法（`dji_device.go`）：设置 `is_online=true`，首次时设 `first_online_at`，每次更新 `last_online_at`。
 
-### DjiDeviceTopo（dji_device.go:58-70）— 拓扑关系表
+### DjiDeviceTopo（dji_device.go）— 拓扑关系表
 
 ```go
 type DjiDeviceTopo struct {
@@ -68,7 +68,7 @@ type DjiDeviceTopo struct {
 
 **蛙跳支持**：`idx_topo_pair` 是 `gateway_sn + sub_device_sn` 组合唯一，**不是** `sub_device_sn` 唯一。允许同一架飞机出现在多个机巢的 topo 中。
 
-**全量替换策略**（`sys_status_up.go:60-66`）：处理 update_topo 时，先删除当前 gateway_sn 下不在新报告中的子设备条目，再 Upsert 剩余条目。
+**全量替换策略**（`sys_status_up.go`）：处理 update_topo 时，先删除当前 gateway_sn 下不在新报告中的子设备条目，再 Upsert 剩余条目。
 
 ### Snapshot 表（dji_osd_state.go）
 
@@ -112,6 +112,6 @@ type DjiDeviceOsdSnapshot struct {
 
 1. **AirSense/PSDK 等"预留"模块没有对应模型**：当前只 log，没有 DB 写入。添加时注意不要产生孤立写入。
 2. **`DjiDevice` 的 `GatewaySn` 默认 `''`**：Domain=0/1 的设备不会在 update_topo 时得到 GatewaySn，查询时需通过 `DjiDeviceTopo` 反查。
-3. **软删除恢复**：update_topo 使用 `gormx.Restore`（`sys_status_up.go:69`）恢复被软删除的 topo 条目，注意不要引入重复唯一键。
+3. **软删除恢复**：update_topo 使用 `gormx.Restore`（`sys_status_up.go`）恢复被软删除的 topo 条目，注意不要引入重复唯一键。
 4. **Snapshot 的 `RawJSON` 字段类型**：虽然 GORM tag 写的是 `jsonb`，实际在 MySQL/GaussDB 中是 `text` 或 `json`，取决于方言。不要依赖 JSON 查询功能。
 5. **`FirstOnlineAt`/`LastOnlineAt` 为 `sql.NullTime`**：未上线过的设备这两个字段为 NULL，代码中需要使用 `.Valid` 判断。
