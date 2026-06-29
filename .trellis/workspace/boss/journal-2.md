@@ -1387,3 +1387,38 @@ gormx 包模型层整理:
 ### Next Steps
 
 - None - task complete
+
+
+## Session 91: DJI SDK naming alignment + comment standardization + spec enrichment
+
+**Date**: 2026-06-29
+**Task**: DJI SDK naming alignment + comment standardization + spec enrichment
+**Branch**: `master`
+
+### Summary
+
+Align proto/SDK naming 4-layer with DJI method values. Move error logging into SDK (72 logic files cleaned). Unify comment format (topic 3-part, method 2-line, handler format). Enrich drone-station-sdk-template with comment/error-log/naming conventions for new vendor SDK development.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `98d02441` | (see git log) |
+| `86718417` | (see git log) |
+| `34892f0d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

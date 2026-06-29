@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 90
+- **Total Sessions**: 91
 - **Last Active**: 2026-06-29
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~1389 | Active |
+| `journal-2.md` | ~1424 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 91 | 2026-06-29 | DJI SDK naming alignment + comment standardization + spec enrichment | `98d02441`, `86718417`, `34892f0d` | `master` |
 | 90 | 2026-06-29 | gormx 模型重构: 移除 VersionMixin 与清理死代码 | `eaa6157d`, `dfa51a79`, `b449e33e` | `master` |
 | 89 | 2026-06-26 | DJI DRC 公网地址配置与 Spec Bootstrap | `8cbb1ce6` | `master` |
 | 88 | 2026-06-26 | netx 包代码审计、Bug 修复与生产加固 | `62894714`, `65e64bf8` | `master` |
