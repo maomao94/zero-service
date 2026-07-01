@@ -50,11 +50,10 @@ DangerousOps:
 # 仅支持 Minio（Category=1），用于上传自定义飞行区 GeoJSON 文件。
 Oss:
   Category: 1
-  Endpoint: "127.0.0.1:19000"
+  Endpoint: "127.0.0.1:9000"
   AccessKey: "AKIAIOSFODNN7EXAMPLE"
   SecretKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
   BucketName: "dji"
-  Region: ""
 # SocketPush 配置（可选，未配置则不推送）
 SocketPushConf:
   Endpoints:

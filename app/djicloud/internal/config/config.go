@@ -18,12 +18,12 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	Dji            djisdk.Config       `json:",optional"`
-	DB             gormx.Config        `json:",optional"`
-	Oss            *OssConfig          `json:",optional"`
-	Telemetry      TelemetryConfig     `json:",optional"`
-	DangerousOps   DangerousOpsConfig  `json:",optional"`
-	SocketPushConf zrpc.RpcClientConf  `json:",optional"`
+	Dji            djisdk.Config      `json:",optional"`
+	DB             gormx.Config       `json:",optional"`
+	Oss            *OssConfig         `json:",optional"`
+	Telemetry      TelemetryConfig    `json:",optional"`
+	DangerousOps   DangerousOpsConfig `json:",optional"`
+	SocketPushConf zrpc.RpcClientConf `json:",optional"`
 }
 
 type TelemetryConfig struct {
@@ -42,10 +42,10 @@ type DangerousOpsConfig struct {
 // OssConfig OSS 对象存储配置（可选）。
 // 仅支持 Minio，用于上传自定义飞行区 GeoJSON 文件。
 type OssConfig struct {
-	Category   int64  `json:",default=1"`    // OSS 类型，1=Minio
-	Endpoint   string `json:",optional"`      // OSS 服务地址
-	AccessKey  string `json:",optional"`      // Access Key
-	SecretKey  string `json:",optional"`      // Secret Key
-	BucketName string `json:",optional"`      // 默认存储桶名称
-	Region     string `json:",optional"`      // 区域
+	Category   int64  `json:",default=1"`            // OSS 类型，1=Minio
+	Endpoint   string `json:",optional"`             // OSS 服务地址
+	AccessKey  string `json:",optional"`             // Access Key
+	SecretKey  string `json:",optional"`             // Secret Key
+	BucketName string `json:",optional,default=dji"` // 默认存储桶名称
+	Region     string `json:",optional"`             // 区域
 }
