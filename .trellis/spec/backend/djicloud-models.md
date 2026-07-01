@@ -17,6 +17,8 @@
 | `dji_remote_log_event` | `DjiRemoteLogEvent` | Insert-only | auto increment |
 | `dji_return_home_event` | `DjiReturnHomeEvent` | Insert-only | auto increment |
 | `dji_drc_up_event` | `DjiDrcUpEvent` | Insert-only | auto increment |
+| `dji_fly_region` | `DjiFlyRegion` | Insert-only | `file_id`（单独）+ `bucket_name + file_name`（联合 idx_bucket_file） |
+| `dji_fly_region_sync_status` | `DjiFlyRegionSyncStatus` | Insert-only | auto increment |
 
 所有模型嵌入 `gormx.LegacyBaseModel`（int64 `id` + `create_time`/`update_time` + 软删除 `delete_time`/`del_state`，**不含 VersionMixin**）。
 
@@ -107,6 +109,47 @@ type DjiDeviceOsdSnapshot struct {
 | 状态机多实例 | Upsert by composite key | 多机巢 + 多飞行任务 |
 | 不可变事件 | Insert-only | HMS 告警、返航事件、日志进度、DRC 上行 |
 | 可确认事件 | Insert-only + 标记字段 | HMS 告警的 acked 标记 |
+
+### DjiFlyRegion（dji_fly_region.go）— 飞行区配置主表
+
+```go
+type DjiFlyRegion struct {
+	gormx.LegacyBaseModel
+	GatewaySn    string `gorm:"column:gateway_sn;index;not null"`
+	Name         string `gorm:"column:name;type:varchar(128);not null;default:''"`
+	FileId       string `gorm:"column:file_id;type:varchar(64);uniqueIndex;not null"`
+	BucketName   string `gorm:"column:bucket_name;uniqueIndex:idx_bucket_file;not null;default:''"`
+	FileName     string `gorm:"column:file_name;uniqueIndex:idx_bucket_file;not null"`
+	FileSize     int64  `gorm:"column:file_size;not null;default:0"`
+	Checksum     string `gorm:"column:checksum;type:varchar(128);not null;default:''"`
+	GeofenceJSON string `gorm:"column:geofence_json;type:text;default:''"`
+}
+```
+
+**字段说明**：
+- `FileId`：文件唯一标识（UUID），单独 uniqueIndex
+- `FileName`：OSS 对象 key，格式为 `{geofence_type}_{fileId}.json`（如 `dfence_550e8400-xxxx.json`）
+- `BucketName + FileName`：联合唯一索引 `idx_bucket_file`
+
+**写入策略**：Insert-only。每次 submit 创建新记录；查最新按 `create_time DESC`。软删除用于 Delete 操作，GORM 自动过滤 `del_state=1` 的记录。
+
+**FlightAreasGet 查询**：`WHERE gateway_sn = ? ORDER BY id DESC`（GORM 自动过滤软删除），返回该机巢所有活跃文件列表。
+
+### DjiFlyRegionSyncStatus（dji_fly_region.go）— 同步状态记录表
+
+```go
+type DjiFlyRegionSyncStatus struct {
+	gormx.LegacyBaseModel
+	GatewaySn   string `gorm:"column:gateway_sn;index;not null"`
+	FlyRegionID int64  `gorm:"column:fly_region_id;index;not null;default:0"`
+	SyncStatus  string `gorm:"column:sync_status;type:varchar(32);not null;default:''"`
+	SyncReason  int    `gorm:"column:sync_reason;not null;default:0"`
+}
+```
+
+**写入策略**：Insert-only。每个 `flight_areas_sync_progress` 事件插入一条新记录，不更新已有记录。此表仅作同步历史追溯，Submit/Delete 不操作此表。
+
+**关联方式**：通过 `fly_region_id` 关联 `dji_fly_region.id`，`flight_areas_sync_progress` 事件按 `gateway_sn + file_name` 匹配对应的 `DjiFlyRegion`。
 
 ## 常见陷阱
 

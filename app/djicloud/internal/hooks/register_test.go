@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -1015,7 +1016,7 @@ func TestRemoteLogProgressPersistsEventWithMethod(t *testing.T) {
 }
 
 func TestDeviceRequestHandlerReturnsErrorOnNilReq(t *testing.T) {
-	handler := NewDeviceRequestHandler()
+	handler := NewDeviceRequestHandler(nil, nil)
 	_, err := handler(context.Background(), "dock-nil", nil)
 	if err == nil {
 		t.Fatal("expected error for nil request")
@@ -1049,14 +1050,12 @@ func TestDrcUpHandlerIgnoresNilMessage(t *testing.T) {
 }
 
 func TestDeviceRequestHandlerReturnsMethodSpecificOutput(t *testing.T) {
-	handler := NewDeviceRequestHandler()
+	handler := NewDeviceRequestHandler(nil, nil)
 	cases := []struct {
 		method string
 		want   string
 	}{
-		{method: djisdk.MethodAirportOrganizationGet, want: "organization_id"},
-		{method: djisdk.MethodAirportBindStatus, want: "status"},
-		{method: djisdk.MethodFlightAreasGet, want: "flight_areas"},
+		{method: djisdk.MethodFlightAreasGet, want: "files"},
 	}
 
 	for _, tc := range cases {
@@ -1067,6 +1066,19 @@ func TestDeviceRequestHandlerReturnsMethodSpecificOutput(t *testing.T) {
 			}
 			if output == nil || !strings.Contains(asJSON(t, output), tc.want) {
 				t.Fatalf("output = %#v, want key %s", output, tc.want)
+			}
+		})
+	}
+}
+
+func TestDeviceRequestHandlerSkipsReplyForLegacyMethods(t *testing.T) {
+	handler := NewDeviceRequestHandler(nil, nil)
+	methods := []string{djisdk.MethodAirportOrganizationGet, djisdk.MethodAirportBindStatus}
+	for _, method := range methods {
+		t.Run(method, func(t *testing.T) {
+			_, err := handler(context.Background(), "dock-req", &djisdk.RequestMessage{Method: method})
+			if !errors.Is(err, djisdk.ErrSkipRequestReply) {
+				t.Fatalf("handler for %s should return ErrSkipRequestReply, got %v", method, err)
 			}
 		})
 	}

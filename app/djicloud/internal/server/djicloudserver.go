@@ -401,12 +401,6 @@ func (s *DjiCloudServer) CameraIrMeteringArea(ctx context.Context, in *djicloud.
 	return l.CameraIrMeteringArea(in)
 }
 
-// FlightAreasUpdate 触发自定义飞行区文件更新。
-func (s *DjiCloudServer) FlightAreasUpdate(ctx context.Context, in *djicloud.FlightAreasUpdateReq) (*djicloud.CommonRes, error) {
-	l := logic.NewFlightAreasUpdateLogic(ctx, s.svcCtx)
-	return l.FlightAreasUpdate(in)
-}
-
 // PsdkUIResourceUpload PSDK UI 资源上传。
 func (s *DjiCloudServer) PsdkUIResourceUpload(ctx context.Context, in *djicloud.PsdkUIResourceUploadReq) (*djicloud.CommonRes, error) {
 	l := logic.NewPsdkUIResourceUploadLogic(ctx, s.svcCtx)
@@ -603,4 +597,34 @@ func (s *DjiCloudServer) GetFlightTaskProgressLast(ctx context.Context, in *djic
 func (s *DjiCloudServer) QueryDrcStatus(ctx context.Context, in *djicloud.QueryDrcStatusReq) (*djicloud.DrcStatusRes, error) {
 	l := logic.NewQueryDrcStatusLogic(ctx, s.svcCtx)
 	return l.QueryDrcStatus(in)
+}
+
+// SubmitCustomFlyRegion 提交自定义飞行区（新增/更新）。
+func (s *DjiCloudServer) SubmitCustomFlyRegion(ctx context.Context, in *djicloud.SubmitCustomFlyRegionReq) (*djicloud.SubmitCustomFlyRegionRes, error) {
+	l := logic.NewSubmitCustomFlyRegionLogic(ctx, s.svcCtx)
+	return l.SubmitCustomFlyRegion(in)
+}
+
+// DeleteCustomFlyRegion 删除自定义飞行区（清除该设备下所有飞行区配置）。
+func (s *DjiCloudServer) DeleteCustomFlyRegion(ctx context.Context, in *djicloud.DeleteCustomFlyRegionReq) (*djicloud.DeleteCustomFlyRegionRes, error) {
+	l := logic.NewDeleteCustomFlyRegionLogic(ctx, s.svcCtx)
+	return l.DeleteCustomFlyRegion(in)
+}
+
+// DeleteCustomFlyRegionByFileId 按文件 ID 删除指定飞行区。
+func (s *DjiCloudServer) DeleteCustomFlyRegionByFileId(ctx context.Context, in *djicloud.DeleteCustomFlyRegionByFileIdReq) (*djicloud.DeleteCustomFlyRegionByFileIdRes, error) {
+	l := logic.NewDeleteCustomFlyRegionByFileIdLogic(ctx, s.svcCtx)
+	return l.DeleteCustomFlyRegionByFileId(in)
+}
+
+// ListFlyRegions 分页查询飞行区配置记录。
+func (s *DjiCloudServer) ListFlyRegions(ctx context.Context, in *djicloud.ListFlyRegionsReq) (*djicloud.ListFlyRegionsRes, error) {
+	l := logic.NewListFlyRegionsLogic(ctx, s.svcCtx)
+	return l.ListFlyRegions(in)
+}
+
+// ListFlyRegionSyncStatus 分页查询飞行区同步状态记录。
+func (s *DjiCloudServer) ListFlyRegionSyncStatus(ctx context.Context, in *djicloud.ListFlyRegionSyncStatusReq) (*djicloud.ListFlyRegionSyncStatusRes, error) {
+	l := logic.NewListFlyRegionSyncStatusLogic(ctx, s.svcCtx)
+	return l.ListFlyRegionSyncStatus(in)
 }

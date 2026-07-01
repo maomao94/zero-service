@@ -3,6 +3,7 @@ package hooks
 import (
 	"zero-service/common/djisdk"
 	"zero-service/common/gormx"
+	"zero-service/common/ossx"
 	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/zeromicro/go-zero/core/collection"
@@ -13,6 +14,7 @@ type RegisterDjiClientOptions struct {
 	OnlineCache        *collection.Cache
 	PushCli            socketpush.SocketPushClient
 	DisableOsdSQLTrace bool
+	OssTemplate        ossx.OssTemplate
 }
 
 func eventHandlerOptions(db *gormx.DB) []djisdk.ClientOption {
@@ -25,6 +27,8 @@ func eventHandlerOptions(db *gormx.DB) []djisdk.ClientOption {
 		djisdk.WithOtaProgressHandler(HandleOtaProgressEvent),
 		djisdk.WithHmsEventNotifyHandler(NewHmsEventNotifyHandler(db)),
 		djisdk.WithRemoteLogFileUploadProgressHandler(NewRemoteLogFileUploadProgressHandler(db)),
+		djisdk.WithFlightAreasSyncProgressHandler(NewFlightAreasSyncProgressHandler(db)),
+		djisdk.WithFlightAreasDroneLocationHandler(HandleFlightAreasDroneLocation),
 	}
 }
 
@@ -42,9 +46,9 @@ func drcHandlerOptions(db *gormx.DB, pushCli socketpush.SocketPushClient) []djis
 	}
 }
 
-func requestHandlerOptions() []djisdk.ClientOption {
+func requestHandlerOptions(db *gormx.DB, ossTemplate ossx.OssTemplate) []djisdk.ClientOption {
 	return []djisdk.ClientOption{
-		djisdk.WithRequestHandler(NewDeviceRequestHandler()),
+		djisdk.WithRequestHandler(NewDeviceRequestHandler(db, ossTemplate)),
 	}
 }
 
@@ -60,7 +64,7 @@ func WithDjiClientOptions(o RegisterDjiClientOptions) []djisdk.ClientOption {
 		opts = append(opts, telemetryHandlerOptions(o.DB, o.OnlineCache, o.PushCli, o.DisableOsdSQLTrace)...)
 		opts = append(opts, drcHandlerOptions(o.DB, o.PushCli)...)
 	}
-	opts = append(opts, requestHandlerOptions()...)
+	opts = append(opts, requestHandlerOptions(o.DB, o.OssTemplate)...)
 	if o.OnlineCache != nil {
 		opts = append(opts, onlineCheckerOption(o.OnlineCache))
 	}

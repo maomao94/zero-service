@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 95
-- **Last Active**: 2026-06-29
+- **Total Sessions**: 100
+- **Last Active**: 2026-07-01
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~1560 | Active |
+| `journal-2.md` | ~1731 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,11 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 100 | 2026-07-01 | Trellis Spec 修复 — geofence/djicloud-models 同步代码现状 | `e4956af1` | `master` |
+| 99 | 2026-07-01 | ListFlyRegions 增加 sign_url 签名地址 | `cc613e1d` | `master` |
+| 98 | 2026-07-01 | DJI 飞行区优化 + Trellis Spec Bootstrap | `9d71ecb2`, `5516eec4`, `f7ddca00`, `d3f410ed`, `5be85525` | `master` |
+| 97 | 2026-07-01 | djisdk 自定义飞行区 GeoJSON 处理 + djcloud OSS 配置与平台接口 | `0c481f4e` | `master` |
+| 96 | 2026-07-01 | 优化自定义飞行区 SDK | `fe73aeb2`, `cda8f268`, `dbd7a151` | `master` |
 | 95 | 2026-06-29 | Spec tidy + online_cache fix | `8501b986`, `7f93301b` | `master` |
 | 94 | 2026-06-29 | 项目文档全面优化与 Trellis spec 更新 | `7b071f14`, `0ad71a25` | `master` |
 | 93 | 2026-06-29 | DRC 回调重构 + Spec Bootstrap | - | `master` |

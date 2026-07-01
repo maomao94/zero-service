@@ -85,7 +85,6 @@ const (
 	DjiCloud_CameraScreenDrag_FullMethodName                     = "/djicloud.DjiCloud/CameraScreenDrag"
 	DjiCloud_CameraIrMeteringPoint_FullMethodName                = "/djicloud.DjiCloud/CameraIrMeteringPoint"
 	DjiCloud_CameraIrMeteringArea_FullMethodName                 = "/djicloud.DjiCloud/CameraIrMeteringArea"
-	DjiCloud_FlightAreasUpdate_FullMethodName                    = "/djicloud.DjiCloud/FlightAreasUpdate"
 	DjiCloud_PsdkUIResourceUpload_FullMethodName                 = "/djicloud.DjiCloud/PsdkUIResourceUpload"
 	DjiCloud_CustomDataTransmissionToPsdk_FullMethodName         = "/djicloud.DjiCloud/CustomDataTransmissionToPsdk"
 	DjiCloud_CustomDataTransmissionToEsdk_FullMethodName         = "/djicloud.DjiCloud/CustomDataTransmissionToEsdk"
@@ -119,6 +118,11 @@ const (
 	DjiCloud_ListFlightTaskProgress_FullMethodName               = "/djicloud.DjiCloud/ListFlightTaskProgress"
 	DjiCloud_GetFlightTaskProgressLast_FullMethodName            = "/djicloud.DjiCloud/GetFlightTaskProgressLast"
 	DjiCloud_QueryDrcStatus_FullMethodName                       = "/djicloud.DjiCloud/QueryDrcStatus"
+	DjiCloud_SubmitCustomFlyRegion_FullMethodName                = "/djicloud.DjiCloud/SubmitCustomFlyRegion"
+	DjiCloud_DeleteCustomFlyRegion_FullMethodName                = "/djicloud.DjiCloud/DeleteCustomFlyRegion"
+	DjiCloud_DeleteCustomFlyRegionByFileId_FullMethodName        = "/djicloud.DjiCloud/DeleteCustomFlyRegionByFileId"
+	DjiCloud_ListFlyRegions_FullMethodName                       = "/djicloud.DjiCloud/ListFlyRegions"
+	DjiCloud_ListFlyRegionSyncStatus_FullMethodName              = "/djicloud.DjiCloud/ListFlyRegionSyncStatus"
 )
 
 // DjiCloudClient is the client API for DjiCloud service.
@@ -401,9 +405,6 @@ type DjiCloudClient interface {
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
 	CameraIrMeteringArea(ctx context.Context, in *CameraIrMeteringAreaReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// FlightAreasUpdate 触发自定义飞行区文件更新。
-	// 对应 DJI Cloud API method: flight_areas_update，Topic: services，方向 down，data 为 null。
-	FlightAreasUpdate(ctx context.Context, in *FlightAreasUpdateReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// PsdkUIResourceUpload PSDK UI 资源上传。
 	// 对应 DJI Cloud API method: psdk_ui_resource_upload，
 	// Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -510,6 +511,17 @@ type DjiCloudClient interface {
 	// QueryDrcStatus 查询设备 DRC 运行状态。
 	// 返回 DRC 模式启用状态、启动时间、最近设备心跳时间、序号和存活状态。
 	QueryDrcStatus(ctx context.Context, in *QueryDrcStatusReq, opts ...grpc.CallOption) (*DrcStatusRes, error)
+	// SubmitCustomFlyRegion 提交自定义飞行区（新增/更新）。
+	// 接收结构化几何参数，生成 DJI GeoJSON 上传 OSS，写入 DB 后通知目标机巢拉取。
+	SubmitCustomFlyRegion(ctx context.Context, in *SubmitCustomFlyRegionReq, opts ...grpc.CallOption) (*SubmitCustomFlyRegionRes, error)
+	// DeleteCustomFlyRegion 删除自定义飞行区（清除该设备下所有飞行区配置）。
+	DeleteCustomFlyRegion(ctx context.Context, in *DeleteCustomFlyRegionReq, opts ...grpc.CallOption) (*DeleteCustomFlyRegionRes, error)
+	// DeleteCustomFlyRegionByFileId 按文件 ID 删除指定飞行区。
+	DeleteCustomFlyRegionByFileId(ctx context.Context, in *DeleteCustomFlyRegionByFileIdReq, opts ...grpc.CallOption) (*DeleteCustomFlyRegionByFileIdRes, error)
+	// ListFlyRegions 分页查询飞行区配置记录。
+	ListFlyRegions(ctx context.Context, in *ListFlyRegionsReq, opts ...grpc.CallOption) (*ListFlyRegionsRes, error)
+	// ListFlyRegionSyncStatus 分页查询飞行区同步状态记录。
+	ListFlyRegionSyncStatus(ctx context.Context, in *ListFlyRegionSyncStatusReq, opts ...grpc.CallOption) (*ListFlyRegionSyncStatusRes, error)
 }
 
 type djiCloudClient struct {
@@ -1150,16 +1162,6 @@ func (c *djiCloudClient) CameraIrMeteringArea(ctx context.Context, in *CameraIrM
 	return out, nil
 }
 
-func (c *djiCloudClient) FlightAreasUpdate(ctx context.Context, in *FlightAreasUpdateReq, opts ...grpc.CallOption) (*CommonRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiCloud_FlightAreasUpdate_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *djiCloudClient) PsdkUIResourceUpload(ctx context.Context, in *PsdkUIResourceUploadReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
@@ -1490,6 +1492,56 @@ func (c *djiCloudClient) QueryDrcStatus(ctx context.Context, in *QueryDrcStatusR
 	return out, nil
 }
 
+func (c *djiCloudClient) SubmitCustomFlyRegion(ctx context.Context, in *SubmitCustomFlyRegionReq, opts ...grpc.CallOption) (*SubmitCustomFlyRegionRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SubmitCustomFlyRegionRes)
+	err := c.cc.Invoke(ctx, DjiCloud_SubmitCustomFlyRegion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) DeleteCustomFlyRegion(ctx context.Context, in *DeleteCustomFlyRegionReq, opts ...grpc.CallOption) (*DeleteCustomFlyRegionRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteCustomFlyRegionRes)
+	err := c.cc.Invoke(ctx, DjiCloud_DeleteCustomFlyRegion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) DeleteCustomFlyRegionByFileId(ctx context.Context, in *DeleteCustomFlyRegionByFileIdReq, opts ...grpc.CallOption) (*DeleteCustomFlyRegionByFileIdRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteCustomFlyRegionByFileIdRes)
+	err := c.cc.Invoke(ctx, DjiCloud_DeleteCustomFlyRegionByFileId_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) ListFlyRegions(ctx context.Context, in *ListFlyRegionsReq, opts ...grpc.CallOption) (*ListFlyRegionsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFlyRegionsRes)
+	err := c.cc.Invoke(ctx, DjiCloud_ListFlyRegions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) ListFlyRegionSyncStatus(ctx context.Context, in *ListFlyRegionSyncStatusReq, opts ...grpc.CallOption) (*ListFlyRegionSyncStatusRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFlyRegionSyncStatusRes)
+	err := c.cc.Invoke(ctx, DjiCloud_ListFlyRegionSyncStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DjiCloudServer is the server API for DjiCloud service.
 // All implementations must embed UnimplementedDjiCloudServer
 // for forward compatibility.
@@ -1770,9 +1822,6 @@ type DjiCloudServer interface {
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
 	CameraIrMeteringArea(context.Context, *CameraIrMeteringAreaReq) (*CommonRes, error)
-	// FlightAreasUpdate 触发自定义飞行区文件更新。
-	// 对应 DJI Cloud API method: flight_areas_update，Topic: services，方向 down，data 为 null。
-	FlightAreasUpdate(context.Context, *FlightAreasUpdateReq) (*CommonRes, error)
 	// PsdkUIResourceUpload PSDK UI 资源上传。
 	// 对应 DJI Cloud API method: psdk_ui_resource_upload，
 	// Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -1879,6 +1928,17 @@ type DjiCloudServer interface {
 	// QueryDrcStatus 查询设备 DRC 运行状态。
 	// 返回 DRC 模式启用状态、启动时间、最近设备心跳时间、序号和存活状态。
 	QueryDrcStatus(context.Context, *QueryDrcStatusReq) (*DrcStatusRes, error)
+	// SubmitCustomFlyRegion 提交自定义飞行区（新增/更新）。
+	// 接收结构化几何参数，生成 DJI GeoJSON 上传 OSS，写入 DB 后通知目标机巢拉取。
+	SubmitCustomFlyRegion(context.Context, *SubmitCustomFlyRegionReq) (*SubmitCustomFlyRegionRes, error)
+	// DeleteCustomFlyRegion 删除自定义飞行区（清除该设备下所有飞行区配置）。
+	DeleteCustomFlyRegion(context.Context, *DeleteCustomFlyRegionReq) (*DeleteCustomFlyRegionRes, error)
+	// DeleteCustomFlyRegionByFileId 按文件 ID 删除指定飞行区。
+	DeleteCustomFlyRegionByFileId(context.Context, *DeleteCustomFlyRegionByFileIdReq) (*DeleteCustomFlyRegionByFileIdRes, error)
+	// ListFlyRegions 分页查询飞行区配置记录。
+	ListFlyRegions(context.Context, *ListFlyRegionsReq) (*ListFlyRegionsRes, error)
+	// ListFlyRegionSyncStatus 分页查询飞行区同步状态记录。
+	ListFlyRegionSyncStatus(context.Context, *ListFlyRegionSyncStatusReq) (*ListFlyRegionSyncStatusRes, error)
 	mustEmbedUnimplementedDjiCloudServer()
 }
 
@@ -2078,9 +2138,6 @@ func (UnimplementedDjiCloudServer) CameraIrMeteringPoint(context.Context, *Camer
 func (UnimplementedDjiCloudServer) CameraIrMeteringArea(context.Context, *CameraIrMeteringAreaReq) (*CommonRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method CameraIrMeteringArea not implemented")
 }
-func (UnimplementedDjiCloudServer) FlightAreasUpdate(context.Context, *FlightAreasUpdateReq) (*CommonRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method FlightAreasUpdate not implemented")
-}
 func (UnimplementedDjiCloudServer) PsdkUIResourceUpload(context.Context, *PsdkUIResourceUploadReq) (*CommonRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method PsdkUIResourceUpload not implemented")
 }
@@ -2179,6 +2236,21 @@ func (UnimplementedDjiCloudServer) GetFlightTaskProgressLast(context.Context, *G
 }
 func (UnimplementedDjiCloudServer) QueryDrcStatus(context.Context, *QueryDrcStatusReq) (*DrcStatusRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method QueryDrcStatus not implemented")
+}
+func (UnimplementedDjiCloudServer) SubmitCustomFlyRegion(context.Context, *SubmitCustomFlyRegionReq) (*SubmitCustomFlyRegionRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method SubmitCustomFlyRegion not implemented")
+}
+func (UnimplementedDjiCloudServer) DeleteCustomFlyRegion(context.Context, *DeleteCustomFlyRegionReq) (*DeleteCustomFlyRegionRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteCustomFlyRegion not implemented")
+}
+func (UnimplementedDjiCloudServer) DeleteCustomFlyRegionByFileId(context.Context, *DeleteCustomFlyRegionByFileIdReq) (*DeleteCustomFlyRegionByFileIdRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteCustomFlyRegionByFileId not implemented")
+}
+func (UnimplementedDjiCloudServer) ListFlyRegions(context.Context, *ListFlyRegionsReq) (*ListFlyRegionsRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListFlyRegions not implemented")
+}
+func (UnimplementedDjiCloudServer) ListFlyRegionSyncStatus(context.Context, *ListFlyRegionSyncStatusReq) (*ListFlyRegionSyncStatusRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListFlyRegionSyncStatus not implemented")
 }
 func (UnimplementedDjiCloudServer) mustEmbedUnimplementedDjiCloudServer() {}
 func (UnimplementedDjiCloudServer) testEmbeddedByValue()                  {}
@@ -3335,24 +3407,6 @@ func _DjiCloud_CameraIrMeteringArea_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DjiCloud_FlightAreasUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FlightAreasUpdateReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DjiCloudServer).FlightAreasUpdate(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DjiCloud_FlightAreasUpdate_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).FlightAreasUpdate(ctx, req.(*FlightAreasUpdateReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _DjiCloud_PsdkUIResourceUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PsdkUIResourceUploadReq)
 	if err := dec(in); err != nil {
@@ -3947,6 +4001,96 @@ func _DjiCloud_QueryDrcStatus_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DjiCloud_SubmitCustomFlyRegion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitCustomFlyRegionReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).SubmitCustomFlyRegion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_SubmitCustomFlyRegion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).SubmitCustomFlyRegion(ctx, req.(*SubmitCustomFlyRegionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_DeleteCustomFlyRegion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteCustomFlyRegionReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).DeleteCustomFlyRegion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_DeleteCustomFlyRegion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).DeleteCustomFlyRegion(ctx, req.(*DeleteCustomFlyRegionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_DeleteCustomFlyRegionByFileId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteCustomFlyRegionByFileIdReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).DeleteCustomFlyRegionByFileId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_DeleteCustomFlyRegionByFileId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).DeleteCustomFlyRegionByFileId(ctx, req.(*DeleteCustomFlyRegionByFileIdReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_ListFlyRegions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFlyRegionsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).ListFlyRegions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_ListFlyRegions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).ListFlyRegions(ctx, req.(*ListFlyRegionsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_ListFlyRegionSyncStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFlyRegionSyncStatusReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).ListFlyRegionSyncStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_ListFlyRegionSyncStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).ListFlyRegionSyncStatus(ctx, req.(*ListFlyRegionSyncStatusReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DjiCloud_ServiceDesc is the grpc.ServiceDesc for DjiCloud service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -4207,10 +4351,6 @@ var DjiCloud_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DjiCloud_CameraIrMeteringArea_Handler,
 		},
 		{
-			MethodName: "FlightAreasUpdate",
-			Handler:    _DjiCloud_FlightAreasUpdate_Handler,
-		},
-		{
 			MethodName: "PsdkUIResourceUpload",
 			Handler:    _DjiCloud_PsdkUIResourceUpload_Handler,
 		},
@@ -4341,6 +4481,26 @@ var DjiCloud_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QueryDrcStatus",
 			Handler:    _DjiCloud_QueryDrcStatus_Handler,
+		},
+		{
+			MethodName: "SubmitCustomFlyRegion",
+			Handler:    _DjiCloud_SubmitCustomFlyRegion_Handler,
+		},
+		{
+			MethodName: "DeleteCustomFlyRegion",
+			Handler:    _DjiCloud_DeleteCustomFlyRegion_Handler,
+		},
+		{
+			MethodName: "DeleteCustomFlyRegionByFileId",
+			Handler:    _DjiCloud_DeleteCustomFlyRegionByFileId_Handler,
+		},
+		{
+			MethodName: "ListFlyRegions",
+			Handler:    _DjiCloud_ListFlyRegions_Handler,
+		},
+		{
+			MethodName: "ListFlyRegionSyncStatus",
+			Handler:    _DjiCloud_ListFlyRegionSyncStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

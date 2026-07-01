@@ -43,6 +43,8 @@ type handlers struct {
 	onHmsEventNotify                 func(ctx context.Context, gatewaySn string, data *HmsEventData) error
 	onRemoteLogFileUploadProgress    func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent) error
 	onOtaProgress                    func(ctx context.Context, gatewaySn string, data *OtaProgressEvent) error
+	onFlightAreasSyncProgress        func(ctx context.Context, gatewaySn string, data *FlightAreasSyncProgressEvent) error
+	onFlightAreasDroneLocation       func(ctx context.Context, gatewaySn string, data *FlightAreasDroneLocationEvent) error
 	onUpdateTopo                     func(ctx context.Context, gatewaySn string, data *TopoUpdateData) error
 	onOsd                            func(ctx context.Context, deviceSn string, data *OsdMessage) error
 	onState                          func(ctx context.Context, deviceSn string, data *StateMessage) error
@@ -121,6 +123,18 @@ func WithRemoteLogFileUploadProgressHandler(handler func(ctx context.Context, ga
 func WithOtaProgressHandler(handler func(ctx context.Context, gatewaySn string, data *OtaProgressEvent) error) ClientOption {
 	return func(options *clientOptions) {
 		options.handlers.onOtaProgress = handler
+	}
+}
+
+func WithFlightAreasSyncProgressHandler(handler func(ctx context.Context, gatewaySn string, data *FlightAreasSyncProgressEvent) error) ClientOption {
+	return func(options *clientOptions) {
+		options.handlers.onFlightAreasSyncProgress = handler
+	}
+}
+
+func WithFlightAreasDroneLocationHandler(handler func(ctx context.Context, gatewaySn string, data *FlightAreasDroneLocationEvent) error) ClientOption {
+	return func(options *clientOptions) {
+		options.handlers.onFlightAreasDroneLocation = handler
 	}
 }
 

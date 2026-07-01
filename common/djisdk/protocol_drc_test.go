@@ -662,9 +662,7 @@ func TestRequestsReplyOutputForKnownMethods(t *testing.T) {
 		output     any
 		wantOutput string
 	}{
-		{name: "airport_organization_get", method: MethodAirportOrganizationGet, output: map[string]any{"organization_id": "org-1", "organization_name": "ops"}, wantOutput: `"organization_id":"org-1"`},
-		{name: "airport_bind_status", method: MethodAirportBindStatus, output: map[string]any{"status": 1}, wantOutput: `"status":1`},
-		{name: "flight_areas_get", method: MethodFlightAreasGet, output: map[string]any{"url": "https://example.com/fly.json"}, wantOutput: `"url":"https://example.com/fly.json"`},
+		{name: "flight_areas_get", method: MethodFlightAreasGet, output: &FlightAreasGetReplyData{Files: []FlightAreasFile{{Name: "geofence_test.json", URL: "https://example.com/fly.json", Size: 500, Checksum: "abc123"}}}, wantOutput: `"url":"https://example.com/fly.json"`},
 	}
 
 	for _, tc := range cases {
@@ -689,6 +687,32 @@ func TestRequestsReplyOutputForKnownMethods(t *testing.T) {
 			}
 			if !strings.Contains(string(mqtt.published[0].payload), tc.wantOutput) {
 				t.Fatalf("payload = %s, want output containing %s", mqtt.published[0].payload, tc.wantOutput)
+			}
+		})
+	}
+}
+
+func TestHandleRequestsSkipReplyForLegacyMethods(t *testing.T) {
+	mqtt := &recordingMQTTClient{}
+	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: true}),
+		WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (any, error) {
+			if req.Method == MethodAirportOrganizationGet || req.Method == MethodAirportBindStatus {
+				return nil, ErrSkipRequestReply
+			}
+			return nil, nil
+		}),
+	)
+	client.mqttClient = mqtt
+
+	for _, method := range []string{MethodAirportOrganizationGet, MethodAirportBindStatus} {
+		t.Run(method, func(t *testing.T) {
+			mqtt.published = nil
+			payload := []byte(`{"tid":"tid-1","bid":"bid-1","timestamp":1710000000000,"method":"` + method + `","data":{}}`)
+			if err := client.HandleRequests(context.Background(), payload, "thing/product/gateway-1/requests", ""); err != nil {
+				t.Fatalf("HandleRequests() error = %v", err)
+			}
+			if len(mqtt.published) != 0 {
+				t.Fatalf("published = %+v, want zero requests_reply for skip method", mqtt.published)
 			}
 		})
 	}

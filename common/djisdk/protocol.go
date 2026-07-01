@@ -294,12 +294,64 @@ type ReturnSpecificHomeData struct {
 // airport_* 为 thing/product/{gateway_sn}/requests 上行，使用 RequestMessage 原始数据处理。
 
 // ==================== 自定义飞行区（Custom Fly Region） ====================
+// 交互时序: 云上传GeoJSON至OSS → flight_areas_update通知设备 → 设备flight_areas_get拉取 → 云requests_reply返回文件
+// flight_areas_sync_progress / flight_areas_alarm 为设备→云 events 上行
 
-// FlightAreasUpdateData 触发自定义飞行区文件更新数据。
-// 对应 DJI Cloud API method: flight_areas_update 的 data 载荷。
-type FlightAreasUpdateData struct {
-	// File 飞行区配置文件引用。必填。
-	File *UnlockLicenseFile `json:"file"`
+// FlightAreasUpdateData 自定义飞行区更新指令数据。
+// flight_areas_update 仅为触发信号（data: null），不含文件数据。
+type FlightAreasUpdateData struct{}
+
+// FlightAreasFile 飞行区文件信息。
+// 对应 flight_areas_get 的 requests_reply.data.output.files[] 元素。
+type FlightAreasFile struct {
+	// Name 飞行区文件名，如 geofence_xxx.json。必填。
+	Name string `json:"name"`
+	// URL 飞行区文件OSS下载地址（含签名参数）。必填。
+	URL string `json:"url"`
+	// Size 文件大小，单位字节。必填。
+	Size int64 `json:"size"`
+	// Checksum 文件校验值，如 sha256。必填。
+	Checksum string `json:"checksum"`
+}
+
+// FlightAreasGetReplyData flight_areas_get 的 requests_reply.data.output 数据。
+type FlightAreasGetReplyData struct {
+	// Files 自定义飞行区文件列表。必填。
+	Files []FlightAreasFile `json:"files"`
+}
+
+// FlightAreasSyncProgressEvent 自定义飞行区文件同步状态事件（Events up）。
+type FlightAreasSyncProgressEvent struct {
+	// File 飞行区文件信息。必填。
+	File FlightAreasSyncFile `json:"file"`
+	// Status 同步状态，如 "synchronized"、"failed"。必填。
+	Status string `json:"status"`
+	// Reason 同步失败原因码，0 表示无异常。可选。
+	Reason int `json:"reason,omitempty"`
+}
+
+// FlightAreasSyncFile 飞行区同步文件信息。
+type FlightAreasSyncFile struct {
+	// Name 飞行区文件名。必填。
+	Name string `json:"name"`
+	// Checksum 文件校验值。必填。
+	Checksum string `json:"checksum"`
+}
+
+// DroneLocationItem 飞行器位置与飞行区关系信息。
+type DroneLocationItem struct {
+	// AreaID 飞行区 ID。必填。
+	AreaID string `json:"area_id"`
+	// IsInArea 是否在区域内。必填。
+	IsInArea bool `json:"is_in_area"`
+	// AreaDistance 距飞行区边界距离，单位米。必填。
+	AreaDistance float64 `json:"area_distance"`
+}
+
+// FlightAreasDroneLocationEvent 自定义飞行区告警信息推送（Events up）。
+type FlightAreasDroneLocationEvent struct {
+	// DroneLocations 飞行器与各飞行区的关系列表。必填。
+	DroneLocations []DroneLocationItem `json:"drone_locations"`
 }
 
 // ==================== PSDK 功能与互联互通（PSDK / PSDK Transmit） ====================

@@ -2,7 +2,7 @@ package ossx
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"path"
@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 var (
@@ -134,19 +135,32 @@ func Template(ctx context.Context, TenantId, Code string, tenantMode bool, getCo
 		ossTemplate = templatePool[TenantId]
 		if needRebuild(configCached, ossTemplate, config) {
 			ossRule := OssRule{tenantMode: tenantMode}
-			if config.Category == Category_Minio {
-				ossTemplate, err = NewMinioTemplate(config, ossRule)
-				if err != nil {
-					return nil, err
-				}
-			} else {
-				return nil, errors.New("oss type error")
+			ossTemplate, err = NewTemplate(config, ossRule)
+			if err != nil {
+				return nil, err
 			}
 			templatePool[TenantId] = ossTemplate
 			ossPool[TenantId] = config
 		}
 	}
 	return
+}
+
+// NewTemplate 根据 Config.Category 创建对应的 OssTemplate 实例。
+func NewTemplate(config *Config, ossRule OssRule) (OssTemplate, error) {
+	switch config.Category {
+	case Category_Minio:
+		return NewMinioTemplate(config, ossRule)
+	default:
+		return nil, fmt.Errorf("unsupported oss category: %d", config.Category)
+	}
+}
+
+// MustNewTemplate 调用 NewTemplate，失败时 panic（go-zero Must* 风格）。
+func MustNewTemplate(config *Config, ossRule OssRule) OssTemplate {
+	t, err := NewTemplate(config, ossRule)
+	logx.Must(err)
+	return t
 }
 
 func needRebuild(cached *Config, ossTemplate OssTemplate, current *Config) bool {

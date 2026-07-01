@@ -224,3 +224,40 @@ func HandleCustomDataFromEsdkEvent(ctx context.Context, gatewaySn string, data *
 	logx.WithContext(ctx).Infof("[dji-cloud] custom_data_from_esdk: sn=%s value=%s", gatewaySn, data.Value)
 	return nil
 }
+
+// NewFlightAreasSyncProgressHandler 处理自定义飞行区文件同步状态事件。
+func NewFlightAreasSyncProgressHandler(db *gormx.DB) func(ctx context.Context, gatewaySn string, data *djisdk.FlightAreasSyncProgressEvent) error {
+	return func(ctx context.Context, gatewaySn string, data *djisdk.FlightAreasSyncProgressEvent) error {
+		if data == nil || db == nil {
+			return nil
+		}
+		logx.WithContext(ctx).Infof("[dji-cloud] flight_areas_sync_progress: sn=%s status=%s file=%s reason=%d",
+			gatewaySn, data.Status, data.File.Name, data.Reason)
+
+		var region gormmodel.DjiFlyRegion
+		if err := db.WithContext(ctx).Where("gateway_sn = ? AND file_name = ?", gatewaySn, data.File.Name).
+			Order("id DESC").First(&region).Error; err != nil {
+			return nil
+		}
+
+		return db.WithContext(ctx).Create(&gormmodel.DjiFlyRegionSyncStatus{
+			GatewaySn:   gatewaySn,
+			FlyRegionID: region.Id,
+			SyncStatus:  data.Status,
+			SyncReason:  data.Reason,
+		}).Error
+	}
+}
+
+// HandleFlightAreasDroneLocation 处理自定义飞行区飞行器位置告警事件。
+// 对应 DJI Cloud API event method: flight_areas_drone_location（Events, up）。
+func HandleFlightAreasDroneLocation(ctx context.Context, gatewaySn string, data *djisdk.FlightAreasDroneLocationEvent) error {
+	if data == nil {
+		return nil
+	}
+	for _, loc := range data.DroneLocations {
+		logx.WithContext(ctx).Infof("[dji-cloud] flight_areas_drone_location: sn=%s area_id=%s is_in_area=%v distance=%.2f",
+			gatewaySn, loc.AreaID, loc.IsInArea, loc.AreaDistance)
+	}
+	return nil
+}

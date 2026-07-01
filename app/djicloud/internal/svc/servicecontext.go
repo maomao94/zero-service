@@ -12,6 +12,7 @@ import (
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/djisdk"
 	"zero-service/common/gormx"
+	"zero-service/common/ossx"
 	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/zeromicro/go-zero/core/collection"
@@ -29,6 +30,7 @@ type ServiceContext struct {
 	DjiClient   *djisdk.Client
 	DB          *gormx.DB
 	OnlineCache *collection.Cache
+	OssTemplate ossx.OssTemplate
 }
 
 func initDB(c config.Config) *gormx.DB {
@@ -48,6 +50,8 @@ func initDB(c config.Config) *gormx.DB {
 			&gormmodel.DjiFlightTaskReady{},
 			&gormmodel.DjiRemoteLogEvent{},
 			&gormmodel.DjiReturnHomeEvent{},
+			&gormmodel.DjiFlyRegion{},
+			&gormmodel.DjiFlyRegionSyncStatus{},
 		)
 	}
 	return db
@@ -126,11 +130,25 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		)
 	}
 
+	// 初始化 OSS（可选）
+	var ossTemplate ossx.OssTemplate
+	if c.Oss != nil {
+		ossTemplate = ossx.MustNewTemplate(&ossx.Config{
+			Category:   c.Oss.Category,
+			Endpoint:   c.Oss.Endpoint,
+			AccessKey:  c.Oss.AccessKey,
+			SecretKey:  c.Oss.SecretKey,
+			BucketName: c.Oss.BucketName,
+			Region:     c.Oss.Region,
+		}, ossx.OssRule{})
+	}
+
 	handlerOpts = append(handlerOpts, hooks.WithDjiClientOptions(hooks.RegisterDjiClientOptions{
 		DB:                 db,
 		OnlineCache:        onlineCache,
 		PushCli:            pushCli,
 		DisableOsdSQLTrace: c.Telemetry.DisableOsdSQLTrace,
+		OssTemplate:        ossTemplate,
 	})...)
 
 	djiCli := djisdk.MustNewClient(c.Dji, handlerOpts...)
@@ -144,6 +162,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		DjiClient:   djiCli,
 		DB:          db,
 		OnlineCache: onlineCache,
+		OssTemplate: ossTemplate,
 	}
 }
 

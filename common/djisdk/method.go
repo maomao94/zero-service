@@ -426,17 +426,27 @@ const (
 
 // ==================== 自定义飞行区（Custom Fly Region） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/custom-fly-region.html
-// Topic: thing/product/{gateway_sn}/services
-// 方向: 云平台 → 设备（Services），触发飞行区文件更新等控制指令。
+// 文件格式: https://developer.dji.com/doc/cloud-api-tutorial/cn/feature-set/dock-feature-set/custom-flight-area.html
+// 交互时序: 云上传GeoJSON至OSS → flight_areas_update通知设备 → 设备flight_areas_get拉取 → 云requests_reply返回文件
+// Topic: thing/product/{gateway_sn}/services | events | requests
+// 方向: services为云平台→设备，events为设备→云平台，requests为设备→云平台
 
 const (
-	// MethodFlightAreasUpdate 触发自定义飞行区文件更新。
-	// 云平台 → 设备（Services），下发飞行区配置文件引用，触发设备拉取更新。
+	// MethodFlightAreasUpdate 自定义飞行区更新指令。
+	// 云平台 → 设备（Services），触发设备拉取最新飞行区文件，仅通知信号不含文件数据。
 	MethodFlightAreasUpdate = "flight_areas_update"
 
-	// MethodFlightAreasGet 自定义飞行区文件获取请求上行。
-	// 设备 → 云平台（Requests），设备主动请求获取自定义飞行区文件。
+	// MethodFlightAreasGet 自定义飞行区文件获取请求。
+	// 设备 → 云平台（Requests），设备收到更新通知后主动请求获取飞行区文件。
 	MethodFlightAreasGet = "flight_areas_get"
+
+	// MethodFlightAreasSyncProgress 自定义飞行区文件同步状态上报。
+	// 设备 → 云平台（Events），设备上报飞行区文件下载/应用的进度和结果。
+	MethodFlightAreasSyncProgress = "flight_areas_sync_progress"
+
+	// MethodFlightAreasDroneLocation 自定义飞行区告警信息推送。
+	// 设备 → 云平台（Events），设备上报飞行器位置与飞行区的关系（是否在区内、距离等）。
+	MethodFlightAreasDroneLocation = "flight_areas_drone_location"
 )
 
 // ==================== PSDK 功能与互联互通（PSDK / PSDK Transmit） ====================

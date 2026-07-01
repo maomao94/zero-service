@@ -394,9 +394,9 @@ service DjiCloud {
   // ==================== 自定义飞行区（Custom Fly Region） ====================
   // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/custom-fly-region.html
 
-  // FlightAreasUpdate 触发自定义飞行区文件更新。
-  // 对应 DJI Cloud API method: flight_areas_update，Topic: services，方向 down，data 为 null。
-  rpc FlightAreasUpdate(FlightAreasUpdateReq) returns (CommonRes);
+  // FlightAreasUpdate 触发自定义飞行区文件更新（仅通知信号）。
+  // 对应 DJI Cloud API method: flight_areas_update，Topic: services，方向 down。
+  // flight_areas_update 仅为触发信号不含文件数据；设备收到通知后通过 flight_areas_get 拉取文件。  rpc FlightAreasUpdate(FlightAreasUpdateReq) returns (CommonRes);
 
   // ==================== PSDK 功能（PSDK） ====================
   // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk.html
@@ -566,6 +566,28 @@ service DjiCloud {
   // QueryDrcStatus 查询设备 DRC 运行状态。
   // 返回 DRC 模式启用状态、启动时间、最近设备心跳时间、序号和存活状态。
   rpc QueryDrcStatus(QueryDrcStatusReq) returns (DrcStatusRes);
+
+  // —————————————————— 自定义飞行区（平台能力） ——————————————————
+  //
+  // 平台跨端全流程飞行区管理：提交 GeoJSON 文件到 OSS → 通知机巢拉取 →
+  // 机巢下载后推送给飞机 → 设备上报同步结果 → 平台落库同步状态。
+  // 标准接口 flight_areas_update/get 见上方 "自定义飞行区（Custom Fly Region）" 段。
+
+  // SubmitCustomFlyRegion 提交自定义飞行区（新增/更新）。
+  // 接收结构化几何参数，生成 DJI GeoJSON 上传 OSS，写入 DB 后通知目标机巢拉取。
+  rpc SubmitCustomFlyRegion(SubmitCustomFlyRegionReq) returns (SubmitCustomFlyRegionRes);
+
+  // DeleteCustomFlyRegion 删除自定义飞行区（清除该设备下所有飞行区配置）。
+  rpc DeleteCustomFlyRegion(DeleteCustomFlyRegionReq) returns (DeleteCustomFlyRegionRes);
+
+  // DeleteCustomFlyRegionByFileId 按文件 ID 删除指定飞行区。
+  rpc DeleteCustomFlyRegionByFileId(DeleteCustomFlyRegionByFileIdReq) returns (DeleteCustomFlyRegionByFileIdRes);
+
+  // ListFlyRegions 分页查询飞行区配置记录。
+  rpc ListFlyRegions(ListFlyRegionsReq) returns (ListFlyRegionsRes);
+
+  // ListFlyRegionSyncStatus 分页查询飞行区同步状态记录。
+  rpc ListFlyRegionSyncStatus(ListFlyRegionSyncStatusReq) returns (ListFlyRegionSyncStatusRes);
 }
 
 // ==================== 通用消息 ====================
@@ -1194,13 +1216,11 @@ message CameraIrMeteringAreaReq {
 
 // ==================== 自定义飞行区（Custom Fly Region）消息 ====================
 
-// FlightAreasUpdateReq 触发自定义飞行区文件更新请求。
-// 对应 DJI Cloud API method: flight_areas_update（Services, down）。
+// FlightAreasUpdateReq 触发自定义飞行区文件更新请求（仅通知信号）。
+// flight_areas_update 仅为触发信号不含文件数据；设备收到通知后通过 flight_areas_get 拉取文件。
 message FlightAreasUpdateReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;
-  // file 飞行区配置文件引用。必填。
-  FlightTaskFileRef file = 2;
 }
 
 // ==================== PSDK 功能与互联互通请求消息 ====================
@@ -1780,4 +1800,132 @@ message DrcStatusRes {
   int32 next_seq = 4;
   // is_alive 设备是否存活
   bool is_alive = 5;
+}
+
+// ==================== 自定义飞行区（平台能力）消息 ====================
+//
+// 平台自定义飞行区接口消息：提交、删除、查询。
+// 对应 RPC：SubmitCustomFlyRegion、DeleteCustomFlyRegion、ListFlyRegions、ListFlyRegionSyncStatus。
+
+// PointCoordinate WGS84 坐标点，[lng, lat] 顺序。
+message PointCoordinate {
+  double lng = 1;
+  double lat = 2;
+}
+
+// FlyRegionFeature 飞行区要素。
+// geofence_type 为 "dfence"（围栏）或 "nfz"（禁飞区），通过 geometry oneof 选择几何类型。
+message FlyRegionFeature {
+  string id = 1; // 推荐 UUID，为空时自动生成 UUID
+  string geofence_type = 2;
+  bool enable = 3;
+  oneof geometry {
+    FlyRegionPolygon polygon = 4;
+    FlyRegionCircle circle = 5;
+  }
+}
+
+// FlyRegionPolygon 多边形几何。
+message FlyRegionPolygon {
+  repeated PointCoordinate coordinates = 1;
+}
+
+// FlyRegionCircle 圆形几何。
+message FlyRegionCircle {
+  PointCoordinate center = 1;
+  double radius = 2;
+}
+
+// SubmitCustomFlyRegionReq 提交自定义飞行区请求（新增/更新）。
+message SubmitCustomFlyRegionReq {
+  string device_sn = 1;
+  string name = 2;
+  repeated FlyRegionFeature features = 3;
+}
+
+// SubmitCustomFlyRegionRes 提交自定义飞行区响应。
+message SubmitCustomFlyRegionRes {
+  int32 code = 1;
+  string message = 2;
+  string tid = 3;
+  int32 reason_code = 4;
+  string file_id = 5;
+}
+
+// DeleteCustomFlyRegionReq 删除自定义飞行区请求（清除该设备下所有飞行区配置）。
+message DeleteCustomFlyRegionReq {
+  string device_sn = 1;
+}
+
+// DeleteCustomFlyRegionRes 删除自定义飞行区响应。
+message DeleteCustomFlyRegionRes {
+  int32 code = 1;
+  string message = 2;
+  string tid = 3;
+  int32 reason_code = 4;
+}
+
+// DeleteCustomFlyRegionByFileIdReq 按文件 ID 删除指定飞行区请求。
+message DeleteCustomFlyRegionByFileIdReq {
+  string file_id = 1;
+}
+
+// DeleteCustomFlyRegionByFileIdRes 按文件 ID 删除飞行区响应。
+message DeleteCustomFlyRegionByFileIdRes {
+  int32 code = 1;
+  string message = 2;
+  string tid = 3;
+  int32 reason_code = 4;
+}
+
+// ListFlyRegionsReq 查询飞行区配置记录请求。
+message ListFlyRegionsReq {
+  int64 page = 1;
+  int64 page_size = 2;
+  string gateway_sn = 3;
+  bool sign_url = 4; // 是否返回 OSS 签名下载地址
+}
+
+// ListFlyRegionsRes 查询飞行区配置记录响应。
+message ListFlyRegionsRes {
+  int64 total = 1;
+  repeated FlyRegionInfo list = 2;
+}
+
+// FlyRegionInfo 飞行区配置记录。
+message FlyRegionInfo {
+  int64 id = 1;
+  string gateway_sn = 2;
+  string name = 3;
+  string file_id = 4;
+  string file_name = 5;
+  int64 file_size = 6;
+  string checksum = 7;
+  int64 create_time = 8;
+  string url = 9; // OSS 签名下载地址（sign_url=true 时返回）
+}
+
+// ListFlyRegionSyncStatusReq 查询飞行区同步状态请求。
+message ListFlyRegionSyncStatusReq {
+  int64 page = 1;
+  int64 page_size = 2;
+  string gateway_sn = 3;
+  string sync_status = 4;
+}
+
+// ListFlyRegionSyncStatusRes 查询飞行区同步状态响应。
+message ListFlyRegionSyncStatusRes {
+  int64 total = 1;
+  repeated FlyRegionSyncStatusInfo list = 2;
+}
+
+// FlyRegionSyncStatusInfo 飞行区同步状态。
+message FlyRegionSyncStatusInfo {
+  int64 id = 1;
+  string gateway_sn = 2;
+  int64 fly_region_id = 3;
+  string sync_status = 4;
+  int32 sync_reason = 5;
+  int64 create_time = 6;
+  int64 update_time = 7;
 }

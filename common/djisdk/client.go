@@ -894,12 +894,12 @@ func (c *Client) CameraIrMeteringArea(ctx context.Context, gatewaySn string, dat
 
 // ==================== 自定义飞行区（Custom Fly Region） ====================
 
-// FlightAreasUpdate 触发自定义飞行区文件更新。
+// FlightAreasUpdate 触发自定义飞行区文件更新（仅通知信号）。
+// flight_areas_update 为触发更新通知，不含文件数据；设备收到后通过 flight_areas_get 拉取文件。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
-//   - data: 飞行区文件引用（url + fingerprint）
-func (c *Client) FlightAreasUpdate(ctx context.Context, gatewaySn string, data *FlightAreasUpdateData) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodFlightAreasUpdate, data)
+func (c *Client) FlightAreasUpdate(ctx context.Context, gatewaySn string) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodFlightAreasUpdate, &FlightAreasUpdateData{})
 }
 
 // ==================== PSDK 功能（PSDK） ====================

@@ -66,3 +66,7 @@ func ResultFromError(err error) PlatformResult {
 	}
 	return PlatformResultHandlerError
 }
+
+// ErrSkipRequestReply 请求处理器返回此错误时，HandleRequests 不发送 requests_reply。
+// 用于标记某些 method 由旧平台接管、新平台无需回复的场景。
+var ErrSkipRequestReply = errors.New("skip request reply")

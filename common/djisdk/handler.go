@@ -3,6 +3,7 @@ package djisdk
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -245,6 +246,36 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 			}
 			return true, PlatformResultOK
 		}
+	case MethodFlightAreasSyncProgress:
+		if c.handlers.onFlightAreasSyncProgress != nil {
+			var msg struct {
+				Data FlightAreasSyncProgressEvent `json:"data"`
+			}
+			if err := json.Unmarshal(raw, &msg); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal FlightAreasSyncProgressEvent failed: %v", err)
+				return true, PlatformResultHandlerError
+			}
+			if err := c.handlers.onFlightAreasSyncProgress(ctx, gatewaySn, &msg.Data); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] onFlightAreasSyncProgress error: %v", err)
+				return true, ResultFromError(err)
+			}
+			return true, PlatformResultOK
+		}
+	case MethodFlightAreasDroneLocation:
+		if c.handlers.onFlightAreasDroneLocation != nil {
+			var msg struct {
+				Data FlightAreasDroneLocationEvent `json:"data"`
+			}
+			if err := json.Unmarshal(raw, &msg); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal FlightAreasDroneLocationEvent failed: %v", err)
+				return true, PlatformResultHandlerError
+			}
+			if err := c.handlers.onFlightAreasDroneLocation(ctx, gatewaySn, &msg.Data); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] onFlightAreasDroneLocation error: %v", err)
+				return true, ResultFromError(err)
+			}
+			return true, PlatformResultOK
+		}
 	}
 	return false, PlatformResultHandlerError
 }
@@ -438,6 +469,10 @@ func (c *Client) HandleRequests(ctx context.Context, payload []byte, topic strin
 		return c.requestsReply(reqCtx, gatewaySn, &msg, PlatformResultHandlerError, nil)
 	}
 	output, err := c.handlers.onRequest(reqCtx, gatewaySn, &msg)
+	if errors.Is(err, ErrSkipRequestReply) {
+		logx.WithContext(reqCtx).Infof("[dji-sdk] skip request reply by handler: sn=%s method=%s", gatewaySn, msg.Method)
+		return nil
+	}
 	var result PlatformResult
 	if err != nil {
 		logx.WithContext(reqCtx).Errorf("[dji-sdk] request handler error: %v", err)
