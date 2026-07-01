@@ -12,7 +12,7 @@ type DjiFlyRegion struct {
 	gormx.LegacyBaseModel
 	GatewaySn    string `gorm:"column:gateway_sn;index;not null;comment:目标机巢序列号"`
 	Name         string `gorm:"column:name;type:varchar(128);not null;default:'';comment:用户自定义飞行区名称（来自 gRPC 请求，如"航点A区""禁飞区-1号"）"`
-	FileId       string `gorm:"column:file_id;type:varchar(64);uniqueIndex;not null;comment:文件唯一标识(UUID)，用于文件名中的 uuid"`
+	FileId       string `gorm:"column:file_id;type:varchar(64);uniqueIndex;not null;comment:文件唯一标识(UUID)，用于业务关联"`
 	BucketName   string `gorm:"column:bucket_name;uniqueIndex:idx_bucket_file;not null;default:'';comment:OSS 存储桶名称"`
 	FileName     string `gorm:"column:file_name;uniqueIndex:idx_bucket_file;not null;comment:OSS 文件对象 key（自动生成，如 dfence_abc123.json）"`
 	FileSize     int64  `gorm:"column:file_size;not null;default:0;comment:文件大小（字节）"`
