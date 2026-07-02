@@ -241,6 +241,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/orcaman/concurrent-map v0.0.0-20210501183033-44dafcb38ecc // indirect
+	github.com/panjf2000/gnet/v2 v2.9.8 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pelletier/go-toml/v2 v2.3.1 // indirect
 	github.com/petermattis/goid v0.0.0-20260113132338-7c7de50cc741 // indirect

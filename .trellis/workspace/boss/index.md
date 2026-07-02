@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 100
-- **Last Active**: 2026-07-01
+- **Total Sessions**: 101
+- **Last Active**: 2026-07-02
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~1731 | Active |
+| `journal-2.md` | ~1764 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 101 | 2026-07-02 | gnetx: Client refactor + full test coverage + Trellis spec | `60882962`, `d557c92d` | `-` |
 | 100 | 2026-07-01 | Trellis Spec 修复 — geofence/djicloud-models 同步代码现状 | `e4956af1` | `master` |
 | 99 | 2026-07-01 | ListFlyRegions 增加 sign_url 签名地址 | `cc613e1d` | `master` |
 | 98 | 2026-07-01 | DJI 飞行区优化 + Trellis Spec Bootstrap | `9d71ecb2`, `5516eec4`, `f7ddca00`, `d3f410ed`, `5be85525` | `master` |

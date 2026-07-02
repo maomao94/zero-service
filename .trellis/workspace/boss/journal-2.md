@@ -1729,3 +1729,36 @@ ListFlyRegionsReq 新增 sign_url 参数，FlyRegionInfo 新增 url 字段；sig
 ### Next Steps
 
 - None - task complete
+
+
+## Session 101: gnetx: Client refactor + full test coverage + Trellis spec
+
+**Date**: 2026-07-02
+**Task**: gnetx: Client refactor + full test coverage + Trellis spec
+
+### Summary
+
+Client 重构为单连接模型（构造即拨号、固定间隔重连、响应式 Send/Notify/Request API）。Session 解耦 SessionManager（codec 移入 Session，mgr 可选）。修复 DialContext/SetContext 数据竞争。新增 16 个测试覆盖客户端级 API、断开态、Session 管理器、属性操作等。编写 .trellis/spec/backend/gnetx/ 编码规范（实验性标注）。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `60882962` | (see git log) |
+| `d557c92d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
