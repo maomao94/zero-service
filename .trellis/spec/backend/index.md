@@ -17,6 +17,7 @@
 
 ### 通信与协议
 
+- [flowx-guidelines.md](./flowx-guidelines.md) - flowx Workflow 封装：New() 构造、拦截器链顺序、ctx 字段注入、Step/Attempt 日志
 - [socketiox-guidelines.md](./socketiox-guidelines.md) - SocketIO 包 API、Session、房间、并发规则
 - [socketiox-contracts.md](./socketiox-contracts.md) - SocketIO 事件名、payload、跨层协议契约
 - [messaging-guidelines.md](./messaging-guidelines.md) - 消息队列和异步通信规范
