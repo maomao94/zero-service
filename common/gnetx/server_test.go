@@ -43,7 +43,7 @@ func (m *echoMsg) MessageID() int { return 10 }
 // payload 格式：消息类型标识 + 内容，这里简单用 "ping:<serial>:<msg>" / "pong:<serial>:<reply>" / "echo:<body>"。
 type testSerializer struct{}
 
-func (testSerializer) Decode(raw []byte, _ *Session) (any, error) {
+func (testSerializer) Decode(raw []byte, _ CodecConn) (any, error) {
 	s := string(raw)
 	switch {
 	case len(s) > 5 && s[:5] == "ping:":
@@ -69,7 +69,7 @@ func (testSerializer) Decode(raw []byte, _ *Session) (any, error) {
 	return nil, errors.New("unknown message type")
 }
 
-func (testSerializer) Encode(msg any, _ *Session) ([]byte, error) {
+func (testSerializer) Encode(msg any, _ CodecConn) ([]byte, error) {
 	switch m := msg.(type) {
 	case *pingReq:
 		return []byte("ping:" + strconv.Itoa(m.Serial) + ":" + m.Msg), nil
@@ -136,7 +136,7 @@ func startServer(t *testing.T, port int, handler Handler, opts ...ServerOption) 
 	all := append([]ServerOption{
 		WithAddr("127.0.0.1:" + strconv.Itoa(port)),
 		WithCodec(newTestCodec()),
-		WithHandler(handler),
+		WithServerHandler(handler),
 		WithMaxFrameLength(1024 * 1024),
 	}, opts...)
 	srv, err := NewServer(all...)
@@ -159,7 +159,7 @@ func startServer(t *testing.T, port int, handler Handler, opts ...ServerOption) 
 
 func TestServerEcho(t *testing.T) {
 	port := freePort(t)
-	handler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	handler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if e, ok := msg.(*echoMsg); ok {
 			// 原样回显：encode 后仍是 "echo:<body>"
 			return &echoMsg{Body: e.Body}, nil
@@ -191,19 +191,19 @@ func TestServerEcho(t *testing.T) {
 
 func TestServerResponseAutoRoute(t *testing.T) {
 	// server 主动 Request client（client 回 pong）。
-	// 这里用 goroutine 模拟：server handler 收到 ping 后 session.Request 等回包。
+	// 这里用 goroutine 模拟：server handler 收到 ping 后 conn.Request 等回包。
 	// 但 on-loop 不能 Request，所以用 AsyncHandler offload。
 	port := freePort(t)
 
-	var serverSess *Session
+	var serverConn Conn
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	asyncReq := AsyncFunc(HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	asyncReq := AsyncFunc(HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if p, ok := msg.(*pingReq); ok {
 			// 异步里发起 Request 等 pong（client 需先回 pong，这里用 net.Conn 模拟）
 			// 实际上需要 client 侧逻辑回 pong，本测试简化：handler 直接构造 pong 返回
-			serverSess = s
+			serverConn = c
 			wg.Done()
 			return &pongResp{RespSerial: p.Serial, Reply: "ack-" + p.Msg}, nil
 		}
@@ -230,16 +230,16 @@ func TestServerResponseAutoRoute(t *testing.T) {
 	if string(body) != "pong:1:ack-hello" {
 		t.Fatalf("reply = %q, want pong:1:ack-hello", body)
 	}
-	wg.Wait() // 确保 serverSess 赋值
-	if serverSess == nil {
-		t.Fatal("serverSess not set")
+	wg.Wait() // 确保 serverConn 赋值
+	if serverConn == nil {
+		t.Fatal("serverConn not set")
 	}
 }
 
 func TestServerPartialFrame(t *testing.T) {
 	// 验证半包：先发一半，等一会再发另一半，server 应正确拼接。
 	port := freePort(t)
-	handler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	handler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if e, ok := msg.(*echoMsg); ok {
 			return &echoMsg{Body: e.Body}, nil
 		}
@@ -273,7 +273,7 @@ func TestServerPartialFrame(t *testing.T) {
 func TestServerMultipleFramesInOnePacket(t *testing.T) {
 	// 验证粘包：一次发两帧，server 应分别处理并回两包。
 	port := freePort(t)
-	handler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	handler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if e, ok := msg.(*echoMsg); ok {
 			return &echoMsg{Body: e.Body}, nil
 		}
@@ -307,7 +307,7 @@ func TestServerMultipleFramesInOnePacket(t *testing.T) {
 
 func TestServerIdleTimeout(t *testing.T) {
 	port := freePort(t)
-	handler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) { return nil, nil })
+	handler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) { return nil, nil })
 	stop := startServer(t, port, handler, WithIdleTimeout(300*time.Millisecond))
 	defer stop()
 
@@ -328,7 +328,7 @@ func TestServerIdleTimeout(t *testing.T) {
 
 func TestServerGracefulShutdown(t *testing.T) {
 	port := freePort(t)
-	handler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	handler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if e, ok := msg.(*echoMsg); ok {
 			return &echoMsg{Body: e.Body}, nil
 		}
@@ -338,7 +338,7 @@ func TestServerGracefulShutdown(t *testing.T) {
 	srv, err := NewServer(
 		WithAddr("127.0.0.1:"+strconv.Itoa(port)),
 		WithCodec(newTestCodec()),
-		WithHandler(handler),
+		WithServerHandler(handler),
 		WithMaxFrameLength(1024*1024),
 	)
 	if err != nil {
@@ -378,7 +378,7 @@ func TestServerGracefulShutdown(t *testing.T) {
 // TestServerHandlerError：handler 返回 error 不 panic，不回包，记日志。
 func TestServerHandlerError(t *testing.T) {
 	port := freePort(t)
-	handler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	handler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if _, ok := msg.(*echoMsg); ok {
 			return nil, errors.New("internal")
 		}
@@ -408,7 +408,7 @@ func TestServerHandlerError(t *testing.T) {
 // TestServerDecodeErrorLogOnly：DecodeErrorLogOnly 下解码错误不关闭连接。
 func TestServerDecodeErrorLogOnly(t *testing.T) {
 	port := freePort(t)
-	handler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	handler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if e, ok := msg.(*echoMsg); ok {
 			return &echoMsg{Body: e.Body}, nil
 		}
@@ -464,4 +464,57 @@ func isTimeout(err error) bool {
 	}
 	var ne net.Error
 	return errors.As(err, &ne) && ne.Timeout()
+}
+
+// TestServerOnCloseNilContext 验证 OnClose 收到 nil context 时不 panic。
+// 正常流程 OnOpen 总会 SetContext，但防御性测试确认没问题。
+func TestServerOnCloseNilContext(t *testing.T) {
+	port := freePort(t)
+	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) { return nil, nil })
+
+	srv, err := NewServer(
+		WithAddr("127.0.0.1:"+strconv.Itoa(port)),
+		WithCodec(newTestCodec()),
+		WithServerHandler(srvHandler),
+		WithMaxFrameLength(1024*1024),
+	)
+	if err != nil {
+		t.Fatalf("NewServer: %v", err)
+	}
+	done := make(chan error, 1)
+	go func() { done <- srv.Run() }()
+	time.Sleep(100 * time.Millisecond)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	_ = srv.Shutdown(ctx)
+	<-done
+}
+
+// TestServerDecodeErrorClose 验证 DecodeErrorClose（默认）下，不可恢复解码错误会关闭连接。
+func TestServerDecodeErrorClose(t *testing.T) {
+	port := freePort(t)
+	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) { return nil, nil })
+	stop := startServer(t, port, srvHandler)
+	defer stop()
+
+	conn, err := net.Dial("tcp", "127.0.0.1:"+strconv.Itoa(port))
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer conn.Close()
+
+	// 直接发一个解码错误的帧（serializer 不识别的 payload）
+	_, err = conn.Write(frameEncode("bad:payload"))
+	if err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	// 连接应被关闭，后续读返回 EOF
+	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	buf := make([]byte, 16)
+	_, err = conn.Read(buf)
+	if err == nil {
+		t.Fatal("expect connection closed after decode error")
+	}
 }

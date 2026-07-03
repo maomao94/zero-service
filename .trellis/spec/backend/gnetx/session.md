@@ -1,90 +1,129 @@
 # Session & SessionManager
 
-> **EXPERIMENTAL** — 此包尚未经过生产环境验证。
-
 `Session` 是每连接上下文，封装 `gnet.Conn` 并提供业务层 API。
 
-关键 source：`common/gnetx/session.go:25-211`
+关键 source：`common/gnetx/session.go`
 
 ## Session 结构
 
 ```go
-// common/gnetx/session.go:25-45
-type Session struct {
-    id       string           // 框架分配（远端地址派生）
-    alias    string           // opt-in 业务 id（Register 时设置）
-    conn     gnet.Conn
-    codec    Codec            // Send/Request 编码用
-    mgr      *SessionManager  // server 非 nil，client 为 nil
-    isClient bool
-    created  time.Time
-    lastActive atomic.Int64   // unix nano，空闲扫描用
-    attrs    sync.Map         // 业务属性
-    pool     atomic.Pointer[antsx.ReplyPool[any]]  // 懒创建
-    poolOnce sync.Once
+// common/gnetx/session.go:36-52
+type session struct {
+    id          string
+    alias       string
+    gc          gnet.Conn
+    codec       Codec
+    mgr         *SessionManager
+    created     time.Time
+    lastActive  atomic.Int64
+    attrs       sync.Map
+    replyPool   *antsx.ReplyPool[any]   // 非拥有型引用，指向 Server/Client 共享池
+    closeOnce   sync.Once
+    closed      atomic.Bool
+    closeFunc   func()                  // Dialer 额外清理（当前未使用）
 }
 ```
 
+### 设计要点
+
+- **`replyPool` 是非拥有型引用** — 指向 Server 或 Client 的共享池。Session 不创建也不关闭 ReplyPool。
+- **无 `ensurePool()` 方法** — 池生命周期由 Server/Client/Dialer 管理
+- **`session` 是 unexported** — 外部通过 `Conn` / `ServerConn` / `ClientConn` 接口使用
+
+## newSession
+
+```go
+// common/gnetx/session.go:54-66
+func newSession(id string, gc gnet.Conn, codec Codec, mgr *SessionManager, replyPool *antsx.ReplyPool[any]) *session
+```
+
+| 参数 | Server 调用 | Client 调用 | Dialer 调用 |
+|------|-----------|------------|------------|
+| `mgr` | `s.mgr` | `nil` | `nil` |
+| `replyPool` | `s.replyPool` | `c.replyPool` | `nil` |
+
+Dialer 的 session 无 replyPool，`Request()` 方法返回 `ErrSessionClosed`。
+
 ## 关键方法
 
-| 方法 | 线程安全 | 说明 |
-|------|---------|------|
-| `Send(msg)` | off-loop ✅ | 编码后 `AsyncWrite` |
-| `Notify(ctx, msg)` | off-loop ✅ | `Send` 的语义别名 |
-| `Request(ctx, msg, ttl)` | off-loop ✅ | 响应式请求，阻塞等回包 |
-| `Close()` | off-loop ✅ | 幂等、从 mgr 移除、关 pool、关 conn |
+| 方法 | 线程 | 说明 |
+|------|------|------|
+| `Send(ctx, msg)` | off-loop ✅ | 编码后 `AsyncWrite` |
+| `Request(ctx, msg, ttl)` | off-loop ✅ | 复合 TID 注册 + 阻塞等回包 |
+| `Close()` | off-loop ✅ | 幂等；不关 replyPool（上层管理） |
 | `SetAttribute`/`Attribute` | 并发 ✅ | `sync.Map` |
 | `Register(alias)` | 并发 ✅ | alias 冲突踢旧 |
-| `touch()` | on-loop | 更新 `lastActive`（atomic） |
 
-**禁止**在 event-loop handler 同步路径调 `Session.Request`。
+**禁止**在 event-loop（OnTraffic sync handler）中调 `Request()`。
+
+## 复合 TID 机制
+
+为支持 Server/Client 全局共享 `ReplyPool`，`Request` 和 `resolveResponse` 使用复合 TID：
+
+```
+Session.id = "127.0.0.1:54321"
+msg.TID()  = "1"
+────────────────────
+registerKey = "127.0.0.1:54321|1"
+resolveKey  = "127.0.0.1:54321|1"
+```
+
+```go
+// common/gnetx/session.go:103-112
+func (s *session) Request(ctx context.Context, msg Correlatable, ttl time.Duration) (any, error) {
+    compositeTID := s.id + "|" + msg.TID()
+    return antsx.RequestReply[any](ctx, s.replyPool, compositeTID, ...)
+}
+
+// common/gnetx/session.go:114-120
+func (s *session) resolveResponse(tid string, resp any) bool {
+    compositeTID := s.id + "|" + tid
+    return s.replyPool.Resolve(compositeTID, resp)
+}
+```
+
+- 分隔符 `"|"`，永不拆分，仅作 key
+- `resolveResponse` 内部拼接，调用方无需感知
+- 重连后旧 session 的复合 TID 与新 session 不冲突（id 不同）
 
 ## SessionManager
 
-管理所有活跃 Session，按 id 和 alias 查找。Server 持有；Client 不使用（mgr=nil）。
+管理所有活跃 Session，按 id 和 alias 查找。Server 持有；Client/Dialer 不使用（mgr=nil）。
 
-`common/gnetx/session.go:215-297`
+`common/gnetx/session.go:138-213`
 
 ```go
-mgr := gnetx.NewSessionManager(listener)  // nil listener → noop
-
-mgr.Get("id-or-alias")   // alias 优先，再查 byID
-mgr.All()                 // 快照（只读锁）
-mgr.Count()               // 只读锁
+mgr := NewSessionManager(listener)  // nil listener → noop
+mgr.Get("id-or-alias")              // alias 优先
+mgr.All()                           // 快照
+mgr.Count()
 ```
 
 ### Alias 冲突
 
-`common/gnetx/session.go:273-284`
+`common/gnetx/session.go:191-201`
 
-同 alias 重复注册时踢旧：`Unlock → old.Close() → Lock → 写新映射`。解锁-加锁避免死锁。
+同 alias 重复注册时踢旧：`Unlock → old.Close() → Lock → 写新映射`。
 
-### Listener
+### SessionListener
 
 ```go
-// common/gnetx/session.go:301-312
 type SessionListener interface {
-    OnCreated(s *Session)    // OnOpen 时
-    OnRegistered(s *Session) // Register 时
-    OnDestroyed(s *Session)  // OnClose/Close 时
+    OnCreated(s ServerConn)
+    OnRegistered(s ServerConn)
+    OnDestroyed(s ServerConn)
 }
 ```
 
-嵌入 `noopSessionListener` 获全部空实现。
+## ReplyPool 所有权
 
-## Client Session 特殊性
+| 结构 | 创建 | 销毁 | Session.replyPool |
+|------|------|------|------------------|
+| `Server` | `NewServer()` | `Shutdown()` | 所有 server session 共享 |
+| `Client` | `NewClient()` | `Close()` | 该 client 的 session 共享 |
+| `Dialer` | **无** | — | nil（不支持 Request） |
 
-Client Session 的 `mgr = nil`：`Register` 只设 `alias` 不写管理器；`Close` 跳 `mgr.remove`。
-
-## ReplyPool
-
-每 Session 一个 `antsx.ReplyPool[any]`，懒创建（首次 `Request` 时）。
-
-`common/gnetx/session.go:160-173`
-
-- `sync.Once` 防重
-- 创建后查 `closed`：已关闭则立即 `pool.Close()` 防泄漏
-- `atomic.Pointer` 存，与 `resolveResponse` 并发读无竞争
+Client 断连重连时旧 Session 关闭但不关池，新 Session 仍用同一个池。在途请求等 TTL 过期（默认 30s）。
 
 ## 常见错误
 
@@ -93,3 +132,4 @@ Client Session 的 `mgr = nil`：`Register` 只设 `alias` 不写管理器；`Cl
 | on-loop 调 `sess.Request` | 阻塞 event-loop |
 | alias 冲突后仍用旧 Session 指针 | 旧 Session 已 Close |
 | `SetContext` 在非 event-loop 线程调用 | 与 OnClose 数据竞争 |
+| Dialer session 上调 `Request()` | replyPool 为 nil，返回 `ErrSessionClosed` |

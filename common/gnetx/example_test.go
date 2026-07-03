@@ -32,7 +32,7 @@ func (m *exampleResp) ResponseTID() string { return strconv.Itoa(m.RespSerial) }
 // === 自定义序列化：payload 格式 "REQ:<serial>" / "RESP:<serial>" ===
 type exampleSerializer struct{}
 
-func (exampleSerializer) Decode(raw []byte, _ *gnetx.Session) (any, error) {
+func (exampleSerializer) Decode(raw []byte, _ gnetx.CodecConn) (any, error) {
 	s := string(raw)
 	switch {
 	case len(s) > 4 && s[:4] == "REQ:":
@@ -45,7 +45,7 @@ func (exampleSerializer) Decode(raw []byte, _ *gnetx.Session) (any, error) {
 	return nil, errors.New("unknown")
 }
 
-func (exampleSerializer) Encode(msg any, _ *gnetx.Session) ([]byte, error) {
+func (exampleSerializer) Encode(msg any, _ gnetx.CodecConn) ([]byte, error) {
 	switch m := msg.(type) {
 	case *exampleReq:
 		return []byte("REQ:" + strconv.Itoa(m.Serial)), nil
@@ -94,7 +94,7 @@ func TestExampleMinimalProtocol(t *testing.T) {
 	port := freePortExample()
 
 	// 1) 构造 server：handler 收到 exampleReq 返回 exampleResp
-	handler := gnetx.HandlerFunc(func(ctx context.Context, s *gnetx.Session, msg any) (any, error) {
+	handler := gnetx.HandlerFunc(func(ctx context.Context, c gnetx.Conn, msg any) (any, error) {
 		if req, ok := msg.(*exampleReq); ok {
 			return &exampleResp{RespSerial: req.Serial}, nil
 		}
@@ -104,7 +104,7 @@ func TestExampleMinimalProtocol(t *testing.T) {
 	srv, err := gnetx.NewServer(
 		gnetx.WithAddr(fmt.Sprintf("127.0.0.1:%d", port)),
 		gnetx.WithCodec(newExampleCodec()),
-		gnetx.WithHandler(handler),
+		gnetx.WithServerHandler(handler),
 		gnetx.WithMaxFrameLength(1<<20),
 	)
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 )
 
 // TestServerInitiatedRequest 验证双向报文的 headline 能力：
-// server 端通过已连接会话的 Session.Request 主动向 client 发请求，client 回包，
+// server 端通过已连接会话的 Request 主动向 client 发请求，client 回包，
 // server 的 Request 按 tid 匹配到回包并返回。
 //
 // 流程：
@@ -20,14 +20,14 @@ func TestServerInitiatedRequest(t *testing.T) {
 	port := freePort(t)
 
 	// server handler：普通消息不处理（本测试由 server 主动发起请求）。
-	srvReady := make(chan *Session, 1)
-	srvHandler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	srvReady := make(chan ServerConn, 1)
+	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		return nil, nil
 	})
 	srv, err := NewServer(
 		WithAddr("127.0.0.1:"+strconv.Itoa(port)),
 		WithCodec(newTestCodec()),
-		WithHandler(srvHandler),
+		WithServerHandler(srvHandler),
 		WithMaxFrameLength(1<<20),
 		WithSessionListener(&captureListener{ch: srvReady}),
 	)
@@ -47,7 +47,7 @@ func TestServerInitiatedRequest(t *testing.T) {
 	// client handler：收到 pingReq 回 pongResp（同 serial）。
 	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
-		WithClientHandler(HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+		WithClientHandler(HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 			if p, ok := msg.(*pingReq); ok {
 				return &pongResp{RespSerial: p.Serial, Reply: "client-ack-" + p.Msg}, nil
 			}
@@ -65,9 +65,9 @@ func TestServerInitiatedRequest(t *testing.T) {
 	}
 
 	// 等 server 端会话建立
-	var srvSess *Session
+	var srvReq ServerConn
 	select {
-	case srvSess = <-srvReady:
+	case srvReq = <-srvReady:
 	case <-time.After(2 * time.Second):
 		t.Fatal("server session not created")
 	}
@@ -75,7 +75,7 @@ func TestServerInitiatedRequest(t *testing.T) {
 	// server 端主动发起 Request（off-loop：测试 goroutine）
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	resp, err := srvSess.Request(ctx, &pingReq{Serial: 100, Msg: "hi"}, 5*time.Second)
+	resp, err := srvReq.Request(ctx, &pingReq{Serial: 100, Msg: "hi"}, 5*time.Second)
 	if err != nil {
 		t.Fatalf("server Request: %v", err)
 	}
@@ -88,13 +88,15 @@ func TestServerInitiatedRequest(t *testing.T) {
 	}
 }
 
-// captureListener 捕获 server 端新建的会话，供测试拿到 Session 主动发起请求。
+// captureListener 捕获 server 端新建的会话，供测试拿到 Conn 主动发起请求。
 type captureListener struct {
 	noopSessionListener
 	once sync.Once
-	ch   chan *Session
+	ch   chan ServerConn
 }
 
-func (l *captureListener) OnCreated(s *Session) {
-	l.once.Do(func() { l.ch <- s })
+func (l *captureListener) OnCreated(s ServerConn) {
+	l.once.Do(func() {
+		l.ch <- s
+	})
 }

@@ -38,7 +38,7 @@
 - [antsx-replypool-guidelines.md](./antsx-replypool-guidelines.md) - Antsx ReplyPool 异步请求/应答池
 - [mr-concurrency.md](./mr-concurrency.md) - go-zero mr 并发工具（Finish/MapReduce）分页+并发查询模式
 - [bytex-contracts.md](./bytex-contracts.md) - Modbus 字节/寄存器工具包合约
-- [gnetx/index.md](./gnetx/index.md) - gnetx TCP 框架：Codec/Server/Client/Session/Router/Request-Response（⚠️ 实验性）
+- [gnetx/index.md](./gnetx/index.md) - gnetx TCP 框架：Codec/Server/Client/Dialer/Session/Router/Request-Response（⚠️ 实验性）
 
 ### 元规范
 

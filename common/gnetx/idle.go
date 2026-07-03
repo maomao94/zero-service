@@ -46,9 +46,9 @@ func (s *idleSweeper) loop(idle time.Duration) {
 // sweep 执行一次扫描，关闭超时会话。
 func (s *idleSweeper) sweep(idle time.Duration) {
 	now := time.Now()
-	for _, sess := range s.mgr.All() {
-		if now.Sub(sess.LastActiveAt()) > idle {
-			_ = sess.Close()
+	for _, sc := range s.mgr.All() {
+		if now.Sub(sc.LastActiveAt()) > idle {
+			_ = sc.Close()
 		}
 	}
 }

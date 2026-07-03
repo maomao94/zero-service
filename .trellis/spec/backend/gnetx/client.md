@@ -4,14 +4,15 @@
 
 `Client` 是 gnetx 的**单连接 TCP 客户端**，对标 `mqttx`/`modbusx` 的 `MustNewClient` 模型。一个 Client = 一个远端连接。
 
-关键 source：`common/gnetx/client.go:36-363`
+关键 source：`common/gnetx/client.go:25-327`
 
 ## 核心设计
 
 - **构造即拨号** — 无 `Start`/`Stop`（仅 `NewClient` + `Close`）
-- **固定间隔重连** — 断线按 `ReconnectInterval`（默认 3s）自动重连，非指数退避
-- **多连接 = 多 Client** — 多连接管理是独立职责，不耦合进 Client
+- **固定间隔重连** — 断线按 `ReconnectInterval`（默认 3s）自动重连
+- **多连接 = 多 Client**
 - **不实现 `go-zero service.Service`** — 生命周期仅构造 + `Close`
+- **共享 ReplyPool** — Client 级 `antsx.ReplyPool[any]`，所有重连 session 共享
 
 ## 构造
 
@@ -19,7 +20,7 @@
 // MustNewClient：失败 panic + 自动注册 proc 关闭监听
 cli := gnetx.MustNewClient("tcp", "127.0.0.1:9000",
     gnetx.WithClientCodec(myCodec),
-    gnetx.WithClientHandler(myHandler),
+    gnetx.WithClientHandler(myHandler),       // 统一 Handler 类型
     gnetx.WithClientMaxFrameLength(1 << 20),
     gnetx.WithClientReconnectInterval(5 * time.Second),
     gnetx.WithClientOnReady(func(c *gnetx.Client) {
@@ -32,27 +33,35 @@ defer cli.Close()
 cli, err := gnetx.NewClient("tcp", "...", opts...)
 ```
 
-必填项（`common/gnetx/options.go:297-308`）：`Codec`、`Handler`、`MaxFrameLength`
+必填项（`common/gnetx/options.go:296-307`）：`Codec`、`Handler`、`MaxFrameLength`
 
-默认值（`common/gnetx/options.go:311-324`）：
-- `ReconnectInterval` → 3s（`common/gnetx/handler.go:63`）
+默认值（`common/gnetx/options.go:310-323`）：
+- `ReconnectInterval` → 3s
 - `SlowHandlerThreshold` → 50ms
 - `BatchReadLimit` → 64
+
+## ClientConn 接口
+
+```go
+type ClientConn interface {
+    Conn
+    Request(ctx context.Context, msg Correlatable, ttl time.Duration) (any, error)
+}
+```
+
+`cli.Session()` 返回 `ClientConn`（nil if 未连接）。
 
 ## 响应式 API
 
 ```go
 // fire-and-forget 发送
-cli.Send(msg)                          // → sess.Send(msg)
-
-// 带 ctx 的 fire-and-forget
-cli.Notify(ctx, msg)                   // → sess.Notify(ctx, msg)
+cli.Send(ctx, msg)                        // → sess.Send(ctx, msg)
 
 // 响应式请求：发请求等匹配 tid 的回包
-resp, err := cli.Request(ctx, req, ttl) // → sess.Request(ctx, req, ttl)
+resp, err := cli.Request(ctx, req, ttl)   // → sess.Request(ctx, req, ttl)
 ```
 
-`common/gnetx/client.go:118-145`
+`common/gnetx/client.go:107-121`
 
 未连接或重连中时均返回 `ErrSessionClosed`（非 panic）。
 
@@ -61,11 +70,11 @@ resp, err := cli.Request(ctx, req, ttl) // → sess.Request(ctx, req, ttl)
 ```
 MustNewClient() → NewClient → gnet.NewClient → gcli.Start → c.dial()
     ↓ 首次拨号成功
-OnOpen → newSession → c.sess.Store → OnReady（仅首次）
+OnOpen → newSession(UUID) → c.sess.Store → OnReady（仅首次）
     ↓
-收发：OnTraffic → decode → Response 匹配 → dispatch
+收发：OnTraffic → decode → Response 匹配（resolveResponse）→ dispatch
     ↓ 断连
-OnClose → c.sess.CAS(nil) → startReconnect
+OnClose → c.sess.CAS(nil) → cn.Close() → startReconnect
     ↓ 固定间隔后
 c.dial() → OnOpen → 收发恢复
     ↑ 重连 goroutine 退出（one-shot）；下次断开再触发
@@ -73,26 +82,24 @@ c.dial() → OnOpen → 收发恢复
 
 ## 自动重连
 
-`common/gnetx/client.go:241-268`
+`common/gnetx/client.go:206-232`
 
-- 固定间隔重连（`ReconnectInterval`）
+- 固定间隔重连（`ReconnectInterval`，默认 3s）
 - 单实例保护：`reconnecting.CompareAndSwap` 防重入
 - 重连成功即退，one-shot goroutine
 - `Close()` → `close(reconnectCh)` → 立即退出
 
 ## OnReady 回调
 
-`common/gnetx/client.go:165-173`
+`common/gnetx/client.go:139-146`
 
 - 仅首次拨号成功触发（`ready.CompareAndSwap`）
 - off-loop 调用（避免阻塞 event-loop）
 - 重连不重复触发
 
-## DialContext 安全
+## ReplyPool（共享）
 
-`NewClient` 和重连都使用 `gnet.Client.DialContext`，在 `OnOpen`（event-loop 线程）完成后才返回，保证 `dial()` 返回时 `c.sess` 已就绪，无 `SetContext` 竞争。
-
-`common/gnetx/client.go:166`
+Client 级的 `antsx.ReplyPool[any]`，构造时创建，所有重连 session 共享。request 使用复合 TID（`sessionID + "|" + msg.TID()`）隔离不同重连期间的同 TID 请求。
 
 ## 常见错误
 

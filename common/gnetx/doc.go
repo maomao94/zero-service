@@ -7,7 +7,7 @@
 // # 设计原则
 //
 //   - 不抄 netmc 的 Spring-MVC 注解那套，做 Go 标准的 TCP 框架。
-//   - Core 层（所有协议都用）：Codec、Session、Handler、Server/Client、空闲检测、优雅停止。
+//   - Core 层（所有协议都用）：Codec、Conn、Handler、Server/Client、空闲检测、优雅停止。
 //   - opt-in 层（需要才用）：Router（按 messageID 路由）、请求-响应（tid 响应式，基于 antsx.ReplyPool）。
 //   - 纯推送/遥测协议只用 Core，零 tid/路由包袱。
 //
@@ -16,8 +16,8 @@
 // Codec 单接口承载分帧+序列化（对齐 gnet v1 ICodec 的简洁形态）：
 //
 //	type Codec interface {
-//	    Decode(c gnet.Conn, sess *Session) (any, error) // 半包返回 ErrIncompletePacket
-//	    Encode(msg any, sess *Session) ([]byte, error)
+//	    Decode(c gnet.Conn, conn Conn) (any, error) // 半包返回 ErrIncompletePacket
+//	    Encode(msg any, conn Conn) ([]byte, error)
 //	}
 //
 // 内置 LengthPrefixCodec / DelimiterCodec / FixedLengthCodec 直接实现本接口，
@@ -46,17 +46,17 @@
 //	)
 //	defer cli.Close()
 //
-// 响应式 API：cli.Send(msg) / cli.Notify(ctx, msg) / cli.Request(ctx, msg, ttl)。
+// 响应式 API：cli.Send(ctx, msg) / cli.Request(ctx, msg, ttl)。
 // 不实现 service.Service（无 Start/Stop），生命周期仅构造 + Close。
 //
 // # 请求-响应（opt-in，tid 响应式）
 //
 // 消息实现 Correlatable（请求侧 TID()）和 Response（回包侧 ResponseTID()）后，
-// Session.Request 发送请求并等待匹配 tid 的回包：
+// Requester.Request 发送请求并等待匹配 tid 的回包：
 //
-//	resp, err := sess.Request(ctx, &MyReq{Serial: 1}, 10*time.Second)
+//	resp, err := conn.Request(ctx, &MyReq{Serial: 1}, 10*time.Second)
 //
-// 关联引擎为每 Session 一个 common/antsx.ReplyPool，断连自动 Reject 在途请求。
+// 关联引擎为 Server/Client 级共享 common/antsx.ReplyPool，断连不会立即 Reject 在途请求。
 // 入站回包（实现 Response）由框架自动路由到 ReplyPool.Resolve，不进业务 handler。
 // 禁止在 on-loop handler 中调用 Request（会阻塞 event-loop）。
 //
@@ -66,8 +66,8 @@
 //     重活用 AsyncFunc/Async 标记，框架 offload 到 gnet 自带的 goroutine.DefaultWorkerPool，
 //     回包走 AsyncWrite。
 //   - on-loop only：Codec.Decode（Peek/Discard）、同步 c.Write、c.Context。
-//   - off-loop 安全：Session.Send/Notify/Request（内部 AsyncWrite）、
-//     Session.Close、SessionManager、antsx.ReplyPool。
+//   - off-loop 安全：Conn.Send/Request（内部 AsyncWrite）、
+//     Conn.Close、SessionManager、antsx.ReplyPool。
 //
 // # 日志
 //

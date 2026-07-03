@@ -19,7 +19,7 @@ func TestServerWithServiceGroup(t *testing.T) {
 	srv, err := NewServer(
 		WithAddr("127.0.0.1:"+strconv.Itoa(port)),
 		WithCodec(newTestCodec()),
-		WithHandler(HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+		WithServerHandler(HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 			if e, ok := msg.(*echoMsg); ok {
 				return &echoMsg{Body: e.Body}, nil
 			}

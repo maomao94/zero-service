@@ -25,7 +25,7 @@ func NewFixedLengthCodec(length int, ser Serializer) *FixedLengthCodec {
 }
 
 // Decode 从连接读一帧固定长度字节并交给 Serializer 转成消息。只用 Peek/Discard（on-loop 安全）。
-func (c *FixedLengthCodec) Decode(conn gnet.Conn, sess *Session) (any, error) {
+func (c *FixedLengthCodec) Decode(conn gnet.Conn, sc CodecConn) (any, error) {
 	buf, err := conn.Peek(c.length)
 	if err != nil {
 		return nil, mapShortBuffer(err)
@@ -36,12 +36,12 @@ func (c *FixedLengthCodec) Decode(conn gnet.Conn, sess *Session) (any, error) {
 	if _, err := conn.Discard(c.length); err != nil {
 		return nil, mapShortBuffer(err)
 	}
-	return c.Serializer.Decode(raw, sess)
+	return c.Serializer.Decode(raw, sc)
 }
 
 // Encode 把消息序列化为字节直接返回（定长协议无需加帧头）。
 // 由用户/Serializer 保证产出长度符合固定长度约定；本 codec 不强制校验长度，
 // 以便某些协议在 payload 里自带定长布局。
-func (c *FixedLengthCodec) Encode(msg any, sess *Session) ([]byte, error) {
-	return c.Serializer.Encode(msg, sess)
+func (c *FixedLengthCodec) Encode(msg any, sc CodecConn) ([]byte, error) {
+	return c.Serializer.Encode(msg, sc)
 }

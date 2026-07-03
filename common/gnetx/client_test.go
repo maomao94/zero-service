@@ -22,16 +22,21 @@ func waitFor(t *testing.T, timeout time.Duration, cond func() bool) {
 	t.Fatalf("condition not met within %s", timeout)
 }
 
-// noopClientHandler 是 client 侧不处理入站的占位 handler。
-func noopClientHandler() Handler {
-	return HandlerFunc(func(context.Context, *Session, any) (any, error) { return nil, nil })
+// noopServerHandler 是 server 侧不处理入站的占位 handler。
+func noopServerHandler() Handler {
+	return HandlerFunc(func(context.Context, Conn, any) (any, error) { return nil, nil })
 }
 
-// TestClientNotify：Client 连到 server，Notify 发 echo，server 回包，client handler 收到。
-func TestClientNotify(t *testing.T) {
+// noopClientHandler 是 client 侧不处理入站的占位 handler。
+func noopClientHandler() Handler {
+	return HandlerFunc(func(context.Context, Conn, any) (any, error) { return nil, nil })
+}
+
+// TestClientSend：Client 连到 server，Send 发 echo，server 回包，client handler 收到。
+func TestClientSend(t *testing.T) {
 	port := freePort(t)
 
-	srvHandler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if e, ok := msg.(*echoMsg); ok {
 			return &echoMsg{Body: e.Body}, nil
 		}
@@ -43,7 +48,7 @@ func TestClientNotify(t *testing.T) {
 	got := make(chan *echoMsg, 1)
 	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
-		WithClientHandler(HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+		WithClientHandler(HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 			if e, ok := msg.(*echoMsg); ok {
 				got <- e
 			}
@@ -61,8 +66,8 @@ func TestClientNotify(t *testing.T) {
 		t.Fatal("Session() nil after connect")
 	}
 
-	if err := sess.Notify(context.Background(), &echoMsg{Body: "from-client"}); err != nil {
-		t.Fatalf("Notify: %v", err)
+	if err := sess.Send(context.Background(), &echoMsg{Body: "from-client"}); err != nil {
+		t.Fatalf("Send: %v", err)
 	}
 
 	select {
@@ -79,7 +84,7 @@ func TestClientNotify(t *testing.T) {
 func TestClientRequestResponse(t *testing.T) {
 	port := freePort(t)
 
-	srvHandler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if p, ok := msg.(*pingReq); ok {
 			return &pongResp{RespSerial: p.Serial, Reply: "ack-" + p.Msg}, nil
 		}
@@ -117,7 +122,7 @@ func TestClientRequestResponse(t *testing.T) {
 func TestClientRequestTimeout(t *testing.T) {
 	port := freePort(t)
 
-	srvHandler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) { return nil, nil })
+	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) { return nil, nil })
 	stop := startServer(t, port, srvHandler)
 	defer stop()
 
@@ -156,7 +161,7 @@ func TestClientConnectError(t *testing.T) {
 // TestClientOnReady：首次连上触发 OnReady 回调一次。
 func TestClientOnReady(t *testing.T) {
 	port := freePort(t)
-	stop := startServer(t, port, noopClientHandler())
+	stop := startServer(t, port, noopServerHandler())
 	defer stop()
 
 	ready := make(chan *Client, 1)
@@ -181,11 +186,11 @@ func TestClientOnReady(t *testing.T) {
 	}
 }
 
-// TestClientNotifyViaClient：使用 Client.Notify 便捷方法（而非 Session.Notify）。
-func TestClientNotifyViaClient(t *testing.T) {
+// TestClientSendViaClient：使用 Client.Send 便捷方法（而非 Session().Send）。
+func TestClientSendViaClient(t *testing.T) {
 	port := freePort(t)
 
-	srvHandler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if e, ok := msg.(*echoMsg); ok {
 			return &echoMsg{Body: e.Body}, nil
 		}
@@ -197,7 +202,7 @@ func TestClientNotifyViaClient(t *testing.T) {
 	got := make(chan *echoMsg, 1)
 	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
-		WithClientHandler(HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+		WithClientHandler(HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 			if e, ok := msg.(*echoMsg); ok {
 				got <- e
 			}
@@ -210,8 +215,8 @@ func TestClientNotifyViaClient(t *testing.T) {
 	}
 	defer cli.Close()
 
-	if err := cli.Notify(context.Background(), &echoMsg{Body: "via-client"}); err != nil {
-		t.Fatalf("Notify via Client: %v", err)
+	if err := cli.Send(context.Background(), &echoMsg{Body: "via-client"}); err != nil {
+		t.Fatalf("Send via Client: %v", err)
 	}
 	select {
 	case e := <-got:
@@ -223,11 +228,11 @@ func TestClientNotifyViaClient(t *testing.T) {
 	}
 }
 
-// TestClientRequestViaClient：使用 Client.Request 便捷方法（而非 Session.Request）。
+// TestClientRequestViaClient：使用 Client.Request 便捷方法（而非 Session().Request）。
 func TestClientRequestViaClient(t *testing.T) {
 	port := freePort(t)
 
-	srvHandler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if p, ok := msg.(*pingReq); ok {
 			return &pongResp{RespSerial: p.Serial, Reply: "ack-" + p.Msg}, nil
 		}
@@ -261,10 +266,10 @@ func TestClientRequestViaClient(t *testing.T) {
 	}
 }
 
-// TestClientOpsOnDisconnected：连接关闭后 Send/Notify/Request 返回 ErrSessionClosed。
+// TestClientOpsOnDisconnected：连接关闭后 Send/Request 返回 ErrSessionClosed。
 func TestClientOpsOnDisconnected(t *testing.T) {
 	port := freePort(t)
-	stop := startServer(t, port, noopClientHandler())
+	stop := startServer(t, port, noopServerHandler())
 	defer stop()
 
 	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
@@ -277,11 +282,8 @@ func TestClientOpsOnDisconnected(t *testing.T) {
 	}
 	cli.Close()
 
-	if err := cli.Send(&echoMsg{Body: "x"}); !errors.Is(err, ErrSessionClosed) {
+	if err := cli.Send(context.Background(), &echoMsg{Body: "x"}); !errors.Is(err, ErrSessionClosed) {
 		t.Fatalf("Send: want ErrSessionClosed, got %v", err)
-	}
-	if err := cli.Notify(context.Background(), &echoMsg{Body: "x"}); !errors.Is(err, ErrSessionClosed) {
-		t.Fatalf("Notify: want ErrSessionClosed, got %v", err)
 	}
 	if _, err := cli.Request(context.Background(), &pingReq{Serial: 1}, time.Second); !errors.Is(err, ErrSessionClosed) {
 		t.Fatalf("Request: want ErrSessionClosed, got %v", err)
@@ -291,7 +293,7 @@ func TestClientOpsOnDisconnected(t *testing.T) {
 // TestClientCloseIdempotent：多次 Close 不 panic。
 func TestClientCloseIdempotent(t *testing.T) {
 	port := freePort(t)
-	stop := startServer(t, port, noopClientHandler())
+	stop := startServer(t, port, noopServerHandler())
 	defer stop()
 
 	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
@@ -307,11 +309,11 @@ func TestClientCloseIdempotent(t *testing.T) {
 	cli.Close() // 第三次也不应 panic
 }
 
-// TestClientHandlerError：client handler 返回 error 不 panic，仅日志。
-func TestClientHandlerError(t *testing.T) {
+// TestHandlerError：client handler 返回 error 不 panic，仅日志。
+func TestHandlerError(t *testing.T) {
 	port := freePort(t)
 
-	srvHandler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if e, ok := msg.(*echoMsg); ok {
 			return &echoMsg{Body: e.Body}, nil
 		}
@@ -323,7 +325,7 @@ func TestClientHandlerError(t *testing.T) {
 	testErr := errors.New("test handler failure")
 	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
-		WithClientHandler(HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+		WithClientHandler(HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 			return nil, testErr
 		})),
 		WithClientMaxFrameLength(1024*1024),
@@ -333,7 +335,7 @@ func TestClientHandlerError(t *testing.T) {
 	}
 	defer cli.Close()
 
-	if err := cli.Send(&echoMsg{Body: "trigger"}); err != nil {
+	if err := cli.Send(context.Background(), &echoMsg{Body: "trigger"}); err != nil {
 		t.Fatalf("Send: %v", err)
 	}
 	// server echoback arrives → client handler returns error → 不 panic 即通过
@@ -344,7 +346,7 @@ func TestClientHandlerError(t *testing.T) {
 func TestClientOnReadyNotOnReconnect(t *testing.T) {
 	port := freePort(t)
 
-	srvHandler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if e, ok := msg.(*echoMsg); ok {
 			return &echoMsg{Body: e.Body}, nil
 		}
@@ -353,7 +355,7 @@ func TestClientOnReadyNotOnReconnect(t *testing.T) {
 	srv, err := NewServer(
 		WithAddr("127.0.0.1:"+strconv.Itoa(port)),
 		WithCodec(newTestCodec()),
-		WithHandler(srvHandler),
+		WithServerHandler(srvHandler),
 		WithMaxFrameLength(1024*1024),
 	)
 	if err != nil {
@@ -370,13 +372,11 @@ func TestClientOnReadyNotOnReconnect(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	readyCount := atomic.Int32{}
-	lis := &countListener{}
 	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
 		WithClientReconnectInterval(200*time.Millisecond),
-		WithClientSessionListener(lis),
 		WithClientOnReady(func(c *Client) { readyCount.Add(1) }),
 	)
 	if err != nil {
@@ -392,27 +392,19 @@ func TestClientOnReadyNotOnReconnect(t *testing.T) {
 	for _, s := range srv.Manager().All() {
 		_ = s.Close()
 	}
-	waitFor(t, 5*time.Second, func() bool { return lis.created.Load() >= 2 })
+	waitFor(t, 5*time.Second, func() bool { return cli.Session() != nil })
 
 	if readyCount.Load() != 1 {
 		t.Fatalf("OnReady called %d times after reconnect, want still 1", readyCount.Load())
 	}
 }
 
-// countListener 统计连接建立次数，用于验证重连。
-type countListener struct {
-	noopSessionListener
-	created atomic.Int32
-}
-
-func (l *countListener) OnCreated(*Session) { l.created.Add(1) }
-
 // TestClientReconnect：连接被服务端断开后，Client 按固定间隔自动重连到仍在运行的 server，
 // 且重连后 Session 可正常收发。用连接计数监听器判定重连发生（server 全程不停，避免端口复用抖动）。
 func TestClientReconnect(t *testing.T) {
 	port := freePort(t)
 
-	srvHandler := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if e, ok := msg.(*echoMsg); ok {
 			return &echoMsg{Body: e.Body}, nil
 		}
@@ -421,7 +413,7 @@ func TestClientReconnect(t *testing.T) {
 	srv, err := NewServer(
 		WithAddr("127.0.0.1:"+strconv.Itoa(port)),
 		WithCodec(newTestCodec()),
-		WithHandler(srvHandler),
+		WithServerHandler(srvHandler),
 		WithMaxFrameLength(1024*1024),
 	)
 	if err != nil {
@@ -437,13 +429,11 @@ func TestClientReconnect(t *testing.T) {
 	}()
 	time.Sleep(100 * time.Millisecond)
 
-	lis := &countListener{}
 	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
 		WithClientReconnectInterval(200*time.Millisecond),
-		WithClientSessionListener(lis),
 	)
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
@@ -453,23 +443,20 @@ func TestClientReconnect(t *testing.T) {
 	if cli.Session() == nil {
 		t.Fatal("Session() nil after initial connect")
 	}
-	if got := lis.created.Load(); got != 1 {
-		t.Fatalf("initial connection count = %d, want 1", got)
-	}
 
 	// 从服务端强制断开当前连接，触发 client 重连
 	for _, s := range srv.Manager().All() {
 		_ = s.Close()
 	}
 
-	// Client 自动重连到仍在运行的 server（第 2 次建连）
-	waitFor(t, 5*time.Second, func() bool { return lis.created.Load() >= 2 })
+	// Client 自动重连到仍在运行的 server
+	waitFor(t, 5*time.Second, func() bool { return cli.Session() != nil })
 
 	// 重连后可通过 Client 便捷接口正常发送（不再是 ErrSessionClosed）
 	if cli.Session() == nil {
 		t.Fatal("Session() nil after reconnect")
 	}
-	if err := cli.Send(&echoMsg{Body: "after-reconnect"}); err != nil {
+	if err := cli.Send(context.Background(), &echoMsg{Body: "after-reconnect"}); err != nil {
 		t.Fatalf("Send after reconnect: %v", err)
 	}
 }
@@ -478,7 +465,7 @@ func TestClientReconnect(t *testing.T) {
 func TestClientRequestViaServer(t *testing.T) {
 	port := freePort(t)
 
-	srvStop := startServer(t, port, HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	srvStop := startServer(t, port, HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		if p, ok := msg.(*pingReq); ok {
 			return &pongResp{RespSerial: p.Serial, Reply: "ack"}, nil
 		}
@@ -506,4 +493,71 @@ func TestClientRequestViaServer(t *testing.T) {
 	if !ok || pong.RespSerial != 7 || pong.Reply != "ack" {
 		t.Fatalf("resp = %+v", resp)
 	}
+}
+
+// TestClientSessionNilAfterClose 验证 Close 后 Session() 返回 nil。
+func TestClientSessionNilAfterClose(t *testing.T) {
+	port := freePort(t)
+	stop := startServer(t, port, noopServerHandler())
+	defer stop()
+
+	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+		WithClientCodec(newTestCodec()),
+		WithClientHandler(noopClientHandler()),
+		WithClientMaxFrameLength(1024*1024),
+	)
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	cli.Close()
+
+	if cli.Session() != nil {
+		t.Fatal("Session() should return nil after Close")
+	}
+}
+
+// TestClientIdleTimeout 验证 client 空闲超时关闭（通过 server idle timeout 断开 client）。
+func TestClientIdleTimeout(t *testing.T) {
+	port := freePort(t)
+
+	srv, err := NewServer(
+		WithAddr("127.0.0.1:"+strconv.Itoa(port)),
+		WithCodec(newTestCodec()),
+		WithServerHandler(noopServerHandler()),
+		WithMaxFrameLength(1024*1024),
+		WithIdleTimeout(300*time.Millisecond),
+	)
+	if err != nil {
+		t.Fatalf("NewServer: %v", err)
+	}
+	done := make(chan error, 1)
+	go func() { done <- srv.Run() }()
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		_ = srv.Shutdown(ctx)
+		<-done
+	}()
+	time.Sleep(100 * time.Millisecond)
+
+	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+		WithClientCodec(newTestCodec()),
+		WithClientHandler(noopClientHandler()),
+		WithClientMaxFrameLength(1024*1024),
+		WithClientReconnectInterval(500*time.Millisecond),
+	)
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	defer cli.Close()
+
+	if cli.Session() == nil {
+		t.Fatal("Session() nil after connect")
+	}
+
+	// 不发数据，等 server idle timeout 断开
+	waitFor(t, 2*time.Second, func() bool { return cli.Session() == nil })
+
+	// 验证重连
+	waitFor(t, 3*time.Second, func() bool { return cli.Session() != nil })
 }

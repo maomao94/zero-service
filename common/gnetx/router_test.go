@@ -9,12 +9,12 @@ import (
 
 func TestRouterRouteByID(t *testing.T) {
 	r := NewRouter(nil)
-	r.RegisterFunc(1, HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	r.RegisterFunc(1, func(ctx context.Context, c Conn, msg any) (any, error) {
 		return "handler-1", nil
-	}))
-	r.RegisterFunc(2, HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	})
+	r.RegisterFunc(2, func(ctx context.Context, c Conn, msg any) (any, error) {
 		return "handler-2", nil
-	}))
+	})
 
 	// 命中 id=1
 	reply, err := r.Handle(context.Background(), nil, testMsg{id: 1})
@@ -38,9 +38,9 @@ func TestRouterNoHandler(t *testing.T) {
 
 func TestRouterFallback(t *testing.T) {
 	r := NewRouter(nil)
-	r.FallbackFunc(HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	r.FallbackFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		return "fallback", nil
-	}))
+	})
 	reply, err := r.Handle(context.Background(), nil, testMsg{id: 999})
 	if err != nil || reply != "fallback" {
 		t.Fatalf("fallback: reply=%v err=%v", reply, err)
@@ -49,9 +49,9 @@ func TestRouterFallback(t *testing.T) {
 
 func TestRouterMsgNotIdentifiable(t *testing.T) {
 	r := NewRouter(nil)
-	r.RegisterFunc(1, HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	r.RegisterFunc(1, func(ctx context.Context, c Conn, msg any) (any, error) {
 		return "handler-1", nil
-	}))
+	})
 	// 未实现 Identifiable 的消息走 fallback；无 fallback 返回 ErrNoHandler
 	_, err := r.Handle(context.Background(), nil, "plain-string")
 	if !errors.Is(err, ErrNoHandler) {
@@ -59,9 +59,9 @@ func TestRouterMsgNotIdentifiable(t *testing.T) {
 	}
 
 	// 配了 fallback 则走 fallback
-	r.FallbackFunc(HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	r.FallbackFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		return "fb", nil
-	}))
+	})
 	reply, err := r.Handle(context.Background(), nil, "plain-string")
 	if err != nil || reply != "fb" {
 		t.Fatalf("non-identifiable with fallback: reply=%v err=%v", reply, err)
@@ -70,7 +70,7 @@ func TestRouterMsgNotIdentifiable(t *testing.T) {
 
 func TestHandleTyped(t *testing.T) {
 	r := NewRouter(nil)
-	HandleTyped(r, 1, func(ctx context.Context, s *Session, msg testMsg) (any, error) {
+	HandleTyped(r, 1, func(ctx context.Context, c Conn, msg testMsg) (any, error) {
 		return msg.id * 10, nil
 	})
 
@@ -106,9 +106,9 @@ func TestRouterRegisterTypeFactory(t *testing.T) {
 }
 
 func TestRouterIsAsyncFlag(t *testing.T) {
-	// 验证 Async 标记的 handler 被 isAsync 识别。
+	// 验证 AsyncServer 标记的 handler 被 isAsync 识别。
 	called := false
-	h := AsyncFunc(HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	h := AsyncFunc(HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 		called = true
 		return nil, nil
 	}))
@@ -116,7 +116,7 @@ func TestRouterIsAsyncFlag(t *testing.T) {
 		t.Fatal("AsyncFunc handler should be recognized as async")
 	}
 	// 同步 handler 不应被识别为 async
-	sync := HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) { return nil, nil })
+	sync := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) { return nil, nil })
 	if isAsync(sync) {
 		t.Fatal("plain HandlerFunc should not be async")
 	}
@@ -128,16 +128,15 @@ func TestRouterIsAsyncFlag(t *testing.T) {
 }
 
 // TestRouterPerHandlerAsync 验证 Router.Async(id) + Router.Handle 真正 offload 到 pool。
-// 这是之前 Router 的已知 bug：Router.Handle 不检查内部 handler 的 isAsync 标记。
 func TestRouterPerHandlerAsync(t *testing.T) {
 	pool := defaultWorkerPool()
 	r := NewRouter(pool)
 
 	done := make(chan struct{}, 1)
-	r.RegisterFunc(42, HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	r.RegisterFunc(42, func(ctx context.Context, c Conn, msg any) (any, error) {
 		close(done)
 		return nil, nil
-	}))
+	})
 	r.Async(42) // 标记为异步
 
 	// 直接用 Router.Handle（模拟 server dispatch 路径），应 offload 到 pool 而非同步执行。
@@ -162,10 +161,10 @@ func TestRouterPerHandlerAsyncNoPool(t *testing.T) {
 	r := NewRouter(nil) // 无 pool
 
 	called := false
-	r.RegisterFunc(1, HandlerFunc(func(ctx context.Context, s *Session, msg any) (any, error) {
+	r.RegisterFunc(1, func(ctx context.Context, c Conn, msg any) (any, error) {
 		called = true
 		return nil, nil
-	}))
+	})
 	r.Async(1)
 	// 无 pool 时 isAsync 检查跳过，handler 同步执行
 	_, _ = r.Handle(context.Background(), nil, testMsg{id: 1})

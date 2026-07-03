@@ -13,7 +13,7 @@ import (
 // 半包处理：若当前缓冲区里还没出现完整分隔符，返回 ErrIncompletePacket，
 // 不消费任何字节，等下次可读事件累积更多数据后重试（分隔符本身也可能跨多次读取到达）。
 //
-// 性能说明：每次 Decode 会在“当前全部已缓冲字节”里 bytes.Index 查找分隔符。
+// 性能说明：每次 Decode 会在"当前全部已缓冲字节"里 bytes.Index 查找分隔符。
 // 对典型的小帧文本协议（每帧几十~几百字节）开销可忽略；若单帧极大且分多次到达，
 // 会有 O(n²) 的重复扫描——这类大二进制帧建议改用 LengthPrefixCodec。
 type DelimiterCodec struct {
@@ -63,7 +63,7 @@ func NewDelimiterCodec(delimiter []byte, ser Serializer, opts ...DelimiterOption
 // Decode 从连接读一帧并交给 Serializer 转成消息。
 // 分隔符可能跨多次可读事件到达，未找到分隔符时按半包处理（返回 ErrIncompletePacket）。
 // 只用 Peek/Discard（on-loop 安全）。
-func (c *DelimiterCodec) Decode(conn gnet.Conn, sess *Session) (any, error) {
+func (c *DelimiterCodec) Decode(conn gnet.Conn, sc CodecConn) (any, error) {
 	buffered := conn.InboundBuffered()
 	if buffered == 0 {
 		return nil, ErrIncompletePacket
@@ -96,7 +96,7 @@ func (c *DelimiterCodec) Decode(conn gnet.Conn, sess *Session) (any, error) {
 	if _, err := conn.Discard(frameLen); err != nil {
 		return nil, mapShortBuffer(err)
 	}
-	return c.Serializer.Decode(raw, sess)
+	return c.Serializer.Decode(raw, sc)
 }
 
 // applyMaxFrameSizeIfUnset 实现 frameLimiter：仅当未显式设置 maxSize 时注入框架级上限。
@@ -109,8 +109,8 @@ func (c *DelimiterCodec) applyMaxFrameSizeIfUnset(max int) {
 // Encode 把消息序列化后追加分隔符形成完整帧。
 // 注意：不会校验 payload 内部是否已含分隔符——若含，对端会提前切帧。协议设计上应保证
 // payload 不含分隔符（或对分隔符做转义），这是分隔符类协议的固有约束。
-func (c *DelimiterCodec) Encode(msg any, sess *Session) ([]byte, error) {
-	payload, err := c.Serializer.Encode(msg, sess)
+func (c *DelimiterCodec) Encode(msg any, sc CodecConn) ([]byte, error) {
+	payload, err := c.Serializer.Encode(msg, sc)
 	if err != nil {
 		return nil, err
 	}

@@ -2,15 +2,25 @@
 
 > **EXPERIMENTAL** — 此包尚未经过生产环境验证。
 
-## Codec 接口
+## CodecConn 接口
 
-Codec 是单接口，同时承载分帧与序列化（对齐 gnet v1 ICodec 的简洁形态）：
+Codec 不再接收 `*Session`，改为最小接口 `CodecConn`，仅提供只读访问：
 
 ```go
-// common/gnetx/codec.go:23-26
+// common/gnetx/codec.go:14-17
+type CodecConn interface {
+    ID() string
+    Attribute(key any) any
+}
+```
+
+## Codec 接口
+
+```go
+// common/gnetx/codec.go:30-33
 type Codec interface {
-    Decode(c gnet.Conn, sess *Session) (any, error)
-    Encode(msg any, sess *Session) ([]byte, error)
+    Decode(c gnet.Conn, sc CodecConn) (any, error)
+    Encode(msg any, sc CodecConn) ([]byte, error)
 }
 ```
 
@@ -19,7 +29,7 @@ type Codec interface {
 | 方法 | 执行上下文 | 可用操作 | 禁止 |
 |------|-----------|---------|------|
 | `Decode` | `OnTraffic`（event-loop） | `Peek`/`Discard`/`InboundBuffered` | `Read`/业务阻塞 |
-| `Encode` | on-loop（`c.Write`）或 off-loop（`AsyncWrite`） | 序列化 | 读 conn |
+| `Encode` | on-loop（`gc.Write`）或 off-loop（`AsyncWrite`） | 序列化 | 读 conn |
 
 ### 半包处理
 
@@ -37,20 +47,18 @@ type Codec interface {
 ## Serializer 接口
 
 ```go
-// common/gnetx/codec.go:31-34
+// common/gnetx/codec.go:38-41
 type Serializer interface {
-    Decode(raw []byte, sess *Session) (any, error)
-    Encode(msg any, sess *Session) ([]byte, error)
+    Decode(raw []byte, sc CodecConn) (any, error)
+    Encode(msg any, sc CodecConn) ([]byte, error)
 }
 ```
 
-Serializer 只负责 raw 字节 ↔ 消息结构转换，与分帧层解耦。内置 Codec 在调用 `Serializer.Decode` 前已将帧数据 copy 成独立切片，因此 Serializer 可安全持有 raw 字节。
+序列化器只管 raw 字节 ↔ 消息结构转换。内置 Codec 在调用 `Serializer.Decode` 前已将帧数据 copy 成独立切片。
 
 ## 内置 Codec
 
 ### LengthPrefixCodec — 长度前缀分帧
-
-最常用的二进制协议分帧方式。帧格式：`[lengthOffset 字节前缀][lengthBytes 字节长度字段][payload]`。
 
 ```go
 codec := gnetx.NewLengthPrefixCodec(4, binary.BigEndian, gnetx.JSONSerializer{},
@@ -58,19 +66,14 @@ codec := gnetx.NewLengthPrefixCodec(4, binary.BigEndian, gnetx.JSONSerializer{},
 )
 ```
 
-`common/gnetx/codec_lengthprefix.go:93-126`（Decode）、`:138-158`（Encode）
+`common/gnetx/codec_lengthprefix.go:64-86`（构造）、`:93-126`（Decode）、`:138-158`（Encode）
 
-**Decode 安全校验顺序**：
+**Decode 安全校验顺序**（`:101-112`）：
 1. Payload 长度 < 0（`lengthAdjust` 或 uint64→int 溢出）→ `ErrFrameTooLarge`
 2. Frame 总长溢出 → `ErrFrameTooLarge`
 3. 超过 `maxFrameSize` → `ErrFrameTooLarge`
 
-**Encode 防截断**：payload 超长度字段容量时返回 error，不静默截断。
-
-支持的参数（`LengthPrefixOption`）：
-- `WithLengthOffset(offset)` — 长度字段前的跳过字节
-- `WithLengthAdjust(adjust)` — 长度字段值与 payload 实际长度的差值调整
-- `WithMaxFrameSize(max)` — 单帧上限
+**Encode 防截断**：payload 超长度字段容量时返回 error，不静默截断（`:148-151`）。
 
 ### DelimiterCodec — 分隔符分帧
 
@@ -98,21 +101,21 @@ codec := gnetx.NewFuncCodec(myDecode, myEncode)
 
 // 或直接实现 Codec 接口
 type myCodec struct{}
-func (c *myCodec) Decode(conn gnet.Conn, sess *Session) (any, error) { ... }
-func (c *myCodec) Encode(msg any, sess *Session) ([]byte, error) { ... }
+func (c *myCodec) Decode(conn gnet.Conn, sc CodecConn) (any, error) { ... }
+func (c *myCodec) Encode(msg any, sc CodecConn) ([]byte, error) { ... }
 ```
 
-`common/gnetx/codec.go:52-66`
+`common/gnetx/codec.go:60-73`
 
 半包错误转换：用 `mapShortBuffer(err)` 把 `io.ErrShortBuffer` 映射为 `ErrIncompletePacket`。
-`common/gnetx/codec.go:70-78`
+`common/gnetx/codec.go:77-85`
 
 ## MaxFrameLength 注入
 
 `NewServer`/`NewClient` 把必填的 `MaxFrameLength` 注入到内置 Codec：
 
 ```go
-// common/gnetx/codec.go:41-50
+// common/gnetx/codec.go:48-57
 type frameLimiter interface {
     applyMaxFrameSizeIfUnset(max int)
 }

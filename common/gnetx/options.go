@@ -68,8 +68,8 @@ func WithCodec(c Codec) ServerOption {
 	return func(o *ServerOptions) { o.Codec = c }
 }
 
-// WithHandler 设置消息处理入口。
-func WithHandler(h Handler) ServerOption {
+// WithServerHandler 设置消息处理入口。
+func WithServerHandler(h Handler) ServerOption {
 	return func(o *ServerOptions) { o.Handler = h }
 }
 
@@ -143,6 +143,13 @@ func WithOnDecodeError(a DecodeErrorAction) ServerOption {
 	return func(o *ServerOptions) { o.OnDecodeError = a }
 }
 
+// slowHandlerWarning 是 on-loop 同步 handler 的慢处理告警阈值。
+// 超过此阈值的 handler 会打 logx 慢处理日志。可通过 options 调整。
+const defaultSlowHandlerThreshold = 50 * time.Millisecond
+
+// defaultReconnectInterval 是 Client 断线后的默认固定重连间隔。
+const defaultReconnectInterval = 3 * time.Second
+
 // DecodeErrorAction 描述解码遇到不可恢复错误时的动作。
 type DecodeErrorAction int
 
@@ -197,9 +204,6 @@ type ClientOptions struct {
 	// SlowHandlerThreshold on-loop 同步 handler 慢处理告警阈值。0 用默认 50ms。
 	SlowHandlerThreshold time.Duration
 
-	// SessionListener 连接生命周期监听：连上触发 OnCreated，断开触发 OnDestroyed。nil 不触发。
-	SessionListener SessionListener
-
 	// OnDecodeError 不可恢复解码错误处理策略。0 用默认 DecodeErrorClose。
 	OnDecodeError DecodeErrorAction
 
@@ -241,11 +245,6 @@ func WithClientMaxFrameLength(max int) ClientOption {
 // WithClientSlowHandlerThreshold 设置慢处理告警阈值。
 func WithClientSlowHandlerThreshold(d time.Duration) ClientOption {
 	return func(o *ClientOptions) { o.SlowHandlerThreshold = d }
-}
-
-// WithClientSessionListener 设置连接生命周期监听（连上/断开）。
-func WithClientSessionListener(l SessionListener) ClientOption {
-	return func(o *ClientOptions) { o.SessionListener = l }
 }
 
 // WithClientBatchReadLimit 设置单次 OnTraffic 最多解码帧数。
