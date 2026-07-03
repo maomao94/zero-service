@@ -145,6 +145,26 @@ func (c *Client) dial() error {
 	return nil
 }
 
+func (c *Client) OnTick() (delay time.Duration, action gnet.Action) {
+	if c.opts.HeartbeatInterval <= 0 || c.opts.HeartbeatMessage == nil {
+		return
+	}
+	cn := c.sess.Load()
+	if cn == nil || cn.isClosed() {
+		return c.opts.HeartbeatInterval, gnet.None
+	}
+	msg := c.opts.HeartbeatMessage()
+	payload, err := c.opts.Codec.Encode(msg, cn)
+	if err != nil {
+		logx.Errorf("[gnetx] client heartbeat encode error: %v", err)
+		return c.opts.HeartbeatInterval, gnet.None
+	}
+	if err := cn.gc.AsyncWrite(payload, nil); err != nil {
+		logx.Errorf("[gnetx] client heartbeat send error: %v", err)
+	}
+	return c.opts.HeartbeatInterval, gnet.None
+}
+
 func (c *Client) OnOpen(gc gnet.Conn) ([]byte, gnet.Action) {
 	cn := newSession(newSessionID(), gc, c.opts.Codec, nil, c.replyPool)
 	gc.SetContext(cn)
@@ -316,6 +336,9 @@ func (c *Client) handleDecodeError(cn *session, err error) gnet.Action {
 
 func (c *Client) buildGnetOptions() []gnet.Option {
 	opts := []gnet.Option{gnet.WithLogger(logxAdapter)}
+	if c.opts.HeartbeatInterval > 0 && c.opts.HeartbeatMessage != nil {
+		opts = append(opts, gnet.WithTicker(true))
+	}
 	if c.opts.TCPKeepAlive > 0 {
 		opts = append(opts, gnet.WithTCPKeepAlive(c.opts.TCPKeepAlive))
 	}

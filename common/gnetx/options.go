@@ -216,6 +216,12 @@ type ClientOptions struct {
 	// OnReady 首次拨号成功回调（仅触发一次）。可为 nil。
 	OnReady func(*Client)
 
+	// HeartbeatInterval 应用层心跳发送间隔。0 表示不启用心跳。
+	HeartbeatInterval time.Duration
+
+	// HeartbeatMessage 心跳报文工厂，返回待编码的消息体。仅当 HeartbeatInterval > 0 且非 nil 时生效。
+	HeartbeatMessage func() any
+
 	// gnet 原生选项（单连接，无 Multicore/NumEventLoop）
 	TCPKeepAlive    time.Duration // TCP_KEEPIDLE
 	TCPKeepInterval time.Duration // TCP_KEEPINTVL
@@ -290,6 +296,16 @@ func WithClientReadBufferCap(n int) ClientOption {
 // WithClientWriteBufferCap 设置写缓冲容量。
 func WithClientWriteBufferCap(n int) ClientOption {
 	return func(o *ClientOptions) { o.WriteBufferCap = n }
+}
+
+// WithClientHeartbeatInterval 设置应用层心跳发送间隔。
+func WithClientHeartbeatInterval(d time.Duration) ClientOption {
+	return func(o *ClientOptions) { o.HeartbeatInterval = d }
+}
+
+// WithClientHeartbeatMessage 设置心跳报文工厂。
+func WithClientHeartbeatMessage(fn func() any) ClientOption {
+	return func(o *ClientOptions) { o.HeartbeatMessage = fn }
 }
 
 // validate 校验 ClientOptions 必填项。

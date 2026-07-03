@@ -39,6 +39,11 @@ type echoMsg struct {
 
 func (m *echoMsg) MessageID() int { return 10 }
 
+// hbMsg 是心跳消息。
+type hbMsg struct{}
+
+func (m *hbMsg) MessageID() int { return 99 }
+
 // testCodec 用长度前缀分帧 + 自定义序列化（字符串协议：[len][payload]）。
 // payload 格式：消息类型标识 + 内容，这里简单用 "ping:<serial>:<msg>" / "pong:<serial>:<reply>" / "echo:<body>"。
 type testSerializer struct{}
@@ -65,6 +70,8 @@ func (testSerializer) Decode(raw []byte, _ CodecConn) (any, error) {
 		return &pongResp{RespSerial: serial, Reply: rest[idx+1:]}, nil
 	case len(s) > 5 && s[:5] == "echo:":
 		return &echoMsg{Body: s[5:]}, nil
+	case s == "hb":
+		return &hbMsg{}, nil
 	}
 	return nil, errors.New("unknown message type")
 }
@@ -77,6 +84,8 @@ func (testSerializer) Encode(msg any, _ CodecConn) ([]byte, error) {
 		return []byte("pong:" + strconv.Itoa(m.RespSerial) + ":" + m.Reply), nil
 	case *echoMsg:
 		return []byte("echo:" + m.Body), nil
+	case *hbMsg:
+		return []byte("hb"), nil
 	case []byte:
 		return m, nil
 	}

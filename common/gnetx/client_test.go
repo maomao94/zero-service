@@ -516,6 +516,84 @@ func TestClientSessionNilAfterClose(t *testing.T) {
 	}
 }
 
+// TestClientHeartbeat 验证 client 按 HeartbeatInterval 定时发送心跳报文。
+func TestClientHeartbeat(t *testing.T) {
+	port := freePort(t)
+
+	hbCh := make(chan struct{}, 10)
+	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
+		if _, ok := msg.(*hbMsg); ok {
+			select {
+			case hbCh <- struct{}{}:
+			default:
+			}
+		}
+		return nil, nil
+	})
+	stop := startServer(t, port, srvHandler)
+	defer stop()
+
+	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+		WithClientCodec(newTestCodec()),
+		WithClientHandler(noopClientHandler()),
+		WithClientMaxFrameLength(1024*1024),
+		WithClientHeartbeatInterval(100*time.Millisecond),
+		WithClientHeartbeatMessage(func() any { return &hbMsg{} }),
+	)
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	defer cli.Close()
+
+	// 等至少收到 2 个心跳
+	for i := 0; i < 2; i++ {
+		select {
+		case <-hbCh:
+		case <-time.After(2 * time.Second):
+			t.Fatalf("received %d heartbeats, want at least 2", i)
+		}
+	}
+}
+
+// TestClientHeartbeatDisabled 验证 HeartbeatInterval=0 时不发送心跳。
+func TestClientHeartbeatDisabled(t *testing.T) {
+	port := freePort(t)
+
+	hbCh := make(chan struct{}, 10)
+	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
+		if _, ok := msg.(*hbMsg); ok {
+			select {
+			case hbCh <- struct{}{}:
+			default:
+			}
+		}
+		return nil, nil
+	})
+	stop := startServer(t, port, srvHandler)
+	defer stop()
+
+	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+		WithClientCodec(newTestCodec()),
+		WithClientHandler(noopClientHandler()),
+		WithClientMaxFrameLength(1024*1024),
+	)
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	defer cli.Close()
+
+	// 确认正常收发
+	if err := cli.Send(context.Background(), &echoMsg{Body: "check"}); err != nil {
+		t.Fatalf("Send: %v", err)
+	}
+
+	select {
+	case <-hbCh:
+		t.Fatal("unexpected heartbeat when HeartbeatInterval is 0")
+	case <-time.After(500 * time.Millisecond):
+	}
+}
+
 // TestClientIdleTimeout 验证 client 空闲超时关闭（通过 server idle timeout 断开 client）。
 func TestClientIdleTimeout(t *testing.T) {
 	port := freePort(t)

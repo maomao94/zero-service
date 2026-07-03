@@ -24,6 +24,11 @@
 - [wsx-guidelines.md](./wsx-guidelines.md) - wsx WebSocket 客户端：状态机、自动重连、认证/心跳、并发安全
 - [iec104-control-commands.md](./iec104-control-commands.md) - IEC104 控制命令协议
 
+### AI 与协议
+
+- [einox-guidelines.md](./einox-guidelines.md) - EinoX Agent 框架：Agent 工厂、ChatModel 多厂商适配、工具管理（Kit+Policy）、中断中间件、Runtime、协议事件
+- [mcpx-guidelines.md](./mcpx-guidelines.md) - MCPx 客户端/服务端：多连接管理、工具路由、鉴权、进度通知、异步任务、CallToolWrapper
+
 ### 领域模块
 
 - [gisx-guidelines.md](./gisx-guidelines.md) - GIS 服务架构、gisx 包边界、坐标系约定、算法说明、FenceStore 模式、常见陷阱
