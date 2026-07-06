@@ -76,6 +76,10 @@ func (p *Promise[T]) Get() (val T, err error, ok bool) {
 // Catch 注册一个错误回调，当 Promise 以错误完成时在独立 goroutine 中调用 fn。
 // ctx 用于控制回调 goroutine 的生命周期：如果 ctx 先于 Promise 取消，goroutine 自动退出，
 // 防止因 Promise 永远不完成而导致 goroutine 泄漏。
+//
+// 注意：内部启动的 goroutine 依赖 ctx 取消或 Promise 完成来退出。
+// 如果 ctx 为 context.Background() 且源 Promise 永远不完成，goroutine 将泄漏。
+// 建议传入带超时的 ctx 以防止泄漏。
 func (p *Promise[T]) Catch(ctx context.Context, fn func(error)) {
 	go func() {
 		select {

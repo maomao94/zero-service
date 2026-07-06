@@ -329,6 +329,7 @@ fn, ok := ch.ReceiveContext(ctx)  // 支持 ctx 取消
 
 ### 实现细节
 
+- `Invoke` 基于 `golang.org/x/sync/errgroup`，自动 cancel 和第一错误返回；`InvokeWithReactor` 使用 `WaitGroup + errOnce + cancel`，因为 ants 的 `pool.Submit` 阻塞时不响应 ctx 取消，不能桥接 errgroup。
 - MergeStreamReaders ≤5 路静态 select，>5 路 reflect.Select。
 - StreamReaderFromArray 零 goroutine 同步流。
 - Copy 普通流用链表 + sync.Once 广播。

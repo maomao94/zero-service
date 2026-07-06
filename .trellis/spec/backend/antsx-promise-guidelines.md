@@ -97,7 +97,7 @@ if errors.Is(err, context.Canceled) { }  // 语义不精确
 
 ## Goroutine 泄漏防护
 
-`Then`、`Map`、`FlatMap`、`Go` 内部启动 goroutine，依赖 ctx 取消或 Promise 完成来退出。
+`Then`、`Map`、`FlatMap`、`Go`、`Catch` 内部启动 goroutine，依赖 ctx 取消或 Promise 完成来退出。
 
 **如果 ctx 为 `context.Background()` 且 Promise 永远不完成，goroutine 将泄漏。**
 

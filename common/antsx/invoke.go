@@ -2,9 +2,10 @@ package antsx
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/zeromicro/go-zero/core/threading"
 )
@@ -20,87 +21,8 @@ type Task[T any] struct {
 	Timeout time.Duration
 }
 
-// invokeState 封装 Invoke 系列函数的共享状态。
-type invokeState[T any] struct {
-	ctx     context.Context
-	cancel  context.CancelFunc
-	results []T
-	mu      sync.Mutex
-	errs    []error
-	wg      sync.WaitGroup
-}
-
-func newInvokeState[T any](ctx context.Context, n int) *invokeState[T] {
-	ctx, cancel := context.WithCancel(ctx)
-	return &invokeState[T]{
-		ctx:     ctx,
-		cancel:  cancel,
-		results: make([]T, n),
-	}
-}
-
-func (s *invokeState[T]) addErr(err error) {
-	s.mu.Lock()
-	s.errs = append(s.errs, err)
-	s.mu.Unlock()
-	s.cancel()
-}
-
-func (s *invokeState[T]) wait() ([]T, error) {
-	s.wg.Wait()
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if len(s.errs) > 0 {
-		return nil, errors.Join(s.errs...)
-	}
-	return s.results, nil
-}
-
-// runTaskWithRecovery 执行单个任务，包含 panic 恢复和 wg 管理。
-func (s *invokeState[T]) runTaskWithRecovery(idx int, t Task[T]) {
-	defer func() {
-		if r := recover(); r != nil {
-			s.addErr(taskPanicErr(t.Name, r))
-		}
-		s.wg.Done()
-	}()
-	val, err := runTask(s.ctx, t)
-	if err != nil {
-		s.addErr(err)
-		return
-	}
-	s.results[idx] = val
-}
-
-func (s *invokeState[T]) goTask(idx int, t Task[T]) {
-	s.wg.Add(1)
-	threading.GoSafe(func() {
-		s.runTaskWithRecovery(idx, t)
-	})
-}
-
-func (s *invokeState[T]) runTaskSync(idx int, t Task[T]) {
-	s.wg.Add(1)
-	s.runTaskWithRecovery(idx, t)
-}
-
-func (s *invokeState[T]) submitTask(r *Reactor, idx int, t Task[T]) error {
-	s.wg.Add(1)
-	err := r.Go(s.ctx, func(ctx context.Context) {
-		s.runTaskWithRecovery(idx, t)
-	})
-	if err != nil {
-		s.wg.Done()
-		return err
-	}
-	return nil
-}
-
 // Invoke 并行执行多个任务，返回按输入顺序排列的结果。
-// 采用 fast-fail 策略：任何一个任务失败则立即通过 cancel 通知其他任务退出。
-//
-// 优化：单任务时在当前 goroutine 同步执行，多任务时第一个在当前 goroutine 执行，
-// 其余在新 goroutine 中并行，避免不必要的 goroutine 开销（借鉴 eino 框架）。
+// 采用 fast-fail 策略：任何一个任务失败则通过 errgroup 自动取消其他任务。
 //
 // 所有 goroutine 都有 panic 恢复保护。
 func Invoke[T any](ctx context.Context, tasks ...Task[T]) ([]T, error) {
@@ -116,19 +38,25 @@ func Invoke[T any](ctx context.Context, tasks ...Task[T]) ([]T, error) {
 		return []T{val}, nil
 	}
 
-	s := newInvokeState[T](ctx, len(tasks))
-	defer s.cancel()
+	results := make([]T, len(tasks))
+	g, groupCtx := errgroup.WithContext(ctx)
 
-	// 其余任务并行执行
-	for i := 1; i < len(tasks); i++ {
-		s.goTask(i, tasks[i])
+	for i, task := range tasks {
+		idx, t := i, task
+		g.Go(func() error {
+			val, err := invokeSingle(groupCtx, t)
+			if err != nil {
+				return err
+			}
+			results[idx] = val
+			return nil
+		})
 	}
 
-	// 第一个任务在当前 goroutine 同步执行，放在最后启动
-	// 这样其他任务的错误可以先触发 cancel，让第一个任务检测到 ctx.Done()
-	s.runTaskSync(0, tasks[0])
-
-	return s.wait()
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+	return results, nil
 }
 
 // InvokeCallback 执行所有任务后将结果传入 callback 进行聚合转换。
@@ -143,7 +71,9 @@ func InvokeCallback[T, U any](ctx context.Context, tasks []Task[T], callback fun
 }
 
 // InvokeWithReactor 使用 Reactor 协程池并行执行多个任务。
-// 与 Invoke 不同的是所有任务（包括第一个）都通过协程池调度，
+// 采用 fast-fail 策略：任何一个任务失败则取消其他任务。
+// 注意：不使用 errgroup，因为 goroutine 由 ants 池而非 errgroup 调度，
+// errgroup 的 g.Go 会阻塞在 pool.Submit 上，无法响应 ctx 取消。
 // 适用于需要限制并发度的场景。
 func InvokeWithReactor[T any](ctx context.Context, r *Reactor, tasks ...Task[T]) ([]T, error) {
 	if len(tasks) == 0 {
@@ -158,18 +88,55 @@ func InvokeWithReactor[T any](ctx context.Context, r *Reactor, tasks ...Task[T])
 		return []T{val}, nil
 	}
 
-	s := newInvokeState[T](ctx, len(tasks))
-	defer s.cancel()
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	results := make([]T, len(tasks))
+	var (
+		wg       sync.WaitGroup
+		errOnce  sync.Once
+		firstErr error
+	)
 
 	for i, task := range tasks {
-		err := s.submitTask(r, i, task)
-		if err != nil {
-			s.addErr(err)
+		if ctx.Err() != nil {
+			break
+		}
+		idx, t := i, task
+		wg.Add(1)
+		submitErr := r.Go(ctx, func(poolCtx context.Context) {
+			defer wg.Done()
+			val, err := invokeSingle(poolCtx, t)
+			if err != nil {
+				errOnce.Do(func() {
+					firstErr = err
+					cancel()
+				})
+				return
+			}
+			results[idx] = val
+		})
+		if submitErr != nil {
+			wg.Done()
+			errOnce.Do(func() {
+				firstErr = submitErr
+				cancel()
+			})
 			break
 		}
 	}
 
-	return s.wait()
+	wg.Wait()
+	if firstErr != nil {
+		return nil, firstErr
+	}
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	return results, nil
 }
 
 // SettledResult 表示单个任务的最终结果，无论成功或失败。
@@ -224,7 +191,6 @@ func InvokeAllSettled[T any](ctx context.Context, tasks ...Task[T]) []SettledRes
 		})
 	}
 
-	results[0] = SettledResult[T]{Name: tasks[0].Name}
 	results[0] = settleTask(ctx, tasks[0])
 	wg.Wait()
 	return results
@@ -263,17 +229,10 @@ func InvokeAllSettledWithReactor[T any](ctx context.Context, r *Reactor, tasks .
 	return results
 }
 
-// settleTask 执行单个任务并返回 SettledResult，包含 panic 恢复保护。
+// settleTask 执行单个任务并返回 SettledResult。
 func settleTask[T any](ctx context.Context, t Task[T]) (sr SettledResult[T]) {
 	sr.Name = t.Name
-	defer func() {
-		if r := recover(); r != nil {
-			sr.Err = taskPanicErr(t.Name, r)
-		}
-	}()
-	val, err := runTask(ctx, t)
-	sr.Val = val
-	sr.Err = err
+	sr.Val, sr.Err = invokeSingle(ctx, t)
 	return
 }
 

@@ -559,6 +559,52 @@ func TestInvokeWithReactor_FastFail(t *testing.T) {
 	}
 }
 
+func TestInvokeWithReactor_FastFailPoolExhausted(t *testing.T) {
+	reactor, err := antsx.NewReactor(2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reactor.Release()
+
+	ctx := context.Background()
+	start := time.Now()
+
+	_, err = antsx.InvokeWithReactor(ctx, reactor,
+		antsx.Task[string]{Name: "slow-ok", Fn: func(ctx context.Context) (string, error) {
+			select {
+			case <-time.After(200 * time.Millisecond):
+				return "slow", nil
+			case <-ctx.Done():
+				return "", ctx.Err()
+			}
+		}},
+		antsx.Task[string]{Name: "fail-fast", Fn: func(ctx context.Context) (string, error) {
+			time.Sleep(30 * time.Millisecond)
+			return "", errors.New("pool-exhausted-boom")
+		}},
+		antsx.Task[string]{Name: "queued-cancelled", Fn: func(ctx context.Context) (string, error) {
+			select {
+			case <-time.After(5 * time.Second):
+				return "never", nil
+			case <-ctx.Done():
+				return "", ctx.Err()
+			}
+		}},
+	)
+
+	elapsed := time.Since(start)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "pool-exhausted-boom") {
+		t.Fatalf("expected 'pool-exhausted-boom' in error, got '%v'", err)
+	}
+	// fast-fail 应远小于第一个任务的 200ms
+	if elapsed > 500*time.Millisecond {
+		t.Fatalf("fast-fail with pool exhausted took too long: %v (possible deadlock)", elapsed)
+	}
+}
+
 // ======================== InvokeAllSettled ========================
 
 func TestInvokeAllSettled_AllSuccess(t *testing.T) {
