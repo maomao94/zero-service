@@ -203,7 +203,7 @@ func (s *Server) OnTraffic(c gnet.Conn) gnet.Action {
 				continue
 			}
 		}
-		s.dispatch(cn, msg)
+		s.dispatch(context.Background(), cn, msg)
 	}
 
 	if consumed > 0 && c.InboundBuffered() > 0 {
@@ -233,18 +233,18 @@ func (s *Server) OnShutdown(gnet.Engine) {
 	}
 }
 
-func (s *Server) dispatch(cn *session, msg any) {
+func (s *Server) dispatch(ctx context.Context, cn *session, msg any) {
 	h := s.opts.Handler
 	if isAsync(h) {
-		s.dispatchAsync(cn, msg, h)
+		s.dispatchAsync(ctx, cn, msg, h)
 		return
 	}
-	s.dispatchSync(cn, msg, h)
+	s.dispatchSync(ctx, cn, msg, h)
 }
 
-func (s *Server) dispatchSync(cn *session, msg any, h Handler) {
+func (s *Server) dispatchSync(parentCtx context.Context, cn *session, msg any, h Handler) {
 	startTime := timex.Now()
-	ctx, span := startServerSpan(s.tracer, cn, msg)
+	ctx, span := startServerSpan(s.tracer, parentCtx, cn, msg)
 	defer span.End()
 
 	if pcp, ok := msg.(PacketContextProvider); ok {
@@ -272,9 +272,8 @@ func (s *Server) dispatchSync(cn *session, msg any, h Handler) {
 	}
 }
 
-func (s *Server) dispatchAsync(cn *session, msg any, h Handler) {
-	startTime := timex.Now()
-	ctx, span := startServerSpan(s.tracer, cn, msg)
+func (s *Server) dispatchAsync(parentCtx context.Context, cn *session, msg any, h Handler) {
+	ctx, span := startServerSpan(s.tracer, parentCtx, cn, msg)
 
 	if pcp, ok := msg.(PacketContextProvider); ok {
 		ctx = context.WithValue(ctx, PacketContextKey, pcp.PacketContext())
@@ -284,7 +283,13 @@ func (s *Server) dispatchAsync(cn *session, msg any, h Handler) {
 	err := s.pool.Submit(func() {
 		defer s.asyncWG.Done()
 		defer span.End()
+		startTime := timex.Now()
 		reply, hErr := h.Handle(ctx, cn, msg)
+		duration := timex.Since(startTime)
+		if duration > s.opts.SlowHandlerThreshold {
+			logx.Slowf("[gnetx] async slow handler %s id=%s", duration, cn.id)
+		}
+		s.recordMetrics(duration)
 		if hErr != nil {
 			span.RecordError(hErr)
 			logx.Errorf("[gnetx] async handler error: %v", hErr)
@@ -301,7 +306,6 @@ func (s *Server) dispatchAsync(cn *session, msg any, h Handler) {
 		span.End()
 		logx.Errorf("[gnetx] async submit error: %v", err)
 	}
-	s.recordMetrics(timex.Since(startTime))
 }
 
 func (s *Server) recordMetrics(d time.Duration) { s.metrics.Add(stat.Task{Duration: d}) }

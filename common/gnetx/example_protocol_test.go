@@ -279,7 +279,7 @@ func TestDispatchInjectsPacketContextIntoReplyCtx(t *testing.T) {
 	cn := newSession("test", newMockConn(nil), codec, nil, nil)
 
 	srv := newTestServer(ServerOptions{Codec: codec})
-	srv.dispatchSync(cn, req, handler)
+	srv.dispatchSync(context.Background(), cn, req, handler)
 
 	// handler 收到的 ctx 中应有 PacketContext
 	if pc, ok := capturedCtx.Value(PacketContextKey).(*seqPacketCtx); !ok || pc.Seq != 42 {
@@ -311,7 +311,7 @@ func TestDispatchNoPacketContextProvider(t *testing.T) {
 	cn := newSession("test", newMockConn(nil), codec, nil, nil)
 
 	srv := newTestServer(ServerOptions{Codec: codec})
-	srv.dispatchSync(cn, msg, handler)
+	srv.dispatchSync(context.Background(), cn, msg, handler)
 
 	if capturedCtx.Value(PacketContextKey) != nil {
 		t.Fatal("ctx should NOT have PacketContext when msg doesn't implement PacketContextProvider")
@@ -333,7 +333,7 @@ func TestPushMessagePacketContext(t *testing.T) {
 	cn := newSession("test", newMockConn(nil), codec, nil, nil)
 
 	srv := newTestServer(ServerOptions{Codec: codec})
-	srv.dispatchSync(cn, push, handler)
+	srv.dispatchSync(context.Background(), cn, push, handler)
 
 	pc, ok := capturedCtx.Value(PacketContextKey).(*seqPacketCtx)
 	if !ok {

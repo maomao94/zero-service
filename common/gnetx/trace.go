@@ -14,17 +14,17 @@ func gnetxTracer() oteltrace.Tracer {
 	return otel.Tracer(ztrace.TraceName)
 }
 
-func startServerSpan(tracer oteltrace.Tracer, s *session, msg any) (context.Context, oteltrace.Span) {
-	return startSpanWithKind(tracer, s, msg, "gnetx-server", oteltrace.SpanKindServer)
+func startServerSpan(tracer oteltrace.Tracer, parentCtx context.Context, s *session, msg any) (context.Context, oteltrace.Span) {
+	return startSpanWithKind(tracer, parentCtx, s, msg, "gnetx-server", oteltrace.SpanKindInternal)
 }
 
-func startClientSpan(tracer oteltrace.Tracer, s *session, msg any) (context.Context, oteltrace.Span) {
-	return startSpanWithKind(tracer, s, msg, "gnetx-client", oteltrace.SpanKindClient)
+func startClientSpan(tracer oteltrace.Tracer, parentCtx context.Context, s *session, msg any) (context.Context, oteltrace.Span) {
+	return startSpanWithKind(tracer, parentCtx, s, msg, "gnetx-client", oteltrace.SpanKindInternal)
 }
 
-func startSpanWithKind(tracer oteltrace.Tracer, s *session, msg any, name string, kind oteltrace.SpanKind) (context.Context, oteltrace.Span) {
+func startSpanWithKind(tracer oteltrace.Tracer, parentCtx context.Context, s *session, msg any, name string, kind oteltrace.SpanKind) (context.Context, oteltrace.Span) {
 	attrs := spanAttrs(s, msg)
-	return tracer.Start(context.Background(), name,
+	return tracer.Start(parentCtx, name,
 		oteltrace.WithSpanKind(kind),
 		oteltrace.WithAttributes(attrs...),
 	)

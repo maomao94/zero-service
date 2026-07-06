@@ -196,7 +196,7 @@ func (c *Client) OnTraffic(gc gnet.Conn) gnet.Action {
 				continue
 			}
 		}
-		c.dispatch(cn, msg)
+		c.dispatch(context.Background(), cn, msg)
 	}
 	if consumed > 0 && gc.InboundBuffered() > 0 {
 		_ = gc.Wake(nil)
@@ -259,18 +259,18 @@ func (c *Client) startReconnect() {
 	}()
 }
 
-func (c *Client) dispatch(cn *session, msg any) {
+func (c *Client) dispatch(ctx context.Context, cn *session, msg any) {
 	h := c.opts.Handler
 	if isAsync(h) {
-		c.dispatchAsync(cn, msg, h)
+		c.dispatchAsync(ctx, cn, msg, h)
 		return
 	}
-	c.dispatchSync(cn, msg, h)
+	c.dispatchSync(ctx, cn, msg, h)
 }
 
-func (c *Client) dispatchSync(cn *session, msg any, h Handler) {
+func (c *Client) dispatchSync(parentCtx context.Context, cn *session, msg any, h Handler) {
 	startTime := timex.Now()
-	ctx, span := startClientSpan(c.tracer, cn, msg)
+	ctx, span := startClientSpan(c.tracer, parentCtx, cn, msg)
 	defer span.End()
 
 	if pcp, ok := msg.(PacketContextProvider); ok {
@@ -295,8 +295,8 @@ func (c *Client) dispatchSync(cn *session, msg any, h Handler) {
 	}
 }
 
-func (c *Client) dispatchAsync(cn *session, msg any, h Handler) {
-	ctx, span := startClientSpan(c.tracer, cn, msg)
+func (c *Client) dispatchAsync(parentCtx context.Context, cn *session, msg any, h Handler) {
+	ctx, span := startClientSpan(c.tracer, parentCtx, cn, msg)
 
 	if pcp, ok := msg.(PacketContextProvider); ok {
 		ctx = context.WithValue(ctx, PacketContextKey, pcp.PacketContext())
@@ -304,7 +304,12 @@ func (c *Client) dispatchAsync(cn *session, msg any, h Handler) {
 
 	err := c.pool.Submit(func() {
 		defer span.End()
+		startTime := timex.Now()
 		reply, hErr := h.Handle(ctx, cn, msg)
+		duration := timex.Since(startTime)
+		if duration > c.opts.SlowHandlerThreshold {
+			logx.Slowf("[gnetx] client async slow handler %s id=%s", duration, cn.id)
+		}
 		if hErr != nil {
 			span.RecordError(hErr)
 			logx.Errorf("[gnetx] client async handler error: %v", hErr)

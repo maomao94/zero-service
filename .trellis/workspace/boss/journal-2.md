@@ -1896,3 +1896,36 @@ Removed CodecConn; Codec uses Conn + ctx; Conn.NextSendSeq; Serializer body-only
 ### Next Steps
 
 - None - task complete
+
+
+## Session 106: gnetx trace fix: dispatchAsync metrics + span parentCtx
+
+**Date**: 2026-07-06
+**Task**: gnetx trace fix: dispatchAsync metrics + span parentCtx
+**Branch**: `master`
+
+### Summary
+
+修复 dispatchAsync 指标记录 submit 耗时而非 handler 真实耗时的 bug；startServerSpan/startClientSpan 签名预留 parentCtx 参数支持未来分布式 trace 注入；server+client 双端同步修复。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `86d95578` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
