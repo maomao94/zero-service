@@ -1929,3 +1929,38 @@ Removed CodecConn; Codec uses Conn + ctx; Conn.NextSendSeq; Serializer body-only
 ### Next Steps
 
 - None - task complete
+
+
+## Session 107: antsx Invoke 架构优化：errgroup + WaitGroup/errOnce + 规范文档
+
+**Date**: 2026-07-06
+**Task**: antsx Invoke 架构优化：errgroup + WaitGroup/errOnce + 规范文档
+**Branch**: `master`
+
+### Summary
+
+Invoke 用 errgroup 替代 invokeState；InvokeWithReactor 用 WaitGroup+errOnce（不用 errgroup 桥接，因 ants pool.Submit 阻塞不认 ctx 取消）；删除 invokeTaskWithRecovery，统一 panic 恢复至 invokeSingle；补充池满 fast-fail 测试；更新 spec 文件和 README
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7122e595` | (see git log) |
+| `1c1b2bee` | (see git log) |
+| `dba0d6d1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

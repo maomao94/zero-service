@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 106
+- **Total Sessions**: 107
 - **Last Active**: 2026-07-06
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~1931 | Active |
+| `journal-2.md` | ~1966 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 107 | 2026-07-06 | antsx Invoke 架构优化：errgroup + WaitGroup/errOnce + 规范文档 | `7122e595`, `1c1b2bee`, `dba0d6d1` | `master` |
 | 106 | 2026-07-06 | gnetx trace fix: dispatchAsync metrics + span parentCtx | `86d95578` | `master` |
 | 105 | 2026-07-06 | Redesign gnetx codec and session interfaces | `812064ba`, `2de71854` | `master` |
 | 104 | 2026-07-03 | flowx Workflow 封装开发 | `2751e54e`, `52133a2b` | `master` |
