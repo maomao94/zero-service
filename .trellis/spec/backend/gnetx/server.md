@@ -76,7 +76,7 @@ sg := service.NewServiceGroup(); sg.Add(srv); sg.Start()
 
 ```
 for i := 0; i < batchLimit; i++ {
-    msg, err := Codec.Decode(conn, sess)
+    msg, err := Codec.Decode(gconn, sess)
     if ErrIncompletePacket → break
     if 其他 error       → handleDecodeError
     consumed++
@@ -85,6 +85,8 @@ for i := 0; i < batchLimit; i++ {
 }
 // consumed > 0 && InboundBuffered > 0 → Wake 重触发
 ```
+
+同步 handler 返回 reply 时，Server 使用同一个 handler ctx 调用 `Codec.Encode(ctx, reply, conn)`。该 ctx 已由 dispatch 通过 `PacketContextProvider` 注入入站协议头（key=`PacketContextKey`），因此协议 Codec 可以从 ctx 中读取入站 seq 来填回复的 ack。dispatchAsync 同理（入池前完成注入）。
 
 ## 空闲扫描
 

@@ -129,6 +129,6 @@ cli := gnetx.MustNewClient("tcp", "127.0.0.1:9000",
 - `HeartbeatInterval` ≤ 0 时不启用心跳
 - `HeartbeatMessage` 为 nil 时不发送
 - 心跳报文通过 `Codec.Encode` 编码后走 `AsyncWrite` 非阻塞发送
+- 心跳没有入站请求上下文，编码使用 `context.Background()`
 - 内部自动调用 `gnet.WithTicker(true)` 开启 gnet 定时器
 - 未连接时（session nil/closing）静默跳过，按间隔重试
-

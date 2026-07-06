@@ -13,8 +13,8 @@ type HandlerFunc func(ctx context.Context, conn Conn, msg any) (any, error)
 
 第二个参数是 `Conn` 接口（`common/gnetx/session.go:22-33`），提供 `ID()`、`Send()`、`Close()` 等方法。Server/Client/Dialer 传入的 `*session` 满足该接口。
 
-- `ctx` — OTel trace context
-- `reply` — 非 nil 框架编码回包（sync→`c.Write` / async→`AsyncWrite`）
+- `ctx` — OTel trace context，若入站消息实现了 `PacketContextProvider`，ctx 中额外注入 `PacketContextKey` 对应的协议包头
+- `reply` — 非 nil 框架编码回包（sync→`c.Write` / async→`AsyncWrite`）；回包编码使用的 ctx 与 handler 收到的相同，`Codec.Encode` 可从 `ctx.Value(PacketContextKey)` 读取入站协议头填 ack
 - `err` — 进日志/`span.RecordError`
 
 ### 同步 vs 异步

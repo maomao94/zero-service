@@ -21,6 +21,7 @@ func newSessionID() string {
 // Both ServerConn and ClientConn embed Conn.
 type Conn interface {
 	ID() string
+	NextSendSeq() uint64
 	Send(ctx context.Context, msg any) error
 	RemoteAddr() net.Addr
 	LocalAddr() net.Addr
@@ -34,13 +35,14 @@ type Conn interface {
 
 // session is the concrete per-connection context implementing Conn, ServerConn, and ClientConn.
 type session struct {
-	id       string
-	alias    string
-	gc       gnet.Conn
-	codec    Codec
-	mgr      *SessionManager
+	id         string
+	alias      string
+	gc         gnet.Conn
+	codec      Codec
+	mgr        *SessionManager
 	created    time.Time
 	lastActive atomic.Int64
+	sendSeq    atomic.Uint64
 
 	attrs sync.Map
 
@@ -51,7 +53,7 @@ type session struct {
 	closeFunc func() // called on Close by Dialer to stop gnet.Client
 }
 
-func newSession(id string, gc gnet.Conn, codec Codec, mgr *SessionManager, replyPool *antsx.ReplyPool[any]) *session {
+func newSession(id string, gc gnet.Conn, codec Codec, mgr *SessionManager, replyPool *antsx.ReplyPool[any], sequenceStart ...uint64) *session {
 	now := time.Now()
 	s := &session{
 		id:        id,
@@ -62,36 +64,40 @@ func newSession(id string, gc gnet.Conn, codec Codec, mgr *SessionManager, reply
 		created:   now,
 	}
 	s.lastActive.Store(now.UnixNano())
+	if len(sequenceStart) > 0 {
+		s.sendSeq.Store(sequenceStart[0])
+	}
 	return s
 }
 
 func (s *session) ID() string                { return s.id }
-func (s *session) CreatedAt() time.Time       { return s.created }
-func (s *session) LastActiveAt() time.Time    { return time.Unix(0, s.lastActive.Load()) }
-func (s *session) RemoteAddr() net.Addr       { return s.gc.RemoteAddr() }
-func (s *session) LocalAddr() net.Addr        { return s.gc.LocalAddr() }
-func (s *session) SetAttribute(key, val any)  { s.attrs.Store(key, val) }
-func (s *session) DeleteAttribute(key any)    { s.attrs.Delete(key) }
+func (s *session) NextSendSeq() uint64       { return s.sendSeq.Add(1) - 1 }
+func (s *session) CreatedAt() time.Time      { return s.created }
+func (s *session) LastActiveAt() time.Time   { return time.Unix(0, s.lastActive.Load()) }
+func (s *session) RemoteAddr() net.Addr      { return s.gc.RemoteAddr() }
+func (s *session) LocalAddr() net.Addr       { return s.gc.LocalAddr() }
+func (s *session) SetAttribute(key, val any) { s.attrs.Store(key, val) }
+func (s *session) DeleteAttribute(key any)   { s.attrs.Delete(key) }
 
 func (s *session) Attribute(key any) any {
 	v, _ := s.attrs.Load(key)
 	return v
 }
 
-func (s *session) Send(_ context.Context, msg any) error {
+func (s *session) Send(ctx context.Context, msg any) error {
 	if s.closed.Load() {
 		return ErrSessionClosed
 	}
-	payload, err := s.codec.Encode(msg, s)
+	payload, err := s.codec.Encode(ctx, msg, s)
 	if err != nil {
 		return err
 	}
 	return s.gc.AsyncWrite(payload, nil)
 }
 
-func (s *session) Alias() string              { return s.alias }
-func (s *session) touch()                     { s.lastActive.Store(time.Now().UnixNano()) }
-func (s *session) isClosed() bool             { return s.closed.Load() }
+func (s *session) Alias() string  { return s.alias }
+func (s *session) touch()         { s.lastActive.Store(time.Now().UnixNano()) }
+func (s *session) isClosed() bool { return s.closed.Load() }
 
 func (s *session) Register(alias string) {
 	s.alias = alias

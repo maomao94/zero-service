@@ -2,34 +2,26 @@
 
 > **EXPERIMENTAL** — 此包尚未经过生产环境验证。
 
-## CodecConn 接口
-
-Codec 不再接收 `*Session`，改为最小接口 `CodecConn`，仅提供只读访问：
-
-```go
-// common/gnetx/codec.go:14-17
-type CodecConn interface {
-    ID() string
-    Attribute(key any) any
-}
-```
-
 ## Codec 接口
 
 ```go
-// common/gnetx/codec.go:30-33
+// common/gnetx/codec.go
 type Codec interface {
-    Decode(c gnet.Conn, sc CodecConn) (any, error)
-    Encode(msg any, sc CodecConn) ([]byte, error)
+    Decode(c gnet.Conn, conn Conn) (any, error)
+    Encode(ctx context.Context, msg any, conn Conn) ([]byte, error)
 }
 ```
+
+`CodecConn` 已删除；Codec 直接接收公共 `Conn` 接口，用于读取 session 元数据、地址、attributes，并通过 `NextSendSeq()` 获取连接级发送序号。
 
 ### 线程契约
 
 | 方法 | 执行上下文 | 可用操作 | 禁止 |
 |------|-----------|---------|------|
-| `Decode` | `OnTraffic`（event-loop） | `Peek`/`Discard`/`InboundBuffered` | `Read`/业务阻塞 |
-| `Encode` | on-loop（`gc.Write`）或 off-loop（`AsyncWrite`） | 序列化 | 读 conn |
+| `Decode` | `OnTraffic`（event-loop） | `gnet.Conn.Peek`/`Discard`/`InboundBuffered`、`Conn` 元数据 | `Read`/业务阻塞 |
+| `Encode` | on-loop（`gc.Write`）或 off-loop（`AsyncWrite`） | `context.Context`、`Conn` 元数据、`NextSendSeq()`、序列化 | 读 `gnet.Conn` / 直接写连接 |
+
+`gnet.Conn` 只出现在 `Decode`，因为它暴露 event-loop-only buffer API。`Encode` 不接收 `gnet.Conn`，避免 off-loop 发送路径误用 `Peek`/`Discard`/`Write`。
 
 ### 半包处理
 
@@ -49,12 +41,12 @@ type Codec interface {
 ```go
 // common/gnetx/codec.go:38-41
 type Serializer interface {
-    Decode(raw []byte, sc CodecConn) (any, error)
-    Encode(msg any, sc CodecConn) ([]byte, error)
+    Decode(raw []byte) (any, error)
+    Encode(msg any) ([]byte, error)
 }
 ```
 
-序列化器只管 raw 字节 ↔ 消息结构转换。内置 Codec 在调用 `Serializer.Decode` 前已将帧数据 copy 成独立切片。
+序列化器只管 raw 字节 ↔ 消息结构转换，不接收 session/connection。协议头、序号、ack、CRC、TID 映射等上下文相关逻辑必须留在 Codec。内置 Codec 在调用 `Serializer.Decode` 前已将帧数据 copy 成独立切片。
 
 ## 内置 Codec
 
@@ -101,8 +93,8 @@ codec := gnetx.NewFuncCodec(myDecode, myEncode)
 
 // 或直接实现 Codec 接口
 type myCodec struct{}
-func (c *myCodec) Decode(conn gnet.Conn, sc CodecConn) (any, error) { ... }
-func (c *myCodec) Encode(msg any, sc CodecConn) ([]byte, error) { ... }
+func (c *myCodec) Decode(gconn gnet.Conn, conn Conn) (any, error) { ... }
+func (c *myCodec) Encode(ctx context.Context, msg any, conn Conn) ([]byte, error) { ... }
 ```
 
 `common/gnetx/codec.go:60-73`
@@ -149,3 +141,73 @@ type frameLimiter interface {
 | 半包时 Discard 部分数据 | 下次可读事件拿不到完整帧头，协议错序 |
 | Encode 不校验 payload 大小就 `putUintN` | 截断导致对端错帧（`uint16(70000)=4464`） |
 | 自定义 Codec 未实现 `frameLimiter` 且无帧长校验 | `MaxFrameLength` 安全上限不生效 |
+| 在 Encode 中尝试访问 `gnet.Conn` | Encode 可能 off-loop 执行，不能读写 gnet buffer |
+| 把协议头逻辑写进 Serializer | Serializer 是 body-only，协议上下文应由 Codec 处理 |
+
+## Codec/Serializer Interface Contract
+
+### 1. Scope / Trigger
+
+- Trigger: 修改 gnetx 编解码公开接口或新增协议 Codec/Serializer。
+
+### 2. Signatures
+
+```go
+type Codec interface {
+    Decode(c gnet.Conn, conn Conn) (any, error)
+    Encode(ctx context.Context, msg any, conn Conn) ([]byte, error)
+}
+
+type Serializer interface {
+    Decode(raw []byte) (any, error)
+    Encode(msg any) ([]byte, error)
+}
+```
+
+### 3. Contracts
+
+- `Decode` may use `gnet.Conn` buffer APIs only inside OnTraffic.
+- `Encode` must only produce bytes; framework owns `Write`/`AsyncWrite`.
+- `ctx` may carry protocol request context for reply encoding (injected by framework via `PacketContextProvider`).
+- `conn.NextSendSeq()` is the framework-provided connection sequence allocator.
+
+### 4. Validation & Error Matrix
+
+| Condition | Error/Behavior |
+| --- | --- |
+| Incomplete frame | return `ErrIncompletePacket` and consume no bytes |
+| Frame exceeds max | return `ErrFrameTooLarge` |
+| Serializer cannot encode type | return codec/serializer error; caller does not write |
+
+### 5. Good/Base/Bad Cases
+
+- Good: Codec parses header, message implements PacketContextProvider, dispatch injects pc into ctx. Encode reads pc from ctx for reply header. Serializer only maps body bytes to structs.
+- Base: Built-in LengthPrefix/Delimiter/Fixed codecs ignore ctx and use body-only serializers.
+- Bad: Serializer calls `conn.NextSendSeq()` or parses ack/CRC.
+
+### 6. Tests Required
+
+- Codec tests cover full frame, half frame, frame-too-large, encode length overflow.
+- Serializer tests cover body encode/decode only.
+- Runtime tests verify ctx is passed to `Encode` and sequence start is honored.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```go
+func (c *myCodec) Encode(msg any, gconn gnet.Conn) ([]byte, error) {
+    _, _ = gconn.Peek(1)
+    return nil, nil
+}
+```
+
+#### Correct
+
+```go
+func (c *myCodec) Encode(ctx context.Context, msg any, conn Conn) ([]byte, error) {
+    seq := conn.NextSendSeq()
+    _ = seq
+    return c.encodeFrame(ctx, msg)
+}
+```

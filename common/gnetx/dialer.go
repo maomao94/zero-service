@@ -110,7 +110,7 @@ func (d *Dialer) Request(ctx context.Context, network, address string, msg Corre
 	cn := gc.Context().(*session)
 	cn.SetAttribute(&dialStateKey, ds)
 
-	payload, err := d.opts.Codec.Encode(msg, cn)
+	payload, err := d.opts.Codec.Encode(ctx, msg, cn)
 	if err != nil {
 		cn.Close()
 		return nil, err
@@ -140,7 +140,7 @@ func (d *Dialer) Close() error {
 // --- gnet.EventHandler ---
 
 func (d *Dialer) OnOpen(c gnet.Conn) ([]byte, gnet.Action) {
-	cn := newSession(newSessionID(), c, d.opts.Codec, nil, nil)
+	cn := newSession(newSessionID(), c, d.opts.Codec, nil, nil, d.opts.SequenceStart)
 	c.SetContext(cn)
 	return nil, gnet.None
 }

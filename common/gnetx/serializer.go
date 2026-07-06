@@ -16,14 +16,14 @@ type RawSerializer struct{}
 // 再拷一次是防御性设计：即便某些自定义 Codec 传入的是可复用 buffer 切片，
 // RawSerializer 返回给业务的 []byte 也始终安全可持有。内置 Codec 已 copy 时这层拷贝是冗余的，
 // 但 RawSerializer 面向原型场景，可读性/安全优先。
-func (RawSerializer) Decode(raw []byte, _ CodecConn) (any, error) {
+func (RawSerializer) Decode(raw []byte) (any, error) {
 	out := make([]byte, len(raw))
 	copy(out, raw)
 	return out, nil
 }
 
 // Encode 把消息序列化为字节。仅接受 []byte，其他类型返回 errRawSerializerType。
-func (RawSerializer) Encode(msg any, _ CodecConn) ([]byte, error) {
+func (RawSerializer) Encode(msg any) ([]byte, error) {
 	if b, ok := msg.([]byte); ok {
 		out := make([]byte, len(b))
 		copy(out, b)
@@ -39,7 +39,7 @@ type JSONSerializer struct{}
 // Decode 把原始帧字节 JSON 反序列化为 map[string]any 返回。
 // JSONSerializer 无法感知目标 Go 类型，故统一返回 map[string]any，由业务在 handler 里映射；
 // 如需类型化（反序列化成具体 struct），请自定义 Serializer 用 json.Unmarshal 到目标类型。
-func (JSONSerializer) Decode(raw []byte, _ CodecConn) (any, error) {
+func (JSONSerializer) Decode(raw []byte) (any, error) {
 	var m map[string]any
 	if err := json.Unmarshal(raw, &m); err != nil {
 		return nil, err
@@ -48,6 +48,6 @@ func (JSONSerializer) Decode(raw []byte, _ CodecConn) (any, error) {
 }
 
 // Encode 把消息 JSON 序列化为字节。
-func (JSONSerializer) Encode(msg any, _ CodecConn) ([]byte, error) {
+func (JSONSerializer) Encode(msg any) ([]byte, error) {
 	return json.Marshal(msg)
 }

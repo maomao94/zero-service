@@ -11,8 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/panjf2000/gnet/v2"
-
 	"zero-service/common/gnetx"
 )
 
@@ -32,7 +30,7 @@ func (m *exampleResp) ResponseTID() string { return strconv.Itoa(m.RespSerial) }
 // === 自定义序列化：payload 格式 "REQ:<serial>" / "RESP:<serial>" ===
 type exampleSerializer struct{}
 
-func (exampleSerializer) Decode(raw []byte, _ gnetx.CodecConn) (any, error) {
+func (exampleSerializer) Decode(raw []byte) (any, error) {
 	s := string(raw)
 	switch {
 	case len(s) > 4 && s[:4] == "REQ:":
@@ -45,7 +43,7 @@ func (exampleSerializer) Decode(raw []byte, _ gnetx.CodecConn) (any, error) {
 	return nil, errors.New("unknown")
 }
 
-func (exampleSerializer) Encode(msg any, _ gnetx.CodecConn) ([]byte, error) {
+func (exampleSerializer) Encode(msg any) ([]byte, error) {
 	switch m := msg.(type) {
 	case *exampleReq:
 		return []byte("REQ:" + strconv.Itoa(m.Serial)), nil
@@ -139,6 +137,3 @@ func TestExampleMinimalProtocol(t *testing.T) {
 		t.Fatalf("resp = %q, want RESP:1", resp)
 	}
 }
-
-// 让 gnet 在示例文件中可被引用（gnet.Conn 在 exampleSerializer 签名中作为参数类型注解）。
-var _ gnet.Conn = (gnet.Conn)(nil)

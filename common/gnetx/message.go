@@ -31,3 +31,39 @@ type Response interface {
 type ClientIdentifiable interface {
 	ClientID() string
 }
+
+// PacketContextProvider 用于协议头上下文传递。
+// 消息实现此接口后，框架在 dispatch 阶段读出 PacketContext 并注入 handler/reply 的
+// context.Context（key=PacketContextKey）。Codec.Encode 从 ctx 中取回该值用于回包
+// 时填写 ack/reply-seq 等协议头字段。
+//
+// PacketContext 的生命周期与消息一致（请求级），不存在连接级共享状态问题。
+//
+// 用法：
+//
+//	// Codec.Decode 返回带协议头的消息:
+//	type myMsg struct { Seq uint32; Ack uint32; Body string }
+//	func (m *myMsg) PacketContext() any { return &myCtx{Seq: m.Seq, Ack: m.Ack} }
+//
+//	// Codec.Encode 从 ctx 取回:
+//	pc, _ := ctx.Value(PacketContextKey).(*myCtx)
+type PacketContextProvider interface {
+	PacketContext() any
+}
+
+type packetContextKeyType struct{}
+
+// PacketContextKey 是协议包头在 context.Context 中的标准存取键。
+//
+// 框架在 dispatch 阶段：若消息实现了 PacketContextProvider，则
+//
+//	ctx = context.WithValue(ctx, PacketContextKey, msg.PacketContext())
+//
+// Codec.Encode 从 ctx 中取出 PacketContextKey 对应的值，用于回包时填写 ack/reply-seq
+// 等协议头字段。如果 ctx 中不存在该值（主动发起的请求，没有入站请求上下文），
+// Codec.Encode 生成新协议头。
+//
+// 读取时做类型断言：
+//
+//	pc, _ := ctx.Value(PacketContextKey).(*myPacketContext)
+var PacketContextKey = &packetContextKeyType{}

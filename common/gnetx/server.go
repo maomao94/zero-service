@@ -171,7 +171,7 @@ func (s *Server) OnBoot(eng gnet.Engine) gnet.Action {
 }
 
 func (s *Server) OnOpen(c gnet.Conn) ([]byte, gnet.Action) {
-	cn := newSession(newSessionID(), c, s.opts.Codec, s.mgr, s.replyPool)
+	cn := newSession(newSessionID(), c, s.opts.Codec, s.mgr, s.replyPool, s.opts.SequenceStart)
 	c.SetContext(cn)
 	s.mgr.add(cn)
 	logx.Infof("[gnetx] connected remote=%s id=%s", c.RemoteAddr(), cn.id)
@@ -247,6 +247,10 @@ func (s *Server) dispatchSync(cn *session, msg any, h Handler) {
 	ctx, span := startServerSpan(s.tracer, cn, msg)
 	defer span.End()
 
+	if pcp, ok := msg.(PacketContextProvider); ok {
+		ctx = context.WithValue(ctx, PacketContextKey, pcp.PacketContext())
+	}
+
 	reply, hErr := h.Handle(ctx, cn, msg)
 
 	duration := timex.Since(startTime)
@@ -262,7 +266,7 @@ func (s *Server) dispatchSync(cn *session, msg any, h Handler) {
 		return
 	}
 	if reply != nil {
-		if err := s.writeReply(cn, reply); err != nil {
+		if err := s.writeReply(ctx, cn, reply); err != nil {
 			logx.Errorf("[gnetx] write reply error: %v", err)
 		}
 	}
@@ -271,6 +275,10 @@ func (s *Server) dispatchSync(cn *session, msg any, h Handler) {
 func (s *Server) dispatchAsync(cn *session, msg any, h Handler) {
 	startTime := timex.Now()
 	ctx, span := startServerSpan(s.tracer, cn, msg)
+
+	if pcp, ok := msg.(PacketContextProvider); ok {
+		ctx = context.WithValue(ctx, PacketContextKey, pcp.PacketContext())
+	}
 
 	s.asyncWG.Add(1)
 	err := s.pool.Submit(func() {
@@ -298,8 +306,8 @@ func (s *Server) dispatchAsync(cn *session, msg any, h Handler) {
 
 func (s *Server) recordMetrics(d time.Duration) { s.metrics.Add(stat.Task{Duration: d}) }
 
-func (s *Server) writeReply(cn *session, reply any) error {
-	payload, err := s.opts.Codec.Encode(reply, cn)
+func (s *Server) writeReply(ctx context.Context, cn *session, reply any) error {
+	payload, err := s.opts.Codec.Encode(ctx, reply, cn)
 	if err != nil {
 		return err
 	}

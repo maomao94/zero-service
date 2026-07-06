@@ -6,7 +6,7 @@ func TestRawSerializer(t *testing.T) {
 	var s RawSerializer
 
 	// Encode []byte
-	out, err := s.Encode([]byte("hello"), nil)
+	out, err := s.Encode([]byte("hello"))
 	if err != nil {
 		t.Fatalf("encode: %v", err)
 	}
@@ -15,12 +15,12 @@ func TestRawSerializer(t *testing.T) {
 	}
 
 	// Encode 非 []byte 应报错
-	if _, err := s.Encode("string-not-bytes", nil); err == nil {
+	if _, err := s.Encode("string-not-bytes"); err == nil {
 		t.Fatal("encode non-byte should error")
 	}
 
 	// Decode 返回 []byte 副本
-	decoded, err := s.Decode([]byte("world"), nil)
+	decoded, err := s.Decode([]byte("world"))
 	if err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -38,13 +38,13 @@ func TestJSONSerializer(t *testing.T) {
 		Type string `json:"type"`
 		Val  int    `json:"val"`
 	}
-	out, err := s.Encode(ping{Type: "ping", Val: 42}, nil)
+	out, err := s.Encode(ping{Type: "ping", Val: 42})
 	if err != nil {
 		t.Fatalf("encode: %v", err)
 	}
 
 	// Decode
-	decoded, err := s.Decode(out, nil)
+	decoded, err := s.Decode(out)
 	if err != nil {
 		t.Fatalf("decode: %v", err)
 	}

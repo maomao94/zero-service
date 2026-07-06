@@ -48,7 +48,7 @@ func (m *hbMsg) MessageID() int { return 99 }
 // payload 格式：消息类型标识 + 内容，这里简单用 "ping:<serial>:<msg>" / "pong:<serial>:<reply>" / "echo:<body>"。
 type testSerializer struct{}
 
-func (testSerializer) Decode(raw []byte, _ CodecConn) (any, error) {
+func (testSerializer) Decode(raw []byte) (any, error) {
 	s := string(raw)
 	switch {
 	case len(s) > 5 && s[:5] == "ping:":
@@ -76,7 +76,7 @@ func (testSerializer) Decode(raw []byte, _ CodecConn) (any, error) {
 	return nil, errors.New("unknown message type")
 }
 
-func (testSerializer) Encode(msg any, _ CodecConn) ([]byte, error) {
+func (testSerializer) Encode(msg any) ([]byte, error) {
 	switch m := msg.(type) {
 	case *pingReq:
 		return []byte("ping:" + strconv.Itoa(m.Serial) + ":" + m.Msg), nil

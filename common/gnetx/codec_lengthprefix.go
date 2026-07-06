@@ -2,6 +2,7 @@ package gnetx
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 
@@ -45,9 +46,9 @@ import (
 //     Decode: framePayloadLen = 字段值 + lengthAdjust（framePayloadLen = 长度字段后的字节数）
 //     Encode: 字段值 = framePayloadLen - lengthAdjust
 //     举例：
-//     - 字段值 = postLengthBytes 字节数    → lengthAdjust = 0（最常见）
-//     - 字段值 = 整帧字节数（含头）         → lengthAdjust = -(lengthOffset + lengthBytes)
-//     - 字段值不含尾缀                      → lengthAdjust = len(trailingBytes)
+//   - 字段值 = postLengthBytes 字节数    → lengthAdjust = 0（最常见）
+//   - 字段值 = 整帧字节数（含头）         → lengthAdjust = -(lengthOffset + lengthBytes)
+//   - 字段值不含尾缀                      → lengthAdjust = len(trailingBytes)
 //   - stripBytes：解码后从帧首剥离的字节数（对标 Netty initialBytesToStrip）。
 //     不调用时默认剥离整个帧头（lengthOffset + lengthBytes）。
 //     Serializer 仅接收帧中 [stripBytes, frameLen-len(trailingBytes)] 区间的字节。
@@ -163,7 +164,7 @@ func NewLengthPrefixCodec(lengthBytes int, endianness binary.ByteOrder, ser Seri
 //
 // 流程：校验 leadingBytes → Peek 帧头得 bodyLen → 校验合法性 → Peek 整帧 →
 // 校验 trailingBytes → 从 stripBytes 位置裁出数据交给 Serializer → Discard 消费。
-func (c *LengthPrefixCodec) Decode(conn gnet.Conn, sc CodecConn) (any, error) {
+func (c *LengthPrefixCodec) Decode(conn gnet.Conn, _ Conn) (any, error) {
 	headerLen := c.lengthOffset + c.lengthBytes
 
 	hdr, err := conn.Peek(headerLen)
@@ -213,7 +214,7 @@ func (c *LengthPrefixCodec) Decode(conn gnet.Conn, sc CodecConn) (any, error) {
 	if _, err := conn.Discard(frameLen); err != nil {
 		return nil, mapShortBuffer(err)
 	}
-	return c.Serializer.Decode(serializedPayload, sc)
+	return c.Serializer.Decode(serializedPayload)
 }
 
 // applyMaxFrameSizeIfUnset 实现 frameLimiter：仅当未显式设置 maxFrameSize 时注入框架级上限。
@@ -229,8 +230,8 @@ func (c *LengthPrefixCodec) applyMaxFrameSizeIfUnset(max int) {
 // 长度字段由 codec 在 [lengthOffset, lengthOffset+lengthBytes) 位置写入；
 // Serializer 产出中对应的字节被跳过（不会重复写入）。
 // trailingBytes 追加到帧尾。
-func (c *LengthPrefixCodec) Encode(msg any, sc CodecConn) ([]byte, error) {
-	payload, err := c.Serializer.Encode(msg, sc)
+func (c *LengthPrefixCodec) Encode(_ context.Context, msg any, _ Conn) ([]byte, error) {
+	payload, err := c.Serializer.Encode(msg)
 	if err != nil {
 		return nil, err
 	}

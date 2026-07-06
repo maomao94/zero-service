@@ -154,7 +154,7 @@ func (c *Client) OnTick() (delay time.Duration, action gnet.Action) {
 		return c.opts.HeartbeatInterval, gnet.None
 	}
 	msg := c.opts.HeartbeatMessage()
-	payload, err := c.opts.Codec.Encode(msg, cn)
+	payload, err := c.opts.Codec.Encode(context.Background(), msg, cn)
 	if err != nil {
 		logx.Errorf("[gnetx] client heartbeat encode error: %v", err)
 		return c.opts.HeartbeatInterval, gnet.None
@@ -166,7 +166,7 @@ func (c *Client) OnTick() (delay time.Duration, action gnet.Action) {
 }
 
 func (c *Client) OnOpen(gc gnet.Conn) ([]byte, gnet.Action) {
-	cn := newSession(newSessionID(), gc, c.opts.Codec, nil, c.replyPool)
+	cn := newSession(newSessionID(), gc, c.opts.Codec, nil, c.replyPool, c.opts.SequenceStart)
 	gc.SetContext(cn)
 	c.sess.Store(cn)
 	return nil, gnet.None
@@ -273,6 +273,10 @@ func (c *Client) dispatchSync(cn *session, msg any, h Handler) {
 	ctx, span := startClientSpan(c.tracer, cn, msg)
 	defer span.End()
 
+	if pcp, ok := msg.(PacketContextProvider); ok {
+		ctx = context.WithValue(ctx, PacketContextKey, pcp.PacketContext())
+	}
+
 	reply, hErr := h.Handle(ctx, cn, msg)
 
 	duration := timex.Since(startTime)
@@ -285,7 +289,7 @@ func (c *Client) dispatchSync(cn *session, msg any, h Handler) {
 		return
 	}
 	if reply != nil {
-		if err := c.writeReply(cn, reply); err != nil {
+		if err := c.writeReply(ctx, cn, reply); err != nil {
 			logx.Errorf("[gnetx] client write reply error: %v", err)
 		}
 	}
@@ -293,6 +297,10 @@ func (c *Client) dispatchSync(cn *session, msg any, h Handler) {
 
 func (c *Client) dispatchAsync(cn *session, msg any, h Handler) {
 	ctx, span := startClientSpan(c.tracer, cn, msg)
+
+	if pcp, ok := msg.(PacketContextProvider); ok {
+		ctx = context.WithValue(ctx, PacketContextKey, pcp.PacketContext())
+	}
 
 	err := c.pool.Submit(func() {
 		defer span.End()
@@ -314,8 +322,8 @@ func (c *Client) dispatchAsync(cn *session, msg any, h Handler) {
 	}
 }
 
-func (c *Client) writeReply(cn *session, reply any) error {
-	payload, err := c.opts.Codec.Encode(reply, cn)
+func (c *Client) writeReply(ctx context.Context, cn *session, reply any) error {
+	payload, err := c.opts.Codec.Encode(ctx, reply, cn)
 	if err != nil {
 		return err
 	}

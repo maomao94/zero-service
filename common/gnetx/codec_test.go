@@ -1,6 +1,7 @@
 package gnetx
 
 import (
+	"context"
 	"encoding/binary"
 	"errors"
 	"testing"
@@ -81,7 +82,7 @@ func TestLengthPrefixCodecTooLarge(t *testing.T) {
 
 func TestLengthPrefixCodecEncodeRoundtrip(t *testing.T) {
 	c := NewLengthPrefixCodec(2, binary.BigEndian, RawSerializer{})
-	out, err := c.Encode([]byte("hi"), nil)
+	out, err := c.Encode(context.Background(), []byte("hi"), nil)
 	if err != nil {
 		t.Fatalf("Encode: %v", err)
 	}
@@ -140,7 +141,7 @@ func TestDelimiterCodecPartial(t *testing.T) {
 
 func TestDelimiterCodecEncode(t *testing.T) {
 	c := NewDelimiterCodec([]byte{0x0A}, RawSerializer{})
-	out, err := c.Encode([]byte("hi"), nil)
+	out, err := c.Encode(context.Background(), []byte("hi"), nil)
 	if err != nil || string(out) != "hi\x0A" {
 		t.Fatalf("encode = %q err %v", out, err)
 	}
@@ -169,7 +170,7 @@ func TestFixedLengthCodecPartial(t *testing.T) {
 func TestLengthPrefixCodecEncodeOverflow(t *testing.T) {
 	c := NewLengthPrefixCodec(2, binary.BigEndian, RawSerializer{}) // 2 字节字段，max 65535
 	big := make([]byte, 70000)                                      // 超过 65535
-	_, err := c.Encode(big, nil)
+	_, err := c.Encode(context.Background(), big, nil)
 	if err == nil {
 		t.Fatal("expect error when payload exceeds length field capacity, got nil")
 	}
@@ -208,7 +209,7 @@ func TestLengthPrefixCodecNegativePayloadLen(t *testing.T) {
 func TestLengthPrefixCodecEncodeMaxFits(t *testing.T) {
 	c := NewLengthPrefixCodec(1, binary.BigEndian, RawSerializer{}) // 1 字节字段，max 255
 	payload := make([]byte, 255)
-	out, err := c.Encode(payload, nil)
+	out, err := c.Encode(context.Background(), payload, nil)
 	if err != nil {
 		t.Fatalf("Encode 255-byte payload with 1-byte field should succeed: %v", err)
 	}
@@ -225,7 +226,7 @@ func TestLengthPrefixLeadingBytes(t *testing.T) {
 		WithLeadingBytes([]byte{0xEB, 0xEB}),
 	)
 	// Encode → Decode roundtrip
-	out, err := c.Encode([]byte("hello"), nil)
+	out, err := c.Encode(context.Background(), []byte("hello"), nil)
 	if err != nil {
 		t.Fatalf("Encode: %v", err)
 	}
@@ -261,7 +262,7 @@ func TestLengthPrefixTrailingBytes(t *testing.T) {
 	c := NewLengthPrefixCodec(2, binary.BigEndian, RawSerializer{},
 		WithTrailingBytes([]byte{0xEB, 0xEB}),
 	)
-	out, err := c.Encode([]byte("ok"), nil)
+	out, err := c.Encode(context.Background(), []byte("ok"), nil)
 	if err != nil {
 		t.Fatalf("Encode: %v", err)
 	}
@@ -299,7 +300,7 @@ func TestLengthPrefixLeadingAndTrailing(t *testing.T) {
 		WithLeadingBytes([]byte{0xEB, 0xEB}),
 		WithTrailingBytes([]byte{0xEB, 0xEB}),
 	)
-	out, err := c.Encode([]byte("data"), nil)
+	out, err := c.Encode(context.Background(), []byte("data"), nil)
 	if err != nil {
 		t.Fatalf("Encode: %v", err)
 	}
@@ -326,7 +327,7 @@ func TestLengthPrefixLeadingAndTrailingWithAdjust(t *testing.T) {
 		WithLengthAdjust(2), // fieldVal = 6 - 2 = 4 (exclude trailing from length)
 	)
 	payload := []byte("data")
-	out, err := c.Encode(payload, nil)
+	out, err := c.Encode(context.Background(), payload, nil)
 	if err != nil {
 		t.Fatalf("Encode: %v", err)
 	}
@@ -346,7 +347,7 @@ func TestLengthPrefixLeadingBytesAutoOffset(t *testing.T) {
 		t.Fatalf("auto offset = %d, want 3", c.lengthOffset)
 	}
 	// leading(3) + length(1) + payload "a"
-	out, err := c.Encode([]byte("a"), nil)
+	out, err := c.Encode(context.Background(), []byte("a"), nil)
 	if err != nil {
 		t.Fatalf("Encode: %v", err)
 	}
@@ -420,7 +421,7 @@ func bytesEqual(a, b []byte) bool {
 func TestLengthPrefixStripBytesDefault(t *testing.T) {
 	// Default stripBytes == headerLen: serializer gets body only
 	c := NewLengthPrefixCodec(2, binary.BigEndian, RawSerializer{}) // headerLen=2
-	out, _ := c.Encode([]byte("hi"), nil)
+	out, _ := c.Encode(context.Background(), []byte("hi"), nil)
 	// [0x00 0x02][hi]
 	expect := []byte{0x00, 0x02, 'h', 'i'}
 	if !bytesEqual(out, expect) {
@@ -440,7 +441,7 @@ func TestLengthPrefixStripBytesZero(t *testing.T) {
 		WithStripBytes(0),
 	)
 	// Serializer produces: [0x00 0x02]["hi"] = full frame
-	out, err := c.Encode([]byte{0x00, 0x02, 'h', 'i'}, nil)
+	out, err := c.Encode(context.Background(), []byte{0x00, 0x02, 'h', 'i'}, nil)
 	if err != nil {
 		t.Fatalf("Encode: %v", err)
 	}
@@ -469,7 +470,7 @@ func TestLengthPrefixStripBytesKeepLength(t *testing.T) {
 	)
 	// Serializer produces: [length=4][body=4B] → total frame: [msgID=0,0][0x00 0x04]["data"]
 	// msgID is in the gap [0..2), filled by leadingBytes or zero; serializer handles [2..)
-	payload, err := c.Encode([]byte{0x00, 0x04, 'd', 'a', 't', 'a'}, nil)
+	payload, err := c.Encode(context.Background(), []byte{0x00, 0x04, 'd', 'a', 't', 'a'}, nil)
 	if err != nil {
 		t.Fatalf("Encode: %v", err)
 	}
@@ -498,7 +499,7 @@ func TestLengthPrefixStripBytesWithLeadingZero(t *testing.T) {
 		WithStripBytes(0),
 	)
 	// Serializer output = full frame = [EB EB][0x00 0x03]["foo"]
-	out, err := c.Encode([]byte{0xEB, 0xEB, 0x00, 0x03, 'f', 'o', 'o'}, nil)
+	out, err := c.Encode(context.Background(), []byte{0xEB, 0xEB, 0x00, 0x03, 'f', 'o', 'o'}, nil)
 	if err != nil {
 		t.Fatalf("Encode: %v", err)
 	}
@@ -531,11 +532,11 @@ func TestLengthPrefixStripBytesTooLarge(t *testing.T) {
 func TestLengthPrefixStripBytesFullRoundtrip(t *testing.T) {
 	// Protocol: [msgID 2B][properties 1B][length 2B][body N]
 	c := NewLengthPrefixCodec(2, binary.BigEndian, RawSerializer{},
-		WithLengthOffset(3),   // skip msgID(2) + props(1)
-		WithStripBytes(0),     // keep everything
+		WithLengthOffset(3), // skip msgID(2) + props(1)
+		WithStripBytes(0),   // keep everything
 	)
 	// Full frame from serializer: [msgID=01,02][props=03][0x00,0x02]["ok"]
-	out, err := c.Encode([]byte{0x01, 0x02, 0x03, 0x00, 0x02, 'o', 'k'}, nil)
+	out, err := c.Encode(context.Background(), []byte{0x01, 0x02, 0x03, 0x00, 0x02, 'o', 'k'}, nil)
 	if err != nil {
 		t.Fatalf("Encode: %v", err)
 	}

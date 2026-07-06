@@ -1,6 +1,7 @@
 package gnetx
 
-	import (
+import (
+	"context"
 	"encoding/base64"
 	"encoding/binary"
 	"errors"
@@ -10,13 +11,6 @@ package gnetx
 	"github.com/panjf2000/gnet/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 )
-
-// CodecConn is the minimal connection interface needed by Codec and Serializer.
-// It provides read-only access to session identity and attributes.
-type CodecConn interface {
-	ID() string
-	Attribute(key any) any
-}
 
 // Codec 是 gnetx 的编解码契约，一个接口同时承载分帧与序列化（对齐 gnet v1 ICodec 的简洁形态）。
 //
@@ -30,16 +24,16 @@ type CodecConn interface {
 // 内置 LengthPrefixCodec/DelimiterCodec/FixedLengthCodec 直接实现本接口，开箱即用；
 // 用户自定义协议实现本接口即可，或用 NewFuncCodec 把两个闭包拼成 Codec。
 type Codec interface {
-	Decode(c gnet.Conn, sc CodecConn) (any, error)
-	Encode(msg any, sc CodecConn) ([]byte, error)
+	Decode(c gnet.Conn, conn Conn) (any, error)
+	Encode(ctx context.Context, msg any, conn Conn) ([]byte, error)
 }
 
 // Serializer 承载 raw 帧字节与消息结构之间的转换，与分帧层解耦。
 // 内置 Codec 把分帧（Peek/Discard）与 Serializer 组合，用户只需实现 Serializer 的序列化部分。
 // 用户也可完全自定义 Codec，不用 Serializer。
 type Serializer interface {
-	Decode(raw []byte, sc CodecConn) (any, error)
-	Encode(msg any, sc CodecConn) ([]byte, error)
+	Decode(raw []byte) (any, error)
+	Encode(msg any) ([]byte, error)
 }
 
 // frameLimiter 由内置的、有"帧长度上限"语义的 Codec 实现（LengthPrefix/Delimiter）。
@@ -60,19 +54,24 @@ func applyFrameLimit(c Codec, max int) {
 
 // NewFuncCodec 用两个函数构造 Codec，适合自定义协议一把梭（分帧+序列化一体）。
 func NewFuncCodec(
-	decode func(c gnet.Conn, sc CodecConn) (any, error),
-	encode func(msg any, sc CodecConn) ([]byte, error),
+	decode func(c gnet.Conn, conn Conn) (any, error),
+	encode func(ctx context.Context, msg any, conn Conn) ([]byte, error),
 ) Codec {
 	return &funcCodec{decode: decode, encode: encode}
 }
 
 type funcCodec struct {
-	decode func(gnet.Conn, CodecConn) (any, error)
-	encode func(any, CodecConn) ([]byte, error)
+	decode func(gnet.Conn, Conn) (any, error)
+	encode func(context.Context, any, Conn) ([]byte, error)
 }
 
-func (c *funcCodec) Decode(conn gnet.Conn, sc CodecConn) (any, error) { return c.decode(conn, sc) }
-func (c *funcCodec) Encode(msg any, sc CodecConn) ([]byte, error)     { return c.encode(msg, sc) }
+func (c *funcCodec) Decode(gconn gnet.Conn, conn Conn) (any, error) {
+	return c.decode(gconn, conn)
+}
+
+func (c *funcCodec) Encode(ctx context.Context, msg any, conn Conn) ([]byte, error) {
+	return c.encode(ctx, msg, conn)
+}
 
 // DebugSerializer 包装一个 Serializer，在 Debug 日志级别下打印每帧 payload 的 base64 编码。
 // 用法：codec := NewLengthPrefixCodec(2, endian, DebugSerializer(mySerializer))
@@ -82,13 +81,13 @@ func DebugSerializer(inner Serializer) Serializer {
 
 type debugSerializer struct{ inner Serializer }
 
-func (s *debugSerializer) Decode(raw []byte, sc CodecConn) (any, error) {
+func (s *debugSerializer) Decode(raw []byte) (any, error) {
 	logx.Debugf("[gnetx] recv %d bytes base64=%s", len(raw), base64.StdEncoding.EncodeToString(raw))
-	return s.inner.Decode(raw, sc)
+	return s.inner.Decode(raw)
 }
 
-func (s *debugSerializer) Encode(msg any, sc CodecConn) ([]byte, error) {
-	raw, err := s.inner.Encode(msg, sc)
+func (s *debugSerializer) Encode(msg any) ([]byte, error) {
+	raw, err := s.inner.Encode(msg)
 	if err != nil {
 		return raw, err
 	}

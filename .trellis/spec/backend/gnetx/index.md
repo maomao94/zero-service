@@ -4,12 +4,13 @@
 
 ## Pre-Development Checklist
 
-1. **确定改动层级** — Core 层（codec/session）还是 opt-in 层（Router / Request-Response）
+1. **确定改动层级** — Core 层（codec/session）还是 opt-in 层（Router / Request-Response / PacketContextProvider）
 2. **阅读对应 topic spec** — 下方列出的 spec 文件
 3. **gnet 线程契约** — `OnTraffic` 内禁止阻塞；重活用 `Async`/`AsyncFunc` mark offload
 4. **Codec 半包契约** — `Decode` 返回 `ErrIncompletePacket` 时不消费字节
 5. **Session 生命周期** — OnOpen 创建 / OnClose 清理
 6. **ReplyPool 所有权** — Session 持有非拥有型引用；Server/Client 管理池生命周期
+7. **PacketContextProvider** — 如果 Codec 需要在回包时填 ack/seq，让消息实现 `PacketContextProvider`；框架在 dispatch 阶段注入 ctx
 
 ## Package Architecture
 
@@ -23,7 +24,7 @@ common/gnetx/
 ├── session.go        # Session + SessionManager + SessionListener
 ├── handler.go        # Handler/HandlerFunc/AsyncHandler + Async/AsyncFunc
 ├── router.go         # Router：按 messageID 路由的 Handler 容器
-├── message.go        # 消息 opt-in 接口：Identifiable/Correlatable/Response
+├── message.go        # 消息 opt-in 接口：Identifiable/Correlatable/Response/PacketContextProvider + PacketContextKey
 ├── errors.go         # 包级哨兵错误
 ├── options.go        # ServerOptions/ClientOptions + With* 选项函数
 ├── idle.go           # idleSweeper：独立 goroutine 空闲扫描
@@ -36,11 +37,11 @@ common/gnetx/
 
 | 文件 | 说明 |
 |------|------|
-| [codec.md](codec.md) | Codec/Serializer 接口、LengthPrefix（含 leading/trailing/stripBytes）、Delimiter、FixedLength、DebugSerializer |
-| [server.md](server.md) | Server：构造、共享 ReplyPool、生命周期、service.Group 集成 |
-| [client.md](client.md) | Client（长连接）+ Dialer（短连接）：构造、ReplyPool、重连、Promise 匹配 |
-| [handler.md](handler.md) | Handler/Router：签名、sync/async 分发、Router 注册 |
-| [session.md](session.md) | Session/SessionManager：复合 TID、共享 ReplyPool、生命周期 |
+| [codec.md](codec.md) | Codec/Serializer 接口、LengthPrefix（含 leading/trailing/stripBytes）、Delimiter、FixedLength、DebugSerializer、PacketContext 回包 |
+| [server.md](server.md) | Server：构造、共享 ReplyPool、生命周期、dispatch ctx 注入、service.Group 集成 |
+| [client.md](client.md) | Client（长连接）+ Dialer（短连接）：构造、ReplyPool、重连、Promise 匹配、dispatch ctx 注入 |
+| [handler.md](handler.md) | Handler/Router：签名、ctx 含 PacketContext、sync/async 分发、Router 注册 |
+| [session.md](session.md) | Session/SessionManager：NextSendSeq、复合 TID、共享 ReplyPool、生命周期 |
 | [request-response.md](request-response.md) | 请求-响应 opt-in：Correlatable/Response、复合 TID、线程约束 |
 
 ## Quality Check

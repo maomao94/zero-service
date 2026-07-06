@@ -17,7 +17,7 @@
 //
 //	type Codec interface {
 //	    Decode(c gnet.Conn, conn Conn) (any, error) // 半包返回 ErrIncompletePacket
-//	    Encode(msg any, conn Conn) ([]byte, error)
+//	    Encode(ctx context.Context, msg any, conn Conn) ([]byte, error)
 //	}
 //
 // 内置 LengthPrefixCodec / DelimiterCodec / FixedLengthCodec 直接实现本接口，

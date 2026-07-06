@@ -3,11 +3,27 @@ package gnetx
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/panjf2000/gnet/v2"
+
 	"zero-service/common/antsx"
 )
+
+type ctxTestKey struct{}
+
+type ctxCaptureCodec struct {
+	got context.Context
+}
+
+func (c *ctxCaptureCodec) Decode(gnet.Conn, Conn) (any, error) { return nil, nil }
+
+func (c *ctxCaptureCodec) Encode(ctx context.Context, _ any, _ Conn) ([]byte, error) {
+	c.got = ctx
+	return []byte("ok"), nil
+}
 
 func TestSessionManagerGetAllCount(t *testing.T) {
 	mgr := NewSessionManager(nil)
@@ -186,8 +202,35 @@ func TestSessionSendOnClosed(t *testing.T) {
 	cn := newSession("id1", mc, newTestCodec(), nil, nil)
 	cn.Close()
 
-	if err := cn.Send(nil, &echoMsg{Body: "x"}); !errors.Is(err, ErrSessionClosed) {
+	if err := cn.Send(context.Background(), &echoMsg{Body: "x"}); !errors.Is(err, ErrSessionClosed) {
 		t.Fatalf("Send on closed: want ErrSessionClosed, got %v", err)
+	}
+}
+
+func TestSessionSendPassesContextToCodec(t *testing.T) {
+	codec := &ctxCaptureCodec{}
+	cn := newSession("id1", newMockConn(nil), codec, nil, nil)
+	ctx := context.WithValue(context.Background(), ctxTestKey{}, "value")
+
+	if err := cn.Send(ctx, &echoMsg{Body: "x"}); err != nil {
+		t.Fatalf("Send: %v", err)
+	}
+	if got := codec.got.Value(ctxTestKey{}); got != "value" {
+		t.Fatalf("Encode ctx value = %v, want value", got)
+	}
+}
+
+func TestServerWriteReplyPassesContextToCodec(t *testing.T) {
+	codec := &ctxCaptureCodec{}
+	cn := newSession("id1", newMockConn(nil), codec, nil, nil)
+	srv := &Server{opts: ServerOptions{Codec: codec}}
+	ctx := context.WithValue(context.Background(), ctxTestKey{}, "reply")
+
+	if err := srv.writeReply(ctx, cn, &echoMsg{Body: "x"}); err != nil {
+		t.Fatalf("writeReply: %v", err)
+	}
+	if got := codec.got.Value(ctxTestKey{}); got != "reply" {
+		t.Fatalf("reply Encode ctx value = %v, want reply", got)
 	}
 }
 
@@ -196,7 +239,7 @@ func TestSessionRequestOnClosed(t *testing.T) {
 	cn := newSession("id1", mc, newTestCodec(), nil, nil)
 	cn.Close()
 
-	_, err := cn.Request(nil, &pingReq{Serial: 1}, time.Second)
+	_, err := cn.Request(context.Background(), &pingReq{Serial: 1}, time.Second)
 	if !errors.Is(err, ErrSessionClosed) {
 		t.Fatalf("Request on closed: want ErrSessionClosed, got %v", err)
 	}
@@ -206,7 +249,7 @@ func TestSessionRequestNilReplyPool(t *testing.T) {
 	mc := newMockConn(nil)
 	cn := newSession("id1", mc, newTestCodec(), nil, nil)
 
-	_, err := cn.Request(nil, &pingReq{Serial: 1}, time.Second)
+	_, err := cn.Request(context.Background(), &pingReq{Serial: 1}, time.Second)
 	if !errors.Is(err, ErrSessionClosed) {
 		t.Fatalf("Request with nil replyPool: want ErrSessionClosed, got %v", err)
 	}
@@ -250,5 +293,144 @@ func TestNewSessionID(t *testing.T) {
 	}
 	if id1 == id2 {
 		t.Fatal("two session IDs should be unique")
+	}
+}
+
+func TestSessionNextSendSeqStartsAtConfiguredValue(t *testing.T) {
+	cn := newSession("id1", newMockConn(nil), newTestCodec(), nil, nil, 7)
+
+	if seq := cn.NextSendSeq(); seq != 7 {
+		t.Fatalf("first NextSendSeq = %d, want 7", seq)
+	}
+	if seq := cn.NextSendSeq(); seq != 8 {
+		t.Fatalf("second NextSendSeq = %d, want 8", seq)
+	}
+}
+
+func TestSequenceStartAppliedByConnectionOwners(t *testing.T) {
+	serverConn := newMockConn(nil)
+	srv := &Server{
+		opts: ServerOptions{Codec: newTestCodec(), SequenceStart: 10},
+		mgr:  NewSessionManager(nil),
+	}
+	srv.OnOpen(serverConn)
+	serverSession := serverConn.Context().(*session)
+	if seq := serverSession.NextSendSeq(); seq != 10 {
+		t.Fatalf("server first seq = %d, want 10", seq)
+	}
+
+	clientConn := newMockConn(nil)
+	cli := &Client{opts: ClientOptions{Codec: newTestCodec(), SequenceStart: 20}}
+	cli.OnOpen(clientConn)
+	clientSession := clientConn.Context().(*session)
+	if seq := clientSession.NextSendSeq(); seq != 20 {
+		t.Fatalf("client first seq = %d, want 20", seq)
+	}
+
+	dialerConn := newMockConn(nil)
+	dialer := &Dialer{opts: ClientOptions{Codec: newTestCodec(), SequenceStart: 30}}
+	dialer.OnOpen(dialerConn)
+	dialerSession := dialerConn.Context().(*session)
+	if seq := dialerSession.NextSendSeq(); seq != 30 {
+		t.Fatalf("dialer first seq = %d, want 30", seq)
+	}
+}
+
+func TestNextSendSeqConcurrent(t *testing.T) {
+	cn := newSession("id1", newMockConn(nil), newTestCodec(), nil, nil)
+	const goroutines = 16
+	const calls = 1000
+	total := goroutines * calls
+
+	seen := make(map[uint64]bool, total)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	var errOnce sync.Once
+	var firstErr error
+	wg.Add(goroutines)
+	for g := 0; g < goroutines; g++ {
+		go func() {
+			defer wg.Done()
+			for i := 0; i < calls; i++ {
+				seq := cn.NextSendSeq()
+				mu.Lock()
+				if seen[seq] {
+					errOnce.Do(func() { firstErr = errors.New("duplicate seq") })
+					mu.Unlock()
+					return
+				}
+				seen[seq] = true
+				mu.Unlock()
+			}
+		}()
+	}
+	wg.Wait()
+	if firstErr != nil {
+		t.Fatal(firstErr)
+	}
+
+	for i := uint64(0); i < uint64(total); i++ {
+		if !seen[i] {
+			t.Fatalf("missing seq %d", i)
+		}
+	}
+}
+
+func TestNextSendSeqViaConnInterface(t *testing.T) {
+	cn := newSession("id1", newMockConn(nil), newTestCodec(), nil, nil)
+	var conn Conn = cn
+
+	if seq := conn.NextSendSeq(); seq != 0 {
+		t.Fatalf("Conn.NextSendSeq = %d, want 0", seq)
+	}
+	if seq := conn.NextSendSeq(); seq != 1 {
+		t.Fatalf("Conn.NextSendSeq = %d, want 1", seq)
+	}
+}
+
+func TestNextSendSeqViaServerConn(t *testing.T) {
+	srv := &Server{
+		opts: ServerOptions{Codec: newTestCodec(), SequenceStart: 5},
+		mgr:  NewSessionManager(nil),
+	}
+	conn := newMockConn(nil)
+	srv.OnOpen(conn)
+	srv.mgr.add(conn.Context().(*session))
+
+	serverConn := srv.mgr.Get(conn.Context().(*session).ID()).(ServerConn)
+	if seq := serverConn.NextSendSeq(); seq != 5 {
+		t.Fatalf("ServerConn.NextSendSeq = %d, want 5", seq)
+	}
+	if seq := serverConn.NextSendSeq(); seq != 6 {
+		t.Fatalf("ServerConn.NextSendSeq = %d, want 6", seq)
+	}
+}
+
+func TestNextSendSeqViaClientConn(t *testing.T) {
+	conn := newMockConn(nil)
+	cli := &Client{opts: ClientOptions{Codec: newTestCodec(), SequenceStart: 100}}
+	cli.OnOpen(conn)
+
+	clientConn := conn.Context().(*session)
+	if seq := clientConn.NextSendSeq(); seq != 100 {
+		t.Fatalf("ClientConn.NextSendSeq = %d, want 100", seq)
+	}
+	if seq := clientConn.NextSendSeq(); seq != 101 {
+		t.Fatalf("ClientConn.NextSendSeq = %d, want 101", seq)
+	}
+}
+
+func TestNextSendSeqViaDialerConn(t *testing.T) {
+	conn := newMockConn(nil)
+	d := &Dialer{opts: ClientOptions{Codec: newTestCodec(), SequenceStart: 200}}
+	d.OnOpen(conn)
+
+	dialerConn := conn.Context().(*session)
+	if seq := dialerConn.NextSendSeq(); seq != 200 {
+		t.Fatalf("DialerConn.NextSendSeq = %d, want 200", seq)
+	}
+	if seq := dialerConn.NextSendSeq(); seq != 201 {
+		t.Fatalf("DialerConn.NextSendSeq = %d, want 201", seq)
 	}
 }

@@ -44,6 +44,9 @@ type ServerOptions struct {
 	// 防止单连接一次可读事件占满 event-loop。到达上限且仍有剩余字节会 Wake 重触发。
 	BatchReadLimit int
 
+	// SequenceStart 连接级发送序号起始值。每个新 Session 的首次 NextSendSeq 返回此值。
+	SequenceStart uint64
+
 	// gnet 原生选项透传（详见 gnet.Options）
 	Multicore       bool               // 是否多核（多 event-loop），默认单 loop
 	NumEventLoop    int                // event-loop 数量，>0 时覆盖 Multicore
@@ -96,6 +99,11 @@ func WithSessionListener(l SessionListener) ServerOption {
 // WithBatchReadLimit 设置单次 OnTraffic 最多解码帧数。
 func WithBatchReadLimit(n int) ServerOption {
 	return func(o *ServerOptions) { o.BatchReadLimit = n }
+}
+
+// WithSequenceStart 设置连接级发送序号起始值。
+func WithSequenceStart(n uint64) ServerOption {
+	return func(o *ServerOptions) { o.SequenceStart = n }
 }
 
 // WithMulticore 是否多核（多 event-loop）。
@@ -210,6 +218,9 @@ type ClientOptions struct {
 	// BatchReadLimit 单次 OnTraffic 最多解码帧数。0 用默认 64。
 	BatchReadLimit int
 
+	// SequenceStart 连接级发送序号起始值。每个新 Session 的首次 NextSendSeq 返回此值。
+	SequenceStart uint64
+
 	// ReconnectInterval 连接断开后的固定重连间隔。0 用默认 3s。
 	ReconnectInterval time.Duration
 
@@ -256,6 +267,11 @@ func WithClientSlowHandlerThreshold(d time.Duration) ClientOption {
 // WithClientBatchReadLimit 设置单次 OnTraffic 最多解码帧数。
 func WithClientBatchReadLimit(n int) ClientOption {
 	return func(o *ClientOptions) { o.BatchReadLimit = n }
+}
+
+// WithClientSequenceStart 设置连接级发送序号起始值。
+func WithClientSequenceStart(n uint64) ClientOption {
+	return func(o *ClientOptions) { o.SequenceStart = n }
 }
 
 // WithClientReconnectInterval 设置断线后的固定重连间隔。
