@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 104
-- **Last Active**: 2026-07-03
+- **Total Sessions**: 105
+- **Last Active**: 2026-07-06
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~1864 | Active |
+| `journal-2.md` | ~1898 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 105 | 2026-07-06 | Redesign gnetx codec and session interfaces | `812064ba`, `2de71854` | `master` |
 | 104 | 2026-07-03 | flowx Workflow 封装开发 | `2751e54e`, `52133a2b` | `master` |
 | 103 | 2026-07-03 | Spec Bootstrap: einox/mcpx 规范 + gnetx 心跳更新 | `a7206f42` | `master` |
 | 102 | 2026-07-03 | gnetx: shared ReplyPool, composite TID, Dialer, enhanced LengthPrefix codec, DebugSerializer | `3d15b54d` | `master` |

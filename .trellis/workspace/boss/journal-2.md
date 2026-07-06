@@ -1862,3 +1862,37 @@ common/flowx 包：基于 Azure/go-workflow 的 go-zero 集成封装。提供 Ne
 ### Next Steps
 
 - None - task complete
+
+
+## Session 105: Redesign gnetx codec and session interfaces
+
+**Date**: 2026-07-06
+**Task**: Redesign gnetx codec and session interfaces
+**Branch**: `master`
+
+### Summary
+
+Removed CodecConn; Codec uses Conn + ctx; Conn.NextSendSeq; Serializer body-only; PacketContextProvider for ctx injection; SequenceStart options; example protocol tests
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `812064ba` | (see git log) |
+| `2de71854` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
