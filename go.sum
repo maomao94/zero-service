@@ -18,6 +18,8 @@ github.com/CloudyKit/jet/v3 v3.0.0/go.mod h1:HKQPgSJmdK8hdoAbKUUWajkHyHo4RaU5rMd
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DATA-DOG/go-sqlmock v1.5.2 h1:OcvFkGmslmlZibjAjaHm3L//6LiuBgolP7OputlJIzU=
 github.com/DATA-DOG/go-sqlmock v1.5.2/go.mod h1:88MAG/4G7SMwSE3CeA0ZKzrT5CiOU3OJ+JlNzwDqpNU=
+github.com/HuaweiCloudDeveloper/gaussdb-go v1.0.0-rc1 h1:OIZ83SgbK0ImF/vKFSfNoCAQWQySx5sYhj0RgsWbMbA=
+github.com/HuaweiCloudDeveloper/gaussdb-go v1.0.0-rc1/go.mod h1:Xf3AtRet+/ygewEMfzt0FbIFydPkv47Hx5Xz3w07+yo=
 github.com/Joker/hpp v1.0.0/go.mod h1:8x5n+M1Hp5hC0g8okX3sR3vFQwynaX/UgSOM9MeBKzY=
 github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ4pzQ=
 github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6lCpQ4fNJ8LE=
@@ -1233,6 +1235,8 @@ gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gorm.io/driver/clickhouse v0.7.0 h1:BCrqvgONayvZRgtuA6hdya+eAW5P2QVagV3OlEp1vtA=
 gorm.io/driver/clickhouse v0.7.0/go.mod h1:TmNo0wcVTsD4BBObiRnCahUgHJHjBIwuRejHwYt3JRs=
+gorm.io/driver/gaussdb v0.1.0 h1:QBuYI+j3vPFdXmhBUgC0mgMny/LTy0jMrkNKvLJ5KaE=
+gorm.io/driver/gaussdb v0.1.0/go.mod h1:eaLeLIMHLOxPuNA/wF8BbZvivN28cKzcJmNQbiSpDAw=
 gorm.io/driver/mysql v1.6.0 h1:eNbLmNTpPpTOVZi8MMxCi2aaIm0ZpInbORNXDwyLGvg=
 gorm.io/driver/mysql v1.6.0/go.mod h1:D/oCC2GWK3M/dqoLxnOlaNKmXz8WNTfcS9y5ovaSqKo=
 gorm.io/driver/postgres v1.6.0 h1:2dxzU8xJ+ivvqTRph34QX+WrRaJlmfyPqXmoGVjMBa4=

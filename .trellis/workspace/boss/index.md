@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 108
+- **Total Sessions**: 109
 - **Last Active**: 2026-07-07
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~42 | Active |
+| `journal-3.md` | ~75 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 109 | 2026-07-07 | gormx: 新增 GaussDB 驱动支持，统一 DSN 前缀识别 | `a0de8b2e` | `master` |
 | 108 | 2026-07-07 | trigger: 新增 BatchNextId 批量顺序生成业务唯一编码 | `0a7f1593`, `33f1ae2a`, `dc9fe06a` | `master` |
 | 107 | 2026-07-06 | antsx Invoke 架构优化：errgroup + WaitGroup/errOnce + 规范文档 | `7122e595`, `1c1b2bee`, `dba0d6d1` | `master` |
 | 106 | 2026-07-06 | gnetx trace fix: dispatchAsync metrics + span parentCtx | `86d95578` | `master` |

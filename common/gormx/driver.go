@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"gorm.io/driver/gaussdb"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -16,6 +17,7 @@ const (
 	DatabaseMySQL    DatabaseType = "mysql"
 	DatabasePostgres DatabaseType = "postgres"
 	DatabaseSQLite   DatabaseType = "sqlite"
+	DatabaseGaussDB  DatabaseType = "gaussdb"
 )
 
 func ParseDatabaseType(dsn string) DatabaseType {
@@ -24,13 +26,16 @@ func ParseDatabaseType(dsn string) DatabaseType {
 	if lower == "" {
 		return DatabaseMySQL
 	}
-	if strings.HasPrefix(lower, "sqlite://") || strings.HasPrefix(lower, "sqlite3://") || strings.HasPrefix(lower, "file:") || strings.Contains(lower, ".db") || strings.Contains(lower, ".sqlite") || strings.Contains(lower, ":memory:") {
+	if strings.HasPrefix(lower, "sqlite://") || strings.HasPrefix(lower, "sqlite3://") || strings.HasPrefix(lower, "file:") || strings.HasPrefix(lower, ":memory:") {
 		return DatabaseSQLite
 	}
-	if strings.HasPrefix(lower, "postgres://") || strings.HasPrefix(lower, "postgresql://") || strings.HasPrefix(lower, "postgres ") || strings.Contains(lower, "sslmode=") || strings.Contains(lower, ":5432") {
+	if strings.HasPrefix(lower, "gaussdb://") {
+		return DatabaseGaussDB
+	}
+	if strings.HasPrefix(lower, "postgres://") || strings.HasPrefix(lower, "postgresql://") {
 		return DatabasePostgres
 	}
-	if strings.HasPrefix(lower, "mysql://") || strings.Contains(lower, "@tcp(") || strings.Contains(lower, "charset=") || strings.Contains(lower, ":3306") {
+	if strings.HasPrefix(lower, "mysql://") {
 		return DatabaseMySQL
 	}
 	return DatabaseMySQL
@@ -44,6 +49,8 @@ func GetDialector(dbType DatabaseType, dsn string) (gorm.Dialector, error) {
 		return postgres.Open(dsn), nil
 	case DatabaseSQLite:
 		return sqlite.Open(dsn), nil
+	case DatabaseGaussDB:
+		return gaussdb.Open(dsn), nil
 	default:
 		return nil, errors.Errorf("unsupported database type: %s", dbType)
 	}
@@ -60,6 +67,8 @@ func GetDatabaseTypeFromDialector(db *gorm.DB) DatabaseType {
 		return DatabasePostgres
 	case *sqlite.Dialector:
 		return DatabaseSQLite
+	case *gaussdb.Dialector:
+		return DatabaseGaussDB
 	default:
 		return DatabaseMySQL
 	}

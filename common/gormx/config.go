@@ -6,9 +6,10 @@ import (
 )
 
 type Config struct {
-	// 数据库连接地址，支持 MySQL/PostgreSQL/SQLite 自动识别。
+	// 数据库连接地址，支持 MySQL/PostgreSQL/SQLite/GaussDB 自动识别。
 	// MySQL:      user:pass@tcp(host:port)/db?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
 	// PostgreSQL: postgres://user:pass@host:port/db?sslmode=disable&TimeZone=Asia/Shanghai
+	// GaussDB:    gaussdb://user:pass@host:port/db?sslmode=disable&TimeZone=Asia/Shanghai
 	// SQLite:     file:./data.db?cache=shared
 	DataSource string `json:",optional"`
 	// 最大空闲连接数，默认 100。建议与 MaxOpenConns 一致，避免连接抖动。

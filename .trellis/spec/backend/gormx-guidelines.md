@@ -23,11 +23,46 @@
 | `model.go` | 原子 mixin：`IDModel`/`StringIDModel`（uint/string 主键）、`TimeMixin`（created_at/updated_at）、`SoftDeleteMixin`（deleted_at）、`VersionMixin`（乐观锁，按需嵌入）、`TenantMixin`（tenant_id） |
 | `model_audit.go` | 审计 mixin：`AuditMixin`（uint 用户）、`StringAuditMixin`（string 用户）、`AuditWithoutDeleteMixin`、`StringAuditWithoutDeleteMixin` |
 | `model_legacy.go` | Legacy mixin + `LegacyBaseModel`/`LegacyStringBaseModel`（int64/string 主键 + create_time/update_time + delete_time/del_state，**不含 VersionMixin**） |
-| `driver.go` | 数据库驱动工具 |
+| `driver.go` | 数据库驱动：DSN 前缀识别、Dialector 创建、类型推断 |
 | `upsert.go` | `Upsert` / `UpsertInBatches` 批量合并写入 |
 | `trace.go` | GORM 链路追踪回调 |
 | `logger.go` | `gormLogger` 自定义日志器，支持 `WithoutSQLTrace` context 标记 |
 | `user_context.go` | `AuditUserValue`/`AuditUserID`/`SetAuditUser`，租户上下文提取 |
+
+## 数据库驱动
+
+### DSN 前缀识别
+
+`ParseDatabaseType` 按 DSN scheme 前缀识别数据库类型，不使用端口号、关键字等启发式：
+
+| 前缀 | DatabaseType |
+|------|-------------|
+| `mysql://` | `DatabaseMySQL` |
+| `postgres://` / `postgresql://` | `DatabasePostgres` |
+| `sqlite://` / `sqlite3://` / `file:` / `:memory:` | `DatabaseSQLite` |
+| `gaussdb://` | `DatabaseGaussDB` |
+
+空 DSN 默认 `DatabaseMySQL`。其他格式（如 `user:pass@tcp(...)`、`host=localhost sslmode=...`）不会被自动识别，需通过 `WithDialector` 或 `OpenWithRawDB` 显式指定类型。
+
+```go
+// Good: URL 前缀可自动识别
+db, _ := gormx.Open("postgres://user:pass@host/db?sslmode=disable")
+db, _ := gormx.Open("gaussdb://user:pass@host:8000/db?sslmode=disable")
+
+// Good: 无法自动识别时显式指定
+db, _ := gormx.OpenWithRawDB(sqlDB, gormx.DatabaseMySQL, opts...)
+dialector := gaussdb.New(gaussdb.Config{DSN: "host=... port=8000 ..."})
+db, _ := gormx.OpenWithDialector(&dialector)
+```
+
+### 新增驱动
+
+新增数据库类型需要修改 3 处：
+1. `DatabaseType` 常量 + `ParseDatabaseType` 前缀识别
+2. `GetDialector` switch case
+3. `GetDatabaseTypeFromDialector` type switch
+
+源文件：`driver.go`。
 
 ## 调用约定
 

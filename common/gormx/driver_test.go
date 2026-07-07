@@ -3,6 +3,7 @@ package gormx
 import (
 	"testing"
 
+	"gorm.io/driver/gaussdb"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -15,8 +16,6 @@ func TestParseDatabaseTypeDetectsSQLite(t *testing.T) {
 		{"file:test.db?mode=memory", DatabaseSQLite},
 		{"sqlite://test.db", DatabaseSQLite},
 		{"sqlite3://test.db", DatabaseSQLite},
-		{"/tmp/test.db", DatabaseSQLite},
-		{"test.sqlite", DatabaseSQLite},
 		{":memory:", DatabaseSQLite},
 	}
 	for _, tc := range cases {
@@ -33,8 +32,6 @@ func TestParseDatabaseTypeDetectsPostgres(t *testing.T) {
 	}{
 		{"postgres://user:pass@localhost/db", DatabasePostgres},
 		{"postgresql://user:pass@localhost/db", DatabasePostgres},
-		{"host=localhost sslmode=disable", DatabasePostgres},
-		{"host=localhost:5432 dbname=test", DatabasePostgres},
 	}
 	for _, tc := range cases {
 		if got := ParseDatabaseType(tc.dsn); got != tc.want {
@@ -49,8 +46,6 @@ func TestParseDatabaseTypeDetectsMySQL(t *testing.T) {
 		want DatabaseType
 	}{
 		{"mysql://user:pass@tcp(localhost:3306)/db", DatabaseMySQL},
-		{"user:pass@tcp(localhost:3306)/db?charset=utf8", DatabaseMySQL},
-		{"user:pass@tcp(localhost:3306)/db", DatabaseMySQL},
 		{"", DatabaseMySQL},
 	}
 	for _, tc := range cases {
@@ -94,6 +89,39 @@ func TestGetDialectorRejectsUnsupportedType(t *testing.T) {
 	_, err := GetDialector(DatabaseType("oracle"), "dsn")
 	if err == nil {
 		t.Fatalf("expected error for unsupported database type")
+	}
+}
+
+func TestParseDatabaseTypeDetectsGaussDB(t *testing.T) {
+	cases := []struct {
+		dsn  string
+		want DatabaseType
+	}{
+		{"gaussdb://user:pass@localhost:8000/db", DatabaseGaussDB},
+	}
+	for _, tc := range cases {
+		if got := ParseDatabaseType(tc.dsn); got != tc.want {
+			t.Fatalf("ParseDatabaseType(%q) = %s, want %s", tc.dsn, got, tc.want)
+		}
+	}
+}
+
+func TestGetDialectorReturnsGaussDB(t *testing.T) {
+	d, err := GetDialector(DatabaseGaussDB, "host=localhost port=8000 user=gorm dbname=gorm sslmode=disable")
+	if err != nil {
+		t.Fatalf("get dialector error = %v", err)
+	}
+	if d == nil {
+		t.Fatalf("dialector should not be nil")
+	}
+}
+
+func TestGetDatabaseTypeFromDialectorGaussDB(t *testing.T) {
+	var d gorm.Dialector = gaussdb.New(gaussdb.Config{})
+	db := &gorm.DB{Config: &gorm.Config{}}
+	db.Dialector = d
+	if got := GetDatabaseTypeFromDialector(db); got != DatabaseGaussDB {
+		t.Fatalf("database type = %s, want %s", got, DatabaseGaussDB)
 	}
 }
 
