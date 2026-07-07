@@ -7055,7 +7055,7 @@ type BatchNextIdReq struct {
 	// true: 按维度/分类分开生成 ID
 	// false: 全局统一生成 ID
 	Separate bool `protobuf:"varint,2,opt,name=separate,proto3" json:"separate,omitempty"`
-	// 生成数量，最多 10000；用于业务批量插入前顺序预生成编码
+	// 生成数量，自动扩位；用于业务批量插入前顺序预生成编码
 	Count         uint32 `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -8078,12 +8078,11 @@ const file_trigger_proto_rawDesc = "" +
 	"\voutDescType\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\voutDescType\x12\x1a\n" +
 	"\bseparate\x18\x02 \x01(\bR\bseparate\"#\n" +
 	"\tNextIdRes\x12\x16\n" +
-	"\x06nextId\x18\x01 \x01(\tR\x06nextId\"y\n" +
+	"\x06nextId\x18\x01 \x01(\tR\x06nextId\"v\n" +
 	"\x0eBatchNextIdReq\x12)\n" +
 	"\voutDescType\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\voutDescType\x12\x1a\n" +
-	"\bseparate\x18\x02 \x01(\bR\bseparate\x12 \n" +
-	"\x05count\x18\x03 \x01(\rB\n" +
-	"\xfaB\a*\x05\x18\x90N(\x01R\x05count\"*\n" +
+	"\bseparate\x18\x02 \x01(\bR\bseparate\x12\x1d\n" +
+	"\x05count\x18\x03 \x01(\rB\a\xfaB\x04*\x02(\x01R\x05count\"*\n" +
 	"\x0eBatchNextIdRes\x12\x18\n" +
 	"\anextIds\x18\x01 \x03(\tR\anextIds\"\x8b\x03\n" +
 	"\fInvokeTaskPb\x12\x17\n" +

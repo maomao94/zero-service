@@ -34,45 +34,33 @@ func (u *IdUtil) NextIds(outDescType string, category string, count int64) ([]st
 	if count <= 0 {
 		count = 1
 	}
-	if count > 10000 {
-		return nil, fmt.Errorf("count must be less than or equal to 10000")
+
+	now := time.Now()
+	yy := now.Format("2006")             // 4位年份
+	dateTime := now.Format("0102150405") // MMddHHmmss
+
+	endId, err := u.getNextIds(outDescType, category, count)
+	if err != nil {
+		return nil, err
 	}
 
-	for {
-		now := time.Now()
-		yy := now.Format("2006")             // 4位年份
-		dateTime := now.Format("0102150405") // MMddHHmmss
-		endId, err := u.getNextIds(outDescType, category, dateTime, count)
-		if err != nil {
-			return nil, err
-		}
-		if endId > 10000 {
-			time.Sleep(time.Until(now.Truncate(time.Second).Add(time.Second)))
-			continue
-		}
-
-		startId := endId - count + 1
-		ids := make([]string, 0, count)
-		for id := startId; id <= endId; id++ {
-			seq := fmt.Sprintf("%04d", id%10000)
-			ids = append(ids, fmt.Sprintf("%s%s%s%s", outDescType, yy, dateTime, seq))
-		}
-		return ids, nil
+	startId := endId - count + 1
+	ids := make([]string, 0, count)
+	for id := startId; id <= endId; id++ {
+		seq := fmt.Sprintf("%04d", id)
+		ids = append(ids, fmt.Sprintf("%s%s%s%s", outDescType, yy, dateTime, seq))
 	}
+	return ids, nil
 }
 
-func (u *IdUtil) getNextId(key string, category string) (int64, error) {
-	return u.getNextIds(key, category, time.Now().Format("0102150405"), 1)
-}
-
-func (u *IdUtil) getNextIds(key string, category string, dateTime string, count int64) (int64, error) {
-	fKey := fmt.Sprintf("%s:outId_%s_%s", category, key, dateTime)
+func (u *IdUtil) getNextIds(key string, category string, count int64) (int64, error) {
+	fKey := fmt.Sprintf("%s:outId_%s", category, key)
 	id, err := u.Redis.Incrby(fKey, count)
 	if err != nil {
 		return 0, err
 	}
-	if id == count || id >= 10000 {
-		err = u.Redis.Expire(fKey, 3600) // 1小时 = 3600秒
+	if id == count {
+		err = u.Redis.Expire(fKey, 60)
 		if err != nil {
 			return 0, err
 		}

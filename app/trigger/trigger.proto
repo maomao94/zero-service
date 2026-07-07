@@ -1194,8 +1194,8 @@ message BatchNextIdReq{
   // false: 全局统一生成 ID
   bool separate = 2;
 
-  // 生成数量，最多 10000；用于业务批量插入前顺序预生成编码
-  uint32 count = 3 [(validate.rules).uint32 = {gte: 1, lte: 10000}];
+  // 生成数量，自动扩位；用于业务批量插入前顺序预生成编码
+  uint32 count = 3 [(validate.rules).uint32 = {gte: 1}];
 }
 
 message BatchNextIdRes{

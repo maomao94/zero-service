@@ -13239,10 +13239,10 @@ func (m *BatchNextIdReq) validate(all bool) error {
 
 	// no validation rules for Separate
 
-	if val := m.GetCount(); val < 1 || val > 10000 {
+	if m.GetCount() < 1 {
 		err := BatchNextIdReqValidationError{
 			field:  "Count",
-			reason: "value must be inside range [1, 10000]",
+			reason: "value must be greater than or equal to 1",
 		}
 		if !all {
 			return err
