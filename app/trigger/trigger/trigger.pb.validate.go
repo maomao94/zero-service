@@ -13204,6 +13204,230 @@ var _ interface {
 	ErrorName() string
 } = NextIdResValidationError{}
 
+// Validate checks the field values on BatchNextIdReq with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *BatchNextIdReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on BatchNextIdReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in BatchNextIdReqMultiError,
+// or nil if none found.
+func (m *BatchNextIdReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *BatchNextIdReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetOutDescType()) > 64 {
+		err := BatchNextIdReqValidationError{
+			field:  "OutDescType",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Separate
+
+	if val := m.GetCount(); val < 1 || val > 10000 {
+		err := BatchNextIdReqValidationError{
+			field:  "Count",
+			reason: "value must be inside range [1, 10000]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return BatchNextIdReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// BatchNextIdReqMultiError is an error wrapping multiple validation errors
+// returned by BatchNextIdReq.ValidateAll() if the designated constraints
+// aren't met.
+type BatchNextIdReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m BatchNextIdReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m BatchNextIdReqMultiError) AllErrors() []error { return m }
+
+// BatchNextIdReqValidationError is the validation error returned by
+// BatchNextIdReq.Validate if the designated constraints aren't met.
+type BatchNextIdReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e BatchNextIdReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e BatchNextIdReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e BatchNextIdReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e BatchNextIdReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e BatchNextIdReqValidationError) ErrorName() string { return "BatchNextIdReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e BatchNextIdReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sBatchNextIdReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = BatchNextIdReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = BatchNextIdReqValidationError{}
+
+// Validate checks the field values on BatchNextIdRes with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *BatchNextIdRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on BatchNextIdRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in BatchNextIdResMultiError,
+// or nil if none found.
+func (m *BatchNextIdRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *BatchNextIdRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return BatchNextIdResMultiError(errors)
+	}
+
+	return nil
+}
+
+// BatchNextIdResMultiError is an error wrapping multiple validation errors
+// returned by BatchNextIdRes.ValidateAll() if the designated constraints
+// aren't met.
+type BatchNextIdResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m BatchNextIdResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m BatchNextIdResMultiError) AllErrors() []error { return m }
+
+// BatchNextIdResValidationError is the validation error returned by
+// BatchNextIdRes.Validate if the designated constraints aren't met.
+type BatchNextIdResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e BatchNextIdResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e BatchNextIdResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e BatchNextIdResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e BatchNextIdResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e BatchNextIdResValidationError) ErrorName() string { return "BatchNextIdResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e BatchNextIdResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sBatchNextIdRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = BatchNextIdResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = BatchNextIdResValidationError{}
+
 // Validate checks the field values on InvokeTaskPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.

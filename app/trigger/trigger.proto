@@ -103,6 +103,8 @@ service TriggerRpc {
 
   // 生成业务唯一编码（如工单号、告警编码等），由中间件统一生成，非数据库自增序列
   rpc NextId (NextIdReq) returns (NextIdRes);
+  // 批量顺序生成业务唯一编码，用于业务批量插入前预生成编码
+  rpc BatchNextId (BatchNextIdReq) returns (BatchNextIdRes);
 
   // 并发调用调度
   rpc Invoke(InvokeReq) returns (InvokeRes);
@@ -1182,6 +1184,23 @@ message NextIdReq{
 
 message NextIdRes{
   string nextId = 1;
+}
+
+message BatchNextIdReq{
+  // 输出描述类型 默认-P
+  string outDescType = 1 [(validate.rules).string = {max_len: 64}];
+
+  // true: 按维度/分类分开生成 ID
+  // false: 全局统一生成 ID
+  bool separate = 2;
+
+  // 生成数量，最多 10000；用于业务批量插入前顺序预生成编码
+  uint32 count = 3 [(validate.rules).uint32 = {gte: 1, lte: 10000}];
+}
+
+message BatchNextIdRes{
+  // 批量编码，按生成顺序返回
+  repeated string nextIds = 1;
 }
 
 // ==================== Invoke Service ====================

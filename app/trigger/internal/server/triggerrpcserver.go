@@ -263,10 +263,16 @@ func (s *TriggerRpcServer) CallbackPlanExecItem(ctx context.Context, in *trigger
 	return l.CallbackPlanExecItem(in)
 }
 
-// 生成自增ID
+// 生成业务唯一编码（如工单号、告警编码等），由中间件统一生成，非数据库自增序列
 func (s *TriggerRpcServer) NextId(ctx context.Context, in *trigger.NextIdReq) (*trigger.NextIdRes, error) {
 	l := logic.NewNextIdLogic(ctx, s.svcCtx)
 	return l.NextId(in)
+}
+
+// 批量顺序生成业务唯一编码，用于业务批量插入前预生成编码
+func (s *TriggerRpcServer) BatchNextId(ctx context.Context, in *trigger.BatchNextIdReq) (*trigger.BatchNextIdRes, error) {
+	l := logic.NewBatchNextIdLogic(ctx, s.svcCtx)
+	return l.BatchNextId(in)
 }
 
 // 并发调用调度
