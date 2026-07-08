@@ -108,6 +108,26 @@ func (m *Manager) connect() error {
 		m.trackRecvSeq(req.SendSeq, conn.ID())
 		return m.responseWithCode(conn, req, handler.ResponseCode(err)), nil
 	})
+	// 模型更新上报 (11-0)：服务端推送模型文件列表
+	gnetx.HandleTyped(router, isp.MessageIDModelUpdateReport, func(ctx context.Context, conn gnetx.Conn, req *isp.Message) (any, error) {
+		handler.LogInbound(ctx, req)
+		err := handler.HandleModelUpdateReport(ctx, req)
+		m.trackRecvSeq(req.SendSeq, conn.ID())
+		return m.responseWithCode(conn, req, handler.ResponseCode(err)), nil
+	})
+	// 模型同步拉取 (61-2/4/9)：服务端主动拉取模型文件
+	modelSyncHandler := func(ctx context.Context, conn gnetx.Conn, req *isp.Message) (any, error) {
+		handler.LogInbound(ctx, req)
+		items, err := handler.HandleModelSync(ctx, req)
+		m.trackRecvSeq(req.SendSeq, conn.ID())
+		if err != nil || len(items) == 0 {
+			return m.responseWithCode(conn, req, handler.ResponseCode(err)), nil
+		}
+		return m.responseWithItems(conn, req, isp.StatusSuccess, items), nil
+	}
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelRobot), modelSyncHandler)       // 61-2
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelPoint), modelSyncHandler)      // 61-4
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelMap), modelSyncHandler)         // 61-9
 	// 未匹配入站消息：fallback 日志 + 回复 251-3
 	router.FallbackFunc(func(ctx context.Context, conn gnetx.Conn, msg any) (any, error) {
 		im, ok := msg.(*isp.Message)
@@ -140,6 +160,15 @@ func (m *Manager) defaultResponse(conn gnetx.Conn, req *isp.Message) *isp.Messag
 
 // responseWithCode 构造带指定 Code 的 251-3 通用应答。
 func (m *Manager) responseWithCode(conn gnetx.Conn, req *isp.Message, code string) *isp.Message {
+	return m.makeResponse(conn, req, code, isp.CommandGenericResponseWithoutItems, nil)
+}
+
+// responseWithItems 构造带 Code 和 Items 的 251-4 通用应答。
+func (m *Manager) responseWithItems(conn gnetx.Conn, req *isp.Message, code string, items []isp.Item) *isp.Message {
+	return m.makeResponse(conn, req, code, isp.CommandGenericResponseWithItems, items)
+}
+
+func (m *Manager) makeResponse(conn gnetx.Conn, req *isp.Message, code string, command int32, items []isp.Item) *isp.Message {
 	m.mu.RLock()
 	rootName := m.cfg.RootName
 	sendCode := m.cfg.SendCode
@@ -152,10 +181,11 @@ func (m *Manager) responseWithCode(conn gnetx.Conn, req *isp.Message, code strin
 		ReceiveCode:   receiveCode,
 		Type:          isp.TypeSystem,
 		Code:          code,
-		Command:       isp.CommandGenericResponseWithoutItems,
+		Command:       command,
 		SendSeq:       conn.NextSendSeq(),
 		RecvSeq:       req.SendSeq,
 		Time:          defaultTime(""),
+		Items:         items,
 	}
 }
 

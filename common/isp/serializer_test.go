@@ -117,3 +117,52 @@ func TestCodecEncodesJavaCompatibleFrame(t *testing.T) {
 		t.Fatalf("xml length = %d, want %d", xmlLen, len(frame)-25)
 	}
 }
+
+func TestXMLParseModelUpdateMultiItems(t *testing.T) {
+	xmlBizData := `<PatrolDevice>
+    <SendCode>testDog</SendCode>
+    <ReceiveCode>Server01</ReceiveCode>
+    <Code>变电站编码</Code>
+    <Type>11</Type>
+    <Time>2025-01-09 12:00:00</Time>
+    <Items>
+        <Item time="2025-01-09 12:00:00" type="1" file_path="/path/to/deviceA_model.xml"/>
+        <Item time="2025-01-09 12:05:00" type="2" file_path="/path/to/region_host_model.xml"/>
+        <Item time="2025-01-09 12:10:00" type="3" file_path="/path/to/robot_model.xml"/>
+        <Item time="2025-01-09 12:15:00" type="4" file_path="/path/to/camera_model.xml"/>
+        <Item time="2025-01-09 12:20:00" type="5" file_path="/path/to/drone_model.xml"/>
+        <Item time="2025-01-09 12:25:00" type="6" file_path="/path/to/voice_model.xml"/>
+        <Item time="2025-01-09 12:30:00" type="7" file_path="/path/to/task_model.xml"/>
+        <Item time="2025-01-09 12:35:00" type="8" file_path="/path/to/maintenance_config.xml"/>
+        <Item time="2025-01-09 12:40:00" type="9" file_path="/path/to/map_file.xml"/>
+        <Item time="2025-01-09 12:45:00" type="10" file_path="/path/to/maintenance_record.xml"/>
+        <Item time="2025-01-09 12:50:00" type="11" file_path="/path/to/linkage_config.xml"/>
+        <Item time="2025-01-09 12:55:00" type="12" file_path="/path/to/alarm_threshold_model.xml"/>
+    </Items>
+</PatrolDevice>`
+
+	msg, err := ParseXML([]byte(xmlBizData))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if msg.Type != TypeModelUpdateReport {
+		t.Fatalf("type=%d, want %d", msg.Type, TypeModelUpdateReport)
+	}
+	if msg.Command != 0 {
+		t.Fatalf("command=%d, want 0 (report)", msg.Command)
+	}
+	if msg.MessageID() != MessageIDModelUpdateReport {
+		t.Fatalf("messageID=%#x, want %#x", msg.MessageID(), MessageIDModelUpdateReport)
+	}
+	if len(msg.Items) != 12 {
+		t.Fatalf("items=%d, want 12", len(msg.Items))
+	}
+	for i, item := range msg.Items {
+		typ := item["type"]
+		fp := item["file_path"]
+		if typ == "" || fp == "" {
+			t.Fatalf("item[%d] type=%s file_path=%s", i, typ, fp)
+		}
+		t.Logf("item[%d]: type=%s file_path=%s", i, typ, fp)
+	}
+}
