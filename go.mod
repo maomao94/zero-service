@@ -42,7 +42,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0
 	github.com/hibiken/asynq v0.26.0
 	github.com/jinzhu/copier v0.4.0
-	github.com/larksuite/oapi-sdk-go/v3 v3.9.7
+	github.com/larksuite/oapi-sdk-go/v3 v3.9.8
 	github.com/lib/pq v1.12.3
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2
 	github.com/minio/minio-go/v7 v7.2.1
@@ -63,7 +63,7 @@ require (
 	github.com/taosdata/driver-go/v3 v3.8.1
 	github.com/teambition/rrule-go v1.8.2
 	github.com/tidwall/gjson v1.19.0
-	github.com/twpayne/go-geos v0.20.4
+	github.com/twpayne/go-geos v0.21.0
 	github.com/u2takey/ffmpeg-go v0.5.0
 	github.com/uber/h3-go/v4 v4.5.0
 	github.com/wendy512/go-iecp5 v1.2.6
@@ -77,7 +77,7 @@ require (
 	golang.org/x/net v0.56.0
 	golang.org/x/sync v0.21.0
 	golang.org/x/term v0.44.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20260630182238-925bb5da69e7
+	google.golang.org/genproto/googleapis/api v0.0.0-20260706201446-f0a921348800
 	google.golang.org/grpc v1.82.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
