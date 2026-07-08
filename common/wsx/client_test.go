@@ -746,7 +746,7 @@ func TestNormalizeConfig_PreservesUserValues(t *testing.T) {
 
 func TestSentinelErrors(t *testing.T) {
 	errs := []error{
-		ErrNotConnected,
+		ErrNotConnected, ErrNotAuthenticated,
 		ErrAuthTimeout, ErrAuthFailed, ErrAuthCanceled,
 		ErrTokenRefresh,
 	}
@@ -754,5 +754,93 @@ func TestSentinelErrors(t *testing.T) {
 		if e.Error() == "" {
 			t.Fatalf("empty error message for %T", e)
 		}
+	}
+}
+
+// ---------- Send before authenticated ----------
+
+func TestSend_NotAuthenticated(t *testing.T) {
+	ts := newWSServer(drainServer)
+	defer ts.Close()
+
+	blockAuth := make(chan struct{})
+	releaseAuth := make(chan struct{})
+
+	connectedCh := make(chan struct{}, 1)
+	cli, _ := NewClient(Config{URL: wsURL(ts)},
+		WithOnStateChange(func(ctx context.Context, s ConnState, err error) {
+			if s == StateConnected {
+				connectedCh <- struct{}{}
+			}
+		}),
+		WithAuthenticate(func(ctx context.Context) error {
+			blockAuth <- struct{}{}
+			<-releaseAuth
+			return nil
+		}),
+	)
+	defer cli.Close()
+
+	select {
+	case <-connectedCh:
+	case <-time.After(3 * time.Second):
+		t.Fatal("timeout waiting for StateConnected")
+	}
+
+	select {
+	case <-blockAuth:
+	case <-time.After(3 * time.Second):
+		t.Fatal("timeout waiting for auth to start")
+	}
+
+	if err := cli.Send(context.Background(), []byte("x")); err != ErrNotAuthenticated {
+		t.Fatalf("want ErrNotAuthenticated, got %v", err)
+	}
+
+	close(releaseAuth)
+	waitState(t, cli, StateAuthenticated, 3*time.Second)
+
+	if err := cli.Send(context.Background(), []byte("x")); err != nil {
+		t.Fatalf("send after auth should succeed, got %v", err)
+	}
+}
+
+// ---------- Send during reconnecting ----------
+
+func TestSend_DuringReconnecting(t *testing.T) {
+	ts := newWSServer(func(conn *websocket.Conn) {
+		conn.ReadMessage()
+		conn.Close()
+	})
+	defer ts.Close()
+
+	reconnectingCh := make(chan struct{}, 1)
+	cli, _ := NewClient(Config{
+		URL:               wsURL(ts),
+		ReconnectInterval: 500 * time.Millisecond,
+	},
+		WithOnStateChange(func(ctx context.Context, s ConnState, err error) {
+			if s == StateReconnecting {
+				select {
+				case reconnectingCh <- struct{}{}:
+				default:
+				}
+			}
+		}),
+	)
+	defer cli.Close()
+	waitState(t, cli, StateAuthenticated, 3*time.Second)
+
+	cli.Send(context.Background(), []byte("trigger"))
+
+	select {
+	case <-reconnectingCh:
+	case <-time.After(3 * time.Second):
+		t.Fatal("timeout waiting for reconnecting state")
+	}
+
+	err := cli.Send(context.Background(), []byte("x"))
+	if err != ErrNotConnected && err != ErrNotAuthenticated {
+		t.Fatalf("want ErrNotConnected or ErrNotAuthenticated, got %v", err)
 	}
 }

@@ -101,6 +101,9 @@ func (c *client) writeMessage(msgType int, data []byte) error {
 	if conn == nil {
 		return ErrNotConnected
 	}
+	if ConnState(c.state.Load()) != StateAuthenticated {
+		return ErrNotAuthenticated
+	}
 
 	c.writeMu.Lock()
 	defer c.writeMu.Unlock()
