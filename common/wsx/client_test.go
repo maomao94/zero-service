@@ -13,8 +13,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// ---------- test helpers ----------
-
 func newWSServer(handler func(*websocket.Conn)) *httptest.Server {
 	upgrader := websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +45,6 @@ func waitState(t *testing.T, cli Client, want ConnState, timeout time.Duration) 
 	}
 }
 
-// echoServer returns a handler that echoes received messages.
 func echoServer(received *[][]byte, mu *sync.Mutex) func(*websocket.Conn) {
 	return func(conn *websocket.Conn) {
 		for {
@@ -67,7 +64,6 @@ func echoServer(received *[][]byte, mu *sync.Mutex) func(*websocket.Conn) {
 	}
 }
 
-// drainServer reads and discards all messages until connection closes.
 func drainServer(conn *websocket.Conn) {
 	for {
 		if _, _, err := conn.ReadMessage(); err != nil {
@@ -86,17 +82,20 @@ func TestNewClient_EmptyURL(t *testing.T) {
 }
 
 func TestNewClient_DefaultConfig(t *testing.T) {
-	cli, err := NewClient(Config{URL: "ws://localhost:9999"})
+	ts := newWSServer(drainServer)
+	defer ts.Close()
+
+	cli, err := NewClient(Config{URL: wsURL(ts)})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cli.State() != StateDisconnected {
-		t.Fatalf("expected StateDisconnected before Connect, got %s", cli.State())
-	}
+	defer cli.Close()
+	waitState(t, cli, StateAuthenticated, 3*time.Second)
 }
 
 func TestNewClient_FillsDefaults(t *testing.T) {
 	cli, _ := NewClient(Config{URL: "ws://localhost:9999"})
+	defer cli.Close()
 	c := cli.(*client)
 	if c.cfg.WriteTimeout != DefaultWriteTimeout {
 		t.Fatalf("WriteTimeout default: want %v, got %v", DefaultWriteTimeout, c.cfg.WriteTimeout)
@@ -110,49 +109,33 @@ func TestMustNewClient(t *testing.T) {
 	ts := newWSServer(drainServer)
 	defer ts.Close()
 
-	cli := MustNewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0})
+	cli := MustNewClient(Config{URL: wsURL(ts)})
 	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 }
 
-// ---------- Connect / Close ----------
+// ---------- Close ----------
 
 func TestConnectAndClose(t *testing.T) {
 	ts := newWSServer(drainServer)
 	defer ts.Close()
 
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0})
-	cli.Connect(context.Background())
+	cli, _ := NewClient(Config{URL: wsURL(ts)})
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
-	if err := cli.Close(); err != nil {
-		t.Fatal(err)
-	}
+	cli.Close()
 	if cli.State() != StateDisconnected {
 		t.Fatalf("expected StateDisconnected after Close, got %s", cli.State())
 	}
-}
-
-func TestConnect_AlreadyRunning(t *testing.T) {
-	ts := newWSServer(drainServer)
-	defer ts.Close()
-
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0})
-	cli.Connect(context.Background())
-	waitState(t, cli, StateAuthenticated, 3*time.Second)
-
-	if err := cli.Connect(context.Background()); err != ErrAlreadyRunning {
-		t.Fatalf("expected ErrAlreadyRunning, got %v", err)
-	}
-	cli.Close()
 }
 
 func TestDoubleClose_Noop(t *testing.T) {
 	ts := newWSServer(drainServer)
 	defer ts.Close()
 
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0})
-	cli.Connect(context.Background())
+	cli, _ := NewClient(Config{URL: wsURL(ts)})
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
 	cli.Close()
@@ -162,13 +145,13 @@ func TestDoubleClose_Noop(t *testing.T) {
 }
 
 func TestClose_BeforeConnect(t *testing.T) {
-	cli, _ := NewClient(Config{URL: "ws://localhost:9999", MaxReconnectRetries: 0})
+	cli, _ := NewClient(Config{URL: "ws://localhost:9999"})
 	if err := cli.Close(); err != nil {
-		t.Fatalf("Close before Connect should succeed, got: %v", err)
+		t.Fatalf("Close before connect should succeed, got: %v", err)
 	}
 }
 
-// ---------- Send / Receive (bidirectional) ----------
+// ---------- Send / Receive ----------
 
 func TestSend_ReceiveByServer(t *testing.T) {
 	received := make(chan []byte, 1)
@@ -178,8 +161,8 @@ func TestSend_ReceiveByServer(t *testing.T) {
 	})
 	defer ts.Close()
 
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0})
-	cli.Connect(context.Background())
+	cli, _ := NewClient(Config{URL: wsURL(ts)})
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
 	cli.Send(context.Background(), []byte("hello"))
@@ -192,7 +175,6 @@ func TestSend_ReceiveByServer(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for message on server")
 	}
-	cli.Close()
 }
 
 func TestOnMessage_ReceiveFromServer(t *testing.T) {
@@ -203,13 +185,13 @@ func TestOnMessage_ReceiveFromServer(t *testing.T) {
 	})
 	defer ts.Close()
 
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0},
+	cli, _ := NewClient(Config{URL: wsURL(ts)},
 		WithOnMessage(func(ctx context.Context, msg []byte) error {
 			got <- msg
 			return nil
 		}),
 	)
-	cli.Connect(context.Background())
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
 	select {
@@ -220,7 +202,6 @@ func TestOnMessage_ReceiveFromServer(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		t.Fatal("timeout waiting for OnMessage callback")
 	}
-	cli.Close()
 }
 
 func TestOnMessage_OnMessageError_MetricsDrop(t *testing.T) {
@@ -230,17 +211,15 @@ func TestOnMessage_OnMessageError_MetricsDrop(t *testing.T) {
 	})
 	defer ts.Close()
 
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0},
+	cli, _ := NewClient(Config{URL: wsURL(ts)},
 		WithOnMessage(func(ctx context.Context, msg []byte) error {
-			return ErrNotConnected // trigger drop path
+			return ErrNotConnected
 		}),
 	)
-	cli.Connect(context.Background())
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
-	// wait for message processing
 	time.Sleep(200 * time.Millisecond)
-	cli.Close()
 }
 
 func TestSendJSON(t *testing.T) {
@@ -251,8 +230,8 @@ func TestSendJSON(t *testing.T) {
 	})
 	defer ts.Close()
 
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0})
-	cli.Connect(context.Background())
+	cli, _ := NewClient(Config{URL: wsURL(ts)})
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
 	cli.SendJSON(context.Background(), map[string]int{"a": 1})
@@ -265,11 +244,11 @@ func TestSendJSON(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout")
 	}
-	cli.Close()
 }
 
 func TestSend_NotConnected(t *testing.T) {
-	cli, _ := NewClient(Config{URL: "ws://localhost:9999", MaxReconnectRetries: 0})
+	cli, _ := NewClient(Config{URL: "ws://localhost:9999"})
+	defer cli.Close()
 	if err := cli.Send(context.Background(), []byte("x")); err != ErrNotConnected {
 		t.Fatalf("want ErrNotConnected, got %v", err)
 	}
@@ -279,8 +258,8 @@ func TestSend_AfterClose(t *testing.T) {
 	ts := newWSServer(drainServer)
 	defer ts.Close()
 
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0})
-	cli.Connect(context.Background())
+	cli, _ := NewClient(Config{URL: wsURL(ts)})
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 	cli.Close()
 
@@ -297,7 +276,7 @@ func TestBidirectionalEcho(t *testing.T) {
 	ts := newWSServer(echoServer(&received, &mu))
 	defer ts.Close()
 
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0},
+	cli, _ := NewClient(Config{URL: wsURL(ts)},
 		WithOnMessage(func(ctx context.Context, msg []byte) error {
 			mu.Lock()
 			received = append(received, msg)
@@ -305,7 +284,7 @@ func TestBidirectionalEcho(t *testing.T) {
 			return nil
 		}),
 	)
-	cli.Connect(context.Background())
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
 	for i := 0; i < 5; i++ {
@@ -314,18 +293,14 @@ func TestBidirectionalEcho(t *testing.T) {
 		}
 	}
 
-	// Wait for echoes to arrive
 	time.Sleep(300 * time.Millisecond)
 
 	mu.Lock()
 	count := len(received)
 	mu.Unlock()
-	// Server echoes back, so OnMessage should receive echoed messages
-	// (5 sent + 5 echoed = 10 total, but OnMessage only captures incoming)
 	if count < 5 {
 		t.Fatalf("expected at least 5 echoed messages received by client, got %d", count)
 	}
-	cli.Close()
 }
 
 // ---------- Concurrent sends ----------
@@ -342,8 +317,8 @@ func TestConcurrentSends(t *testing.T) {
 	})
 	defer ts.Close()
 
-	cli, _ := NewClient(Config{URL: wsURL(ts), WriteTimeout: 5 * time.Second, MaxReconnectRetries: 0})
-	cli.Connect(context.Background())
+	cli, _ := NewClient(Config{URL: wsURL(ts), WriteTimeout: 5 * time.Second})
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
 	var wg sync.WaitGroup
@@ -360,7 +335,6 @@ func TestConcurrentSends(t *testing.T) {
 	if msgCount.Load() != 20 {
 		t.Fatalf("expected 20 messages on server, got %d", msgCount.Load())
 	}
-	cli.Close()
 }
 
 // ---------- Authentication ----------
@@ -370,76 +344,79 @@ func TestAuthSuccess(t *testing.T) {
 	defer ts.Close()
 
 	called := false
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0},
+	cli, _ := NewClient(Config{URL: wsURL(ts)},
 		WithAuthenticate(func(ctx context.Context) error {
 			called = true
 			return nil
 		}),
 	)
-	cli.Connect(context.Background())
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
 	if !called {
 		t.Fatal("authenticate not called")
 	}
-	cli.Close()
 }
 
-func TestAuthFailure_NoReconnect(t *testing.T) {
+func TestAuthFailure_Reconnects(t *testing.T) {
 	ts := newWSServer(drainServer)
 	defer ts.Close()
 
-	stateCh := make(chan ConnState, 3)
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0},
+	var mu sync.Mutex
+	var states []ConnState
+	cli, _ := NewClient(Config{URL: wsURL(ts)},
 		WithAuthenticate(func(ctx context.Context) error { return ErrAuthFailed }),
-		WithReconnectOnAuthFailed(false),
 		WithOnStateChange(func(ctx context.Context, s ConnState, err error) {
-			if s == StateAuthFailed {
-				stateCh <- s
-			}
+			mu.Lock()
+			states = append(states, s)
+			mu.Unlock()
 		}),
 	)
-	cli.Connect(context.Background())
+	defer cli.Close()
 
-	select {
-	case s := <-stateCh:
-		if s != StateAuthFailed {
-			t.Fatalf("want StateAuthFailed, got %s", s)
+	time.Sleep(500 * time.Millisecond)
+
+	mu.Lock()
+	hasConnected := false
+	for _, s := range states {
+		if s == StateConnected {
+			hasConnected = true
+			break
 		}
-	case <-time.After(3 * time.Second):
-		t.Fatal("timeout waiting for auth failure")
 	}
-	cli.Close()
+	mu.Unlock()
+
+	if !hasConnected {
+		t.Fatal("expected reconnect after auth failure")
+	}
 }
 
 func TestAuthTimeout(t *testing.T) {
 	ts := newWSServer(drainServer)
 	defer ts.Close()
 
-	stateCh := make(chan ConnState, 3)
-	cli, _ := NewClient(Config{URL: wsURL(ts), AuthTimeout: 100 * time.Millisecond, MaxReconnectRetries: 0},
+	stateCh := make(chan error, 1)
+	cli, _ := NewClient(Config{URL: wsURL(ts), AuthTimeout: 100 * time.Millisecond},
 		WithAuthenticate(func(ctx context.Context) error {
-			<-ctx.Done() // block until timeout
+			<-ctx.Done()
 			return ctx.Err()
 		}),
-		WithReconnectOnAuthFailed(false),
 		WithOnStateChange(func(ctx context.Context, s ConnState, err error) {
 			if s == StateAuthFailed {
-				stateCh <- s
+				stateCh <- err
 			}
 		}),
 	)
-	cli.Connect(context.Background())
+	defer cli.Close()
 
 	select {
-	case s := <-stateCh:
-		if s != StateAuthFailed {
-			t.Fatalf("want StateAuthFailed, got %s", s)
+	case err := <-stateCh:
+		if err != ErrAuthTimeout {
+			t.Fatalf("want ErrAuthTimeout, got %v", err)
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for auth timeout")
 	}
-	cli.Close()
 }
 
 // ---------- State transitions ----------
@@ -450,66 +427,78 @@ func TestStateTransitions(t *testing.T) {
 
 	var mu sync.Mutex
 	var states []ConnState
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0},
+	cli, _ := NewClient(Config{URL: wsURL(ts)},
 		WithOnStateChange(func(ctx context.Context, s ConnState, err error) {
 			mu.Lock()
 			states = append(states, s)
 			mu.Unlock()
 		}),
 	)
-	cli.Connect(context.Background())
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 	cli.Close()
 
 	mu.Lock()
 	defer mu.Unlock()
-	// Expect: Connecting → Connected → Authenticated → Disconnected
 	if len(states) < 3 {
 		t.Fatalf("want >=3 transitions, got %d: %v", len(states), states)
 	}
 }
 
-// ---------- Context cancellation ----------
+// ---------- Close stops reconnection ----------
 
-func TestContextCancel_Disconnects(t *testing.T) {
-	ts := newWSServer(drainServer)
-	defer ts.Close()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0})
-	cli.Connect(ctx)
-	waitState(t, cli, StateAuthenticated, 3*time.Second)
-
-	cancel()
-	waitState(t, cli, StateDisconnected, 3*time.Second)
-}
-
-func TestContextCancel_DuringReconnect(t *testing.T) {
+func TestClose_StopsReconnect(t *testing.T) {
+	connCount := atomic.Int32{}
 	ts := newWSServer(func(conn *websocket.Conn) {
-		conn.ReadMessage() // block, then server closes after first msg
+		connCount.Add(1)
 		conn.Close()
 	})
 	defer ts.Close()
 
-	ctx, cancel := context.WithCancel(context.Background())
 	cli, _ := NewClient(Config{
 		URL:               wsURL(ts),
-		MinReconnectDelay: 1 * time.Second,
-		MaxReconnectDelay: 2 * time.Second,
+		ReconnectInterval: 10 * time.Millisecond,
+	})
+	defer cli.Close()
+
+	time.Sleep(200 * time.Millisecond)
+
+	if connCount.Load() < 2 {
+		t.Fatalf("want >=2 connections, got %d", connCount.Load())
+	}
+}
+
+func TestClose_DuringReconnect(t *testing.T) {
+	ts := newWSServer(func(conn *websocket.Conn) {
+		conn.ReadMessage()
+		conn.Close()
+	})
+	defer ts.Close()
+
+	reconnecting := make(chan struct{}, 2)
+	cli, _ := NewClient(Config{
+		URL:               wsURL(ts),
+		ReconnectInterval: 1 * time.Second,
 	},
 		WithOnStateChange(func(ctx context.Context, s ConnState, err error) {
 			if s == StateReconnecting {
-				cancel() // cancel during reconnect wait
+				reconnecting <- struct{}{}
 			}
 		}),
 	)
-	cli.Connect(ctx)
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
-	// Trigger disconnect
 	cli.Send(context.Background(), []byte("trigger"))
 
-	waitState(t, cli, StateDisconnected, 5*time.Second)
+	select {
+	case <-reconnecting:
+	case <-time.After(3 * time.Second):
+		t.Fatal("no reconnect after disconnect")
+	}
+
+	cli.Close()
+	waitState(t, cli, StateDisconnected, 3*time.Second)
 }
 
 // ---------- Reconnection ----------
@@ -518,16 +507,15 @@ func TestReconnect_AfterServerClose(t *testing.T) {
 	connCount := atomic.Int32{}
 	ts := newWSServer(func(conn *websocket.Conn) {
 		connCount.Add(1)
-		conn.ReadMessage() // wait for message
-		conn.Close()       // then close
+		conn.ReadMessage()
+		conn.Close()
 	})
 	defer ts.Close()
 
 	reconnecting := make(chan struct{}, 2)
 	cli, _ := NewClient(Config{
 		URL:               wsURL(ts),
-		MinReconnectDelay: 10 * time.Millisecond,
-		MaxReconnectDelay: 50 * time.Millisecond,
+		ReconnectInterval: 10 * time.Millisecond,
 	},
 		WithOnStateChange(func(ctx context.Context, s ConnState, err error) {
 			if s == StateReconnecting {
@@ -535,12 +523,11 @@ func TestReconnect_AfterServerClose(t *testing.T) {
 			}
 		}),
 	)
-	cli.Connect(context.Background())
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
 	cli.Send(context.Background(), []byte("trigger"))
 
-	// Verify at least one reconnect attempt
 	select {
 	case <-reconnecting:
 	case <-time.After(3 * time.Second):
@@ -551,68 +538,6 @@ func TestReconnect_AfterServerClose(t *testing.T) {
 	if connCount.Load() < 2 {
 		t.Fatalf("want >=2 connections (initial + reconnect), got %d", connCount.Load())
 	}
-	cli.Close()
-}
-
-func TestReconnect_MaxRetriesDialFail(t *testing.T) {
-	// Server not started → dial always fails, testing MaxReconnectRetries
-	cli, _ := NewClient(Config{
-		URL:                 "ws://127.0.0.1:1", // unreachable
-		DialTimeout:         100 * time.Millisecond,
-		MinReconnectDelay:   5 * time.Millisecond,
-		MaxReconnectDelay:   10 * time.Millisecond,
-		MaxReconnectRetries: 2,
-	})
-	cli.Connect(context.Background())
-	waitState(t, cli, StateDisconnected, 5*time.Second)
-	cli.Close()
-}
-
-func TestServerCloses_ClientStopsAfterRetries(t *testing.T) {
-	ts := newWSServer(func(conn *websocket.Conn) {
-		conn.Close() // immediately close every connection
-	})
-	defer ts.Close()
-
-	cli, _ := NewClient(Config{
-		URL:                 wsURL(ts),
-		DialTimeout:         200 * time.Millisecond,
-		MinReconnectDelay:   5 * time.Millisecond,
-		MaxReconnectDelay:   15 * time.Millisecond,
-		MaxReconnectRetries: 3,
-	})
-	cli.Connect(context.Background())
-	waitState(t, cli, StateDisconnected, 5*time.Second)
-	cli.Close()
-}
-
-func TestReconnect_UnlimitedRetries(t *testing.T) {
-	connCount := atomic.Int32{}
-	ts := newWSServer(func(conn *websocket.Conn) {
-		connCount.Add(1)
-		conn.Close()
-	})
-	defer ts.Close()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	cli, _ := NewClient(Config{
-		URL:               wsURL(ts),
-		MinReconnectDelay: 10 * time.Millisecond,
-		MaxReconnectDelay: 30 * time.Millisecond,
-	})
-	cli.Connect(ctx)
-
-	// Wait a bit for multiple reconnects, then cancel
-	time.Sleep(200 * time.Millisecond)
-	cancel()
-	waitState(t, cli, StateDisconnected, 3*time.Second)
-
-	if connCount.Load() < 2 {
-		t.Fatalf("expected multiple connections, got %d", connCount.Load())
-	}
-	cli.Close()
 }
 
 func TestReconnect_SuccessfulAfterFailures(t *testing.T) {
@@ -628,18 +553,15 @@ func TestReconnect_SuccessfulAfterFailures(t *testing.T) {
 	defer ts.Close()
 
 	cli, _ := NewClient(Config{
-		URL:                 wsURL(ts),
-		MinReconnectDelay:   10 * time.Millisecond,
-		MaxReconnectDelay:   50 * time.Millisecond,
-		MaxReconnectRetries: 5,
+		URL:               wsURL(ts),
+		ReconnectInterval: 10 * time.Millisecond,
 	})
-	cli.Connect(context.Background())
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 5*time.Second)
 
 	if attempts.Load() < 3 {
 		t.Fatalf("expected 3+ attempts, got %d", attempts.Load())
 	}
-	cli.Close()
 }
 
 // ---------- Heartbeat ----------
@@ -660,15 +582,14 @@ func TestHeartbeat_CustomPing(t *testing.T) {
 	defer ts.Close()
 
 	cli, _ := NewClient(Config{
-		URL:                 wsURL(ts),
-		HeartbeatInterval:   50 * time.Millisecond,
-		MaxReconnectRetries: 0,
+		URL:               wsURL(ts),
+		HeartbeatInterval: 50 * time.Millisecond,
 	},
 		WithOnHeartbeat(func(ctx context.Context) ([]byte, error) {
 			return []byte("hb"), nil
 		}),
 	)
-	cli.Connect(context.Background())
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
 	select {
@@ -676,7 +597,6 @@ func TestHeartbeat_CustomPing(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for heartbeat")
 	}
-	cli.Close()
 }
 
 func TestHeartbeat_PingRespondsPong(t *testing.T) {
@@ -691,11 +611,10 @@ func TestHeartbeat_PingRespondsPong(t *testing.T) {
 	defer ts.Close()
 
 	cli, _ := NewClient(Config{
-		URL:                 wsURL(ts),
-		HeartbeatInterval:   50 * time.Millisecond,
-		MaxReconnectRetries: 0,
+		URL:               wsURL(ts),
+		HeartbeatInterval: 50 * time.Millisecond,
 	})
-	cli.Connect(context.Background())
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
 	select {
@@ -703,7 +622,6 @@ func TestHeartbeat_PingRespondsPong(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for ping")
 	}
-	cli.Close()
 }
 
 // ---------- Token refresh ----------
@@ -716,7 +634,6 @@ func TestTokenRefresh_Called(t *testing.T) {
 	cli, _ := NewClient(Config{
 		URL:                  wsURL(ts),
 		TokenRefreshInterval: 100 * time.Millisecond,
-		MaxReconnectRetries:  0,
 	},
 		WithOnTokenRefresh(func(ctx context.Context) error {
 			select {
@@ -726,7 +643,7 @@ func TestTokenRefresh_Called(t *testing.T) {
 			return nil
 		}),
 	)
-	cli.Connect(context.Background())
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
 	select {
@@ -734,7 +651,6 @@ func TestTokenRefresh_Called(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for token refresh")
 	}
-	cli.Close()
 }
 
 func TestTokenRefresh_FailureDisconnects(t *testing.T) {
@@ -744,23 +660,16 @@ func TestTokenRefresh_FailureDisconnects(t *testing.T) {
 	cli, _ := NewClient(Config{
 		URL:                  wsURL(ts),
 		TokenRefreshInterval: 100 * time.Millisecond,
-		MaxReconnectRetries:  0,
 	},
 		WithOnTokenRefresh(func(ctx context.Context) error { return ErrTokenRefresh }),
-		WithReconnectOnTokenExpire(true),
-		WithReconnectOnAuthFailed(false),
 	)
-	cli.Connect(context.Background())
+	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
-	// Token refresh fails, connection drops. With unlimited retries client
-	// reconnects, re-authenticates, and refreshes again — infinite cycle.
-	// Verify the client is still running (reconnecting).
 	time.Sleep(500 * time.Millisecond)
 	if cli.State() == StateDisconnected {
 		t.Fatal("with unlimited retries, client should keep reconnecting")
 	}
-	cli.Close()
 }
 
 // ---------- Custom headers ----------
@@ -778,10 +687,10 @@ func TestCustomHeaders(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	cli, _ := NewClient(Config{URL: wsURL(ts), MaxReconnectRetries: 0},
+	cli, _ := NewClient(Config{URL: wsURL(ts)},
 		WithHeaders(http.Header{"X-Test": {"value1"}, "Authorization": {"Bearer token123"}}),
 	)
-	cli.Connect(context.Background())
+	defer cli.Close()
 
 	select {
 	case h := <-headerCh:
@@ -794,32 +703,6 @@ func TestCustomHeaders(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		t.Fatal("timeout")
 	}
-	cli.Close()
-}
-
-// ---------- Server shutdown ----------
-
-func TestServerDisconnect_ReconnectAndStop(t *testing.T) {
-	connCount := atomic.Int32{}
-	ts := newWSServer(func(conn *websocket.Conn) {
-		connCount.Add(1)
-		conn.Close()
-	})
-	defer ts.Close()
-
-	cli, _ := NewClient(Config{
-		URL:                 wsURL(ts),
-		DialTimeout:         200 * time.Millisecond,
-		MinReconnectDelay:   5 * time.Millisecond,
-		MaxReconnectDelay:   15 * time.Millisecond,
-		MaxReconnectRetries: 3,
-	})
-	cli.Connect(context.Background())
-	waitState(t, cli, StateDisconnected, 5*time.Second)
-	if connCount.Load() < 2 {
-		t.Fatalf("want >=2 connections, got %d", connCount.Load())
-	}
-	cli.Close()
 }
 
 // ---------- Config normalization ----------
@@ -836,8 +719,7 @@ func TestNormalizeConfig_AllDefaults(t *testing.T) {
 		{"ReadTimeout", cfg.ReadTimeout, DefaultReadTimeout},
 		{"AuthTimeout", cfg.AuthTimeout, DefaultAuthTimeout},
 		{"HeartbeatInterval", cfg.HeartbeatInterval, DefaultHeartbeatInterval},
-		{"MinReconnectDelay", cfg.MinReconnectDelay, DefaultMinReconnectDelay},
-		{"MaxReconnectDelay", cfg.MaxReconnectDelay, DefaultMaxReconnectDelay},
+		{"ReconnectInterval", cfg.ReconnectInterval, DefaultReconnectInterval},
 		{"TokenRefreshInterval", cfg.TokenRefreshInterval, DefaultTokenRefreshInterval},
 	}
 	for _, c := range checks {
@@ -860,35 +742,13 @@ func TestNormalizeConfig_PreservesUserValues(t *testing.T) {
 	}
 }
 
-// ---------- backoffDelay ----------
-
-func TestBackoffDelay_Capped(t *testing.T) {
-	for i := 0; i < 100; i++ {
-		delay := backoffDelay(100, 10*time.Millisecond, 30*time.Millisecond)
-		if delay > 30*time.Millisecond {
-			t.Fatalf("delay %v exceeds max", delay)
-		}
-	}
-}
-
-func TestBackoffDelay_StatisticallyIncreases(t *testing.T) {
-	var sum0, sum5 int64
-	for i := 0; i < 1000; i++ {
-		sum0 += int64(backoffDelay(0, 10*time.Millisecond, 5*time.Second))
-		sum5 += int64(backoffDelay(5, 10*time.Millisecond, 5*time.Second))
-	}
-	if sum5/1000 <= sum0/1000 {
-		t.Fatalf("average delay should increase: attempt0=%d attempt5=%d", sum0/1000, sum5/1000)
-	}
-}
-
 // ---------- Sentinel errors ----------
 
 func TestSentinelErrors(t *testing.T) {
 	errs := []error{
-		ErrNotConnected, ErrNotRunning, ErrAlreadyRunning,
+		ErrNotConnected,
 		ErrAuthTimeout, ErrAuthFailed, ErrAuthCanceled,
-		ErrTokenRefresh, ErrMaxReconnect, ErrConnNil, ErrNotAuthenticated,
+		ErrTokenRefresh,
 	}
 	for _, e := range errs {
 		if e.Error() == "" {

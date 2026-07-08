@@ -73,3 +73,34 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 110: 重构 wsx websocket 客户端
+
+**Date**: 2026-07-08
+**Task**: 重构 wsx websocket 客户端
+**Branch**: `master`
+
+### Summary
+
+从零重写 common/wsx/ websocket 客户端：单 context 对 (closeCtx/closeCancel)、拍平 running() 循环、固定间隔重连、atomic.Pointer 无锁连接指针、heartbeater/tokenRefresher 按连接生命周期启动、onMessage 使用 WithoutCancel + trace span、移除 lancet 依赖改用 crypto/md5、移除 MaxReconnectRetries/ErrAlreadyRunning/reconnectOnAuthFailed/reconnectOnTokenExpire 冗余字段、teardownConn 仅 2 处调用、client.go 562→401 行 (-29%)、30 个测试全过
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

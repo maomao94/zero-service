@@ -2,26 +2,26 @@ package wsx
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"math/rand/v2"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/duke-git/lancet/v2/cryptor"
 	"github.com/gorilla/websocket"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/proc"
 	"github.com/zeromicro/go-zero/core/stat"
 	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/core/timex"
+	"github.com/zeromicro/go-zero/core/trace"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
-// Client is the websocket client interface.
 type Client interface {
-	Connect(ctx context.Context) error
 	Send(ctx context.Context, msg []byte) error
 	SendJSON(ctx context.Context, data any) error
 	Close() error
@@ -29,65 +29,32 @@ type Client interface {
 }
 
 type client struct {
-	cfg    Config
-	opts   clientOptions
-	dialer *websocket.Dialer
+	cfg  Config
+	opts clientOptions
 
-	conn *websocket.Conn
+	closeCtx    context.Context
+	closeCancel context.CancelFunc
 
-	lifeCtx    context.Context
-	lifeCancel context.CancelFunc
-
-	connCtx    context.Context
-	connCancel context.CancelFunc
-
-	wg      sync.WaitGroup
-	mu      sync.Mutex
+	conn    atomic.Pointer[websocket.Conn]
 	writeMu sync.Mutex
-
-	running       atomicBool
-	authenticated atomicBool
-
-	reconnectIdx int
+	state   atomic.Int32
+	wg      sync.WaitGroup
 
 	logger  logx.Logger
 	metrics *stat.Metrics
+	tracer  oteltrace.Tracer
 }
 
-type atomicBool struct {
-	v int32
-}
-
-func (b *atomicBool) store(val bool) {
-	if val {
-		atomic.StoreInt32(&b.v, 1)
-	} else {
-		atomic.StoreInt32(&b.v, 0)
-	}
-}
-
-func (b *atomicBool) load() bool {
-	return atomic.LoadInt32(&b.v) == 1
-}
-
-// MustNewClient creates a client, connects it, and panics on error.
-// A shutdown listener is registered so Close is called automatically on SIGTERM.
 func MustNewClient(cfg Config, opts ...ClientOption) Client {
 	cli, err := NewClient(cfg, opts...)
 	logx.Must(err)
-	if err := cli.Connect(context.Background()); err != nil {
-		logx.Must(err)
-	}
-	proc.AddShutdownListener(func() {
-		cli.Close()
-	})
+	proc.AddShutdownListener(func() { cli.Close() })
 	return cli
 }
 
-// NewClient creates a websocket client. Call Connect to start.
 func NewClient(cfg Config, opts ...ClientOption) (Client, error) {
 	if cfg.URL == "" {
-		return nil, errors.New("[wsx] URL is required")
+		return nil, fmt.Errorf("wsx: URL is required")
 	}
 
 	cfg = normalizeConfig(cfg)
@@ -96,206 +63,140 @@ func NewClient(cfg Config, opts ...ClientOption) (Client, error) {
 		opt(&o)
 	}
 
-	dialer := o.dialer
-	if dialer == nil {
-		dialer = &websocket.Dialer{
-			HandshakeTimeout: cfg.DialTimeout,
-		}
+	c := &client{cfg: cfg, opts: o, metrics: o.metrics, tracer: otel.Tracer(trace.TraceName)}
+	if c.metrics == nil {
+		sum := md5.Sum([]byte(cfg.URL))
+		c.metrics = stat.NewMetrics(fmt.Sprintf("wsx-%x", sum[:4]))
 	}
 
-	metrics := o.metrics
-	if metrics == nil {
-		metrics = stat.NewMetrics(fmt.Sprintf("wsx-%s", cryptor.Md5String(cfg.URL)[:8]))
-	}
-
-	return &client{
-		cfg:     cfg,
-		opts:    o,
-		dialer:  dialer,
-		metrics: metrics,
-	}, nil
-}
-
-// Connect starts the connection lifecycle. It returns immediately;
-// connection progress is reported via WithOnStateChange.
-func (c *client) Connect(ctx context.Context) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if c.running.load() {
-		return ErrAlreadyRunning
-	}
-
-	c.lifeCtx, c.lifeCancel = context.WithCancel(ctx)
-	c.lifeCtx = logx.ContextWithFields(c.lifeCtx, logx.Field("url", c.cfg.URL))
-	c.lifeCtx = logx.ContextWithFields(c.lifeCtx, logx.Field("session", cryptor.Md5String(c.cfg.URL)[:12]))
-	c.logger = logx.WithContext(c.lifeCtx)
-
-	c.running.store(true)
+	c.closeCtx, c.closeCancel = context.WithCancel(context.Background())
+	sum := md5.Sum([]byte(cfg.URL))
+	c.closeCtx = logx.ContextWithFields(c.closeCtx,
+		logx.Field("url", cfg.URL),
+		logx.Field("session", fmt.Sprintf("%x", sum[:6])),
+	)
+	c.logger = logx.WithContext(c.closeCtx)
 
 	c.wg.Add(1)
-	go c.connectionManager()
+	go c.running()
 
-	c.logger.Infof("[wsx] client started, target: %s", c.cfg.URL)
-	c.opts.onStateChange(c.lifeCtx, StateConnecting, nil)
-	return nil
+	c.logger.Infof("[wsx] connecting to %s", cfg.URL)
+	return c, nil
 }
 
-// Send writes a binary message. The WriteTimeout from Config is used as the
-// write deadline; the supplied ctx is for tracing and cancellation checks.
 func (c *client) Send(ctx context.Context, msg []byte) error {
-	return c.write(ctx, websocket.TextMessage, msg)
+	return c.writeMessage(websocket.TextMessage, msg)
 }
 
-// SendJSON marshals data as JSON and sends it as a text message.
 func (c *client) SendJSON(ctx context.Context, data any) error {
 	raw, err := json.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("marshal json: %w", err)
+		return fmt.Errorf("wsx: marshal json: %w", err)
 	}
-	return c.write(ctx, websocket.TextMessage, raw)
+	return c.writeMessage(websocket.TextMessage, raw)
 }
 
-func (c *client) write(ctx context.Context, msgType int, data []byte) error {
-	c.writeMu.Lock()
-	defer c.writeMu.Unlock()
-
-	c.mu.Lock()
-	conn := c.conn
-	c.mu.Unlock()
-
-	if conn == nil || !c.running.load() {
+func (c *client) writeMessage(msgType int, data []byte) error {
+	conn := c.conn.Load()
+	if conn == nil {
 		return ErrNotConnected
 	}
+
+	c.writeMu.Lock()
+	defer c.writeMu.Unlock()
 
 	if err := conn.SetWriteDeadline(time.Now().Add(c.cfg.WriteTimeout)); err != nil {
 		return err
 	}
-
-	if err := conn.WriteMessage(msgType, data); err != nil {
-		c.logger.Errorf("[wsx] write failed: %v", err)
-		c.cancelConn()
-		return err
-	}
-
-	c.metrics.Add(stat.Task{Duration: timex.Since(timex.Now())})
-	return nil
+	return conn.WriteMessage(msgType, data)
 }
 
-// Close shuts down the client and waits for all goroutines to exit.
 func (c *client) Close() error {
-	c.mu.Lock()
-	if !c.running.load() {
-		c.mu.Unlock()
-		return nil
-	}
+	c.closeCancel()
 
-	c.running.store(false)
-	c.authenticated.store(false)
-
-	c.logger.Info("[wsx] shutting down client")
-
-	if c.lifeCancel != nil {
-		c.lifeCancel()
-	}
-
-	conn := c.conn
-	c.conn = nil
-	c.mu.Unlock()
-
-	if conn != nil {
+	if conn := c.conn.Swap(nil); conn != nil {
 		c.writeMu.Lock()
-		closeMsg := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "client shutdown")
-		conn.SetWriteDeadline(time.Now().Add(c.cfg.WriteTimeout))
-		_ = conn.WriteMessage(websocket.CloseMessage, closeMsg)
+		_ = conn.WriteMessage(websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 		_ = conn.Close()
 		c.writeMu.Unlock()
 	}
 
 	c.wg.Wait()
-
-	c.logger.Info("[wsx] client shutdown complete")
+	c.state.Store(int32(StateDisconnected))
 	c.opts.onStateChange(context.Background(), StateDisconnected, nil)
+	c.logger.Info("[wsx] shutdown complete")
 	return nil
 }
 
-// State returns the current connection state.
 func (c *client) State() ConnState {
-	if !c.running.load() || (c.lifeCtx != nil && c.lifeCtx.Err() != nil) {
-		return StateDisconnected
-	}
-	if c.authenticated.load() {
-		return StateAuthenticated
-	}
-	c.mu.Lock()
-	hasConn := c.conn != nil
-	c.mu.Unlock()
-	if hasConn {
-		return StateConnected
-	}
-	return StateConnecting
+	return ConnState(c.state.Load())
 }
 
-func (c *client) connectionManager() {
+func (c *client) running() {
 	defer c.wg.Done()
-	defer c.running.store(false)
-	c.logger.Info("[wsx] connection manager started")
 
-	for c.running.load() && c.lifeCtx.Err() == nil {
+	for {
+		if c.closeCtx.Err() != nil {
+			return
+		}
+
 		conn, err := c.dial()
 		if err != nil {
 			c.logger.Errorf("[wsx] dial failed: %v", err)
-			c.opts.onStateChange(c.lifeCtx, StateDisconnected, err)
-			if !c.shouldReconnect() {
+			if !c.sleepReconnect() {
 				return
 			}
-			c.waitBeforeReconnect()
 			continue
 		}
 
-		c.setConnection(conn)
-		c.opts.onStateChange(c.lifeCtx, StateConnected, nil)
+		c.state.Store(int32(StateConnected))
+		c.opts.onStateChange(c.closeCtx, StateConnected, nil)
 
-		if !c.authenticate() {
-			if c.opts.reconnectOnAuthFailed && c.shouldReconnect() {
-				c.waitBeforeReconnect()
-				continue
+		connCtx, connCancel := context.WithCancel(c.closeCtx)
+		c.startConn(conn, connCancel)
+
+		authOK := c.authenticate()
+		if authOK {
+			c.state.Store(int32(StateAuthenticated))
+			c.opts.onStateChange(c.closeCtx, StateAuthenticated, nil)
+
+			c.wg.Add(1)
+			go c.heartbeater(conn, connCtx)
+			c.startTokenRefresher(connCtx, connCancel)
+
+			select {
+			case <-connCtx.Done():
+			case <-c.closeCtx.Done():
 			}
+		}
+
+		connCancel()
+		c.teardownConn()
+		c.state.Store(int32(StateDisconnected))
+		c.opts.onStateChange(c.closeCtx, StateDisconnected, nil)
+		c.logger.Info("[wsx] connection closed")
+
+		if !c.sleepReconnect() {
 			return
 		}
-
-		c.authenticated.store(true)
-		c.opts.onStateChange(c.lifeCtx, StateAuthenticated, nil)
-		c.startTokenRefresh()
-
-		select {
-		case <-c.connCtx.Done():
-		case <-c.lifeCtx.Done():
-		}
-
-		c.authenticated.store(false)
-		c.cancelConn()
-		c.cleanupConnection()
-		c.opts.onStateChange(c.lifeCtx, StateDisconnected, nil)
-
-		if !c.shouldReconnect() {
-			return
-		}
-		c.waitBeforeReconnect()
 	}
-
-	c.opts.onStateChange(c.lifeCtx, StateDisconnected, nil)
-	c.logger.Info("[wsx] connection manager exited")
 }
 
 func (c *client) dial() (*websocket.Conn, error) {
-	ctx, cancel := context.WithTimeout(c.lifeCtx, c.cfg.DialTimeout)
-	defer cancel()
-
-	c.opts.onStateChange(c.lifeCtx, StateConnecting, nil)
+	c.state.Store(int32(StateConnecting))
+	c.opts.onStateChange(c.closeCtx, StateConnecting, nil)
 	c.logger.Info("[wsx] dialing...")
 
-	conn, resp, err := c.dialer.DialContext(ctx, c.cfg.URL, c.opts.headers)
+	dialer := c.opts.dialer
+	if dialer == nil {
+		dialer = &websocket.Dialer{HandshakeTimeout: c.cfg.DialTimeout}
+	}
+
+	ctx, cancel := context.WithTimeout(c.closeCtx, c.cfg.DialTimeout)
+	defer cancel()
+
+	conn, resp, err := dialer.DialContext(ctx, c.cfg.URL, c.opts.headers)
 	if err != nil {
 		if resp != nil && resp.Body != nil {
 			resp.Body.Close()
@@ -305,83 +206,68 @@ func (c *client) dial() (*websocket.Conn, error) {
 	return conn, nil
 }
 
-func (c *client) setConnection(conn *websocket.Conn) {
-	c.mu.Lock()
-	c.connCtx, c.connCancel = context.WithCancel(c.lifeCtx)
-	c.conn = conn
-	c.mu.Unlock()
+func (c *client) startConn(conn *websocket.Conn, connCancel context.CancelFunc) {
+	c.conn.Store(conn)
 
 	conn.SetPongHandler(func(string) error {
-		return conn.SetReadDeadline(time.Now().Add(c.cfg.ReadTimeout))
+		_ = conn.SetReadDeadline(time.Now().Add(c.cfg.ReadTimeout))
+		return nil
 	})
 
-	c.wg.Add(2)
-	go c.readLoop(conn)
-	go c.heartbeatLoop(conn)
+	c.logger.Info("[wsx] connected")
+
+	c.wg.Add(1)
+	go c.readLoop(conn, connCancel)
 }
 
-func (c *client) cancelConn() {
-	c.mu.Lock()
-	if c.connCancel != nil {
-		c.connCancel()
-		c.connCancel = nil
+func (c *client) teardownConn() {
+	if conn := c.conn.Swap(nil); conn != nil {
+		conn.Close()
 	}
-	c.mu.Unlock()
-}
-
-func (c *client) cleanupConnection() {
-	c.mu.Lock()
-	if c.conn != nil {
-		_ = c.conn.Close()
-		c.conn = nil
-	}
-	c.mu.Unlock()
 }
 
 func (c *client) authenticate() bool {
-	ctx, cancel := context.WithTimeout(c.lifeCtx, c.cfg.AuthTimeout)
+	ctx, cancel := context.WithTimeout(c.closeCtx, c.cfg.AuthTimeout)
 	defer cancel()
 
 	c.logger.Info("[wsx] authenticating...")
-
 	err := c.opts.onAuthenticate(ctx)
+
 	if err == nil {
-		c.logger.Info("[wsx] authentication succeeded")
+		c.logger.Info("[wsx] auth success")
 		return true
 	}
 
-	if errors.Is(err, context.DeadlineExceeded) {
-		c.logger.Errorf("[wsx] authentication timeout after %v", c.cfg.AuthTimeout)
-		c.opts.onStateChange(c.lifeCtx, StateAuthFailed, ErrAuthTimeout)
-	} else if errors.Is(err, context.Canceled) {
-		c.logger.Error("[wsx] authentication canceled")
-		c.opts.onStateChange(c.lifeCtx, StateAuthFailed, ErrAuthCanceled)
-	} else {
-		c.logger.Errorf("[wsx] authentication failed: %v", err)
-		c.opts.onStateChange(c.lifeCtx, StateAuthFailed, err)
-	}
+	c.logger.Errorf("[wsx] auth failed: %v", err)
 
-	c.cancelConn()
+	switch {
+	case ctx.Err() == context.DeadlineExceeded:
+		c.opts.onStateChange(c.closeCtx, StateAuthFailed, ErrAuthTimeout)
+	case ctx.Err() == context.Canceled:
+		c.opts.onStateChange(c.closeCtx, StateAuthFailed, ErrAuthCanceled)
+	default:
+		c.opts.onStateChange(c.closeCtx, StateAuthFailed, err)
+	}
 	return false
 }
 
-func (c *client) readLoop(conn *websocket.Conn) {
+func (c *client) readLoop(conn *websocket.Conn, connCancel context.CancelFunc) {
 	defer c.wg.Done()
-	defer c.cancelConn()
+	defer func() {
+		connCancel()
+		c.teardownConn()
+	}()
 
-	c.logger.Info("[wsx] read loop started")
-
-	for c.running.load() && c.lifeCtx.Err() == nil {
+	for {
 		if err := conn.SetReadDeadline(time.Now().Add(c.cfg.ReadTimeout)); err != nil {
-			c.logger.Errorf("[wsx] set read deadline failed: %v", err)
 			return
 		}
 
-		msgType, msgData, err := conn.ReadMessage()
+		msgType, data, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
-				c.logger.Info("[wsx] server closed connection normally")
-			} else if !c.running.load() {
+				c.logger.Info("[wsx] receive closed normally")
+			} else if c.closeCtx.Err() != nil {
 				c.logger.Info("[wsx] read loop: client stopped")
 			} else {
 				c.logger.Errorf("[wsx] read error: %v", err)
@@ -393,76 +279,74 @@ func (c *client) readLoop(conn *websocket.Conn) {
 			continue
 		}
 
-		msgCopy := make([]byte, len(msgData))
-		copy(msgCopy, msgData)
+		msg := make([]byte, len(data))
+		copy(msg, data)
 
 		threading.GoSafe(func() {
-			startTime := timex.Now()
-			if err := c.opts.onMessage(c.lifeCtx, msgCopy); err != nil {
+			ctx := context.WithoutCancel(c.closeCtx)
+			ctx, span := c.tracer.Start(ctx, "wsx-receive",
+				oteltrace.WithSpanKind(oteltrace.SpanKindConsumer),
+				oteltrace.WithAttributes(
+					attribute.String("ws.url", c.cfg.URL),
+					attribute.Int("ws.msg_size", len(msg)),
+				),
+			)
+			defer span.End()
+
+			start := timex.Now()
+			if err := c.opts.onMessage(ctx, msg); err != nil {
 				c.logger.Errorf("[wsx] message handler error: %v", err)
 				c.metrics.AddDrop()
 				return
 			}
-			c.metrics.Add(stat.Task{Duration: timex.Since(startTime)})
+			c.metrics.Add(stat.Task{Duration: timex.Since(start)})
 		})
 	}
-
-	c.logger.Info("[wsx] read loop exited")
 }
 
-func (c *client) heartbeatLoop(conn *websocket.Conn) {
+func (c *client) heartbeater(conn *websocket.Conn, connCtx context.Context) {
 	defer c.wg.Done()
-
-	c.logger.Infof("[wsx] heartbeat loop started (interval: %v)", c.cfg.HeartbeatInterval)
+	c.logger.Infof("[wsx] heartbeat started (interval: %v)", c.cfg.HeartbeatInterval)
 
 	ticker := time.NewTicker(c.cfg.HeartbeatInterval)
 	defer ticker.Stop()
 
 	for {
 		select {
-		case <-c.lifeCtx.Done():
-			c.logger.Info("[wsx] heartbeat loop: context canceled")
+		case <-c.closeCtx.Done():
 			return
-		case <-c.connCtx.Done():
-			c.logger.Info("[wsx] heartbeat loop: connection closed")
+		case <-connCtx.Done():
 			return
 		case <-ticker.C:
-			if !c.running.load() {
-				return
-			}
-			if !c.authenticated.load() {
-				continue
+			var payload []byte
+			if c.opts.onHeartbeat != nil {
+				var err error
+				payload, err = c.opts.onHeartbeat(c.closeCtx)
+				if err != nil {
+					c.logger.Errorf("[wsx] heartbeat generate failed: %v", err)
+					return
+				}
 			}
 
-			deadline := time.Now().Add(c.cfg.WriteTimeout)
 			c.writeMu.Lock()
+			var err error
+			_ = conn.SetWriteDeadline(time.Now().Add(c.cfg.WriteTimeout))
 			if c.opts.onHeartbeat != nil {
-				data, err := c.opts.onHeartbeat(c.lifeCtx)
-				if err != nil {
-					c.writeMu.Unlock()
-					c.logger.Errorf("[wsx] custom heartbeat failed: %v", err)
-					return
-				}
-				conn.SetWriteDeadline(deadline)
-				if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
-					c.writeMu.Unlock()
-					c.logger.Errorf("[wsx] heartbeat write failed: %v", err)
-					return
-				}
+				err = conn.WriteMessage(websocket.TextMessage, payload)
 			} else {
-				conn.SetWriteDeadline(deadline)
-				if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-					c.writeMu.Unlock()
-					c.logger.Errorf("[wsx] ping failed: %v", err)
-					return
-				}
+				err = conn.WriteMessage(websocket.PingMessage, nil)
 			}
 			c.writeMu.Unlock()
+
+			if err != nil {
+				c.logger.Errorf("[wsx] heartbeat write failed: %v", err)
+				return
+			}
 		}
 	}
 }
 
-func (c *client) startTokenRefresh() {
+func (c *client) startTokenRefresher(connCtx context.Context, connCancel context.CancelFunc) {
 	if c.opts.onTokenRefresh == nil || c.cfg.TokenRefreshInterval <= 0 {
 		return
 	}
@@ -470,33 +354,25 @@ func (c *client) startTokenRefresh() {
 	c.wg.Add(1)
 	go func() {
 		defer c.wg.Done()
-		c.logger.Infof("[wsx] token refresh loop started (interval: %v)", c.cfg.TokenRefreshInterval)
+		c.logger.Infof("[wsx] token refresh started (interval: %v)", c.cfg.TokenRefreshInterval)
 
 		ticker := time.NewTicker(c.cfg.TokenRefreshInterval)
 		defer ticker.Stop()
 
 		for {
 			select {
-			case <-c.lifeCtx.Done():
-				c.logger.Info("[wsx] token refresh: context canceled")
+			case <-c.closeCtx.Done():
 				return
-			case <-c.connCtx.Done():
-				c.logger.Info("[wsx] token refresh: connection closed")
+			case <-connCtx.Done():
 				return
 			case <-ticker.C:
-				if !c.authenticated.load() {
-					return
-				}
-
-				ctx, cancel := context.WithTimeout(c.lifeCtx, 10*time.Second)
+				ctx, cancel := context.WithTimeout(c.closeCtx, 10*time.Second)
 				err := c.opts.onTokenRefresh(ctx)
 				cancel()
 
 				if err != nil {
 					c.logger.Errorf("[wsx] token refresh failed: %v", err)
-					if c.opts.reconnectOnTokenExpire {
-						c.cancelConn()
-					}
+					connCancel()
 					return
 				}
 				c.logger.Info("[wsx] token refreshed")
@@ -505,58 +381,21 @@ func (c *client) startTokenRefresh() {
 	}()
 }
 
-func (c *client) shouldReconnect() bool {
-	if !c.running.load() || c.lifeCtx.Err() != nil {
-		return false
-	}
+func (c *client) sleepReconnect() bool {
+	c.state.Store(int32(StateReconnecting))
+	c.opts.onStateChange(c.closeCtx, StateReconnecting, nil)
+	c.logger.Infof("[wsx] reconnect in %v", c.cfg.ReconnectInterval)
 
-	c.mu.Lock()
-	idx := c.reconnectIdx
-	c.reconnectIdx++
-	c.mu.Unlock()
-
-	if c.cfg.MaxReconnectRetries > 0 && idx >= c.cfg.MaxReconnectRetries {
-		c.logger.Errorf("[wsx] reached max reconnect retries (%d)", c.cfg.MaxReconnectRetries)
-		c.opts.onStateChange(c.lifeCtx, StateDisconnected, ErrMaxReconnect)
-		return false
-	}
-
-	c.opts.onStateChange(c.lifeCtx, StateReconnecting, nil)
-	return true
-}
-
-func (c *client) waitBeforeReconnect() {
-	c.mu.Lock()
-	idx := c.reconnectIdx
-	c.mu.Unlock()
-
-	delay := backoffDelay(idx, c.cfg.MinReconnectDelay, c.cfg.MaxReconnectDelay)
-	c.logger.Infof("[wsx] reconnect attempt %d, waiting %v", idx+1, delay)
-
-	timer := time.NewTimer(delay)
+	timer := time.NewTimer(c.cfg.ReconnectInterval)
 	defer timer.Stop()
 
 	select {
-	case <-c.lifeCtx.Done():
-		c.logger.Info("[wsx] context canceled during reconnect wait")
+	case <-c.closeCtx.Done():
 		if !timer.Stop() {
 			<-timer.C
 		}
+		return false
 	case <-timer.C:
+		return true
 	}
-}
-
-func backoffDelay(attempt int, min, max time.Duration) time.Duration {
-	base := min
-	for i := 0; i < attempt; i++ {
-		base *= 2
-		if base > max {
-			base = max
-			break
-		}
-	}
-	if base <= 0 {
-		return 0
-	}
-	return time.Duration(rand.Int64N(int64(base)))
 }
