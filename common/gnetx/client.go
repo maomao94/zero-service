@@ -29,13 +29,11 @@ type Client struct {
 	gcli *gnet.Client
 	pool *workerPool
 
-	network string
 	address string
 
 	replyPool *antsx.ReplyPool[any]
 
 	sess         atomic.Pointer[session]
-	ready        atomic.Bool
 	closed       atomic.Bool
 	reconnecting atomic.Bool
 	reconnectCh  chan struct{}
@@ -43,16 +41,16 @@ type Client struct {
 	tracer oteltrace.Tracer
 }
 
-func MustNewClient(network, address string, opts ...ClientOption) *Client {
-	cli, err := NewClient(network, address, opts...)
+func MustNewClient(address string, opts ...ClientOption) *Client {
+	cli, err := NewClient(address, opts...)
 	if err != nil {
-		panic("gnetx: MustNewClient " + network + "/" + address + ": " + err.Error())
+		panic("gnetx: MustNewClient " + address + ": " + err.Error())
 	}
 	proc.AddShutdownListener(func() { cli.Close() })
 	return cli
 }
 
-func NewClient(network, address string, opts ...ClientOption) (*Client, error) {
+func NewClient(address string, opts ...ClientOption) (*Client, error) {
 	o := &ClientOptions{}
 	for _, opt := range opts {
 		if opt != nil {
@@ -73,7 +71,6 @@ func NewClient(network, address string, opts ...ClientOption) (*Client, error) {
 	c := &Client{
 		opts:        *o,
 		pool:        defaultWorkerPool(),
-		network:     network,
 		address:     address,
 		replyPool:   replyPool,
 		reconnectCh: make(chan struct{}),
@@ -90,8 +87,9 @@ func NewClient(network, address string, opts ...ClientOption) (*Client, error) {
 	c.gcli = gcli
 
 	if err := c.dial(); err != nil {
-		_ = gcli.Stop()
-		return nil, err
+		logx.Errorf("[gnetx] 首次拨号 %s 失败: %v，启动后台重连", address, err)
+		c.startReconnect()
+		return c, nil
 	}
 	return c, nil
 }
@@ -132,17 +130,12 @@ func (c *Client) Close() {
 	if c.gcli != nil {
 		_ = c.gcli.Stop()
 	}
-	logx.Infof("[gnetx] client closed %s/%s", c.network, c.address)
+	logx.Infof("[gnetx] client closed %s/%s", "tcp", c.address)
 }
 
 func (c *Client) dial() error {
-	if _, err := c.gcli.DialContext(c.network, c.address, nil); err != nil {
-		return err
-	}
-	if c.ready.CompareAndSwap(false, true) && c.opts.OnReady != nil {
-		c.opts.OnReady(c)
-	}
-	return nil
+	_, err := c.gcli.DialContext("tcp", c.address, nil)
+	return err
 }
 
 func (c *Client) OnTick() (delay time.Duration, action gnet.Action) {
@@ -169,6 +162,19 @@ func (c *Client) OnOpen(gc gnet.Conn) ([]byte, gnet.Action) {
 	cn := newSession(newSessionID(), gc, c.opts.Codec, nil, c.replyPool, c.opts.SequenceStart)
 	gc.SetContext(cn)
 	c.sess.Store(cn)
+	if c.opts.OnConnect != nil {
+		ctx := context.Background()
+		if c.opts.ConnectTimeout > 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, c.opts.ConnectTimeout)
+			go func() {
+				defer cancel()
+				c.opts.OnConnect(ctx, c)
+			}()
+		} else {
+			go c.opts.OnConnect(ctx, c)
+		}
+	}
 	return nil, gnet.None
 }
 
@@ -240,9 +246,9 @@ func (c *Client) startReconnect() {
 			if c.closed.Load() {
 				return
 			}
-			logx.Infof("[gnetx] reconnecting %s/%s ...", c.network, c.address)
+			logx.Infof("[gnetx] reconnecting %s/%s ...", "tcp", c.address)
 			if err := c.dial(); err != nil {
-				logx.Errorf("[gnetx] reconnect %s/%s failed: %v", c.network, c.address, err)
+				logx.Errorf("[gnetx] reconnect %s/%s failed: %v", "tcp", c.address, err)
 				continue
 			}
 			// Check closed again after successful dial — Close might have been called
@@ -253,7 +259,7 @@ func (c *Client) startReconnect() {
 				}
 				return
 			}
-			logx.Infof("[gnetx] reconnected %s/%s", c.network, c.address)
+			logx.Infof("[gnetx] reconnected %s/%s", "tcp", c.address)
 			return
 		}
 	}()

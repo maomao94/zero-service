@@ -1,6 +1,7 @@
 package gnetx
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -224,8 +225,12 @@ type ClientOptions struct {
 	// ReconnectInterval 连接断开后的固定重连间隔。0 用默认 3s。
 	ReconnectInterval time.Duration
 
-	// OnReady 首次拨号成功回调（仅触发一次）。可为 nil。
-	OnReady func(*Client)
+	// OnConnect 每次 TCP 连接建立回调（含重连后的新会话）。可为 nil。
+	// 回调在独立 goroutine 中执行，ctx 携带 ConnectTimeout 超时。
+	OnConnect func(ctx context.Context, c *Client)
+
+	// ConnectTimeout OnConnect 回调 ctx 的超时时间。0 表示不设超时。
+	ConnectTimeout time.Duration
 
 	// HeartbeatInterval 应用层心跳发送间隔。0 表示不启用心跳。
 	HeartbeatInterval time.Duration
@@ -279,9 +284,14 @@ func WithClientReconnectInterval(d time.Duration) ClientOption {
 	return func(o *ClientOptions) { o.ReconnectInterval = d }
 }
 
-// WithClientOnReady 设置首次拨号成功回调（仅触发一次）。
-func WithClientOnReady(fn func(*Client)) ClientOption {
-	return func(o *ClientOptions) { o.OnReady = fn }
+// WithClientOnConnect 设置每次 TCP 连接建立回调（含重连），在独立 goroutine 中执行。
+func WithClientOnConnect(fn func(ctx context.Context, c *Client)) ClientOption {
+	return func(o *ClientOptions) { o.OnConnect = fn }
+}
+
+// WithClientConnectTimeout 设置 OnConnect 回调 ctx 的超时时间。0 表示不超时。
+func WithClientConnectTimeout(d time.Duration) ClientOption {
+	return func(o *ClientOptions) { o.ConnectTimeout = d }
 }
 
 // WithClientOnDecodeError 设置解码错误策略。

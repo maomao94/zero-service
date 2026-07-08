@@ -45,7 +45,7 @@ func TestServerInitiatedRequest(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// client handler：收到 pingReq 回 pongResp（同 serial）。
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 			if p, ok := msg.(*pingReq); ok {

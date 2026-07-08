@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 110
+- **Total Sessions**: 111
 - **Last Active**: 2026-07-08
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~106 | Active |
+| `journal-3.md` | ~141 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 111 | 2026-07-08 | ISP Agent 开发完成：common/isp协议层 + app/ispagent gRPC服务 + gnetx增强 | `b65d5929`, `abb0b129`, `5c02b8b6` | `master` |
 | 110 | 2026-07-08 | 重构 wsx websocket 客户端 | - | `master` |
 | 109 | 2026-07-07 | gormx: 新增 GaussDB 驱动支持，统一 DSN 前缀识别 | `a0de8b2e` | `master` |
 | 108 | 2026-07-07 | trigger: 新增 BatchNextId 批量顺序生成业务唯一编码 | `0a7f1593`, `33f1ae2a`, `dc9fe06a` | `master` |

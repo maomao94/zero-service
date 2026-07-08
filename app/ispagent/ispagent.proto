@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package ispagent;
+
+option go_package = "./ispagent";
+
+// Item 对应 XML <Item attr="value"/> 的动态属性映射
+message Item {
+  map<string, string> attributes = 1;
+}
+
+// CommandReq 通用指令请求（ExecuteCommand 使用）
+message CommandReq {
+  int32 type = 1;              // 消息类型（高 16 位 messageId）
+  int32 command = 2;           // 命令（低 16 位 messageId）
+  string code = 3;             // 变电站/设备编码
+  repeated Item items = 4;     // 业务数据
+}
+
+// PatrolItemsReq 特定巡视上报请求（type/command 固定，仅填 code + items）
+message PatrolItemsReq {
+  string code = 1;             // 变电站编码
+  repeated Item items = 2;     // 业务数据
+}
+
+// PatrolDeviceCoordinate 巡视装置坐标（表 O.45）
+message PatrolDeviceCoordinate {
+  string patrol_device_name = 1;   // 巡视装置名称
+  string patrol_device_code = 2;   // 巡视装置编码
+  string coordinate_pixel = 3;     // 格式 x,y,z,a（地图坐标 + 航向角）
+  string coordinate_geography = 4; // 格式 x,y（经纬度）
+  string task_patrolled_id = 5;    // 巡视任务执行ID，无巡视任务时可为空
+}
+
+// PatrolDeviceRunData 巡视装置运行数据（表 J.34）
+message PatrolDeviceRunData {
+  string patrol_device_name = 1;   // 巡视装置名称
+  string patrol_device_code = 2;   // 巡视装置编码
+  int32 type = 3;                  // 1=水平速度, 2=行驶里程, 3=电池电量, 4=垂直速度, 5=飞行距离, 6=飞行高度, 7=飞行时长, 8=云台俯仰角, 9=云台横滚角, 10=云台偏航角, 11=充电电流
+  string value = 4;
+  string value_unit = 5;
+  string unit = 6;
+}
+
+// PatrolDeviceStatusData 巡视装置状态数据
+message PatrolDeviceStatusData {
+  string patrol_device_name = 1;   // 巡视装置名称
+  string patrol_device_code = 2;   // 巡视装置编码
+  string type = 3;                 // 状态类型编码
+  string value = 4;
+  string value_unit = 5;
+  string unit = 6;
+}
+
+// SendPatrolDeviceCoordinatesReq 巡视装置坐标上报
+message SendPatrolDeviceCoordinatesReq {
+  string code = 1;                           // 目标对象唯一标识（可为空）
+  repeated PatrolDeviceCoordinate items = 2;
+}
+
+// SendPatrolDeviceRunDataReq 巡视装置运行数据上报
+message SendPatrolDeviceRunDataReq {
+  string code = 1;                           // 目标对象唯一标识（可为空）
+  repeated PatrolDeviceRunData items = 2;
+}
+
+// SendPatrolDeviceStatusDataReq 巡视装置状态数据上报
+message SendPatrolDeviceStatusDataReq {
+  string code = 1;                           // 目标对象唯一标识（可为空）
+  repeated PatrolDeviceStatusData items = 2;
+}
+
+// CommandRes 指令响应（透传解析后的 SIP 回包）
+message CommandRes {
+  bool success = 1;            // type=251 时表示应答成功，其他类型默认 true
+  string code = 2;             // 响应状态码（200/500/100/400）
+  repeated Item items = 3;     // 解析后的 Item 列表
+  string rawXml = 4;           // 原始 XML（诊断用）
+}
+
+service IspAgent {
+  // ExecuteCommand 通用指令透传（调用方指定 type/command）
+  rpc ExecuteCommand(CommandReq) returns(CommandRes);
+  // SendPatrolDeviceRunData 巡视装置运行数据上报（表 J.34）
+  rpc SendPatrolDeviceRunData(SendPatrolDeviceRunDataReq) returns(CommandRes);
+  // SendPatrolDeviceStatusData 巡视装置状态数据上报
+  rpc SendPatrolDeviceStatusData(SendPatrolDeviceStatusDataReq) returns(CommandRes);
+  // SendPatrolDeviceCoordinates 巡视装置坐标上报（表 O.45）
+  rpc SendPatrolDeviceCoordinates(SendPatrolDeviceCoordinatesReq) returns(CommandRes);
+}

@@ -46,7 +46,7 @@ func TestClientSend(t *testing.T) {
 	defer stop()
 
 	got := make(chan *echoMsg, 1)
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 			if e, ok := msg.(*echoMsg); ok {
@@ -93,7 +93,7 @@ func TestClientRequestResponse(t *testing.T) {
 	stop := startServer(t, port, srvHandler)
 	defer stop()
 
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
@@ -126,7 +126,7 @@ func TestClientRequestTimeout(t *testing.T) {
 	stop := startServer(t, port, srvHandler)
 	defer stop()
 
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
@@ -148,7 +148,7 @@ func TestClientRequestTimeout(t *testing.T) {
 func TestClientConnectError(t *testing.T) {
 	port := freePort(t) // 未监听端口
 
-	_, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	_, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
@@ -158,18 +158,18 @@ func TestClientConnectError(t *testing.T) {
 	}
 }
 
-// TestClientOnReady：首次连上触发 OnReady 回调一次。
-func TestClientOnReady(t *testing.T) {
+// TestClientOnConnect：TCP 连接建立触发 OnConnect 回调。
+func TestClientOnConnect(t *testing.T) {
 	port := freePort(t)
 	stop := startServer(t, port, noopServerHandler())
 	defer stop()
 
 	ready := make(chan *Client, 1)
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
-		WithClientOnReady(func(c *Client) { ready <- c }),
+		WithClientOnConnect(func(ctx context.Context, c *Client) { ready <- c }),
 	)
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
@@ -179,10 +179,10 @@ func TestClientOnReady(t *testing.T) {
 	select {
 	case c := <-ready:
 		if c != cli {
-			t.Fatal("OnReady got different client")
+			t.Fatal("OnConnect got different client")
 		}
 	case <-time.After(time.Second):
-		t.Fatal("OnReady not called")
+		t.Fatal("OnConnect not called")
 	}
 }
 
@@ -200,7 +200,7 @@ func TestClientSendViaClient(t *testing.T) {
 	defer stop()
 
 	got := make(chan *echoMsg, 1)
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 			if e, ok := msg.(*echoMsg); ok {
@@ -241,7 +241,7 @@ func TestClientRequestViaClient(t *testing.T) {
 	stop := startServer(t, port, srvHandler)
 	defer stop()
 
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
@@ -272,7 +272,7 @@ func TestClientOpsOnDisconnected(t *testing.T) {
 	stop := startServer(t, port, noopServerHandler())
 	defer stop()
 
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
@@ -296,7 +296,7 @@ func TestClientCloseIdempotent(t *testing.T) {
 	stop := startServer(t, port, noopServerHandler())
 	defer stop()
 
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
@@ -323,7 +323,7 @@ func TestHandlerError(t *testing.T) {
 	defer stop()
 
 	testErr := errors.New("test handler failure")
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
 			return nil, testErr
@@ -342,8 +342,8 @@ func TestHandlerError(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 }
 
-// TestClientOnReadyNotOnReconnect：OnReady 仅在首次连上触发，重连不重复触发。
-func TestClientOnReadyNotOnReconnect(t *testing.T) {
+// TestClientOnConnectOnReconnect：OnConnect 在每次 TCP 连接建立时触发（含重连）。
+func TestClientOnConnectOnReconnect(t *testing.T) {
 	port := freePort(t)
 
 	srvHandler := HandlerFunc(func(ctx context.Context, c Conn, msg any) (any, error) {
@@ -371,31 +371,32 @@ func TestClientOnReadyNotOnReconnect(t *testing.T) {
 	}()
 	time.Sleep(100 * time.Millisecond)
 
-	readyCount := atomic.Int32{}
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	connectCount := atomic.Int32{}
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
 		WithClientReconnectInterval(200*time.Millisecond),
-		WithClientOnReady(func(c *Client) { readyCount.Add(1) }),
+		WithClientOnConnect(func(ctx context.Context, c *Client) { connectCount.Add(1) }),
 	)
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
 	defer cli.Close()
 
-	waitFor(t, 3*time.Second, func() bool { return readyCount.Load() >= 1 })
-	if got := readyCount.Load(); got != 1 {
-		t.Fatalf("OnReady called %d times, want 1", got)
+	waitFor(t, 3*time.Second, func() bool { return connectCount.Load() >= 1 })
+	if got := connectCount.Load(); got != 1 {
+		t.Fatalf("OnConnect called %d times on first connect, want 1", got)
 	}
 
+	// 关闭所有服务端会话模拟断连，客户端重连后 OnConnect 应再次触发
 	for _, s := range srv.Manager().All() {
 		_ = s.Close()
 	}
 	waitFor(t, 5*time.Second, func() bool { return cli.Session() != nil })
 
-	if readyCount.Load() != 1 {
-		t.Fatalf("OnReady called %d times after reconnect, want still 1", readyCount.Load())
+	if connectCount.Load() < 2 {
+		t.Fatalf("OnConnect called %d times after reconnect, want >= 2", connectCount.Load())
 	}
 }
 
@@ -429,7 +430,7 @@ func TestClientReconnect(t *testing.T) {
 	}()
 	time.Sleep(100 * time.Millisecond)
 
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
@@ -473,7 +474,7 @@ func TestClientRequestViaServer(t *testing.T) {
 	}))
 	defer srvStop()
 
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
@@ -501,7 +502,7 @@ func TestClientSessionNilAfterClose(t *testing.T) {
 	stop := startServer(t, port, noopServerHandler())
 	defer stop()
 
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
@@ -533,7 +534,7 @@ func TestClientHeartbeat(t *testing.T) {
 	stop := startServer(t, port, srvHandler)
 	defer stop()
 
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
@@ -572,7 +573,7 @@ func TestClientHeartbeatDisabled(t *testing.T) {
 	stop := startServer(t, port, srvHandler)
 	defer stop()
 
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
@@ -618,7 +619,7 @@ func TestClientIdleTimeout(t *testing.T) {
 	}()
 	time.Sleep(100 * time.Millisecond)
 
-	cli, err := NewClient("tcp", "127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),

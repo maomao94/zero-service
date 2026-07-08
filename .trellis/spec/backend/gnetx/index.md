@@ -11,6 +11,8 @@
 5. **Session 生命周期** — OnOpen 创建 / OnClose 清理
 6. **ReplyPool 所有权** — Session 持有非拥有型引用；Server/Client 管理池生命周期
 7. **PacketContextProvider** — 如果 Codec 需要在回包时填 ack/seq，让消息实现 `PacketContextProvider`；框架在 dispatch 阶段注入 ctx
+8. **OnConnect 回调** — 每次连接（含重连）触发，独立 goroutine 执行；`ConnectTimeout` 控制超时；已取代单次 `OnReady`
+9. **DebugSerializer** — 包装 Serializer，debug 级别输出 hex 日志；不再使用 base64
 
 ## Package Architecture
 

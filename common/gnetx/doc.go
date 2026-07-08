@@ -39,7 +39,7 @@
 //
 // Client 是单连接模型（对标 mqttx/modbusx），构造即拨号，断线按固定间隔自动重连：
 //
-//	cli := gnetx.MustNewClient("tcp", "127.0.0.1:9000",
+//	cli := gnetx.MustNewClient("127.0.0.1:9000",
 //	    gnetx.WithClientCodec(myCodec),
 //	    gnetx.WithClientHandler(myHandler),
 //	    gnetx.WithClientMaxFrameLength(1<<20),

@@ -27,8 +27,9 @@
 
 ### AI 与协议
 
-- [einox-guidelines.md](./einox-guidelines.md) - EinoX Agent 框架：Agent 工厂、ChatModel 多厂商适配、工具管理（Kit+Policy）、中断中间件、Runtime、协议事件
-- [mcpx-guidelines.md](./mcpx-guidelines.md) - MCPx 客户端/服务端：多连接管理、工具路由、鉴权、进度通知、异步任务、CallToolWrapper
+- [einox-guidelines.md](./einox-guidelines.md) - EinoX Agent 框架
+- [mcpx-guidelines.md](./mcpx-guidelines.md) - MCPx 客户端/服务端
+- [isp-guidelines.md](./isp-guidelines.md) - ISP 协议（Inspector Substation Protocol）：帧格式、编解码、常量、应答约定
 
 ### 领域模块
 

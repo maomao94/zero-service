@@ -2,8 +2,8 @@ package gnetx
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"io"
 	"math"
@@ -73,7 +73,7 @@ func (c *funcCodec) Encode(ctx context.Context, msg any, conn Conn) ([]byte, err
 	return c.encode(ctx, msg, conn)
 }
 
-// DebugSerializer 包装一个 Serializer，在 Debug 日志级别下打印每帧 payload 的 base64 编码。
+// DebugSerializer 包装一个 Serializer，在 Debug 日志级别下打印每帧 payload 的 hex 编码。
 // 用法：codec := NewLengthPrefixCodec(2, endian, DebugSerializer(mySerializer))
 func DebugSerializer(inner Serializer) Serializer {
 	return &debugSerializer{inner: inner}
@@ -82,7 +82,7 @@ func DebugSerializer(inner Serializer) Serializer {
 type debugSerializer struct{ inner Serializer }
 
 func (s *debugSerializer) Decode(raw []byte) (any, error) {
-	logx.Debugf("[gnetx] recv %d bytes base64=%s", len(raw), base64.StdEncoding.EncodeToString(raw))
+	logx.Debugf("[gnetx] recv %d bytes hex=%s", len(raw), hex.EncodeToString(raw))
 	return s.inner.Decode(raw)
 }
 
@@ -91,7 +91,7 @@ func (s *debugSerializer) Encode(msg any) ([]byte, error) {
 	if err != nil {
 		return raw, err
 	}
-	logx.Debugf("[gnetx] send %d bytes base64=%s", len(raw), base64.StdEncoding.EncodeToString(raw))
+	logx.Debugf("[gnetx] send %d bytes hex=%s", len(raw), hex.EncodeToString(raw))
 	return raw, nil
 }
 

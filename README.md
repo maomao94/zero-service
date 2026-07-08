@@ -9,6 +9,7 @@
 - **异步任务调度** — asynq 分布式队列 + 自研计划任务引擎，HTTP/gRPC 回调
 - **实时通信** — SocketIO 消息网关，房间管理、广播推送、MQTT 桥接
 - **协议桥接** — Modbus TCP/RTU、MQTT 协议转换
+- **变电站巡检** — ISP 巡检协议代理，对接上级巡检系统服务
 - **地理信息** — H3 网格、GeoHash 编解码、电子围栏、坐标系转换
 - **容器管理** — Docker 容器生命周期管理
 
@@ -77,10 +78,11 @@ cd app/trigger && go run trigger.go -f etc/trigger.yaml
 | **bridgemqtt** | MQTT 协议桥接 | - |
 | **gis** | 地理信息 — H3/GeoHash/围栏/坐标转换 | - |
 | **podengine** | 容器管理 — Docker 容器生命周期 | - |
+| **ispagent** | ISP 巡检协议 — 变电站机器人巡检 TCP 代理 | - |
 
 ## 技术栈
 
-go-zero · gRPC · Kafka · asynq + Redis · SocketIO · IEC 104 · Modbus · MQTT · DJI Cloud API · MySQL / PostgreSQL / SQLite · TDengine · MinIO / OSS · Nacos · Docker
+go-zero · gRPC · Kafka · asynq + Redis · SocketIO · IEC 104 · Modbus · MQTT · ISP · DJI Cloud API · MySQL / PostgreSQL / SQLite · TDengine · MinIO / OSS · Nacos · Docker
 
 ## 文档
 

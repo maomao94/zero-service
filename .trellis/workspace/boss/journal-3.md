@@ -104,3 +104,38 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 111: ISP Agent 开发完成：common/isp协议层 + app/ispagent gRPC服务 + gnetx增强
+
+**Date**: 2026-07-08
+**Task**: ISP Agent 开发完成：common/isp协议层 + app/ispagent gRPC服务 + gnetx增强
+**Branch**: `master`
+
+### Summary
+
+基于gnetx开发ISP协议TCP客户端(ispagent)，对接Java allcore-sip服务。包含：协议编解码(lengthPrefix+Serializer)、注册/心跳轮询管理、Router消息路由+251-3应答、handler钩子目录、gnetx增加OnConnect/hex debug
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b65d5929` | (see git log) |
+| `abb0b129` | (see git log) |
+| `5c02b8b6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
