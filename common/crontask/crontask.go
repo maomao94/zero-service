@@ -19,14 +19,15 @@ import (
 type Handler func(ctx context.Context, task *TaskConfig) error
 
 // Scheduler 通用周期性任务调度器，依赖 TaskStore 接口实现存储无关。
-// 主循环使用自适应 sleep：有任务 10ms 快速连扫，无任务 1~2s 慢速等待。
+// 主循环使用自适应 sleep：有任务 10ms 快速连扫，无任务 interval 间隔等待。
 type Scheduler struct {
-	store      TaskStore
-	handler    Handler
-	interval   time.Duration
-	lockExpire time.Duration
-	stopCh     chan struct{}
-	tracer     oteltrace.Tracer
+	store            TaskStore
+	handler          Handler
+	interval         time.Duration
+	lockExpire       time.Duration
+	stopCh           chan struct{}
+	tracer           oteltrace.Tracer
+	invalidTimeFilter InvalidTimeFilter
 }
 
 // NewScheduler 创建调度器，默认扫描间隔 2s，锁过期 30s。
@@ -39,12 +40,13 @@ func NewScheduler(store TaskStore, handler Handler, opts ...SchedulerOption) *Sc
 		opt(o)
 	}
 	return &Scheduler{
-		store:      store,
-		handler:    handler,
-		interval:   o.Interval,
-		lockExpire: o.LockExpire,
-		stopCh:     make(chan struct{}),
-		tracer:     otel.Tracer(trace.TraceName),
+		store:            store,
+		handler:          handler,
+		interval:         o.Interval,
+		lockExpire:       o.LockExpire,
+		stopCh:           make(chan struct{}),
+		tracer:           otel.Tracer(trace.TraceName),
+		invalidTimeFilter: o.InvalidTimeFilter,
 	}
 }
 
@@ -115,6 +117,9 @@ func (s *Scheduler) executeTask(task *TaskConfig) {
 	if err != nil {
 		logx.WithContext(ctx).Errorf("[crontask] task %s compute next run failed: %v", task.TaskCode, err)
 		return
+	}
+	if s.invalidTimeFilter != nil {
+		nextRun = s.invalidTimeFilter(task, nextRun)
 	}
 	if err := s.store.UpdateNextRun(ctx, task.ID, nextRun, carbon.Now().StdTime()); err != nil {
 		logx.WithContext(ctx).Errorf("[crontask] task %s update next run failed: %v", task.TaskCode, err)

@@ -368,3 +368,27 @@ func NewTaskConfig(existingID int64, fields *IspTaskFields) *crontask.TaskConfig
 func Migrate(db *gorm.DB) error {
 	return db.AutoMigrate(&GormTaskConfig{})
 }
+
+// NewInvalidTimeFilter 创建 crontask 的 InvalidTimeFilter，复用 CalcInitNextRun 的 skipInvalidTime 逻辑。
+func NewInvalidTimeFilter() crontask.InvalidTimeFilter {
+	return func(task *crontask.TaskConfig, next time.Time) time.Time {
+		fields := DeserializeExtra(string(task.Extra))
+		if fields == nil {
+			return next
+		}
+		is := parseTime(fields.InvalidStartTime)
+		ie := parseTime(fields.InvalidEndTime)
+		if is.IsZero() || ie.IsZero() {
+			return next
+		}
+		rule, err := rrule.StrToRRule(task.RRuleStr)
+		if err != nil {
+			return next
+		}
+		next = fields.skipInvalidTime(rule, next)
+		if next.IsZero() {
+			return carbon.Now().AddYears(100).StdTime()
+		}
+		return next
+	}
+}
