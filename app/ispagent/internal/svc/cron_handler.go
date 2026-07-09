@@ -11,6 +11,7 @@ import (
 
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/threading"
 )
 
 func NewCronHandler(svcCtx *ServiceContext) crontask.Handler {
@@ -50,13 +51,17 @@ func NewCronHandler(svcCtx *ServiceContext) crontask.Handler {
 		// 开始执行
 		sendStatus(2)
 
-		// 模拟执行延迟
-		time.Sleep(60 * time.Second)
+		threading.GoSafe(func() {
+			// 模拟执行延迟
+			time.Sleep(60 * time.Second)
 
-		// 执行完成
-		sendStatus(1)
+			// 执行完成
+			sendStatus(1)
 
-		logx.WithContext(ctx).Infof("[ispagent] cron 任务完成 task_code=%s", task.TaskCode)
+			logx.WithContext(ctx).Infof("[ispagent] cron 任务完成 task_code=%s", task.TaskCode)
+		})
+
+		logx.WithContext(ctx).Infof("[ispagent] cron 任务开始执行 task_code=%s", task.TaskCode)
 		return nil
 	}
 }
