@@ -50,6 +50,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		svcCtx.Scheduler = crontask.NewScheduler(store, handler,
 			crontask.WithInterval(c.CronTask.Interval),
 			crontask.WithLockExpire(c.CronTask.LockExpire),
+			crontask.WithMaxDelay(c.CronTask.MaxDelay),
 			crontask.WithInvalidTimeFilter(ctask.NewInvalidTimeFilter()),
 		)
 		svcCtx.Scheduler.Start()

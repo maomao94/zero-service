@@ -70,8 +70,10 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, lockDur time.
 		return nil, crontask.ErrNotFound
 	}
 
-	record.NextRun = lockedTime
-	return toTaskConfig(&record), nil
+	originalNextRun := record.NextRun
+	cfg := toTaskConfig(&record)
+	cfg.NextRun = originalNextRun
+	return cfg, nil
 }
 
 // UpdateNextRun 更新任务的下次调度时间和上次执行时间。

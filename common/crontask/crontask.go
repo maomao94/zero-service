@@ -21,12 +21,13 @@ type Handler func(ctx context.Context, task *TaskConfig) error
 // Scheduler 通用周期性任务调度器，依赖 TaskStore 接口实现存储无关。
 // 主循环使用自适应 sleep：有任务 10ms 快速连扫，无任务 interval 间隔等待。
 type Scheduler struct {
-	store            TaskStore
-	handler          Handler
-	interval         time.Duration
-	lockExpire       time.Duration
-	stopCh           chan struct{}
-	tracer           oteltrace.Tracer
+	store             TaskStore
+	handler           Handler
+	interval          time.Duration
+	lockExpire        time.Duration
+	maxDelay          time.Duration
+	stopCh            chan struct{}
+	tracer            oteltrace.Tracer
 	invalidTimeFilter InvalidTimeFilter
 }
 
@@ -40,12 +41,13 @@ func NewScheduler(store TaskStore, handler Handler, opts ...SchedulerOption) *Sc
 		opt(o)
 	}
 	return &Scheduler{
-		store:            store,
-		handler:          handler,
-		interval:         o.Interval,
-		lockExpire:       o.LockExpire,
-		stopCh:           make(chan struct{}),
-		tracer:           otel.Tracer(trace.TraceName),
+		store:             store,
+		handler:           handler,
+		interval:          o.Interval,
+		lockExpire:        o.LockExpire,
+		maxDelay:          o.MaxDelay,
+		stopCh:            make(chan struct{}),
+		tracer:            otel.Tracer(trace.TraceName),
 		invalidTimeFilter: o.InvalidTimeFilter,
 	}
 }
@@ -91,6 +93,7 @@ func (s *Scheduler) scanLoop() {
 }
 
 // executeTask 执行单个任务。handler 成功后计算下次调度时间并更新。
+// 若 MaxDelay > 0 且任务已延迟超过 MaxDelay，跳过执行直接计算下次时间。
 func (s *Scheduler) executeTask(task *TaskConfig) {
 	ctx := context.Background()
 	ctx, span := s.tracer.Start(ctx, "crontask-execute",
@@ -108,9 +111,17 @@ func (s *Scheduler) executeTask(task *TaskConfig) {
 		logx.Field("task_id", task.ID),
 	)
 
-	if err := s.handler(ctx, task); err != nil {
-		logx.WithContext(ctx).Errorf("[crontask] task %s execute failed: %v", task.TaskCode, err)
-		return
+	stale := false
+	if s.maxDelay > 0 && time.Since(task.NextRun) > s.maxDelay {
+		logx.WithContext(ctx).Infof("[crontask] task %s skipped: delayed %v > max %v", task.TaskCode, time.Since(task.NextRun), s.maxDelay)
+		stale = true
+	}
+
+	if !stale {
+		if err := s.handler(ctx, task); err != nil {
+			logx.WithContext(ctx).Errorf("[crontask] task %s execute failed: %v", task.TaskCode, err)
+			return
+		}
 	}
 
 	nextRun, err := computeNextRun(task)
@@ -137,12 +148,17 @@ func (s *Scheduler) RunNow(ctx context.Context, taskCode string) error {
 }
 
 // computeNextRun 基于 rrule 计算下一次调度时间。
-// 使用 cfg.NextRun 作为基准避免时间漂移。
+// 以 max(NextRun, now) 为基准避免延迟后算出已过去的时间。
 // 若已无更多触发计划（COUNT 耗尽、超出 Until），返回 100 年后避免重复调度。
 func computeNextRun(cfg *TaskConfig) (time.Time, error) {
+	base := cfg.NextRun
+	if now := carbon.Now().StdTime(); base.Before(now) {
+		base = now
+	}
+
 	set, err := rrule.StrToRRuleSet(cfg.RRuleStr)
 	if err == nil {
-		next := set.After(cfg.NextRun, false)
+		next := set.After(base, false)
 		if next.IsZero() {
 			return carbon.Now().AddYears(100).StdTime(), nil
 		}
@@ -153,7 +169,7 @@ func computeNextRun(cfg *TaskConfig) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	next := rule.After(cfg.NextRun, false)
+	next := rule.After(base, false)
 	if next.IsZero() {
 		return carbon.Now().AddYears(100).StdTime(), nil
 	}

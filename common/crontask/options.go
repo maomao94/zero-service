@@ -5,6 +5,7 @@ import "time"
 type SchedulerOptions struct {
 	Interval          time.Duration
 	LockExpire        time.Duration
+	MaxDelay          time.Duration // 最大延迟容忍，超过则跳过执行直接计算下次时间，0=不限制
 	InvalidTimeFilter InvalidTimeFilter
 }
 
@@ -30,5 +31,12 @@ func WithLockExpire(d time.Duration) SchedulerOption {
 func WithInvalidTimeFilter(f InvalidTimeFilter) SchedulerOption {
 	return func(o *SchedulerOptions) {
 		o.InvalidTimeFilter = f
+	}
+}
+
+// WithMaxDelay 设置最大延迟容忍。任务 next_run 距当前时间超过此值则跳过执行，直接计算下次时间。
+func WithMaxDelay(d time.Duration) SchedulerOption {
+	return func(o *SchedulerOptions) {
+		o.MaxDelay = d
 	}
 }

@@ -28,6 +28,7 @@ DB:
 CronTask:
   Interval: 2s
   LockExpire: 30s
+  # MaxDelay: 30m  # 停服太久导致的过期任务跳过执行，直接计算下次时间（默认30分钟）
 # ISP TCP 客户端配置
 IspSetting:
   ServerAddr: 10.10.1.213:7100         # 上级 ISP 系统地址

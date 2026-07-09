@@ -19,6 +19,7 @@ type Config struct {
 type CronTaskConfig struct {
 	Interval   time.Duration `json:",default=2s"`
 	LockExpire time.Duration `json:",default=300s"`
+	MaxDelay   time.Duration `json:",default=30m"` // 最大延迟容忍，超过则跳过执行直接计算下次时间
 }
 
 // IspSetting 定义 ISP TCP 客户端连接及协议参数。

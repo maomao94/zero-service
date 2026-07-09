@@ -56,10 +56,12 @@ func (m *MemoryStore) LockAndFetch(ctx context.Context, now time.Time, lockDur t
 	}
 	task := candidates[rand.Intn(last+1)]
 
+	originalNextRun := task.NextRun
 	task.NextRun = now.Add(lockDur)
 	task.Version++
 
 	cloned := *task
+	cloned.NextRun = originalNextRun
 	return &cloned, nil
 }
 

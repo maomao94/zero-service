@@ -99,13 +99,17 @@ func TestMemoryStoreLockAndFetch(t *testing.T) {
 		t.Fatalf("expected t2 (higher priority), got %s", got.TaskCode)
 	}
 
-	// time should be extended
-	if !got.NextRun.After(now) {
-		t.Fatalf("expected nextRun extended, got %v", got.NextRun)
+	// LockAndFetch returns the original next_run (for computeNextRun),
+	// the lock extension is stored in the store.
+	if !got.NextRun.Before(now) {
+		t.Fatalf("expected original nextRun in past, got %v", got.NextRun)
 	}
 
-	// version should be incremented in store
+	// stored task should have next_run extended (locked)
 	stored, _ := store.GetByCode(ctx, "t2")
+	if !stored.NextRun.After(now) {
+		t.Fatalf("expected nextRun extended in store, got %v", stored.NextRun)
+	}
 	if stored.Version != 1 {
 		t.Fatalf("expected version 1, got %d", stored.Version)
 	}
