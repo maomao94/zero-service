@@ -310,6 +310,7 @@ func HandleTaskControl(ctx context.Context, msg *isp.Message, store crontask.Tas
 		now := carbon.Now()
 		execTime = now.ToDateTimeString()
 		taskPatrolledID = fmt.Sprintf("%s_%s_%s", substationCode, taskCode, now.Format("YmdHis"))
+		_ = store.UpdateNextRun(ctx, task.ID, task.NextRun, now.StdTime())
 	}
 
 	items := []isp.Item{{

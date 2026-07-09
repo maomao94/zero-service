@@ -30,8 +30,8 @@ func NewDBStore(db *gormx.DB) *DBStore {
 }
 
 // LockAndFetch 扫描并锁定一个到期任务，参照 trigger 的 LockTriggerItem 模式：
-//  1. SELECT status=enabled AND next_run<=now，按 priority DESC 排序，LIMIT 1
-//  2. UPDATE next_run = now+lockDur，optimisticlock 插件自动追加 WHERE version=oldVersion 并自增
+//  1. SELECT status=enabled AND next_run<=now，按 priority DESC + RAND() 排序，LIMIT 1
+//  2. UPDATE next_run = now+lockDur WHERE next_run<=now，通过时间扩展防并发
 //     RowsAffected==0 → 已被其他实例抢占，返回 ErrNotFound
 func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, lockDur time.Duration) (*crontask.TaskConfig, error) {
 	var randomFn string
