@@ -11,7 +11,9 @@ import (
 	"zero-service/app/ispagent/internal/config"
 	"zero-service/app/ispagent/internal/handler"
 	"zero-service/common/crontask"
+	"zero-service/common/ftps"
 	"zero-service/common/gnetx"
+	"zero-service/common/gormx"
 	"zero-service/common/isp"
 
 	"github.com/dromara/carbon/v2"
@@ -25,8 +27,11 @@ import (
 // 采用乐观轮询模式，每 2s 检查连接/注册/心跳状态。
 // handler 基于 gnetx.Router 按 messageId 路由入站消息，未匹配的消息自动回复 251-3 通用应答。
 type Manager struct {
-	cfg       config.IspSetting
-	taskStore crontask.TaskStore
+	cfg           config.IspSetting
+	taskStore     crontask.TaskStore
+	db            *gormx.DB
+	modelUploader *ftps.Uploader
+	modelProvider handler.ModelDataProvider
 
 	mu            sync.RWMutex
 	cli           *gnetx.Client
@@ -49,15 +54,21 @@ type recvSeq struct {
 }
 
 // NewManager 创建 ISP 客户端管理器。
-func NewManager(cfg config.IspSetting, taskStore crontask.TaskStore) *Manager {
+func NewManager(cfg config.IspSetting, taskStore crontask.TaskStore, db *gormx.DB, uploader *ftps.Uploader, provider handler.ModelDataProvider) *Manager {
 	cfg.ApplyDefaults()
+	if provider == nil {
+		provider = handler.DefaultModelDataProvider{}
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	m := &Manager{
-		cfg:       cfg,
-		taskStore: taskStore,
-		ctx:       ctx,
-		cancel:    cancel,
-		heartbeat: cfg.HeartbeatInterval,
+		cfg:           cfg,
+		taskStore:     taskStore,
+		db:            db,
+		modelUploader: uploader,
+		modelProvider: provider,
+		ctx:           ctx,
+		cancel:        cancel,
+		heartbeat:     cfg.HeartbeatInterval,
 	}
 	m.lastRecvSeq.Store(recvSeq{})
 	_ = m.connect()
@@ -116,7 +127,7 @@ func (m *Manager) connect() error {
 	// TODO: 异步发送协程后续改为硬件下发指令，等硬件确认后再通知
 	taskControlHandler := func(ctx context.Context, conn gnetx.Conn, req *isp.Message) (any, error) {
 		handler.LogInbound(ctx, req)
-		taskPatrolledID, err := handler.HandleTaskControl(ctx, req, m.taskStore, func(ctx context.Context, code string, items []isp.Item) {
+		taskPatrolledID, err := handler.HandleTaskControl(ctx, req, m.taskStore, m.db, m.cfg.SendCode, m.currentReceiveCode(), func(ctx context.Context, code string, items []isp.Item) {
 			if _, e := m.Execute(ctx, isp.TypeTaskStatusData, isp.CommandReport, code, items); e != nil {
 				logx.Errorf("[ispagent] 任务控制通知发送失败: %v", e)
 			}
@@ -143,16 +154,25 @@ func (m *Manager) connect() error {
 	// 模型同步拉取 (61-2/4/9)：服务端主动拉取模型文件
 	modelSyncHandler := func(ctx context.Context, conn gnetx.Conn, req *isp.Message) (any, error) {
 		handler.LogInbound(ctx, req)
-		items, err := handler.HandleModelSync(ctx, req)
+		items, err := handler.HandleModelSync(ctx, req, m.modelUploader, m.modelProvider)
 		m.trackRecvSeq(req.SendSeq, conn.ID())
 		if err != nil || len(items) == 0 {
 			return m.responseWithCode(conn, req, handler.ResponseCode(err)), nil
 		}
 		return m.responseWithItems(conn, req, isp.StatusSuccess, items), nil
 	}
-	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelRobot), modelSyncHandler) // 61-2
-	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelPoint), modelSyncHandler) // 61-4
-	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelMap), modelSyncHandler)   // 61-9
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelRegionHost), modelSyncHandler)     // 61-1
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelRobot), modelSyncHandler)          // 61-2
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelCamera), modelSyncHandler)         // 61-3
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelPoint), modelSyncHandler)          // 61-4
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelDrone), modelSyncHandler)          // 61-5
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelVoice), modelSyncHandler)          // 61-6
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelTaskFile), modelSyncHandler)       // 61-7
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelMaintenance), modelSyncHandler)    // 61-8
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelMap), modelSyncHandler)            // 61-9
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelMaintRecord), modelSyncHandler)    // 61-10
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelLinkage), modelSyncHandler)        // 61-11
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelAlarmThreshold), modelSyncHandler) // 61-12
 	// 未匹配入站消息：fallback 日志 + 回复 251-3
 	router.FallbackFunc(func(ctx context.Context, conn gnetx.Conn, msg any) (any, error) {
 		im, ok := msg.(*isp.Message)

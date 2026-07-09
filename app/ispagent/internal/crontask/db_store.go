@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"zero-service/app/ispagent/model/gormmodel"
 	"zero-service/common/crontask"
 	"zero-service/common/gormx"
 
@@ -41,7 +42,7 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, lockDur time.
 		randomFn = "RAND()"
 	}
 
-	var records []GormTaskConfig
+	var records []gormmodel.GormTaskConfig
 	err := s.db.WithContext(ctx).
 		Where("status = ?", int(crontask.StatusEnabled)).
 		Where("next_run <= ?", now).
@@ -79,7 +80,7 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, lockDur time.
 // UpdateNextRun 更新任务的下次调度时间和上次执行时间。
 func (s *DBStore) UpdateNextRun(ctx context.Context, id int64, nextRun, lastRun time.Time) error {
 	result := s.db.WithContext(ctx).
-		Model(&GormTaskConfig{}).
+		Model(&gormmodel.GormTaskConfig{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
 			"next_run": nextRun,
@@ -96,7 +97,7 @@ func (s *DBStore) UpdateNextRun(ctx context.Context, id int64, nextRun, lastRun 
 
 // GetByCode 按全局唯一的 task_code 查询任务配置。
 func (s *DBStore) GetByCode(ctx context.Context, taskCode string) (*crontask.TaskConfig, error) {
-	var record GormTaskConfig
+	var record gormmodel.GormTaskConfig
 	err := s.db.WithContext(ctx).Where("task_code = ?", taskCode).First(&record).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -124,7 +125,7 @@ func (s *DBStore) Insert(ctx context.Context, cfg *crontask.TaskConfig) error {
 func (s *DBStore) Update(ctx context.Context, cfg *crontask.TaskConfig) error {
 	record := fromTaskConfig(cfg)
 	result := s.db.WithContext(ctx).
-		Model(&GormTaskConfig{}).
+		Model(&gormmodel.GormTaskConfig{}).
 		Where("id = ?", cfg.ID).
 		Updates(record)
 	if result.Error != nil {
@@ -141,7 +142,7 @@ func (s *DBStore) Update(ctx context.Context, cfg *crontask.TaskConfig) error {
 
 // UpdateStatus 更新任务启用/禁用状态。
 func (s *DBStore) UpdateStatus(ctx context.Context, id int64, status crontask.TaskStatus) error {
-	record := GormTaskConfig{}
+	record := gormmodel.GormTaskConfig{}
 	record.Id = id
 
 	result := s.db.WithContext(ctx).
@@ -160,7 +161,7 @@ func (s *DBStore) UpdateStatus(ctx context.Context, id int64, status crontask.Ta
 
 // Delete 软删除任务。
 func (s *DBStore) Delete(ctx context.Context, id int64) error {
-	result := s.db.WithContext(ctx).Where("id = ?", id).Delete(&GormTaskConfig{})
+	result := s.db.WithContext(ctx).Where("id = ?", id).Delete(&gormmodel.GormTaskConfig{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -172,7 +173,7 @@ func (s *DBStore) Delete(ctx context.Context, id int64) error {
 
 // ListEnabled 获取所有启用状态的任务配置。
 func (s *DBStore) ListEnabled(ctx context.Context) ([]*crontask.TaskConfig, error) {
-	var records []GormTaskConfig
+	var records []gormmodel.GormTaskConfig
 	err := s.db.WithContext(ctx).
 		Where("status = ?", int(crontask.StatusEnabled)).
 		Find(&records).Error

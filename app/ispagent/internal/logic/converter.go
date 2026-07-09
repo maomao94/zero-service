@@ -2,10 +2,11 @@ package logic
 
 import (
 	"strconv"
-	"time"
 
 	"zero-service/app/ispagent/ispagent"
 	"zero-service/common/isp"
+
+	"github.com/dromara/carbon/v2"
 )
 
 func protoItems(items []*ispagent.Item) []isp.Item {
@@ -24,7 +25,7 @@ func protoItems(items []*ispagent.Item) []isp.Item {
 }
 
 func patrolDeviceCoordinatesToItems(items []*ispagent.PatrolDeviceCoordinate) []isp.Item {
-	now := time.Now().Format("2006-01-02 15:04:05")
+	now := carbon.Now().ToDateTimeString()
 	out := make([]isp.Item, 0, len(items))
 	for _, item := range items {
 		if item == nil {
@@ -43,7 +44,7 @@ func patrolDeviceCoordinatesToItems(items []*ispagent.PatrolDeviceCoordinate) []
 }
 
 func patrolDeviceRunDataToItems(items []*ispagent.PatrolDeviceRunData) []isp.Item {
-	now := time.Now().Format("2006-01-02 15:04:05")
+	now := carbon.Now().ToDateTimeString()
 	out := make([]isp.Item, 0, len(items))
 	for _, item := range items {
 		if item == nil {
@@ -63,7 +64,7 @@ func patrolDeviceRunDataToItems(items []*ispagent.PatrolDeviceRunData) []isp.Ite
 }
 
 func patrolDeviceStatusDataToItems(items []*ispagent.PatrolDeviceStatusData) []isp.Item {
-	now := time.Now().Format("2006-01-02 15:04:05")
+	now := carbon.Now().ToDateTimeString()
 	out := make([]isp.Item, 0, len(items))
 	for _, item := range items {
 		if item == nil {

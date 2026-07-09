@@ -6,7 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"zero-service/app/ispagent/model/gormmodel"
 	"zero-service/common/crontask"
+	"zero-service/common/gormx"
 	"zero-service/common/isp"
 
 	ctask "zero-service/app/ispagent/internal/crontask"
@@ -14,6 +16,7 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gorm.io/gorm/clause"
 )
 
 // HandleTaskDispatch 处理任务下发指令 (101-1)。
@@ -115,9 +118,9 @@ func atoi(s string) int {
 }
 
 var (
-	validTypes      = map[string]bool{"1": true, "2": true, "3": true, "4": true}
-	validPriorities = map[string]bool{"1": true, "2": true, "3": true, "4": true}
-	validEnables    = map[string]bool{"0": true, "1": true, "2": true}
+	validTypes         = map[string]bool{"1": true, "2": true, "3": true, "4": true}
+	validPriorities    = map[string]bool{"1": true, "2": true, "3": true, "4": true}
+	validEnables       = map[string]bool{"0": true, "1": true, "2": true}
 	validIntervalTypes = map[string]bool{"1": true, "2": true}
 	validDeviceLevels  = map[int]bool{1: true, 2: true, 3: true, 4: true}
 )
@@ -263,7 +266,7 @@ var taskControlToState = map[int32]string{
 // HandleTaskControl 处理任务控制指令 (41-1/2/3/4)。
 // Command=1(启动): msg.Code 为 task_code。
 // Command=2/3/4(暂停/继续/停止): msg.Code 为 变电站编码_任务编码_时间。
-func HandleTaskControl(ctx context.Context, msg *isp.Message, store crontask.TaskStore, notify func(ctx context.Context, code string, items []isp.Item)) (string, error) {
+func HandleTaskControl(ctx context.Context, msg *isp.Message, store crontask.TaskStore, db *gormx.DB, sendCode, receiveCode string, notify func(ctx context.Context, code string, items []isp.Item)) (string, error) {
 	if store == nil {
 		return "", fmt.Errorf("store is nil")
 	}
@@ -310,7 +313,9 @@ func HandleTaskControl(ctx context.Context, msg *isp.Message, store crontask.Tas
 		now := carbon.Now()
 		execTime = now.ToDateTimeString()
 		taskPatrolledID = fmt.Sprintf("%s_%s_%s", substationCode, taskCode, now.Format("YmdHis"))
-		_ = store.UpdateNextRun(ctx, task.ID, task.NextRun, now.StdTime())
+		if err := store.UpdateNextRun(ctx, task.ID, task.NextRun, now.StdTime()); err != nil {
+			logx.WithContext(ctx).Errorf("[ispagent] 更新 last_run 失败: %v", err)
+		}
 	}
 
 	items := []isp.Item{{
@@ -324,8 +329,48 @@ func HandleTaskControl(ctx context.Context, msg *isp.Message, store crontask.Tas
 		"task_estimated_time": "",
 		"description":         "",
 	}}
+	updateColumns := []string{
+		"send_code",
+		"receive_code",
+		"code",
+		"task_name",
+		"task_code",
+		"task_state",
+		"task_progress",
+		"task_estimated_time",
+		"description",
+	}
+	if msg.Command == isp.CommandTaskStart {
+		updateColumns = append(updateColumns, "plan_start_time", "start_time")
+	}
+	if err := upsertPatrolTask(ctx, db, &gormmodel.GormIspPatrolTask{
+		SendCode:          sendCode,
+		ReceiveCode:       receiveCode,
+		Code:              substationCode,
+		TaskPatrolledID:   taskPatrolledID,
+		TaskName:          task.TaskName,
+		TaskCode:          taskCode,
+		TaskState:         state,
+		PlanStartTime:     execTime,
+		StartTime:         execTime,
+		TaskProgress:      "0",
+		TaskEstimatedTime: "",
+		Description:       "",
+	}, updateColumns); err != nil {
+		return "", fmt.Errorf("同步巡视任务表失败: %w", err)
+	}
 	if notify != nil {
 		go notify(context.Background(), substationCode, items)
 	}
 	return taskPatrolledID, nil
+}
+
+func upsertPatrolTask(ctx context.Context, db *gormx.DB, task *gormmodel.GormIspPatrolTask, updateColumns []string) error {
+	if db == nil || task == nil {
+		return nil
+	}
+	return db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "task_patrolled_id"}},
+		DoUpdates: clause.AssignmentColumns(updateColumns),
+	}).Create(task).Error
 }

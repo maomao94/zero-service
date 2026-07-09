@@ -14,6 +14,23 @@ type Config struct {
 	IspSetting IspSetting
 	DB         gormx.Config `json:",optional"`
 	CronTask   CronTaskConfig
+	ModelSync  ModelSyncConfig
+}
+
+type ModelSyncConfig struct {
+	FTPS ModelSyncFTPSConfig
+}
+
+type ModelSyncFTPSConfig struct {
+	Address            string        `json:",optional"`
+	Username           string        `json:",optional"`
+	Password           string        `json:",optional"`
+	RemoteDir          string        `json:",optional"`
+	TLSMode            string        `json:",default=implicit"` // implicit or explicit
+	InsecureSkipVerify bool          `json:",optional"`
+	Timeout            time.Duration `json:",default=30s"`
+	DisableEPSV        bool          `json:",optional"`
+	UseTemporaryFile   bool          `json:",default=true"`
 }
 
 type CronTaskConfig struct {

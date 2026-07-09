@@ -6,7 +6,7 @@ import (
 
 	"zero-service/app/ispagent/internal/svc"
 	"zero-service/app/ispagent/ispagent"
-	ctask "zero-service/app/ispagent/internal/crontask"
+	"zero-service/app/ispagent/model/gormmodel"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -41,7 +41,7 @@ func (l *ListTaskConfigsLogic) ListTaskConfigs(in *ispagent.ListTaskConfigsReq) 
 		pageSize = 20
 	}
 
-	db := l.svcCtx.DB.WithContext(l.ctx).Model(&ctask.GormTaskConfig{})
+	db := l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.GormTaskConfig{})
 
 	if code := in.GetSubstationCode(); code != "" {
 		db = db.Where("substation_code = ?", code)
@@ -55,7 +55,7 @@ func (l *ListTaskConfigsLogic) ListTaskConfigs(in *ispagent.ListTaskConfigsReq) 
 		return nil, err
 	}
 
-	var records []ctask.GormTaskConfig
+	var records []gormmodel.GormTaskConfig
 	if err := db.Order("id DESC").Offset((page - 1) * pageSize).Limit(pageSize).Find(&records).Error; err != nil {
 		return nil, err
 	}
@@ -64,33 +64,33 @@ func (l *ListTaskConfigsLogic) ListTaskConfigs(in *ispagent.ListTaskConfigsReq) 
 	for i := range records {
 		r := &records[i]
 		item := &ispagent.TaskConfigItem{
-			Id:                 r.Id,
-			TaskCode:           r.TaskCode,
-			TaskName:           r.TaskName,
-			Priority:           int32(r.Priority),
-			RruleStr:           r.RRuleStr,
-			Status:             int32(r.Status),
-			SubstationCode:     r.SubstationCode,
-			PatrolType:         r.PatrolType,
-			DeviceLevel:        int32(r.DeviceLevel),
-			DeviceList:         r.DeviceList,
-			IspEnable:          r.IsEnable,
-			IspCreator:         r.IspCreator,
-			IspCreateTime:      r.IspCreateTime,
-			FixedStartTime:     r.FixedStartTime,
-			CycleMonth:         r.CycleMonth,
-			CycleWeek:          r.CycleWeek,
-			CycleExecuteTime:   r.CycleExecuteTime,
-			CycleStartTime:     r.CycleStartTime,
-			CycleEndTime:       r.CycleEndTime,
-			IntervalNumber:     r.IntervalNumber,
-			IntervalType:       r.IntervalType,
+			Id:                  r.Id,
+			TaskCode:            r.TaskCode,
+			TaskName:            r.TaskName,
+			Priority:            int32(r.Priority),
+			RruleStr:            r.RRuleStr,
+			Status:              int32(r.Status),
+			SubstationCode:      r.SubstationCode,
+			PatrolType:          r.PatrolType,
+			DeviceLevel:         int32(r.DeviceLevel),
+			DeviceList:          r.DeviceList,
+			IspEnable:           r.IsEnable,
+			IspCreator:          r.IspCreator,
+			IspCreateTime:       r.IspCreateTime,
+			FixedStartTime:      r.FixedStartTime,
+			CycleMonth:          r.CycleMonth,
+			CycleWeek:           r.CycleWeek,
+			CycleExecuteTime:    r.CycleExecuteTime,
+			CycleStartTime:      r.CycleStartTime,
+			CycleEndTime:        r.CycleEndTime,
+			IntervalNumber:      r.IntervalNumber,
+			IntervalType:        r.IntervalType,
 			IntervalExecuteTime: r.IntervalExecuteTime,
-			IntervalStartTime:  r.IntervalStartTime,
-			IntervalEndTime:    r.IntervalEndTime,
-			InvalidStartTime:   r.InvalidStartTime,
-			InvalidEndTime:     r.InvalidEndTime,
-			NextRun:            carbon.CreateFromStdTime(r.NextRun).ToDateTimeString(),
+			IntervalStartTime:   r.IntervalStartTime,
+			IntervalEndTime:     r.IntervalEndTime,
+			InvalidStartTime:    r.InvalidStartTime,
+			InvalidEndTime:      r.InvalidEndTime,
+			NextRun:             carbon.CreateFromStdTime(r.NextRun).ToDateTimeString(),
 		}
 		if r.LastRun != nil {
 			item.LastRun = carbon.CreateFromStdTime(*r.LastRun).ToDateTimeString()

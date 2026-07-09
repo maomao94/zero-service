@@ -40,3 +40,24 @@ IspSetting:
   ReconnectInterval: 3s               # 断线重连间隔
   MaxFrameLength: 1048576             # 单帧最大字节数
   DebugLog: true                       # 帧级 debug 日志（hex）
+# 模型同步文件上传配置（示例占位，部署时通过环境配置覆盖）
+ModelSync:
+  FTPS:
+    # Address 是 FTPS/FTP 服务地址，格式为 host:port；未配置时不会执行上传。
+    Address: ""
+    # Username 是登录 FTPS/FTP 服务的用户名；部署时通过环境或安全配置注入。
+    Username: ""
+    # Password 是登录 FTPS/FTP 服务的密码；不要在仓库配置里填写真实密码。
+    Password: ""
+    # RemoteDir 是模型文件上传到服务端的远程目录。
+    RemoteDir: "/"
+    # TLSMode 控制 TLS 握手方式：implicit 通常用于 990 端口，explicit 使用 AUTH TLS 升级。
+    TLSMode: implicit                  # implicit 或 explicit
+    # InsecureSkipVerify 为 true 时跳过服务端证书校验，仅用于测试或自签证书环境。
+    InsecureSkipVerify: false
+    # Timeout 是建立连接、登录和传输相关操作的超时时间。
+    Timeout: 30s
+    # DisableEPSV 为 true 时禁用 EPSV 被动模式，兼容不支持 EPSV 的 FTP 服务端或网络设备。
+    DisableEPSV: true
+    # UseTemporaryFile 为 true 时先上传为 .uploading 临时文件，成功后再重命名为目标文件。
+    UseTemporaryFile: true

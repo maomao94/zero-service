@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PatrolDevice_Model>
+   <Item station_name="500kV变电站" station_code="Nanwang500KV" patroldevice_name="xgrobot" patroldevice_code="Q1_P484" device_model="" manufacturer="联想" use_unit="" device_source="" production_date="" production_code="" istransport="" use_mode="null" video_mode="null" place="" type="4" patroldevice_info="" robots_code="192.168.1.15"/>
+</PatrolDevice_Model>

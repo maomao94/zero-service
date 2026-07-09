@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"strconv"
 
+	"zero-service/app/ispagent/model/gormmodel"
 	"zero-service/common/crontask"
 )
 
 // fromTaskConfig 将 crontask.TaskConfig 转为 GormTaskConfig 持久化模型。
 // Extra 中的 ISP 字段会被反序列化并平铺到 GormTaskConfig 对应列。
-func fromTaskConfig(cfg *crontask.TaskConfig) *GormTaskConfig {
-	g := &GormTaskConfig{
+func fromTaskConfig(cfg *crontask.TaskConfig) *gormmodel.GormTaskConfig {
+	g := &gormmodel.GormTaskConfig{
 		TaskCode: cfg.TaskCode,
 		TaskName: cfg.TaskName,
 		RRuleStr: cfg.RRuleStr,
@@ -24,7 +25,7 @@ func fromTaskConfig(cfg *crontask.TaskConfig) *GormTaskConfig {
 	g.Id = cfg.ID
 
 	if fields := DeserializeExtra(string(cfg.Extra)); fields != nil {
-		g.applyFields(fields)
+		applyFields(g, fields)
 	}
 
 	return g
@@ -32,7 +33,7 @@ func fromTaskConfig(cfg *crontask.TaskConfig) *GormTaskConfig {
 
 // toTaskConfig 将 GormTaskConfig 转为 crontask.TaskConfig。
 // ISP 字段会被序列化到 TaskConfig.Extra JSON 中。
-func toTaskConfig(g *GormTaskConfig) *crontask.TaskConfig {
+func toTaskConfig(g *gormmodel.GormTaskConfig) *crontask.TaskConfig {
 	cfg := &crontask.TaskConfig{
 		ID:       g.Id,
 		TaskCode: g.TaskCode,
@@ -45,15 +46,13 @@ func toTaskConfig(g *GormTaskConfig) *crontask.TaskConfig {
 		LastRun:  g.LastRun,
 	}
 
-	fields := g.toFields()
-	extra, _ := json.Marshal(fields)
-	cfg.Extra = extra
-
+	fields := toFields(g)
+	cfg.Extra = json.RawMessage(SerializeExtra(fields))
 	return cfg
 }
 
 // applyFields 将 IspTaskFields 的值平铺设置到 GormTaskConfig 对应列。
-func (g *GormTaskConfig) applyFields(f *IspTaskFields) {
+func applyFields(g *gormmodel.GormTaskConfig, f *IspTaskFields) {
 	g.SubstationCode = f.SubstationCode
 	g.PatrolType = f.PatrolType
 	g.DeviceLevel = f.DeviceLevel
@@ -77,7 +76,7 @@ func (g *GormTaskConfig) applyFields(f *IspTaskFields) {
 }
 
 // toFields 从 GormTaskConfig 的列值重建 IspTaskFields。
-func (g *GormTaskConfig) toFields() *IspTaskFields {
+func toFields(g *gormmodel.GormTaskConfig) *IspTaskFields {
 	return &IspTaskFields{
 		SubstationCode:      g.SubstationCode,
 		PatrolType:          g.PatrolType,

@@ -8,11 +8,9 @@ import (
 	"time"
 
 	"zero-service/common/crontask"
-	"zero-service/common/gormx"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/teambition/rrule-go"
-	"gorm.io/gorm"
 )
 
 // 巡视类型常量（与 ISP 协议 type 字段对齐）。
@@ -36,49 +34,6 @@ const (
 // ISP 星期数字 → rrule 星期常量 (1=MO, 2=TU, ..., 7=SU)。
 var ispWeekdayToRRule = []rrule.Weekday{
 	rrule.MO, rrule.TU, rrule.WE, rrule.TH, rrule.FR, rrule.SA, rrule.SU,
-}
-
-// GormTaskConfig 周期性任务配置的 GORM 持久化模型。
-// 核心字段与 crontask.TaskConfig 对齐，ISP 业务字段平铺为表列方便查询与索引。
-type GormTaskConfig struct {
-	gormx.LegacyBaseModel // id / create_time / update_time / delete_time / del_state
-
-	// --- crontask.TaskConfig 对齐字段 ---
-	TaskCode string     `gorm:"column:task_code;size:64;uniqueIndex"` // 全局唯一任务编码
-	TaskName string     `gorm:"column:task_name;size:128"`
-	RRuleStr string     `gorm:"column:rrule_str;size:1048"` // RFC 5545 规则字符串
-	Priority int        `gorm:"column:priority;default:1;index"`
-	Payload  string     `gorm:"column:payload;type:text"` // 业务参数（如 device_list）
-	Extra    string     `gorm:"column:extra;type:text"`   // 业务扩展字段 JSON
-	Status   int        `gorm:"column:status;default:1;index"`
-	NextRun  time.Time  `gorm:"column:next_run;index"`
-	LastRun  *time.Time `gorm:"column:last_run"`
-
-	// --- ISP 业务字段（平铺为列）---
-	SubstationCode      string `gorm:"column:substation_code;size:64;index"` // 变电站编码
-	PatrolType          string `gorm:"column:patrol_type;size:4"`            // 巡视类型
-	DeviceLevel         int    `gorm:"column:device_level;default:3"`        // 设备层级
-	DeviceList          string `gorm:"column:device_list;type:text"`         // 设备列表（逗号分隔）
-	FixedStartTime      string `gorm:"column:fixed_start_time;size:32"`      // 定期开始时间
-	CycleMonth          string `gorm:"column:cycle_month;size:32"`           // 周期（月）
-	CycleWeek           string `gorm:"column:cycle_week;size:32"`            // 周期（周）
-	CycleExecuteTime    string `gorm:"column:cycle_execute_time;size:16"`    // 周期执行时间 HH:mm:ss
-	CycleStartTime      string `gorm:"column:cycle_start_time;size:32"`      // 周期开始时间
-	CycleEndTime        string `gorm:"column:cycle_end_time;size:32"`        // 周期结束时间
-	IntervalNumber      string `gorm:"column:interval_number;size:16"`       // 间隔数量
-	IntervalType        string `gorm:"column:interval_type;size:4"`          // 间隔类型
-	IntervalExecuteTime string `gorm:"column:interval_execute_time;size:16"` // 间隔执行时间 HH:mm:ss
-	IntervalStartTime   string `gorm:"column:interval_start_time;size:32"`   // 间隔开始时间
-	IntervalEndTime     string `gorm:"column:interval_end_time;size:32"`     // 间隔结束时间
-	InvalidStartTime    string `gorm:"column:invalid_start_time;size:32"`    // 不可用开始时间
-	InvalidEndTime      string `gorm:"column:invalid_end_time;size:32"`      // 不可用结束时间
-	IsEnable            string `gorm:"column:isenable;size:4"`               // 是否启用 (0=启用 1=禁用 2=删除)
-	IspCreator          string `gorm:"column:isp_creator;size:64"`           // 编制人
-	IspCreateTime       string `gorm:"column:isp_create_time;size:32"`       // 编制时间
-}
-
-func (GormTaskConfig) TableName() string {
-	return "cron_task_config"
 }
 
 // IspTaskFields ISP 任务扩展字段，存储在 TaskConfig.Extra 中。
@@ -275,8 +230,10 @@ func buildCycleROption(f *IspTaskFields) *rrule.ROption {
 
 // buildIntervalROption 构建间隔任务的 ROption。
 // 按 ISP 协议规则计算首次执行时间 T0 作为 Dtstart：
-//   a) T0 = interval_start_time 日期 + interval_execute_time HHmmss
-//   b) 若 T0 < interval_start_time，则 T0 + 1 天
+//
+//	a) T0 = interval_start_time 日期 + interval_execute_time HHmmss
+//	b) 若 T0 < interval_start_time，则 T0 + 1 天
+//
 // 后续执行时间由 FREQ + INTERVAL 自然递增，Until 约束结束时间。
 func buildIntervalROption(f *IspTaskFields) *rrule.ROption {
 	opt := &rrule.ROption{}
@@ -332,14 +289,22 @@ func splitCSV(s string) []string {
 
 // SerializeExtra 将 IspTaskFields 序列化为 JSON 字符串。
 func SerializeExtra(fields *IspTaskFields) string {
+	if fields == nil {
+		return ""
+	}
 	data, _ := json.Marshal(fields)
 	return string(data)
 }
 
-// DeserializeExtra 从 JSON 字符串反序列化 IspTaskFields。
+// DeserializeExtra 从 JSON 字符串反序列化 IspTaskFields，失败时返回 nil。
 func DeserializeExtra(extra string) *IspTaskFields {
+	if extra == "" {
+		return nil
+	}
 	var f IspTaskFields
-	_ = json.Unmarshal([]byte(extra), &f)
+	if err := json.Unmarshal([]byte(extra), &f); err != nil {
+		return nil
+	}
 	return &f
 }
 
@@ -362,11 +327,6 @@ func NewTaskConfig(existingID int64, fields *IspTaskFields) *crontask.TaskConfig
 		NextRun:  nextRun,
 		Extra:    json.RawMessage(SerializeExtra(fields)),
 	}
-}
-
-// Migrate 自动建表。
-func Migrate(db *gorm.DB) error {
-	return db.AutoMigrate(&GormTaskConfig{})
 }
 
 // NewInvalidTimeFilter 创建 crontask 的 InvalidTimeFilter，复用 CalcInitNextRun 的 skipInvalidTime 逻辑。

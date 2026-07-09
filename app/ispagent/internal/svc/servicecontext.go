@@ -4,7 +4,9 @@ import (
 	"zero-service/app/ispagent/internal/config"
 	ctask "zero-service/app/ispagent/internal/crontask"
 	"zero-service/app/ispagent/internal/ispclient"
+	"zero-service/app/ispagent/model/gormmodel"
 	"zero-service/common/crontask"
+	"zero-service/common/ftps"
 	"zero-service/common/gormx"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -30,12 +32,13 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	if c.DB.DataSource != "" {
 		db = gormx.MustOpenWithConf(c.DB)
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
-			db.MustAutoMigrate(&ctask.GormTaskConfig{})
+			db.MustAutoMigrate(&gormmodel.GormTaskConfig{}, &gormmodel.GormIspPatrolTask{})
 		}
 		store = ctask.NewDBStore(db)
 	}
 
-	m := ispclient.NewManager(c.IspSetting, store)
+	modelUploader := ftps.NewUploader(c.ModelSync.FTPS.ToFTPSConfig())
+	m := ispclient.NewManager(c.IspSetting, store, db, modelUploader, nil)
 	proc.AddShutdownListener(func() { m.Close() })
 
 	svcCtx := &ServiceContext{
