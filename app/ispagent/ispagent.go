@@ -3,13 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	interceptor "zero-service/common/Interceptor/rpcserver"
 
 	"zero-service/app/ispagent/internal/config"
 	"zero-service/app/ispagent/internal/server"
 	"zero-service/app/ispagent/internal/svc"
 	"zero-service/app/ispagent/ispagent"
 
+	_ "zero-service/common/carbonx"
+
 	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
@@ -32,6 +36,8 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
+	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
+	logx.AddGlobalFields(logx.Field("app", c.Name))
 	defer s.Stop()
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)

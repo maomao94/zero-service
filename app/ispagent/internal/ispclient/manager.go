@@ -10,9 +10,11 @@ import (
 
 	"zero-service/app/ispagent/internal/config"
 	"zero-service/app/ispagent/internal/handler"
+	"zero-service/common/crontask"
 	"zero-service/common/gnetx"
 	"zero-service/common/isp"
 
+	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,7 +25,8 @@ import (
 // 采用乐观轮询模式，每 2s 检查连接/注册/心跳状态。
 // handler 基于 gnetx.Router 按 messageId 路由入站消息，未匹配的消息自动回复 251-3 通用应答。
 type Manager struct {
-	cfg config.IspSetting
+	cfg       config.IspSetting
+	taskStore crontask.TaskStore
 
 	mu            sync.RWMutex
 	cli           *gnetx.Client
@@ -46,11 +49,12 @@ type recvSeq struct {
 }
 
 // NewManager 创建 ISP 客户端管理器。
-func NewManager(cfg config.IspSetting) *Manager {
+func NewManager(cfg config.IspSetting, taskStore crontask.TaskStore) *Manager {
 	cfg.ApplyDefaults()
 	ctx, cancel := context.WithCancel(context.Background())
 	m := &Manager{
 		cfg:       cfg,
+		taskStore: taskStore,
 		ctx:       ctx,
 		cancel:    cancel,
 		heartbeat: cfg.HeartbeatInterval,
@@ -104,10 +108,31 @@ func (m *Manager) connect() error {
 	// 任务下发指令 (101-1)：打印任务详情 + 回复成功
 	gnetx.HandleTyped(router, isp.MessageIDTaskDispatch, func(ctx context.Context, conn gnetx.Conn, req *isp.Message) (any, error) {
 		handler.LogInbound(ctx, req)
-		err := handler.HandleTaskDispatch(ctx, req)
+		err := handler.HandleTaskDispatch(ctx, req, m.taskStore)
 		m.trackRecvSeq(req.SendSeq, conn.ID())
 		return m.responseWithCode(conn, req, handler.ResponseCode(err)), nil
 	})
+	// 任务控制指令 (41-1/2/3/4)：服务端控制任务启动/暂停/继续/停止
+	// TODO: 异步发送协程后续改为硬件下发指令，等硬件确认后再通知
+	taskControlHandler := func(ctx context.Context, conn gnetx.Conn, req *isp.Message) (any, error) {
+		handler.LogInbound(ctx, req)
+		taskPatrolledID, err := handler.HandleTaskControl(ctx, req, m.taskStore, func(ctx context.Context, code string, items []isp.Item) {
+			if _, e := m.Execute(ctx, isp.TypeTaskStatusData, isp.CommandReport, code, items); e != nil {
+				logx.Errorf("[ispagent] 任务控制通知发送失败: %v", e)
+			}
+		})
+		m.trackRecvSeq(req.SendSeq, conn.ID())
+		if err != nil {
+			return m.responseWithCode(conn, req, handler.ResponseCode(err)), nil
+		}
+		respItems := []isp.Item{{"task_patrolled_id": taskPatrolledID}}
+		return m.responseWithItems(conn, req, isp.StatusSuccess, respItems), nil
+	}
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeTaskControl, isp.CommandTaskStart), taskControlHandler)
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeTaskControl, isp.CommandTaskPause), taskControlHandler)
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeTaskControl, isp.CommandTaskResume), taskControlHandler)
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeTaskControl, isp.CommandTaskStop), taskControlHandler)
+
 	// 模型更新上报 (11-0)：服务端推送模型文件列表
 	gnetx.HandleTyped(router, isp.MessageIDModelUpdateReport, func(ctx context.Context, conn gnetx.Conn, req *isp.Message) (any, error) {
 		handler.LogInbound(ctx, req)
@@ -125,9 +150,9 @@ func (m *Manager) connect() error {
 		}
 		return m.responseWithItems(conn, req, isp.StatusSuccess, items), nil
 	}
-	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelRobot), modelSyncHandler)       // 61-2
-	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelPoint), modelSyncHandler)      // 61-4
-	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelMap), modelSyncHandler)         // 61-9
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelRobot), modelSyncHandler) // 61-2
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelPoint), modelSyncHandler) // 61-4
+	gnetx.HandleTyped(router, isp.EncodeMessageID(isp.TypeModelSync, isp.CommandModelMap), modelSyncHandler)   // 61-9
 	// 未匹配入站消息：fallback 日志 + 回复 251-3
 	router.FallbackFunc(func(ctx context.Context, conn gnetx.Conn, msg any) (any, error) {
 		im, ok := msg.(*isp.Message)
@@ -394,7 +419,7 @@ func defaultTime(v string) string {
 	if strings.TrimSpace(v) != "" {
 		return v
 	}
-	return time.Now().Format("2006-01-02 15:04:05")
+	return carbon.Now().ToDateTimeString()
 }
 
 func heartbeatFromItems(items []isp.Item, fallback time.Duration) time.Duration {

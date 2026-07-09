@@ -78,6 +78,66 @@ message CommandRes {
   string rawXml = 4;           // 原始 XML（诊断用）
 }
 
+// ListTaskExecutionsReq 查询任务未来执行时间
+message ListTaskExecutionsReq {
+  string task_code = 1;        // 任务编码
+  int32 count = 2;             // 返回数量上限（默认 20）
+}
+
+// ListTaskExecutionsRes 任务未来执行时间响应
+message ListTaskExecutionsRes {
+  string task_code = 1;        // 任务编码
+  string task_name = 2;
+  string rrule_str = 3;        // 当前 rrule 字符串
+  repeated string exec_times = 4; // 未来执行时间列表
+}
+
+// ListTaskConfigsReq 任务配置分页查询
+message ListTaskConfigsReq {
+  int32 page = 1;              // 页码（从 1 开始）
+  int32 page_size = 2;         // 每页数量（默认 20）
+  string task_code = 3;        // 任务编码（模糊匹配，可选）
+  string substation_code = 4;  // 变电站编码（精确匹配，可选）
+}
+
+// TaskConfigItem 任务配置条目（平铺 ISP 业务字段）
+message TaskConfigItem {
+  int64 id = 1;
+  string task_code = 2;
+  string task_name = 3;
+  string patrol_type = 4;          // 巡视类型: 1=例行,2=特殊,3=专项,4=自定义
+  int32 priority = 5;              // 优先级 1-4
+  int32 device_level = 6;          // 设备层级: 1=间隔,2=主设备,3=设备点位,4=部件
+  string device_list = 7;          // 设备列表(逗号分隔)
+  int32 status = 8;                // 0=禁用,1=启用
+  string rrule_str = 9;
+  string next_run = 10;            // 下次执行时间
+  string last_run = 11;            // 上次执行时间
+  string substation_code = 12;     // 变电站编码
+  string isp_enable = 13;           // ISP 启用标记: 0=启用,1=禁用,2=删除
+  string isp_creator = 14;          // 编制人
+  string isp_create_time = 15;      // 编制时间
+  string fixed_start_time = 16;    // 定期开始时间
+  string cycle_month = 17;         // 周期(月)
+  string cycle_week = 18;          // 周期(周)
+  string cycle_execute_time = 19;  // 周期执行时间
+  string cycle_start_time = 20;    // 周期开始时间
+  string cycle_end_time = 21;      // 周期结束时间
+  string interval_number = 22;     // 间隔数量
+  string interval_type = 23;       // 间隔类型: 1=小时,2=天
+  string interval_execute_time = 24; // 间隔执行时间
+  string interval_start_time = 25; // 间隔开始时间
+  string interval_end_time = 26;   // 间隔结束时间
+  string invalid_start_time = 27;  // 不可用开始时间
+  string invalid_end_time = 28;    // 不可用结束时间
+}
+
+// ListTaskConfigsRes 任务配置分页响应
+message ListTaskConfigsRes {
+  int64 total = 1;
+  repeated TaskConfigItem items = 2;
+}
+
 service IspAgent {
   // ExecuteCommand 通用指令透传（调用方指定 type/command）
   rpc ExecuteCommand(CommandReq) returns(CommandRes);
@@ -87,4 +147,8 @@ service IspAgent {
   rpc SendPatrolDeviceStatusData(SendPatrolDeviceStatusDataReq) returns(CommandRes);
   // SendPatrolDeviceCoordinates 巡视装置坐标上报（表 O.45）
   rpc SendPatrolDeviceCoordinates(SendPatrolDeviceCoordinatesReq) returns(CommandRes);
+  // ListTaskExecutions 查询任务未来执行时间（用于验证 rrule 配置）
+  rpc ListTaskExecutions(ListTaskExecutionsReq) returns(ListTaskExecutionsRes);
+  // ListTaskConfigs 任务配置分页查询
+  rpc ListTaskConfigs(ListTaskConfigsReq) returns(ListTaskConfigsRes);
 }

@@ -23,6 +23,8 @@ const (
 	IspAgent_SendPatrolDeviceRunData_FullMethodName     = "/ispagent.IspAgent/SendPatrolDeviceRunData"
 	IspAgent_SendPatrolDeviceStatusData_FullMethodName  = "/ispagent.IspAgent/SendPatrolDeviceStatusData"
 	IspAgent_SendPatrolDeviceCoordinates_FullMethodName = "/ispagent.IspAgent/SendPatrolDeviceCoordinates"
+	IspAgent_ListTaskExecutions_FullMethodName          = "/ispagent.IspAgent/ListTaskExecutions"
+	IspAgent_ListTaskConfigs_FullMethodName             = "/ispagent.IspAgent/ListTaskConfigs"
 )
 
 // IspAgentClient is the client API for IspAgent service.
@@ -37,6 +39,10 @@ type IspAgentClient interface {
 	SendPatrolDeviceStatusData(ctx context.Context, in *SendPatrolDeviceStatusDataReq, opts ...grpc.CallOption) (*CommandRes, error)
 	// SendPatrolDeviceCoordinates 巡视装置坐标上报（表 O.45）
 	SendPatrolDeviceCoordinates(ctx context.Context, in *SendPatrolDeviceCoordinatesReq, opts ...grpc.CallOption) (*CommandRes, error)
+	// ListTaskExecutions 查询任务未来执行时间（用于验证 rrule 配置）
+	ListTaskExecutions(ctx context.Context, in *ListTaskExecutionsReq, opts ...grpc.CallOption) (*ListTaskExecutionsRes, error)
+	// ListTaskConfigs 任务配置分页查询
+	ListTaskConfigs(ctx context.Context, in *ListTaskConfigsReq, opts ...grpc.CallOption) (*ListTaskConfigsRes, error)
 }
 
 type ispAgentClient struct {
@@ -87,6 +93,26 @@ func (c *ispAgentClient) SendPatrolDeviceCoordinates(ctx context.Context, in *Se
 	return out, nil
 }
 
+func (c *ispAgentClient) ListTaskExecutions(ctx context.Context, in *ListTaskExecutionsReq, opts ...grpc.CallOption) (*ListTaskExecutionsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTaskExecutionsRes)
+	err := c.cc.Invoke(ctx, IspAgent_ListTaskExecutions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ispAgentClient) ListTaskConfigs(ctx context.Context, in *ListTaskConfigsReq, opts ...grpc.CallOption) (*ListTaskConfigsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTaskConfigsRes)
+	err := c.cc.Invoke(ctx, IspAgent_ListTaskConfigs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IspAgentServer is the server API for IspAgent service.
 // All implementations must embed UnimplementedIspAgentServer
 // for forward compatibility.
@@ -99,6 +125,10 @@ type IspAgentServer interface {
 	SendPatrolDeviceStatusData(context.Context, *SendPatrolDeviceStatusDataReq) (*CommandRes, error)
 	// SendPatrolDeviceCoordinates 巡视装置坐标上报（表 O.45）
 	SendPatrolDeviceCoordinates(context.Context, *SendPatrolDeviceCoordinatesReq) (*CommandRes, error)
+	// ListTaskExecutions 查询任务未来执行时间（用于验证 rrule 配置）
+	ListTaskExecutions(context.Context, *ListTaskExecutionsReq) (*ListTaskExecutionsRes, error)
+	// ListTaskConfigs 任务配置分页查询
+	ListTaskConfigs(context.Context, *ListTaskConfigsReq) (*ListTaskConfigsRes, error)
 	mustEmbedUnimplementedIspAgentServer()
 }
 
@@ -120,6 +150,12 @@ func (UnimplementedIspAgentServer) SendPatrolDeviceStatusData(context.Context, *
 }
 func (UnimplementedIspAgentServer) SendPatrolDeviceCoordinates(context.Context, *SendPatrolDeviceCoordinatesReq) (*CommandRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method SendPatrolDeviceCoordinates not implemented")
+}
+func (UnimplementedIspAgentServer) ListTaskExecutions(context.Context, *ListTaskExecutionsReq) (*ListTaskExecutionsRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListTaskExecutions not implemented")
+}
+func (UnimplementedIspAgentServer) ListTaskConfigs(context.Context, *ListTaskConfigsReq) (*ListTaskConfigsRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListTaskConfigs not implemented")
 }
 func (UnimplementedIspAgentServer) mustEmbedUnimplementedIspAgentServer() {}
 func (UnimplementedIspAgentServer) testEmbeddedByValue()                  {}
@@ -214,6 +250,42 @@ func _IspAgent_SendPatrolDeviceCoordinates_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IspAgent_ListTaskExecutions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTaskExecutionsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IspAgentServer).ListTaskExecutions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IspAgent_ListTaskExecutions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IspAgentServer).ListTaskExecutions(ctx, req.(*ListTaskExecutionsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IspAgent_ListTaskConfigs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTaskConfigsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IspAgentServer).ListTaskConfigs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IspAgent_ListTaskConfigs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IspAgentServer).ListTaskConfigs(ctx, req.(*ListTaskConfigsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IspAgent_ServiceDesc is the grpc.ServiceDesc for IspAgent service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -236,6 +308,14 @@ var IspAgent_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendPatrolDeviceCoordinates",
 			Handler:    _IspAgent_SendPatrolDeviceCoordinates_Handler,
+		},
+		{
+			MethodName: "ListTaskExecutions",
+			Handler:    _IspAgent_ListTaskExecutions_Handler,
+		},
+		{
+			MethodName: "ListTaskConfigs",
+			Handler:    _IspAgent_ListTaskConfigs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

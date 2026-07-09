@@ -139,3 +139,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 112: ispagent crontask: 合并 HandleTaskControl 回归单函数 + patrol ID 校验
+
+**Date**: 2026-07-09
+**Task**: ispagent crontask: 合并 HandleTaskControl 回归单函数 + patrol ID 校验
+**Branch**: `master`
+
+### Summary
+
+合并之前拆分的 handleTaskStart/handleTaskControlOther 回 HandleTaskControl；新增 patrol ID 变电站编码非空校验，无效格式直接返回 error 不通知
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e0dbcd87` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -663,6 +663,511 @@ func (x *CommandRes) GetRawXml() string {
 	return ""
 }
 
+// ListTaskExecutionsReq 查询任务未来执行时间
+type ListTaskExecutionsReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TaskCode      string                 `protobuf:"bytes,1,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"` // 任务编码
+	Count         int32                  `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`                      // 返回数量上限（默认 20）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTaskExecutionsReq) Reset() {
+	*x = ListTaskExecutionsReq{}
+	mi := &file_ispagent_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTaskExecutionsReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTaskExecutionsReq) ProtoMessage() {}
+
+func (x *ListTaskExecutionsReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTaskExecutionsReq.ProtoReflect.Descriptor instead.
+func (*ListTaskExecutionsReq) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ListTaskExecutionsReq) GetTaskCode() string {
+	if x != nil {
+		return x.TaskCode
+	}
+	return ""
+}
+
+func (x *ListTaskExecutionsReq) GetCount() int32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+// ListTaskExecutionsRes 任务未来执行时间响应
+type ListTaskExecutionsRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TaskCode      string                 `protobuf:"bytes,1,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"` // 任务编码
+	TaskName      string                 `protobuf:"bytes,2,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
+	RruleStr      string                 `protobuf:"bytes,3,opt,name=rrule_str,json=rruleStr,proto3" json:"rrule_str,omitempty"`    // 当前 rrule 字符串
+	ExecTimes     []string               `protobuf:"bytes,4,rep,name=exec_times,json=execTimes,proto3" json:"exec_times,omitempty"` // 未来执行时间列表
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTaskExecutionsRes) Reset() {
+	*x = ListTaskExecutionsRes{}
+	mi := &file_ispagent_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTaskExecutionsRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTaskExecutionsRes) ProtoMessage() {}
+
+func (x *ListTaskExecutionsRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTaskExecutionsRes.ProtoReflect.Descriptor instead.
+func (*ListTaskExecutionsRes) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ListTaskExecutionsRes) GetTaskCode() string {
+	if x != nil {
+		return x.TaskCode
+	}
+	return ""
+}
+
+func (x *ListTaskExecutionsRes) GetTaskName() string {
+	if x != nil {
+		return x.TaskName
+	}
+	return ""
+}
+
+func (x *ListTaskExecutionsRes) GetRruleStr() string {
+	if x != nil {
+		return x.RruleStr
+	}
+	return ""
+}
+
+func (x *ListTaskExecutionsRes) GetExecTimes() []string {
+	if x != nil {
+		return x.ExecTimes
+	}
+	return nil
+}
+
+// ListTaskConfigsReq 任务配置分页查询
+type ListTaskConfigsReq struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Page           int32                  `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`                                          // 页码（从 1 开始）
+	PageSize       int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`                  // 每页数量（默认 20）
+	TaskCode       string                 `protobuf:"bytes,3,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"`                   // 任务编码（模糊匹配，可选）
+	SubstationCode string                 `protobuf:"bytes,4,opt,name=substation_code,json=substationCode,proto3" json:"substation_code,omitempty"` // 变电站编码（精确匹配，可选）
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ListTaskConfigsReq) Reset() {
+	*x = ListTaskConfigsReq{}
+	mi := &file_ispagent_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTaskConfigsReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTaskConfigsReq) ProtoMessage() {}
+
+func (x *ListTaskConfigsReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTaskConfigsReq.ProtoReflect.Descriptor instead.
+func (*ListTaskConfigsReq) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ListTaskConfigsReq) GetPage() int32 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListTaskConfigsReq) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListTaskConfigsReq) GetTaskCode() string {
+	if x != nil {
+		return x.TaskCode
+	}
+	return ""
+}
+
+func (x *ListTaskConfigsReq) GetSubstationCode() string {
+	if x != nil {
+		return x.SubstationCode
+	}
+	return ""
+}
+
+// TaskConfigItem 任务配置条目（平铺 ISP 业务字段）
+type TaskConfigItem struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Id                  int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	TaskCode            string                 `protobuf:"bytes,2,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"`
+	TaskName            string                 `protobuf:"bytes,3,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
+	PatrolType          string                 `protobuf:"bytes,4,opt,name=patrol_type,json=patrolType,proto3" json:"patrol_type,omitempty"`     // 巡视类型: 1=例行,2=特殊,3=专项,4=自定义
+	Priority            int32                  `protobuf:"varint,5,opt,name=priority,proto3" json:"priority,omitempty"`                          // 优先级 1-4
+	DeviceLevel         int32                  `protobuf:"varint,6,opt,name=device_level,json=deviceLevel,proto3" json:"device_level,omitempty"` // 设备层级: 1=间隔,2=主设备,3=设备点位,4=部件
+	DeviceList          string                 `protobuf:"bytes,7,opt,name=device_list,json=deviceList,proto3" json:"device_list,omitempty"`     // 设备列表(逗号分隔)
+	Status              int32                  `protobuf:"varint,8,opt,name=status,proto3" json:"status,omitempty"`                              // 0=禁用,1=启用
+	RruleStr            string                 `protobuf:"bytes,9,opt,name=rrule_str,json=rruleStr,proto3" json:"rrule_str,omitempty"`
+	NextRun             string                 `protobuf:"bytes,10,opt,name=next_run,json=nextRun,proto3" json:"next_run,omitempty"`                                       // 下次执行时间
+	LastRun             string                 `protobuf:"bytes,11,opt,name=last_run,json=lastRun,proto3" json:"last_run,omitempty"`                                       // 上次执行时间
+	SubstationCode      string                 `protobuf:"bytes,12,opt,name=substation_code,json=substationCode,proto3" json:"substation_code,omitempty"`                  // 变电站编码
+	IspEnable           string                 `protobuf:"bytes,13,opt,name=isp_enable,json=ispEnable,proto3" json:"isp_enable,omitempty"`                                 // ISP 启用标记: 0=启用,1=禁用,2=删除
+	IspCreator          string                 `protobuf:"bytes,14,opt,name=isp_creator,json=ispCreator,proto3" json:"isp_creator,omitempty"`                              // 编制人
+	IspCreateTime       string                 `protobuf:"bytes,15,opt,name=isp_create_time,json=ispCreateTime,proto3" json:"isp_create_time,omitempty"`                   // 编制时间
+	FixedStartTime      string                 `protobuf:"bytes,16,opt,name=fixed_start_time,json=fixedStartTime,proto3" json:"fixed_start_time,omitempty"`                // 定期开始时间
+	CycleMonth          string                 `protobuf:"bytes,17,opt,name=cycle_month,json=cycleMonth,proto3" json:"cycle_month,omitempty"`                              // 周期(月)
+	CycleWeek           string                 `protobuf:"bytes,18,opt,name=cycle_week,json=cycleWeek,proto3" json:"cycle_week,omitempty"`                                 // 周期(周)
+	CycleExecuteTime    string                 `protobuf:"bytes,19,opt,name=cycle_execute_time,json=cycleExecuteTime,proto3" json:"cycle_execute_time,omitempty"`          // 周期执行时间
+	CycleStartTime      string                 `protobuf:"bytes,20,opt,name=cycle_start_time,json=cycleStartTime,proto3" json:"cycle_start_time,omitempty"`                // 周期开始时间
+	CycleEndTime        string                 `protobuf:"bytes,21,opt,name=cycle_end_time,json=cycleEndTime,proto3" json:"cycle_end_time,omitempty"`                      // 周期结束时间
+	IntervalNumber      string                 `protobuf:"bytes,22,opt,name=interval_number,json=intervalNumber,proto3" json:"interval_number,omitempty"`                  // 间隔数量
+	IntervalType        string                 `protobuf:"bytes,23,opt,name=interval_type,json=intervalType,proto3" json:"interval_type,omitempty"`                        // 间隔类型: 1=小时,2=天
+	IntervalExecuteTime string                 `protobuf:"bytes,24,opt,name=interval_execute_time,json=intervalExecuteTime,proto3" json:"interval_execute_time,omitempty"` // 间隔执行时间
+	IntervalStartTime   string                 `protobuf:"bytes,25,opt,name=interval_start_time,json=intervalStartTime,proto3" json:"interval_start_time,omitempty"`       // 间隔开始时间
+	IntervalEndTime     string                 `protobuf:"bytes,26,opt,name=interval_end_time,json=intervalEndTime,proto3" json:"interval_end_time,omitempty"`             // 间隔结束时间
+	InvalidStartTime    string                 `protobuf:"bytes,27,opt,name=invalid_start_time,json=invalidStartTime,proto3" json:"invalid_start_time,omitempty"`          // 不可用开始时间
+	InvalidEndTime      string                 `protobuf:"bytes,28,opt,name=invalid_end_time,json=invalidEndTime,proto3" json:"invalid_end_time,omitempty"`                // 不可用结束时间
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *TaskConfigItem) Reset() {
+	*x = TaskConfigItem{}
+	mi := &file_ispagent_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TaskConfigItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TaskConfigItem) ProtoMessage() {}
+
+func (x *TaskConfigItem) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TaskConfigItem.ProtoReflect.Descriptor instead.
+func (*TaskConfigItem) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *TaskConfigItem) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *TaskConfigItem) GetTaskCode() string {
+	if x != nil {
+		return x.TaskCode
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetTaskName() string {
+	if x != nil {
+		return x.TaskName
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetPatrolType() string {
+	if x != nil {
+		return x.PatrolType
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetPriority() int32 {
+	if x != nil {
+		return x.Priority
+	}
+	return 0
+}
+
+func (x *TaskConfigItem) GetDeviceLevel() int32 {
+	if x != nil {
+		return x.DeviceLevel
+	}
+	return 0
+}
+
+func (x *TaskConfigItem) GetDeviceList() string {
+	if x != nil {
+		return x.DeviceList
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetStatus() int32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
+func (x *TaskConfigItem) GetRruleStr() string {
+	if x != nil {
+		return x.RruleStr
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetNextRun() string {
+	if x != nil {
+		return x.NextRun
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetLastRun() string {
+	if x != nil {
+		return x.LastRun
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetSubstationCode() string {
+	if x != nil {
+		return x.SubstationCode
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetIspEnable() string {
+	if x != nil {
+		return x.IspEnable
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetIspCreator() string {
+	if x != nil {
+		return x.IspCreator
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetIspCreateTime() string {
+	if x != nil {
+		return x.IspCreateTime
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetFixedStartTime() string {
+	if x != nil {
+		return x.FixedStartTime
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetCycleMonth() string {
+	if x != nil {
+		return x.CycleMonth
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetCycleWeek() string {
+	if x != nil {
+		return x.CycleWeek
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetCycleExecuteTime() string {
+	if x != nil {
+		return x.CycleExecuteTime
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetCycleStartTime() string {
+	if x != nil {
+		return x.CycleStartTime
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetCycleEndTime() string {
+	if x != nil {
+		return x.CycleEndTime
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetIntervalNumber() string {
+	if x != nil {
+		return x.IntervalNumber
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetIntervalType() string {
+	if x != nil {
+		return x.IntervalType
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetIntervalExecuteTime() string {
+	if x != nil {
+		return x.IntervalExecuteTime
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetIntervalStartTime() string {
+	if x != nil {
+		return x.IntervalStartTime
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetIntervalEndTime() string {
+	if x != nil {
+		return x.IntervalEndTime
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetInvalidStartTime() string {
+	if x != nil {
+		return x.InvalidStartTime
+	}
+	return ""
+}
+
+func (x *TaskConfigItem) GetInvalidEndTime() string {
+	if x != nil {
+		return x.InvalidEndTime
+	}
+	return ""
+}
+
+// ListTaskConfigsRes 任务配置分页响应
+type ListTaskConfigsRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Total         int64                  `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	Items         []*TaskConfigItem      `protobuf:"bytes,2,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTaskConfigsRes) Reset() {
+	*x = ListTaskConfigsRes{}
+	mi := &file_ispagent_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTaskConfigsRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTaskConfigsRes) ProtoMessage() {}
+
+func (x *ListTaskConfigsRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTaskConfigsRes.ProtoReflect.Descriptor instead.
+func (*ListTaskConfigsRes) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ListTaskConfigsRes) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *ListTaskConfigsRes) GetItems() []*TaskConfigItem {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
 var File_ispagent_proto protoreflect.FileDescriptor
 
 const file_ispagent_proto_rawDesc = "" +
@@ -720,12 +1225,67 @@ const file_ispagent_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12$\n" +
 	"\x05items\x18\x03 \x03(\v2\x0e.ispagent.ItemR\x05items\x12\x16\n" +
-	"\x06rawXml\x18\x04 \x01(\tR\x06rawXml2\xdb\x02\n" +
+	"\x06rawXml\x18\x04 \x01(\tR\x06rawXml\"J\n" +
+	"\x15ListTaskExecutionsReq\x12\x1b\n" +
+	"\ttask_code\x18\x01 \x01(\tR\btaskCode\x12\x14\n" +
+	"\x05count\x18\x02 \x01(\x05R\x05count\"\x8d\x01\n" +
+	"\x15ListTaskExecutionsRes\x12\x1b\n" +
+	"\ttask_code\x18\x01 \x01(\tR\btaskCode\x12\x1b\n" +
+	"\ttask_name\x18\x02 \x01(\tR\btaskName\x12\x1b\n" +
+	"\trrule_str\x18\x03 \x01(\tR\brruleStr\x12\x1d\n" +
+	"\n" +
+	"exec_times\x18\x04 \x03(\tR\texecTimes\"\x8b\x01\n" +
+	"\x12ListTaskConfigsReq\x12\x12\n" +
+	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1b\n" +
+	"\ttask_code\x18\x03 \x01(\tR\btaskCode\x12'\n" +
+	"\x0fsubstation_code\x18\x04 \x01(\tR\x0esubstationCode\"\xf5\a\n" +
+	"\x0eTaskConfigItem\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
+	"\ttask_code\x18\x02 \x01(\tR\btaskCode\x12\x1b\n" +
+	"\ttask_name\x18\x03 \x01(\tR\btaskName\x12\x1f\n" +
+	"\vpatrol_type\x18\x04 \x01(\tR\n" +
+	"patrolType\x12\x1a\n" +
+	"\bpriority\x18\x05 \x01(\x05R\bpriority\x12!\n" +
+	"\fdevice_level\x18\x06 \x01(\x05R\vdeviceLevel\x12\x1f\n" +
+	"\vdevice_list\x18\a \x01(\tR\n" +
+	"deviceList\x12\x16\n" +
+	"\x06status\x18\b \x01(\x05R\x06status\x12\x1b\n" +
+	"\trrule_str\x18\t \x01(\tR\brruleStr\x12\x19\n" +
+	"\bnext_run\x18\n" +
+	" \x01(\tR\anextRun\x12\x19\n" +
+	"\blast_run\x18\v \x01(\tR\alastRun\x12'\n" +
+	"\x0fsubstation_code\x18\f \x01(\tR\x0esubstationCode\x12\x1d\n" +
+	"\n" +
+	"isp_enable\x18\r \x01(\tR\tispEnable\x12\x1f\n" +
+	"\visp_creator\x18\x0e \x01(\tR\n" +
+	"ispCreator\x12&\n" +
+	"\x0fisp_create_time\x18\x0f \x01(\tR\rispCreateTime\x12(\n" +
+	"\x10fixed_start_time\x18\x10 \x01(\tR\x0efixedStartTime\x12\x1f\n" +
+	"\vcycle_month\x18\x11 \x01(\tR\n" +
+	"cycleMonth\x12\x1d\n" +
+	"\n" +
+	"cycle_week\x18\x12 \x01(\tR\tcycleWeek\x12,\n" +
+	"\x12cycle_execute_time\x18\x13 \x01(\tR\x10cycleExecuteTime\x12(\n" +
+	"\x10cycle_start_time\x18\x14 \x01(\tR\x0ecycleStartTime\x12$\n" +
+	"\x0ecycle_end_time\x18\x15 \x01(\tR\fcycleEndTime\x12'\n" +
+	"\x0finterval_number\x18\x16 \x01(\tR\x0eintervalNumber\x12#\n" +
+	"\rinterval_type\x18\x17 \x01(\tR\fintervalType\x122\n" +
+	"\x15interval_execute_time\x18\x18 \x01(\tR\x13intervalExecuteTime\x12.\n" +
+	"\x13interval_start_time\x18\x19 \x01(\tR\x11intervalStartTime\x12*\n" +
+	"\x11interval_end_time\x18\x1a \x01(\tR\x0fintervalEndTime\x12,\n" +
+	"\x12invalid_start_time\x18\x1b \x01(\tR\x10invalidStartTime\x12(\n" +
+	"\x10invalid_end_time\x18\x1c \x01(\tR\x0einvalidEndTime\"Z\n" +
+	"\x12ListTaskConfigsRes\x12\x14\n" +
+	"\x05total\x18\x01 \x01(\x03R\x05total\x12.\n" +
+	"\x05items\x18\x02 \x03(\v2\x18.ispagent.TaskConfigItemR\x05items2\x82\x04\n" +
 	"\bIspAgent\x12<\n" +
 	"\x0eExecuteCommand\x12\x14.ispagent.CommandReq\x1a\x14.ispagent.CommandRes\x12U\n" +
 	"\x17SendPatrolDeviceRunData\x12$.ispagent.SendPatrolDeviceRunDataReq\x1a\x14.ispagent.CommandRes\x12[\n" +
 	"\x1aSendPatrolDeviceStatusData\x12'.ispagent.SendPatrolDeviceStatusDataReq\x1a\x14.ispagent.CommandRes\x12]\n" +
-	"\x1bSendPatrolDeviceCoordinates\x12(.ispagent.SendPatrolDeviceCoordinatesReq\x1a\x14.ispagent.CommandResB\fZ\n" +
+	"\x1bSendPatrolDeviceCoordinates\x12(.ispagent.SendPatrolDeviceCoordinatesReq\x1a\x14.ispagent.CommandRes\x12V\n" +
+	"\x12ListTaskExecutions\x12\x1f.ispagent.ListTaskExecutionsReq\x1a\x1f.ispagent.ListTaskExecutionsRes\x12M\n" +
+	"\x0fListTaskConfigs\x12\x1c.ispagent.ListTaskConfigsReq\x1a\x1c.ispagent.ListTaskConfigsResB\fZ\n" +
 	"./ispagentb\x06proto3"
 
 var (
@@ -740,7 +1300,7 @@ func file_ispagent_proto_rawDescGZIP() []byte {
 	return file_ispagent_proto_rawDescData
 }
 
-var file_ispagent_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_ispagent_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_ispagent_proto_goTypes = []any{
 	(*Item)(nil),                           // 0: ispagent.Item
 	(*CommandReq)(nil),                     // 1: ispagent.CommandReq
@@ -752,29 +1312,39 @@ var file_ispagent_proto_goTypes = []any{
 	(*SendPatrolDeviceRunDataReq)(nil),     // 7: ispagent.SendPatrolDeviceRunDataReq
 	(*SendPatrolDeviceStatusDataReq)(nil),  // 8: ispagent.SendPatrolDeviceStatusDataReq
 	(*CommandRes)(nil),                     // 9: ispagent.CommandRes
-	nil,                                    // 10: ispagent.Item.AttributesEntry
+	(*ListTaskExecutionsReq)(nil),          // 10: ispagent.ListTaskExecutionsReq
+	(*ListTaskExecutionsRes)(nil),          // 11: ispagent.ListTaskExecutionsRes
+	(*ListTaskConfigsReq)(nil),             // 12: ispagent.ListTaskConfigsReq
+	(*TaskConfigItem)(nil),                 // 13: ispagent.TaskConfigItem
+	(*ListTaskConfigsRes)(nil),             // 14: ispagent.ListTaskConfigsRes
+	nil,                                    // 15: ispagent.Item.AttributesEntry
 }
 var file_ispagent_proto_depIdxs = []int32{
-	10, // 0: ispagent.Item.attributes:type_name -> ispagent.Item.AttributesEntry
+	15, // 0: ispagent.Item.attributes:type_name -> ispagent.Item.AttributesEntry
 	0,  // 1: ispagent.CommandReq.items:type_name -> ispagent.Item
 	0,  // 2: ispagent.PatrolItemsReq.items:type_name -> ispagent.Item
 	3,  // 3: ispagent.SendPatrolDeviceCoordinatesReq.items:type_name -> ispagent.PatrolDeviceCoordinate
 	4,  // 4: ispagent.SendPatrolDeviceRunDataReq.items:type_name -> ispagent.PatrolDeviceRunData
 	5,  // 5: ispagent.SendPatrolDeviceStatusDataReq.items:type_name -> ispagent.PatrolDeviceStatusData
 	0,  // 6: ispagent.CommandRes.items:type_name -> ispagent.Item
-	1,  // 7: ispagent.IspAgent.ExecuteCommand:input_type -> ispagent.CommandReq
-	7,  // 8: ispagent.IspAgent.SendPatrolDeviceRunData:input_type -> ispagent.SendPatrolDeviceRunDataReq
-	8,  // 9: ispagent.IspAgent.SendPatrolDeviceStatusData:input_type -> ispagent.SendPatrolDeviceStatusDataReq
-	6,  // 10: ispagent.IspAgent.SendPatrolDeviceCoordinates:input_type -> ispagent.SendPatrolDeviceCoordinatesReq
-	9,  // 11: ispagent.IspAgent.ExecuteCommand:output_type -> ispagent.CommandRes
-	9,  // 12: ispagent.IspAgent.SendPatrolDeviceRunData:output_type -> ispagent.CommandRes
-	9,  // 13: ispagent.IspAgent.SendPatrolDeviceStatusData:output_type -> ispagent.CommandRes
-	9,  // 14: ispagent.IspAgent.SendPatrolDeviceCoordinates:output_type -> ispagent.CommandRes
-	11, // [11:15] is the sub-list for method output_type
-	7,  // [7:11] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	13, // 7: ispagent.ListTaskConfigsRes.items:type_name -> ispagent.TaskConfigItem
+	1,  // 8: ispagent.IspAgent.ExecuteCommand:input_type -> ispagent.CommandReq
+	7,  // 9: ispagent.IspAgent.SendPatrolDeviceRunData:input_type -> ispagent.SendPatrolDeviceRunDataReq
+	8,  // 10: ispagent.IspAgent.SendPatrolDeviceStatusData:input_type -> ispagent.SendPatrolDeviceStatusDataReq
+	6,  // 11: ispagent.IspAgent.SendPatrolDeviceCoordinates:input_type -> ispagent.SendPatrolDeviceCoordinatesReq
+	10, // 12: ispagent.IspAgent.ListTaskExecutions:input_type -> ispagent.ListTaskExecutionsReq
+	12, // 13: ispagent.IspAgent.ListTaskConfigs:input_type -> ispagent.ListTaskConfigsReq
+	9,  // 14: ispagent.IspAgent.ExecuteCommand:output_type -> ispagent.CommandRes
+	9,  // 15: ispagent.IspAgent.SendPatrolDeviceRunData:output_type -> ispagent.CommandRes
+	9,  // 16: ispagent.IspAgent.SendPatrolDeviceStatusData:output_type -> ispagent.CommandRes
+	9,  // 17: ispagent.IspAgent.SendPatrolDeviceCoordinates:output_type -> ispagent.CommandRes
+	11, // 18: ispagent.IspAgent.ListTaskExecutions:output_type -> ispagent.ListTaskExecutionsRes
+	14, // 19: ispagent.IspAgent.ListTaskConfigs:output_type -> ispagent.ListTaskConfigsRes
+	14, // [14:20] is the sub-list for method output_type
+	8,  // [8:14] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_ispagent_proto_init() }
@@ -788,7 +1358,7 @@ func file_ispagent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ispagent_proto_rawDesc), len(file_ispagent_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

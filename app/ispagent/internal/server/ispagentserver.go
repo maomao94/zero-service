@@ -23,22 +23,38 @@ func NewIspAgentServer(svcCtx *svc.ServiceContext) *IspAgentServer {
 	}
 }
 
+// ExecuteCommand 通用指令透传（调用方指定 type/command）
 func (s *IspAgentServer) ExecuteCommand(ctx context.Context, in *ispagent.CommandReq) (*ispagent.CommandRes, error) {
 	l := logic.NewExecuteCommandLogic(ctx, s.svcCtx)
 	return l.ExecuteCommand(in)
 }
 
+// SendPatrolDeviceRunData 巡视装置运行数据上报（表 J.34）
 func (s *IspAgentServer) SendPatrolDeviceRunData(ctx context.Context, in *ispagent.SendPatrolDeviceRunDataReq) (*ispagent.CommandRes, error) {
 	l := logic.NewSendPatrolDeviceRunDataLogic(ctx, s.svcCtx)
 	return l.SendPatrolDeviceRunData(in)
 }
 
+// SendPatrolDeviceStatusData 巡视装置状态数据上报
 func (s *IspAgentServer) SendPatrolDeviceStatusData(ctx context.Context, in *ispagent.SendPatrolDeviceStatusDataReq) (*ispagent.CommandRes, error) {
 	l := logic.NewSendPatrolDeviceStatusDataLogic(ctx, s.svcCtx)
 	return l.SendPatrolDeviceStatusData(in)
 }
 
+// SendPatrolDeviceCoordinates 巡视装置坐标上报（表 O.45）
 func (s *IspAgentServer) SendPatrolDeviceCoordinates(ctx context.Context, in *ispagent.SendPatrolDeviceCoordinatesReq) (*ispagent.CommandRes, error) {
 	l := logic.NewSendPatrolDeviceCoordinatesLogic(ctx, s.svcCtx)
 	return l.SendPatrolDeviceCoordinates(in)
+}
+
+// ListTaskExecutions 查询任务未来执行时间（用于验证 rrule 配置）
+func (s *IspAgentServer) ListTaskExecutions(ctx context.Context, in *ispagent.ListTaskExecutionsReq) (*ispagent.ListTaskExecutionsRes, error) {
+	l := logic.NewListTaskExecutionsLogic(ctx, s.svcCtx)
+	return l.ListTaskExecutions(in)
+}
+
+// ListTaskConfigs 任务配置分页查询
+func (s *IspAgentServer) ListTaskConfigs(ctx context.Context, in *ispagent.ListTaskConfigsReq) (*ispagent.ListTaskConfigsRes, error) {
+	l := logic.NewListTaskConfigsLogic(ctx, s.svcCtx)
+	return l.ListTaskConfigs(in)
 }
