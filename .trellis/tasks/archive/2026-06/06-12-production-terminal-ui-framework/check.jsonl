@@ -1,5 +1,0 @@
-{"path":".trellis/spec/backend/uix-framework.md","reason":"Check implementation against required shell/module contracts and validation commands."}
-{"path":"cli/uix/shell_test.go","reason":"Existing shell behavior coverage to extend."}
-{"path":"cli/uix/components","reason":"Shared component coverage and safe sizing behavior."}
-{"path":"cli/dtui/README.md","reason":"Docs must match final wired modules and commands."}
-{"path":"cli/dtui/main.go","reason":"Host module wiring and no-Docker startup behavior."}

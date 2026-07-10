@@ -13,7 +13,7 @@ message Item {
 message CommandReq {
   int32 type = 1;              // 消息类型（高 16 位 messageId）
   int32 command = 2;           // 命令（低 16 位 messageId）
-  string code = 3;             // 变电站/设备编码
+  string code = 3;             // 目标对象唯一标识（变电站编码/任务编码/巡视ID 等）
   repeated Item items = 4;     // 业务数据
 }
 
@@ -138,6 +138,46 @@ message ListTaskConfigsRes {
   repeated TaskConfigItem items = 2;
 }
 
+// TestFTPSUploadReq FTPS 上传测试请求
+message TestFTPSUploadReq {
+  string local_path = 1;  // 测试文件本地路径，默认 local/test.txt
+}
+
+// TestFTPSUploadRes FTPS 上传测试响应
+message TestFTPSUploadRes {
+  bool success = 1;
+  string remote_path = 2; // 上传成功后的远端路径
+  string error = 3;       // 错误信息
+}
+
+// FTPSDirEntry FTPS 目录条目
+message FTPSDirEntry {
+  string name = 1;          // 文件/目录名
+  bool is_dir = 2;          // 是否为目录
+  uint64 size = 3;          // 文件大小（目录为 0）
+  EntryType entry_type = 4; // 条目类型
+  string size_display = 5;  // 格式化大小（如 "1.2 GB"、"345 KB"）
+}
+
+enum EntryType {
+  ENTRY_TYPE_UNSPECIFIED = 0;
+  ENTRY_TYPE_FILE = 1;
+  ENTRY_TYPE_FOLDER = 2;
+  ENTRY_TYPE_LINK = 3;
+}
+
+// ListFTPSDirectoryReq FTPS 目录列表请求
+message ListFTPSDirectoryReq {
+  string path = 1; // 子目录路径，空则列出根目录
+}
+
+// ListFTPSDirectoryRes FTPS 目录列表响应
+message ListFTPSDirectoryRes {
+  bool success = 1;
+  repeated FTPSDirEntry entries = 2; // 目录下条目列表
+  string error = 3;                  // 错误信息
+}
+
 service IspAgent {
   // ExecuteCommand 通用指令透传（调用方指定 type/command）
   rpc ExecuteCommand(CommandReq) returns(CommandRes);
@@ -151,4 +191,8 @@ service IspAgent {
   rpc ListTaskExecutions(ListTaskExecutionsReq) returns(ListTaskExecutionsRes);
   // ListTaskConfigs 任务配置分页查询
   rpc ListTaskConfigs(ListTaskConfigsReq) returns(ListTaskConfigsRes);
+  // TestFTPSUpload 测试 FTPS 上传（上传 local/test.txt）
+  rpc TestFTPSUpload(TestFTPSUploadReq) returns(TestFTPSUploadRes);
+  // ListFTPSDirectory 列出 FTPS 远程目录文件列表
+  rpc ListFTPSDirectory(ListFTPSDirectoryReq) returns(ListFTPSDirectoryRes);
 }

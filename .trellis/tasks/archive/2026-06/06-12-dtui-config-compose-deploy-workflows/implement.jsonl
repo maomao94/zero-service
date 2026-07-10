@@ -1,9 +1,0 @@
-{"path":".trellis/tasks/06-12-production-terminal-ui-framework/prd.md","reason":"Parent requirements and cross-child acceptance criteria."}
-{"path":".trellis/tasks/06-12-production-terminal-ui-framework/design.md","reason":"Parent architecture, boundaries, data flow, and safety posture."}
-{"path":".trellis/tasks/06-12-production-terminal-ui-framework/implement.md","reason":"Parent execution order and low-concurrency guardrails."}
-{"path":".trellis/spec/backend/uix-framework.md","reason":"Module forms, file picker, confirmation, and root/subview contracts."}
-{"path":"cli/dtui/internal/config/config.go","reason":"Config persistence, history, and backup helpers."}
-{"path":"cli/dtui/plugins/config/plugin.go","reason":"Canonical config module target."}
-{"path":"cli/dtui/plugins/compose/plugin.go","reason":"Compose workflow target."}
-{"path":"cli/dtui/plugins/deploy/plugin.go","reason":"Deploy workflow target."}
-{"path":"cli/dtui/internal/docker/compose.go","reason":"Compose/deploy helper functions and zip/copy behavior."}

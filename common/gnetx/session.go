@@ -118,6 +118,9 @@ func (s *session) Request(ctx context.Context, msg Correlatable, ttl time.Durati
 }
 
 func (s *session) resolveResponse(tid string, resp any) bool {
+	if tid == "" {
+		return false
+	}
 	if s.replyPool == nil {
 		return false
 	}

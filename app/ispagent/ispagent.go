@@ -38,8 +38,13 @@ func main() {
 	})
 	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
 	logx.AddGlobalFields(logx.Field("app", c.Name))
-	defer s.Stop()
+	serviceGroup := service.NewServiceGroup()
+	defer serviceGroup.Stop()
+	serviceGroup.Add(s)
+	if ctx.Scheduler != nil {
+		serviceGroup.Add(ctx.Scheduler)
+	}
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
-	s.Start()
+	serviceGroup.Start()
 }

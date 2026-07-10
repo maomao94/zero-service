@@ -4,29 +4,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"path"
+	"path/filepath"
 
-	"zero-service/app/ispagent/internal/modelxml"
 	"zero-service/common/ftps"
 	"zero-service/common/isp"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
-
-var modelSyncCommandName = map[int32]string{
-	1:  "区域主机及边缘节点装置模型",
-	2:  "机器人模型",
-	3:  "摄像机模型及硬盘录像机模型",
-	4:  "点位模型",
-	5:  "无人机模型及无人机机巢模型",
-	6:  "声纹模型",
-	7:  "任务文件",
-	8:  "检修区域配置文件",
-	9:  "地图文件",
-	10: "维护记录文件",
-	11: "联动配置文件",
-	12: "告警阈值模型",
-}
 
 var modelSyncFilePathKey = map[int32]string{
 	1:  "host_file_path",
@@ -52,7 +38,7 @@ var modelSyncDefaultPath = map[int32]string{
 	6:  "/voice_model.xml",
 	7:  "/task_model.xml",
 	8:  "/overhaularea_model.xml",
-	9:  "/map_model.xml",
+	9:  "/map_model.jpeg",
 	10: "/maintain_model.xml",
 	11: "/source_model.xml",
 	12: "/alarm_model.xml",
@@ -99,9 +85,23 @@ func syncModel(ctx context.Context, msg *isp.Message, uploader *ftps.Uploader, p
 		return syncPatrolDeviceModel(ctx, uploader, provider, remoteName, msg.Code)
 	case isp.CommandModelPoint:
 		return syncDevicePointModel(ctx, uploader, provider, remoteName, msg.Code)
+	case isp.CommandModelMap:
+		return syncMapModel(ctx, uploader, remoteName, msg.Code)
 	default:
 		return path.Join(uploader.Config().RemoteDir, remoteName), nil
 	}
+}
+
+func syncMapModel(ctx context.Context, uploader *ftps.Uploader, remoteName, stationCode string) (string, error) {
+	localPath := filepath.Join("local", stationCode, "map.jpeg")
+	if _, err := os.Stat(localPath); err != nil {
+		return "", fmt.Errorf("map file not found: %s", localPath)
+	}
+	result, err := uploader.UploadFile(ctx, localPath, remoteName)
+	if err != nil {
+		return "", fmt.Errorf("upload map model %s: %w", remoteName, err)
+	}
+	return result.RemotePath, nil
 }
 
 func syncPatrolDeviceModel(ctx context.Context, uploader *ftps.Uploader, provider ModelDataProvider, remoteName, stationCode string) (string, error) {
@@ -111,13 +111,13 @@ func syncPatrolDeviceModel(ctx context.Context, uploader *ftps.Uploader, provide
 	}
 
 	var buf bytes.Buffer
-	if err := modelxml.WritePatrolDeviceModel(&buf, items); err != nil {
+	if err := isp.WritePatrolDeviceModel(&buf, items); err != nil {
 		return "", fmt.Errorf("generate patrol device xml: %w", err)
 	}
 
 	result, err := uploader.Upload(ctx, remoteName, &buf, int64(buf.Len()))
 	if err != nil {
-		return "", fmt.Errorf("upload patrol device model: %w", err)
+		return "", fmt.Errorf("upload patrol device model %s: %w", remoteName, err)
 	}
 	return result.RemotePath, nil
 }
@@ -129,13 +129,13 @@ func syncDevicePointModel(ctx context.Context, uploader *ftps.Uploader, provider
 	}
 
 	var buf bytes.Buffer
-	if err := modelxml.WriteDeviceModel(&buf, items); err != nil {
+	if err := isp.WriteDeviceModel(&buf, items); err != nil {
 		return "", fmt.Errorf("generate device point xml: %w", err)
 	}
 
 	result, err := uploader.Upload(ctx, remoteName, &buf, int64(buf.Len()))
 	if err != nil {
-		return "", fmt.Errorf("upload device point model: %w", err)
+		return "", fmt.Errorf("upload device point model %s: %w", remoteName, err)
 	}
 	return result.RemotePath, nil
 }

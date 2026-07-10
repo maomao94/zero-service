@@ -1,5 +1,0 @@
-{"kind":"test","path":"app/ieccaller/internal/svc/servicecontext_test.go","reason":"已有 service context 测试；可扩展覆盖 broadcast ACK pusher/pool 行为和 nil pusher 错误。"}
-{"kind":"test","path":"app/ieccaller/internal/iec/clienthandler_test.go","reason":"已有 IEC handler 测试；可用于确认 ACK 解析和本地 resolve 假设。"}
-{"kind":"test","path":"common/antsx/replypool_test.go","reason":"底层 reply pool 行为测试，覆盖 timeout、重复注册、resolve、reject 语义。"}
-{"kind":"test","path":"common/antsx/promise_test.go","reason":"Promise await/cancel 行为测试，broadcast reply pool 会依赖这些行为。"}
-{"kind":"command","cmd":"go test ./app/ieccaller/internal/svc ./app/ieccaller/kafka ./app/ieccaller/internal/logic ./common/iec104/client","reason":"针对 service context、Kafka broadcast、logic handlers 和 IEC client ACK 语义的目标验证命令。"}

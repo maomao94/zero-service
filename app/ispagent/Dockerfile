@@ -32,6 +32,7 @@ ENV TZ Asia/Shanghai
 
 WORKDIR /app
 COPY --from=builder /build /app/build
+COPY local /app/local
 COPY etc /app/etc
 COPY app/ispagent /app/ispagent
 

@@ -1,8 +1,0 @@
-{"file": ".trellis/spec/backend/go-zero-conventions.md", "reason": "go-zero proto-first service structure"}
-{"file": ".trellis/spec/backend/directory-structure.md", "reason": "service/common package boundary rules"}
-{"file": ".trellis/spec/backend/error-handling.md", "reason": "RPC logic error handling rules"}
-{"file": ".trellis/spec/backend/gnetx/index.md", "reason": "gnetx TCP client and codec entry spec"}
-{"file": ".trellis/spec/backend/gnetx/codec.md", "reason": "LengthPrefixCodec and Serializer contract"}
-{"file": ".trellis/spec/backend/gnetx/client.md", "reason": "gnetx client lifecycle and reconnect contract"}
-{"file": ".trellis/spec/backend/gnetx/request-response.md", "reason": "ReplyPool request-response correlation"}
-{"file": ".trellis/tasks/07-08-sip-client/research/java-isp-protocol.md", "reason": "Java protocol frame and message constants research"}

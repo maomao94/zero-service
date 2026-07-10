@@ -1,6 +1,0 @@
-{"file": ".trellis/spec/backend/go-zero-conventions.md", "reason": "go-zero service generation and layering check"}
-{"file": ".trellis/spec/backend/error-handling.md", "reason": "RPC error handling check"}
-{"file": ".trellis/spec/backend/gnetx/index.md", "reason": "gnetx usage quality check"}
-{"file": ".trellis/spec/backend/gnetx/codec.md", "reason": "codec contract verification"}
-{"file": ".trellis/spec/backend/gnetx/client.md", "reason": "client lifecycle verification"}
-{"file": ".trellis/tasks/07-08-sip-client/research/java-isp-protocol.md", "reason": "protocol compatibility verification"}

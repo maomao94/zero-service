@@ -107,6 +107,57 @@ if err := db.Where("device_sn = ?", sn).First(&state).Error; err != nil {
 }
 ```
 
+## Scenario: GORM 跨数据库 Upsert（禁止 clause.OnConflict）
+
+### 1. Scope / Trigger
+
+`clause.OnConflict` 在不同数据库驱动下生成不同 SQL（MySQL `ON DUPLICATE KEY UPDATE`、PostgreSQL `ON CONFLICT ... DO UPDATE`），GaussDB 驱动生成 MySQL 语法但 GORM 在 `Create` 时追加 `RETURNING "id"` 取自增主键，GaussDB 不支持两者组合，报 `SQLSTATE 0A000`。
+
+### 2. Contracts
+
+- 永远不用 `clause.OnConflict` 做 upsert。
+- 统一使用 `FirstOrCreate` + `Assign` 模式，零方言 SQL，全数据库兼容。
+- djicloud 有专门测试 `TestHookHandlersDoNotGenerateDialectUpsertSQL` 确保不生成 `ON CONFLICT`。
+- 需要按列选择性更新时，用 `map[string]any` 构造 assign map，从 `updateColumns` 过滤。
+
+### 3. Signatures
+
+```go
+// 标准模式：全部字段覆盖
+c.Where("task_patrolled_id = ?", id).Assign(assign).FirstOrCreate(&task)
+
+// 按列选择性更新
+all := map[string]any{"task_state": task.TaskState, "task_progress": task.TaskProgress, ...}
+assign := make(map[string]any, len(updateColumns))
+for _, col := range updateColumns {
+    if v, ok := all[col]; ok { assign[col] = v }
+}
+c.Where("task_patrolled_id = ?", id).Assign(assign).FirstOrCreate(&task)
+```
+
+### 4. Attrs vs Assign
+
+| | `Attrs` | `Assign` |
+|---|---|---|
+| 记录已存在 | 不更新 | 更新为 Assign 值 |
+| 记录不存在 | INSERT 带这些值 | INSERT 带这些值 |
+
+首次写入用 `Attrs`（如默认值），每次覆盖用 `Assign`。
+
+### 5. Good/Base/Bad Cases
+
+- Good: `FirstOrCreate` + `Assign` → 零方言，全兼容。
+- Base: 两步法（First → Create/Updates）→ 可工作但冗余。
+- Bad: `clause.OnConflict` + `Create` → GaussDB 报 `SQLSTATE 0A000`。
+
+### 6. 源文件
+
+- `app/djicloud/internal/hooks/telemetry_up.go:56-72` — FirstOrCreate + Assign 示例
+- `app/djicloud/internal/hooks/register_test.go:662-714` — 防 ON CONFLICT 测试
+- `app/ispagent/internal/handler/task.go:359` — 按列选择性 Assign
+
+---
+
 ## 时间格式化
 
 proto/API 层时间字段使用 `string`，格式 `YYYY-MM-DD HH:mm:ss.SSSSSS`，UTC+8 时区。Go 层使用 `carbon.CreateFromStdTime(m.ReportedAt).ToDateTimeMicroString()` 转换。

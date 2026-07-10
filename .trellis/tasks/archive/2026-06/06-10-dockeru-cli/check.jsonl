@@ -1,4 +1,0 @@
-{"type":"task","path":".trellis/tasks/06-10-dockeru-cli/prd.md","reason":"按中文验收标准检查实现。"}
-{"type":"task","path":".trellis/tasks/06-10-dockeru-cli/design.md","reason":"检查命令/文件布局、Docker 边界和 Cobra 学习结构。"}
-{"type":"task","path":".trellis/tasks/06-10-dockeru-cli/implement.md","reason":"检查验证命令和评审关卡。"}
-{"type":"spec","path":".trellis/spec/backend/quality-guidelines.md","reason":"质量验证和依赖更新检查。"}

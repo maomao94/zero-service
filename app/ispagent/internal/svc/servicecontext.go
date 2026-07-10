@@ -3,7 +3,7 @@ package svc
 import (
 	"zero-service/app/ispagent/internal/config"
 	ctask "zero-service/app/ispagent/internal/crontask"
-	"zero-service/app/ispagent/internal/ispclient"
+	ispclient "zero-service/app/ispagent/internal/isp"
 	"zero-service/app/ispagent/model/gormmodel"
 	"zero-service/common/crontask"
 	"zero-service/common/ftps"
@@ -16,14 +16,15 @@ import (
 
 // ServiceContext 为 ispagent 的依赖注入容器，持有配置和 ISP TCP 客户端管理器。
 type ServiceContext struct {
-	Config    config.Config
-	IspClient *ispclient.Manager
-	Scheduler *crontask.Scheduler
-	Store     crontask.TaskStore
-	DB        *gormx.DB
+	Config        config.Config
+	IspClient     *ispclient.Client
+	Scheduler     *crontask.Scheduler
+	ModelUploader *ftps.Uploader
+	Store         crontask.TaskStore
+	DB            *gormx.DB
 }
 
-// NewServiceContext 创建 ServiceContext 并注册 ISP 客户端关闭回调。
+// NewServiceContext 创建 ServiceContext。
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
 
@@ -38,14 +39,15 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 
 	modelUploader := ftps.NewUploader(c.ModelSync.FTPS.ToFTPSConfig())
-	m := ispclient.NewManager(c.IspSetting, store, db, modelUploader, nil)
+	m := ispclient.NewClient(c.IspSetting, store, db, modelUploader, nil)
 	proc.AddShutdownListener(func() { m.Close() })
 
 	svcCtx := &ServiceContext{
-		Config:    c,
-		IspClient: m,
-		Store:     store,
-		DB:        db,
+		Config:        c,
+		IspClient:     m,
+		ModelUploader: modelUploader,
+		Store:         store,
+		DB:            db,
 	}
 
 	if store != nil {
@@ -56,9 +58,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			crontask.WithMaxDelay(c.CronTask.MaxDelay),
 			crontask.WithInvalidTimeFilter(ctask.NewInvalidTimeFilter()),
 		)
-		svcCtx.Scheduler.Start()
-		proc.AddShutdownListener(func() { svcCtx.Scheduler.Stop() })
-		logx.Info("[ispagent] cron scheduler started")
 	}
 
 	return svcCtx

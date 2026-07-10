@@ -1,5 +1,7 @@
 package isp
 
+import "errors"
+
 // ISP 协议常量。messageId = (type << 16) | command，高 16 位存 Type，低 16 位存 Command。
 //
 // Command=0 的消息为上报类（server→client），Command≠0 为指令类（client→server 或双向）。
@@ -30,6 +32,36 @@ const (
 	StatusReject  = "400" // 拒绝
 	StatusError   = "500" // 错误
 )
+
+// IspError 为 ISP 协议错误，携带状态码和描述。
+type IspError struct {
+	Code string
+	Msg  string
+}
+
+func (e *IspError) Error() string { return e.Msg }
+
+var (
+	ErrRetry  = &IspError{Code: StatusRetry, Msg: "需重发"}
+	ErrReject = &IspError{Code: StatusReject, Msg: "拒绝"}
+	ErrError  = &IspError{Code: StatusError, Msg: "内部错误"}
+)
+
+func NewIspError(code, msg string) *IspError {
+	return &IspError{Code: code, Msg: msg}
+}
+
+// ResponseCode 根据 error 提取 ISP 响应状态码。
+func ResponseCode(err error) string {
+	var ie *IspError
+	if errors.As(err, &ie) {
+		return ie.Code
+	}
+	if err != nil {
+		return StatusError
+	}
+	return StatusSuccess
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Type 枚举 — messageId 高 16 位，标识消息大类
@@ -74,7 +106,7 @@ const (
 	TypePartialDischarge int32 = 23 // 局放传感器控制（伸长/收缩/停止/复位）
 
 	// ── 任务 ─ Type=41 ──
-	TypeTaskControl   int32 = 41 // 任务控制指令（启动/暂停/继续/停止）
+	TypeTaskControl    int32 = 41 // 任务控制指令（启动/暂停/继续/停止）
 	TypeTaskStatusData int32 = 41 // 任务状态数据上报（Type 与指令共用）
 
 	// ── 模型同步 ─ Type=61 ──
@@ -118,8 +150,8 @@ const (
 	CommandGenericResponseWithoutItems int32 = 3 // 通用应答_无Item（server→client），普通消息的通用回复
 	CommandGenericResponseWithItems    int32 = 4 // 通用应答_有Item（server→client），注册等需要携带数据的回复
 
-	// ── 上报类 ── 所有 server→client 上报消息的 Command 固定为 0
-	CommandReport int32 = 0 // 上报类指令
+	// 上报/状态类消息仅有 Type 无 Command，协议侧填 0 占位
+	CommandReport int32 = 0 // 上报类消息占位 Command
 
 	// ── 机器人本体控制（Type 1，Command 1~7）──
 	CommandRobotRemoteReset    int32 = 1 // 远方复位（1-1）
@@ -161,20 +193,24 @@ const (
 	CommandAuxLighting   int32 = 5 // 辅助照明（4-5）
 
 	// ── 可见光摄像机（Type 21，Command 1~12）──
-	CommandVisZoomIn    int32 = 1  // 镜头拉近（21-1）
-	CommandVisZoomOut   int32 = 2  // 镜头拉远（21-2）
-	CommandVisZoomStop  int32 = 3  // 镜头拉焦停止（21-3）
-	CommandVisFocusInc  int32 = 4  // 焦距增加（21-4）
-	CommandVisFocusDec  int32 = 5  // 焦距减少（21-5）
-	CommandVisAutoFocus int32 = 6  // 自动聚焦（21-6）
-	CommandVisReboot    int32 = 8  // 重启（21-8）
-	CommandVisZoomSet   int32 = 11 // 倍率值设置（21-11）
-	CommandVisFocusSet  int32 = 12 // 聚焦值设置（21-12）
+	CommandVisZoomIn      int32 = 1  // 镜头拉近（21-1）
+	CommandVisZoomOut     int32 = 2  // 镜头拉远（21-2）
+	CommandVisZoomStop    int32 = 3  // 镜头拉焦停止（21-3）
+	CommandVisFocusInc    int32 = 4  // 焦距增加（21-4）
+	CommandVisFocusDec    int32 = 5  // 焦距减少（21-5）
+	CommandVisAutoFocus   int32 = 6  // 自动聚焦（21-6）
+	CommandVisCapture     int32 = 7  // 抓图（21-7）
+	CommandVisReboot      int32 = 8  // 重启（21-8）
+	CommandVisRecordStart int32 = 9  // 启动录像（21-9）
+	CommandVisRecordStop  int32 = 10 // 停止录像（21-10）
+	CommandVisZoomSet     int32 = 11 // 倍率值设置（21-11）
+	CommandVisFocusSet    int32 = 12 // 聚焦值设置（21-12）
 
 	// ── 红外热像仪（Type 22，Command 5~8）──
-	CommandThermalFocusSet   int32 = 5 // 设定焦距值（22-5）
-	CommandThermalAutoFocus  int32 = 6 // 自动聚焦（22-6）
-	CommandThermalReboot     int32 = 8 // 重启（22-8）
+	CommandThermalFocusSet  int32 = 5 // 设定焦距值（22-5）
+	CommandThermalAutoFocus int32 = 6 // 自动聚焦（22-6）
+	CommandThermalCapture   int32 = 7 // 抓图（22-7）
+	CommandThermalReboot    int32 = 8 // 重启（22-8）
 
 	// ── 局放传感器（Type 23，Command 1~4）──
 	CommandPartialDischargeExtend  int32 = 1 // 伸长（23-1）
@@ -261,6 +297,98 @@ const (
 	MessageIDTaskDispatch        = int((TypeTaskDispatch << 16) | CommandTaskConfig)        // 任务下发指令_任务配置（101-1）
 	MessageIDLinkageTaskDispatch = int((TypeLinkageTaskDispatch << 16) | CommandTaskConfig) // 联动任务下发指令_任务配置（102-1）
 )
+
+// MessageIDPair 表示一个 (Type, Command) 对，用于批量注册消息处理器。
+type MessageIDPair struct {
+	Type int32 // 消息类型（高16位）
+	Cmd  int32 // 指令（低16位）
+}
+
+// RobotControlPairs 机器人控制指令全集。
+var RobotControlPairs = []MessageIDPair{
+	// ---- 机器人本体 (Type 1) ----
+	{TypeRobotBody, CommandRobotRemoteReset},    // 1-1 远方复位
+	{TypeRobotBody, CommandRobotSelfCheck},      // 1-2 系统自检
+	{TypeRobotBody, CommandRobotReturnHome},     // 1-3 一键返航
+	{TypeRobotBody, CommandRobotManualCharge},   // 1-4 手动充电
+	{TypeRobotBody, CommandRobotModeSwitch},     // 1-5 控制模式切换
+	{TypeRobotBody, CommandRobotTakeControl},    // 1-6 控制权获得
+	{TypeRobotBody, CommandRobotReleaseControl}, // 1-7 控制权释放
+	// ---- 机器人车体 (Type 2) ----
+	{TypeRobotChassis, CommandChassisForward},    // 2-1 前进
+	{TypeRobotChassis, CommandChassisBackward},   // 2-2 后退
+	{TypeRobotChassis, CommandChassisTurnLeft},   // 2-3 左转
+	{TypeRobotChassis, CommandChassisTurnRight},  // 2-4 右转
+	{TypeRobotChassis, CommandChassisStop},       // 2-5 停止
+	{TypeRobotChassis, CommandChassisUp},         // 2-6 升起
+	{TypeRobotChassis, CommandChassisDown},       // 2-7 下降
+	{TypeRobotChassis, CommandChassisShiftLeft},  // 2-8 左移
+	{TypeRobotChassis, CommandChassisShiftRight}, // 2-9 右移
+	{TypeRobotChassis, CommandChassisGaitSwitch}, // 2-11 行进模式切换
+	// ---- 机器人云台 (Type 3) ----
+	{TypeRobotPTZ, CommandPTZTiltUp},   // 3-1 云台上仰
+	{TypeRobotPTZ, CommandPTZTiltDown}, // 3-2 云台下俯
+	{TypeRobotPTZ, CommandPTZPanLeft},  // 3-3 云台左转
+	{TypeRobotPTZ, CommandPTZPanRight}, // 3-4 云台右转
+	{TypeRobotPTZ, CommandPTZRise},     // 3-5 云台上升
+	{TypeRobotPTZ, CommandPTZLower},    // 3-6 云台下降
+	{TypeRobotPTZ, CommandPTZPreset},   // 3-7 云台预置位
+	{TypeRobotPTZ, CommandPTZStop},     // 3-8 停止
+	{TypeRobotPTZ, CommandPTZReset},    // 3-9 复位
+	// ---- 机器人辅助设备 (Type 4) ----
+	{TypeRobotAux, CommandAuxIRPower},    // 4-1 红外电源
+	{TypeRobotAux, CommandAuxWiper},      // 4-2 雨刷
+	{TypeRobotAux, CommandAuxUltrasound}, // 4-3 超声
+	{TypeRobotAux, CommandAuxIRLamp},     // 4-4 红外射灯
+	{TypeRobotAux, CommandAuxLighting},   // 4-5 辅助照明
+	// ---- 可见光摄像机 (Type 21) ----
+	{TypeVisibleCamera, CommandVisZoomIn},      // 21-1 镜头拉近
+	{TypeVisibleCamera, CommandVisZoomOut},     // 21-2 镜头拉远
+	{TypeVisibleCamera, CommandVisZoomStop},    // 21-3 拉焦停止
+	{TypeVisibleCamera, CommandVisFocusInc},    // 21-4 焦距增加
+	{TypeVisibleCamera, CommandVisFocusDec},    // 21-5 焦距减少
+	{TypeVisibleCamera, CommandVisAutoFocus},   // 21-6 自动聚焦
+	{TypeVisibleCamera, CommandVisCapture},     // 21-7 抓图
+	{TypeVisibleCamera, CommandVisReboot},      // 21-8 重启
+	{TypeVisibleCamera, CommandVisRecordStart}, // 21-9 启动录像
+	{TypeVisibleCamera, CommandVisRecordStop},  // 21-10 停止录像
+	{TypeVisibleCamera, CommandVisZoomSet},     // 21-11 倍率值设置
+	{TypeVisibleCamera, CommandVisFocusSet},    // 21-12 聚焦值设置
+	// ---- 红外热像仪 (Type 22) ----
+	{TypeThermalCamera, CommandThermalFocusSet},  // 22-5 设定焦距值
+	{TypeThermalCamera, CommandThermalAutoFocus}, // 22-6 自动聚焦
+	{TypeThermalCamera, CommandThermalCapture},   // 22-7 抓图
+	{TypeThermalCamera, CommandThermalReboot},    // 22-8 重启
+	// ---- 局放传感器 (Type 23) ----
+	{TypePartialDischarge, CommandPartialDischargeExtend},  // 23-1 伸长
+	{TypePartialDischarge, CommandPartialDischargeRetract}, // 23-2 收缩
+	{TypePartialDischarge, CommandPartialDischargeStop},    // 23-3 停止
+	{TypePartialDischarge, CommandPartialDischargeReset},   // 23-4 复位
+}
+
+// TaskControlPairs 任务控制指令全集。
+var TaskControlPairs = []MessageIDPair{
+	{TypeTaskControl, CommandTaskStart},  // 41-1 任务启动
+	{TypeTaskControl, CommandTaskPause},  // 41-2 任务暂停
+	{TypeTaskControl, CommandTaskResume}, // 41-3 任务继续
+	{TypeTaskControl, CommandTaskStop},   // 41-4 任务停止
+}
+
+// ModelSyncPairs 模型同步指令全集。
+var ModelSyncPairs = []MessageIDPair{
+	{TypeModelSync, CommandModelRegionHost},     // 61-1 区域主机及边缘节点装置模型
+	{TypeModelSync, CommandModelRobot},          // 61-2 机器人模型
+	{TypeModelSync, CommandModelCamera},         // 61-3 摄像机模型及硬盘录像机模型
+	{TypeModelSync, CommandModelPoint},          // 61-4 点位模型
+	{TypeModelSync, CommandModelDrone},          // 61-5 无人机模型及无人机机巢模型
+	{TypeModelSync, CommandModelVoice},          // 61-6 声纹模型
+	{TypeModelSync, CommandModelTaskFile},       // 61-7 任务文件
+	{TypeModelSync, CommandModelMaintenance},    // 61-8 检修区域配置文件
+	{TypeModelSync, CommandModelMap},            // 61-9 地图文件
+	{TypeModelSync, CommandModelMaintRecord},    // 61-10 维护记录文件
+	{TypeModelSync, CommandModelLinkage},        // 61-11 联动配置文件
+	{TypeModelSync, CommandModelAlarmThreshold}, // 61-12 告警阈值模型
+}
 
 // EncodeMessageID 将 Type（高16位）和 Command（低16位）编码为 32 位 messageId。
 // 对标 Java TSip.encode(type, command)。

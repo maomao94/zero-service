@@ -25,6 +25,8 @@ const (
 	IspAgent_SendPatrolDeviceCoordinates_FullMethodName = "/ispagent.IspAgent/SendPatrolDeviceCoordinates"
 	IspAgent_ListTaskExecutions_FullMethodName          = "/ispagent.IspAgent/ListTaskExecutions"
 	IspAgent_ListTaskConfigs_FullMethodName             = "/ispagent.IspAgent/ListTaskConfigs"
+	IspAgent_TestFTPSUpload_FullMethodName              = "/ispagent.IspAgent/TestFTPSUpload"
+	IspAgent_ListFTPSDirectory_FullMethodName           = "/ispagent.IspAgent/ListFTPSDirectory"
 )
 
 // IspAgentClient is the client API for IspAgent service.
@@ -43,6 +45,10 @@ type IspAgentClient interface {
 	ListTaskExecutions(ctx context.Context, in *ListTaskExecutionsReq, opts ...grpc.CallOption) (*ListTaskExecutionsRes, error)
 	// ListTaskConfigs 任务配置分页查询
 	ListTaskConfigs(ctx context.Context, in *ListTaskConfigsReq, opts ...grpc.CallOption) (*ListTaskConfigsRes, error)
+	// TestFTPSUpload 测试 FTPS 上传（上传 local/test.txt）
+	TestFTPSUpload(ctx context.Context, in *TestFTPSUploadReq, opts ...grpc.CallOption) (*TestFTPSUploadRes, error)
+	// ListFTPSDirectory 列出 FTPS 远程目录文件列表
+	ListFTPSDirectory(ctx context.Context, in *ListFTPSDirectoryReq, opts ...grpc.CallOption) (*ListFTPSDirectoryRes, error)
 }
 
 type ispAgentClient struct {
@@ -113,6 +119,26 @@ func (c *ispAgentClient) ListTaskConfigs(ctx context.Context, in *ListTaskConfig
 	return out, nil
 }
 
+func (c *ispAgentClient) TestFTPSUpload(ctx context.Context, in *TestFTPSUploadReq, opts ...grpc.CallOption) (*TestFTPSUploadRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TestFTPSUploadRes)
+	err := c.cc.Invoke(ctx, IspAgent_TestFTPSUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ispAgentClient) ListFTPSDirectory(ctx context.Context, in *ListFTPSDirectoryReq, opts ...grpc.CallOption) (*ListFTPSDirectoryRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFTPSDirectoryRes)
+	err := c.cc.Invoke(ctx, IspAgent_ListFTPSDirectory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IspAgentServer is the server API for IspAgent service.
 // All implementations must embed UnimplementedIspAgentServer
 // for forward compatibility.
@@ -129,6 +155,10 @@ type IspAgentServer interface {
 	ListTaskExecutions(context.Context, *ListTaskExecutionsReq) (*ListTaskExecutionsRes, error)
 	// ListTaskConfigs 任务配置分页查询
 	ListTaskConfigs(context.Context, *ListTaskConfigsReq) (*ListTaskConfigsRes, error)
+	// TestFTPSUpload 测试 FTPS 上传（上传 local/test.txt）
+	TestFTPSUpload(context.Context, *TestFTPSUploadReq) (*TestFTPSUploadRes, error)
+	// ListFTPSDirectory 列出 FTPS 远程目录文件列表
+	ListFTPSDirectory(context.Context, *ListFTPSDirectoryReq) (*ListFTPSDirectoryRes, error)
 	mustEmbedUnimplementedIspAgentServer()
 }
 
@@ -156,6 +186,12 @@ func (UnimplementedIspAgentServer) ListTaskExecutions(context.Context, *ListTask
 }
 func (UnimplementedIspAgentServer) ListTaskConfigs(context.Context, *ListTaskConfigsReq) (*ListTaskConfigsRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTaskConfigs not implemented")
+}
+func (UnimplementedIspAgentServer) TestFTPSUpload(context.Context, *TestFTPSUploadReq) (*TestFTPSUploadRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method TestFTPSUpload not implemented")
+}
+func (UnimplementedIspAgentServer) ListFTPSDirectory(context.Context, *ListFTPSDirectoryReq) (*ListFTPSDirectoryRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListFTPSDirectory not implemented")
 }
 func (UnimplementedIspAgentServer) mustEmbedUnimplementedIspAgentServer() {}
 func (UnimplementedIspAgentServer) testEmbeddedByValue()                  {}
@@ -286,6 +322,42 @@ func _IspAgent_ListTaskConfigs_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IspAgent_TestFTPSUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TestFTPSUploadReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IspAgentServer).TestFTPSUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IspAgent_TestFTPSUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IspAgentServer).TestFTPSUpload(ctx, req.(*TestFTPSUploadReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IspAgent_ListFTPSDirectory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFTPSDirectoryReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IspAgentServer).ListFTPSDirectory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IspAgent_ListFTPSDirectory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IspAgentServer).ListFTPSDirectory(ctx, req.(*ListFTPSDirectoryReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IspAgent_ServiceDesc is the grpc.ServiceDesc for IspAgent service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -316,6 +388,14 @@ var IspAgent_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListTaskConfigs",
 			Handler:    _IspAgent_ListTaskConfigs_Handler,
+		},
+		{
+			MethodName: "TestFTPSUpload",
+			Handler:    _IspAgent_TestFTPSUpload_Handler,
+		},
+		{
+			MethodName: "ListFTPSDirectory",
+			Handler:    _IspAgent_ListFTPSDirectory_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

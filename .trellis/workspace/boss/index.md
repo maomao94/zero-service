@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 112
-- **Last Active**: 2026-07-09
+- **Total Sessions**: 113
+- **Last Active**: 2026-07-10
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~174 | Active |
+| `journal-3.md` | ~208 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 113 | 2026-07-10 | ispagent model ftps foundation: 重构生命周期/client/响应/模型 | `fec0680f`, `56d88b80` | `master` |
 | 112 | 2026-07-09 | ispagent crontask: 合并 HandleTaskControl 回归单函数 + patrol ID 校验 | `e0dbcd87` | `master` |
 | 111 | 2026-07-08 | ISP Agent 开发完成：common/isp协议层 + app/ispagent gRPC服务 + gnetx增强 | `b65d5929`, `abb0b129`, `5c02b8b6` | `master` |
 | 110 | 2026-07-08 | 重构 wsx websocket 客户端 | - | `master` |

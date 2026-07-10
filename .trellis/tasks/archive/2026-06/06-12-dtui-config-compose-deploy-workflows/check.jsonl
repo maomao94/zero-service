@@ -1,4 +1,0 @@
-{"path":"cli/dtui/internal/config/config.go","reason":"Verify CRUD, history, and backup helper behavior."}
-{"path":"cli/dtui/plugins/config/plugin.go","reason":"Verify all config sections are handled consistently."}
-{"path":"cli/dtui/plugins/deploy/plugin.go","reason":"Verify backup/history/safety before copy."}
-{"path":"cli/dtui/internal/docker/compose.go","reason":"Verify command timeout, zip extraction safety, and copy helpers."}

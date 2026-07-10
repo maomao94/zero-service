@@ -21,6 +21,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type EntryType int32
+
+const (
+	EntryType_ENTRY_TYPE_UNSPECIFIED EntryType = 0
+	EntryType_ENTRY_TYPE_FILE        EntryType = 1
+	EntryType_ENTRY_TYPE_FOLDER      EntryType = 2
+	EntryType_ENTRY_TYPE_LINK        EntryType = 3
+)
+
+// Enum value maps for EntryType.
+var (
+	EntryType_name = map[int32]string{
+		0: "ENTRY_TYPE_UNSPECIFIED",
+		1: "ENTRY_TYPE_FILE",
+		2: "ENTRY_TYPE_FOLDER",
+		3: "ENTRY_TYPE_LINK",
+	}
+	EntryType_value = map[string]int32{
+		"ENTRY_TYPE_UNSPECIFIED": 0,
+		"ENTRY_TYPE_FILE":        1,
+		"ENTRY_TYPE_FOLDER":      2,
+		"ENTRY_TYPE_LINK":        3,
+	}
+)
+
+func (x EntryType) Enum() *EntryType {
+	p := new(EntryType)
+	*p = x
+	return p
+}
+
+func (x EntryType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (EntryType) Descriptor() protoreflect.EnumDescriptor {
+	return file_ispagent_proto_enumTypes[0].Descriptor()
+}
+
+func (EntryType) Type() protoreflect.EnumType {
+	return &file_ispagent_proto_enumTypes[0]
+}
+
+func (x EntryType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use EntryType.Descriptor instead.
+func (EntryType) EnumDescriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{0}
+}
+
 // Item 对应 XML <Item attr="value"/> 的动态属性映射
 type Item struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -71,7 +123,7 @@ type CommandReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Type          int32                  `protobuf:"varint,1,opt,name=type,proto3" json:"type,omitempty"`       // 消息类型（高 16 位 messageId）
 	Command       int32                  `protobuf:"varint,2,opt,name=command,proto3" json:"command,omitempty"` // 命令（低 16 位 messageId）
-	Code          string                 `protobuf:"bytes,3,opt,name=code,proto3" json:"code,omitempty"`        // 变电站/设备编码
+	Code          string                 `protobuf:"bytes,3,opt,name=code,proto3" json:"code,omitempty"`        // 目标对象唯一标识（变电站编码/任务编码/巡视ID 等）
 	Items         []*Item                `protobuf:"bytes,4,rep,name=items,proto3" json:"items,omitempty"`      // 业务数据
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1168,6 +1220,295 @@ func (x *ListTaskConfigsRes) GetItems() []*TaskConfigItem {
 	return nil
 }
 
+// TestFTPSUploadReq FTPS 上传测试请求
+type TestFTPSUploadReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LocalPath     string                 `protobuf:"bytes,1,opt,name=local_path,json=localPath,proto3" json:"local_path,omitempty"` // 测试文件本地路径，默认 local/test.txt
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TestFTPSUploadReq) Reset() {
+	*x = TestFTPSUploadReq{}
+	mi := &file_ispagent_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestFTPSUploadReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestFTPSUploadReq) ProtoMessage() {}
+
+func (x *TestFTPSUploadReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestFTPSUploadReq.ProtoReflect.Descriptor instead.
+func (*TestFTPSUploadReq) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *TestFTPSUploadReq) GetLocalPath() string {
+	if x != nil {
+		return x.LocalPath
+	}
+	return ""
+}
+
+// TestFTPSUploadRes FTPS 上传测试响应
+type TestFTPSUploadRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	RemotePath    string                 `protobuf:"bytes,2,opt,name=remote_path,json=remotePath,proto3" json:"remote_path,omitempty"` // 上传成功后的远端路径
+	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`                             // 错误信息
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TestFTPSUploadRes) Reset() {
+	*x = TestFTPSUploadRes{}
+	mi := &file_ispagent_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestFTPSUploadRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestFTPSUploadRes) ProtoMessage() {}
+
+func (x *TestFTPSUploadRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestFTPSUploadRes.ProtoReflect.Descriptor instead.
+func (*TestFTPSUploadRes) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *TestFTPSUploadRes) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *TestFTPSUploadRes) GetRemotePath() string {
+	if x != nil {
+		return x.RemotePath
+	}
+	return ""
+}
+
+func (x *TestFTPSUploadRes) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+// FTPSDirEntry FTPS 目录条目
+type FTPSDirEntry struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`                                                     // 文件/目录名
+	IsDir         bool                   `protobuf:"varint,2,opt,name=is_dir,json=isDir,proto3" json:"is_dir,omitempty"`                                     // 是否为目录
+	Size          uint64                 `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`                                                    // 文件大小（目录为 0）
+	EntryType     EntryType              `protobuf:"varint,4,opt,name=entry_type,json=entryType,proto3,enum=ispagent.EntryType" json:"entry_type,omitempty"` // 条目类型
+	SizeDisplay   string                 `protobuf:"bytes,5,opt,name=size_display,json=sizeDisplay,proto3" json:"size_display,omitempty"`                    // 格式化大小（如 "1.2 GB"、"345 KB"）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FTPSDirEntry) Reset() {
+	*x = FTPSDirEntry{}
+	mi := &file_ispagent_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FTPSDirEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FTPSDirEntry) ProtoMessage() {}
+
+func (x *FTPSDirEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FTPSDirEntry.ProtoReflect.Descriptor instead.
+func (*FTPSDirEntry) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *FTPSDirEntry) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *FTPSDirEntry) GetIsDir() bool {
+	if x != nil {
+		return x.IsDir
+	}
+	return false
+}
+
+func (x *FTPSDirEntry) GetSize() uint64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+func (x *FTPSDirEntry) GetEntryType() EntryType {
+	if x != nil {
+		return x.EntryType
+	}
+	return EntryType_ENTRY_TYPE_UNSPECIFIED
+}
+
+func (x *FTPSDirEntry) GetSizeDisplay() string {
+	if x != nil {
+		return x.SizeDisplay
+	}
+	return ""
+}
+
+// ListFTPSDirectoryReq FTPS 目录列表请求
+type ListFTPSDirectoryReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"` // 子目录路径，空则列出根目录
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFTPSDirectoryReq) Reset() {
+	*x = ListFTPSDirectoryReq{}
+	mi := &file_ispagent_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFTPSDirectoryReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFTPSDirectoryReq) ProtoMessage() {}
+
+func (x *ListFTPSDirectoryReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFTPSDirectoryReq.ProtoReflect.Descriptor instead.
+func (*ListFTPSDirectoryReq) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ListFTPSDirectoryReq) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+// ListFTPSDirectoryRes FTPS 目录列表响应
+type ListFTPSDirectoryRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Entries       []*FTPSDirEntry        `protobuf:"bytes,2,rep,name=entries,proto3" json:"entries,omitempty"` // 目录下条目列表
+	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`     // 错误信息
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFTPSDirectoryRes) Reset() {
+	*x = ListFTPSDirectoryRes{}
+	mi := &file_ispagent_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFTPSDirectoryRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFTPSDirectoryRes) ProtoMessage() {}
+
+func (x *ListFTPSDirectoryRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFTPSDirectoryRes.ProtoReflect.Descriptor instead.
+func (*ListFTPSDirectoryRes) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ListFTPSDirectoryRes) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ListFTPSDirectoryRes) GetEntries() []*FTPSDirEntry {
+	if x != nil {
+		return x.Entries
+	}
+	return nil
+}
+
+func (x *ListFTPSDirectoryRes) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
 var File_ispagent_proto protoreflect.FileDescriptor
 
 const file_ispagent_proto_rawDesc = "" +
@@ -1278,14 +1619,42 @@ const file_ispagent_proto_rawDesc = "" +
 	"\x10invalid_end_time\x18\x1c \x01(\tR\x0einvalidEndTime\"Z\n" +
 	"\x12ListTaskConfigsRes\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x03R\x05total\x12.\n" +
-	"\x05items\x18\x02 \x03(\v2\x18.ispagent.TaskConfigItemR\x05items2\x82\x04\n" +
+	"\x05items\x18\x02 \x03(\v2\x18.ispagent.TaskConfigItemR\x05items\"2\n" +
+	"\x11TestFTPSUploadReq\x12\x1d\n" +
+	"\n" +
+	"local_path\x18\x01 \x01(\tR\tlocalPath\"d\n" +
+	"\x11TestFTPSUploadRes\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1f\n" +
+	"\vremote_path\x18\x02 \x01(\tR\n" +
+	"remotePath\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\xa4\x01\n" +
+	"\fFTPSDirEntry\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x15\n" +
+	"\x06is_dir\x18\x02 \x01(\bR\x05isDir\x12\x12\n" +
+	"\x04size\x18\x03 \x01(\x04R\x04size\x122\n" +
+	"\n" +
+	"entry_type\x18\x04 \x01(\x0e2\x13.ispagent.EntryTypeR\tentryType\x12!\n" +
+	"\fsize_display\x18\x05 \x01(\tR\vsizeDisplay\"*\n" +
+	"\x14ListFTPSDirectoryReq\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"x\n" +
+	"\x14ListFTPSDirectoryRes\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x120\n" +
+	"\aentries\x18\x02 \x03(\v2\x16.ispagent.FTPSDirEntryR\aentries\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error*h\n" +
+	"\tEntryType\x12\x1a\n" +
+	"\x16ENTRY_TYPE_UNSPECIFIED\x10\x00\x12\x13\n" +
+	"\x0fENTRY_TYPE_FILE\x10\x01\x12\x15\n" +
+	"\x11ENTRY_TYPE_FOLDER\x10\x02\x12\x13\n" +
+	"\x0fENTRY_TYPE_LINK\x10\x032\xa3\x05\n" +
 	"\bIspAgent\x12<\n" +
 	"\x0eExecuteCommand\x12\x14.ispagent.CommandReq\x1a\x14.ispagent.CommandRes\x12U\n" +
 	"\x17SendPatrolDeviceRunData\x12$.ispagent.SendPatrolDeviceRunDataReq\x1a\x14.ispagent.CommandRes\x12[\n" +
 	"\x1aSendPatrolDeviceStatusData\x12'.ispagent.SendPatrolDeviceStatusDataReq\x1a\x14.ispagent.CommandRes\x12]\n" +
 	"\x1bSendPatrolDeviceCoordinates\x12(.ispagent.SendPatrolDeviceCoordinatesReq\x1a\x14.ispagent.CommandRes\x12V\n" +
 	"\x12ListTaskExecutions\x12\x1f.ispagent.ListTaskExecutionsReq\x1a\x1f.ispagent.ListTaskExecutionsRes\x12M\n" +
-	"\x0fListTaskConfigs\x12\x1c.ispagent.ListTaskConfigsReq\x1a\x1c.ispagent.ListTaskConfigsResB\fZ\n" +
+	"\x0fListTaskConfigs\x12\x1c.ispagent.ListTaskConfigsReq\x1a\x1c.ispagent.ListTaskConfigsRes\x12J\n" +
+	"\x0eTestFTPSUpload\x12\x1b.ispagent.TestFTPSUploadReq\x1a\x1b.ispagent.TestFTPSUploadRes\x12S\n" +
+	"\x11ListFTPSDirectory\x12\x1e.ispagent.ListFTPSDirectoryReq\x1a\x1e.ispagent.ListFTPSDirectoryResB\fZ\n" +
 	"./ispagentb\x06proto3"
 
 var (
@@ -1300,51 +1669,64 @@ func file_ispagent_proto_rawDescGZIP() []byte {
 	return file_ispagent_proto_rawDescData
 }
 
-var file_ispagent_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_ispagent_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_ispagent_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_ispagent_proto_goTypes = []any{
-	(*Item)(nil),                           // 0: ispagent.Item
-	(*CommandReq)(nil),                     // 1: ispagent.CommandReq
-	(*PatrolItemsReq)(nil),                 // 2: ispagent.PatrolItemsReq
-	(*PatrolDeviceCoordinate)(nil),         // 3: ispagent.PatrolDeviceCoordinate
-	(*PatrolDeviceRunData)(nil),            // 4: ispagent.PatrolDeviceRunData
-	(*PatrolDeviceStatusData)(nil),         // 5: ispagent.PatrolDeviceStatusData
-	(*SendPatrolDeviceCoordinatesReq)(nil), // 6: ispagent.SendPatrolDeviceCoordinatesReq
-	(*SendPatrolDeviceRunDataReq)(nil),     // 7: ispagent.SendPatrolDeviceRunDataReq
-	(*SendPatrolDeviceStatusDataReq)(nil),  // 8: ispagent.SendPatrolDeviceStatusDataReq
-	(*CommandRes)(nil),                     // 9: ispagent.CommandRes
-	(*ListTaskExecutionsReq)(nil),          // 10: ispagent.ListTaskExecutionsReq
-	(*ListTaskExecutionsRes)(nil),          // 11: ispagent.ListTaskExecutionsRes
-	(*ListTaskConfigsReq)(nil),             // 12: ispagent.ListTaskConfigsReq
-	(*TaskConfigItem)(nil),                 // 13: ispagent.TaskConfigItem
-	(*ListTaskConfigsRes)(nil),             // 14: ispagent.ListTaskConfigsRes
-	nil,                                    // 15: ispagent.Item.AttributesEntry
+	(EntryType)(0),                         // 0: ispagent.EntryType
+	(*Item)(nil),                           // 1: ispagent.Item
+	(*CommandReq)(nil),                     // 2: ispagent.CommandReq
+	(*PatrolItemsReq)(nil),                 // 3: ispagent.PatrolItemsReq
+	(*PatrolDeviceCoordinate)(nil),         // 4: ispagent.PatrolDeviceCoordinate
+	(*PatrolDeviceRunData)(nil),            // 5: ispagent.PatrolDeviceRunData
+	(*PatrolDeviceStatusData)(nil),         // 6: ispagent.PatrolDeviceStatusData
+	(*SendPatrolDeviceCoordinatesReq)(nil), // 7: ispagent.SendPatrolDeviceCoordinatesReq
+	(*SendPatrolDeviceRunDataReq)(nil),     // 8: ispagent.SendPatrolDeviceRunDataReq
+	(*SendPatrolDeviceStatusDataReq)(nil),  // 9: ispagent.SendPatrolDeviceStatusDataReq
+	(*CommandRes)(nil),                     // 10: ispagent.CommandRes
+	(*ListTaskExecutionsReq)(nil),          // 11: ispagent.ListTaskExecutionsReq
+	(*ListTaskExecutionsRes)(nil),          // 12: ispagent.ListTaskExecutionsRes
+	(*ListTaskConfigsReq)(nil),             // 13: ispagent.ListTaskConfigsReq
+	(*TaskConfigItem)(nil),                 // 14: ispagent.TaskConfigItem
+	(*ListTaskConfigsRes)(nil),             // 15: ispagent.ListTaskConfigsRes
+	(*TestFTPSUploadReq)(nil),              // 16: ispagent.TestFTPSUploadReq
+	(*TestFTPSUploadRes)(nil),              // 17: ispagent.TestFTPSUploadRes
+	(*FTPSDirEntry)(nil),                   // 18: ispagent.FTPSDirEntry
+	(*ListFTPSDirectoryReq)(nil),           // 19: ispagent.ListFTPSDirectoryReq
+	(*ListFTPSDirectoryRes)(nil),           // 20: ispagent.ListFTPSDirectoryRes
+	nil,                                    // 21: ispagent.Item.AttributesEntry
 }
 var file_ispagent_proto_depIdxs = []int32{
-	15, // 0: ispagent.Item.attributes:type_name -> ispagent.Item.AttributesEntry
-	0,  // 1: ispagent.CommandReq.items:type_name -> ispagent.Item
-	0,  // 2: ispagent.PatrolItemsReq.items:type_name -> ispagent.Item
-	3,  // 3: ispagent.SendPatrolDeviceCoordinatesReq.items:type_name -> ispagent.PatrolDeviceCoordinate
-	4,  // 4: ispagent.SendPatrolDeviceRunDataReq.items:type_name -> ispagent.PatrolDeviceRunData
-	5,  // 5: ispagent.SendPatrolDeviceStatusDataReq.items:type_name -> ispagent.PatrolDeviceStatusData
-	0,  // 6: ispagent.CommandRes.items:type_name -> ispagent.Item
-	13, // 7: ispagent.ListTaskConfigsRes.items:type_name -> ispagent.TaskConfigItem
-	1,  // 8: ispagent.IspAgent.ExecuteCommand:input_type -> ispagent.CommandReq
-	7,  // 9: ispagent.IspAgent.SendPatrolDeviceRunData:input_type -> ispagent.SendPatrolDeviceRunDataReq
-	8,  // 10: ispagent.IspAgent.SendPatrolDeviceStatusData:input_type -> ispagent.SendPatrolDeviceStatusDataReq
-	6,  // 11: ispagent.IspAgent.SendPatrolDeviceCoordinates:input_type -> ispagent.SendPatrolDeviceCoordinatesReq
-	10, // 12: ispagent.IspAgent.ListTaskExecutions:input_type -> ispagent.ListTaskExecutionsReq
-	12, // 13: ispagent.IspAgent.ListTaskConfigs:input_type -> ispagent.ListTaskConfigsReq
-	9,  // 14: ispagent.IspAgent.ExecuteCommand:output_type -> ispagent.CommandRes
-	9,  // 15: ispagent.IspAgent.SendPatrolDeviceRunData:output_type -> ispagent.CommandRes
-	9,  // 16: ispagent.IspAgent.SendPatrolDeviceStatusData:output_type -> ispagent.CommandRes
-	9,  // 17: ispagent.IspAgent.SendPatrolDeviceCoordinates:output_type -> ispagent.CommandRes
-	11, // 18: ispagent.IspAgent.ListTaskExecutions:output_type -> ispagent.ListTaskExecutionsRes
-	14, // 19: ispagent.IspAgent.ListTaskConfigs:output_type -> ispagent.ListTaskConfigsRes
-	14, // [14:20] is the sub-list for method output_type
-	8,  // [8:14] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	21, // 0: ispagent.Item.attributes:type_name -> ispagent.Item.AttributesEntry
+	1,  // 1: ispagent.CommandReq.items:type_name -> ispagent.Item
+	1,  // 2: ispagent.PatrolItemsReq.items:type_name -> ispagent.Item
+	4,  // 3: ispagent.SendPatrolDeviceCoordinatesReq.items:type_name -> ispagent.PatrolDeviceCoordinate
+	5,  // 4: ispagent.SendPatrolDeviceRunDataReq.items:type_name -> ispagent.PatrolDeviceRunData
+	6,  // 5: ispagent.SendPatrolDeviceStatusDataReq.items:type_name -> ispagent.PatrolDeviceStatusData
+	1,  // 6: ispagent.CommandRes.items:type_name -> ispagent.Item
+	14, // 7: ispagent.ListTaskConfigsRes.items:type_name -> ispagent.TaskConfigItem
+	0,  // 8: ispagent.FTPSDirEntry.entry_type:type_name -> ispagent.EntryType
+	18, // 9: ispagent.ListFTPSDirectoryRes.entries:type_name -> ispagent.FTPSDirEntry
+	2,  // 10: ispagent.IspAgent.ExecuteCommand:input_type -> ispagent.CommandReq
+	8,  // 11: ispagent.IspAgent.SendPatrolDeviceRunData:input_type -> ispagent.SendPatrolDeviceRunDataReq
+	9,  // 12: ispagent.IspAgent.SendPatrolDeviceStatusData:input_type -> ispagent.SendPatrolDeviceStatusDataReq
+	7,  // 13: ispagent.IspAgent.SendPatrolDeviceCoordinates:input_type -> ispagent.SendPatrolDeviceCoordinatesReq
+	11, // 14: ispagent.IspAgent.ListTaskExecutions:input_type -> ispagent.ListTaskExecutionsReq
+	13, // 15: ispagent.IspAgent.ListTaskConfigs:input_type -> ispagent.ListTaskConfigsReq
+	16, // 16: ispagent.IspAgent.TestFTPSUpload:input_type -> ispagent.TestFTPSUploadReq
+	19, // 17: ispagent.IspAgent.ListFTPSDirectory:input_type -> ispagent.ListFTPSDirectoryReq
+	10, // 18: ispagent.IspAgent.ExecuteCommand:output_type -> ispagent.CommandRes
+	10, // 19: ispagent.IspAgent.SendPatrolDeviceRunData:output_type -> ispagent.CommandRes
+	10, // 20: ispagent.IspAgent.SendPatrolDeviceStatusData:output_type -> ispagent.CommandRes
+	10, // 21: ispagent.IspAgent.SendPatrolDeviceCoordinates:output_type -> ispagent.CommandRes
+	12, // 22: ispagent.IspAgent.ListTaskExecutions:output_type -> ispagent.ListTaskExecutionsRes
+	15, // 23: ispagent.IspAgent.ListTaskConfigs:output_type -> ispagent.ListTaskConfigsRes
+	17, // 24: ispagent.IspAgent.TestFTPSUpload:output_type -> ispagent.TestFTPSUploadRes
+	20, // 25: ispagent.IspAgent.ListFTPSDirectory:output_type -> ispagent.ListFTPSDirectoryRes
+	18, // [18:26] is the sub-list for method output_type
+	10, // [10:18] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_ispagent_proto_init() }
@@ -1357,13 +1739,14 @@ func file_ispagent_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ispagent_proto_rawDesc), len(file_ispagent_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   16,
+			NumEnums:      1,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_ispagent_proto_goTypes,
 		DependencyIndexes: file_ispagent_proto_depIdxs,
+		EnumInfos:         file_ispagent_proto_enumTypes,
 		MessageInfos:      file_ispagent_proto_msgTypes,
 	}.Build()
 	File_ispagent_proto = out.File

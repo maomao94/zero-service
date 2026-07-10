@@ -1,4 +1,0 @@
-{"path":"cli/dtui/README.md","reason":"Verify docs match final behavior and safety model."}
-{"path":"cli/dtui/build.sh","reason":"Verify build output and portability."}
-{"path":"cli/dtui/main.go","reason":"Verify documented module list matches registration."}
-{"path":"cli/dtui/plugins","reason":"Verify documented module keys match Bindings."}

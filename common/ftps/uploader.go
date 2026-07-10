@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/jlaffaye/ftp"
@@ -98,6 +99,7 @@ func (u *Uploader) Upload(ctx context.Context, remoteName string, r io.Reader, s
 
 	remotePath := path.Join(u.cfg.RemoteDir, remoteName)
 	storePath := remotePath
+	_ = client.MakeDir(path.Dir(remotePath))
 	if u.cfg.UseTemporaryFile {
 		storePath = remotePath + ".uploading"
 		_ = client.Delete(storePath)
@@ -121,6 +123,55 @@ func (u *Uploader) Upload(ctx context.Context, remoteName string, r io.Reader, s
 		}
 	}
 	return UploadResult{RemotePath: remotePath, Size: size}, nil
+}
+
+// List retrieves file entries under Config.RemoteDir.
+func (u *Uploader) List(ctx context.Context) ([]Entry, error) {
+	return u.ListDir(ctx, "")
+}
+
+// ListDir retrieves file entries under RemoteDir joined with subPath.
+// subPath is relative to RemoteDir; directory traversal is blocked.
+func (u *Uploader) ListDir(ctx context.Context, subPath string) ([]Entry, error) {
+	remotePath := u.cfg.RemoteDir
+	if subPath != "" {
+		clean := strings.TrimPrefix(path.Clean(subPath), "/")
+		if clean == ".." || strings.HasPrefix(clean, "../") {
+			return nil, fmt.Errorf("invalid path: %s", subPath)
+		}
+		remotePath = path.Join(remotePath, clean)
+	}
+	client, err := u.dial(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer client.Quit()
+	if err := client.Login(u.cfg.Username, u.cfg.Password); err != nil {
+		return nil, fmt.Errorf("ftps login failed: %w", err)
+	}
+	entries, err := client.List(remotePath)
+	if err != nil {
+		return nil, fmt.Errorf("ftps list failed: %w", err)
+	}
+	out := make([]Entry, len(entries))
+	for i, e := range entries {
+		out[i] = Entry{
+			Name:  e.Name,
+			Size:  e.Size,
+			Type:  e.Type,
+			Time:  e.Time,
+			IsDir: e.Type == ftp.EntryTypeFolder || e.Type == ftp.EntryTypeLink,
+		}
+	}
+	return out, nil
+}
+
+type Entry struct {
+	Name  string
+	Size  uint64
+	IsDir bool
+	Type  ftp.EntryType
+	Time  time.Time
 }
 
 func (u *Uploader) dial(ctx context.Context) (*ftp.ServerConn, error) {

@@ -22,6 +22,57 @@ func TestMessageIDHelpers(t *testing.T) {
 	}
 }
 
+func TestMessageResponseTIDOnlyForResponses(t *testing.T) {
+	tests := []struct {
+		name    string
+		msg     *Message
+		wantTID string
+	}{
+		{
+			name: "generic response without items",
+			msg: &Message{
+				RecvSeq: 123,
+				Type:    TypeSystem,
+				Command: CommandGenericResponseWithoutItems,
+			},
+			wantTID: "123",
+		},
+		{
+			name: "generic response with items",
+			msg: &Message{
+				RecvSeq: 456,
+				Type:    TypeSystem,
+				Command: CommandGenericResponseWithItems,
+			},
+			wantTID: "456",
+		},
+		{
+			name: "heartbeat command is not a response",
+			msg: &Message{
+				RecvSeq: 789,
+				Type:    TypeSystem,
+				Command: CommandHeartbeat,
+			},
+		},
+		{
+			name: "proactive report is not a response",
+			msg: &Message{
+				RecvSeq: 789,
+				Type:    TypePatrolDeviceRunData,
+				Command: CommandReport,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.msg.ResponseTID(); got != tt.wantTID {
+				t.Fatalf("ResponseTID() = %q, want %q", got, tt.wantTID)
+			}
+		})
+	}
+}
+
 func TestXMLBuildParseDynamicItems(t *testing.T) {
 	msg := &Message{
 		RootName:    RootPatrolDevice,

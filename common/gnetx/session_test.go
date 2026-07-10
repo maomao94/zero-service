@@ -264,6 +264,17 @@ func TestSessionResolveResponseNilReplyPool(t *testing.T) {
 	}
 }
 
+func TestSessionResolveResponseEmptyTID(t *testing.T) {
+	mc := newMockConn(nil)
+	replyPool := antsx.NewReplyPool[any]()
+	defer replyPool.Close()
+	cn := newSession("id1", mc, newTestCodec(), nil, replyPool)
+
+	if cn.resolveResponse("", &pongResp{RespSerial: 1}) {
+		t.Fatal("resolveResponse with empty TID should return false")
+	}
+}
+
 func TestSessionResolveResponse(t *testing.T) {
 	mc := newMockConn(nil)
 	replyPool := antsx.NewReplyPool[any]()

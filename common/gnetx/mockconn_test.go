@@ -94,10 +94,12 @@ func (c *mockConn) AsyncWritev(bs [][]byte, cb gnet.AsyncCallback) error {
 	return nil
 }
 
-func (c *mockConn) Context() any         { return c.ctx }
-func (c *mockConn) SetContext(ctx any)   { c.ctx = ctx }
-func (c *mockConn) LocalAddr() net.Addr  { return c.local }
-func (c *mockConn) RemoteAddr() net.Addr { return c.remote }
+func (c *mockConn) Context() any           { return c.ctx }
+func (c *mockConn) SafeContext() any       { return c.ctx }
+func (c *mockConn) SetContext(ctx any)     { c.ctx = ctx }
+func (c *mockConn) SetSafeContext(ctx any) { c.ctx = ctx }
+func (c *mockConn) LocalAddr() net.Addr    { return c.local }
+func (c *mockConn) RemoteAddr() net.Addr   { return c.remote }
 
 func (c *mockConn) Fd() int                                  { return -1 }
 func (c *mockConn) Dup() (int, error)                        { return -1, nil }

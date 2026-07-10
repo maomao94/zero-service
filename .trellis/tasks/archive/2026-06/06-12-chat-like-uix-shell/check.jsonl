@@ -1,3 +1,0 @@
-{"file":".trellis/spec/backend/uix-framework.md","reason":"Check final shell/module behavior against documented uix conventions or update spec if intentionally changed."}
-{"file":".trellis/spec/guides/bubble-tea-tui-guide.md","reason":"Check key routing, textinput focus, filepicker init, table setup, and resize behavior."}
-{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Run final quality checklist and ensure broad refactor does not introduce forbidden patterns."}

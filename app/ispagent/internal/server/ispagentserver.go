@@ -58,3 +58,15 @@ func (s *IspAgentServer) ListTaskConfigs(ctx context.Context, in *ispagent.ListT
 	l := logic.NewListTaskConfigsLogic(ctx, s.svcCtx)
 	return l.ListTaskConfigs(in)
 }
+
+// TestFTPSUpload 测试 FTPS 上传（上传 local/test.txt）
+func (s *IspAgentServer) TestFTPSUpload(ctx context.Context, in *ispagent.TestFTPSUploadReq) (*ispagent.TestFTPSUploadRes, error) {
+	l := logic.NewTestFTPSUploadLogic(ctx, s.svcCtx)
+	return l.TestFTPSUpload(in)
+}
+
+// ListFTPSDirectory 列出 FTPS 远程目录文件列表
+func (s *IspAgentServer) ListFTPSDirectory(ctx context.Context, in *ispagent.ListFTPSDirectoryReq) (*ispagent.ListFTPSDirectoryRes, error) {
+	l := logic.NewListFTPSDirectoryLogic(ctx, s.svcCtx)
+	return l.ListFTPSDirectory(in)
+}

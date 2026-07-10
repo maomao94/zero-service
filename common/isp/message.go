@@ -22,10 +22,10 @@ type Message struct {
 	RecvSeq       uint64 // 对端回执序号 receiveSerialNo（8 字节小端）= 上次收到的对端 SendSeq
 	SessionSource byte   // 会话源：0x00=客户端，0x01=服务端
 
-	SendCode    string // 发送方标识
-	ReceiveCode string // 接收方标识（注册后从服务端学习）
+	SendCode    string // 发送方唯一标识
+	ReceiveCode string // 接收方唯一标识（注册后从服务端学习）
 	Type        int32  // 消息类型（高 16 位 messageId）
-	Code        string // 变电站/设备编码
+	Code        string // 目标对象唯一标识，含义随消息类型变化：变电站编码/任务编码/巡视ID 等
 	Command     int32  // 命令（低 16 位 messageId）
 	Time        string // 时间戳
 	Items       []Item // 业务数据列表
@@ -97,10 +97,15 @@ func (m *Message) TID() string {
 	return strconv.FormatUint(m.SendSeq, 10)
 }
 
-// ResponseTID 返回回包关联 ID（用 RecvSeq），供 gnetx 匹配在途请求。
+// ResponseTID 返回实际应答消息的回包关联 ID（用 RecvSeq），供 gnetx 匹配在途请求。
 // 服务端回复时将 receiveSerialNo 设为本端请求的 SendSeq，实现回包匹配。
 func (m *Message) ResponseTID() string {
-	return strconv.FormatUint(m.RecvSeq, 10)
+	switch m.MessageID() {
+	case MessageIDGenericResponseWithoutItems, MessageIDGenericResponseWithItems:
+		return strconv.FormatUint(m.RecvSeq, 10)
+	default:
+		return ""
+	}
 }
 
 // EnsureDefaults 填充默认根元素和会话源。

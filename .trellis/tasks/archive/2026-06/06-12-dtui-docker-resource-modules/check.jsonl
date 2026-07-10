@@ -1,3 +1,0 @@
-{"path":"cli/dtui/plugins/containers/plugin.go","reason":"Verify commands, subviews, confirmations, and daemon error handling."}
-{"path":"cli/dtui/plugins/images/plugin.go","reason":"Verify image workflows and confirmations."}
-{"path":"cli/dtui/internal/docker/docker_test.go","reason":"Existing Docker helper tests and daemon-skipping patterns."}

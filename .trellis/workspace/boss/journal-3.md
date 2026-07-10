@@ -172,3 +172,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 113: ispagent model ftps foundation: 重构生命周期/client/响应/模型
+
+**Date**: 2026-07-10
+**Task**: ispagent model ftps foundation: 重构生命周期/client/响应/模型
+**Branch**: `master`
+
+### Summary
+
+1. ispclient→isp 目录重命名，Manager→Client，去掉 Start/Stop（纯client），proc.AddShutdownListener 注册关闭，crontask.Scheduler 入 serviceGroup。2. NewCronHandler 补 GormIspPatrolTask 持久化，对照 djicloud 改用 FirstOrCreate+Assign 代替 clause.OnConflict（GaussDB 兼容）。3. 汉化映射收归 handler/names.go。4. modelxml 迁入 common/isp。5. 新增 IspError 类型+统一审计 responseError。6. FTPS 新增 List/自动 MkDir，TestFTPSUpload/ListFTPSDirectory gRPC 测试接口。7. 地图同步 syncMapModel 支持 ISP 61-9。8. provider 从 local XML 文件读取模型数据。9. 更新 database-guidelines.md / isp-guidelines.md。10. 修复 proto/code 注释。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `fec0680f` | (see git log) |
+| `56d88b80` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

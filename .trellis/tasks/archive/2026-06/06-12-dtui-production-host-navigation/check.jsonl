@@ -1,3 +1,0 @@
-{"path":"cli/dtui/main.go","reason":"Verify all production modules are registered and startup messages match."}
-{"path":"cli/dtui/README.md","reason":"Verify docs match final module list after docs child."}
-{"path":"cli/dtui/plugins/test/plugin.go","reason":"Verify diagnostic module remains available."}

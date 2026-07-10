@@ -64,18 +64,18 @@ const (
 type GormIspPatrolTask struct {
 	gormx.LegacyBaseModel // id / create_time / update_time / delete_time / del_state
 
-	SendCode          string `gorm:"column:send_code;size:64;not null;index;comment:区域巡视主机唯一标识"`                    // SendCode：区域巡视主机唯一标识
-	ReceiveCode       string `gorm:"column:receive_code;size:64;not null;comment:上级系统唯一标识"`                         // ReceiveCode：上级系统唯一标识
-	Code              string `gorm:"column:code;size:64;not null;index;comment:变电站编码"`                              // Code：变电站编码
-	TaskPatrolledID   string `gorm:"column:task_patrolled_id;size:255;not null;uniqueIndex;comment:巡视任务执行 ID"`      // 巡视任务执行 ID
-	TaskName          string `gorm:"column:task_name;size:255;comment:任务名称"`                                        // 任务名称
-	TaskCode          string `gorm:"column:task_code;size:255;not null;index;comment:任务编码"`                         // 任务编码
-	TaskState         string `gorm:"column:task_state;size:8;index;comment:任务状态：1=已执行，2=正在执行，3=暂停，4=终止，5=未执行，6=超期"` // 任务状态
-	PlanStartTime     string `gorm:"column:plan_start_time;size:32;comment:计划开始时间"`                                 // 计划开始时间
-	StartTime         string `gorm:"column:start_time;size:32;comment:开始时间"`                                        // 开始时间
-	TaskProgress      string `gorm:"column:task_progress;size:128;comment:任务进度"`                                    // 任务进度
-	TaskEstimatedTime string `gorm:"column:task_estimated_time;size:128;comment:任务预计剩余时间"`                          // 任务预计剩余时间
-	Description       string `gorm:"column:description;type:text;comment:描述"`                                       // 描述
+	SendCode          string    `gorm:"column:send_code;size:64;not null;index;comment:区域巡视主机唯一标识"`                    // SendCode：区域巡视主机唯一标识
+	ReceiveCode       string    `gorm:"column:receive_code;size:64;not null;comment:上级系统唯一标识"`                         // ReceiveCode：上级系统唯一标识
+	Code              string    `gorm:"column:code;size:64;not null;index;comment:变电站编码"`                              // Code：变电站编码
+	TaskPatrolledID   string    `gorm:"column:task_patrolled_id;size:255;not null;uniqueIndex;comment:巡视任务执行 ID"`      // 巡视任务执行 ID
+	TaskName          string    `gorm:"column:task_name;size:255;comment:任务名称"`                                        // 任务名称
+	TaskCode          string    `gorm:"column:task_code;size:255;not null;index;comment:任务编码"`                         // 任务编码
+	TaskState         string    `gorm:"column:task_state;size:8;index;comment:任务状态：1=已执行，2=正在执行，3=暂停，4=终止，5=未执行，6=超期"` // 任务状态
+	PlanStartTime     time.Time `gorm:"column:plan_start_time;comment:计划开始时间"`                                         // 计划开始时间
+	StartTime         time.Time `gorm:"column:start_time;comment:开始时间"`                                                // 开始时间
+	TaskProgress      string    `gorm:"column:task_progress;size:128;comment:任务进度"`                                    // 任务进度
+	TaskEstimatedTime string    `gorm:"column:task_estimated_time;size:128;comment:任务预计剩余时间"`                          // 任务预计剩余时间
+	Description       string    `gorm:"column:description;type:text;comment:描述"`                                       // 描述
 }
 
 func (GormIspPatrolTask) TableName() string { return "isp_patrol_task" }
