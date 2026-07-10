@@ -70,3 +70,9 @@ func (s *IspAgentServer) ListFTPSDirectory(ctx context.Context, in *ispagent.Lis
 	l := logic.NewListFTPSDirectoryLogic(ctx, s.svcCtx)
 	return l.ListFTPSDirectory(in)
 }
+
+// ListReportIntervals 查询上报间隔配置
+func (s *IspAgentServer) ListReportIntervals(ctx context.Context, in *ispagent.ListReportIntervalsReq) (*ispagent.ListReportIntervalsRes, error) {
+	l := logic.NewListReportIntervalsLogic(ctx, s.svcCtx)
+	return l.ListReportIntervals(in)
+}

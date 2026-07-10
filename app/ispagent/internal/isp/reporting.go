@@ -290,14 +290,41 @@ func cloneAll(items map[string]*cachedItem) []isp.Item {
 	return out
 }
 
+// ReportIntervals 返回所有上报类别的当前间隔和预留间隔。
+func (c *Client) ReportIntervals() map[ReportCategory]time.Duration {
+	c.reports.mu.RLock()
+	defer c.reports.mu.RUnlock()
+	out := make(map[ReportCategory]time.Duration, len(c.reports.intervals))
+	for k, v := range c.reports.intervals {
+		out[k] = v
+	}
+	return out
+}
+
+// ReservedIntervals 返回注册响应中预留的间隔（nest_run_interval、weather_interval 等）。
+func (c *Client) ReservedIntervals() map[string]time.Duration {
+	c.reports.mu.RLock()
+	defer c.reports.mu.RUnlock()
+	out := make(map[string]time.Duration, len(c.reports.reservedIntervals))
+	for k, v := range c.reports.reservedIntervals {
+		out[k] = v
+	}
+	return out
+}
+
 // SetNoFreshCheck 暴露给外部调用方，控制指定上报类别的新鲜度检查开关。
 func (c *Client) SetNoFreshCheck(category ReportCategory, skip bool) {
 	c.reports.setNoFreshCheck(category, skip)
 }
 
-func categoryMessageName(category ReportCategory) string {
+// CategoryMessageName 返回 ISP 协议中该 messageId 对应的中文名称。
+func CategoryMessageName(category ReportCategory) string {
 	typ, cmd := isp.DecodeMessageID(int(category))
 	return (&isp.Message{Type: typ, Command: cmd}).MessageName()
+}
+
+func categoryMessageName(category ReportCategory) string {
+	return CategoryMessageName(category)
 }
 
 // CacheReport gRPC 上报入口：将 proto 数据写入本地缓存，立即返回受理结果。

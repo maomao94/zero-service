@@ -27,6 +27,7 @@ const (
 	IspAgent_ListTaskConfigs_FullMethodName             = "/ispagent.IspAgent/ListTaskConfigs"
 	IspAgent_TestFTPSUpload_FullMethodName              = "/ispagent.IspAgent/TestFTPSUpload"
 	IspAgent_ListFTPSDirectory_FullMethodName           = "/ispagent.IspAgent/ListFTPSDirectory"
+	IspAgent_ListReportIntervals_FullMethodName         = "/ispagent.IspAgent/ListReportIntervals"
 )
 
 // IspAgentClient is the client API for IspAgent service.
@@ -49,6 +50,8 @@ type IspAgentClient interface {
 	TestFTPSUpload(ctx context.Context, in *TestFTPSUploadReq, opts ...grpc.CallOption) (*TestFTPSUploadRes, error)
 	// ListFTPSDirectory 列出 FTPS 远程目录文件列表
 	ListFTPSDirectory(ctx context.Context, in *ListFTPSDirectoryReq, opts ...grpc.CallOption) (*ListFTPSDirectoryRes, error)
+	// ListReportIntervals 查询上报间隔配置
+	ListReportIntervals(ctx context.Context, in *ListReportIntervalsReq, opts ...grpc.CallOption) (*ListReportIntervalsRes, error)
 }
 
 type ispAgentClient struct {
@@ -139,6 +142,16 @@ func (c *ispAgentClient) ListFTPSDirectory(ctx context.Context, in *ListFTPSDire
 	return out, nil
 }
 
+func (c *ispAgentClient) ListReportIntervals(ctx context.Context, in *ListReportIntervalsReq, opts ...grpc.CallOption) (*ListReportIntervalsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListReportIntervalsRes)
+	err := c.cc.Invoke(ctx, IspAgent_ListReportIntervals_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IspAgentServer is the server API for IspAgent service.
 // All implementations must embed UnimplementedIspAgentServer
 // for forward compatibility.
@@ -159,6 +172,8 @@ type IspAgentServer interface {
 	TestFTPSUpload(context.Context, *TestFTPSUploadReq) (*TestFTPSUploadRes, error)
 	// ListFTPSDirectory 列出 FTPS 远程目录文件列表
 	ListFTPSDirectory(context.Context, *ListFTPSDirectoryReq) (*ListFTPSDirectoryRes, error)
+	// ListReportIntervals 查询上报间隔配置
+	ListReportIntervals(context.Context, *ListReportIntervalsReq) (*ListReportIntervalsRes, error)
 	mustEmbedUnimplementedIspAgentServer()
 }
 
@@ -192,6 +207,9 @@ func (UnimplementedIspAgentServer) TestFTPSUpload(context.Context, *TestFTPSUplo
 }
 func (UnimplementedIspAgentServer) ListFTPSDirectory(context.Context, *ListFTPSDirectoryReq) (*ListFTPSDirectoryRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListFTPSDirectory not implemented")
+}
+func (UnimplementedIspAgentServer) ListReportIntervals(context.Context, *ListReportIntervalsReq) (*ListReportIntervalsRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListReportIntervals not implemented")
 }
 func (UnimplementedIspAgentServer) mustEmbedUnimplementedIspAgentServer() {}
 func (UnimplementedIspAgentServer) testEmbeddedByValue()                  {}
@@ -358,6 +376,24 @@ func _IspAgent_ListFTPSDirectory_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IspAgent_ListReportIntervals_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListReportIntervalsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IspAgentServer).ListReportIntervals(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IspAgent_ListReportIntervals_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IspAgentServer).ListReportIntervals(ctx, req.(*ListReportIntervalsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IspAgent_ServiceDesc is the grpc.ServiceDesc for IspAgent service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -396,6 +432,10 @@ var IspAgent_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListFTPSDirectory",
 			Handler:    _IspAgent_ListFTPSDirectory_Handler,
+		},
+		{
+			MethodName: "ListReportIntervals",
+			Handler:    _IspAgent_ListReportIntervals_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

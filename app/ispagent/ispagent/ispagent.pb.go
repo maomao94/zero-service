@@ -1509,6 +1509,210 @@ func (x *ListFTPSDirectoryRes) GetError() string {
 	return ""
 }
 
+// ReportIntervalEntry 上报间隔条目
+type ReportIntervalEntry struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Category        int32                  `protobuf:"varint,1,opt,name=category,proto3" json:"category,omitempty"`                                      // 上报类别 messageId
+	IntervalSeconds int64                  `protobuf:"varint,2,opt,name=interval_seconds,json=intervalSeconds,proto3" json:"interval_seconds,omitempty"` // 当前间隔（秒）
+	Name            string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`                                               // 中文名称，如 "巡视设备运行数据(2-0)"
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ReportIntervalEntry) Reset() {
+	*x = ReportIntervalEntry{}
+	mi := &file_ispagent_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReportIntervalEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReportIntervalEntry) ProtoMessage() {}
+
+func (x *ReportIntervalEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReportIntervalEntry.ProtoReflect.Descriptor instead.
+func (*ReportIntervalEntry) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ReportIntervalEntry) GetCategory() int32 {
+	if x != nil {
+		return x.Category
+	}
+	return 0
+}
+
+func (x *ReportIntervalEntry) GetIntervalSeconds() int64 {
+	if x != nil {
+		return x.IntervalSeconds
+	}
+	return 0
+}
+
+func (x *ReportIntervalEntry) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+// ReservedIntervalEntry 预留间隔条目
+type ReservedIntervalEntry struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Key             string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`                                                 // 预留字段名，如 "nest_run_interval"
+	IntervalSeconds int64                  `protobuf:"varint,2,opt,name=interval_seconds,json=intervalSeconds,proto3" json:"interval_seconds,omitempty"` // 当前值（秒）
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ReservedIntervalEntry) Reset() {
+	*x = ReservedIntervalEntry{}
+	mi := &file_ispagent_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReservedIntervalEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReservedIntervalEntry) ProtoMessage() {}
+
+func (x *ReservedIntervalEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReservedIntervalEntry.ProtoReflect.Descriptor instead.
+func (*ReservedIntervalEntry) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *ReservedIntervalEntry) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *ReservedIntervalEntry) GetIntervalSeconds() int64 {
+	if x != nil {
+		return x.IntervalSeconds
+	}
+	return 0
+}
+
+// ListReportIntervalsReq 上报间隔查询请求（空）
+type ListReportIntervalsReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListReportIntervalsReq) Reset() {
+	*x = ListReportIntervalsReq{}
+	mi := &file_ispagent_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListReportIntervalsReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListReportIntervalsReq) ProtoMessage() {}
+
+func (x *ListReportIntervalsReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListReportIntervalsReq.ProtoReflect.Descriptor instead.
+func (*ListReportIntervalsReq) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{22}
+}
+
+// ListReportIntervalsRes 上报间隔查询响应
+type ListReportIntervalsRes struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Intervals     []*ReportIntervalEntry   `protobuf:"bytes,1,rep,name=intervals,proto3" json:"intervals,omitempty"` // 已激活上报类别间隔
+	Reserved      []*ReservedIntervalEntry `protobuf:"bytes,2,rep,name=reserved,proto3" json:"reserved,omitempty"`   // 预留字段间隔
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListReportIntervalsRes) Reset() {
+	*x = ListReportIntervalsRes{}
+	mi := &file_ispagent_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListReportIntervalsRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListReportIntervalsRes) ProtoMessage() {}
+
+func (x *ListReportIntervalsRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListReportIntervalsRes.ProtoReflect.Descriptor instead.
+func (*ListReportIntervalsRes) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ListReportIntervalsRes) GetIntervals() []*ReportIntervalEntry {
+	if x != nil {
+		return x.Intervals
+	}
+	return nil
+}
+
+func (x *ListReportIntervalsRes) GetReserved() []*ReservedIntervalEntry {
+	if x != nil {
+		return x.Reserved
+	}
+	return nil
+}
+
 var File_ispagent_proto protoreflect.FileDescriptor
 
 const file_ispagent_proto_rawDesc = "" +
@@ -1640,12 +1844,23 @@ const file_ispagent_proto_rawDesc = "" +
 	"\x14ListFTPSDirectoryRes\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x120\n" +
 	"\aentries\x18\x02 \x03(\v2\x16.ispagent.FTPSDirEntryR\aentries\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error*h\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"p\n" +
+	"\x13ReportIntervalEntry\x12\x1a\n" +
+	"\bcategory\x18\x01 \x01(\x05R\bcategory\x12)\n" +
+	"\x10interval_seconds\x18\x02 \x01(\x03R\x0fintervalSeconds\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\"T\n" +
+	"\x15ReservedIntervalEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12)\n" +
+	"\x10interval_seconds\x18\x02 \x01(\x03R\x0fintervalSeconds\"\x18\n" +
+	"\x16ListReportIntervalsReq\"\x92\x01\n" +
+	"\x16ListReportIntervalsRes\x12;\n" +
+	"\tintervals\x18\x01 \x03(\v2\x1d.ispagent.ReportIntervalEntryR\tintervals\x12;\n" +
+	"\breserved\x18\x02 \x03(\v2\x1f.ispagent.ReservedIntervalEntryR\breserved*h\n" +
 	"\tEntryType\x12\x1a\n" +
 	"\x16ENTRY_TYPE_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fENTRY_TYPE_FILE\x10\x01\x12\x15\n" +
 	"\x11ENTRY_TYPE_FOLDER\x10\x02\x12\x13\n" +
-	"\x0fENTRY_TYPE_LINK\x10\x032\xa3\x05\n" +
+	"\x0fENTRY_TYPE_LINK\x10\x032\xfe\x05\n" +
 	"\bIspAgent\x12<\n" +
 	"\x0eExecuteCommand\x12\x14.ispagent.CommandReq\x1a\x14.ispagent.CommandRes\x12U\n" +
 	"\x17SendPatrolDeviceRunData\x12$.ispagent.SendPatrolDeviceRunDataReq\x1a\x14.ispagent.CommandRes\x12[\n" +
@@ -1654,7 +1869,8 @@ const file_ispagent_proto_rawDesc = "" +
 	"\x12ListTaskExecutions\x12\x1f.ispagent.ListTaskExecutionsReq\x1a\x1f.ispagent.ListTaskExecutionsRes\x12M\n" +
 	"\x0fListTaskConfigs\x12\x1c.ispagent.ListTaskConfigsReq\x1a\x1c.ispagent.ListTaskConfigsRes\x12J\n" +
 	"\x0eTestFTPSUpload\x12\x1b.ispagent.TestFTPSUploadReq\x1a\x1b.ispagent.TestFTPSUploadRes\x12S\n" +
-	"\x11ListFTPSDirectory\x12\x1e.ispagent.ListFTPSDirectoryReq\x1a\x1e.ispagent.ListFTPSDirectoryResB\fZ\n" +
+	"\x11ListFTPSDirectory\x12\x1e.ispagent.ListFTPSDirectoryReq\x1a\x1e.ispagent.ListFTPSDirectoryRes\x12Y\n" +
+	"\x13ListReportIntervals\x12 .ispagent.ListReportIntervalsReq\x1a .ispagent.ListReportIntervalsResB\fZ\n" +
 	"./ispagentb\x06proto3"
 
 var (
@@ -1670,7 +1886,7 @@ func file_ispagent_proto_rawDescGZIP() []byte {
 }
 
 var file_ispagent_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_ispagent_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_ispagent_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_ispagent_proto_goTypes = []any{
 	(EntryType)(0),                         // 0: ispagent.EntryType
 	(*Item)(nil),                           // 1: ispagent.Item
@@ -1693,10 +1909,14 @@ var file_ispagent_proto_goTypes = []any{
 	(*FTPSDirEntry)(nil),                   // 18: ispagent.FTPSDirEntry
 	(*ListFTPSDirectoryReq)(nil),           // 19: ispagent.ListFTPSDirectoryReq
 	(*ListFTPSDirectoryRes)(nil),           // 20: ispagent.ListFTPSDirectoryRes
-	nil,                                    // 21: ispagent.Item.AttributesEntry
+	(*ReportIntervalEntry)(nil),            // 21: ispagent.ReportIntervalEntry
+	(*ReservedIntervalEntry)(nil),          // 22: ispagent.ReservedIntervalEntry
+	(*ListReportIntervalsReq)(nil),         // 23: ispagent.ListReportIntervalsReq
+	(*ListReportIntervalsRes)(nil),         // 24: ispagent.ListReportIntervalsRes
+	nil,                                    // 25: ispagent.Item.AttributesEntry
 }
 var file_ispagent_proto_depIdxs = []int32{
-	21, // 0: ispagent.Item.attributes:type_name -> ispagent.Item.AttributesEntry
+	25, // 0: ispagent.Item.attributes:type_name -> ispagent.Item.AttributesEntry
 	1,  // 1: ispagent.CommandReq.items:type_name -> ispagent.Item
 	1,  // 2: ispagent.PatrolItemsReq.items:type_name -> ispagent.Item
 	4,  // 3: ispagent.SendPatrolDeviceCoordinatesReq.items:type_name -> ispagent.PatrolDeviceCoordinate
@@ -1706,27 +1926,31 @@ var file_ispagent_proto_depIdxs = []int32{
 	14, // 7: ispagent.ListTaskConfigsRes.items:type_name -> ispagent.TaskConfigItem
 	0,  // 8: ispagent.FTPSDirEntry.entry_type:type_name -> ispagent.EntryType
 	18, // 9: ispagent.ListFTPSDirectoryRes.entries:type_name -> ispagent.FTPSDirEntry
-	2,  // 10: ispagent.IspAgent.ExecuteCommand:input_type -> ispagent.CommandReq
-	8,  // 11: ispagent.IspAgent.SendPatrolDeviceRunData:input_type -> ispagent.SendPatrolDeviceRunDataReq
-	9,  // 12: ispagent.IspAgent.SendPatrolDeviceStatusData:input_type -> ispagent.SendPatrolDeviceStatusDataReq
-	7,  // 13: ispagent.IspAgent.SendPatrolDeviceCoordinates:input_type -> ispagent.SendPatrolDeviceCoordinatesReq
-	11, // 14: ispagent.IspAgent.ListTaskExecutions:input_type -> ispagent.ListTaskExecutionsReq
-	13, // 15: ispagent.IspAgent.ListTaskConfigs:input_type -> ispagent.ListTaskConfigsReq
-	16, // 16: ispagent.IspAgent.TestFTPSUpload:input_type -> ispagent.TestFTPSUploadReq
-	19, // 17: ispagent.IspAgent.ListFTPSDirectory:input_type -> ispagent.ListFTPSDirectoryReq
-	10, // 18: ispagent.IspAgent.ExecuteCommand:output_type -> ispagent.CommandRes
-	10, // 19: ispagent.IspAgent.SendPatrolDeviceRunData:output_type -> ispagent.CommandRes
-	10, // 20: ispagent.IspAgent.SendPatrolDeviceStatusData:output_type -> ispagent.CommandRes
-	10, // 21: ispagent.IspAgent.SendPatrolDeviceCoordinates:output_type -> ispagent.CommandRes
-	12, // 22: ispagent.IspAgent.ListTaskExecutions:output_type -> ispagent.ListTaskExecutionsRes
-	15, // 23: ispagent.IspAgent.ListTaskConfigs:output_type -> ispagent.ListTaskConfigsRes
-	17, // 24: ispagent.IspAgent.TestFTPSUpload:output_type -> ispagent.TestFTPSUploadRes
-	20, // 25: ispagent.IspAgent.ListFTPSDirectory:output_type -> ispagent.ListFTPSDirectoryRes
-	18, // [18:26] is the sub-list for method output_type
-	10, // [10:18] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	21, // 10: ispagent.ListReportIntervalsRes.intervals:type_name -> ispagent.ReportIntervalEntry
+	22, // 11: ispagent.ListReportIntervalsRes.reserved:type_name -> ispagent.ReservedIntervalEntry
+	2,  // 12: ispagent.IspAgent.ExecuteCommand:input_type -> ispagent.CommandReq
+	8,  // 13: ispagent.IspAgent.SendPatrolDeviceRunData:input_type -> ispagent.SendPatrolDeviceRunDataReq
+	9,  // 14: ispagent.IspAgent.SendPatrolDeviceStatusData:input_type -> ispagent.SendPatrolDeviceStatusDataReq
+	7,  // 15: ispagent.IspAgent.SendPatrolDeviceCoordinates:input_type -> ispagent.SendPatrolDeviceCoordinatesReq
+	11, // 16: ispagent.IspAgent.ListTaskExecutions:input_type -> ispagent.ListTaskExecutionsReq
+	13, // 17: ispagent.IspAgent.ListTaskConfigs:input_type -> ispagent.ListTaskConfigsReq
+	16, // 18: ispagent.IspAgent.TestFTPSUpload:input_type -> ispagent.TestFTPSUploadReq
+	19, // 19: ispagent.IspAgent.ListFTPSDirectory:input_type -> ispagent.ListFTPSDirectoryReq
+	23, // 20: ispagent.IspAgent.ListReportIntervals:input_type -> ispagent.ListReportIntervalsReq
+	10, // 21: ispagent.IspAgent.ExecuteCommand:output_type -> ispagent.CommandRes
+	10, // 22: ispagent.IspAgent.SendPatrolDeviceRunData:output_type -> ispagent.CommandRes
+	10, // 23: ispagent.IspAgent.SendPatrolDeviceStatusData:output_type -> ispagent.CommandRes
+	10, // 24: ispagent.IspAgent.SendPatrolDeviceCoordinates:output_type -> ispagent.CommandRes
+	12, // 25: ispagent.IspAgent.ListTaskExecutions:output_type -> ispagent.ListTaskExecutionsRes
+	15, // 26: ispagent.IspAgent.ListTaskConfigs:output_type -> ispagent.ListTaskConfigsRes
+	17, // 27: ispagent.IspAgent.TestFTPSUpload:output_type -> ispagent.TestFTPSUploadRes
+	20, // 28: ispagent.IspAgent.ListFTPSDirectory:output_type -> ispagent.ListFTPSDirectoryRes
+	24, // 29: ispagent.IspAgent.ListReportIntervals:output_type -> ispagent.ListReportIntervalsRes
+	21, // [21:30] is the sub-list for method output_type
+	12, // [12:21] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_ispagent_proto_init() }
@@ -1740,7 +1964,7 @@ func file_ispagent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ispagent_proto_rawDesc), len(file_ispagent_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   21,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

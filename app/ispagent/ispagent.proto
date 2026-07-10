@@ -178,6 +178,28 @@ message ListFTPSDirectoryRes {
   string error = 3;                  // 错误信息
 }
 
+// ReportIntervalEntry 上报间隔条目
+message ReportIntervalEntry {
+  int32 category = 1;         // 上报类别 messageId
+  int64 interval_seconds = 2; // 当前间隔（秒）
+  string name = 3;            // 中文名称，如 "巡视设备运行数据(2-0)"
+}
+
+// ReservedIntervalEntry 预留间隔条目
+message ReservedIntervalEntry {
+  string key = 1;             // 预留字段名，如 "nest_run_interval"
+  int64 interval_seconds = 2; // 当前值（秒）
+}
+
+// ListReportIntervalsReq 上报间隔查询请求（空）
+message ListReportIntervalsReq {}
+
+// ListReportIntervalsRes 上报间隔查询响应
+message ListReportIntervalsRes {
+  repeated ReportIntervalEntry intervals = 1;       // 已激活上报类别间隔
+  repeated ReservedIntervalEntry reserved = 2;      // 预留字段间隔
+}
+
 service IspAgent {
   // ExecuteCommand 通用指令透传（调用方指定 type/command）
   rpc ExecuteCommand(CommandReq) returns(CommandRes);
@@ -195,4 +217,6 @@ service IspAgent {
   rpc TestFTPSUpload(TestFTPSUploadReq) returns(TestFTPSUploadRes);
   // ListFTPSDirectory 列出 FTPS 远程目录文件列表
   rpc ListFTPSDirectory(ListFTPSDirectoryReq) returns(ListFTPSDirectoryRes);
+  // ListReportIntervals 查询上报间隔配置
+  rpc ListReportIntervals(ListReportIntervalsReq) returns(ListReportIntervalsRes);
 }
