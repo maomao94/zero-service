@@ -78,7 +78,7 @@ cd app/trigger && go run trigger.go -f etc/trigger.yaml
 | **bridgemqtt** | MQTT 协议桥接 | - |
 | **gis** | 地理信息 — H3/GeoHash/围栏/坐标转换 | - |
 | **podengine** | 容器管理 — Docker 容器生命周期 | - |
-| **ispagent** | ISP 巡检协议 — 变电站机器人巡检 TCP 代理 | - |
+| **ispagent** | ISP 巡检协议 — 变电站机器人巡检 TCP 代理 | [ISP 巡检协议](docs/ispagent.md) |
 
 ## 技术栈
 

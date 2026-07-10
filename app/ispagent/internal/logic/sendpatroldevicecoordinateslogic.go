@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 
+	ispclient "zero-service/app/ispagent/internal/isp"
 	"zero-service/app/ispagent/internal/svc"
 	"zero-service/app/ispagent/ispagent"
 	"zero-service/common/isp"
@@ -25,9 +26,8 @@ func NewSendPatrolDeviceCoordinatesLogic(ctx context.Context, svcCtx *svc.Servic
 }
 
 func (l *SendPatrolDeviceCoordinatesLogic) SendPatrolDeviceCoordinates(in *ispagent.SendPatrolDeviceCoordinatesReq) (*ispagent.CommandRes, error) {
-	msg, err := l.svcCtx.IspClient.Execute(l.ctx, isp.TypePatrolDeviceCoordinates, isp.CommandReport, in.GetCode(), patrolDeviceCoordinatesToItems(in.GetItems()))
-	if err != nil {
+	if err := l.svcCtx.IspClient.CacheReport(l.ctx, ispclient.ReportCategoryPatrolDeviceCoordinates, in.GetCode(), patrolDeviceCoordinatesToItems(in.GetItems())); err != nil {
 		return nil, err
 	}
-	return commandResponse(msg), nil
+	return &ispagent.CommandRes{Success: true, Code: isp.StatusSuccess}, nil
 }

@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 
+	ispclient "zero-service/app/ispagent/internal/isp"
 	"zero-service/app/ispagent/internal/svc"
 	"zero-service/app/ispagent/ispagent"
 	"zero-service/common/isp"
@@ -25,9 +26,8 @@ func NewSendPatrolDeviceRunDataLogic(ctx context.Context, svcCtx *svc.ServiceCon
 }
 
 func (l *SendPatrolDeviceRunDataLogic) SendPatrolDeviceRunData(in *ispagent.SendPatrolDeviceRunDataReq) (*ispagent.CommandRes, error) {
-	msg, err := l.svcCtx.IspClient.Execute(l.ctx, isp.TypePatrolDeviceRunData, isp.CommandReport, in.GetCode(), patrolDeviceRunDataToItems(in.GetItems()))
-	if err != nil {
+	if err := l.svcCtx.IspClient.CacheReport(l.ctx, ispclient.ReportCategoryPatrolDeviceRunData, in.GetCode(), patrolDeviceRunDataToItems(in.GetItems())); err != nil {
 		return nil, err
 	}
-	return commandResponse(msg), nil
+	return &ispagent.CommandRes{Success: true, Code: isp.StatusSuccess}, nil
 }

@@ -1,0 +1,9 @@
+{"path":".trellis/spec/guides/index.md","reason":"Documentation and cross-layer planning guide index"}
+{"path":".trellis/spec/backend/isp-guidelines.md","reason":"ISP protocol framing, registration, response, and ispagent conventions"}
+{"path":".trellis/spec/backend/gnetx/index.md","reason":"Client request/response and lifecycle conventions if reporter sends through gnetx client"}
+{"path":"app/ispagent/internal/isp/client.go","reason":"ISP client registration, heartbeat, request, and router lifecycle"}
+{"path":"app/ispagent/internal/logic/sendpatroldevicerundatalogic.go","reason":"Current run-data RPC direct-send logic to change to cache update"}
+{"path":"app/ispagent/internal/logic/sendpatroldevicestatusdatalogic.go","reason":"Current status-data RPC direct-send logic to change to cache update"}
+{"path":"app/ispagent/internal/logic/sendpatroldevicecoordinateslogic.go","reason":"Current coordinate RPC direct-send logic to change to cache update"}
+{"path":"app/ispagent/internal/logic/converter.go","reason":"Existing proto-to-ISP item conversion and CommandRes conversion"}
+{"path":"docs/ispagent.md","reason":"User-facing ISP protocol documentation to update after implementation"}

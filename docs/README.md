@@ -19,6 +19,7 @@
 | [Trigger 服务](trigger.md) | 异步任务调度、计划任务管理、API、状态流转 |
 | [SocketIO 实时通信](socketio.md) | SocketIO 网关对接、事件体系、MQTT 桥接、鉴权 |
 | [DJI 云平台](djicloud.md) | DJI Dock3 Cloud API 封装、RPC 接口、配置说明 |
+| [ISP 巡检协议](ispagent.md) | 变电站远程智能巡视系统 ISP 协议代理、帧格式、任务和模型同步 |
 
 ## 开发者
 

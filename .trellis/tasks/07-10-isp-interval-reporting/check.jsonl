@@ -1,0 +1,7 @@
+{"path":".trellis/tasks/07-10-isp-interval-reporting/prd.md","reason":"Requirements and acceptance criteria"}
+{"path":".trellis/tasks/07-10-isp-interval-reporting/design.md","reason":"Technical design and compatibility constraints"}
+{"path":".trellis/tasks/07-10-isp-interval-reporting/implement.md","reason":"Implementation checklist and validation commands"}
+{"path":".trellis/spec/backend/isp-guidelines.md","reason":"ISP protocol compliance"}
+{"path":"app/ispagent/internal/isp/client.go","reason":"Core client lifecycle and reporting behavior to review"}
+{"path":"app/ispagent/internal/logic","reason":"RPC behavior changes to review"}
+{"path":"docs/ispagent.md","reason":"Documentation accuracy"}

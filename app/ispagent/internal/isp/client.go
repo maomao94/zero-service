@@ -3,7 +3,6 @@ package isp
 import (
 	"context"
 	"errors"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -43,6 +42,7 @@ type Client struct {
 	lastSessID    string
 	heartbeat     time.Duration
 	lastHeartbeat time.Time
+	reports       *reportManager
 	registering   atomic.Bool
 	heartbeating  atomic.Bool
 
@@ -69,6 +69,7 @@ func NewClient(cfg config.IspSetting, taskStore crontask.TaskStore, db *gormx.DB
 		ctx:           ctx,
 		cancel:        cancel,
 		heartbeat:     cfg.HeartbeatInterval,
+		reports:       newReportManager(),
 	}
 	c.lastRecvSeq.Store(recvSeq{})
 	_ = c.connect()
@@ -289,6 +290,7 @@ func (c *Client) tick() {
 	if elapsed >= interval {
 		c.sendHeartbeat()
 	}
+	c.reportTick()
 }
 
 // ---------------------------------------------------------------------------
@@ -318,22 +320,42 @@ func (c *Client) doRegister() {
 		c.closeCurrentConn()
 		return
 	}
-	remote := resp.SendCode
-	if remote == "" {
-		remote = resp.ReceiveCode
+	hb := c.heartbeat
+	if len(resp.Items) > 0 {
+		hb = parseItemInterval(resp.Items[0], "heart_beat_interval", hb)
 	}
-	hb := heartbeatFromItems(resp.Items, c.heartbeat)
 
 	c.mu.Lock()
-	if remote != "" {
-		c.receiveCode = remote
+	if resp.SendCode != "" {
+		c.receiveCode = resp.SendCode
 	}
 	c.heartbeat = hb
 	c.registered = true
 	c.lastHeartbeat = time.Now()
 	c.mu.Unlock()
 
+	c.reports.applyRegistrationIntervals(resp.Items)
+
 	logx.Infof("[ispagent] 注册成功, receiveCode=%s, heartbeat=%s", c.receiveCode, c.heartbeat)
+}
+
+func (c *Client) reportTick() {
+	if !c.isRegistered() {
+		return
+	}
+	now := time.Now()
+	for _, report := range c.reports.dueReports(now) {
+		typ, cmd := isp.DecodeMessageID(int(report.category))
+		reqCtx, cancel := context.WithTimeout(c.ctx, c.cfg.RequestTimeout)
+		logx.WithContext(reqCtx).Debugf("[ispagent] 定时上报 name=%s code=%s items=%d", categoryMessageName(report.category), report.code, len(report.items))
+		_, err := c.Execute(reqCtx, typ, cmd, report.code, report.items)
+		cancel()
+		if err != nil {
+			logx.Errorf("[ispagent] 定时上报失败 name=%s: %v", categoryMessageName(report.category), err)
+			continue
+		}
+		c.reports.markSent(report.category, report.code, now)
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -451,15 +473,4 @@ func defaultTime(v string) string {
 		return v
 	}
 	return carbon.Now().ToDateTimeString()
-}
-
-func heartbeatFromItems(items []isp.Item, fallback time.Duration) time.Duration {
-	for _, item := range items {
-		if raw := strings.TrimSpace(item["heart_beat_interval"]); raw != "" {
-			if sec, err := strconv.Atoi(raw); err == nil && sec > 0 {
-				return time.Duration(sec) * time.Second
-			}
-		}
-	}
-	return fallback
 }
