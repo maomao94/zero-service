@@ -54,8 +54,25 @@ type recvSeq struct {
 	seq       uint64
 }
 
-func NewClient(cfg config.IspSetting, taskStore crontask.TaskStore, db *gormx.DB, uploader *ftps.Uploader, provider handler.ModelDataProvider) *Client {
+// ClientOptions ISP 客户端构造配置。
+type ClientOptions struct {
+	ReportOpts []ReportManagerOption
+}
+
+// ClientOption ISP 客户端构造选项。
+type ClientOption func(*ClientOptions)
+
+// WithReportOption 传入上报管理器构造选项。
+func WithReportOption(opts ...ReportManagerOption) ClientOption {
+	return func(o *ClientOptions) { o.ReportOpts = append(o.ReportOpts, opts...) }
+}
+
+func NewClient(cfg config.IspSetting, taskStore crontask.TaskStore, db *gormx.DB, uploader *ftps.Uploader, provider handler.ModelDataProvider, opts ...ClientOption) *Client {
 	cfg.ApplyDefaults()
+	o := &ClientOptions{}
+	for _, opt := range opts {
+		opt(o)
+	}
 	if provider == nil {
 		provider = handler.DefaultModelDataProvider{}
 	}
@@ -69,7 +86,7 @@ func NewClient(cfg config.IspSetting, taskStore crontask.TaskStore, db *gormx.DB
 		ctx:           ctx,
 		cancel:        cancel,
 		heartbeat:     cfg.HeartbeatInterval,
-		reports:       newReportManager(),
+		reports:       newReportManager(o.ReportOpts...),
 	}
 	c.lastRecvSeq.Store(recvSeq{})
 	_ = c.connect()
@@ -354,7 +371,7 @@ func (c *Client) reportTick() {
 			logx.Errorf("[ispagent] 定时上报失败 name=%s: %v", categoryMessageName(report.category), err)
 			continue
 		}
-		c.reports.markSent(report.category, report.code, now)
+		c.reports.markSent(report.category, report.code, now, report.snapLastSent)
 	}
 }
 

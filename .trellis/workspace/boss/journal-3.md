@@ -206,3 +206,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 114: ISP 定时上报缓存优化：过期清理 + 新 key 立即上报 + 机巢/环境 proto
+
+**Date**: 2026-07-14
+**Task**: ISP 定时上报缓存优化：过期清理 + 新 key 立即上报 + 机巢/环境 proto
+**Branch**: `master`
+
+### Summary
+
+1. 过期 item 在 2s tick 扫描时清理（RLock 收集 + 短写锁删除，updatedAt 二次校验）; 2. 新 itemKey 重置 lastSent，下一次 tick 立即上报; 3. markSent 通过 snapLastSent 防并发 update 覆盖; 4. newReportManager 支持 options 自定义间隔; 5. 新增 ReportCategoryDroneNestRunData 和 ReportCategoryEnvData，配套 proto RPC + converter + logic; 6. 清理 reservedIntervals，统一用 ReportCategory; 7. ISP XML debug 日志带上 MessageName; 8. 更新 isp-guidelines.md 规范
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c9e94f83` | (see git log) |
+| `b1c22d96` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -30,21 +30,33 @@ func (s *IspAgentServer) ExecuteCommand(ctx context.Context, in *ispagent.Comman
 }
 
 // SendPatrolDeviceRunData 巡视装置运行数据上报（表 J.34）
-func (s *IspAgentServer) SendPatrolDeviceRunData(ctx context.Context, in *ispagent.SendPatrolDeviceRunDataReq) (*ispagent.CommandRes, error) {
+func (s *IspAgentServer) SendPatrolDeviceRunData(ctx context.Context, in *ispagent.SendPatrolDeviceRunDataReq) (*ispagent.SendPatrolDeviceRunDataRes, error) {
 	l := logic.NewSendPatrolDeviceRunDataLogic(ctx, s.svcCtx)
 	return l.SendPatrolDeviceRunData(in)
 }
 
 // SendPatrolDeviceStatusData 巡视装置状态数据上报
-func (s *IspAgentServer) SendPatrolDeviceStatusData(ctx context.Context, in *ispagent.SendPatrolDeviceStatusDataReq) (*ispagent.CommandRes, error) {
+func (s *IspAgentServer) SendPatrolDeviceStatusData(ctx context.Context, in *ispagent.SendPatrolDeviceStatusDataReq) (*ispagent.SendPatrolDeviceStatusDataRes, error) {
 	l := logic.NewSendPatrolDeviceStatusDataLogic(ctx, s.svcCtx)
 	return l.SendPatrolDeviceStatusData(in)
 }
 
 // SendPatrolDeviceCoordinates 巡视装置坐标上报（表 O.45）
-func (s *IspAgentServer) SendPatrolDeviceCoordinates(ctx context.Context, in *ispagent.SendPatrolDeviceCoordinatesReq) (*ispagent.CommandRes, error) {
+func (s *IspAgentServer) SendPatrolDeviceCoordinates(ctx context.Context, in *ispagent.SendPatrolDeviceCoordinatesReq) (*ispagent.SendPatrolDeviceCoordinatesRes, error) {
 	l := logic.NewSendPatrolDeviceCoordinatesLogic(ctx, s.svcCtx)
 	return l.SendPatrolDeviceCoordinates(in)
+}
+
+// SendDroneNestRunData 无人机机巢运行数据上报（表 O.40）
+func (s *IspAgentServer) SendDroneNestRunData(ctx context.Context, in *ispagent.SendDroneNestRunDataReq) (*ispagent.SendDroneNestRunDataRes, error) {
+	l := logic.NewSendDroneNestRunDataLogic(ctx, s.svcCtx)
+	return l.SendDroneNestRunData(in)
+}
+
+// SendEnvData 环境/微气象数据上报（表 J.41）
+func (s *IspAgentServer) SendEnvData(ctx context.Context, in *ispagent.SendEnvDataReq) (*ispagent.SendEnvDataRes, error) {
+	l := logic.NewSendEnvDataLogic(ctx, s.svcCtx)
+	return l.SendEnvData(in)
 }
 
 // ListTaskExecutions 查询任务未来执行时间（用于验证 rrule 配置）

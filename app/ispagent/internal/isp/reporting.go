@@ -21,10 +21,12 @@ const (
 	ReportCategoryPatrolDeviceRunData     ReportCategory = ReportCategory(isp.MessageIDPatrolDeviceRunData)     // 2-0 巡视设备运行数据
 	ReportCategoryPatrolDeviceStatusData  ReportCategory = ReportCategory(isp.MessageIDPatrolDeviceStatusData)  // 1-0 巡视设备状态数据
 	ReportCategoryPatrolDeviceCoordinates ReportCategory = ReportCategory(isp.MessageIDPatrolDeviceCoordinates) // 3-0 巡视设备坐标
+	ReportCategoryDroneNestRunData        ReportCategory = ReportCategory(isp.MessageIDDroneNestRunData)        // 10004-0 无人机机巢运行数据
+	ReportCategoryEnvData                 ReportCategory = ReportCategory(isp.MessageIDEnvData)                 // 21-0 环境/微气象数据
 )
 
 // 默认上报间隔。
-// 运行数据、状态数据默认 1 分钟；坐标/经纬度要求更频繁，默认 2 秒。
+// 坐标默认 2 秒（noFreshCheck=true，不做过期清理）；其余类别默认 1 分钟。
 const (
 	defaultReportInterval = time.Minute
 	defaultCoordInterval  = 2 * time.Second
@@ -36,6 +38,8 @@ var keyAttrsByCategory = map[ReportCategory][]string{
 	ReportCategoryPatrolDeviceRunData:     {"patroldevice_code", "type"},
 	ReportCategoryPatrolDeviceStatusData:  {"patroldevice_code", "type"},
 	ReportCategoryPatrolDeviceCoordinates: {"patroldevice_code"},
+	ReportCategoryDroneNestRunData:        {"nest_code", "type"},
+	ReportCategoryEnvData:                 {"patroldevice_code", "type"},
 }
 
 // cachedReport 缓存某个变电站（code）下某个上报类别的全部 item。
@@ -53,54 +57,131 @@ type cachedItem struct {
 }
 
 // reportSnapshot 单次上报的快照，包含类别、变电站编码和去重/去过期后的 item 列表。
+// snapLastSent 记录快照时刻的 lastSent，markSent 用它判断是否被并发 update 重置过。
 type reportSnapshot struct {
+	category     ReportCategory
+	code         string
+	items        []isp.Item
+	snapLastSent time.Time
+}
+
+type expiredReportItem struct {
+	category  ReportCategory
+	code      string
+	itemKey   string
+	updatedAt time.Time
+}
+
+type emptyReportRef struct {
 	category ReportCategory
 	code     string
-	items    []isp.Item
 }
 
 // reportManager 管理所有上报类别的缓存、间隔和新鲜度策略。
 //
 // 并发模型：
-//   - 写操作（update/applyRegistrationIntervals/markSent）持 Lock
-//   - 读操作（dueReports）持 RLock
-//   - setNoFreshCheck 持 Lock
+//   - 写操作（update/applyRegistrationIntervals/markSent/setInterval/deleteExpired）持 Lock
+//   - dueReports 扫描/clone 时持 RLock，过期清理在扫描后短暂持 Lock
 //
 // intervals:     每个上报类别的当前间隔（注册响应可覆盖运行数据）
 // cache:         三级结构 category → code（变电站编码） → item key → cachedItem
-// reservedIntervals: 注册响应中尚未分配 reportSpec 的预留间隔（nest_run_interval、weather_interval）
-// noFreshCheck:  设为 true 的类别跳过新鲜度检查，始终上报缓存中的旧数据
-type reportManager struct {
-	mu                sync.RWMutex
-	intervals         map[ReportCategory]time.Duration
-	cache             map[ReportCategory]map[string]*cachedReport
-	reservedIntervals map[string]time.Duration
-	noFreshCheck      map[ReportCategory]bool
+// noFreshCheck:  设为 true 的类别跳过新鲜度检查，始终按间隔上报缓存中的已有数据
+
+// ReportManagerOptions 上报管理器构造配置，零值表示使用默认间隔。
+type ReportManagerOptions struct {
+	RunDataInterval       time.Duration
+	StatusDataInterval    time.Duration
+	CoordInterval         time.Duration
+	NestRunInterval       time.Duration
+	EnvDataInterval       time.Duration
+	NoFreshCheckCategories []ReportCategory
 }
 
-func newReportManager() *reportManager {
+// ReportManagerOption 上报管理器构造选项。
+type ReportManagerOption func(*ReportManagerOptions)
+
+// WithRunDataInterval 设置巡视装置运行数据上报间隔，非正值使用默认值。
+func WithRunDataInterval(d time.Duration) ReportManagerOption {
+	return func(o *ReportManagerOptions) { o.RunDataInterval = d }
+}
+
+// WithStatusDataInterval 设置巡视装置状态数据上报间隔，非正值使用默认值。
+func WithStatusDataInterval(d time.Duration) ReportManagerOption {
+	return func(o *ReportManagerOptions) { o.StatusDataInterval = d }
+}
+
+// WithCoordInterval 设置巡视装置坐标上报间隔，非正值使用默认值。
+func WithCoordInterval(d time.Duration) ReportManagerOption {
+	return func(o *ReportManagerOptions) { o.CoordInterval = d }
+}
+
+// WithNestRunInterval 设置无人机机巢运行数据上报间隔，非正值使用默认值。
+func WithNestRunInterval(d time.Duration) ReportManagerOption {
+	return func(o *ReportManagerOptions) { o.NestRunInterval = d }
+}
+
+// WithEnvDataInterval 设置环境/微气象数据上报间隔，非正值使用默认值。
+func WithEnvDataInterval(d time.Duration) ReportManagerOption {
+	return func(o *ReportManagerOptions) { o.EnvDataInterval = d }
+}
+
+// WithNoFreshCheck 设置指定类别跳过新鲜度检查（始终按间隔上报已有数据）。
+func WithNoFreshCheck(categories ...ReportCategory) ReportManagerOption {
+	return func(o *ReportManagerOptions) { o.NoFreshCheckCategories = append(o.NoFreshCheckCategories, categories...) }
+}
+
+type reportManager struct {
+	mu           sync.RWMutex
+	intervals    map[ReportCategory]time.Duration
+	cache        map[ReportCategory]map[string]*cachedReport
+	noFreshCheck map[ReportCategory]bool
+}
+
+func newReportManager(opts ...ReportManagerOption) *reportManager {
+	o := &ReportManagerOptions{}
+	for _, opt := range opts {
+		opt(o)
+	}
 	r := &reportManager{
-		intervals:         make(map[ReportCategory]time.Duration, len(keyAttrsByCategory)),
-		cache:             make(map[ReportCategory]map[string]*cachedReport, len(keyAttrsByCategory)),
-		reservedIntervals: make(map[string]time.Duration),
-		noFreshCheck:      make(map[ReportCategory]bool),
+		intervals:    make(map[ReportCategory]time.Duration, len(keyAttrsByCategory)),
+		cache:        make(map[ReportCategory]map[string]*cachedReport, len(keyAttrsByCategory)),
+		noFreshCheck: make(map[ReportCategory]bool),
 	}
 	for cat := range keyAttrsByCategory {
 		r.intervals[cat] = defaultReportInterval
 		r.cache[cat] = make(map[string]*cachedReport)
 	}
-	r.intervals[ReportCategoryPatrolDeviceCoordinates] = defaultCoordInterval
-	r.noFreshCheck[ReportCategoryPatrolDeviceCoordinates] = true
+	if o.RunDataInterval > 0 {
+		r.intervals[ReportCategoryPatrolDeviceRunData] = o.RunDataInterval
+	}
+	if o.StatusDataInterval > 0 {
+		r.intervals[ReportCategoryPatrolDeviceStatusData] = o.StatusDataInterval
+	}
+	if o.CoordInterval > 0 {
+		r.intervals[ReportCategoryPatrolDeviceCoordinates] = o.CoordInterval
+	} else {
+		r.intervals[ReportCategoryPatrolDeviceCoordinates] = defaultCoordInterval
+	}
+	if o.NestRunInterval > 0 {
+		r.intervals[ReportCategoryDroneNestRunData] = o.NestRunInterval
+	}
+	if o.EnvDataInterval > 0 {
+		r.intervals[ReportCategoryEnvData] = o.EnvDataInterval
+	}
+	for _, cat := range o.NoFreshCheckCategories {
+		r.noFreshCheck[cat] = true
+	}
 	return r
 }
 
 // update 将 gRPC 收到的上报数据写入缓存。
 // category+code 定位到具体缓存槽位，itemKey 区分同一上报里的多个数据点。
 // 每次 update 会刷新 updatedAt，使该 item 重新进入新鲜期。
-func (r *reportManager) update(category ReportCategory, code string, items []isp.Item, now time.Time) bool {
+// 非法 category 返回 error。
+func (r *reportManager) update(category ReportCategory, code string, items []isp.Item, now time.Time) error {
 	keyAttrs, ok := keyAttrsByCategory[category]
 	if !ok {
-		return false
+		return fmt.Errorf("未知上报类别: %d", int(category))
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -111,17 +192,22 @@ func (r *reportManager) update(category ReportCategory, code string, items []isp
 	}
 	for i, item := range items {
 		key := itemKey(keyAttrs, item, i)
+		_, exists := report.itemByKey[key]
 		report.itemByKey[key] = &cachedItem{item: cloneItem(item), category: category, updatedAt: now}
+		if !exists && !report.lastSent.IsZero() {
+			report.lastSent = time.Time{}
+		}
 	}
-	return true
+	return nil
 }
 
 // applyRegistrationIntervals 解析注册响应（251-4）中的间隔配置并应用。
-// 注册响应固定只有一条 <Item>，包含 patroldevice_run_interval 等属性。
-//   - patroldevice_run_interval → 直接覆盖运行数据上报间隔
-//   - nest_run_interval / weather_interval → 存入 reservedIntervals 预留
+//   - patroldevice_run_interval → 巡视装置运行数据上报间隔
+//   - nest_run_interval → 无人机机巢运行数据上报间隔
+//   - weather_interval → 环境/微气象数据上报间隔
 //
-// 解析完成后重置全部缓存的上次发送时间，使注册成功后能立即上报。
+// 字段缺失或非法时保持当前值不变。
+// 解析完成后重置全部缓存的 lastSent，使注册成功后能立即上报。
 func (r *reportManager) applyRegistrationIntervals(items []isp.Item) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -132,10 +218,10 @@ func (r *reportManager) applyRegistrationIntervals(items []isp.Item) {
 			r.intervals[ReportCategoryPatrolDeviceRunData] = d
 		}
 		if d := parseItemInterval(item, "nest_run_interval", 0); d > 0 {
-			r.reservedIntervals["nest_run_interval"] = d
+			r.intervals[ReportCategoryDroneNestRunData] = d
 		}
 		if d := parseItemInterval(item, "weather_interval", 0); d > 0 {
-			r.reservedIntervals["weather_interval"] = d
+			r.intervals[ReportCategoryEnvData] = d
 		}
 	}
 
@@ -153,10 +239,11 @@ func (r *reportManager) applyRegistrationIntervals(items []isp.Item) {
 //
 //	超过则视为过期，不在本次上报中包含（除非 noFreshCheck 为 true）。
 //
-// 持 RLock，仅在方法内 clone 数据，返回后调用方可安全使用。
+// 持 RLock 扫描并 clone 到期数据，释放读锁后短写锁清理过期/空缓存。
 func (r *reportManager) dueReports(now time.Time) []reportSnapshot {
+	var expired []expiredReportItem
+	var empty []emptyReportRef
 	r.mu.RLock()
-	defer r.mu.RUnlock()
 	out := make([]reportSnapshot, 0, len(r.cache))
 	for category, reports := range r.cache {
 		interval := r.intervals[category]
@@ -166,31 +253,83 @@ func (r *reportManager) dueReports(now time.Time) []reportSnapshot {
 		timeout := freshnessTimeout(interval)
 		for code, report := range reports {
 			if len(report.itemByKey) == 0 {
+				empty = append(empty, emptyReportRef{category: category, code: code})
 				continue
 			}
-			if !report.lastSent.IsZero() && now.Sub(report.lastSent) < interval {
-				continue
-			}
+			shouldReport := report.lastSent.IsZero() || now.Sub(report.lastSent) >= interval
 			var items []isp.Item
 			if r.noFreshCheck[category] {
+				if !shouldReport {
+					continue
+				}
 				items = cloneAll(report.itemByKey)
 			} else {
-				items = freshItems(report.itemByKey, code, now, timeout)
+				var fresh []isp.Item
+				var expiredItems []expiredReportItem
+				fresh, expiredItems = freshItems(report.itemByKey, code, now, timeout)
+				expired = append(expired, expiredItems...)
+				if shouldReport {
+					items = fresh
+				}
+			}
+			if !shouldReport {
+				continue
 			}
 			if len(items) == 0 {
 				continue
 			}
-			out = append(out, reportSnapshot{category: category, code: code, items: items})
+			out = append(out, reportSnapshot{category: category, code: code, items: items, snapLastSent: report.lastSent})
 		}
+	}
+	r.mu.RUnlock()
+	if len(expired) > 0 || len(empty) > 0 {
+		r.deleteExpired(expired, empty)
 	}
 	return out
 }
 
+func (r *reportManager) deleteExpired(expired []expiredReportItem, empty []emptyReportRef) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, ref := range empty {
+		reports := r.cache[ref.category]
+		if reports == nil {
+			continue
+		}
+		report := reports[ref.code]
+		if report != nil && len(report.itemByKey) == 0 {
+			delete(reports, ref.code)
+		}
+	}
+	for _, item := range expired {
+		reports := r.cache[item.category]
+		if reports == nil {
+			continue
+		}
+		report := reports[item.code]
+		if report == nil {
+			continue
+		}
+		cached := report.itemByKey[item.itemKey]
+		if cached == nil || !cached.updatedAt.Equal(item.updatedAt) {
+			continue
+		}
+		delete(report.itemByKey, item.itemKey)
+		if len(report.itemByKey) == 0 {
+			delete(reports, item.code)
+		}
+	}
+}
+
 // markSent 记录指定 category+code 的上次发送时间，用于控制上报频率。
-func (r *reportManager) markSent(category ReportCategory, code string, sentAt time.Time) {
+// snapLastSent 是快照时刻的 lastSent，如果 lastSent 在快照后被并发 update 重置为零，则跳过更新。
+func (r *reportManager) markSent(category ReportCategory, code string, sentAt time.Time, snapLastSent time.Time) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if report := r.cache[category][code]; report != nil {
+		if !snapLastSent.IsZero() && report.lastSent.IsZero() {
+			return
+		}
 		report.lastSent = sentAt
 	}
 }
@@ -229,21 +368,24 @@ func cloneItem(item isp.Item) isp.Item {
 	return cloned
 }
 
-// freshItems 从缓存中筛选未过期的 item，返回克隆后的列表。
-// 已过期的 item 记录日志（含类别名称、变电站编码、item key），不包含在返回结果中。
-func freshItems(items map[string]*cachedItem, code string, now time.Time, timeout time.Duration) []isp.Item {
+// freshItems 从缓存中筛选未过期的 item，返回克隆后的列表和过期 key。
+// 过期 key 统一由 deleteExpired 在释放读锁后清理。
+func freshItems(items map[string]*cachedItem, code string, now time.Time, timeout time.Duration) ([]isp.Item, []expiredReportItem) {
 	out := make([]isp.Item, 0, len(items))
+	expired := make([]expiredReportItem, 0)
 	for key, cached := range items {
 		if cached.updatedAt.IsZero() {
 			continue
 		}
 		if now.Sub(cached.updatedAt) >= timeout {
-			logx.Debugf("[ispagent] report cache item expired name=%s code=%s itemKey=%s updated_at=%s", categoryMessageName(cached.category), code, key, cached.updatedAt.Format(time.RFC3339))
+			logx.Debugf("[ispagent] report cache item expired name=%s code=%s itemKey=%s updated_at=%s now=%s timeout=%s",
+				categoryMessageName(cached.category), code, key, cached.updatedAt.Format(time.RFC3339), now.Format(time.RFC3339), timeout)
+			expired = append(expired, expiredReportItem{category: cached.category, code: code, itemKey: key, updatedAt: cached.updatedAt})
 			continue
 		}
 		out = append(out, cloneItem(cached.item))
 	}
-	return out
+	return out, expired
 }
 
 // itemKey 根据 keyAttrs 构建 Item 的唯一标识。
@@ -281,6 +423,14 @@ func (r *reportManager) setNoFreshCheck(category ReportCategory, skip bool) {
 	}
 }
 
+func (r *reportManager) setInterval(category ReportCategory, d time.Duration) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.intervals[category]; ok && d > 0 {
+		r.intervals[category] = d
+	}
+}
+
 // cloneAll 复制缓存中全部 item（不检查过期），在 noFreshCheck 时使用。
 func cloneAll(items map[string]*cachedItem) []isp.Item {
 	out := make([]isp.Item, 0, len(items))
@@ -301,15 +451,21 @@ func (c *Client) ReportIntervals() map[ReportCategory]time.Duration {
 	return out
 }
 
-// ReservedIntervals 返回注册响应中预留的间隔（nest_run_interval、weather_interval 等）。
-func (c *Client) ReservedIntervals() map[string]time.Duration {
+// SetInterval 运行时覆盖指定类别的上报间隔，非正值忽略。
+func (c *Client) SetInterval(category ReportCategory, d time.Duration) {
+	c.reports.setInterval(category, d)
+}
+
+// CategoryKeyAttrs 返回指定类别的缓存 key 属性列表。
+func CategoryKeyAttrs(category ReportCategory) []string {
+	return keyAttrsByCategory[category]
+}
+
+// CategoryNoFreshCheck 返回指定类别是否跳过新鲜度检查。
+func (c *Client) CategoryNoFreshCheck(category ReportCategory) bool {
 	c.reports.mu.RLock()
 	defer c.reports.mu.RUnlock()
-	out := make(map[string]time.Duration, len(c.reports.reservedIntervals))
-	for k, v := range c.reports.reservedIntervals {
-		out[k] = v
-	}
-	return out
+	return c.reports.noFreshCheck[category]
 }
 
 // SetNoFreshCheck 暴露给外部调用方，控制指定上报类别的新鲜度检查开关。
@@ -330,9 +486,9 @@ func categoryMessageName(category ReportCategory) string {
 // CacheReport gRPC 上报入口：将 proto 数据写入本地缓存，立即返回受理结果。
 // 后续由 reportTick 按间隔定时发送到上级 ISP 系统。
 func (c *Client) CacheReport(ctx context.Context, category ReportCategory, code string, items []isp.Item) error {
-	if c.reports.update(category, code, items, time.Now()) {
-		logx.WithContext(ctx).Infof("[ispagent] report cache updated name=%s code=%s items=%d", categoryMessageName(category), code, len(items))
-		return nil
+	if err := c.reports.update(category, code, items, time.Now()); err != nil {
+		return err
 	}
-	return isp.NewIspError(isp.StatusReject, "未知上报类别")
+	logx.WithContext(ctx).Infof("[ispagent] report cache updated name=%s code=%s items=%d", categoryMessageName(category), code, len(items))
+	return nil
 }

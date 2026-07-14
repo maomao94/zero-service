@@ -23,6 +23,8 @@ const (
 	IspAgent_SendPatrolDeviceRunData_FullMethodName     = "/ispagent.IspAgent/SendPatrolDeviceRunData"
 	IspAgent_SendPatrolDeviceStatusData_FullMethodName  = "/ispagent.IspAgent/SendPatrolDeviceStatusData"
 	IspAgent_SendPatrolDeviceCoordinates_FullMethodName = "/ispagent.IspAgent/SendPatrolDeviceCoordinates"
+	IspAgent_SendDroneNestRunData_FullMethodName        = "/ispagent.IspAgent/SendDroneNestRunData"
+	IspAgent_SendEnvData_FullMethodName                 = "/ispagent.IspAgent/SendEnvData"
 	IspAgent_ListTaskExecutions_FullMethodName          = "/ispagent.IspAgent/ListTaskExecutions"
 	IspAgent_ListTaskConfigs_FullMethodName             = "/ispagent.IspAgent/ListTaskConfigs"
 	IspAgent_TestFTPSUpload_FullMethodName              = "/ispagent.IspAgent/TestFTPSUpload"
@@ -37,11 +39,15 @@ type IspAgentClient interface {
 	// ExecuteCommand 通用指令透传（调用方指定 type/command）
 	ExecuteCommand(ctx context.Context, in *CommandReq, opts ...grpc.CallOption) (*CommandRes, error)
 	// SendPatrolDeviceRunData 巡视装置运行数据上报（表 J.34）
-	SendPatrolDeviceRunData(ctx context.Context, in *SendPatrolDeviceRunDataReq, opts ...grpc.CallOption) (*CommandRes, error)
+	SendPatrolDeviceRunData(ctx context.Context, in *SendPatrolDeviceRunDataReq, opts ...grpc.CallOption) (*SendPatrolDeviceRunDataRes, error)
 	// SendPatrolDeviceStatusData 巡视装置状态数据上报
-	SendPatrolDeviceStatusData(ctx context.Context, in *SendPatrolDeviceStatusDataReq, opts ...grpc.CallOption) (*CommandRes, error)
+	SendPatrolDeviceStatusData(ctx context.Context, in *SendPatrolDeviceStatusDataReq, opts ...grpc.CallOption) (*SendPatrolDeviceStatusDataRes, error)
 	// SendPatrolDeviceCoordinates 巡视装置坐标上报（表 O.45）
-	SendPatrolDeviceCoordinates(ctx context.Context, in *SendPatrolDeviceCoordinatesReq, opts ...grpc.CallOption) (*CommandRes, error)
+	SendPatrolDeviceCoordinates(ctx context.Context, in *SendPatrolDeviceCoordinatesReq, opts ...grpc.CallOption) (*SendPatrolDeviceCoordinatesRes, error)
+	// SendDroneNestRunData 无人机机巢运行数据上报（表 O.40）
+	SendDroneNestRunData(ctx context.Context, in *SendDroneNestRunDataReq, opts ...grpc.CallOption) (*SendDroneNestRunDataRes, error)
+	// SendEnvData 环境/微气象数据上报（表 J.41）
+	SendEnvData(ctx context.Context, in *SendEnvDataReq, opts ...grpc.CallOption) (*SendEnvDataRes, error)
 	// ListTaskExecutions 查询任务未来执行时间（用于验证 rrule 配置）
 	ListTaskExecutions(ctx context.Context, in *ListTaskExecutionsReq, opts ...grpc.CallOption) (*ListTaskExecutionsRes, error)
 	// ListTaskConfigs 任务配置分页查询
@@ -72,9 +78,9 @@ func (c *ispAgentClient) ExecuteCommand(ctx context.Context, in *CommandReq, opt
 	return out, nil
 }
 
-func (c *ispAgentClient) SendPatrolDeviceRunData(ctx context.Context, in *SendPatrolDeviceRunDataReq, opts ...grpc.CallOption) (*CommandRes, error) {
+func (c *ispAgentClient) SendPatrolDeviceRunData(ctx context.Context, in *SendPatrolDeviceRunDataReq, opts ...grpc.CallOption) (*SendPatrolDeviceRunDataRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommandRes)
+	out := new(SendPatrolDeviceRunDataRes)
 	err := c.cc.Invoke(ctx, IspAgent_SendPatrolDeviceRunData_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -82,9 +88,9 @@ func (c *ispAgentClient) SendPatrolDeviceRunData(ctx context.Context, in *SendPa
 	return out, nil
 }
 
-func (c *ispAgentClient) SendPatrolDeviceStatusData(ctx context.Context, in *SendPatrolDeviceStatusDataReq, opts ...grpc.CallOption) (*CommandRes, error) {
+func (c *ispAgentClient) SendPatrolDeviceStatusData(ctx context.Context, in *SendPatrolDeviceStatusDataReq, opts ...grpc.CallOption) (*SendPatrolDeviceStatusDataRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommandRes)
+	out := new(SendPatrolDeviceStatusDataRes)
 	err := c.cc.Invoke(ctx, IspAgent_SendPatrolDeviceStatusData_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -92,10 +98,30 @@ func (c *ispAgentClient) SendPatrolDeviceStatusData(ctx context.Context, in *Sen
 	return out, nil
 }
 
-func (c *ispAgentClient) SendPatrolDeviceCoordinates(ctx context.Context, in *SendPatrolDeviceCoordinatesReq, opts ...grpc.CallOption) (*CommandRes, error) {
+func (c *ispAgentClient) SendPatrolDeviceCoordinates(ctx context.Context, in *SendPatrolDeviceCoordinatesReq, opts ...grpc.CallOption) (*SendPatrolDeviceCoordinatesRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommandRes)
+	out := new(SendPatrolDeviceCoordinatesRes)
 	err := c.cc.Invoke(ctx, IspAgent_SendPatrolDeviceCoordinates_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ispAgentClient) SendDroneNestRunData(ctx context.Context, in *SendDroneNestRunDataReq, opts ...grpc.CallOption) (*SendDroneNestRunDataRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendDroneNestRunDataRes)
+	err := c.cc.Invoke(ctx, IspAgent_SendDroneNestRunData_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ispAgentClient) SendEnvData(ctx context.Context, in *SendEnvDataReq, opts ...grpc.CallOption) (*SendEnvDataRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendEnvDataRes)
+	err := c.cc.Invoke(ctx, IspAgent_SendEnvData_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -159,11 +185,15 @@ type IspAgentServer interface {
 	// ExecuteCommand 通用指令透传（调用方指定 type/command）
 	ExecuteCommand(context.Context, *CommandReq) (*CommandRes, error)
 	// SendPatrolDeviceRunData 巡视装置运行数据上报（表 J.34）
-	SendPatrolDeviceRunData(context.Context, *SendPatrolDeviceRunDataReq) (*CommandRes, error)
+	SendPatrolDeviceRunData(context.Context, *SendPatrolDeviceRunDataReq) (*SendPatrolDeviceRunDataRes, error)
 	// SendPatrolDeviceStatusData 巡视装置状态数据上报
-	SendPatrolDeviceStatusData(context.Context, *SendPatrolDeviceStatusDataReq) (*CommandRes, error)
+	SendPatrolDeviceStatusData(context.Context, *SendPatrolDeviceStatusDataReq) (*SendPatrolDeviceStatusDataRes, error)
 	// SendPatrolDeviceCoordinates 巡视装置坐标上报（表 O.45）
-	SendPatrolDeviceCoordinates(context.Context, *SendPatrolDeviceCoordinatesReq) (*CommandRes, error)
+	SendPatrolDeviceCoordinates(context.Context, *SendPatrolDeviceCoordinatesReq) (*SendPatrolDeviceCoordinatesRes, error)
+	// SendDroneNestRunData 无人机机巢运行数据上报（表 O.40）
+	SendDroneNestRunData(context.Context, *SendDroneNestRunDataReq) (*SendDroneNestRunDataRes, error)
+	// SendEnvData 环境/微气象数据上报（表 J.41）
+	SendEnvData(context.Context, *SendEnvDataReq) (*SendEnvDataRes, error)
 	// ListTaskExecutions 查询任务未来执行时间（用于验证 rrule 配置）
 	ListTaskExecutions(context.Context, *ListTaskExecutionsReq) (*ListTaskExecutionsRes, error)
 	// ListTaskConfigs 任务配置分页查询
@@ -187,14 +217,20 @@ type UnimplementedIspAgentServer struct{}
 func (UnimplementedIspAgentServer) ExecuteCommand(context.Context, *CommandReq) (*CommandRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method ExecuteCommand not implemented")
 }
-func (UnimplementedIspAgentServer) SendPatrolDeviceRunData(context.Context, *SendPatrolDeviceRunDataReq) (*CommandRes, error) {
+func (UnimplementedIspAgentServer) SendPatrolDeviceRunData(context.Context, *SendPatrolDeviceRunDataReq) (*SendPatrolDeviceRunDataRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method SendPatrolDeviceRunData not implemented")
 }
-func (UnimplementedIspAgentServer) SendPatrolDeviceStatusData(context.Context, *SendPatrolDeviceStatusDataReq) (*CommandRes, error) {
+func (UnimplementedIspAgentServer) SendPatrolDeviceStatusData(context.Context, *SendPatrolDeviceStatusDataReq) (*SendPatrolDeviceStatusDataRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method SendPatrolDeviceStatusData not implemented")
 }
-func (UnimplementedIspAgentServer) SendPatrolDeviceCoordinates(context.Context, *SendPatrolDeviceCoordinatesReq) (*CommandRes, error) {
+func (UnimplementedIspAgentServer) SendPatrolDeviceCoordinates(context.Context, *SendPatrolDeviceCoordinatesReq) (*SendPatrolDeviceCoordinatesRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method SendPatrolDeviceCoordinates not implemented")
+}
+func (UnimplementedIspAgentServer) SendDroneNestRunData(context.Context, *SendDroneNestRunDataReq) (*SendDroneNestRunDataRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendDroneNestRunData not implemented")
+}
+func (UnimplementedIspAgentServer) SendEnvData(context.Context, *SendEnvDataReq) (*SendEnvDataRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendEnvData not implemented")
 }
 func (UnimplementedIspAgentServer) ListTaskExecutions(context.Context, *ListTaskExecutionsReq) (*ListTaskExecutionsRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTaskExecutions not implemented")
@@ -300,6 +336,42 @@ func _IspAgent_SendPatrolDeviceCoordinates_Handler(srv interface{}, ctx context.
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IspAgentServer).SendPatrolDeviceCoordinates(ctx, req.(*SendPatrolDeviceCoordinatesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IspAgent_SendDroneNestRunData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendDroneNestRunDataReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IspAgentServer).SendDroneNestRunData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IspAgent_SendDroneNestRunData_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IspAgentServer).SendDroneNestRunData(ctx, req.(*SendDroneNestRunDataReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IspAgent_SendEnvData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendEnvDataReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IspAgentServer).SendEnvData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IspAgent_SendEnvData_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IspAgentServer).SendEnvData(ctx, req.(*SendEnvDataReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -416,6 +488,14 @@ var IspAgent_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendPatrolDeviceCoordinates",
 			Handler:    _IspAgent_SendPatrolDeviceCoordinates_Handler,
+		},
+		{
+			MethodName: "SendDroneNestRunData",
+			Handler:    _IspAgent_SendDroneNestRunData_Handler,
+		},
+		{
+			MethodName: "SendEnvData",
+			Handler:    _IspAgent_SendEnvData_Handler,
 		},
 		{
 			MethodName: "ListTaskExecutions",

@@ -39,7 +39,13 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 
 	modelUploader := ftps.NewUploader(c.ModelSync.FTPS.ToFTPSConfig())
-	m := ispclient.NewClient(c.IspSetting, store, db, modelUploader, nil)
+	m := ispclient.NewClient(c.IspSetting, store, db, modelUploader, nil,
+		ispclient.WithReportOption(ispclient.WithNoFreshCheck(
+			ispclient.ReportCategoryPatrolDeviceCoordinates,
+			ispclient.ReportCategoryPatrolDeviceRunData,
+			ispclient.ReportCategoryPatrolDeviceStatusData,
+		)),
+	)
 	proc.AddShutdownListener(func() { m.Close() })
 
 	svcCtx := &ServiceContext{

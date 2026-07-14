@@ -52,11 +52,37 @@ message PatrolDeviceStatusData {
   string unit = 6;
 }
 
+// DroneNestRunData 无人机机巢运行数据（表 O.40）
+message DroneNestRunData {
+  string nest_name = 1;     // 机巢名称
+  string nest_code = 2;     // 机巢编码
+  string module_no = 3;     // 模块序号，非必须，用于区分多个模块
+  string type = 4;          // 1=电池电量, 2=电池使用状态, 3=电池状态, 4=电池电压, 5=舱内温度, 6=舱内湿度
+  string value = 5;
+  string value_unit = 6;    // 值带单位
+  string unit = 7;          // 单位
+}
+
+// EnvData 环境/微气象数据（表 J.41）
+message EnvData {
+  string patrol_device_name = 1;   // 巡视装置名称，环境采集装置属于巡视装置时填写
+  string patrol_device_code = 2;   // 巡视装置编码，环境采集装置属于巡视装置时填写
+  string time = 3;                 // 时间
+  string type = 4;                 // 1=环境温度, 2=环境湿度, 3=风速, 4=雨量, 5=风向, 6=气压, 7=氧气, 8=SF6
+  string value = 5;
+  string value_unit = 6;           // 值带单位
+  string unit = 7;                 // 单位
+}
+
 // SendPatrolDeviceCoordinatesReq 巡视装置坐标上报
 message SendPatrolDeviceCoordinatesReq {
   string code = 1;                           // 目标对象唯一标识（可为空）
   repeated PatrolDeviceCoordinate items = 2;
 }
+
+message SendPatrolDeviceCoordinatesRes {
+}
+
 
 // SendPatrolDeviceRunDataReq 巡视装置运行数据上报
 message SendPatrolDeviceRunDataReq {
@@ -64,11 +90,38 @@ message SendPatrolDeviceRunDataReq {
   repeated PatrolDeviceRunData items = 2;
 }
 
+message SendPatrolDeviceRunDataRes {
+}
+
 // SendPatrolDeviceStatusDataReq 巡视装置状态数据上报
 message SendPatrolDeviceStatusDataReq {
   string code = 1;                           // 目标对象唯一标识（可为空）
   repeated PatrolDeviceStatusData items = 2;
 }
+
+message SendPatrolDeviceStatusDataRes {
+}
+
+
+// SendDroneNestRunDataReq 无人机机巢运行数据上报
+message SendDroneNestRunDataReq {
+  string code = 1;                           // 变电站编码
+  repeated DroneNestRunData items = 2;
+}
+
+message SendDroneNestRunDataRes {
+}
+
+
+// SendEnvDataReq 环境/微气象数据上报
+message SendEnvDataReq {
+  string code = 1;                           // 变电站编码
+  repeated EnvData items = 2;
+}
+
+message SendEnvDataRes {
+}
+
 
 // CommandRes 指令响应（透传解析后的 SIP 回包）
 message CommandRes {
@@ -178,17 +231,15 @@ message ListFTPSDirectoryRes {
   string error = 3;                  // 错误信息
 }
 
-// ReportIntervalEntry 上报间隔条目
-message ReportIntervalEntry {
-  int32 category = 1;         // 上报类别 messageId
-  int64 interval_seconds = 2; // 当前间隔（秒）
-  string name = 3;            // 中文名称，如 "巡视设备运行数据(2-0)"
-}
-
-// ReservedIntervalEntry 预留间隔条目
-message ReservedIntervalEntry {
-  string key = 1;             // 预留字段名，如 "nest_run_interval"
-  int64 interval_seconds = 2; // 当前值（秒）
+// ReportCategoryInfo 上报类别完整信息
+message ReportCategoryInfo {
+  int32 category = 1;            // 上报类别 messageId
+  string name = 2;               // 中文名称
+  int64 interval_seconds = 3;    // 当前间隔（秒）
+  bool no_fresh_check = 4;       // 是否跳过新鲜度检查
+  int32 type = 5;                // ISP Type
+  int32 command = 6;             // ISP Command
+  repeated string key_attrs = 7; // 缓存 key 属性列表
 }
 
 // ListReportIntervalsReq 上报间隔查询请求（空）
@@ -196,19 +247,22 @@ message ListReportIntervalsReq {}
 
 // ListReportIntervalsRes 上报间隔查询响应
 message ListReportIntervalsRes {
-  repeated ReportIntervalEntry intervals = 1;       // 已激活上报类别间隔
-  repeated ReservedIntervalEntry reserved = 2;      // 预留字段间隔
+  repeated ReportCategoryInfo categories = 1;       // 所有已注册上报类别完整信息
 }
 
 service IspAgent {
   // ExecuteCommand 通用指令透传（调用方指定 type/command）
   rpc ExecuteCommand(CommandReq) returns(CommandRes);
   // SendPatrolDeviceRunData 巡视装置运行数据上报（表 J.34）
-  rpc SendPatrolDeviceRunData(SendPatrolDeviceRunDataReq) returns(CommandRes);
+  rpc SendPatrolDeviceRunData(SendPatrolDeviceRunDataReq) returns(SendPatrolDeviceRunDataRes);
   // SendPatrolDeviceStatusData 巡视装置状态数据上报
-  rpc SendPatrolDeviceStatusData(SendPatrolDeviceStatusDataReq) returns(CommandRes);
+  rpc SendPatrolDeviceStatusData(SendPatrolDeviceStatusDataReq) returns(SendPatrolDeviceStatusDataRes);
   // SendPatrolDeviceCoordinates 巡视装置坐标上报（表 O.45）
-  rpc SendPatrolDeviceCoordinates(SendPatrolDeviceCoordinatesReq) returns(CommandRes);
+  rpc SendPatrolDeviceCoordinates(SendPatrolDeviceCoordinatesReq) returns(SendPatrolDeviceCoordinatesRes);
+  // SendDroneNestRunData 无人机机巢运行数据上报（表 O.40）
+  rpc SendDroneNestRunData(SendDroneNestRunDataReq) returns(SendDroneNestRunDataRes);
+  // SendEnvData 环境/微气象数据上报（表 J.41）
+  rpc SendEnvData(SendEnvDataReq) returns(SendEnvDataRes);
   // ListTaskExecutions 查询任务未来执行时间（用于验证 rrule 配置）
   rpc ListTaskExecutions(ListTaskExecutionsReq) returns(ListTaskExecutionsRes);
   // ListTaskConfigs 任务配置分页查询

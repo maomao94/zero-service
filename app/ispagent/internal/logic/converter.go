@@ -83,6 +83,51 @@ func patrolDeviceStatusDataToItems(items []*ispagent.PatrolDeviceStatusData) []i
 	return out
 }
 
+func droneNestRunDataToItems(items []*ispagent.DroneNestRunData) []isp.Item {
+	now := carbon.Now().ToDateTimeString()
+	out := make([]isp.Item, 0, len(items))
+	for _, item := range items {
+		if item == nil {
+			continue
+		}
+		out = append(out, isp.Item{
+			"nest_name":  item.GetNestName(),
+			"nest_code":  item.GetNestCode(),
+			"module_no":  item.GetModuleNo(),
+			"time":       now,
+			"type":       item.GetType(),
+			"value":      item.GetValue(),
+			"value_unit": item.GetValueUnit(),
+			"unit":       item.GetUnit(),
+		})
+	}
+	return out
+}
+
+func envDataToItems(items []*ispagent.EnvData) []isp.Item {
+	now := carbon.Now().ToDateTimeString()
+	out := make([]isp.Item, 0, len(items))
+	for _, item := range items {
+		if item == nil {
+			continue
+		}
+		t := item.GetTime()
+		if t == "" {
+			t = now
+		}
+		out = append(out, isp.Item{
+			"patroldevice_name": item.GetPatrolDeviceName(),
+			"patroldevice_code": item.GetPatrolDeviceCode(),
+			"time":              t,
+			"type":              item.GetType(),
+			"value":             item.GetValue(),
+			"value_unit":        item.GetValueUnit(),
+			"unit":              item.GetUnit(),
+		})
+	}
+	return out
+}
+
 // commandResponse 将 ISP 响应转换为 gRPC CommandRes。
 func commandResponse(msg *isp.Message) *ispagent.CommandRes {
 	items := make([]*ispagent.Item, 0, len(msg.Items))

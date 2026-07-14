@@ -6,6 +6,7 @@ import (
 	ispclient "zero-service/app/ispagent/internal/isp"
 	"zero-service/app/ispagent/internal/svc"
 	"zero-service/app/ispagent/ispagent"
+	"zero-service/common/isp"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -26,27 +27,22 @@ func NewListReportIntervalsLogic(ctx context.Context, svcCtx *svc.ServiceContext
 
 func (l *ListReportIntervalsLogic) ListReportIntervals(in *ispagent.ListReportIntervalsReq) (*ispagent.ListReportIntervalsRes, error) {
 	reportIntervals := l.svcCtx.IspClient.ReportIntervals()
-	reserved := l.svcCtx.IspClient.ReservedIntervals()
 
-	intervals := make([]*ispagent.ReportIntervalEntry, 0, len(reportIntervals))
+	categories := make([]*ispagent.ReportCategoryInfo, 0, len(reportIntervals))
 	for cat, d := range reportIntervals {
-		intervals = append(intervals, &ispagent.ReportIntervalEntry{
+		typ, cmd := isp.DecodeMessageID(int(cat))
+		categories = append(categories, &ispagent.ReportCategoryInfo{
 			Category:        int32(cat),
-			IntervalSeconds: int64(d.Seconds()),
 			Name:            ispclient.CategoryMessageName(cat),
-		})
-	}
-
-	reservedEntries := make([]*ispagent.ReservedIntervalEntry, 0, len(reserved))
-	for k, d := range reserved {
-		reservedEntries = append(reservedEntries, &ispagent.ReservedIntervalEntry{
-			Key:             k,
 			IntervalSeconds: int64(d.Seconds()),
+			NoFreshCheck:    l.svcCtx.IspClient.CategoryNoFreshCheck(cat),
+			Type:            typ,
+			Command:         cmd,
+			KeyAttrs:        ispclient.CategoryKeyAttrs(cat),
 		})
 	}
 
 	return &ispagent.ListReportIntervalsRes{
-		Intervals: intervals,
-		Reserved:  reservedEntries,
+		Categories: categories,
 	}, nil
 }

@@ -11,17 +11,11 @@ func TestApplyRegistrationIntervals(t *testing.T) {
 	m := newReportManager()
 
 	m.applyRegistrationIntervals([]protocol.Item{
-		{"patroldevice_run_interval": "10", "nest_run_interval": "20", "weather_interval": "30"},
+		{"patroldevice_run_interval": "10"},
 	})
 
 	if got := m.intervals[ReportCategoryPatrolDeviceRunData]; got != 10*time.Second {
 		t.Fatalf("run data interval = %s, want 10s", got)
-	}
-	if got := m.reservedIntervals["nest_run_interval"]; got != 20*time.Second {
-		t.Fatalf("nest_run_interval = %s, want 20s", got)
-	}
-	if got := m.reservedIntervals["weather_interval"]; got != 30*time.Second {
-		t.Fatalf("weather_interval = %s, want 30s", got)
 	}
 }
 
@@ -55,12 +49,57 @@ func TestReportManagerDueAndMarkSent(t *testing.T) {
 		t.Fatalf("due reports = %d, want 1", len(due))
 	}
 
-	m.markSent(ReportCategoryPatrolDeviceRunData, "station-1", now)
+	m.markSent(ReportCategoryPatrolDeviceRunData, "station-1", now, time.Time{})
 	if got := len(m.dueReports(now.Add(9 * time.Second))); got != 0 {
 		t.Fatalf("due before interval = %d, want 0", got)
 	}
 	if got := len(m.dueReports(now.Add(10 * time.Second))); got != 1 {
 		t.Fatalf("due at interval = %d, want 1", got)
+	}
+}
+
+func TestReportManagerNewItemResetsLastSentAndDueImmediately(t *testing.T) {
+	now := time.Date(2026, 7, 10, 12, 0, 0, 0, time.UTC)
+	m := newReportManager()
+	m.intervals[ReportCategoryPatrolDeviceRunData] = 10 * time.Second
+
+	m.update(ReportCategoryPatrolDeviceRunData, "station-1", []protocol.Item{
+		{"patroldevice_code": "robot-1", "type": "1", "value": "old"},
+	}, now)
+	m.markSent(ReportCategoryPatrolDeviceRunData, "station-1", now, time.Time{})
+
+	m.update(ReportCategoryPatrolDeviceRunData, "station-1", []protocol.Item{
+		{"patroldevice_code": "robot-2", "type": "1", "value": "new"},
+	}, now.Add(2*time.Second))
+
+	due := m.dueReports(now.Add(2 * time.Second))
+	if len(due) != 1 {
+		t.Fatalf("due reports after new item = %d, want 1", len(due))
+	}
+	if !containsItemValue(due[0].items, "new") {
+		t.Fatal("new item was not included in immediate due report")
+	}
+}
+
+func TestReportManagerExistingItemRefreshDoesNotResetLastSent(t *testing.T) {
+	now := time.Date(2026, 7, 10, 12, 0, 0, 0, time.UTC)
+	m := newReportManager()
+	m.intervals[ReportCategoryPatrolDeviceRunData] = 10 * time.Second
+
+	m.update(ReportCategoryPatrolDeviceRunData, "station-1", []protocol.Item{
+		{"patroldevice_code": "robot-1", "type": "1", "value": "old"},
+	}, now)
+	m.markSent(ReportCategoryPatrolDeviceRunData, "station-1", now, time.Time{})
+
+	m.update(ReportCategoryPatrolDeviceRunData, "station-1", []protocol.Item{
+		{"patroldevice_code": "robot-1", "type": "1", "value": "refreshed"},
+	}, now.Add(2*time.Second))
+
+	if got := len(m.dueReports(now.Add(2 * time.Second))); got != 0 {
+		t.Fatalf("due reports after existing item refresh = %d, want 0", got)
+	}
+	if got := len(m.dueReports(now.Add(10 * time.Second))); got != 1 {
+		t.Fatalf("due reports at original interval = %d, want 1", got)
 	}
 }
 
@@ -79,9 +118,132 @@ func TestReportManagerSkipsStaleItemsOnDue(t *testing.T) {
 	}
 }
 
-func TestReportManagerStatusAndCoordinatesDefaultInterval(t *testing.T) {
+func TestReportManagerRemovesExpiredItemsFromCache(t *testing.T) {
 	now := time.Date(2026, 7, 10, 12, 0, 0, 0, time.UTC)
 	m := newReportManager()
+	m.intervals[ReportCategoryPatrolDeviceRunData] = 10 * time.Second
+	m.update(ReportCategoryPatrolDeviceRunData, "station-1", []protocol.Item{
+		{"patroldevice_code": "robot-1", "type": "1", "value": "old"},
+		{"patroldevice_code": "robot-2", "type": "1", "value": "fresh"},
+	}, now)
+	m.update(ReportCategoryPatrolDeviceRunData, "station-1", []protocol.Item{
+		{"patroldevice_code": "robot-2", "type": "1", "value": "fresh"},
+	}, now.Add(15*time.Second))
+
+	m.dueReports(now.Add(freshnessTimeout(10 * time.Second)))
+
+	report := m.cache[ReportCategoryPatrolDeviceRunData]["station-1"]
+	if report == nil {
+		t.Fatal("cached report was removed, want fresh item to remain")
+	}
+	if got := len(report.itemByKey); got != 1 {
+		t.Fatalf("cached items after cleanup = %d, want 1", got)
+	}
+	if containsCachedItemValue(report.itemByKey, "old") {
+		t.Fatal("expired item remained in cache")
+	}
+	if !containsCachedItemValue(report.itemByKey, "fresh") {
+		t.Fatal("fresh item missing from cache")
+	}
+}
+
+func TestReportManagerCleansExpiredItemsBeforeReportInterval(t *testing.T) {
+	now := time.Date(2026, 7, 10, 12, 0, 0, 0, time.UTC)
+	m := newReportManager()
+	m.intervals[ReportCategoryPatrolDeviceRunData] = time.Minute
+	m.update(ReportCategoryPatrolDeviceRunData, "station-1", []protocol.Item{
+		{"patroldevice_code": "robot-1", "type": "1", "value": "old"},
+	}, now)
+	m.markSent(ReportCategoryPatrolDeviceRunData, "station-1", now.Add(90*time.Second), time.Time{})
+
+	if got := len(m.dueReports(now.Add(2 * time.Minute))); got != 0 {
+		t.Fatalf("due reports before interval = %d, want 0", got)
+	}
+	if report := m.cache[ReportCategoryPatrolDeviceRunData]["station-1"]; report != nil {
+		t.Fatalf("cached report remained after freshness cleanup before interval: %#v", report)
+	}
+}
+
+func TestReportManagerRemovesCachedReportWhenAllItemsExpire(t *testing.T) {
+	now := time.Date(2026, 7, 10, 12, 0, 0, 0, time.UTC)
+	m := newReportManager()
+	m.intervals[ReportCategoryPatrolDeviceRunData] = 10 * time.Second
+	m.update(ReportCategoryPatrolDeviceRunData, "station-1", []protocol.Item{
+		{"patroldevice_code": "robot-1", "type": "1", "value": "old"},
+	}, now)
+
+	m.dueReports(now.Add(freshnessTimeout(10 * time.Second)))
+
+	if report := m.cache[ReportCategoryPatrolDeviceRunData]["station-1"]; report != nil {
+		t.Fatalf("cached report remained after all items expired: %#v", report)
+	}
+}
+
+func TestReportManagerDeleteExpiredSkipsConcurrentlyRefreshedItem(t *testing.T) {
+	now := time.Date(2026, 7, 10, 12, 0, 0, 0, time.UTC)
+	m := newReportManager()
+	m.update(ReportCategoryPatrolDeviceRunData, "station-1", []protocol.Item{
+		{"patroldevice_code": "robot-1", "type": "1", "value": "old"},
+	}, now)
+
+	key := itemKey(keyAttrsByCategory[ReportCategoryPatrolDeviceRunData], protocol.Item{"patroldevice_code": "robot-1", "type": "1"}, 0)
+	m.update(ReportCategoryPatrolDeviceRunData, "station-1", []protocol.Item{
+		{"patroldevice_code": "robot-1", "type": "1", "value": "fresh"},
+	}, now.Add(time.Second))
+	m.deleteExpired([]expiredReportItem{{
+		category:  ReportCategoryPatrolDeviceRunData,
+		code:      "station-1",
+		itemKey:   key,
+		updatedAt: now,
+	}}, nil)
+
+	report := m.cache[ReportCategoryPatrolDeviceRunData]["station-1"]
+	if report == nil {
+		t.Fatal("refreshed cached report was deleted")
+	}
+	if !containsCachedItemValue(report.itemByKey, "fresh") {
+		t.Fatal("refreshed item was deleted by stale expired ref")
+	}
+}
+
+func TestReportManagerRemovesPreexistingEmptyCachedReport(t *testing.T) {
+	now := time.Date(2026, 7, 10, 12, 0, 0, 0, time.UTC)
+	m := newReportManager()
+	m.cache[ReportCategoryPatrolDeviceRunData]["station-1"] = &cachedReport{itemByKey: map[string]*cachedItem{}}
+
+	if got := len(m.dueReports(now)); got != 0 {
+		t.Fatalf("due reports for empty cached report = %d, want 0", got)
+	}
+	if report := m.cache[ReportCategoryPatrolDeviceRunData]["station-1"]; report != nil {
+		t.Fatalf("empty cached report remained after scan: %#v", report)
+	}
+}
+
+func TestReportManagerNoFreshCheckDoesNotCleanStaleItems(t *testing.T) {
+	now := time.Date(2026, 7, 10, 12, 0, 0, 0, time.UTC)
+	m := newReportManager(WithNoFreshCheck(ReportCategoryPatrolDeviceCoordinates))
+	m.intervals[ReportCategoryPatrolDeviceCoordinates] = 10 * time.Second
+
+	m.update(ReportCategoryPatrolDeviceCoordinates, "station-1", []protocol.Item{
+		{"patroldevice_code": "robot-1", "coordinate_geography": "1,2"},
+	}, now)
+
+	due := m.dueReports(now.Add(freshnessTimeout(10 * time.Second)))
+	if len(due) != 1 {
+		t.Fatalf("due reports = %d, want 1", len(due))
+	}
+	report := m.cache[ReportCategoryPatrolDeviceCoordinates]["station-1"]
+	if report == nil {
+		t.Fatal("noFreshCheck cached report was cleaned")
+	}
+	if got := len(report.itemByKey); got != 1 {
+		t.Fatalf("noFreshCheck cached items after scan = %d, want 1", got)
+	}
+}
+
+func TestReportManagerStatusAndCoordinatesDefaultInterval(t *testing.T) {
+	now := time.Date(2026, 7, 10, 12, 0, 0, 0, time.UTC)
+	m := newReportManager(WithNoFreshCheck(ReportCategoryPatrolDeviceCoordinates))
 
 	m.update(ReportCategoryPatrolDeviceStatusData, "station-1", []protocol.Item{{"patroldevice_code": "robot-1", "type": "1", "value": "ok"}}, now)
 	m.update(ReportCategoryPatrolDeviceCoordinates, "station-1", []protocol.Item{{"patroldevice_code": "robot-1", "coordinate_geography": "1,2"}}, now)
@@ -90,10 +252,10 @@ func TestReportManagerStatusAndCoordinatesDefaultInterval(t *testing.T) {
 	if got := len(m.dueReports(now)); got != 2 {
 		t.Fatalf("initial due reports = %d, want 2", got)
 	}
-	m.markSent(ReportCategoryPatrolDeviceStatusData, "station-1", now)
-	m.markSent(ReportCategoryPatrolDeviceCoordinates, "station-1", now)
+	m.markSent(ReportCategoryPatrolDeviceStatusData, "station-1", now, time.Time{})
+	m.markSent(ReportCategoryPatrolDeviceCoordinates, "station-1", now, time.Time{})
 
-	// 2 秒后坐标到间隔
+	// 坐标默认 2 秒间隔，状态默认 1 分钟
 	if got := dueCountByCategory(m.dueReports(now.Add(defaultCoordInterval)), ReportCategoryPatrolDeviceCoordinates); got != 1 {
 		t.Fatalf("coordinate due at 2s = %d, want 1", got)
 	}
@@ -257,6 +419,15 @@ func dueCountByCategory(reports []reportSnapshot, category ReportCategory) int {
 func containsItemAttr(items []protocol.Item, attr, value string) bool {
 	for _, item := range items {
 		if item[attr] == value {
+			return true
+		}
+	}
+	return false
+}
+
+func containsCachedItemValue(items map[string]*cachedItem, value string) bool {
+	for _, item := range items {
+		if item.item["value"] == value {
 			return true
 		}
 	}
