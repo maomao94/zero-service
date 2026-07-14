@@ -127,7 +127,7 @@ func (r *ReplyPool[T]) handleTimeout(id string) {
 	r.deltaExpired.Add(1)
 	r.mu.Unlock()
 
-	logx.Debugw(fmt.Sprintf("[%s] entry %s expired by timing wheel, pending=%d", r.cfg.name, id, r.Len()),
+	logx.Debugw(fmt.Sprintf("[%s] entry %s expired by timing wheel", r.cfg.name, id),
 		logx.Field("tid", id),
 	)
 	entry.promise.Reject(ErrReplyExpired)
@@ -219,7 +219,7 @@ func (r *ReplyPool[T]) Resolve(id string, val T) bool {
 	r.mu.Unlock()
 
 	_ = r.tw.RemoveTimer(id)
-	logx.Debugw(fmt.Sprintf("[%s] entry %s resolved, pending=%d", r.cfg.name, id, r.Len()),
+	logx.Debugw(fmt.Sprintf("[%s] entry %s resolved", r.cfg.name, id),
 		logx.Field("tid", id),
 	)
 	entry.promise.Resolve(val)
@@ -240,7 +240,7 @@ func (r *ReplyPool[T]) Reject(id string, err error) bool {
 	r.mu.Unlock()
 
 	_ = r.tw.RemoveTimer(id)
-	logx.Debugw(fmt.Sprintf("[%s] entry %s rejected: %v, pending=%d", r.cfg.name, id, err, r.Len()),
+	logx.Debugw(fmt.Sprintf("[%s] entry %s rejected: %v", r.cfg.name, id, err),
 		logx.Field("tid", id),
 	)
 	entry.promise.Reject(err)

@@ -187,6 +187,75 @@ func (x *CommandReq) GetItems() []*Item {
 	return nil
 }
 
+// CommandRes 指令响应（透传解析后的 SIP 回包）
+type CommandRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"` // type=251 时表示应答成功，其他类型默认 true
+	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`        // 响应状态码（200/500/100/400）
+	Items         []*Item                `protobuf:"bytes,3,rep,name=items,proto3" json:"items,omitempty"`      // 解析后的 Item 列表
+	RawXml        string                 `protobuf:"bytes,4,opt,name=rawXml,proto3" json:"rawXml,omitempty"`    // 原始 XML（诊断用）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CommandRes) Reset() {
+	*x = CommandRes{}
+	mi := &file_ispagent_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CommandRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommandRes) ProtoMessage() {}
+
+func (x *CommandRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommandRes.ProtoReflect.Descriptor instead.
+func (*CommandRes) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *CommandRes) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *CommandRes) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *CommandRes) GetItems() []*Item {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+func (x *CommandRes) GetRawXml() string {
+	if x != nil {
+		return x.RawXml
+	}
+	return ""
+}
+
 // PatrolItemsReq 特定巡视上报请求（type/command 固定，仅填 code + items）
 type PatrolItemsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -198,7 +267,7 @@ type PatrolItemsReq struct {
 
 func (x *PatrolItemsReq) Reset() {
 	*x = PatrolItemsReq{}
-	mi := &file_ispagent_proto_msgTypes[2]
+	mi := &file_ispagent_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -210,7 +279,7 @@ func (x *PatrolItemsReq) String() string {
 func (*PatrolItemsReq) ProtoMessage() {}
 
 func (x *PatrolItemsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[2]
+	mi := &file_ispagent_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -223,7 +292,7 @@ func (x *PatrolItemsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatrolItemsReq.ProtoReflect.Descriptor instead.
 func (*PatrolItemsReq) Descriptor() ([]byte, []int) {
-	return file_ispagent_proto_rawDescGZIP(), []int{2}
+	return file_ispagent_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PatrolItemsReq) GetCode() string {
@@ -238,83 +307,6 @@ func (x *PatrolItemsReq) GetItems() []*Item {
 		return x.Items
 	}
 	return nil
-}
-
-// PatrolDeviceCoordinate 巡视装置坐标（表 O.45）
-type PatrolDeviceCoordinate struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	PatrolDeviceName    string                 `protobuf:"bytes,1,opt,name=patrol_device_name,json=patrolDeviceName,proto3" json:"patrol_device_name,omitempty"`        // 巡视装置名称
-	PatrolDeviceCode    string                 `protobuf:"bytes,2,opt,name=patrol_device_code,json=patrolDeviceCode,proto3" json:"patrol_device_code,omitempty"`        // 巡视装置编码
-	CoordinatePixel     string                 `protobuf:"bytes,3,opt,name=coordinate_pixel,json=coordinatePixel,proto3" json:"coordinate_pixel,omitempty"`             // 格式 x,y,z,a（地图坐标 + 航向角）
-	CoordinateGeography string                 `protobuf:"bytes,4,opt,name=coordinate_geography,json=coordinateGeography,proto3" json:"coordinate_geography,omitempty"` // 格式 x,y（经纬度）
-	TaskPatrolledId     string                 `protobuf:"bytes,5,opt,name=task_patrolled_id,json=taskPatrolledId,proto3" json:"task_patrolled_id,omitempty"`           // 巡视任务执行ID，无巡视任务时可为空
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
-}
-
-func (x *PatrolDeviceCoordinate) Reset() {
-	*x = PatrolDeviceCoordinate{}
-	mi := &file_ispagent_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PatrolDeviceCoordinate) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PatrolDeviceCoordinate) ProtoMessage() {}
-
-func (x *PatrolDeviceCoordinate) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PatrolDeviceCoordinate.ProtoReflect.Descriptor instead.
-func (*PatrolDeviceCoordinate) Descriptor() ([]byte, []int) {
-	return file_ispagent_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *PatrolDeviceCoordinate) GetPatrolDeviceName() string {
-	if x != nil {
-		return x.PatrolDeviceName
-	}
-	return ""
-}
-
-func (x *PatrolDeviceCoordinate) GetPatrolDeviceCode() string {
-	if x != nil {
-		return x.PatrolDeviceCode
-	}
-	return ""
-}
-
-func (x *PatrolDeviceCoordinate) GetCoordinatePixel() string {
-	if x != nil {
-		return x.CoordinatePixel
-	}
-	return ""
-}
-
-func (x *PatrolDeviceCoordinate) GetCoordinateGeography() string {
-	if x != nil {
-		return x.CoordinateGeography
-	}
-	return ""
-}
-
-func (x *PatrolDeviceCoordinate) GetTaskPatrolledId() string {
-	if x != nil {
-		return x.TaskPatrolledId
-	}
-	return ""
 }
 
 // PatrolDeviceRunData 巡视装置运行数据（表 J.34）
@@ -402,6 +394,95 @@ func (x *PatrolDeviceRunData) GetUnit() string {
 	return ""
 }
 
+// SendPatrolDeviceRunDataReq 巡视装置运行数据上报
+type SendPatrolDeviceRunDataReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"` // 目标对象唯一标识（可为空）
+	Items         []*PatrolDeviceRunData `protobuf:"bytes,2,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendPatrolDeviceRunDataReq) Reset() {
+	*x = SendPatrolDeviceRunDataReq{}
+	mi := &file_ispagent_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendPatrolDeviceRunDataReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendPatrolDeviceRunDataReq) ProtoMessage() {}
+
+func (x *SendPatrolDeviceRunDataReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendPatrolDeviceRunDataReq.ProtoReflect.Descriptor instead.
+func (*SendPatrolDeviceRunDataReq) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *SendPatrolDeviceRunDataReq) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *SendPatrolDeviceRunDataReq) GetItems() []*PatrolDeviceRunData {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+type SendPatrolDeviceRunDataRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendPatrolDeviceRunDataRes) Reset() {
+	*x = SendPatrolDeviceRunDataRes{}
+	mi := &file_ispagent_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendPatrolDeviceRunDataRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendPatrolDeviceRunDataRes) ProtoMessage() {}
+
+func (x *SendPatrolDeviceRunDataRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendPatrolDeviceRunDataRes.ProtoReflect.Descriptor instead.
+func (*SendPatrolDeviceRunDataRes) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{6}
+}
+
 // PatrolDeviceStatusData 巡视装置状态数据
 type PatrolDeviceStatusData struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
@@ -417,7 +498,7 @@ type PatrolDeviceStatusData struct {
 
 func (x *PatrolDeviceStatusData) Reset() {
 	*x = PatrolDeviceStatusData{}
-	mi := &file_ispagent_proto_msgTypes[5]
+	mi := &file_ispagent_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -429,7 +510,7 @@ func (x *PatrolDeviceStatusData) String() string {
 func (*PatrolDeviceStatusData) ProtoMessage() {}
 
 func (x *PatrolDeviceStatusData) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[5]
+	mi := &file_ispagent_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -442,7 +523,7 @@ func (x *PatrolDeviceStatusData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatrolDeviceStatusData.ProtoReflect.Descriptor instead.
 func (*PatrolDeviceStatusData) Descriptor() ([]byte, []int) {
-	return file_ispagent_proto_rawDescGZIP(), []int{5}
+	return file_ispagent_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PatrolDeviceStatusData) GetPatrolDeviceName() string {
@@ -487,6 +568,261 @@ func (x *PatrolDeviceStatusData) GetUnit() string {
 	return ""
 }
 
+// SendPatrolDeviceStatusDataReq 巡视装置状态数据上报
+type SendPatrolDeviceStatusDataReq struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	Code          string                    `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"` // 目标对象唯一标识（可为空）
+	Items         []*PatrolDeviceStatusData `protobuf:"bytes,2,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendPatrolDeviceStatusDataReq) Reset() {
+	*x = SendPatrolDeviceStatusDataReq{}
+	mi := &file_ispagent_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendPatrolDeviceStatusDataReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendPatrolDeviceStatusDataReq) ProtoMessage() {}
+
+func (x *SendPatrolDeviceStatusDataReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendPatrolDeviceStatusDataReq.ProtoReflect.Descriptor instead.
+func (*SendPatrolDeviceStatusDataReq) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SendPatrolDeviceStatusDataReq) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *SendPatrolDeviceStatusDataReq) GetItems() []*PatrolDeviceStatusData {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+type SendPatrolDeviceStatusDataRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendPatrolDeviceStatusDataRes) Reset() {
+	*x = SendPatrolDeviceStatusDataRes{}
+	mi := &file_ispagent_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendPatrolDeviceStatusDataRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendPatrolDeviceStatusDataRes) ProtoMessage() {}
+
+func (x *SendPatrolDeviceStatusDataRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendPatrolDeviceStatusDataRes.ProtoReflect.Descriptor instead.
+func (*SendPatrolDeviceStatusDataRes) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{9}
+}
+
+// PatrolDeviceCoordinate 巡视装置坐标（表 O.45）
+type PatrolDeviceCoordinate struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	PatrolDeviceName    string                 `protobuf:"bytes,1,opt,name=patrol_device_name,json=patrolDeviceName,proto3" json:"patrol_device_name,omitempty"`        // 巡视装置名称
+	PatrolDeviceCode    string                 `protobuf:"bytes,2,opt,name=patrol_device_code,json=patrolDeviceCode,proto3" json:"patrol_device_code,omitempty"`        // 巡视装置编码
+	CoordinatePixel     string                 `protobuf:"bytes,3,opt,name=coordinate_pixel,json=coordinatePixel,proto3" json:"coordinate_pixel,omitempty"`             // 格式 x,y,z,a（地图坐标 + 航向角）
+	CoordinateGeography string                 `protobuf:"bytes,4,opt,name=coordinate_geography,json=coordinateGeography,proto3" json:"coordinate_geography,omitempty"` // 格式 x,y（经纬度）
+	TaskPatrolledId     string                 `protobuf:"bytes,5,opt,name=task_patrolled_id,json=taskPatrolledId,proto3" json:"task_patrolled_id,omitempty"`           // 巡视任务执行ID，无巡视任务时可为空
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *PatrolDeviceCoordinate) Reset() {
+	*x = PatrolDeviceCoordinate{}
+	mi := &file_ispagent_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PatrolDeviceCoordinate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PatrolDeviceCoordinate) ProtoMessage() {}
+
+func (x *PatrolDeviceCoordinate) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PatrolDeviceCoordinate.ProtoReflect.Descriptor instead.
+func (*PatrolDeviceCoordinate) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *PatrolDeviceCoordinate) GetPatrolDeviceName() string {
+	if x != nil {
+		return x.PatrolDeviceName
+	}
+	return ""
+}
+
+func (x *PatrolDeviceCoordinate) GetPatrolDeviceCode() string {
+	if x != nil {
+		return x.PatrolDeviceCode
+	}
+	return ""
+}
+
+func (x *PatrolDeviceCoordinate) GetCoordinatePixel() string {
+	if x != nil {
+		return x.CoordinatePixel
+	}
+	return ""
+}
+
+func (x *PatrolDeviceCoordinate) GetCoordinateGeography() string {
+	if x != nil {
+		return x.CoordinateGeography
+	}
+	return ""
+}
+
+func (x *PatrolDeviceCoordinate) GetTaskPatrolledId() string {
+	if x != nil {
+		return x.TaskPatrolledId
+	}
+	return ""
+}
+
+// SendPatrolDeviceCoordinatesReq 巡视装置坐标上报
+type SendPatrolDeviceCoordinatesReq struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	Code          string                    `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"` // 目标对象唯一标识（可为空）
+	Items         []*PatrolDeviceCoordinate `protobuf:"bytes,2,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendPatrolDeviceCoordinatesReq) Reset() {
+	*x = SendPatrolDeviceCoordinatesReq{}
+	mi := &file_ispagent_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendPatrolDeviceCoordinatesReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendPatrolDeviceCoordinatesReq) ProtoMessage() {}
+
+func (x *SendPatrolDeviceCoordinatesReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendPatrolDeviceCoordinatesReq.ProtoReflect.Descriptor instead.
+func (*SendPatrolDeviceCoordinatesReq) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *SendPatrolDeviceCoordinatesReq) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *SendPatrolDeviceCoordinatesReq) GetItems() []*PatrolDeviceCoordinate {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+type SendPatrolDeviceCoordinatesRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendPatrolDeviceCoordinatesRes) Reset() {
+	*x = SendPatrolDeviceCoordinatesRes{}
+	mi := &file_ispagent_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendPatrolDeviceCoordinatesRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendPatrolDeviceCoordinatesRes) ProtoMessage() {}
+
+func (x *SendPatrolDeviceCoordinatesRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendPatrolDeviceCoordinatesRes.ProtoReflect.Descriptor instead.
+func (*SendPatrolDeviceCoordinatesRes) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{12}
+}
+
 // DroneNestRunData 无人机机巢运行数据（表 O.40）
 type DroneNestRunData struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -503,7 +839,7 @@ type DroneNestRunData struct {
 
 func (x *DroneNestRunData) Reset() {
 	*x = DroneNestRunData{}
-	mi := &file_ispagent_proto_msgTypes[6]
+	mi := &file_ispagent_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -515,7 +851,7 @@ func (x *DroneNestRunData) String() string {
 func (*DroneNestRunData) ProtoMessage() {}
 
 func (x *DroneNestRunData) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[6]
+	mi := &file_ispagent_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -528,7 +864,7 @@ func (x *DroneNestRunData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DroneNestRunData.ProtoReflect.Descriptor instead.
 func (*DroneNestRunData) Descriptor() ([]byte, []int) {
-	return file_ispagent_proto_rawDescGZIP(), []int{6}
+	return file_ispagent_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DroneNestRunData) GetNestName() string {
@@ -578,366 +914,6 @@ func (x *DroneNestRunData) GetUnit() string {
 		return x.Unit
 	}
 	return ""
-}
-
-// EnvData 环境/微气象数据（表 J.41）
-type EnvData struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	PatrolDeviceName string                 `protobuf:"bytes,1,opt,name=patrol_device_name,json=patrolDeviceName,proto3" json:"patrol_device_name,omitempty"` // 巡视装置名称，环境采集装置属于巡视装置时填写
-	PatrolDeviceCode string                 `protobuf:"bytes,2,opt,name=patrol_device_code,json=patrolDeviceCode,proto3" json:"patrol_device_code,omitempty"` // 巡视装置编码，环境采集装置属于巡视装置时填写
-	Time             string                 `protobuf:"bytes,3,opt,name=time,proto3" json:"time,omitempty"`                                                   // 时间
-	Type             string                 `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`                                                   // 1=环境温度, 2=环境湿度, 3=风速, 4=雨量, 5=风向, 6=气压, 7=氧气, 8=SF6
-	Value            string                 `protobuf:"bytes,5,opt,name=value,proto3" json:"value,omitempty"`
-	ValueUnit        string                 `protobuf:"bytes,6,opt,name=value_unit,json=valueUnit,proto3" json:"value_unit,omitempty"` // 值带单位
-	Unit             string                 `protobuf:"bytes,7,opt,name=unit,proto3" json:"unit,omitempty"`                            // 单位
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *EnvData) Reset() {
-	*x = EnvData{}
-	mi := &file_ispagent_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EnvData) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EnvData) ProtoMessage() {}
-
-func (x *EnvData) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EnvData.ProtoReflect.Descriptor instead.
-func (*EnvData) Descriptor() ([]byte, []int) {
-	return file_ispagent_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *EnvData) GetPatrolDeviceName() string {
-	if x != nil {
-		return x.PatrolDeviceName
-	}
-	return ""
-}
-
-func (x *EnvData) GetPatrolDeviceCode() string {
-	if x != nil {
-		return x.PatrolDeviceCode
-	}
-	return ""
-}
-
-func (x *EnvData) GetTime() string {
-	if x != nil {
-		return x.Time
-	}
-	return ""
-}
-
-func (x *EnvData) GetType() string {
-	if x != nil {
-		return x.Type
-	}
-	return ""
-}
-
-func (x *EnvData) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-func (x *EnvData) GetValueUnit() string {
-	if x != nil {
-		return x.ValueUnit
-	}
-	return ""
-}
-
-func (x *EnvData) GetUnit() string {
-	if x != nil {
-		return x.Unit
-	}
-	return ""
-}
-
-// SendPatrolDeviceCoordinatesReq 巡视装置坐标上报
-type SendPatrolDeviceCoordinatesReq struct {
-	state         protoimpl.MessageState    `protogen:"open.v1"`
-	Code          string                    `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"` // 目标对象唯一标识（可为空）
-	Items         []*PatrolDeviceCoordinate `protobuf:"bytes,2,rep,name=items,proto3" json:"items,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SendPatrolDeviceCoordinatesReq) Reset() {
-	*x = SendPatrolDeviceCoordinatesReq{}
-	mi := &file_ispagent_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SendPatrolDeviceCoordinatesReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SendPatrolDeviceCoordinatesReq) ProtoMessage() {}
-
-func (x *SendPatrolDeviceCoordinatesReq) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SendPatrolDeviceCoordinatesReq.ProtoReflect.Descriptor instead.
-func (*SendPatrolDeviceCoordinatesReq) Descriptor() ([]byte, []int) {
-	return file_ispagent_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *SendPatrolDeviceCoordinatesReq) GetCode() string {
-	if x != nil {
-		return x.Code
-	}
-	return ""
-}
-
-func (x *SendPatrolDeviceCoordinatesReq) GetItems() []*PatrolDeviceCoordinate {
-	if x != nil {
-		return x.Items
-	}
-	return nil
-}
-
-type SendPatrolDeviceCoordinatesRes struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SendPatrolDeviceCoordinatesRes) Reset() {
-	*x = SendPatrolDeviceCoordinatesRes{}
-	mi := &file_ispagent_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SendPatrolDeviceCoordinatesRes) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SendPatrolDeviceCoordinatesRes) ProtoMessage() {}
-
-func (x *SendPatrolDeviceCoordinatesRes) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SendPatrolDeviceCoordinatesRes.ProtoReflect.Descriptor instead.
-func (*SendPatrolDeviceCoordinatesRes) Descriptor() ([]byte, []int) {
-	return file_ispagent_proto_rawDescGZIP(), []int{9}
-}
-
-// SendPatrolDeviceRunDataReq 巡视装置运行数据上报
-type SendPatrolDeviceRunDataReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"` // 目标对象唯一标识（可为空）
-	Items         []*PatrolDeviceRunData `protobuf:"bytes,2,rep,name=items,proto3" json:"items,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SendPatrolDeviceRunDataReq) Reset() {
-	*x = SendPatrolDeviceRunDataReq{}
-	mi := &file_ispagent_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SendPatrolDeviceRunDataReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SendPatrolDeviceRunDataReq) ProtoMessage() {}
-
-func (x *SendPatrolDeviceRunDataReq) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SendPatrolDeviceRunDataReq.ProtoReflect.Descriptor instead.
-func (*SendPatrolDeviceRunDataReq) Descriptor() ([]byte, []int) {
-	return file_ispagent_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *SendPatrolDeviceRunDataReq) GetCode() string {
-	if x != nil {
-		return x.Code
-	}
-	return ""
-}
-
-func (x *SendPatrolDeviceRunDataReq) GetItems() []*PatrolDeviceRunData {
-	if x != nil {
-		return x.Items
-	}
-	return nil
-}
-
-type SendPatrolDeviceRunDataRes struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SendPatrolDeviceRunDataRes) Reset() {
-	*x = SendPatrolDeviceRunDataRes{}
-	mi := &file_ispagent_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SendPatrolDeviceRunDataRes) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SendPatrolDeviceRunDataRes) ProtoMessage() {}
-
-func (x *SendPatrolDeviceRunDataRes) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SendPatrolDeviceRunDataRes.ProtoReflect.Descriptor instead.
-func (*SendPatrolDeviceRunDataRes) Descriptor() ([]byte, []int) {
-	return file_ispagent_proto_rawDescGZIP(), []int{11}
-}
-
-// SendPatrolDeviceStatusDataReq 巡视装置状态数据上报
-type SendPatrolDeviceStatusDataReq struct {
-	state         protoimpl.MessageState    `protogen:"open.v1"`
-	Code          string                    `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"` // 目标对象唯一标识（可为空）
-	Items         []*PatrolDeviceStatusData `protobuf:"bytes,2,rep,name=items,proto3" json:"items,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SendPatrolDeviceStatusDataReq) Reset() {
-	*x = SendPatrolDeviceStatusDataReq{}
-	mi := &file_ispagent_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SendPatrolDeviceStatusDataReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SendPatrolDeviceStatusDataReq) ProtoMessage() {}
-
-func (x *SendPatrolDeviceStatusDataReq) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SendPatrolDeviceStatusDataReq.ProtoReflect.Descriptor instead.
-func (*SendPatrolDeviceStatusDataReq) Descriptor() ([]byte, []int) {
-	return file_ispagent_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *SendPatrolDeviceStatusDataReq) GetCode() string {
-	if x != nil {
-		return x.Code
-	}
-	return ""
-}
-
-func (x *SendPatrolDeviceStatusDataReq) GetItems() []*PatrolDeviceStatusData {
-	if x != nil {
-		return x.Items
-	}
-	return nil
-}
-
-type SendPatrolDeviceStatusDataRes struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SendPatrolDeviceStatusDataRes) Reset() {
-	*x = SendPatrolDeviceStatusDataRes{}
-	mi := &file_ispagent_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SendPatrolDeviceStatusDataRes) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SendPatrolDeviceStatusDataRes) ProtoMessage() {}
-
-func (x *SendPatrolDeviceStatusDataRes) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SendPatrolDeviceStatusDataRes.ProtoReflect.Descriptor instead.
-func (*SendPatrolDeviceStatusDataRes) Descriptor() ([]byte, []int) {
-	return file_ispagent_proto_rawDescGZIP(), []int{13}
 }
 
 // SendDroneNestRunDataReq 无人机机巢运行数据上报
@@ -1029,6 +1005,99 @@ func (*SendDroneNestRunDataRes) Descriptor() ([]byte, []int) {
 	return file_ispagent_proto_rawDescGZIP(), []int{15}
 }
 
+// EnvData 环境/微气象数据（表 J.41）
+type EnvData struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	PatrolDeviceName string                 `protobuf:"bytes,1,opt,name=patrol_device_name,json=patrolDeviceName,proto3" json:"patrol_device_name,omitempty"` // 巡视装置名称，环境采集装置属于巡视装置时填写
+	PatrolDeviceCode string                 `protobuf:"bytes,2,opt,name=patrol_device_code,json=patrolDeviceCode,proto3" json:"patrol_device_code,omitempty"` // 巡视装置编码，环境采集装置属于巡视装置时填写
+	Time             string                 `protobuf:"bytes,3,opt,name=time,proto3" json:"time,omitempty"`                                                   // 时间
+	Type             string                 `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`                                                   // 1=环境温度, 2=环境湿度, 3=风速, 4=雨量, 5=风向, 6=气压, 7=氧气, 8=SF6
+	Value            string                 `protobuf:"bytes,5,opt,name=value,proto3" json:"value,omitempty"`
+	ValueUnit        string                 `protobuf:"bytes,6,opt,name=value_unit,json=valueUnit,proto3" json:"value_unit,omitempty"` // 值带单位
+	Unit             string                 `protobuf:"bytes,7,opt,name=unit,proto3" json:"unit,omitempty"`                            // 单位
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *EnvData) Reset() {
+	*x = EnvData{}
+	mi := &file_ispagent_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EnvData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EnvData) ProtoMessage() {}
+
+func (x *EnvData) ProtoReflect() protoreflect.Message {
+	mi := &file_ispagent_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EnvData.ProtoReflect.Descriptor instead.
+func (*EnvData) Descriptor() ([]byte, []int) {
+	return file_ispagent_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *EnvData) GetPatrolDeviceName() string {
+	if x != nil {
+		return x.PatrolDeviceName
+	}
+	return ""
+}
+
+func (x *EnvData) GetPatrolDeviceCode() string {
+	if x != nil {
+		return x.PatrolDeviceCode
+	}
+	return ""
+}
+
+func (x *EnvData) GetTime() string {
+	if x != nil {
+		return x.Time
+	}
+	return ""
+}
+
+func (x *EnvData) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *EnvData) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+func (x *EnvData) GetValueUnit() string {
+	if x != nil {
+		return x.ValueUnit
+	}
+	return ""
+}
+
+func (x *EnvData) GetUnit() string {
+	if x != nil {
+		return x.Unit
+	}
+	return ""
+}
+
 // SendEnvDataReq 环境/微气象数据上报
 type SendEnvDataReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1040,7 +1109,7 @@ type SendEnvDataReq struct {
 
 func (x *SendEnvDataReq) Reset() {
 	*x = SendEnvDataReq{}
-	mi := &file_ispagent_proto_msgTypes[16]
+	mi := &file_ispagent_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1052,7 +1121,7 @@ func (x *SendEnvDataReq) String() string {
 func (*SendEnvDataReq) ProtoMessage() {}
 
 func (x *SendEnvDataReq) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[16]
+	mi := &file_ispagent_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1065,7 +1134,7 @@ func (x *SendEnvDataReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendEnvDataReq.ProtoReflect.Descriptor instead.
 func (*SendEnvDataReq) Descriptor() ([]byte, []int) {
-	return file_ispagent_proto_rawDescGZIP(), []int{16}
+	return file_ispagent_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *SendEnvDataReq) GetCode() string {
@@ -1090,7 +1159,7 @@ type SendEnvDataRes struct {
 
 func (x *SendEnvDataRes) Reset() {
 	*x = SendEnvDataRes{}
-	mi := &file_ispagent_proto_msgTypes[17]
+	mi := &file_ispagent_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1102,7 +1171,7 @@ func (x *SendEnvDataRes) String() string {
 func (*SendEnvDataRes) ProtoMessage() {}
 
 func (x *SendEnvDataRes) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[17]
+	mi := &file_ispagent_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1115,76 +1184,7 @@ func (x *SendEnvDataRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendEnvDataRes.ProtoReflect.Descriptor instead.
 func (*SendEnvDataRes) Descriptor() ([]byte, []int) {
-	return file_ispagent_proto_rawDescGZIP(), []int{17}
-}
-
-// CommandRes 指令响应（透传解析后的 SIP 回包）
-type CommandRes struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"` // type=251 时表示应答成功，其他类型默认 true
-	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`        // 响应状态码（200/500/100/400）
-	Items         []*Item                `protobuf:"bytes,3,rep,name=items,proto3" json:"items,omitempty"`      // 解析后的 Item 列表
-	RawXml        string                 `protobuf:"bytes,4,opt,name=rawXml,proto3" json:"rawXml,omitempty"`    // 原始 XML（诊断用）
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CommandRes) Reset() {
-	*x = CommandRes{}
-	mi := &file_ispagent_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CommandRes) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CommandRes) ProtoMessage() {}
-
-func (x *CommandRes) ProtoReflect() protoreflect.Message {
-	mi := &file_ispagent_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CommandRes.ProtoReflect.Descriptor instead.
-func (*CommandRes) Descriptor() ([]byte, []int) {
 	return file_ispagent_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *CommandRes) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *CommandRes) GetCode() string {
-	if x != nil {
-		return x.Code
-	}
-	return ""
-}
-
-func (x *CommandRes) GetItems() []*Item {
-	if x != nil {
-		return x.Items
-	}
-	return nil
-}
-
-func (x *CommandRes) GetRawXml() string {
-	if x != nil {
-		return x.RawXml
-	}
-	return ""
 }
 
 // ListTaskExecutionsReq 查询任务未来执行时间
@@ -2173,16 +2173,16 @@ const file_ispagent_proto_rawDesc = "" +
 	"\x04type\x18\x01 \x01(\x05R\x04type\x12\x18\n" +
 	"\acommand\x18\x02 \x01(\x05R\acommand\x12\x12\n" +
 	"\x04code\x18\x03 \x01(\tR\x04code\x12$\n" +
-	"\x05items\x18\x04 \x03(\v2\x0e.ispagent.ItemR\x05items\"J\n" +
+	"\x05items\x18\x04 \x03(\v2\x0e.ispagent.ItemR\x05items\"x\n" +
+	"\n" +
+	"CommandRes\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\x12$\n" +
+	"\x05items\x18\x03 \x03(\v2\x0e.ispagent.ItemR\x05items\x12\x16\n" +
+	"\x06rawXml\x18\x04 \x01(\tR\x06rawXml\"J\n" +
 	"\x0ePatrolItemsReq\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12$\n" +
-	"\x05items\x18\x02 \x03(\v2\x0e.ispagent.ItemR\x05items\"\xfe\x01\n" +
-	"\x16PatrolDeviceCoordinate\x12,\n" +
-	"\x12patrol_device_name\x18\x01 \x01(\tR\x10patrolDeviceName\x12,\n" +
-	"\x12patrol_device_code\x18\x02 \x01(\tR\x10patrolDeviceCode\x12)\n" +
-	"\x10coordinate_pixel\x18\x03 \x01(\tR\x0fcoordinatePixel\x121\n" +
-	"\x14coordinate_geography\x18\x04 \x01(\tR\x13coordinateGeography\x12*\n" +
-	"\x11task_patrolled_id\x18\x05 \x01(\tR\x0ftaskPatrolledId\"\xce\x01\n" +
+	"\x05items\x18\x02 \x03(\v2\x0e.ispagent.ItemR\x05items\"\xce\x01\n" +
 	"\x13PatrolDeviceRunData\x12,\n" +
 	"\x12patrol_device_name\x18\x01 \x01(\tR\x10patrolDeviceName\x12,\n" +
 	"\x12patrol_device_code\x18\x02 \x01(\tR\x10patrolDeviceCode\x12\x12\n" +
@@ -2190,7 +2190,11 @@ const file_ispagent_proto_rawDesc = "" +
 	"\x05value\x18\x04 \x01(\tR\x05value\x12\x1d\n" +
 	"\n" +
 	"value_unit\x18\x05 \x01(\tR\tvalueUnit\x12\x12\n" +
-	"\x04unit\x18\x06 \x01(\tR\x04unit\"\xd1\x01\n" +
+	"\x04unit\x18\x06 \x01(\tR\x04unit\"e\n" +
+	"\x1aSendPatrolDeviceRunDataReq\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x123\n" +
+	"\x05items\x18\x02 \x03(\v2\x1d.ispagent.PatrolDeviceRunDataR\x05items\"\x1c\n" +
+	"\x1aSendPatrolDeviceRunDataRes\"\xd1\x01\n" +
 	"\x16PatrolDeviceStatusData\x12,\n" +
 	"\x12patrol_device_name\x18\x01 \x01(\tR\x10patrolDeviceName\x12,\n" +
 	"\x12patrol_device_code\x18\x02 \x01(\tR\x10patrolDeviceCode\x12\x12\n" +
@@ -2198,7 +2202,21 @@ const file_ispagent_proto_rawDesc = "" +
 	"\x05value\x18\x04 \x01(\tR\x05value\x12\x1d\n" +
 	"\n" +
 	"value_unit\x18\x05 \x01(\tR\tvalueUnit\x12\x12\n" +
-	"\x04unit\x18\x06 \x01(\tR\x04unit\"\xc6\x01\n" +
+	"\x04unit\x18\x06 \x01(\tR\x04unit\"k\n" +
+	"\x1dSendPatrolDeviceStatusDataReq\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x126\n" +
+	"\x05items\x18\x02 \x03(\v2 .ispagent.PatrolDeviceStatusDataR\x05items\"\x1f\n" +
+	"\x1dSendPatrolDeviceStatusDataRes\"\xfe\x01\n" +
+	"\x16PatrolDeviceCoordinate\x12,\n" +
+	"\x12patrol_device_name\x18\x01 \x01(\tR\x10patrolDeviceName\x12,\n" +
+	"\x12patrol_device_code\x18\x02 \x01(\tR\x10patrolDeviceCode\x12)\n" +
+	"\x10coordinate_pixel\x18\x03 \x01(\tR\x0fcoordinatePixel\x121\n" +
+	"\x14coordinate_geography\x18\x04 \x01(\tR\x13coordinateGeography\x12*\n" +
+	"\x11task_patrolled_id\x18\x05 \x01(\tR\x0ftaskPatrolledId\"l\n" +
+	"\x1eSendPatrolDeviceCoordinatesReq\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x126\n" +
+	"\x05items\x18\x02 \x03(\v2 .ispagent.PatrolDeviceCoordinateR\x05items\" \n" +
+	"\x1eSendPatrolDeviceCoordinatesRes\"\xc6\x01\n" +
 	"\x10DroneNestRunData\x12\x1b\n" +
 	"\tnest_name\x18\x01 \x01(\tR\bnestName\x12\x1b\n" +
 	"\tnest_code\x18\x02 \x01(\tR\bnestCode\x12\x1b\n" +
@@ -2207,7 +2225,11 @@ const file_ispagent_proto_rawDesc = "" +
 	"\x05value\x18\x05 \x01(\tR\x05value\x12\x1d\n" +
 	"\n" +
 	"value_unit\x18\x06 \x01(\tR\tvalueUnit\x12\x12\n" +
-	"\x04unit\x18\a \x01(\tR\x04unit\"\xd6\x01\n" +
+	"\x04unit\x18\a \x01(\tR\x04unit\"_\n" +
+	"\x17SendDroneNestRunDataReq\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x120\n" +
+	"\x05items\x18\x02 \x03(\v2\x1a.ispagent.DroneNestRunDataR\x05items\"\x19\n" +
+	"\x17SendDroneNestRunDataRes\"\xd6\x01\n" +
 	"\aEnvData\x12,\n" +
 	"\x12patrol_device_name\x18\x01 \x01(\tR\x10patrolDeviceName\x12,\n" +
 	"\x12patrol_device_code\x18\x02 \x01(\tR\x10patrolDeviceCode\x12\x12\n" +
@@ -2216,33 +2238,11 @@ const file_ispagent_proto_rawDesc = "" +
 	"\x05value\x18\x05 \x01(\tR\x05value\x12\x1d\n" +
 	"\n" +
 	"value_unit\x18\x06 \x01(\tR\tvalueUnit\x12\x12\n" +
-	"\x04unit\x18\a \x01(\tR\x04unit\"l\n" +
-	"\x1eSendPatrolDeviceCoordinatesReq\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code\x126\n" +
-	"\x05items\x18\x02 \x03(\v2 .ispagent.PatrolDeviceCoordinateR\x05items\" \n" +
-	"\x1eSendPatrolDeviceCoordinatesRes\"e\n" +
-	"\x1aSendPatrolDeviceRunDataReq\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code\x123\n" +
-	"\x05items\x18\x02 \x03(\v2\x1d.ispagent.PatrolDeviceRunDataR\x05items\"\x1c\n" +
-	"\x1aSendPatrolDeviceRunDataRes\"k\n" +
-	"\x1dSendPatrolDeviceStatusDataReq\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code\x126\n" +
-	"\x05items\x18\x02 \x03(\v2 .ispagent.PatrolDeviceStatusDataR\x05items\"\x1f\n" +
-	"\x1dSendPatrolDeviceStatusDataRes\"_\n" +
-	"\x17SendDroneNestRunDataReq\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code\x120\n" +
-	"\x05items\x18\x02 \x03(\v2\x1a.ispagent.DroneNestRunDataR\x05items\"\x19\n" +
-	"\x17SendDroneNestRunDataRes\"M\n" +
+	"\x04unit\x18\a \x01(\tR\x04unit\"M\n" +
 	"\x0eSendEnvDataReq\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12'\n" +
 	"\x05items\x18\x02 \x03(\v2\x11.ispagent.EnvDataR\x05items\"\x10\n" +
-	"\x0eSendEnvDataRes\"x\n" +
-	"\n" +
-	"CommandRes\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\tR\x04code\x12$\n" +
-	"\x05items\x18\x03 \x03(\v2\x0e.ispagent.ItemR\x05items\x12\x16\n" +
-	"\x06rawXml\x18\x04 \x01(\tR\x06rawXml\"J\n" +
+	"\x0eSendEnvDataRes\"J\n" +
 	"\x15ListTaskExecutionsReq\x12\x1b\n" +
 	"\ttask_code\x18\x01 \x01(\tR\btaskCode\x12\x14\n" +
 	"\x05count\x18\x02 \x01(\x05R\x05count\"\x8d\x01\n" +
@@ -2367,23 +2367,23 @@ var file_ispagent_proto_goTypes = []any{
 	(EntryType)(0),                         // 0: ispagent.EntryType
 	(*Item)(nil),                           // 1: ispagent.Item
 	(*CommandReq)(nil),                     // 2: ispagent.CommandReq
-	(*PatrolItemsReq)(nil),                 // 3: ispagent.PatrolItemsReq
-	(*PatrolDeviceCoordinate)(nil),         // 4: ispagent.PatrolDeviceCoordinate
+	(*CommandRes)(nil),                     // 3: ispagent.CommandRes
+	(*PatrolItemsReq)(nil),                 // 4: ispagent.PatrolItemsReq
 	(*PatrolDeviceRunData)(nil),            // 5: ispagent.PatrolDeviceRunData
-	(*PatrolDeviceStatusData)(nil),         // 6: ispagent.PatrolDeviceStatusData
-	(*DroneNestRunData)(nil),               // 7: ispagent.DroneNestRunData
-	(*EnvData)(nil),                        // 8: ispagent.EnvData
-	(*SendPatrolDeviceCoordinatesReq)(nil), // 9: ispagent.SendPatrolDeviceCoordinatesReq
-	(*SendPatrolDeviceCoordinatesRes)(nil), // 10: ispagent.SendPatrolDeviceCoordinatesRes
-	(*SendPatrolDeviceRunDataReq)(nil),     // 11: ispagent.SendPatrolDeviceRunDataReq
-	(*SendPatrolDeviceRunDataRes)(nil),     // 12: ispagent.SendPatrolDeviceRunDataRes
-	(*SendPatrolDeviceStatusDataReq)(nil),  // 13: ispagent.SendPatrolDeviceStatusDataReq
-	(*SendPatrolDeviceStatusDataRes)(nil),  // 14: ispagent.SendPatrolDeviceStatusDataRes
+	(*SendPatrolDeviceRunDataReq)(nil),     // 6: ispagent.SendPatrolDeviceRunDataReq
+	(*SendPatrolDeviceRunDataRes)(nil),     // 7: ispagent.SendPatrolDeviceRunDataRes
+	(*PatrolDeviceStatusData)(nil),         // 8: ispagent.PatrolDeviceStatusData
+	(*SendPatrolDeviceStatusDataReq)(nil),  // 9: ispagent.SendPatrolDeviceStatusDataReq
+	(*SendPatrolDeviceStatusDataRes)(nil),  // 10: ispagent.SendPatrolDeviceStatusDataRes
+	(*PatrolDeviceCoordinate)(nil),         // 11: ispagent.PatrolDeviceCoordinate
+	(*SendPatrolDeviceCoordinatesReq)(nil), // 12: ispagent.SendPatrolDeviceCoordinatesReq
+	(*SendPatrolDeviceCoordinatesRes)(nil), // 13: ispagent.SendPatrolDeviceCoordinatesRes
+	(*DroneNestRunData)(nil),               // 14: ispagent.DroneNestRunData
 	(*SendDroneNestRunDataReq)(nil),        // 15: ispagent.SendDroneNestRunDataReq
 	(*SendDroneNestRunDataRes)(nil),        // 16: ispagent.SendDroneNestRunDataRes
-	(*SendEnvDataReq)(nil),                 // 17: ispagent.SendEnvDataReq
-	(*SendEnvDataRes)(nil),                 // 18: ispagent.SendEnvDataRes
-	(*CommandRes)(nil),                     // 19: ispagent.CommandRes
+	(*EnvData)(nil),                        // 17: ispagent.EnvData
+	(*SendEnvDataReq)(nil),                 // 18: ispagent.SendEnvDataReq
+	(*SendEnvDataRes)(nil),                 // 19: ispagent.SendEnvDataRes
 	(*ListTaskExecutionsReq)(nil),          // 20: ispagent.ListTaskExecutionsReq
 	(*ListTaskExecutionsRes)(nil),          // 21: ispagent.ListTaskExecutionsRes
 	(*ListTaskConfigsReq)(nil),             // 22: ispagent.ListTaskConfigsReq
@@ -2402,34 +2402,34 @@ var file_ispagent_proto_goTypes = []any{
 var file_ispagent_proto_depIdxs = []int32{
 	33, // 0: ispagent.Item.attributes:type_name -> ispagent.Item.AttributesEntry
 	1,  // 1: ispagent.CommandReq.items:type_name -> ispagent.Item
-	1,  // 2: ispagent.PatrolItemsReq.items:type_name -> ispagent.Item
-	4,  // 3: ispagent.SendPatrolDeviceCoordinatesReq.items:type_name -> ispagent.PatrolDeviceCoordinate
+	1,  // 2: ispagent.CommandRes.items:type_name -> ispagent.Item
+	1,  // 3: ispagent.PatrolItemsReq.items:type_name -> ispagent.Item
 	5,  // 4: ispagent.SendPatrolDeviceRunDataReq.items:type_name -> ispagent.PatrolDeviceRunData
-	6,  // 5: ispagent.SendPatrolDeviceStatusDataReq.items:type_name -> ispagent.PatrolDeviceStatusData
-	7,  // 6: ispagent.SendDroneNestRunDataReq.items:type_name -> ispagent.DroneNestRunData
-	8,  // 7: ispagent.SendEnvDataReq.items:type_name -> ispagent.EnvData
-	1,  // 8: ispagent.CommandRes.items:type_name -> ispagent.Item
+	8,  // 5: ispagent.SendPatrolDeviceStatusDataReq.items:type_name -> ispagent.PatrolDeviceStatusData
+	11, // 6: ispagent.SendPatrolDeviceCoordinatesReq.items:type_name -> ispagent.PatrolDeviceCoordinate
+	14, // 7: ispagent.SendDroneNestRunDataReq.items:type_name -> ispagent.DroneNestRunData
+	17, // 8: ispagent.SendEnvDataReq.items:type_name -> ispagent.EnvData
 	23, // 9: ispagent.ListTaskConfigsRes.items:type_name -> ispagent.TaskConfigItem
 	0,  // 10: ispagent.FTPSDirEntry.entry_type:type_name -> ispagent.EntryType
 	27, // 11: ispagent.ListFTPSDirectoryRes.entries:type_name -> ispagent.FTPSDirEntry
 	30, // 12: ispagent.ListReportIntervalsRes.categories:type_name -> ispagent.ReportCategoryInfo
 	2,  // 13: ispagent.IspAgent.ExecuteCommand:input_type -> ispagent.CommandReq
-	11, // 14: ispagent.IspAgent.SendPatrolDeviceRunData:input_type -> ispagent.SendPatrolDeviceRunDataReq
-	13, // 15: ispagent.IspAgent.SendPatrolDeviceStatusData:input_type -> ispagent.SendPatrolDeviceStatusDataReq
-	9,  // 16: ispagent.IspAgent.SendPatrolDeviceCoordinates:input_type -> ispagent.SendPatrolDeviceCoordinatesReq
+	6,  // 14: ispagent.IspAgent.SendPatrolDeviceRunData:input_type -> ispagent.SendPatrolDeviceRunDataReq
+	9,  // 15: ispagent.IspAgent.SendPatrolDeviceStatusData:input_type -> ispagent.SendPatrolDeviceStatusDataReq
+	12, // 16: ispagent.IspAgent.SendPatrolDeviceCoordinates:input_type -> ispagent.SendPatrolDeviceCoordinatesReq
 	15, // 17: ispagent.IspAgent.SendDroneNestRunData:input_type -> ispagent.SendDroneNestRunDataReq
-	17, // 18: ispagent.IspAgent.SendEnvData:input_type -> ispagent.SendEnvDataReq
+	18, // 18: ispagent.IspAgent.SendEnvData:input_type -> ispagent.SendEnvDataReq
 	20, // 19: ispagent.IspAgent.ListTaskExecutions:input_type -> ispagent.ListTaskExecutionsReq
 	22, // 20: ispagent.IspAgent.ListTaskConfigs:input_type -> ispagent.ListTaskConfigsReq
 	25, // 21: ispagent.IspAgent.TestFTPSUpload:input_type -> ispagent.TestFTPSUploadReq
 	28, // 22: ispagent.IspAgent.ListFTPSDirectory:input_type -> ispagent.ListFTPSDirectoryReq
 	31, // 23: ispagent.IspAgent.ListReportIntervals:input_type -> ispagent.ListReportIntervalsReq
-	19, // 24: ispagent.IspAgent.ExecuteCommand:output_type -> ispagent.CommandRes
-	12, // 25: ispagent.IspAgent.SendPatrolDeviceRunData:output_type -> ispagent.SendPatrolDeviceRunDataRes
-	14, // 26: ispagent.IspAgent.SendPatrolDeviceStatusData:output_type -> ispagent.SendPatrolDeviceStatusDataRes
-	10, // 27: ispagent.IspAgent.SendPatrolDeviceCoordinates:output_type -> ispagent.SendPatrolDeviceCoordinatesRes
+	3,  // 24: ispagent.IspAgent.ExecuteCommand:output_type -> ispagent.CommandRes
+	7,  // 25: ispagent.IspAgent.SendPatrolDeviceRunData:output_type -> ispagent.SendPatrolDeviceRunDataRes
+	10, // 26: ispagent.IspAgent.SendPatrolDeviceStatusData:output_type -> ispagent.SendPatrolDeviceStatusDataRes
+	13, // 27: ispagent.IspAgent.SendPatrolDeviceCoordinates:output_type -> ispagent.SendPatrolDeviceCoordinatesRes
 	16, // 28: ispagent.IspAgent.SendDroneNestRunData:output_type -> ispagent.SendDroneNestRunDataRes
-	18, // 29: ispagent.IspAgent.SendEnvData:output_type -> ispagent.SendEnvDataRes
+	19, // 29: ispagent.IspAgent.SendEnvData:output_type -> ispagent.SendEnvDataRes
 	21, // 30: ispagent.IspAgent.ListTaskExecutions:output_type -> ispagent.ListTaskExecutionsRes
 	24, // 31: ispagent.IspAgent.ListTaskConfigs:output_type -> ispagent.ListTaskConfigsRes
 	26, // 32: ispagent.IspAgent.TestFTPSUpload:output_type -> ispagent.TestFTPSUploadRes

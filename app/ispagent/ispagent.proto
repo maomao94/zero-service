@@ -4,6 +4,32 @@ package ispagent;
 
 option go_package = "./ispagent";
 
+
+service IspAgent {
+  // ExecuteCommand 通用指令透传（调用方指定 type/command）
+  rpc ExecuteCommand(CommandReq) returns(CommandRes);
+  // SendPatrolDeviceRunData 巡视装置运行数据上报（表 J.34）
+  rpc SendPatrolDeviceRunData(SendPatrolDeviceRunDataReq) returns(SendPatrolDeviceRunDataRes);
+  // SendPatrolDeviceStatusData 巡视装置状态数据上报
+  rpc SendPatrolDeviceStatusData(SendPatrolDeviceStatusDataReq) returns(SendPatrolDeviceStatusDataRes);
+  // SendPatrolDeviceCoordinates 巡视装置坐标上报（表 O.45）
+  rpc SendPatrolDeviceCoordinates(SendPatrolDeviceCoordinatesReq) returns(SendPatrolDeviceCoordinatesRes);
+  // SendDroneNestRunData 无人机机巢运行数据上报（表 O.40）
+  rpc SendDroneNestRunData(SendDroneNestRunDataReq) returns(SendDroneNestRunDataRes);
+  // SendEnvData 环境/微气象数据上报（表 J.41）
+  rpc SendEnvData(SendEnvDataReq) returns(SendEnvDataRes);
+  // ListTaskExecutions 查询任务未来执行时间（用于验证 rrule 配置）
+  rpc ListTaskExecutions(ListTaskExecutionsReq) returns(ListTaskExecutionsRes);
+  // ListTaskConfigs 任务配置分页查询
+  rpc ListTaskConfigs(ListTaskConfigsReq) returns(ListTaskConfigsRes);
+  // TestFTPSUpload 测试 FTPS 上传（上传 local/test.txt）
+  rpc TestFTPSUpload(TestFTPSUploadReq) returns(TestFTPSUploadRes);
+  // ListFTPSDirectory 列出 FTPS 远程目录文件列表
+  rpc ListFTPSDirectory(ListFTPSDirectoryReq) returns(ListFTPSDirectoryRes);
+  // ListReportIntervals 查询上报间隔配置
+  rpc ListReportIntervals(ListReportIntervalsReq) returns(ListReportIntervalsRes);
+}
+
 // Item 对应 XML <Item attr="value"/> 的动态属性映射
 message Item {
   map<string, string> attributes = 1;
@@ -17,19 +43,18 @@ message CommandReq {
   repeated Item items = 4;     // 业务数据
 }
 
+// CommandRes 指令响应（透传解析后的 SIP 回包）
+message CommandRes {
+  bool success = 1;            // type=251 时表示应答成功，其他类型默认 true
+  string code = 2;             // 响应状态码（200/500/100/400）
+  repeated Item items = 3;     // 解析后的 Item 列表
+  string rawXml = 4;           // 原始 XML（诊断用）
+}
+
 // PatrolItemsReq 特定巡视上报请求（type/command 固定，仅填 code + items）
 message PatrolItemsReq {
   string code = 1;             // 变电站编码
   repeated Item items = 2;     // 业务数据
-}
-
-// PatrolDeviceCoordinate 巡视装置坐标（表 O.45）
-message PatrolDeviceCoordinate {
-  string patrol_device_name = 1;   // 巡视装置名称
-  string patrol_device_code = 2;   // 巡视装置编码
-  string coordinate_pixel = 3;     // 格式 x,y,z,a（地图坐标 + 航向角）
-  string coordinate_geography = 4; // 格式 x,y（经纬度）
-  string task_patrolled_id = 5;    // 巡视任务执行ID，无巡视任务时可为空
 }
 
 // PatrolDeviceRunData 巡视装置运行数据（表 J.34）
@@ -42,6 +67,15 @@ message PatrolDeviceRunData {
   string unit = 6;
 }
 
+// SendPatrolDeviceRunDataReq 巡视装置运行数据上报
+message SendPatrolDeviceRunDataReq {
+  string code = 1;                           // 目标对象唯一标识（可为空）
+  repeated PatrolDeviceRunData items = 2;
+}
+
+message SendPatrolDeviceRunDataRes {
+}
+
 // PatrolDeviceStatusData 巡视装置状态数据
 message PatrolDeviceStatusData {
   string patrol_device_name = 1;   // 巡视装置名称
@@ -50,6 +84,33 @@ message PatrolDeviceStatusData {
   string value = 4;
   string value_unit = 5;
   string unit = 6;
+}
+
+// SendPatrolDeviceStatusDataReq 巡视装置状态数据上报
+message SendPatrolDeviceStatusDataReq {
+  string code = 1;                           // 目标对象唯一标识（可为空）
+  repeated PatrolDeviceStatusData items = 2;
+}
+
+message SendPatrolDeviceStatusDataRes {
+}
+
+// PatrolDeviceCoordinate 巡视装置坐标（表 O.45）
+message PatrolDeviceCoordinate {
+  string patrol_device_name = 1;   // 巡视装置名称
+  string patrol_device_code = 2;   // 巡视装置编码
+  string coordinate_pixel = 3;     // 格式 x,y,z,a（地图坐标 + 航向角）
+  string coordinate_geography = 4; // 格式 x,y（经纬度）
+  string task_patrolled_id = 5;    // 巡视任务执行ID，无巡视任务时可为空
+}
+
+// SendPatrolDeviceCoordinatesReq 巡视装置坐标上报
+message SendPatrolDeviceCoordinatesReq {
+  string code = 1;                           // 目标对象唯一标识（可为空）
+  repeated PatrolDeviceCoordinate items = 2;
+}
+
+message SendPatrolDeviceCoordinatesRes {
 }
 
 // DroneNestRunData 无人机机巢运行数据（表 O.40）
@@ -63,6 +124,15 @@ message DroneNestRunData {
   string unit = 7;          // 单位
 }
 
+// SendDroneNestRunDataReq 无人机机巢运行数据上报
+message SendDroneNestRunDataReq {
+  string code = 1;                           // 变电站编码
+  repeated DroneNestRunData items = 2;
+}
+
+message SendDroneNestRunDataRes {
+}
+
 // EnvData 环境/微气象数据（表 J.41）
 message EnvData {
   string patrol_device_name = 1;   // 巡视装置名称，环境采集装置属于巡视装置时填写
@@ -74,45 +144,6 @@ message EnvData {
   string unit = 7;                 // 单位
 }
 
-// SendPatrolDeviceCoordinatesReq 巡视装置坐标上报
-message SendPatrolDeviceCoordinatesReq {
-  string code = 1;                           // 目标对象唯一标识（可为空）
-  repeated PatrolDeviceCoordinate items = 2;
-}
-
-message SendPatrolDeviceCoordinatesRes {
-}
-
-
-// SendPatrolDeviceRunDataReq 巡视装置运行数据上报
-message SendPatrolDeviceRunDataReq {
-  string code = 1;                           // 目标对象唯一标识（可为空）
-  repeated PatrolDeviceRunData items = 2;
-}
-
-message SendPatrolDeviceRunDataRes {
-}
-
-// SendPatrolDeviceStatusDataReq 巡视装置状态数据上报
-message SendPatrolDeviceStatusDataReq {
-  string code = 1;                           // 目标对象唯一标识（可为空）
-  repeated PatrolDeviceStatusData items = 2;
-}
-
-message SendPatrolDeviceStatusDataRes {
-}
-
-
-// SendDroneNestRunDataReq 无人机机巢运行数据上报
-message SendDroneNestRunDataReq {
-  string code = 1;                           // 变电站编码
-  repeated DroneNestRunData items = 2;
-}
-
-message SendDroneNestRunDataRes {
-}
-
-
 // SendEnvDataReq 环境/微气象数据上报
 message SendEnvDataReq {
   string code = 1;                           // 变电站编码
@@ -120,15 +151,6 @@ message SendEnvDataReq {
 }
 
 message SendEnvDataRes {
-}
-
-
-// CommandRes 指令响应（透传解析后的 SIP 回包）
-message CommandRes {
-  bool success = 1;            // type=251 时表示应答成功，其他类型默认 true
-  string code = 2;             // 响应状态码（200/500/100/400）
-  repeated Item items = 3;     // 解析后的 Item 列表
-  string rawXml = 4;           // 原始 XML（诊断用）
 }
 
 // ListTaskExecutionsReq 查询任务未来执行时间
@@ -203,6 +225,13 @@ message TestFTPSUploadRes {
   string error = 3;       // 错误信息
 }
 
+enum EntryType {
+  ENTRY_TYPE_UNSPECIFIED = 0;
+  ENTRY_TYPE_FILE = 1;
+  ENTRY_TYPE_FOLDER = 2;
+  ENTRY_TYPE_LINK = 3;
+}
+
 // FTPSDirEntry FTPS 目录条目
 message FTPSDirEntry {
   string name = 1;          // 文件/目录名
@@ -210,13 +239,6 @@ message FTPSDirEntry {
   uint64 size = 3;          // 文件大小（目录为 0）
   EntryType entry_type = 4; // 条目类型
   string size_display = 5;  // 格式化大小（如 "1.2 GB"、"345 KB"）
-}
-
-enum EntryType {
-  ENTRY_TYPE_UNSPECIFIED = 0;
-  ENTRY_TYPE_FILE = 1;
-  ENTRY_TYPE_FOLDER = 2;
-  ENTRY_TYPE_LINK = 3;
 }
 
 // ListFTPSDirectoryReq FTPS 目录列表请求
@@ -248,29 +270,4 @@ message ListReportIntervalsReq {}
 // ListReportIntervalsRes 上报间隔查询响应
 message ListReportIntervalsRes {
   repeated ReportCategoryInfo categories = 1;       // 所有已注册上报类别完整信息
-}
-
-service IspAgent {
-  // ExecuteCommand 通用指令透传（调用方指定 type/command）
-  rpc ExecuteCommand(CommandReq) returns(CommandRes);
-  // SendPatrolDeviceRunData 巡视装置运行数据上报（表 J.34）
-  rpc SendPatrolDeviceRunData(SendPatrolDeviceRunDataReq) returns(SendPatrolDeviceRunDataRes);
-  // SendPatrolDeviceStatusData 巡视装置状态数据上报
-  rpc SendPatrolDeviceStatusData(SendPatrolDeviceStatusDataReq) returns(SendPatrolDeviceStatusDataRes);
-  // SendPatrolDeviceCoordinates 巡视装置坐标上报（表 O.45）
-  rpc SendPatrolDeviceCoordinates(SendPatrolDeviceCoordinatesReq) returns(SendPatrolDeviceCoordinatesRes);
-  // SendDroneNestRunData 无人机机巢运行数据上报（表 O.40）
-  rpc SendDroneNestRunData(SendDroneNestRunDataReq) returns(SendDroneNestRunDataRes);
-  // SendEnvData 环境/微气象数据上报（表 J.41）
-  rpc SendEnvData(SendEnvDataReq) returns(SendEnvDataRes);
-  // ListTaskExecutions 查询任务未来执行时间（用于验证 rrule 配置）
-  rpc ListTaskExecutions(ListTaskExecutionsReq) returns(ListTaskExecutionsRes);
-  // ListTaskConfigs 任务配置分页查询
-  rpc ListTaskConfigs(ListTaskConfigsReq) returns(ListTaskConfigsRes);
-  // TestFTPSUpload 测试 FTPS 上传（上传 local/test.txt）
-  rpc TestFTPSUpload(TestFTPSUploadReq) returns(TestFTPSUploadRes);
-  // ListFTPSDirectory 列出 FTPS 远程目录文件列表
-  rpc ListFTPSDirectory(ListFTPSDirectoryReq) returns(ListFTPSDirectoryRes);
-  // ListReportIntervals 查询上报间隔配置
-  rpc ListReportIntervals(ListReportIntervalsReq) returns(ListReportIntervalsRes);
 }
