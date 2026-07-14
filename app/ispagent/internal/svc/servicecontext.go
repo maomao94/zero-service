@@ -63,6 +63,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			crontask.WithLockExpire(c.CronTask.LockExpire),
 			crontask.WithMaxDelay(c.CronTask.MaxDelay),
 			crontask.WithInvalidTimeFilter(ctask.NewInvalidTimeFilter()),
+			crontask.WithGuard(m.Connected),
 		)
 	}
 

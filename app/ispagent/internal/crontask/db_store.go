@@ -35,6 +35,8 @@ func NewDBStore(db *gormx.DB) *DBStore {
 //  2. UPDATE next_run = now+lockDur WHERE next_run<=now，通过时间扩展防并发
 //     RowsAffected==0 → 已被其他实例抢占，返回 ErrNotFound
 func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, lockDur time.Duration) (*crontask.TaskConfig, error) {
+	quietCtx := gormx.WithoutSQLTrace(ctx)
+
 	var randomFn string
 	if s.dbType == gormx.DatabasePostgres || s.dbType == gormx.DatabaseGaussDB {
 		randomFn = "RANDOM()"
@@ -43,7 +45,7 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, lockDur time.
 	}
 
 	var records []gormmodel.GormTaskConfig
-	err := s.db.WithContext(ctx).
+	err := s.db.WithContext(quietCtx).
 		Where("status = ?", int(crontask.StatusEnabled)).
 		Where("next_run <= ?", now).
 		Order("priority DESC, " + randomFn).
@@ -58,8 +60,8 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, lockDur time.
 	record := records[0]
 
 	lockedTime := now.Add(lockDur)
-	result := s.db.WithContext(ctx).
-		Model(&record).
+	result := s.db.WithContext(quietCtx).
+		Model(&gormmodel.GormTaskConfig{}).
 		Where("next_run <= ?", now).
 		Updates(map[string]interface{}{
 			"next_run": lockedTime,

@@ -480,6 +480,12 @@ func (c *Client) isRegistered() bool {
 	return c.registered
 }
 
+func (c *Client) Connected() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.cli != nil && c.cli.Session() != nil && c.registered
+}
+
 func (c *Client) ReceiveCode() string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()

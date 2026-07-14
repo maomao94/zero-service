@@ -2,11 +2,13 @@ package crontask
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/teambition/rrule-go"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/core/trace"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -29,6 +31,7 @@ type Scheduler struct {
 	stopCh            chan struct{}
 	tracer            oteltrace.Tracer
 	invalidTimeFilter InvalidTimeFilter
+	guard             Guard
 }
 
 // NewScheduler 创建调度器，默认扫描间隔 2s，锁过期 30s。
@@ -49,6 +52,7 @@ func NewScheduler(store TaskStore, handler Handler, opts ...SchedulerOption) *Sc
 		stopCh:            make(chan struct{}),
 		tracer:            otel.Tracer(trace.TraceName),
 		invalidTimeFilter: o.InvalidTimeFilter,
+		guard:             o.Guard,
 	}
 }
 
@@ -68,9 +72,27 @@ func (s *Scheduler) Stop() {
 // 有任务时 10ms 快速连扫，无任务时按 interval 间隔等待。
 func (s *Scheduler) scanLoop() {
 	for {
+		if s.guard != nil && !s.guard() {
+			timer := time.NewTimer(s.interval)
+			select {
+			case <-s.stopCh:
+				if !timer.Stop() {
+					<-timer.C
+				}
+				return
+			case <-timer.C:
+			}
+			continue
+		}
+
 		task, err := s.store.LockAndFetch(context.Background(), carbon.Now().StdTime(), s.lockExpire)
 		if err == nil && task != nil {
-			go s.executeTask(task)
+			threading.GoSafe(func() {
+				s.executeTask(task)
+			})
+		}
+		if err != nil && !errors.Is(err, ErrNotFound) {
+			logx.Errorf("[crontask] scan loop error: %v", err)
 		}
 
 		var sleepDuration time.Duration

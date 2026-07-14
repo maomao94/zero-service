@@ -7,12 +7,16 @@ type SchedulerOptions struct {
 	LockExpire        time.Duration
 	MaxDelay          time.Duration // 最大延迟容忍，超过则跳过执行直接计算下次时间，0=不限制
 	InvalidTimeFilter InvalidTimeFilter
+	Guard             Guard // 扫表前置条件，nil 表示不限制
 }
 
 // InvalidTimeFilter 在计算下次执行时间后调用，跳过不可用时间段。
 // task 为当前任务，next 为 rrule 计算的下次时间。
 // 若 next 在不可用范围内，应循环调用 rrule.After 直到跳出范围。
 type InvalidTimeFilter func(task *TaskConfig, next time.Time) time.Time
+
+// Guard 扫表前置条件，返回 false 则本次跳过扫表。
+type Guard func() bool
 
 type SchedulerOption func(*SchedulerOptions)
 
@@ -38,5 +42,12 @@ func WithInvalidTimeFilter(f InvalidTimeFilter) SchedulerOption {
 func WithMaxDelay(d time.Duration) SchedulerOption {
 	return func(o *SchedulerOptions) {
 		o.MaxDelay = d
+	}
+}
+
+// WithGuard 设置扫表前置条件。Guard 返回 false 时跳过本次 LockAndFetch。
+func WithGuard(g Guard) SchedulerOption {
+	return func(o *SchedulerOptions) {
+		o.Guard = g
 	}
 }
