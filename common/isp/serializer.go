@@ -112,7 +112,7 @@ type xmlLogSerializer struct{ inner gnetx.Serializer }
 func (s *xmlLogSerializer) Decode(raw []byte) (any, error) {
 	msg, err := s.inner.Decode(raw)
 	if m, ok := msg.(*Message); ok && m.RawXML != "" {
-		logx.Debugf("[isp] recv %s xml:\n%s", m.MessageName(), html.UnescapeString(m.RawXML))
+		logx.Debugf("[isp] recv %s xml:\n%s, recvSeq: %d, sendSeq: %d", m.MessageName(), html.UnescapeString(m.RawXML), m.RecvSeq, m.SendSeq)
 	}
 	return msg, err
 }
@@ -123,7 +123,7 @@ func (s *xmlLogSerializer) Encode(v any) ([]byte, error) {
 		if m, ok := v.(*Message); ok {
 			xml, _ := BuildXML(m, m.RootName)
 			if len(xml) > 0 {
-				logx.Debugf("[isp] send %s xml:\n%s", m.MessageName(), html.UnescapeString(string(xml)))
+				logx.Debugf("[isp] send %s xml:\n%s, sendSeq: %d, recvSeq: %d", m.MessageName(), html.UnescapeString(string(xml)), m.SendSeq, m.RecvSeq)
 			}
 		}
 	}
