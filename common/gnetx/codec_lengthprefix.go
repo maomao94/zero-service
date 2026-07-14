@@ -61,18 +61,18 @@ import (
 // 构造用 NewLengthPrefixCodec，不要直接实例化（构造器会校验参数）。
 type LengthPrefixCodec struct {
 	Serializer
-	lengthBytes  int
-	bo           binary.ByteOrder
-	lengthOffset int // 长度字段距帧首的偏移
-	lengthAdjust int // 长度字段值与 framePayloadLen 的差值
-	maxFrameSize int
+	lengthBytes  int              // 长度字段字节数，仅允许 1/2/4/8。
+	bo           binary.ByteOrder // 长度字段字节序，构造时必填。
+	lengthOffset int              // 长度字段距帧首的偏移，必须 >= 0；未显式设置且有 leadingBytes 时默认 len(leadingBytes)。
+	lengthAdjust int              // Decode: bodyLen = lengthField + lengthAdjust；Encode: lengthField = bodyLen - lengthAdjust。
+	maxFrameSize int              // 单帧最大字节数（含帧头），0 表示不限；必须 >= 0。
 
-	stripBytes    int // 解码后从帧首剥离的字节数，默认 headerLen
-	leadingBytes  []byte
-	trailingBytes []byte
+	stripBytes    int    // Decode 后从帧首剥离的字节数，默认 headerLen；必须满足 0 <= stripBytes <= headerLen。
+	leadingBytes  []byte // 帧首固定字节；必须完全位于 lengthOffset 前，避免覆盖长度字段。
+	trailingBytes []byte // 帧尾固定字节；Decode 校验后剥离，Encode 自动追加。
 
-	offsetExplicit bool
-	stripExplicit  bool
+	offsetExplicit bool // WithLengthOffset 是否被显式调用；用于决定 leadingBytes 是否自动设置 lengthOffset。
+	stripExplicit  bool // WithStripBytes 是否被显式调用；未设置时 stripBytes 默认取 headerLen。
 }
 
 // LengthPrefixOption 配置 LengthPrefixCodec。
@@ -148,11 +148,20 @@ func NewLengthPrefixCodec(lengthBytes int, endianness binary.ByteOrder, ser Seri
 	if len(c.leadingBytes) > 0 && !c.offsetExplicit {
 		c.lengthOffset = len(c.leadingBytes)
 	}
+	if c.lengthOffset < 0 {
+		panic("gnetx: NewLengthPrefixCodec lengthOffset must be non-negative")
+	}
+	if c.maxFrameSize < 0 {
+		panic("gnetx: NewLengthPrefixCodec maxFrameSize must be non-negative")
+	}
 	if len(c.leadingBytes) > c.lengthOffset {
 		panic("gnetx: NewLengthPrefixCodec leadingBytes length exceeds lengthOffset, would overlap length field")
 	}
 	if !c.stripExplicit {
 		c.stripBytes = c.lengthOffset + c.lengthBytes
+	}
+	if c.stripBytes < 0 {
+		panic("gnetx: NewLengthPrefixCodec stripBytes must be non-negative")
 	}
 	if c.stripBytes > c.lengthOffset+c.lengthBytes {
 		panic("gnetx: NewLengthPrefixCodec stripBytes exceeds header length")
@@ -208,6 +217,9 @@ func (c *LengthPrefixCodec) Decode(conn gnet.Conn, _ Conn) (any, error) {
 	// Deliver [stripBytes, frameLen-len(trailing)) to Serializer.
 	// stripBytes defaults to headerLen (strip full header); 0 means keep everything.
 	serializedLen := frameLen - c.stripBytes - len(c.trailingBytes)
+	if serializedLen < 0 {
+		return nil, fmt.Errorf("gnetx: negative serialized payload length %d", serializedLen)
+	}
 	serializedPayload := make([]byte, serializedLen)
 	copy(serializedPayload, buf[c.stripBytes:frameLen-len(c.trailingBytes)])
 
@@ -237,6 +249,9 @@ func (c *LengthPrefixCodec) Encode(_ context.Context, msg any, _ Conn) ([]byte, 
 	}
 
 	headerLen := c.lengthOffset + c.lengthBytes
+	if c.lengthOffset < 0 || c.stripBytes < 0 || c.stripBytes > headerLen {
+		return nil, fmt.Errorf("gnetx: invalid length-prefix codec configuration")
+	}
 	preLen := 0
 	if c.lengthOffset > c.stripBytes {
 		preLen = c.lengthOffset - c.stripBytes

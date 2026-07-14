@@ -529,6 +529,61 @@ func TestLengthPrefixStripBytesTooLarge(t *testing.T) {
 	)
 }
 
+func TestLengthPrefixInvalidOptionsPanic(t *testing.T) {
+	tests := []struct {
+		name string
+		opts []LengthPrefixOption
+	}{
+		{
+			name: "negative stripBytes",
+			opts: []LengthPrefixOption{WithStripBytes(-1)},
+		},
+		{
+			name: "negative lengthOffset",
+			opts: []LengthPrefixOption{WithLengthOffset(-1)},
+		},
+		{
+			name: "negative maxFrameSize",
+			opts: []LengthPrefixOption{WithMaxFrameSize(-1)},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Fatal("expect panic")
+				}
+			}()
+			NewLengthPrefixCodec(2, binary.BigEndian, RawSerializer{}, tt.opts...)
+		})
+	}
+}
+
+func TestLengthPrefixDecodeNegativeSerializedLenReturnsError(t *testing.T) {
+	c := NewLengthPrefixCodec(2, binary.BigEndian, RawSerializer{})
+	c.stripBytes = 3 // simulate an internal invariant violation after construction
+
+	mc := newMockConn([]byte{0x00, 0x00})
+	_, err := c.Decode(mc, nil)
+	if err == nil {
+		t.Fatal("expect error")
+	}
+	if mc.buf.Len() != 2 {
+		t.Fatalf("buffer drained on decode error, left %d", mc.buf.Len())
+	}
+}
+
+func TestLengthPrefixEncodeInvalidInternalConfigReturnsError(t *testing.T) {
+	c := NewLengthPrefixCodec(2, binary.BigEndian, RawSerializer{})
+	c.stripBytes = -1 // simulate an internal invariant violation after construction
+
+	_, err := c.Encode(context.Background(), []byte("ok"), nil)
+	if err == nil {
+		t.Fatal("expect error")
+	}
+}
+
 func TestLengthPrefixStripBytesFullRoundtrip(t *testing.T) {
 	// Protocol: [msgID 2B][properties 1B][length 2B][body N]
 	c := NewLengthPrefixCodec(2, binary.BigEndian, RawSerializer{},
