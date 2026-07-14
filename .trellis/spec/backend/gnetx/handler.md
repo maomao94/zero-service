@@ -42,7 +42,9 @@ r := gnetx.NewRouter(defaultWorkerPool())
 r.RegisterFunc(1, handler1)
 gnetx.HandleTyped(r, 1, func(ctx context.Context, conn Conn, msg MyMsg) (any, error) { ... })
 r.Async(1)           // 标记异步
-r.FallbackFunc(f)    // 兜底
+gnetx.HandleTypedAsync(r, 1, handler)  // HandleTyped + Async 一步完成（推荐）
+r.FallbackFunc(f)    // 兜底（同步）
+r.FallbackFuncAsync(f) // 兜底（异步）
 r.RegisterType(1, func() any { return &MyMsg{} })
 ```
 

@@ -105,6 +105,12 @@ func HandleTyped[T any](r *Router, id int, fn func(ctx context.Context, conn Con
 	})
 }
 
+// HandleTypedAsync 注册 typed handler 并标记为异步执行，等价于 HandleTyped + Async。
+func HandleTypedAsync[T any](r *Router, id int, fn func(ctx context.Context, conn Conn, msg T) (any, error)) {
+	HandleTyped(r, id, fn)
+	r.Async(id)
+}
+
 func (r *Router) Async(id int) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -121,6 +127,12 @@ func (r *Router) Fallback(h func(ctx context.Context, conn Conn, msg any) (any, 
 
 func (r *Router) FallbackFunc(fn func(ctx context.Context, conn Conn, msg any) (any, error)) {
 	r.Fallback(fn)
+}
+
+func (r *Router) FallbackFuncAsync(fn func(ctx context.Context, conn Conn, msg any) (any, error)) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.fallback = &routerEntry{handle: fn, async: true}
 }
 
 func (r *Router) RegisterType(id int, factory func() any) {

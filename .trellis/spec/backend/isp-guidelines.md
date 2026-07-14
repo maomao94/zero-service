@@ -183,10 +183,35 @@ freshnessTimeout = max(interval * 2, interval + 10s)
 
 `app/ispagent/internal/isp/client.go` 是 TCP 长连接客户端，**不是 go-zero service**：
 
-- `NewClient` 构造即建连、启动轮询 goroutine
+- `NewClient(cfg, store, db, uploader, provider, opts ...ClientOption)` — 构造即建连、启动轮询 goroutine
 - `Close()` 取消 context + 关闭 gnetx client
 - 通过 `proc.AddShutdownListener` 注册关闭，**不放入 `serviceGroup`**
 - `serviceGroup` 只放 RPC server 和 `crontask.Scheduler`（二者都实现 `Start/Stop`）
+
+**goroutine 拆分**（`client.go:288`）：
+
+```go
+func (c *Client) run() {
+    go c.reportLoop()  // 独立 2s ticker，TCP 发送不阻塞主循环
+    // 主 ticker 只负责注册+心跳
+}
+```
+
+- `tick()` — 注册检查 + 心跳（2s ticker）
+- `reportLoop()` — 上行缓存上报（独立 2s ticker），防 TCP 超时阻塞注册/心跳
+
+**构造选项**（`ClientOption func(*ClientOptions)`，遵循 `coding-standards.md`）：
+
+```go
+NewClient(cfg, store, db, uploader, nil,
+    WithReportOption(WithNoFreshCheck(categories...)),
+    WithReportOption(WithCoordInterval(5*time.Second)),
+)
+```
+
+**TCP handler 异步**（`connect()`）：
+
+全部入站 handler 使用 `gnetx.HandleTypedAsync` / `FallbackFuncAsync` 注册，由 gnet worker pool offload 执行，不阻塞 eventloop。
 
 源文件：
 - `app/ispagent/ispagent.go` — serviceGroup 注册点

@@ -17,6 +17,7 @@ import (
 	"zero-service/common/isp"
 
 	"github.com/dromara/carbon/v2"
+	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -133,10 +134,10 @@ func (c *Client) Execute(ctx context.Context, typ, command int32, code string, i
 
 func (c *Client) connect() error {
 	codec := isp.NewCodec(c.cfg.RootName, c.cfg.MaxFrameLength, c.cfg.DebugLog)
-	router := gnetx.NewRouter(nil)
+	router := gnetx.NewRouter(goroutine.DefaultWorkerPool)
 
 	// ---- 任务下发 101-1 ----
-	gnetx.HandleTyped(router, isp.MessageIDTaskDispatch, c.wrap(func(ctx context.Context, req *isp.Message) ([]isp.Item, error) {
+	gnetx.HandleTypedAsync(router, isp.MessageIDTaskDispatch, c.wrap(func(ctx context.Context, req *isp.Message) ([]isp.Item, error) {
 		return nil, handler.HandleTaskDispatch(ctx, req, c.taskStore)
 	}))
 
@@ -153,11 +154,11 @@ func (c *Client) connect() error {
 		return []isp.Item{{"task_patrolled_id": taskPatrolledID}}, nil
 	})
 	for _, pair := range isp.TaskControlPairs {
-		gnetx.HandleTyped(router, isp.EncodeMessageID(pair.Type, pair.Cmd), taskControlHandler)
+		gnetx.HandleTypedAsync(router, isp.EncodeMessageID(pair.Type, pair.Cmd), taskControlHandler)
 	}
 
 	// ---- 模型更新上报 36-0 ----
-	gnetx.HandleTyped(router, isp.MessageIDModelUpdateReport, c.wrap(func(ctx context.Context, req *isp.Message) ([]isp.Item, error) {
+	gnetx.HandleTypedAsync(router, isp.MessageIDModelUpdateReport, c.wrap(func(ctx context.Context, req *isp.Message) ([]isp.Item, error) {
 		return nil, handler.HandleModelUpdateReport(ctx, req)
 	}))
 
@@ -166,7 +167,7 @@ func (c *Client) connect() error {
 		return handler.HandleModelSync(ctx, req, c.modelUploader, c.modelProvider)
 	})
 	for _, pair := range isp.ModelSyncPairs {
-		gnetx.HandleTyped(router, isp.EncodeMessageID(pair.Type, pair.Cmd), modelSyncHandler)
+		gnetx.HandleTypedAsync(router, isp.EncodeMessageID(pair.Type, pair.Cmd), modelSyncHandler)
 	}
 
 	// ---- 机器人控制 21~29 ----
@@ -174,11 +175,11 @@ func (c *Client) connect() error {
 		return nil, handler.HandleRobotControl(ctx, req)
 	})
 	for _, pair := range isp.RobotControlPairs {
-		gnetx.HandleTyped(router, isp.EncodeMessageID(pair.Type, pair.Cmd), robotControlHandler)
+		gnetx.HandleTypedAsync(router, isp.EncodeMessageID(pair.Type, pair.Cmd), robotControlHandler)
 	}
 
 	// ---- 未匹配消息 ----
-	router.FallbackFunc(func(ctx context.Context, conn gnetx.Conn, msg any) (any, error) {
+	router.FallbackFuncAsync(func(ctx context.Context, conn gnetx.Conn, msg any) (any, error) {
 		im, ok := msg.(*isp.Message)
 		if !ok {
 			return nil, nil
@@ -269,6 +270,8 @@ func (c *Client) auditError(ctx context.Context, code string, req *isp.Message, 
 // ---------------------------------------------------------------------------
 
 func (c *Client) run() {
+	go c.reportLoop()
+
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 	for {
@@ -277,6 +280,19 @@ func (c *Client) run() {
 			return
 		case <-ticker.C:
 			c.tick()
+		}
+	}
+}
+
+func (c *Client) reportLoop() {
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-c.ctx.Done():
+			return
+		case <-ticker.C:
+			c.reportTick()
 		}
 	}
 }
@@ -307,7 +323,6 @@ func (c *Client) tick() {
 	if elapsed >= interval {
 		c.sendHeartbeat()
 	}
-	c.reportTick()
 }
 
 // ---------------------------------------------------------------------------
