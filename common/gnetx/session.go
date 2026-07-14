@@ -22,7 +22,8 @@ func newSessionID() string {
 type Conn interface {
 	ID() string
 	NextSendSeq() uint64
-	Send(ctx context.Context, msg any) error
+	Write(ctx context.Context, msg any) error
+	WriteAsync(ctx context.Context, msg any) error
 	RemoteAddr() net.Addr
 	LocalAddr() net.Addr
 	CreatedAt() time.Time
@@ -84,11 +85,28 @@ func (s *session) Attribute(key any) any {
 	return v
 }
 
-func (s *session) Send(ctx context.Context, msg any) error {
+func (s *session) encode(ctx context.Context, msg any) ([]byte, error) {
 	if s.closed.Load() {
-		return ErrSessionClosed
+		return nil, ErrSessionClosed
 	}
 	payload, err := s.codec.Encode(ctx, msg, s)
+	if err != nil {
+		return nil, err
+	}
+	return payload, nil
+}
+
+func (s *session) Write(ctx context.Context, msg any) error {
+	payload, err := s.encode(ctx, msg)
+	if err != nil {
+		return err
+	}
+	_, err = s.gc.Write(payload)
+	return err
+}
+
+func (s *session) WriteAsync(ctx context.Context, msg any) error {
+	payload, err := s.encode(ctx, msg)
 	if err != nil {
 		return err
 	}
@@ -114,7 +132,7 @@ func (s *session) Request(ctx context.Context, msg Correlatable, ttl time.Durati
 		return nil, ErrSessionClosed
 	}
 	compositeTID := s.id + "|" + msg.TID()
-	return antsx.RequestReply[any](ctx, s.replyPool, compositeTID, func() error { return s.Send(ctx, msg) }, ttl)
+	return antsx.RequestReply[any](ctx, s.replyPool, compositeTID, func() error { return s.WriteAsync(ctx, msg) }, ttl)
 }
 
 func (s *session) resolveResponse(tid string, resp any) bool {

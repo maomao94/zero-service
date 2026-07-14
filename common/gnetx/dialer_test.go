@@ -89,7 +89,7 @@ func TestDialerDial(t *testing.T) {
 		t.Fatal("Dial returned conn with nil RemoteAddr")
 	}
 
-	if err := conn.Send(ctx, &echoMsg{Body: "via-dialer"}); err != nil {
+	if err := conn.WriteAsync(ctx, &echoMsg{Body: "via-dialer"}); err != nil {
 		t.Fatalf("Send: %v", err)
 	}
 }

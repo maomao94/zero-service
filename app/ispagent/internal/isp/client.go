@@ -17,7 +17,6 @@ import (
 	"zero-service/common/isp"
 
 	"github.com/dromara/carbon/v2"
-	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -134,7 +133,7 @@ func (c *Client) Execute(ctx context.Context, typ, command int32, code string, i
 
 func (c *Client) connect() error {
 	codec := isp.NewCodec(c.cfg.RootName, c.cfg.MaxFrameLength, c.cfg.DebugLog)
-	router := gnetx.NewRouter(goroutine.DefaultWorkerPool)
+	router := gnetx.NewRouter()
 
 	// ---- 任务下发 101-1 ----
 	gnetx.HandleTypedAsync(router, isp.MessageIDTaskDispatch, c.wrap(func(ctx context.Context, req *isp.Message) ([]isp.Item, error) {

@@ -102,12 +102,12 @@ func (c *Client) Session() ClientConn {
 	return cn
 }
 
-func (c *Client) Send(ctx context.Context, msg any) error {
+func (c *Client) WriteAsync(ctx context.Context, msg any) error {
 	cn := c.sess.Load()
 	if cn == nil {
 		return ErrSessionClosed
 	}
-	return cn.Send(ctx, msg)
+	return cn.WriteAsync(ctx, msg)
 }
 
 func (c *Client) Request(ctx context.Context, msg Correlatable, ttl time.Duration) (any, error) {
@@ -267,6 +267,14 @@ func (c *Client) startReconnect() {
 
 func (c *Client) dispatch(ctx context.Context, cn *session, msg any) {
 	h := c.opts.Handler
+	if resolver, ok := h.(RouteResolver); ok {
+		resolved, err := resolver.Resolve(msg)
+		if err != nil {
+			logx.Errorf("[gnetx] client route resolve error: %v", err)
+			return
+		}
+		h = resolved
+	}
 	if isAsync(h) {
 		c.dispatchAsync(ctx, cn, msg, h)
 		return
@@ -322,7 +330,7 @@ func (c *Client) dispatchAsync(parentCtx context.Context, cn *session, msg any, 
 			return
 		}
 		if reply != nil {
-			if err := cn.Send(ctx, reply); err != nil {
+			if err := cn.WriteAsync(ctx, reply); err != nil {
 				logx.Errorf("[gnetx] client async write reply error: %v", err)
 			}
 		}
@@ -334,12 +342,7 @@ func (c *Client) dispatchAsync(parentCtx context.Context, cn *session, msg any, 
 }
 
 func (c *Client) writeReply(ctx context.Context, cn *session, reply any) error {
-	payload, err := c.opts.Codec.Encode(ctx, reply, cn)
-	if err != nil {
-		return err
-	}
-	_, err = cn.gc.Write(payload)
-	return err
+	return cn.Write(ctx, reply)
 }
 
 func (c *Client) handleDecodeError(cn *session, err error) gnet.Action {

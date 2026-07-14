@@ -9,55 +9,49 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-// Router is a message-ID-based dispatcher implementing Handler.
-// Registered handlers receive a Conn, satisfied by both ServerConn and ClientConn,
-// enabling the same handler registration to work on both sides.
+// RouteResolver 将消息解析为对应的业务 Handler。
+type RouteResolver interface {
+	Resolve(msg any) (Handler, error)
+}
+
+// Router 是基于 messageID 的路由表，同时实现 Handler 和 RouteResolver。
+// 只负责消息→handler 的匹配，不关心 sync/async 执行模型。
+// 异步标记通过注册时传入 Async(handler) 完成，执行调度由 Server/Client 的 dispatch 统一负责。
 //
-// Messages must implement Identifiable (MessageID() int). Unmatched messages
-// fall back to a fallback handler if configured. Per-handler async offload is
-// enabled via Router.Async(id).
+// 消息必须实现 Identifiable（MessageID() int），未匹配的消息回退到 fallback handler（若已配置）。
 type Router struct {
 	mu       sync.RWMutex
 	handlers map[int]*routerEntry
 	fallback *routerEntry
-	types    map[int]func() any
-	pool     *workerPool
 }
 
 type routerEntry struct {
-	handle func(ctx context.Context, conn Conn, msg any) (any, error)
-	async  bool
+	handler Handler
 }
 
-func NewRouter(pool *workerPool) *Router {
+// NewRouter 创建一个空的路由表。
+func NewRouter() *Router {
 	return &Router{
 		handlers: make(map[int]*routerEntry),
-		types:    make(map[int]func() any),
-		pool:     pool,
 	}
 }
 
-func (r *Router) Handle(ctx context.Context, conn Conn, msg any) (any, error) {
+// Resolve 实现 RouteResolver，根据消息 ID 查找对应的 Handler。
+func (r *Router) Resolve(msg any) (Handler, error) {
 	entry, err := r.lookupEntry(msg)
 	if err != nil {
 		return nil, err
 	}
-	if r.pool != nil && entry.async {
-		_ = r.pool.Submit(func() {
-			reply, hErr := entry.handle(ctx, conn, msg)
-			if hErr != nil {
-				logx.Errorf("[gnetx] router async handler error: %v", hErr)
-				return
-			}
-			if reply != nil {
-				if err := conn.Send(ctx, reply); err != nil {
-					logx.Errorf("[gnetx] router async reply error: %v", err)
-				}
-			}
-		})
-		return nil, nil
+	return entry.handler, nil
+}
+
+// Handle 实现 Handler，解析消息并委托给匹配的 handler 执行。
+func (r *Router) Handle(ctx context.Context, conn Conn, msg any) (any, error) {
+	h, err := r.Resolve(msg)
+	if err != nil {
+		return nil, err
 	}
-	return entry.handle(ctx, conn, msg)
+	return h.Handle(ctx, conn, msg)
 }
 
 func (r *Router) lookupEntry(msg any) (*routerEntry, error) {
@@ -85,66 +79,60 @@ func (r *Router) lookupEntry(msg any) (*routerEntry, error) {
 	return entry, nil
 }
 
-func (r *Router) Register(id int, h func(ctx context.Context, conn Conn, msg any) (any, error)) {
+// Register 为指定 messageID 注册一个 Handler。
+func (r *Router) Register(id int, h Handler) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.handlers[id] = &routerEntry{handle: h}
+	r.handlers[id] = &routerEntry{handler: h}
 }
 
+// RegisterFunc 为指定 messageID 注册一个处理函数。
 func (r *Router) RegisterFunc(id int, fn func(ctx context.Context, conn Conn, msg any) (any, error)) {
-	r.Register(id, fn)
+	r.Register(id, HandlerFunc(fn))
 }
 
+// HandleTyped 为指定 messageID 注册一个带类型检查的处理函数。
 func HandleTyped[T any](r *Router, id int, fn func(ctx context.Context, conn Conn, msg T) (any, error)) {
-	r.Register(id, func(ctx context.Context, conn Conn, msg any) (any, error) {
+	r.Register(id, HandlerFunc(func(ctx context.Context, conn Conn, msg any) (any, error) {
 		typed, ok := msg.(T)
 		if !ok {
 			return nil, errTypeMismatch(id, msg)
 		}
 		return fn(ctx, conn, typed)
-	})
+	}))
 }
 
-// HandleTypedAsync 注册 typed handler 并标记为异步执行，等价于 HandleTyped + Async。
+// HandleTypedAsync 注册一个带类型检查的异步处理函数，等价于 HandleTyped + Async。
 func HandleTypedAsync[T any](r *Router, id int, fn func(ctx context.Context, conn Conn, msg T) (any, error)) {
 	HandleTyped(r, id, fn)
 	r.Async(id)
 }
 
+// Async 将指定 messageID 的 handler 包装为 Async(handler)。
+// 异步执行由 Server/Client 的 dispatch 通过 isAsync() 判断后统一调度。
 func (r *Router) Async(id int) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if entry, ok := r.handlers[id]; ok {
-		entry.async = true
+		entry.handler = Async(entry.handler)
 	}
 }
 
-func (r *Router) Fallback(h func(ctx context.Context, conn Conn, msg any) (any, error)) {
+// Fallback 设置未匹配消息的兜底 Handler。
+func (r *Router) Fallback(h Handler) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.fallback = &routerEntry{handle: h}
+	r.fallback = &routerEntry{handler: h}
 }
 
+// FallbackFunc 设置未匹配消息的兜底处理函数。
 func (r *Router) FallbackFunc(fn func(ctx context.Context, conn Conn, msg any) (any, error)) {
-	r.Fallback(fn)
+	r.Fallback(HandlerFunc(fn))
 }
 
+// FallbackFuncAsync 设置未匹配消息的异步兜底处理函数。
 func (r *Router) FallbackFuncAsync(fn func(ctx context.Context, conn Conn, msg any) (any, error)) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.fallback = &routerEntry{handle: fn, async: true}
-}
-
-func (r *Router) RegisterType(id int, factory func() any) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.types[id] = factory
-}
-
-func (r *Router) Factory(id int) func() any {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	return r.types[id]
+	r.Fallback(Async(HandlerFunc(fn)))
 }
 
 func messageIDOf(msg any) (int, bool) {

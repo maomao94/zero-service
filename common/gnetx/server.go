@@ -235,6 +235,14 @@ func (s *Server) OnShutdown(gnet.Engine) {
 
 func (s *Server) dispatch(ctx context.Context, cn *session, msg any) {
 	h := s.opts.Handler
+	if resolver, ok := h.(RouteResolver); ok {
+		resolved, err := resolver.Resolve(msg)
+		if err != nil {
+			logx.Errorf("[gnetx] route resolve error: %v", err)
+			return
+		}
+		h = resolved
+	}
 	if isAsync(h) {
 		s.dispatchAsync(ctx, cn, msg, h)
 		return
@@ -296,7 +304,7 @@ func (s *Server) dispatchAsync(parentCtx context.Context, cn *session, msg any, 
 			return
 		}
 		if reply != nil {
-			if err := cn.Send(ctx, reply); err != nil {
+			if err := cn.WriteAsync(ctx, reply); err != nil {
 				logx.Errorf("[gnetx] async write reply error: %v", err)
 			}
 		}
@@ -311,12 +319,7 @@ func (s *Server) dispatchAsync(parentCtx context.Context, cn *session, msg any, 
 func (s *Server) recordMetrics(d time.Duration) { s.metrics.Add(stat.Task{Duration: d}) }
 
 func (s *Server) writeReply(ctx context.Context, cn *session, reply any) error {
-	payload, err := s.opts.Codec.Encode(ctx, reply, cn)
-	if err != nil {
-		return err
-	}
-	_, err = cn.gc.Write(payload)
-	return err
+	return cn.Write(ctx, reply)
 }
 
 func (s *Server) handleDecodeError(cn *session, err error) gnet.Action {

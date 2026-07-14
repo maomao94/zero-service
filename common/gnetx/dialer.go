@@ -25,7 +25,7 @@ import (
 //
 //	conn, err := dialer.Dial(ctx, "tcp", "127.0.0.1:8080")
 //	defer conn.Close()
-//	conn.Send(ctx, msg)
+//	conn.WriteAsync(ctx, msg)
 type Dialer struct {
 	gnet.BuiltinEventEngine
 
@@ -74,7 +74,7 @@ func (d *Dialer) ensureClient() error {
 	return d.gcliErr
 }
 
-// Dial 创建一次性 TCP 连接并返回 Conn。返回的 Conn replyPool 为 nil，仅支持 Send。
+// Dial 创建一次性 TCP 连接并返回 Conn。返回的 Conn replyPool 为 nil，仅支持 WriteAsync。
 // 调用方使用完毕后应调用 conn.Close() 释放底层连接。
 func (d *Dialer) Dial(ctx context.Context, network, address string) (Conn, error) {
 	if d.closed.Load() {

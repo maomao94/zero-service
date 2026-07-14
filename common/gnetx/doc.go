@@ -46,7 +46,7 @@
 //	)
 //	defer cli.Close()
 //
-// 响应式 API：cli.Send(ctx, msg) / cli.Request(ctx, msg, ttl)。
+// 响应式 API：cli.WriteAsync(ctx, msg) / cli.Request(ctx, msg, ttl)。
 // 不实现 service.Service（无 Start/Stop），生命周期仅构造 + Close。
 //
 // # 请求-响应（opt-in，tid 响应式）
@@ -66,7 +66,7 @@
 //     重活用 AsyncFunc/Async 标记，框架 offload 到 gnet 自带的 goroutine.DefaultWorkerPool，
 //     回包走 AsyncWrite。
 //   - on-loop only：Codec.Decode（Peek/Discard）、同步 c.Write、c.Context。
-//   - off-loop 安全：Conn.Send/Request（内部 AsyncWrite）、
+//   - off-loop 安全：Conn.WriteAsync/Request（内部 AsyncWrite）、
 //     Conn.Close、SessionManager、antsx.ReplyPool。
 //
 // # 日志

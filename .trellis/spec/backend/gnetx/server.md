@@ -67,7 +67,8 @@ sg := service.NewServiceGroup(); sg.Add(srv); sg.Start()
 |------|------|------|
 | `OnTraffic` → sync handler | event-loop | 必须快（> 50ms 打 slow log） |
 | `OnTraffic` → async handler | gnet worker pool | 可做 IO/重操作 |
-| `Session.Send` | off-loop | `AsyncWrite` |
+| `Session.Write` | event-loop | 同步回包，底层 `gnet.Conn.Write` |
+| `Session.WriteAsync` | off-loop | 异步发送，底层 `gnet.Conn.AsyncWrite` |
 | `Session.Close` | off-loop | `conn.Close` |
 
 ## 半包/粘包处理
@@ -86,7 +87,9 @@ for i := 0; i < batchLimit; i++ {
 // consumed > 0 && InboundBuffered > 0 → Wake 重触发
 ```
 
-同步 handler 返回 reply 时，Server 使用同一个 handler ctx 调用 `Codec.Encode(ctx, reply, conn)`。该 ctx 已由 dispatch 通过 `PacketContextProvider` 注入入站协议头（key=`PacketContextKey`），因此协议 Codec 可以从 ctx 中读取入站 seq 来填回复的 ack。dispatchAsync 同理（入池前完成注入）。
+同步 handler 返回 reply 时，Server 使用同一个 handler ctx 调用 `Conn.Write(ctx, reply)`；异步 handler 返回 reply 时，Server 使用 `Conn.WriteAsync(ctx, reply)`。该 ctx 已由 dispatch 通过 `PacketContextProvider` 注入入站协议头（key=`PacketContextKey`），因此协议 Codec 可以从 ctx 中读取入站 seq 来填回复的 ack。dispatchAsync 同理（入池前完成注入）。
+
+若根 handler 实现 `RouteResolver`（例如 Router），Server dispatch 会先 `Resolve(msg)` 得到实际业务 handler，再根据该 handler 是否满足 `AsyncHandler` 选择 sync/async 路径。Router 不拥有 worker pool，也不写 reply。
 
 ## 空闲扫描
 

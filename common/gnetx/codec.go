@@ -19,7 +19,7 @@ import (
 // 解码并等待下次可读事件）；不可恢复错误（magic 错、超长等）返回其他非 nil error。
 //
 // Encode 把消息编码为完整帧字节（含分帧层加的长度/分隔符），可在 on-loop（同步回包 c.Write）
-// 或 off-loop（业务 goroutine 主动 conn.Send/AsyncWrite）调用，不得读 conn。
+// 或 off-loop（业务 goroutine 主动 conn.WriteAsync）调用，不得读 conn。
 //
 // 内置 LengthPrefixCodec/DelimiterCodec/FixedLengthCodec 直接实现本接口，开箱即用；
 // 用户自定义协议实现本接口即可，或用 NewFuncCodec 把两个闭包拼成 Codec。

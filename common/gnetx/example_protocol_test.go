@@ -362,7 +362,7 @@ func TestNextSendSeqIncrementsAcrossFrames(t *testing.T) {
 }
 
 // =========================================================================
-// 测试: goroutine 间 conn.Send 触发 Encode — ctx 透传
+// 测试: goroutine 间 conn.WriteAsync 触发 Encode — ctx 透传
 // =========================================================================
 func TestSessionSendPassesContextToProtocolCodec(t *testing.T) {
 	type ctxKey struct{}
@@ -370,7 +370,7 @@ func TestSessionSendPassesContextToProtocolCodec(t *testing.T) {
 	cn := newSession("test-send", newMockConn(nil), codec, nil, nil)
 
 	ctx := context.WithValue(context.Background(), ctxKey{}, "send-ctx")
-	if err := cn.Send(ctx, &seqPushMsg{Body: "go"}); err != nil {
+	if err := cn.WriteAsync(ctx, &seqPushMsg{Body: "go"}); err != nil {
 		t.Fatalf("Send: %v", err)
 	}
 	// mockConn in Encode is ok — we just verify no panic and seq increments

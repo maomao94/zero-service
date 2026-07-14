@@ -32,7 +32,7 @@ func noopClientHandler() Handler {
 	return HandlerFunc(func(context.Context, Conn, any) (any, error) { return nil, nil })
 }
 
-// TestClientSend：Client 连到 server，Send 发 echo，server 回包，client handler 收到。
+// TestClientSend：Client 连到 server，WriteAsync 发 echo，server 回包，client handler 收到。
 func TestClientSend(t *testing.T) {
 	port := freePort(t)
 
@@ -66,7 +66,7 @@ func TestClientSend(t *testing.T) {
 		t.Fatal("Session() nil after connect")
 	}
 
-	if err := sess.Send(context.Background(), &echoMsg{Body: "from-client"}); err != nil {
+	if err := sess.WriteAsync(context.Background(), &echoMsg{Body: "from-client"}); err != nil {
 		t.Fatalf("Send: %v", err)
 	}
 
@@ -186,7 +186,7 @@ func TestClientOnConnect(t *testing.T) {
 	}
 }
 
-// TestClientSendViaClient：使用 Client.Send 便捷方法（而非 Session().Send）。
+// TestClientSendViaClient：使用 Client.WriteAsync 便捷方法。
 func TestClientSendViaClient(t *testing.T) {
 	port := freePort(t)
 
@@ -215,7 +215,7 @@ func TestClientSendViaClient(t *testing.T) {
 	}
 	defer cli.Close()
 
-	if err := cli.Send(context.Background(), &echoMsg{Body: "via-client"}); err != nil {
+	if err := cli.WriteAsync(context.Background(), &echoMsg{Body: "via-client"}); err != nil {
 		t.Fatalf("Send via Client: %v", err)
 	}
 	select {
@@ -266,7 +266,7 @@ func TestClientRequestViaClient(t *testing.T) {
 	}
 }
 
-// TestClientOpsOnDisconnected：连接关闭后 Send/Request 返回 ErrSessionClosed。
+// TestClientOpsOnDisconnected：连接关闭后 WriteAsync/Request 返回 ErrSessionClosed。
 func TestClientOpsOnDisconnected(t *testing.T) {
 	port := freePort(t)
 	stop := startServer(t, port, noopServerHandler())
@@ -282,7 +282,7 @@ func TestClientOpsOnDisconnected(t *testing.T) {
 	}
 	cli.Close()
 
-	if err := cli.Send(context.Background(), &echoMsg{Body: "x"}); !errors.Is(err, ErrSessionClosed) {
+	if err := cli.WriteAsync(context.Background(), &echoMsg{Body: "x"}); !errors.Is(err, ErrSessionClosed) {
 		t.Fatalf("Send: want ErrSessionClosed, got %v", err)
 	}
 	if _, err := cli.Request(context.Background(), &pingReq{Serial: 1}, time.Second); !errors.Is(err, ErrSessionClosed) {
@@ -335,7 +335,7 @@ func TestHandlerError(t *testing.T) {
 	}
 	defer cli.Close()
 
-	if err := cli.Send(context.Background(), &echoMsg{Body: "trigger"}); err != nil {
+	if err := cli.WriteAsync(context.Background(), &echoMsg{Body: "trigger"}); err != nil {
 		t.Fatalf("Send: %v", err)
 	}
 	// server echoback arrives → client handler returns error → 不 panic 即通过
@@ -457,7 +457,7 @@ func TestClientReconnect(t *testing.T) {
 	if cli.Session() == nil {
 		t.Fatal("Session() nil after reconnect")
 	}
-	if err := cli.Send(context.Background(), &echoMsg{Body: "after-reconnect"}); err != nil {
+	if err := cli.WriteAsync(context.Background(), &echoMsg{Body: "after-reconnect"}); err != nil {
 		t.Fatalf("Send after reconnect: %v", err)
 	}
 }
@@ -584,7 +584,7 @@ func TestClientHeartbeatDisabled(t *testing.T) {
 	defer cli.Close()
 
 	// 确认正常收发
-	if err := cli.Send(context.Background(), &echoMsg{Body: "check"}); err != nil {
+	if err := cli.WriteAsync(context.Background(), &echoMsg{Body: "check"}); err != nil {
 		t.Fatalf("Send: %v", err)
 	}
 

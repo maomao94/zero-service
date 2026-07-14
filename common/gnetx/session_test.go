@@ -202,7 +202,7 @@ func TestSessionSendOnClosed(t *testing.T) {
 	cn := newSession("id1", mc, newTestCodec(), nil, nil)
 	cn.Close()
 
-	if err := cn.Send(context.Background(), &echoMsg{Body: "x"}); !errors.Is(err, ErrSessionClosed) {
+	if err := cn.WriteAsync(context.Background(), &echoMsg{Body: "x"}); !errors.Is(err, ErrSessionClosed) {
 		t.Fatalf("Send on closed: want ErrSessionClosed, got %v", err)
 	}
 }
@@ -212,7 +212,7 @@ func TestSessionSendPassesContextToCodec(t *testing.T) {
 	cn := newSession("id1", newMockConn(nil), codec, nil, nil)
 	ctx := context.WithValue(context.Background(), ctxTestKey{}, "value")
 
-	if err := cn.Send(ctx, &echoMsg{Body: "x"}); err != nil {
+	if err := cn.WriteAsync(ctx, &echoMsg{Body: "x"}); err != nil {
 		t.Fatalf("Send: %v", err)
 	}
 	if got := codec.got.Value(ctxTestKey{}); got != "value" {
