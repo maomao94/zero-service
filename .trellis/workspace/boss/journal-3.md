@@ -274,3 +274,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 116: Fix GaussDB cron timestamp timezone
+
+**Date**: 2026-07-15
+**Task**: Fix GaussDB cron timestamp timezone
+
+### Summary
+
+Diagnosed cron next_run offset caused by GaussDB timestamp scan timezone behavior, switched GaussDB dialect handling to reuse PostgreSQL driver behavior, documented timestamp timezone guidance, and verified targeted cron/gormx tests.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `67779e66` | (see git log) |
+| `f7e14149` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

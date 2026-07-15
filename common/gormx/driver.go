@@ -50,7 +50,7 @@ func GetDialector(dbType DatabaseType, dsn string) (gorm.Dialector, error) {
 	case DatabaseSQLite:
 		return sqlite.Open(dsn), nil
 	case DatabaseGaussDB:
-		return gaussdb.Open(dsn), nil
+		return postgres.Open(dsn), nil
 	default:
 		return nil, errors.Errorf("unsupported database type: %s", dbType)
 	}

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gorm.io/driver/gaussdb"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -113,6 +114,16 @@ func TestGetDialectorReturnsGaussDB(t *testing.T) {
 	}
 	if d == nil {
 		t.Fatalf("dialector should not be nil")
+	}
+}
+
+func TestGetDialectorUsesPostgresDriverForGaussDB(t *testing.T) {
+	d, err := GetDialector(DatabaseGaussDB, "host=localhost port=8000 user=gorm dbname=gorm sslmode=disable TimeZone=Asia/Shanghai")
+	if err != nil {
+		t.Fatalf("get dialector error = %v", err)
+	}
+	if _, ok := d.(*postgres.Dialector); !ok {
+		t.Fatalf("dialector type = %T, want *postgres.Dialector", d)
 	}
 }
 
