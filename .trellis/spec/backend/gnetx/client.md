@@ -72,7 +72,7 @@ MustNewClient() → NewClient → gnet.NewClient → gcli.Start → c.dial()
     ↓ 首次拨号成功
 OnOpen → newSession(UUID) → c.sess.Store → OnConnect（每次连接，含重连）
     ↓
-收发：OnTraffic → decode → Response 匹配（resolveResponse）→ dispatch
+收发：OnTraffic → decode → Response 匹配（resolveResponse + 未匹配丢弃，同 Server）→ dispatch
     ↓ 断连
 OnClose → c.sess.CAS(nil) → cn.Close() → startReconnect
     ↓ 固定间隔后

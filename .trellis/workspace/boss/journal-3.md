@@ -307,3 +307,37 @@ Diagnosed cron next_run offset caused by GaussDB timestamp scan timezone behavio
 ### Next Steps
 
 - None - task complete
+
+
+## Session 117: ispserver 服务搭建 + gnetx 框架完善 + ISP 协议公共能力
+
+**Date**: 2026-07-15
+**Task**: ispserver 服务搭建 + gnetx 框架完善 + ISP 协议公共能力
+**Branch**: `master`
+
+### Summary
+
+搭建 ispserver TCP 服务端（对标 Java SipEndpoint），实现注册/心跳/未实现应答 handler；抽取 common/isp 公共能力（logging/wrapper/NewResponse/ErrUnimplemented/RootName 校验）；修复 gnetx Response 接口未匹配时僵尸应答回环；gnetx session 日志字段注入（injectSessionLogFields）；更新 Trellis spec
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a0141b5b` | (see git log) |
+| `2a78fc76` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

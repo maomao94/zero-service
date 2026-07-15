@@ -42,10 +42,15 @@ type IspError struct {
 func (e *IspError) Error() string { return e.Msg }
 
 var (
-	ErrRetry  = &IspError{Code: StatusRetry, Msg: "需重发"}
-	ErrReject = &IspError{Code: StatusReject, Msg: "拒绝"}
-	ErrError  = &IspError{Code: StatusError, Msg: "内部错误"}
+	ErrRetry         = &IspError{Code: StatusRetry, Msg: "需重发"}
+	ErrReject        = &IspError{Code: StatusReject, Msg: "拒绝"}
+	ErrError         = &IspError{Code: StatusError, Msg: "内部错误"}
+	ErrUnimplemented = &IspError{Code: StatusError, Msg: "该指令暂未实现"}
 )
+
+func IsUnimplemented(err error) bool {
+	return errors.Is(err, ErrUnimplemented)
+}
 
 func NewIspError(code, msg string) *IspError {
 	return &IspError{Code: code, Msg: msg}

@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package ispserver;
+
+option go_package = "./ispserver";
+
+service IspServer {
+  rpc ListSessions(ListSessionsReq) returns(ListSessionsRes);
+  rpc DisconnectSession(DisconnectSessionReq) returns(DisconnectSessionRes);
+}
+
+message SessionInfo {
+  string session_id = 1;
+  string device_code = 2;
+  string remote_addr = 3;
+  int64 connected_at = 4;
+}
+
+message ListSessionsReq {}
+
+message ListSessionsRes {
+  repeated SessionInfo sessions = 1;
+}
+
+message DisconnectSessionReq {
+  string session_id = 1;
+}
+
+message DisconnectSessionRes {}

@@ -183,7 +183,7 @@ func (c *Client) connect() error {
 		if !ok {
 			return nil, nil
 		}
-		handler.LogFallback(ctx, im)
+		isp.LogFallback(ctx, im)
 		c.trackRecvSeq(im.SendSeq, conn.ID())
 		return c.response(ctx, conn, im, nil), nil
 	})
@@ -235,7 +235,7 @@ func (c *Client) newResponse(conn gnetx.Conn, req *isp.Message, code string, com
 
 func (c *Client) wrap(h func(ctx context.Context, req *isp.Message) ([]isp.Item, error)) func(ctx context.Context, conn gnetx.Conn, req *isp.Message) (any, error) {
 	return func(ctx context.Context, conn gnetx.Conn, req *isp.Message) (any, error) {
-		handler.LogInbound(ctx, req)
+		isp.LogInbound(ctx, req)
 		items, err := h(ctx, req)
 		c.trackRecvSeq(req.SendSeq, conn.ID())
 		if err != nil || len(items) == 0 {
@@ -351,6 +351,11 @@ func (c *Client) doRegister() {
 		c.closeCurrentConn()
 		return
 	}
+	if resp.Code != isp.StatusSuccess {
+		logx.Errorf("[ispagent] 注册被拒绝: code=%s", resp.Code)
+		c.closeCurrentConn()
+		return
+	}
 	hb := c.heartbeat
 	if len(resp.Items) > 0 {
 		hb = parseItemInterval(resp.Items[0], "heart_beat_interval", hb)
@@ -432,7 +437,7 @@ func (c *Client) request(ctx context.Context, msg *isp.Message) (*isp.Message, e
 			ttl = d
 		}
 	}
-	handler.LogOutbound(ctx, msg)
+	isp.LogOutbound(ctx, msg)
 	respAny, err := sess.Request(ctx, msg, ttl)
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "isp tcp 请求失败: %v", err)

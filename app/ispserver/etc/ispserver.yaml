@@ -1,0 +1,20 @@
+Name: ispserver.rpc
+ListenOn: 0.0.0.0:21015
+Mode: dev
+Log:
+  Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/ispserver
+  Level: debug
+  KeepDays: 300
+# ISP TCP 服务端配置（对标 Java SipEndpoint + SipConstant）
+IspConf:
+  ListenAddr: 0.0.0.0:7100                       # ISP TCP 监听地址，下级设备通过此端口连接
+  MaxFrameLength: 1048576                 # 单帧最大字节数（1MB）
+  HeartbeatInterval: 60                   # 心跳间隔（秒），注册响应中下发给客户端
+  DeviceRunInterval: 10                   # 巡视设备运行数据上报间隔（秒）
+  NestRunInterval: 500                    # 无人机机巢运行数据上报间隔（秒）
+  WeatherInterval: 500                    # 微气象数据上报间隔（秒）
+  DebugLog: true                          # 帧级 debug 日志（hex + xml）
+  RootName: PatrolHost                    # XML 根元素（服务端侧使用 PatrolHost，客户端连接时 RootName 不一致则断开连接）
+  IdleTimeoutSeconds: 300                 # 读空闲超时（秒），超过则断开连接

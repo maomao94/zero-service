@@ -202,6 +202,9 @@ func (s *Server) OnTraffic(c gnet.Conn) gnet.Action {
 			if cn.resolveResponse(resp.ResponseTID(), msg) {
 				continue
 			}
+			if resp.ResponseTID() != "" {
+				continue // 未匹配的应答消息静默丢弃，避免僵尸应答回环
+			}
 		}
 		s.dispatch(context.Background(), cn, msg)
 	}
@@ -221,7 +224,7 @@ func (s *Server) OnClose(c gnet.Conn, err error) gnet.Action {
 	if err != nil {
 		cause = err.Error()
 	}
-	logx.Infof("[gnetx] session closed id=%s alias=%s remote=%s cause=%s",
+	logx.Errorf("[gnetx] session closed id=%s alias=%s remote=%s cause=%s",
 		cn.id, cn.alias, cn.RemoteAddr(), cause)
 	_ = cn.Close()
 	return gnet.None
@@ -258,6 +261,7 @@ func (s *Server) dispatchSync(parentCtx context.Context, cn *session, msg any, h
 	if pcp, ok := msg.(PacketContextProvider); ok {
 		ctx = context.WithValue(ctx, PacketContextKey, pcp.PacketContext())
 	}
+	ctx = injectSessionLogFields(ctx, cn)
 
 	reply, hErr := h.Handle(ctx, cn, msg)
 
@@ -286,6 +290,7 @@ func (s *Server) dispatchAsync(parentCtx context.Context, cn *session, msg any, 
 	if pcp, ok := msg.(PacketContextProvider); ok {
 		ctx = context.WithValue(ctx, PacketContextKey, pcp.PacketContext())
 	}
+	ctx = injectSessionLogFields(ctx, cn)
 
 	s.asyncWG.Add(1)
 	err := s.pool.Submit(func() {

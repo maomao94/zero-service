@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 116
+- **Total Sessions**: 117
 - **Last Active**: 2026-07-15
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~309 | Active |
+| `journal-3.md` | ~343 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 117 | 2026-07-15 | ispserver 服务搭建 + gnetx 框架完善 + ISP 协议公共能力 | `a0141b5b`, `2a78fc76` | `master` |
 | 116 | 2026-07-15 | Fix GaussDB cron timestamp timezone | `67779e66`, `f7e14149` | `-` |
 | 115 | 2026-07-15 | common tool 时间工具与 SQLite 时间规范 | `de7bdce3`, `1354132d` | `master` |
 | 114 | 2026-07-14 | ISP 定时上报缓存优化：过期清理 + 新 key 立即上报 + 机巢/环境 proto | `c9e94f83`, `b1c22d96` | `master` |

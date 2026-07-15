@@ -3,6 +3,8 @@ package isp
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/dromara/carbon/v2"
 )
 
 // Item 为动态 key-value 属性容器，对应 XML 中 <Item attr="value"/> 的属性映射。
@@ -113,6 +115,28 @@ func (m *Message) EnsureDefaults(rootName string) {
 	m.RootName = NormalizeRootName(firstNonEmpty(m.RootName, rootName))
 	if m.SessionSource == 0 {
 		m.SessionSource = SessionSourceClient
+	}
+}
+
+// NewResponse 基于请求消息构造 ISP 系统应答，自动处理 SendCode/ReceiveCode 互换和 RecvSeq 回执。
+// sessionSource: 本端会话源（SessionSourceClient 或 SessionSourceServer）
+// code: 应答状态码（200/400/500）
+// command: 应答指令（CommandGenericResponseWithoutItems 或 CommandGenericResponseWithItems）
+// items: 可选业务数据
+//
+// 调用方需填充 SendSeq（从 conn.NextSendSeq()）并可覆盖 RootName。
+func NewResponse(req *Message, sessionSource byte, code string, command int32, items []Item) *Message {
+	return &Message{
+		RootName:      req.RootName,
+		SessionSource: sessionSource,
+		SendCode:      req.ReceiveCode,
+		ReceiveCode:   req.SendCode,
+		Type:          TypeSystem,
+		Code:          code,
+		Command:       command,
+		Time:          carbon.Now().ToDateTimeString(),
+		RecvSeq:       req.SendSeq,
+		Items:         items,
 	}
 }
 

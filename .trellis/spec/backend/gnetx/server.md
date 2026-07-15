@@ -81,11 +81,22 @@ for i := 0; i < batchLimit; i++ {
     if ErrIncompletePacket → break
     if 其他 error       → handleDecodeError
     consumed++
-    // Response auto-route: resolveResponse(共享池)
-    // 未命中 → dispatch
+    // Response auto-route: resolveResponse(共享池) → 命中 → continue
+    // Response 未命中且 TID 非空 → continue（丢弃，防僵尸应答回环）
+    // 非 Response 或 TID 为空 → dispatch
 }
 // consumed > 0 && InboundBuffered > 0 → Wake 重触发
 ```
+
+**Response 接口的三态处理：**
+
+| `ResponseTID()` | `resolveResponse` | 结果 |
+|---|---|---|
+| `""` | — | → dispatch（正常消息，如 isp.Message 的 251-1/251-2） |
+| 非空 | 命中 | `continue`（消费） |
+| 非空 | 未命中 | `continue`（丢弃，避免 Answer→Answer 无限回环） |
+
+`isp.Message` 实现 `Response` 接口但仅 251-3/251-4 返回非空 `ResponseTID()`，因此业务消息不受影响。
 
 同步 handler 返回 reply 时，Server 使用同一个 handler ctx 调用 `Conn.Write(ctx, reply)`；异步 handler 返回 reply 时，Server 使用 `Conn.WriteAsync(ctx, reply)`。该 ctx 已由 dispatch 通过 `PacketContextProvider` 注入入站协议头（key=`PacketContextKey`），因此协议 Codec 可以从 ctx 中读取入站 seq 来填回复的 ack。dispatchAsync 同理（入池前完成注入）。
 

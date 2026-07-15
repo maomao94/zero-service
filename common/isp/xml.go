@@ -3,10 +3,15 @@ package isp
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 )
+
+// ErrRootNameMismatch 在服务端校验收到消息的 RootName 与预期不符时返回，用于断开非法连接。
+var ErrRootNameMismatch = errors.New("isp: root name mismatch")
+
 
 // xmlMessage 对应 ISP 协议 XML 报文结构，用于标准库 xml 编解码。
 // Command 字段使用 omitempty：Command=0 时省略 <Command> 元素，与 Java 侧行为一致。
@@ -102,6 +107,31 @@ func ParseXML(raw []byte) (*Message, error) {
 		msg.Items = append(msg.Items, item)
 	}
 	return msg, nil
+}
+
+// ValidateRootName 校验收到的 XML 根元素名称是否与预期一致。
+// 对标 Java 侧 SipHandlerInterceptor 中 rootNodeName 的校验逻辑。
+func ValidateRootName(expected, actual string) error {
+	if actual == "" {
+		return nil
+	}
+	if !IsValidRootName(actual) {
+		return fmt.Errorf("%w: 不支持的根元素 %q", ErrRootNameMismatch, actual)
+	}
+	if NormalizeRootName(expected) != NormalizeRootName(actual) {
+		return fmt.Errorf("%w: 期望 %q, 实际 %q", ErrRootNameMismatch, expected, actual)
+	}
+	return nil
+}
+
+// IsValidRootName 校验根元素是否为合法的 PatrolHost 或 PatrolDevice。
+func IsValidRootName(root string) bool {
+	switch root {
+	case RootPatrolHost, RootPatrolDevice:
+		return true
+	default:
+		return false
+	}
 }
 
 // parseInt32 将字段字符串转为 int32，空字符串返回 0。

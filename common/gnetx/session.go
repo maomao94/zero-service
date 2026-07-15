@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/panjf2000/gnet/v2"
+	"github.com/zeromicro/go-zero/core/logx"
 
 	"zero-service/common/antsx"
 )
@@ -131,6 +132,7 @@ func (s *session) Request(ctx context.Context, msg Correlatable, ttl time.Durati
 	if s.replyPool == nil {
 		return nil, ErrSessionClosed
 	}
+	ctx = injectSessionLogFields(ctx, s)
 	compositeTID := s.id + "|" + msg.TID()
 	return antsx.RequestReply[any](ctx, s.replyPool, compositeTID, func() error { return s.WriteAsync(ctx, msg) }, ttl)
 }
@@ -237,4 +239,18 @@ func (m *SessionManager) remove(s *session) {
 	}
 	m.mu.Unlock()
 	m.listener.OnDestroyed(s)
+}
+
+// injectSessionLogFields 将 session 级信息注入 context，使 handler 内
+// logx.WithContext(ctx) 自动携带 session_id、local、remote、alias。
+func injectSessionLogFields(ctx context.Context, s *session) context.Context {
+	ctx = logx.ContextWithFields(ctx,
+		logx.Field("session_id", s.id),
+		logx.Field("local", s.LocalAddr().String()),
+		logx.Field("remote", s.RemoteAddr().String()),
+	)
+	if alias := s.Alias(); alias != "" {
+		ctx = logx.ContextWithFields(ctx, logx.Field("alias", alias))
+	}
+	return ctx
 }

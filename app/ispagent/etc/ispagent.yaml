@@ -32,10 +32,10 @@ CronTask:
   # MaxDelay: 30m  # 停服太久导致的过期任务跳过执行，直接计算下次时间（默认30分钟）
 # ISP TCP 客户端配置
 IspSetting:
-  ServerAddr: 10.10.1.213:7100         # 上级 ISP 系统地址
+  ServerAddr: 127.0.0.1:7100         # 上级 ISP 系统地址
   SendCode: daystar-robot-code                   # 本端标识（固定配置）
   RegisterReceiveCode: Server01       # 注册报文中的预期对端标识（注册响应后以服务端实际返回为准）
-  RootName: PatrolDevice              # XML 根元素（PatrolHost 或 PatrolDevice，与 Java 侧上级系统属性一致）
+  RootName: PatrolHost              # XML 根元素（PatrolHost 或 PatrolDevice，与 Java 侧上级系统属性一致）
   HeartbeatInterval: 60s              # 默认心跳间隔（注册响应中的 heart_beat_interval 可覆盖）
   RequestTimeout: 10s                 # 单次请求超时
   ReconnectInterval: 3s               # 断线重连间隔
