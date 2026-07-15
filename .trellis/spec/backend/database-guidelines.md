@@ -162,10 +162,24 @@ c.Where("task_patrolled_id = ?", id).Assign(assign).FirstOrCreate(&task)
 
 proto/API 层时间字段使用 `string`，格式 `YYYY-MM-DD HH:mm:ss.SSSSSS`，UTC+8 时区。Go 层使用 `carbon.CreateFromStdTime(m.ReportedAt).ToDateTimeMicroString()` 转换。
 
+需要落库或对外生成秒级业务时间时，先清掉亚秒精度，再格式化或写入 `time.Time`：
+
+```go
+now := tool.NowStartOfSecond()
+text := now.ToDateTimeString()        // 2006-01-02 15:04:05
+idSuffix := now.ToShortDateTimeString() // 20060102150405
+stored := now.StdTime()
+```
+
+从已有 `time.Time` 派生业务时间时使用 `tool.CarbonFromTimeStartOfSecond(t)`；不要手写 `Format("YmdHis")`，carbon 已提供 `ToShortDateTimeString()`。
+
+盒子端 SQLite 读取 `time.Time` 的 GORM tag 约定见 [`gormx-guidelines.md`](./gormx-guidelines.md#时间字段类型)：使用 `type:timestamp`，不要使用 `timestamp(6)` / `timestamp(0)`；秒级业务约束由写入前的 `tool.NowStartOfSecond()` 保证。
+
 源文件：
 - `common/carbonx/carbonx.go` — 全局时区默认 `carbon.Shanghai`
 - `app/djicloud/djicloud.proto` — 所有 `reported_at` 字段
 - `app/djicloud/internal/logic/helper.go` — 转换示例
+- `common/tool/timeutil.go` — 秒级业务时间 helper
 
 ## 常见错误
 

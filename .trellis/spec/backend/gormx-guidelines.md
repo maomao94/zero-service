@@ -245,6 +245,28 @@ type DjiDeviceOsdSnapshot struct {
 - `TenantMixin`：`TenantID`（Go 复合缩写惯例）
 - GORM 仅对全大写 `ID` 自动识别为主键，`Id` 需要显式 `primarykey` tag
 
+### 时间字段类型
+
+盒子端会使用 SQLite 作为一等运行环境。`mattn/go-sqlite3` 读取 `time.Time` 时只把 declared type 精确等于 `timestamp` / `datetime` / `date` 的列解析为时间；`timestamp(6)`、`timestamp(0)` 会按 `string` 返回，扫描到 `time.Time` 时失败。
+
+因此 gormx 基础时间 mixin 使用无精度 `timestamp`：
+
+```go
+type TimeMixin struct {
+    CreatedAt time.Time `gorm:"type:timestamp;autoCreateTime:milli"`
+    UpdatedAt time.Time `gorm:"type:timestamp;autoUpdateTime:milli"`
+}
+
+type LegacyTimeMixin struct {
+    CreateTime time.Time `gorm:"column:create_time;type:timestamp;autoCreateTime:milli"`
+    UpdateTime time.Time `gorm:"column:update_time;type:timestamp;autoUpdateTime:milli"`
+}
+```
+
+需要秒级业务时间时，不通过 `timestamp(0)` 表达，而是在写入前清精度，例如 `tool.NowStartOfSecond()`。已有生产表需要改精度时另写 SQL migration，不通过改 mixin tag 假设 AutoMigrate 会安全改列。
+
+源文件：`common/gormx/model.go`、`common/gormx/model_legacy.go`；SQLite driver 行为见 `github.com/mattn/go-sqlite3` 的 `SQLiteTimestampFormats` 和 declared type 判断。
+
 ### GORM Model Hook 与 gormx Callback 的区别
 
 | 机制 | 定义方式 | `SkipHooks: true` 影响 |

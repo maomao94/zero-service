@@ -240,3 +240,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 115: common tool 时间工具与 SQLite 时间规范
+
+**Date**: 2026-07-15
+**Task**: common tool 时间工具与 SQLite 时间规范
+**Branch**: `master`
+
+### Summary
+
+整理 common/tool 工具函数，新增秒级时间 helper，统一 ISP 任务时间写入与 SQLite/GORM timestamp 规则，并刷新相关 Trellis spec。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `de7bdce3` | (see git log) |
+| `1354132d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

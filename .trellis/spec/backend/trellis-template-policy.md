@@ -24,7 +24,7 @@
 | `.opencode/agents/**` | OpenCode sub-agent 定义 |
 | `.opencode/plugins/**` | OpenCode 插件（session-start、workflow-state、subagent-context） |
 | `.opencode/lib/**` | OpenCode 插件共享库 |
-| `.opencode/skills/**` | OpenCode skill 模板（包括 trellis-spec-bootstarp 等） |
+| `.opencode/skills/**` | OpenCode skill 模板（包括 trellis-spec-bootstrap 等） |
 | `.opencode/package.json` | OpenCode 插件依赖版本 |
 | `.qoder/**` | Qoder 平台 hooks、agents、skills、settings |
 | `AGENTS.md` 的 Trellis block | 不修改 Trellis 标记块内容 |

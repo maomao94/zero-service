@@ -1,6 +1,6 @@
 # DRC Manager 并发规范
 
-> `common/djisdk/drc.go` 中的 `drcManager` 负责 DRC 会话生命周期管理与心跳调度。并发模型与旧 `app/djicloud/internal/drc/` 完全一致。
+> `common/djisdk/drc.go` 中的 `drcManager` 负责 DRC 会话生命周期管理与心跳调度；DRC 入口逻辑位于 `app/djicloud/internal/logic/drc*.go` 和 `app/djicloud/internal/hooks/mqtt_drc_up.go`。
 
 ## 核心设计
 

@@ -169,6 +169,39 @@ func TestHandleTaskControlParsesSubstationFromMessageCode(t *testing.T) {
 	}
 }
 
+func TestHandleTaskControlStartStoresSecondPrecisionTimes(t *testing.T) {
+	ctx := context.Background()
+	store := crontask.NewMemoryStore()
+	db := newTaskControlTestDB(t)
+	fields := &ctask.IspTaskFields{SubstationCode: "SUB001", TaskCode: "TASK001"}
+	if err := store.Insert(ctx, &crontask.TaskConfig{
+		TaskCode: "TASK001",
+		TaskName: "测试任务",
+		Extra:    []byte(ctask.SerializeExtra(fields)),
+		NextRun:  time.Date(2025, 12, 16, 10, 0, 0, 0, time.Local),
+	}); err != nil {
+		t.Fatalf("insert task: %v", err)
+	}
+
+	taskPatrolledID, err := HandleTaskControl(ctx, &isp.Message{
+		Command: isp.CommandTaskStart,
+		Code:    "TASK001",
+	}, store, db, "send", "receive", nil)
+	if err != nil {
+		t.Fatalf("HandleTaskControl: %v", err)
+	}
+
+	var created gormmodel.GormIspPatrolTask
+	if err := db.Select("plan_start_time", "start_time").
+		Where("task_patrolled_id = ?", taskPatrolledID).
+		First(&created).Error; err != nil {
+		t.Fatalf("query created patrol task: %v", err)
+	}
+	if created.PlanStartTime.Nanosecond() != 0 || created.StartTime.Nanosecond() != 0 {
+		t.Fatalf("expected second precision times, got plan=%v start=%v", created.PlanStartTime, created.StartTime)
+	}
+}
+
 func newTaskControlTestDB(t *testing.T) *gormx.DB {
 	t.Helper()
 	db, err := gorm.Open(sqlite.Open("file:"+t.Name()+"?mode=memory&cache=shared&parseTime=true&_loc=auto"), &gorm.Config{})

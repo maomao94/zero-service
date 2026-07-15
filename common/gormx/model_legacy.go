@@ -24,13 +24,13 @@ type LegacyStringIDMixin struct {
 
 // LegacyTimeMixin 提供旧表 create_time 和 update_time 字段。
 type LegacyTimeMixin struct {
-	CreateTime time.Time `gorm:"column:create_time;type:timestamp(6);autoCreateTime:milli" json:"create_time"`
-	UpdateTime time.Time `gorm:"column:update_time;type:timestamp(6);autoUpdateTime:milli" json:"update_time"`
+	CreateTime time.Time `gorm:"column:create_time;type:timestamp;autoCreateTime:milli" json:"create_time"`
+	UpdateTime time.Time `gorm:"column:update_time;type:timestamp;autoUpdateTime:milli" json:"update_time"`
 }
 
 // LegacySoftDeleteMixin 提供旧表 delete_time 和 del_state 软删除字段。
 type LegacySoftDeleteMixin struct {
-	DeleteTime sql.NullTime          `gorm:"column:delete_time;index" json:"-"`
+	DeleteTime sql.NullTime          `gorm:"column:delete_time;type:timestamp;index" json:"-"`
 	DelState   soft_delete.DeletedAt `gorm:"column:del_state;softDelete:flag,DeletedAtField:DeleteTime;default:0;index" json:"del_state"`
 }
 

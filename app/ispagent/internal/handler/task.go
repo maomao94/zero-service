@@ -11,6 +11,7 @@ import (
 	"zero-service/common/crontask"
 	"zero-service/common/gormx"
 	"zero-service/common/isp"
+	"zero-service/common/tool"
 
 	ctask "zero-service/app/ispagent/internal/crontask"
 
@@ -110,8 +111,6 @@ func atoi(s string) int {
 	return n
 }
 
-
-
 // taskControlToState 任务控制指令 → 任务状态。 todo 待定 设备没接入
 var taskControlToState = map[int32]string{
 	isp.CommandTaskStart:  "2", // 正在执行
@@ -188,12 +187,12 @@ func HandleTaskControl(ctx context.Context, msg *isp.Message, store crontask.Tas
 		if substationCode == "" {
 			return "", fmt.Errorf("任务 %s 缺少变电站编码", taskCode)
 		}
-		now := carbon.Now()
+		now := tool.NowStartOfSecond()
 		planStartTime = now.ToDateTimeString()
 		startTime = planStartTime
 		execAt = now.StdTime()
 		taskName = task.TaskName
-		taskPatrolledID = fmt.Sprintf("%s_%s_%s", substationCode, taskCode, now.Format("YmdHis"))
+		taskPatrolledID = fmt.Sprintf("%s_%s_%s", substationCode, taskCode, now.ToShortDateTimeString())
 		if err := store.UpdateNextRun(ctx, task.ID, task.NextRun, now.StdTime()); err != nil {
 			logx.WithContext(ctx).Errorf("[ispagent] 更新 last_run 失败: %v", err)
 		}

@@ -92,8 +92,8 @@ func (l *ListTaskConfigsLogic) ListTaskConfigs(in *ispagent.ListTaskConfigsReq) 
 			InvalidEndTime:      r.InvalidEndTime,
 			NextRun:             carbon.CreateFromStdTime(r.NextRun).ToDateTimeString(),
 		}
-		if r.LastRun != nil {
-			item.LastRun = carbon.CreateFromStdTime(*r.LastRun).ToDateTimeString()
+		if r.LastRun.Valid {
+			item.LastRun = carbon.CreateFromStdTime(r.LastRun.Time).ToDateTimeString()
 		}
 		items = append(items, item)
 	}

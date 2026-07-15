@@ -1,6 +1,7 @@
 package crontask
 
 import (
+	"database/sql"
 	"encoding/json"
 	"strconv"
 
@@ -20,7 +21,9 @@ func fromTaskConfig(cfg *crontask.TaskConfig) *gormmodel.GormTaskConfig {
 		Extra:    string(cfg.Extra),
 		Status:   int(cfg.Status),
 		NextRun:  cfg.NextRun,
-		LastRun:  cfg.LastRun,
+	}
+	if cfg.LastRun != nil {
+		g.LastRun = sql.NullTime{Time: *cfg.LastRun, Valid: true}
 	}
 	g.Id = cfg.ID
 
@@ -43,7 +46,10 @@ func toTaskConfig(g *gormmodel.GormTaskConfig) *crontask.TaskConfig {
 		Payload:  json.RawMessage(g.Payload),
 		Status:   crontask.TaskStatus(g.Status),
 		NextRun:  g.NextRun,
-		LastRun:  g.LastRun,
+	}
+	if g.LastRun.Valid {
+		lastRun := g.LastRun.Time
+		cfg.LastRun = &lastRun
 	}
 
 	fields := toFields(g)

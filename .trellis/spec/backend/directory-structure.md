@@ -11,7 +11,7 @@
 | `socketapp/` | SocketIO 网关和推送服务（2 个） |
 | `gtw/` | BFF 网关，聚合 gRPC 后端并提供 HTTP/gRPC Gateway 入口 |
 | `facade/` | 对外协议层，当前为 `streamevent` 跨语言 gRPC 协议 |
-| `common/` | 跨服务复用能力（38 个包），按通信、工具、领域三层组织 |
+| `common/` | 跨服务复用能力（42 个包），按通信、工具、领域三层组织 |
 | `model/` | 数据库模型和模型生成脚本 |
 | `deploy/` | Docker Compose、部署编排和环境相关材料 |
 | `docs/`、`swagger/`、`third_party/`、`util/`、`cli/` | 项目文档、Swagger、第三方 proto、工具集和独立 CLI 工具（如 dtui） |
@@ -35,6 +35,7 @@
 | `iecagent` | proto (gRPC) | IEC104 从站代理 |
 | `ieccaller` | proto (gRPC) | IEC104 主站调用 |
 | `iecstash` | proto (gRPC) | IEC104 数据暂存 |
+| `ispagent` | proto (gRPC) | ISP 硬件盒子代理，SQLite 本地任务调度与设备模型上报 |
 | `djicloud` | proto (gRPC) | DJI Cloud API 物联平台（机巢管理、OSD/State、飞行区、DRC） |
 
 ### 基础能力
@@ -78,7 +79,7 @@
 | `socketgtw` | — | SocketIO 握手/路由网关 |
 | `socketpush` | — | WebSocket 推送服务 |
 
-## common/ 公共包清单（38 个）
+## common/ 公共包清单（42 个）
 
 ### 通信层
 
@@ -87,10 +88,12 @@
 | `socketiox` | SocketIO 服务端/客户端（Session、房间、广播） |
 | `mqttx` | MQTT 客户端抽象（Client 接口、ReplyRouter、handler 注册） |
 | `wsx` | WebSocket 客户端（状态机、自动重连、认证/心跳） |
+| `gnetx` | TCP 框架（Codec、Server、Client、Session、Request-Response） |
 | `netx` | HTTP 客户端（Engine 抽象、链式 Request、上传/下载、OTel） |
 | `ssex` | SSE 流式输出 |
 | `nacosx` | Nacos 服务发现 |
 | `asynqx` | asynq 任务队列 |
+| `ftps` | FTP/SFTP 相关封装 |
 
 ### AI 与协议
 
@@ -112,11 +115,13 @@
 | `ossx` | OSS 对象存储（上传、签名 URL） |
 | `dockerx` | Docker 操作封装 |
 | `gtwx` | 网关错误处理与路由工具 |
+| `flowx` | Workflow 封装（构造、拦截器、Step/Attempt 日志） |
 | `tool` | 通用工具（错误构建、类型转换等） |
-| `interceptor` | RPC 拦截器（日志、异常恢复等） |
+| `Interceptor` | RPC 拦截器（日志、异常恢复等） |
 | `configx` | 配置工具 |
 | `copierx` | 对象深拷贝 |
 | `filex` | 文件操作 |
+| `crontask` | cron/task 调度辅助 |
 | `imagex` | 图片处理 |
 | `mediax` | 媒体处理 |
 | `powerwechatx` | 企业微信集成 |

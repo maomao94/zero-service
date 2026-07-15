@@ -17,10 +17,10 @@ type StringIDModel struct {
 	Id string `gorm:"primarykey;size:36" json:"id"`
 }
 
-// TimeMixin 提供 created_at 和 updated_at 字段，并保留 MySQL timestamp(6) 精度。
+// TimeMixin 提供 created_at 和 updated_at 字段。
 type TimeMixin struct {
-	CreatedAt time.Time `gorm:"type:timestamp(6);autoCreateTime:milli" json:"created_at"`
-	UpdatedAt time.Time `gorm:"type:timestamp(6);autoUpdateTime:milli" json:"updated_at"`
+	CreatedAt time.Time `gorm:"type:timestamp;autoCreateTime:milli" json:"created_at"`
+	UpdatedAt time.Time `gorm:"type:timestamp;autoUpdateTime:milli" json:"updated_at"`
 }
 
 // SoftDeleteMixin 启用 GORM 标准 deleted_at 软删除。
