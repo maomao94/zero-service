@@ -8,8 +8,8 @@
 - **DJI 云平台** — Dock3 Cloud API MQTT 封装，航线任务、直播推流、DRC 指令飞行
 - **异步任务调度** — asynq 分布式队列 + 自研计划任务引擎，HTTP/gRPC 回调
 - **实时通信** — SocketIO 消息网关，房间管理、广播推送、MQTT 桥接
-- **协议桥接** — Modbus TCP/RTU、MQTT 协议转换
-- **变电站巡检** — ISP 巡检协议代理，对接上级巡检系统服务
+- **协议桥接** — Modbus TCP/RTU、MQTT、Kafka、gRPC-Gateway 转发和南瑞反向隔离装置桥接
+- **变电站巡检** — ISP 巡检协议代理和 TCP 服务端，对接上级/下级巡检系统
 - **地理信息** — H3 网格、GeoHash 编解码、电子围栏、坐标系转换
 - **容器管理** — Docker 容器生命周期管理
 
@@ -74,11 +74,16 @@ cd app/trigger && go run trigger.go -f etc/trigger.yaml
 | **socketgtw/push** | SocketIO 实时通信网关 | [SocketIO](docs/socketio.md) |
 | **gtw** | BFF 网关 — HTTP/gRPC-Gateway 聚合入口 | - |
 | **file** | 文件服务 — 分片流上传、OSS 集成 | - |
+| **bridgegtw** | HTTP/gRPC-Gateway 代理转发 | - |
+| **bridgekafka** | Kafka 桥接服务 | - |
+| **bridgedump** | 南瑞反向隔离装置桥接 | - |
 | **bridgemodbus** | Modbus TCP/RTU 协议桥接 | - |
 | **bridgemqtt** | MQTT 协议桥接 | - |
+| **lalhook/lalproxy** | LAL 流媒体回调与代理 | - |
 | **gis** | 地理信息 — H3/GeoHash/围栏/坐标转换 | - |
 | **podengine** | 容器管理 — Docker 容器生命周期 | - |
-| **ispagent** | ISP 巡检协议 — 变电站机器人巡检 TCP 代理 | [ISP 巡检协议](docs/ispagent.md) |
+| **ispagent** | ISP 巡检协议 — 变电站机器人巡检 TCP 代理 | [ISP 巡检协议](docs/isp.md) |
+| **ispserver** | ISP 巡检协议 — TCP 服务端，接入下级设备 | [ISP 巡检协议](docs/isp.md) |
 
 ## 技术栈
 

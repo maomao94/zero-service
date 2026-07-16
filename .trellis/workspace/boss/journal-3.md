@@ -341,3 +341,74 @@ Diagnosed cron next_run offset caused by GaussDB timestamp scan timezone behavio
 ### Next Steps
 
 - None - task complete
+
+
+## Session 118: ISP handler message return & gnetx shutdown/lifecycle improvements
+
+**Date**: 2026-07-16
+**Task**: ISP handler message return & gnetx shutdown/lifecycle improvements
+**Branch**: `master`
+
+### Summary
+
+统一 ISP handler 返回 *isp.Message，common/isp 基础通信下沉，wrapper 简化（去掉 build/client 参数），client/server 新增 asyncWG + ShutdownTimeout + Shutdown(ctx)，slow log 对齐 go-zero 风格，fallback 改为 ErrUnimplemented，modelsync_provider 路径穿越修复，spec 同步更新
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4d6a67c6` | (see git log) |
+| `e4d6b550` | (see git log) |
+| `e13bb46a` | (see git log) |
+| `dc37c5a6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 119: Project documentation refresh
+
+**Date**: 2026-07-16
+**Task**: Project documentation refresh
+**Branch**: `master`
+
+### Summary
+
+整理项目级文档：更新根 README、docs 索引和服务端口清单；补齐正式服务入口、移除非正式/半成品服务公开条目；将 ISP 文档从 ispagent.md 改名为 isp.md 并重写为同时覆盖 ispagent/ispserver 两个服务。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `401a54b0` | (see git log) |
+| `d7d9444e` | (see git log) |
+| `fd3d4227` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

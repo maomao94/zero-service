@@ -140,6 +140,21 @@ func NewResponse(req *Message, sessionSource byte, code string, command int32, i
 	}
 }
 
+// NewSuccessResponse 构造 251-3 通用成功应答（不带 Item）。
+func NewSuccessResponse(req *Message, sessionSource byte) *Message {
+	return NewResponse(req, sessionSource, StatusSuccess, CommandGenericResponseWithoutItems, nil)
+}
+
+// NewItemsResponse 构造 251-4 通用成功应答（带 Item）。
+func NewItemsResponse(req *Message, sessionSource byte, items []Item) *Message {
+	return NewResponse(req, sessionSource, StatusSuccess, CommandGenericResponseWithItems, items)
+}
+
+// NewErrorResponse 构造 251-3 通用错误应答，状态码由 ResponseCode(err) 映射。
+func NewErrorResponse(req *Message, sessionSource byte, err error) *Message {
+	return NewResponse(req, sessionSource, ResponseCode(err), CommandGenericResponseWithoutItems, nil)
+}
+
 func firstNonEmpty(values ...string) string {
 	for _, v := range values {
 		if v != "" {

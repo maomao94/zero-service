@@ -3,6 +3,7 @@ package gnetx
 import (
 	"context"
 	"errors"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -38,7 +39,8 @@ type Client struct {
 	reconnecting atomic.Bool
 	reconnectCh  chan struct{}
 
-	tracer oteltrace.Tracer
+	tracer  oteltrace.Tracer
+	asyncWG sync.WaitGroup
 }
 
 func MustNewClient(address string, opts ...ClientOption) *Client {
@@ -119,12 +121,29 @@ func (c *Client) Request(ctx context.Context, msg Correlatable, ttl time.Duratio
 }
 
 func (c *Client) Close() {
+	ctx, cancel := context.WithTimeout(context.Background(), c.opts.ShutdownTimeout)
+	defer cancel()
+	c.Shutdown(ctx)
+}
+
+// Shutdown 优雅关闭客户端：先关闭当前连接，等待异步 handler 完成，再停止 gnet 引擎。
+func (c *Client) Shutdown(ctx context.Context) {
 	if !c.closed.CompareAndSwap(false, true) {
 		return
 	}
 	close(c.reconnectCh)
 	if cn := c.sess.Swap(nil); cn != nil {
 		_ = cn.Close()
+	}
+	done := make(chan struct{})
+	go func() {
+		c.asyncWG.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-ctx.Done():
+		logx.Infof("[gnetx] client close timeout, async handlers still running")
 	}
 	c.replyPool.Close()
 	if c.gcli != nil {
@@ -299,16 +318,16 @@ func (c *Client) dispatchSync(parentCtx context.Context, cn *session, msg any, h
 
 	duration := timex.Since(startTime)
 	if duration > c.opts.SlowHandlerThreshold {
-		logx.Slowf("[gnetx] client slow handler %s id=%s", duration, cn.id)
+		logx.WithContext(ctx).WithDuration(duration).Slowf("[gnetx] client slow handler id=%s", cn.id)
 	}
 	if hErr != nil {
 		span.RecordError(hErr)
-		logx.Errorf("[gnetx] client handler error: %v", hErr)
+		logx.WithContext(ctx).Errorf("[gnetx] client handler error: %v", hErr)
 		return
 	}
 	if reply != nil {
 		if err := c.writeReply(ctx, cn, reply); err != nil {
-			logx.Errorf("[gnetx] client write reply error: %v", err)
+			logx.WithContext(ctx).Errorf("[gnetx] client write reply error: %v", err)
 		}
 	}
 }
@@ -321,26 +340,29 @@ func (c *Client) dispatchAsync(parentCtx context.Context, cn *session, msg any, 
 	}
 	ctx = injectSessionLogFields(ctx, cn)
 
+	c.asyncWG.Add(1)
 	err := c.pool.Submit(func() {
+		defer c.asyncWG.Done()
 		defer span.End()
 		startTime := timex.Now()
 		reply, hErr := h.Handle(ctx, cn, msg)
 		duration := timex.Since(startTime)
 		if duration > c.opts.SlowHandlerThreshold {
-			logx.Slowf("[gnetx] client async slow handler %s id=%s", duration, cn.id)
+			logx.WithContext(ctx).WithDuration(duration).Slowf("[gnetx] client async slow handler id=%s", cn.id)
 		}
 		if hErr != nil {
 			span.RecordError(hErr)
-			logx.Errorf("[gnetx] client async handler error: %v", hErr)
+			logx.WithContext(ctx).Errorf("[gnetx] client async handler error: %v", hErr)
 			return
 		}
 		if reply != nil {
 			if err := cn.WriteAsync(ctx, reply); err != nil {
-				logx.Errorf("[gnetx] client async write reply error: %v", err)
+				logx.WithContext(ctx).Errorf("[gnetx] client async write reply error: %v", err)
 			}
 		}
 	})
 	if err != nil {
+		c.asyncWG.Done()
 		span.End()
 		logx.Errorf("[gnetx] client async submit error: %v", err)
 	}

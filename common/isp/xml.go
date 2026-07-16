@@ -12,7 +12,6 @@ import (
 // ErrRootNameMismatch 在服务端校验收到消息的 RootName 与预期不符时返回，用于断开非法连接。
 var ErrRootNameMismatch = errors.New("isp: root name mismatch")
 
-
 // xmlMessage 对应 ISP 协议 XML 报文结构，用于标准库 xml 编解码。
 // Command 字段使用 omitempty：Command=0 时省略 <Command> 元素，与 Java 侧行为一致。
 type xmlMessage struct {

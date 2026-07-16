@@ -3,7 +3,7 @@ package svc
 import (
 	"zero-service/app/ispagent/internal/config"
 	ctask "zero-service/app/ispagent/internal/crontask"
-	ispclient "zero-service/app/ispagent/internal/isp"
+	"zero-service/app/ispagent/internal/ispclient"
 	"zero-service/app/ispagent/model/gormmodel"
 	"zero-service/common/crontask"
 	"zero-service/common/ftps"
@@ -17,7 +17,7 @@ import (
 // ServiceContext 为 ispagent 的依赖注入容器，持有配置和 ISP TCP 客户端管理器。
 type ServiceContext struct {
 	Config        config.Config
-	IspClient     *ispclient.Client
+	IspClient     *ispclient.IspClient
 	Scheduler     *crontask.Scheduler
 	ModelUploader *ftps.Uploader
 	Store         crontask.TaskStore
@@ -47,7 +47,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		)),
 	)
 	proc.AddShutdownListener(func() { m.Close() })
-
 	svcCtx := &ServiceContext{
 		Config:        c,
 		IspClient:     m,

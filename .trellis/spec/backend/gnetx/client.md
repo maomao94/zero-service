@@ -1,18 +1,17 @@
 # Client
 
-> **EXPERIMENTAL** — 此包尚未经过生产环境验证。
-
 `Client` 是 gnetx 的**单连接 TCP 客户端**，对标 `mqttx`/`modbusx` 的 `MustNewClient` 模型。一个 Client = 一个远端连接。
 
 关键 source：`common/gnetx/client.go`
 
 ## 核心设计
 
-- **构造即拨号** — 无 `Start`/`Stop`（仅 `NewClient` + `Close`）
+- **构造即拨号** — 无需 `Start`；通过 `Close`/`Shutdown(ctx)` 优雅关闭
 - **固定间隔重连** — 断线按 `ReconnectInterval`（默认 3s）自动重连
 - **多连接 = 多 Client**
 - **不实现 `go-zero service.Service`** — 生命周期仅构造 + `Close`
 - **共享 ReplyPool** — Client 级 `antsx.ReplyPool[any]`，所有重连 session 共享
+- **异步等待** — `asyncWG sync.WaitGroup` 跟踪异步 handler 完成，`Shutdown` 等待超时后强制退出
 
 ## 构造
 
@@ -35,10 +34,11 @@ cli, err := gnetx.NewClient("127.0.0.1:9000", opts...)
 
 必填项（`common/gnetx/options.go:296-307`）：`Codec`、`Handler`、`MaxFrameLength`
 
-默认值（`common/gnetx/options.go:310-323`）：
+默认值（`common/gnetx/options.go:360-377`）：
 - `ReconnectInterval` → 3s
 - `SlowHandlerThreshold` → 50ms
 - `BatchReadLimit` → 64
+- `ShutdownTimeout` → 30s
 
 ## ClientConn 接口
 
@@ -78,7 +78,27 @@ OnClose → c.sess.CAS(nil) → cn.Close() → startReconnect
     ↓ 固定间隔后
 c.dial() → OnOpen → 收发恢复
     ↑ 重连 goroutine 退出（one-shot）；下次断开再触发
+
+外部关闭：
+Close() → Shutdown(ctx, ShutdownTimeout)
+    → CAS closed → close(reconnectCh) → sess.Swap(nil) + cn.Close()
+    → goroutine: asyncWG.Wait() + 超时 select
+    → replyPool.Close() → gcli.Stop()
 ```
+
+## Shutdown 与 Close
+
+`common/gnetx/client.go:123-153`
+
+- `Close()` 使用 `ShutdownTimeout` 作为 ctx 超时，委托给 `Shutdown(ctx)`
+- `Shutdown(ctx)` 流程：
+  1. `closed` CAS（`false → true`），重复调用直接返回
+  2. `close(reconnectCh)` 停止重连 goroutine
+  3. `sess.Swap(nil)` 关闭当前连接
+  4. 启动 goroutine 等待 `asyncWG.Wait()`，select `ctx.Done()` 超时
+  5. `replyPool.Close()` 清理共享 ReplyPool
+  6. `gcli.Stop()` 停止 gnet 引擎
+- `asyncWG` 在 `dispatchAsync` 中 `Add(1)/Done()`，保证异步 handler 在关闭时有机会执行完
 
 ## 自动重连
 

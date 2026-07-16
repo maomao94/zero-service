@@ -102,7 +102,7 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Stop() {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.opts.ShutdownTimeout)
 	defer cancel()
 	if err := s.Shutdown(ctx); err != nil {
 		logx.Errorf("[gnetx] server shutdown error: %v", err)
@@ -110,13 +110,15 @@ func (s *Server) Stop() {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	if !s.booted.Load() {
+	if !s.booted.CompareAndSwap(true, false) {
 		return nil
 	}
 	defer s.replyPool.Close()
+
 	if err := s.eng.Stop(ctx); err != nil {
 		return err
 	}
+
 	done := make(chan struct{})
 	go func() {
 		s.asyncWG.Wait()
@@ -267,11 +269,11 @@ func (s *Server) dispatchSync(parentCtx context.Context, cn *session, msg any, h
 
 	duration := timex.Since(startTime)
 	if duration > s.opts.SlowHandlerThreshold {
-		logx.Slowf("[gnetx] slow handler %s id=%s", duration, cn.id)
+		logx.WithContext(ctx).WithDuration(duration).Slowf("[gnetx] slow handler id=%s", cn.id)
 	}
 	if hErr != nil {
 		span.RecordError(hErr)
-		logx.Errorf("[gnetx] handler error: %v", hErr)
+		logx.WithContext(ctx).Errorf("[gnetx] handler error: %v", hErr)
 	}
 	s.recordMetrics(duration)
 	if hErr != nil {
@@ -279,7 +281,7 @@ func (s *Server) dispatchSync(parentCtx context.Context, cn *session, msg any, h
 	}
 	if reply != nil {
 		if err := s.writeReply(ctx, cn, reply); err != nil {
-			logx.Errorf("[gnetx] write reply error: %v", err)
+			logx.WithContext(ctx).Errorf("[gnetx] write reply error: %v", err)
 		}
 	}
 }
@@ -300,24 +302,24 @@ func (s *Server) dispatchAsync(parentCtx context.Context, cn *session, msg any, 
 		reply, hErr := h.Handle(ctx, cn, msg)
 		duration := timex.Since(startTime)
 		if duration > s.opts.SlowHandlerThreshold {
-			logx.Slowf("[gnetx] async slow handler %s id=%s", duration, cn.id)
+			logx.WithContext(ctx).WithDuration(duration).Slowf("[gnetx] async slow handler id=%s", cn.id)
 		}
 		s.recordMetrics(duration)
 		if hErr != nil {
 			span.RecordError(hErr)
-			logx.Errorf("[gnetx] async handler error: %v", hErr)
+			logx.WithContext(ctx).Errorf("[gnetx] async handler error: %v", hErr)
 			return
 		}
 		if reply != nil {
 			if err := cn.WriteAsync(ctx, reply); err != nil {
-				logx.Errorf("[gnetx] async write reply error: %v", err)
+				logx.WithContext(ctx).Errorf("[gnetx] async write reply error: %v", err)
 			}
 		}
 	})
 	if err != nil {
 		s.asyncWG.Done()
 		span.End()
-		logx.Errorf("[gnetx] async submit error: %v", err)
+		logx.WithContext(ctx).Errorf("[gnetx] async submit error: %v", err)
 	}
 }
 

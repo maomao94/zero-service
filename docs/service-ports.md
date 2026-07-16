@@ -12,14 +12,6 @@
 | lalhook | `app/lalhook/` | 11002 | LAL 流媒体回调 |
 | socketgtw | `socketapp/socketgtw/` | 11003 | Socket.IO 网关（混合型，同时有 gRPC） |
 
-### 13xxx — AI 应用
-
-| 服务 | 目录 | HTTP 端口 | 说明 |
-|------|------|-----------|------|
-| aigtw | `aiapp/aigtw/` | 13001 | AI 网关（OpenAI 兼容） |
-| ssegtw | `aiapp/ssegtw/` | 13002 | SSE 网关 |
-| mcpserver | `aiapp/mcpserver/` | 13003 | MCP 服务器 |
-
 ### 15xxx — 桥接网关
 
 | 服务 | 目录 | HTTP 端口 | 说明 |
@@ -40,19 +32,11 @@
 | trigger.rpc | `app/trigger/` | 21006 | 异步任务 / 计划任务 |
 | xfusionmock.rpc | `app/xfusionmock/` | 21007 | X-Fusion 模拟服务 |
 | iecstash.rpc | `app/iecstash/` | 21008 | IEC 104 数据合并 |
-| streamevent.rpc | `facade/streamevent/` | 21009 | 流事件服务 |
 | podengine.rpc | `app/podengine/` | 21010 | 容器管理引擎 |
-| alarm.rpc | `app/alarm/` | 21011 | 告警服务 |
 | djicloud.rpc | `app/djicloud/` | 21012 | DJI 云平台服务 |
 | bridgekafka.rpc | `app/bridgekafka/` | 21013 | Kafka 桥接 |
 | ispagent.rpc | `app/ispagent/` | 21014 | ISP 巡检协议代理 |
-
-### 23xxx — AI 应用
-
-| 服务 | 目录 | gRPC 端口 | 说明 |
-|------|------|-----------|------|
-| aichat.rpc | `aiapp/aichat/` | 23001 | AI 对话 RPC |
-| aisolo.rpc | `aiapp/aisolo/` | 23002 | Eino ADK Agent / Solo 会话服务 |
+| ispserver.rpc | `app/ispserver/` | 21015 | ISP 巡检协议服务端 |
 
 ### 25xxx — Socket / 桥接 / 扩展
 
@@ -71,13 +55,12 @@
 | 端口段 | 用途 |
 |--------|------|
 | 11001 – 11003 | 通用 HTTP 网关 |
-| 13001 – 13003 | AI 应用 HTTP 服务 |
 | 15001 | 桥接 HTTP 网关 |
-| 21001 – 21014 | 核心业务 gRPC 服务 |
-| 23001 – 23002 | AI 应用 gRPC 服务 |
+| 21001 – 21015 | 核心业务 gRPC 服务 |
 | 25001 – 25007 | Socket / 桥接 / 扩展 gRPC 服务 |
 
 ## 备注
 
 - **socketgtw** 是混合型服务，同时暴露 HTTP 11003 和 gRPC 25001
 - **iecagent** 额外监听 12404 端口用于 IEC 104 设备通信
+- **ispserver** 额外监听 TCP 7100（`IspConf.ListenAddr`），用于 ISP 下级设备接入

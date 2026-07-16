@@ -28,6 +28,9 @@ type patrolDeviceModelXML struct {
 }
 
 func (d DefaultModelDataProvider) DevicePoints(_ context.Context, stationCode string) ([]isp.DevicePointModel, error) {
+	if err := validateSafePathComponent(stationCode); err != nil {
+		return nil, err
+	}
 	path := filepath.Join("local", stationCode, "device_model.xml")
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -42,6 +45,9 @@ func (d DefaultModelDataProvider) DevicePoints(_ context.Context, stationCode st
 }
 
 func (d DefaultModelDataProvider) PatrolDevices(_ context.Context, stationCode string) ([]isp.PatrolDeviceModel, error) {
+	if err := validateSafePathComponent(stationCode); err != nil {
+		return nil, err
+	}
 	path := filepath.Join("local", stationCode, "patrol_device_model.xml")
 	data, err := os.ReadFile(path)
 	if err != nil {

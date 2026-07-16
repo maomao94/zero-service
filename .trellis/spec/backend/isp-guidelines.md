@@ -26,13 +26,16 @@
 
 ```
 common/isp/
+├── config.go         # ClientConfig / ServerConfig + ApplyDefaults()
 ├── constants.go      # Type/Command/MessageID 常量 + IspError + ErrUnimplemented
-├── message.go        # Message 结构 + gnetx 接口实现 + NewResponse 工具
+├── message.go        # Message 结构 + gnetx 接口实现 + NewResponse / NewSuccessResponse / NewItemsResponse / NewErrorResponse
+├── client.go         # Client + ClientRouter + ClientOption 构造与生命周期管理
+├── server.go         # Server + ServerRouter + rootNameCodec
+├── wrapper.go        # IspHandler 类型 + wrapHandler / serverWrap / clientWrap + async 注册函数
 ├── xml.go            # XML 编解码（BuildXML/ParseXML）+ RootName 校验
 ├── serializer.go     # gnetx Codec 构造 + ISP Serializer
 ├── serializer_test.go
-├── logging.go        # LogFields / LogInbound / LogOutbound / LogFallback
-├── wrapper.go        # IspHandler 类型 + ServerWrap 服务端包装器
+├── logging.go        # LogFields / LogInbound / LogOutbound / LogFallback / LogErrorResponse
 ├── model_types.go    # DevicePointModel / PatrolDeviceModel 结构定义
 ├── model_writer.go   # WriteDeviceModel / WritePatrolDeviceModel 流式 XML 生成
 └── model_writer_test.go
@@ -81,7 +84,7 @@ resp.SendSeq = conn.NextSendSeq()
 | `command` | 应答指令（251-3 无 Item 或 251-4 有 Item） |
 | `items` | 可选业务数据 |
 
-调用方需自行填充 `SendSeq`（`conn.NextSendSeq()`），可按需覆盖 `RootName`。
+直接使用 `NewResponse` 的调用方需自行填充 `SendSeq`（`conn.NextSendSeq()`），可按需覆盖 `RootName`。经 `ClientRouter` / `ServerRouter` 注册的 handler 返回响应由基础包装器统一填充 `SendSeq`。
 
 ## 日志
 
@@ -96,22 +99,131 @@ resp.SendSeq = conn.NextSendSeq()
 
 session 信息（session_id、local、remote、alias）由 gnetx 框架在 dispatch / Request 时通过 `logx.ContextWithFields` 注入 ctx，日志函数通过 `logx.WithContext(ctx)` 自动携带。
 
-## 服务端包装器
+## ISP Client/Server 与 Handler 注册
 
-`common/isp/wrapper.go` 定义：
+`common/isp` 提供 ISP 基础通信对象和方向明确的业务 handler 注册入口。业务系统只关心协议指令 handler，不直接管理 gnetx client/server、router、async/fallback 包装、SendSeq/RecvSeq 或 rootName codec：
 
 ```go
 type IspHandler func(ctx context.Context, conn gnetx.Conn, req *Message) (*Message, error)
-
-func ServerWrap(fn IspHandler) gnetx.Handler
 ```
 
-`ServerWrap` 统一处理：
+### Client API
+
+```go
+// 配置与构造
+type ClientConfig struct {
+    ServerAddr, SendCode, RegisterReceiveCode, RootName string
+    HeartbeatInterval, RequestTimeout, ReconnectInterval time.Duration
+    MaxFrameLength int
+    DebugLog       bool
+}
+func (c *ClientConfig) ApplyDefaults()
+
+type ClientOption func(*clientOptions)
+func WithClientHandler(handler ClientHandler) ClientOption
+func WithClientOnRegister(fn func(*Message)) ClientOption
+
+func NewClient(cfg ClientConfig, opts ...ClientOption) *Client
+
+// 生命周期
+func (c *Client) Close()
+func (c *Client) Context() context.Context
+
+// 请求/应答
+func (c *Client) Execute(ctx, typ, command, code, items) (*Message, error)
+func (c *Client) Request(ctx, msg) (*Message, error)  // 内部方法
+
+// 响应构造（带客户端端点状态覆盖）
+func (c *Client) NewItemsResponse(req, items) *Message   // 251-4
+func (c *Client) NewSuccessResponse(req) *Message        // 251-3 code=200
+func (c *Client) NewErrorResponse(req, err) *Message     // 251-3
+func (c *Client) Response(ctx, req, err, items) *Message // 统一响应入口
+
+// 状态查询
+func (c *Client) IsRegistered() bool
+func (c *Client) Connected() bool
+func (c *Client) SendCode() string
+func (c *Client) ReceiveCode() string
+func (c *Client) RequestTimeout() time.Duration
+
+// Handler 注册
+type ClientHandler func(*ClientRouter)
+type ClientRouter
+func (r *ClientRouter) Handle(messageID int, fn IspHandler)
+func (r *ClientRouter) HandlePairs(pairs []MessageIDPair, fn IspHandler)
+```
+
+### Server API
+
+```go
+// 配置与构造
+type ServerConfig struct {
+    ListenAddr, RootName string
+    MaxFrameLength, HeartbeatInterval, DeviceRunInterval, NestRunInterval, WeatherInterval, IdleTimeoutSeconds int
+    DebugLog bool
+}
+func (c *ServerConfig) ApplyDefaults()
+
+func NewServer(cfg ServerConfig, register ServerHandler) (*Server, error)
+
+// 生命周期
+func (s *Server) Start()
+func (s *Server) Stop()
+func (s *Server) Manager() *gnetx.SessionManager
+
+// Handler 注册
+type ServerHandler func(*ServerRouter)
+type ServerRouter
+func (r *ServerRouter) Handle(messageID int, fn IspHandler)
+func (r *ServerRouter) Fallback(fn IspHandler)
+```
+
+### 配置约定
+
+go-zero `internal/config` 应直接使用 `common/isp.ClientConfig` / `ServerConfig` 作为字段类型，不做配置字段转换 helper：
+
+```go
+// app/ispagent/internal/config/config.go
+type Config struct {
+    zrpc.RpcServerConf
+    IspSetting isp.ClientConfig  // 直接使用 common/isp 类型
+    ...
+}
+
+// app/ispserver/internal/config/config.go
+type Config struct {
+    zrpc.RpcServerConf
+    IspConf isp.ServerConfig  // 直接使用 common/isp 类型
+}
+```
+
+`internal/svc` 只负责依赖注入和传入业务 handler 注册函数：
+
+```go
+// ispserver
+ispSrv, err := isp.NewServer(c.IspConf, ispserver.RegisterHandlers(c.IspConf))
+
+// ispagent
+c.Client = isp.NewClient(cfg,
+    isp.WithClientHandler(c.registerHandlers),
+    isp.WithClientOnRegister(c.onRegister),
+)
+```
+
+### 包装器行为
+
+包装器（`wrapper.go`）基于 `Client` / `Server` 统一处理每个业务 handler：
 1. 消息类型断言（`*Message`）
 2. 入站日志（`LogInbound`）
 3. 业务处理
-4. error 自动转为 251-3 通用应答（Code=500）
-5. SendSeq 填充（`conn.NextSendSeq`）
+4. 客户端方向在 handler 返回后由 `clientWrap` 记录对端 SendSeq（`Client.trackRecvSeq`）
+5. error 自动通过 `ResponseCode(err)` 转为 251-3 通用应答并记录错误日志（`LogErrorResponse`）
+6. nil 响应自动转为 251-3 通用成功应答
+7. 对最终返回的 `*Message` 统一填充 SendSeq（`conn.NextSendSeq`）
+
+服务端方向默认使用 `SessionSourceServer` 构造应答。客户端方向若需要覆盖 `RootName` / `SendCode` / `ReceiveCode` 端点状态，handler 应通过 `Client.Response` 或 `Client.NewSuccessResponse` / `Client.NewItemsResponse` / `Client.NewErrorResponse` 显式构造响应。
+
+`ispagent` 入站 handler 应返回 `*isp.Message, error`：空/nil 响应由包装器转为 251-3 成功；带业务 Item 的响应由 handler 显式构造 251-4（优先用 `Client.Response` / `Client.NewItemsResponse`）；错误通过 `Client.Response` / `Client.NewErrorResponse` 返回。fallback 由 `Client.connect()` 默认注册（返回 `ErrUnimplemented`），确保 gnetx `any` 返回值始终是协议消息对象。
 
 ## 未实现错误
 
@@ -170,7 +282,9 @@ func (c *rootNameCodec) Decode(gc gnet.Conn, conn gnetx.Conn) (any, error) {
 | SendSeq/RecvSeq 字节序用混 | SendSeq/RecvSeq/XMLLength 一律小端 |
 | 混淆 Type 共用 | Type=1 既是巡视设备状态上报也是机器人本体指令，由 Command 区分 |
 | 251-3/251-4 未匹配时回 251-3 | gnetx 框架已处理：`ResponseTID() != ""` 未匹配直接丢弃 |
-| 忘记设置 `resp.SendSeq` | `NewResponse` 不填充 SendSeq，需调用 `conn.NextSendSeq()` |
+| 忘记设置 `resp.SendSeq` | wrapper 统一在返回前调用 `conn.NextSendSeq()` 填充；仅直接调用 `NewResponse` 不经过 wrapper 的场景（如 register handler 显式构造 251-4）需自行填充 |
+| 业务 handler 直接使用 `gnetx.NewServer`/`gnetx.NewClient` | 应使用 `isp.NewServer` / `isp.NewClient`，让 common/isp 管理 codec、rootName 校验、router 和 async 包装 |
+| config 中定义 `type IspSetting = isp.ClientConfig` 别名 | 直接使用 `isp.ClientConfig` / `isp.ServerConfig` 字段类型 |
 
 ## ispserver 服务
 
@@ -180,21 +294,20 @@ func (c *rootNameCodec) Decode(gc gnet.Conn, conn gnetx.Conn) (any, error) {
 
 ```
 app/ispserver/
-├── ispserver.go                # main 入口：zrpc + gnetx Server → serviceGroup
+├── ispserver.go                # main 入口：zrpc + isp.Server → serviceGroup
 ├── ispserver.proto             # gRPC 管理接口（ListSessions/DisconnectSession）
 ├── etc/ispserver.yaml           # 配置：TCP 端口、心跳间隔、RootName 校验
 ├── internal/
-│   ├── config/config.go         # Config + IspConf（ListenAddr/MaxFrameLength/HeartbeatInterval 等）
-│   ├── svc/servicecontext.go    # ServiceContext：持有 Config + isp.Server
+│   ├── config/config.go         # Config + isp.ServerConfig
+│   ├── svc/servicecontext.go    # ServiceContext：持有 Config + *isp.Server
 │   ├── server/ispserverserver.go # gRPC Server 实现
 │   ├── logic/                    # gRPC 业务逻辑
-│   ├── isp/
-│   │   ├── server.go            # gnetx Server 构造 + rootNameCodec 包装
-│   │   └── router.go            # 注册所有 Client→Server 上行消息 handler
+│   ├── ispserver/
+│   │   └── router.go            # RegisterHandlers(conf) → isp.ServerHandler
 │   └── handler/
 │       ├── register.go          # 251-1 注册（唯一真正实现的 handler）
 │       ├── heartbeat.go         # 251-2 心跳（async，返回 251-3 code=200）
-│       ├── unimplemented.go     # 默认 handler：返回 251-3 code=500
+│       ├── unimplemented.go     # HandleUnimplemented + HandleFallbackUnimplemented
 │       └── names.go             # 工具函数
 ```
 
@@ -206,22 +319,29 @@ app/ispserver/
 |------|------|--------|
 | Client→Server | 251-1 注册 | register.go |
 | Client→Server | 251-2 心跳 | heartbeat.go |
-| Client→Server | 251-3/251-4 | gnetx OnTraffic 自动匹配 + 丢弃 |
+| Client→Server | 251-3/251-4 | gnetx OnTraffic 通过 Response 接口匹配在途请求，未匹配静默丢弃 |
 | Client→Server | 上报类（1-0~5-0, 11-0, 21-0, 41-0, 61-0~64-0, 67-0, 81-0, 10004-0, 20001-0） | unimplemented.go |
-| Fallback | 未匹配 | unimplemented.go |
+| Fallback | 未匹配 | HandleFallbackUnimplemented |
 
 **下行指令（Server→Client）不在 router 注册**，由未来 `SendCommand` 方法主动下发。
 
 ### 构造约定
 
 ```go
-srv, err := gnetx.NewServer(
-    gnetx.WithAddr(conf.ListenAddr),
-    gnetx.WithCodec(rootNameCodec),  // 校验 RootName
-    gnetx.WithServerHandler(router),
-    gnetx.WithMaxFrameLength(conf.MaxFrameLength),
-)
+// app/ispserver/internal/ispserver/router.go
+func RegisterHandlers(conf isp.ServerConfig) isp.ServerHandler {
+    return func(r *isp.ServerRouter) {
+        r.Handle(isp.MessageIDRegister, handler.NewRegisterHandler(conf))
+        r.Handle(isp.MessageIDHeartbeat, handler.HandleHeartbeat)
+        // ... 其余 Handle / HandleFallback 注册
+    }
+}
+
+// app/ispserver/internal/svc/servicecontext.go
+ispSrv, err := isp.NewServer(c.IspConf, ispserver.RegisterHandlers(c.IspConf))
 ```
+
+Server 构造由 `isp.NewServer` 内部完成：创建 ISP codec、包装 rootNameCodec 校验 RootName、初始化 gnetx router、向 gnetx server 注入 handler。业务服务不再直接构造 gnetx server。
 
 ### 与 ispagent 的关系
 
@@ -231,7 +351,7 @@ srv, err := gnetx.NewServer(
 | gnetx | Client（长连接） | Server（多连接） |
 | gRPC | 上报/指令透传接口 | 管理接口（ListSessions/DisconnectSession） |
 | Handler 方向 | Server→Client（接收指令） | Client→Server（接收上报） |
-| 生命周期 | `serviceGroup.Add(rpc)`, Client 通过 `proc.AddShutdownListener` | `serviceGroup.Add(rpc)`, `serviceGroup.Add(tcpServer)` |
+| 生命周期 | `serviceGroup.Add(rpc)`, `proc.AddShutdownListener(func() { client.Close() })` 注册 Client 关闭 | `serviceGroup.Add(rpc)`, `serviceGroup.Add(tcpServer)` |
 
 ## ispagent 服务约定
 
@@ -239,7 +359,7 @@ srv, err := gnetx.NewServer(
 
 `SendPatrolDeviceRunData`、`SendPatrolDeviceStatusData`、`SendPatrolDeviceCoordinates`、`SendDroneNestRunData`、`SendEnvData` gRPC 调用只写入本地内存缓存并返回本地受理成功，不同步等待上级 ISP 应答。
 
-**当前已注册的 ReportCategory（`app/ispagent/internal/isp/reporting.go`）：**
+**当前已注册的 ReportCategory（`app/ispagent/internal/ispclient/reporting.go`）：**
 
 | 常量 | messageId | 对应 gRPC |
 |------|-----------|-----------|
@@ -249,13 +369,14 @@ srv, err := gnetx.NewServer(
 | `ReportCategoryDroneNestRunData` | 10004-0 | `SendDroneNestRunData` |
 | `ReportCategoryEnvData` | 21-0 | `SendEnvData` |
 
-- 周期上报由 `app/ispagent/internal/isp.Client` 在注册成功后按各上报类别自己的间隔发送 `CommandReport`；禁止把心跳间隔当作业务上报间隔。
+- 周期上报由 `app/ispagent/internal/ispclient.IspClient` 在注册成功后按各上报类别自己的间隔发送 `CommandReport`；禁止把心跳间隔当作业务上报间隔。
 - `patroldevice_run_interval` 只驱动巡视装置运行数据；`nest_run_interval` 驱动机巢运行数据；`weather_interval` 驱动环境数据。未在注册响应中给出的字段保持当前间隔不变。
 - 默认间隔：坐标 2 秒（`noFreshCheck=true`），其余类别 1 分钟。可通过 `newReportManager` 选项覆盖，也可运行时通过 `SetInterval` 覆盖。
 - 缓存模型必须按 report category 复用：category 映射 Type/Command，缓存 code/items/update time/expired/last sent。
 - 缓存 key 由 `keyAttrsByCategory[category]` 定义：运行/状态/环境使用 `patroldevice_code + type`，坐标使用 `patroldevice_code`，机巢使用 `nest_code + type`。
 - 上报时同一 XML `Code` 下聚合当前 category 的所有最新 Item。
 - 发送前必须 snapshot 缓存，禁止持锁执行 TCP 请求。
+- 定时上报可用 `threading.NewTaskRunner(4)` 做有界并发，但 `reportTick` 必须等待本轮 `dueReports` 快照全部发送完成后再返回；禁止 fire-and-forget 投递，否则上一轮未 `markSent` 前下一轮 tick 会再次取到同一批快照并重复上报。
 - 下游长时间未刷新时按 `freshnessTimeout(report interval)` 判定 expired；非 `noFreshCheck` 类别在 2s tick 扫描时收集过期 key，释放读锁后短写锁删除，删除前必须按 `updatedAt` 二次校验，避免误删并发刷新。
 - `noFreshCheck` 类别不做新鲜度清理，继续按类别间隔上报缓存旧值；当前巡视设备坐标属于此类。
 - 新 `itemKey` 写入缓存时必须将对应 `category+Code` 的 `lastSent` 置零，使下一次 2s tick 立即上报完整快照；已存在 key 的刷新不能重置 `lastSent`，避免破坏上报间隔控频。
@@ -285,7 +406,7 @@ reports: newReportManager(
 
 #### 运行时接口
 
-`*Client` 对外暴露的上报控制接口（`app/ispagent/internal/isp/reporting.go`）：
+`*IspClient` 对外暴露的上报控制接口（`app/ispagent/internal/ispclient/reporting.go`）：
 
 | 方法 | 用途 |
 |------|------|
@@ -315,6 +436,21 @@ func markSent(category, code, sentAt, snapLastSent)
 if !snapLastSent.IsZero() && report.lastSent.IsZero() { return }
 ```
 
+**周期上报有界并发**（`client.go:135`）：
+```go
+const reportTaskConcurrency = 4
+
+for _, report := range c.reports.dueReports(now) {
+    report := report
+    c.reportRunner.Schedule(func() {
+        c.sendReport(now, report)
+    })
+}
+c.reportRunner.Wait()
+```
+
+`sendReport` 保持原有语义：每条上报使用 `context.WithTimeout(c.Context(), c.RequestTimeout())`，只有 `Execute` 成功后才调用 `markSent`。失败不更新 `lastSent`，由后续 tick 继续重试。
+
 **新鲜度公式**（`reporting.go:344`）：
 ```go
 freshnessTimeout = max(interval * 2, interval + 10s)
@@ -330,24 +466,19 @@ freshnessTimeout = max(interval * 2, interval + 10s)
 
 ### 客户端生命周期
 
-`app/ispagent/internal/isp/client.go` 是 TCP 长连接客户端，**不是 go-zero service**：
+`app/ispagent/internal/ispclient/client.go` 是 TCP 长连接客户端，**不是 go-zero service**：
 
-- `NewClient(cfg, store, db, uploader, provider, opts ...ClientOption)` — 构造即建连、启动轮询 goroutine
-- `Close()` 取消 context + 关闭 gnetx client
-- 通过 `proc.AddShutdownListener` 注册关闭，**不放入 `serviceGroup`**
+- `NewClient(cfg isp.ClientConfig, taskStore, db, uploader, provider, opts ...ClientOption) *IspClient` — 构造即建连、启动轮询 goroutine
+- `Close()` — `*isp.Client.Close()` 取消 context + 关闭 gnetx client
+- 通过 `proc.AddShutdownListener(func() { client.Close() })` 注册 go-zero shutdown close，**不放入 `serviceGroup`**
 - `serviceGroup` 只放 RPC server 和 `crontask.Scheduler`（二者都实现 `Start/Stop`）
 
-**goroutine 拆分**（`client.go:288`）：
+**goroutine 拆分**：
 
-```go
-func (c *Client) run() {
-    go c.reportLoop()  // 独立 2s ticker，TCP 发送不阻塞主循环
-    // 主 ticker 只负责注册+心跳
-}
-```
+`*isp.Client` 内部 `run()` goroutine（2s ticker）负责注册检查 + 心跳。`*IspClient` 在 `NewClient` 末尾启动独立的 `go c.reportLoop()` goroutine（2s ticker）负责上行缓存上报，防止 TCP 超时阻塞注册/心跳。
 
-- `tick()` — 注册检查 + 心跳（2s ticker）
-- `reportLoop()` — 上行缓存上报（独立 2s ticker），防 TCP 超时阻塞注册/心跳
+- `*isp.Client.run()` — 注册检查 + 心跳（2s ticker）
+- `*IspClient.reportLoop()` — 上行缓存上报（独立 2s ticker）
 
 **构造选项**（`ClientOption func(*ClientOptions)`，遵循 `coding-standards.md`）：
 
@@ -358,9 +489,11 @@ NewClient(cfg, store, db, uploader, nil,
 )
 ```
 
-**TCP handler 异步**（`connect()`）：
+**TCP handler 注册**（`registerHandlers`）：
 
-全部入站 handler 使用 `gnetx.HandleTypedAsync` / `FallbackFuncAsync` 注册，由 gnet worker pool offload 执行，不阻塞 eventloop。
+全部入站 handler 使用 `isp.ClientRouter.Handle` / `HandlePairs` 注册，由 common/isp 的 `clientHandleAsync` / `clientFallbackAsync` 隐藏 gnetx 包装细节，gnet worker pool offload 执行，不阻塞 eventloop。
+
+`IspClient` 嵌入 `*isp.Client`，最终响应契约是 `*isp.Message`：业务 handler 返回 `*isp.Message, error`，wrapper 统一处理 nil→251-3 和 error→251-3。带客户端端点状态的响应通过 `c.Response(ctx, req, err, items)` 构造（内部调 `c.NewSuccessResponse` / `c.NewItemsResponse` / `c.NewErrorResponse`）。gnetx handler 的 `any` 返回值始终是 `*isp.Message`。
 
 **注册响应校验**（`doRegister()`）：
 

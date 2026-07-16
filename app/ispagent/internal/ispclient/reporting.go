@@ -1,4 +1,4 @@
-package isp
+package ispclient
 
 import (
 	"context"
@@ -89,11 +89,11 @@ type emptyReportRef struct {
 
 // ReportManagerOptions 上报管理器构造配置，零值表示使用默认间隔。
 type ReportManagerOptions struct {
-	RunDataInterval       time.Duration
-	StatusDataInterval    time.Duration
-	CoordInterval         time.Duration
-	NestRunInterval       time.Duration
-	EnvDataInterval       time.Duration
+	RunDataInterval        time.Duration
+	StatusDataInterval     time.Duration
+	CoordInterval          time.Duration
+	NestRunInterval        time.Duration
+	EnvDataInterval        time.Duration
 	NoFreshCheckCategories []ReportCategory
 }
 
@@ -127,7 +127,9 @@ func WithEnvDataInterval(d time.Duration) ReportManagerOption {
 
 // WithNoFreshCheck 设置指定类别跳过新鲜度检查（始终按间隔上报已有数据）。
 func WithNoFreshCheck(categories ...ReportCategory) ReportManagerOption {
-	return func(o *ReportManagerOptions) { o.NoFreshCheckCategories = append(o.NoFreshCheckCategories, categories...) }
+	return func(o *ReportManagerOptions) {
+		o.NoFreshCheckCategories = append(o.NoFreshCheckCategories, categories...)
+	}
 }
 
 type reportManager struct {
@@ -441,7 +443,7 @@ func cloneAll(items map[string]*cachedItem) []isp.Item {
 }
 
 // ReportIntervals 返回所有上报类别的当前间隔和预留间隔。
-func (c *Client) ReportIntervals() map[ReportCategory]time.Duration {
+func (c *IspClient) ReportIntervals() map[ReportCategory]time.Duration {
 	c.reports.mu.RLock()
 	defer c.reports.mu.RUnlock()
 	out := make(map[ReportCategory]time.Duration, len(c.reports.intervals))
@@ -452,7 +454,7 @@ func (c *Client) ReportIntervals() map[ReportCategory]time.Duration {
 }
 
 // SetInterval 运行时覆盖指定类别的上报间隔，非正值忽略。
-func (c *Client) SetInterval(category ReportCategory, d time.Duration) {
+func (c *IspClient) SetInterval(category ReportCategory, d time.Duration) {
 	c.reports.setInterval(category, d)
 }
 
@@ -462,14 +464,14 @@ func CategoryKeyAttrs(category ReportCategory) []string {
 }
 
 // CategoryNoFreshCheck 返回指定类别是否跳过新鲜度检查。
-func (c *Client) CategoryNoFreshCheck(category ReportCategory) bool {
+func (c *IspClient) CategoryNoFreshCheck(category ReportCategory) bool {
 	c.reports.mu.RLock()
 	defer c.reports.mu.RUnlock()
 	return c.reports.noFreshCheck[category]
 }
 
 // SetNoFreshCheck 暴露给外部调用方，控制指定上报类别的新鲜度检查开关。
-func (c *Client) SetNoFreshCheck(category ReportCategory, skip bool) {
+func (c *IspClient) SetNoFreshCheck(category ReportCategory, skip bool) {
 	c.reports.setNoFreshCheck(category, skip)
 }
 
@@ -485,7 +487,7 @@ func categoryMessageName(category ReportCategory) string {
 
 // CacheReport gRPC 上报入口：将 proto 数据写入本地缓存，立即返回受理结果。
 // 后续由 reportTick 按间隔定时发送到上级 ISP 系统。
-func (c *Client) CacheReport(ctx context.Context, category ReportCategory, code string, items []isp.Item) error {
+func (c *IspClient) CacheReport(ctx context.Context, category ReportCategory, code string, items []isp.Item) error {
 	if err := c.reports.update(category, code, items, time.Now()); err != nil {
 		return err
 	}

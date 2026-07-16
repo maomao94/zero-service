@@ -31,6 +31,9 @@ type ServerOptions struct {
 	// 独立扫描 goroutine 周期检查 lastActiveAt（非 gnet OnTick，规避多核 N× 问题）。
 	IdleTimeout time.Duration
 
+	// ShutdownTimeout 优雅关闭等待异步 handler 完成的最大时长。0 用默认 30s。
+	ShutdownTimeout time.Duration
+
 	// SlowHandlerThreshold on-loop 同步 handler 慢处理告警阈值，超过打 logx 日志。
 	// 0 用默认 50ms。async handler 不计入（已 offload）。
 	SlowHandlerThreshold time.Duration
@@ -197,6 +200,9 @@ func (o *ServerOptions) applyDefaults() {
 	if o.OnDecodeError == 0 {
 		o.OnDecodeError = DecodeErrorClose
 	}
+	if o.ShutdownTimeout <= 0 {
+		o.ShutdownTimeout = 30 * time.Second
+	}
 }
 
 // ClientOptions 是构造单连接 Client 的配置。
@@ -237,6 +243,9 @@ type ClientOptions struct {
 
 	// HeartbeatMessage 心跳报文工厂，返回待编码的消息体。仅当 HeartbeatInterval > 0 且非 nil 时生效。
 	HeartbeatMessage func() any
+
+	// ShutdownTimeout 优雅关闭等待异步 handler 完成的最大时长。0 用默认 30s。
+	ShutdownTimeout time.Duration
 
 	// gnet 原生选项（单连接，无 Multicore/NumEventLoop）
 	TCPKeepAlive    time.Duration // TCP_KEEPIDLE
@@ -361,5 +370,8 @@ func (o *ClientOptions) applyDefaults() {
 	}
 	if o.ReconnectInterval <= 0 {
 		o.ReconnectInterval = defaultReconnectInterval
+	}
+	if o.ShutdownTimeout <= 0 {
+		o.ShutdownTimeout = 30 * time.Second
 	}
 }

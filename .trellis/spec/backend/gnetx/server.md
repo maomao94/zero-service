@@ -20,10 +20,11 @@ srv, err := gnetx.NewServer(
 
 必填项（`common/gnetx/options.go:164-178`）：`Addr`、`Codec`、`Handler`、`MaxFrameLength`
 
-默认值（`common/gnetx/options.go:181-191`）：
+默认值（`common/gnetx/options.go:193-206`）：
 - `SlowHandlerThreshold` → 50ms
 - `BatchReadLimit` → 64
 - `OnDecodeError` → `DecodeErrorClose`
+- `ShutdownTimeout` → 30s
 
 ## 共享 ReplyPool
 
@@ -38,7 +39,15 @@ replyPool := antsx.NewReplyPool[any](
 
 OnOpen 中传入：`newSession(..., s.replyPool)`（`server.go:178`）
 
-Shutdown 中关闭：`defer s.replyPool.Close()`（`server.go:116`，用 defer 保证即使 eng.Stop 报错也清理）
+Shutdown 中关闭：`defer s.replyPool.Close()`（`server.go:116`，defer 保证 eng.Stop 之后才清理）
+
+## 异步等待（asyncWG）
+
+`Server` 通过 `asyncWG sync.WaitGroup` 跟踪所有异步 handler 完成状态：
+
+- `dispatchAsync` 入池前 `s.asyncWG.Add(1)`，handler 完成后 `defer s.asyncWG.Done()`
+- 提交失败时立即 `s.asyncWG.Done()` 回退计数
+- `Shutdown(ctx)` 中 `eng.Stop` 之后启动 goroutine 等待 `asyncWG.Wait()`，select `ctx.Done()` 超时后记日志强制退出
 
 ## 生命周期
 
@@ -50,7 +59,10 @@ NewServer() → 配置校验 + SessionManager + replyPool
   OnTraffic  → decode → Response.resolveResponse(共享池) → dispatch
   OnClose    → Session.Close
   OnShutdown → 停 idleSweeper
-  srv.Shutdown(ctx) / srv.Stop() → replyPool.Close() + eng.Stop()
+  srv.Stop() → Shutdown(ctx, ShutdownTimeout)
+      → CAS booted → eng.Stop(ctx)
+      → goroutine: asyncWG.Wait() + 超时 select
+      → defer replyPool.Close()
 ```
 
 两种运行方式：

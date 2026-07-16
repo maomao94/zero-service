@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"zero-service/common/ftps"
 	"zero-service/common/isp"
@@ -80,16 +81,33 @@ func HandleModelSync(ctx context.Context, msg *isp.Message, uploader *ftps.Uploa
 func syncModel(ctx context.Context, msg *isp.Message, uploader *ftps.Uploader, provider ModelDataProvider) (string, error) {
 	remoteName := msg.Code + modelSyncDefaultPath[msg.Command]
 
+	// 校验 station code 不含路径穿越字符，防止文件系统访问越权。
+	stationCode := msg.Code
+	if err := validateSafePathComponent(stationCode); err != nil {
+		return "", fmt.Errorf("invalid station code: %w", err)
+	}
+
 	switch msg.Command {
 	case isp.CommandModelRobot:
-		return syncPatrolDeviceModel(ctx, uploader, provider, remoteName, msg.Code)
+		return syncPatrolDeviceModel(ctx, uploader, provider, remoteName, stationCode)
 	case isp.CommandModelPoint:
-		return syncDevicePointModel(ctx, uploader, provider, remoteName, msg.Code)
+		return syncDevicePointModel(ctx, uploader, provider, remoteName, stationCode)
 	case isp.CommandModelMap:
-		return syncMapModel(ctx, uploader, remoteName, msg.Code)
+		return syncMapModel(ctx, uploader, remoteName, stationCode)
 	default:
 		return path.Join(uploader.Config().RemoteDir, remoteName), nil
 	}
+}
+
+// validateSafePathComponent 校验路径片段不含路径穿越字符。
+func validateSafePathComponent(s string) error {
+	if s == "" {
+		return fmt.Errorf("empty path component")
+	}
+	if strings.Contains(s, "..") || strings.ContainsAny(s, "/\\") {
+		return fmt.Errorf("path component contains unsafe characters: %q", s)
+	}
+	return nil
 }
 
 func syncMapModel(ctx context.Context, uploader *ftps.Uploader, remoteName, stationCode string) (string, error) {

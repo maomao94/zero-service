@@ -1,4 +1,4 @@
-package isp
+package ispclient
 
 import (
 	"testing"

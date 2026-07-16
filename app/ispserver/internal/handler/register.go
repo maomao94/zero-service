@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 
-	"zero-service/app/ispserver/internal/config"
 	"zero-service/common/gnetx"
 	"zero-service/common/isp"
 
@@ -11,7 +10,7 @@ import (
 )
 
 // NewRegisterHandler 返回 251-1 注册指令的 isp.IspHandler，对标 Java SipEndpoint.T2511_2514。
-func NewRegisterHandler(conf config.IspConf) isp.IspHandler {
+func NewRegisterHandler(conf isp.ServerConfig) isp.IspHandler {
 	return func(ctx context.Context, conn gnetx.Conn, req *isp.Message) (*isp.Message, error) {
 		clientID := req.SendCode
 		if clientID == "" {
@@ -26,10 +25,10 @@ func NewRegisterHandler(conf config.IspConf) isp.IspHandler {
 
 		return isp.NewResponse(req, isp.SessionSourceServer, isp.StatusSuccess, isp.CommandGenericResponseWithItems,
 			[]isp.Item{{
-				"heart_beat_interval":           itoa(conf.HeartbeatInterval),
-				"patroldevice_run_interval":     itoa(conf.DeviceRunInterval),
-				"nest_run_interval":             itoa(conf.NestRunInterval),
-				"weather_interval":              itoa(conf.WeatherInterval),
+				"heart_beat_interval":       itoa(conf.HeartbeatInterval),
+				"patroldevice_run_interval": itoa(conf.DeviceRunInterval),
+				"nest_run_interval":         itoa(conf.NestRunInterval),
+				"weather_interval":          itoa(conf.WeatherInterval),
 			}}), nil
 	}
 }

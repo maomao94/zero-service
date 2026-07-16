@@ -19,7 +19,8 @@
 | [Trigger 服务](trigger.md) | 异步任务调度、计划任务管理、API、状态流转 |
 | [SocketIO 实时通信](socketio.md) | SocketIO 网关对接、事件体系、MQTT 桥接、鉴权 |
 | [DJI 云平台](djicloud.md) | DJI Dock3 Cloud API 封装、RPC 接口、配置说明 |
-| [ISP 巡检协议](ispagent.md) | 变电站远程智能巡视系统 ISP 协议代理、帧格式、任务和模型同步 |
+| [ISP 巡检协议](isp.md) | 变电站远程智能巡视系统 ISP 协议服务端/代理、帧格式、任务和模型同步 |
+| [LAL 流媒体回调](../app/lalhook/README.md) | LAL HTTP 回调事件、鉴权、配置和接口说明 |
 
 ## 开发者
 
@@ -28,3 +29,4 @@
 | [开发指南](development.md) | 环境搭建、代码生成、模块扩展、调试技巧 |
 | [部署指南](deployment.md) | Docker 部署、集群部署、配置管理 |
 | [KML/KMZ 指南](kml-kmz-guide.md) | 无人机航点任务 KML 文件结构和使用 |
+| [antsx 与响应式模式](antsx-vs-reactive.md) | antsx Promise/Invoke 与响应式编排模式对比 |

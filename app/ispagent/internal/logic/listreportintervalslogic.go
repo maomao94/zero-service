@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 
-	ispclient "zero-service/app/ispagent/internal/isp"
+	"zero-service/app/ispagent/internal/ispclient"
 	"zero-service/app/ispagent/internal/svc"
 	"zero-service/app/ispagent/ispagent"
 	"zero-service/common/isp"
