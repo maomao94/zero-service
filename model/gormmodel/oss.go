@@ -3,7 +3,7 @@ package gormmodel
 import "zero-service/common/gormx"
 
 type Oss struct {
-	gormx.LegacyBaseModel
+	gormx.LegacyStringBaseModel
 	gormx.VersionMixin
 	TenantId   string `gorm:"column:tenant_id;type:varchar(12);default:000000;uniqueIndex:idx_tid_code;comment:租户ID"`
 	Category   int64  `gorm:"column:category;default:0;comment:分类 1-minio 2-qiniu 3-ali 4-tecent"`

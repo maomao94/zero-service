@@ -233,7 +233,7 @@ func (nilTaskStore) LockAndFetch(context.Context, time.Time, time.Duration) (*cr
 	return nil, crontask.ErrNotFound
 }
 
-func (nilTaskStore) UpdateNextRun(context.Context, int64, time.Time, time.Time) error {
+func (nilTaskStore) UpdateNextRun(context.Context, string, time.Time, time.Time) error {
 	return crontask.ErrNotFound
 }
 
@@ -249,11 +249,11 @@ func (nilTaskStore) Update(context.Context, *crontask.TaskConfig) error {
 	return nil
 }
 
-func (nilTaskStore) UpdateStatus(context.Context, int64, crontask.TaskStatus) error {
+func (nilTaskStore) UpdateStatus(context.Context, string, crontask.TaskStatus) error {
 	return nil
 }
 
-func (nilTaskStore) Delete(context.Context, int64) error {
+func (nilTaskStore) Delete(context.Context, string) error {
 	return nil
 }
 

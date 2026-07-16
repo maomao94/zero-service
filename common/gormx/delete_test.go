@@ -13,7 +13,7 @@ func TestUnscopedDeleteHardDeletesRecord(t *testing.T) {
 		t.Fatalf("create error = %v", err)
 	}
 
-	if err := UnscopedDelete(db, &legacyDeleteTestModel{LegacyBaseModel: LegacyBaseModel{LegacyIDMixin: LegacyIDMixin{Id: record.Id}}}); err != nil {
+	if err := UnscopedDelete(db, &legacyDeleteTestModel{LegacyStringBaseModel: LegacyStringBaseModel{LegacyStringIDMixin: LegacyStringIDMixin{Id: record.Id}}}); err != nil {
 		t.Fatalf("unscoped delete error = %v", err)
 	}
 

@@ -28,7 +28,7 @@ func (s TaskStatus) String() string {
 // Extra 字段存储业务方自定义扩展字段 JSON，调度器不解析。
 // RRuleStr 为空表示一次性任务（执行后自动禁用）。
 type TaskConfig struct {
-	ID       int64           `json:"id"`
+	ID       string          `json:"id"`
 	TaskCode string          `json:"task_code"` // 全局唯一任务编码
 	TaskName string          `json:"task_name"`
 	RRuleStr string          `json:"rrule_str"` // RFC 5545 规则，空串为一次性任务

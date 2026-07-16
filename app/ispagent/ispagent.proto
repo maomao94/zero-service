@@ -177,7 +177,7 @@ message ListTaskConfigsReq {
 
 // TaskConfigItem 任务配置条目（平铺 ISP 业务字段）
 message TaskConfigItem {
-  int64 id = 1;
+  string id = 1;
   string task_code = 2;
   string task_name = 3;
   string patrol_type = 4;          // 巡视类型: 1=例行,2=特殊,3=专项,4=自定义

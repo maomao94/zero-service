@@ -9,7 +9,7 @@ import (
 )
 
 type legacyDeleteTestModel struct {
-	LegacyBaseModel
+	LegacyStringBaseModel
 	Name string `gorm:"column:name;uniqueIndex"`
 }
 
@@ -25,6 +25,15 @@ type stringAuditTestModel struct {
 
 func (stringAuditTestModel) TableName() string {
 	return "string_audit_test_models"
+}
+
+type legacyStringIDTestModel struct {
+	LegacyStringBaseModel
+	Name string `gorm:"column:name"`
+}
+
+func (legacyStringIDTestModel) TableName() string {
+	return "legacy_string_id_test_models"
 }
 
 type uintAuditTestModel struct {

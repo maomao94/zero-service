@@ -13,7 +13,7 @@ import (
 // 写入策略：按 device_sn Upsert 覆盖最新值，不保存历史时序；历史轨迹后续如有需要再单独建表。
 // 使用场景：设备详情、机巢/无人机实时状态面板、控制前状态检查。
 type DjiDeviceOsdSnapshot struct {
-	gormx.LegacyBaseModel
+	gormx.LegacyStringBaseModel
 	DeviceSn   string    `gorm:"column:device_sn;uniqueIndex;type:varchar(64);not null;comment:设备SN，机巢或无人机"`
 	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);index;not null;default:'';comment:所属机巢SN"`
 	ReportedAt time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
@@ -29,7 +29,7 @@ func (DjiDeviceOsdSnapshot) TableName() string { return "dji_device_osd_snapshot
 // 写入策略：按 device_sn Upsert 覆盖最新值；State 不刷新设备在线状态，在线状态以 OSD 有效上行为准。
 // 使用场景：机巢管理页展示机巢工作状态、判断无人机挂载关系、补充控制前置校验。
 type DjiDeviceStateSnapshot struct {
-	gormx.LegacyBaseModel
+	gormx.LegacyStringBaseModel
 	DeviceSn   string    `gorm:"column:device_sn;uniqueIndex;type:varchar(64);not null;comment:设备SN，机巢或无人机"`
 	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);index;not null;default:'';comment:所属机巢SN"`
 	ReportedAt time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`

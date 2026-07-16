@@ -30,7 +30,7 @@ const (
 	// 在线状态：数据库默认 IsOnline=false，表示离线或尚未收到在线上报；收到设备 osd 有效上行后置为 true，status/update_topo 与 state 仅维护设备归属和状态快照。
 // 使用场景：设备列表、机巢详情、无人机详情、设备在线判断、后续设备分组/别名管理。
 type DjiDevice struct {
-	gormx.LegacyBaseModel
+	gormx.LegacyStringBaseModel
 	DeviceSn        string       `gorm:"column:device_sn;type:varchar(64);uniqueIndex;not null;comment:设备SN，机巢/无人机/负载设备唯一标识"`
 	GatewaySn       string       `gorm:"column:gateway_sn;type:varchar(64);index;not null;default:'';comment:最近一次上报关联的网关机巢SN，机巢自身等于device_sn；蛙跳多绑定关系以dji_device_topo为准"`
 	Alias           string       `gorm:"column:alias;type:varchar(128);default:'';comment:设备别名"`
@@ -60,7 +60,7 @@ func (d *DjiDevice) TouchOnline(now time.Time) {
 // 蛙跳场景：同一架飞机可以被多个机巢绑定，因此本表允许同一个 sub_device_sn 出现在多条不同 gateway_sn 记录中；业务查询按 gateway_sn + sub_device_sn 唯一确定某一次机巢绑定关系。
 // 约束：同一个 gateway_sn + sub_device_sn 唯一，不对 sub_device_sn 单独做唯一约束。
 type DjiDeviceTopo struct {
-	gormx.LegacyBaseModel
+	gormx.LegacyStringBaseModel
 	GatewaySn        string `gorm:"column:gateway_sn;uniqueIndex:idx_topo_pair;type:varchar(64);not null;comment:网关机巢SN"`
 	SubDeviceSn      string `gorm:"column:sub_device_sn;uniqueIndex:idx_topo_pair;index:idx_topo_sub;type:varchar(64);not null;comment:子设备SN"`
 	Domain           string `gorm:"column:domain;type:varchar(8);not null;default:'';comment:大疆设备领域domain，0飞机类，1负载类，2遥控器类，3机场类"`

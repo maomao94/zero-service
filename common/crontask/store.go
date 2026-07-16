@@ -14,7 +14,7 @@ type TaskStore interface {
 	LockAndFetch(ctx context.Context, now time.Time, lockDur time.Duration) (*TaskConfig, error)
 
 	// UpdateNextRun 更新任务的下次调度时间和上次执行时间。
-	UpdateNextRun(ctx context.Context, id int64, nextRun, lastRun time.Time) error
+	UpdateNextRun(ctx context.Context, id string, nextRun, lastRun time.Time) error
 
 	// GetByCode 按全局唯一的 task_code 查询任务。
 	GetByCode(ctx context.Context, taskCode string) (*TaskConfig, error)
@@ -26,10 +26,10 @@ type TaskStore interface {
 	Update(ctx context.Context, cfg *TaskConfig) error
 
 	// UpdateStatus 更新任务启用/禁用状态。
-	UpdateStatus(ctx context.Context, id int64, status TaskStatus) error
+	UpdateStatus(ctx context.Context, id string, status TaskStatus) error
 
 	// Delete 删除任务（软删除）。
-	Delete(ctx context.Context, id int64) error
+	Delete(ctx context.Context, id string) error
 
 	// ListEnabled 获取所有启用状态的任务配置。
 	ListEnabled(ctx context.Context) ([]*TaskConfig, error)

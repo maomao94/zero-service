@@ -2,6 +2,7 @@ package crontask
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"sort"
 	"sync"
@@ -14,13 +15,12 @@ var _ TaskStore = (*MemoryStore)(nil)
 // LockAndFetch 参照 trigger 扫表逻辑：同优先级随机选一条，立即时间扩展防并发。
 type MemoryStore struct {
 	mu    sync.RWMutex
-	tasks map[int64]*TaskConfig
-	seq   int64
+	tasks map[string]*TaskConfig
 }
 
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
-		tasks: make(map[int64]*TaskConfig),
+		tasks: make(map[string]*TaskConfig),
 	}
 }
 
@@ -66,7 +66,7 @@ func (m *MemoryStore) LockAndFetch(ctx context.Context, now time.Time, lockDur t
 }
 
 // UpdateNextRun 更新下次调度时间和上次执行时间。
-func (m *MemoryStore) UpdateNextRun(ctx context.Context, id int64, nextRun, lastRun time.Time) error {
+func (m *MemoryStore) UpdateNextRun(ctx context.Context, id string, nextRun, lastRun time.Time) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -98,9 +98,8 @@ func (m *MemoryStore) Insert(ctx context.Context, cfg *TaskConfig) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if cfg.ID == 0 {
-		m.seq++
-		cfg.ID = m.seq
+	if cfg.ID == "" {
+		cfg.ID = fmt.Sprintf("auto-%d", time.Now().UnixNano())
 	}
 
 	for _, t := range m.tasks {
@@ -135,7 +134,7 @@ func (m *MemoryStore) Update(ctx context.Context, cfg *TaskConfig) error {
 }
 
 // UpdateStatus 更新任务启用/禁用状态。
-func (m *MemoryStore) UpdateStatus(ctx context.Context, id int64, status TaskStatus) error {
+func (m *MemoryStore) UpdateStatus(ctx context.Context, id string, status TaskStatus) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -149,7 +148,7 @@ func (m *MemoryStore) UpdateStatus(ctx context.Context, id int64, status TaskSta
 }
 
 // Delete 删除任务。
-func (m *MemoryStore) Delete(ctx context.Context, id int64) error {
+func (m *MemoryStore) Delete(ctx context.Context, id string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

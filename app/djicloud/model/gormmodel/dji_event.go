@@ -14,7 +14,7 @@ import (
 // 写入策略：按每次上报逐条插入，保留告警历史；当前阶段不做去重合并，避免丢失上报细节。
 // 使用场景：查询未确认告警、按设备/机巢/等级筛选告警、人工确认处理。
 type DjiHmsAlert struct {
-	gormx.LegacyBaseModel
+	gormx.LegacyStringBaseModel
 	GatewaySn      string       `gorm:"column:gateway_sn;type:varchar(64);index;not null;comment:上报告警的网关机巢SN"`
 	Level          int          `gorm:"column:level;index;not null;default:0;comment:告警等级"`
 	Module         int          `gorm:"column:module;not null;default:0;comment:告警模块"`
@@ -35,7 +35,7 @@ func (DjiHmsAlert) TableName() string { return "dji_hms_alert" }
 
 // DjiDockFlightTask 是机巢航线任务最新快照表。
 type DjiDockFlightTask struct {
-	gormx.LegacyBaseModel
+	gormx.LegacyStringBaseModel
 	FlightId   string    `gorm:"column:flight_id;type:varchar(64);uniqueIndex:idx_dji_dock_flight_task_gateway_flight;not null;comment:大疆航线任务ID"`
 	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);uniqueIndex:idx_dji_dock_flight_task_gateway_flight;not null;comment:网关机巢SN"`
 	ReportedAt time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
@@ -57,7 +57,7 @@ func (DjiDockFlightTask) TableName() string { return "dji_dock_flight_task" }
 
 // DjiDockDeviceFlightTaskState 是机巢当前航线任务状态表。
 type DjiDockDeviceFlightTaskState struct {
-	gormx.LegacyBaseModel
+	gormx.LegacyStringBaseModel
 	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);uniqueIndex;not null;comment:网关机巢SN"`
 	FlightId   string    `gorm:"column:flight_id;type:varchar(64);index;not null;comment:大疆航线任务ID"`
 	ReportedAt time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
@@ -86,7 +86,7 @@ func (DjiDockDeviceFlightTaskState) TableName() string {
 // 写入策略：按事件逐条插入，保留历史记录。
 // 使用场景：排查任务就绪推送、统计就绪任务数、后续任务编排扩展。
 type DjiFlightTaskReady struct {
-	gormx.LegacyBaseModel
+	gormx.LegacyStringBaseModel
 	GatewaySn    string    `gorm:"column:gateway_sn;type:varchar(64);index;not null;comment:网关机巢SN"`
 	FlightIdJSON string    `gorm:"column:flight_id_json;type:jsonb;default:'[]';comment:就绪任务ID列表原始JSON"`
 	RawJSON      string    `gorm:"column:raw_json;type:jsonb;default:'{}';comment:完整flighttask_ready事件原始JSON"`
@@ -103,7 +103,7 @@ func (DjiFlightTaskReady) TableName() string { return "dji_flight_task_ready" }
 // 写入策略：按事件逐条插入，原始数据完整保存在 RawJSON。
 // 使用场景：排查日志上传进度、运维审计。
 type DjiRemoteLogEvent struct {
-	gormx.LegacyBaseModel
+	gormx.LegacyStringBaseModel
 	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);index;not null;comment:网关机巢SN"`
 	Method     string    `gorm:"column:method;type:varchar(64);index;not null;default:'';comment:事件方法名(fileupload_progress)"`
 	RawJSON    string    `gorm:"column:raw_json;type:jsonb;default:'{}';comment:完整事件原始JSON"`
@@ -120,7 +120,7 @@ func (DjiRemoteLogEvent) TableName() string { return "dji_remote_log_event" }
 // 写入策略：按事件逐条插入，原始数据完整保存在 RawJSON。
 // 使用场景：机巢运维、返航过程追踪、后续告警/通知扩展。
 type DjiReturnHomeEvent struct {
-	gormx.LegacyBaseModel
+	gormx.LegacyStringBaseModel
 	FlightId   string    `gorm:"column:flight_id;type:varchar(64);index;default:'';comment:关联航线任务ID"`
 	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);index;not null;comment:网关机巢SN"`
 	ReportedAt time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
@@ -140,7 +140,7 @@ func (DjiReturnHomeEvent) TableName() string { return "dji_return_home_event" }
 // 写入策略：按上行消息逐条插入，RawJSON 保留解析后的原始业务数据，Summary 保留便于检索的短摘要。
 // 使用场景：排查 DRC 链路异常、追踪初始状态订阅回执、分析设备上报的避障/时延/OSD 状态。
 type DjiDrcUpEvent struct {
-	gormx.LegacyBaseModel
+	gormx.LegacyStringBaseModel
 	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);index;not null;comment:网关机巢SN"`
 	Method     string    `gorm:"column:method;type:varchar(64);index;not null;default:'';comment:DRC上行方法名"`
 	RawJSON    string    `gorm:"column:raw_json;type:jsonb;default:'{}';comment:DRC上行原始解析数据JSON"`

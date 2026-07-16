@@ -310,7 +310,7 @@ func DeserializeExtra(extra string) *IspTaskFields {
 
 // NewTaskConfig 从 ISP 字段创建 crontask.TaskConfig。
 // RRuleStr 和 NextRun 每次从 ISP 字段重新计算，保证配置更新后使用最新值。
-func NewTaskConfig(existingID int64, fields *IspTaskFields) *crontask.TaskConfig {
+func NewTaskConfig(existingID string, fields *IspTaskFields) *crontask.TaskConfig {
 	nextRun, err := fields.CalcInitNextRun()
 	status := fields.ToStatus()
 	if err != nil || nextRun.IsZero() {

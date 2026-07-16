@@ -80,7 +80,7 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, lockDur time.
 }
 
 // UpdateNextRun 更新任务的下次调度时间和上次执行时间。
-func (s *DBStore) UpdateNextRun(ctx context.Context, id int64, nextRun, lastRun time.Time) error {
+func (s *DBStore) UpdateNextRun(ctx context.Context, id string, nextRun, lastRun time.Time) error {
 	result := s.db.WithContext(ctx).
 		Model(&gormmodel.GormTaskConfig{}).
 		Where("id = ?", id).
@@ -143,7 +143,7 @@ func (s *DBStore) Update(ctx context.Context, cfg *crontask.TaskConfig) error {
 }
 
 // UpdateStatus 更新任务启用/禁用状态。
-func (s *DBStore) UpdateStatus(ctx context.Context, id int64, status crontask.TaskStatus) error {
+func (s *DBStore) UpdateStatus(ctx context.Context, id string, status crontask.TaskStatus) error {
 	record := gormmodel.GormTaskConfig{}
 	record.Id = id
 
@@ -162,7 +162,7 @@ func (s *DBStore) UpdateStatus(ctx context.Context, id int64, status crontask.Ta
 }
 
 // Delete 软删除任务。
-func (s *DBStore) Delete(ctx context.Context, id int64) error {
+func (s *DBStore) Delete(ctx context.Context, id string) error {
 	result := s.db.WithContext(ctx).Where("id = ?", id).Delete(&gormmodel.GormTaskConfig{})
 	if result.Error != nil {
 		return result.Error

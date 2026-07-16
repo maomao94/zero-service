@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type deleteTimeOnlyTestModel struct {
@@ -56,7 +58,7 @@ func TestLegacySoftDeleteSetsDeleteTimeAndDelState(t *testing.T) {
 	}
 
 	var got legacyDeleteTestModel
-	if err := db.Unscoped().Select("id", "delete_time", "del_state").First(&got, record.Id).Error; err != nil {
+	if err := db.Unscoped().Select("id", "delete_time", "del_state").Where("id = ?", record.Id).First(&got).Error; err != nil {
 		t.Fatalf("unscoped find error = %v", err)
 	}
 	if !got.DeleteTime.Valid {
@@ -67,6 +69,53 @@ func TestLegacySoftDeleteSetsDeleteTimeAndDelState(t *testing.T) {
 	}
 	if !got.IsDeleted() {
 		t.Fatalf("is deleted = false, want true")
+	}
+}
+
+func TestLegacyStringIDMixinGeneratesUUID(t *testing.T) {
+	db := openTestDB(t, &legacyStringIDTestModel{})
+	record := legacyStringIDTestModel{Name: "legacy"}
+
+	if err := db.Create(&record).Error; err != nil {
+		t.Fatalf("create error = %v", err)
+	}
+	if record.Id == "" {
+		t.Fatalf("id is empty, want uuid")
+	}
+	parsed, err := uuid.Parse(record.Id)
+	if err != nil {
+		t.Fatalf("parse id error = %v", err)
+	}
+	if parsed.Version() != 4 {
+		t.Fatalf("uuid version = %d, want 4", parsed.Version())
+	}
+
+	var got legacyStringIDTestModel
+	if err := db.First(&got, "id = ?", record.Id).Error; err != nil {
+		t.Fatalf("find error = %v", err)
+	}
+	if got.Id != record.Id {
+		t.Fatalf("id = %q, want %q", got.Id, record.Id)
+	}
+}
+
+func TestLegacyStringIDMixinKeepsPresetID(t *testing.T) {
+	db := openTestDB(t, &legacyStringIDTestModel{})
+	record := legacyStringIDTestModel{LegacyStringBaseModel: LegacyStringBaseModel{LegacyStringIDMixin: LegacyStringIDMixin{Id: "preset-id"}}, Name: "legacy"}
+
+	if err := db.Create(&record).Error; err != nil {
+		t.Fatalf("create error = %v", err)
+	}
+	if record.Id != "preset-id" {
+		t.Fatalf("id = %q, want preset-id", record.Id)
+	}
+
+	var got legacyStringIDTestModel
+	if err := db.First(&got, "id = ?", "preset-id").Error; err != nil {
+		t.Fatalf("find error = %v", err)
+	}
+	if got.Id != "preset-id" {
+		t.Fatalf("stored id = %q, want preset-id", got.Id)
 	}
 }
 
@@ -117,7 +166,7 @@ func TestLegacyRestoreClearsDeleteTimeAndDelState(t *testing.T) {
 	}
 
 	var got legacyDeleteTestModel
-	if err := db.Select("id", "delete_time", "del_state").First(&got, record.Id).Error; err != nil {
+	if err := db.Select("id", "delete_time", "del_state").Where("id = ?", record.Id).First(&got).Error; err != nil {
 		t.Fatalf("find error = %v", err)
 	}
 	if got.DeleteTime.Valid {

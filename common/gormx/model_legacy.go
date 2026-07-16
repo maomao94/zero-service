@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"time"
 
+	"zero-service/common/tool"
+
+	"gorm.io/gorm"
 	"gorm.io/plugin/soft_delete"
 )
 
@@ -20,6 +23,15 @@ type LegacyIDMixin struct {
 // LegacyStringIDMixin 提供旧表使用的 string id 字段。
 type LegacyStringIDMixin struct {
 	Id string `gorm:"column:id;primaryKey;size:36" json:"id"`
+}
+
+func (m *LegacyStringIDMixin) BeforeCreate(tx *gorm.DB) error {
+	if m.Id == "" {
+		var err error
+		m.Id, err = tool.UUID()
+		return err
+	}
+	return nil
 }
 
 // LegacyTimeMixin 提供旧表 create_time 和 update_time 字段。

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/duke-git/lancet/v2/random"
+	"github.com/google/uuid"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 )
 
@@ -84,4 +85,13 @@ func SimpleUUID() (string, error) {
 		return "", err
 	}
 	return strings.ReplaceAll(uid, "-", ""), nil
+}
+
+// UUID 生成带 "-" 的时间有序 UUID v7
+func UUID() (string, error) {
+	uid, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+	return uid.String(), nil
 }

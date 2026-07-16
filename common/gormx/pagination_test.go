@@ -24,7 +24,7 @@ func TestQueryPageNormalizesInvalidParams(t *testing.T) {
 	}
 }
 
-func TestQueryPageSelectWildcardDoesNotBreakCount(t *testing.T) {
+func TestQueryPageSelectAllDoesNotBreakCount(t *testing.T) {
 	db := openTestDB(t, &pageTestModel{})
 	for _, name := range []string{"a", "b"} {
 		if err := db.Create(&pageTestModel{Name: name}).Error; err != nil {
@@ -33,7 +33,7 @@ func TestQueryPageSelectWildcardDoesNotBreakCount(t *testing.T) {
 	}
 
 	var list []pageTestModel
-	page, err := QueryPage(db.Model(&pageTestModel{}).Select("page_test_models.*").Order("id ASC"), 1, 1, &list)
+	page, err := QueryPage(db.Model(&pageTestModel{}).Select("*").Order("id ASC"), 1, 1, &list)
 	if err != nil {
 		t.Fatalf("query page error = %v", err)
 	}

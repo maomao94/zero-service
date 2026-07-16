@@ -10,7 +10,7 @@ import (
 // GormTaskConfig 是 ISP 周期性任务配置表。
 // 核心字段与 crontask.TaskConfig 对齐，ISP 业务字段平铺为表列方便查询与索引。
 type GormTaskConfig struct {
-	gormx.LegacyBaseModel // id / create_time / update_time / delete_time / del_state
+	gormx.LegacyStringBaseModel // id / create_time / update_time / delete_time / del_state
 
 	// --- crontask.TaskConfig 对齐字段 ---
 	TaskCode string       `gorm:"column:task_code;size:64;uniqueIndex;comment:全局唯一任务编码"` // 全局唯一任务编码
@@ -63,7 +63,7 @@ const (
 // GormIspPatrolTask 是区域巡视主机侧的 ISP 协议巡视任务主表。
 // 字段由任务状态通知（Type=41, Command=0）的报文信封和表 J.42 Item 属性组成。
 type GormIspPatrolTask struct {
-	gormx.LegacyBaseModel // id / create_time / update_time / delete_time / del_state
+	gormx.LegacyStringBaseModel // id / create_time / update_time / delete_time / del_state
 
 	SendCode          string    `gorm:"column:send_code;size:64;not null;index;comment:区域巡视主机唯一标识"`                    // SendCode：区域巡视主机唯一标识
 	ReceiveCode       string    `gorm:"column:receive_code;size:64;not null;comment:上级系统唯一标识"`                         // ReceiveCode：上级系统唯一标识

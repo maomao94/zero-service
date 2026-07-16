@@ -22,7 +22,7 @@ func TestMemoryStoreInsertAndGet(t *testing.T) {
 	if err := store.Insert(ctx, cfg); err != nil {
 		t.Fatal(err)
 	}
-	if cfg.ID == 0 {
+	if cfg.ID == "" {
 		t.Fatal("expected auto-increment ID")
 	}
 

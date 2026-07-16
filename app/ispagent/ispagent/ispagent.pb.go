@@ -1381,7 +1381,7 @@ func (x *ListTaskConfigsReq) GetSubstationCode() string {
 // TaskConfigItem 任务配置条目（平铺 ISP 业务字段）
 type TaskConfigItem struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
-	Id                  int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	TaskCode            string                 `protobuf:"bytes,2,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"`
 	TaskName            string                 `protobuf:"bytes,3,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
 	PatrolType          string                 `protobuf:"bytes,4,opt,name=patrol_type,json=patrolType,proto3" json:"patrol_type,omitempty"`     // 巡视类型: 1=例行,2=特殊,3=专项,4=自定义
@@ -1443,11 +1443,11 @@ func (*TaskConfigItem) Descriptor() ([]byte, []int) {
 	return file_ispagent_proto_rawDescGZIP(), []int{22}
 }
 
-func (x *TaskConfigItem) GetId() int64 {
+func (x *TaskConfigItem) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *TaskConfigItem) GetTaskCode() string {
@@ -2258,7 +2258,7 @@ const file_ispagent_proto_rawDesc = "" +
 	"\ttask_code\x18\x03 \x01(\tR\btaskCode\x12'\n" +
 	"\x0fsubstation_code\x18\x04 \x01(\tR\x0esubstationCode\"\xf5\a\n" +
 	"\x0eTaskConfigItem\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\ttask_code\x18\x02 \x01(\tR\btaskCode\x12\x1b\n" +
 	"\ttask_name\x18\x03 \x01(\tR\btaskName\x12\x1f\n" +
 	"\vpatrol_type\x18\x04 \x01(\tR\n" +

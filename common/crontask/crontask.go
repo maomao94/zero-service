@@ -129,7 +129,7 @@ func (s *Scheduler) executeTask(task *TaskConfig) {
 	span.SetAttributes(
 		attribute.String("crontask.code", task.TaskCode),
 		attribute.String("crontask.name", task.TaskName),
-		attribute.Int64("crontask.id", task.ID),
+		attribute.String("crontask.id", task.ID),
 		attribute.Int64("crontask.version", task.Version),
 	)
 	ctx = logx.ContextWithFields(ctx,

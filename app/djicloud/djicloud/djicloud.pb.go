@@ -6420,7 +6420,7 @@ func (x *DeviceOnlineRes) GetIsOnline() bool {
 type DeviceInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id 数据库主键。
-	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// device_sn 设备 SN，机巢/无人机/负载设备唯一标识。
 	DeviceSn string `protobuf:"bytes,2,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
 	// gateway_sn 最近一次上报关联的网关机巢 SN；机巢自身等于 device_sn。
@@ -6476,11 +6476,11 @@ func (*DeviceInfo) Descriptor() ([]byte, []int) {
 	return file_djicloud_proto_rawDescGZIP(), []int{108}
 }
 
-func (x *DeviceInfo) GetId() int64 {
+func (x *DeviceInfo) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *DeviceInfo) GetDeviceSn() string {
@@ -7516,7 +7516,7 @@ func (x *GetDeviceStateSnapshotReq) GetDeviceSn() string {
 // HmsAlertInfo HMS 告警信息。
 type HmsAlertInfo struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	Id             int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	GatewaySn      string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
 	Level          int32                  `protobuf:"varint,3,opt,name=level,proto3" json:"level,omitempty"`
 	Module         int32                  `protobuf:"varint,4,opt,name=module,proto3" json:"module,omitempty"`
@@ -7566,11 +7566,11 @@ func (*HmsAlertInfo) Descriptor() ([]byte, []int) {
 	return file_djicloud_proto_rawDescGZIP(), []int{123}
 }
 
-func (x *HmsAlertInfo) GetId() int64 {
+func (x *HmsAlertInfo) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *HmsAlertInfo) GetGatewaySn() string {
@@ -7863,7 +7863,7 @@ func (x *AckHmsAlertReq) GetAckedBy() string {
 // FlightTaskProgressInfo 飞行任务进度推送记录。
 type FlightTaskProgressInfo struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
-	Id                   int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id                   string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	FlightId             string                 `protobuf:"bytes,2,opt,name=flight_id,json=flightId,proto3" json:"flight_id,omitempty"`
 	GatewaySn            string                 `protobuf:"bytes,3,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
 	WaylineMissionState  int32                  `protobuf:"varint,4,opt,name=wayline_mission_state,json=waylineMissionState,proto3" json:"wayline_mission_state,omitempty"`
@@ -7913,11 +7913,11 @@ func (*FlightTaskProgressInfo) Descriptor() ([]byte, []int) {
 	return file_djicloud_proto_rawDescGZIP(), []int{127}
 }
 
-func (x *FlightTaskProgressInfo) GetId() int64 {
+func (x *FlightTaskProgressInfo) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *FlightTaskProgressInfo) GetFlightId() string {
@@ -9130,7 +9130,7 @@ func (x *ListFlyRegionsRes) GetList() []*FlyRegionInfo {
 // FlyRegionInfo 飞行区配置记录。
 type FlyRegionInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	GatewaySn     string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	FileId        string                 `protobuf:"bytes,4,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
@@ -9173,11 +9173,11 @@ func (*FlyRegionInfo) Descriptor() ([]byte, []int) {
 	return file_djicloud_proto_rawDescGZIP(), []int{146}
 }
 
-func (x *FlyRegionInfo) GetId() int64 {
+func (x *FlyRegionInfo) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *FlyRegionInfo) GetGatewaySn() string {
@@ -9361,9 +9361,9 @@ func (x *ListFlyRegionSyncStatusRes) GetList() []*FlyRegionSyncStatusInfo {
 // FlyRegionSyncStatusInfo 飞行区同步状态。
 type FlyRegionSyncStatusInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	GatewaySn     string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
-	FlyRegionId   int64                  `protobuf:"varint,3,opt,name=fly_region_id,json=flyRegionId,proto3" json:"fly_region_id,omitempty"`
+	FlyRegionId   string                 `protobuf:"bytes,3,opt,name=fly_region_id,json=flyRegionId,proto3" json:"fly_region_id,omitempty"`
 	SyncStatus    string                 `protobuf:"bytes,4,opt,name=sync_status,json=syncStatus,proto3" json:"sync_status,omitempty"`
 	SyncReason    int32                  `protobuf:"varint,5,opt,name=sync_reason,json=syncReason,proto3" json:"sync_reason,omitempty"`
 	CreateTime    int64                  `protobuf:"varint,6,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
@@ -9402,11 +9402,11 @@ func (*FlyRegionSyncStatusInfo) Descriptor() ([]byte, []int) {
 	return file_djicloud_proto_rawDescGZIP(), []int{149}
 }
 
-func (x *FlyRegionSyncStatusInfo) GetId() int64 {
+func (x *FlyRegionSyncStatusInfo) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *FlyRegionSyncStatusInfo) GetGatewaySn() string {
@@ -9416,11 +9416,11 @@ func (x *FlyRegionSyncStatusInfo) GetGatewaySn() string {
 	return ""
 }
 
-func (x *FlyRegionSyncStatusInfo) GetFlyRegionId() int64 {
+func (x *FlyRegionSyncStatusInfo) GetFlyRegionId() string {
 	if x != nil {
 		return x.FlyRegionId
 	}
-	return 0
+	return ""
 }
 
 func (x *FlyRegionSyncStatusInfo) GetSyncStatus() string {
@@ -9858,7 +9858,7 @@ const file_djicloud_proto_rawDesc = "" +
 	"\tis_online\x18\x01 \x01(\bR\bisOnline\"\xce\x02\n" +
 	"\n" +
 	"DeviceInfo\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tdevice_sn\x18\x02 \x01(\tR\bdeviceSn\x12\x1d\n" +
 	"\n" +
 	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x12\x14\n" +
@@ -9950,7 +9950,7 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x19GetDeviceStateSnapshotReq\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\"\xb0\x03\n" +
 	"\fHmsAlertInfo\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
 	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12\x14\n" +
 	"\x05level\x18\x03 \x01(\x05R\x05level\x12\x16\n" +
@@ -9984,7 +9984,7 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
 	"\backed_by\x18\x02 \x01(\tR\aackedBy\"\x90\x04\n" +
 	"\x16FlightTaskProgressInfo\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tflight_id\x18\x02 \x01(\tR\bflightId\x12\x1d\n" +
 	"\n" +
 	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x122\n" +
@@ -10081,7 +10081,7 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x05total\x18\x01 \x01(\x03R\x05total\x12+\n" +
 	"\x04list\x18\x02 \x03(\v2\x17.djicloud.FlyRegionInfoR\x04list\"\xf4\x01\n" +
 	"\rFlyRegionInfo\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
 	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x17\n" +
@@ -10103,10 +10103,10 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x05total\x18\x01 \x01(\x03R\x05total\x125\n" +
 	"\x04list\x18\x02 \x03(\v2!.djicloud.FlyRegionSyncStatusInfoR\x04list\"\xf0\x01\n" +
 	"\x17FlyRegionSyncStatusInfo\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
 	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12\"\n" +
-	"\rfly_region_id\x18\x03 \x01(\x03R\vflyRegionId\x12\x1f\n" +
+	"\rfly_region_id\x18\x03 \x01(\tR\vflyRegionId\x12\x1f\n" +
 	"\vsync_status\x18\x04 \x01(\tR\n" +
 	"syncStatus\x12\x1f\n" +
 	"\vsync_reason\x18\x05 \x01(\x05R\n" +

@@ -1521,7 +1521,7 @@ message DeviceOnlineRes {
 // firmware_version 与 hardware_version 从 DJI state 物模型快照中提取，对应 pushMode=1 的状态数据；空上报不会覆盖已有非空版本。
 message DeviceInfo {
   // id 数据库主键。
-  int64 id = 1;
+  string id = 1;
   // device_sn 设备 SN，机巢/无人机/负载设备唯一标识。
   string device_sn = 2;
   // gateway_sn 最近一次上报关联的网关机巢 SN；机巢自身等于 device_sn。
@@ -1689,7 +1689,7 @@ message GetDeviceStateSnapshotReq { string device_sn = 1; }
 
 // HmsAlertInfo HMS 告警信息。
 message HmsAlertInfo {
-  int64 id = 1;
+  string id = 1;
   string gateway_sn = 2;
   int32 level = 3;
   int32 module = 4;
@@ -1736,7 +1736,7 @@ message AckHmsAlertReq {
 
 // FlightTaskProgressInfo 飞行任务进度推送记录。
 message FlightTaskProgressInfo {
-  int64 id = 1;
+  string id = 1;
   string flight_id = 2;
   string gateway_sn = 3;
   int32 wayline_mission_state = 4;
@@ -1894,7 +1894,7 @@ message ListFlyRegionsRes {
 
 // FlyRegionInfo 飞行区配置记录。
 message FlyRegionInfo {
-  int64 id = 1;
+  string id = 1;
   string gateway_sn = 2;
   string name = 3;
   string file_id = 4;
@@ -1921,9 +1921,9 @@ message ListFlyRegionSyncStatusRes {
 
 // FlyRegionSyncStatusInfo 飞行区同步状态。
 message FlyRegionSyncStatusInfo {
-  int64 id = 1;
+  string id = 1;
   string gateway_sn = 2;
-  int64 fly_region_id = 3;
+  string fly_region_id = 3;
   string sync_status = 4;
   int32 sync_reason = 5;
   int64 create_time = 6;

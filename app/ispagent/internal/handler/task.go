@@ -47,14 +47,14 @@ func HandleTaskDispatch(ctx context.Context, msg *isp.Message, store crontask.Ta
 			continue
 		}
 
-		var existingID int64
+		var existingID string
 		if existing != nil {
 			existingID = existing.ID
 		}
 
 		cfg := ctask.NewTaskConfig(existingID, fields)
 		if fields.IsEnable == "2" {
-			if existingID != 0 {
+			if existingID != "" {
 				if err := store.Delete(ctx, existingID); err != nil {
 					logx.WithContext(ctx).Errorf("[ispagent] 删除任务失败: %v", err)
 				}
@@ -62,7 +62,7 @@ func HandleTaskDispatch(ctx context.Context, msg *isp.Message, store crontask.Ta
 			continue
 		}
 
-		if existingID == 0 {
+		if existingID == "" {
 			if err := store.Insert(ctx, cfg); err != nil {
 				logx.WithContext(ctx).Errorf("[ispagent] 插入任务 %s 失败: %v", fields.TaskCode, err)
 				return err
