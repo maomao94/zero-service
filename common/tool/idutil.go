@@ -78,13 +78,13 @@ func (u *IdUtil) SimpleUUID() (string, error) {
 	return strings.ReplaceAll(uid, "-", ""), nil
 }
 
-// SimpleUUID 生成不带 "-" 的 UUID v4
+// SimpleUUID 生成不带 "-" 的时间有序 UUID v7
 func SimpleUUID() (string, error) {
-	uid, err := random.UUIdV4()
+	uid, err := uuid.NewV7()
 	if err != nil {
 		return "", err
 	}
-	return strings.ReplaceAll(uid, "-", ""), nil
+	return strings.ReplaceAll(uid.String(), "-", ""), nil
 }
 
 // UUID 生成带 "-" 的时间有序 UUID v7
