@@ -28,7 +28,7 @@ type LegacyStringIDMixin struct {
 func (m *LegacyStringIDMixin) BeforeCreate(tx *gorm.DB) error {
 	if m.Id == "" {
 		var err error
-		m.Id, err = tool.UUID()
+		m.Id, err = tool.SimpleUUID()
 		return err
 	}
 	return nil
