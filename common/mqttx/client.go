@@ -60,6 +60,7 @@ type mqttClient struct {
 	subscribed map[string]struct{}
 	onReady    func(Client)
 	ready      atomic.Bool
+	closed     atomic.Bool
 	qos        byte
 	mu         sync.RWMutex
 	tracer     oteltrace.Tracer
@@ -71,7 +72,7 @@ type mqttClient struct {
 func MustNewClient(cfg MqttConfig, opts ...ClientOption) Client {
 	cli, err := NewClient(cfg, opts...)
 	logx.Must(err)
-	proc.AddShutdownListener(func() {
+	proc.AddWrapUpListener(func() {
 		cli.Close()
 	})
 	return cli
@@ -395,6 +396,9 @@ func (c *mqttClient) Publish(ctx context.Context, topic string, payload []byte) 
 
 // Close 关闭 MQTT 连接
 func (c *mqttClient) Close() {
+	if !c.closed.CompareAndSwap(false, true) {
+		return
+	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.client != nil {

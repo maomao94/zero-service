@@ -4,6 +4,8 @@ import (
 	"zero-service/app/ispserver/internal/config"
 	"zero-service/app/ispserver/internal/ispserver"
 	"zero-service/common/isp"
+
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type ServiceContext struct {
@@ -12,6 +14,7 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	logx.Must(logx.SetUp(c.Log))
 	c.IspConf.ApplyDefaults()
 	ispSrv, err := isp.NewServer(c.IspConf, ispserver.RegisterHandlers(c.IspConf))
 	if err != nil {

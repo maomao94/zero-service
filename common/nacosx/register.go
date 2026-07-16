@@ -56,7 +56,7 @@ func RegisterService(opts *Options) error {
 	}
 
 	// service deregister
-	proc.AddShutdownListener(func() {
+	proc.AddWrapUpListener(func() {
 		_, err := client.DeregisterInstance(vo.DeregisterInstanceParam{
 			Ip:          host,
 			Port:        port,
@@ -66,7 +66,7 @@ func RegisterService(opts *Options) error {
 			Ephemeral:   true,
 		})
 		if err != nil {
-			logx.Infow("[nacos] deregister service error: "+err.Error())
+			logx.Infow("[nacos] deregister service error: " + err.Error())
 		} else {
 			logx.Info("[nacos] deregistered service")
 		}

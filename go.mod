@@ -340,7 +340,4 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-replace (
-	github.com/Azure/go-workflow => /Users/hehanpeng/GolandProjects/go-workflow
-	github.com/doquangtan/socketio/v4 => github.com/maomao94/socket.io-golang/v4 v4.1.8-fork.20260602090851
-)
+replace github.com/doquangtan/socketio/v4 => github.com/maomao94/socket.io-golang/v4 v4.1.8-fork.20260602090851

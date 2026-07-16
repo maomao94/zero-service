@@ -46,7 +46,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			ispclient.ReportCategoryPatrolDeviceStatusData,
 		)),
 	)
-	proc.AddShutdownListener(func() { m.Close() })
+	proc.AddWrapUpListener(func() { m.Close() })
 	svcCtx := &ServiceContext{
 		Config:        c,
 		IspClient:     m,

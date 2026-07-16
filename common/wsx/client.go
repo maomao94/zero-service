@@ -38,6 +38,7 @@ type client struct {
 	conn    atomic.Pointer[websocket.Conn]
 	writeMu sync.Mutex
 	state   atomic.Int32
+	closed  atomic.Bool
 	wg      sync.WaitGroup
 
 	logger  logx.Logger
@@ -48,7 +49,7 @@ type client struct {
 func MustNewClient(cfg Config, opts ...ClientOption) Client {
 	cli, err := NewClient(cfg, opts...)
 	logx.Must(err)
-	proc.AddShutdownListener(func() { cli.Close() })
+	proc.AddWrapUpListener(func() { cli.Close() })
 	return cli
 }
 
@@ -115,6 +116,9 @@ func (c *client) writeMessage(msgType int, data []byte) error {
 }
 
 func (c *client) Close() error {
+	if !c.closed.CompareAndSwap(false, true) {
+		return nil
+	}
 	c.closeCancel()
 
 	if conn := c.conn.Swap(nil); conn != nil {

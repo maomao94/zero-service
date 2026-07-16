@@ -3,6 +3,7 @@ package crontask
 import (
 	"context"
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/dromara/carbon/v2"
@@ -29,6 +30,7 @@ type Scheduler struct {
 	lockExpire        time.Duration
 	maxDelay          time.Duration
 	stopCh            chan struct{}
+	stopOnce          sync.Once
 	tracer            oteltrace.Tracer
 	invalidTimeFilter InvalidTimeFilter
 	guard             Guard
@@ -64,8 +66,10 @@ func (s *Scheduler) Start() {
 
 // Stop 停止调度器。
 func (s *Scheduler) Stop() {
-	close(s.stopCh)
-	logx.Info("[crontask] scheduler stopped")
+	s.stopOnce.Do(func() {
+		close(s.stopCh)
+		logx.Info("[crontask] scheduler stopped")
+	})
 }
 
 // scanLoop 主扫描循环：LockAndFetch → 异步执行 → 成功后更新下次时间。

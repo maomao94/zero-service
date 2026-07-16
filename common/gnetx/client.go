@@ -48,7 +48,7 @@ func MustNewClient(address string, opts ...ClientOption) *Client {
 	if err != nil {
 		panic("gnetx: MustNewClient " + address + ": " + err.Error())
 	}
-	proc.AddShutdownListener(func() { cli.Close() })
+	proc.AddWrapUpListener(func() { cli.Close() })
 	return cli
 }
 
