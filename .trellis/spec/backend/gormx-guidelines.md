@@ -41,18 +41,17 @@
 | `mysql://` | `DatabaseMySQL` |
 | `postgres://` / `postgresql://` | `DatabasePostgres` |
 | `sqlite://` / `sqlite3://` / `file:` / `:memory:` | `DatabaseSQLite` |
-| `gaussdb://` | `DatabaseGaussDB` |
 
-空 DSN 默认 `DatabaseMySQL`。其他格式（如 `user:pass@tcp(...)`、`host=localhost sslmode=...`）不会被自动识别，需通过 `WithDialector` 或 `OpenWithRawDB` 显式指定类型。
+空 DSN 默认 `DatabaseMySQL`。`gaussdb://` 暂时不支持，GaussDB PG 兼容模式必须使用 `postgres://` DSN 走 PostgreSQL driver，避免 `gorm.io/driver/gaussdb` 的 timestamp 扫描时区兼容问题。其他格式（如 `user:pass@tcp(...)`、`host=localhost sslmode=...`）不会被自动识别，需通过 `WithDialector` 或 `OpenWithRawDB` 显式指定类型。
 
 ```go
 // Good: URL 前缀可自动识别
 db, _ := gormx.Open("postgres://user:pass@host/db?sslmode=disable")
-db, _ := gormx.Open("gaussdb://user:pass@host:8000/db?sslmode=disable")
+db, _ := gormx.Open("postgres://user:pass@gaussdb-host:8000/db?sslmode=disable&TimeZone=Asia/Shanghai")
 
 // Good: 无法自动识别时显式指定
 db, _ := gormx.OpenWithRawDB(sqlDB, gormx.DatabaseMySQL, opts...)
-dialector := gaussdb.New(gaussdb.Config{DSN: "host=... port=8000 ..."})
+dialector := postgres.Open("postgres://user:pass@host/db?sslmode=disable")
 db, _ := gormx.OpenWithDialector(&dialector)
 ```
 
@@ -369,7 +368,7 @@ dbType := gormx.GetDatabaseTypeFromDialector(db)
 // 被调用方：使用 DatabaseType 常量判断
 func clauseOrderBy(dbType gormx.DatabaseType) string {
     switch dbType {
-    case gormx.DatabasePostgres, gormx.DatabaseGaussDB, gormx.DatabaseSQLite:
+    case gormx.DatabasePostgres, gormx.DatabaseSQLite:
         return "RANDOM()"
     default:
         return "RAND()"
@@ -377,9 +376,9 @@ func clauseOrderBy(dbType gormx.DatabaseType) string {
 }
 ```
 
-**Why**: `gormx.DatabaseType` 是 golangx 统一的数据库类型常量，新加入 GaussDB / SQLite 等类型时只需在 switch 中补充 case，调用方不需要变更签名。避免用 `Dialector.Name() == "postgres"` 等字符串比较。
+**Why**: `gormx.DatabaseType` 是 golangx 统一的数据库类型常量，新加入 SQLite 等类型时只需在 switch 中补充 case，调用方不需要变更签名。避免用 `Dialector.Name() == "postgres"` 等字符串比较。GaussDB PG 兼容模式当前按 PostgreSQL 处理。
 
-**How**: `gormx.GetDatabaseTypeFromDialector(*gorm.DB)` 从 dialector 实例类型推断，覆盖 MySQL / Postgres / SQLite / GaussDB。
+**How**: `gormx.GetDatabaseTypeFromDialector(*gorm.DB)` 从 dialector 实例类型推断，覆盖 MySQL / Postgres / SQLite。
 
 ### 时间字段类型
 

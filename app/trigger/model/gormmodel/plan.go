@@ -252,7 +252,7 @@ func LockTriggerItem(ctx context.Context, db *gorm.DB, dbType gormx.DatabaseType
 
 func clauseOrderBy(dbType gormx.DatabaseType) string {
 	switch dbType {
-	case gormx.DatabasePostgres, gormx.DatabaseGaussDB, gormx.DatabaseSQLite:
+	case gormx.DatabasePostgres, gormx.DatabaseSQLite:
 		return "RANDOM()"
 	default:
 		return "RAND()"

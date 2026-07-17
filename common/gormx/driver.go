@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"gorm.io/driver/gaussdb"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -17,7 +16,6 @@ const (
 	DatabaseMySQL    DatabaseType = "mysql"
 	DatabasePostgres DatabaseType = "postgres"
 	DatabaseSQLite   DatabaseType = "sqlite"
-	DatabaseGaussDB  DatabaseType = "gaussdb"
 )
 
 func ParseDatabaseType(dsn string) DatabaseType {
@@ -30,7 +28,9 @@ func ParseDatabaseType(dsn string) DatabaseType {
 		return DatabaseSQLite
 	}
 	if strings.HasPrefix(lower, "gaussdb://") {
-		return DatabaseGaussDB
+		// Temporarily disabled: gorm.io/driver/gaussdb has timestamp compatibility
+		// issues in PG-compatible mode. Use postgres:// DSNs for GaussDB instead.
+		return DatabaseType("gaussdb")
 	}
 	if strings.HasPrefix(lower, "postgres://") || strings.HasPrefix(lower, "postgresql://") {
 		return DatabasePostgres
@@ -49,8 +49,6 @@ func GetDialector(dbType DatabaseType, dsn string) (gorm.Dialector, error) {
 		return postgres.Open(dsn), nil
 	case DatabaseSQLite:
 		return sqlite.Open(dsn), nil
-	case DatabaseGaussDB:
-		return postgres.Open(dsn), nil
 	default:
 		return nil, errors.Errorf("unsupported database type: %s", dbType)
 	}
@@ -67,8 +65,6 @@ func GetDatabaseTypeFromDialector(db *gorm.DB) DatabaseType {
 		return DatabasePostgres
 	case *sqlite.Dialector:
 		return DatabaseSQLite
-	case *gaussdb.Dialector:
-		return DatabaseGaussDB
 	default:
 		return DatabaseMySQL
 	}

@@ -38,7 +38,7 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, lockDur time.
 	quietCtx := gormx.WithoutSQLTrace(ctx)
 
 	var randomFn string
-	if s.dbType == gormx.DatabasePostgres || s.dbType == gormx.DatabaseGaussDB || s.dbType == gormx.DatabaseSQLite {
+	if s.dbType == gormx.DatabasePostgres || s.dbType == gormx.DatabaseSQLite {
 		randomFn = "RANDOM()"
 	} else {
 		randomFn = "RAND()"

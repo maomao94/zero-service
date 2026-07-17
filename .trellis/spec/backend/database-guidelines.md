@@ -177,14 +177,9 @@ stored := now.StdTime()
 
 `timestamp without time zone` 列必须在驱动层明确扫描时区。数据库驱动可能把 `2026-07-15 13:44:21` 扫描成 `time.Date(..., time.UTC)`；如果业务按上海墙上时间调度，后续绝对时间比较会变成 `21:44:21 +0800`，小时任务可能错误跳到 `22:44:21`。
 
-```go
-case DatabaseGaussDB:
-    return postgres.Open(dsn), nil
-```
+规则：PostgreSQL 使用 `gorm.io/driver/postgres` 内置的 `TimeZone` -> `pgtype.TimestampCodec.ScanLocation` 处理。GaussDB PG 兼容模式暂时禁用 `gaussdb://` DSN 和 `gorm.io/driver/gaussdb`，必须使用 `postgres://...&TimeZone=Asia/Shanghai` 连接，避免重新引入 timestamp 时区偏移。MySQL DSN 必须保留 `parseTime=true&loc=Asia%2FShanghai`；SQLite 测试和本地库按 `_loc=auto` 或应用层显式解析处理。
 
-规则：PostgreSQL 使用 `gorm.io/driver/postgres` 内置的 `TimeZone` -> `pgtype.TimestampCodec.ScanLocation` 处理。当前 GaussDB 方言在 `common/gormx.GetDialector` 暂时复用 PostgreSQL 驱动连接 GaussDB，直到 `gorm.io/driver/gaussdb` 补齐同等 timestamp 扫描时区处理。MySQL DSN 必须保留 `parseTime=true&loc=Asia%2FShanghai`；SQLite 测试和本地库按 `_loc=auto` 或应用层显式解析处理。
-
-测试要求：`DatabaseGaussDB` 必须返回 PostgreSQL Dialector，避免切回 GaussDB 驱动后重新引入 timestamp 时区偏移。
+测试要求：`gaussdb://` 必须被拒绝；GaussDB 连接示例必须使用 `postgres://` 并返回 PostgreSQL Dialector。
 
 源文件：
 - `common/carbonx/carbonx.go` — 全局时区默认 `carbon.Shanghai`
