@@ -15,6 +15,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/collection"
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/mathx"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/core/stores/redis"
@@ -47,6 +48,7 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	logx.Must(logx.SetUp(c.Log))
 	redisDb := redis.MustNewRedis(c.Redis.RedisConf)
 	// 创建数据库连接
 	db := gormx.MustOpenWithConf(c.DB)
