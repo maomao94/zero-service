@@ -71,7 +71,7 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		plan.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
 		plan.FinishedTime = sql.NullTime{Time: now, Valid: true}
 		plan.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
-		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
+		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
 
 		// 更新计划
 		transErr := tx.Save(&plan).Error
@@ -88,7 +88,7 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 				"status":            int64(model.PlanStatusTerminated),
 				"terminated_reason": sql.NullString{String: in.Reason, Valid: in.Reason != ""},
 				"finished_time":     now,
-				"update_user":       sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""},
+				"update_user":       sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""},
 			}).Error
 		return transErr
 	})

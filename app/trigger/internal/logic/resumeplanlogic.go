@@ -72,7 +72,7 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 		plan.Status = int64(model.PlanStatusEnabled)
 		plan.PausedTime = sql.NullTime{}
 		plan.PausedReason = sql.NullString{}
-		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
+		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
 		plan.UpdateTime = time.Now()
 
 		// 更新计划
@@ -89,7 +89,7 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 				"status":        int64(model.PlanStatusEnabled),
 				"paused_time":   sql.NullTime{},
 				"paused_reason": sql.NullString{},
-				"update_user":   sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""},
+				"update_user":   sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""},
 			}).Error
 		return transErr
 	})

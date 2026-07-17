@@ -79,7 +79,7 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 	err = db.Transaction(func(tx *gorm.DB) error {
 		// 更新计划批次状态为启用
 		planBatch.Status = int64(model.PlanStatusEnabled) // 启用
-		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
+		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
 
 		// 更新计划批次
 		transErr := tx.Save(&planBatch).Error
@@ -95,7 +95,7 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 				"status":        int64(model.PlanStatusEnabled),
 				"paused_time":   sql.NullTime{},
 				"paused_reason": sql.NullString{},
-				"update_user":   sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""},
+				"update_user":   sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""},
 			}).Error
 		return transErr
 	})

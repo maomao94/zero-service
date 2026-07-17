@@ -432,35 +432,6 @@ func (m *SendTriggerReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, SendTriggerReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, SendTriggerReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return SendTriggerReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for ProcessIn
 
 	// no validation rules for TriggerTime
@@ -678,35 +649,6 @@ func (m *SendProtoTriggerReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, SendProtoTriggerReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, SendProtoTriggerReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return SendProtoTriggerReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	// no validation rules for ProcessIn
 
@@ -934,35 +876,6 @@ func (m *QueuesReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, QueuesReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, QueuesReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return QueuesReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if len(errors) > 0 {
 		return QueuesReqMultiError(errors)
 	}
@@ -1160,35 +1073,6 @@ func (m *GetQueueInfoReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, GetQueueInfoReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, GetQueueInfoReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return GetQueueInfoReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	if utf8.RuneCountInString(m.GetQueue()) < 1 {
 		err := GetQueueInfoReqValidationError{
@@ -1430,35 +1314,6 @@ func (m *ArchiveTaskReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ArchiveTaskReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ArchiveTaskReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ArchiveTaskReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if utf8.RuneCountInString(m.GetQueue()) < 1 {
 		err := ArchiveTaskReqValidationError{
 			field:  "Queue",
@@ -1681,35 +1536,6 @@ func (m *DeleteTaskReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, DeleteTaskReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, DeleteTaskReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return DeleteTaskReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if utf8.RuneCountInString(m.GetQueue()) < 1 {
 		err := DeleteTaskReqValidationError{
 			field:  "Queue",
@@ -1931,35 +1757,6 @@ func (m *GetTaskInfoReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, GetTaskInfoReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, GetTaskInfoReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return GetTaskInfoReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	if utf8.RuneCountInString(m.GetQueue()) < 1 {
 		err := GetTaskInfoReqValidationError{
@@ -2212,35 +2009,6 @@ func (m *DeleteAllCompletedTasksReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, DeleteAllCompletedTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, DeleteAllCompletedTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return DeleteAllCompletedTasksReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if utf8.RuneCountInString(m.GetQueue()) < 1 {
 		err := DeleteAllCompletedTasksReqValidationError{
 			field:  "Queue",
@@ -2458,35 +2226,6 @@ func (m *DeleteAllArchivedTasksReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, DeleteAllArchivedTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, DeleteAllArchivedTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return DeleteAllArchivedTasksReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if utf8.RuneCountInString(m.GetQueue()) < 1 {
 		err := DeleteAllArchivedTasksReqValidationError{
 			field:  "Queue",
@@ -2703,35 +2442,6 @@ func (m *HistoricalStatsReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, HistoricalStatsReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, HistoricalStatsReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return HistoricalStatsReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	if utf8.RuneCountInString(m.GetQueue()) < 1 {
 		err := HistoricalStatsReqValidationError{
@@ -2992,35 +2702,6 @@ func (m *ListActiveTasksReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ListActiveTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ListActiveTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ListActiveTasksReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	if m.GetPageSize() < 0 {
 		err := ListActiveTasksReqValidationError{
@@ -3322,35 +3003,6 @@ func (m *ListPendingTasksReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ListPendingTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ListPendingTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ListPendingTasksReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if m.GetPageSize() < 0 {
 		err := ListPendingTasksReqValidationError{
 			field:  "PageSize",
@@ -3650,35 +3302,6 @@ func (m *ListAggregatingTasksReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ListAggregatingTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ListAggregatingTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ListAggregatingTasksReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	if m.GetPageSize() < 0 {
 		err := ListAggregatingTasksReqValidationError{
@@ -3991,35 +3614,6 @@ func (m *ListScheduledTasksReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ListScheduledTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ListScheduledTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ListScheduledTasksReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if m.GetPageSize() < 0 {
 		err := ListScheduledTasksReqValidationError{
 			field:  "PageSize",
@@ -4319,35 +3913,6 @@ func (m *ListRetryTasksReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ListRetryTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ListRetryTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ListRetryTasksReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	if m.GetPageSize() < 0 {
 		err := ListRetryTasksReqValidationError{
@@ -4649,35 +4214,6 @@ func (m *ListArchivedTasksReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ListArchivedTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ListArchivedTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ListArchivedTasksReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if m.GetPageSize() < 0 {
 		err := ListArchivedTasksReqValidationError{
 			field:  "PageSize",
@@ -4977,35 +4513,6 @@ func (m *ListCompletedTasksReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ListCompletedTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ListCompletedTasksReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ListCompletedTasksReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	if m.GetPageSize() < 0 {
 		err := ListCompletedTasksReqValidationError{
@@ -5307,35 +4814,6 @@ func (m *RunTaskReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, RunTaskReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, RunTaskReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return RunTaskReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if utf8.RuneCountInString(m.GetQueue()) < 1 {
 		err := RunTaskReqValidationError{
 			field:  "Queue",
@@ -5555,35 +5033,6 @@ func (m *CalcPlanTaskDateReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, CalcPlanTaskDateReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, CalcPlanTaskDateReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return CalcPlanTaskDateReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	// no validation rules for StartTime
 
@@ -5848,35 +5297,6 @@ func (m *CreatePlanTaskReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, CreatePlanTaskReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, CreatePlanTaskReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return CreatePlanTaskReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	if utf8.RuneCountInString(m.GetDeptCode()) < 1 {
 		err := CreatePlanTaskReqValidationError{
@@ -6648,35 +6068,6 @@ func (m *PausePlanReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, PausePlanReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, PausePlanReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return PausePlanReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for Id
 
 	// no validation rules for PlanId
@@ -6889,35 +6280,6 @@ func (m *TerminatePlanReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, TerminatePlanReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, TerminatePlanReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return TerminatePlanReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	// no validation rules for Id
 
@@ -7134,35 +6496,6 @@ func (m *ResumePlanReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ResumePlanReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ResumePlanReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ResumePlanReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for Id
 
 	// no validation rules for PlanId
@@ -7366,35 +6699,6 @@ func (m *PausePlanBatchReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, PausePlanBatchReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, PausePlanBatchReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return PausePlanBatchReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	// no validation rules for Id
 
@@ -7615,35 +6919,6 @@ func (m *TerminatePlanBatchReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, TerminatePlanBatchReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, TerminatePlanBatchReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return TerminatePlanBatchReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for Id
 
 	// no validation rules for BatchId
@@ -7863,35 +7138,6 @@ func (m *ResumePlanBatchReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ResumePlanBatchReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ResumePlanBatchReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ResumePlanBatchReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for Id
 
 	// no validation rules for BatchId
@@ -8099,35 +7345,6 @@ func (m *PausePlanExecItemReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, PausePlanExecItemReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, PausePlanExecItemReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return PausePlanExecItemReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	// no validation rules for Id
 
@@ -8348,35 +7565,6 @@ func (m *TerminatePlanExecItemReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, TerminatePlanExecItemReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, TerminatePlanExecItemReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return TerminatePlanExecItemReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for Id
 
 	// no validation rules for ExecId
@@ -8596,35 +7784,6 @@ func (m *ResumePlanExecItemReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ResumePlanExecItemReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ResumePlanExecItemReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ResumePlanExecItemReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for Id
 
 	// no validation rules for ExecId
@@ -8833,35 +7992,6 @@ func (m *RunPlanExecItemReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, RunPlanExecItemReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, RunPlanExecItemReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return RunPlanExecItemReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for Id
 
 	// no validation rules for ExecId
@@ -9069,35 +8199,6 @@ func (m *GetPlanReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, GetPlanReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, GetPlanReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return GetPlanReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	// no validation rules for Id
 
@@ -9505,35 +8606,6 @@ func (m *ListPlansReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ListPlansReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ListPlansReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ListPlansReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if m.GetPageSize() < 0 {
 		err := ListPlansReqValidationError{
 			field:  "PageSize",
@@ -9796,35 +8868,6 @@ func (m *GetPlanBatchReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, GetPlanBatchReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, GetPlanBatchReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return GetPlanBatchReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for Id
 
 	// no validation rules for BatchId
@@ -10057,35 +9100,6 @@ func (m *ListPlanBatchesReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ListPlanBatchesReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ListPlanBatchesReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ListPlanBatchesReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	if m.GetPageSize() < 0 {
 		err := ListPlanBatchesReqValidationError{
@@ -10356,35 +9370,6 @@ func (m *GetPlanExecItemReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, GetPlanExecItemReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, GetPlanExecItemReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return GetPlanExecItemReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	// no validation rules for Id
 
@@ -10796,35 +9781,6 @@ func (m *ListPlanExecItemsReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ListPlanExecItemsReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ListPlanExecItemsReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ListPlanExecItemsReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if m.GetPageSize() < 0 {
 		err := ListPlanExecItemsReqValidationError{
 			field:  "PageSize",
@@ -11099,35 +10055,6 @@ func (m *GetPlanExecLogReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, GetPlanExecLogReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, GetPlanExecLogReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return GetPlanExecLogReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if utf8.RuneCountInString(m.GetId()) < 1 {
 		err := GetPlanExecLogReqValidationError{
 			field:  "Id",
@@ -11371,35 +10298,6 @@ func (m *ListPlanExecLogsReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ListPlanExecLogsReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ListPlanExecLogsReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ListPlanExecLogsReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	if m.GetPageSize() < 0 {
 		err := ListPlanExecLogsReqValidationError{
@@ -12584,35 +11482,6 @@ func (m *CallbackPlanExecItemReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, CallbackPlanExecItemReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, CallbackPlanExecItemReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return CallbackPlanExecItemReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for Id
 
 	// no validation rules for ExecId
@@ -13591,35 +12460,6 @@ func (m *InvokeReq) validate(all bool) error {
 	}
 
 	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, InvokeReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, InvokeReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return InvokeReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	if len(m.GetTasks()) < 1 {
 		err := InvokeReqValidationError{

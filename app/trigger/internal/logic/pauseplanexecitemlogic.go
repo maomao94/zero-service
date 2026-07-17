@@ -88,7 +88,7 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 		execItem.Status = int64(model.StatusPaused)
 		execItem.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
 		execItem.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
-		execItem.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
+		execItem.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
 
 		// 更新执行项
 		return tx.Save(&execItem).Error

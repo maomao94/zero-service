@@ -88,7 +88,7 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 		execItem.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
 		execItem.PausedTime = sql.NullTime{}
 		execItem.PausedReason = sql.NullString{}
-		execItem.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
+		execItem.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
 
 		// 更新执行项
 		return tx.Save(&execItem).Error
