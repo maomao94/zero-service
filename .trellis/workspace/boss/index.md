@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 122
+- **Total Sessions**: 123
 - **Last Active**: 2026-07-17
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~520 | Active |
+| `journal-3.md` | ~553 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 123 | 2026-07-17 | Remove trigger currentUser proto field | `23efa99d` | `master` |
 | 122 | 2026-07-17 | 关闭 cron 扫表 SQL 日志 | `be099e47` | `master` |
 | 121 | 2026-07-17 | Trigger gormx migration | `75afadc3`, `16bbbdc5`, `b5c69466`, `16ea42f0` | `master` |
 | 120 | 2026-07-17 | Align gormx legacy soft delete | `d30796c9`, `b00747ae`, `782a37bc`, `0fa690af`, `3d8a6872` | `master` |

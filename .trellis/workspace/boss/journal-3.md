@@ -518,3 +518,36 @@ Migrated trigger plan persistence to gormx with string UUID keys, aligned MySQL/
 ### Next Steps
 
 - None - task complete
+
+
+## Session 123: Remove trigger currentUser proto field
+
+**Date**: 2026-07-17
+**Task**: Remove trigger currentUser proto field
+**Branch**: `master`
+
+### Summary
+
+Removed currentUser from trigger RPC request payloads, regenerated trigger protobuf outputs, updated trigger logic to read current user from context, and verified app/trigger tests.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `23efa99d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
