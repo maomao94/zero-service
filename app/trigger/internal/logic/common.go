@@ -8,7 +8,6 @@ import (
 	"zero-service/third_party/extproto"
 
 	"github.com/dromara/carbon/v2"
-	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/jsonx"
 )
@@ -26,7 +25,11 @@ func prepareEnqueue(
 	opts := []asynq.Option{}
 
 	if len(msgId) == 0 {
-		msgId = uuid.NewString()
+		var err error
+		msgId, err = tool.SimpleUUID()
+		if err != nil {
+			return nil, nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_MQ, err, "生成消息ID失败")
+		}
 		// 由于 msg 是接口，我们不能直接设置 MsgId，需要调用方自己设置
 	}
 	opts = append(opts, asynq.TaskID(msgId))

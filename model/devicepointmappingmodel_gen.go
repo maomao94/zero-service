@@ -61,7 +61,7 @@ type (
 		CreateTime      time.Time      `db:"create_time"`       // 创建时间
 		UpdateTime      time.Time      `db:"update_time"`       // 更新时间
 		DeleteTime      sql.NullTime   `db:"delete_time"`       // 删除时间（软删除标记）
-		DelState        int64          `db:"del_state"`         // 删除状态：0-未删除，1-已删除
+		IsDeleted       int64          `db:"is_deleted"`        // 删除状态：0-未删除，1-已删除
 		Version         int64          `db:"version"`           // 版本号（乐观锁）
 		CreateUser      string         `db:"create_user"`       // 创建人
 		UpdateUser      string         `db:"update_user"`       // 更新人
@@ -113,7 +113,7 @@ func (m *defaultDevicePointMappingModel) Delete(ctx context.Context, session sql
 func (m *defaultDevicePointMappingModel) FindOne(ctx context.Context, id int64) (*DevicePointMapping, error) {
 	selectBuilder := m.SelectBuilder().Columns(m.rows).
 		Where("id = ?", id).
-		Where("del_state = ?", 0).
+		Where("is_deleted = ?", 0).
 		Limit(1)
 	query, args, err := selectBuilder.ToSql()
 	if err != nil {
@@ -134,7 +134,7 @@ func (m *defaultDevicePointMappingModel) FindOne(ctx context.Context, id int64) 
 func (m *defaultDevicePointMappingModel) FindOneByTagStationCoaIoa(ctx context.Context, tagStation string, coa int64, ioa int64) (*DevicePointMapping, error) {
 	selectBuilder := m.SelectBuilder().Columns(m.rows).
 		Where(adaptSQLPlaceholders("tag_station = $1 and coa = $2 and ioa = $3", m.dbType), tagStation, coa, ioa).
-		Where("del_state = 0").
+		Where("is_deleted = 0").
 		Limit(1)
 	query, args, err := selectBuilder.ToSql()
 	if err != nil {
@@ -156,7 +156,7 @@ func (m *defaultDevicePointMappingModel) Insert(ctx context.Context, session sql
 	data.DeleteTime = sql.NullTime{
 		Valid: false,
 	}
-	data.DelState = 0
+	data.IsDeleted = 0
 	columns, values := generateColumnsAndValues(data, []string{})
 	insertBuilder := m.InsertBuilder().Columns(columns...).Values(values...)
 
@@ -199,7 +199,7 @@ func (m *defaultDevicePointMappingModel) Update(ctx context.Context, session sql
 	data.DeleteTime = sql.NullTime{
 		Valid: false,
 	}
-	data.DelState = 0
+	data.IsDeleted = 0
 	columns, values := generateColumnsAndValues(data, []string{})
 	updateBuilder := m.UpdateBuilder()
 	for i, column := range columns {
@@ -227,7 +227,7 @@ func (m *defaultDevicePointMappingModel) UpdateWithVersion(ctx context.Context, 
 	data.DeleteTime = sql.NullTime{
 		Valid: false,
 	}
-	data.DelState = 0
+	data.IsDeleted = 0
 	columns, values := generateColumnsAndValues(data, []string{})
 	updateBuilder := m.UpdateBuilder()
 	for i, column := range columns {
@@ -263,7 +263,7 @@ func (m *defaultDevicePointMappingModel) DeleteSoft(ctx context.Context, session
 	if err != nil {
 		return err
 	}
-	data.DelState = 1
+	data.IsDeleted = 1
 	data.DeleteTime = sql.NullTime{
 		Time:  time.Now(),
 		Valid: true,
@@ -280,7 +280,7 @@ func (m *defaultDevicePointMappingModel) FindSum(ctx context.Context, builder sq
 	}
 	sumFunction := "COALESCE(SUM(" + field + "),0)"
 	builder = builder.Columns(sumFunction)
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -301,7 +301,7 @@ func (m *defaultDevicePointMappingModel) FindCount(ctx context.Context, builder 
 		return 0, errors.Wrapf(errors.New("FindCount Least One Field"), "FindCount Least One Field")
 	}
 	builder = builder.Columns("COUNT(" + field + ")")
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -324,7 +324,7 @@ func (m *defaultDevicePointMappingModel) FindAll(ctx context.Context, builder sq
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -351,7 +351,7 @@ func (m *defaultDevicePointMappingModel) FindPageListByPage(ctx context.Context,
 		page = 1
 	}
 	offset := (page - 1) * pageSize
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +382,7 @@ func (m *defaultDevicePointMappingModel) FindPageListByPageWithTotal(ctx context
 		page = 1
 	}
 	offset := (page - 1) * pageSize
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, total, err
 	}
@@ -403,7 +403,7 @@ func (m *defaultDevicePointMappingModel) FindPageListByIdDESC(ctx context.Contex
 	if preMinId > 0 {
 		builder = builder.Where("id < ?", preMinId)
 	}
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -424,7 +424,7 @@ func (m *defaultDevicePointMappingModel) FindPageListByIdASC(ctx context.Context
 	if preMaxId > 0 {
 		builder = builder.Where("id > ?", preMaxId)
 	}
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}

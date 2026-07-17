@@ -3,6 +3,8 @@ package config
 import (
 	"time"
 
+	"zero-service/common/gormx"
+
 	"github.com/zeromicro/go-zero/zrpc"
 )
 
@@ -17,11 +19,8 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	RedisDB int `json:",optional"`
-	DB      struct {
-		DataSource string
-	}
-	DisableStmtLog  bool          `json:",optional"`
+	RedisDB         int           `json:",optional"`
+	DB              gormx.Config  `json:",optional"`
 	GracePeriod     time.Duration `json:",default=30s"`
 	StreamEventConf zrpc.RpcClientConf
 }

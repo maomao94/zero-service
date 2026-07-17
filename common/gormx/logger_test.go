@@ -1,11 +1,14 @@
 package gormx
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -52,17 +55,64 @@ func TestGormLoggerTraceSkipsSQLWhenSilent(t *testing.T) {
 	}
 }
 
-func TestGormLoggerTraceSkipsSQLWhenContextDisablesTrace(t *testing.T) {
-	l := NewGormLogger(LoggerConfig{LogLevel: logger.Info, SlowThreshold: time.Millisecond})
+func TestGormLoggerTraceSkipsSuccessfulSQLWhenContextDisablesTrace(t *testing.T) {
+	l := NewGormLogger(LoggerConfig{LogLevel: logger.Info, SlowThreshold: time.Hour})
+	called := false
+
+	l.Trace(WithoutSQLTrace(context.Background()), time.Now(), func() (string, int64) {
+		called = true
+		return "select 1", 1
+	}, nil)
+
+	if called {
+		t.Fatalf("fc should not be called for successful sql when context disables sql trace")
+	}
+}
+
+func TestGormLoggerTraceLogsErrorWhenContextDisablesTrace(t *testing.T) {
+	l := NewGormLogger(LoggerConfig{LogLevel: logger.Error, SlowThreshold: time.Hour})
+	called := false
+
+	l.Trace(WithoutSQLTrace(context.Background()), time.Now(), func() (string, int64) {
+		called = true
+		return "select 1", 1
+	}, errors.New("boom"))
+
+	if !called {
+		t.Fatalf("fc should be called for sql error even when context disables sql trace")
+	}
+}
+
+func TestGormLoggerTraceLogsSlowSQLWhenContextDisablesTrace(t *testing.T) {
+	l := NewGormLogger(LoggerConfig{LogLevel: logger.Error, SlowThreshold: time.Millisecond})
 	called := false
 
 	l.Trace(WithoutSQLTrace(context.Background()), time.Now().Add(-time.Hour), func() (string, int64) {
 		called = true
 		return "select 1", 1
-	}, errors.New("boom"))
+	}, nil)
 
-	if called {
-		t.Fatalf("fc should not be called when context disables sql trace")
+	if !called {
+		t.Fatalf("fc should be called for slow sql even when context disables sql trace")
+	}
+}
+
+func TestGormLoggerTraceLogsInfoAndSlowWhenInfoLevelSQLIsSlow(t *testing.T) {
+	var buf bytes.Buffer
+	logx.SetWriter(logx.NewWriter(&buf))
+	defer logx.Reset()
+
+	l := NewGormLogger(LoggerConfig{LogLevel: logger.Info, SlowThreshold: time.Millisecond})
+	l.Trace(context.Background(), time.Now().Add(-time.Hour), func() (string, int64) {
+		return "select 1", 1
+	}, nil)
+
+	output := buf.String()
+	if strings.Count(output, "select 1") != 2 {
+		t.Fatalf("expected info and slow logs, got: %s", output)
+	}
+	if !strings.Contains(output, "[SLOW]") {
+		t.Fatalf("expected slow log, got: %s", output)
 	}
 }
 

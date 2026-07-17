@@ -56,7 +56,7 @@ type (
 		CreateTime     time.Time       `db:"create_time"`      // 插入时间
 		UpdateTime     time.Time       `db:"update_time"`      // 更新时间
 		DeleteTime     time.Time       `db:"delete_time"`      // 逻辑删除时间
-		DelState       int64           `db:"del_state"`        // 逻辑删除标记
+		IsDeleted      int64           `db:"is_deleted"`       // 逻辑删除标记
 		Version        int64           `db:"version"`          // 版本号
 		Event          string          `db:"event"`            // "open" 表示 TS 创建，"close" 表示 TS 写入完成
 		StreamName     string          `db:"stream_name"`      // 流名称
@@ -90,7 +90,7 @@ func (m *defaultHlsTsFilesModel) Delete(ctx context.Context, session sqlx.Sessio
 	return err
 }
 func (m *defaultHlsTsFilesModel) FindOne(ctx context.Context, id int64) (*HlsTsFiles, error) {
-	query := fmt.Sprintf("select %s from %s where `id` = ? and del_state = ? limit 1", hlsTsFilesRows, m.table)
+	query := fmt.Sprintf("select %s from %s where `id` = ? and is_deleted = ? limit 1", hlsTsFilesRows, m.table)
 	var resp HlsTsFiles
 	err := m.conn.QueryRowCtx(ctx, &resp, query, id, 0)
 	switch err {
@@ -105,7 +105,7 @@ func (m *defaultHlsTsFilesModel) FindOne(ctx context.Context, id int64) (*HlsTsF
 
 func (m *defaultHlsTsFilesModel) FindOneByTsFile(ctx context.Context, tsFile string) (*HlsTsFiles, error) {
 	var resp HlsTsFiles
-	query := fmt.Sprintf("select %s from %s where `ts_file` = ?  and del_state = ? limit 1", hlsTsFilesRows, m.table)
+	query := fmt.Sprintf("select %s from %s where `ts_file` = ?  and is_deleted = ? limit 1", hlsTsFilesRows, m.table)
 	err := m.conn.QueryRowCtx(ctx, &resp, query, tsFile, 0)
 	switch err {
 	case nil:
@@ -119,23 +119,23 @@ func (m *defaultHlsTsFilesModel) FindOneByTsFile(ctx context.Context, tsFile str
 
 func (m *defaultHlsTsFilesModel) Insert(ctx context.Context, session sqlx.Session, data *HlsTsFiles) (sql.Result, error) {
 	data.DeleteTime = time.Unix(0, 0)
-	data.DelState = 0
+	data.IsDeleted = 0
 
 	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, hlsTsFilesRowsExpectAutoSet)
 	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.Event, data.StreamName, data.Cwd, data.TsFile, data.LiveM3u8File, data.RecordM3u8File, data.TsId, data.TsTimestamp, data.Duration, data.ServerId)
+		return session.ExecCtx(ctx, query, data.DeleteTime, data.IsDeleted, data.Version, data.Event, data.StreamName, data.Cwd, data.TsFile, data.LiveM3u8File, data.RecordM3u8File, data.TsId, data.TsTimestamp, data.Duration, data.ServerId)
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.Event, data.StreamName, data.Cwd, data.TsFile, data.LiveM3u8File, data.RecordM3u8File, data.TsId, data.TsTimestamp, data.Duration, data.ServerId)
+	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.IsDeleted, data.Version, data.Event, data.StreamName, data.Cwd, data.TsFile, data.LiveM3u8File, data.RecordM3u8File, data.TsId, data.TsTimestamp, data.Duration, data.ServerId)
 }
 
 func (m *defaultHlsTsFilesModel) Update(ctx context.Context, session sqlx.Session, newData *HlsTsFiles) (sql.Result, error) {
 	newData.DeleteTime = time.Unix(0, 0)
-	newData.DelState = 0
+	newData.IsDeleted = 0
 	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, hlsTsFilesRowsWithPlaceHolder)
 	if session != nil {
-		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.TsTimestamp, newData.Duration, newData.ServerId, newData.Id)
+		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.TsTimestamp, newData.Duration, newData.ServerId, newData.Id)
 	}
-	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.TsTimestamp, newData.Duration, newData.ServerId, newData.Id)
+	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.TsTimestamp, newData.Duration, newData.ServerId, newData.Id)
 }
 
 func (m *defaultHlsTsFilesModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *HlsTsFiles) error {
@@ -148,9 +148,9 @@ func (m *defaultHlsTsFilesModel) UpdateWithVersion(ctx context.Context, session 
 
 	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, hlsTsFilesRowsWithPlaceHolder)
 	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.TsTimestamp, newData.Duration, newData.ServerId, newData.Id, oldVersion)
+		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.TsTimestamp, newData.Duration, newData.ServerId, newData.Id, oldVersion)
 	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.TsTimestamp, newData.Duration, newData.ServerId, newData.Id, oldVersion)
+		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.TsTimestamp, newData.Duration, newData.ServerId, newData.Id, oldVersion)
 	}
 
 	if err != nil {
@@ -172,7 +172,7 @@ func (m *defaultHlsTsFilesModel) DeleteSoft(ctx context.Context, session sqlx.Se
 	if err != nil {
 		return err
 	}
-	data.DelState = 1
+	data.IsDeleted = 1
 	data.DeleteTime = time.Now()
 	if err := m.UpdateWithVersion(ctx, session, data); err != nil {
 		return errors.Wrapf(errors.New("delete soft failed "), "HlsTsFilesModel delete err : %+v", err)
@@ -188,7 +188,7 @@ func (m *defaultHlsTsFilesModel) FindSum(ctx context.Context, builder squirrel.S
 
 	builder = builder.Columns("IFNULL(SUM(" + field + "),0)")
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -213,7 +213,7 @@ func (m *defaultHlsTsFilesModel) FindCount(ctx context.Context, builder squirrel
 
 	builder = builder.Columns("COUNT(" + field + ")")
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -240,7 +240,7 @@ func (m *defaultHlsTsFilesModel) FindAll(ctx context.Context, builder squirrel.S
 		builder = builder.OrderBy(orderBy...)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func (m *defaultHlsTsFilesModel) FindPageListByPage(ctx context.Context, builder
 	}
 	offset := (page - 1) * pageSize
 
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +309,7 @@ func (m *defaultHlsTsFilesModel) FindPageListByPageWithTotal(ctx context.Context
 	}
 	offset := (page - 1) * pageSize
 
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, total, err
 	}
@@ -334,7 +334,7 @@ func (m *defaultHlsTsFilesModel) FindPageListByIdDESC(ctx context.Context, build
 		builder = builder.Where(" id < ? ", preMinId)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +359,7 @@ func (m *defaultHlsTsFilesModel) FindPageListByIdASC(ctx context.Context, builde
 		builder = builder.Where(" id > ? ", preMaxId)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}

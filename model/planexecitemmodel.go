@@ -22,23 +22,23 @@ type (
 		// 锁定需要触发的执行项
 		LockTriggerItem(ctx context.Context, expireIn time.Duration) (*PlanExecItem, error)
 		// 更新执行项状态为执行中
-		UpdateStatusToRunning(ctx context.Context, id int64, lastResult string) error
+		UpdateStatusToRunning(ctx context.Context, id string, lastResult string) error
 		// 更新执行项状态为已完成
-		UpdateStatusToCompleted(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error
+		UpdateStatusToCompleted(ctx context.Context, id string, lastMessage, lastReason string, statusIn []int, statusOut []int) error
 		// 更新执行项状态为失败延期
-		UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMessage, lastReason string, statusIn []int, statusOut []int) error
+		UpdateStatusToFail(ctx context.Context, id string, lastResult, lastMessage, lastReason string, statusIn []int, statusOut []int) error
 		// 更新执行项状态为延期
-		UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMessage, lastReason, nextTriggerTime string, statusIn []int, statusOut []int) error
+		UpdateStatusToDelayed(ctx context.Context, id string, lastResult, lastMessage, lastReason, nextTriggerTime string, statusIn []int, statusOut []int) error
 		// 更新执行项状态为已终止
-		UpdateStatusToTerminated(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error
+		UpdateStatusToTerminated(ctx context.Context, id string, lastMessage, lastReason string, statusIn []int, statusOut []int) error
 		// 更新执行项为进行中状态并补充回调数据
-		UpdateStatusToOngoing(ctx context.Context, id int64, lastMessage, lastReason string, updateTriggerInfo bool, nextTriggerTime string, statusIn []int, statusOut []int) error
+		UpdateStatusToOngoing(ctx context.Context, id string, lastMessage, lastReason string, updateTriggerInfo bool, nextTriggerTime string, statusIn []int, statusOut []int) error
 		// 通用SQL查询方法
 		QuerySQL(ctx context.Context, sql string, args ...interface{}) ([]map[string]interface{}, error)
 		// 获取批次执行项状态统计
-		GetBatchStatusCounts(ctx context.Context, batchPk int64) ([]ExecItemStatusCountEx, error)
+		GetBatchStatusCounts(ctx context.Context, batchPk string) ([]ExecItemStatusCountEx, error)
 		// 获取批次总执行项数
-		GetBatchTotalExecItems(ctx context.Context, batchPk int64) (int64, error)
+		GetBatchTotalExecItems(ctx context.Context, batchPk string) (int64, error)
 	}
 
 	customPlanExecItemModel struct {
@@ -87,12 +87,12 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	).From(m.table+" AS pei").
 		Join("plan p ON p.id = pei.plan_pk").
 		Join("plan_batch pb ON pb.id = pei.batch_pk").
-		Where("pei.del_state = ?", 0).
+		Where("pei.is_deleted = ?", 0).
 		Where("pei.status IN (?, ?,?)", StatusWaiting, StatusDelayed, StatusRunning).
 		Where("pei.next_trigger_time <= ?", currentTimeStr).
-		Where("p.del_state = ?", 0).
+		Where("p.is_deleted = ?", 0).
 		Where("p.status = ?", PlanStatusEnabled).
-		Where("pb.del_state = ?", 0).
+		Where("pb.is_deleted = ?", 0).
 		Where("pb.status = ?", PlanStatusEnabled)
 	if m.dbType == DatabaseTypePostgres {
 		selectBuilder = selectBuilder.OrderBy("RANDOM()")
@@ -143,7 +143,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	}
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id int64, lastResult string) error {
+func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id string, lastResult string) error {
 	updateBuilder := squirrel.Update(m.table).
 		Set("status", StatusRunning).
 		Set("last_trigger_time", time.Now()).
@@ -162,7 +162,7 @@ func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id 
 	return err
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
+func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id string, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
 	// 检查并截取字段长度
 	if utf8.RuneCountInString(lastReason) > 1000 {
 		runes := []rune(lastReason)
@@ -199,7 +199,7 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 	return err
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
+func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id string, lastResult, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
 	// 检查并截取字段长度
 	if utf8.RuneCountInString(lastReason) > 1000 {
 		runes := []rune(lastReason)
@@ -270,7 +270,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int
 	return err
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMessage, lastReason, nextTriggerTimeStr string, statusIn []int, statusOut []int) error {
+func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id string, lastResult, lastMessage, lastReason, nextTriggerTimeStr string, statusIn []int, statusOut []int) error {
 	// 检查并截取字段长度
 	if utf8.RuneCountInString(lastReason) > 1000 {
 		runes := []rune(lastReason)
@@ -312,7 +312,7 @@ func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id 
 	return err
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToTerminated(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
+func (m *customPlanExecItemModel) UpdateStatusToTerminated(ctx context.Context, id string, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
 	// 检查并截取字段长度
 	if utf8.RuneCountInString(lastReason) > 1000 {
 		runes := []rune(lastReason)
@@ -350,7 +350,7 @@ func (m *customPlanExecItemModel) UpdateStatusToTerminated(ctx context.Context, 
 	return err
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToOngoing(ctx context.Context, id int64, lastMessage, lastReason string, updateTriggerInfo bool, nextTriggerTime string, statusIn []int, statusOut []int) error {
+func (m *customPlanExecItemModel) UpdateStatusToOngoing(ctx context.Context, id string, lastMessage, lastReason string, updateTriggerInfo bool, nextTriggerTime string, statusIn []int, statusOut []int) error {
 	// 检查并截取字段长度
 	if utf8.RuneCountInString(lastReason) > 1000 {
 		runes := []rune(lastReason)
@@ -398,10 +398,10 @@ func (m *customPlanExecItemModel) UpdateStatusToOngoing(ctx context.Context, id 
 	return err
 }
 
-func (m *customPlanExecItemModel) GetBatchStatusCounts(ctx context.Context, batchPk int64) ([]ExecItemStatusCountEx, error) {
+func (m *customPlanExecItemModel) GetBatchStatusCounts(ctx context.Context, batchPk string) ([]ExecItemStatusCountEx, error) {
 	selectBuilder := m.SelectBuilder().Columns("status", "COUNT(*) as count").
 		Where("batch_pk = ?", batchPk).
-		Where("del_state = ?", 0).
+		Where("is_deleted = ?", 0).
 		GroupBy("status")
 	selectSQL, selectArgs, err := selectBuilder.ToSql()
 	if err != nil {
@@ -414,10 +414,10 @@ func (m *customPlanExecItemModel) GetBatchStatusCounts(ctx context.Context, batc
 	return statusCounts, nil
 }
 
-func (m *customPlanExecItemModel) GetBatchTotalExecItems(ctx context.Context, batchPk int64) (int64, error) {
+func (m *customPlanExecItemModel) GetBatchTotalExecItems(ctx context.Context, batchPk string) (int64, error) {
 	selectBuilder := m.SelectBuilder().Columns("COUNT(*) as count").
 		Where("batch_pk = ?", batchPk).
-		Where("del_state = ?", 0)
+		Where("is_deleted = ?", 0)
 	selectSQL, selectArgs, err := selectBuilder.ToSql()
 	if err != nil {
 		return 0, err

@@ -56,7 +56,7 @@ type (
 		CreateTime time.Time `db:"create_time"`
 		UpdateTime time.Time `db:"update_time"`
 		DeleteTime time.Time `db:"delete_time"`
-		DelState   int64     `db:"del_state"`
+		IsDeleted  int64     `db:"is_deleted"`
 		Version    int64     `db:"version"` // 版本号
 		Mobile     string    `db:"mobile"`
 		Password   string    `db:"password"`
@@ -86,7 +86,7 @@ func (m *defaultUserModel) Delete(ctx context.Context, session sqlx.Session, id 
 	return err
 }
 func (m *defaultUserModel) FindOne(ctx context.Context, id int64) (*User, error) {
-	query := fmt.Sprintf("select %s from %s where `id` = ? and del_state = ? limit 1", userRows, m.table)
+	query := fmt.Sprintf("select %s from %s where `id` = ? and is_deleted = ? limit 1", userRows, m.table)
 	var resp User
 	err := m.conn.QueryRowCtx(ctx, &resp, query, id, 0)
 	switch err {
@@ -101,7 +101,7 @@ func (m *defaultUserModel) FindOne(ctx context.Context, id int64) (*User, error)
 
 func (m *defaultUserModel) FindOneByMobile(ctx context.Context, mobile string) (*User, error) {
 	var resp User
-	query := fmt.Sprintf("select %s from %s where `mobile` = ?  and del_state = ? limit 1", userRows, m.table)
+	query := fmt.Sprintf("select %s from %s where `mobile` = ?  and is_deleted = ? limit 1", userRows, m.table)
 	err := m.conn.QueryRowCtx(ctx, &resp, query, mobile, 0)
 	switch err {
 	case nil:
@@ -115,23 +115,23 @@ func (m *defaultUserModel) FindOneByMobile(ctx context.Context, mobile string) (
 
 func (m *defaultUserModel) Insert(ctx context.Context, session sqlx.Session, data *User) (sql.Result, error) {
 	data.DeleteTime = time.Unix(0, 0)
-	data.DelState = 0
+	data.IsDeleted = 0
 
 	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, userRowsExpectAutoSet)
 	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.Mobile, data.Password, data.Nickname, data.Sex, data.Avatar, data.Info)
+		return session.ExecCtx(ctx, query, data.DeleteTime, data.IsDeleted, data.Version, data.Mobile, data.Password, data.Nickname, data.Sex, data.Avatar, data.Info)
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.Mobile, data.Password, data.Nickname, data.Sex, data.Avatar, data.Info)
+	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.IsDeleted, data.Version, data.Mobile, data.Password, data.Nickname, data.Sex, data.Avatar, data.Info)
 }
 
 func (m *defaultUserModel) Update(ctx context.Context, session sqlx.Session, newData *User) (sql.Result, error) {
 	newData.DeleteTime = time.Unix(0, 0)
-	newData.DelState = 0
+	newData.IsDeleted = 0
 	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, userRowsWithPlaceHolder)
 	if session != nil {
-		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Mobile, newData.Password, newData.Nickname, newData.Sex, newData.Avatar, newData.Info, newData.Id)
+		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.Mobile, newData.Password, newData.Nickname, newData.Sex, newData.Avatar, newData.Info, newData.Id)
 	}
-	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Mobile, newData.Password, newData.Nickname, newData.Sex, newData.Avatar, newData.Info, newData.Id)
+	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.Mobile, newData.Password, newData.Nickname, newData.Sex, newData.Avatar, newData.Info, newData.Id)
 }
 
 func (m *defaultUserModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *User) error {
@@ -144,9 +144,9 @@ func (m *defaultUserModel) UpdateWithVersion(ctx context.Context, session sqlx.S
 
 	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, userRowsWithPlaceHolder)
 	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Mobile, newData.Password, newData.Nickname, newData.Sex, newData.Avatar, newData.Info, newData.Id, oldVersion)
+		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.Mobile, newData.Password, newData.Nickname, newData.Sex, newData.Avatar, newData.Info, newData.Id, oldVersion)
 	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Mobile, newData.Password, newData.Nickname, newData.Sex, newData.Avatar, newData.Info, newData.Id, oldVersion)
+		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.Mobile, newData.Password, newData.Nickname, newData.Sex, newData.Avatar, newData.Info, newData.Id, oldVersion)
 	}
 
 	if err != nil {
@@ -164,7 +164,7 @@ func (m *defaultUserModel) UpdateWithVersion(ctx context.Context, session sqlx.S
 }
 
 func (m *defaultUserModel) DeleteSoft(ctx context.Context, session sqlx.Session, data *User) error {
-	data.DelState = 1
+	data.IsDeleted = 1
 	data.DeleteTime = time.Now()
 	if err := m.UpdateWithVersion(ctx, session, data); err != nil {
 		return errors.Wrapf(errors.New("delete soft failed "), "UserModel delete err : %+v", err)
@@ -180,7 +180,7 @@ func (m *defaultUserModel) FindSum(ctx context.Context, builder squirrel.SelectB
 
 	builder = builder.Columns("IFNULL(SUM(" + field + "),0)")
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -205,7 +205,7 @@ func (m *defaultUserModel) FindCount(ctx context.Context, builder squirrel.Selec
 
 	builder = builder.Columns("COUNT(" + field + ")")
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -232,7 +232,7 @@ func (m *defaultUserModel) FindAll(ctx context.Context, builder squirrel.SelectB
 		builder = builder.OrderBy(orderBy)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +264,7 @@ func (m *defaultUserModel) FindPageListByPage(ctx context.Context, builder squir
 	}
 	offset := (page - 1) * pageSize
 
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +301,7 @@ func (m *defaultUserModel) FindPageListByPageWithTotal(ctx context.Context, buil
 	}
 	offset := (page - 1) * pageSize
 
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, total, err
 	}
@@ -326,7 +326,7 @@ func (m *defaultUserModel) FindPageListByIdDESC(ctx context.Context, builder squ
 		builder = builder.Where(" id < ? ", preMinId)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -351,7 +351,7 @@ func (m *defaultUserModel) FindPageListByIdASC(ctx context.Context, builder squi
 		builder = builder.Where(" id > ? ", preMaxId)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}

@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/gormx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -36,26 +38,26 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 	}
 
 	// 构建查询条件
-	builder := l.svcCtx.PlanModel.SelectBuilder()
+	db := l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.Plan{})
 	if in.PlanId != "" {
-		builder = builder.Where("plan_id = ?", in.PlanId)
+		db = db.Where("plan_id = ?", in.PlanId)
 	}
 	if in.PlanName != "" {
-		builder = builder.Where("plan_name LIKE ?", "%"+in.PlanName+"%")
+		db = db.Where("plan_name LIKE ?", "%"+in.PlanName+"%")
 	}
 	if in.Type != "" {
-		builder = builder.Where("type = ?", in.Type)
+		db = db.Where("type = ?", in.Type)
 	}
 	if len(in.Status) > 0 {
 		statusInts := make([]int64, len(in.Status))
 		for i, status := range in.Status {
 			statusInts[i] = int64(status)
 		}
-		builder = builder.Where("status IN (?) ", statusInts)
+		db = db.Where("status IN ?", statusInts)
 	}
 
-	// 查询计划列表
-	plans, total, err := l.svcCtx.PlanModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "id DESC")
+	var plans []gormmodel.Plan
+	page, err := gormx.QueryPage(db.Order("id DESC"), int(in.PageNum), int(in.PageSize), &plans)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划列表失败")
 	}
@@ -63,50 +65,50 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 	// 构建响应
 	resp := &trigger.ListPlansRes{
 		Plans: make([]*trigger.PlanPb, 0, len(plans)),
-		Total: total,
+		Total: page.Total,
 	}
 
 	// 转换计划列表
-	for _, plan := range plans {
+	rawDB := l.svcCtx.DB.WithContext(l.ctx).DB
+	for i := range plans {
 		// 解析规则
 		var pbRule trigger.PlanRulePb
-		err = json.Unmarshal([]byte(plan.RecurrenceRule), &pbRule)
-		if err != nil {
+		if err := json.Unmarshal([]byte(plans[i].RecurrenceRule), &pbRule); err != nil {
 			continue
 		}
 
 		pbPlan := &trigger.PlanPb{
-			CreateTime:       carbon.CreateFromStdTime(plan.CreateTime).ToDateTimeString(),
-			UpdateTime:       carbon.CreateFromStdTime(plan.UpdateTime).ToDateTimeString(),
-			CreateUser:       plan.CreateUser.String,
-			UpdateUser:       plan.UpdateUser.String,
-			DeptCode:         plan.DeptCode.String,
-			Id:               plan.Id,
-			PlanId:           plan.PlanId,
-			PlanName:         plan.PlanName.String,
-			Type:             plan.Type.String,
-			GroupId:          plan.GroupId.String,
-			Description:      plan.Description.String,
-			StartTime:        carbon.CreateFromStdTime(plan.StartTime).ToDateTimeString(),
-			EndTime:          carbon.CreateFromStdTime(plan.EndTime).ToDateTimeString(),
+			CreateTime:       carbon.CreateFromStdTime(plans[i].CreateTime).ToDateTimeString(),
+			UpdateTime:       carbon.CreateFromStdTime(plans[i].UpdateTime).ToDateTimeString(),
+			CreateUser:       plans[i].CreateUser.String,
+			UpdateUser:       plans[i].UpdateUser.String,
+			DeptCode:         plans[i].DeptCode.String,
+			Id:               plans[i].Id,
+			PlanId:           plans[i].PlanId,
+			PlanName:         plans[i].PlanName.String,
+			Type:             plans[i].Type.String,
+			GroupId:          plans[i].GroupId.String,
+			Description:      plans[i].Description.String,
+			StartTime:        carbon.CreateFromStdTime(plans[i].StartTime).ToDateTimeString(),
+			EndTime:          carbon.CreateFromStdTime(plans[i].EndTime).ToDateTimeString(),
 			Rule:             &pbRule,
-			Status:           int32(plan.Status),
-			ScanFlg:          int32(plan.ScanFlg),
-			TerminatedReason: plan.TerminatedReason.String,
-			PausedReason:     plan.PausedReason.String,
-			Ext1:             plan.Ext1.String,
-			Ext2:             plan.Ext2.String,
-			Ext3:             plan.Ext3.String,
-			Ext4:             plan.Ext4.String,
-			Ext5:             plan.Ext5.String,
+			Status:           int32(plans[i].Status),
+			ScanFlg:          int32(plans[i].ScanFlg),
+			TerminatedReason: plans[i].TerminatedReason.String,
+			PausedReason:     plans[i].PausedReason.String,
+			Ext1:             plans[i].Ext1.String,
+			Ext2:             plans[i].Ext2.String,
+			Ext3:             plans[i].Ext3.String,
+			Ext4:             plans[i].Ext4.String,
+			Ext5:             plans[i].Ext5.String,
 		}
 
 		// 设置暂停时间和原因
-		if plan.PausedTime.Valid {
-			pbPlan.PausedTime = carbon.CreateFromStdTime(plan.PausedTime.Time).ToDateTimeString()
+		if plans[i].PausedTime.Valid {
+			pbPlan.PausedTime = carbon.CreateFromStdTime(plans[i].PausedTime.Time).ToDateTimeString()
 		}
 
-		progress, err := l.svcCtx.PlanBatchModel.CalculatePlanProgress(l.ctx, plan.Id)
+		progress, err := gormmodel.CalculatePlanProgress(l.ctx, rawDB, plans[i].Id)
 		if err != nil {
 			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "计算计划进度失败")
 		}

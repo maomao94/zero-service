@@ -35,12 +35,28 @@ type postgresResult struct {
 	id int64
 }
 
+type stringIDResult struct {
+	id string
+}
+
 func (r *postgresResult) LastInsertId() (int64, error) {
 	return r.id, nil
 }
 
 func (r *postgresResult) RowsAffected() (int64, error) {
 	return 1, nil
+}
+
+func (r *stringIDResult) LastInsertId() (int64, error) {
+	return 0, errors.New("LastInsertId is not supported for string primary keys")
+}
+
+func (r *stringIDResult) RowsAffected() (int64, error) {
+	return 1, nil
+}
+
+func (r *stringIDResult) StringID() string {
+	return r.id
 }
 
 // ============================

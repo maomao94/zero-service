@@ -16,7 +16,7 @@ type (
 	PlanModel interface {
 		planModel
 		withSession(session sqlx.Session) PlanModel
-		UpdateBatchFinishedTime(ctx context.Context, id int64) (int64, error)
+		UpdateBatchFinishedTime(ctx context.Context, id string) (int64, error)
 	}
 
 	customPlanModel struct {
@@ -36,9 +36,9 @@ func (m *customPlanModel) withSession(session sqlx.Session) PlanModel {
 	}
 }
 
-func (m *customPlanModel) UpdateBatchFinishedTime(ctx context.Context, id int64) (int64, error) {
+func (m *customPlanModel) UpdateBatchFinishedTime(ctx context.Context, id string) (int64, error) {
 	now := time.Now()
-	subQuery := "SELECT 1 FROM plan_batch b WHERE b.del_state = 0 AND b.plan_pk = p.id AND b.finished_time IS NULL"
+	subQuery := "SELECT 1 FROM plan_batch b WHERE b.is_deleted = 0 AND b.plan_pk = p.id AND b.finished_time IS NULL"
 	builder := squirrel.
 		Update(m.table+" AS p").
 		Set("finished_time", now).

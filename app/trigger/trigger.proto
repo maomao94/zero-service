@@ -615,7 +615,7 @@ message CreatePlanExecItemPb {
 
 message CreatePlanTaskRes {
   // 计划主键ID
-  int64 id = 1;
+  string id = 1;
   // 计划ID
   string planId = 2;
   // 计划批次数
@@ -626,7 +626,7 @@ message CreatePlanTaskRes {
 
 message PausePlanReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1;
+  string id = 1;
   string planId = 2;
   // 暂停原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
@@ -637,7 +637,7 @@ message PausePlanRes {
 
 message TerminatePlanReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1;
+  string id = 1;
   string planId = 2;
   // 终止原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
@@ -648,7 +648,7 @@ message TerminatePlanRes {
 
 message ResumePlanReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1;
+  string id = 1;
   string planId = 2;
 }
 
@@ -657,7 +657,7 @@ message ResumePlanRes {
 
 message PausePlanBatchReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1;
+  string id = 1;
   string batchId = 2;
   // 暂停原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
@@ -668,7 +668,7 @@ message PausePlanBatchRes {
 
 message TerminatePlanBatchReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1;
+  string id = 1;
   string batchId = 2;
   // 终止原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
@@ -679,7 +679,7 @@ message TerminatePlanBatchRes {
 
 message ResumePlanBatchReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1;
+  string id = 1;
   string batchId = 2;
 }
 
@@ -688,7 +688,7 @@ message ResumePlanBatchRes {
 
 message PausePlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1;
+  string id = 1;
   string execId = 2;
   // 暂停原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
@@ -699,7 +699,7 @@ message PausePlanExecItemRes {
 
 message TerminatePlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1;
+  string id = 1;
   string execId = 2;
   // 终止原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
@@ -710,7 +710,7 @@ message TerminatePlanExecItemRes {
 
 message ResumePlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1;
+  string id = 1;
   string execId = 2;
 }
 
@@ -720,7 +720,7 @@ message ResumePlanExecItemRes {
 // 立即执行计划项请求
 message RunPlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1;
+  string id = 1;
   string execId = 2;
 }
 
@@ -730,7 +730,7 @@ message RunPlanExecItemRes {
 
 message GetPlanReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1;
+  string id = 1;
   string planId = 2;
 }
 
@@ -750,8 +750,8 @@ message PlanPb {
   // 机构code
   string deptCode = 105;
 
-  // 自增主键ID
-  int64 id = 50;
+  // UUID主键ID
+  string id = 50;
   // 计划ID
   string planId = 1;
   // 计划名称
@@ -817,7 +817,7 @@ message ListPlansRes {
 
 message GetPlanBatchReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1;
+  string id = 1;
   string batchId = 2;
 }
 
@@ -832,7 +832,7 @@ message ListPlanBatchesReq {
   // 页码
   int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
   // 计划主键ID
-  int64 planPk = 3;
+  string planPk = 3;
   // 计划ID
   string planId = 4;
   // 批次ID
@@ -852,7 +852,7 @@ message ListPlanBatchesRes {
 
 message GetPlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1;
+  string id = 1;
   string execId = 2;
 }
 
@@ -872,14 +872,14 @@ message PlanExecItemPb {
   // 机构code
   string deptCode = 105;
 
-  // 自增主键ID
-  int64 id = 50;
+  // UUID主键ID
+  string id = 50;
   // 关联的计划主键ID
-  int64 planPk = 1;
+  string planPk = 1;
   // 计划ID
   string planId = 2;
   // 批主键ID
-  int64 batchPk = 4;
+  string batchPk = 4;
   // 批ID
   string batchId = 5;
   // 执行ID 全局唯一
@@ -939,7 +939,7 @@ message ListPlanExecItemsReq {
   // 页码
   int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
   // 计划主键 id
-  int64 id = 3 [(validate.rules).int64 = {gte: 0}];
+  string id = 3;
   // 执行ID（唯一索引）
   string execId = 4;
   // 计划ID
@@ -962,7 +962,7 @@ message ListPlanExecItemsRes {
 
 message GetPlanExecLogReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  string id = 1 [(validate.rules).string = {min_len: 1}];
 }
 
 message GetPlanExecLogRes {
@@ -1013,20 +1013,20 @@ message PlanExecLogPb {
   // 机构code
   string deptCode = 105;
 
-  // 自增主键ID
-  int64 id = 50;
+  // UUID主键ID
+  string id = 50;
   // 关联的计划主键ID
-  int64 planPk = 1;
+  string planPk = 1;
   // 计划ID
   string planId = 2;
   // 计划名称
   string planName = 3;
   // 批主键ID
-  int64 batchPk = 4;
+  string batchPk = 4;
   // 批ID
   string batchId = 5;
   // 关联的执行项主键ID
-  int64 itemPk = 6;
+  string itemPk = 6;
   // 执行ID 全局唯一
   string execId = 7;
   // 执行项ID
@@ -1058,10 +1058,10 @@ message PlanBatchPb {
   // 机构code
   string deptCode = 105;
 
-  // 自增主键ID
-  int64 id = 50;
+  // UUID主键ID
+  string id = 50;
   // 关联的计划主键ID
-  int64 planPk = 1;
+  string planPk = 1;
   // 计划ID
   string planId = 2;
   // 批ID
@@ -1148,8 +1148,8 @@ message ExecItemDashboardItemPb {
 message CallbackPlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
 
-  // 自增主键ID
-  int64 id = 1;
+  // UUID主键ID
+  string id = 1;
   // 执行ID 全局唯一
   string execId = 2;
   // 回调设计 参考 grpc status 用于分布式事务

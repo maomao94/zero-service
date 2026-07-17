@@ -1,6 +1,6 @@
 # gormx 快速使用指南
 
-`common/gormx` 是项目内 GORM 封装包，负责数据库打开、审计回调、租户查询、软删恢复、批量操作、分页、日志和追踪配置。
+`common/gormx` 是项目内 GORM 封装包，负责数据库打开、回调注册、租户查询、软删恢复、批量操作、分页、日志和追踪配置。
 
 ## 快速开始
 
@@ -17,7 +17,7 @@ if err != nil {
 
 ## 模型选择
 
-gormx 提供原子级 mixin，按需组合；不再提供固定的复合 BaseModel。
+gormx 提供原子级 mixin，按需组合；Legacy 表保留 `LegacyBaseModel` / `LegacyStringBaseModel` 作为旧系统兼容字段组合。
 
 - `IDModel` / `StringIDModel` — uint / string 主键。
 - `TimeMixin` — `created_at` / `updated_at`（自动填充）。
@@ -28,7 +28,7 @@ gormx 提供原子级 mixin，按需组合；不再提供固定的复合 BaseMod
 - `AuditWithoutDeleteMixin` / `StringAuditWithoutDeleteMixin` — 仅创建/更新审计，无删除审计。
 - `LegacyIDMixin` / `LegacyStringIDMixin` — 旧表 int64 / string 主键。
 - `LegacyTimeMixin` — 旧表 `create_time` / `update_time`。
-- `LegacySoftDeleteMixin` — 旧表 `delete_time` / `del_state` 软删除。
+- `LegacySoftDeleteMixin` — 旧系统兼容表 `is_deleted` / `delete_time` 软删除；`is_deleted` 为状态字段，`delete_time` 仅作删除审计时间。
 - `LegacyBaseModel` — 旧表默认组合（int64 id + legacy 时间 + legacy 软删）。
 - `LegacyStringBaseModel` — 同上，string 主键。
 
@@ -58,6 +58,8 @@ type Config struct {
 ctx := gormx.WithUserAndTenantContext(context.Background(), uint(7), "alice", "tenant-a")
 err := db.WithContext(ctx).Create(&device).Error
 ```
+
+通用字段生命周期由模型自己的 GORM hook 负责；全局 callbacks 目前只是注册/扩展占位，不会自动写入审计、租户或删除字段。Legacy 模型使用 `LegacyBaseModel` / `LegacyStringBaseModel` 的 hook 填充存在的 `create_user`、`create_name`、`update_user`、`update_name`、`tenant_id` 字段；非 Legacy 模型如需自动审计，应在模型上显式实现 hook 并调用对应 mixin capability 方法。
 
 租户查询优先使用 `DB` 方法或 scope：
 
@@ -102,12 +104,14 @@ page, err := gormx.QueryPage(db.WithTenant(ctx), 1, 20, &list)
 
 ## 软删与恢复
 
-普通删除走 GORM 软删；旧表会设置 `delete_time/del_state`。
+普通删除走 GORM 软删；Legacy 旧系统兼容表会设置 `is_deleted=1` 并填充 `delete_time`。
 
 ```go
 err := gormx.SoftDelete(db.DB, &Device{}, "id = ?", id)
 err := gormx.Restore(db.DB, &Device{}, "id = ?", id)
 ```
+
+`Restore` 只处理 gormx 已知软删字段：标准 `deleted_at`、Legacy `is_deleted/delete_time`，以及过渡兼容的 `del_state`。字段形态复杂或恢复条件有业务含义时，业务侧应使用 `Unscoped()` 加显式 `Updates(...)` 自行恢复。
 
 租户表使用带 tenant 的版本，防止跨租户恢复或硬删：
 
@@ -139,5 +143,5 @@ db, err := gormx.Open(dsn, gormx.WithoutOpenTelemetry())
 ## 注意事项
 
 - `BatchInsertWithTenant` 使用批量 create，GORM hook 对批量审计字段存在限制；需要逐条完整审计时不要使用批量插入。
-- `Restore` 会执行 update callbacks；如果恢复后又更新业务字段，可能触发两次 update/save hook。
+- `Restore` 会执行模型 update hook；如果恢复后又更新业务字段，可能触发两次 update/save hook。
 - `OpenWithRawDB` 不接管外部 `*sql.DB` 生命周期，调用方负责关闭。

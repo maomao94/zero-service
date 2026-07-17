@@ -2,7 +2,7 @@ package gormx
 
 import "testing"
 
-func TestSkipHooksCreateWritesAuditFieldsViaCallback(t *testing.T) {
+func TestSkipHooksCreateDoesNotWriteAuditFields(t *testing.T) {
 	db := openTestDB(t, &uintAuditTestModel{})
 	ctx := WithUserContext(t.Context(), NewUserContext(uint(50), "creator", "tenant-1"))
 
@@ -18,15 +18,15 @@ func TestSkipHooksCreateWritesAuditFieldsViaCallback(t *testing.T) {
 	if got.Name != "created" {
 		t.Fatalf("name = %q, want created", got.Name)
 	}
-	if got.CreateUser != 50 {
-		t.Fatalf("create_user = %d, want 50 from audit callback", got.CreateUser)
+	if got.CreateUser != 0 {
+		t.Fatalf("create_user = %d, want zero", got.CreateUser)
 	}
-	if got.CreateName != "creator" {
-		t.Fatalf("create_name = %q, want creator from audit callback", got.CreateName)
+	if got.CreateName != "" {
+		t.Fatalf("create_name = %q, want empty", got.CreateName)
 	}
 }
 
-func TestSkipHooksUpdateWritesAuditFieldsViaCallback(t *testing.T) {
+func TestSkipHooksUpdateDoesNotWriteAuditFields(t *testing.T) {
 	db := openTestDB(t, &uintAuditTestModel{})
 	createCtx := WithUserContext(t.Context(), NewUserContext(uint(100), "creator", "tenant-1"))
 	model := uintAuditTestModel{Name: "old"}
@@ -46,10 +46,10 @@ func TestSkipHooksUpdateWritesAuditFieldsViaCallback(t *testing.T) {
 	if got.Name != "new" {
 		t.Fatalf("name = %q, want new", got.Name)
 	}
-	if got.UpdateUser != 200 {
-		t.Fatalf("update_user = %d, want updater 200 from audit callback", got.UpdateUser)
+	if got.UpdateUser != 0 {
+		t.Fatalf("update_user = %d, want zero", got.UpdateUser)
 	}
-	if got.UpdateName != "updater" {
-		t.Fatalf("update_name = %q, want updater from audit callback", got.UpdateName)
+	if got.UpdateName != "" {
+		t.Fatalf("update_name = %q, want empty", got.UpdateName)
 	}
 }

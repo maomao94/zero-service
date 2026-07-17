@@ -30,7 +30,7 @@ func TestUnscopedDeleteWithTenantHardDeletesRecord(t *testing.T) {
 	db := openTestDB(t, &batchTenantTestModel{})
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 
-	record := batchTenantTestModel{Name: "test"}
+	record := batchTenantTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "test"}
 	if err := db.WithContext(ctx).Create(&record).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
@@ -53,7 +53,7 @@ func TestUnscopedDeleteWithTenantDoesNotAffectOtherTenant(t *testing.T) {
 	ctx1 := WithTenantContext(context.Background(), "tenant-1")
 	ctx2 := WithTenantContext(context.Background(), "tenant-2")
 
-	record1 := batchTenantTestModel{Name: "keep"}
+	record1 := batchTenantTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "keep"}
 	if err := db.WithContext(ctx1).Create(&record1).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}

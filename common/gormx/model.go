@@ -37,3 +37,10 @@ type VersionMixin struct {
 type TenantMixin struct {
 	TenantID string `gorm:"column:tenant_id;size:64;index" json:"tenant_id"`
 }
+
+func (m *TenantMixin) BeforeCreateTenant(userCtx *UserContext) {
+	if m == nil || userCtx == nil || userCtx.TenantID == "" {
+		return
+	}
+	m.TenantID = userCtx.TenantID
+}

@@ -3,21 +3,23 @@ package logic
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/tool"
-	"zero-service/model"
 	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
+	"zero-service/model"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/teambition/rrule-go"
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"gorm.io/gorm"
 )
 
 type CreatePlanTaskLogic struct {
@@ -40,13 +42,14 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	if err != nil {
 		return nil, err
 	}
-	querPlan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
+	db := l.svcCtx.DB.WithContext(l.ctx).DB
+	var plan gormmodel.Plan
+	err = db.Where("plan_id = ?", in.PlanId).First(&plan).Error
 	if err != nil {
-		if err != sqlx.ErrNotFound {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 		}
-	}
-	if querPlan != nil {
+	} else {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_ALREADY_EXIST)
 	}
 	if len(in.StartTime) == 0 {
@@ -115,7 +118,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	rule, _ := jsonx.Marshal(in.Rule)
 	currentUserId := tool.GetCurrentUserId(l.ctx, in.CurrentUser)
 
-	var insertPlan = &model.Plan{
+	var insertPlan = gormmodel.Plan{
 		CreateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 		UpdateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 		DeptCode:         sql.NullString{String: in.DeptCode, Valid: in.DeptCode != ""},
@@ -139,14 +142,15 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	}
 	var batchCnt int64 = 0
 	var execCnt int64 = 0
-	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
-		result, transErr := l.svcCtx.PlanModel.Insert(ctx, tx, insertPlan)
-		if transErr != nil {
-			return transErr
+	err = db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&insertPlan).Error; err != nil {
+			return err
 		}
-		insertPlan.Id, _ = result.LastInsertId()
 		for _, d := range dates {
-			batchId, _ := tool.SimpleUUID()
+			batchId, idErr := tool.SimpleUUID()
+			if idErr != nil {
+				return idErr
+			}
 			dStr := carbon.NewCarbon(d).Format("Y-m-d H:i")
 			batchName := fmt.Sprintf("%s@%s", in.PlanName, dStr)
 			batchNum, nextIdErr := l.svcCtx.IdUtil.NextId("P", l.svcCtx.Config.Name)
@@ -156,7 +160,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			if len(in.BatchNumPrefix) >= 0 {
 				batchNum = fmt.Sprintf("%s%s", in.BatchNumPrefix, strutil.After(batchNum, "P"))
 			}
-			batch := model.PlanBatch{
+			batch := gormmodel.PlanBatch{
 				CreateUser:      sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 				UpdateUser:      sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 				DeptCode:        sql.NullString{String: in.DeptCode, Valid: in.DeptCode != ""},
@@ -174,15 +178,16 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 				Ext4:            sql.NullString{String: in.Ext4, Valid: in.Ext4 != ""},
 				Ext5:            sql.NullString{String: in.Ext5, Valid: in.Ext5 != ""},
 			}
-			batchResult, err := l.svcCtx.PlanBatchModel.Insert(ctx, tx, &batch)
-			if err != nil {
+			if err := tx.Create(&batch).Error; err != nil {
 				return err
 			}
-			batchPk, _ := batchResult.LastInsertId()
 			batchCnt++
 			itemIndex := 0
 			for _, item := range in.ExecItems {
-				execId, _ := tool.SimpleUUID()
+				execId, idErr := tool.SimpleUUID()
+				if idErr != nil {
+					return idErr
+				}
 				nextTriggerTime := d
 				switch in.IntervalType {
 				case 1:
@@ -193,13 +198,13 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 						nextTriggerTime = d.Add(offset)
 					}
 				}
-				planItem := model.PlanExecItem{
+				planItem := gormmodel.PlanExecItem{
 					CreateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 					UpdateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 					DeptCode:         sql.NullString{String: in.DeptCode, Valid: in.DeptCode != ""},
 					PlanPk:           insertPlan.Id,
 					PlanId:           in.PlanId,
-					BatchPk:          batchPk,
+					BatchPk:          batch.Id,
 					BatchId:          batchId,
 					ExecId:           execId,
 					ItemId:           item.ItemId,
@@ -227,8 +232,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 					Ext5:             sql.NullString{String: item.Ext5, Valid: item.Ext5 != ""},
 				}
 				itemIndex++
-				_, err = l.svcCtx.PlanExecItemModel.Insert(l.ctx, tx, &planItem)
-				if err != nil {
+				if err := tx.Create(&planItem).Error; err != nil {
 					return err
 				}
 				execCnt++

@@ -510,7 +510,7 @@ message PlanPb{
   string deptCode = 105;
 
   // 自增主键ID
-  int64 id = 50;
+  string id = 50;
   // 计划ID
   string planId = 1;
   // 计划名称
@@ -541,13 +541,13 @@ message HandlerPlanTaskEventReq{
   PlanPb plan = 100;
 
   // 自增主键ID
-  int64 id = 50;
+  string id = 50;
   // 关联的计划主键ID
-  int64 planPk = 1;
+  string planPk = 1;
   // 计划ID 全局唯一
   string planId = 2;
   // 批主键ID
-  int64 batchPk = 3;
+  string batchPk = 3;
   // 批ID
   string batchId = 4;
   // 执行ID 全局唯一

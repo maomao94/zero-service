@@ -8,7 +8,7 @@ CREATE TABLE `user`
     `create_time` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `delete_time` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `del_state`   tinyint      NOT NULL DEFAULT '0',
+    `is_deleted`  tinyint      NOT NULL DEFAULT '0',
     `version`     bigint       NOT NULL DEFAULT '0' COMMENT '版本号',
     `mobile`      char(11)     NOT NULL DEFAULT '',
     `password`    varchar(255) NOT NULL DEFAULT '',
@@ -27,7 +27,7 @@ CREATE TABLE `region`
     `create_time`   datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time`   datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `delete_time`   datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `del_state`     tinyint     NOT NULL DEFAULT '0',
+    `is_deleted`    tinyint     NOT NULL DEFAULT '0',
     `version`       bigint      NOT NULL DEFAULT '0' COMMENT '版本号',
     `code`          varchar(12) NOT NULL COMMENT '区划编号',
     `parent_code`   varchar(12) NULL DEFAULT NULL COMMENT '父区划编号',
@@ -57,7 +57,7 @@ CREATE TABLE `order_txn`
     `create_time`          datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time`          datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `delete_time`          datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `del_state`            tinyint      NOT NULL DEFAULT '0',
+    `is_deleted`           tinyint      NOT NULL DEFAULT '0',
     `version`              bigint       NOT NULL DEFAULT '0' COMMENT '版本号',
     `txn_id`               varchar(64)  NOT NULL DEFAULT '' COMMENT '订单号',
     `ori_txn_id`           varchar(64)  NOT NULL DEFAULT '' COMMENT '原订单号',
@@ -119,9 +119,9 @@ FROM plan_exec_item pei
          JOIN plan_batch pb ON pei.batch_pk = pb.id
          JOIN plan p ON pb.plan_pk = p.id
 WHERE
-    pei.del_state = 0  -- 未删除的执行项
-  AND pb.del_state = 0  -- 未删除的批次
-  AND p.del_state = 0  -- 未删除的计划
+    pei.is_deleted = 0  -- 未删除的执行项
+  AND pb.is_deleted = 0  -- 未删除的批次
+  AND p.is_deleted = 0  -- 未删除的计划
 -- 可根据需要添加部门或用户过滤条件
 -- AND p.dept_code = :dept_code
 -- AND p.create_user = :user_id

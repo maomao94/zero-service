@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/duke-git/lancet/v2/random"
 	"github.com/google/uuid"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 )
@@ -71,11 +70,11 @@ func (u *IdUtil) getNextIds(key string, category string, count int64) (int64, er
 
 // SimpleUUID 生成不带 "-" 的 UUID v4
 func (u *IdUtil) SimpleUUID() (string, error) {
-	uid, err := random.UUIdV4()
+	uid, err := uuid.NewV7()
 	if err != nil {
 		return "", err
 	}
-	return strings.ReplaceAll(uid, "-", ""), nil
+	return strings.ReplaceAll(uid.String(), "-", ""), nil
 }
 
 // SimpleUUID 生成不带 "-" 的时间有序 UUID v7

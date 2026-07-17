@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/gormx"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -33,97 +35,97 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 	}
 
 	// 构建查询条件
-	builder := l.svcCtx.PlanExecItemModel.SelectBuilder()
+	db := l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.PlanExecItem{})
 
 	// 处理计划主键id
-	if in.Id > 0 {
+	if in.Id != "" {
 		// 根据计划主键id查询plan_id
-		plan, err := l.svcCtx.PlanModel.FindOne(l.ctx, in.Id)
-		if err != nil {
+		var plan gormmodel.Plan
+		if err := l.svcCtx.DB.WithContext(l.ctx).Where("id = ?", in.Id).First(&plan).Error; err != nil {
 			return nil, err
 		}
 		in.PlanId = plan.PlanId
 	}
 
 	if in.PlanId != "" {
-		builder = builder.Where("plan_id = ?", in.PlanId)
+		db = db.Where("plan_id = ?", in.PlanId)
 	}
 	if in.BatchId != "" {
-		builder = builder.Where("batch_id = ?", in.BatchId)
+		db = db.Where("batch_id = ?", in.BatchId)
 	}
 	if in.ExecId != "" {
-		builder = builder.Where("exec_id = ?", in.ExecId)
+		db = db.Where("exec_id = ?", in.ExecId)
 	}
 	if in.ItemId != "" {
-		builder = builder.Where("item_id LIKE ?", "%"+in.ItemId+"%")
+		db = db.Where("item_id LIKE ?", "%"+in.ItemId+"%")
 	}
 	if in.ItemName != "" {
-		builder = builder.Where("item_name LIKE ?", "%"+in.ItemName+"%")
+		db = db.Where("item_name LIKE ?", "%"+in.ItemName+"%")
 	}
 	if len(in.Status) > 0 {
 		statusInts := make([]int64, len(in.Status))
 		for i, status := range in.Status {
 			statusInts[i] = int64(status)
 		}
-		builder = builder.Where("status IN (?) ", statusInts)
+		db = db.Where("status IN ?", statusInts)
 	}
 
-	// 查询执行项列表
-	execItems, total, err := l.svcCtx.PlanExecItemModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "next_trigger_time ASC", "Status ASC", "id DESC")
+	var items []gormmodel.PlanExecItem
+	page, err := gormx.QueryPage(db.Order("next_trigger_time ASC, status ASC, id DESC"), int(in.PageNum), int(in.PageSize), &items)
 	if err != nil {
 		return nil, err
 	}
 
 	// 构建响应
 	resp := &trigger.ListPlanExecItemsRes{
-		PlanExecItems: make([]*trigger.PlanExecItemPb, 0, len(execItems)),
-		Total:         total,
+		PlanExecItems: make([]*trigger.PlanExecItemPb, 0, len(items)),
+		Total:         page.Total,
 	}
 
 	// 转换执行项列表
-	for _, execItem := range execItems {
+	for i := range items {
 		pbExecItem := &trigger.PlanExecItemPb{
-			CreateTime:       carbon.CreateFromStdTime(execItem.CreateTime).ToDateTimeString(),
-			UpdateTime:       carbon.CreateFromStdTime(execItem.UpdateTime).ToDateTimeString(),
-			CreateUser:       execItem.CreateUser.String,
-			UpdateUser:       execItem.UpdateUser.String,
-			DeptCode:         execItem.DeptCode.String,
-			Id:               execItem.Id,
-			PlanPk:           execItem.PlanPk,
-			PlanId:           execItem.PlanId,
-			BatchPk:          execItem.BatchPk,
-			BatchId:          execItem.BatchId,
-			ExecId:           execItem.ExecId,
-			ItemId:           execItem.ItemId,
-			ItemType:         execItem.ItemType.String,
-			ItemName:         execItem.ItemName.String,
-			ItemRowId:        execItem.ItemRowId,
-			PointId:          execItem.PointId.String,
-			Payload:          execItem.Payload,
-			RequestTimeout:   execItem.RequestTimeout,
-			PlanTriggerTime:  carbon.CreateFromStdTime(execItem.PlanTriggerTime).ToDateTimeString(),
-			NextTriggerTime:  carbon.CreateFromStdTime(execItem.NextTriggerTime).ToDateTimeString(),
-			TriggerCount:     int32(execItem.TriggerCount),
-			Status:           trigger.ExecItemStatusPb(execItem.Status),
-			LastResult:       execItem.LastResult.String,
-			LastMessage:      execItem.LastMessage.String,
-			LastReason:       execItem.LastReason.String,
-			TerminatedReason: execItem.TerminatedReason.String,
-			PausedReason:     execItem.PausedReason.String,
-			Ext1:             execItem.Ext1.String,
-			Ext2:             execItem.Ext2.String,
-			Ext3:             execItem.Ext3.String,
-			Ext4:             execItem.Ext4.String,
-			Ext5:             execItem.Ext5.String,
+			CreateTime:       carbon.CreateFromStdTime(items[i].CreateTime).ToDateTimeString(),
+			UpdateTime:       carbon.CreateFromStdTime(items[i].UpdateTime).ToDateTimeString(),
+			CreateUser:       items[i].CreateUser.String,
+			UpdateUser:       items[i].UpdateUser.String,
+			DeptCode:         items[i].DeptCode.String,
+			Id:               items[i].Id,
+			PlanPk:           items[i].PlanPk,
+			PlanId:           items[i].PlanId,
+			BatchPk:          items[i].BatchPk,
+			BatchId:          items[i].BatchId,
+			ExecId:           items[i].ExecId,
+			ItemId:           items[i].ItemId,
+			ItemType:         items[i].ItemType.String,
+			ItemName:         items[i].ItemName.String,
+			ItemRowId:        items[i].ItemRowId,
+			PointId:          items[i].PointId.String,
+			Payload:          items[i].Payload,
+			RequestTimeout:   items[i].RequestTimeout,
+			PlanTriggerTime:  carbon.CreateFromStdTime(items[i].PlanTriggerTime).ToDateTimeString(),
+			NextTriggerTime:  carbon.CreateFromStdTime(items[i].NextTriggerTime).ToDateTimeString(),
+			TriggerCount:     int32(items[i].TriggerCount),
+			Status:           trigger.ExecItemStatusPb(items[i].Status),
+			LastResult:       items[i].LastResult.String,
+			LastMessage:      items[i].LastMessage.String,
+			LastReason:       items[i].LastReason.String,
+			TerminatedReason: items[i].TerminatedReason.String,
+			PausedReason:     items[i].PausedReason.String,
+			Ext1:             items[i].Ext1.String,
+			Ext2:             items[i].Ext2.String,
+			Ext3:             items[i].Ext3.String,
+			Ext4:             items[i].Ext4.String,
+			Ext5:             items[i].Ext5.String,
 		}
 		// 设置上次触发时间
-		if execItem.LastTriggerTime.Valid {
-			pbExecItem.LastTriggerTime = carbon.CreateFromStdTime(execItem.LastTriggerTime.Time).ToDateTimeString()
+		if items[i].LastTriggerTime.Valid {
+			pbExecItem.LastTriggerTime = carbon.CreateFromStdTime(items[i].LastTriggerTime.Time).ToDateTimeString()
 		}
 
 		// 设置暂停时间和原因
-		if execItem.PausedTime.Valid {
-			pbExecItem.PausedTime = carbon.CreateFromStdTime(execItem.PausedTime.Time).ToDateTimeString()
+		if items[i].PausedTime.Valid {
+			pbExecItem.PausedTime = carbon.CreateFromStdTime(items[i].PausedTime.Time).ToDateTimeString()
 		}
 
 		resp.PlanExecItems = append(resp.PlanExecItems, pbExecItem)

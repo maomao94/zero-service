@@ -56,7 +56,7 @@ type (
 		CreateTime   time.Time      `db:"create_time"`
 		UpdateTime   time.Time      `db:"update_time"`
 		DeleteTime   time.Time      `db:"delete_time"`
-		DelState     int64          `db:"del_state"`
+		IsDeleted    int64          `db:"is_deleted"`
 		Version      int64          `db:"version"`       // 版本号
 		Code         string         `db:"code"`          // 区划编号
 		ParentCode   sql.NullString `db:"parent_code"`   // 父区划编号
@@ -97,7 +97,7 @@ func (m *defaultRegionModel) Delete(ctx context.Context, session sqlx.Session, i
 	return err
 }
 func (m *defaultRegionModel) FindOne(ctx context.Context, id int64) (*Region, error) {
-	query := fmt.Sprintf("select %s from %s where `id` = ? and del_state = ? limit 1", regionRows, m.table)
+	query := fmt.Sprintf("select %s from %s where `id` = ? and is_deleted = ? limit 1", regionRows, m.table)
 	var resp Region
 	err := m.conn.QueryRowCtx(ctx, &resp, query, id, 0)
 	switch err {
@@ -112,7 +112,7 @@ func (m *defaultRegionModel) FindOne(ctx context.Context, id int64) (*Region, er
 
 func (m *defaultRegionModel) FindOneByCode(ctx context.Context, code string) (*Region, error) {
 	var resp Region
-	query := fmt.Sprintf("select %s from %s where `code` = ?  and del_state = ? limit 1", regionRows, m.table)
+	query := fmt.Sprintf("select %s from %s where `code` = ?  and is_deleted = ? limit 1", regionRows, m.table)
 	err := m.conn.QueryRowCtx(ctx, &resp, query, code, 0)
 	switch err {
 	case nil:
@@ -126,23 +126,23 @@ func (m *defaultRegionModel) FindOneByCode(ctx context.Context, code string) (*R
 
 func (m *defaultRegionModel) Insert(ctx context.Context, session sqlx.Session, data *Region) (sql.Result, error) {
 	data.DeleteTime = time.Unix(0, 0)
-	data.DelState = 0
+	data.IsDeleted = 0
 
 	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, regionRowsExpectAutoSet)
 	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.Code, data.ParentCode, data.Ancestors, data.Name, data.ProvinceCode, data.ProvinceName, data.CityCode, data.CityName, data.DistrictCode, data.DistrictName, data.TownCode, data.TownName, data.VillageCode, data.VillageName, data.RegionLevel, data.Sort, data.Remark)
+		return session.ExecCtx(ctx, query, data.DeleteTime, data.IsDeleted, data.Version, data.Code, data.ParentCode, data.Ancestors, data.Name, data.ProvinceCode, data.ProvinceName, data.CityCode, data.CityName, data.DistrictCode, data.DistrictName, data.TownCode, data.TownName, data.VillageCode, data.VillageName, data.RegionLevel, data.Sort, data.Remark)
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.Code, data.ParentCode, data.Ancestors, data.Name, data.ProvinceCode, data.ProvinceName, data.CityCode, data.CityName, data.DistrictCode, data.DistrictName, data.TownCode, data.TownName, data.VillageCode, data.VillageName, data.RegionLevel, data.Sort, data.Remark)
+	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.IsDeleted, data.Version, data.Code, data.ParentCode, data.Ancestors, data.Name, data.ProvinceCode, data.ProvinceName, data.CityCode, data.CityName, data.DistrictCode, data.DistrictName, data.TownCode, data.TownName, data.VillageCode, data.VillageName, data.RegionLevel, data.Sort, data.Remark)
 }
 
 func (m *defaultRegionModel) Update(ctx context.Context, session sqlx.Session, newData *Region) (sql.Result, error) {
 	newData.DeleteTime = time.Unix(0, 0)
-	newData.DelState = 0
+	newData.IsDeleted = 0
 	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, regionRowsWithPlaceHolder)
 	if session != nil {
-		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Code, newData.ParentCode, newData.Ancestors, newData.Name, newData.ProvinceCode, newData.ProvinceName, newData.CityCode, newData.CityName, newData.DistrictCode, newData.DistrictName, newData.TownCode, newData.TownName, newData.VillageCode, newData.VillageName, newData.RegionLevel, newData.Sort, newData.Remark, newData.Id)
+		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.Code, newData.ParentCode, newData.Ancestors, newData.Name, newData.ProvinceCode, newData.ProvinceName, newData.CityCode, newData.CityName, newData.DistrictCode, newData.DistrictName, newData.TownCode, newData.TownName, newData.VillageCode, newData.VillageName, newData.RegionLevel, newData.Sort, newData.Remark, newData.Id)
 	}
-	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Code, newData.ParentCode, newData.Ancestors, newData.Name, newData.ProvinceCode, newData.ProvinceName, newData.CityCode, newData.CityName, newData.DistrictCode, newData.DistrictName, newData.TownCode, newData.TownName, newData.VillageCode, newData.VillageName, newData.RegionLevel, newData.Sort, newData.Remark, newData.Id)
+	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.Code, newData.ParentCode, newData.Ancestors, newData.Name, newData.ProvinceCode, newData.ProvinceName, newData.CityCode, newData.CityName, newData.DistrictCode, newData.DistrictName, newData.TownCode, newData.TownName, newData.VillageCode, newData.VillageName, newData.RegionLevel, newData.Sort, newData.Remark, newData.Id)
 }
 
 func (m *defaultRegionModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *Region) error {
@@ -155,9 +155,9 @@ func (m *defaultRegionModel) UpdateWithVersion(ctx context.Context, session sqlx
 
 	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, regionRowsWithPlaceHolder)
 	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Code, newData.ParentCode, newData.Ancestors, newData.Name, newData.ProvinceCode, newData.ProvinceName, newData.CityCode, newData.CityName, newData.DistrictCode, newData.DistrictName, newData.TownCode, newData.TownName, newData.VillageCode, newData.VillageName, newData.RegionLevel, newData.Sort, newData.Remark, newData.Id, oldVersion)
+		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.Code, newData.ParentCode, newData.Ancestors, newData.Name, newData.ProvinceCode, newData.ProvinceName, newData.CityCode, newData.CityName, newData.DistrictCode, newData.DistrictName, newData.TownCode, newData.TownName, newData.VillageCode, newData.VillageName, newData.RegionLevel, newData.Sort, newData.Remark, newData.Id, oldVersion)
 	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Code, newData.ParentCode, newData.Ancestors, newData.Name, newData.ProvinceCode, newData.ProvinceName, newData.CityCode, newData.CityName, newData.DistrictCode, newData.DistrictName, newData.TownCode, newData.TownName, newData.VillageCode, newData.VillageName, newData.RegionLevel, newData.Sort, newData.Remark, newData.Id, oldVersion)
+		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.Code, newData.ParentCode, newData.Ancestors, newData.Name, newData.ProvinceCode, newData.ProvinceName, newData.CityCode, newData.CityName, newData.DistrictCode, newData.DistrictName, newData.TownCode, newData.TownName, newData.VillageCode, newData.VillageName, newData.RegionLevel, newData.Sort, newData.Remark, newData.Id, oldVersion)
 	}
 
 	if err != nil {
@@ -175,7 +175,7 @@ func (m *defaultRegionModel) UpdateWithVersion(ctx context.Context, session sqlx
 }
 
 func (m *defaultRegionModel) DeleteSoft(ctx context.Context, session sqlx.Session, data *Region) error {
-	data.DelState = 1
+	data.IsDeleted = 1
 	data.DeleteTime = time.Now()
 	if err := m.UpdateWithVersion(ctx, session, data); err != nil {
 		return errors.Wrapf(errors.New("delete soft failed "), "RegionModel delete err : %+v", err)
@@ -191,7 +191,7 @@ func (m *defaultRegionModel) FindSum(ctx context.Context, builder squirrel.Selec
 
 	builder = builder.Columns("IFNULL(SUM(" + field + "),0)")
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -216,7 +216,7 @@ func (m *defaultRegionModel) FindCount(ctx context.Context, builder squirrel.Sel
 
 	builder = builder.Columns("COUNT(" + field + ")")
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -243,7 +243,7 @@ func (m *defaultRegionModel) FindAll(ctx context.Context, builder squirrel.Selec
 		builder = builder.OrderBy(orderBy)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +275,7 @@ func (m *defaultRegionModel) FindPageListByPage(ctx context.Context, builder squ
 	}
 	offset := (page - 1) * pageSize
 
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +312,7 @@ func (m *defaultRegionModel) FindPageListByPageWithTotal(ctx context.Context, bu
 	}
 	offset := (page - 1) * pageSize
 
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, total, err
 	}
@@ -337,7 +337,7 @@ func (m *defaultRegionModel) FindPageListByIdDESC(ctx context.Context, builder s
 		builder = builder.Where(" id < ? ", preMinId)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +362,7 @@ func (m *defaultRegionModel) FindPageListByIdASC(ctx context.Context, builder sq
 		builder = builder.Where(" id > ? ", preMaxId)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}

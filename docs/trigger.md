@@ -168,7 +168,7 @@ StreamEventConf:          # 回调业务系统的 gRPC 目标
 | trigger_count | INT | 触发次数 |
 | status | SMALLINT | 0/10/100/150/200/300 |
 
-> 核心索引：`(del_state, next_trigger_time, status)`
+> 核心索引：`(is_deleted, next_trigger_time, status)`
 
 ### plan_exec_log
 

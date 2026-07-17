@@ -4,7 +4,7 @@ func (m *default{{.upperStartCamelObject}}Model) FindOne(ctx context.Context, {{
 	err := m.QueryRowCtx(ctx, &resp, {{.cacheKeyVariable}}, func(ctx context.Context, conn sqlx.SqlConn, v any) error {
 		selectBuilder := m.SelectBuilder().Columns(m.rows).
 			Where("id = ?", {{.lowerStartCamelPrimaryKey}}).
-			Where("del_state = ?", 0).
+			Where("is_deleted = ?", 0).
 			Limit(1)
 		query, args, err := selectBuilder.ToSql()
 		if err != nil {
@@ -21,7 +21,7 @@ func (m *default{{.upperStartCamelObject}}Model) FindOne(ctx context.Context, {{
 		return nil, err
 	}{{else}}selectBuilder := m.SelectBuilder().Columns(m.rows).
 		Where("id = ?", {{.lowerStartCamelPrimaryKey}}).
-		Where("del_state = ?", 0).
+		Where("is_deleted = ?", 0).
 		Limit(1)
 	query, args, err := selectBuilder.ToSql()
 	if err != nil {

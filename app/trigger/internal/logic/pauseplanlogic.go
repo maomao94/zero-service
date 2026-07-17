@@ -7,6 +7,7 @@ import (
 
 	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
 	"zero-service/model"
@@ -14,7 +15,7 @@ import (
 
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"gorm.io/gorm"
 )
 
 type PausePlanLogic struct {
@@ -40,16 +41,17 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 	}
 
 	// 检查参数
-	if in.Id <= 0 && strutil.IsBlank(in.PlanId) {
+	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.PlanId) {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
 
 	// 查询计划
-	var plan *model.Plan
-	if in.Id > 0 {
-		plan, err = l.svcCtx.PlanModel.FindOne(l.ctx, in.Id)
+	db := l.svcCtx.DB.WithContext(l.ctx).DB
+	var plan gormmodel.Plan
+	if !strutil.IsBlank(in.Id) {
+		err = db.Where("id = ?", in.Id).First(&plan).Error
 	} else {
-		plan, err = l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
+		err = db.Where("plan_id = ?", in.PlanId).First(&plan).Error
 	}
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
@@ -62,7 +64,7 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 	}
 
 	// 执行事务
-	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
+	err = db.Transaction(func(tx *gorm.DB) error {
 		// 更新计划状态为暂停
 		plan.Status = int64(model.PlanStatusPaused) // 暂停
 		plan.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
@@ -70,30 +72,29 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
 
 		// 更新计划
-		transErr := l.svcCtx.PlanModel.UpdateWithVersion(ctx, tx, plan)
+		transErr := tx.Save(&plan).Error
 		if transErr != nil {
 			return transErr
 		}
 
-		builder := l.svcCtx.PlanBatchModel.UpdateBuilder().
-			Set("status", int64(model.PlanStatusPaused)).
-			Set("paused_time", sql.NullTime{Time: time.Now(), Valid: true}).
-			Set("paused_reason", sql.NullString{String: in.Reason, Valid: in.Reason != ""}).
-			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}).
+		// 更新批次
+		transErr = tx.Model(&gormmodel.PlanBatch{}).
 			Where("plan_id = ?", plan.PlanId).
 			Where("status = ?", int64(model.PlanStatusEnabled)).
-			Where("finished_time IS NULL")
-		_, transErr = l.svcCtx.PlanBatchModel.UpdateWithBuilder(ctx, tx, builder)
-		if transErr != nil {
-			return transErr
-		}
-		return nil
+			Where("finished_time IS NULL").
+			Updates(map[string]any{
+				"status":        int64(model.PlanStatusPaused),
+				"paused_time":   sql.NullTime{Time: time.Now(), Valid: true},
+				"paused_reason": sql.NullString{String: in.Reason, Valid: in.Reason != ""},
+				"update_user":   sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""},
+			}).Error
+		return transErr
 	})
 
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "暂停计划事务失败")
 	}
 
-	planscope.PlanScope(plan).Logger(l.ctx).Info("RPC 暂停计划：计划状态已更新，事务已提交")
+	planscope.PlanScope(&plan).Logger(l.ctx).Info("RPC 暂停计划：计划状态已更新，事务已提交")
 	return &trigger.PausePlanRes{}, nil
 }

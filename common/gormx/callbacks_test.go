@@ -30,10 +30,10 @@ func (callbackTestModel) TableName() string {
 	return "callback_test_models"
 }
 
-func TestRegisterCallbacksEnablesHooks(t *testing.T) {
+func TestRegisterCallbacksDoesNotFillCommonFields(t *testing.T) {
 	db := openTestDB(t, &callbackTestModel{})
 
-	// Verify callbacks are registered by creating a record with user context
+	// Callbacks are registered as extension placeholders only; common fields are model-owned.
 	ctx := WithUserAndTenantContext(context.Background(), "user-1", "tester", "tenant-1")
 	record := callbackTestModel{Name: "test"}
 	if err := db.WithContext(ctx).Create(&record).Error; err != nil {
@@ -45,25 +45,24 @@ func TestRegisterCallbacksEnablesHooks(t *testing.T) {
 		t.Fatalf("find error = %v", err)
 	}
 
-	// Verify audit fields are filled
-	if got.CreateUser != "user-1" {
-		t.Fatalf("create_user = %q, want user-1", got.CreateUser)
+	if got.CreateUser != "" {
+		t.Fatalf("create_user = %q, want empty", got.CreateUser)
 	}
-	if got.UpdateUser != "user-1" {
-		t.Fatalf("update_user = %q, want user-1", got.UpdateUser)
+	if got.UpdateUser != "" {
+		t.Fatalf("update_user = %q, want empty", got.UpdateUser)
 	}
-	if got.CreateName != "tester" {
-		t.Fatalf("create_name = %q, want tester", got.CreateName)
+	if got.CreateName != "" {
+		t.Fatalf("create_name = %q, want empty", got.CreateName)
 	}
-	if got.UpdateName != "tester" {
-		t.Fatalf("update_name = %q, want tester", got.UpdateName)
+	if got.UpdateName != "" {
+		t.Fatalf("update_name = %q, want empty", got.UpdateName)
 	}
-	if got.TenantID != "tenant-1" {
-		t.Fatalf("tenant_id = %q, want tenant-1", got.TenantID)
+	if got.TenantID != "" {
+		t.Fatalf("tenant_id = %q, want empty", got.TenantID)
 	}
 }
 
-func TestBeforeCreateHookFillsAuditFields(t *testing.T) {
+func TestBeforeCreateHookIsNoop(t *testing.T) {
 	db := openTestDB(t, &callbackTestModel{})
 
 	ctx := WithUserAndTenantContext(context.Background(), "user-1", "tester", "tenant-1")
@@ -77,20 +76,20 @@ func TestBeforeCreateHookFillsAuditFields(t *testing.T) {
 		t.Fatalf("find error = %v", err)
 	}
 
-	if got.CreateUser != "user-1" {
-		t.Fatalf("create_user = %q, want user-1", got.CreateUser)
+	if got.CreateUser != "" {
+		t.Fatalf("create_user = %q, want empty", got.CreateUser)
 	}
-	if got.UpdateUser != "user-1" {
-		t.Fatalf("update_user = %q, want user-1", got.UpdateUser)
+	if got.UpdateUser != "" {
+		t.Fatalf("update_user = %q, want empty", got.UpdateUser)
 	}
-	if got.CreateName != "tester" {
-		t.Fatalf("create_name = %q, want tester", got.CreateName)
+	if got.CreateName != "" {
+		t.Fatalf("create_name = %q, want empty", got.CreateName)
 	}
-	if got.UpdateName != "tester" {
-		t.Fatalf("update_name = %q, want tester", got.UpdateName)
+	if got.UpdateName != "" {
+		t.Fatalf("update_name = %q, want empty", got.UpdateName)
 	}
-	if got.TenantID != "tenant-1" {
-		t.Fatalf("tenant_id = %q, want tenant-1", got.TenantID)
+	if got.TenantID != "" {
+		t.Fatalf("tenant_id = %q, want empty", got.TenantID)
 	}
 }
 
@@ -116,7 +115,7 @@ func TestBeforeCreateHookSkipsWhenNoUserContext(t *testing.T) {
 	}
 }
 
-func TestBeforeUpdateHookFillsUpdateFields(t *testing.T) {
+func TestBeforeUpdateHookIsNoop(t *testing.T) {
 	db := openTestDB(t, &callbackTestModel{})
 
 	ctx1 := WithUserAndTenantContext(context.Background(), "user-1", "creator", "tenant-1")
@@ -135,20 +134,17 @@ func TestBeforeUpdateHookFillsUpdateFields(t *testing.T) {
 		t.Fatalf("find error = %v", err)
 	}
 
-	// Update fields should be filled with new user
-	if got.UpdateUser != "user-2" {
-		t.Fatalf("update_user = %q, want user-2", got.UpdateUser)
+	if got.UpdateUser != "" {
+		t.Fatalf("update_user = %q, want empty", got.UpdateUser)
 	}
-	if got.UpdateName != "updater" {
-		t.Fatalf("update_name = %q, want updater", got.UpdateName)
+	if got.UpdateName != "" {
+		t.Fatalf("update_name = %q, want empty", got.UpdateName)
 	}
-
-	// Create fields should remain from original user
-	if got.CreateUser != "user-1" {
-		t.Fatalf("create_user = %q, want user-1", got.CreateUser)
+	if got.CreateUser != "" {
+		t.Fatalf("create_user = %q, want empty", got.CreateUser)
 	}
-	if got.CreateName != "creator" {
-		t.Fatalf("create_name = %q, want creator", got.CreateName)
+	if got.CreateName != "" {
+		t.Fatalf("create_name = %q, want empty", got.CreateName)
 	}
 }
 

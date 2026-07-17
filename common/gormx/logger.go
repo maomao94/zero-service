@@ -90,26 +90,40 @@ func (c *gormLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 	if c.cfg.LogLevel <= logger.Silent {
 		return
 	}
-	if skip, ok := ctx.Value(skipSQLTraceKey{}).(bool); ok && skip {
+	elapsed := time.Since(begin)
+	slow := isSlowSQL(elapsed, c.cfg.SlowThreshold)
+	traceDisabled := isSQLTraceDisabled(ctx)
+
+	shouldLogError := err != nil && c.cfg.LogLevel >= logger.Error && (!errors.Is(err, gorm.ErrRecordNotFound) || !c.cfg.IgnoreRecordNotFoundError)
+	shouldLogRecordNotFound := err != nil && errors.Is(err, gorm.ErrRecordNotFound) && c.cfg.LogLevel >= logger.Info
+	shouldLogSlow := slow && c.cfg.LogLevel >= logger.Error
+	shouldLogInfo := err == nil && c.cfg.LogLevel >= logger.Info && !traceDisabled
+	if !shouldLogError && !shouldLogRecordNotFound && !shouldLogSlow && !shouldLogInfo {
 		return
 	}
 
-	elapsed := time.Since(begin)
-
-	switch {
-	case err != nil && c.cfg.LogLevel >= logger.Error && (!errors.Is(err, gorm.ErrRecordNotFound) || !c.cfg.IgnoreRecordNotFoundError):
-		sql, rows := fc()
+	sql, rows := fc()
+	if shouldLogError {
 		logx.WithContext(ctx).WithDuration(elapsed).Errorf("[gorm] [rows:%s] %s error: %v", formatRows(rows), sql, err)
-	case err != nil && errors.Is(err, gorm.ErrRecordNotFound) && c.cfg.LogLevel >= logger.Info:
-		sql, rows := fc()
+	}
+	if shouldLogRecordNotFound {
 		logx.WithContext(ctx).WithDuration(elapsed).Infof("[gorm] [rows:%s] %s record not found", formatRows(rows), sql)
-	case elapsed > c.cfg.SlowThreshold && c.cfg.SlowThreshold != 0 && c.cfg.LogLevel >= logger.Warn:
-		sql, rows := fc()
+	}
+	if shouldLogSlow {
 		logx.WithContext(ctx).WithDuration(elapsed).Slowf("[gorm] [rows:%s] [SLOW] %s", formatRows(rows), sql)
-	case c.cfg.LogLevel >= logger.Info:
-		sql, rows := fc()
+	}
+	if shouldLogInfo {
 		logx.WithContext(ctx).WithDuration(elapsed).Infof("[gorm] [rows:%s] %s", formatRows(rows), sql)
 	}
+}
+
+func isSQLTraceDisabled(ctx context.Context) bool {
+	skip, ok := ctx.Value(skipSQLTraceKey{}).(bool)
+	return ok && skip
+}
+
+func isSlowSQL(elapsed time.Duration, threshold time.Duration) bool {
+	return threshold != 0 && elapsed > threshold
 }
 
 func formatRows(rows int64) string {

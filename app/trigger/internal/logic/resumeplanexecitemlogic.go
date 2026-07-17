@@ -3,7 +3,9 @@ package logic
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/tool"
 	"zero-service/model"
 	"zero-service/third_party/extproto"
@@ -14,7 +16,7 @@ import (
 
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"gorm.io/gorm"
 )
 
 type ResumePlanExecItemLogic struct {
@@ -39,19 +41,20 @@ func (l *ResumePlanExecItemLogic) ResumePlanExecItem(in *trigger.ResumePlanExecI
 	}
 
 	// 检查参数
-	if in.Id <= 0 && strutil.IsBlank(in.ExecId) {
+	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.ExecId) {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
 
 	// 查询执行项
-	var execItem *model.PlanExecItem
-	if in.Id > 0 {
-		execItem, err = l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
+	db := l.svcCtx.DB.WithContext(l.ctx).DB
+	var execItem gormmodel.PlanExecItem
+	if !strutil.IsBlank(in.Id) {
+		err = db.Where("id = ?", in.Id).First(&execItem).Error
 	} else {
-		execItem, err = l.svcCtx.PlanExecItemModel.FindOneByExecId(l.ctx, in.ExecId)
+		err = db.Where("exec_id = ?", in.ExecId).First(&execItem).Error
 	}
 	if err != nil {
-		if err == sqlx.ErrNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return &trigger.ResumePlanExecItemRes{}, nil
 		}
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_DB, "查询执行项失败")
@@ -61,13 +64,13 @@ func (l *ResumePlanExecItemLogic) ResumePlanExecItem(in *trigger.ResumePlanExecI
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划执行项非暂停,不可恢复")
 	}
 
-	_, err = l.svcCtx.PlanModel.FindOne(l.ctx, execItem.PlanPk)
-	if err != nil {
+	var plan gormmodel.Plan
+	if err := db.Where("id = ?", execItem.PlanPk).First(&plan).Error; err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 	}
 
 	// 执行事务
-	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
+	err = db.Transaction(func(tx *gorm.DB) error {
 		execItem.Status = int64(model.StatusWaiting)
 		execItem.PausedTime = sql.NullTime{}
 		execItem.PausedReason = sql.NullString{}
@@ -75,18 +78,13 @@ func (l *ResumePlanExecItemLogic) ResumePlanExecItem(in *trigger.ResumePlanExecI
 		execItem.UpdateTime = time.Now()
 
 		// 更新执行项
-		transErr := l.svcCtx.PlanExecItemModel.UpdateWithVersion(ctx, tx, execItem)
-		if transErr != nil {
-			return transErr
-		}
-
-		return nil
+		return tx.Save(&execItem).Error
 	})
 
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "恢复执行项事务失败")
 	}
 
-	planscope.ExecScope(execItem).Logger(l.ctx).Info("RPC 恢复执行项：执行项状态已更新，事务已提交")
+	planscope.ExecScope(&execItem).Logger(l.ctx).Info("RPC 恢复执行项：执行项状态已更新，事务已提交")
 	return &trigger.ResumePlanExecItemRes{}, nil
 }

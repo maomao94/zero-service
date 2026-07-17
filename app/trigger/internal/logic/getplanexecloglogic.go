@@ -2,6 +2,8 @@ package logic
 
 import (
 	"context"
+	"errors"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -10,7 +12,7 @@ import (
 
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"gorm.io/gorm"
 )
 
 type GetPlanExecLogLogic struct {
@@ -36,9 +38,10 @@ func (l *GetPlanExecLogLogic) GetPlanExecLog(in *trigger.GetPlanExecLogReq) (*tr
 	}
 
 	// 查询日志
-	log, err := l.svcCtx.PlanExecLogModel.FindOne(l.ctx, in.Id)
+	var execLog gormmodel.PlanExecLog
+	err = l.svcCtx.DB.WithContext(l.ctx).Where("id = ?", in.Id).First(&execLog).Error
 	if err != nil {
-		if err == sqlx.ErrNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
 		}
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_DB, "查询执行日志失败")
@@ -46,26 +49,26 @@ func (l *GetPlanExecLogLogic) GetPlanExecLog(in *trigger.GetPlanExecLogReq) (*tr
 
 	// 构建响应
 	pbLog := &trigger.PlanExecLogPb{
-		CreateTime:  carbon.CreateFromStdTime(log.CreateTime).ToDateTimeString(),
-		UpdateTime:  carbon.CreateFromStdTime(log.UpdateTime).ToDateTimeString(),
-		CreateUser:  log.CreateUser.String,
-		UpdateUser:  log.UpdateUser.String,
-		DeptCode:    log.DeptCode.String,
-		Id:          log.Id,
-		PlanPk:      log.PlanPk,
-		PlanId:      log.PlanId,
-		PlanName:    log.PlanName.String,
-		BatchPk:     log.BatchPk,
-		BatchId:     log.BatchId,
-		ItemPk:      log.ItemPk,
-		ExecId:      log.ExecId,
-		ItemId:      log.ItemId,
-		ItemType:    log.ItemType.String,
-		ItemName:    log.ItemName.String,
-		PointId:     log.PointId.String,
-		TriggerTime: carbon.CreateFromStdTime(log.TriggerTime).ToDateTimeString(),
-		ExecResult:  log.ExecResult.String,
-		Message:     log.Message.String,
+		CreateTime:  carbon.CreateFromStdTime(execLog.CreateTime).ToDateTimeString(),
+		UpdateTime:  carbon.CreateFromStdTime(execLog.UpdateTime).ToDateTimeString(),
+		CreateUser:  execLog.CreateUser.String,
+		UpdateUser:  execLog.UpdateUser.String,
+		DeptCode:    execLog.DeptCode.String,
+		Id:          execLog.Id,
+		PlanPk:      execLog.PlanPk,
+		PlanId:      execLog.PlanId,
+		PlanName:    execLog.PlanName.String,
+		BatchPk:     execLog.BatchPk,
+		BatchId:     execLog.BatchId,
+		ItemPk:      execLog.ItemPk,
+		ExecId:      execLog.ExecId,
+		ItemId:      execLog.ItemId,
+		ItemType:    execLog.ItemType.String,
+		ItemName:    execLog.ItemName.String,
+		PointId:     execLog.PointId.String,
+		TriggerTime: carbon.CreateFromStdTime(execLog.TriggerTime).ToDateTimeString(),
+		ExecResult:  execLog.ExecResult.String,
+		Message:     execLog.Message.String,
 	}
 
 	return &trigger.GetPlanExecLogRes{

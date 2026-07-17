@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/gormx"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -33,32 +35,32 @@ func (l *ListPlanExecLogsLogic) ListPlanExecLogs(in *trigger.ListPlanExecLogsReq
 	}
 
 	// 构建查询条件
-	builder := l.svcCtx.PlanExecLogModel.SelectBuilder()
+	db := l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.PlanExecLog{})
 	if in.PlanId != "" {
-		builder = builder.Where("plan_id = ?", in.PlanId)
+		db = db.Where("plan_id = ?", in.PlanId)
 	}
 	if in.ItemId != "" {
-		builder = builder.Where("item_id = ?", in.ItemId)
+		db = db.Where("item_id = ?", in.ItemId)
 	}
 	if in.ExecId != "" {
-		builder = builder.Where("exec_id = ?", in.ExecId)
+		db = db.Where("exec_id = ?", in.ExecId)
 	}
 	if in.StartTime != "" {
-		builder = builder.Where("trigger_time >= ?", in.StartTime)
+		db = db.Where("trigger_time >= ?", in.StartTime)
 	}
 	if in.EndTime != "" {
-		builder = builder.Where("trigger_time <= ?", in.EndTime)
+		db = db.Where("trigger_time <= ?", in.EndTime)
 	}
 	if len(in.ExecResult) > 0 {
 		execResultInts := make([]int64, len(in.ExecResult))
 		for i, execResult := range in.ExecResult {
 			execResultInts[i] = int64(execResult)
 		}
-		builder = builder.Where("exec_result IN (?) ", execResultInts)
+		db = db.Where("exec_result IN ?", execResultInts)
 	}
 
-	// 查询日志列表
-	logs, total, err := l.svcCtx.PlanExecLogModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "create_time DESC", "id DESC")
+	var logs []gormmodel.PlanExecLog
+	page, err := gormx.QueryPage(db.Order("create_time DESC, id DESC"), int(in.PageNum), int(in.PageSize), &logs)
 	if err != nil {
 		return nil, err
 	}
@@ -66,32 +68,32 @@ func (l *ListPlanExecLogsLogic) ListPlanExecLogs(in *trigger.ListPlanExecLogsReq
 	// 构建响应
 	resp := &trigger.ListPlanExecLogsRes{
 		PlanExecLogs: make([]*trigger.PlanExecLogPb, 0, len(logs)),
-		Total:        total,
+		Total:        page.Total,
 	}
 
 	// 转换日志列表
-	for _, log := range logs {
+	for i := range logs {
 		pbLog := &trigger.PlanExecLogPb{
-			CreateTime:  carbon.CreateFromStdTime(log.CreateTime).ToDateTimeString(),
-			UpdateTime:  carbon.CreateFromStdTime(log.UpdateTime).ToDateTimeString(),
-			CreateUser:  log.CreateUser.String,
-			UpdateUser:  log.UpdateUser.String,
-			DeptCode:    log.DeptCode.String,
-			Id:          log.Id,
-			PlanPk:      log.PlanPk,
-			PlanId:      log.PlanId,
-			PlanName:    log.PlanName.String,
-			BatchPk:     log.BatchPk,
-			BatchId:     log.BatchId,
-			ItemPk:      log.ItemPk,
-			ExecId:      log.ExecId,
-			ItemId:      log.ItemId,
-			ItemType:    log.ItemType.String,
-			ItemName:    log.ItemName.String,
-			PointId:     log.PointId.String,
-			TriggerTime: carbon.CreateFromStdTime(log.TriggerTime).ToDateTimeString(),
-			ExecResult:  log.ExecResult.String,
-			Message:     log.Message.String,
+			CreateTime:  carbon.CreateFromStdTime(logs[i].CreateTime).ToDateTimeString(),
+			UpdateTime:  carbon.CreateFromStdTime(logs[i].UpdateTime).ToDateTimeString(),
+			CreateUser:  logs[i].CreateUser.String,
+			UpdateUser:  logs[i].UpdateUser.String,
+			DeptCode:    logs[i].DeptCode.String,
+			Id:          logs[i].Id,
+			PlanPk:      logs[i].PlanPk,
+			PlanId:      logs[i].PlanId,
+			PlanName:    logs[i].PlanName.String,
+			BatchPk:     logs[i].BatchPk,
+			BatchId:     logs[i].BatchId,
+			ItemPk:      logs[i].ItemPk,
+			ExecId:      logs[i].ExecId,
+			ItemId:      logs[i].ItemId,
+			ItemType:    logs[i].ItemType.String,
+			ItemName:    logs[i].ItemName.String,
+			PointId:     logs[i].PointId.String,
+			TriggerTime: carbon.CreateFromStdTime(logs[i].TriggerTime).ToDateTimeString(),
+			ExecResult:  logs[i].ExecResult.String,
+			Message:     logs[i].Message.String,
 		}
 
 		resp.PlanExecLogs = append(resp.PlanExecLogs, pbLog)

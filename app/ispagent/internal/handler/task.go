@@ -18,6 +18,7 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/threading"
 	"gorm.io/gorm"
 )
 
@@ -234,7 +235,10 @@ func HandleTaskControl(ctx context.Context, msg *isp.Message, store crontask.Tas
 		}
 	}
 	if notify != nil {
-		go notify(context.Background(), substationCode, items)
+		threading.GoSafe(func() {
+			time.Sleep(3 * time.Second)
+			notify(context.Background(), substationCode, items)
+		})
 	}
 	return taskPatrolledID, nil
 }

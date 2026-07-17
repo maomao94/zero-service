@@ -16,8 +16,8 @@ type (
 	PlanBatchModel interface {
 		planBatchModel
 		withSession(session sqlx.Session) PlanBatchModel
-		UpdateBatchFinishedTime(ctx context.Context, id int64) (int64, error)
-		CalculatePlanProgress(ctx context.Context, planPk int64) (float32, error)
+		UpdateBatchFinishedTime(ctx context.Context, id string) (int64, error)
+		CalculatePlanProgress(ctx context.Context, planPk string) (float32, error)
 	}
 
 	customPlanBatchModel struct {
@@ -38,9 +38,9 @@ func (m *customPlanBatchModel) withSession(session sqlx.Session) PlanBatchModel 
 	}
 }
 
-func (m *customPlanBatchModel) UpdateBatchFinishedTime(ctx context.Context, id int64) (int64, error) {
+func (m *customPlanBatchModel) UpdateBatchFinishedTime(ctx context.Context, id string) (int64, error) {
 	now := time.Now()
-	subQuery := "SELECT 1 FROM plan_exec_item i WHERE i.del_state = 0 AND i.batch_pk = b.id AND i.status NOT IN (?, ?)"
+	subQuery := "SELECT 1 FROM plan_exec_item i WHERE i.is_deleted = 0 AND i.batch_pk = b.id AND i.status NOT IN (?, ?)"
 	builder := squirrel.
 		Update(m.table+" AS b").
 		Set("finished_time", now).
@@ -65,11 +65,11 @@ func (m *customPlanBatchModel) UpdateBatchFinishedTime(ctx context.Context, id i
 	return updateCount, err
 }
 
-func (m *customPlanBatchModel) CalculatePlanProgress(ctx context.Context, planPk int64) (float32, error) {
+func (m *customPlanBatchModel) CalculatePlanProgress(ctx context.Context, planPk string) (float32, error) {
 	execItemBuilder := m.SelectBuilder().Columns("COUNT(*) as total, SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as finished").
 		From("plan_exec_item").
 		Where("plan_pk = ?", planPk).
-		Where("del_state = ?", 0)
+		Where("is_deleted = ?", 0)
 	sql, args, err := execItemBuilder.ToSql()
 	if err != nil {
 		return 0.0, err

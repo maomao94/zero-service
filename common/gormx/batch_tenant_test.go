@@ -12,8 +12,8 @@ func TestBatchInsertWithTenantSetsTenantID(t *testing.T) {
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 
 	records := []batchTenantTestModel{
-		{Name: "a"},
-		{Name: "b"},
+		{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "a"},
+		{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "b"},
 	}
 	if err := BatchInsertWithTenant(db.WithContext(ctx), records); err != nil {
 		t.Fatalf("batch insert error = %v", err)
@@ -41,7 +41,7 @@ func TestBatchUpdateByIdsWithTenantUpdatesRecords(t *testing.T) {
 	db := openTestDB(t, &batchTenantTestModel{})
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 
-	record := batchTenantTestModel{Name: "old"}
+	record := batchTenantTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "old"}
 	if err := db.WithContext(ctx).Create(&record).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
@@ -76,8 +76,8 @@ func TestBatchDeleteByIdsWithTenantDeletesRecords(t *testing.T) {
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 
 	records := []batchTenantTestModel{
-		{Name: "a"},
-		{Name: "b"},
+		{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "a"},
+		{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "b"},
 	}
 	if err := db.WithContext(ctx).Create(&records).Error; err != nil {
 		t.Fatalf("create error = %v", err)
@@ -110,10 +110,10 @@ func TestBatchDeleteByConditionWithTenantDeletesMatchingRecords(t *testing.T) {
 	db := openTestDB(t, &batchTenantTestModel{})
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 
-	if err := db.WithContext(ctx).Create(&batchTenantTestModel{Name: "keep"}).Error; err != nil {
+	if err := db.WithContext(ctx).Create(&batchTenantTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "keep"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
-	if err := db.WithContext(ctx).Create(&batchTenantTestModel{Name: "delete"}).Error; err != nil {
+	if err := db.WithContext(ctx).Create(&batchTenantTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "delete"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
 
@@ -137,7 +137,7 @@ func TestBatchUpdateByIdsWithTenantDoesNotAffectOtherTenant(t *testing.T) {
 	ctx1 := WithTenantContext(context.Background(), "tenant-1")
 	ctx2 := WithTenantContext(context.Background(), "tenant-2")
 
-	record1 := batchTenantTestModel{Name: "old"}
+	record1 := batchTenantTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "old"}
 	if err := db.WithContext(ctx1).Create(&record1).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
@@ -161,7 +161,7 @@ func TestBatchDeleteByIdsWithTenantDoesNotAffectOtherTenant(t *testing.T) {
 	ctx1 := WithTenantContext(context.Background(), "tenant-1")
 	ctx2 := WithTenantContext(context.Background(), "tenant-2")
 
-	record1 := batchTenantTestModel{Name: "keep"}
+	record1 := batchTenantTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "keep"}
 	if err := db.WithContext(ctx1).Create(&record1).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}

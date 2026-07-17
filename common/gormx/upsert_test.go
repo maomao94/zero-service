@@ -45,7 +45,3 @@ func TestUpsertDoesNothingWhenUpdateColumnsEmpty(t *testing.T) {
 		t.Fatalf("name = %q, want old", got.Name)
 	}
 }
-
-
-
-

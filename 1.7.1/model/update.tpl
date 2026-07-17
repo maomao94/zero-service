@@ -3,7 +3,7 @@ func (m *default{{.upperStartCamelObject}}Model) Update(ctx context.Context,sess
 	newData.DeleteTime = sql.NullTime{
     		Valid: false,
     }
-    newData.DelState = 0
+    newData.IsDeleted = 0
 	{{if .withCache}}{{if .containsIndexCache}}data, err:=m.FindOne(ctx, newData.{{.upperStartCamelPrimaryKey}})
         if err!=nil{
             return nil,err
@@ -72,7 +72,7 @@ func (m *default{{.upperStartCamelObject}}Model) DeleteSoft(ctx context.Context,
     if err != nil {
         return err
     }
-    data.DelState = 1
+    data.IsDeleted = 1
     data.DeleteTime = sql.NullTime{
         Time:  time.Now(),
         Valid: true,
@@ -91,7 +91,7 @@ func (m *default{{.upperStartCamelObject}}Model) FindSum(ctx context.Context,bui
 
     builder = builder.Columns("IFNULL(SUM(" + field + "),0)")
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -116,7 +116,7 @@ func (m *default{{.upperStartCamelObject}}Model) FindCount(ctx context.Context, 
 
 	builder = builder.Columns("COUNT(" + field + ")")
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -143,7 +143,7 @@ func (m *default{{.upperStartCamelObject}}Model) FindAll(ctx context.Context,bui
 		builder = builder.OrderBy(orderBy...)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func (m *default{{.upperStartCamelObject}}Model) FindPageListByPage(ctx context.
 	}
 	offset := (page - 1) * pageSize
 
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (m *default{{.upperStartCamelObject}}Model) FindPageListByPageWithTotal(ctx
 	}
 	offset := (page - 1) * pageSize
 
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil,total, err
 	}
@@ -238,7 +238,7 @@ func (m *default{{.upperStartCamelObject}}Model) FindPageListByIdDESC(ctx contex
 		builder = builder.Where(" id < ? " , preMinId)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +263,7 @@ func (m *default{{.upperStartCamelObject}}Model) FindPageListByIdASC(ctx context
 		builder = builder.Where(" id > ? " , preMaxId)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}

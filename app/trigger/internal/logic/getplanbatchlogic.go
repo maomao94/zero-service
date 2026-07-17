@@ -2,9 +2,10 @@ package logic
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/tool"
-	"zero-service/model"
 	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/svc"
@@ -13,7 +14,7 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"gorm.io/gorm"
 )
 
 type GetPlanBatchLogic struct {
@@ -38,30 +39,31 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 		return nil, err
 	}
 
-	if in.Id <= 0 && strutil.IsBlank(in.BatchId) {
+	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.BatchId) {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
-	var planBatch *model.PlanBatch
-	if in.Id > 0 {
-		planBatch, err = l.svcCtx.PlanBatchModel.FindOne(l.ctx, in.Id)
+	var planBatch gormmodel.PlanBatch
+	db := l.svcCtx.DB.WithContext(l.ctx).DB
+	if !strutil.IsBlank(in.Id) {
+		err = db.Where("id = ?", in.Id).First(&planBatch).Error
 	} else {
-		planBatch, err = l.svcCtx.PlanBatchModel.FindOneByBatchId(l.ctx, in.BatchId)
+		err = db.Where("batch_id = ?", in.BatchId).First(&planBatch).Error
 	}
 	if err != nil {
-		if err == sqlx.ErrNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
 		}
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划批次失败")
 	}
 
 	// 获取批次执行项状态统计
-	statusCounts, err := l.svcCtx.PlanExecItemModel.GetBatchStatusCounts(l.ctx, planBatch.Id)
+	statusCounts, err := gormmodel.GetBatchStatusCounts(l.ctx, db, planBatch.Id)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "获取批次状态统计失败")
 	}
 
 	// 获取批次总执行项数
-	totalExecItems, err := l.svcCtx.PlanExecItemModel.GetBatchTotalExecItems(l.ctx, planBatch.Id)
+	totalExecItems, err := gormmodel.GetBatchTotalExecItems(l.ctx, db, planBatch.Id)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "获取批次总数失败")
 	}

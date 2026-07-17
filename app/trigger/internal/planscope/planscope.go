@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"zero-service/model"
+	"zero-service/app/trigger/model/gormmodel"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
 // execRef 串联计划业务 ID、批次 ID、执行单 ID，便于日志检索与对齐「计划 → 批次 → 执行项」关系。
-func execRef(exec *model.PlanExecItem) string {
+func execRef(exec *gormmodel.PlanExecItem) string {
 	if exec == nil {
 		return ""
 	}
@@ -18,7 +18,7 @@ func execRef(exec *model.PlanExecItem) string {
 }
 
 // batchRef 串联计划业务 ID 与批次 ID（无执行项维度时使用）。
-func batchRef(planID string, batch *model.PlanBatch) string {
+func batchRef(planID string, batch *gormmodel.PlanBatch) string {
 	if batch == nil || planID == "" {
 		return ""
 	}
@@ -52,7 +52,7 @@ func (s Scope) WithFields(extra ...logx.LogField) Scope {
 	return s
 }
 
-func planFields(entry, tag string, plan *model.Plan) Scope {
+func planFields(entry, tag string, plan *gormmodel.Plan) Scope {
 	fields := []logx.LogField{
 		logx.Field("entry", entry),
 		logx.Field("tag", tag),
@@ -68,7 +68,7 @@ func planFields(entry, tag string, plan *model.Plan) Scope {
 	return Scope{Entry: entry, Tag: tag, Fields: fields}
 }
 
-func execFields(entry, tag string, exec *model.PlanExecItem) Scope {
+func execFields(entry, tag string, exec *gormmodel.PlanExecItem) Scope {
 	fields := []logx.LogField{
 		logx.Field("entry", entry),
 		logx.Field("tag", tag),
@@ -88,19 +88,19 @@ func execFields(entry, tag string, exec *model.PlanExecItem) Scope {
 	return Scope{Entry: entry, Tag: tag, Fields: fields}
 }
 
-func PlanScope(plan *model.Plan) Scope {
+func PlanScope(plan *gormmodel.Plan) Scope {
 	return planFields(EntryRPC, "plan", plan)
 }
 
-func ExecScope(exec *model.PlanExecItem) Scope {
+func ExecScope(exec *gormmodel.PlanExecItem) Scope {
 	return execFields(EntryRPC, "plan-exec", exec)
 }
 
-func ExecCron(exec *model.PlanExecItem) Scope {
+func ExecCron(exec *gormmodel.PlanExecItem) Scope {
 	return execFields(EntryCron, "plan-exec", exec)
 }
 
-func ExecCallback(exec *model.PlanExecItem) Scope {
+func ExecCallback(exec *gormmodel.PlanExecItem) Scope {
 	return execFields(EntryCallback, "plan-exec", exec)
 }
 
@@ -115,7 +115,7 @@ func CronLockScope() Scope {
 	}
 }
 
-func TriggerScope(exec *model.PlanExecItem, plan *model.Plan) Scope {
+func TriggerScope(exec *gormmodel.PlanExecItem, plan *gormmodel.Plan) Scope {
 	fields := []logx.LogField{
 		logx.Field("entry", EntryCron),
 		logx.Field("tag", "plan-trigger"),
@@ -138,13 +138,13 @@ func TriggerScope(exec *model.PlanExecItem, plan *model.Plan) Scope {
 	return Scope{Entry: EntryCron, Tag: "plan-trigger", Fields: fields}
 }
 
-func BatchScope(plan *model.Plan, batch *model.PlanBatch) Scope {
+func BatchScope(plan *gormmodel.Plan, batch *gormmodel.PlanBatch) Scope {
 	fields := []logx.LogField{
 		logx.Field("entry", EntryRPC),
 		logx.Field("tag", "plan-batch"),
 	}
 	if batch != nil {
-		var planPk int64
+		var planPk string
 		var planID string
 		if plan != nil {
 			planPk = plan.Id
@@ -168,7 +168,7 @@ func BatchScope(plan *model.Plan, batch *model.PlanBatch) Scope {
 	return Scope{Entry: EntryRPC, Tag: "plan-batch", Fields: fields}
 }
 
-func CallbackScope(exec *model.PlanExecItem, plan *model.Plan, batch *model.PlanBatch) Scope {
+func CallbackScope(exec *gormmodel.PlanExecItem, plan *gormmodel.Plan, batch *gormmodel.PlanBatch) Scope {
 	fields := []logx.LogField{
 		logx.Field("entry", EntryCallback),
 		logx.Field("tag", "plan-callback"),

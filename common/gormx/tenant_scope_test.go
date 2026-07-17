@@ -43,13 +43,13 @@ func TestTenantScopeFiltersByTenantID(t *testing.T) {
 	ctx1 := WithTenantContext(context.Background(), "tenant-1")
 	ctx2 := WithTenantContext(context.Background(), "tenant-2")
 
-	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{Name: "a"}).Error; err != nil {
+	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "a"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
-	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{Name: "b"}).Error; err != nil {
+	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "b"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
-	if err := db.WithContext(ctx2).Create(&tenantScopeTestModel{Name: "c"}).Error; err != nil {
+	if err := db.WithContext(ctx2).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-2"}, Name: "c"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
 
@@ -67,8 +67,8 @@ func TestTenantScopeReturnsAllWhenNoTenantContext(t *testing.T) {
 	db := openTestDB(t, &tenantScopeTestModel{})
 
 	records := []tenantScopeTestModel{
-		{Name: "a"},
-		{Name: "b"},
+		{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "a"},
+		{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "b"},
 	}
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 	if err := db.WithContext(ctx).Create(&records).Error; err != nil {
@@ -109,7 +109,7 @@ func TestTenantScopeStrictReturnsEmptyWhenNoTenantContext(t *testing.T) {
 	db := openTestDB(t, &tenantScopeTestModel{})
 
 	records := []tenantScopeTestModel{
-		{Name: "a"},
+		{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "a"},
 	}
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 	if err := db.WithContext(ctx).Create(&records).Error; err != nil {
@@ -130,10 +130,10 @@ func TestTenantScopeStrictFiltersByTenantID(t *testing.T) {
 	db := openTestDB(t, &tenantScopeTestModel{})
 
 	ctx := WithTenantContext(context.Background(), "tenant-1")
-	if err := db.WithContext(ctx).Create(&tenantScopeTestModel{Name: "a"}).Error; err != nil {
+	if err := db.WithContext(ctx).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "a"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
-	if err := db.WithContext(ctx).Create(&tenantScopeTestModel{Name: "b"}).Error; err != nil {
+	if err := db.WithContext(ctx).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "b"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
 
@@ -168,7 +168,7 @@ func TestTenantScopeWithDeleteIncludesDeletedRecords(t *testing.T) {
 	db := openTestDB(t, &tenantScopeSoftDeleteTestModel{})
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 
-	record := tenantScopeSoftDeleteTestModel{Name: "test"}
+	record := tenantScopeSoftDeleteTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "test"}
 	if err := db.WithContext(ctx).Create(&record).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
@@ -189,7 +189,7 @@ func TestTenantScopeWithDeleteIncludesDeletedRecords(t *testing.T) {
 func TestTenantScopeWithDeleteReturnsAllWhenNoTenantContext(t *testing.T) {
 	db := openTestDB(t, &tenantScopeSoftDeleteTestModel{})
 
-	record := tenantScopeSoftDeleteTestModel{Name: "test"}
+	record := tenantScopeSoftDeleteTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "test"}
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 	if err := db.WithContext(ctx).Create(&record).Error; err != nil {
 		t.Fatalf("create error = %v", err)
@@ -213,13 +213,13 @@ func TestTenantEqFiltersByTenantID(t *testing.T) {
 	ctx1 := WithTenantContext(context.Background(), "tenant-1")
 	ctx2 := WithTenantContext(context.Background(), "tenant-2")
 
-	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{Name: "a"}).Error; err != nil {
+	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "a"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
-	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{Name: "b"}).Error; err != nil {
+	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "b"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
-	if err := db.WithContext(ctx2).Create(&tenantScopeTestModel{Name: "c"}).Error; err != nil {
+	if err := db.WithContext(ctx2).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-2"}, Name: "c"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
 
@@ -236,7 +236,7 @@ func TestTenantEqFiltersByTenantID(t *testing.T) {
 func TestTenantEqReturnsAllWhenEmptyTenantID(t *testing.T) {
 	db := openTestDB(t, &tenantScopeTestModel{})
 
-	record := tenantScopeTestModel{Name: "test"}
+	record := tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "test"}
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 	if err := db.WithContext(ctx).Create(&record).Error; err != nil {
 		t.Fatalf("create error = %v", err)
@@ -258,13 +258,13 @@ func TestTenantNotEqFiltersByTenantID(t *testing.T) {
 	ctx1 := WithTenantContext(context.Background(), "tenant-1")
 	ctx2 := WithTenantContext(context.Background(), "tenant-2")
 
-	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{Name: "a"}).Error; err != nil {
+	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "a"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
-	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{Name: "b"}).Error; err != nil {
+	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "b"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
-	if err := db.WithContext(ctx2).Create(&tenantScopeTestModel{Name: "c"}).Error; err != nil {
+	if err := db.WithContext(ctx2).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-2"}, Name: "c"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
 
@@ -285,13 +285,13 @@ func TestTenantInFiltersByTenantIDs(t *testing.T) {
 	ctx2 := WithTenantContext(context.Background(), "tenant-2")
 	ctx3 := WithTenantContext(context.Background(), "tenant-3")
 
-	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{Name: "a"}).Error; err != nil {
+	if err := db.WithContext(ctx1).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "a"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
-	if err := db.WithContext(ctx2).Create(&tenantScopeTestModel{Name: "b"}).Error; err != nil {
+	if err := db.WithContext(ctx2).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-2"}, Name: "b"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
-	if err := db.WithContext(ctx3).Create(&tenantScopeTestModel{Name: "c"}).Error; err != nil {
+	if err := db.WithContext(ctx3).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-3"}, Name: "c"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
 
@@ -308,7 +308,7 @@ func TestTenantInFiltersByTenantIDs(t *testing.T) {
 func TestTenantInReturnsAllWhenEmptyTenantIDs(t *testing.T) {
 	db := openTestDB(t, &tenantScopeTestModel{})
 
-	record := tenantScopeTestModel{Name: "test"}
+	record := tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "test"}
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 	if err := db.WithContext(ctx).Create(&record).Error; err != nil {
 		t.Fatalf("create error = %v", err)

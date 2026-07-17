@@ -4,21 +4,20 @@ import (
 	"math"
 	"time"
 	"zero-service/app/trigger/internal/config"
+	"zero-service/app/trigger/model/gormmodel"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/asynqx"
-	"zero-service/common/dbx"
+	"zero-service/common/gormx"
 	"zero-service/common/netx"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
-	"zero-service/model"
 
-	"github.com/doug-martin/goqu/v9"
 	"github.com/go-playground/validator/v10"
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/go-zero/core/mathx"
+	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/core/stores/redis"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/rest/httpc"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
@@ -31,38 +30,34 @@ const (
 )
 
 type ServiceContext struct {
-	Config            config.Config
-	Validate          *validator.Validate
-	AsynqClient       *asynq.Client
-	AsynqInspector    *asynq.Inspector
-	AsynqServer       *asynq.Server
-	Scheduler         *asynq.Scheduler
-	Httpc             httpc.Service
-	NetClient         *netx.Client
-	ConnMap           *collection.Cache // 使用带过期清理的缓存
-	SqlConn           sqlx.SqlConn
-	PlanModel         model.PlanModel
-	PlanBatchModel    model.PlanBatchModel
-	PlanExecItemModel model.PlanExecItemModel
-	PlanExecLogModel  model.PlanExecLogModel
-	Database          *goqu.Database
-	UnstableExpiry    mathx.Unstable
-	Redis             *redis.Redis
-	StreamEventCli    streamevent.StreamEventClient
-	IdUtil            *tool.IdUtil
+	Config         config.Config
+	Validate       *validator.Validate
+	AsynqClient    *asynq.Client
+	AsynqInspector *asynq.Inspector
+	AsynqServer    *asynq.Server
+	Scheduler      *asynq.Scheduler
+	Httpc          httpc.Service
+	NetClient      *netx.Client
+	ConnMap        *collection.Cache // 使用带过期清理的缓存
+	DB             *gormx.DB
+	UnstableExpiry mathx.Unstable
+	Redis          *redis.Redis
+	StreamEventCli streamevent.StreamEventClient
+	IdUtil         *tool.IdUtil
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
-	if c.DisableStmtLog {
-		sqlx.DisableStmtLog()
-	}
 	redisDb := redis.MustNewRedis(c.Redis.RedisConf)
-	// 解析数据库类型
-	dbType := dbx.ParseDatabaseType(c.DB.DataSource)
-
 	// 创建数据库连接
-	dbConn := dbx.New(c.DB.DataSource)
-	database := dbx.MustNewQoqu(c.DB.DataSource)
+	db := gormx.MustOpenWithConf(c.DB)
+
+	if c.Mode == service.DevMode || c.Mode == service.TestMode {
+		db.MustAutoMigrate(
+			&gormmodel.Plan{},
+			&gormmodel.PlanBatch{},
+			&gormmodel.PlanExecItem{},
+			&gormmodel.PlanExecLog{})
+	}
 
 	// 使用带自动过期清理的缓存，30分钟不访问自动移除过期连接
 	connCache, err := collection.NewCache(time.Minute*connExpiryMinutes, collection.WithName("conn-cache"))
@@ -72,23 +67,18 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 	httpcSvc := netx.NewHTTPCService("trigger-httpc")
 	return &ServiceContext{
-		Config:            c,
-		Validate:          validator.New(),
-		AsynqClient:       asynqx.NewAsynqClient(c.Redis.Host, c.Redis.Pass, c.RedisDB),
-		AsynqInspector:    asynqx.NewAsynqInspector(c.Redis.Host, c.Redis.Pass, c.RedisDB),
-		AsynqServer:       asynqx.NewAsynqServer(c.Redis.Host, c.Redis.Pass, c.RedisDB),
-		Scheduler:         asynqx.NewScheduler(c.Redis.Host, c.Redis.Pass, c.RedisDB),
-		Httpc:             httpcSvc,
-		NetClient:         netx.NewClient(netx.WithEngine(netx.NewHTTPEngine(httpcSvc))),
-		ConnMap:           connCache,
-		SqlConn:           dbConn,
-		PlanModel:         model.NewPlanModel(dbConn, model.WithDBType(dbType)),
-		PlanBatchModel:    model.NewPlanBatchModel(dbConn, model.WithDBType(dbType)),
-		PlanExecItemModel: model.NewPlanExecItemModel(dbConn, model.WithDBType(dbType)),
-		PlanExecLogModel:  model.NewPlanExecLogModel(dbConn, model.WithDBType(dbType)),
-		Database:          database,
-		Redis:             redisDb,
-		UnstableExpiry:    mathx.NewUnstable(expiryDeviation),
+		Config:         c,
+		Validate:       validator.New(),
+		AsynqClient:    asynqx.NewAsynqClient(c.Redis.Host, c.Redis.Pass, c.RedisDB),
+		AsynqInspector: asynqx.NewAsynqInspector(c.Redis.Host, c.Redis.Pass, c.RedisDB),
+		AsynqServer:    asynqx.NewAsynqServer(c.Redis.Host, c.Redis.Pass, c.RedisDB),
+		Scheduler:      asynqx.NewScheduler(c.Redis.Host, c.Redis.Pass, c.RedisDB),
+		Httpc:          httpcSvc,
+		NetClient:      netx.NewClient(netx.WithEngine(netx.NewHTTPEngine(httpcSvc))),
+		ConnMap:        connCache,
+		DB:             db,
+		Redis:          redisDb,
+		UnstableExpiry: mathx.NewUnstable(expiryDeviation),
 		StreamEventCli: streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
 			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
 			// 添加最大消息配置

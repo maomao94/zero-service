@@ -20,7 +20,7 @@
 | `dji_fly_region` | `DjiFlyRegion` | Insert-only | `file_id`（单独）+ `bucket_name + file_name`（联合 idx_bucket_file） |
 | `dji_fly_region_sync_status` | `DjiFlyRegionSyncStatus` | Insert-only | auto increment |
 
-所有模型嵌入 `gormx.LegacyBaseModel`（int64 `id` + `create_time`/`update_time` + 软删除 `delete_time`/`del_state`，**不含 VersionMixin**）。
+所有模型嵌入 `gormx.LegacyBaseModel`（int64 `id` + `create_time`/`update_time` + 软删除 `delete_time`/`is_deleted`，**不含 VersionMixin**）。
 
 ## 关键模型详解
 
@@ -82,11 +82,12 @@ type DjiDeviceOsdSnapshot struct {
     DeviceSn   string    `gorm:"column:device_sn;uniqueIndex;not null"`
     GatewaySn  string    `gorm:"column:gateway_sn;index;not null;default:''"`
     ReportedAt time.Time `gorm:"column:reported_at;index;not null"`
-    RawJSON    string    `gorm:"column:raw_json;type:jsonb;default:'{}'"`
+    RawJSON    string    `gorm:"column:raw_json;type:text"`
 }
 ```
 
 **策略**：Upsert，每个 device_sn 只保留最近一次快照。不做历史时序。`RawJSON` 存储完整 payload 原始 JSON。
+JSON 原文载荷字段统一使用 `type:text`，不要使用 `type:jsonb`，也不要在 TEXT 字段上写 `default:'{}'`，保持 MySQL/PostgreSQL/GaussDB 兼容。
 
 ### Insert-only 事件表（dji_event.go）
 
@@ -131,7 +132,7 @@ type DjiFlyRegion struct {
 - `FileName`：OSS 对象 key，格式为 `{geofence_type}_{fileId}.json`（如 `dfence_550e8400-xxxx.json`）
 - `BucketName + FileName`：联合唯一索引 `idx_bucket_file`
 
-**写入策略**：Insert-only。每次 submit 创建新记录；查最新按 `create_time DESC`。软删除用于 Delete 操作，GORM 自动过滤 `del_state=1` 的记录。
+**写入策略**：Insert-only。每次 submit 创建新记录；查最新按 `create_time DESC`。软删除用于 Delete 操作，GORM 自动过滤 `is_deleted=1` 的记录。
 
 **FlightAreasGet 查询**：`WHERE gateway_sn = ? ORDER BY id DESC`（GORM 自动过滤软删除），返回该机巢所有活跃文件列表。
 
@@ -156,5 +157,5 @@ type DjiFlyRegionSyncStatus struct {
 1. **AirSense/PSDK 等"预留"模块没有对应模型**：当前只 log，没有 DB 写入。添加时注意不要产生孤立写入。
 2. **`DjiDevice` 的 `GatewaySn` 默认 `''`**：Domain=0/1 的设备不会在 update_topo 时得到 GatewaySn，查询时需通过 `DjiDeviceTopo` 反查。
 3. **软删除恢复**：update_topo 使用 `gormx.Restore`（`sys_status_up.go`）恢复被软删除的 topo 条目，注意不要引入重复唯一键。
-4. **Snapshot 的 `RawJSON` 字段类型**：虽然 GORM tag 写的是 `jsonb`，实际在 MySQL/GaussDB 中是 `text` 或 `json`，取决于方言。不要依赖 JSON 查询功能。
+4. **Snapshot 的 `RawJSON` 字段类型**：GORM tag 使用 `type:text`，只保存原始 JSON 文本。不要改成 `json/jsonb`，不要依赖数据库 JSON 查询功能。
 5. **`FirstOnlineAt`/`LastOnlineAt` 为 `sql.NullTime`**：未上线过的设备这两个字段为 NULL，代码中需要使用 `.Valid` 判断。

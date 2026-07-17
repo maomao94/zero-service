@@ -1,10 +1,6 @@
 package gormx
 
-import (
-	"reflect"
-
-	"gorm.io/gorm"
-)
+import "gorm.io/gorm"
 
 func Restore(db *gorm.DB, model any, conds ...any) error {
 	q := db.Unscoped().Model(model)
@@ -29,7 +25,7 @@ func RestoreWithTenant(db *gorm.DB, model any, conds ...any) error {
 }
 
 func restoreDeleteFields(db *gorm.DB, updates map[string]any) error {
-	return db.Select(restoreUpdateColumns(updates)).Updates(updates).Error
+	return db.Select(mapKeys(updates)).Updates(updates).Error
 }
 
 func restoreDeleteFieldUpdates(db *gorm.DB, model any) map[string]any {
@@ -53,18 +49,6 @@ func restoreDeleteFieldUpdates(db *gorm.DB, model any) map[string]any {
 	return updates
 }
 
-func restoreUpdateColumns(updates map[string]any) []string {
-	columns := make([]string, 0, len(updates))
-	for column := range updates {
-		columns = append(columns, column)
-	}
-	return columns
-}
-
 func hasLegacyDeleteFields(db *gorm.DB, model any) bool {
 	return len(restoreDeleteFieldUpdates(db, model)) > 0
-}
-
-func zeroValue(fieldType reflect.Type) any {
-	return reflect.Zero(fieldType).Interface()
 }

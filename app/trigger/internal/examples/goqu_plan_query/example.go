@@ -27,7 +27,7 @@ func SelectEnabledPlansSample(ctx context.Context, dsn string) error {
 	query := db.From("plan").
 		Select("id", "plan_id", "plan_name").
 		Where(goqu.C("status").Eq(1)).
-		Where(goqu.C("del_state").Eq(0)).
+		Where(goqu.C("is_deleted").Eq(0)).
 		Limit(5)
 
 	sqlStr, args, err := query.ToSQL()
@@ -38,7 +38,7 @@ func SelectEnabledPlansSample(ctx context.Context, dsn string) error {
 	fmt.Println("args:", args)
 
 	type planRow struct {
-		Id       int64  `db:"id"`
+		Id       string `db:"id"`
 		PlanId   string `db:"plan_id"`
 		PlanName string `db:"plan_name"`
 	}
@@ -47,7 +47,7 @@ func SelectEnabledPlansSample(ctx context.Context, dsn string) error {
 		return fmt.Errorf("scan: %w", err)
 	}
 	for i, p := range rows {
-		fmt.Printf("row %d: id=%d plan_id=%s plan_name=%s\n", i, p.Id, p.PlanId, p.PlanName)
+		fmt.Printf("row %d: id=%s plan_id=%s plan_name=%s\n", i, p.Id, p.PlanId, p.PlanName)
 	}
 	return nil
 }

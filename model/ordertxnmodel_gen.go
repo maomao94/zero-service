@@ -57,7 +57,7 @@ type (
 		CreateTime        time.Time    `db:"create_time"`
 		UpdateTime        time.Time    `db:"update_time"`
 		DeleteTime        time.Time    `db:"delete_time"`
-		DelState          int64        `db:"del_state"`
+		IsDeleted         int64        `db:"is_deleted"`
 		Version           int64        `db:"version"`              // 版本号
 		TxnId             string       `db:"txn_id"`               // 订单号
 		OriTxnId          string       `db:"ori_txn_id"`           // 原订单号
@@ -107,7 +107,7 @@ func (m *defaultOrderTxnModel) Delete(ctx context.Context, session sqlx.Session,
 	return err
 }
 func (m *defaultOrderTxnModel) FindOne(ctx context.Context, id int64) (*OrderTxn, error) {
-	query := fmt.Sprintf("select %s from %s where `id` = ? and del_state = ? limit 1", orderTxnRows, m.table)
+	query := fmt.Sprintf("select %s from %s where `id` = ? and is_deleted = ? limit 1", orderTxnRows, m.table)
 	var resp OrderTxn
 	err := m.conn.QueryRowCtx(ctx, &resp, query, id, 0)
 	switch err {
@@ -122,7 +122,7 @@ func (m *defaultOrderTxnModel) FindOne(ctx context.Context, id int64) (*OrderTxn
 
 func (m *defaultOrderTxnModel) FindOneByMchIdMchOrderNo(ctx context.Context, mchId string, mchOrderNo string) (*OrderTxn, error) {
 	var resp OrderTxn
-	query := fmt.Sprintf("select %s from %s where `mch_id` = ? and `mch_order_no` = ?  and del_state = ? limit 1", orderTxnRows, m.table)
+	query := fmt.Sprintf("select %s from %s where `mch_id` = ? and `mch_order_no` = ?  and is_deleted = ? limit 1", orderTxnRows, m.table)
 	err := m.conn.QueryRowCtx(ctx, &resp, query, mchId, mchOrderNo, 0)
 	switch err {
 	case nil:
@@ -136,7 +136,7 @@ func (m *defaultOrderTxnModel) FindOneByMchIdMchOrderNo(ctx context.Context, mch
 
 func (m *defaultOrderTxnModel) FindOneByTxnId(ctx context.Context, txnId string) (*OrderTxn, error) {
 	var resp OrderTxn
-	query := fmt.Sprintf("select %s from %s where `txn_id` = ?  and del_state = ? limit 1", orderTxnRows, m.table)
+	query := fmt.Sprintf("select %s from %s where `txn_id` = ?  and is_deleted = ? limit 1", orderTxnRows, m.table)
 	err := m.conn.QueryRowCtx(ctx, &resp, query, txnId, 0)
 	switch err {
 	case nil:
@@ -150,23 +150,23 @@ func (m *defaultOrderTxnModel) FindOneByTxnId(ctx context.Context, txnId string)
 
 func (m *defaultOrderTxnModel) Insert(ctx context.Context, session sqlx.Session, data *OrderTxn) (sql.Result, error) {
 	data.DeleteTime = time.Unix(0, 0)
-	data.DelState = 0
+	data.IsDeleted = 0
 
 	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, orderTxnRowsExpectAutoSet)
 	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TxnId, data.OriTxnId, data.TxnTime, data.TxnDate, data.MchId, data.MchOrderNo, data.PayType, data.TxnType, data.TxnChannel, data.TxnAmt, data.RealAmt, data.Result, data.Body, data.Extra, data.UserId, data.ChannelUser, data.ChannelPayTime, data.ChannelOrderNo, data.PayerAcct, data.PayerAcctName, data.PayerAcctBankName, data.PayeeAcct, data.PayeeAcctName, data.PayeeAcctBankName, data.QrCode, data.ExpireTime)
+		return session.ExecCtx(ctx, query, data.DeleteTime, data.IsDeleted, data.Version, data.TxnId, data.OriTxnId, data.TxnTime, data.TxnDate, data.MchId, data.MchOrderNo, data.PayType, data.TxnType, data.TxnChannel, data.TxnAmt, data.RealAmt, data.Result, data.Body, data.Extra, data.UserId, data.ChannelUser, data.ChannelPayTime, data.ChannelOrderNo, data.PayerAcct, data.PayerAcctName, data.PayerAcctBankName, data.PayeeAcct, data.PayeeAcctName, data.PayeeAcctBankName, data.QrCode, data.ExpireTime)
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TxnId, data.OriTxnId, data.TxnTime, data.TxnDate, data.MchId, data.MchOrderNo, data.PayType, data.TxnType, data.TxnChannel, data.TxnAmt, data.RealAmt, data.Result, data.Body, data.Extra, data.UserId, data.ChannelUser, data.ChannelPayTime, data.ChannelOrderNo, data.PayerAcct, data.PayerAcctName, data.PayerAcctBankName, data.PayeeAcct, data.PayeeAcctName, data.PayeeAcctBankName, data.QrCode, data.ExpireTime)
+	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.IsDeleted, data.Version, data.TxnId, data.OriTxnId, data.TxnTime, data.TxnDate, data.MchId, data.MchOrderNo, data.PayType, data.TxnType, data.TxnChannel, data.TxnAmt, data.RealAmt, data.Result, data.Body, data.Extra, data.UserId, data.ChannelUser, data.ChannelPayTime, data.ChannelOrderNo, data.PayerAcct, data.PayerAcctName, data.PayerAcctBankName, data.PayeeAcct, data.PayeeAcctName, data.PayeeAcctBankName, data.QrCode, data.ExpireTime)
 }
 
 func (m *defaultOrderTxnModel) Update(ctx context.Context, session sqlx.Session, newData *OrderTxn) (sql.Result, error) {
 	newData.DeleteTime = time.Unix(0, 0)
-	newData.DelState = 0
+	newData.IsDeleted = 0
 	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, orderTxnRowsWithPlaceHolder)
 	if session != nil {
-		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TxnId, newData.OriTxnId, newData.TxnTime, newData.TxnDate, newData.MchId, newData.MchOrderNo, newData.PayType, newData.TxnType, newData.TxnChannel, newData.TxnAmt, newData.RealAmt, newData.Result, newData.Body, newData.Extra, newData.UserId, newData.ChannelUser, newData.ChannelPayTime, newData.ChannelOrderNo, newData.PayerAcct, newData.PayerAcctName, newData.PayerAcctBankName, newData.PayeeAcct, newData.PayeeAcctName, newData.PayeeAcctBankName, newData.QrCode, newData.ExpireTime, newData.Id)
+		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.TxnId, newData.OriTxnId, newData.TxnTime, newData.TxnDate, newData.MchId, newData.MchOrderNo, newData.PayType, newData.TxnType, newData.TxnChannel, newData.TxnAmt, newData.RealAmt, newData.Result, newData.Body, newData.Extra, newData.UserId, newData.ChannelUser, newData.ChannelPayTime, newData.ChannelOrderNo, newData.PayerAcct, newData.PayerAcctName, newData.PayerAcctBankName, newData.PayeeAcct, newData.PayeeAcctName, newData.PayeeAcctBankName, newData.QrCode, newData.ExpireTime, newData.Id)
 	}
-	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TxnId, newData.OriTxnId, newData.TxnTime, newData.TxnDate, newData.MchId, newData.MchOrderNo, newData.PayType, newData.TxnType, newData.TxnChannel, newData.TxnAmt, newData.RealAmt, newData.Result, newData.Body, newData.Extra, newData.UserId, newData.ChannelUser, newData.ChannelPayTime, newData.ChannelOrderNo, newData.PayerAcct, newData.PayerAcctName, newData.PayerAcctBankName, newData.PayeeAcct, newData.PayeeAcctName, newData.PayeeAcctBankName, newData.QrCode, newData.ExpireTime, newData.Id)
+	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.TxnId, newData.OriTxnId, newData.TxnTime, newData.TxnDate, newData.MchId, newData.MchOrderNo, newData.PayType, newData.TxnType, newData.TxnChannel, newData.TxnAmt, newData.RealAmt, newData.Result, newData.Body, newData.Extra, newData.UserId, newData.ChannelUser, newData.ChannelPayTime, newData.ChannelOrderNo, newData.PayerAcct, newData.PayerAcctName, newData.PayerAcctBankName, newData.PayeeAcct, newData.PayeeAcctName, newData.PayeeAcctBankName, newData.QrCode, newData.ExpireTime, newData.Id)
 }
 
 func (m *defaultOrderTxnModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *OrderTxn) error {
@@ -179,9 +179,9 @@ func (m *defaultOrderTxnModel) UpdateWithVersion(ctx context.Context, session sq
 
 	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, orderTxnRowsWithPlaceHolder)
 	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TxnId, newData.OriTxnId, newData.TxnTime, newData.TxnDate, newData.MchId, newData.MchOrderNo, newData.PayType, newData.TxnType, newData.TxnChannel, newData.TxnAmt, newData.RealAmt, newData.Result, newData.Body, newData.Extra, newData.UserId, newData.ChannelUser, newData.ChannelPayTime, newData.ChannelOrderNo, newData.PayerAcct, newData.PayerAcctName, newData.PayerAcctBankName, newData.PayeeAcct, newData.PayeeAcctName, newData.PayeeAcctBankName, newData.QrCode, newData.ExpireTime, newData.Id, oldVersion)
+		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.TxnId, newData.OriTxnId, newData.TxnTime, newData.TxnDate, newData.MchId, newData.MchOrderNo, newData.PayType, newData.TxnType, newData.TxnChannel, newData.TxnAmt, newData.RealAmt, newData.Result, newData.Body, newData.Extra, newData.UserId, newData.ChannelUser, newData.ChannelPayTime, newData.ChannelOrderNo, newData.PayerAcct, newData.PayerAcctName, newData.PayerAcctBankName, newData.PayeeAcct, newData.PayeeAcctName, newData.PayeeAcctBankName, newData.QrCode, newData.ExpireTime, newData.Id, oldVersion)
 	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TxnId, newData.OriTxnId, newData.TxnTime, newData.TxnDate, newData.MchId, newData.MchOrderNo, newData.PayType, newData.TxnType, newData.TxnChannel, newData.TxnAmt, newData.RealAmt, newData.Result, newData.Body, newData.Extra, newData.UserId, newData.ChannelUser, newData.ChannelPayTime, newData.ChannelOrderNo, newData.PayerAcct, newData.PayerAcctName, newData.PayerAcctBankName, newData.PayeeAcct, newData.PayeeAcctName, newData.PayeeAcctBankName, newData.QrCode, newData.ExpireTime, newData.Id, oldVersion)
+		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.IsDeleted, newData.Version, newData.TxnId, newData.OriTxnId, newData.TxnTime, newData.TxnDate, newData.MchId, newData.MchOrderNo, newData.PayType, newData.TxnType, newData.TxnChannel, newData.TxnAmt, newData.RealAmt, newData.Result, newData.Body, newData.Extra, newData.UserId, newData.ChannelUser, newData.ChannelPayTime, newData.ChannelOrderNo, newData.PayerAcct, newData.PayerAcctName, newData.PayerAcctBankName, newData.PayeeAcct, newData.PayeeAcctName, newData.PayeeAcctBankName, newData.QrCode, newData.ExpireTime, newData.Id, oldVersion)
 	}
 
 	if err != nil {
@@ -199,7 +199,7 @@ func (m *defaultOrderTxnModel) UpdateWithVersion(ctx context.Context, session sq
 }
 
 func (m *defaultOrderTxnModel) DeleteSoft(ctx context.Context, session sqlx.Session, data *OrderTxn) error {
-	data.DelState = 1
+	data.IsDeleted = 1
 	data.DeleteTime = time.Now()
 	if err := m.UpdateWithVersion(ctx, session, data); err != nil {
 		return errors.Wrapf(errors.New("delete soft failed "), "OrderTxnModel delete err : %+v", err)
@@ -215,7 +215,7 @@ func (m *defaultOrderTxnModel) FindSum(ctx context.Context, builder squirrel.Sel
 
 	builder = builder.Columns("IFNULL(SUM(" + field + "),0)")
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -240,7 +240,7 @@ func (m *defaultOrderTxnModel) FindCount(ctx context.Context, builder squirrel.S
 
 	builder = builder.Columns("COUNT(" + field + ")")
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -267,7 +267,7 @@ func (m *defaultOrderTxnModel) FindAll(ctx context.Context, builder squirrel.Sel
 		builder = builder.OrderBy(orderBy)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +299,7 @@ func (m *defaultOrderTxnModel) FindPageListByPage(ctx context.Context, builder s
 	}
 	offset := (page - 1) * pageSize
 
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +336,7 @@ func (m *defaultOrderTxnModel) FindPageListByPageWithTotal(ctx context.Context, 
 	}
 	offset := (page - 1) * pageSize
 
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, total, err
 	}
@@ -361,7 +361,7 @@ func (m *defaultOrderTxnModel) FindPageListByIdDESC(ctx context.Context, builder
 		builder = builder.Where(" id < ? ", preMinId)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -386,7 +386,7 @@ func (m *defaultOrderTxnModel) FindPageListByIdASC(ctx context.Context, builder 
 		builder = builder.Where(" id > ? ", preMaxId)
 	}
 
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}

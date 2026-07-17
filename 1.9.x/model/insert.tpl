@@ -3,7 +3,7 @@ func (m *default{{.upperStartCamelObject}}Model) Insert(ctx context.Context, ses
 	data.DeleteTime = sql.NullTime{
 		Valid: false,
 	}
-	data.DelState = 0
+	data.IsDeleted = 0
 	columns, values := generateColumnsAndValues(data, []string{})
 	insertBuilder := m.InsertBuilder().Columns(columns...).Values(values...)
 

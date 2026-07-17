@@ -3,7 +3,7 @@ func (m *default{{.upperStartCamelObject}}Model) Insert(ctx context.Context,sess
     data.DeleteTime = sql.NullTime{
         Valid: false,
     }
-	data.DelState = 0
+	data.IsDeleted = 0
 	{{if .withCache}}{{.keys}}
 	return m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
 	query := fmt.Sprintf("insert into %s (%s) values ({{.expression}})", m.table, {{.lowerStartCamelObject}}RowsExpectAutoSet)

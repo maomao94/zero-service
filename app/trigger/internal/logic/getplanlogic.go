@@ -3,8 +3,9 @@ package logic
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/tool"
-	"zero-service/model"
 	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/svc"
@@ -13,7 +14,7 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"gorm.io/gorm"
 )
 
 type GetPlanLogic struct {
@@ -37,17 +38,17 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 	if err != nil {
 		return nil, err
 	}
-	if in.Id <= 0 && strutil.IsBlank(in.PlanId) {
+	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.PlanId) {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
-	var plan *model.Plan
-	if in.Id > 0 {
-		plan, err = l.svcCtx.PlanModel.FindOne(l.ctx, in.Id)
+	var plan gormmodel.Plan
+	if !strutil.IsBlank(in.Id) {
+		err = l.svcCtx.DB.WithContext(l.ctx).Where("id = ?", in.Id).First(&plan).Error
 	} else {
-		plan, err = l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
+		err = l.svcCtx.DB.WithContext(l.ctx).Where("plan_id = ?", in.PlanId).First(&plan).Error
 	}
 	if err != nil {
-		if err == sqlx.ErrNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
 		}
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
@@ -89,7 +90,7 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 	if plan.PausedTime.Valid {
 		pbPlan.PausedTime = carbon.CreateFromStdTime(plan.PausedTime.Time).ToDateTimeString()
 	}
-	progress, err := l.svcCtx.PlanBatchModel.CalculatePlanProgress(l.ctx, plan.Id)
+	progress, err := gormmodel.CalculatePlanProgress(l.ctx, l.svcCtx.DB.WithContext(l.ctx).DB, plan.Id)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "计算计划进度失败")
 	}

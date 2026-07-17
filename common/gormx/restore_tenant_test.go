@@ -9,7 +9,7 @@ func TestRestoreWithTenantRestoresSoftDeletedRecord(t *testing.T) {
 	db := openTestDB(t, &batchTenantSoftDeleteTestModel{})
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 
-	record := batchTenantSoftDeleteTestModel{Name: "test"}
+	record := batchTenantSoftDeleteTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "test"}
 	if err := db.WithContext(ctx).Create(&record).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
@@ -36,7 +36,7 @@ func TestRestoreWithTenantDoesNotAffectOtherTenant(t *testing.T) {
 	ctx1 := WithTenantContext(context.Background(), "tenant-1")
 	ctx2 := WithTenantContext(context.Background(), "tenant-2")
 
-	record1 := batchTenantSoftDeleteTestModel{Name: "test"}
+	record1 := batchTenantSoftDeleteTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "test"}
 	if err := db.WithContext(ctx1).Create(&record1).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}

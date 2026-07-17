@@ -17,7 +17,7 @@ type DjiDeviceOsdSnapshot struct {
 	DeviceSn   string    `gorm:"column:device_sn;uniqueIndex;type:varchar(64);not null;comment:设备SN，机巢或无人机"`
 	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);index;not null;default:'';comment:所属机巢SN"`
 	ReportedAt time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
-	RawJSON    string    `gorm:"column:raw_json;type:jsonb;default:'{}';comment:完整OSD原始数据JSON"`
+	RawJSON    string    `gorm:"column:raw_json;type:text;comment:完整OSD原始数据JSON"`
 }
 
 func (DjiDeviceOsdSnapshot) TableName() string { return "dji_device_osd_snapshot" }
@@ -33,7 +33,7 @@ type DjiDeviceStateSnapshot struct {
 	DeviceSn   string    `gorm:"column:device_sn;uniqueIndex;type:varchar(64);not null;comment:设备SN，机巢或无人机"`
 	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);index;not null;default:'';comment:所属机巢SN"`
 	ReportedAt time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
-	RawJSON    string    `gorm:"column:raw_json;type:jsonb;default:'{}';comment:完整State原始数据JSON"`
+	RawJSON    string    `gorm:"column:raw_json;type:text;comment:完整State原始数据JSON"`
 }
 
 func (DjiDeviceStateSnapshot) TableName() string { return "dji_device_state_snapshot" }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"time"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/tool"
 	"zero-service/model"
 	"zero-service/third_party/extproto"
@@ -14,7 +15,7 @@ import (
 
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"gorm.io/gorm"
 )
 
 type PausePlanExecItemLogic struct {
@@ -40,28 +41,29 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 	}
 
 	// 检查参数
-	if in.Id <= 0 && strutil.IsBlank(in.ExecId) {
+	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.ExecId) {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
 
 	// 查询执行项
-	var execItem *model.PlanExecItem
-	if in.Id > 0 {
-		execItem, err = l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
+	db := l.svcCtx.DB.WithContext(l.ctx).DB
+	var execItem gormmodel.PlanExecItem
+	if !strutil.IsBlank(in.Id) {
+		err = db.Where("id = ?", in.Id).First(&execItem).Error
 	} else {
-		execItem, err = l.svcCtx.PlanExecItemModel.FindOneByExecId(l.ctx, in.ExecId)
+		err = db.Where("exec_id = ?", in.ExecId).First(&execItem).Error
 	}
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询执行项失败")
 	}
 	// 查询计划批次
-	planBatch, err := l.svcCtx.PlanBatchModel.FindOne(l.ctx, execItem.BatchPk)
-	if err != nil {
+	var planBatch gormmodel.PlanBatch
+	if err := db.Where("id = ?", execItem.BatchPk).First(&planBatch).Error; err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划批次失败")
 	}
 	// 查询计划
-	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, execItem.PlanId)
-	if err != nil {
+	var plan gormmodel.Plan
+	if err := db.Where("plan_id = ?", execItem.PlanId).First(&plan).Error; err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 	}
 	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
@@ -81,7 +83,7 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 	}
 
 	// 执行事务
-	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
+	err = db.Transaction(func(tx *gorm.DB) error {
 		// 更新执行项状态为暂停
 		execItem.Status = int64(model.StatusPaused)
 		execItem.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
@@ -89,18 +91,13 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 		execItem.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
 
 		// 更新执行项
-		transErr := l.svcCtx.PlanExecItemModel.UpdateWithVersion(ctx, tx, execItem)
-		if transErr != nil {
-			return transErr
-		}
-
-		return nil
+		return tx.Save(&execItem).Error
 	})
 
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "暂停执行项事务失败")
 	}
 
-	planscope.ExecScope(execItem).Logger(l.ctx).Info("RPC 暂停执行项：执行项状态已更新，事务已提交")
+	planscope.ExecScope(&execItem).Logger(l.ctx).Info("RPC 暂停执行项：执行项状态已更新，事务已提交")
 	return &trigger.PausePlanExecItemRes{}, nil
 }

@@ -9,7 +9,7 @@ CREATE TABLE `hls_ts_files`
     `create_time`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '插入时间',
     `update_time`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `delete_time`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '逻辑删除时间',
-    `del_state`        TINYINT      NOT NULL DEFAULT '0' COMMENT '逻辑删除标记',
+    `is_deleted`       TINYINT      NOT NULL DEFAULT '0' COMMENT '逻辑删除标记',
     `version`          BIGINT       NOT NULL DEFAULT '0' COMMENT '版本号',
 
     `event`            VARCHAR(16)  NOT NULL COMMENT '"open" 表示 TS 创建，"close" 表示 TS 写入完成',

@@ -8,6 +8,7 @@ import (
 
 	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
 	"zero-service/model"
@@ -15,7 +16,7 @@ import (
 
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"gorm.io/gorm"
 )
 
 type TerminatePlanBatchLogic struct {
@@ -41,24 +42,25 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 	}
 
 	// 检查参数
-	if in.Id <= 0 && strutil.IsBlank(in.BatchId) {
+	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.BatchId) {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
 
 	// 查询计划批次
-	var planBatch *model.PlanBatch
-	if in.Id > 0 {
-		planBatch, err = l.svcCtx.PlanBatchModel.FindOne(l.ctx, in.Id)
+	db := l.svcCtx.DB.WithContext(l.ctx).DB
+	var planBatch gormmodel.PlanBatch
+	if !strutil.IsBlank(in.Id) {
+		err = db.Where("id = ?", in.Id).First(&planBatch).Error
 	} else {
-		planBatch, err = l.svcCtx.PlanBatchModel.FindOneByBatchId(l.ctx, in.BatchId)
+		err = db.Where("batch_id = ?", in.BatchId).First(&planBatch).Error
 	}
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划批次失败")
 	}
 
 	// 查询计划
-	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, planBatch.PlanId)
-	if err != nil {
+	var plan gormmodel.Plan
+	if err := db.Where("plan_id = ?", planBatch.PlanId).First(&plan).Error; err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 	}
 
@@ -72,7 +74,7 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 	}
 
 	// 执行事务
-	err = l.svcCtx.PlanBatchModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
+	err = db.Transaction(func(tx *gorm.DB) error {
 		now := time.Now()
 		// 更新计划批次状态为终止
 		planBatch.Status = int64(model.PlanStatusTerminated) // 终止
@@ -83,17 +85,13 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
 
 		// 更新计划批次
-		transErr := l.svcCtx.PlanBatchModel.UpdateWithVersion(ctx, tx, planBatch)
-		if transErr != nil {
-			return transErr
-		}
-		return nil
+		return tx.Save(&planBatch).Error
 	})
 
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "终止批次事务失败")
 	}
-	bScope := planscope.BatchScope(plan, planBatch)
+	bScope := planscope.BatchScope(&plan, &planBatch)
 	bLog := bScope.Logger(l.ctx)
 	batchNotifyReq := streamevent.NotifyPlanEventReq{
 		EventType:  streamevent.PlanEventType_BATCH_FINISHED,
@@ -104,16 +102,15 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 	}
 	bLog.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Info("下游通知：调用 NotifyPlanEvent（批次收尾）")
 	l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq)
-	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, planBatch.PlanPk)
+	planCount, err := gormmodel.UpdatePlanFinishedTime(l.ctx, db, planBatch.PlanPk)
 	if err != nil {
 		bLog.Errorf("更新计划 finished_time（用于收尾判断）失败: %v", err)
 	}
 	if planCount > 0 {
 		planPlanReq := streamevent.NotifyPlanEventReq{
-			EventType: streamevent.PlanEventType_PLAN_FINISHED,
-			PlanId:    planBatch.PlanId,
-			PlanType:  plan.Type.String,
-			//BatchId:    planBatch.BatchId,
+			EventType:  streamevent.PlanEventType_PLAN_FINISHED,
+			PlanId:     planBatch.PlanId,
+			PlanType:   plan.Type.String,
 			Attributes: map[string]string{},
 		}
 		bLog.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")

@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 创建时间
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 更新时间
     delete_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 删除时间（软删除标记）
-    del_state INTEGER NOT NULL DEFAULT 0,       -- 删除状态：0-未删除，1-已删除
+    is_deleted INTEGER NOT NULL DEFAULT 0,      -- 删除状态：0-未删除，1-已删除
     version INTEGER NOT NULL DEFAULT 0,         -- 版本号（乐观锁）
     create_user VARCHAR(64) DEFAULT '', -- 创建人
     update_user VARCHAR(64) DEFAULT '', -- 更新人

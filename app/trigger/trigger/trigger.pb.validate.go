@@ -10847,16 +10847,7 @@ func (m *ListPlanExecItemsReq) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if m.GetId() < 0 {
-		err := ListPlanExecItemsReqValidationError{
-			field:  "Id",
-			reason: "value must be greater than or equal to 0",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Id
 
 	// no validation rules for ExecId
 
@@ -11137,10 +11128,10 @@ func (m *GetPlanExecLogReq) validate(all bool) error {
 		}
 	}
 
-	if m.GetId() < 1 {
+	if utf8.RuneCountInString(m.GetId()) < 1 {
 		err := GetPlanExecLogReqValidationError{
 			field:  "Id",
-			reason: "value must be greater than or equal to 1",
+			reason: "value length must be at least 1 runes",
 		}
 		if !all {
 			return err

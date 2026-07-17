@@ -10,6 +10,8 @@ import (
 
 type legacyDeleteTestModel struct {
 	LegacyStringBaseModel
+	AuditMixin
+	TenantMixin
 	Name string `gorm:"column:name;uniqueIndex"`
 }
 

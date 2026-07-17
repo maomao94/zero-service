@@ -3,6 +3,7 @@ package cron
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"math/rand"
 	"time"
@@ -10,6 +11,8 @@ import (
 	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/internal/triggerutil"
+	"zero-service/app/trigger/model/gormmodel"
+	"zero-service/common/gormx"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/model"
@@ -17,7 +20,6 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/redis"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/core/trace"
 	"go.opentelemetry.io/otel"
@@ -84,9 +86,10 @@ func (s *CronService) ScanPlanExecItem() bool {
 	ctx, span := tracer.Start(ctx, "cron-scan", oteltrace.WithSpanKind(oteltrace.SpanKindProducer))
 	defer span.End()
 
-	execItem, err := s.svcCtx.PlanExecItemModel.LockTriggerItem(ctx, 5*60*time.Second)
+	dbType := gormx.GetDatabaseTypeFromDialector(s.svcCtx.DB.DB)
+	execItem, err := gormmodel.LockTriggerItem(ctx, s.svcCtx.DB.WithContext(ctx).DB, dbType, 5*60*time.Second)
 	if err != nil {
-		if err == sqlx.ErrNotFound {
+		if errors.Is(err, model.ErrNotFound) {
 			return false
 		}
 		planscope.CronLockScope().Logger(ctx).Errorf("定时扫表：抢占待调度执行项失败: %v", err)
@@ -96,13 +99,15 @@ func (s *CronService) ScanPlanExecItem() bool {
 		return false
 	}
 
-	queryExecItem, queryErr := s.svcCtx.PlanExecItemModel.FindOne(ctx, execItem.Id)
-	if queryErr != nil || queryExecItem == nil {
+	queryExecItem := &gormmodel.PlanExecItem{}
+	queryErr := s.svcCtx.DB.WithContext(ctx).DB.Where("id = ?", execItem.Id).First(queryExecItem).Error
+	if queryErr != nil {
 		planscope.ExecCron(execItem).Logger(ctx).Errorf("扫表锁定后重新加载执行项失败: %v", queryErr)
 		return false
 	}
-	plan, planErr := s.svcCtx.PlanModel.FindOneByPlanId(ctx, queryExecItem.PlanId)
-	if planErr != nil || plan == nil {
+	plan := &gormmodel.Plan{}
+	planErr := s.svcCtx.DB.WithContext(ctx).DB.Where("id = ?", queryExecItem.PlanPk).First(plan).Error
+	if planErr != nil {
 		planscope.ExecCron(execItem).Logger(ctx).Errorf("扫表锁定后加载计划失败: %v", planErr)
 		return false
 	}
@@ -113,13 +118,13 @@ func (s *CronService) ScanPlanExecItem() bool {
 		queryExecItem.NextTriggerTime.Format(time.RFC3339Nano),
 	)
 
-	planUpdateBuilder := s.svcCtx.PlanModel.UpdateBuilder().Set("scan_flg", 1).Where("id = ?", plan.Id)
-	if _, err := s.svcCtx.PlanModel.UpdateWithBuilder(ctx, nil, planUpdateBuilder); err != nil {
+	// 更新计划 scan_flg
+	if err := s.svcCtx.DB.WithContext(ctx).Model(&gormmodel.Plan{}).Where("id = ?", queryExecItem.PlanPk).Update("scan_flg", 1).Error; err != nil {
 		scope.Logger(ctx).Errorf("更新计划 scan_flg 失败: %v", err)
 	}
 
-	batchUpdateBuilder := s.svcCtx.PlanBatchModel.UpdateBuilder().Set("scan_flg", 1).Where("id = ?", queryExecItem.BatchPk)
-	if _, err := s.svcCtx.PlanBatchModel.UpdateWithBuilder(ctx, nil, batchUpdateBuilder); err != nil {
+	// 更新批次 scan_flg
+	if err := s.svcCtx.DB.WithContext(ctx).Model(&gormmodel.PlanBatch{}).Where("id = ?", queryExecItem.BatchPk).Update("scan_flg", 1).Error; err != nil {
 		scope.Logger(ctx).Errorf("更新批次 scan_flg 失败: %v", err)
 	}
 
@@ -144,7 +149,7 @@ func (cb rawCodec) Unmarshal(data []byte, v any) error {
 
 func (cb rawCodec) Name() string { return "proto_raw" }
 
-func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanExecItem, plan *model.Plan) {
+func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.PlanExecItem, plan *gormmodel.Plan) {
 	traceID := trace.TraceIDFromContext(ctx)
 	if execItem.RequestTimeout == 0 {
 		execItem.RequestTimeout = s.svcCtx.Config.StreamEventConf.Timeout
@@ -154,8 +159,9 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	scope := planscope.TriggerScope(execItem, plan)
 	log := scope.Logger(ctx)
 	log.Debug("计划执行回调：调用下游 HandlerPlanTaskEvent 开始")
+	db := s.svcCtx.DB.WithContext(ctx).DB
 
-	if err := s.svcCtx.PlanExecItemModel.UpdateStatusToRunning(ctx, execItem.Id, ""); err != nil {
+	if err := gormmodel.UpdateExecItemStatusToRunning(ctx, db, execItem.Id, ""); err != nil {
 		log.Errorf("回写执行项状态为「执行中」失败: %v", err)
 		return
 	}
@@ -236,7 +242,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		return
 	}
 
-	logEntry := &model.PlanExecLog{
+	execLog := &gormmodel.PlanExecLog{
 		DeptCode:    execItem.DeptCode,
 		PlanPk:      plan.Id,
 		PlanId:      execItem.PlanId,
@@ -265,14 +271,15 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	switch res.ExecResult {
 	case model.ResultCompleted:
 		resultLog.Info("下游返回：执行完成（completed）")
-		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToCompleted(ctx, execItem.Id, res.Message, res.Reason,
+		err = gormmodel.UpdateExecItemStatusToCompleted(ctx, db, execItem.Id, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
-		); err != nil {
+		)
+		if err != nil {
 			log.Errorf("回写执行项为「已完成」失败: %v", err)
 		}
 	case model.ResultFailed:
 		resultLog.Info("下游返回：执行失败（failed）")
-		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, res.Message, res.Reason,
+		if err := gormmodel.UpdateExecItemStatusToFail(ctx, db, execItem.Id, model.ResultFailed, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		); err != nil {
 			log.Errorf("回写执行项为「失败」失败: %v", err)
@@ -282,48 +289,66 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		currentTime := carbon.Now()
 		dr := execdelay.Resolve(res.DelayConfig, res.Message, res.Reason, currentTime, execdelay.ModeDelayed)
 		execdelay.LogWarnings(ctx, scope, dr)
-		delayTriggerTime := dr.NextTrigger
-		delayReason := execdelay.FinalReason(dr.ReasonStem, delayTriggerTime)
-		logEntry.Reason = sql.NullString{String: delayReason, Valid: true}
-		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, res.ExecResult, res.Message, delayReason, delayTriggerTime,
-			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
-		); err != nil {
-			log.Errorf("回写执行项为「延期等待」失败: %v", err)
+		delayReason := execdelay.FinalReason(dr.ReasonStem, dr.NextTrigger)
+		execLog.Reason = sql.NullString{String: delayReason, Valid: true}
+		nextTime := carbon.Parse(dr.NextTrigger)
+		if nextTime.Error != nil {
+			log.Errorf("解析延期触发时间失败: %v", nextTime.Error)
+		} else {
+			err = gormmodel.UpdateExecItemStatusToDelayed(ctx, db, execItem.Id, res.ExecResult, res.Message, delayReason, nextTime.StdTime(),
+				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
+			)
+			if err != nil {
+				log.Errorf("回写执行项为「延期等待」失败: %v", err)
+			}
 		}
 	case model.ResultOngoing:
 		resultLog.Info("下游返回：仍在进行（ongoing），将按规则更新下次触发时间")
 		currentTime := carbon.Now()
 		or := execdelay.Resolve(res.DelayConfig, res.Message, res.Reason, currentTime, execdelay.ModeOngoing)
 		execdelay.LogWarnings(ctx, scope, or)
-		delayTriggerTime := or.NextTrigger
-		delayReason := execdelay.FinalReason(or.ReasonStem, delayTriggerTime)
-		logEntry.Reason = sql.NullString{String: delayReason, Valid: true}
-		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToOngoing(ctx, execItem.Id, res.ExecResult, delayReason, true, delayTriggerTime,
-			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
-		); err != nil {
+		delayReason := execdelay.FinalReason(or.ReasonStem, or.NextTrigger)
+		execLog.Reason = sql.NullString{String: delayReason, Valid: true}
+		var nextTime *time.Time
+		if or.NextTrigger != "" {
+			nt := carbon.Parse(or.NextTrigger)
+			if nt.Error != nil {
+				log.Errorf("解析 ongoing 触发时间失败: %v", nt.Error)
+			} else {
+				t := nt.StdTime()
+				nextTime = &t
+			}
+		}
+		err = gormmodel.UpdateExecItemStatusToOngoing(ctx, db, execItem.Id, res.ExecResult, delayReason,
+			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated}, nextTime, true,
+		)
+		if err != nil {
 			log.Errorf("回写执行项为「进行中」失败: %v", err)
 		}
 	case model.ResultTerminated:
 		resultLog.Info("下游返回：已终止（terminated）")
-		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToTerminated(ctx, execItem.Id, res.Message, res.Reason,
+		err = gormmodel.UpdateExecItemStatusToTerminated(ctx, db, execItem.Id, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
-		); err != nil {
+		)
+		if err != nil {
 			log.Errorf("回写执行项为「已终止」失败: %v", err)
 		}
 	default:
 		log.Errorf("下游返回未知结果 exec_result=%q，将按 completed 回写库", res.ExecResult)
-		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToCompleted(ctx, execItem.Id, res.Message, res.Reason,
+		err = gormmodel.UpdateExecItemStatusToCompleted(ctx, db, execItem.Id, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
-		); err != nil {
+		)
+		if err != nil {
 			log.Errorf("未知结果按「已完成」回写执行项失败: %v", err)
 		}
 	}
 
-	if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
+	// 插入执行日志
+	if err := db.Create(execLog).Error; err != nil {
 		log.Errorf("写入执行流水 plan_exec_log 失败: %v", err)
 	}
 
-	batchCount, err := s.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(ctx, execItem.BatchPk)
+	batchCount, err := gormmodel.UpdatePlanBatchFinishedTime(ctx, db, execItem.BatchPk)
 	if err != nil {
 		log.Errorf("更新批次 finished_time（用于收尾判断）失败: %v", err)
 	}
@@ -338,7 +363,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Logger(ctx).Info("下游通知：调用 NotifyPlanEvent（批次收尾）")
 		s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &batchNotifyReq)
 	}
-	planCount, err := s.svcCtx.PlanModel.UpdateBatchFinishedTime(ctx, execItem.PlanPk)
+	planCount, err := gormmodel.UpdatePlanFinishedTime(ctx, db, execItem.PlanPk)
 	if err != nil {
 		log.Errorf("更新计划 finished_time（用于收尾判断）失败: %v", err)
 	}

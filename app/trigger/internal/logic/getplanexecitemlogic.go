@@ -2,8 +2,9 @@ package logic
 
 import (
 	"context"
+	"errors"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/tool"
-	"zero-service/model"
 	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/svc"
@@ -12,7 +13,7 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"gorm.io/gorm"
 )
 
 type GetPlanExecItemLogic struct {
@@ -36,17 +37,17 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 	if err != nil {
 		return nil, err
 	}
-	if in.Id <= 0 && strutil.IsBlank(in.ExecId) {
+	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.ExecId) {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
-	var execItem *model.PlanExecItem
-	if in.Id > 0 {
-		execItem, err = l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
+	var execItem gormmodel.PlanExecItem
+	if !strutil.IsBlank(in.Id) {
+		err = l.svcCtx.DB.WithContext(l.ctx).Where("id = ?", in.Id).First(&execItem).Error
 	} else {
-		execItem, err = l.svcCtx.PlanExecItemModel.FindOneByExecId(l.ctx, in.ExecId)
+		err = l.svcCtx.DB.WithContext(l.ctx).Where("exec_id = ?", in.ExecId).First(&execItem).Error
 	}
 	if err != nil {
-		if err == sqlx.ErrNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
 		}
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_DB, "查询执行项失败")

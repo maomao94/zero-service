@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
     create_time TIMESTAMP NOT NULL, 
     update_time TIMESTAMP NOT NULL, 
     delete_time TIMESTAMP NULL, 
-    del_state SMALLINT NOT NULL DEFAULT 0, 
+    is_deleted SMALLINT NOT NULL DEFAULT 0, 
     version INT NOT NULL DEFAULT 0, 
     create_user VARCHAR(64) DEFAULT '',
     update_user VARCHAR(64) DEFAULT '',
@@ -55,7 +55,7 @@ COMMENT ON COLUMN device_point_mapping.id IS '自增主键ID';
 COMMENT ON COLUMN device_point_mapping.create_time IS '创建时间';
 COMMENT ON COLUMN device_point_mapping.update_time IS '更新时间';
 COMMENT ON COLUMN device_point_mapping.delete_time IS '删除时间（软删除标记）';
-COMMENT ON COLUMN device_point_mapping.del_state IS '删除状态：0-未删除，1-已删除';
+COMMENT ON COLUMN device_point_mapping.is_deleted IS '删除状态：0-未删除，1-已删除';
 COMMENT ON COLUMN device_point_mapping.version IS '版本号（乐观锁）';
 COMMENT ON COLUMN device_point_mapping.create_user IS '创建人';
 COMMENT ON COLUMN device_point_mapping.update_user IS '更新人';
@@ -93,11 +93,11 @@ CREATE TRIGGER "trigger_update_modified_time"
 
 -- 4. 创建计划任务表
 CREATE TABLE IF NOT EXISTS plan (
-    id BIGSERIAL PRIMARY KEY, 
+    id VARCHAR(64) PRIMARY KEY,
     create_time TIMESTAMP NOT NULL,
     update_time TIMESTAMP NOT NULL,
     delete_time TIMESTAMP NULL, 
-    del_state SMALLINT NOT NULL DEFAULT 0, 
+    is_deleted SMALLINT NOT NULL DEFAULT 0, 
     version INT NOT NULL DEFAULT 0, 
     create_user VARCHAR(64) DEFAULT '',
     update_user VARCHAR(64) DEFAULT '',
@@ -106,12 +106,12 @@ CREATE TABLE IF NOT EXISTS plan (
     plan_name VARCHAR(128) DEFAULT '',
     type VARCHAR(64) DEFAULT '',
     group_id VARCHAR(64) DEFAULT '',
-    recurrence_rule JSONB NOT NULL DEFAULT '{}'::jsonb, 
+    recurrence_rule TEXT NOT NULL DEFAULT '', 
     start_time TIMESTAMP NOT NULL, 
     end_time TIMESTAMP NOT NULL, 
     status SMALLINT NOT NULL DEFAULT 0, 
     scan_flg SMALLINT NOT NULL DEFAULT 0, 
-    terminated_reason VARCHAR(256) DEFAULT '',
+    terminated_reason VARCHAR(2000) DEFAULT '',
     paused_time TIMESTAMP NULL, 
     paused_reason VARCHAR(256) DEFAULT '',
     finished_time TIMESTAMP NULL,
@@ -128,11 +128,11 @@ CREATE TABLE IF NOT EXISTS plan (
 COMMENT ON TABLE plan IS '计划任务表';
 
 -- 为 plan 表的列添加注释
-COMMENT ON COLUMN plan.id IS '自增主键ID';
+COMMENT ON COLUMN plan.id IS 'UUID主键ID';
 COMMENT ON COLUMN plan.create_time IS '创建时间';
 COMMENT ON COLUMN plan.update_time IS '更新时间';
 COMMENT ON COLUMN plan.delete_time IS '删除时间（软删除标记）';
-COMMENT ON COLUMN plan.del_state IS '删除状态：0-未删除，1-已删除';
+COMMENT ON COLUMN plan.is_deleted IS '删除状态：0-未删除，1-已删除';
 COMMENT ON COLUMN plan.version IS '版本号（乐观锁）';
 COMMENT ON COLUMN plan.create_user IS '创建人';
 COMMENT ON COLUMN plan.update_user IS '更新人';
@@ -180,18 +180,18 @@ CREATE TRIGGER "trigger_update_modified_time"
 
 -- 5. 创建计划执行项表
 CREATE TABLE IF NOT EXISTS plan_exec_item (
-    id BIGSERIAL PRIMARY KEY, 
+    id VARCHAR(64) PRIMARY KEY,
     create_time TIMESTAMP NOT NULL,
     update_time TIMESTAMP NOT NULL,
     delete_time TIMESTAMP NULL, 
-    del_state SMALLINT NOT NULL DEFAULT 0, 
+    is_deleted SMALLINT NOT NULL DEFAULT 0, 
     version INT NOT NULL DEFAULT 0, 
     create_user VARCHAR(64) DEFAULT '',
     update_user VARCHAR(64) DEFAULT '',
     dept_code VARCHAR(64) DEFAULT '',
-    plan_pk BIGINT NOT NULL DEFAULT 0, 
+    plan_pk VARCHAR(64) NOT NULL DEFAULT '',
     plan_id VARCHAR(64) NOT NULL DEFAULT '',
-    batch_pk BIGINT NOT NULL DEFAULT 0, 
+    batch_pk VARCHAR(64) NOT NULL DEFAULT '',
     batch_id VARCHAR(64) NOT NULL DEFAULT '', 
     exec_id VARCHAR(64) NOT NULL DEFAULT '', 
     item_id VARCHAR(64) NOT NULL DEFAULT '',
@@ -208,8 +208,8 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     status SMALLINT NOT NULL DEFAULT 0, 
     last_result VARCHAR(256) DEFAULT '',
     last_message VARCHAR(2000) DEFAULT '',
-    last_reason TEXT DEFAULT '',
-    terminated_reason VARCHAR(256) DEFAULT '',
+    last_reason VARCHAR(2000) DEFAULT '',
+    terminated_reason VARCHAR(2000) DEFAULT '',
     paused_time TIMESTAMP NULL, 
     paused_reason VARCHAR(256) DEFAULT '',
     ext_1 VARCHAR(256) DEFAULT '',
@@ -223,11 +223,11 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
 COMMENT ON TABLE plan_exec_item IS '计划执行项表';
 
 -- 为 plan_exec_item 表的列添加注释
-COMMENT ON COLUMN plan_exec_item.id IS '自增主键ID';
+COMMENT ON COLUMN plan_exec_item.id IS 'UUID主键ID';
 COMMENT ON COLUMN plan_exec_item.create_time IS '创建时间';
 COMMENT ON COLUMN plan_exec_item.update_time IS '更新时间';
 COMMENT ON COLUMN plan_exec_item.delete_time IS '删除时间（软删除标记）';
-COMMENT ON COLUMN plan_exec_item.del_state IS '删除状态：0-未删除，1-已删除';
+COMMENT ON COLUMN plan_exec_item.is_deleted IS '删除状态：0-未删除，1-已删除';
 COMMENT ON COLUMN plan_exec_item.version IS '版本号（乐观锁）';
 COMMENT ON COLUMN plan_exec_item.create_user IS '创建人';
 COMMENT ON COLUMN plan_exec_item.update_user IS '更新人';
@@ -269,7 +269,7 @@ CREATE INDEX idx_plan_exec_item_plan_pk_item_id ON plan_exec_item (plan_pk, item
 CREATE INDEX idx_plan_exec_item_plan_id_item_id ON plan_exec_item (plan_id, item_id);
 CREATE INDEX idx_plan_exec_item_point_id ON plan_exec_item (point_id);
 CREATE INDEX idx_plan_exec_item_status ON plan_exec_item (status);
-CREATE INDEX idx_plan_exec_item_core_scan ON plan_exec_item (del_state, next_trigger_time, status);
+CREATE INDEX idx_plan_exec_item_core_scan ON plan_exec_item (is_deleted, next_trigger_time, status);
 
 -- 为 plan_exec_item 表创建触发器
 CREATE TRIGGER "trigger_insert_modified_time"
@@ -286,21 +286,21 @@ CREATE TRIGGER "trigger_update_modified_time"
 
 -- 6. 创建计划任务执行日志表
 CREATE TABLE IF NOT EXISTS plan_exec_log (
-    id BIGSERIAL PRIMARY KEY, 
+    id VARCHAR(64) PRIMARY KEY,
     create_time TIMESTAMP NOT NULL,
     update_time TIMESTAMP NOT NULL,
     delete_time TIMESTAMP NULL, 
-    del_state SMALLINT NOT NULL DEFAULT 0, 
+    is_deleted SMALLINT NOT NULL DEFAULT 0, 
     version INT NOT NULL DEFAULT 0, 
     create_user VARCHAR(64) DEFAULT '',
     update_user VARCHAR(64) DEFAULT '',
     dept_code VARCHAR(64) DEFAULT '',
-    plan_pk BIGINT NOT NULL DEFAULT 0, 
+    plan_pk VARCHAR(64) NOT NULL DEFAULT '',
     plan_id VARCHAR(64) NOT NULL DEFAULT '',
     plan_name VARCHAR(128) DEFAULT '',
-    batch_pk BIGINT NOT NULL DEFAULT 0,
+    batch_pk VARCHAR(64) NOT NULL DEFAULT '',
     batch_id VARCHAR(64) NOT NULL DEFAULT '', 
-    item_pk BIGINT NOT NULL DEFAULT 0,
+    item_pk VARCHAR(64) NOT NULL DEFAULT '',
     exec_id VARCHAR(64) NOT NULL DEFAULT '',
     item_id VARCHAR(64) NOT NULL DEFAULT '',
     item_type varchar(64) DEFAULT '',
@@ -310,18 +310,18 @@ CREATE TABLE IF NOT EXISTS plan_exec_log (
     trace_id VARCHAR(64) DEFAULT '',
     exec_result VARCHAR(256) DEFAULT '',
     message VARCHAR(2000) DEFAULT '',
-    reason TEXT DEFAULT ''
+    reason VARCHAR(2000) DEFAULT ''
 );
 
 -- 为 plan_exec_log 表添加注释
 COMMENT ON TABLE plan_exec_log IS '计划任务执行日志表';
 
 -- 为 plan_exec_log 表的列添加注释
-COMMENT ON COLUMN plan_exec_log.id IS '自增主键ID';
+COMMENT ON COLUMN plan_exec_log.id IS 'UUID主键ID';
 COMMENT ON COLUMN plan_exec_log.create_time IS '创建时间';
 COMMENT ON COLUMN plan_exec_log.update_time IS '更新时间';
 COMMENT ON COLUMN plan_exec_log.delete_time IS '删除时间（软删除标记）';
-COMMENT ON COLUMN plan_exec_log.del_state IS '删除状态：0-未删除，1-已删除';
+COMMENT ON COLUMN plan_exec_log.is_deleted IS '删除状态：0-未删除，1-已删除';
 COMMENT ON COLUMN plan_exec_log.version IS '版本号（乐观锁）';
 COMMENT ON COLUMN plan_exec_log.create_user IS '创建人';
 COMMENT ON COLUMN plan_exec_log.update_user IS '更新人';
@@ -370,16 +370,16 @@ CREATE TRIGGER "trigger_update_modified_time"
 
 -- 7. 创建计划批次表
 CREATE TABLE IF NOT EXISTS plan_batch (
-    id BIGSERIAL PRIMARY KEY, 
+    id VARCHAR(64) PRIMARY KEY,
     create_time TIMESTAMP NOT NULL, 
     update_time TIMESTAMP NOT NULL, 
     delete_time TIMESTAMP NULL, 
-    del_state SMALLINT NOT NULL DEFAULT 0, 
+    is_deleted SMALLINT NOT NULL DEFAULT 0, 
     version INT NOT NULL DEFAULT 0, 
     create_user VARCHAR(64) DEFAULT '',
     update_user VARCHAR(64) DEFAULT '',
     dept_code VARCHAR(64) DEFAULT '',
-    plan_pk BIGINT NOT NULL DEFAULT 0, 
+    plan_pk VARCHAR(64) NOT NULL DEFAULT '',
     plan_id VARCHAR(64) NOT NULL DEFAULT '', 
     batch_id VARCHAR(64) NOT NULL DEFAULT '', 
     batch_name VARCHAR(128) DEFAULT '',
@@ -387,7 +387,7 @@ CREATE TABLE IF NOT EXISTS plan_batch (
     status SMALLINT NOT NULL DEFAULT 0,
     scan_flg SMALLINT NOT NULL DEFAULT 0,
     plan_trigger_time TIMESTAMP NULL,
-    terminated_reason VARCHAR(256) DEFAULT '',
+    terminated_reason VARCHAR(2000) DEFAULT '',
     paused_time TIMESTAMP NULL,
     paused_reason VARCHAR(256) DEFAULT '',
     finished_time TIMESTAMP NULL,
@@ -403,11 +403,11 @@ CREATE TABLE IF NOT EXISTS plan_batch (
 COMMENT ON TABLE plan_batch IS '计划批次表';
 
 -- 为 plan_batch 表的列添加注释
-COMMENT ON COLUMN plan_batch.id IS '自增主键ID';
+COMMENT ON COLUMN plan_batch.id IS 'UUID主键ID';
 COMMENT ON COLUMN plan_batch.create_time IS '创建时间';
 COMMENT ON COLUMN plan_batch.update_time IS '更新时间';
 COMMENT ON COLUMN plan_batch.delete_time IS '删除时间（软删除标记）';
-COMMENT ON COLUMN plan_batch.del_state IS '删除状态：0-未删除，1-已删除';
+COMMENT ON COLUMN plan_batch.is_deleted IS '删除状态：0-未删除，1-已删除';
 COMMENT ON COLUMN plan_batch.version IS '版本号（乐观锁）';
 COMMENT ON COLUMN plan_batch.create_user IS '创建人';
 COMMENT ON COLUMN plan_batch.update_user IS '更新人';
@@ -455,7 +455,7 @@ CREATE TABLE IF NOT EXISTS modbus_slave_config (
     create_time TIMESTAMP NOT NULL,
     update_time TIMESTAMP NOT NULL,
     delete_time TIMESTAMP NULL,
-    del_state SMALLINT NOT NULL DEFAULT 0,
+    is_deleted SMALLINT NOT NULL DEFAULT 0,
     version INT NOT NULL DEFAULT 0,
     modbus_code VARCHAR(32) NOT NULL DEFAULT '',
     slave_address VARCHAR(64) NOT NULL DEFAULT '',
@@ -482,7 +482,7 @@ COMMENT ON COLUMN modbus_slave_config.id IS '主键ID';
 COMMENT ON COLUMN modbus_slave_config.create_time IS '创建时间';
 COMMENT ON COLUMN modbus_slave_config.update_time IS '更新时间';
 COMMENT ON COLUMN modbus_slave_config.delete_time IS '删除时间（软删除标记）';
-COMMENT ON COLUMN modbus_slave_config.del_state IS '删除状态：0-未删除，1-已删除';
+COMMENT ON COLUMN modbus_slave_config.is_deleted IS '删除状态：0-未删除，1-已删除';
 COMMENT ON COLUMN modbus_slave_config.version IS '版本号（乐观锁，防并发修改）';
 COMMENT ON COLUMN modbus_slave_config.modbus_code IS 'Modbus配置唯一编码（如：modbus-192.168.1.100）';
 COMMENT ON COLUMN modbus_slave_config.slave_address IS 'TCP设备地址（格式：IP:Port，对应结构体 Address）';

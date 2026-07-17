@@ -2,8 +2,10 @@ package logic
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -14,7 +16,7 @@ import (
 
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"gorm.io/gorm"
 )
 
 type RunPlanExecItemLogic struct {
@@ -38,18 +40,19 @@ func (l *RunPlanExecItemLogic) RunPlanExecItem(in *trigger.RunPlanExecItemReq) (
 		return nil, err
 	}
 	// 检查参数
-	if in.Id <= 0 && strutil.IsBlank(in.ExecId) {
+	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.ExecId) {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
 	// 查询执行项
-	var execItem *model.PlanExecItem
-	if in.Id > 0 {
-		execItem, err = l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
+	var execItem gormmodel.PlanExecItem
+	db := l.svcCtx.DB.WithContext(l.ctx).DB
+	if !strutil.IsBlank(in.Id) {
+		err = db.Where("id = ?", in.Id).First(&execItem).Error
 	} else {
-		execItem, err = l.svcCtx.PlanExecItemModel.FindOneByExecId(l.ctx, in.ExecId)
+		err = db.Where("exec_id = ?", in.ExecId).First(&execItem).Error
 	}
 	if err != nil {
-		if err == sqlx.ErrNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
 		}
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_DB, "查询执行项失败")
@@ -58,14 +61,14 @@ func (l *RunPlanExecItemLogic) RunPlanExecItem(in *trigger.RunPlanExecItemReq) (
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, fmt.Sprintf("执行项当前状态为%d，无法立即执行，仅支持等待调度(0)或延期等待(10)状态", execItem.Status))
 	}
 	// 查询计划批次
-	planBatch, err := l.svcCtx.PlanBatchModel.FindOne(l.ctx, execItem.BatchPk)
-	if err != nil {
+	var planBatch gormmodel.PlanBatch
+	if err := db.Where("id = ?", execItem.BatchPk).First(&planBatch).Error; err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划批次失败")
 	}
 
 	// 查询计划
-	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, execItem.PlanId)
-	if err != nil {
+	var plan gormmodel.Plan
+	if err := db.Where("plan_id = ?", execItem.PlanId).First(&plan).Error; err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 	}
 
@@ -88,12 +91,11 @@ func (l *RunPlanExecItemLogic) RunPlanExecItem(in *trigger.RunPlanExecItemReq) (
 	// 更新下次触发时间为当前时间，使其立即执行
 	now := time.Now()
 	execItem.NextTriggerTime = now
-	err = l.svcCtx.PlanExecItemModel.UpdateWithVersion(l.ctx, nil, execItem)
-	if err != nil {
+	if err := db.Save(&execItem).Error; err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "更新执行项失败")
 	}
 
-	planscope.ExecScope(execItem).WithFields(
+	planscope.ExecScope(&execItem).WithFields(
 		logx.Field("plan_name", plan.PlanName.String),
 		logx.Field("next_trigger", execItem.NextTriggerTime.Format(time.RFC3339Nano)),
 		logx.Field("status", execItem.Status),

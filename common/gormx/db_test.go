@@ -53,7 +53,7 @@ func TestWithTenantAddsTenantFilter(t *testing.T) {
 	db := &DB{DB: gormDB}
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 
-	if err := gormDB.WithContext(ctx).Create(&tenantScopeTestModel{Name: "a"}).Error; err != nil {
+	if err := gormDB.WithContext(ctx).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "a"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
 
@@ -71,7 +71,7 @@ func TestWithTenantStrictReturnsEmptyWhenNoTenant(t *testing.T) {
 	db := &DB{DB: gormDB}
 	ctx := context.Background()
 
-	if err := gormDB.WithContext(WithTenantContext(ctx, "tenant-1")).Create(&tenantScopeTestModel{Name: "a"}).Error; err != nil {
+	if err := gormDB.WithContext(WithTenantContext(ctx, "tenant-1")).Create(&tenantScopeTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "a"}).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}
 
@@ -120,7 +120,7 @@ func TestWithTenantDeletedIncludesDeletedForTenant(t *testing.T) {
 	db := &DB{DB: gormDB}
 	ctx := WithTenantContext(context.Background(), "tenant-1")
 
-	record := tenantScopeSoftDeleteTestModel{Name: "a"}
+	record := tenantScopeSoftDeleteTestModel{TenantMixin: TenantMixin{TenantID: "tenant-1"}, Name: "a"}
 	if err := gormDB.WithContext(ctx).Create(&record).Error; err != nil {
 		t.Fatalf("create error = %v", err)
 	}

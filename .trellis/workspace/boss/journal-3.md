@@ -412,3 +412,109 @@ Diagnosed cron next_run offset caused by GaussDB timestamp scan timezone behavio
 ### Next Steps
 
 - None - task complete
+
+
+## Session 120: Align gormx legacy soft delete
+
+**Date**: 2026-07-17
+**Task**: Align gormx legacy soft delete
+**Branch**: `master`
+
+### Summary
+
+Aligned legacy gormx soft-delete semantics and generated/model SQL from del_state to is_deleted, preserved delete_time as audit data, updated Legacy BaseModel lifecycle behavior, verified SQL/templates, and switched Legacy string ID generation to no-hyphen UUID v7 via tool.SimpleUUID.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d30796c9` | (see git log) |
+| `b00747ae` | (see git log) |
+| `782a37bc` | (see git log) |
+| `0fa690af` | (see git log) |
+| `3d8a6872` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 121: Trigger gormx migration
+
+**Date**: 2026-07-17
+**Task**: Trigger gormx migration
+**Branch**: `master`
+
+### Summary
+
+Migrated trigger plan persistence to gormx with string UUID keys, aligned MySQL/PostgreSQL schemas and proto payloads, verified trigger state transitions and SQLx removal, converted JSON raw payload fields to text for cross-database compatibility, refreshed related Trellis specs, and validated trigger/model/gormx builds and tests.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `75afadc3` | (see git log) |
+| `16bbbdc5` | (see git log) |
+| `b5c69466` | (see git log) |
+| `16ea42f0` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 122: 关闭 cron 扫表 SQL 日志
+
+**Date**: 2026-07-17
+**Task**: 关闭 cron 扫表 SQL 日志
+**Branch**: `master`
+
+### Summary
+
+收窄 cron 扫表 SQL trace 静默范围，只对 plan_exec_item 扫表 SELECT 使用 gormx.WithoutSQLTrace，后续锁更新和其他操作保持正常 SQL 日志；完成目标包和 gormx 验证。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `be099e47` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

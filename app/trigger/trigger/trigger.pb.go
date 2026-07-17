@@ -3221,7 +3221,7 @@ func (x *CreatePlanExecItemPb) GetExt5() string {
 type CreatePlanTaskRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 计划主键ID
-	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// 计划ID
 	PlanId string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 计划批次数
@@ -3262,11 +3262,11 @@ func (*CreatePlanTaskRes) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{44}
 }
 
-func (x *CreatePlanTaskRes) GetId() int64 {
+func (x *CreatePlanTaskRes) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *CreatePlanTaskRes) GetPlanId() string {
@@ -3293,7 +3293,7 @@ func (x *CreatePlanTaskRes) GetExecCnt() int64 {
 type PausePlanReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	PlanId      string                 `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 暂停原因
 	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
@@ -3338,11 +3338,11 @@ func (x *PausePlanReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *PausePlanReq) GetId() int64 {
+func (x *PausePlanReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *PausePlanReq) GetPlanId() string {
@@ -3398,7 +3398,7 @@ func (*PausePlanRes) Descriptor() ([]byte, []int) {
 type TerminatePlanReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	PlanId      string                 `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 终止原因
 	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
@@ -3443,11 +3443,11 @@ func (x *TerminatePlanReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *TerminatePlanReq) GetId() int64 {
+func (x *TerminatePlanReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *TerminatePlanReq) GetPlanId() string {
@@ -3503,7 +3503,7 @@ func (*TerminatePlanRes) Descriptor() ([]byte, []int) {
 type ResumePlanReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	PlanId        string                 `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -3546,11 +3546,11 @@ func (x *ResumePlanReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *ResumePlanReq) GetId() int64 {
+func (x *ResumePlanReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *ResumePlanReq) GetPlanId() string {
@@ -3599,7 +3599,7 @@ func (*ResumePlanRes) Descriptor() ([]byte, []int) {
 type PausePlanBatchReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	BatchId     string                 `protobuf:"bytes,2,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	// 暂停原因
 	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
@@ -3644,11 +3644,11 @@ func (x *PausePlanBatchReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *PausePlanBatchReq) GetId() int64 {
+func (x *PausePlanBatchReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *PausePlanBatchReq) GetBatchId() string {
@@ -3704,7 +3704,7 @@ func (*PausePlanBatchRes) Descriptor() ([]byte, []int) {
 type TerminatePlanBatchReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	BatchId     string                 `protobuf:"bytes,2,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	// 终止原因
 	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
@@ -3749,11 +3749,11 @@ func (x *TerminatePlanBatchReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *TerminatePlanBatchReq) GetId() int64 {
+func (x *TerminatePlanBatchReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *TerminatePlanBatchReq) GetBatchId() string {
@@ -3809,7 +3809,7 @@ func (*TerminatePlanBatchRes) Descriptor() ([]byte, []int) {
 type ResumePlanBatchReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	BatchId       string                 `protobuf:"bytes,2,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -3852,11 +3852,11 @@ func (x *ResumePlanBatchReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *ResumePlanBatchReq) GetId() int64 {
+func (x *ResumePlanBatchReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *ResumePlanBatchReq) GetBatchId() string {
@@ -3905,7 +3905,7 @@ func (*ResumePlanBatchRes) Descriptor() ([]byte, []int) {
 type PausePlanExecItemReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	ExecId      string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
 	// 暂停原因
 	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
@@ -3950,11 +3950,11 @@ func (x *PausePlanExecItemReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *PausePlanExecItemReq) GetId() int64 {
+func (x *PausePlanExecItemReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *PausePlanExecItemReq) GetExecId() string {
@@ -4010,7 +4010,7 @@ func (*PausePlanExecItemRes) Descriptor() ([]byte, []int) {
 type TerminatePlanExecItemReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	ExecId      string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
 	// 终止原因
 	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
@@ -4055,11 +4055,11 @@ func (x *TerminatePlanExecItemReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *TerminatePlanExecItemReq) GetId() int64 {
+func (x *TerminatePlanExecItemReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *TerminatePlanExecItemReq) GetExecId() string {
@@ -4115,7 +4115,7 @@ func (*TerminatePlanExecItemRes) Descriptor() ([]byte, []int) {
 type ResumePlanExecItemReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	ExecId        string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -4158,11 +4158,11 @@ func (x *ResumePlanExecItemReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *ResumePlanExecItemReq) GetId() int64 {
+func (x *ResumePlanExecItemReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *ResumePlanExecItemReq) GetExecId() string {
@@ -4212,7 +4212,7 @@ func (*ResumePlanExecItemRes) Descriptor() ([]byte, []int) {
 type RunPlanExecItemReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	ExecId        string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -4255,11 +4255,11 @@ func (x *RunPlanExecItemReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *RunPlanExecItemReq) GetId() int64 {
+func (x *RunPlanExecItemReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *RunPlanExecItemReq) GetExecId() string {
@@ -4309,7 +4309,7 @@ func (*RunPlanExecItemRes) Descriptor() ([]byte, []int) {
 type GetPlanReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	PlanId        string                 `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -4352,11 +4352,11 @@ func (x *GetPlanReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *GetPlanReq) GetId() int64 {
+func (x *GetPlanReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *GetPlanReq) GetPlanId() string {
@@ -4422,8 +4422,8 @@ type PlanPb struct {
 	UpdateUser string `protobuf:"bytes,104,opt,name=updateUser,proto3" json:"updateUser,omitempty"`
 	// 机构code
 	DeptCode string `protobuf:"bytes,105,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
-	// 自增主键ID
-	Id int64 `protobuf:"varint,50,opt,name=id,proto3" json:"id,omitempty"`
+	// UUID主键ID
+	Id string `protobuf:"bytes,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 计划ID
 	PlanId string `protobuf:"bytes,1,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 计划名称
@@ -4531,11 +4531,11 @@ func (x *PlanPb) GetDeptCode() string {
 	return ""
 }
 
-func (x *PlanPb) GetId() int64 {
+func (x *PlanPb) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *PlanPb) GetPlanId() string {
@@ -4826,7 +4826,7 @@ func (x *ListPlansRes) GetTotal() int64 {
 type GetPlanBatchReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	BatchId       string                 `protobuf:"bytes,2,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -4869,11 +4869,11 @@ func (x *GetPlanBatchReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *GetPlanBatchReq) GetId() int64 {
+func (x *GetPlanBatchReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *GetPlanBatchReq) GetBatchId() string {
@@ -4935,7 +4935,7 @@ type ListPlanBatchesReq struct {
 	// 页码
 	PageNum int64 `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
 	// 计划主键ID
-	PlanPk int64 `protobuf:"varint,3,opt,name=planPk,proto3" json:"planPk,omitempty"`
+	PlanPk string `protobuf:"bytes,3,opt,name=planPk,proto3" json:"planPk,omitempty"`
 	// 计划ID
 	PlanId string `protobuf:"bytes,4,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 批次ID
@@ -4999,11 +4999,11 @@ func (x *ListPlanBatchesReq) GetPageNum() int64 {
 	return 0
 }
 
-func (x *ListPlanBatchesReq) GetPlanPk() int64 {
+func (x *ListPlanBatchesReq) GetPlanPk() string {
 	if x != nil {
 		return x.PlanPk
 	}
-	return 0
+	return ""
 }
 
 func (x *ListPlanBatchesReq) GetPlanId() string {
@@ -5091,7 +5091,7 @@ func (x *ListPlanBatchesRes) GetTotal() int64 {
 type GetPlanExecItemReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	ExecId        string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -5134,11 +5134,11 @@ func (x *GetPlanExecItemReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *GetPlanExecItemReq) GetId() int64 {
+func (x *GetPlanExecItemReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *GetPlanExecItemReq) GetExecId() string {
@@ -5204,14 +5204,14 @@ type PlanExecItemPb struct {
 	UpdateUser string `protobuf:"bytes,104,opt,name=updateUser,proto3" json:"updateUser,omitempty"`
 	// 机构code
 	DeptCode string `protobuf:"bytes,105,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
-	// 自增主键ID
-	Id int64 `protobuf:"varint,50,opt,name=id,proto3" json:"id,omitempty"`
+	// UUID主键ID
+	Id string `protobuf:"bytes,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 关联的计划主键ID
-	PlanPk int64 `protobuf:"varint,1,opt,name=planPk,proto3" json:"planPk,omitempty"`
+	PlanPk string `protobuf:"bytes,1,opt,name=planPk,proto3" json:"planPk,omitempty"`
 	// 计划ID
 	PlanId string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 批主键ID
-	BatchPk int64 `protobuf:"varint,4,opt,name=batchPk,proto3" json:"batchPk,omitempty"`
+	BatchPk string `protobuf:"bytes,4,opt,name=batchPk,proto3" json:"batchPk,omitempty"`
 	// 批ID
 	BatchId string `protobuf:"bytes,5,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	// 执行ID 全局唯一
@@ -5331,18 +5331,18 @@ func (x *PlanExecItemPb) GetDeptCode() string {
 	return ""
 }
 
-func (x *PlanExecItemPb) GetId() int64 {
+func (x *PlanExecItemPb) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
-func (x *PlanExecItemPb) GetPlanPk() int64 {
+func (x *PlanExecItemPb) GetPlanPk() string {
 	if x != nil {
 		return x.PlanPk
 	}
-	return 0
+	return ""
 }
 
 func (x *PlanExecItemPb) GetPlanId() string {
@@ -5352,11 +5352,11 @@ func (x *PlanExecItemPb) GetPlanId() string {
 	return ""
 }
 
-func (x *PlanExecItemPb) GetBatchPk() int64 {
+func (x *PlanExecItemPb) GetBatchPk() string {
 	if x != nil {
 		return x.BatchPk
 	}
-	return 0
+	return ""
 }
 
 func (x *PlanExecItemPb) GetBatchId() string {
@@ -5542,7 +5542,7 @@ type ListPlanExecItemsReq struct {
 	// 页码
 	PageNum int64 `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
 	// 计划主键 id
-	Id int64 `protobuf:"varint,3,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
 	// 执行ID（唯一索引）
 	ExecId string `protobuf:"bytes,4,opt,name=execId,proto3" json:"execId,omitempty"`
 	// 计划ID
@@ -5609,11 +5609,11 @@ func (x *ListPlanExecItemsReq) GetPageNum() int64 {
 	return 0
 }
 
-func (x *ListPlanExecItemsReq) GetId() int64 {
+func (x *ListPlanExecItemsReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *ListPlanExecItemsReq) GetExecId() string {
@@ -5715,7 +5715,7 @@ func (x *ListPlanExecItemsRes) GetTotal() int64 {
 type GetPlanExecLogReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5757,11 +5757,11 @@ func (x *GetPlanExecLogReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *GetPlanExecLogReq) GetId() int64 {
+func (x *GetPlanExecLogReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 type GetPlanExecLogRes struct {
@@ -6001,20 +6001,20 @@ type PlanExecLogPb struct {
 	UpdateUser string `protobuf:"bytes,104,opt,name=updateUser,proto3" json:"updateUser,omitempty"`
 	// 机构code
 	DeptCode string `protobuf:"bytes,105,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
-	// 自增主键ID
-	Id int64 `protobuf:"varint,50,opt,name=id,proto3" json:"id,omitempty"`
+	// UUID主键ID
+	Id string `protobuf:"bytes,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 关联的计划主键ID
-	PlanPk int64 `protobuf:"varint,1,opt,name=planPk,proto3" json:"planPk,omitempty"`
+	PlanPk string `protobuf:"bytes,1,opt,name=planPk,proto3" json:"planPk,omitempty"`
 	// 计划ID
 	PlanId string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 计划名称
 	PlanName string `protobuf:"bytes,3,opt,name=planName,proto3" json:"planName,omitempty"`
 	// 批主键ID
-	BatchPk int64 `protobuf:"varint,4,opt,name=batchPk,proto3" json:"batchPk,omitempty"`
+	BatchPk string `protobuf:"bytes,4,opt,name=batchPk,proto3" json:"batchPk,omitempty"`
 	// 批ID
 	BatchId string `protobuf:"bytes,5,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	// 关联的执行项主键ID
-	ItemPk int64 `protobuf:"varint,6,opt,name=itemPk,proto3" json:"itemPk,omitempty"`
+	ItemPk string `protobuf:"bytes,6,opt,name=itemPk,proto3" json:"itemPk,omitempty"`
 	// 执行ID 全局唯一
 	ExecId string `protobuf:"bytes,7,opt,name=execId,proto3" json:"execId,omitempty"`
 	// 执行项ID
@@ -6100,18 +6100,18 @@ func (x *PlanExecLogPb) GetDeptCode() string {
 	return ""
 }
 
-func (x *PlanExecLogPb) GetId() int64 {
+func (x *PlanExecLogPb) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
-func (x *PlanExecLogPb) GetPlanPk() int64 {
+func (x *PlanExecLogPb) GetPlanPk() string {
 	if x != nil {
 		return x.PlanPk
 	}
-	return 0
+	return ""
 }
 
 func (x *PlanExecLogPb) GetPlanId() string {
@@ -6128,11 +6128,11 @@ func (x *PlanExecLogPb) GetPlanName() string {
 	return ""
 }
 
-func (x *PlanExecLogPb) GetBatchPk() int64 {
+func (x *PlanExecLogPb) GetBatchPk() string {
 	if x != nil {
 		return x.BatchPk
 	}
-	return 0
+	return ""
 }
 
 func (x *PlanExecLogPb) GetBatchId() string {
@@ -6142,11 +6142,11 @@ func (x *PlanExecLogPb) GetBatchId() string {
 	return ""
 }
 
-func (x *PlanExecLogPb) GetItemPk() int64 {
+func (x *PlanExecLogPb) GetItemPk() string {
 	if x != nil {
 		return x.ItemPk
 	}
-	return 0
+	return ""
 }
 
 func (x *PlanExecLogPb) GetExecId() string {
@@ -6218,10 +6218,10 @@ type PlanBatchPb struct {
 	UpdateUser string `protobuf:"bytes,104,opt,name=updateUser,proto3" json:"updateUser,omitempty"`
 	// 机构code
 	DeptCode string `protobuf:"bytes,105,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
-	// 自增主键ID
-	Id int64 `protobuf:"varint,50,opt,name=id,proto3" json:"id,omitempty"`
+	// UUID主键ID
+	Id string `protobuf:"bytes,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 关联的计划主键ID
-	PlanPk int64 `protobuf:"varint,1,opt,name=planPk,proto3" json:"planPk,omitempty"`
+	PlanPk string `protobuf:"bytes,1,opt,name=planPk,proto3" json:"planPk,omitempty"`
 	// 计划ID
 	PlanId string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 批ID
@@ -6327,18 +6327,18 @@ func (x *PlanBatchPb) GetDeptCode() string {
 	return ""
 }
 
-func (x *PlanBatchPb) GetId() int64 {
+func (x *PlanBatchPb) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
-func (x *PlanBatchPb) GetPlanPk() int64 {
+func (x *PlanBatchPb) GetPlanPk() string {
 	if x != nil {
 		return x.PlanPk
 	}
-	return 0
+	return ""
 }
 
 func (x *PlanBatchPb) GetPlanId() string {
@@ -6763,8 +6763,8 @@ func (x *ExecItemDashboardItemPb) GetPending() *PendingItemsStatsPb {
 type CallbackPlanExecItemReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	// 自增主键ID
-	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// UUID主键ID
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// 执行ID 全局唯一
 	ExecId string `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
 	// 回调设计 参考 grpc status 用于分布式事务
@@ -6817,11 +6817,11 @@ func (x *CallbackPlanExecItemReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *CallbackPlanExecItemReq) GetId() int64 {
+func (x *CallbackPlanExecItemReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *CallbackPlanExecItemReq) GetExecId() string {
@@ -7743,70 +7743,70 @@ const file_trigger_proto_rawDesc = "" +
 	"\x04ext4\x185 \x01(\tR\x04ext4\x12\x12\n" +
 	"\x04ext5\x186 \x01(\tR\x04ext5\"q\n" +
 	"\x11CreatePlanTaskRes\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x1a\n" +
 	"\bbatchCnt\x18\x03 \x01(\x03R\bbatchCnt\x12\x18\n" +
 	"\aexecCnt\x18\x04 \x01(\x03R\aexecCnt\"\x91\x01\n" +
 	"\fPausePlanReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x0e\n" +
 	"\fPausePlanRes\"\x95\x01\n" +
 	"\x10TerminatePlanReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x12\n" +
 	"\x10TerminatePlanRes\"p\n" +
 	"\rResumePlanReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\"\x0f\n" +
 	"\rResumePlanRes\"\x98\x01\n" +
 	"\x11PausePlanBatchReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\abatchId\x18\x02 \x01(\tR\abatchId\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x13\n" +
 	"\x11PausePlanBatchRes\"\x9c\x01\n" +
 	"\x15TerminatePlanBatchReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\abatchId\x18\x02 \x01(\tR\abatchId\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x17\n" +
 	"\x15TerminatePlanBatchRes\"w\n" +
 	"\x12ResumePlanBatchReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\abatchId\x18\x02 \x01(\tR\abatchId\"\x14\n" +
 	"\x12ResumePlanBatchRes\"\x99\x01\n" +
 	"\x14PausePlanExecItemReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06execId\x18\x02 \x01(\tR\x06execId\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x16\n" +
 	"\x14PausePlanExecItemRes\"\x9d\x01\n" +
 	"\x18TerminatePlanExecItemReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06execId\x18\x02 \x01(\tR\x06execId\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x1a\n" +
 	"\x18TerminatePlanExecItemRes\"x\n" +
 	"\x15ResumePlanExecItemReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06execId\x18\x02 \x01(\tR\x06execId\"\x17\n" +
 	"\x15ResumePlanExecItemRes\"u\n" +
 	"\x12RunPlanExecItemReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06execId\x18\x02 \x01(\tR\x06execId\"\x14\n" +
 	"\x12RunPlanExecItemRes\"m\n" +
 	"\n" +
 	"GetPlanReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\"1\n" +
 	"\n" +
 	"GetPlanRes\x12#\n" +
@@ -7825,7 +7825,7 @@ const file_trigger_proto_rawDesc = "" +
 	"updateUser\x18h \x01(\tR\n" +
 	"updateUser\x12\x1a\n" +
 	"\bdeptCode\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
-	"\x02id\x182 \x01(\x03R\x02id\x12\x16\n" +
+	"\x02id\x182 \x01(\tR\x02id\x12\x16\n" +
 	"\x06planId\x18\x01 \x01(\tR\x06planId\x12\x1a\n" +
 	"\bplanName\x18\x02 \x01(\tR\bplanName\x12\x12\n" +
 	"\x04type\x18\x03 \x01(\tR\x04type\x12\x18\n" +
@@ -7861,7 +7861,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\"t\n" +
 	"\x0fGetPlanBatchReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\abatchId\x18\x02 \x01(\tR\abatchId\"E\n" +
 	"\x0fGetPlanBatchRes\x122\n" +
 	"\tplanBatch\x18\x01 \x01(\v2\x14.trigger.PlanBatchPbR\tplanBatch\"\x93\x02\n" +
@@ -7869,7 +7869,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12#\n" +
 	"\bpageSize\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bpageSize\x12!\n" +
 	"\apageNum\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\apageNum\x12\x16\n" +
-	"\x06planPk\x18\x03 \x01(\x03R\x06planPk\x12\x16\n" +
+	"\x06planPk\x18\x03 \x01(\tR\x06planPk\x12\x16\n" +
 	"\x06planId\x18\x04 \x01(\tR\x06planId\x12\x18\n" +
 	"\abatchId\x18\x05 \x01(\tR\abatchId\x12\x16\n" +
 	"\x06status\x18\x06 \x03(\x05R\x06status\x12\x1a\n" +
@@ -7879,7 +7879,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\"u\n" +
 	"\x12GetPlanExecItemReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06execId\x18\x02 \x01(\tR\x06execId\"Q\n" +
 	"\x12GetPlanExecItemRes\x12;\n" +
 	"\fplanExecItem\x18\x01 \x03(\v2\x17.trigger.PlanExecItemPbR\fplanExecItem\"\x8d\b\n" +
@@ -7897,10 +7897,10 @@ const file_trigger_proto_rawDesc = "" +
 	"updateUser\x18h \x01(\tR\n" +
 	"updateUser\x12\x1a\n" +
 	"\bdeptCode\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
-	"\x02id\x182 \x01(\x03R\x02id\x12\x16\n" +
-	"\x06planPk\x18\x01 \x01(\x03R\x06planPk\x12\x16\n" +
+	"\x02id\x182 \x01(\tR\x02id\x12\x16\n" +
+	"\x06planPk\x18\x01 \x01(\tR\x06planPk\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x18\n" +
-	"\abatchPk\x18\x04 \x01(\x03R\abatchPk\x12\x18\n" +
+	"\abatchPk\x18\x04 \x01(\tR\abatchPk\x12\x18\n" +
 	"\abatchId\x18\x05 \x01(\tR\abatchId\x12\x16\n" +
 	"\x06execId\x18\x06 \x01(\tR\x06execId\x12\x16\n" +
 	"\x06itemId\x18\a \x01(\tR\x06itemId\x12\x1a\n" +
@@ -7932,12 +7932,12 @@ const file_trigger_proto_rawDesc = "" +
 	"\x04ext2\x184 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x185 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x186 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x187 \x01(\tR\x04ext5\"\xe1\x02\n" +
+	"\x04ext5\x187 \x01(\tR\x04ext5\"\xd8\x02\n" +
 	"\x14ListPlanExecItemsReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12#\n" +
 	"\bpageSize\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bpageSize\x12!\n" +
-	"\apageNum\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\apageNum\x12\x17\n" +
-	"\x02id\x18\x03 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\x02id\x12\x16\n" +
+	"\apageNum\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\apageNum\x12\x0e\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\x12\x16\n" +
 	"\x06execId\x18\x04 \x01(\tR\x06execId\x12\x16\n" +
 	"\x06planId\x18\x05 \x01(\tR\x06planId\x12\x18\n" +
 	"\abatchId\x18\x06 \x01(\tR\abatchId\x12\x16\n" +
@@ -7949,7 +7949,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\"e\n" +
 	"\x11GetPlanExecLogReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\"M\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"M\n" +
 	"\x11GetPlanExecLogRes\x128\n" +
 	"\vplanExecLog\x18\x01 \x01(\v2\x16.trigger.PlanExecLogPbR\vplanExecLog\"\xd0\x02\n" +
 	"\x13ListPlanExecLogsReq\x127\n" +
@@ -7982,13 +7982,13 @@ const file_trigger_proto_rawDesc = "" +
 	"updateUser\x18h \x01(\tR\n" +
 	"updateUser\x12\x1a\n" +
 	"\bdeptCode\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
-	"\x02id\x182 \x01(\x03R\x02id\x12\x16\n" +
-	"\x06planPk\x18\x01 \x01(\x03R\x06planPk\x12\x16\n" +
+	"\x02id\x182 \x01(\tR\x02id\x12\x16\n" +
+	"\x06planPk\x18\x01 \x01(\tR\x06planPk\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x1a\n" +
 	"\bplanName\x18\x03 \x01(\tR\bplanName\x12\x18\n" +
-	"\abatchPk\x18\x04 \x01(\x03R\abatchPk\x12\x18\n" +
+	"\abatchPk\x18\x04 \x01(\tR\abatchPk\x12\x18\n" +
 	"\abatchId\x18\x05 \x01(\tR\abatchId\x12\x16\n" +
-	"\x06itemPk\x18\x06 \x01(\x03R\x06itemPk\x12\x16\n" +
+	"\x06itemPk\x18\x06 \x01(\tR\x06itemPk\x12\x16\n" +
 	"\x06execId\x18\a \x01(\tR\x06execId\x12\x16\n" +
 	"\x06itemId\x18\b \x01(\tR\x06itemId\x12\x1a\n" +
 	"\bitemType\x18\t \x01(\tR\bitemType\x12\x1a\n" +
@@ -8014,8 +8014,8 @@ const file_trigger_proto_rawDesc = "" +
 	"updateUser\x18h \x01(\tR\n" +
 	"updateUser\x12\x1a\n" +
 	"\bdeptCode\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
-	"\x02id\x182 \x01(\x03R\x02id\x12\x16\n" +
-	"\x06planPk\x18\x01 \x01(\x03R\x06planPk\x12\x16\n" +
+	"\x02id\x182 \x01(\tR\x02id\x12\x16\n" +
+	"\x06planPk\x18\x01 \x01(\tR\x06planPk\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x18\n" +
 	"\abatchId\x18\x03 \x01(\tR\abatchId\x12\x1c\n" +
 	"\tbatchName\x18\x04 \x01(\tR\tbatchName\x12\x1a\n" +
@@ -8061,7 +8061,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\apending\x18\x04 \x01(\v2\x1c.trigger.PendingItemsStatsPbR\apending\"\xd2\x02\n" +
 	"\x17CallbackPlanExecItemReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06execId\x18\x02 \x01(\tR\x06execId\x12V\n" +
 	"\n" +
 	"execResult\x18\x03 \x01(\tB6\xfaB3r1R\tcompletedR\n" +

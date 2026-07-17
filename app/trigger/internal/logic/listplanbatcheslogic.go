@@ -3,13 +3,12 @@ package logic
 import (
 	"context"
 	"fmt"
-	"zero-service/common/tool"
 
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
-	"zero-service/model"
+	"zero-service/common/gormx"
 
-	"github.com/doug-martin/goqu/v9"
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -30,84 +29,54 @@ func NewListPlanBatchesLogic(ctx context.Context, svcCtx *svc.ServiceContext) *L
 
 // 分页获取计划批次列表
 func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (*trigger.ListPlanBatchesRes, error) {
-	// 验证请求
 	err := in.Validate()
 	if err != nil {
 		return nil, err
 	}
 
-	query := l.svcCtx.Database.From(goqu.I("plan_batch").As("pb"))
+	db := l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.PlanBatch{})
 	if len(in.PlanType) > 0 {
-		query = query.LeftJoin(goqu.I("plan").As("p"), goqu.On(goqu.I("pb.plan_pk").Eq(goqu.I("p.id")))).
-			Where(goqu.I("p.type").Eq(in.PlanType))
+		db = db.Joins("LEFT JOIN plan AS p ON p.id = plan_batch.plan_pk AND p.is_deleted = 0").
+			Where("p.type = ?", in.PlanType)
 	}
 	if in.PlanId != "" {
-		query = query.Where(goqu.I("pb.plan_id").Eq(in.PlanId))
+		db = db.Where("plan_batch.plan_id = ?", in.PlanId)
 	}
 	if in.BatchId != "" {
-		query = query.Where(goqu.I("pb.batch_id").Eq(in.BatchId))
+		db = db.Where("plan_batch.batch_id = ?", in.BatchId)
 	}
 	if len(in.Status) > 0 {
-		statusInterface := make([]interface{}, len(in.Status))
-		for i, status := range in.Status {
-			statusInterface[i] = int64(status)
+		statusInts := make([]int64, len(in.Status))
+		for i, s := range in.Status {
+			statusInts[i] = int64(s)
 		}
-		query = query.Where(goqu.I("pb.status").In(statusInterface...))
+		db = db.Where("plan_batch.status IN ?", statusInts)
 	}
-	query = query.Where(goqu.I("pb.del_state").Eq(0))
 
-	countQuery := query.Select(goqu.COUNT("pb.id"))
-	countSQL, countArgs, err := countQuery.ToSQL()
-	if err != nil {
-		return nil, err
-	}
-	var total int64
-	err = l.svcCtx.SqlConn.QueryRowCtx(l.ctx, &total, countSQL, countArgs...)
+	var planBatches []gormmodel.PlanBatch
+	page, err := gormx.QueryPage(db.Order("plan_batch.plan_trigger_time ASC, plan_batch.id DESC"), int(in.PageNum), int(in.PageSize), &planBatches)
 	if err != nil {
 		return nil, err
 	}
 
-	// 构建分页查询
-	dataQuery := query.Select(goqu.I("pb.*")).
-		Order(goqu.I("pb.plan_trigger_time").Asc(), goqu.I("pb.id").Desc()).
-		Limit(uint(in.PageSize)).
-		Offset(tool.CalculateOffset(in.PageNum, in.PageSize))
-
-	dataSQL, dataArgs, err := dataQuery.ToSQL()
-	if err != nil {
-		return nil, err
-	}
-	var planBatches []*model.PlanBatch
-	err = l.svcCtx.SqlConn.QueryRowsPartialCtx(l.ctx, &planBatches, dataSQL, dataArgs...)
-	if err != nil {
-		return nil, err
-	}
-
-	// 构建响应
 	resp := &trigger.ListPlanBatchesRes{
 		PlanBatches: make([]*trigger.PlanBatchPb, 0, len(planBatches)),
-		Total:       total,
+		Total:       page.Total,
 	}
 
-	// 转换计划批次列表
+	rawDB := l.svcCtx.DB.WithContext(l.ctx).DB
 	for _, planBatch := range planBatches {
-		// 获取批次执行项状态统计
-		statusCounts, err := l.svcCtx.PlanExecItemModel.GetBatchStatusCounts(l.ctx, planBatch.Id)
+		statusCounts, err := gormmodel.GetBatchStatusCounts(l.ctx, rawDB, planBatch.Id)
 		if err != nil {
 			return nil, err
 		}
-
-		// 获取批次总执行项数
-		totalExecItems, err := l.svcCtx.PlanExecItemModel.GetBatchTotalExecItems(l.ctx, planBatch.Id)
+		totalExecItems, err := gormmodel.GetBatchTotalExecItems(l.ctx, rawDB, planBatch.Id)
 		if err != nil {
 			return nil, err
 		}
 		statusCountMap := make(map[string]int64)
-
-		// 统计各状态数量
 		for _, sc := range statusCounts {
-			statusStr := fmt.Sprintf("%d", sc.Status)
-			statusCountMap[statusStr] = sc.Count
+			statusCountMap[fmt.Sprintf("%d", sc.Status)] = sc.Count
 		}
 
 		pbPlanBatch := &trigger.PlanBatchPb{
@@ -141,7 +110,6 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 		if planBatch.FinishedTime.Valid {
 			pbPlanBatch.FinishedTime = carbon.CreateFromStdTime(planBatch.FinishedTime.Time).ToDateTimeString()
 		}
-
 		resp.PlanBatches = append(resp.PlanBatches, pbPlanBatch)
 	}
 	return resp, nil

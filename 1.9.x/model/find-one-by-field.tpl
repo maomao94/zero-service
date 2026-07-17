@@ -5,7 +5,7 @@ func (m *default{{.upperStartCamelObject}}Model) FindOneBy{{.upperField}}(ctx co
 	err := m.QueryRowIndexCtx(ctx, &resp, {{.cacheKeyVariable}}, m.formatPrimary, func(ctx context.Context, conn sqlx.SqlConn, v any) (i any, e error) {
 		selectBuilder := m.SelectBuilder().Columns(m.rows).
 			Where(adaptSQLPlaceholders("{{.originalField}}", m.dbType), {{.lowerStartCamelField}}).
-			Where("del_state = 0").
+			Where("is_deleted = 0").
 			Limit(1)
 		query, args, err := selectBuilder.ToSql()
 		if err != nil {
@@ -26,7 +26,7 @@ func (m *default{{.upperStartCamelObject}}Model) FindOneBy{{.upperField}}(ctx co
 	}
 }{{else}}selectBuilder := m.SelectBuilder().Columns(m.rows).
 		Where(adaptSQLPlaceholders("{{.originalField}}", m.dbType), {{.lowerStartCamelField}}).
-		Where("del_state = 0").
+		Where("is_deleted = 0").
 		Limit(1)
 	query, args, err := selectBuilder.ToSql()
 	if err != nil {

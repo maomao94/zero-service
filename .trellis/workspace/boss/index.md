@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 119
-- **Last Active**: 2026-07-16
+- **Total Sessions**: 122
+- **Last Active**: 2026-07-17
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~414 | Active |
+| `journal-3.md` | ~520 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,9 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 122 | 2026-07-17 | 关闭 cron 扫表 SQL 日志 | `be099e47` | `master` |
+| 121 | 2026-07-17 | Trigger gormx migration | `75afadc3`, `16bbbdc5`, `b5c69466`, `16ea42f0` | `master` |
+| 120 | 2026-07-17 | Align gormx legacy soft delete | `d30796c9`, `b00747ae`, `782a37bc`, `0fa690af`, `3d8a6872` | `master` |
 | 119 | 2026-07-16 | Project documentation refresh | `401a54b0`, `d7d9444e`, `fd3d4227` | `master` |
 | 118 | 2026-07-16 | ISP handler message return & gnetx shutdown/lifecycle improvements | `4d6a67c6`, `e4d6b550`, `e13bb46a`, `dc37c5a6` | `master` |
 | 117 | 2026-07-15 | ispserver 服务搭建 + gnetx 框架完善 + ISP 协议公共能力 | `a0141b5b`, `2a78fc76` | `master` |

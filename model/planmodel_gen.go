@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"strings"
 	"time"
+	"zero-service/common/tool"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
@@ -19,7 +20,7 @@ import (
 type (
 	planModel interface {
 		Insert(ctx context.Context, session sqlx.Session, data *Plan) (sql.Result, error)
-		FindOne(ctx context.Context, id int64) (*Plan, error)
+		FindOne(ctx context.Context, id string) (*Plan, error)
 		FindOneByPlanId(ctx context.Context, planId string) (*Plan, error)
 		Update(ctx context.Context, session sqlx.Session, data *Plan) (sql.Result, error)
 		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *Plan) error
@@ -34,7 +35,7 @@ type (
 		InsertBuilder() squirrel.InsertBuilder
 		UpdateBuilder() squirrel.UpdateBuilder
 		DeleteBuilder() squirrel.DeleteBuilder
-		DeleteSoft(ctx context.Context, session sqlx.Session, id int64) error
+		DeleteSoft(ctx context.Context, session sqlx.Session, id string) error
 		FindSum(ctx context.Context, sumBuilder squirrel.SelectBuilder, field string) (float64, error)
 		FindCount(ctx context.Context, countBuilder squirrel.SelectBuilder, field string) (int64, error)
 		FindAll(ctx context.Context, rowBuilder squirrel.SelectBuilder, orderBy ...string) ([]*Plan, error)
@@ -42,7 +43,7 @@ type (
 		FindPageListByPageWithTotal(ctx context.Context, rowBuilder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*Plan, int64, error)
 		FindPageListByIdDESC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMinId, pageSize int64) ([]*Plan, error)
 		FindPageListByIdASC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMaxId, pageSize int64) ([]*Plan, error)
-		Delete(ctx context.Context, session sqlx.Session, id int64) error
+		Delete(ctx context.Context, session sqlx.Session, id string) error
 	}
 
 	defaultPlanModel struct {
@@ -53,11 +54,11 @@ type (
 	}
 
 	Plan struct {
-		Id               int64          `db:"id"`                // 自增主键ID
+		Id               string         `db:"id"`                // UUID主键ID
 		CreateTime       time.Time      `db:"create_time"`       // 创建时间
 		UpdateTime       time.Time      `db:"update_time"`       // 更新时间
-		DeleteTime       sql.NullTime   `db:"delete_time"`       // 删除时间（软删除标记）
-		DelState         int64          `db:"del_state"`         // 删除状态：0-未删除，1-已删除
+		DeleteTime       sql.NullTime   `db:"delete_time"`       // 删除审计时间
+		IsDeleted        int64          `db:"is_deleted"`        // 删除状态：0-未删除，1-已删除
 		Version          int64          `db:"version"`           // 版本号（乐观锁）
 		CreateUser       sql.NullString `db:"create_user"`       // 创建人
 		UpdateUser       sql.NullString `db:"update_user"`       // 更新人
@@ -97,7 +98,7 @@ func newPlanModel(conn sqlx.SqlConn, opts ...ModelOption) *defaultPlanModel {
 	}
 }
 
-func (m *defaultPlanModel) Delete(ctx context.Context, session sqlx.Session, id int64) error {
+func (m *defaultPlanModel) Delete(ctx context.Context, session sqlx.Session, id string) error {
 	deleteBuilder := m.DeleteBuilder().Where("id = ?", id)
 	query, args, err := deleteBuilder.ToSql()
 	if err != nil {
@@ -111,10 +112,10 @@ func (m *defaultPlanModel) Delete(ctx context.Context, session sqlx.Session, id 
 	}
 	return execErr
 }
-func (m *defaultPlanModel) FindOne(ctx context.Context, id int64) (*Plan, error) {
+func (m *defaultPlanModel) FindOne(ctx context.Context, id string) (*Plan, error) {
 	selectBuilder := m.SelectBuilder().Columns(m.planRows).
 		Where("id = ?", id).
-		Where("del_state = ?", 0).
+		Where("is_deleted = ?", 0).
 		Limit(1)
 	query, args, err := selectBuilder.ToSql()
 	if err != nil {
@@ -135,7 +136,7 @@ func (m *defaultPlanModel) FindOne(ctx context.Context, id int64) (*Plan, error)
 func (m *defaultPlanModel) FindOneByPlanId(ctx context.Context, planId string) (*Plan, error) {
 	selectBuilder := m.SelectBuilder().Columns(m.planRows).
 		Where("plan_id = ?", planId).
-		Where("del_state = ?", 0).
+		Where("is_deleted = ?", 0).
 		Limit(1)
 	query, args, err := selectBuilder.ToSql()
 	if err != nil {
@@ -154,52 +155,41 @@ func (m *defaultPlanModel) FindOneByPlanId(ctx context.Context, planId string) (
 }
 
 func (m *defaultPlanModel) Insert(ctx context.Context, session sqlx.Session, data *Plan) (sql.Result, error) {
+	if data.Id == "" {
+		id, err := tool.UUID()
+		if err != nil {
+			return nil, err
+		}
+		data.Id = id
+	}
 	data.DeleteTime = sql.NullTime{
 		Valid: false,
 	}
-	data.DelState = 0
+	data.IsDeleted = 0
 	columns, values := generateColumnsAndValues(data, []string{})
 	insertBuilder := m.InsertBuilder().Columns(columns...).Values(values...)
 
-	if m.dbType == DatabaseTypePostgres {
-		insertBuilder = insertBuilder.Suffix("RETURNING id")
-		query, args, err := insertBuilder.ToSql()
-		if err != nil {
-			return nil, err
-		}
-		var id int64
-		var execErr error
-		if session != nil {
-			execErr = session.QueryRowCtx(ctx, &id, query, args...)
-		} else {
-			execErr = m.conn.QueryRowCtx(ctx, &id, query, args...)
-		}
-		if execErr != nil {
-			return nil, execErr
-		}
-		data.Id = id
-		return &postgresResult{id: id}, nil
-	} else {
-		query, args, err := insertBuilder.ToSql()
-		if err != nil {
-			return nil, err
-		}
-		var result sql.Result
-		var execErr error
-		if session != nil {
-			result, execErr = session.ExecCtx(ctx, query, args...)
-		} else {
-			result, execErr = m.conn.ExecCtx(ctx, query, args...)
-		}
-		return result, execErr
+	query, args, err := insertBuilder.ToSql()
+	if err != nil {
+		return nil, err
 	}
+	var execErr error
+	if session != nil {
+		_, execErr = session.ExecCtx(ctx, query, args...)
+	} else {
+		_, execErr = m.conn.ExecCtx(ctx, query, args...)
+	}
+	if execErr != nil {
+		return nil, execErr
+	}
+	return &stringIDResult{id: data.Id}, nil
 }
 
 func (m *defaultPlanModel) Update(ctx context.Context, session sqlx.Session, newData *Plan) (sql.Result, error) {
 	newData.DeleteTime = sql.NullTime{
 		Valid: false,
 	}
-	newData.DelState = 0
+	newData.IsDeleted = 0
 	columns, values := generateColumnsAndValues(newData, []string{})
 	updateBuilder := m.UpdateBuilder()
 	for i, column := range columns {
@@ -253,12 +243,12 @@ func (m *defaultPlanModel) UpdateWithVersion(ctx context.Context, session sqlx.S
 	return nil
 }
 
-func (m *defaultPlanModel) DeleteSoft(ctx context.Context, session sqlx.Session, id int64) error {
+func (m *defaultPlanModel) DeleteSoft(ctx context.Context, session sqlx.Session, id string) error {
 	data, err := m.FindOne(ctx, id)
 	if err != nil {
 		return err
 	}
-	data.DelState = 1
+	data.IsDeleted = 1
 	data.DeleteTime = sql.NullTime{
 		Time:  time.Now(),
 		Valid: true,
@@ -275,7 +265,7 @@ func (m *defaultPlanModel) FindSum(ctx context.Context, builder squirrel.SelectB
 	}
 	sumFunction := "COALESCE(SUM(" + field + "),0)"
 	builder = builder.Columns(sumFunction)
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -294,7 +284,7 @@ func (m *defaultPlanModel) FindCount(ctx context.Context, builder squirrel.Selec
 		return 0, errors.Wrapf(errors.New("FindCount Least One Field"), "FindCount Least One Field")
 	}
 	builder = builder.Columns("COUNT(" + field + ")")
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -315,7 +305,7 @@ func (m *defaultPlanModel) FindAll(ctx context.Context, builder squirrel.SelectB
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
-	query, values, err := builder.Where("del_state = ?", 0).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -340,7 +330,7 @@ func (m *defaultPlanModel) FindPageListByPage(ctx context.Context, builder squir
 		page = 1
 	}
 	offset := (page - 1) * pageSize
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -369,7 +359,7 @@ func (m *defaultPlanModel) FindPageListByPageWithTotal(ctx context.Context, buil
 		page = 1
 	}
 	offset := (page - 1) * pageSize
-	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, total, err
 	}
@@ -388,7 +378,7 @@ func (m *defaultPlanModel) FindPageListByIdDESC(ctx context.Context, builder squ
 	if preMinId > 0 {
 		builder = builder.Where(" id < ? ", preMinId)
 	}
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -407,7 +397,7 @@ func (m *defaultPlanModel) FindPageListByIdASC(ctx context.Context, builder squi
 	if preMaxId > 0 {
 		builder = builder.Where(" id > ? ", preMaxId)
 	}
-	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
+	query, values, err := builder.Where("is_deleted = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
