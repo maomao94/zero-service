@@ -58,7 +58,7 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 	}
 
-	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
+	if plan.Status == model.PlanStatusTerminated || plan.FinishedTime.Valid {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态已结束,无需终止")
 	}
 
@@ -66,7 +66,7 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 	err = db.Transaction(func(tx *gorm.DB) error {
 		now := time.Now()
 		// 更新计划状态为已终止
-		plan.Status = int64(model.PlanStatusTerminated) // 终止
+		plan.Status = model.PlanStatusTerminated // 终止
 		plan.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
 		plan.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
 		plan.FinishedTime = sql.NullTime{Time: now, Valid: true}
@@ -82,10 +82,10 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		// 更新批次
 		transErr = tx.Model(&gormmodel.PlanBatch{}).
 			Where("plan_id = ?", plan.PlanId).
-			Where("status != ?", int64(model.PlanStatusTerminated)).
+			Where("status != ?", model.PlanStatusTerminated).
 			Where("finished_time IS NULL").
 			Updates(map[string]any{
-				"status":            int64(model.PlanStatusTerminated),
+				"status":            model.PlanStatusTerminated,
 				"terminated_reason": sql.NullString{String: in.Reason, Valid: in.Reason != ""},
 				"finished_time":     now,
 				"update_user":       sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""},

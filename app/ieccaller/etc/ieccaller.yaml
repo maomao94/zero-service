@@ -59,13 +59,25 @@ StreamEventConf:
     - 127.0.0.1:21009
   NonBlock: true
   Timeout: 10000
-# 数据库配置, 配置后将根据点位表推送数据
+# 数据库配置, 配置后将根据点位表推送数据；推荐内嵌 SQLite 或 PostgreSQL。
 #DB:
-#  DataSource: file:./model/sql/default.db?_busy_timeout=5000&_journal_mode=WAL
-#  DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+##  DataSource: file:./model/sql/default.db?_busy_timeout=5000&_journal_mode=WAL
 #  DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
-DisableStmtLog: false
-# 指令推送间隔
+#  # 最大空闲连接数，默认 100。
+#  MaxIdleConns: 100
+#  # 最大打开连接数，默认 100。
+#  MaxOpenConns: 100
+#  # 慢 SQL 阈值，默认 200ms。
+#  SlowThreshold: 200ms
+#  # GORM 日志级别，默认 error，可选 silent/error/warn/info。
+#  LogLevel: info
+#  # 是否参数化 SQL 日志，默认 false。生产环境建议开启以避免日志暴露敏感参数。
+#  ParameterizedQueries: false
+#  # 是否忽略 record not found 日志，默认 false。
+#  IgnoreRecordNotFoundError: false
+#  # 是否按字段名显式查询，默认 false。
+#  QueryFields: false
+# 指令推送间隔˚
 # 总召唤 默认 @every 60s
 #InterrogationCmdCron: "*/10 * * * * *"
 # 累计量召唤 默认 @every 60s

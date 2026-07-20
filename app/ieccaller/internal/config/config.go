@@ -2,6 +2,7 @@ package config
 
 import (
 	"time"
+	"zero-service/common/gormx"
 	"zero-service/common/iec104/client"
 	"zero-service/common/mqttx"
 
@@ -47,10 +48,7 @@ type Config struct {
 
 	StreamEventConf zrpc.RpcClientConf
 
-	DisableStmtLog bool `json:",optional,default=false"`
-	DB             struct {
-		DataSource string `json:",optional"`
-	}
+	DB                 gormx.Config  `json:",optional"`
 	PushAsduChunkBytes int           `json:",default=1048576"` // 1M
 	GracePeriod        time.Duration `json:",default=10s"`
 }

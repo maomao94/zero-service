@@ -65,20 +65,20 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 	}
 
-	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
+	if plan.Status == model.PlanStatusTerminated || plan.FinishedTime.Valid {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态已结束,无需恢复")
 	}
-	if planBatch.Status == int64(model.PlanStatusTerminated) || planBatch.FinishedTime.Valid {
+	if planBatch.Status == model.PlanStatusTerminated || planBatch.FinishedTime.Valid {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划批次状态已结束,无需恢复")
 	}
-	if planBatch.Status != int64(model.PlanStatusPaused) {
+	if planBatch.Status != model.PlanStatusPaused {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划批次非暂停,不可恢复")
 	}
 
 	// 执行事务
 	err = db.Transaction(func(tx *gorm.DB) error {
 		// 更新计划批次状态为启用
-		planBatch.Status = int64(model.PlanStatusEnabled) // 启用
+		planBatch.Status = model.PlanStatusEnabled // 启用
 		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
 
 		// 更新计划批次
@@ -90,9 +90,9 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 		// 更新计划启用
 		transErr = tx.Model(&gormmodel.Plan{}).
 			Where("id = ?", planBatch.PlanPk).
-			Where("status = ?", int64(model.PlanStatusPaused)).
+			Where("status = ?", model.PlanStatusPaused).
 			Updates(map[string]any{
-				"status":        int64(model.PlanStatusEnabled),
+				"status":        model.PlanStatusEnabled,
 				"paused_time":   sql.NullTime{},
 				"paused_reason": sql.NullString{},
 				"update_user":   sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""},

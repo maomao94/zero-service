@@ -25,17 +25,17 @@ type Plan struct {
 	CreateUser       sql.NullString `gorm:"column:create_user;size:64;comment:创建人"`
 	UpdateUser       sql.NullString `gorm:"column:update_user;size:64;comment:更新人"`
 	DeptCode         sql.NullString `gorm:"column:dept_code;size:64;comment:机构code"`
-	PlanId           string         `gorm:"column:plan_id;size:64;comment:计划唯一标识;uniqueIndex"`
+	PlanId           string         `gorm:"column:plan_id;size:64;comment:计划唯一标识;uniqueIndex:uq_plan_plan_id"`
 	PlanName         sql.NullString `gorm:"column:plan_name;size:128;comment:计划任务名称"`
-	Type             sql.NullString `gorm:"column:type;size:64;comment:任务类型;index"`
-	GroupId          sql.NullString `gorm:"column:group_id;size:64;comment:计划组ID,用于分组管理计划任务;index"`
+	Type             sql.NullString `gorm:"column:type;size:64;comment:任务类型;index:idx_plan_table_type"`
+	GroupId          sql.NullString `gorm:"column:group_id;size:64;comment:计划组ID,用于分组管理计划任务;index:idx_plan_table_group_id"`
 	RecurrenceRule   string         `gorm:"column:recurrence_rule;type:text;comment:重复规则，JSON格式存储"`
-	StartTime        time.Time      `gorm:"column:start_time;comment:规则生效开始时间;index"`
-	EndTime          time.Time      `gorm:"column:end_time;comment:规则生效结束时间;index"`
-	Status           int64          `gorm:"column:status;comment:状态：0-禁用，1-启用，2-暂停，3-终止;index"`
-	ScanFlg          int64          `gorm:"column:scan_flg;comment:扫表标记, 0-未扫表, 1-已扫表"`
+	StartTime        time.Time      `gorm:"column:start_time;comment:规则生效开始时间;index:idx_plan_table_start_time"`
+	EndTime          time.Time      `gorm:"column:end_time;comment:规则生效结束时间;index:idx_plan_table_end_time"`
+	Status           int            `gorm:"column:status;comment:状态：0-禁用，1-启用，2-暂停，3-终止;index:idx_plan_table_status"`
+	ScanFlg          int            `gorm:"column:scan_flg;comment:扫表标记, 0-未扫表, 1-已扫表"`
 	TerminatedReason sql.NullString `gorm:"column:terminated_reason;size:2000;comment:终止原因"`
-	PausedTime       sql.NullTime   `gorm:"column:paused_time;comment:暂停时间;index"`
+	PausedTime       sql.NullTime   `gorm:"column:paused_time;comment:暂停时间;index:idx_plan_table_paused_time"`
 	PausedReason     sql.NullString `gorm:"column:paused_reason;size:256;comment:暂停原因"`
 	FinishedTime     sql.NullTime   `gorm:"column:finished_time;comment:结束时间"`
 	Description      sql.NullString `gorm:"column:description;size:256;comment:备注信息"`
@@ -55,13 +55,13 @@ type PlanBatch struct {
 	CreateUser       sql.NullString `gorm:"column:create_user;size:64;comment:创建人"`
 	UpdateUser       sql.NullString `gorm:"column:update_user;size:64;comment:更新人"`
 	DeptCode         sql.NullString `gorm:"column:dept_code;size:64;comment:机构code"`
-	PlanPk           string         `gorm:"column:plan_pk;size:64;comment:关联的计划主键ID;index"`
-	PlanId           string         `gorm:"column:plan_id;size:64;comment:关联的计划ID;index"`
-	BatchId          string         `gorm:"column:batch_id;size:64;comment:批ID;uniqueIndex"`
+	PlanPk           string         `gorm:"column:plan_pk;size:64;comment:关联的计划主键ID;index:idx_plan_batch_plan_pk"`
+	PlanId           string         `gorm:"column:plan_id;size:64;comment:关联的计划ID;index:idx_plan_batch_plan_id"`
+	BatchId          string         `gorm:"column:batch_id;size:64;comment:批ID;uniqueIndex:uq_plan_batch_batch_id"`
 	BatchName        sql.NullString `gorm:"column:batch_name;size:128;comment:批次名称"`
-	BatchNum         sql.NullString `gorm:"column:batch_num;size:128;comment:批次序号;uniqueIndex"`
-	Status           int64          `gorm:"column:status;comment:状态：0-禁用，1-启用，2-暂停，3-终止;index"`
-	ScanFlg          int64          `gorm:"column:scan_flg;comment:扫表标记, 0-未扫表, 1-已扫表"`
+	BatchNum         sql.NullString `gorm:"column:batch_num;size:128;comment:批次序号;uniqueIndex:uk_plan_batch_batch_num"`
+	Status           int            `gorm:"column:status;comment:状态：0-禁用，1-启用，2-暂停，3-终止;index:idx_plan_batch_status"`
+	ScanFlg          int            `gorm:"column:scan_flg;comment:扫表标记, 0-未扫表, 1-已扫表"`
 	PlanTriggerTime  sql.NullTime   `gorm:"column:plan_trigger_time;comment:计划触发时间"`
 	TerminatedReason sql.NullString `gorm:"column:terminated_reason;size:2000;comment:终止原因"`
 	PausedTime       sql.NullTime   `gorm:"column:paused_time;comment:暂停时间"`
@@ -83,23 +83,23 @@ type PlanExecItem struct {
 	CreateUser       sql.NullString `gorm:"column:create_user;size:64;comment:创建人"`
 	UpdateUser       sql.NullString `gorm:"column:update_user;size:64;comment:更新人"`
 	DeptCode         sql.NullString `gorm:"column:dept_code;size:64;comment:机构code"`
-	PlanPk           string         `gorm:"column:plan_pk;size:64;comment:关联的计划主键ID;index:idx_plan_pk_item_id,priority:1"`
-	PlanId           string         `gorm:"column:plan_id;size:64;comment:关联的计划ID;index:idx_plan_id_item_id,priority:1"`
-	BatchPk          string         `gorm:"column:batch_pk;size:64;comment:批主键ID;index"`
-	BatchId          string         `gorm:"column:batch_id;size:64;comment:批ID;index"`
-	ExecId           string         `gorm:"column:exec_id;size:64;comment:执行ID;uniqueIndex"`
-	ItemId           string         `gorm:"column:item_id;size:64;comment:执行项ID;index:idx_plan_pk_item_id,priority:2;index:idx_plan_id_item_id,priority:2"`
+	PlanPk           string         `gorm:"column:plan_pk;size:64;comment:关联的计划主键ID;index:idx_plan_exec_item_plan_pk_item_id,priority:1"`
+	PlanId           string         `gorm:"column:plan_id;size:64;comment:关联的计划ID;index:idx_plan_exec_item_plan_id_item_id,priority:1"`
+	BatchPk          string         `gorm:"column:batch_pk;size:64;comment:批主键ID;index:idx_plan_exec_item_batch_pk"`
+	BatchId          string         `gorm:"column:batch_id;size:64;comment:批ID;index:idx_plan_exec_item_batch_id"`
+	ExecId           string         `gorm:"column:exec_id;size:64;comment:执行ID;uniqueIndex:uk_plan_exec_item_exec_id"`
+	ItemId           string         `gorm:"column:item_id;size:64;comment:执行项ID;index:idx_plan_exec_item_plan_pk_item_id,priority:2;index:idx_plan_exec_item_plan_id_item_id,priority:2"`
 	ItemType         sql.NullString `gorm:"column:item_type;size:64;comment:执行项类型"`
 	ItemName         sql.NullString `gorm:"column:item_name;size:128;comment:执行项名称"`
 	ItemRowId        int64          `gorm:"column:item_row_id;comment:执行项行ID"`
-	PointId          sql.NullString `gorm:"column:point_id;size:64;comment:点位id;index"`
+	PointId          sql.NullString `gorm:"column:point_id;size:64;comment:点位id;index:idx_plan_exec_item_point_id"`
 	Payload          string         `gorm:"column:payload;type:text;comment:业务负载"`
 	RequestTimeout   int64          `gorm:"column:request_timeout;comment:请求超时时间（毫秒）"`
 	PlanTriggerTime  time.Time      `gorm:"column:plan_trigger_time;comment:计划触发时间"`
-	NextTriggerTime  time.Time      `gorm:"column:next_trigger_time;comment:下次触发时间（扫表核心字段）;index:idx_core_scan,priority:2"`
+	NextTriggerTime  time.Time      `gorm:"column:next_trigger_time;comment:下次触发时间（扫表核心字段）;index:idx_plan_exec_item_core_scan,priority:2"`
 	LastTriggerTime  sql.NullTime   `gorm:"column:last_trigger_time;comment:上次触发时间"`
-	TriggerCount     int64          `gorm:"column:trigger_count;comment:触发次数"`
-	Status           int64          `gorm:"column:status;comment:状态：0-等待调度，10-延期等待，100-执行中，150-暂停，200-完成，300-终止;index;index:idx_core_scan,priority:3"`
+	TriggerCount     int            `gorm:"column:trigger_count;comment:触发次数"`
+	Status           int            `gorm:"column:status;comment:状态：0-等待调度，10-延期等待，100-执行中，150-暂停，200-完成，300-终止;index:idx_plan_exec_item_status;index:idx_plan_exec_item_core_scan,priority:3"`
 	LastResult       sql.NullString `gorm:"column:last_result;size:256;comment:上次执行结果"`
 	LastMessage      sql.NullString `gorm:"column:last_message;size:2000;comment:上次结果描述"`
 	LastReason       sql.NullString `gorm:"column:last_reason;size:2000;comment:上次结果原因"`
@@ -122,25 +122,30 @@ type PlanExecLog struct {
 	CreateUser  sql.NullString `gorm:"column:create_user;size:64;comment:创建人"`
 	UpdateUser  sql.NullString `gorm:"column:update_user;size:64;comment:更新人"`
 	DeptCode    sql.NullString `gorm:"column:dept_code;size:64;comment:机构code"`
-	PlanPk      string         `gorm:"column:plan_pk;size:64;comment:关联的计划主键ID;index"`
-	PlanId      string         `gorm:"column:plan_id;size:64;comment:计划任务ID;index"`
+	PlanPk      string         `gorm:"column:plan_pk;size:64;comment:关联的计划主键ID;index:idx_plan_exec_log_plan_pk"`
+	PlanId      string         `gorm:"column:plan_id;size:64;comment:计划任务ID;index:idx_plan_exec_log_plan_id"`
 	PlanName    sql.NullString `gorm:"column:plan_name;size:128;comment:计划任务名称"`
-	BatchPk     string         `gorm:"column:batch_pk;size:64;comment:批主键ID;index"`
-	BatchId     string         `gorm:"column:batch_id;size:64;comment:批ID;index"`
-	ItemPk      string         `gorm:"column:item_pk;size:64;comment:关联的执行项主键ID;index"`
-	ExecId      string         `gorm:"column:exec_id;size:64;comment:执行ID;index"`
-	ItemId      string         `gorm:"column:item_id;size:64;comment:执行项ID;index"`
+	BatchPk     string         `gorm:"column:batch_pk;size:64;comment:批主键ID;index:idx_plan_exec_log_batch_pk"`
+	BatchId     string         `gorm:"column:batch_id;size:64;comment:批ID;index:idx_plan_exec_log_batch_id"`
+	ItemPk      string         `gorm:"column:item_pk;size:64;comment:关联的执行项主键ID;index:idx_plan_exec_log_item_pk"`
+	ExecId      string         `gorm:"column:exec_id;size:64;comment:执行ID;index:idx_plan_exec_log_exec_id"`
+	ItemId      string         `gorm:"column:item_id;size:64;comment:执行项ID;index:idx_plan_exec_log_item_id"`
 	ItemType    sql.NullString `gorm:"column:item_type;size:64;comment:执行项类型"`
 	ItemName    sql.NullString `gorm:"column:item_name;size:128;comment:执行项名称"`
 	PointId     sql.NullString `gorm:"column:point_id;size:64;comment:点位id"`
-	TriggerTime time.Time      `gorm:"column:trigger_time;comment:触发时间;index"`
-	TraceId     sql.NullString `gorm:"column:trace_id;size:64;comment:唯一追踪ID;index"`
-	ExecResult  sql.NullString `gorm:"column:exec_result;size:256;comment:执行结果;index"`
+	TriggerTime time.Time      `gorm:"column:trigger_time;comment:触发时间;index:idx_plan_exec_log_trigger_time"`
+	TraceId     sql.NullString `gorm:"column:trace_id;size:64;comment:唯一追踪ID;index:idx_plan_exec_log_trace_id"`
+	ExecResult  sql.NullString `gorm:"column:exec_result;size:256;comment:执行结果;index:idx_plan_exec_log_exec_result"`
 	Message     sql.NullString `gorm:"column:message;size:2000;comment:结果描述"`
 	Reason      sql.NullString `gorm:"column:reason;size:2000;comment:结果原因"`
 }
 
 func (PlanExecLog) TableName() string { return "plan_exec_log" }
+
+type ExecItemStatusCount struct {
+	Status int
+	Count  int64
+}
 
 // ============================================================================
 // Plan / PlanBatch finished time helpers
@@ -192,8 +197,8 @@ func CalculatePlanProgress(ctx context.Context, db *gorm.DB, planPk string) (flo
 // ============================================================================
 
 // GetBatchStatusCounts returns status counts for a plan batch.
-func GetBatchStatusCounts(ctx context.Context, db *gorm.DB, batchPk string) ([]model.ExecItemStatusCountEx, error) {
-	var rows []model.ExecItemStatusCountEx
+func GetBatchStatusCounts(ctx context.Context, db *gorm.DB, batchPk string) ([]ExecItemStatusCount, error) {
+	var rows []ExecItemStatusCount
 	err := db.WithContext(ctx).Model(&PlanExecItem{}).
 		Select("status, COUNT(*) AS count").
 		Where("batch_pk = ?", batchPk).
@@ -285,7 +290,7 @@ func UpdateExecItemStatusToFail(ctx context.Context, db *gorm.DB, id string, las
 	if err := db.WithContext(ctx).Model(&PlanExecItem{}).Select("trigger_count").Where("id = ?", id).Scan(&item).Error; err != nil {
 		return err
 	}
-	nextTriggerTime, isExceeded := tool.CalculateNextTriggerTime(item.TriggerCount+1, mathx.NewUnstable(expiryDeviation).AroundDuration(retryInterval))
+	nextTriggerTime, isExceeded := tool.CalculateNextTriggerTime(int64(item.TriggerCount+1), mathx.NewUnstable(expiryDeviation).AroundDuration(retryInterval))
 	updates := map[string]any{
 		"status":            model.StatusDelayed,
 		"last_result":       lastResult,

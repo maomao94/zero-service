@@ -65,11 +65,11 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 	}
 
 	// 检查当前状态是否允许终止操作
-	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
+	if plan.Status == model.PlanStatusTerminated || plan.FinishedTime.Valid {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态已结束,无需终止")
 	}
 
-	if planBatch.Status == int64(model.PlanStatusTerminated) || planBatch.FinishedTime.Valid {
+	if planBatch.Status == model.PlanStatusTerminated || planBatch.FinishedTime.Valid {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划批次状态已结束,无需终止")
 	}
 
@@ -77,7 +77,7 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 	err = db.Transaction(func(tx *gorm.DB) error {
 		now := time.Now()
 		// 更新计划批次状态为终止
-		planBatch.Status = int64(model.PlanStatusTerminated) // 终止
+		planBatch.Status = model.PlanStatusTerminated // 终止
 		planBatch.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
 		planBatch.PausedTime = sql.NullTime{}
 		planBatch.PausedReason = sql.NullString{}

@@ -56,17 +56,17 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 	}
-	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
+	if plan.Status == model.PlanStatusTerminated || plan.FinishedTime.Valid {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态已结束,无需暂停")
 	}
-	if plan.Status != int64(model.PlanStatusEnabled) {
+	if plan.Status != model.PlanStatusEnabled {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态非启用状态,无需暂停")
 	}
 
 	// 执行事务
 	err = db.Transaction(func(tx *gorm.DB) error {
 		// 更新计划状态为暂停
-		plan.Status = int64(model.PlanStatusPaused) // 暂停
+		plan.Status = model.PlanStatusPaused // 暂停
 		plan.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
 		plan.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
 		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
@@ -80,10 +80,10 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 		// 更新批次
 		transErr = tx.Model(&gormmodel.PlanBatch{}).
 			Where("plan_id = ?", plan.PlanId).
-			Where("status = ?", int64(model.PlanStatusEnabled)).
+			Where("status = ?", model.PlanStatusEnabled).
 			Where("finished_time IS NULL").
 			Updates(map[string]any{
-				"status":        int64(model.PlanStatusPaused),
+				"status":        model.PlanStatusPaused,
 				"paused_time":   sql.NullTime{Time: time.Now(), Valid: true},
 				"paused_reason": sql.NullString{String: in.Reason, Valid: in.Reason != ""},
 				"update_user":   sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""},

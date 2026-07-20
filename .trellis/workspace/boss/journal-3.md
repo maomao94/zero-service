@@ -584,3 +584,36 @@ Implemented IEC104 ASDU trace propagation cleanup, documented stationId and trac
 ### Next Steps
 
 - None - task complete
+
+
+## Session 125: Final doc review & task archive
+
+**Date**: 2026-07-20
+**Task**: Final doc review & task archive
+**Branch**: `master`
+
+### Summary
+
+Review all IEC 104 docs for stale model references after migration; clean up GORM-specific language from external-facing iec104-message.md; final archive of ieccaller-device-gorm task.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `85b34973` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

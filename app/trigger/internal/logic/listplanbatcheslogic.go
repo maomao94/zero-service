@@ -46,9 +46,9 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 		db = db.Where("plan_batch.batch_id = ?", in.BatchId)
 	}
 	if len(in.Status) > 0 {
-		statusInts := make([]int64, len(in.Status))
+		statusInts := make([]int, len(in.Status))
 		for i, s := range in.Status {
-			statusInts[i] = int64(s)
+			statusInts[i] = int(s)
 		}
 		db = db.Where("plan_batch.status IN ?", statusInts)
 	}

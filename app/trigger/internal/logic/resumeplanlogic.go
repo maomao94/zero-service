@@ -62,14 +62,14 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 	}
 
 	// 只有暂停状态的计划才能恢复，已终止的计划无法恢复
-	if plan.Status != int64(model.PlanStatusPaused) {
+	if plan.Status != model.PlanStatusPaused {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划非暂停,不可恢复")
 	}
 
 	// 执行事务
 	err = db.Transaction(func(tx *gorm.DB) error {
 		// 更新计划状态为启用
-		plan.Status = int64(model.PlanStatusEnabled)
+		plan.Status = model.PlanStatusEnabled
 		plan.PausedTime = sql.NullTime{}
 		plan.PausedReason = sql.NullString{}
 		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
@@ -84,9 +84,9 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 		// 更新批次
 		transErr = tx.Model(&gormmodel.PlanBatch{}).
 			Where("plan_id = ?", plan.PlanId).
-			Where("status = ?", int64(model.PlanStatusPaused)).
+			Where("status = ?", model.PlanStatusPaused).
 			Updates(map[string]any{
-				"status":        int64(model.PlanStatusEnabled),
+				"status":        model.PlanStatusEnabled,
 				"paused_time":   sql.NullTime{},
 				"paused_reason": sql.NullString{},
 				"update_user":   sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""},

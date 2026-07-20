@@ -60,7 +60,7 @@ func (l *ResumePlanExecItemLogic) ResumePlanExecItem(in *trigger.ResumePlanExecI
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_DB, "查询执行项失败")
 	}
 
-	if execItem.Status != int64(model.StatusPaused) {
+	if execItem.Status != model.StatusPaused {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划执行项非暂停,不可恢复")
 	}
 
@@ -71,7 +71,7 @@ func (l *ResumePlanExecItemLogic) ResumePlanExecItem(in *trigger.ResumePlanExecI
 
 	// 执行事务
 	err = db.Transaction(func(tx *gorm.DB) error {
-		execItem.Status = int64(model.StatusWaiting)
+		execItem.Status = model.StatusWaiting
 		execItem.PausedTime = sql.NullTime{}
 		execItem.PausedReason = sql.NullString{}
 		execItem.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}

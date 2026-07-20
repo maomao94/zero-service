@@ -300,6 +300,8 @@ Legacy GORM 模型使用旧系统兼容字段：
 
 **What**: 业务服务迁移到 GORM 时，本地模型放在 `app/{service}/model/gormmodel/`，优先使用 `LegacyStringBaseModel` 表达 string/UUID 主键语义。
 
+默认规则：后续从 sqlx/go-zero model 迁移到服务内 GORM 时，只要需求没有明确指定保留数字自增主键，就使用 `LegacyStringBaseModel` 作为基础模型。不要因为旧 SQL 里存在 `BIGINT AUTO_INCREMENT` 就继续默认使用 `LegacyBaseModel`；只有用户明确要求保留 int64 主键或存在不可变外部契约时才例外。
+
 **Why**: 这样可以把 GORM 迁移限制在服务内，不污染根目录 go-zero 生成 DAO；同时 string/UUID 主键和业务唯一标识、外部协议字段更容易保持一致。
 
 **Example**:

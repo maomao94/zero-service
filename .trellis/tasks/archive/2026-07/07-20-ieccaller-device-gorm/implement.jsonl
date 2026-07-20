@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/go-zero-conventions.md","reason":"ServiceContext dependency injection, go-zero layering, and validation command conventions."}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"Database/model migration rules, context propagation, GORM missing-row and pagination semantics."}
+{"file":".trellis/spec/backend/gormx-guidelines.md","reason":"GORM wrapper config/opening, model mixins, pagination helpers, and DB initialization patterns."}
+{"file":".trellis/spec/guides/index.md","reason":"Cross-layer and code reuse thinking guide routing for backend service migration."}

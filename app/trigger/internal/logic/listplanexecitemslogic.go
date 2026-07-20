@@ -63,9 +63,9 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 		db = db.Where("item_name LIKE ?", "%"+in.ItemName+"%")
 	}
 	if len(in.Status) > 0 {
-		statusInts := make([]int64, len(in.Status))
+		statusInts := make([]int, len(in.Status))
 		for i, status := range in.Status {
-			statusInts[i] = int64(status)
+			statusInts[i] = int(status)
 		}
 		db = db.Where("status IN ?", statusInts)
 	}

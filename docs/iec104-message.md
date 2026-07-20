@@ -159,30 +159,35 @@ device_123/alarm/M_SP_NA_1
 
 `device_point_mapping` 是点位映射、弱校验推送和动态 Topic 生成的配置来源。
 
+使用内嵌数据库（SQLite 或 PostgreSQL），`id` 为去杠 UUID 字符串主键。
+
 ```sql
 CREATE TABLE IF NOT EXISTS device_point_mapping (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    delete_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id VARCHAR(64) PRIMARY KEY,
+    create_time TIMESTAMP NOT NULL,
+    update_time TIMESTAMP NOT NULL,
+    delete_time TIMESTAMP NULL,
     is_deleted INTEGER NOT NULL DEFAULT 0,
-    version INTEGER NOT NULL DEFAULT 0,
+
+    create_user VARCHAR(64) DEFAULT '',
+    update_user VARCHAR(64) DEFAULT '',
+    dept_code VARCHAR(64) DEFAULT '',
 
     tag_station VARCHAR(64) NOT NULL DEFAULT '',
     coa INTEGER NOT NULL DEFAULT 0,
     ioa INTEGER NOT NULL DEFAULT 0,
     device_id VARCHAR(64) NOT NULL DEFAULT '',
     device_name VARCHAR(128) NOT NULL DEFAULT '',
-    td_table_type VARCHAR(255) NOT NULL DEFAULT '',
+    td_table_type VARCHAR(255) DEFAULT '',
     enable_push INTEGER NOT NULL DEFAULT 1,
     enable_raw_insert INTEGER NOT NULL DEFAULT 1,
-    description VARCHAR(256) NOT NULL DEFAULT '',
+    description VARCHAR(256) DEFAULT '',
 
-    ext_1 VARCHAR(64) NOT NULL DEFAULT '',
-    ext_2 VARCHAR(64) NOT NULL DEFAULT '',
-    ext_3 VARCHAR(64) NOT NULL DEFAULT '',
-    ext_4 VARCHAR(64) NOT NULL DEFAULT '',
-    ext_5 VARCHAR(64) NOT NULL DEFAULT '',
+    ext_1 VARCHAR(64) DEFAULT '',
+    ext_2 VARCHAR(64) DEFAULT '',
+    ext_3 VARCHAR(64) DEFAULT '',
+    ext_4 VARCHAR(64) DEFAULT '',
+    ext_5 VARCHAR(64) DEFAULT '',
 
     UNIQUE(tag_station, coa, ioa)
 );
@@ -190,7 +195,11 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `tag_station` | string | 站点标识。默认由 `host` 和 `port` 生成，也可通过 `metaData.stationId` 覆盖。该字段必须和 handler 注入到 `ctx.Value("stationId")` 的值一致，才能命中点位映射。 |
+| `id` | string | 去杠 UUID 字符串主键。 |
+| `create_time` / `update_time` | timestamp | 创建/更新时间。 |
+| `delete_time` / `is_deleted` | timestamp / int | 旧系统兼容软删除字段，查询只返回 `is_deleted=0` 的记录。 |
+| `create_user` / `update_user` / `dept_code` | string | 旧系统审计与机构字段。 |
+| `tag_station` | string | 站点标识。默认由 `host` 和 `port` 生成，也可通过 `metaData.stationId` 覆盖。消息推送时按此字段匹配点位映射。 |
 | `coa` | int | IEC 104 公共地址。 |
 | `ioa` | int | IEC 104 信息对象地址。 |
 | `device_id` | string | 映射到 `pm.deviceId`。 |

@@ -28,25 +28,27 @@ func NewClearPointMappingCacheLogic(ctx context.Context, svcCtx *svc.ServiceCont
 // 清除点位绑定缓存（支持批量）
 func (l *ClearPointMappingCacheLogic) ClearPointMappingCache(in *ieccaller.ClearPointMappingCacheReq) (*ieccaller.ClearPointMappingCacheRes, error) {
 	clearedCount := int64(0)
-	if l.svcCtx.DevicePointMappingModel == nil {
+	if l.svcCtx.DevicePointMappingStore == nil {
 		return &ieccaller.ClearPointMappingCacheRes{}, nil
 	}
 	if len(in.Keys) > 0 {
 		for _, key := range in.Keys {
-			if _, exists := l.svcCtx.DevicePointMappingModel.GetCache(l.ctx, key); exists {
-				if err := l.svcCtx.DevicePointMappingModel.RemoveCache(l.ctx, key); err != nil {
+			if _, exists := l.svcCtx.DevicePointMappingStore.GetCache(l.ctx, key); exists {
+				if err := l.svcCtx.DevicePointMappingStore.RemoveCache(l.ctx, key); err != nil {
 					return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "清除缓存失败(key)")
 				}
+				clearedCount++
 			}
 		}
 	}
 	if len(in.KeyInfos) > 0 {
 		for _, info := range in.KeyInfos {
-			key := l.svcCtx.DevicePointMappingModel.GenerateCacheKey(info.TagStation, info.Coa, info.Ioa)
-			if _, exists := l.svcCtx.DevicePointMappingModel.GetCache(l.ctx, key); exists {
-				if err := l.svcCtx.DevicePointMappingModel.RemoveCache(l.ctx, key); err != nil {
+			key := l.svcCtx.DevicePointMappingStore.GenerateCacheKey(info.TagStation, info.Coa, info.Ioa)
+			if _, exists := l.svcCtx.DevicePointMappingStore.GetCache(l.ctx, key); exists {
+				if err := l.svcCtx.DevicePointMappingStore.RemoveCache(l.ctx, key); err != nil {
 					return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "清除缓存失败(keyInfo)")
 				}
+				clearedCount++
 			}
 		}
 	}

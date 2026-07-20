@@ -9,8 +9,8 @@ import (
 	"zero-service/app/ieccaller/internal/config"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/antsx"
-	"zero-service/common/dbx"
 	"zero-service/common/executorx"
+	"zero-service/common/gormx"
 	"zero-service/common/iec104"
 	"zero-service/common/iec104/client"
 	"zero-service/common/iec104/types"
@@ -18,7 +18,7 @@ import (
 	"zero-service/common/mqttx"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
-	"zero-service/model"
+	"zero-service/model/gormmodel"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/tidwall/gjson"
@@ -26,7 +26,7 @@ import (
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/mr"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/core/timex"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
@@ -43,14 +43,12 @@ type ServiceContext struct {
 	broadcastTopic      string
 	broadcastAckTopic   string
 
-	DevicePointMappingModel model.DevicePointMappingModel
+	DB                      *gormx.DB
+	DevicePointMappingStore *gormmodel.DevicePointMappingStore
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
-	if c.DisableStmtLog {
-		sqlx.DisableStmtLog()
-	}
 	svcCtx := &ServiceContext{
 		Config:        c,
 		ClientManager: client.NewClientManager(),
@@ -154,12 +152,12 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		)
 	}
 	if len(c.DB.DataSource) > 0 {
-		// 解析数据库类型
-		dbType := dbx.ParseDatabaseType(c.DB.DataSource)
-		// 创建数据库连接
-		dbConn := dbx.New(c.DB.DataSource)
-		_ = dbx.MustNewQoqu(c.DB.DataSource)
-		svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModel(dbConn, model.WithDBType(dbType))
+		db := gormx.MustOpenWithConf(c.DB)
+		if c.Mode == service.DevMode || c.Mode == service.TestMode {
+			db.MustAutoMigrate(&gormmodel.GormDevicePointMapping{})
+		}
+		svcCtx.DB = db
+		svcCtx.DevicePointMappingStore = gormmodel.NewDevicePointMappingStore(db)
 	}
 	return svcCtx
 }
@@ -174,8 +172,8 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 		stationId = util.GenerateStationId(data.Host, data.Port)
 		logx.WithContext(ctx).Debugf("stationId not found in context, generated: %s, msgId: %s", stationId, data.MsgId)
 	}
-	if svc.DevicePointMappingModel != nil {
-		query, exist, cacheErr := svc.DevicePointMappingModel.FindCacheOneByTagStationCoaIoa(ctx, stationId, int64(data.Coa), int64(ioa))
+	if svc.DevicePointMappingStore != nil {
+		query, exist, cacheErr := svc.DevicePointMappingStore.FindCacheOneByTagStationCoaIoa(ctx, stationId, int64(data.Coa), int64(ioa))
 		if cacheErr != nil {
 			logx.WithContext(ctx).Errorf("cache error %v, msgId: %s", cacheErr, data.MsgId)
 			// 继续推送
@@ -188,16 +186,7 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 					logx.WithContext(ctx).Debugf("push asdu disabled for stationId: %s, coa: %d, ioa: %d, msgId: %s", stationId, data.Coa, ioa, data.MsgId)
 					return nil
 				}
-				data.Pm = &types.PointMapping{
-					DeviceId:    query.DeviceId,
-					DeviceName:  query.DeviceName,
-					TdTableType: query.TdTableType,
-					Ext1:        query.Ext1.String,
-					Ext2:        query.Ext2.String,
-					Ext3:        query.Ext3.String,
-					Ext4:        query.Ext4.String,
-					Ext5:        query.Ext5.String,
-				}
+				data.Pm = query.ToPointMapping()
 			}
 		}
 	}

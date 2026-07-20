@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 124
+- **Total Sessions**: 125
 - **Last Active**: 2026-07-20
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~586 | Active |
+| `journal-3.md` | ~619 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 125 | 2026-07-20 | Final doc review & task archive | `85b34973` | `master` |
 | 124 | 2026-07-20 | IEC ASDU Trace Propagation | `a1639562` | `master` |
 | 123 | 2026-07-17 | Remove trigger currentUser proto field | `23efa99d` | `master` |
 | 122 | 2026-07-17 | 关闭 cron 扫表 SQL 日志 | `be099e47` | `master` |

@@ -22,20 +22,19 @@ $$ LANGUAGE plpgsql;
 
 -- 3. 创建设备与 IEC104 点位映射表
 CREATE TABLE IF NOT EXISTS device_point_mapping (
-    id BIGSERIAL PRIMARY KEY, 
+    id VARCHAR(64) PRIMARY KEY, 
     create_time TIMESTAMP NOT NULL, 
     update_time TIMESTAMP NOT NULL, 
     delete_time TIMESTAMP NULL, 
     is_deleted SMALLINT NOT NULL DEFAULT 0, 
-    version INT NOT NULL DEFAULT 0, 
     create_user VARCHAR(64) DEFAULT '',
     update_user VARCHAR(64) DEFAULT '',
     dept_code VARCHAR(64) DEFAULT '',
-    tag_station VARCHAR(64) DEFAULT '',
+    tag_station VARCHAR(64) NOT NULL DEFAULT '',
     coa INT NOT NULL DEFAULT 0, 
     ioa INT NOT NULL DEFAULT 0, 
-    device_id VARCHAR(64) DEFAULT '',
-    device_name VARCHAR(128) DEFAULT '',
+    device_id VARCHAR(64) NOT NULL DEFAULT '',
+    device_name VARCHAR(128) NOT NULL DEFAULT '',
     td_table_type VARCHAR(255) DEFAULT '',
     enable_push SMALLINT NOT NULL DEFAULT 1, 
     enable_raw_insert SMALLINT NOT NULL DEFAULT 1, 
@@ -51,12 +50,11 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
 COMMENT ON TABLE device_point_mapping IS '设备与 IEC104 点位映射表';
 
 -- 为 device_point_mapping 表的列添加注释
-COMMENT ON COLUMN device_point_mapping.id IS '自增主键ID';
+COMMENT ON COLUMN device_point_mapping.id IS '去杠 UUID 字符串主键';
 COMMENT ON COLUMN device_point_mapping.create_time IS '创建时间';
 COMMENT ON COLUMN device_point_mapping.update_time IS '更新时间';
 COMMENT ON COLUMN device_point_mapping.delete_time IS '删除时间（软删除标记）';
 COMMENT ON COLUMN device_point_mapping.is_deleted IS '删除状态：0-未删除，1-已删除';
-COMMENT ON COLUMN device_point_mapping.version IS '版本号（乐观锁）';
 COMMENT ON COLUMN device_point_mapping.create_user IS '创建人';
 COMMENT ON COLUMN device_point_mapping.update_user IS '更新人';
 COMMENT ON COLUMN device_point_mapping.dept_code IS '机构code';

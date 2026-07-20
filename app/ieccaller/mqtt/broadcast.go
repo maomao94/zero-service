@@ -296,11 +296,11 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			return err
 		}
 		clearedCount := int64(0)
-		if l.svcCtx.DevicePointMappingModel != nil {
+		if l.svcCtx.DevicePointMappingStore != nil {
 			if len(in.Keys) > 0 {
 				for _, key := range in.Keys {
-					if _, exists := l.svcCtx.DevicePointMappingModel.GetCache(ctx, key); exists {
-						if err := l.svcCtx.DevicePointMappingModel.RemoveCache(ctx, key); err != nil {
+					if _, exists := l.svcCtx.DevicePointMappingStore.GetCache(ctx, key); exists {
+						if err := l.svcCtx.DevicePointMappingStore.RemoveCache(ctx, key); err != nil {
 							logx.WithContext(ctx).Errorw("mqtt broadcast cache remove failed",
 								logx.Field("key", key),
 								logx.Field("error", err),
@@ -313,9 +313,9 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			}
 			if len(in.KeyInfos) > 0 {
 				for _, info := range in.KeyInfos {
-					key := l.svcCtx.DevicePointMappingModel.GenerateCacheKey(info.TagStation, info.Coa, info.Ioa)
-					if _, exists := l.svcCtx.DevicePointMappingModel.GetCache(ctx, key); exists {
-						if err := l.svcCtx.DevicePointMappingModel.RemoveCache(ctx, key); err != nil {
+					key := l.svcCtx.DevicePointMappingStore.GenerateCacheKey(info.TagStation, info.Coa, info.Ioa)
+					if _, exists := l.svcCtx.DevicePointMappingStore.GetCache(ctx, key); exists {
+						if err := l.svcCtx.DevicePointMappingStore.RemoveCache(ctx, key); err != nil {
 							logx.WithContext(ctx).Errorw("mqtt broadcast cache remove failed",
 								logx.Field("tag_station", info.TagStation),
 								logx.Field("coa", info.Coa),

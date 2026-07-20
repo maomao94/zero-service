@@ -66,15 +66,15 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	if err := db.Where("plan_id = ?", execItem.PlanId).First(&plan).Error; err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 	}
-	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
+	if plan.Status == model.PlanStatusTerminated || plan.FinishedTime.Valid {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态已结束,无需终止")
 	}
 
-	if planBatch.Status == int64(model.PlanStatusTerminated) || planBatch.FinishedTime.Valid {
+	if planBatch.Status == model.PlanStatusTerminated || planBatch.FinishedTime.Valid {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划批次状态已结束,无需终止")
 	}
 
-	if execItem.Status == int64(model.StatusCompleted) || execItem.Status == int64(model.StatusTerminated) {
+	if execItem.Status == model.StatusCompleted || execItem.Status == model.StatusTerminated {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "执行项状态已结束,无需终止")
 	}
 
@@ -84,7 +84,7 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	// 执行事务
 	err = db.Transaction(func(tx *gorm.DB) error {
 		// 更新执行项状态为已终止
-		execItem.Status = int64(model.StatusTerminated)
+		execItem.Status = model.StatusTerminated
 		execItem.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
 		execItem.PausedTime = sql.NullTime{}
 		execItem.PausedReason = sql.NullString{}

@@ -1,6 +1,10 @@
 package config
 
-import "github.com/zeromicro/go-zero/zrpc"
+import (
+	"zero-service/common/gormx"
+
+	"github.com/zeromicro/go-zero/zrpc"
+)
 
 type Config struct {
 	zrpc.RpcServerConf
@@ -18,7 +22,5 @@ type Config struct {
 		DataSource string
 		DBName     string `json:",default=default"`
 	}
-	DB struct {
-		DataSource string
-	}
+	DB gormx.Config
 }

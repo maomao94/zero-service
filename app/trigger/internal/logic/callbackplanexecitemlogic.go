@@ -106,10 +106,10 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		logx.Field("message", in.Message),
 	).Info("RPC 执行回调：收到下游回执，将按 exec_result 回写执行项与流水")
 
-	if execItem.Status == int64(model.StatusCompleted) || execItem.Status == int64(model.StatusTerminated) {
+	if execItem.Status == model.StatusCompleted || execItem.Status == model.StatusTerminated {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "执行项已结束")
 	}
-	if execItem.Status != int64(model.StatusRunning) {
+	if execItem.Status != model.StatusRunning {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "执行项状态错误")
 	}
 
