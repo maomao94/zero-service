@@ -8,6 +8,7 @@ import (
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/asynqx"
 	"zero-service/common/gormx"
+	"zero-service/common/holiday"
 	"zero-service/common/netx"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
@@ -31,20 +32,22 @@ const (
 )
 
 type ServiceContext struct {
-	Config         config.Config
-	Validate       *validator.Validate
-	AsynqClient    *asynq.Client
-	AsynqInspector *asynq.Inspector
-	AsynqServer    *asynq.Server
-	Scheduler      *asynq.Scheduler
-	Httpc          httpc.Service
-	NetClient      *netx.Client
-	ConnMap        *collection.Cache // 使用带过期清理的缓存
-	DB             *gormx.DB
-	UnstableExpiry mathx.Unstable
-	Redis          *redis.Redis
-	StreamEventCli streamevent.StreamEventClient
-	IdUtil         *tool.IdUtil
+	Config          config.Config
+	Validate        *validator.Validate
+	AsynqClient     *asynq.Client
+	AsynqInspector  *asynq.Inspector
+	AsynqServer     *asynq.Server
+	Scheduler       *asynq.Scheduler
+	Httpc           httpc.Service
+	NetClient       *netx.Client
+	ConnMap         *collection.Cache // 使用带过期清理的缓存
+	DB              *gormx.DB
+	UnstableExpiry  mathx.Unstable
+	Redis           *redis.Redis
+	StreamEventCli  streamevent.StreamEventClient
+	IdUtil          *tool.IdUtil
+	HolidaySource   holiday.Store
+	HolidayCalendar *holiday.Calendar
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -53,19 +56,21 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	// 创建数据库连接
 	db := gormx.MustOpenWithConf(c.DB)
 
+	// 使用带自动过期清理的缓存，30分钟不访问自动移除过期连接
+	connCache, err := collection.NewCache(time.Minute*connExpiryMinutes, collection.WithName("conn-cache"))
+	if err != nil {
+		logx.Must(err)
+	}
 	if c.Mode == service.DevMode || c.Mode == service.TestMode {
 		db.MustAutoMigrate(
 			&gormmodel.Plan{},
 			&gormmodel.PlanBatch{},
 			&gormmodel.PlanExecItem{},
-			&gormmodel.PlanExecLog{})
+			&gormmodel.PlanExecLog{},
+			&holiday.GormHoliday{})
 	}
-
-	// 使用带自动过期清理的缓存，30分钟不访问自动移除过期连接
-	connCache, err := collection.NewCache(time.Minute*connExpiryMinutes, collection.WithName("conn-cache"))
-	if err != nil {
-		panic(err)
-	}
+	holidaySource := holiday.NewGormSource(db, holiday.WithGormAutoMigrate(c.Mode == service.DevMode || c.Mode == service.TestMode))
+	holidayCal := holiday.MustNewCalendar(holiday.WithSource(holidaySource))
 
 	httpcSvc := netx.NewHTTPCService("trigger-httpc")
 	return &ServiceContext{
@@ -90,6 +95,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 				//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
 			)),
 		).Conn()),
-		IdUtil: tool.NewIdUtil(redisDb),
+		IdUtil:          tool.NewIdUtil(redisDb),
+		HolidaySource:   holidaySource,
+		HolidayCalendar: holidayCal,
 	}
 }

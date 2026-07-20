@@ -124,6 +124,58 @@ type frameLimiter interface {
 
 生产级二进制协议应自定义 Serializer 直接解析成 typed struct。
 
+## DebugSerializer hex 日志格式
+
+`DebugSerializer` 包装任意 `Serializer`，在 debug 级别打印入站/出站 payload。默认格式必须保持为 `hex.EncodeToString` 等价的小写紧凑 hex，避免破坏既有日志检索：
+
+```go
+ser := gnetx.DebugSerializer(inner)
+// [gnetx] recv 4 bytes hex=680e00ff
+```
+
+协议现场排查需要按字节查看时，用 `WithDebugHexFormat` 显式 opt in：
+
+```go
+ser := gnetx.DebugSerializer(inner, gnetx.WithDebugHexFormat(gnetx.HexUpperSpace))
+// [gnetx] recv 4 bytes hex=68 0E 00 FF
+```
+
+### Signatures
+
+```go
+type DebugHexFormat int
+
+const (
+    HexLowerCompact DebugHexFormat = iota
+    HexUpperCompact
+    HexUpperSpace
+)
+
+type DebugSerializerOption func(*debugSerializerOptions)
+
+func WithDebugHexFormat(format DebugHexFormat) DebugSerializerOption
+func DebugSerializer(inner Serializer, opts ...DebugSerializerOption) Serializer
+```
+
+底层通用字节格式化放在 `common/tool`：
+
+```go
+func tool.HexBytes(raw []byte, format tool.HexBytesFormat) string
+```
+
+### Contracts
+
+- `DebugSerializer(inner)` 默认输出小写紧凑 hex，等价于 `tool.HexBytes(raw, tool.HexLowerCompact)`。
+- `HexUpperCompact` 输出大写紧凑 hex，例如 `680E00FF`。
+- `HexUpperSpace` 输出大写且按字节空格分隔，例如 `68 0E 00 FF`；实现可直接使用 `fmt.Sprintf("% X", raw)`。
+- 该配置只影响日志文本，不得改变 `Serializer.Decode` / `Serializer.Encode` 的入参、返回值、错误传播或 codec 分帧行为。
+
+### Tests Required
+
+- `common/tool` 单测覆盖 lower compact、upper compact、upper space 和未知格式默认值。
+- `common/gnetx` 单测覆盖 `DebugSerializer` 接收 `WithDebugHexFormat`，并确认 `formatDebugHex` 映射到期望格式。
+- 修改该能力后至少运行 `go test -race -count=1 ./common/gnetx/... ./common/tool/...`；如因既有网络时序测试失败，需补跑聚焦测试并说明失败与本改动无关。
+
 ## 构造校验
 
 所有内置 Codec 构造器在参数非法时 **panic**（early-fail 设计）：
@@ -143,6 +195,7 @@ type frameLimiter interface {
 | 自定义 Codec 未实现 `frameLimiter` 且无帧长校验 | `MaxFrameLength` 安全上限不生效 |
 | 在 Encode 中尝试访问 `gnet.Conn` | Encode 可能 off-loop 执行，不能读写 gnet buffer |
 | 把协议头逻辑写进 Serializer | Serializer 是 body-only，协议上下文应由 Codec 处理 |
+| 直接把 `DebugSerializer` 默认改成 `% X` | 会破坏既有小写紧凑 hex 日志检索；协议排查格式必须 opt in |
 
 ## Codec/Serializer Interface Contract
 

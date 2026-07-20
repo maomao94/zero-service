@@ -50,6 +50,22 @@ service TriggerRpc {
 
   // 计算计划任务日期
   rpc CalcPlanTaskDate(CalcPlanTaskDateReq) returns (CalcPlanTaskDateRes);
+  // 查询中国大陆日期类型
+  rpc QueryHoliday(QueryHolidayReq) returns (QueryHolidayRes);
+  // 查询中国大陆节日列表
+  rpc ListHolidayFestivals(ListHolidayFestivalsReq) returns (ListHolidayFestivalsRes);
+  // 获取中国大陆节日详情
+  rpc GetHolidayFestival(GetHolidayFestivalReq) returns (GetHolidayFestivalRes);
+  // 获取中国大陆全年节假日汇总
+  rpc GetHolidayYearSummary(GetHolidayYearSummaryReq) returns (GetHolidayYearSummaryRes);
+  // 获取已配置中国大陆节假日年份
+  rpc ListHolidayYears(ListHolidayYearsReq) returns (ListHolidayYearsRes);
+  // 获取中国大陆节假日源配置
+  rpc ListHolidaySource(ListHolidaySourceReq) returns (ListHolidaySourceRes);
+  // 保存中国大陆节假日源配置
+  rpc SaveHolidaySource(SaveHolidaySourceReq) returns (SaveHolidaySourceRes);
+  // 设置中国大陆节假日源配置启用状态
+  rpc SetHolidaySourceEnabled(SetHolidaySourceEnabledReq) returns (SetHolidaySourceEnabledRes);
   // 创建计划任务
   rpc CreatePlanTask(CreatePlanTaskReq) returns (CreatePlanTaskRes);
   // 暂停计划
@@ -467,6 +483,181 @@ message CalcPlanTaskDateReq {
 
 message CalcPlanTaskDateRes {
   repeated string planDates = 1;
+}
+
+enum HolidayDayKindPb {
+  // 未指定
+  HOLIDAY_DAY_KIND_UNSPECIFIED = 0;
+  // 法定节假日或调休假日
+  HOLIDAY_DAY_KIND_STATUTORY_HOLIDAY = 1;
+  // 普通周末
+  HOLIDAY_DAY_KIND_WEEKEND = 2;
+  // 调休补班日
+  HOLIDAY_DAY_KIND_MAKEUP_WORKDAY = 3;
+  // 普通工作日
+  HOLIDAY_DAY_KIND_NORMAL_WORKDAY = 4;
+}
+
+message HolidayDayPb {
+  // 日期，格式 yyyy-MM-dd
+  string date = 1;
+  // 节日名称，如 国庆节、中秋国庆；普通周末/普通工作日为空
+  string name = 2;
+  // 日期类型：holiday=假日，workday=工作日
+  string type = 3;
+  // 日期原因
+  HolidayDayKindPb kind = 4;
+  // 日期说明
+  string note = 5;
+  // 是否假日
+  bool isHoliday = 6;
+  // 是否工作日
+  bool isWorkday = 7;
+  // 是否节日当天，如春节正月初一、国庆节 10 月 1 日
+  bool isFestivalDay = 8;
+}
+
+message HolidaySourcePb {
+  // 日期，格式 yyyy-MM-dd
+  string date = 1;
+  // 节日名称，如 国庆节、中秋国庆
+  string name = 2;
+  // 日期类型：holiday=假日，workday=工作日
+  string type = 3;
+  // 日期说明
+  string note = 4;
+  // 是否节日当天，如春节正月初一、国庆节 10 月 1 日
+  bool isFestivalDay = 5;
+  // 是否启用；禁用后查询会按普通周末/工作日兜底
+  bool enabled = 6;
+}
+
+message HolidayFestivalPb {
+  // 年份
+  int32 year = 1;
+  // 节日名称，如 国庆节、中秋国庆
+  string name = 2;
+  // 假期开始日期，格式 yyyy-MM-dd；只按 holidayDays 计算
+  string startDate = 3;
+  // 假期结束日期，格式 yyyy-MM-dd；只按 holidayDays 计算
+  string endDate = 4;
+  // 假日日期列表，包含法定节假日和调休放假日
+  repeated string holidayDays = 5;
+  // 调休补班日期列表
+  repeated string makeupWorkdays = 6;
+  // 节日当天日期列表，如国庆节 10-01、春节正月初一
+  repeated string festivalDays = 7;
+}
+
+message HolidayYearSummaryPb {
+  // 年份
+  int32 year = 1;
+  // 全年特殊假日日期列表，包含法定节假日和调休放假日
+  repeated string holidayDays = 2;
+  // 全年调休补班日期列表
+  repeated string makeupWorkdays = 3;
+  // 全年节日当天日期列表
+  repeated string festivalDays = 4;
+  // 全年涉及的节日名称列表，按节日首次出现时间排序
+  repeated string names = 5;
+}
+
+message QueryHolidayReq {
+  // 查询日期，格式 yyyy-MM-dd；为空时查询当天
+  string date = 1 [(validate.rules).string = {max_len: 10}];
+}
+
+message QueryHolidayRes {
+  // 日期查询结果
+  HolidayDayPb day = 1;
+}
+
+message ListHolidayFestivalsReq {
+  // 开始年份；不传时默认当前年
+  int32 startYear = 1 [(validate.rules).int32 = {gte: 0, lte: 9999}];
+  // 结束年份；不传时默认 startYear
+  int32 endYear = 2 [(validate.rules).int32 = {gte: 0, lte: 9999}];
+  // 节日名称，如 国庆节、中秋国庆；为空表示不过滤，组合节日支持按部分名称匹配
+  string name = 3 [(validate.rules).string = {max_len: 32}];
+}
+
+message ListHolidayFestivalsRes {
+  // 节日列表
+  repeated HolidayFestivalPb items = 1;
+}
+
+message GetHolidayFestivalReq {
+  // 年份
+  int32 year = 1 [(validate.rules).int32 = {gte: 1900, lte: 9999}];
+  // 节日名称，如 国庆节、中秋国庆；组合节日支持按部分名称匹配
+  string name = 2 [(validate.rules).string = {min_len: 1, max_len: 32}];
+}
+
+message GetHolidayFestivalRes {
+  // 是否找到节日详情
+  bool found = 1;
+  // 节日详情
+  HolidayFestivalPb festival = 2;
+}
+
+message GetHolidayYearSummaryReq {
+  // 年份
+  int32 year = 1 [(validate.rules).int32 = {gte: 1900, lte: 9999}];
+}
+
+message GetHolidayYearSummaryRes {
+  // 是否找到全年汇总
+  bool found = 1;
+  // 全年节假日汇总
+  HolidayYearSummaryPb summary = 2;
+}
+
+message ListHolidayYearsReq {
+}
+
+message ListHolidayYearsRes {
+  // 已配置特殊节假日数据的年份
+  repeated int32 years = 1;
+}
+
+message ListHolidaySourceReq {
+  // 年份
+  int32 year = 1 [(validate.rules).int32 = {gte: 1900, lte: 9999}];
+  // 是否包含禁用配置
+  bool includeDisabled = 2;
+}
+
+message ListHolidaySourceRes {
+  // 节假日源配置列表
+  repeated HolidaySourcePb items = 1;
+}
+
+message SaveHolidaySourceReq {
+  // 日期，格式 yyyy-MM-dd
+  string date = 1 [(validate.rules).string = {len: 10}];
+  // 节日名称，如 国庆节、中秋国庆
+  string name = 2 [(validate.rules).string = {min_len: 1, max_len: 32}];
+  // 日期类型：holiday=假日，workday=工作日
+  string type = 3 [(validate.rules).string = {in: ["holiday", "workday"]}];
+  // 日期说明
+  string note = 4 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  // 是否节日当天，如春节正月初一、国庆节 10 月 1 日
+  bool isFestivalDay = 5;
+  // 是否启用；禁用后查询会按普通周末/工作日兜底
+  bool enabled = 6;
+}
+
+message SaveHolidaySourceRes {
+}
+
+message SetHolidaySourceEnabledReq {
+  // 日期，格式 yyyy-MM-dd
+  string date = 1 [(validate.rules).string = {len: 10}];
+  // 是否启用；禁用后查询会按普通周末/工作日兜底
+  bool enabled = 2;
+}
+
+message SetHolidaySourceEnabledRes {
 }
 
 message CreatePlanTaskReq {

@@ -38,6 +38,14 @@ const (
 	TriggerRpc_ListCompletedTasks_FullMethodName      = "/trigger.TriggerRpc/ListCompletedTasks"
 	TriggerRpc_RunTask_FullMethodName                 = "/trigger.TriggerRpc/RunTask"
 	TriggerRpc_CalcPlanTaskDate_FullMethodName        = "/trigger.TriggerRpc/CalcPlanTaskDate"
+	TriggerRpc_QueryHoliday_FullMethodName            = "/trigger.TriggerRpc/QueryHoliday"
+	TriggerRpc_ListHolidayFestivals_FullMethodName    = "/trigger.TriggerRpc/ListHolidayFestivals"
+	TriggerRpc_GetHolidayFestival_FullMethodName      = "/trigger.TriggerRpc/GetHolidayFestival"
+	TriggerRpc_GetHolidayYearSummary_FullMethodName   = "/trigger.TriggerRpc/GetHolidayYearSummary"
+	TriggerRpc_ListHolidayYears_FullMethodName        = "/trigger.TriggerRpc/ListHolidayYears"
+	TriggerRpc_ListHolidaySource_FullMethodName       = "/trigger.TriggerRpc/ListHolidaySource"
+	TriggerRpc_SaveHolidaySource_FullMethodName       = "/trigger.TriggerRpc/SaveHolidaySource"
+	TriggerRpc_SetHolidaySourceEnabled_FullMethodName = "/trigger.TriggerRpc/SetHolidaySourceEnabled"
 	TriggerRpc_CreatePlanTask_FullMethodName          = "/trigger.TriggerRpc/CreatePlanTask"
 	TriggerRpc_PausePlan_FullMethodName               = "/trigger.TriggerRpc/PausePlan"
 	TriggerRpc_TerminatePlan_FullMethodName           = "/trigger.TriggerRpc/TerminatePlan"
@@ -106,6 +114,22 @@ type TriggerRpcClient interface {
 	RunTask(ctx context.Context, in *RunTaskReq, opts ...grpc.CallOption) (*RunTaskRes, error)
 	// 计算计划任务日期
 	CalcPlanTaskDate(ctx context.Context, in *CalcPlanTaskDateReq, opts ...grpc.CallOption) (*CalcPlanTaskDateRes, error)
+	// 查询中国大陆日期类型
+	QueryHoliday(ctx context.Context, in *QueryHolidayReq, opts ...grpc.CallOption) (*QueryHolidayRes, error)
+	// 查询中国大陆节日列表
+	ListHolidayFestivals(ctx context.Context, in *ListHolidayFestivalsReq, opts ...grpc.CallOption) (*ListHolidayFestivalsRes, error)
+	// 获取中国大陆节日详情
+	GetHolidayFestival(ctx context.Context, in *GetHolidayFestivalReq, opts ...grpc.CallOption) (*GetHolidayFestivalRes, error)
+	// 获取中国大陆全年节假日汇总
+	GetHolidayYearSummary(ctx context.Context, in *GetHolidayYearSummaryReq, opts ...grpc.CallOption) (*GetHolidayYearSummaryRes, error)
+	// 获取已配置中国大陆节假日年份
+	ListHolidayYears(ctx context.Context, in *ListHolidayYearsReq, opts ...grpc.CallOption) (*ListHolidayYearsRes, error)
+	// 获取中国大陆节假日源配置
+	ListHolidaySource(ctx context.Context, in *ListHolidaySourceReq, opts ...grpc.CallOption) (*ListHolidaySourceRes, error)
+	// 保存中国大陆节假日源配置
+	SaveHolidaySource(ctx context.Context, in *SaveHolidaySourceReq, opts ...grpc.CallOption) (*SaveHolidaySourceRes, error)
+	// 设置中国大陆节假日源配置启用状态
+	SetHolidaySourceEnabled(ctx context.Context, in *SetHolidaySourceEnabledReq, opts ...grpc.CallOption) (*SetHolidaySourceEnabledRes, error)
 	// 创建计划任务
 	CreatePlanTask(ctx context.Context, in *CreatePlanTaskReq, opts ...grpc.CallOption) (*CreatePlanTaskRes, error)
 	// 暂停计划
@@ -348,6 +372,86 @@ func (c *triggerRpcClient) CalcPlanTaskDate(ctx context.Context, in *CalcPlanTas
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CalcPlanTaskDateRes)
 	err := c.cc.Invoke(ctx, TriggerRpc_CalcPlanTaskDate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) QueryHoliday(ctx context.Context, in *QueryHolidayReq, opts ...grpc.CallOption) (*QueryHolidayRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryHolidayRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_QueryHoliday_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ListHolidayFestivals(ctx context.Context, in *ListHolidayFestivalsReq, opts ...grpc.CallOption) (*ListHolidayFestivalsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListHolidayFestivalsRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListHolidayFestivals_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) GetHolidayFestival(ctx context.Context, in *GetHolidayFestivalReq, opts ...grpc.CallOption) (*GetHolidayFestivalRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetHolidayFestivalRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_GetHolidayFestival_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) GetHolidayYearSummary(ctx context.Context, in *GetHolidayYearSummaryReq, opts ...grpc.CallOption) (*GetHolidayYearSummaryRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetHolidayYearSummaryRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_GetHolidayYearSummary_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ListHolidayYears(ctx context.Context, in *ListHolidayYearsReq, opts ...grpc.CallOption) (*ListHolidayYearsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListHolidayYearsRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListHolidayYears_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ListHolidaySource(ctx context.Context, in *ListHolidaySourceReq, opts ...grpc.CallOption) (*ListHolidaySourceRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListHolidaySourceRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListHolidaySource_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) SaveHolidaySource(ctx context.Context, in *SaveHolidaySourceReq, opts ...grpc.CallOption) (*SaveHolidaySourceRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveHolidaySourceRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_SaveHolidaySource_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) SetHolidaySourceEnabled(ctx context.Context, in *SetHolidaySourceEnabledReq, opts ...grpc.CallOption) (*SetHolidaySourceEnabledRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetHolidaySourceEnabledRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_SetHolidaySourceEnabled_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -636,6 +740,22 @@ type TriggerRpcServer interface {
 	RunTask(context.Context, *RunTaskReq) (*RunTaskRes, error)
 	// 计算计划任务日期
 	CalcPlanTaskDate(context.Context, *CalcPlanTaskDateReq) (*CalcPlanTaskDateRes, error)
+	// 查询中国大陆日期类型
+	QueryHoliday(context.Context, *QueryHolidayReq) (*QueryHolidayRes, error)
+	// 查询中国大陆节日列表
+	ListHolidayFestivals(context.Context, *ListHolidayFestivalsReq) (*ListHolidayFestivalsRes, error)
+	// 获取中国大陆节日详情
+	GetHolidayFestival(context.Context, *GetHolidayFestivalReq) (*GetHolidayFestivalRes, error)
+	// 获取中国大陆全年节假日汇总
+	GetHolidayYearSummary(context.Context, *GetHolidayYearSummaryReq) (*GetHolidayYearSummaryRes, error)
+	// 获取已配置中国大陆节假日年份
+	ListHolidayYears(context.Context, *ListHolidayYearsReq) (*ListHolidayYearsRes, error)
+	// 获取中国大陆节假日源配置
+	ListHolidaySource(context.Context, *ListHolidaySourceReq) (*ListHolidaySourceRes, error)
+	// 保存中国大陆节假日源配置
+	SaveHolidaySource(context.Context, *SaveHolidaySourceReq) (*SaveHolidaySourceRes, error)
+	// 设置中国大陆节假日源配置启用状态
+	SetHolidaySourceEnabled(context.Context, *SetHolidaySourceEnabledReq) (*SetHolidaySourceEnabledRes, error)
 	// 创建计划任务
 	CreatePlanTask(context.Context, *CreatePlanTaskReq) (*CreatePlanTaskRes, error)
 	// 暂停计划
@@ -750,6 +870,30 @@ func (UnimplementedTriggerRpcServer) RunTask(context.Context, *RunTaskReq) (*Run
 }
 func (UnimplementedTriggerRpcServer) CalcPlanTaskDate(context.Context, *CalcPlanTaskDateReq) (*CalcPlanTaskDateRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method CalcPlanTaskDate not implemented")
+}
+func (UnimplementedTriggerRpcServer) QueryHoliday(context.Context, *QueryHolidayReq) (*QueryHolidayRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method QueryHoliday not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListHolidayFestivals(context.Context, *ListHolidayFestivalsReq) (*ListHolidayFestivalsRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListHolidayFestivals not implemented")
+}
+func (UnimplementedTriggerRpcServer) GetHolidayFestival(context.Context, *GetHolidayFestivalReq) (*GetHolidayFestivalRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetHolidayFestival not implemented")
+}
+func (UnimplementedTriggerRpcServer) GetHolidayYearSummary(context.Context, *GetHolidayYearSummaryReq) (*GetHolidayYearSummaryRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetHolidayYearSummary not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListHolidayYears(context.Context, *ListHolidayYearsReq) (*ListHolidayYearsRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListHolidayYears not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListHolidaySource(context.Context, *ListHolidaySourceReq) (*ListHolidaySourceRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListHolidaySource not implemented")
+}
+func (UnimplementedTriggerRpcServer) SaveHolidaySource(context.Context, *SaveHolidaySourceReq) (*SaveHolidaySourceRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method SaveHolidaySource not implemented")
+}
+func (UnimplementedTriggerRpcServer) SetHolidaySourceEnabled(context.Context, *SetHolidaySourceEnabledReq) (*SetHolidaySourceEnabledRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetHolidaySourceEnabled not implemented")
 }
 func (UnimplementedTriggerRpcServer) CreatePlanTask(context.Context, *CreatePlanTaskReq) (*CreatePlanTaskRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreatePlanTask not implemented")
@@ -1182,6 +1326,150 @@ func _TriggerRpc_CalcPlanTaskDate_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TriggerRpcServer).CalcPlanTaskDate(ctx, req.(*CalcPlanTaskDateReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_QueryHoliday_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHolidayReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).QueryHoliday(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_QueryHoliday_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).QueryHoliday(ctx, req.(*QueryHolidayReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ListHolidayFestivals_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListHolidayFestivalsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListHolidayFestivals(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListHolidayFestivals_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListHolidayFestivals(ctx, req.(*ListHolidayFestivalsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_GetHolidayFestival_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetHolidayFestivalReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).GetHolidayFestival(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_GetHolidayFestival_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).GetHolidayFestival(ctx, req.(*GetHolidayFestivalReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_GetHolidayYearSummary_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetHolidayYearSummaryReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).GetHolidayYearSummary(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_GetHolidayYearSummary_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).GetHolidayYearSummary(ctx, req.(*GetHolidayYearSummaryReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ListHolidayYears_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListHolidayYearsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListHolidayYears(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListHolidayYears_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListHolidayYears(ctx, req.(*ListHolidayYearsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ListHolidaySource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListHolidaySourceReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListHolidaySource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListHolidaySource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListHolidaySource(ctx, req.(*ListHolidaySourceReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_SaveHolidaySource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveHolidaySourceReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).SaveHolidaySource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_SaveHolidaySource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).SaveHolidaySource(ctx, req.(*SaveHolidaySourceReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_SetHolidaySourceEnabled_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetHolidaySourceEnabledReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).SetHolidaySourceEnabled(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_SetHolidaySourceEnabled_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).SetHolidaySourceEnabled(ctx, req.(*SetHolidaySourceEnabledReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1700,6 +1988,38 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CalcPlanTaskDate",
 			Handler:    _TriggerRpc_CalcPlanTaskDate_Handler,
+		},
+		{
+			MethodName: "QueryHoliday",
+			Handler:    _TriggerRpc_QueryHoliday_Handler,
+		},
+		{
+			MethodName: "ListHolidayFestivals",
+			Handler:    _TriggerRpc_ListHolidayFestivals_Handler,
+		},
+		{
+			MethodName: "GetHolidayFestival",
+			Handler:    _TriggerRpc_GetHolidayFestival_Handler,
+		},
+		{
+			MethodName: "GetHolidayYearSummary",
+			Handler:    _TriggerRpc_GetHolidayYearSummary_Handler,
+		},
+		{
+			MethodName: "ListHolidayYears",
+			Handler:    _TriggerRpc_ListHolidayYears_Handler,
+		},
+		{
+			MethodName: "ListHolidaySource",
+			Handler:    _TriggerRpc_ListHolidaySource_Handler,
+		},
+		{
+			MethodName: "SaveHolidaySource",
+			Handler:    _TriggerRpc_SaveHolidaySource_Handler,
+		},
+		{
+			MethodName: "SetHolidaySourceEnabled",
+			Handler:    _TriggerRpc_SetHolidaySourceEnabled_Handler,
 		},
 		{
 			MethodName: "CreatePlanTask",

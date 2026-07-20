@@ -137,6 +137,54 @@ func (s *TriggerRpcServer) CalcPlanTaskDate(ctx context.Context, in *trigger.Cal
 	return l.CalcPlanTaskDate(in)
 }
 
+// 查询中国大陆日期类型
+func (s *TriggerRpcServer) QueryHoliday(ctx context.Context, in *trigger.QueryHolidayReq) (*trigger.QueryHolidayRes, error) {
+	l := logic.NewQueryHolidayLogic(ctx, s.svcCtx)
+	return l.QueryHoliday(in)
+}
+
+// 查询中国大陆节日列表
+func (s *TriggerRpcServer) ListHolidayFestivals(ctx context.Context, in *trigger.ListHolidayFestivalsReq) (*trigger.ListHolidayFestivalsRes, error) {
+	l := logic.NewListHolidayFestivalsLogic(ctx, s.svcCtx)
+	return l.ListHolidayFestivals(in)
+}
+
+// 获取中国大陆节日详情
+func (s *TriggerRpcServer) GetHolidayFestival(ctx context.Context, in *trigger.GetHolidayFestivalReq) (*trigger.GetHolidayFestivalRes, error) {
+	l := logic.NewGetHolidayFestivalLogic(ctx, s.svcCtx)
+	return l.GetHolidayFestival(in)
+}
+
+// 获取中国大陆全年节假日汇总
+func (s *TriggerRpcServer) GetHolidayYearSummary(ctx context.Context, in *trigger.GetHolidayYearSummaryReq) (*trigger.GetHolidayYearSummaryRes, error) {
+	l := logic.NewGetHolidayYearSummaryLogic(ctx, s.svcCtx)
+	return l.GetHolidayYearSummary(in)
+}
+
+// 获取已配置中国大陆节假日年份
+func (s *TriggerRpcServer) ListHolidayYears(ctx context.Context, in *trigger.ListHolidayYearsReq) (*trigger.ListHolidayYearsRes, error) {
+	l := logic.NewListHolidayYearsLogic(ctx, s.svcCtx)
+	return l.ListHolidayYears(in)
+}
+
+// 获取中国大陆节假日源配置
+func (s *TriggerRpcServer) ListHolidaySource(ctx context.Context, in *trigger.ListHolidaySourceReq) (*trigger.ListHolidaySourceRes, error) {
+	l := logic.NewListHolidaySourceLogic(ctx, s.svcCtx)
+	return l.ListHolidaySource(in)
+}
+
+// 保存中国大陆节假日源配置
+func (s *TriggerRpcServer) SaveHolidaySource(ctx context.Context, in *trigger.SaveHolidaySourceReq) (*trigger.SaveHolidaySourceRes, error) {
+	l := logic.NewSaveHolidaySourceLogic(ctx, s.svcCtx)
+	return l.SaveHolidaySource(in)
+}
+
+// 设置中国大陆节假日源配置启用状态
+func (s *TriggerRpcServer) SetHolidaySourceEnabled(ctx context.Context, in *trigger.SetHolidaySourceEnabledReq) (*trigger.SetHolidaySourceEnabledRes, error) {
+	l := logic.NewSetHolidaySourceEnabledLogic(ctx, s.svcCtx)
+	return l.SetHolidaySourceEnabled(in)
+}
+
 // 创建计划任务
 func (s *TriggerRpcServer) CreatePlanTask(ctx context.Context, in *trigger.CreatePlanTaskReq) (*trigger.CreatePlanTaskRes, error) {
 	l := logic.NewCreatePlanTaskLogic(ctx, s.svcCtx)

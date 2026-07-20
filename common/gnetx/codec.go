@@ -3,13 +3,13 @@ package gnetx
 import (
 	"context"
 	"encoding/binary"
-	"encoding/hex"
 	"errors"
 	"io"
 	"math"
 
 	"github.com/panjf2000/gnet/v2"
 	"github.com/zeromicro/go-zero/core/logx"
+	"zero-service/common/tool"
 )
 
 // Codec 是 gnetx 的编解码契约，一个接口同时承载分帧与序列化（对齐 gnet v1 ICodec 的简洁形态）。
@@ -73,16 +73,54 @@ func (c *funcCodec) Encode(ctx context.Context, msg any, conn Conn) ([]byte, err
 	return c.encode(ctx, msg, conn)
 }
 
-// DebugSerializer 包装一个 Serializer，在 Debug 日志级别下打印每帧 payload 的 hex 编码。
-// 用法：codec := NewLengthPrefixCodec(2, endian, DebugSerializer(mySerializer))
-func DebugSerializer(inner Serializer) Serializer {
-	return &debugSerializer{inner: inner}
+// DebugHexFormat controls how DebugSerializer renders payload bytes in logs.
+type DebugHexFormat int
+
+const (
+	// HexLowerCompact renders bytes like hex.EncodeToString, for example "680e".
+	HexLowerCompact DebugHexFormat = iota
+	// HexUpperCompact renders compact upper-case hex, for example "680E".
+	HexUpperCompact
+	// HexUpperSpace renders upper-case bytes separated by spaces, for example "68 0E".
+	HexUpperSpace
+)
+
+// DebugSerializerOption configures DebugSerializer logging behavior.
+type DebugSerializerOption func(*debugSerializerOptions)
+
+type debugSerializerOptions struct {
+	hexFormat DebugHexFormat
 }
 
-type debugSerializer struct{ inner Serializer }
+// WithDebugHexFormat configures how DebugSerializer renders payload bytes in logs.
+// The default is HexLowerCompact, matching the previous hex.EncodeToString output.
+func WithDebugHexFormat(format DebugHexFormat) DebugSerializerOption {
+	return func(opts *debugSerializerOptions) {
+		opts.hexFormat = format
+	}
+}
+
+// DebugSerializer 包装一个 Serializer，在 Debug 日志级别下打印每帧 payload 的 hex 编码。
+// 默认格式保持为 hex.EncodeToString 的小写紧凑输出。
+// 用法：codec := NewLengthPrefixCodec(2, endian, DebugSerializer(mySerializer))
+// 如需协议抓包风格字节输出：DebugSerializer(mySerializer, WithDebugHexFormat(HexUpperSpace))。
+func DebugSerializer(inner Serializer, opts ...DebugSerializerOption) Serializer {
+	options := debugSerializerOptions{hexFormat: HexLowerCompact}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&options)
+		}
+	}
+	return &debugSerializer{inner: inner, hexFormat: options.hexFormat}
+}
+
+type debugSerializer struct {
+	inner     Serializer
+	hexFormat DebugHexFormat
+}
 
 func (s *debugSerializer) Decode(raw []byte) (any, error) {
-	logx.Debugf("[gnetx] recv %d bytes hex=%s", len(raw), hex.EncodeToString(raw))
+	logx.Debugf("[gnetx] recv %d bytes hex=%s", len(raw), formatDebugHex(raw, s.hexFormat))
 	return s.inner.Decode(raw)
 }
 
@@ -91,8 +129,19 @@ func (s *debugSerializer) Encode(msg any) ([]byte, error) {
 	if err != nil {
 		return raw, err
 	}
-	logx.Debugf("[gnetx] send %d bytes hex=%s", len(raw), hex.EncodeToString(raw))
+	logx.Debugf("[gnetx] send %d bytes hex=%s", len(raw), formatDebugHex(raw, s.hexFormat))
 	return raw, nil
+}
+
+func formatDebugHex(raw []byte, format DebugHexFormat) string {
+	switch format {
+	case HexUpperCompact:
+		return tool.HexBytes(raw, tool.HexUpperCompact)
+	case HexUpperSpace:
+		return tool.HexBytes(raw, tool.HexUpperSpace)
+	default:
+		return tool.HexBytes(raw, tool.HexLowerCompact)
+	}
 }
 
 // mapShortBuffer 把 gnet Peek/Discard 返回的 io.ErrShortBuffer 统一映射为 ErrIncompletePacket。

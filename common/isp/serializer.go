@@ -88,7 +88,7 @@ func (s Serializer) Encode(v any) ([]byte, error) {
 func NewCodec(rootName string, maxFrameLength int, debug bool) gnetx.Codec {
 	ser := gnetx.Serializer(NewSerializer(rootName))
 	if debug {
-		ser = gnetx.DebugSerializer(ser)
+		ser = gnetx.DebugSerializer(ser, gnetx.WithDebugHexFormat(gnetx.HexLowerCompact))
 		ser = &xmlLogSerializer{inner: ser}
 	}
 	return gnetx.NewLengthPrefixCodec(4, binary.LittleEndian, ser,

@@ -5276,6 +5276,2392 @@ var _ interface {
 	ErrorName() string
 } = CalcPlanTaskDateResValidationError{}
 
+// Validate checks the field values on HolidayDayPb with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *HolidayDayPb) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on HolidayDayPb with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in HolidayDayPbMultiError, or
+// nil if none found.
+func (m *HolidayDayPb) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *HolidayDayPb) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Date
+
+	// no validation rules for Name
+
+	// no validation rules for Type
+
+	// no validation rules for Kind
+
+	// no validation rules for Note
+
+	// no validation rules for IsHoliday
+
+	// no validation rules for IsWorkday
+
+	// no validation rules for IsFestivalDay
+
+	if len(errors) > 0 {
+		return HolidayDayPbMultiError(errors)
+	}
+
+	return nil
+}
+
+// HolidayDayPbMultiError is an error wrapping multiple validation errors
+// returned by HolidayDayPb.ValidateAll() if the designated constraints aren't met.
+type HolidayDayPbMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m HolidayDayPbMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m HolidayDayPbMultiError) AllErrors() []error { return m }
+
+// HolidayDayPbValidationError is the validation error returned by
+// HolidayDayPb.Validate if the designated constraints aren't met.
+type HolidayDayPbValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e HolidayDayPbValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e HolidayDayPbValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e HolidayDayPbValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e HolidayDayPbValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e HolidayDayPbValidationError) ErrorName() string { return "HolidayDayPbValidationError" }
+
+// Error satisfies the builtin error interface
+func (e HolidayDayPbValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sHolidayDayPb.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = HolidayDayPbValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = HolidayDayPbValidationError{}
+
+// Validate checks the field values on HolidaySourcePb with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *HolidaySourcePb) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on HolidaySourcePb with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// HolidaySourcePbMultiError, or nil if none found.
+func (m *HolidaySourcePb) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *HolidaySourcePb) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Date
+
+	// no validation rules for Name
+
+	// no validation rules for Type
+
+	// no validation rules for Note
+
+	// no validation rules for IsFestivalDay
+
+	// no validation rules for Enabled
+
+	if len(errors) > 0 {
+		return HolidaySourcePbMultiError(errors)
+	}
+
+	return nil
+}
+
+// HolidaySourcePbMultiError is an error wrapping multiple validation errors
+// returned by HolidaySourcePb.ValidateAll() if the designated constraints
+// aren't met.
+type HolidaySourcePbMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m HolidaySourcePbMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m HolidaySourcePbMultiError) AllErrors() []error { return m }
+
+// HolidaySourcePbValidationError is the validation error returned by
+// HolidaySourcePb.Validate if the designated constraints aren't met.
+type HolidaySourcePbValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e HolidaySourcePbValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e HolidaySourcePbValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e HolidaySourcePbValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e HolidaySourcePbValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e HolidaySourcePbValidationError) ErrorName() string { return "HolidaySourcePbValidationError" }
+
+// Error satisfies the builtin error interface
+func (e HolidaySourcePbValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sHolidaySourcePb.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = HolidaySourcePbValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = HolidaySourcePbValidationError{}
+
+// Validate checks the field values on HolidayFestivalPb with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *HolidayFestivalPb) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on HolidayFestivalPb with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// HolidayFestivalPbMultiError, or nil if none found.
+func (m *HolidayFestivalPb) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *HolidayFestivalPb) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Year
+
+	// no validation rules for Name
+
+	// no validation rules for StartDate
+
+	// no validation rules for EndDate
+
+	if len(errors) > 0 {
+		return HolidayFestivalPbMultiError(errors)
+	}
+
+	return nil
+}
+
+// HolidayFestivalPbMultiError is an error wrapping multiple validation errors
+// returned by HolidayFestivalPb.ValidateAll() if the designated constraints
+// aren't met.
+type HolidayFestivalPbMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m HolidayFestivalPbMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m HolidayFestivalPbMultiError) AllErrors() []error { return m }
+
+// HolidayFestivalPbValidationError is the validation error returned by
+// HolidayFestivalPb.Validate if the designated constraints aren't met.
+type HolidayFestivalPbValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e HolidayFestivalPbValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e HolidayFestivalPbValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e HolidayFestivalPbValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e HolidayFestivalPbValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e HolidayFestivalPbValidationError) ErrorName() string {
+	return "HolidayFestivalPbValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e HolidayFestivalPbValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sHolidayFestivalPb.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = HolidayFestivalPbValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = HolidayFestivalPbValidationError{}
+
+// Validate checks the field values on HolidayYearSummaryPb with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *HolidayYearSummaryPb) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on HolidayYearSummaryPb with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// HolidayYearSummaryPbMultiError, or nil if none found.
+func (m *HolidayYearSummaryPb) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *HolidayYearSummaryPb) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Year
+
+	if len(errors) > 0 {
+		return HolidayYearSummaryPbMultiError(errors)
+	}
+
+	return nil
+}
+
+// HolidayYearSummaryPbMultiError is an error wrapping multiple validation
+// errors returned by HolidayYearSummaryPb.ValidateAll() if the designated
+// constraints aren't met.
+type HolidayYearSummaryPbMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m HolidayYearSummaryPbMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m HolidayYearSummaryPbMultiError) AllErrors() []error { return m }
+
+// HolidayYearSummaryPbValidationError is the validation error returned by
+// HolidayYearSummaryPb.Validate if the designated constraints aren't met.
+type HolidayYearSummaryPbValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e HolidayYearSummaryPbValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e HolidayYearSummaryPbValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e HolidayYearSummaryPbValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e HolidayYearSummaryPbValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e HolidayYearSummaryPbValidationError) ErrorName() string {
+	return "HolidayYearSummaryPbValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e HolidayYearSummaryPbValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sHolidayYearSummaryPb.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = HolidayYearSummaryPbValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = HolidayYearSummaryPbValidationError{}
+
+// Validate checks the field values on QueryHolidayReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *QueryHolidayReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on QueryHolidayReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// QueryHolidayReqMultiError, or nil if none found.
+func (m *QueryHolidayReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *QueryHolidayReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetDate()) > 10 {
+		err := QueryHolidayReqValidationError{
+			field:  "Date",
+			reason: "value length must be at most 10 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return QueryHolidayReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// QueryHolidayReqMultiError is an error wrapping multiple validation errors
+// returned by QueryHolidayReq.ValidateAll() if the designated constraints
+// aren't met.
+type QueryHolidayReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QueryHolidayReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QueryHolidayReqMultiError) AllErrors() []error { return m }
+
+// QueryHolidayReqValidationError is the validation error returned by
+// QueryHolidayReq.Validate if the designated constraints aren't met.
+type QueryHolidayReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QueryHolidayReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QueryHolidayReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QueryHolidayReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QueryHolidayReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QueryHolidayReqValidationError) ErrorName() string { return "QueryHolidayReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e QueryHolidayReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQueryHolidayReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QueryHolidayReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QueryHolidayReqValidationError{}
+
+// Validate checks the field values on QueryHolidayRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *QueryHolidayRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on QueryHolidayRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// QueryHolidayResMultiError, or nil if none found.
+func (m *QueryHolidayRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *QueryHolidayRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetDay()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, QueryHolidayResValidationError{
+					field:  "Day",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, QueryHolidayResValidationError{
+					field:  "Day",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDay()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return QueryHolidayResValidationError{
+				field:  "Day",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return QueryHolidayResMultiError(errors)
+	}
+
+	return nil
+}
+
+// QueryHolidayResMultiError is an error wrapping multiple validation errors
+// returned by QueryHolidayRes.ValidateAll() if the designated constraints
+// aren't met.
+type QueryHolidayResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QueryHolidayResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QueryHolidayResMultiError) AllErrors() []error { return m }
+
+// QueryHolidayResValidationError is the validation error returned by
+// QueryHolidayRes.Validate if the designated constraints aren't met.
+type QueryHolidayResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QueryHolidayResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QueryHolidayResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QueryHolidayResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QueryHolidayResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QueryHolidayResValidationError) ErrorName() string { return "QueryHolidayResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e QueryHolidayResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQueryHolidayRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QueryHolidayResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QueryHolidayResValidationError{}
+
+// Validate checks the field values on ListHolidayFestivalsReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListHolidayFestivalsReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListHolidayFestivalsReq with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListHolidayFestivalsReqMultiError, or nil if none found.
+func (m *ListHolidayFestivalsReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListHolidayFestivalsReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if val := m.GetStartYear(); val < 0 || val > 9999 {
+		err := ListHolidayFestivalsReqValidationError{
+			field:  "StartYear",
+			reason: "value must be inside range [0, 9999]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if val := m.GetEndYear(); val < 0 || val > 9999 {
+		err := ListHolidayFestivalsReqValidationError{
+			field:  "EndYear",
+			reason: "value must be inside range [0, 9999]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetName()) > 32 {
+		err := ListHolidayFestivalsReqValidationError{
+			field:  "Name",
+			reason: "value length must be at most 32 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ListHolidayFestivalsReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListHolidayFestivalsReqMultiError is an error wrapping multiple validation
+// errors returned by ListHolidayFestivalsReq.ValidateAll() if the designated
+// constraints aren't met.
+type ListHolidayFestivalsReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListHolidayFestivalsReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListHolidayFestivalsReqMultiError) AllErrors() []error { return m }
+
+// ListHolidayFestivalsReqValidationError is the validation error returned by
+// ListHolidayFestivalsReq.Validate if the designated constraints aren't met.
+type ListHolidayFestivalsReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListHolidayFestivalsReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListHolidayFestivalsReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListHolidayFestivalsReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListHolidayFestivalsReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListHolidayFestivalsReqValidationError) ErrorName() string {
+	return "ListHolidayFestivalsReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListHolidayFestivalsReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListHolidayFestivalsReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListHolidayFestivalsReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListHolidayFestivalsReqValidationError{}
+
+// Validate checks the field values on ListHolidayFestivalsRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListHolidayFestivalsRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListHolidayFestivalsRes with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListHolidayFestivalsResMultiError, or nil if none found.
+func (m *ListHolidayFestivalsRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListHolidayFestivalsRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetItems() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListHolidayFestivalsResValidationError{
+						field:  fmt.Sprintf("Items[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListHolidayFestivalsResValidationError{
+						field:  fmt.Sprintf("Items[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListHolidayFestivalsResValidationError{
+					field:  fmt.Sprintf("Items[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListHolidayFestivalsResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListHolidayFestivalsResMultiError is an error wrapping multiple validation
+// errors returned by ListHolidayFestivalsRes.ValidateAll() if the designated
+// constraints aren't met.
+type ListHolidayFestivalsResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListHolidayFestivalsResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListHolidayFestivalsResMultiError) AllErrors() []error { return m }
+
+// ListHolidayFestivalsResValidationError is the validation error returned by
+// ListHolidayFestivalsRes.Validate if the designated constraints aren't met.
+type ListHolidayFestivalsResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListHolidayFestivalsResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListHolidayFestivalsResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListHolidayFestivalsResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListHolidayFestivalsResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListHolidayFestivalsResValidationError) ErrorName() string {
+	return "ListHolidayFestivalsResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListHolidayFestivalsResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListHolidayFestivalsRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListHolidayFestivalsResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListHolidayFestivalsResValidationError{}
+
+// Validate checks the field values on GetHolidayFestivalReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetHolidayFestivalReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetHolidayFestivalReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetHolidayFestivalReqMultiError, or nil if none found.
+func (m *GetHolidayFestivalReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetHolidayFestivalReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if val := m.GetYear(); val < 1900 || val > 9999 {
+		err := GetHolidayFestivalReqValidationError{
+			field:  "Year",
+			reason: "value must be inside range [1900, 9999]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetName()); l < 1 || l > 32 {
+		err := GetHolidayFestivalReqValidationError{
+			field:  "Name",
+			reason: "value length must be between 1 and 32 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return GetHolidayFestivalReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetHolidayFestivalReqMultiError is an error wrapping multiple validation
+// errors returned by GetHolidayFestivalReq.ValidateAll() if the designated
+// constraints aren't met.
+type GetHolidayFestivalReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetHolidayFestivalReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetHolidayFestivalReqMultiError) AllErrors() []error { return m }
+
+// GetHolidayFestivalReqValidationError is the validation error returned by
+// GetHolidayFestivalReq.Validate if the designated constraints aren't met.
+type GetHolidayFestivalReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetHolidayFestivalReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetHolidayFestivalReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetHolidayFestivalReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetHolidayFestivalReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetHolidayFestivalReqValidationError) ErrorName() string {
+	return "GetHolidayFestivalReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetHolidayFestivalReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetHolidayFestivalReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetHolidayFestivalReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetHolidayFestivalReqValidationError{}
+
+// Validate checks the field values on GetHolidayFestivalRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetHolidayFestivalRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetHolidayFestivalRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetHolidayFestivalResMultiError, or nil if none found.
+func (m *GetHolidayFestivalRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetHolidayFestivalRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Found
+
+	if all {
+		switch v := interface{}(m.GetFestival()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetHolidayFestivalResValidationError{
+					field:  "Festival",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetHolidayFestivalResValidationError{
+					field:  "Festival",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFestival()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetHolidayFestivalResValidationError{
+				field:  "Festival",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return GetHolidayFestivalResMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetHolidayFestivalResMultiError is an error wrapping multiple validation
+// errors returned by GetHolidayFestivalRes.ValidateAll() if the designated
+// constraints aren't met.
+type GetHolidayFestivalResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetHolidayFestivalResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetHolidayFestivalResMultiError) AllErrors() []error { return m }
+
+// GetHolidayFestivalResValidationError is the validation error returned by
+// GetHolidayFestivalRes.Validate if the designated constraints aren't met.
+type GetHolidayFestivalResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetHolidayFestivalResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetHolidayFestivalResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetHolidayFestivalResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetHolidayFestivalResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetHolidayFestivalResValidationError) ErrorName() string {
+	return "GetHolidayFestivalResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetHolidayFestivalResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetHolidayFestivalRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetHolidayFestivalResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetHolidayFestivalResValidationError{}
+
+// Validate checks the field values on GetHolidayYearSummaryReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetHolidayYearSummaryReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetHolidayYearSummaryReq with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetHolidayYearSummaryReqMultiError, or nil if none found.
+func (m *GetHolidayYearSummaryReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetHolidayYearSummaryReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if val := m.GetYear(); val < 1900 || val > 9999 {
+		err := GetHolidayYearSummaryReqValidationError{
+			field:  "Year",
+			reason: "value must be inside range [1900, 9999]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return GetHolidayYearSummaryReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetHolidayYearSummaryReqMultiError is an error wrapping multiple validation
+// errors returned by GetHolidayYearSummaryReq.ValidateAll() if the designated
+// constraints aren't met.
+type GetHolidayYearSummaryReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetHolidayYearSummaryReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetHolidayYearSummaryReqMultiError) AllErrors() []error { return m }
+
+// GetHolidayYearSummaryReqValidationError is the validation error returned by
+// GetHolidayYearSummaryReq.Validate if the designated constraints aren't met.
+type GetHolidayYearSummaryReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetHolidayYearSummaryReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetHolidayYearSummaryReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetHolidayYearSummaryReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetHolidayYearSummaryReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetHolidayYearSummaryReqValidationError) ErrorName() string {
+	return "GetHolidayYearSummaryReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetHolidayYearSummaryReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetHolidayYearSummaryReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetHolidayYearSummaryReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetHolidayYearSummaryReqValidationError{}
+
+// Validate checks the field values on GetHolidayYearSummaryRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetHolidayYearSummaryRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetHolidayYearSummaryRes with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetHolidayYearSummaryResMultiError, or nil if none found.
+func (m *GetHolidayYearSummaryRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetHolidayYearSummaryRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Found
+
+	if all {
+		switch v := interface{}(m.GetSummary()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetHolidayYearSummaryResValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetHolidayYearSummaryResValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSummary()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetHolidayYearSummaryResValidationError{
+				field:  "Summary",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return GetHolidayYearSummaryResMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetHolidayYearSummaryResMultiError is an error wrapping multiple validation
+// errors returned by GetHolidayYearSummaryRes.ValidateAll() if the designated
+// constraints aren't met.
+type GetHolidayYearSummaryResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetHolidayYearSummaryResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetHolidayYearSummaryResMultiError) AllErrors() []error { return m }
+
+// GetHolidayYearSummaryResValidationError is the validation error returned by
+// GetHolidayYearSummaryRes.Validate if the designated constraints aren't met.
+type GetHolidayYearSummaryResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetHolidayYearSummaryResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetHolidayYearSummaryResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetHolidayYearSummaryResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetHolidayYearSummaryResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetHolidayYearSummaryResValidationError) ErrorName() string {
+	return "GetHolidayYearSummaryResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetHolidayYearSummaryResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetHolidayYearSummaryRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetHolidayYearSummaryResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetHolidayYearSummaryResValidationError{}
+
+// Validate checks the field values on ListHolidayYearsReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListHolidayYearsReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListHolidayYearsReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListHolidayYearsReqMultiError, or nil if none found.
+func (m *ListHolidayYearsReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListHolidayYearsReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return ListHolidayYearsReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListHolidayYearsReqMultiError is an error wrapping multiple validation
+// errors returned by ListHolidayYearsReq.ValidateAll() if the designated
+// constraints aren't met.
+type ListHolidayYearsReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListHolidayYearsReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListHolidayYearsReqMultiError) AllErrors() []error { return m }
+
+// ListHolidayYearsReqValidationError is the validation error returned by
+// ListHolidayYearsReq.Validate if the designated constraints aren't met.
+type ListHolidayYearsReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListHolidayYearsReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListHolidayYearsReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListHolidayYearsReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListHolidayYearsReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListHolidayYearsReqValidationError) ErrorName() string {
+	return "ListHolidayYearsReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListHolidayYearsReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListHolidayYearsReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListHolidayYearsReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListHolidayYearsReqValidationError{}
+
+// Validate checks the field values on ListHolidayYearsRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListHolidayYearsRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListHolidayYearsRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListHolidayYearsResMultiError, or nil if none found.
+func (m *ListHolidayYearsRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListHolidayYearsRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return ListHolidayYearsResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListHolidayYearsResMultiError is an error wrapping multiple validation
+// errors returned by ListHolidayYearsRes.ValidateAll() if the designated
+// constraints aren't met.
+type ListHolidayYearsResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListHolidayYearsResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListHolidayYearsResMultiError) AllErrors() []error { return m }
+
+// ListHolidayYearsResValidationError is the validation error returned by
+// ListHolidayYearsRes.Validate if the designated constraints aren't met.
+type ListHolidayYearsResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListHolidayYearsResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListHolidayYearsResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListHolidayYearsResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListHolidayYearsResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListHolidayYearsResValidationError) ErrorName() string {
+	return "ListHolidayYearsResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListHolidayYearsResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListHolidayYearsRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListHolidayYearsResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListHolidayYearsResValidationError{}
+
+// Validate checks the field values on ListHolidaySourceReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListHolidaySourceReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListHolidaySourceReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListHolidaySourceReqMultiError, or nil if none found.
+func (m *ListHolidaySourceReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListHolidaySourceReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if val := m.GetYear(); val < 1900 || val > 9999 {
+		err := ListHolidaySourceReqValidationError{
+			field:  "Year",
+			reason: "value must be inside range [1900, 9999]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for IncludeDisabled
+
+	if len(errors) > 0 {
+		return ListHolidaySourceReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListHolidaySourceReqMultiError is an error wrapping multiple validation
+// errors returned by ListHolidaySourceReq.ValidateAll() if the designated
+// constraints aren't met.
+type ListHolidaySourceReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListHolidaySourceReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListHolidaySourceReqMultiError) AllErrors() []error { return m }
+
+// ListHolidaySourceReqValidationError is the validation error returned by
+// ListHolidaySourceReq.Validate if the designated constraints aren't met.
+type ListHolidaySourceReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListHolidaySourceReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListHolidaySourceReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListHolidaySourceReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListHolidaySourceReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListHolidaySourceReqValidationError) ErrorName() string {
+	return "ListHolidaySourceReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListHolidaySourceReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListHolidaySourceReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListHolidaySourceReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListHolidaySourceReqValidationError{}
+
+// Validate checks the field values on ListHolidaySourceRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListHolidaySourceRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListHolidaySourceRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListHolidaySourceResMultiError, or nil if none found.
+func (m *ListHolidaySourceRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListHolidaySourceRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetItems() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListHolidaySourceResValidationError{
+						field:  fmt.Sprintf("Items[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListHolidaySourceResValidationError{
+						field:  fmt.Sprintf("Items[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListHolidaySourceResValidationError{
+					field:  fmt.Sprintf("Items[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListHolidaySourceResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListHolidaySourceResMultiError is an error wrapping multiple validation
+// errors returned by ListHolidaySourceRes.ValidateAll() if the designated
+// constraints aren't met.
+type ListHolidaySourceResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListHolidaySourceResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListHolidaySourceResMultiError) AllErrors() []error { return m }
+
+// ListHolidaySourceResValidationError is the validation error returned by
+// ListHolidaySourceRes.Validate if the designated constraints aren't met.
+type ListHolidaySourceResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListHolidaySourceResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListHolidaySourceResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListHolidaySourceResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListHolidaySourceResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListHolidaySourceResValidationError) ErrorName() string {
+	return "ListHolidaySourceResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListHolidaySourceResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListHolidaySourceRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListHolidaySourceResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListHolidaySourceResValidationError{}
+
+// Validate checks the field values on SaveHolidaySourceReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SaveHolidaySourceReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SaveHolidaySourceReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SaveHolidaySourceReqMultiError, or nil if none found.
+func (m *SaveHolidaySourceReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SaveHolidaySourceReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetDate()) != 10 {
+		err := SaveHolidaySourceReqValidationError{
+			field:  "Date",
+			reason: "value length must be 10 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
+	if l := utf8.RuneCountInString(m.GetName()); l < 1 || l > 32 {
+		err := SaveHolidaySourceReqValidationError{
+			field:  "Name",
+			reason: "value length must be between 1 and 32 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := _SaveHolidaySourceReq_Type_InLookup[m.GetType()]; !ok {
+		err := SaveHolidaySourceReqValidationError{
+			field:  "Type",
+			reason: "value must be in list [holiday workday]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetNote()); l < 1 || l > 128 {
+		err := SaveHolidaySourceReqValidationError{
+			field:  "Note",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for IsFestivalDay
+
+	// no validation rules for Enabled
+
+	if len(errors) > 0 {
+		return SaveHolidaySourceReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// SaveHolidaySourceReqMultiError is an error wrapping multiple validation
+// errors returned by SaveHolidaySourceReq.ValidateAll() if the designated
+// constraints aren't met.
+type SaveHolidaySourceReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SaveHolidaySourceReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SaveHolidaySourceReqMultiError) AllErrors() []error { return m }
+
+// SaveHolidaySourceReqValidationError is the validation error returned by
+// SaveHolidaySourceReq.Validate if the designated constraints aren't met.
+type SaveHolidaySourceReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SaveHolidaySourceReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SaveHolidaySourceReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SaveHolidaySourceReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SaveHolidaySourceReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SaveHolidaySourceReqValidationError) ErrorName() string {
+	return "SaveHolidaySourceReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SaveHolidaySourceReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSaveHolidaySourceReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SaveHolidaySourceReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SaveHolidaySourceReqValidationError{}
+
+var _SaveHolidaySourceReq_Type_InLookup = map[string]struct{}{
+	"holiday": {},
+	"workday": {},
+}
+
+// Validate checks the field values on SaveHolidaySourceRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SaveHolidaySourceRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SaveHolidaySourceRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SaveHolidaySourceResMultiError, or nil if none found.
+func (m *SaveHolidaySourceRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SaveHolidaySourceRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return SaveHolidaySourceResMultiError(errors)
+	}
+
+	return nil
+}
+
+// SaveHolidaySourceResMultiError is an error wrapping multiple validation
+// errors returned by SaveHolidaySourceRes.ValidateAll() if the designated
+// constraints aren't met.
+type SaveHolidaySourceResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SaveHolidaySourceResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SaveHolidaySourceResMultiError) AllErrors() []error { return m }
+
+// SaveHolidaySourceResValidationError is the validation error returned by
+// SaveHolidaySourceRes.Validate if the designated constraints aren't met.
+type SaveHolidaySourceResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SaveHolidaySourceResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SaveHolidaySourceResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SaveHolidaySourceResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SaveHolidaySourceResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SaveHolidaySourceResValidationError) ErrorName() string {
+	return "SaveHolidaySourceResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SaveHolidaySourceResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSaveHolidaySourceRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SaveHolidaySourceResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SaveHolidaySourceResValidationError{}
+
+// Validate checks the field values on SetHolidaySourceEnabledReq with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SetHolidaySourceEnabledReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SetHolidaySourceEnabledReq with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SetHolidaySourceEnabledReqMultiError, or nil if none found.
+func (m *SetHolidaySourceEnabledReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SetHolidaySourceEnabledReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetDate()) != 10 {
+		err := SetHolidaySourceEnabledReqValidationError{
+			field:  "Date",
+			reason: "value length must be 10 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
+	// no validation rules for Enabled
+
+	if len(errors) > 0 {
+		return SetHolidaySourceEnabledReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// SetHolidaySourceEnabledReqMultiError is an error wrapping multiple
+// validation errors returned by SetHolidaySourceEnabledReq.ValidateAll() if
+// the designated constraints aren't met.
+type SetHolidaySourceEnabledReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SetHolidaySourceEnabledReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SetHolidaySourceEnabledReqMultiError) AllErrors() []error { return m }
+
+// SetHolidaySourceEnabledReqValidationError is the validation error returned
+// by SetHolidaySourceEnabledReq.Validate if the designated constraints aren't met.
+type SetHolidaySourceEnabledReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SetHolidaySourceEnabledReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SetHolidaySourceEnabledReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SetHolidaySourceEnabledReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SetHolidaySourceEnabledReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SetHolidaySourceEnabledReqValidationError) ErrorName() string {
+	return "SetHolidaySourceEnabledReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SetHolidaySourceEnabledReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSetHolidaySourceEnabledReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SetHolidaySourceEnabledReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SetHolidaySourceEnabledReqValidationError{}
+
+// Validate checks the field values on SetHolidaySourceEnabledRes with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SetHolidaySourceEnabledRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SetHolidaySourceEnabledRes with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SetHolidaySourceEnabledResMultiError, or nil if none found.
+func (m *SetHolidaySourceEnabledRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SetHolidaySourceEnabledRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return SetHolidaySourceEnabledResMultiError(errors)
+	}
+
+	return nil
+}
+
+// SetHolidaySourceEnabledResMultiError is an error wrapping multiple
+// validation errors returned by SetHolidaySourceEnabledRes.ValidateAll() if
+// the designated constraints aren't met.
+type SetHolidaySourceEnabledResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SetHolidaySourceEnabledResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SetHolidaySourceEnabledResMultiError) AllErrors() []error { return m }
+
+// SetHolidaySourceEnabledResValidationError is the validation error returned
+// by SetHolidaySourceEnabledRes.Validate if the designated constraints aren't met.
+type SetHolidaySourceEnabledResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SetHolidaySourceEnabledResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SetHolidaySourceEnabledResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SetHolidaySourceEnabledResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SetHolidaySourceEnabledResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SetHolidaySourceEnabledResValidationError) ErrorName() string {
+	return "SetHolidaySourceEnabledResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SetHolidaySourceEnabledResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSetHolidaySourceEnabledRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SetHolidaySourceEnabledResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SetHolidaySourceEnabledResValidationError{}
+
 // Validate checks the field values on CreatePlanTaskReq with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.

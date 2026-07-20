@@ -617,3 +617,38 @@ Review all IEC 104 docs for stale model references after migration; clean up GOR
 ### Next Steps
 
 - None - task complete
+
+
+## Session 126: gnetx debug hex format
+
+**Date**: 2026-07-21
+**Task**: gnetx debug hex format
+**Branch**: `add_holiday`
+
+### Summary
+
+Added configurable gnetx DebugSerializer hex formatting, sunk reusable byte hex formatting into common/tool, documented the gnetx debug log contract, and verified focused tests/vet. Full race test remains blocked by the existing reconnect timing test.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `db807517` | (see git log) |
+| `d76c87a3` | (see git log) |
+| `23859d21` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

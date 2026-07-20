@@ -60,3 +60,41 @@ func TestJSONSerializer(t *testing.T) {
 		t.Fatalf("val = %v, want 42", m["val"])
 	}
 }
+
+func TestDebugSerializerAcceptsHexFormatOption(t *testing.T) {
+	s := DebugSerializer(RawSerializer{}, WithDebugHexFormat(HexUpperSpace))
+	debug, ok := s.(*debugSerializer)
+	if !ok {
+		t.Fatalf("DebugSerializer type = %T, want *debugSerializer", s)
+	}
+	if debug.hexFormat != HexUpperSpace {
+		t.Fatalf("hexFormat = %v, want %v", debug.hexFormat, HexUpperSpace)
+	}
+}
+
+func TestDebugSerializerDefaultsToLowerCompactHex(t *testing.T) {
+	s := DebugSerializer(RawSerializer{})
+	debug, ok := s.(*debugSerializer)
+	if !ok {
+		t.Fatalf("DebugSerializer type = %T, want *debugSerializer", s)
+	}
+	if debug.hexFormat != HexLowerCompact {
+		t.Fatalf("hexFormat = %v, want %v", debug.hexFormat, HexLowerCompact)
+	}
+
+	raw := []byte{0x68, 0x0e, 0x00, 0xff}
+	got := formatDebugHex(raw, debug.hexFormat)
+	want := "680e00ff"
+	if got != want {
+		t.Fatalf("default formatDebugHex = %q, want %q", got, want)
+	}
+}
+
+func TestFormatDebugHexUsesToolFormat(t *testing.T) {
+	raw := []byte{0x68, 0x0e, 0x00, 0xff}
+	got := formatDebugHex(raw, HexUpperSpace)
+	want := "68 0E 00 FF"
+	if got != want {
+		t.Fatalf("formatDebugHex = %q, want %q", got, want)
+	}
+}
