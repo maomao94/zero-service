@@ -35,7 +35,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 	chunkAsduPusher := executorx.NewChunkMessagesPusher(
 		func(msgs []string) {
-			// 转换为streamevent.MsgBody列表
+			tid, _ := tool.SimpleUUID()
 			msgBodyList := make([]*streamevent.MsgBody, 0, len(msgs))
 			for _, s := range msgs {
 				result := gjson.Parse(s)
@@ -52,6 +52,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 					BodyRaw:     bodyRaw,
 					Time:        result.Get("time").String(),
 					MetaDataRaw: result.Get("metaData").String(),
+					TraceId:     result.Get("traceId").String(),
+					Headers:     gjsonHeadersMap(result.Get("headers")),
 				}
 				pm := result.Get("pm")
 				if pm.Exists() {
@@ -59,26 +61,30 @@ func NewServiceContext(c config.Config) *ServiceContext {
 						DeviceId:    pm.Get("deviceId").String(),
 						DeviceName:  pm.Get("deviceName").String(),
 						TdTableType: pm.Get("tdTableType").String(),
+						Ext1:        pm.Get("ext1").String(),
+						Ext2:        pm.Get("ext2").String(),
+						Ext3:        pm.Get("ext3").String(),
+						Ext4:        pm.Get("ext4").String(),
+						Ext5:        pm.Get("ext5").String(),
 					}
 				}
 				msgBodyList = append(msgBodyList, msgBody)
 			}
 
-			// 调用gRPC推送
-			tid, _ := tool.SimpleUUID()
-			startTime := timex.Now()
-			_, err := streamEventCli.PushChunkAsdu(context.Background(), &streamevent.PushChunkAsduReq{
-				MsgBody: msgBodyList,
-				TId:     tid,
-			})
-			var invokeflg = "success"
-			if err != nil {
-				invokeflg = "fail"
-				logx.Errorf("PushChunkAsdu failed, tId: %s, err: %v", tid, err)
+			if len(msgBodyList) > 0 {
+				startTime := timex.Now()
+				_, err := streamEventCli.PushChunkAsdu(context.Background(), &streamevent.PushChunkAsduReq{
+					MsgBody: msgBodyList,
+					TId:     tid,
+				})
+				invokeflg := "success"
+				if err != nil {
+					invokeflg = "fail"
+					logx.Errorf("PushChunkAsdu failed, tId: %s, err: %v", tid, err)
+				}
+				duration := timex.Since(startTime)
+				logx.WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
 			}
-			duration := timex.Since(startTime)
-			logx.WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
-			return
 		},
 		c.PushAsduChunkBytes,
 	)
@@ -88,4 +94,15 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		StreamEventCli:  streamEventCli,
 		ChunkAsduPusher: chunkAsduPusher,
 	}
+}
+
+func gjsonHeadersMap(r gjson.Result) map[string]string {
+	if !r.Exists() {
+		return nil
+	}
+	m := make(map[string]string)
+	for k, v := range r.Map() {
+		m[k] = v.String()
+	}
+	return m
 }

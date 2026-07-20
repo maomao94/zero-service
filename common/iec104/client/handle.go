@@ -1,7 +1,12 @@
 package client
 
 import (
+	"context"
+	"zero-service/common/iec104"
+
+	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/wendy512/go-iecp5/asdu"
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stat"
 	"github.com/zeromicro/go-zero/core/timex"
 )
@@ -33,8 +38,9 @@ const (
 type DataType int
 
 type ClientHandler struct {
-	call    ASDUCall
-	metrics *stat.Metrics
+	call      ASDUCall
+	metrics   *stat.Metrics
+	traceOpts iec104.FrameTraceOptions
 }
 
 // InterrogationHandler 总召唤回复
@@ -43,7 +49,10 @@ func (h *ClientHandler) InterrogationHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) 
 	defer h.metrics.Add(stat.Task{
 		Duration: timex.Since(startTime),
 	})
-	return h.call.OnInterrogation(rxAsdu)
+	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
+	defer span.End()
+	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	return h.call.OnInterrogation(ctx, rxAsdu)
 }
 
 // CounterInterrogationHandler 总计数器回复
@@ -52,7 +61,10 @@ func (h *ClientHandler) CounterInterrogationHandler(_ asdu.Connect, rxAsdu *asdu
 	defer h.metrics.Add(stat.Task{
 		Duration: timex.Since(startTime),
 	})
-	return h.call.OnCounterInterrogation(rxAsdu)
+	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
+	defer span.End()
+	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	return h.call.OnCounterInterrogation(ctx, rxAsdu)
 }
 
 // ReadHandler 读定值回复
@@ -61,7 +73,10 @@ func (h *ClientHandler) ReadHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
 	defer h.metrics.Add(stat.Task{
 		Duration: timex.Since(startTime),
 	})
-	return h.call.OnRead(rxAsdu)
+	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
+	defer span.End()
+	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	return h.call.OnRead(ctx, rxAsdu)
 }
 
 // TestCommandHandler 测试下发回复
@@ -70,7 +85,10 @@ func (h *ClientHandler) TestCommandHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) er
 	defer h.metrics.Add(stat.Task{
 		Duration: timex.Since(startTime),
 	})
-	return h.call.OnTestCommand(rxAsdu)
+	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
+	defer span.End()
+	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	return h.call.OnTestCommand(ctx, rxAsdu)
 }
 
 // ClockSyncHandler 时钟同步回复
@@ -79,7 +97,10 @@ func (h *ClientHandler) ClockSyncHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) erro
 	defer h.metrics.Add(stat.Task{
 		Duration: timex.Since(startTime),
 	})
-	return h.call.OnClockSync(rxAsdu)
+	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
+	defer span.End()
+	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	return h.call.OnClockSync(ctx, rxAsdu)
 }
 
 // ResetProcessHandler 进程重置回复
@@ -88,7 +109,10 @@ func (h *ClientHandler) ResetProcessHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) e
 	defer h.metrics.Add(stat.Task{
 		Duration: timex.Since(startTime),
 	})
-	return h.call.OnResetProcess(rxAsdu)
+	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
+	defer span.End()
+	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	return h.call.OnResetProcess(ctx, rxAsdu)
 }
 
 // DelayAcquisitionHandler 延迟获取回复
@@ -97,7 +121,10 @@ func (h *ClientHandler) DelayAcquisitionHandler(_ asdu.Connect, rxAsdu *asdu.ASD
 	defer h.metrics.Add(stat.Task{
 		Duration: timex.Since(startTime),
 	})
-	return h.call.OnDelayAcquisition(rxAsdu)
+	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
+	defer span.End()
+	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	return h.call.OnDelayAcquisition(ctx, rxAsdu)
 }
 
 // ASDUHandler ASDU上报，ASDU数据
@@ -106,7 +133,10 @@ func (h *ClientHandler) ASDUHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
 	defer h.metrics.Add(stat.Task{
 		Duration: timex.Since(startTime),
 	})
-	return h.call.OnASDU(rxAsdu)
+	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
+	defer span.End()
+	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	return h.call.OnASDU(ctx, rxAsdu)
 }
 
 func GetDataType(typeId asdu.TypeID) DataType {
@@ -153,5 +183,49 @@ func GetDataType(typeId asdu.TypeID) DataType {
 		return SetBitstringCommand
 	default:
 		return UNKNOWN
+	}
+}
+
+func IecLogContext(ctx context.Context, packet *asdu.ASDU, traceOpts iec104.FrameTraceOptions) context.Context {
+	ctx = context.WithValue(ctx, "stationId", traceOpts.StationId)
+	return logx.ContextWithFields(ctx,
+		logx.Field("host", traceOpts.Host),
+		logx.Field("port", traceOpts.Port),
+		logx.Field("stationId", traceOpts.StationId),
+		logx.Field("iecType", GenTypeName(packet.Type)),
+		logx.Field("typeId", int(packet.Type)),
+		logx.Field("coa", uint(packet.CommonAddr)),
+		logx.Field("cot", GenCOTName(packet.Coa.Cause)),
+		logx.Field("cotCause", int(packet.Coa.Cause)),
+		logx.Field("isNegative", packet.Coa.IsNegative),
+	)
+}
+
+func GenTypeName(typeId asdu.TypeID) string {
+	return strutil.SubInBetween(typeId.String(), "<", ">")
+}
+
+func GenCOTName(cause asdu.Cause) string {
+	switch cause {
+	case asdu.ActivationCon:
+		return "ActivationCon"
+	case asdu.DeactivationCon:
+		return "DeactivationCon"
+	case asdu.ActivationTerm:
+		return "ActivationTerm"
+	case asdu.Activation:
+		return "Activation(echo)"
+	case asdu.Request:
+		return "Request"
+	case asdu.UnknownTypeID:
+		return "UnknownTypeID"
+	case asdu.UnknownCOT:
+		return "UnknownCOT"
+	case asdu.UnknownCA:
+		return "UnknownCA"
+	case asdu.UnknownIOA:
+		return "UnknownIOA"
+	default:
+		return "Unknown"
 	}
 }

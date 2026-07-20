@@ -551,3 +551,36 @@ Removed currentUser from trigger RPC request payloads, regenerated trigger proto
 ### Next Steps
 
 - None - task complete
+
+
+## Session 124: IEC ASDU Trace Propagation
+
+**Date**: 2026-07-20
+**Task**: IEC ASDU Trace Propagation
+**Branch**: `master`
+
+### Summary
+
+Implemented IEC104 ASDU trace propagation cleanup, documented stationId and trace transport boundaries, refreshed Trellis IEC104 trace spec, and verified common/iec104 plus app/ieccaller tests and vet.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a1639562` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

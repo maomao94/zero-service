@@ -627,8 +627,12 @@ type MsgBody struct {
 	// 消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`,UTC+8时区）
 	Time string `protobuf:"bytes,9,opt,name=time,proto3" json:"time,omitempty"`
 	// 应用级元数据（如：应用ID、用户信息、场站信息等）
-	MetaDataRaw   string        `protobuf:"bytes,10,opt,name=metaDataRaw,proto3" json:"metaDataRaw,omitempty"`
-	Pm            *PointMapping `protobuf:"bytes,11,opt,name=pm,proto3" json:"pm,omitempty"`
+	MetaDataRaw string        `protobuf:"bytes,10,opt,name=metaDataRaw,proto3" json:"metaDataRaw,omitempty"`
+	Pm          *PointMapping `protobuf:"bytes,11,opt,name=pm,proto3" json:"pm,omitempty"`
+	// IEC104 帧关联ID（同一帧拆分出来的多条消息共享）
+	TraceId string `protobuf:"bytes,12,opt,name=traceId,proto3" json:"traceId,omitempty"`
+	// OTel propagation headers（traceparent, tracestate）
+	Headers       map[string]string `protobuf:"bytes,13,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -736,6 +740,20 @@ func (x *MsgBody) GetMetaDataRaw() string {
 func (x *MsgBody) GetPm() *PointMapping {
 	if x != nil {
 		return x.Pm
+	}
+	return nil
+}
+
+func (x *MsgBody) GetTraceId() string {
+	if x != nil {
+		return x.TraceId
+	}
+	return ""
+}
+
+func (x *MsgBody) GetHeaders() map[string]string {
+	if x != nil {
+		return x.Headers
 	}
 	return nil
 }
@@ -3347,7 +3365,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x10PushChunkAsduReq\x12\x10\n" +
 	"\x03tId\x18\x01 \x01(\tR\x03tId\x12.\n" +
 	"\amsgBody\x18\x02 \x03(\v2\x14.streamevent.MsgBodyR\amsgBody\"\x12\n" +
-	"\x10PushChunkAsduRes\"\x9c\x02\n" +
+	"\x10PushChunkAsduRes\"\xaf\x03\n" +
 	"\aMsgBody\x12\x14\n" +
 	"\x05msgId\x18\x01 \x01(\tR\x05msgId\x12\x12\n" +
 	"\x04host\x18\x02 \x01(\tR\x04host\x12\x12\n" +
@@ -3360,7 +3378,12 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x04time\x18\t \x01(\tR\x04time\x12 \n" +
 	"\vmetaDataRaw\x18\n" +
 	" \x01(\tR\vmetaDataRaw\x12)\n" +
-	"\x02pm\x18\v \x01(\v2\x19.streamevent.PointMappingR\x02pm\"\xd0\x01\n" +
+	"\x02pm\x18\v \x01(\v2\x19.streamevent.PointMappingR\x02pm\x12\x18\n" +
+	"\atraceId\x18\f \x01(\tR\atraceId\x12;\n" +
+	"\aheaders\x18\r \x03(\v2!.streamevent.MsgBody.HeadersEntryR\aheaders\x1a:\n" +
+	"\fHeadersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd0\x01\n" +
 	"\fPointMapping\x12\x1a\n" +
 	"\bdeviceId\x18\x01 \x01(\tR\bdeviceId\x12\x1e\n" +
 	"\n" +
@@ -3636,7 +3659,7 @@ func file_streamevent_proto_rawDescGZIP() []byte {
 }
 
 var file_streamevent_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_streamevent_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
+var file_streamevent_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_streamevent_proto_goTypes = []any{
 	(PlanEventType)(0),                                 // 0: streamevent.PlanEventType
 	(*ReceiveMQTTMessageReq)(nil),                      // 1: streamevent.ReceiveMQTTMessageReq
@@ -3673,38 +3696,40 @@ var file_streamevent_proto_goTypes = []any{
 	(*DelayConfigPb)(nil),                              // 32: streamevent.DelayConfigPb
 	(*NotifyPlanEventReq)(nil),                         // 33: streamevent.NotifyPlanEventReq
 	(*NotifyPlanEventRes)(nil),                         // 34: streamevent.NotifyPlanEventRes
-	nil,                                                // 35: streamevent.NotifyPlanEventReq.AttributesEntry
+	nil,                                                // 35: streamevent.MsgBody.HeadersEntry
+	nil,                                                // 36: streamevent.NotifyPlanEventReq.AttributesEntry
 }
 var file_streamevent_proto_depIdxs = []int32{
 	3,  // 0: streamevent.ReceiveMQTTMessageReq.messages:type_name -> streamevent.MqttMessage
 	8,  // 1: streamevent.ReceiveKafkaMessageReq.messages:type_name -> streamevent.KafkaMessage
 	11, // 2: streamevent.PushChunkAsduReq.msgBody:type_name -> streamevent.MsgBody
 	12, // 3: streamevent.MsgBody.pm:type_name -> streamevent.PointMapping
-	18, // 4: streamevent.StepPositionInfo.value:type_name -> streamevent.StepPosition
-	22, // 5: streamevent.BinaryCounterReadingInfo.value:type_name -> streamevent.BinaryCounterReading
-	29, // 6: streamevent.HandlerPlanTaskEventReq.plan:type_name -> streamevent.PlanPb
-	32, // 7: streamevent.HandlerPlanTaskEventRes.delayConfig:type_name -> streamevent.DelayConfigPb
-	0,  // 8: streamevent.NotifyPlanEventReq.eventType:type_name -> streamevent.PlanEventType
-	35, // 9: streamevent.NotifyPlanEventReq.attributes:type_name -> streamevent.NotifyPlanEventReq.AttributesEntry
-	1,  // 10: streamevent.StreamEvent.ReceiveMQTTMessage:input_type -> streamevent.ReceiveMQTTMessageReq
-	4,  // 11: streamevent.StreamEvent.ReceiveWSMessage:input_type -> streamevent.ReceiveWSMessageReq
-	6,  // 12: streamevent.StreamEvent.ReceiveKafkaMessage:input_type -> streamevent.ReceiveKafkaMessageReq
-	9,  // 13: streamevent.StreamEvent.PushChunkAsdu:input_type -> streamevent.PushChunkAsduReq
-	27, // 14: streamevent.StreamEvent.UpSocketMessage:input_type -> streamevent.UpSocketMessageReq
-	30, // 15: streamevent.StreamEvent.HandlerPlanTaskEvent:input_type -> streamevent.HandlerPlanTaskEventReq
-	33, // 16: streamevent.StreamEvent.NotifyPlanEvent:input_type -> streamevent.NotifyPlanEventReq
-	2,  // 17: streamevent.StreamEvent.ReceiveMQTTMessage:output_type -> streamevent.ReceiveMQTTMessageRes
-	5,  // 18: streamevent.StreamEvent.ReceiveWSMessage:output_type -> streamevent.ReceiveWSMessageRes
-	7,  // 19: streamevent.StreamEvent.ReceiveKafkaMessage:output_type -> streamevent.ReceiveKafkaMessageRes
-	10, // 20: streamevent.StreamEvent.PushChunkAsdu:output_type -> streamevent.PushChunkAsduRes
-	28, // 21: streamevent.StreamEvent.UpSocketMessage:output_type -> streamevent.UpSocketMessageRes
-	31, // 22: streamevent.StreamEvent.HandlerPlanTaskEvent:output_type -> streamevent.HandlerPlanTaskEventRes
-	34, // 23: streamevent.StreamEvent.NotifyPlanEvent:output_type -> streamevent.NotifyPlanEventRes
-	17, // [17:24] is the sub-list for method output_type
-	10, // [10:17] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	35, // 4: streamevent.MsgBody.headers:type_name -> streamevent.MsgBody.HeadersEntry
+	18, // 5: streamevent.StepPositionInfo.value:type_name -> streamevent.StepPosition
+	22, // 6: streamevent.BinaryCounterReadingInfo.value:type_name -> streamevent.BinaryCounterReading
+	29, // 7: streamevent.HandlerPlanTaskEventReq.plan:type_name -> streamevent.PlanPb
+	32, // 8: streamevent.HandlerPlanTaskEventRes.delayConfig:type_name -> streamevent.DelayConfigPb
+	0,  // 9: streamevent.NotifyPlanEventReq.eventType:type_name -> streamevent.PlanEventType
+	36, // 10: streamevent.NotifyPlanEventReq.attributes:type_name -> streamevent.NotifyPlanEventReq.AttributesEntry
+	1,  // 11: streamevent.StreamEvent.ReceiveMQTTMessage:input_type -> streamevent.ReceiveMQTTMessageReq
+	4,  // 12: streamevent.StreamEvent.ReceiveWSMessage:input_type -> streamevent.ReceiveWSMessageReq
+	6,  // 13: streamevent.StreamEvent.ReceiveKafkaMessage:input_type -> streamevent.ReceiveKafkaMessageReq
+	9,  // 14: streamevent.StreamEvent.PushChunkAsdu:input_type -> streamevent.PushChunkAsduReq
+	27, // 15: streamevent.StreamEvent.UpSocketMessage:input_type -> streamevent.UpSocketMessageReq
+	30, // 16: streamevent.StreamEvent.HandlerPlanTaskEvent:input_type -> streamevent.HandlerPlanTaskEventReq
+	33, // 17: streamevent.StreamEvent.NotifyPlanEvent:input_type -> streamevent.NotifyPlanEventReq
+	2,  // 18: streamevent.StreamEvent.ReceiveMQTTMessage:output_type -> streamevent.ReceiveMQTTMessageRes
+	5,  // 19: streamevent.StreamEvent.ReceiveWSMessage:output_type -> streamevent.ReceiveWSMessageRes
+	7,  // 20: streamevent.StreamEvent.ReceiveKafkaMessage:output_type -> streamevent.ReceiveKafkaMessageRes
+	10, // 21: streamevent.StreamEvent.PushChunkAsdu:output_type -> streamevent.PushChunkAsduRes
+	28, // 22: streamevent.StreamEvent.UpSocketMessage:output_type -> streamevent.UpSocketMessageRes
+	31, // 23: streamevent.StreamEvent.HandlerPlanTaskEvent:output_type -> streamevent.HandlerPlanTaskEventRes
+	34, // 24: streamevent.StreamEvent.NotifyPlanEvent:output_type -> streamevent.NotifyPlanEventRes
+	18, // [18:25] is the sub-list for method output_type
+	11, // [11:18] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_streamevent_proto_init() }
@@ -3718,7 +3743,7 @@ func file_streamevent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_streamevent_proto_rawDesc), len(file_streamevent_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   35,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

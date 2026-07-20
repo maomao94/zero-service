@@ -7,6 +7,7 @@ import (
 	"testing"
 	"zero-service/app/ieccaller/internal/config"
 	"zero-service/app/ieccaller/internal/svc"
+	"zero-service/common/iec104"
 	"zero-service/common/iec104/client"
 	"zero-service/common/iec104/types"
 
@@ -35,7 +36,12 @@ func TestClientCallASDULogContextFillsUnifiedFields(t *testing.T) {
 		},
 	}
 
-	ctx := clientCall.asduLogContext(context.Background(), packet)
+	ctx := context.Background()
+	ctx = client.IecLogContext(ctx, packet, iec104.FrameTraceOptions{
+		Host:      clientCall.config.Host,
+		Port:      clientCall.config.Port,
+		StationId: clientCall.stationId,
+	})
 	logx.WithContext(ctx).Error("asdu log context test")
 
 	got := buf.String()
@@ -44,9 +50,8 @@ func TestClientCallASDULogContextFillsUnifiedFields(t *testing.T) {
 		`"host":"127.0.0.1"`,
 		`"port":2404`,
 		`"stationId":"station-1"`,
-		`"asdu":"M_SP_NA_1"`,
+		`"iecType":"M_SP_NA_1"`,
 		`"typeId":1`,
-		`"dataType":0`,
 		`"coa":7`,
 	} {
 		if !strings.Contains(got, want) {
@@ -72,7 +77,7 @@ func TestClientCallNewMsgBodyFillsCommonFields(t *testing.T) {
 	}
 	body := &types.SinglePointInfo{Ioa: 1}
 
-	got := clientCall.newMsgBody(packet, "msg-1", packet.CommonAddr, body)
+	got := clientCall.newMsgBody(context.Background(), packet, "msg-1", packet.CommonAddr, body)
 
 	if got.MsgId != "msg-1" {
 		t.Fatalf("expected msgId msg-1, got %s", got.MsgId)
@@ -83,8 +88,8 @@ func TestClientCallNewMsgBodyFillsCommonFields(t *testing.T) {
 	if got.Port != 2404 {
 		t.Fatalf("expected port 2404, got %d", got.Port)
 	}
-	if got.Asdu != genASDUName(packet.Type) {
-		t.Fatalf("expected asdu %s, got %s", genASDUName(packet.Type), got.Asdu)
+	if got.Asdu != client.GenTypeName(packet.Type) {
+		t.Fatalf("expected asdu %s, got %s", client.GenTypeName(packet.Type), got.Asdu)
 	}
 	if got.TypeId != int(packet.Type) {
 		t.Fatalf("expected typeId %d, got %d", int(packet.Type), got.TypeId)
@@ -100,6 +105,18 @@ func TestClientCallNewMsgBodyFillsCommonFields(t *testing.T) {
 	}
 	if got.MetaData["stationId"] != "station-1" {
 		t.Fatalf("expected metadata stationId station-1, got %v", got.MetaData["stationId"])
+	}
+	if _, ok := got.MetaData["traceId"]; ok {
+		t.Fatalf("expected metaData NOT to contain traceId")
+	}
+
+	got.MetaData["stationId"] = "mutated-station"
+	next := clientCall.newMsgBody(context.Background(), packet, "msg-2", packet.CommonAddr, body)
+	if next.MetaData["stationId"] != "station-1" {
+		t.Fatalf("expected next message metadata to use original stationId, got %v", next.MetaData["stationId"])
+	}
+	if meta["stationId"] != "station-1" {
+		t.Fatalf("expected config metadata stationId not to be mutated, got %v", meta["stationId"])
 	}
 }
 

@@ -119,6 +119,11 @@ func NewClient(cfg ClientConfig, opts ...ClientOption) (*Client, error) {
 	client.handler = &ClientHandler{
 		call:    client.asduCall,
 		metrics: stat.NewMetrics(fmt.Sprintf("tcp-%s_%d", cfg.Host, cfg.Port)),
+		traceOpts: iec104.FrameTraceOptions{
+			Host:      cfg.Host,
+			Port:      cfg.Port,
+			StationId: stationIdFromMeta(cfg.MetaData, cfg.Host, cfg.Port),
+		},
 	}
 
 	// 初始化104客户端
@@ -547,4 +552,11 @@ func activationCoa() asdu.CauseOfTransmission {
 		IsNegative: false,
 		Cause:      asdu.Activation,
 	}
+}
+
+func stationIdFromMeta(meta map[string]any, host string, port int) string {
+	if sid, ok := meta["stationId"].(string); ok && sid != "" {
+		return sid
+	}
+	return fmt.Sprintf("%s:%d", host, port)
 }

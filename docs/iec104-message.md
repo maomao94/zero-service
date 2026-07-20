@@ -68,13 +68,50 @@
 | `coa` | uint | 公共地址，范围通常为 1 至 65534，65535 为全局地址。 |
 | `body` | object | 信息体对象，结构随 `typeId` 变化。完整结构见[第 3 节](#3-信息体结构详解)。 |
 | `time` | string | ieccaller 推送时间，由服务端写入。 |
-| `metaData` | object | 客户端配置中的应用级元数据，可为空。 |
+| `metaData` | object | 应用级元数据，来自客户端配置。可携带 `stationId` 等业务字段，但不携带链路追踪字段。 |
 | `pm` | object | 点位映射信息。未配置映射或映射禁用时可能缺省。 |
 
 `body.time` 与 `time` 含义不同：
 
 - `time` 是消息推送时间，所有成功推送的消息都有值。
 - `body.time` 是 IEC 104 信息体携带的时标。对应不带时标的 ASDU 时，该字段为空字符串。
+
+### 1.2.1 链路追踪
+
+每条 ASDU 消息 JSON 顶层携带两个链路追踪字段：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `traceId` | string | 消息对应的 OTel trace ID，同一帧拆分的多条消息共享。 |
+| `headers` | object | W3C Trace Context 传播头，包含 `traceparent` 和可选的 `tracestate`。 |
+
+```json
+{
+  "msgId": "消息id",
+  "host": "127.0.0.1",
+  "port": 2404,
+  "asdu": "M_SP_NA_1",
+  "typeId": 1,
+  "dataType": 0,
+  "coa": 1001,
+  "body": { "ioa": 2001, "value": true },
+  "time": "2026-06-05 14:30:00.000000",
+  "metaData": {},
+  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "headers": {
+    "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+  }
+}
+```
+
+- `traceId` 和 `headers.traceparent` 中的 trace ID 一致。
+- Kafka、MQTT、gRPC 三条推送通道的 JSON payload 均包含上述字段。
+- Kafka 额外在消息 headers 中携带 `traceparent`（Kafka 原生 header 机制）。
+- gRPC `PushChunkAsdu` 的 `streamevent.MsgBody` 同样包含 `traceId` 和 `headers` 字段。
+- 无有效 span context 时（如手动重发），`traceId` 和 `headers` 均缺省。
+- 消费端应把 `headers` 视为传输头，不应落入业务元数据。
+
+> **注意**: handler 入口会把业务 `stationId` 写入普通 `context.Context`，供点位映射查询使用；它不属于 trace transport 字段。JSON payload 的 `metaData` 只来自 `IecServerConfig[].MetaData` 配置，配置含 `stationId` 时才会出现在 `metaData.stationId`。`traceId` 只用于链路观测，不要拿它做业务主键。
 
 ### 1.3 PointMapping 结构
 
@@ -153,7 +190,7 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `tag_station` | string | 站点标识。默认由 `host` 和 `port` 生成，也可通过 `metaData.stationId` 覆盖。 |
+| `tag_station` | string | 站点标识。默认由 `host` 和 `port` 生成，也可通过 `metaData.stationId` 覆盖。该字段必须和 handler 注入到 `ctx.Value("stationId")` 的值一致，才能命中点位映射。 |
 | `coa` | int | IEC 104 公共地址。 |
 | `ioa` | int | IEC 104 信息对象地址。 |
 | `device_id` | string | 映射到 `pm.deviceId`。 |
@@ -712,16 +749,18 @@ print(key)  # 127.0.0.1_1_0x0007d1
 - 使用消息 key 保证同一 `host`、`coa`、`ioa` 的事件落在同一分区。
 - 以 `msgId` 做幂等处理，避免重试造成重复写入。
 - 按 `typeId` 或 `asdu` 分流，再按 `body.ioa` 更新点位状态。
+- 链路追踪信息位于 Kafka message headers，同时 JSON payload 顶层 `headers` 也为同一内容。
 
 ### 5.3 MQTT 消费建议
 
 - Topic 可由 `pm`、`asdu`、`coa` 等字段模板生成。
 - 消费者不能假设 `pm` 一定存在。没有点位映射时，仍可使用 `host`、`coa`、`body.ioa` 识别点位。
 - 多 Topic 推送时，同一条消息的 JSON 内容一致。
+- 如需恢复链路追踪上下文，从顶层 `headers.traceparent` / `headers.tracestate` 读取 W3C trace context；不要从 `metaData` 读取追踪传输字段。
 
 ### 5.4 gRPC 流事件消费建议
 
-- gRPC 推送内容与 Kafka、MQTT 的 JSON 消息保持一致。
+- gRPC 推送内容与 Kafka/MQTT payload 的 JSON 保持一致。`streamevent.MsgBody` 已包含 `headers` 字段（map<string, string>），服务端可直接读取 `headers["traceparent"]` 还原链路上下文。
 - 批量或流式消费方应逐条解析 `body`，不要按批次共享同一个信息体类型。
 
 ### 5.5 时区与时标处理

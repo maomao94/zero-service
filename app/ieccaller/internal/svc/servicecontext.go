@@ -11,6 +11,7 @@ import (
 	"zero-service/common/antsx"
 	"zero-service/common/dbx"
 	"zero-service/common/executorx"
+	"zero-service/common/iec104"
 	"zero-service/common/iec104/client"
 	"zero-service/common/iec104/types"
 	"zero-service/common/iec104/util"
@@ -113,6 +114,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 						BodyRaw:     bodyRaw,
 						Time:        result.Get("time").String(),
 						MetaDataRaw: result.Get("metaData").String(),
+						TraceId:     result.Get("traceId").String(),
+						Headers:     gjsonHeadersMap(result.Get("headers")),
 					}
 					pm := result.Get("pm")
 					if pm.Exists() {
@@ -131,19 +134,20 @@ func NewServiceContext(c config.Config) *ServiceContext {
 				}
 
 				if len(msgBodyList) > 0 {
+					ctx, span := iec104.StartForwardSpan(context.Background())
+					defer span.End()
 					startTime := timex.Now()
-					_, err := streamEventCli.PushChunkAsdu(context.Background(), &streamevent.PushChunkAsduReq{
+					_, err := streamEventCli.PushChunkAsdu(ctx, &streamevent.PushChunkAsduReq{
 						MsgBody: msgBodyList,
 						TId:     tid,
 					})
-					var invokeflg = "success"
+					invokeflg := "success"
 					if err != nil {
 						invokeflg = "fail"
-						logx.Errorf("PushChunkAsdu failed, tId: %s, err: %v", tid, err)
+						logx.WithContext(ctx).Errorf("PushChunkAsdu failed, tId: %s, err: %v", tid, err)
 					}
 					duration := timex.Since(startTime)
-					logx.WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
-					return
+					logx.WithContext(ctx).WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
 				}
 			},
 			c.PushAsduChunkBytes,
@@ -197,6 +201,7 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 			}
 		}
 	}
+	data.Headers, data.TraceId = iec104.TraceHeaders(ctx)
 	byteData, err := jsonx.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("json marshal error: %w", err)
@@ -208,16 +213,16 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 			if !svc.Config.KafkaConfig.IsPush {
 				return
 			}
-			logCtx := asduPushLogContext(ctx, data, ioa, "kafka")
+			kafkaCtx := logx.WithFields(ctx, logx.Field("channel", "kafka"))
 			if svc.KafkaASDUPusher == nil {
-				logx.WithContext(logCtx).Error("kafka asdu pusher is nil")
+				logx.WithContext(kafkaCtx).Error("kafka asdu pusher is nil")
 				return
 			}
-			pushCtx, cancel := context.WithTimeout(logCtx, 10*time.Second)
+			pushKafkaCtx, cancel := context.WithTimeout(kafkaCtx, 10*time.Second)
 			defer cancel()
-			kafkaErr := svc.KafkaASDUPusher.PushWithKey(pushCtx, key, string(byteData))
+			kafkaErr := svc.KafkaASDUPusher.PushWithKey(pushKafkaCtx, key, string(byteData))
 			if kafkaErr != nil {
-				logx.WithContext(pushCtx).Errorf("failed to push asdu to kafka: %v", kafkaErr)
+				logx.WithContext(pushKafkaCtx).Errorf("failed to push asdu to kafka: %v", kafkaErr)
 			}
 		},
 		// MQTT 推送
@@ -225,9 +230,9 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 			if !svc.Config.MqttConfig.IsPush {
 				return
 			}
-			logCtx := asduPushLogContext(ctx, data, ioa, "mqtt")
+			mqttCtx := logx.WithFields(ctx, logx.Field("channel", "mqtt"))
 			if svc.MqttClient == nil {
-				logx.WithContext(logCtx).Error("mqtt client is nil")
+				logx.WithContext(mqttCtx).Error("mqtt client is nil")
 				return
 			}
 
@@ -237,47 +242,44 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 			}
 
 			for _, topicPattern := range topics {
-				pushTopicCtx, cancel := context.WithTimeout(logCtx, 10*time.Second)
+				pushMqttCtx, cancel := context.WithTimeout(mqttCtx, 10*time.Second)
 				topic, genErr := util.GenerateTopic(topicPattern, data)
 				if genErr != nil {
-					logx.WithContext(pushTopicCtx).Debugf("failed to generate mqtt topic, pattern: %s, err: %v", topicPattern, genErr)
+					logx.WithContext(pushMqttCtx).Debugf("failed to generate mqtt topic, pattern: %s, err: %v", topicPattern, genErr)
 					cancel()
 					continue
 				}
-				logx.WithContext(pushTopicCtx).Debugf("pushing asdu to mqtt topic: %s", topic)
-				mqttErr := svc.MqttClient.Publish(pushTopicCtx, topic, byteData)
+				logx.WithContext(pushMqttCtx).Debugf("pushing asdu to mqtt topic: %s", topic)
+				mqttErr := svc.MqttClient.Publish(pushMqttCtx, topic, byteData)
 				cancel()
 				if mqttErr != nil {
-					logx.WithContext(logCtx).Errorf("failed to push asdu to mqtt topic: %s, err: %v", topic, mqttErr)
+					logx.WithContext(pushMqttCtx).Errorf("failed to push asdu to mqtt topic: %s, err: %v", topic, mqttErr)
 					continue
 				}
 			}
 		},
 		func() {
 			if svc.ChunkAsduPusher != nil {
-				logCtx := asduPushLogContext(ctx, data, ioa, "stream_event")
+				grpcCtx := logx.WithFields(ctx, logx.Field("channel", "grpc"))
 				if chunkErr := svc.ChunkAsduPusher.Write(string(byteData)); chunkErr != nil {
-					logx.WithContext(logCtx).Errorf("failed to write asdu to batch pusher: %v", chunkErr)
+					logx.WithContext(grpcCtx).Errorf("failed to write asdu to batch pusher: %v", chunkErr)
 				}
-				logx.WithContext(logCtx).Debug("write asdu to batch pusher")
+				logx.WithContext(grpcCtx).Debug("write asdu to batch pusher")
 			}
 		},
 	)
 	return nil
 }
 
-func asduPushLogContext(ctx context.Context, data *types.MsgBody, ioa uint, channel string) context.Context {
-	return logx.ContextWithFields(ctx,
-		logx.Field("msgId", data.MsgId),
-		logx.Field("host", data.Host),
-		logx.Field("port", data.Port),
-		logx.Field("asdu", data.Asdu),
-		logx.Field("typeId", data.TypeId),
-		logx.Field("dataType", data.DataType),
-		logx.Field("coa", data.Coa),
-		logx.Field("ioa", ioa),
-		logx.Field("channel", channel),
-	)
+func gjsonHeadersMap(r gjson.Result) map[string]string {
+	if !r.Exists() {
+		return nil
+	}
+	m := make(map[string]string)
+	for k, v := range r.Map() {
+		m[k] = v.String()
+	}
+	return m
 }
 
 func (svc ServiceContext) PushPbBroadcast(ctx context.Context, method string, in any) error {

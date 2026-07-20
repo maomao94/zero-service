@@ -11,7 +11,6 @@ import (
 	"zero-service/common/iec104/util"
 	"zero-service/common/tool"
 
-	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/jinzhu/copier"
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -44,57 +43,55 @@ func NewClientCall(svcCtx *svc.ServiceContext, config config.IecServerConfig) *C
 }
 
 // OnInterrogation 总召唤回复
-func (c *ClientCall) OnInterrogation(packet *asdu.ASDU) error {
+func (c *ClientCall) OnInterrogation(ctx context.Context, packet *asdu.ASDU) error {
 	addr, value := packet.GetInterrogationCmd()
-	logx.Debugf("interrogation reply, addr: %d, value: %d", addr, value)
+	logx.WithContext(ctx).Debugf("interrogation reply, addr: %d, value: %d", addr, value)
 	return nil
 }
 
 // OnCounterInterrogation 总计数器回复
-func (c *ClientCall) OnCounterInterrogation(packet *asdu.ASDU) error {
+func (c *ClientCall) OnCounterInterrogation(ctx context.Context, packet *asdu.ASDU) error {
 	addr, value := packet.GetCounterInterrogationCmd()
-	logx.Debugf("counter interrogation reply, addr: %d, request: 0x%02X, freeze: 0x%02X\n",
+	logx.WithContext(ctx).Debugf("counter interrogation reply, addr: %d, request: 0x%02X, freeze: 0x%02X\n",
 		addr, value.Request, value.Freeze)
 	return nil
 }
 
 // OnRead 读定值回复
-func (c *ClientCall) OnRead(packet *asdu.ASDU) error {
-	return c.OnASDU(packet)
+func (c *ClientCall) OnRead(ctx context.Context, packet *asdu.ASDU) error {
+	return c.OnASDU(ctx, packet)
 }
 
 // OnTestCommand 测试下发回复
-func (c *ClientCall) OnTestCommand(packet *asdu.ASDU) error {
+func (c *ClientCall) OnTestCommand(ctx context.Context, packet *asdu.ASDU) error {
 	addr, value := packet.GetTestCommand()
-	logx.Debugf("test cmd reply, addr: %d, value: %t", addr, value)
+	logx.WithContext(ctx).Debugf("test cmd reply, addr: %d, value: %t", addr, value)
 	return nil
 }
 
 // OnClockSync 时钟同步回复
-func (c *ClientCall) OnClockSync(packet *asdu.ASDU) error {
+func (c *ClientCall) OnClockSync(ctx context.Context, packet *asdu.ASDU) error {
 	addr, value := packet.GetClockSynchronizationCmd()
-	logx.Debugf("clock sync reply, addr: %d, value: %d", addr, value.UnixMilli())
+	logx.WithContext(ctx).Debugf("clock sync reply, addr: %d, value: %d", addr, value.UnixMilli())
 	return nil
 }
 
 // OnResetProcess 进程重置回复
-func (c *ClientCall) OnResetProcess(packet *asdu.ASDU) error {
+func (c *ClientCall) OnResetProcess(ctx context.Context, packet *asdu.ASDU) error {
 	addr, value := packet.GetResetProcessCmd()
-	logx.Debugf("reset process reply, addr: %d, value: 0x%02X", addr, value)
+	logx.WithContext(ctx).Debugf("reset process reply, addr: %d, value: 0x%02X", addr, value)
 	return nil
 }
 
 // OnDelayAcquisition 延迟获取回复
-func (c *ClientCall) OnDelayAcquisition(packet *asdu.ASDU) error {
+func (c *ClientCall) OnDelayAcquisition(ctx context.Context, packet *asdu.ASDU) error {
 	addr, value := packet.GetDelayAcquireCommand()
-	logx.Debugf("delay acquisition reply, addr: %d, value: %d", addr, value)
+	logx.WithContext(ctx).Debugf("delay acquisition reply, addr: %d, value: %d", addr, value)
 	return nil
 }
 
 // OnASDU 数据正体
-func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
-	ctx := c.asduLogContext(context.Background(), packet)
-	ctx = context.WithValue(ctx, "stationId", c.stationId)
+func (c *ClientCall) OnASDU(ctx context.Context, packet *asdu.ASDU) error {
 	logx.WithContext(ctx).Debug("OnASDU")
 	c.taskRunner.Schedule(func() {
 		if packet.Type == asdu.C_RD_NA_1 {
@@ -156,33 +153,26 @@ func (c *ClientCall) pushASDU(ctx context.Context, data *types.MsgBody, ioa uint
 	return nil
 }
 
-func (c *ClientCall) asduLogContext(ctx context.Context, packet *asdu.ASDU) context.Context {
-	return logx.ContextWithFields(ctx,
-		logx.Field("host", c.config.Host),
-		logx.Field("port", c.config.Port),
-		logx.Field("stationId", c.stationId),
-		logx.Field("asdu", genASDUName(packet.Type)),
-		logx.Field("typeId", int(packet.Type)),
-		logx.Field("dataType", int(client.GetDataType(packet.Type))),
-		logx.Field("coa", uint(packet.CommonAddr)),
-		logx.Field("cot", genCOTName(packet.Coa.Cause)),
-		logx.Field("cotCause", int(packet.Coa.Cause)),
-		logx.Field("isNegative", packet.Coa.IsNegative),
-	)
-}
-
-func (c *ClientCall) newMsgBody(packet *asdu.ASDU, msgId string, coa asdu.CommonAddr, body types.IoaGetter) *types.MsgBody {
+func (c *ClientCall) newMsgBody(ctx context.Context, packet *asdu.ASDU, msgId string, coa asdu.CommonAddr, body types.IoaGetter) *types.MsgBody {
 	return &types.MsgBody{
 		MsgId:    msgId,
 		Host:     c.config.Host,
 		Port:     c.config.Port,
-		Asdu:     genASDUName(packet.Type),
+		Asdu:     client.GenTypeName(packet.Type),
 		TypeId:   int(packet.Type),
 		DataType: int(client.GetDataType(packet.Type)),
 		Coa:      uint(coa),
 		Body:     body,
-		MetaData: c.config.MetaData,
+		MetaData: copyMetaData(c.config.MetaData),
 	}
+}
+
+func copyMetaData(meta map[string]any) map[string]any {
+	copyMap := make(map[string]any, len(meta)+1)
+	for k, v := range meta {
+		copyMap[k] = v
+	}
+	return copyMap
 }
 
 func (c *ClientCall) onSinglePoint(ctx context.Context, packet *asdu.ASDU) {
@@ -202,7 +192,7 @@ func (c *ClientCall) onSinglePoint(ctx context.Context, packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(ctx, packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -225,7 +215,7 @@ func (c *ClientCall) onDoublePoint(ctx context.Context, packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(ctx, packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -246,7 +236,7 @@ func (c *ClientCall) onMeasuredValueScaled(ctx context.Context, packet *asdu.ASD
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(ctx, packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -269,7 +259,7 @@ func (c *ClientCall) onMeasuredValueNormal(ctx context.Context, packet *asdu.ASD
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(ctx, packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -291,7 +281,7 @@ func (c *ClientCall) onStepPosition(ctx context.Context, packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(ctx, packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -312,7 +302,7 @@ func (c *ClientCall) onBitString32(ctx context.Context, packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(ctx, packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -333,7 +323,7 @@ func (c *ClientCall) onMeasuredValueFloat(ctx context.Context, packet *asdu.ASDU
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(ctx, packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -349,7 +339,7 @@ func (c *ClientCall) onIntegratedTotals(ctx context.Context, packet *asdu.ASDU) 
 		var obj types.BinaryCounterReadingInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
-		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(ctx, packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -371,7 +361,7 @@ func (c *ClientCall) onEventOfProtectionEquipment(ctx context.Context, packet *a
 		obj.Sb = util.QdpIsSubstituted(p.Qdp)
 		obj.Nt = util.QdpIsNotTopical(p.Qdp)
 		obj.Iv = util.QdpIsInvalid(p.Qdp)
-		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(ctx, packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -391,7 +381,7 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(ctx context.Contex
 	obj.Sb = util.QdpIsSubstituted(p.Qdp)
 	obj.Nt = util.QdpIsNotTopical(p.Qdp)
 	obj.Iv = util.QdpIsInvalid(p.Qdp)
-	_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
+	_ = c.pushASDU(ctx, c.newMsgBody(ctx, packet, msgId, coa, &obj), obj.Ioa)
 }
 
 func (c *ClientCall) onPackedOutputCircuitInfo(ctx context.Context, packet *asdu.ASDU) {
@@ -418,7 +408,7 @@ func (c *ClientCall) onPackedOutputCircuitInfo(ctx context.Context, packet *asdu
 	obj.Sb = util.QdpIsSubstituted(p.Qdp)
 	obj.Nt = util.QdpIsNotTopical(p.Qdp)
 	obj.Iv = util.QdpIsInvalid(p.Qdp)
-	_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
+	_ = c.pushASDU(ctx, c.newMsgBody(ctx, packet, msgId, coa, &obj), obj.Ioa)
 }
 
 func (c *ClientCall) onPackedSinglePointWithSCD(ctx context.Context, packet *asdu.ASDU) {
@@ -457,18 +447,16 @@ func (c *ClientCall) onPackedSinglePointWithSCD(ctx context.Context, packet *asd
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(ctx, packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
 func (c *ClientCall) onEndOfInitialization(ctx context.Context, packet *asdu.ASDU) {
 	ioa, coi := packet.GetEndOfInitialization()
 	logx.WithContext(ctx).Infow("EndOfInitialization from slave",
-		logx.Field("coa", uint(packet.CommonAddr)),
 		logx.Field("ioa", uint(ioa)),
 		logx.Field("cause", fmt.Sprintf("0x%02X", byte(coi.Cause))),
 		logx.Field("isLocalChange", coi.IsLocalChange),
-		logx.Field("isNegative", packet.Coa.IsNegative),
 	)
 }
 
@@ -490,13 +478,7 @@ func (c *ClientCall) onCommandAck(ctx context.Context, packet *asdu.ASDU) {
 	ioa, value := parseCommandAck(packet)
 	logx.WithContext(ctx).Infow("command ack received",
 		logx.Field("seq", uid),
-		logx.Field("type_id", int(packet.Type)),
-		logx.Field("asdu", genASDUName(packet.Type)),
-		logx.Field("coa", uint(packet.CommonAddr)),
 		logx.Field("ioa", uint(ioa)),
-		logx.Field("cot", genCOTName(packet.Coa.Cause)),
-		logx.Field("cot_cause", int(packet.Coa.Cause)),
-		logx.Field("is_negative", packet.Coa.IsNegative),
 	)
 
 	// IEC104 短浮点设点 ACK：格式化为两位小数，避免 float32 二进制误差暴露给调用方
@@ -515,7 +497,7 @@ func (c *ClientCall) onCommandAck(ctx context.Context, packet *asdu.ASDU) {
 		Coa:        uint(packet.CommonAddr),
 		Ioa:        uint(ioa),
 		Value:      value,
-		Cot:        genCOTName(packet.Coa.Cause),
+		Cot:        client.GenCOTName(packet.Coa.Cause),
 		CotCause:   int(packet.Coa.Cause),
 		IsNegative: packet.Coa.IsNegative,
 	}
@@ -526,7 +508,7 @@ func (c *ClientCall) onCommandAck(ctx context.Context, packet *asdu.ASDU) {
 			TypeID:     int(packet.Type),
 			Coa:        uint(packet.CommonAddr),
 			Ioa:        uint(ioa),
-			Cot:        genCOTName(packet.Coa.Cause),
+			Cot:        client.GenCOTName(packet.Coa.Cause),
 			CotCause:   int(packet.Coa.Cause),
 			IsNegative: true,
 			Status:     client.AckRejected,
@@ -544,7 +526,7 @@ func (c *ClientCall) onCommandAck(ctx context.Context, packet *asdu.ASDU) {
 			TypeID:     int(packet.Type),
 			Coa:        uint(packet.CommonAddr),
 			Ioa:        uint(ioa),
-			Cot:        genCOTName(packet.Coa.Cause),
+			Cot:        client.GenCOTName(packet.Coa.Cause),
 			CotCause:   int(packet.Coa.Cause),
 			IsNegative: false,
 			Status:     client.AckCotError,
@@ -589,33 +571,4 @@ func parseCommandAck(packet *asdu.ASDU) (ioa asdu.InfoObjAddr, value any) {
 
 func (c *ClientCall) onUnknownASDU(ctx context.Context) {
 	logx.WithContext(ctx).Info("unknown asdu type")
-}
-
-func genASDUName(typeId asdu.TypeID) string {
-	return strutil.SubInBetween(typeId.String(), "<", ">")
-}
-
-func genCOTName(cause asdu.Cause) string {
-	switch cause {
-	case asdu.ActivationCon:
-		return "ActivationCon"
-	case asdu.DeactivationCon:
-		return "DeactivationCon"
-	case asdu.ActivationTerm:
-		return "ActivationTerm"
-	case asdu.Activation:
-		return "Activation(echo)"
-	case asdu.Request:
-		return "Request"
-	case asdu.UnknownTypeID:
-		return "UnknownTypeID"
-	case asdu.UnknownCOT:
-		return "UnknownCOT"
-	case asdu.UnknownCA:
-		return "UnknownCA"
-	case asdu.UnknownIOA:
-		return "UnknownIOA"
-	default:
-		return "Unknown"
-	}
 }

@@ -1251,6 +1251,10 @@ func (m *MsgBody) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for TraceId
+
+	// no validation rules for Headers
+
 	if len(errors) > 0 {
 		return MsgBodyMultiError(errors)
 	}

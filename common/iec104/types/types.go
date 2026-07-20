@@ -26,17 +26,19 @@ type BroadcastAckBody struct {
 }
 
 type MsgBody struct {
-	MsgId    string         `json:"msgId"`
-	Host     string         `json:"host"`
-	Port     int            `json:"port"`
-	Asdu     string         `json:"asdu"`
-	TypeId   int            `json:"typeId"`
-	DataType int            `json:"dataType"`
-	Coa      uint           `json:"coa"` // 公共地址
-	Body     IoaGetter      `json:"body"`
-	Time     string         `json:"time"`
-	MetaData map[string]any `json:"metaData,omitempty"`
-	Pm       *PointMapping  `json:"pm,omitempty"`
+	MsgId    string            `json:"msgId"`
+	Host     string            `json:"host"`
+	Port     int               `json:"port"`
+	Asdu     string            `json:"asdu"`
+	TypeId   int               `json:"typeId"`
+	DataType int               `json:"dataType"`
+	Coa      uint              `json:"coa"` // 公共地址
+	Body     IoaGetter         `json:"body"`
+	Time     string            `json:"time"`
+	MetaData map[string]any    `json:"metaData,omitempty"`
+	Pm       *PointMapping     `json:"pm,omitempty"`
+	Headers  map[string]string `json:"headers,omitempty"`
+	TraceId  string            `json:"traceId,omitempty"`
 }
 
 type PointMapping struct {

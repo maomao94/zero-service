@@ -113,6 +113,10 @@ message MsgBody {
   // 应用级元数据（如：应用ID、用户信息、场站信息等）
   string metaDataRaw = 10 [json_name = "metaDataRaw"];
   PointMapping pm = 11 [json_name = "pm"];
+  // IEC104 帧关联ID（同一帧拆分出来的多条消息共享）
+  string traceId = 12 [json_name = "traceId"];
+  // OTel propagation headers（traceparent, tracestate）
+  map<string, string> headers = 13 [json_name = "headers"];
 }
 
 message PointMapping {
