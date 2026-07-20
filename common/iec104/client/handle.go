@@ -52,6 +52,7 @@ func (h *ClientHandler) InterrogationHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) 
 	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
 	defer span.End()
 	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	logRawASDU(ctx, rxAsdu)
 	return h.call.OnInterrogation(ctx, rxAsdu)
 }
 
@@ -64,6 +65,7 @@ func (h *ClientHandler) CounterInterrogationHandler(_ asdu.Connect, rxAsdu *asdu
 	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
 	defer span.End()
 	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	logRawASDU(ctx, rxAsdu)
 	return h.call.OnCounterInterrogation(ctx, rxAsdu)
 }
 
@@ -76,6 +78,7 @@ func (h *ClientHandler) ReadHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
 	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
 	defer span.End()
 	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	logRawASDU(ctx, rxAsdu)
 	return h.call.OnRead(ctx, rxAsdu)
 }
 
@@ -88,6 +91,7 @@ func (h *ClientHandler) TestCommandHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) er
 	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
 	defer span.End()
 	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	logRawASDU(ctx, rxAsdu)
 	return h.call.OnTestCommand(ctx, rxAsdu)
 }
 
@@ -100,6 +104,7 @@ func (h *ClientHandler) ClockSyncHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) erro
 	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
 	defer span.End()
 	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	logRawASDU(ctx, rxAsdu)
 	return h.call.OnClockSync(ctx, rxAsdu)
 }
 
@@ -112,6 +117,7 @@ func (h *ClientHandler) ResetProcessHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) e
 	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
 	defer span.End()
 	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	logRawASDU(ctx, rxAsdu)
 	return h.call.OnResetProcess(ctx, rxAsdu)
 }
 
@@ -124,6 +130,7 @@ func (h *ClientHandler) DelayAcquisitionHandler(_ asdu.Connect, rxAsdu *asdu.ASD
 	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
 	defer span.End()
 	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	logRawASDU(ctx, rxAsdu)
 	return h.call.OnDelayAcquisition(ctx, rxAsdu)
 }
 
@@ -136,6 +143,7 @@ func (h *ClientHandler) ASDUHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
 	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
 	defer span.End()
 	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
+	logRawASDU(ctx, rxAsdu)
 	return h.call.OnASDU(ctx, rxAsdu)
 }
 
@@ -199,6 +207,15 @@ func IecLogContext(ctx context.Context, packet *asdu.ASDU, traceOpts iec104.Fram
 		logx.Field("cotCause", int(packet.Coa.Cause)),
 		logx.Field("isNegative", packet.Coa.IsNegative),
 	)
+}
+
+func logRawASDU(ctx context.Context, packet *asdu.ASDU) {
+	raw, err := packet.MarshalBinary()
+	if err != nil {
+		logx.WithContext(ctx).Errorf("marshal raw asdu failed: %v", err)
+		return
+	}
+	logx.WithContext(ctx).Infof("ASDU Raw[% X]", raw)
 }
 
 func GenTypeName(typeId asdu.TypeID) string {
