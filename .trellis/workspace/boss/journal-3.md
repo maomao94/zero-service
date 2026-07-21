@@ -683,3 +683,36 @@ Reviewed and finalized holiday trigger task, confirmed working tree clean, archi
 ### Next Steps
 
 - None - task complete
+
+
+## Session 128: Refine IEC104 Server Config
+
+**Date**: 2026-07-21
+**Task**: Refine IEC104 Server Config
+**Branch**: `master`
+
+### Summary
+
+Unified IEC104 server construction around Settings and go-zero ServerConfig, added ServerOption runtime overrides, default go-zero logging with LogEnable config, migrated iecagent startup, documented ASDU params handling, and archived the completed IEC104 server tasks.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `53fc5db1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
