@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 126
+- **Total Sessions**: 127
 - **Last Active**: 2026-07-21
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~654 | Active |
+| `journal-3.md` | ~685 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 127 | 2026-07-21 | review holiday trigger | - | `add_holiday` |
 | 126 | 2026-07-21 | gnetx debug hex format | `db807517`, `d76c87a3`, `23859d21` | `add_holiday` |
 | 125 | 2026-07-20 | Final doc review & task archive | `85b34973` | `master` |
 | 124 | 2026-07-20 | IEC ASDU Trace Propagation | `a1639562` | `master` |

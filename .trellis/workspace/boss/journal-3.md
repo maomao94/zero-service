@@ -652,3 +652,34 @@ Added configurable gnetx DebugSerializer hex formatting, sunk reusable byte hex 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 127: review holiday trigger
+
+**Date**: 2026-07-21
+**Task**: review holiday trigger
+**Branch**: `add_holiday`
+
+### Summary
+
+Reviewed and finalized holiday trigger task, confirmed working tree clean, archived the active Trellis task, and recorded finish-work session.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
