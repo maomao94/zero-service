@@ -50,7 +50,7 @@ func main() {
 	defer serviceGroup.Stop()
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 	serviceGroup.Add(s)
-	iecServer := server2.NewIecServer(c.IecSetting.Host, c.IecSetting.Port, c.IecSetting.LogMode, server2.NewServerHandler(iec.NewIecHandler(ctx)))
+	iecServer := server2.NewServer(c.IecServer, iec.NewIecHandler(ctx))
 	serviceGroup.Add(iecServer)
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)

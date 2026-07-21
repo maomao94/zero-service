@@ -7,7 +7,7 @@ Log:
   Path: /opt/logs/iecagent.rpc
   Level: debug
 
-IecSetting:
+IecServer:
   Host: 0.0.0.0
   Port: 12404
-  LogMode: true
+  LogEnable: true

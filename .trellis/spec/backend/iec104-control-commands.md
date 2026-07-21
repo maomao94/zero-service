@@ -6,6 +6,7 @@
 
 - 新增或修改 ieccaller 控制方向（C_*）gRPC 接口。
 - 修改 `common/iec104/client/core.go` 的 Send*Cmd 方法或 doSend 分发逻辑。
+- 修改 `common/iec104/server/core.go` 的服务端构造、配置或连接生命周期管理。
 - 修改 `mqtt/broadcast.go` 消费者 case。
 - 修改集群广播初始化、topic 派生、PublishWithTrace 或 reply pool 逻辑。
 - 对接方询问控制命令的 typeId 和字段含义。
@@ -22,6 +23,89 @@
 | 4 | `app/ieccaller/internal/logic/` | 新建 *logic.go |
 | 5 | `app/ieccaller/internal/server/ieccallerserver.go` | 新增 handler 方法 |
 | 6 | `app/ieccaller/mqtt/broadcast.go` | 新增 consumer case |
+
+## Scenario: IEC104 服务端统一构造
+
+### 1. Scope / Trigger
+
+- Trigger: 修改 `common/iec104/server` 的服务端构造、配置、日志或连接生命周期时。
+- Scope: 服务端封装保留上游 `Settings` 作为底层构造入参，同时提供 go-zero YAML 友好的 `ServerConfig` + `NewServer` 入口。
+
+### 2. Signatures
+
+```go
+type Settings struct {
+    Host        string
+    Port        int
+    Cfg104      *cs104.Config    `json:"-"`
+    Params      *asdu.Params     `json:"-"`
+    LogEnable   bool
+    LogProvider clog.LogProvider `json:"-"`
+}
+
+type ServerConfig struct {
+    Host      string
+    Port      int
+    LogEnable bool `json:",default=true"`
+}
+
+type ServerOption func(*Settings)
+
+func NewSettings() Settings
+func New(cfg Settings, handler CommandHandler) *Server
+func NewServer(cfg ServerConfig, handler CommandHandler, opts ...ServerOption) *Server
+func WithCS104Config(cfg cs104.Config) ServerOption
+func WithParams(params *asdu.Params) ServerOption
+func WithLogProvider(provider clog.LogProvider) ServerOption
+func WithLogEnable(enable bool) ServerOption
+```
+
+### 3. Contracts
+
+- `New` owns low-level settings normalization: empty `Host` defaults to `localhost`, zero `Port` defaults to `2404`, nil `Cfg104` uses `cs104.DefaultConfig()`, nil `Params` uses `asdu.ParamsWide`.
+- go-zero service config should embed or reference `server.ServerConfig` directly, so YAML can configure only `Host` / `Port` / `LogEnable`.
+- `Cfg104`, `Params`, and `LogProvider` are runtime-only override fields and must not be exposed through go-zero YAML config.
+- `Params` carries ASDU wire-format sizes. `CommonAddrSize` maps to COA byte length and `InfoObjAddrSize` maps to IOA byte length; keep them as code options unless a service has a concrete field protocol requirement.
+- Server construction installs `common/iec104.NewLogProvider(logx.ContextWithFields(...))` when `LogEnable` is true and `LogProvider` is nil.
+- `Start()` is blocking and compatible with go-zero `service.ServiceGroup`; do not spawn another goroutine inside `Start`.
+- Connection callbacks registered through `SetOnConnectionHandler` and `SetConnectionLostHandler` must preserve the internal `connections` map bookkeeping.
+
+### 4. Validation & Error Matrix
+
+| 条件 | 行为 |
+|------|------|
+| Host 为空 | 使用 `localhost` 默认值 |
+| Port 为 0 | 使用 `2404` 默认值 |
+| Cfg104 nil | 使用 `cs104.DefaultConfig()` |
+| Params nil | 使用 `asdu.ParamsWide` |
+| LogEnable 省略 | go-zero config 默认填充为 `true` |
+| LogEnable true 且 LogProvider nil | 自动桥接 go-zero `logx` provider |
+
+### 5. Good/Base/Bad Cases
+
+- Good: `iecServer := iecserver.NewServer(c.IecServer, iec.NewIecHandler(ctx))`
+- Bad: 新增 `NewIecServer(host, port, logMode, handler)` 或其他兼容构造入口。
+- Bad: 在 `server.go` 再维护一份 `cs104.NewServer`、`SetConfig`、`SetParams`、`SetLogProvider`、`Start`、`Stop` 实现。
+
+### 6. Tests Required
+
+- 修改服务端构造后至少运行 `go test ./common/iec104/server`。
+- 修改 go-zero 调用方配置后运行相关服务包测试，如 `go test ./app/iecagent/...`。
+- 触及 client/server 公共协议面时扩大到 `go test ./common/iec104/...`。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```go
+iecServer := NewIecServer(host, port, logMode, NewServerHandler(handler))
+```
+
+#### Correct
+
+```go
+iecServer := NewServer(ServerConfig{Host: host, Port: port, LogEnable: true}, handler)
+```
 
 ## Scenario: 新增 typed 控制命令 RPC
 
