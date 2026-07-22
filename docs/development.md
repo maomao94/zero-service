@@ -93,12 +93,13 @@ model/genModelSql.sh
 # 列出服务
 grpcurl -plaintext localhost:21006 list
 
-# 查看方法详情
-grpcurl -plaintext localhost:21006 describe trigger.Trigger.SendTrigger
+# 查看方法详情（服务名来自 app/trigger/trigger.proto）
+grpcurl -plaintext localhost:21006 describe trigger.TriggerRpc.SendTrigger
 
 # 调用方法
-grpcurl -plaintext -d '{"taskType":"test","payload":"hello"}' \
-  localhost:21006 trigger.Trigger/SendTrigger
+grpcurl -plaintext \
+  -d '{"url":"http://localhost:8080/callback","body":"{\"taskType\":\"test\",\"payload\":\"hello\"}"}' \
+  localhost:21006 trigger.TriggerRpc/SendTrigger
 ```
 
 ### HTTP 调试
@@ -117,7 +118,7 @@ curl -X POST http://localhost:11001/api/trigger/send \
 
 ```bash
 # 连接 SocketIO
-websocat ws://localhost:11003/socket.io/?EIO=4&transport=websocket
+websocat 'ws://localhost:11003/socket.io/?EIO=4&transport=websocket'
 ```
 
 ## 代码规范

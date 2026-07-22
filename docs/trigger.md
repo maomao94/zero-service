@@ -104,7 +104,7 @@ WAITING(0) ──CronService──> RUNNING(100) ──callback──> COMPLETED
 | `GetPlanExecItem` / `ListPlanExecItems` | 执行项查询 |
 | `GetPlanExecLog` / `ListPlanExecLogs` | 日志查询 |
 | `GetExecItemDashboard` | 仪表板统计 |
-| `NextId` | 生成自增 ID |
+| `NextId` | 生成业务唯一编码（非数据库自增序列） |
 
 ## 配置
 
@@ -182,10 +182,10 @@ StreamEventConf:          # 回调业务系统的 gRPC 目标
 
 ## 部署
 
-单机直接运行，集群多节点通过 Redis 共享队列，CronService 乐观锁保证不重复执行。
+单机直接运行，集群多节点通过 Redis 共享队列，CronService 乐观锁保证不重复执行。Trigger 同时需要 Redis 和关系数据库，计划任务回调还需要可访问的 StreamEvent gRPC 服务。
 
 ```bash
-cd app/trigger && go run trigger.go -f etc/trigger.yaml
+cd app/trigger && go run . -f etc/trigger.yaml
 ```
 
 ## 监控

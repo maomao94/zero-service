@@ -75,17 +75,17 @@
 ### 数采平台
 
 ```
-IEC 104 从站 --> ieccaller --> Kafka --> iecstash --> TDengine
+IEC 104 从站 --> ieccaller --> Kafka --> iecstash --> streamevent --> TDengine
                           |-> MQTT --> 外部系统
-                          |-> gRPC (流事件协议) --> 消费端
+                          |-> gRPC (流事件协议) --> streamevent / 消费端
 ```
 
-`ieccaller` 采集后经 Kafka/MQTT/gRPC 三通道并行推送。`iecstash` 消费 Kafka 数据合并压缩后写入 TDengine。流事件协议（gRPC）为跨语言设计，供其他语言实现端直接消费。
+`ieccaller` 采集后经 Kafka、MQTT、gRPC 三通道并行推送。`iecstash` 消费 Kafka 数据并批量转发给 `streamevent`，由 `streamevent` 完成点位过滤、分发和 TDengine 落库。流事件协议采用跨语言的 gRPC 定义，也可供其他语言实现端消费。
 
 ### DJI 云平台
 
 ```
-业务系统 --> djicloud gRPC --> common/djisdk --> MQTT Broker --> DJI Dock3/飞行器
+业务系统 --> djicloud gRPC --> common/djisdk --> MQTT Broker --> DJI Dock 3/飞行器
                          ^              |
                          |              v
                   services_reply / events / osd / state / drc/up
@@ -118,4 +118,4 @@ IEC 104 从站 --> ieccaller --> Kafka --> iecstash --> TDengine
 | 服务发现 | Nacos | 配置中心 + 服务注册一体化 |
 | 容器管理 | Docker SDK | 原生容器操作能力 |
 
-> 服务端口分配见 [服务端口清单](service-ports.md)。
+> 服务端口分配见[服务端口清单](./service-ports.md)。

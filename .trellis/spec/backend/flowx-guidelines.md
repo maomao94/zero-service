@@ -137,6 +137,6 @@ func (m *MySubFlow) Do(ctx context.Context) error {
 
 ## 依赖
 
-- `github.com/Azure/go-workflow`（通过 go.mod replace 指向本地仓库）
+- `github.com/Azure/go-workflow`（固定到包含拦截器和 Mutator API 的官方版本，禁止本地路径 replace）
 - `github.com/zeromicro/go-zero/core/logx`
 - `github.com/benbjohnson/clock`（仅用于 `WithClock` 测试注入）

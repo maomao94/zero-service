@@ -45,7 +45,7 @@ const socket = io('http://your-server:11003', {
 ```yaml
 # socketgtw
 Name: socketgtw
-ListenOn: 0.0.0.0:25007          # gRPC
+ListenOn: 0.0.0.0:25001          # gRPC
 http:
   Port: 11003                     # WebSocket (前端连接)
 JwtAuth:
@@ -55,11 +55,11 @@ SocketMetaData: [userId, deviceId]  # Token 声明中提取的元数据字段
 
 # socketpush
 Name: socketpush.rpc
-ListenOn: 0.0.0.0:25008
+ListenOn: 0.0.0.0:25002
 JwtAuth:
   AccessSecret: your-secret
 SocketGtwConf:
-  Endpoints: [127.0.0.1:25007]
+  Endpoints: [127.0.0.1:25001]
 ```
 
 ## 事件体系

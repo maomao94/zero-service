@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/ArtisanCloud/PowerLibs/v3 v3.3.2
 	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.41
-	github.com/Azure/go-workflow v0.1.13
+	github.com/Azure/go-workflow v0.1.14-0.20260515042214-fc60b72c83a8
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/NimbleMarkets/ntcharts v0.5.1
 	github.com/alicebob/miniredis/v2 v2.38.0

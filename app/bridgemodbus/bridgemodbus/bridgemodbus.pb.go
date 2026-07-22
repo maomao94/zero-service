@@ -23,7 +23,7 @@ const (
 
 type PbModbusConfig struct {
 	state                   protoimpl.MessageState `protogen:"open.v1"`
-	Id                      int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`                                            // 主键ID
+	Id                      string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                             // 主键ID
 	CreateTime              string                 `protobuf:"bytes,2,opt,name=createTime,proto3" json:"createTime,omitempty"`                             // 创建时间
 	UpdateTime              string                 `protobuf:"bytes,3,opt,name=updateTime,proto3" json:"updateTime,omitempty"`                             // 更新时间
 	ModbusCode              string                 `protobuf:"bytes,4,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"`                             // Modbus链路编号
@@ -74,11 +74,11 @@ func (*PbModbusConfig) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *PbModbusConfig) GetId() int64 {
+func (x *PbModbusConfig) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *PbModbusConfig) GetCreateTime() string {
@@ -255,7 +255,7 @@ func (x *SaveConfigReq) GetSlave() uint32 {
 
 type SaveConfigRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -290,16 +290,16 @@ func (*SaveConfigRes) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *SaveConfigRes) GetId() int64 {
+func (x *SaveConfigRes) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 type DeleteConfigReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ids           []int64                `protobuf:"varint,1,rep,packed,name=ids,proto3" json:"ids,omitempty"`
+	Ids           []string               `protobuf:"bytes,1,rep,name=ids,proto3" json:"ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -334,7 +334,7 @@ func (*DeleteConfigReq) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *DeleteConfigReq) GetIds() []int64 {
+func (x *DeleteConfigReq) GetIds() []string {
 	if x != nil {
 		return x.Ids
 	}
@@ -2575,7 +2575,7 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"\n" +
 	"\x12bridgemodbus.proto\x12\fbridgemodbus\"\xb4\x04\n" +
 	"\x0ePbModbusConfig\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1e\n" +
 	"\n" +
 	"createTime\x18\x02 \x01(\tR\n" +
 	"createTime\x12\x1e\n" +
@@ -2608,9 +2608,9 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"\fslaveAddress\x18\x02 \x01(\tR\fslaveAddress\x12\x14\n" +
 	"\x05slave\x18\x03 \x01(\rR\x05slave\"\x1f\n" +
 	"\rSaveConfigRes\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"#\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"#\n" +
 	"\x0fDeleteConfigReq\x12\x10\n" +
-	"\x03ids\x18\x01 \x03(\x03R\x03ids\"\x11\n" +
+	"\x03ids\x18\x01 \x03(\tR\x03ids\"\x11\n" +
 	"\x0fDeleteConfigRes\"u\n" +
 	"\x11PageListConfigReq\x12\x12\n" +
 	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1a\n" +

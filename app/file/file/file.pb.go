@@ -111,7 +111,7 @@ func (x *Res) GetPong() string {
 
 type Oss struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	TenantId      string                 `protobuf:"bytes,2,opt,name=tenantId,proto3" json:"tenantId,omitempty"`     // 租户ID
 	Category      int64                  `protobuf:"varint,3,opt,name=category,proto3" json:"category,omitempty"`    // 所属分类
 	OssCode       string                 `protobuf:"bytes,4,opt,name=ossCode,proto3" json:"ossCode,omitempty"`       // 资源编号
@@ -159,11 +159,11 @@ func (*Oss) Descriptor() ([]byte, []int) {
 	return file_file_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *Oss) GetId() int64 {
+func (x *Oss) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *Oss) GetTenantId() string {
@@ -583,7 +583,7 @@ func (x *OssFile) GetSignUrl() string {
 
 type OssDetailReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -618,11 +618,11 @@ func (*OssDetailReq) Descriptor() ([]byte, []int) {
 	return file_file_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *OssDetailReq) GetId() int64 {
+func (x *OssDetailReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 type OssDetailRes struct {
@@ -915,7 +915,7 @@ func (x *CreateOssReq) GetRemark() string {
 
 type CreateOssRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -950,16 +950,16 @@ func (*CreateOssRes) Descriptor() ([]byte, []int) {
 	return file_file_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *CreateOssRes) GetId() int64 {
+func (x *CreateOssRes) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 type UpdateOssReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	TenantId      string                 `protobuf:"bytes,2,opt,name=tenantId,proto3" json:"tenantId,omitempty"`     // 租户ID
 	Category      int64                  `protobuf:"varint,3,opt,name=category,proto3" json:"category,omitempty"`    // 所属分类
 	OssCode       string                 `protobuf:"bytes,4,opt,name=ossCode,proto3" json:"ossCode,omitempty"`       // 资源编号
@@ -1005,11 +1005,11 @@ func (*UpdateOssReq) Descriptor() ([]byte, []int) {
 	return file_file_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *UpdateOssReq) GetId() int64 {
+func (x *UpdateOssReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *UpdateOssReq) GetTenantId() string {
@@ -1127,7 +1127,7 @@ func (*UpdateOssRes) Descriptor() ([]byte, []int) {
 
 type DeleteOssReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1162,16 +1162,16 @@ func (*DeleteOssReq) Descriptor() ([]byte, []int) {
 	return file_file_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *DeleteOssReq) GetId() int64 {
+func (x *DeleteOssReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 type DeleteOssRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1206,11 +1206,11 @@ func (*DeleteOssRes) Descriptor() ([]byte, []int) {
 	return file_file_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *DeleteOssRes) GetId() int64 {
+func (x *DeleteOssRes) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 type MakeBucketReq struct {
@@ -2585,7 +2585,7 @@ const file_file_proto_rawDesc = "" +
 	"\x03Res\x12\x12\n" +
 	"\x04pong\x18\x01 \x01(\tR\x04pong\"\xfd\x02\n" +
 	"\x03Oss\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\btenantId\x18\x02 \x01(\tR\btenantId\x12\x1a\n" +
 	"\bcategory\x18\x03 \x01(\x03R\bcategory\x12\x18\n" +
 	"\aossCode\x18\x04 \x01(\tR\aossCode\x12\x1a\n" +
@@ -2646,7 +2646,7 @@ const file_file_proto_rawDesc = "" +
 	"\vcontentType\x18\x06 \x01(\tR\vcontentType\x12\x18\n" +
 	"\asignUrl\x18\a \x01(\tR\asignUrl\"\x1e\n" +
 	"\fOssDetailReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"+\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"+\n" +
 	"\fOssDetailRes\x12\x1b\n" +
 	"\x03oss\x18\x01 \x01(\v2\t.file.OssR\x03oss\"\x8e\x01\n" +
 	"\n" +
@@ -2675,9 +2675,9 @@ const file_file_proto_rawDesc = "" +
 	"\x06remark\x18\n" +
 	" \x01(\tR\x06remark\"\x1e\n" +
 	"\fCreateOssRes\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"\xc6\x02\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xc6\x02\n" +
 	"\fUpdateOssReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\btenantId\x18\x02 \x01(\tR\btenantId\x12\x1a\n" +
 	"\bcategory\x18\x03 \x01(\x03R\bcategory\x12\x18\n" +
 	"\aossCode\x18\x04 \x01(\tR\aossCode\x12\x1a\n" +
@@ -2694,9 +2694,9 @@ const file_file_proto_rawDesc = "" +
 	"\x06status\x18\f \x01(\x03R\x06status\"\x0e\n" +
 	"\fUpdateOssRes\"\x1e\n" +
 	"\fDeleteOssReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"\x1e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x1e\n" +
 	"\fDeleteOssRes\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"_\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"_\n" +
 	"\rMakeBucketReq\x12\x1a\n" +
 	"\btenantId\x18\x01 \x01(\tR\btenantId\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12\x1e\n" +

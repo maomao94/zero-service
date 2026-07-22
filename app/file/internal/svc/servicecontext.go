@@ -78,7 +78,7 @@ func toOssConfig(oss *gormmodel.Oss) *ossx.Config {
 		return nil
 	}
 	return &ossx.Config{
-		Category:   oss.Category,
+		Category:   int64(oss.Category),
 		Endpoint:   oss.Endpoint,
 		AccessKey:  oss.AccessKey,
 		SecretKey:  oss.SecretKey,

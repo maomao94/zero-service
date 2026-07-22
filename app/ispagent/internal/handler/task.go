@@ -120,10 +120,16 @@ var taskControlToState = map[int32]string{
 	isp.CommandTaskStop:   "4", // 终止
 }
 
+const taskControlNotifyDelay = 3 * time.Second
+
 // HandleTaskControl 处理任务控制指令 (41-1/2/3/4)。
 // Command=1(启动): msg.Code 为 task_code。
 // Command=2/3/4(暂停/继续/停止): msg.Code 为 变电站编码_任务编码_时间。
 func HandleTaskControl(ctx context.Context, msg *isp.Message, store crontask.TaskStore, db *gormx.DB, sendCode, receiveCode string, notify func(ctx context.Context, code string, items []isp.Item)) (string, error) {
+	return handleTaskControl(ctx, msg, store, db, sendCode, receiveCode, notify, taskControlNotifyDelay)
+}
+
+func handleTaskControl(ctx context.Context, msg *isp.Message, store crontask.TaskStore, db *gormx.DB, sendCode, receiveCode string, notify func(ctx context.Context, code string, items []isp.Item), notifyDelay time.Duration) (string, error) {
 	if msg == nil {
 		return "", fmt.Errorf("任务控制消息为空")
 	}
@@ -236,7 +242,9 @@ func HandleTaskControl(ctx context.Context, msg *isp.Message, store crontask.Tas
 	}
 	if notify != nil {
 		threading.GoSafe(func() {
-			time.Sleep(3 * time.Second)
+			if notifyDelay > 0 {
+				time.Sleep(notifyDelay)
+			}
 			notify(context.Background(), substationCode, items)
 		})
 	}

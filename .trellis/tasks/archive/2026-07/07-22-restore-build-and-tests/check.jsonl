@@ -1,0 +1,7 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"构建、测试和 diff 审查标准"}
+{"file":".trellis/spec/backend/go-zero-conventions.md","reason":"检查 proto 生成流程和生成代码边界"}
+{"file":".trellis/spec/backend/flowx-guidelines.md","reason":"检查 flowx 行为兼容性"}
+{"file":".trellis/spec/backend/gormx-guidelines.md","reason":"检查字符串主键未被回退"}
+{"file":".trellis/spec/backend/djisdk-guidelines.md","reason":"检查 DJI 错误上下文与日志"}
+{"file":".trellis/spec/backend/isp-guidelines.md","reason":"检查 ISP 延迟语义与测试隔离"}
+{"file":".trellis/tasks/07-22-restore-build-and-tests/research/baseline.md","reason":"对照已确认根因和范围排除项"}

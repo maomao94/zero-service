@@ -31,7 +31,7 @@ func (l *UpdateOssLogic) UpdateOss(in *file.UpdateOssReq) (*file.UpdateOssRes, e
 		return nil, err
 	}
 	oss.TenantId = in.TenantId
-	oss.Category = in.Category
+	oss.Category = int(in.Category)
 	oss.OssCode = in.OssCode
 	oss.Endpoint = in.Endpoint
 	oss.AccessKey = in.AccessKey
@@ -40,7 +40,7 @@ func (l *UpdateOssLogic) UpdateOss(in *file.UpdateOssReq) (*file.UpdateOssRes, e
 	oss.AppId = in.AppId
 	oss.Region = in.Region
 	oss.Remark = in.Remark
-	oss.Status = in.Status
+	oss.Status = int(in.Status)
 	if err := l.svcCtx.DB.WithContext(l.ctx).Save(&oss).Error; err != nil {
 		return nil, err
 	}

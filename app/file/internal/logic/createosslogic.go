@@ -28,7 +28,7 @@ func NewCreateOssLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CreateO
 func (l *CreateOssLogic) CreateOss(in *file.CreateOssReq) (*file.CreateOssRes, error) {
 	oss := &gormmodel.Oss{
 		TenantId:   in.TenantId,
-		Category:   in.Category,
+		Category:   int(in.Category),
 		OssCode:    in.OssCode,
 		Endpoint:   in.Endpoint,
 		AccessKey:  in.AccessKey,

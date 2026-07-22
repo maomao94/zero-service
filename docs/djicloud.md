@@ -2,7 +2,7 @@
 
 ## 概述
 
-`djicloud` 是面向 DJI Dock3 Cloud API 的云平台服务，封装大疆上云 MQTT Topic 与 method，统一处理设备侧 ACK、上行事件和在线状态。对外提供 gRPC 接口供业务系统调用，对内通过 `common/djisdk` 与 MQTT Broker 通信。
+`djicloud` 是面向 DJI Dock 3 Cloud API 的云平台服务，封装大疆上云 MQTT Topic 与 method，统一处理设备侧 ACK、上行事件和在线状态。对外提供 gRPC 接口供业务系统调用，对内通过 `common/djisdk` 与 MQTT Broker 通信。
 
 **核心能力**：
 - 标准下行指令：属性设置、直播推流、媒体上传、航线任务、远程调试、固件升级、远程日志、配置更新、自定义飞行区、PSDK/ESDK 透传、远程解禁
@@ -13,7 +13,7 @@
 ## 架构
 
 ```
-业务系统 --> djicloud gRPC (21012) --> common/djisdk --> MQTT Broker --> DJI Dock3/飞行器
+业务系统 --> djicloud gRPC (21012) --> common/djisdk --> MQTT Broker --> DJI Dock 3/飞行器
                                    ^              |
                                    |              v
                             services_reply / events / osd / state / status / requests / drc/up

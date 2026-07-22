@@ -83,7 +83,7 @@ service BridgeModbus {
 }
 
 message PbModbusConfig {
-  int64 id = 1; // 主键ID
+  string id = 1; // 主键ID
   string createTime = 2; // 创建时间
   string updateTime = 3; // 更新时间
   string modbusCode = 4; // Modbus链路编号
@@ -109,11 +109,11 @@ message SaveConfigReq {
 }
 
 message SaveConfigRes {
-  int64 id = 1;
+  string id = 1;
 }
 
 message DeleteConfigReq {
-  repeated int64 ids = 1;
+  repeated string ids = 1;
 }
 
 message DeleteConfigRes {

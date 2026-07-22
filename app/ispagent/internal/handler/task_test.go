@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -136,21 +138,35 @@ func TestHandleTaskControlParsesSubstationFromMessageCode(t *testing.T) {
 		t.Fatalf("insert patrol task: %v", err)
 	}
 
-	notifiedCode := make(chan string, 1)
-	_, err := HandleTaskControl(ctx, &isp.Message{
+	type taskControlNotification struct {
+		code  string
+		items []isp.Item
+	}
+	notified := make(chan taskControlNotification, 1)
+	_, err := handleTaskControl(ctx, &isp.Message{
 		Command: isp.CommandTaskPause,
 		Code:    "SUB001_TASK001_20251216100000",
 	}, store, db, "send", "receive", func(ctx context.Context, code string, items []isp.Item) {
-		notifiedCode <- code
-	})
+		notified <- taskControlNotification{code: code, items: items}
+	}, 0)
 	if err != nil {
 		t.Fatalf("HandleTaskControl: %v", err)
 	}
 
 	select {
-	case code := <-notifiedCode:
-		if code != "SUB001" {
-			t.Fatalf("expected substation code from msg.Code, got %q", code)
+	case notification := <-notified:
+		if notification.code != "SUB001" {
+			t.Fatalf("expected substation code from msg.Code, got %q", notification.code)
+		}
+		if len(notification.items) != 1 {
+			t.Fatalf("expected one notification item, got %d", len(notification.items))
+		}
+		item := notification.items[0]
+		if item["task_patrolled_id"] != patrolTask.TaskPatrolledID || item["task_code"] != patrolTask.TaskCode || item["task_state"] != "3" {
+			t.Fatalf("unexpected notification item: %v", item)
+		}
+		if item["plan_start_time"] != "2025-12-16 10:00:00" || item["start_time"] != "2025-12-16 10:00:00" {
+			t.Fatalf("unexpected notification times: %v", item)
 		}
 	case <-time.After(time.Second):
 		t.Fatal("timeout waiting for notify")
@@ -202,12 +218,20 @@ func TestHandleTaskControlStartStoresSecondPrecisionTimes(t *testing.T) {
 	}
 }
 
+var taskControlTestDBSequence atomic.Uint64
+
 func newTaskControlTestDB(t *testing.T) *gormx.DB {
 	t.Helper()
-	db, err := gorm.Open(sqlite.Open("file:"+t.Name()+"?mode=memory&cache=shared&parseTime=true&_loc=auto"), &gorm.Config{})
+	dsn := fmt.Sprintf("file:task-control-%d?mode=memory&cache=shared&parseTime=true&_loc=auto", taskControlTestDBSequence.Add(1))
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
 		t.Fatalf("open sqlite: %v", err)
 	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("get sqlite db: %v", err)
+	}
+	t.Cleanup(func() { _ = sqlDB.Close() })
 	if err := db.AutoMigrate(&gormmodel.GormIspPatrolTask{}); err != nil {
 		t.Fatalf("migrate patrol task: %v", err)
 	}

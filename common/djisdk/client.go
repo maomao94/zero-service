@@ -78,7 +78,7 @@ func buildClient(mqttClient mqttx.Client, opt *clientOptions) *Client {
 //   - 返回值 err: 发送失败、等待超时或设备返回错误时的错误信息
 func (c *Client) SendCommand(ctx context.Context, gatewaySn, method string, data any) (string, error) {
 	if c.handlers.onlineChecker != nil && !c.handlers.onlineChecker(gatewaySn) {
-		err := fmt.Errorf("device offline, command rejected")
+		err := fmt.Errorf("device offline: gateway_sn=%s command rejected", gatewaySn)
 		logDjiSDKError(ctx, "command rejected", gatewaySn, method, "", err)
 		return "", err
 	}

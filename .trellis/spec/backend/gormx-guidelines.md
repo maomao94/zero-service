@@ -228,7 +228,7 @@ Legacy 表继续使用项目内既有字段名风格：Go 主键字段保留 `Id
 ```go
 // Good: 配置表（多人并发编辑）→ 显式嵌入
 type ModbusSlaveConfig struct {
-    gormx.LegacyBaseModel
+    gormx.LegacyStringBaseModel
     gormx.VersionMixin
     ...
 }
@@ -253,6 +253,69 @@ type DjiDeviceOsdSnapshot struct {
 - `LegacyStringBaseModel.BeforeCreate` 钩子通过 `BeforeCreateID()` 自动为空的 `Id` 生成去杠 UUID，业务侧不需要手动预生成主键。
 - 业务唯一标识字段（如 `plan_id`、`batch_id`、`exec_id`）在手动生成时同样使用 `tool.SimpleUUID()`，保持存储格式一致。
 - 对外接口透出的 UUID 可以根据协议需要保留杠格式，但落库值必须去杠。
+
+## Scenario: 字符串主键模型与 protobuf 契约对齐
+
+### 1. Scope / Trigger
+
+- GORM 模型使用 `LegacyStringBaseModel`，且该主键通过 gRPC protobuf 对外读写时适用。
+- 当前明确适用于 `gormmodel.ModbusSlaveConfig` 和 `gormmodel.Oss`；不得为通过编译而将模型回退为数字主键。
+
+### 2. Signatures
+
+```protobuf
+// app/bridgemodbus/bridgemodbus.proto
+message PbModbusConfig { string id = 1; }
+message SaveConfigRes { string id = 1; }
+message DeleteConfigReq { repeated string ids = 1; }
+
+// app/file/file.proto
+message Oss { string id = 1; }
+message OssDetailReq { string id = 1; }
+message CreateOssRes { string id = 1; }
+message UpdateOssReq { string id = 1; }
+message DeleteOssReq { string id = 1; }
+message DeleteOssRes { string id = 1; }
+```
+
+### 3. Contracts
+
+- 模型、请求、响应和查询条件中的主键都使用 `string`，Logic 直接传递 `Id`，不转换为整数。
+- 已发布字段号保持不变；`int64` 改为 `string` 会改变 protobuf wire type，服务端与调用方必须同步升级。
+- `.proto` 是契约源。修改后分别执行 `app/bridgemodbus/gen.sh` 或 `app/file/gen.sh`，并审查生成的 `pb.go` 和 descriptor。
+- OSS 的 `Category` / `Status` 仍是模型 `int`、protobuf `int64`，只在 Logic/配置边界显式转换。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 处理 |
+|------|------|
+| 请求 ID 为空 | 沿用对应 RPC 现有查询/校验错误，不做数值解析 |
+| 字符串 ID 不存在 | 返回对应查询或删除错误 |
+| 模型为字符串而 proto 为数字 | 先修改 proto 并重新生成，禁止回退模型或强制转整数 |
+| 生成代码与 proto 不一致 | 重新执行服务 `gen.sh`，检查工具版本造成的无关 diff |
+
+### 5. Good / Base / Bad Cases
+
+- Good: 新建或更新后直接返回模型生成的字符串 `Id`。
+- Base: 空 ID 保持字符串零值 `""`，由现有业务校验处理。
+- Bad: 使用 `int64(model.Id)`、`strconv.ParseInt(model.Id, ...)`，或把模型改回 `LegacyBaseModel` 规避类型错误。
+
+### 6. Tests Required
+
+- Modbus: 保存响应和批量删除请求的生成类型必须为 `string` / `[]string`，相关包测试通过。
+- File: OSS 详情、创建、更新、删除链路使用字符串 ID，`go test ./app/file/...` 通过。
+- 生成一致性: 运行两个 `gen.sh`，确认字段号未变化且生成 diff 只对应契约变化。
+- 集成: `go build -mod=readonly ./...` 通过，且不改写 `go.mod` / `go.sum`。
+
+### 7. Wrong vs Correct
+
+```go
+// Wrong: 丢失 UUID/string 主键语义。
+id = int64(model.Id)
+
+// Correct: 模型与 protobuf 都使用字符串，直接传递。
+id = model.Id
+```
 
 ### 数据库迁移 (AutoMigrate)
 

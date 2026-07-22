@@ -29,7 +29,7 @@ func NewSaveConfigLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SaveCo
 
 // 保存（新增或更新）配置
 func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemodbus.SaveConfigRes, error) {
-	var id int64
+	var id string
 	err := l.svcCtx.DB.WithContext(l.ctx).Transact(func(tx *gormx.DB) error {
 		var exist gormmodel.ModbusSlaveConfig
 		err := tx.Where("modbus_code = ?", in.ModbusCode).First(&exist).Error
@@ -47,7 +47,7 @@ func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemod
 			if err := tx.Create(newCfg).Error; err != nil {
 				return err
 			}
-			id = int64(newCfg.Id)
+			id = newCfg.Id
 		} else {
 			// 更新
 			exist.SlaveAddress = in.SlaveAddress
@@ -55,7 +55,7 @@ func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemod
 			if err := tx.Save(&exist).Error; err != nil {
 				return err
 			}
-			id = int64(exist.Id)
+			id = exist.Id
 		}
 		return nil
 	})

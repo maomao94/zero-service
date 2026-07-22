@@ -1,0 +1,8 @@
+{"file":".trellis/spec/backend/coding-standards.md","reason":"全局编码、安全和 Git 边界"}
+{"file":".trellis/spec/backend/go-zero-conventions.md","reason":"protobuf 契约与生成代码流程"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"跨模块变更的验证要求"}
+{"file":".trellis/spec/backend/flowx-guidelines.md","reason":"flowx 现有公共行为和日志约定"}
+{"file":".trellis/spec/backend/gormx-guidelines.md","reason":"Modbus 字符串主键模型约定"}
+{"file":".trellis/spec/backend/djisdk-guidelines.md","reason":"DJI SDK 错误与日志约定"}
+{"file":".trellis/spec/backend/isp-guidelines.md","reason":"ISP 任务控制和异步通知约定"}
+{"file":".trellis/tasks/07-22-restore-build-and-tests/research/baseline.md","reason":"故障根因与用户确认的设计决策"}

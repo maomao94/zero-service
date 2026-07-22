@@ -716,3 +716,69 @@ Unified IEC104 server construction around Settings and go-zero ServerConfig, add
 ### Next Steps
 
 - None - task complete
+
+
+## Session 129: 恢复全仓构建并修复行为测试
+
+**Date**: 2026-07-22
+**Task**: 恢复全仓构建并修复行为测试
+**Branch**: `master`
+
+### Summary
+
+固定 Azure 官方 go-workflow 提交；将 Modbus 与 OSS protobuf 主键对齐为字符串；修复 file、Eino、DJI、ISP 构建与行为测试；完成 focused vet/tests 和只读全量构建。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `96d95e51` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 130: 恢复构建基线并优化开源文档
+
+**Date**: 2026-07-22
+**Task**: 恢复构建基线并优化开源文档
+**Branch**: `master`
+
+### Summary
+
+恢复 flowx、Modbus、文件服务、Eino、DJI 和 ISP 的构建与行为测试基线；同步优化 README 与 docs 导航、快速开始、部署、端口及协议说明。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `96d95e51` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -1,5 +1,9 @@
 # 部署指南
 
+本文档覆盖单服务、Docker Compose 和集群部署。仓库中的 Compose 文件包含环境相关的镜像、主机路径和网络配置，部署前必须先完成替换和校验。
+
+> 根目录 `go.mod` 当前要求 Go 1.26。构建镜像前请确认目标服务的 `Dockerfile` 使用了兼容的 Go builder 镜像。
+
 ## Docker 部署
 
 ### 单服务构建
@@ -21,11 +25,13 @@ vim docker-compose.yml
 export REGISTER=your-registry
 export MAIN_TAG=latest
 
-# 启动
-docker-compose up -d
+# 校验并启动（Docker Compose v2）
+docker compose config
+docker compose up -d
 ```
 
 默认包含的服务：
+
 - Kafka（消息队列）
 - Filebeat（日志收集）
 - ieccaller（IEC 104 主站）
@@ -33,6 +39,8 @@ docker-compose up -d
 - bridgegtw（HTTP 代理）
 - bridgedump（南瑞隔离装置）
 - Kafdrop（Kafka 管理 UI）
+
+> `deploy/docker-compose.yml` 使用 `${REGISTER}`、`${MAIN_TAG}`，并挂载 `/home/root/...` 等宿主机路径。请先修改镜像仓库、Kafka 广播地址、日志/Filebeat 路径和 `network_mode: host` 相关设置。
 
 ### 环境变量
 
@@ -147,7 +155,7 @@ Nacos:
 
 ## 端口规划
 
-参考 [服务端口清单](service-ports.md)。
+参考[服务端口清单](./service-ports.md)。
 
 端口规则：
 - HTTP 服务：1xxxx

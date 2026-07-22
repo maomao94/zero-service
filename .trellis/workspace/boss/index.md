@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 128
-- **Last Active**: 2026-07-21
+- **Total Sessions**: 130
+- **Last Active**: 2026-07-22
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~718 | Active |
+| `journal-3.md` | ~784 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,8 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 130 | 2026-07-22 | 恢复构建基线并优化开源文档 | `96d95e51` | `master` |
+| 129 | 2026-07-22 | 恢复全仓构建并修复行为测试 | `96d95e51` | `master` |
 | 128 | 2026-07-21 | Refine IEC104 Server Config | `53fc5db1` | `master` |
 | 127 | 2026-07-21 | review holiday trigger | - | `add_holiday` |
 | 126 | 2026-07-21 | gnetx debug hex format | `db807517`, `d76c87a3`, `23859d21` | `add_holiday` |

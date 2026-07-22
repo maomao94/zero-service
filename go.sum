@@ -8,8 +8,8 @@ github.com/ArtisanCloud/PowerWeChat/v3 v3.4.41 h1:QOg0XQPreb2qStbzCukuJeNbYPJqTn
 github.com/ArtisanCloud/PowerWeChat/v3 v3.4.41/go.mod h1:RGddY/9vNh2P9lKnjJAl0FBgjFlvP942p6s8GQDUm5Q=
 github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 h1:UQHMgLO+TxOElx5B5HZ4hJQsoJ/PvUvKRhJHDQXO8P8=
 github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
-github.com/Azure/go-workflow v0.1.13 h1:tqYmmKsw068Uu/OKRIctQEe1H6BZyXs9mJtzocc7jtE=
-github.com/Azure/go-workflow v0.1.13/go.mod h1:gOt4hadDnP+SzV+ywWJRcM1BSopJ+1rfGlhrTIR040I=
+github.com/Azure/go-workflow v0.1.14-0.20260515042214-fc60b72c83a8 h1:T7a8NcxCLaQ5tQNcDiXwYVsP9ePUFVo6VRs0AjZ2ceA=
+github.com/Azure/go-workflow v0.1.14-0.20260515042214-fc60b72c83a8/go.mod h1:gOt4hadDnP+SzV+ywWJRcM1BSopJ+1rfGlhrTIR040I=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/ClickHouse/ch-go v0.61.5 h1:zwR8QbYI0tsMiEcze/uIMK+Tz1D3XZXLdNrlaOpeEI4=
 github.com/ClickHouse/ch-go v0.61.5/go.mod h1:s1LJW/F/LcFs5HJnuogFMta50kKDO0lf9zzfrbl0RQg=
