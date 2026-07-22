@@ -80,7 +80,6 @@ service TriggerRpc {
   rpc TerminatePlanBatch(TerminatePlanBatchReq) returns (TerminatePlanBatchRes);
   // 恢复计划批次
   rpc ResumePlanBatch(ResumePlanBatchReq) returns (ResumePlanBatchRes);
-
   // 暂停执行项
   rpc PausePlanExecItem(PausePlanExecItemReq) returns (PausePlanExecItemRes);
   // 终止执行项
@@ -89,7 +88,6 @@ service TriggerRpc {
   rpc RunPlanExecItem(RunPlanExecItemReq) returns (RunPlanExecItemRes);
   // 恢复执行项
   rpc ResumePlanExecItem(ResumePlanExecItemReq) returns (ResumePlanExecItemRes);
-
 
   // 获取计划详情
   rpc GetPlan(GetPlanReq) returns (GetPlanRes);
@@ -120,7 +118,6 @@ service TriggerRpc {
   rpc NextId (NextIdReq) returns (NextIdRes);
   // 批量顺序生成业务唯一编码，用于业务批量插入前预生成编码
   rpc BatchNextId (BatchNextIdReq) returns (BatchNextIdRes);
-
   // 并发调用调度
   rpc Invoke(InvokeReq) returns (InvokeRes);
 }
