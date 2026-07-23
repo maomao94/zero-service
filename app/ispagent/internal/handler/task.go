@@ -53,7 +53,10 @@ func HandleTaskDispatch(ctx context.Context, msg *isp.Message, store crontask.Ta
 			existingID = existing.ID
 		}
 
-		cfg := ctask.NewTaskConfig(existingID, fields)
+		cfg, err := ctask.NewTaskConfig(existingID, fields)
+		if err != nil {
+			return fmt.Errorf("构建任务 %s 调度配置失败: %w", fields.TaskCode, err)
+		}
 		if fields.IsEnable == "2" {
 			if existingID != "" {
 				if err := store.Delete(ctx, existingID); err != nil {

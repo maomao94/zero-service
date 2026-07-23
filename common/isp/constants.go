@@ -1,7 +1,5 @@
 package isp
 
-import "errors"
-
 // ISP 协议常量。messageId = (type << 16) | command，高 16 位存 Type，低 16 位存 Command。
 //
 // Command=0 的消息为上报类（server→client），Command≠0 为指令类（client→server 或双向）。
@@ -32,41 +30,6 @@ const (
 	StatusReject  = "400" // 拒绝
 	StatusError   = "500" // 错误
 )
-
-// IspError 为 ISP 协议错误，携带状态码和描述。
-type IspError struct {
-	Code string
-	Msg  string
-}
-
-func (e *IspError) Error() string { return e.Msg }
-
-var (
-	ErrRetry         = &IspError{Code: StatusRetry, Msg: "需重发"}
-	ErrReject        = &IspError{Code: StatusReject, Msg: "拒绝"}
-	ErrError         = &IspError{Code: StatusError, Msg: "内部错误"}
-	ErrUnimplemented = &IspError{Code: StatusError, Msg: "该指令暂未实现"}
-)
-
-func IsUnimplemented(err error) bool {
-	return errors.Is(err, ErrUnimplemented)
-}
-
-func NewIspError(code, msg string) *IspError {
-	return &IspError{Code: code, Msg: msg}
-}
-
-// ResponseCode 根据 error 提取 ISP 响应状态码。
-func ResponseCode(err error) string {
-	var ie *IspError
-	if errors.As(err, &ie) {
-		return ie.Code
-	}
-	if err != nil {
-		return StatusError
-	}
-	return StatusSuccess
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Type 枚举 — messageId 高 16 位，标识消息大类
@@ -324,11 +287,11 @@ var RobotControlPairs = []MessageIDPair{
 	{TypeRobotChassis, CommandChassisBackward},   // 2-2 后退
 	{TypeRobotChassis, CommandChassisTurnLeft},   // 2-3 左转
 	{TypeRobotChassis, CommandChassisTurnRight},  // 2-4 右转
-	{TypeRobotChassis, CommandChassisStop},       // 2-5 停止
-	{TypeRobotChassis, CommandChassisUp},         // 2-6 升起
-	{TypeRobotChassis, CommandChassisDown},       // 2-7 下降
-	{TypeRobotChassis, CommandChassisShiftLeft},  // 2-8 左移
-	{TypeRobotChassis, CommandChassisShiftRight}, // 2-9 右移
+	{TypeRobotChassis, CommandChassisStop},       // 2-6 停止
+	{TypeRobotChassis, CommandChassisUp},         // 2-7 升起
+	{TypeRobotChassis, CommandChassisDown},       // 2-8 下降
+	{TypeRobotChassis, CommandChassisShiftLeft},  // 2-9 左移
+	{TypeRobotChassis, CommandChassisShiftRight}, // 2-10 右移
 	{TypeRobotChassis, CommandChassisGaitSwitch}, // 2-11 行进模式切换
 	// ---- 机器人云台 (Type 3) ----
 	{TypeRobotPTZ, CommandPTZTiltUp},   // 3-1 云台上仰

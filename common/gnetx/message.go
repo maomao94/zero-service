@@ -26,8 +26,8 @@ type Response interface {
 }
 
 // ClientIdentifiable 用于设备注册场景，提供业务身份（设备号等）。
-// 消息实现此接口后，可配合 Session.Register 把会话按业务 id 纳入 SessionManager。
-// 非必需：无设备身份概念的协议可不实现，Session 用框架分配的 id。
+// 消息实现此接口后，可配合 ServerConn/ClientConn.BindClientID 绑定业务 ID。
+// 非必需：无设备身份概念的协议可不实现，Session 使用框架分配的会话 ID。
 type ClientIdentifiable interface {
 	ClientID() string
 }

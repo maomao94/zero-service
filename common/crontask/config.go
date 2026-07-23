@@ -36,7 +36,7 @@ type TaskConfig struct {
 	Payload  json.RawMessage `json:"payload"`   // 执行业务参数
 	Extra    json.RawMessage `json:"extra"`     // 业务扩展字段 JSON
 	Status   TaskStatus      `json:"status"`
-	NextRun  time.Time       `json:"next_run"`           // 下次计划调度时间
-	LastRun  *time.Time      `json:"last_run,omitempty"` // 上次执行时间
+	NextRun  time.Time       `json:"next_run"`           // 下次计划调度时间，零值表示无下次调度
+	LastRun  time.Time       `json:"last_run,omitempty"` // 上次执行时间，零值表示从未执行
 	Version  int64           `json:"version"`            // 乐观锁版本号
 }

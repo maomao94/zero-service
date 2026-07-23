@@ -14,6 +14,9 @@ var (
 	// ErrSessionClosed 表示会话已关闭，无法再发送或接收。
 	ErrSessionClosed = errors.New("gnetx: session closed")
 
+	// ErrInvalidClientID 表示客户端业务身份为空，无法绑定到会话。
+	ErrInvalidClientID = errors.New("gnetx: invalid client id")
+
 	// ErrNoHandler 表示 Router 未找到匹配 messageID 的 handler，且未配置 fallback。
 	ErrNoHandler = errors.New("gnetx: no handler for message id")
 

@@ -19,7 +19,9 @@ func NewRegisterHandler(conf isp.ServerConfig) isp.IspHandler {
 		}
 
 		sc := conn.(gnetx.ServerConn)
-		sc.Register(clientID)
+		if err := sc.BindClientID(clientID); err != nil {
+			return nil, err
+		}
 
 		logx.WithContext(ctx).Infof("[ispserver] 设备注册成功: %s", clientID)
 

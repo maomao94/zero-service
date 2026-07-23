@@ -55,6 +55,7 @@ func TestErrorsAreSentinel(t *testing.T) {
 		ErrIncompletePacket,
 		ErrFrameTooLarge,
 		ErrSessionClosed,
+		ErrInvalidClientID,
 		ErrNoHandler,
 		ErrPendingNotFound,
 		errRawSerializerType,

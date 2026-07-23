@@ -20,7 +20,7 @@ type GormTaskConfig struct {
 	Payload  string       `gorm:"column:payload;type:text;comment:业务参数（如 device_list）"`  // 业务参数（如 device_list）
 	Extra    string       `gorm:"column:extra;type:text;comment:业务扩展字段 JSON"`            // 业务扩展字段 JSON
 	Status   int          `gorm:"column:status;default:1;index;comment:任务配置状态"`          // 任务配置状态
-	NextRun  time.Time    `gorm:"column:next_run;type:timestamp;index;comment:下次执行时间"`   // 下次执行时间
+	NextRun  sql.NullTime `gorm:"column:next_run;type:timestamp;index;comment:下次执行时间"`   // 下次执行时间，NULL 表示无下次调度
 	LastRun  sql.NullTime `gorm:"column:last_run;type:timestamp;comment:上次执行时间"`         // 上次执行时间
 
 	// --- ISP 业务字段（平铺为列）---

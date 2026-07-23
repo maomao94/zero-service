@@ -144,17 +144,22 @@ func TestClientRequestTimeout(t *testing.T) {
 	}
 }
 
-// TestClientConnectError：拨号到不存在的 server 返回错误（不 panic）。
-func TestClientConnectError(t *testing.T) {
+// TestClientConnectFailureStartsReconnect：首次拨号失败时返回 client 并启动后台重连。
+func TestClientConnectFailureStartsReconnect(t *testing.T) {
 	port := freePort(t) // 未监听端口
 
-	_, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
+	cli, err := NewClient("127.0.0.1:"+strconv.Itoa(port),
 		WithClientCodec(newTestCodec()),
 		WithClientHandler(noopClientHandler()),
 		WithClientMaxFrameLength(1024*1024),
 	)
-	if err == nil {
-		t.Fatal("expect dial error connecting to closed port, got nil")
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	defer cli.Close()
+
+	if cli.Session() != nil {
+		t.Fatal("Session() should be nil before reconnect succeeds")
 	}
 }
 
@@ -388,12 +393,16 @@ func TestClientOnConnectOnReconnect(t *testing.T) {
 	if got := connectCount.Load(); got != 1 {
 		t.Fatalf("OnConnect called %d times on first connect, want 1", got)
 	}
+	initialSession := cli.Session()
 
 	// 关闭所有服务端会话模拟断连，客户端重连后 OnConnect 应再次触发
 	for _, s := range srv.Manager().All() {
 		_ = s.Close()
 	}
-	waitFor(t, 5*time.Second, func() bool { return cli.Session() != nil })
+	waitFor(t, 5*time.Second, func() bool {
+		current := cli.Session()
+		return connectCount.Load() >= 2 && current != nil && current != initialSession
+	})
 
 	if connectCount.Load() < 2 {
 		t.Fatalf("OnConnect called %d times after reconnect, want >= 2", connectCount.Load())
@@ -441,7 +450,8 @@ func TestClientReconnect(t *testing.T) {
 	}
 	defer cli.Close()
 
-	if cli.Session() == nil {
+	initialSession := cli.Session()
+	if initialSession == nil {
 		t.Fatal("Session() nil after initial connect")
 	}
 
@@ -451,7 +461,10 @@ func TestClientReconnect(t *testing.T) {
 	}
 
 	// Client 自动重连到仍在运行的 server
-	waitFor(t, 5*time.Second, func() bool { return cli.Session() != nil })
+	waitFor(t, 5*time.Second, func() bool {
+		current := cli.Session()
+		return current != nil && current != initialSession
+	})
 
 	// 重连后可通过 Client 便捷接口正常发送（不再是 ErrSessionClosed）
 	if cli.Session() == nil {

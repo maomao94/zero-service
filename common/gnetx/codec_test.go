@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"math"
 	"testing"
 )
 
@@ -206,6 +207,20 @@ func TestLengthPrefixCodecNegativePayloadLen(t *testing.T) {
 		t.Fatalf("want ErrFrameTooLarge for negative payloadLen, got %v", err)
 	}
 }
+
+func TestLengthPrefixCodecUint64LengthOverflow(t *testing.T) {
+	c := NewLengthPrefixCodec(8, binary.BigEndian, RawSerializer{},
+		WithLengthAdjust(2), WithMaxFrameSize(1024))
+	frame := make([]byte, 9)
+	binary.BigEndian.PutUint64(frame[:8], math.MaxUint64)
+	frame[8] = 'x'
+
+	_, err := c.Decode(newMockConn(frame), nil)
+	if !errors.Is(err, ErrFrameTooLarge) {
+		t.Fatalf("want ErrFrameTooLarge for uint64-to-int overflow, got %v", err)
+	}
+}
+
 func TestLengthPrefixCodecEncodeMaxFits(t *testing.T) {
 	c := NewLengthPrefixCodec(1, binary.BigEndian, RawSerializer{}) // 1 字节字段，max 255
 	payload := make([]byte, 255)

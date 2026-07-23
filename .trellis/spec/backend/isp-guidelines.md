@@ -27,7 +27,8 @@
 ```
 common/isp/
 ├── config.go         # ClientConfig / ServerConfig + ApplyDefaults()
-├── constants.go      # Type/Command/MessageID 常量 + IspError + ErrUnimplemented
+├── constants.go      # Type/Command/MessageID/状态码常量
+├── errors.go         # ISP 协议错误 + 客户端本地运行错误
 ├── message.go        # Message 结构 + gnetx 接口实现 + NewResponse / NewSuccessResponse / NewItemsResponse / NewErrorResponse
 ├── client.go         # Client + ClientRouter + ClientOption 构造与生命周期管理
 ├── server.go         # Server + ServerRouter + rootNameCodec
@@ -97,7 +98,7 @@ resp.SendSeq = conn.NextSendSeq()
 | `LogOutbound(ctx, msg)` | 出站消息（server→client） | `send` info |
 | `LogFallback(ctx, msg)` | 未匹配消息 | `fallback` info |
 
-session 信息（session_id、local、remote、alias）由 gnetx 框架在 dispatch / Request 时通过 `logx.ContextWithFields` 注入 ctx，日志函数通过 `logx.WithContext(ctx)` 自动携带。
+session 信息（`sessionID`、`local`、`remote`、`clientID`）由 gnetx 框架在 dispatch / Request 时通过 `logx.ContextWithFields` 注入 ctx，日志函数通过 `logx.WithContext(ctx)` 自动携带。日志字段沿用来源字段命名：Go 字段使用 lowerCamel（如 `sendSeq`、`recvSeq`、`sendCode`、`reqCode`），XML 字段保留 XML 原名（如 `SendCode`、`ReceiveCode`、`RootName`）。
 
 ## ISP Client/Server 与 Handler 注册
 
@@ -123,7 +124,8 @@ type ClientOption func(*clientOptions)
 func WithClientHandler(handler ClientHandler) ClientOption
 func WithClientOnRegister(fn func(*Message)) ClientOption
 
-func NewClient(cfg ClientConfig, opts ...ClientOption) *Client
+func MustNewClient(cfg ClientConfig, opts ...ClientOption) *Client
+func NewClient(cfg ClientConfig, opts ...ClientOption) (*Client, error)
 
 // 生命周期
 func (c *Client) Close()
@@ -131,7 +133,7 @@ func (c *Client) Context() context.Context
 
 // 请求/应答
 func (c *Client) Execute(ctx, typ, command, code, items) (*Message, error)
-func (c *Client) Request(ctx, msg) (*Message, error)  // 内部方法
+func (c *Client) requestOnSession(ctx context.Context, sess gnetx.ClientConn, msg *Message) (*Message, error) // 包内方法
 
 // 响应构造（带客户端端点状态覆盖）
 func (c *Client) NewItemsResponse(req, items) *Message   // 251-4
@@ -145,6 +147,12 @@ func (c *Client) Connected() bool
 func (c *Client) SendCode() string
 func (c *Client) ReceiveCode() string
 func (c *Client) RequestTimeout() time.Duration
+
+// 注册成功后，common/isp.Client 自动将配置的 ClientConfig.SendCode
+// 绑定到当前 gnetx.ClientConn；绑定失败不会标记为已注册。
+// IsRegistered/Connected 仅在当前 Session 仍存在且绑定了 SendCode 时返回 true。
+// NewClient 仅在底层 gnetx.Client 初始化成功后启动注册/心跳协程；
+// 应用启动路径使用 MustNewClient，成功返回后 Client.transport 在生命周期内保持非空。
 
 // Handler 注册
 type ClientHandler func(*ClientRouter)
@@ -225,14 +233,72 @@ c.Client = isp.NewClient(cfg,
 
 `ispagent` 入站 handler 应返回 `*isp.Message, error`：空/nil 响应由包装器转为 251-3 成功；带业务 Item 的响应由 handler 显式构造 251-4（优先用 `Client.Response` / `Client.NewItemsResponse`）；错误通过 `Client.Response` / `Client.NewErrorResponse` 返回。fallback 由 `Client.connect()` 默认注册（返回 `ErrUnimplemented`），确保 gnetx `any` 返回值始终是协议消息对象。
 
-## 未实现错误
+## 错误边界
+
+### 1. Scope / Trigger
+
+- `common/isp` 构造协议应答、校验客户端调用或向 gnetx 发起请求时。
+- 公共协议包不得依赖 gRPC；传输入口负责记录，grpc-go 负责最终序列化。
+
+### 2. Signatures
 
 ```go
-var ErrUnimplemented = &IspError{Code: StatusError, Msg: "该指令暂未实现"}
+type IspError struct {
+    Code string
+    Msg  string
+}
+
+var ErrRetry, ErrReject, ErrInternal, ErrUnimplemented *IspError
+var ErrInvalidMessageType, ErrClientNotRegistered error
+var ErrSessionUnavailable, ErrRequestFailed, ErrUnexpectedResponse error
+
+func NewIspError(code, msg string) *IspError
+func ResponseCode(err error) string
 func IsUnimplemented(err error) bool
 ```
 
-用于 handler 返回未实现状态，对标 gRPC `codes.Unimplemented`。
+### 3. Contracts
+
+- `IspError` 表示写入 251-3 通用应答 `Code` 的协议错误；`ResponseCode` 使用 `errors.As` 提取。
+- 客户端本地运行错误是 `errors.go` 中的哨兵错误，并通过 `%w` 保留底层 cause。
+- `common/isp` 和 `common/gnetx` 禁止导入 `google.golang.org/grpc/codes` 或 `status`。
+- `app/ispagent` 的 RPC logic 直接 `return nil, err`。现有 `LoggerInterceptor` 统一记录错误；grpc-go 对普通 error 默认返回 `Unknown`，对 context 取消/超时使用对应状态。
+- `ErrUnimplemented` 表示 ISP 协议 `StatusError`，不等同于 gRPC `codes.Unimplemented`。
+
+### 4. Validation & Error Matrix
+
+| 条件 | ISP error |
+|------|-----------|
+| `typ <= 0` | 包装 `ErrInvalidMessageType` |
+| ISP 客户端尚未注册 | `ErrClientNotRegistered` |
+| TCP session 不可用 | `ErrSessionUnavailable` |
+| gnetx request 失败/超时 | `ErrRequestFailed`，同时保留底层 cause |
+| 响应不是 `*Message` | 包装 `ErrUnexpectedResponse` |
+| handler 返回 `IspError` | `ResponseCode` 使用该错误的协议 Code |
+| handler 返回普通 error | `ResponseCode` 返回 `StatusError` |
+
+### 5. Good/Base/Bad Cases
+
+- Good：`fmt.Errorf("%w: %w", ErrRequestFailed, cause)`，调用方可同时匹配语义错误和底层错误。
+- Base：`ExecuteCommand` 原样返回 `Client.Execute` 的 error，由 RPC 拦截器记录。
+- Bad：在 `common/isp/client.go` 中返回 `status.Error(codes.Unavailable, ...)`，或在每个 logic 中重复映射 gRPC code。
+
+### 6. Tests Required
+
+- `Execute` 参数非法、未注册、session 不可用分别断言对应 `errors.Is`。
+- `ResponseCode` 对 nil、包装后的 `IspError`、普通 error 断言 200/指定 Code/500。
+- 请求失败包装同时断言 `errors.Is(err, ErrRequestFailed)` 和 `errors.Is(err, cause)`。
+- 搜索断言 `common/isp`、`common/gnetx` 不包含 gRPC status/codes 导入。
+
+### 7. Wrong vs Correct
+
+```go
+// Wrong: 公共协议包绑定 gRPC 传输语义。
+return nil, status.Error(codes.Unavailable, "isp tcp session unavailable")
+
+// Correct: 返回包内语义错误，由入口和框架统一处理。
+return nil, ErrSessionUnavailable
+```
 
 ## RootName 校验
 
@@ -269,6 +335,95 @@ func (c *rootNameCodec) Decode(gc gnet.Conn, conn gnetx.Conn) (any, error) {
 | `weather_interval` | 微气象数据间隔（→ `ReportCategoryEnvData`） |
 
 心跳、上行周期上报、下游缓存新鲜度是独立概念，禁止用心跳超时直接替代上报间隔或缓存过期判断。
+
+### Scenario: ISP 客户端注册状态原子发布
+
+#### 1. Scope / Trigger
+
+- 修改 `common/isp.Client` 的注册、重连、注册状态查询或 `Execute` 会话选择时适用。
+- 这是 `common/isp` 客户端状态与 `gnetx.ClientConn` 身份绑定之间的跨包并发契约。
+
+#### 2. Signatures
+
+```go
+func (c *Client) doRegister(sess gnetx.ClientConn)
+func (c *Client) requestOnSession(ctx context.Context, sess gnetx.ClientConn, msg *Message) (*Message, error)
+func (c *Client) Execute(ctx context.Context, typ, command int32, code string, items []Item) (*Message, error)
+func (c *Client) IsRegistered() bool
+
+type ClientConn interface {
+    Conn
+    ClientID() string
+    BindClientID(clientID string) error
+    Request(ctx context.Context, msg Correlatable, ttl time.Duration) (any, error)
+}
+```
+
+#### 3. Contracts
+
+- 注册请求开始前固定 `sess`，请求、失败关闭和成功绑定始终操作这个 Session，禁止重新获取 Session 后误操作重连产生的新连接。
+- 网络请求期间不持有 `Client.mu`。注册响应成功后，必须在同一次 `Client.mu.Lock` 临界区内依次完成：确认 `transport.Session().SessionID()` 仍等于固定的 SessionID、调用 `sess.BindClientID(cfg.SendCode)`、按响应更新 `receiveCode`（SendCode 非空才覆盖）、`heartbeat` 和 `lastHeartbeat`。
+- `Execute` 的 `Client.mu.RLock` 必须同时覆盖当前 Session/ClientID 注册校验和 `receiveCode` 快照；释放读锁后再执行网络请求。
+- `IsRegistered` 使用同一把 `Client.mu.RLock` 覆盖当前 Session 查询与 ClientID 校验。这样 ISP Client API 不会观察到 ClientID 已绑定、端点状态尚未提交的中间状态。
+- `onRegister` 回调和日志在释放 `Client.mu` 后执行，回调读取到的必须是已提交状态。
+- 本场景不增加额外注册标志、SessionID 副本或新锁；注册事实由当前 Session 的 `ClientID() == cfg.SendCode` 表示。
+- 无新增请求字段、响应字段或环境变量。注册响应沿用 `Message.SendCode` 和 `heart_beat_interval`。
+
+#### 4. Validation & Error Matrix
+
+| 条件 | 行为 |
+|------|------|
+| 注册请求失败 | 关闭固定的 `sess`，不提交注册状态 |
+| `resp.Code != StatusSuccess` | 关闭固定的 `sess`，不提交注册状态 |
+| 当前 Session 为空或 SessionID 已切换 | 丢弃旧响应，不绑定、不提交，也不关闭新的当前 Session |
+| `BindClientID` 返回错误 | 先释放 `Client.mu`，再关闭固定的 `sess`；不提交端点状态 |
+| `Execute` 查询时 Session 不存在或 ClientID 不匹配 | 返回 `ErrClientNotRegistered` |
+| 注册提交期间并发调用 `Execute` / `IsRegistered` | 读操作等待写锁释放，只能看到提交前或提交后的完整状态 |
+
+#### 5. Good/Base/Bad Cases
+
+- Good：成功响应后，在一把 `Client.mu` 写锁内校验相同 Session、绑定 ClientID 并提交全部注册状态。
+- Base：未注册或重连中的客户端，`IsRegistered` 返回 false，`Execute` 返回 `ErrClientNotRegistered`。
+- Bad：先调用 `BindClientID`，之后才获取 `Client.mu` 更新 `receiveCode`；并发调用方可能将客户端判定为已注册，却使用旧的端点编码发送请求。
+
+#### 6. Tests Required
+
+- `TestClientRegistrationPublishesStateUnderClientLock`：测试持有 `Client.mu.RLock` 并释放服务端注册响应时，断言 `sess.ClientID()` 不得提前可见；释放读锁后再断言 `IsRegistered()` 为 true 且 `ReceiveCode()` 已更新。
+- `TestClientRegistrationBindsClientID`：成功注册后断言当前 Session 绑定配置的 SendCode。
+- `TestClientRegistrationFailureDoesNotCloseReplacementSession`：旧 Session 的延迟失败不得关闭重连后的 Session。
+- `TestClientRegistrationRequiresBoundCurrentSession`：无当前 Session 时 `IsRegistered` 和 `Connected` 都返回 false。
+- 并发相关变更至少运行 `go test -race ./common/isp/... ./common/gnetx/...`。
+
+#### 7. Wrong vs Correct
+
+```go
+// Wrong: ClientID 先对外可见，端点状态稍后才提交。
+if err := sess.BindClientID(c.cfg.SendCode); err != nil {
+    return
+}
+c.mu.Lock()
+c.receiveCode = resp.SendCode
+c.mu.Unlock()
+
+// Correct: 绑定身份与注册状态通过同一把 Client 锁整体发布。
+c.mu.Lock()
+current := c.transport.Session()
+if current == nil || current.SessionID() != sess.SessionID() {
+    c.mu.Unlock()
+    return
+}
+if err := sess.BindClientID(c.cfg.SendCode); err != nil {
+    c.mu.Unlock()
+    _ = sess.Close()
+    return
+}
+if resp.SendCode != "" {
+    c.receiveCode = resp.SendCode
+}
+c.heartbeat = hb
+c.lastHeartbeat = time.Now()
+c.mu.Unlock()
+```
 
 ## 应答约定
 
@@ -495,21 +650,9 @@ NewClient(cfg, store, db, uploader, nil,
 
 `IspClient` 嵌入 `*isp.Client`，最终响应契约是 `*isp.Message`：业务 handler 返回 `*isp.Message, error`，wrapper 统一处理 nil→251-3 和 error→251-3。带客户端端点状态的响应通过 `c.Response(ctx, req, err, items)` 构造（内部调 `c.NewSuccessResponse` / `c.NewItemsResponse` / `c.NewErrorResponse`）。gnetx handler 的 `any` 返回值始终是 `*isp.Message`。
 
-**注册响应校验**（`doRegister()`）：
+**注册响应校验**（`tick()` / `doRegister(sess)`）遵循上文“ISP 客户端注册状态原子发布”场景；应用层不得绕过 `common/isp.Client` 自行绑定 ClientID 或维护第二份注册状态。
 
-```go
-resp, err := c.request(reqCtx, msg)
-if err != nil {
-    c.closeCurrentConn()
-    return
-}
-if resp.Code != isp.StatusSuccess {
-    c.closeCurrentConn()
-    return
-}
-```
-
-注册失败或被拒绝时 `closeCurrentConn()` 断开连接，等待重连。
+最后回执状态使用 `ackState{sessionID, recvSeq}` 保存在 `Client.sessionAck` 中，通过 `atomic.Value` CAS 单调递增，不占用 `Client.mu`。Session 切换时由 `tick` 原子重置为新 Session；`trackRecvSeq` 只接受相同 SessionID 的更新，旧 Session 延迟完成的异步 handler 不得覆盖新 Session 的回执状态，重连后的新 Session 也不得携带旧 Session 的回执序号。
 
 ### 汉化映射
 

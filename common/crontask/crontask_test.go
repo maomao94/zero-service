@@ -172,6 +172,56 @@ func TestMemoryStoreUpdateNextRun(t *testing.T) {
 	if !got.NextRun.Equal(newNext) {
 		t.Fatalf("expected next run updated, got %v", got.NextRun)
 	}
+	if !got.LastRun.Equal(now) {
+		t.Fatalf("expected last run %v, got %v", now, got.LastRun)
+	}
+}
+
+func TestMemoryStoreIgnoresZeroNextRun(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	if err := store.Insert(ctx, &TaskConfig{
+		TaskCode: "exhausted",
+		Status:   StatusEnabled,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := store.LockAndFetch(ctx, carbon.Now().StdTime(), time.Minute); err != ErrNotFound {
+		t.Fatalf("expected zero next run to be ignored, got %v", err)
+	}
+}
+
+func TestMemoryStoreKeepsNextRunByValue(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	original := carbon.Now().StdTime().Add(time.Hour)
+	cfg := &TaskConfig{
+		TaskCode: "clone",
+		Status:   StatusEnabled,
+		NextRun:  original,
+	}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg.NextRun = original.Add(time.Hour)
+	got, err := store.GetByCode(ctx, cfg.TaskCode)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.NextRun.Equal(original) {
+		t.Fatalf("stored next run changed through caller value: %v", got.NextRun)
+	}
+
+	got.NextRun = original.Add(2 * time.Hour)
+	again, err := store.GetByCode(ctx, cfg.TaskCode)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !again.NextRun.Equal(original) {
+		t.Fatalf("stored next run changed through returned value: %v", again.NextRun)
+	}
 }
 
 func TestSchedulerTriggersHandler(t *testing.T) {
@@ -209,12 +259,16 @@ func TestSchedulerTriggersHandler(t *testing.T) {
 		t.Fatal("expected handler to be called at least once")
 	}
 
-	// one-time task should have next run deferred 100 years after last execution
+	// one-time task remains enabled but has no next schedule after its only execution.
 	got, _ := store.GetByCode(ctx, "t")
-	nextRun := got.NextRun
-	expectedMin := carbon.Now().AddYears(99).StdTime()
-	if nextRun.Before(expectedMin) {
-		t.Fatalf("expected next run deferred to ~100 years, got %v", nextRun)
+	if !got.NextRun.IsZero() {
+		t.Fatalf("expected no next run, got %v", got.NextRun)
+	}
+	if got.Status != StatusEnabled {
+		t.Fatalf("expected task status to remain enabled, got %v", got.Status)
+	}
+	if _, err := store.LockAndFetch(ctx, carbon.Now().StdTime(), time.Second); err != ErrNotFound {
+		t.Fatalf("expected exhausted task not to be fetched, got %v", err)
 	}
 }
 
@@ -252,6 +306,36 @@ func TestRunNow(t *testing.T) {
 		t.Fatal("expected RunNow to trigger handler")
 	}
 	mu.Unlock()
+}
+
+func TestRunNowProvidesExecutionTimeForZeroNextRun(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	if err := store.Insert(ctx, &TaskConfig{
+		TaskCode: "manual-exhausted",
+		Status:   StatusEnabled,
+		RRuleStr: "FREQ=DAILY;COUNT=1",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	executed := make(chan time.Time, 1)
+	s := NewScheduler(store, func(ctx context.Context, task *TaskConfig) error {
+		executed <- task.NextRun
+		return nil
+	})
+	if err := s.RunNow(ctx, "manual-exhausted"); err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case runAt := <-executed:
+		if runAt.IsZero() {
+			t.Fatal("expected RunNow to provide an execution time")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for RunNow")
+	}
 }
 
 func TestRecurringTaskComputesNextRun(t *testing.T) {
@@ -298,7 +382,7 @@ func TestRecurringTaskComputesNextRun(t *testing.T) {
 	if got.Status != StatusEnabled {
 		t.Fatalf("expected enabled after recurring execution, got %v", got.Status)
 	}
-	if got.NextRun.Equal(cfg.NextRun) {
+	if got.NextRun.IsZero() || got.NextRun.Equal(cfg.NextRun) {
 		t.Fatal("expected nextRun to be updated to next occurrence")
 	}
 }
@@ -372,7 +456,7 @@ func TestComputeNextRunInvalidRRule(t *testing.T) {
 	}
 }
 
-func TestComputeNextRunExpiredTaskDefers100Years(t *testing.T) {
+func TestComputeNextRunExpiredTaskReturnsZero(t *testing.T) {
 	next, err := computeNextRun(&TaskConfig{
 		TaskCode: "t",
 		RRuleStr: "FREQ=DAILY;COUNT=1",
@@ -381,9 +465,21 @@ func TestComputeNextRunExpiredTaskDefers100Years(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	expectedMin := carbon.Now().AddYears(99).StdTime()
-	if next.Before(expectedMin) {
-		t.Fatalf("expected next run deferred to ~100 years, got %v", next)
+	if !next.IsZero() {
+		t.Fatalf("expected zero next run, got %v", next)
+	}
+}
+
+func TestComputeNextRunAllowsZeroCurrentSchedule(t *testing.T) {
+	next, err := computeNextRun(&TaskConfig{
+		TaskCode: "manual",
+		RRuleStr: "FREQ=DAILY;COUNT=1",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !next.IsZero() {
+		t.Fatalf("expected exhausted rule to stay without next run, got %v", next)
 	}
 }
 
@@ -414,7 +510,7 @@ func TestExecuteTaskErrorKeepsNextRun(t *testing.T) {
 
 	got, _ := store.GetByCode(ctx, "fail-task")
 	// LockAndFetch extended NextRun, so it should be in the future
-	if !got.NextRun.After(cfg.NextRun) {
+	if got.NextRun.IsZero() || !got.NextRun.After(cfg.NextRun) {
 		t.Fatal("expected LockAndFetch to have extended NextRun")
 	}
 }

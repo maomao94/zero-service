@@ -90,7 +90,9 @@ func (l *ListTaskConfigsLogic) ListTaskConfigs(in *ispagent.ListTaskConfigsReq) 
 			IntervalEndTime:     r.IntervalEndTime,
 			InvalidStartTime:    r.InvalidStartTime,
 			InvalidEndTime:      r.InvalidEndTime,
-			NextRun:             carbon.CreateFromStdTime(r.NextRun).ToDateTimeString(),
+		}
+		if r.NextRun.Valid {
+			item.NextRun = carbon.CreateFromStdTime(r.NextRun.Time).ToDateTimeString()
 		}
 		if r.LastRun.Valid {
 			item.LastRun = carbon.CreateFromStdTime(r.LastRun.Time).ToDateTimeString()

@@ -33,7 +33,7 @@ func (m *MemoryStore) LockAndFetch(ctx context.Context, now time.Time, lockDur t
 
 	var candidates []*TaskConfig
 	for _, t := range m.tasks {
-		if t.Status == StatusEnabled && !t.NextRun.After(now) {
+		if t.Status == StatusEnabled && !t.NextRun.IsZero() && !t.NextRun.After(now) {
 			candidates = append(candidates, t)
 		}
 	}
@@ -60,9 +60,9 @@ func (m *MemoryStore) LockAndFetch(ctx context.Context, now time.Time, lockDur t
 	task.NextRun = now.Add(lockDur)
 	task.Version++
 
-	cloned := *task
+	cloned := cloneTaskConfig(task)
 	cloned.NextRun = originalNextRun
-	return &cloned, nil
+	return cloned, nil
 }
 
 // UpdateNextRun 更新下次调度时间和上次执行时间。
@@ -75,7 +75,7 @@ func (m *MemoryStore) UpdateNextRun(ctx context.Context, id string, nextRun, las
 		return ErrNotFound
 	}
 	task.NextRun = nextRun
-	task.LastRun = &lastRun
+	task.LastRun = lastRun
 	return nil
 }
 
@@ -86,8 +86,7 @@ func (m *MemoryStore) GetByCode(ctx context.Context, taskCode string) (*TaskConf
 
 	for _, t := range m.tasks {
 		if t.TaskCode == taskCode {
-			cloned := *t
-			return &cloned, nil
+			return cloneTaskConfig(t), nil
 		}
 	}
 	return nil, ErrNotFound
@@ -108,8 +107,7 @@ func (m *MemoryStore) Insert(ctx context.Context, cfg *TaskConfig) error {
 		}
 	}
 
-	cloned := *cfg
-	m.tasks[cfg.ID] = &cloned
+	m.tasks[cfg.ID] = cloneTaskConfig(cfg)
 	return nil
 }
 
@@ -128,8 +126,7 @@ func (m *MemoryStore) Update(ctx context.Context, cfg *TaskConfig) error {
 		return ErrNotFound
 	}
 
-	cloned := *cfg
-	m.tasks[cfg.ID] = &cloned
+	m.tasks[cfg.ID] = cloneTaskConfig(cfg)
 	return nil
 }
 
@@ -167,9 +164,13 @@ func (m *MemoryStore) ListEnabled(ctx context.Context) ([]*TaskConfig, error) {
 	var result []*TaskConfig
 	for _, t := range m.tasks {
 		if t.Status == StatusEnabled {
-			cloned := *t
-			result = append(result, &cloned)
+			result = append(result, cloneTaskConfig(t))
 		}
 	}
 	return result, nil
+}
+
+func cloneTaskConfig(task *TaskConfig) *TaskConfig {
+	cloned := *task
+	return &cloned
 }

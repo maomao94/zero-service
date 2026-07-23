@@ -47,6 +47,7 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, lockDur time.
 	var records []gormmodel.GormTaskConfig
 	err := s.db.WithContext(quietCtx).
 		Where("status = ?", int(crontask.StatusEnabled)).
+		Where("next_run IS NOT NULL").
 		Where("next_run <= ?", now).
 		Order("priority DESC, " + randomFn).
 		Limit(1).
@@ -62,6 +63,7 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, lockDur time.
 	lockedTime := now.Add(lockDur)
 	result := s.db.WithContext(quietCtx).
 		Model(&gormmodel.GormTaskConfig{}).
+		Where("id = ?", record.Id).
 		Where("next_run <= ?", now).
 		Updates(map[string]interface{}{
 			"next_run": lockedTime,
@@ -73,10 +75,7 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, lockDur time.
 		return nil, crontask.ErrNotFound
 	}
 
-	originalNextRun := record.NextRun
-	cfg := toTaskConfig(&record)
-	cfg.NextRun = originalNextRun
-	return cfg, nil
+	return toTaskConfig(&record), nil
 }
 
 // UpdateNextRun 更新任务的下次调度时间和上次执行时间。
@@ -85,7 +84,7 @@ func (s *DBStore) UpdateNextRun(ctx context.Context, id string, nextRun, lastRun
 		Model(&gormmodel.GormTaskConfig{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"next_run": nextRun,
+			"next_run": toNullTime(nextRun),
 			"last_run": lastRun,
 		})
 	if result.Error != nil {
@@ -129,6 +128,8 @@ func (s *DBStore) Update(ctx context.Context, cfg *crontask.TaskConfig) error {
 	result := s.db.WithContext(ctx).
 		Model(&gormmodel.GormTaskConfig{}).
 		Where("id = ?", cfg.ID).
+		Select("*").
+		Omit("id", "create_time", "delete_time", "is_deleted", "last_run").
 		Updates(record)
 	if result.Error != nil {
 		if isDuplicateErr(result.Error) {

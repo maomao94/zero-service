@@ -310,23 +310,21 @@ func DeserializeExtra(extra string) *IspTaskFields {
 
 // NewTaskConfig 从 ISP 字段创建 crontask.TaskConfig。
 // RRuleStr 和 NextRun 每次从 ISP 字段重新计算，保证配置更新后使用最新值。
-func NewTaskConfig(existingID string, fields *IspTaskFields) *crontask.TaskConfig {
+func NewTaskConfig(existingID string, fields *IspTaskFields) (*crontask.TaskConfig, error) {
 	nextRun, err := fields.CalcInitNextRun()
-	status := fields.ToStatus()
-	if err != nil || nextRun.IsZero() {
-		nextRun = carbon.Now().AddYears(100).StdTime()
+	if err != nil {
+		return nil, err
 	}
-
 	return &crontask.TaskConfig{
 		ID:       existingID,
 		TaskCode: fields.TaskCode,
 		TaskName: fields.TaskName,
 		RRuleStr: fields.ToRRuleStr(),
 		Priority: fields.ToPriority(),
-		Status:   status,
+		Status:   fields.ToStatus(),
 		NextRun:  nextRun,
 		Extra:    json.RawMessage(SerializeExtra(fields)),
-	}
+	}, nil
 }
 
 // NewInvalidTimeFilter 创建 crontask 的 InvalidTimeFilter，复用 CalcInitNextRun 的 skipInvalidTime 逻辑。
@@ -346,9 +344,6 @@ func NewInvalidTimeFilter() crontask.InvalidTimeFilter {
 			return next
 		}
 		next = fields.skipInvalidTime(rule, next)
-		if next.IsZero() {
-			return carbon.Now().AddYears(100).StdTime()
-		}
 		return next
 	}
 }

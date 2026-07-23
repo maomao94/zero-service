@@ -14,7 +14,7 @@ func wrapHandler(fn IspHandler, sessionSource byte, after func(conn gnetx.Conn, 
 	return gnetx.HandlerFunc(func(ctx context.Context, conn gnetx.Conn, msg any) (any, error) {
 		m, ok := msg.(*Message)
 		if !ok {
-			return nil, ErrError
+			return nil, ErrInternal
 		}
 		LogInbound(ctx, m)
 		resp, err := fn(ctx, conn, m)
@@ -58,7 +58,7 @@ func serverFallbackAsync(router *gnetx.Router, fn IspHandler) {
 func clientWrap(fn IspHandler, client *Client) gnetx.Handler {
 	return wrapHandler(fn, SessionSourceClient, func(conn gnetx.Conn, req *Message) {
 		if client != nil {
-			client.trackRecvSeq(req.SendSeq, conn.ID())
+			client.trackRecvSeq(req.SendSeq, conn.SessionID())
 		}
 	})
 }

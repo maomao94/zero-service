@@ -2,6 +2,7 @@ package isp
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"sync"
@@ -12,8 +13,6 @@ import (
 
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // ClientHandler 注册客户端方向 ISP 指令 handler。
@@ -60,28 +59,31 @@ type Client struct {
 	cfg ClientConfig
 
 	mu            sync.RWMutex
-	cli           *gnetx.Client
+	transport     *gnetx.Client
 	ctx           context.Context
 	cancel        context.CancelFunc
 	receiveCode   string
-	registered    bool
-	lastSessID    string
 	heartbeat     time.Duration
 	lastHeartbeat time.Time
-	lastRecvSeq   atomic.Value
-	registering   atomic.Bool
-	heartbeating  atomic.Bool
+	sessionAck    atomic.Value
 	onRegister    func(*Message)
 }
 
-type recvSeq struct {
+type ackState struct {
 	sessionID string
-	seq       uint64
+	recvSeq   uint64
 }
 
-// NewClient 创建 ISP TCP 客户端，并启动注册/心跳轮询。
+// MustNewClient 创建 ISP TCP 客户端，初始化失败时 panic。
+func MustNewClient(cfg ClientConfig, opts ...ClientOption) *Client {
+	client, err := NewClient(cfg, opts...)
+	logx.Must(err)
+	return client
+}
+
+// NewClient 创建 ISP TCP 客户端，连接初始化成功后启动注册/心跳轮询。
 // 业务 handler 通过 WithClientHandler 注册。
-func NewClient(cfg ClientConfig, opts ...ClientOption) *Client {
+func NewClient(cfg ClientConfig, opts ...ClientOption) (*Client, error) {
 	cfg.ApplyDefaults()
 	o := &clientOptions{}
 	for _, opt := range opts {
@@ -97,24 +99,25 @@ func NewClient(cfg ClientConfig, opts ...ClientOption) *Client {
 		heartbeat:  cfg.HeartbeatInterval,
 		onRegister: o.onRegister,
 	}
-	c.lastRecvSeq.Store(recvSeq{})
-	if err := c.connect(o.handler); err != nil {
-		logx.Errorf("[isp] 创建连接失败: %v", err)
+	c.sessionAck.Store(ackState{})
+	cli, err := c.connect(o.handler)
+	if err != nil {
+		cancel()
+		return nil, err
 	}
+	c.transport = cli
 	go c.run()
-	return c
+	return c, nil
 }
 
 // Close 关闭后台轮询和底层 TCP 连接。
 func (c *Client) Close() {
 	c.cancel()
+	c.transport.Close()
 	c.mu.Lock()
-	cli := c.cli
-	c.cli = nil
+	c.receiveCode = ""
 	c.mu.Unlock()
-	if cli != nil {
-		cli.Close()
-	}
+	c.sessionAck.Store(ackState{})
 }
 
 // Context 返回客户端生命周期 context。
@@ -123,12 +126,16 @@ func (c *Client) Context() context.Context { return c.ctx }
 // Execute 发送 ISP 请求并等待 251-3/251-4 应答。
 func (c *Client) Execute(ctx context.Context, typ, command int32, code string, items []Item) (*Message, error) {
 	if typ <= 0 {
-		return nil, status.Error(codes.InvalidArgument, "type 必须大于 0")
+		return nil, fmt.Errorf("%w: %d", ErrInvalidMessageType, typ)
 	}
-	if !c.isRegistered() {
-		return nil, status.Error(codes.Unavailable, "isp tcp 未注册，请等待连接就绪")
+	c.mu.RLock()
+	sess := c.transport.Session()
+	if sess == nil || sess.ClientID() != c.cfg.SendCode {
+		c.mu.RUnlock()
+		return nil, ErrClientNotRegistered
 	}
-	rootName, sendCode, receiveCode := c.endpointCodes()
+	rootName, sendCode, receiveCode := c.cfg.RootName, c.cfg.SendCode, c.receiveCode
+	c.mu.RUnlock()
 	msg := &Message{
 		RootName:      rootName,
 		SessionSource: SessionSourceClient,
@@ -140,7 +147,7 @@ func (c *Client) Execute(ctx context.Context, typ, command int32, code string, i
 		Time:          defaultTime(""),
 		Items:         items,
 	}
-	return c.request(ctx, msg)
+	return c.requestOnSession(ctx, sess, msg)
 }
 
 // NewItemsResponse 使用客户端当前端点编码构造 251-4 应答。
@@ -176,7 +183,7 @@ func (c *Client) Response(ctx context.Context, req *Message, err error, items []
 	return c.NewSuccessResponse(req)
 }
 
-func (c *Client) connect(register ClientHandler) error {
+func (c *Client) connect(register ClientHandler) (*gnetx.Client, error) {
 	codec := NewCodec(c.cfg.RootName, c.cfg.MaxFrameLength, c.cfg.DebugLog)
 	router := gnetx.NewRouter()
 	if register != nil {
@@ -193,12 +200,9 @@ func (c *Client) connect(register ClientHandler) error {
 		gnetx.WithClientReconnectInterval(c.cfg.ReconnectInterval),
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	c.mu.Lock()
-	c.cli = cli
-	c.mu.Unlock()
-	return nil
+	return cli, nil
 }
 
 func (c *Client) run() {
@@ -215,26 +219,26 @@ func (c *Client) run() {
 }
 
 func (c *Client) tick() {
-	sess := c.currentSession()
+	c.mu.Lock()
+	sess := c.transport.Session()
 	if sess == nil {
+		c.receiveCode = ""
+		c.sessionAck.Store(ackState{})
+		c.mu.Unlock()
 		return
 	}
-	sessID := sess.ID()
-
-	c.mu.Lock()
-	if c.lastSessID != sessID {
-		c.lastSessID = sessID
-		c.registered = false
-		c.lastRecvSeq.Store(recvSeq{})
+	sessID := sess.SessionID()
+	ack := c.sessionAck.Load().(ackState)
+	if ack.sessionID != sessID {
 		c.receiveCode = ""
+		c.sessionAck.Store(ackState{sessionID: sessID})
 	}
-	registered := c.registered
 	interval := c.heartbeat
 	elapsed := time.Since(c.lastHeartbeat)
 	c.mu.Unlock()
 
-	if !registered {
-		c.doRegister()
+	if sess.ClientID() != c.cfg.SendCode {
+		c.doRegister(sess)
 		return
 	}
 	if elapsed >= interval {
@@ -242,11 +246,13 @@ func (c *Client) tick() {
 	}
 }
 
-func (c *Client) doRegister() {
-	if !c.registering.CompareAndSwap(false, true) {
-		return
-	}
-	defer c.registering.Store(false)
+func (c *Client) doRegister(sess gnetx.ClientConn) {
+	sessID := sess.SessionID()
+
+	c.mu.RLock()
+	hb := c.heartbeat
+	c.mu.RUnlock()
+
 	msg := &Message{
 		RootName:      c.cfg.RootName,
 		SessionSource: SessionSourceClient,
@@ -259,28 +265,37 @@ func (c *Client) doRegister() {
 	reqCtx, cancel := context.WithTimeout(c.ctx, c.cfg.RequestTimeout)
 	defer cancel()
 
-	resp, err := c.request(reqCtx, msg)
+	resp, err := c.requestOnSession(reqCtx, sess, msg)
 	if err != nil {
 		logx.Errorf("[isp] 注册失败: %v", err)
-		c.closeCurrentConn()
+		_ = sess.Close()
 		return
 	}
 	if resp.Code != StatusSuccess {
 		logx.Errorf("[isp] 注册被拒绝: code=%s", resp.Code)
-		c.closeCurrentConn()
+		_ = sess.Close()
 		return
 	}
-	hb := c.heartbeat
 	if len(resp.Items) > 0 {
 		hb = ParseItemInterval(resp.Items[0], "heart_beat_interval", hb)
 	}
-
 	c.mu.Lock()
+	current := c.transport.Session()
+	if current == nil || current.SessionID() != sessID {
+		c.mu.Unlock()
+		logx.Infof("[isp] 注册绑定完成时会话已切换，丢弃注册状态")
+		return
+	}
+	if err := sess.BindClientID(c.cfg.SendCode); err != nil {
+		c.mu.Unlock()
+		logx.Errorf("[isp] 注册身份绑定失败: %v", err)
+		_ = sess.Close()
+		return
+	}
 	if resp.SendCode != "" {
 		c.receiveCode = resp.SendCode
 	}
 	c.heartbeat = hb
-	c.registered = true
 	c.lastHeartbeat = time.Now()
 	receiveCode := c.receiveCode
 	heartbeat := c.heartbeat
@@ -294,11 +309,6 @@ func (c *Client) doRegister() {
 }
 
 func (c *Client) sendHeartbeat() {
-	if !c.heartbeating.CompareAndSwap(false, true) {
-		return
-	}
-	defer c.heartbeating.Store(false)
-
 	c.mu.Lock()
 	c.lastHeartbeat = time.Now()
 	c.mu.Unlock()
@@ -310,15 +320,14 @@ func (c *Client) sendHeartbeat() {
 	}
 }
 
-func (c *Client) request(ctx context.Context, msg *Message) (*Message, error) {
-	sess := c.currentSession()
-	if sess == nil {
-		return nil, status.Error(codes.Unavailable, "isp tcp 会话未就绪")
-	}
+func (c *Client) requestOnSession(ctx context.Context, sess gnetx.ClientConn, msg *Message) (*Message, error) {
 	msg.SendSeq = sess.NextSendSeq()
-	rs, _ := c.lastRecvSeq.Load().(recvSeq)
-	msg.RecvSeq = rs.seq
-	sessID := sess.ID()
+	sessID := sess.SessionID()
+	msg.RecvSeq = 0
+	ack := c.sessionAck.Load().(ackState)
+	if ack.sessionID == sessID {
+		msg.RecvSeq = ack.recvSeq
+	}
 	if msg.Time == "" {
 		msg.Time = defaultTime("")
 	}
@@ -331,42 +340,27 @@ func (c *Client) request(ctx context.Context, msg *Message) (*Message, error) {
 	LogOutbound(ctx, msg)
 	respAny, err := sess.Request(ctx, msg, ttl)
 	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "isp tcp 请求失败: %v", err)
+		return nil, fmt.Errorf("%w: %w", ErrRequestFailed, err)
 	}
 	resp, ok := respAny.(*Message)
 	if !ok {
-		return nil, status.Errorf(codes.Internal, "isp tcp 响应类型异常: %T", respAny)
+		return nil, fmt.Errorf("%w: %T", ErrUnexpectedResponse, respAny)
 	}
 	c.trackRecvSeq(resp.SendSeq, sessID)
 	return resp, nil
 }
 
-func (c *Client) currentSession() gnetx.ClientConn {
-	c.mu.RLock()
-	cli := c.cli
-	c.mu.RUnlock()
-	if cli == nil {
-		return nil
-	}
-	return cli.Session()
-}
-
 // IsRegistered 返回当前 TCP 会话是否已完成 ISP 注册。
 func (c *Client) IsRegistered() bool {
-	return c.isRegistered()
-}
-
-func (c *Client) isRegistered() bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	return c.registered
+	sess := c.transport.Session()
+	return sess != nil && sess.ClientID() == c.cfg.SendCode
 }
 
 // Connected 返回客户端是否存在已注册的活跃 TCP 会话。
 func (c *Client) Connected() bool {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.cli != nil && c.cli.Session() != nil && c.registered
+	return c.IsRegistered()
 }
 
 func (c *Client) endpointCodes() (rootName, sendCode, receiveCode string) {
@@ -395,16 +389,16 @@ func (c *Client) ReceiveCode() string {
 	return c.receiveCode
 }
 
-func (c *Client) trackRecvSeq(seq uint64, sessionID string) {
-	if seq == 0 || sessionID == "" {
+func (c *Client) trackRecvSeq(recvSeq uint64, sessionID string) {
+	if recvSeq == 0 || sessionID == "" {
 		return
 	}
 	for {
-		old := c.lastRecvSeq.Load().(recvSeq)
-		if old.sessionID == sessionID && seq <= old.seq {
+		old := c.sessionAck.Load().(ackState)
+		if old.sessionID != sessionID || recvSeq <= old.recvSeq {
 			return
 		}
-		if c.lastRecvSeq.CompareAndSwap(old, recvSeq{sessionID: sessionID, seq: seq}) {
+		if c.sessionAck.CompareAndSwap(old, ackState{sessionID: sessionID, recvSeq: recvSeq}) {
 			return
 		}
 	}
@@ -412,19 +406,6 @@ func (c *Client) trackRecvSeq(seq uint64, sessionID string) {
 
 func (c *Client) applyResponseState(resp *Message) {
 	resp.RootName, resp.SendCode, resp.ReceiveCode = c.endpointCodes()
-}
-
-func (c *Client) closeCurrentConn() {
-	c.mu.RLock()
-	cli := c.cli
-	c.mu.RUnlock()
-	if cli == nil {
-		return
-	}
-	sess := cli.Session()
-	if sess != nil {
-		_ = sess.Close()
-	}
 }
 
 func defaultTime(v string) string {

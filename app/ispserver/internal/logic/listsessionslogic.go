@@ -28,13 +28,13 @@ func (l *ListSessionsLogic) ListSessions(in *ispserver.ListSessionsReq) (*ispser
 	sessions := l.svcCtx.IspServer.Manager().All()
 	infos := make([]*ispserver.SessionInfo, 0, len(sessions))
 	for _, s := range sessions {
-		alias := ""
+		clientID := ""
 		if sc, ok := s.(gnetx.ServerConn); ok {
-			alias = sc.Alias()
+			clientID = sc.ClientID()
 		}
 		infos = append(infos, &ispserver.SessionInfo{
-			SessionId:   s.ID(),
-			DeviceCode:  alias,
+			SessionId:   s.SessionID(),
+			DeviceCode:  clientID,
 			RemoteAddr:  s.RemoteAddr().String(),
 			ConnectedAt: s.CreatedAt().Unix(),
 		})

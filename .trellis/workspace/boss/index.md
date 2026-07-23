@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 130
-- **Last Active**: 2026-07-22
+- **Total Sessions**: 132
+- **Last Active**: 2026-07-23
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~784 | Active |
+| `journal-3.md` | ~851 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,8 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 132 | 2026-07-23 | 修复 gnetx Session 绑定竞态与 ISP 注册状态发布 | `405d8094`, `109995c1` | `master` |
+| 131 | 2026-07-23 | 重构 gnetx 客户端身份与 ISP 错误边界 | `9406a185` | `master` |
 | 130 | 2026-07-22 | 恢复构建基线并优化开源文档 | `96d95e51` | `master` |
 | 129 | 2026-07-22 | 恢复全仓构建并修复行为测试 | `96d95e51` | `master` |
 | 128 | 2026-07-21 | Refine IEC104 Server Config | `53fc5db1` | `master` |

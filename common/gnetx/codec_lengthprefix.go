@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"math"
 
 	"github.com/panjf2000/gnet/v2"
 )
@@ -186,14 +187,22 @@ func (c *LengthPrefixCodec) Decode(conn gnet.Conn, _ Conn) (any, error) {
 	}
 
 	lengthField := hdr[c.lengthOffset : c.lengthOffset+c.lengthBytes]
-	bodyLen := int(readUintN(lengthField, c.lengthBytes, c.bo)) + c.lengthAdjust
+	rawBodyLen := readUintN(lengthField, c.lengthBytes, c.bo)
+	if rawBodyLen > uint64(math.MaxInt) {
+		return nil, ErrFrameTooLarge
+	}
+	bodyLen := int(rawBodyLen)
+	if c.lengthAdjust > 0 && bodyLen > math.MaxInt-c.lengthAdjust {
+		return nil, ErrFrameTooLarge
+	}
+	bodyLen += c.lengthAdjust
 	if bodyLen < 0 {
 		return nil, ErrFrameTooLarge
 	}
-	frameLen := headerLen + bodyLen
-	if frameLen < headerLen { // overflow
+	if bodyLen > math.MaxInt-headerLen {
 		return nil, ErrFrameTooLarge
 	}
+	frameLen := headerLen + bodyLen
 	if c.maxFrameSize > 0 && frameLen > c.maxFrameSize {
 		return nil, ErrFrameTooLarge
 	}

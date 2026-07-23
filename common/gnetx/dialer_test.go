@@ -82,8 +82,8 @@ func TestDialerDial(t *testing.T) {
 	}
 	defer conn.Close()
 
-	if conn.ID() == "" {
-		t.Fatal("Dial returned conn with empty ID")
+	if conn.SessionID() == "" {
+		t.Fatal("Dial returned conn with empty SessionID")
 	}
 	if conn.RemoteAddr() == nil {
 		t.Fatal("Dial returned conn with nil RemoteAddr")

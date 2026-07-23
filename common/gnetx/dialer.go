@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"sync"
-	"sync/atomic"
 
 	"github.com/panjf2000/gnet/v2"
 
@@ -30,7 +29,8 @@ type Dialer struct {
 	gnet.BuiltinEventEngine
 
 	opts   ClientOptions
-	closed atomic.Bool
+	mu     sync.Mutex
+	closed bool
 
 	gcli     *gnet.Client
 	gcliOnce sync.Once
@@ -63,7 +63,12 @@ func NewDialer(opts ...ClientOption) *Dialer {
 	return &Dialer{opts: *o}
 }
 
-func (d *Dialer) ensureClient() error {
+func (d *Dialer) client() (*gnet.Client, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.closed {
+		return nil, ErrSessionClosed
+	}
 	d.gcliOnce.Do(func() {
 		d.gcli, d.gcliErr = gnet.NewClient(d, buildGnetClientOptions(d.opts)...)
 		if d.gcliErr != nil {
@@ -71,19 +76,17 @@ func (d *Dialer) ensureClient() error {
 		}
 		d.gcliErr = d.gcli.Start()
 	})
-	return d.gcliErr
+	return d.gcli, d.gcliErr
 }
 
 // Dial 创建一次性 TCP 连接并返回 Conn。返回的 Conn replyPool 为 nil，仅支持 WriteAsync。
 // 调用方使用完毕后应调用 conn.Close() 释放底层连接。
 func (d *Dialer) Dial(ctx context.Context, network, address string) (Conn, error) {
-	if d.closed.Load() {
-		return nil, ErrSessionClosed
-	}
-	if err := d.ensureClient(); err != nil {
+	gcli, err := d.client()
+	if err != nil {
 		return nil, err
 	}
-	gc, err := d.gcli.DialContext(network, address, ctx)
+	gc, err := gcli.DialContext(network, address, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -93,17 +96,15 @@ func (d *Dialer) Dial(ctx context.Context, network, address string) (Conn, error
 // Request 一步完成拨号+发送请求+等待回包+关闭连接。
 // msg 需实现 Correlatable，回包需实现 Response 且 ResponseTID 与 msg.TID 一致。
 func (d *Dialer) Request(ctx context.Context, network, address string, msg Correlatable) (any, error) {
-	if d.closed.Load() {
-		return nil, ErrSessionClosed
-	}
-	if err := d.ensureClient(); err != nil {
+	gcli, err := d.client()
+	if err != nil {
 		return nil, err
 	}
 
 	promise := antsx.NewPromise[any]()
 	ds := &dialState{promise: promise, tid: msg.TID()}
 
-	gc, err := d.gcli.DialContext(network, address, ctx)
+	gc, err := gcli.DialContext(network, address, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -126,13 +127,16 @@ func (d *Dialer) Request(ctx context.Context, network, address string, msg Corre
 }
 
 func (d *Dialer) Close() error {
-	d.closed.Store(true)
-	// ensureClient ensures synchronization with concurrent ensureClient calls.
-	// If the client has been created (or is being created), gcli will be visible after this call.
-	// If ensureClient has never been called, this is a no-op.
-	d.gcliOnce.Do(func() {})
-	if d.gcli != nil {
-		return d.gcli.Stop()
+	d.mu.Lock()
+	if d.closed {
+		d.mu.Unlock()
+		return nil
+	}
+	d.closed = true
+	gcli := d.gcli
+	d.mu.Unlock()
+	if gcli != nil {
+		return gcli.Stop()
 	}
 	return nil
 }
@@ -175,6 +179,7 @@ func (d *Dialer) OnTraffic(c gnet.Conn) gnet.Action {
 func (d *Dialer) OnClose(c gnet.Conn, err error) gnet.Action {
 	cn, _ := c.Context().(*session)
 	if cn != nil {
+		cn.closeFromEventLoop()
 		if ds, ok := cn.Attribute(&dialStateKey).(*dialState); ok {
 			ds.promise.Reject(ErrSessionClosed)
 		}

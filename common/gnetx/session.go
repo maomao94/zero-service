@@ -21,7 +21,7 @@ func newSessionID() string {
 // Conn is the shared connection interface used by Handler for reuse across Server and Client.
 // Both ServerConn and ClientConn embed Conn.
 type Conn interface {
-	ID() string
+	SessionID() string
 	NextSendSeq() uint64
 	Write(ctx context.Context, msg any) error
 	WriteAsync(ctx context.Context, msg any) error
@@ -37,9 +37,11 @@ type Conn interface {
 
 // session is the concrete per-connection context implementing Conn, ServerConn, and ClientConn.
 type session struct {
-	id         string
-	alias      string
+	sessionID  string
+	clientID   string
 	gc         gnet.Conn
+	localAddr  net.Addr
+	remoteAddr net.Addr
 	codec      Codec
 	mgr        *SessionManager
 	created    time.Time
@@ -50,20 +52,22 @@ type session struct {
 
 	replyPool *antsx.ReplyPool[any]
 
+	stateMu   sync.RWMutex
 	closeOnce sync.Once
-	closed    atomic.Bool
-	closeFunc func() // called on Close by Dialer to stop gnet.Client
+	closed    bool
 }
 
-func newSession(id string, gc gnet.Conn, codec Codec, mgr *SessionManager, replyPool *antsx.ReplyPool[any], sequenceStart ...uint64) *session {
+func newSession(sessionID string, gc gnet.Conn, codec Codec, mgr *SessionManager, replyPool *antsx.ReplyPool[any], sequenceStart ...uint64) *session {
 	now := time.Now()
 	s := &session{
-		id:        id,
-		gc:        gc,
-		codec:     codec,
-		mgr:       mgr,
-		replyPool: replyPool,
-		created:   now,
+		sessionID:  sessionID,
+		gc:         gc,
+		localAddr:  snapshotAddr(gc.LocalAddr()),
+		remoteAddr: snapshotAddr(gc.RemoteAddr()),
+		codec:      codec,
+		mgr:        mgr,
+		replyPool:  replyPool,
+		created:    now,
 	}
 	s.lastActive.Store(now.UnixNano())
 	if len(sequenceStart) > 0 {
@@ -72,12 +76,12 @@ func newSession(id string, gc gnet.Conn, codec Codec, mgr *SessionManager, reply
 	return s
 }
 
-func (s *session) ID() string                { return s.id }
+func (s *session) SessionID() string         { return s.sessionID }
 func (s *session) NextSendSeq() uint64       { return s.sendSeq.Add(1) - 1 }
 func (s *session) CreatedAt() time.Time      { return s.created }
 func (s *session) LastActiveAt() time.Time   { return time.Unix(0, s.lastActive.Load()) }
-func (s *session) RemoteAddr() net.Addr      { return s.gc.RemoteAddr() }
-func (s *session) LocalAddr() net.Addr       { return s.gc.LocalAddr() }
+func (s *session) RemoteAddr() net.Addr      { return s.remoteAddr }
+func (s *session) LocalAddr() net.Addr       { return s.localAddr }
 func (s *session) SetAttribute(key, val any) { s.attrs.Store(key, val) }
 func (s *session) DeleteAttribute(key any)   { s.attrs.Delete(key) }
 
@@ -87,7 +91,7 @@ func (s *session) Attribute(key any) any {
 }
 
 func (s *session) encode(ctx context.Context, msg any) ([]byte, error) {
-	if s.closed.Load() {
+	if s.isClosed() {
 		return nil, ErrSessionClosed
 	}
 	payload, err := s.codec.Encode(ctx, msg, s)
@@ -114,26 +118,45 @@ func (s *session) WriteAsync(ctx context.Context, msg any) error {
 	return s.gc.AsyncWrite(payload, nil)
 }
 
-func (s *session) Alias() string  { return s.alias }
-func (s *session) touch()         { s.lastActive.Store(time.Now().UnixNano()) }
-func (s *session) isClosed() bool { return s.closed.Load() }
+func (s *session) ClientID() string {
+	s.stateMu.RLock()
+	defer s.stateMu.RUnlock()
+	return s.clientID
+}
 
-func (s *session) Register(alias string) {
-	s.alias = alias
-	if s.mgr != nil {
-		s.mgr.registerAlias(s, alias)
+func (s *session) bindClientID(clientID string) error {
+	s.stateMu.Lock()
+	defer s.stateMu.Unlock()
+	if s.closed {
+		return ErrSessionClosed
 	}
+	s.clientID = clientID
+	return nil
+}
+
+func (s *session) touch()         { s.lastActive.Store(time.Now().UnixNano()) }
+func (s *session) isClosed() bool { s.stateMu.RLock(); defer s.stateMu.RUnlock(); return s.closed }
+func (s *session) markClosed()    { s.stateMu.Lock(); s.closed = true; s.stateMu.Unlock() }
+
+func (s *session) BindClientID(clientID string) error {
+	if clientID == "" {
+		return ErrInvalidClientID
+	}
+	if s.mgr == nil {
+		return s.bindClientID(clientID)
+	}
+	return s.mgr.bindClientID(s, clientID)
 }
 
 func (s *session) Request(ctx context.Context, msg Correlatable, ttl time.Duration) (any, error) {
-	if s.closed.Load() {
+	if s.isClosed() {
 		return nil, ErrSessionClosed
 	}
 	if s.replyPool == nil {
 		return nil, ErrSessionClosed
 	}
 	ctx = injectSessionLogFields(ctx, s)
-	compositeTID := s.id + "|" + msg.TID()
+	compositeTID := s.sessionID + "|" + msg.TID()
 	return antsx.RequestReply[any](ctx, s.replyPool, compositeTID, func() error { return s.WriteAsync(ctx, msg) }, ttl)
 }
 
@@ -144,31 +167,52 @@ func (s *session) resolveResponse(tid string, resp any) bool {
 	if s.replyPool == nil {
 		return false
 	}
-	compositeTID := s.id + "|" + tid
+	compositeTID := s.sessionID + "|" + tid
 	return s.replyPool.Resolve(compositeTID, resp)
 }
 
 func (s *session) Close() error {
 	var closeErr error
 	s.closeOnce.Do(func() {
-		s.closed.Store(true)
-		if s.mgr != nil {
-			s.mgr.remove(s)
-		}
+		s.closeState()
 		closeErr = s.gc.Close()
-		if s.closeFunc != nil {
-			s.closeFunc()
-		}
 	})
 	return closeErr
 }
 
+func (s *session) closeFromEventLoop() {
+	s.closeOnce.Do(s.closeState)
+}
+
+func (s *session) closeState() {
+	if s.mgr != nil {
+		s.mgr.remove(s)
+	} else {
+		s.markClosed()
+	}
+}
+
+type immutableAddr struct {
+	network string
+	address string
+}
+
+func (a immutableAddr) Network() string { return a.network }
+func (a immutableAddr) String() string  { return a.address }
+
+func snapshotAddr(addr net.Addr) net.Addr {
+	if addr == nil {
+		return nil
+	}
+	return immutableAddr{network: addr.Network(), address: addr.String()}
+}
+
 // SessionManager manages active sessions. Used by Server (multi-session). Thread-safe.
 type SessionManager struct {
-	mu       sync.RWMutex
-	byID     map[string]*session
-	byAlias  map[string]*session
-	listener SessionListener
+	mu          sync.RWMutex
+	bySessionID map[string]*session
+	byClientID  map[string]*session
+	listener    SessionListener
 }
 
 func NewSessionManager(listener SessionListener) *SessionManager {
@@ -176,30 +220,40 @@ func NewSessionManager(listener SessionListener) *SessionManager {
 		listener = noopSessionListener{}
 	}
 	return &SessionManager{
-		byID:     make(map[string]*session),
-		byAlias:  make(map[string]*session),
-		listener: listener,
+		bySessionID: make(map[string]*session),
+		byClientID:  make(map[string]*session),
+		listener:    listener,
 	}
 }
 
-func (m *SessionManager) Get(idOrAlias string) Conn {
+func (m *SessionManager) GetBySessionID(sessionID string) Conn {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	if s, ok := m.byAlias[idOrAlias]; ok {
-		return s
+	s, ok := m.bySessionID[sessionID]
+	if !ok || s.isClosed() {
+		return nil
 	}
-	if s, ok := m.byID[idOrAlias]; ok {
-		return s
+	return s
+}
+
+func (m *SessionManager) GetByClientID(clientID string) Conn {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	s, ok := m.byClientID[clientID]
+	if !ok || s.isClosed() {
+		return nil
 	}
-	return nil
+	return s
 }
 
 func (m *SessionManager) All() []Conn {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	out := make([]Conn, 0, len(m.byID))
-	for _, s := range m.byID {
-		out = append(out, s)
+	out := make([]Conn, 0, len(m.bySessionID))
+	for _, s := range m.bySessionID {
+		if !s.isClosed() {
+			out = append(out, s)
+		}
 	}
 	return out
 }
@@ -207,34 +261,66 @@ func (m *SessionManager) All() []Conn {
 func (m *SessionManager) Count() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return len(m.byID)
+	count := 0
+	for _, s := range m.bySessionID {
+		if !s.isClosed() {
+			count++
+		}
+	}
+	return count
 }
 
 func (m *SessionManager) add(s *session) {
 	m.mu.Lock()
-	m.byID[s.id] = s
+	if s.isClosed() {
+		m.mu.Unlock()
+		return
+	}
+	m.bySessionID[s.sessionID] = s
 	m.mu.Unlock()
 	m.listener.OnCreated(s)
 }
 
-func (m *SessionManager) registerAlias(s *session, alias string) {
+func (m *SessionManager) bindClientID(s *session, clientID string) error {
 	m.mu.Lock()
-	if old, ok := m.byAlias[alias]; ok && old != s {
+	if current := m.bySessionID[s.sessionID]; current != s {
 		m.mu.Unlock()
-		_ = old.Close()
-		m.mu.Lock()
+		return ErrSessionClosed
 	}
-	m.byAlias[alias] = s
+	previousID := s.ClientID()
+	if err := s.bindClientID(clientID); err != nil {
+		m.mu.Unlock()
+		return err
+	}
+	if previousID != "" && previousID != clientID {
+		if current := m.byClientID[previousID]; current == s {
+			delete(m.byClientID, previousID)
+		}
+	}
+	old := m.byClientID[clientID]
+	if old != nil && old != s {
+		// Mark the displaced session while holding the same lock used by
+		// BindClientID. Its delayed Close must not be able to rebind later.
+		old.markClosed()
+	}
+	m.byClientID[clientID] = s
 	m.mu.Unlock()
+
+	if old != nil && old != s {
+		_ = old.Close()
+	}
 	m.listener.OnRegistered(s)
+	return nil
 }
 
 func (m *SessionManager) remove(s *session) {
 	m.mu.Lock()
-	delete(m.byID, s.id)
-	if s.alias != "" {
-		if cur, ok := m.byAlias[s.alias]; ok && cur == s {
-			delete(m.byAlias, s.alias)
+	// Session owns the lifecycle state; manager lock serializes it with BindClientID.
+	s.markClosed()
+	delete(m.bySessionID, s.sessionID)
+	if clientID := s.ClientID(); clientID != "" {
+		if current := m.byClientID[clientID]; current == s {
+			delete(m.byClientID, clientID)
 		}
 	}
 	m.mu.Unlock()
@@ -242,15 +328,15 @@ func (m *SessionManager) remove(s *session) {
 }
 
 // injectSessionLogFields 将 session 级信息注入 context，使 handler 内
-// logx.WithContext(ctx) 自动携带 session_id、local、remote、alias。
+// logx.WithContext(ctx) 自动携带 sessionID、local、remote、clientID。
 func injectSessionLogFields(ctx context.Context, s *session) context.Context {
 	ctx = logx.ContextWithFields(ctx,
-		logx.Field("session_id", s.id),
+		logx.Field("sessionID", s.sessionID),
 		logx.Field("local", s.LocalAddr().String()),
 		logx.Field("remote", s.RemoteAddr().String()),
 	)
-	if alias := s.Alias(); alias != "" {
-		ctx = logx.ContextWithFields(ctx, logx.Field("alias", alias))
+	if clientID := s.ClientID(); clientID != "" {
+		ctx = logx.ContextWithFields(ctx, logx.Field("clientID", clientID))
 	}
 	return ctx
 }

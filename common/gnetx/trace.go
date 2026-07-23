@@ -32,11 +32,11 @@ func startSpanWithKind(tracer oteltrace.Tracer, parentCtx context.Context, s *se
 
 func spanAttrs(s *session, msg any) []attribute.KeyValue {
 	attrs := []attribute.KeyValue{
-		attribute.String("gnetx.session.id", s.ID()),
+		attribute.String("gnetx.session.id", s.SessionID()),
 		attribute.String("gnetx.remote", s.RemoteAddr().String()),
 	}
-	if a := s.Alias(); a != "" {
-		attrs = append(attrs, attribute.String("gnetx.session.alias", a))
+	if clientID := s.ClientID(); clientID != "" {
+		attrs = append(attrs, attribute.String("gnetx.client.id", clientID))
 	}
 	if id, ok := messageIDOf(msg); ok {
 		attrs = append(attrs, attribute.Int("gnetx.message.id", id))

@@ -241,6 +241,7 @@ type Serializer interface {
 ### 6. Tests Required
 
 - Codec tests cover full frame, half frame, frame-too-large, encode length overflow.
+- 8 字节长度字段必须覆盖 `uint64 > MaxInt` 且带正 `lengthAdjust` 的 Decode 溢出用例。
 - Serializer tests cover body encode/decode only.
 - Runtime tests verify ctx is passed to `Encode` and sequence start is honored.
 

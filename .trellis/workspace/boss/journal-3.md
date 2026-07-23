@@ -782,3 +782,70 @@ Unified IEC104 server construction around Settings and go-zero ServerConfig, add
 ### Next Steps
 
 - None - task complete
+
+
+## Session 131: 重构 gnetx 客户端身份与 ISP 错误边界
+
+**Date**: 2026-07-23
+**Task**: 重构 gnetx 客户端身份与 ISP 错误边界
+**Branch**: `master`
+
+### Summary
+
+完成 gnetx SessionID/ClientID 命名与并发身份索引重构，拆分 ISP 错误并移除 gRPC 状态耦合；gnetx race 测试、go vet 与全仓测试通过。审阅发现跨 Session 并发争抢同一 clientID 时，old.Close 可能删除后续映射，待后续修复。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9406a185` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 132: 修复 gnetx Session 绑定竞态与 ISP 注册状态发布
+
+**Date**: 2026-07-23
+**Task**: 修复 gnetx Session 绑定竞态与 ISP 注册状态发布
+**Branch**: `master`
+
+### Summary
+
+修复 SessionManager 绑定与关闭竞态，保证索引不暴露已关闭 Session；ISP 客户端在同一锁内校验当前 Session、绑定 ClientID 并提交注册状态，补充 race 回归测试和可执行规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `405d8094` | (see git log) |
+| `109995c1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

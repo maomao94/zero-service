@@ -23,10 +23,8 @@ func TestConvertRoundTrip(t *testing.T) {
 	}
 	extra := SerializeExtra(f)
 
-	nextRun, err := f.CalcInitNextRun()
-	if err != nil {
-		nextRun = carbon.Now().AddYears(100).StdTime()
-	}
+	nextRun := carbon.Now().AddDay().StdTime()
+	lastRun := carbon.Now().SubHour().StdTime()
 
 	cfg := &crontask.TaskConfig{
 		TaskCode: f.TaskCode,
@@ -35,6 +33,7 @@ func TestConvertRoundTrip(t *testing.T) {
 		Priority: f.ToPriority(),
 		Status:   f.ToStatus(),
 		NextRun:  nextRun,
+		LastRun:  lastRun,
 		Extra:    []byte(extra),
 		Version:  1,
 	}
@@ -54,10 +53,39 @@ func TestConvertRoundTrip(t *testing.T) {
 	if back.Status != cfg.Status {
 		t.Fatal("round-trip status mismatch")
 	}
+	if !back.NextRun.Equal(nextRun) {
+		t.Fatalf("round-trip next_run mismatch: %v", back.NextRun)
+	}
+	if !back.LastRun.Equal(lastRun) {
+		t.Fatalf("round-trip last_run mismatch: %v", back.LastRun)
+	}
 
 	parsed := DeserializeExtra(string(back.Extra))
 	if parsed.Creator != f.Creator {
 		t.Fatal("round-trip creator mismatch")
+	}
+}
+
+func TestConvertRoundTripZeroNextRun(t *testing.T) {
+	cfg := &crontask.TaskConfig{
+		TaskCode: "exhausted",
+		TaskName: "已结束任务",
+		Status:   crontask.StatusEnabled,
+	}
+
+	gorm := fromTaskConfig(cfg)
+	if gorm.NextRun.Valid {
+		t.Fatalf("expected invalid SQL time, got %v", gorm.NextRun)
+	}
+	if gorm.LastRun.Valid {
+		t.Fatalf("expected invalid SQL last run, got %v", gorm.LastRun)
+	}
+	back := toTaskConfig(gorm)
+	if !back.NextRun.IsZero() {
+		t.Fatalf("expected zero next run, got %v", back.NextRun)
+	}
+	if !back.LastRun.IsZero() {
+		t.Fatalf("expected zero last run, got %v", back.LastRun)
 	}
 }
 

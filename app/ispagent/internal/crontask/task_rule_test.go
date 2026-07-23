@@ -1,6 +1,7 @@
 package crontask
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -378,5 +379,50 @@ func TestCycleExecuteTimeShortStringNoPanic(t *testing.T) {
 	}
 	if len(rule.OrigOptions.Byhour) != 0 {
 		t.Fatal("expected no BYHOUR for short execute time")
+	}
+}
+
+func TestNewTaskConfigExpiredScheduleHasZeroNextRun(t *testing.T) {
+	fields := &IspTaskFields{
+		TaskCode:       "expired",
+		TaskName:       "已结束任务",
+		FixedStartTime: carbon.Now().SubHour().ToDateTimeString(),
+		IsEnable:       "0",
+	}
+
+	cfg, err := NewTaskConfig("", fields)
+	if err != nil {
+		t.Fatalf("NewTaskConfig: %v", err)
+	}
+	if !cfg.NextRun.IsZero() {
+		t.Fatalf("expected zero next run, got %v", cfg.NextRun)
+	}
+	if cfg.Status != crontask.StatusEnabled {
+		t.Fatalf("expected enabled status to be preserved, got %v", cfg.Status)
+	}
+}
+
+func TestNewTaskConfigReturnsScheduleError(t *testing.T) {
+	_, err := NewTaskConfig("", &IspTaskFields{TaskCode: "invalid"})
+	if err == nil {
+		t.Fatal("expected invalid task type error")
+	}
+}
+
+func TestInvalidTimeFilterReturnsZeroWhenRuleExhausted(t *testing.T) {
+	runAt := carbon.Now().AddHour().StartOfSecond()
+	fields := &IspTaskFields{
+		FixedStartTime:   runAt.ToDateTimeString(),
+		InvalidStartTime: runAt.SubMinute().ToDateTimeString(),
+		InvalidEndTime:   runAt.AddMinute().ToDateTimeString(),
+	}
+	task := &crontask.TaskConfig{
+		RRuleStr: fields.ToRRuleStr(),
+		Extra:    json.RawMessage(SerializeExtra(fields)),
+	}
+
+	next := NewInvalidTimeFilter()(task, runAt.StdTime())
+	if !next.IsZero() {
+		t.Fatalf("expected zero next run, got %v", next)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"strconv"
+	"time"
 
 	"zero-service/app/ispagent/model/gormmodel"
 	"zero-service/common/crontask"
@@ -20,10 +21,8 @@ func fromTaskConfig(cfg *crontask.TaskConfig) *gormmodel.GormTaskConfig {
 		Payload:  string(cfg.Payload),
 		Extra:    string(cfg.Extra),
 		Status:   int(cfg.Status),
-		NextRun:  cfg.NextRun,
-	}
-	if cfg.LastRun != nil {
-		g.LastRun = sql.NullTime{Time: *cfg.LastRun, Valid: true}
+		NextRun:  toNullTime(cfg.NextRun),
+		LastRun:  toNullTime(cfg.LastRun),
 	}
 	g.Id = cfg.ID
 
@@ -45,16 +44,21 @@ func toTaskConfig(g *gormmodel.GormTaskConfig) *crontask.TaskConfig {
 		Priority: g.Priority,
 		Payload:  json.RawMessage(g.Payload),
 		Status:   crontask.TaskStatus(g.Status),
-		NextRun:  g.NextRun,
+	}
+	if g.NextRun.Valid {
+		cfg.NextRun = g.NextRun.Time
 	}
 	if g.LastRun.Valid {
-		lastRun := g.LastRun.Time
-		cfg.LastRun = &lastRun
+		cfg.LastRun = g.LastRun.Time
 	}
 
 	fields := toFields(g)
 	cfg.Extra = json.RawMessage(SerializeExtra(fields))
 	return cfg
+}
+
+func toNullTime(value time.Time) sql.NullTime {
+	return sql.NullTime{Time: value, Valid: !value.IsZero()}
 }
 
 // applyFields 将 IspTaskFields 的值平铺设置到 GormTaskConfig 对应列。

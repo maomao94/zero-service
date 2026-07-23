@@ -10,6 +10,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"zero-service/common/antsx"
 )
 
 // === 协议定义：长度前缀 + 自定义消息，用于集成测试 ===
@@ -382,6 +384,49 @@ func TestServerGracefulShutdown(t *testing.T) {
 		t.Fatal("expect dial to fail after shutdown")
 	}
 	_ = conn.Close()
+}
+
+func TestServerShutdownBeforeRunClosesReplyPool(t *testing.T) {
+	srv, err := NewServer(
+		WithAddr("127.0.0.1:0"),
+		WithCodec(newTestCodec()),
+		WithServerHandler(noopServerHandler()),
+		WithMaxFrameLength(1024*1024),
+	)
+	if err != nil {
+		t.Fatalf("NewServer: %v", err)
+	}
+
+	if err := srv.Shutdown(context.Background()); err != nil {
+		t.Fatalf("Shutdown: %v", err)
+	}
+	if _, err := srv.replyPool.Register("after-shutdown"); !errors.Is(err, antsx.ErrReplyClosed) {
+		t.Fatalf("Register after Shutdown = %v, want ErrReplyClosed", err)
+	}
+}
+
+func TestServerRunFailureClosesReplyPool(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	defer listener.Close()
+
+	srv, err := NewServer(
+		WithAddr(listener.Addr().String()),
+		WithCodec(newTestCodec()),
+		WithServerHandler(noopServerHandler()),
+		WithMaxFrameLength(1024*1024),
+	)
+	if err != nil {
+		t.Fatalf("NewServer: %v", err)
+	}
+	if err := srv.Run(); err == nil {
+		t.Fatal("Run should fail when the address is already in use")
+	}
+	if _, err := srv.replyPool.Register("after-run-failure"); !errors.Is(err, antsx.ErrReplyClosed) {
+		t.Fatalf("Register after Run failure = %v, want ErrReplyClosed", err)
+	}
 }
 
 // TestServerHandlerError：handler 返回 error 不 panic，不回包，记日志。

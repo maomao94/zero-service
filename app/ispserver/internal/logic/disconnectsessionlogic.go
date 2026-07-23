@@ -25,7 +25,7 @@ func NewDisconnectSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 }
 
 func (l *DisconnectSessionLogic) DisconnectSession(in *ispserver.DisconnectSessionReq) (*ispserver.DisconnectSessionRes, error) {
-	session := l.svcCtx.IspServer.Manager().Get(in.GetSessionId())
+	session := l.svcCtx.IspServer.Manager().GetBySessionID(in.GetSessionId())
 	if session == nil {
 		return nil, fmt.Errorf("session not found: %s", in.GetSessionId())
 	}

@@ -20,8 +20,8 @@ import (
 // ServerConn extends Conn with server-specific methods.
 type ServerConn interface {
 	Conn
-	Alias() string
-	Register(alias string)
+	ClientID() string
+	BindClientID(clientID string) error
 	Request(ctx context.Context, msg Correlatable, ttl time.Duration) (any, error)
 }
 
@@ -98,7 +98,11 @@ func (s *Server) Start() {
 }
 
 func (s *Server) Run() error {
-	return gnet.Run(s, normalizeAddr(s.opts.Addr), s.buildGnetOptions()...)
+	err := gnet.Run(s, normalizeAddr(s.opts.Addr), s.buildGnetOptions()...)
+	if err != nil {
+		s.replyPool.Close()
+	}
+	return err
 }
 
 func (s *Server) Stop() {
@@ -111,6 +115,7 @@ func (s *Server) Stop() {
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	if !s.booted.CompareAndSwap(true, false) {
+		s.replyPool.Close()
 		return nil
 	}
 	defer s.replyPool.Close()
@@ -176,14 +181,14 @@ func (s *Server) OnOpen(c gnet.Conn) ([]byte, gnet.Action) {
 	cn := newSession(newSessionID(), c, s.opts.Codec, s.mgr, s.replyPool, s.opts.SequenceStart)
 	c.SetContext(cn)
 	s.mgr.add(cn)
-	logx.Infof("[gnetx] connected remote=%s id=%s", c.RemoteAddr(), cn.id)
+	logx.Infof("[gnetx] connected remote=%s sessionID=%s", c.RemoteAddr(), cn.sessionID)
 	return nil, gnet.None
 }
 
 func (s *Server) OnTraffic(c gnet.Conn) gnet.Action {
 	cn, _ := c.Context().(*session)
 	if cn == nil {
-		logx.Errorf("[gnetx] OnTraffic: session context is nil, closing connection remote=%s", c.RemoteAddr())
+		logx.Errorf("[gnetx] onTraffic: session context is nil, closing connection remote=%s", c.RemoteAddr())
 		return gnet.Close
 	}
 	cn.touch()
@@ -226,9 +231,14 @@ func (s *Server) OnClose(c gnet.Conn, err error) gnet.Action {
 	if err != nil {
 		cause = err.Error()
 	}
-	logx.Errorf("[gnetx] session closed id=%s alias=%s remote=%s cause=%s",
-		cn.id, cn.alias, cn.RemoteAddr(), cause)
-	_ = cn.Close()
+	if err != nil {
+		logx.Errorf("[gnetx] session closed sessionID=%s clientID=%s remote=%s cause=%s",
+			cn.sessionID, cn.ClientID(), cn.RemoteAddr(), cause)
+	} else {
+		logx.Infof("[gnetx] session closed sessionID=%s clientID=%s remote=%s cause=%s",
+			cn.sessionID, cn.ClientID(), cn.RemoteAddr(), cause)
+	}
+	cn.closeFromEventLoop()
 	return gnet.None
 }
 
@@ -269,7 +279,7 @@ func (s *Server) dispatchSync(parentCtx context.Context, cn *session, msg any, h
 
 	duration := timex.Since(startTime)
 	if duration > s.opts.SlowHandlerThreshold {
-		logx.WithContext(ctx).WithDuration(duration).Slowf("[gnetx] slow handler id=%s", cn.id)
+		logx.WithContext(ctx).WithDuration(duration).Slowf("[gnetx] slow handler sessionID=%s", cn.sessionID)
 	}
 	if hErr != nil {
 		span.RecordError(hErr)
@@ -302,7 +312,7 @@ func (s *Server) dispatchAsync(parentCtx context.Context, cn *session, msg any, 
 		reply, hErr := h.Handle(ctx, cn, msg)
 		duration := timex.Since(startTime)
 		if duration > s.opts.SlowHandlerThreshold {
-			logx.WithContext(ctx).WithDuration(duration).Slowf("[gnetx] async slow handler id=%s", cn.id)
+			logx.WithContext(ctx).WithDuration(duration).Slowf("[gnetx] async slow handler sessionID=%s", cn.sessionID)
 		}
 		s.recordMetrics(duration)
 		if hErr != nil {
@@ -330,7 +340,7 @@ func (s *Server) writeReply(ctx context.Context, cn *session, reply any) error {
 }
 
 func (s *Server) handleDecodeError(cn *session, err error) gnet.Action {
-	logx.Errorf("[gnetx] decode error id=%s remote=%s: %v", cn.id, cn.RemoteAddr(), err)
+	logx.Errorf("[gnetx] decode error sessionID=%s remote=%s: %v", cn.sessionID, cn.RemoteAddr(), err)
 	if errors.Is(err, ErrFrameTooLarge) {
 		return gnet.Close
 	}

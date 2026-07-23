@@ -62,7 +62,7 @@ func NewClient(cfg isp.ClientConfig, taskStore crontask.TaskStore, db *gormx.DB,
 		reports:       newReportManager(o.ReportOpts...),
 		reportRunner:  threading.NewTaskRunner(reportTaskConcurrency),
 	}
-	c.Client = isp.NewClient(cfg,
+	c.Client = isp.MustNewClient(cfg,
 		isp.WithClientHandler(c.registerHandlers),
 		isp.WithClientOnRegister(c.onRegister),
 	)

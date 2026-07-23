@@ -37,14 +37,14 @@ func TestSessionManagerGetAllCount(t *testing.T) {
 	if c := mgr.Count(); c != 2 {
 		t.Fatalf("Count = %d, want 2", c)
 	}
-	if mgr.Get("id1") != cn1 {
-		t.Fatal("Get by id failed")
+	if mgr.GetBySessionID("id1") != cn1 {
+		t.Fatal("GetBySessionID failed")
 	}
-	if mgr.Get("id2") != cn2 {
-		t.Fatal("Get by id failed")
+	if mgr.GetBySessionID("id2") != cn2 {
+		t.Fatal("GetBySessionID failed")
 	}
-	if mgr.Get("nonexistent") != nil {
-		t.Fatal("Get nonexistent should return nil")
+	if mgr.GetBySessionID("nonexistent") != nil {
+		t.Fatal("GetBySessionID nonexistent should return nil")
 	}
 
 	all := mgr.All()
@@ -53,7 +53,36 @@ func TestSessionManagerGetAllCount(t *testing.T) {
 	}
 }
 
-func TestSessionManagerAliasConflict(t *testing.T) {
+func TestSessionManagerDoesNotAddClosedSession(t *testing.T) {
+	mgr := NewSessionManager(nil)
+	cn := newSession("closed-before-add", newMockConn(nil), newTestCodec(), mgr, nil)
+	if err := cn.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+
+	mgr.add(cn)
+
+	if mgr.Count() != 0 {
+		t.Fatalf("Count after adding closed session = %d, want 0", mgr.Count())
+	}
+	if mgr.GetBySessionID(cn.SessionID()) != nil {
+		t.Fatal("closed session should not be added to SessionManager")
+	}
+}
+
+func TestSessionManagerRejectsUnmanagedSessionBinding(t *testing.T) {
+	mgr := NewSessionManager(nil)
+	cn := newSession("not-added", newMockConn(nil), newTestCodec(), mgr, nil)
+
+	if err := cn.BindClientID("client-1"); !errors.Is(err, ErrSessionClosed) {
+		t.Fatalf("BindClientID unmanaged session error = %v, want ErrSessionClosed", err)
+	}
+	if mgr.GetByClientID("client-1") != nil {
+		t.Fatal("unmanaged session should not be added to the client ID index")
+	}
+}
+
+func TestSessionManagerClientIDConflict(t *testing.T) {
 	mgr := NewSessionManager(nil)
 	mc1 := newMockConn(nil)
 	mc2 := newMockConn(nil)
@@ -62,17 +91,180 @@ func TestSessionManagerAliasConflict(t *testing.T) {
 	mgr.add(cn1)
 	mgr.add(cn2)
 
-	cn1.Register("alias-x")
-	if mgr.Get("alias-x") != cn1 {
-		t.Fatal("alias lookup should return cn1")
+	if err := cn1.BindClientID("client-x"); err != nil {
+		t.Fatalf("BindClientID cn1: %v", err)
+	}
+	if mgr.GetByClientID("client-x") != cn1 {
+		t.Fatal("client ID lookup should return cn1")
 	}
 
-	cn2.Register("alias-x")
-	if mgr.Get("alias-x") != cn2 {
-		t.Fatal("alias should now point to cn2")
+	if err := cn2.BindClientID("client-x"); err != nil {
+		t.Fatalf("BindClientID cn2: %v", err)
+	}
+	if mgr.GetByClientID("client-x") != cn2 {
+		t.Fatal("client ID should now point to cn2")
 	}
 	if !cn1.isClosed() {
-		t.Fatal("cn1 should be closed (kicked) after alias conflict")
+		t.Fatal("cn1 should be closed after client ID conflict")
+	}
+	if err := cn1.BindClientID("client-x"); !errors.Is(err, ErrSessionClosed) {
+		t.Fatalf("closed session BindClientID error = %v, want ErrSessionClosed", err)
+	}
+}
+
+func TestSessionManagerClientIDRebindRemovesPreviousIndex(t *testing.T) {
+	mgr := NewSessionManager(nil)
+	cn := newSession("session-1", newMockConn(nil), newTestCodec(), mgr, nil)
+	mgr.add(cn)
+
+	if err := cn.BindClientID("client-a"); err != nil {
+		t.Fatalf("BindClientID client-a: %v", err)
+	}
+	if err := cn.BindClientID("client-b"); err != nil {
+		t.Fatalf("BindClientID client-b: %v", err)
+	}
+
+	if got := mgr.GetByClientID("client-a"); got != nil {
+		t.Fatalf("old client ID still resolves to %v", got)
+	}
+	if got := mgr.GetByClientID("client-b"); got != cn {
+		t.Fatalf("new client ID resolves to %v, want session", got)
+	}
+}
+
+func TestSessionManagerIDNamespacesAreIndependent(t *testing.T) {
+	mgr := NewSessionManager(nil)
+	bySessionID := newSession("shared-id", newMockConn(nil), newTestCodec(), mgr, nil)
+	byClientID := newSession("session-2", newMockConn(nil), newTestCodec(), mgr, nil)
+	mgr.add(bySessionID)
+	mgr.add(byClientID)
+	if err := byClientID.BindClientID("shared-id"); err != nil {
+		t.Fatalf("BindClientID: %v", err)
+	}
+
+	if got := mgr.GetBySessionID("shared-id"); got != bySessionID {
+		t.Fatalf("GetBySessionID = %v, want session identity", got)
+	}
+	if got := mgr.GetByClientID("shared-id"); got != byClientID {
+		t.Fatalf("GetByClientID = %v, want client identity", got)
+	}
+}
+
+func TestBindClientIDValidation(t *testing.T) {
+	cn := newSession("session-1", newMockConn(nil), newTestCodec(), nil, nil)
+	if err := cn.BindClientID(""); !errors.Is(err, ErrInvalidClientID) {
+		t.Fatalf("empty client ID error = %v, want ErrInvalidClientID", err)
+	}
+
+	if err := cn.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	if err := cn.BindClientID("client-1"); !errors.Is(err, ErrSessionClosed) {
+		t.Fatalf("closed session error = %v, want ErrSessionClosed", err)
+	}
+}
+
+func TestClientSessionConcurrentBindAndClose(t *testing.T) {
+	cn := newSession("client-session", newMockConn(nil), newTestCodec(), nil, nil)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 32; i++ {
+		clientID := "client-" + itoa(i)
+		wg.Add(1)
+		go func(clientID string) {
+			defer wg.Done()
+			_ = cn.BindClientID(clientID)
+			_ = cn.ClientID()
+		}(clientID)
+	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		_ = cn.Close()
+	}()
+	wg.Wait()
+
+	if !cn.isClosed() {
+		t.Fatal("client session should be closed")
+	}
+	if err := cn.BindClientID("after-close"); !errors.Is(err, ErrSessionClosed) {
+		t.Fatalf("BindClientID after concurrent close = %v, want ErrSessionClosed", err)
+	}
+}
+
+func TestClientDoesNotExposeClosedSession(t *testing.T) {
+	cn := newSession("client-session", newMockConn(nil), newTestCodec(), nil, nil)
+	cli := &Client{}
+	cli.sess.Store(cn)
+	if cli.Session() != cn {
+		t.Fatal("Session should return the active session")
+	}
+
+	if err := cn.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	if cli.Session() != nil {
+		t.Fatal("Session should not return a closed session")
+	}
+}
+
+func TestSessionManagerConcurrentClientIDBinding(t *testing.T) {
+	mgr := NewSessionManager(nil)
+	cn := newSession("session-1", newMockConn(nil), newTestCodec(), mgr, nil)
+	mgr.add(cn)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 32; i++ {
+		clientID := "client-" + itoa(i)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := cn.BindClientID(clientID); err != nil {
+				t.Errorf("BindClientID(%q): %v", clientID, err)
+			}
+			_ = cn.ClientID()
+			_ = mgr.GetByClientID(clientID)
+		}()
+	}
+	wg.Wait()
+
+	mgr.mu.RLock()
+	defer mgr.mu.RUnlock()
+	if len(mgr.byClientID) != 1 {
+		t.Fatalf("client ID index count = %d, want 1", len(mgr.byClientID))
+	}
+}
+
+func TestSessionManagerConcurrentBindAndClose(t *testing.T) {
+	mgr := NewSessionManager(nil)
+	cn := newSession("session-close-race", newMockConn(nil), newTestCodec(), mgr, nil)
+	mgr.add(cn)
+
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := 0; i < 32; i++ {
+		clientID := "client-" + itoa(i)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			_ = cn.BindClientID(clientID)
+		}()
+	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-start
+		_ = cn.Close()
+	}()
+	close(start)
+	wg.Wait()
+
+	if !cn.isClosed() {
+		t.Fatal("session should be closed")
+	}
+	if mgr.Count() != 0 {
+		t.Fatalf("Count after concurrent close = %d, want 0", mgr.Count())
 	}
 }
 
@@ -81,7 +273,9 @@ func TestSessionManagerRemove(t *testing.T) {
 	mc := newMockConn(nil)
 	cn := newSession("id1", mc, newTestCodec(), mgr, nil)
 	mgr.add(cn)
-	cn.Register("alias-1")
+	if err := cn.BindClientID("client-1"); err != nil {
+		t.Fatalf("BindClientID: %v", err)
+	}
 
 	if mgr.Count() != 1 {
 		t.Fatalf("Count = %d, want 1", mgr.Count())
@@ -92,11 +286,11 @@ func TestSessionManagerRemove(t *testing.T) {
 	if mgr.Count() != 0 {
 		t.Fatalf("Count after close = %d, want 0", mgr.Count())
 	}
-	if mgr.Get("id1") != nil {
-		t.Fatal("Get after close should return nil")
+	if mgr.GetBySessionID("id1") != nil {
+		t.Fatal("GetBySessionID after close should return nil")
 	}
-	if mgr.Get("alias-1") != nil {
-		t.Fatal("Get alias after close should return nil")
+	if mgr.GetByClientID("client-1") != nil {
+		t.Fatal("GetByClientID after close should return nil")
 	}
 }
 
@@ -141,6 +335,23 @@ func TestSessionCloseIdempotent(t *testing.T) {
 	}
 }
 
+func TestSessionCloseFromEventLoopOnlyMarksState(t *testing.T) {
+	mc := newMockConn(nil)
+	cn := newSession("id1", mc, newTestCodec(), nil, nil)
+
+	cn.closeFromEventLoop()
+
+	if !cn.isClosed() {
+		t.Fatal("session should be marked closed")
+	}
+	if mc.closed {
+		t.Fatal("event-loop close callback should not close the gnet connection again")
+	}
+	if err := cn.BindClientID("client-1"); !errors.Is(err, ErrSessionClosed) {
+		t.Fatalf("BindClientID after remote close = %v, want ErrSessionClosed", err)
+	}
+}
+
 func TestSessionCreatedAt(t *testing.T) {
 	mc := newMockConn(nil)
 	cn := newSession("id1", mc, newTestCodec(), nil, nil)
@@ -152,32 +363,45 @@ func TestSessionCreatedAt(t *testing.T) {
 func TestSessionRemoteAddrLocalAddr(t *testing.T) {
 	mc := newMockConn(nil)
 	cn := newSession("id1", mc, newTestCodec(), nil, nil)
+	wantRemote := mc.remote.String()
+	wantLocal := mc.local.String()
+	mc.remote = nil
+	mc.local = nil
 
-	if cn.RemoteAddr() == nil {
-		t.Fatal("RemoteAddr should not be nil")
+	if got := cn.RemoteAddr().String(); got != wantRemote {
+		t.Fatalf("RemoteAddr = %q, want snapshot %q", got, wantRemote)
 	}
-	if cn.LocalAddr() == nil {
-		t.Fatal("LocalAddr should not be nil")
+	if got := cn.LocalAddr().String(); got != wantLocal {
+		t.Fatalf("LocalAddr = %q, want snapshot %q", got, wantLocal)
 	}
 }
 
-func TestSessionIDAndAlias(t *testing.T) {
+func TestSessionIDAndClientID(t *testing.T) {
 	mc := newMockConn(nil)
 	cn := newSession("my-id", mc, newTestCodec(), nil, nil)
+	var clientConn ClientConn = cn
 
-	if cn.ID() != "my-id" {
-		t.Fatalf("ID = %q, want my-id", cn.ID())
+	if cn.SessionID() != "my-id" {
+		t.Fatalf("SessionID = %q, want my-id", cn.SessionID())
 	}
-	if cn.Alias() != "" {
-		t.Fatal("Alias should be empty before Register")
+	if clientConn.ClientID() != "" {
+		t.Fatal("ClientID should be empty before binding")
+	}
+	if err := clientConn.BindClientID("client-side"); err != nil {
+		t.Fatalf("client BindClientID: %v", err)
+	}
+	if clientConn.ClientID() != "client-side" {
+		t.Fatalf("client ClientID = %q, want client-side", clientConn.ClientID())
 	}
 
 	mgr := NewSessionManager(nil)
 	cn2 := newSession("id2", newMockConn(nil), newTestCodec(), mgr, nil)
 	mgr.add(cn2)
-	cn2.Register("device-1")
-	if cn2.Alias() != "device-1" {
-		t.Fatalf("Alias = %q, want device-1", cn2.Alias())
+	if err := cn2.BindClientID("device-1"); err != nil {
+		t.Fatalf("BindClientID: %v", err)
+	}
+	if cn2.ClientID() != "device-1" {
+		t.Fatalf("ClientID = %q, want device-1", cn2.ClientID())
 	}
 }
 
@@ -409,7 +633,7 @@ func TestNextSendSeqViaServerConn(t *testing.T) {
 	srv.OnOpen(conn)
 	srv.mgr.add(conn.Context().(*session))
 
-	serverConn := srv.mgr.Get(conn.Context().(*session).ID()).(ServerConn)
+	serverConn := srv.mgr.GetBySessionID(conn.Context().(*session).SessionID()).(ServerConn)
 	if seq := serverConn.NextSendSeq(); seq != 5 {
 		t.Fatalf("ServerConn.NextSendSeq = %d, want 5", seq)
 	}

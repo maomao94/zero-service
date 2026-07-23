@@ -138,7 +138,7 @@ func (s *Scheduler) executeTask(task *TaskConfig) {
 	)
 
 	stale := false
-	if s.maxDelay > 0 && time.Since(task.NextRun) > s.maxDelay {
+	if s.maxDelay > 0 && !task.NextRun.IsZero() && time.Since(task.NextRun) > s.maxDelay {
 		logx.WithContext(ctx).Infof("[crontask] task %s skipped: delayed %v > max %v", task.TaskCode, time.Since(task.NextRun), s.maxDelay)
 		stale = true
 	}
@@ -169,24 +169,28 @@ func (s *Scheduler) RunNow(ctx context.Context, taskCode string) error {
 	if err != nil {
 		return err
 	}
+	if task.NextRun.IsZero() {
+		task.NextRun = carbon.Now().StdTime()
+	}
 	go s.executeTask(task)
 	return nil
 }
 
 // computeNextRun 基于 rrule 计算下一次调度时间。
 // 以 max(NextRun, now) 为基准避免延迟后算出已过去的时间。
-// 若已无更多触发计划（COUNT 耗尽、超出 Until），返回 100 年后避免重复调度。
+// 若已无更多触发计划（COUNT 耗尽、超出 Until），返回零值表示无下次调度。
 func computeNextRun(cfg *TaskConfig) (time.Time, error) {
-	base := cfg.NextRun
-	if now := carbon.Now().StdTime(); base.Before(now) {
-		base = now
+	now := carbon.Now().StdTime()
+	base := now
+	if cfg.NextRun.After(now) {
+		base = cfg.NextRun
 	}
 
 	set, err := rrule.StrToRRuleSet(cfg.RRuleStr)
 	if err == nil {
 		next := set.After(base, false)
 		if next.IsZero() {
-			return carbon.Now().AddYears(100).StdTime(), nil
+			return time.Time{}, nil
 		}
 		return next, nil
 	}
@@ -197,7 +201,7 @@ func computeNextRun(cfg *TaskConfig) (time.Time, error) {
 	}
 	next := rule.After(base, false)
 	if next.IsZero() {
-		return carbon.Now().AddYears(100).StdTime(), nil
+		return time.Time{}, nil
 	}
 	return next, nil
 }

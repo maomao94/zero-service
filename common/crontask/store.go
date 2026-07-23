@@ -13,7 +13,7 @@ type TaskStore interface {
 	// 选中任务后应将 next_run 推迟 now+lockDur，防止被其他实例重复扫到。
 	LockAndFetch(ctx context.Context, now time.Time, lockDur time.Duration) (*TaskConfig, error)
 
-	// UpdateNextRun 更新任务的下次调度时间和上次执行时间。
+	// UpdateNextRun 更新任务的下次调度时间和上次执行时间，nextRun 零值表示无下次调度。
 	UpdateNextRun(ctx context.Context, id string, nextRun, lastRun time.Time) error
 
 	// GetByCode 按全局唯一的 task_code 查询任务。

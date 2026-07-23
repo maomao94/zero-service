@@ -14,6 +14,7 @@
 - [quality-guidelines.md](./quality-guidelines.md) - 代码质量和审查标准
 - [database-guidelines.md](./database-guidelines.md) - 数据库操作、Model 层规范、常见 GORM 场景
 - [gormx-guidelines.md](./gormx-guidelines.md) - gormx 封装包约定：调用签名、配置默认值、陷阱
+- [crontask-guidelines.md](./crontask-guidelines.md) - crontask 调度器：零值时间、一次性任务、claim CAS、并发完成和 RunNow 契约
 
 ### 通信与协议
 

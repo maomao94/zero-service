@@ -158,6 +158,70 @@ c.Where("task_patrolled_id = ?", id).Assign(assign).FirstOrCreate(&task)
 
 ---
 
+## Scenario: 可空时间字段清空为 SQL NULL
+
+### 1. Scope / Trigger
+
+业务用“没有时间”表达终态或未安排状态，且时间需要在通用结构、GORM 模型、数据库和 protobuf/API 之间传递时适用。不要用远期时间冒充空值。
+
+### 2. Signatures
+
+```go
+// 通用/业务结构：零值表示没有时间
+NextRun time.Time
+LastRun time.Time
+
+// GORM 持久化模型
+NextRun sql.NullTime `gorm:"column:next_run;type:timestamp"`
+
+// 更新接口：nextRun 零值表示清空为 SQL NULL
+UpdateNextRun(ctx context.Context, id string, nextRun, lastRun time.Time) error
+```
+
+### 3. Contracts
+
+- `time.Time.IsZero()` ↔ `sql.NullTime.Valid == false` ↔ SQL `NULL`。
+- 是否存在业务时间统一用标准库 `time.Time.IsZero()` 判断；Carbon `IsValid()` 表示对象可用，零值 Carbon 也可能为 `true`。
+- SQL `NULL` 映射到 protobuf `string` 时返回 `""`，不格式化零值时间。
+- 查询到期记录显式使用 `next_run IS NOT NULL AND next_run <= ?`，把“无下次调度不参与扫描”的契约写进查询。
+- 使用 GORM `Updates(struct)` 将可空列清为 `NULL` 时，必须通过 `Select("next_run", ...)` 显式包含该列；否则 GORM 会跳过 `sql.NullTime{}` 零值。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 正确行为 |
+| --- | --- |
+| 有实际时间 | 保存 `Valid=true` 和原时间 |
+| 无实际时间 | 保存 SQL `NULL` |
+| SQL `NULL` 进入调度扫描 | 不选中、不执行 |
+| SQL `NULL` 返回字符串 API | 返回空字符串 |
+| 时间计算/规则解析错误 | 返回错误，不能当成“无时间” |
+
+### 5. Good/Base/Bad Cases
+
+- Good: `time.Time` 零值 + `sql.NullTime` + 显式 `Select`，完整区分时间、空值和错误。
+- Base: `Updates(map[string]any{"next_run": sql.NullTime{}})`，适合只更新少量指定列。
+- Bad: 写入“当前时间加 100 年”或最大时间作为空值；跨数据库范围不一致，且会产生未来误触发语义。
+
+### 6. Tests Required
+
+- 断言有效时间能在业务结构和 GORM 模型间往返。
+- 断言 `time.Time{}` 经新增、局部更新和全量更新后都落为 SQL `NULL`。
+- 断言 SQL `NULL` 不会被到期查询选中，API 输出为空字符串。
+- SQLite 测试 DSN 使用 `parseTime=true&_loc=auto`，并关闭 `sql.DB`。
+
+### 7. Wrong vs Correct
+
+```go
+// Wrong: Updates(struct) 会跳过 sql.NullTime{} 零值。
+db.Model(&Task{}).Where("id = ?", id).Updates(Task{NextRun: sql.NullTime{}})
+
+// Correct: 显式选择可空列，确保清空为 SQL NULL。
+db.Model(&Task{}).Where("id = ?", id).
+    Select("next_run").Updates(Task{NextRun: sql.NullTime{}})
+```
+
+---
+
 ## 时间格式化
 
 proto/API 层时间字段使用 `string`，格式 `YYYY-MM-DD HH:mm:ss.SSSSSS`，UTC+8 时区。Go 层使用 `carbon.CreateFromStdTime(m.ReportedAt).ToDateTimeMicroString()` 转换。
