@@ -2,6 +2,8 @@ package ispclient
 
 import (
 	"context"
+	"errors"
+	"sync/atomic"
 	"time"
 
 	"zero-service/app/ispagent/internal/handler"
@@ -17,6 +19,9 @@ import (
 
 const reportTaskConcurrency = 4
 
+// TaskRunFunc 立即执行指定任务。
+type TaskRunFunc func(ctx context.Context, taskCode string) error
+
 // IspClient 组合 common/isp.Client 的 TCP 通信能力，并注册 ispagent 私有业务 handler。
 //
 // 建连、注册、心跳、请求序号和通用应答包装由 common/isp.Client 负责；本类型只保留任务、模型、机器人控制和上报缓存等服务私有逻辑。
@@ -24,11 +29,29 @@ type IspClient struct {
 	*isp.Client
 
 	taskStore     crontask.TaskStore
+	taskRun       atomic.Pointer[TaskRunFunc]
 	db            *gormx.DB
 	modelUploader *ftps.Uploader
 	modelProvider handler.ModelDataProvider
 	reports       *reportManager
 	reportRunner  *threading.TaskRunner
+}
+
+// SetTaskRun 注入立即执行闭包，客户端不感知具体调度器实现。
+func (c *IspClient) SetTaskRun(run TaskRunFunc) {
+	if run == nil {
+		c.taskRun.Store(nil)
+		return
+	}
+	c.taskRun.Store(&run)
+}
+
+func (c *IspClient) runTask(ctx context.Context, taskCode string) error {
+	run := c.taskRun.Load()
+	if run == nil {
+		return errors.New("任务调度器未初始化")
+	}
+	return (*run)(ctx, taskCode)
 }
 
 // ClientOptions ISP 客户端构造配置。
@@ -82,7 +105,7 @@ func (c *IspClient) registerHandlers(router *isp.ClientRouter) {
 
 	// ---- 任务控制 41-1/2/3/4 ----
 	taskControlHandler := func(ctx context.Context, conn gnetx.Conn, req *isp.Message) (*isp.Message, error) {
-		taskPatrolledID, err := handler.HandleTaskControl(ctx, req, c.taskStore, c.db, c.SendCode(), c.ReceiveCode(), func(ctx context.Context, code string, items []isp.Item) {
+		taskPatrolledID, err := handler.HandleTaskControl(ctx, req, c.taskStore, c.runTask, c.db, func(ctx context.Context, code string, items []isp.Item) {
 			if _, e := c.Execute(ctx, isp.TypeTaskStatusData, isp.CommandReport, code, items); e != nil {
 				logx.Errorf("[ispagent] 任务控制通知发送失败: %v", e)
 			}

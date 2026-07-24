@@ -64,3 +64,9 @@ func (s *StreamEventServer) NotifyPlanEvent(ctx context.Context, in *streamevent
 	l := logic.NewNotifyPlanEventLogic(ctx, s.svcCtx)
 	return l.NotifyPlanEvent(in)
 }
+
+// 处理 Trigger RRULE Cron Job 到点事件，并返回明确业务回执
+func (s *StreamEventServer) HandleCronJobEvent(ctx context.Context, in *streamevent.HandleCronJobEventReq) (*streamevent.HandleCronJobEventRes, error) {
+	l := logic.NewHandleCronJobEventLogic(ctx, s.svcCtx)
+	return l.HandleCronJobEvent(in)
+}

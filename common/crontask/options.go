@@ -4,7 +4,7 @@ import "time"
 
 type SchedulerOptions struct {
 	Interval          time.Duration
-	LockExpire        time.Duration
+	LockExpire        time.Duration // 默认锁超时；任务配置了正数 LockTimeout 时由任务值覆盖
 	MaxDelay          time.Duration // 最大延迟容忍，超过则跳过执行直接计算下次时间，0=不限制
 	InvalidTimeFilter InvalidTimeFilter
 	Guard             Guard // 扫表前置条件，nil 表示不限制
@@ -26,6 +26,7 @@ func WithInterval(d time.Duration) SchedulerOption {
 	}
 }
 
+// WithLockExpire 设置任务未配置 LockTimeout 时使用的默认锁超时。
 func WithLockExpire(d time.Duration) SchedulerOption {
 	return func(o *SchedulerOptions) {
 		o.LockExpire = d

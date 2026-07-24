@@ -309,14 +309,13 @@ func DeserializeExtra(extra string) *IspTaskFields {
 }
 
 // NewTaskConfig 从 ISP 字段创建 crontask.TaskConfig。
-// RRuleStr 和 NextRun 每次从 ISP 字段重新计算，保证配置更新后使用最新值。
-func NewTaskConfig(existingID string, fields *IspTaskFields) (*crontask.TaskConfig, error) {
+// RRuleStr 和 NextRun 每次从 ISP 字段重新计算；更新已有任务时保留 ID 和 ISP 报文不携带的 LockTimeout。
+func NewTaskConfig(existing *crontask.TaskConfig, fields *IspTaskFields) (*crontask.TaskConfig, error) {
 	nextRun, err := fields.CalcInitNextRun()
 	if err != nil {
 		return nil, err
 	}
-	return &crontask.TaskConfig{
-		ID:       existingID,
+	cfg := &crontask.TaskConfig{
 		TaskCode: fields.TaskCode,
 		TaskName: fields.TaskName,
 		RRuleStr: fields.ToRRuleStr(),
@@ -324,7 +323,12 @@ func NewTaskConfig(existingID string, fields *IspTaskFields) (*crontask.TaskConf
 		Status:   fields.ToStatus(),
 		NextRun:  nextRun,
 		Extra:    json.RawMessage(SerializeExtra(fields)),
-	}, nil
+	}
+	if existing != nil {
+		cfg.ID = existing.ID
+		cfg.LockTimeout = existing.LockTimeout
+	}
+	return cfg, nil
 }
 
 // NewInvalidTimeFilter 创建 crontask 的 InvalidTimeFilter，复用 CalcInitNextRun 的 skipInvalidTime 逻辑。

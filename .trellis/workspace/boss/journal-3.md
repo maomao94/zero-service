@@ -849,3 +849,36 @@ Unified IEC104 server construction around Settings and go-zero ServerConfig, add
 ### Next Steps
 
 - None - task complete
+
+
+## Session 133: crontask 空值调度收尾与全局审阅
+
+**Date**: 2026-07-24
+**Task**: crontask 空值调度收尾与全局审阅
+**Branch**: `master`
+
+### Summary
+
+完成 NextRun/LastRun 零值与 SQL NULL 调度契约，验证 common/crontask 和 ispagent crontask 单测、race、vet 及全仓构建；补充 crontask code-spec，并记录 RunNow、claim CAS、并发配置更新和 MemoryStore 的后续审阅风险。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `715a1233` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

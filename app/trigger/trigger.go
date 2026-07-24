@@ -82,6 +82,8 @@ func main() {
 	serviceGroup.Add(scheduler)
 	// cron
 	serviceGroup.Add(cron.NewCronService(ctx))
+	// RRULE Cron Job 调度器
+	serviceGroup.Add(ctx.CronJobScheduler)
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	serviceGroup.Start()

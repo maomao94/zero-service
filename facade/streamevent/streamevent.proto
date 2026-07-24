@@ -24,6 +24,8 @@ service StreamEvent {
   rpc HandlerPlanTaskEvent (HandlerPlanTaskEventReq) returns (HandlerPlanTaskEventRes);
   // 通知计划任务事件
   rpc NotifyPlanEvent (NotifyPlanEventReq) returns (NotifyPlanEventRes);
+  // 处理 Trigger RRULE Cron Job 到点事件，并返回明确业务回执
+  rpc HandleCronJobEvent (HandleCronJobEventReq) returns (HandleCronJobEventRes);
 }
 
 message ReceiveMQTTMessageReq {
@@ -621,4 +623,60 @@ enum PlanEventType {
 }
 
 message NotifyPlanEventRes {
+}
+
+// HandleCronJobEventReq 是 Trigger 到点调用 Eventstream 的独立周期任务事件。
+message HandleCronJobEventReq {
+  // Trigger 生成的 JobId，对应 cron_job.id。
+  string jobId = 1;
+  // 调用方提供的全局唯一业务任务编码。
+  string taskCode = 2;
+  // 任务名称。
+  string taskName = 3;
+  // 调度优先级，数字越大越优先。
+  int32 priority = 4;
+  // 创建任务时提交的业务参数 JSON。
+  string payload = 5;
+  // Trigger 生成的 CronJobExtra JSON，包含调用方 bizExtra 和规则业务字段。
+  string extra = 6;
+  // 本次执行原计划时间，格式 yyyy-MM-dd HH:mm:ss；自动重试期间保持不变。
+  string scheduledTime = 7;
+  // 任务类型。
+  string type = 8;
+  // 任务分组 ID。
+  string groupId = 9;
+  // 任务描述。
+  string description = 10;
+
+  // 扩展字段 1。
+  string ext1 = 50;
+  // 扩展字段 2。
+  string ext2 = 51;
+  // 扩展字段 3。
+  string ext3 = 52;
+  // 扩展字段 4。
+  string ext4 = 53;
+  // 扩展字段 5。
+  string ext5 = 54;
+
+  // 机构编码。
+  string deptCode = 101;
+}
+
+// CronJobReceiptPb 是 Eventstream 对一次 Cron Job 触发的业务回执。
+enum CronJobReceiptPb {
+  // 未知回执；Trigger 按失败处理并等待 lease 过期后重试。
+  CRON_JOB_RECEIPT_UNKNOWN = 0;
+  // 业务已接受并成功处理；Trigger 完成本次执行并推进 RRULE。
+  CRON_JOB_RECEIPT_SUCCESS = 1;
+  // 业务任务已不存在；Trigger 删除当前 Cron Job，防止后续重复触发。
+  CRON_JOB_RECEIPT_TASK_NOT_FOUND = 2;
+}
+
+// HandleCronJobEventRes 返回 Eventstream 对本次触发的明确处理结果。
+message HandleCronJobEventRes {
+  // 业务回执；UNKNOWN 不会被视为成功。
+  CronJobReceiptPb receipt = 1;
+  // 可选业务说明，仅用于诊断，不参与调度状态判断。
+  string message = 2;
 }

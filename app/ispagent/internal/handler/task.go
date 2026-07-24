@@ -45,28 +45,24 @@ func HandleTaskDispatch(ctx context.Context, msg *isp.Message, store crontask.Ta
 		existing, err := store.GetByCode(ctx, fields.TaskCode)
 		if err != nil && !errors.Is(err, crontask.ErrNotFound) {
 			logx.WithContext(ctx).Errorf("[ispagent] 查询已存任务失败: %v", err)
-			continue
+			return err
 		}
 
-		var existingID string
-		if existing != nil {
-			existingID = existing.ID
-		}
-
-		cfg, err := ctask.NewTaskConfig(existingID, fields)
+		cfg, err := ctask.NewTaskConfig(existing, fields)
 		if err != nil {
 			return fmt.Errorf("构建任务 %s 调度配置失败: %w", fields.TaskCode, err)
 		}
 		if fields.IsEnable == "2" {
-			if existingID != "" {
-				if err := store.Delete(ctx, existingID); err != nil {
+			if cfg.ID != "" {
+				if err := store.Delete(ctx, cfg.ID); err != nil {
 					logx.WithContext(ctx).Errorf("[ispagent] 删除任务失败: %v", err)
+					return err
 				}
 			}
 			continue
 		}
 
-		if existingID == "" {
+		if cfg.ID == "" {
 			if err := store.Insert(ctx, cfg); err != nil {
 				logx.WithContext(ctx).Errorf("[ispagent] 插入任务 %s 失败: %v", fields.TaskCode, err)
 				return err
@@ -128,11 +124,11 @@ const taskControlNotifyDelay = 3 * time.Second
 // HandleTaskControl 处理任务控制指令 (41-1/2/3/4)。
 // Command=1(启动): msg.Code 为 task_code。
 // Command=2/3/4(暂停/继续/停止): msg.Code 为 变电站编码_任务编码_时间。
-func HandleTaskControl(ctx context.Context, msg *isp.Message, store crontask.TaskStore, db *gormx.DB, sendCode, receiveCode string, notify func(ctx context.Context, code string, items []isp.Item)) (string, error) {
-	return handleTaskControl(ctx, msg, store, db, sendCode, receiveCode, notify, taskControlNotifyDelay)
+func HandleTaskControl(ctx context.Context, msg *isp.Message, store crontask.TaskStore, runTask func(context.Context, string) error, db *gormx.DB, notify func(ctx context.Context, code string, items []isp.Item)) (string, error) {
+	return handleTaskControl(ctx, msg, store, runTask, db, notify, taskControlNotifyDelay)
 }
 
-func handleTaskControl(ctx context.Context, msg *isp.Message, store crontask.TaskStore, db *gormx.DB, sendCode, receiveCode string, notify func(ctx context.Context, code string, items []isp.Item), notifyDelay time.Duration) (string, error) {
+func handleTaskControl(ctx context.Context, msg *isp.Message, store crontask.TaskStore, runTask func(context.Context, string) error, db *gormx.DB, notify func(ctx context.Context, code string, items []isp.Item), notifyDelay time.Duration) (string, error) {
 	if msg == nil {
 		return "", fmt.Errorf("任务控制消息为空")
 	}
@@ -154,7 +150,6 @@ func handleTaskControl(ctx context.Context, msg *isp.Message, store crontask.Tas
 	logx.WithContext(ctx).Infof("[ispagent] 任务控制 code=%s command=%s", msg.Code, name)
 
 	var taskPatrolledID, substationCode, taskCode, taskName, planStartTime, startTime string
-	var execAt time.Time
 	if msg.Command == isp.CommandTaskStart {
 		taskCode = msg.Code
 	} else {
@@ -198,14 +193,15 @@ func handleTaskControl(ctx context.Context, msg *isp.Message, store crontask.Tas
 			return "", fmt.Errorf("任务 %s 缺少变电站编码", taskCode)
 		}
 		now := tool.NowStartOfSecond()
-		planStartTime = now.ToDateTimeString()
-		startTime = planStartTime
-		execAt = now.StdTime()
-		taskName = task.TaskName
 		taskPatrolledID = fmt.Sprintf("%s_%s_%s", substationCode, taskCode, now.ToShortDateTimeString())
-		if err := store.UpdateNextRun(ctx, task.ID, task.NextRun, now.StdTime()); err != nil {
-			logx.WithContext(ctx).Errorf("[ispagent] 更新 last_run 失败: %v", err)
+		if runTask == nil {
+			return "", fmt.Errorf("任务调度器未初始化")
 		}
+		runCtx := ctask.WithManualExecution(ctx, taskPatrolledID, now.AddSeconds(10).StdTime())
+		if err := runTask(runCtx, taskCode); err != nil {
+			return "", fmt.Errorf("立即执行任务 %s 失败: %w", taskCode, err)
+		}
+		return taskPatrolledID, nil
 	}
 
 	items := []isp.Item{{
@@ -219,29 +215,10 @@ func handleTaskControl(ctx context.Context, msg *isp.Message, store crontask.Tas
 		"task_estimated_time": "",
 		"description":         "",
 	}}
-	if msg.Command == isp.CommandTaskStart {
-		if err := UpsertPatrolTask(ctx, db, &gormmodel.GormIspPatrolTask{
-			SendCode:          sendCode,
-			ReceiveCode:       receiveCode,
-			Code:              substationCode,
-			TaskPatrolledID:   taskPatrolledID,
-			TaskName:          taskName,
-			TaskCode:          taskCode,
-			TaskState:         state,
-			PlanStartTime:     execAt,
-			StartTime:         execAt,
-			TaskProgress:      "0",
-			TaskEstimatedTime: "",
-			Description:       "",
-		}); err != nil {
-			return "", fmt.Errorf("同步巡视任务表失败: %w", err)
-		}
-	} else {
-		if err := db.WithContext(ctx).Model(&gormmodel.GormIspPatrolTask{}).
-			Where("task_patrolled_id = ?", taskPatrolledID).
-			Update("task_state", state).Error; err != nil {
-			return "", fmt.Errorf("更新巡视任务状态失败: %w", err)
-		}
+	if err := db.WithContext(ctx).Model(&gormmodel.GormIspPatrolTask{}).
+		Where("task_patrolled_id = ?", taskPatrolledID).
+		Update("task_state", state).Error; err != nil {
+		return "", fmt.Errorf("更新巡视任务状态失败: %w", err)
 	}
 	if notify != nil {
 		threading.GoSafe(func() {

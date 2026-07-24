@@ -4149,3 +4149,243 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = NotifyPlanEventResValidationError{}
+
+// Validate checks the field values on HandleCronJobEventReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *HandleCronJobEventReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on HandleCronJobEventReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// HandleCronJobEventReqMultiError, or nil if none found.
+func (m *HandleCronJobEventReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *HandleCronJobEventReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for JobId
+
+	// no validation rules for TaskCode
+
+	// no validation rules for TaskName
+
+	// no validation rules for Priority
+
+	// no validation rules for Payload
+
+	// no validation rules for Extra
+
+	// no validation rules for ScheduledTime
+
+	// no validation rules for Type
+
+	// no validation rules for GroupId
+
+	// no validation rules for Description
+
+	// no validation rules for Ext1
+
+	// no validation rules for Ext2
+
+	// no validation rules for Ext3
+
+	// no validation rules for Ext4
+
+	// no validation rules for Ext5
+
+	// no validation rules for DeptCode
+
+	if len(errors) > 0 {
+		return HandleCronJobEventReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// HandleCronJobEventReqMultiError is an error wrapping multiple validation
+// errors returned by HandleCronJobEventReq.ValidateAll() if the designated
+// constraints aren't met.
+type HandleCronJobEventReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m HandleCronJobEventReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m HandleCronJobEventReqMultiError) AllErrors() []error { return m }
+
+// HandleCronJobEventReqValidationError is the validation error returned by
+// HandleCronJobEventReq.Validate if the designated constraints aren't met.
+type HandleCronJobEventReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e HandleCronJobEventReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e HandleCronJobEventReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e HandleCronJobEventReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e HandleCronJobEventReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e HandleCronJobEventReqValidationError) ErrorName() string {
+	return "HandleCronJobEventReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e HandleCronJobEventReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sHandleCronJobEventReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = HandleCronJobEventReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = HandleCronJobEventReqValidationError{}
+
+// Validate checks the field values on HandleCronJobEventRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *HandleCronJobEventRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on HandleCronJobEventRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// HandleCronJobEventResMultiError, or nil if none found.
+func (m *HandleCronJobEventRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *HandleCronJobEventRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Receipt
+
+	// no validation rules for Message
+
+	if len(errors) > 0 {
+		return HandleCronJobEventResMultiError(errors)
+	}
+
+	return nil
+}
+
+// HandleCronJobEventResMultiError is an error wrapping multiple validation
+// errors returned by HandleCronJobEventRes.ValidateAll() if the designated
+// constraints aren't met.
+type HandleCronJobEventResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m HandleCronJobEventResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m HandleCronJobEventResMultiError) AllErrors() []error { return m }
+
+// HandleCronJobEventResValidationError is the validation error returned by
+// HandleCronJobEventRes.Validate if the designated constraints aren't met.
+type HandleCronJobEventResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e HandleCronJobEventResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e HandleCronJobEventResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e HandleCronJobEventResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e HandleCronJobEventResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e HandleCronJobEventResValidationError) ErrorName() string {
+	return "HandleCronJobEventResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e HandleCronJobEventResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sHandleCronJobEventRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = HandleCronJobEventResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = HandleCronJobEventResValidationError{}

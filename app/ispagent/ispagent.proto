@@ -205,6 +205,7 @@ message TaskConfigItem {
   string interval_end_time = 26;   // 间隔结束时间
   string invalid_start_time = 27;  // 不可用开始时间
   string invalid_end_time = 28;    // 不可用结束时间
+  int64 lock_timeout = 29;         // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值
 }
 
 // ListTaskConfigsRes 任务配置分页响应

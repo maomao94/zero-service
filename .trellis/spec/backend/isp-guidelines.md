@@ -669,13 +669,27 @@ var modelTypeName = map[string]string{...}      // 模型类型名
 
 ### 巡视任务持久化
 
-Cron 触发和 `HandleTaskControl` 都通过 `handler.UpsertPatrolTask` 写入 `GormIspPatrolTask`。使用 `FirstOrCreate` + `Assign` 模式，禁止 `clause.OnConflict`。
+周期触发和 `41-1` 立即执行统一进入 `common/crontask.Scheduler` 的 ISP handler，再通过 `handler.UpsertPatrolTask` 写入 `GormIspPatrolTask`。`HandleTaskControl` 的启动分支只校验任务、生成响应 ID，并调用注入的 `TaskRunFunc`；运行时该闭包绑定 `Scheduler.RunNow`，禁止直接写 `LastRun`、重复持久化巡视任务或重复发送启动通知。
+
+任务 Store 是可选基础设施。`DB.DataSource` 不存在时不创建 Scheduler，`HandleTaskDispatch` 记录并跳过任务持久化后返回成功，其他 ISP 功能继续运行；因此 `101-1` 在该部署形态下是成功的 no-op，不能假定任务已经落库。
+
+立即执行生成的 `task_patrolled_id` 和执行时间必须通过 `crontask.WithManualExecution` 写入 `ctx`。`Scheduler.RunNow` 保留该元数据，`NewCronHandler` 优先使用它，保证控制响应、巡视任务落库和状态上报使用同一个 ID；普通周期触发没有该元数据，继续按计划 `NextRun` 生成 ID。
+
+当前 `task_patrolled_id` 按站点、任务和秒级时间生成，同一任务在同一秒内重复立即启动可能发生 ID 冲突。当前契约基于单实例、低并发假设，暂不增加进程内锁或 Redis 锁；若线上出现冲突或系统需要多实例并发控制，应在立即执行入口增加 Redis 分布式锁，并在该变更中单独定义锁 key、有效期、失败行为和并发测试。
+
+ISP `101-1` 任务下发报文没有 `lock_timeout`。`itemToFields` 和 `validateTaskItem` 不得读取或校验该字段；更新已有任务时必须保留 `TaskConfig.LockTimeout`，不能用报文缺失产生的零值覆盖持久化配置。实际 claim 时由通用层 `ResolveLockTimeout` 保证最终 lease 不小于 `crontask.MinLockTimeout`，无需在 ISP 报文层补造该字段。
+
+配置重建统一使用 `NewTaskConfig(existing *crontask.TaskConfig, fields *IspTaskFields)`。`existing == nil` 表示新增；非 nil 时由构造函数继承 `ID` 和 `LockTimeout`。`HandleTaskDispatch` 只传入查询结果并使用返回的 `cfg.ID` 选择 Insert、Update 或 Delete，禁止在构造完成后补写 `cfg.LockTimeout`。
+
+`41-2/3/4` 暂停、继续和停止指令仍由 `HandleTaskControl` 更新已有巡视任务状态并发送通知。`UpsertPatrolTask` 使用 `FirstOrCreate` + `Assign` 模式，禁止 `clause.OnConflict`。
 
 状态使用 `gormmodel.PatrolTaskStateXxx` 常量，禁止裸字符串 `"1"`/`"2"`。
 
 源文件：
-- `app/ispagent/internal/svc/cron_handler.go` — cron 持久化
-- `app/ispagent/internal/handler/task.go` — 任务控制持久化
+- `app/ispagent/internal/crontask/manual_execution.go` — 立即执行身份元数据
+- `app/ispagent/internal/svc/cron_handler.go` — 周期与立即执行的统一持久化
+- `app/ispagent/internal/handler/task.go` — 立即执行入口与非启动控制状态更新
+- `app/ispagent/internal/ispclient/client.go` — `TaskRunFunc` 注入
 
 ### carbon 时间格式化
 

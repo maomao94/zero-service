@@ -26,6 +26,7 @@ const (
 	StreamEvent_UpSocketMessage_FullMethodName      = "/streamevent.StreamEvent/UpSocketMessage"
 	StreamEvent_HandlerPlanTaskEvent_FullMethodName = "/streamevent.StreamEvent/HandlerPlanTaskEvent"
 	StreamEvent_NotifyPlanEvent_FullMethodName      = "/streamevent.StreamEvent/NotifyPlanEvent"
+	StreamEvent_HandleCronJobEvent_FullMethodName   = "/streamevent.StreamEvent/HandleCronJobEvent"
 )
 
 // StreamEventClient is the client API for StreamEvent service.
@@ -48,6 +49,8 @@ type StreamEventClient interface {
 	HandlerPlanTaskEvent(ctx context.Context, in *HandlerPlanTaskEventReq, opts ...grpc.CallOption) (*HandlerPlanTaskEventRes, error)
 	// 通知计划任务事件
 	NotifyPlanEvent(ctx context.Context, in *NotifyPlanEventReq, opts ...grpc.CallOption) (*NotifyPlanEventRes, error)
+	// 处理 Trigger RRULE Cron Job 到点事件，并返回明确业务回执
+	HandleCronJobEvent(ctx context.Context, in *HandleCronJobEventReq, opts ...grpc.CallOption) (*HandleCronJobEventRes, error)
 }
 
 type streamEventClient struct {
@@ -128,6 +131,16 @@ func (c *streamEventClient) NotifyPlanEvent(ctx context.Context, in *NotifyPlanE
 	return out, nil
 }
 
+func (c *streamEventClient) HandleCronJobEvent(ctx context.Context, in *HandleCronJobEventReq, opts ...grpc.CallOption) (*HandleCronJobEventRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HandleCronJobEventRes)
+	err := c.cc.Invoke(ctx, StreamEvent_HandleCronJobEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StreamEventServer is the server API for StreamEvent service.
 // All implementations must embed UnimplementedStreamEventServer
 // for forward compatibility.
@@ -148,6 +161,8 @@ type StreamEventServer interface {
 	HandlerPlanTaskEvent(context.Context, *HandlerPlanTaskEventReq) (*HandlerPlanTaskEventRes, error)
 	// 通知计划任务事件
 	NotifyPlanEvent(context.Context, *NotifyPlanEventReq) (*NotifyPlanEventRes, error)
+	// 处理 Trigger RRULE Cron Job 到点事件，并返回明确业务回执
+	HandleCronJobEvent(context.Context, *HandleCronJobEventReq) (*HandleCronJobEventRes, error)
 	mustEmbedUnimplementedStreamEventServer()
 }
 
@@ -178,6 +193,9 @@ func (UnimplementedStreamEventServer) HandlerPlanTaskEvent(context.Context, *Han
 }
 func (UnimplementedStreamEventServer) NotifyPlanEvent(context.Context, *NotifyPlanEventReq) (*NotifyPlanEventRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method NotifyPlanEvent not implemented")
+}
+func (UnimplementedStreamEventServer) HandleCronJobEvent(context.Context, *HandleCronJobEventReq) (*HandleCronJobEventRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method HandleCronJobEvent not implemented")
 }
 func (UnimplementedStreamEventServer) mustEmbedUnimplementedStreamEventServer() {}
 func (UnimplementedStreamEventServer) testEmbeddedByValue()                     {}
@@ -326,6 +344,24 @@ func _StreamEvent_NotifyPlanEvent_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StreamEvent_HandleCronJobEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HandleCronJobEventReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StreamEventServer).HandleCronJobEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StreamEvent_HandleCronJobEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StreamEventServer).HandleCronJobEvent(ctx, req.(*HandleCronJobEventReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StreamEvent_ServiceDesc is the grpc.ServiceDesc for StreamEvent service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -360,6 +396,10 @@ var StreamEvent_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "NotifyPlanEvent",
 			Handler:    _StreamEvent_NotifyPlanEvent_Handler,
+		},
+		{
+			MethodName: "HandleCronJobEvent",
+			Handler:    _StreamEvent_HandleCronJobEvent_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

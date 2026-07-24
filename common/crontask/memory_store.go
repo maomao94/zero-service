@@ -26,8 +26,8 @@ func NewMemoryStore() *MemoryStore {
 
 // LockAndFetch 从内存中扫描并锁定一个到期任务。
 // 按 priority DESC 排序，同优先级随机选一条。
-// 选中后立即 nextRun = now+lockDur（时间扩展），version++。
-func (m *MemoryStore) LockAndFetch(ctx context.Context, now time.Time, lockDur time.Duration) (*TaskConfig, error) {
+// 选中后立即 nextRun = now+实际锁超时（时间扩展）。
+func (m *MemoryStore) LockAndFetch(ctx context.Context, now time.Time, defaultLockTimeout time.Duration) (*TaskClaim, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -57,16 +57,32 @@ func (m *MemoryStore) LockAndFetch(ctx context.Context, now time.Time, lockDur t
 	task := candidates[rand.Intn(last+1)]
 
 	originalNextRun := task.NextRun
-	task.NextRun = now.Add(lockDur)
-	task.Version++
+	lockTimeout := ResolveLockTimeout(task.LockTimeout, defaultLockTimeout)
+	task.NextRun = now.Add(lockTimeout).Truncate(time.Second)
 
-	cloned := cloneTaskConfig(task)
-	cloned.NextRun = originalNextRun
-	return cloned, nil
+	claimedTask := *task
+	claimedTask.NextRun = originalNextRun
+	return &TaskClaim{Task: &claimedTask, LockedUntil: task.NextRun}, nil
 }
 
-// UpdateNextRun 更新下次调度时间和上次执行时间。
-func (m *MemoryStore) UpdateNextRun(ctx context.Context, id string, nextRun, lastRun time.Time) error {
+// Complete 使用 LockedUntil token 完成一次周期执行。
+func (m *MemoryStore) Complete(ctx context.Context, id string, expectedLockedUntil, nextRun, lastRun time.Time) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	task, ok := m.tasks[id]
+	if !ok || !task.NextRun.Equal(expectedLockedUntil) {
+		return ErrNotFound
+	}
+	task.NextRun = nextRun
+	if !lastRun.IsZero() {
+		task.LastRun = lastRun
+	}
+	return nil
+}
+
+// UpdateLastRun 只记录手动执行成功时间。
+func (m *MemoryStore) UpdateLastRun(ctx context.Context, id string, lastRun time.Time) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -74,7 +90,6 @@ func (m *MemoryStore) UpdateNextRun(ctx context.Context, id string, nextRun, las
 	if !ok {
 		return ErrNotFound
 	}
-	task.NextRun = nextRun
 	task.LastRun = lastRun
 	return nil
 }
@@ -86,7 +101,8 @@ func (m *MemoryStore) GetByCode(ctx context.Context, taskCode string) (*TaskConf
 
 	for _, t := range m.tasks {
 		if t.TaskCode == taskCode {
-			return cloneTaskConfig(t), nil
+			task := *t
+			return &task, nil
 		}
 	}
 	return nil, ErrNotFound
@@ -96,9 +112,17 @@ func (m *MemoryStore) GetByCode(ctx context.Context, taskCode string) (*TaskConf
 func (m *MemoryStore) Insert(ctx context.Context, cfg *TaskConfig) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if err := ValidateRRule(cfg.RRuleStr); err != nil {
+		return err
+	}
 
 	if cfg.ID == "" {
-		cfg.ID = fmt.Sprintf("auto-%d", time.Now().UnixNano())
+		for {
+			cfg.ID = fmt.Sprintf("auto-%d", time.Now().UnixNano())
+			if _, exists := m.tasks[cfg.ID]; !exists {
+				break
+			}
+		}
 	}
 
 	for _, t := range m.tasks {
@@ -107,7 +131,8 @@ func (m *MemoryStore) Insert(ctx context.Context, cfg *TaskConfig) error {
 		}
 	}
 
-	m.tasks[cfg.ID] = cloneTaskConfig(cfg)
+	task := *cfg
+	m.tasks[cfg.ID] = &task
 	return nil
 }
 
@@ -115,6 +140,9 @@ func (m *MemoryStore) Insert(ctx context.Context, cfg *TaskConfig) error {
 func (m *MemoryStore) Update(ctx context.Context, cfg *TaskConfig) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if err := ValidateRRule(cfg.RRuleStr); err != nil {
+		return err
+	}
 
 	for _, t := range m.tasks {
 		if t.ID != cfg.ID && t.TaskCode == cfg.TaskCode {
@@ -126,12 +154,15 @@ func (m *MemoryStore) Update(ctx context.Context, cfg *TaskConfig) error {
 		return ErrNotFound
 	}
 
-	m.tasks[cfg.ID] = cloneTaskConfig(cfg)
+	lastRun := m.tasks[cfg.ID].LastRun
+	updated := *cfg
+	updated.LastRun = lastRun
+	m.tasks[cfg.ID] = &updated
 	return nil
 }
 
-// UpdateStatus 更新任务启用/禁用状态。
-func (m *MemoryStore) UpdateStatus(ctx context.Context, id string, status TaskStatus) error {
+// Enable 启用任务，并从当前时间重新计算未来 NextRun。
+func (m *MemoryStore) Enable(ctx context.Context, id string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -139,8 +170,28 @@ func (m *MemoryStore) UpdateStatus(ctx context.Context, id string, status TaskSt
 	if !ok {
 		return ErrNotFound
 	}
-	task.Status = status
-	task.Version++
+	if task.Status == StatusEnabled {
+		return nil
+	}
+	nextRun, err := NextAfter(task.RRuleStr, time.Now())
+	if err != nil {
+		return err
+	}
+	task.Status = StatusEnabled
+	task.NextRun = nextRun
+	return nil
+}
+
+// Disable 禁用任务，不撤销已经 claim 的在途执行。
+func (m *MemoryStore) Disable(ctx context.Context, id string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	task, ok := m.tasks[id]
+	if !ok {
+		return ErrUpdate
+	}
+	task.Status = StatusDisabled
 	return nil
 }
 
@@ -156,21 +207,27 @@ func (m *MemoryStore) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-// ListEnabled 获取所有启用状态的任务。
-func (m *MemoryStore) ListEnabled(ctx context.Context) ([]*TaskConfig, error) {
+// List 按条件获取任务；零值条件返回全部任务。
+func (m *MemoryStore) List(ctx context.Context, condition ListCondition) ([]*TaskConfig, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	var result []*TaskConfig
 	for _, t := range m.tasks {
-		if t.Status == StatusEnabled {
-			result = append(result, cloneTaskConfig(t))
+		if len(condition.Statuses) > 0 && !containsStatus(condition.Statuses, t.Status) {
+			continue
 		}
+		task := *t
+		result = append(result, &task)
 	}
 	return result, nil
 }
 
-func cloneTaskConfig(task *TaskConfig) *TaskConfig {
-	cloned := *task
-	return &cloned
+func containsStatus(statuses []TaskStatus, target TaskStatus) bool {
+	for _, status := range statuses {
+		if status == target {
+			return true
+		}
+	}
+	return false
 }

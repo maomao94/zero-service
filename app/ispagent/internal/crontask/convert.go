@@ -14,15 +14,16 @@ import (
 // Extra 中的 ISP 字段会被反序列化并平铺到 GormTaskConfig 对应列。
 func fromTaskConfig(cfg *crontask.TaskConfig) *gormmodel.GormTaskConfig {
 	g := &gormmodel.GormTaskConfig{
-		TaskCode: cfg.TaskCode,
-		TaskName: cfg.TaskName,
-		RRuleStr: cfg.RRuleStr,
-		Priority: cfg.Priority,
-		Payload:  string(cfg.Payload),
-		Extra:    string(cfg.Extra),
-		Status:   int(cfg.Status),
-		NextRun:  toNullTime(cfg.NextRun),
-		LastRun:  toNullTime(cfg.LastRun),
+		TaskCode:    cfg.TaskCode,
+		TaskName:    cfg.TaskName,
+		RRuleStr:    cfg.RRuleStr,
+		Priority:    cfg.Priority,
+		LockTimeout: cfg.LockTimeout.Milliseconds(),
+		Payload:     string(cfg.Payload),
+		Extra:       string(cfg.Extra),
+		Status:      int(cfg.Status),
+		NextRun:     toNullTime(cfg.NextRun),
+		LastRun:     toNullTime(cfg.LastRun),
 	}
 	g.Id = cfg.ID
 
@@ -37,13 +38,14 @@ func fromTaskConfig(cfg *crontask.TaskConfig) *gormmodel.GormTaskConfig {
 // ISP 字段会被序列化到 TaskConfig.Extra JSON 中。
 func toTaskConfig(g *gormmodel.GormTaskConfig) *crontask.TaskConfig {
 	cfg := &crontask.TaskConfig{
-		ID:       g.Id,
-		TaskCode: g.TaskCode,
-		TaskName: g.TaskName,
-		RRuleStr: g.RRuleStr,
-		Priority: g.Priority,
-		Payload:  json.RawMessage(g.Payload),
-		Status:   crontask.TaskStatus(g.Status),
+		ID:          g.Id,
+		TaskCode:    g.TaskCode,
+		TaskName:    g.TaskName,
+		RRuleStr:    g.RRuleStr,
+		Priority:    g.Priority,
+		LockTimeout: time.Duration(g.LockTimeout) * time.Millisecond,
+		Payload:     json.RawMessage(g.Payload),
+		Status:      crontask.TaskStatus(g.Status),
 	}
 	if g.NextRun.Valid {
 		cfg.NextRun = g.NextRun.Time

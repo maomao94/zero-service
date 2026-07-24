@@ -47,6 +47,10 @@ const (
 	TriggerRpc_SaveHolidaySource_FullMethodName       = "/trigger.TriggerRpc/SaveHolidaySource"
 	TriggerRpc_SetHolidaySourceEnabled_FullMethodName = "/trigger.TriggerRpc/SetHolidaySourceEnabled"
 	TriggerRpc_CreatePlanTask_FullMethodName          = "/trigger.TriggerRpc/CreatePlanTask"
+	TriggerRpc_CreateCronJob_FullMethodName           = "/trigger.TriggerRpc/CreateCronJob"
+	TriggerRpc_EnableCronJob_FullMethodName           = "/trigger.TriggerRpc/EnableCronJob"
+	TriggerRpc_DisableCronJob_FullMethodName          = "/trigger.TriggerRpc/DisableCronJob"
+	TriggerRpc_DeleteCronJob_FullMethodName           = "/trigger.TriggerRpc/DeleteCronJob"
 	TriggerRpc_PausePlan_FullMethodName               = "/trigger.TriggerRpc/PausePlan"
 	TriggerRpc_TerminatePlan_FullMethodName           = "/trigger.TriggerRpc/TerminatePlan"
 	TriggerRpc_ResumePlan_FullMethodName              = "/trigger.TriggerRpc/ResumePlan"
@@ -132,6 +136,14 @@ type TriggerRpcClient interface {
 	SetHolidaySourceEnabled(ctx context.Context, in *SetHolidaySourceEnabledReq, opts ...grpc.CallOption) (*SetHolidaySourceEnabledRes, error)
 	// 创建计划任务
 	CreatePlanTask(ctx context.Context, in *CreatePlanTaskReq, opts ...grpc.CallOption) (*CreatePlanTaskRes, error)
+	// 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
+	CreateCronJob(ctx context.Context, in *CreateCronJobReq, opts ...grpc.CallOption) (*CreateCronJobRes, error)
+	// 启用 Cron Job，并从当前时间重新计算未来执行时间
+	EnableCronJob(ctx context.Context, in *EnableCronJobReq, opts ...grpc.CallOption) (*EnableCronJobRes, error)
+	// 禁用 Cron Job，禁用后调度器不再扫描该任务
+	DisableCronJob(ctx context.Context, in *DisableCronJobReq, opts ...grpc.CallOption) (*DisableCronJobRes, error)
+	// 软删除 Cron Job，重复删除按幂等成功处理
+	DeleteCronJob(ctx context.Context, in *DeleteCronJobReq, opts ...grpc.CallOption) (*DeleteCronJobRes, error)
 	// 暂停计划
 	PausePlan(ctx context.Context, in *PausePlanReq, opts ...grpc.CallOption) (*PausePlanRes, error)
 	// 终止计划
@@ -468,6 +480,46 @@ func (c *triggerRpcClient) CreatePlanTask(ctx context.Context, in *CreatePlanTas
 	return out, nil
 }
 
+func (c *triggerRpcClient) CreateCronJob(ctx context.Context, in *CreateCronJobReq, opts ...grpc.CallOption) (*CreateCronJobRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateCronJobRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_CreateCronJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) EnableCronJob(ctx context.Context, in *EnableCronJobReq, opts ...grpc.CallOption) (*EnableCronJobRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnableCronJobRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_EnableCronJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) DisableCronJob(ctx context.Context, in *DisableCronJobReq, opts ...grpc.CallOption) (*DisableCronJobRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DisableCronJobRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_DisableCronJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) DeleteCronJob(ctx context.Context, in *DeleteCronJobReq, opts ...grpc.CallOption) (*DeleteCronJobRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteCronJobRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_DeleteCronJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *triggerRpcClient) PausePlan(ctx context.Context, in *PausePlanReq, opts ...grpc.CallOption) (*PausePlanRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PausePlanRes)
@@ -758,6 +810,14 @@ type TriggerRpcServer interface {
 	SetHolidaySourceEnabled(context.Context, *SetHolidaySourceEnabledReq) (*SetHolidaySourceEnabledRes, error)
 	// 创建计划任务
 	CreatePlanTask(context.Context, *CreatePlanTaskReq) (*CreatePlanTaskRes, error)
+	// 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
+	CreateCronJob(context.Context, *CreateCronJobReq) (*CreateCronJobRes, error)
+	// 启用 Cron Job，并从当前时间重新计算未来执行时间
+	EnableCronJob(context.Context, *EnableCronJobReq) (*EnableCronJobRes, error)
+	// 禁用 Cron Job，禁用后调度器不再扫描该任务
+	DisableCronJob(context.Context, *DisableCronJobReq) (*DisableCronJobRes, error)
+	// 软删除 Cron Job，重复删除按幂等成功处理
+	DeleteCronJob(context.Context, *DeleteCronJobReq) (*DeleteCronJobRes, error)
 	// 暂停计划
 	PausePlan(context.Context, *PausePlanReq) (*PausePlanRes, error)
 	// 终止计划
@@ -897,6 +957,18 @@ func (UnimplementedTriggerRpcServer) SetHolidaySourceEnabled(context.Context, *S
 }
 func (UnimplementedTriggerRpcServer) CreatePlanTask(context.Context, *CreatePlanTaskReq) (*CreatePlanTaskRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreatePlanTask not implemented")
+}
+func (UnimplementedTriggerRpcServer) CreateCronJob(context.Context, *CreateCronJobReq) (*CreateCronJobRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateCronJob not implemented")
+}
+func (UnimplementedTriggerRpcServer) EnableCronJob(context.Context, *EnableCronJobReq) (*EnableCronJobRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method EnableCronJob not implemented")
+}
+func (UnimplementedTriggerRpcServer) DisableCronJob(context.Context, *DisableCronJobReq) (*DisableCronJobRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method DisableCronJob not implemented")
+}
+func (UnimplementedTriggerRpcServer) DeleteCronJob(context.Context, *DeleteCronJobReq) (*DeleteCronJobRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteCronJob not implemented")
 }
 func (UnimplementedTriggerRpcServer) PausePlan(context.Context, *PausePlanReq) (*PausePlanRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method PausePlan not implemented")
@@ -1492,6 +1564,78 @@ func _TriggerRpc_CreatePlanTask_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TriggerRpc_CreateCronJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCronJobReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).CreateCronJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_CreateCronJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).CreateCronJob(ctx, req.(*CreateCronJobReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_EnableCronJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnableCronJobReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).EnableCronJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_EnableCronJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).EnableCronJob(ctx, req.(*EnableCronJobReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_DisableCronJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DisableCronJobReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).DisableCronJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_DisableCronJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).DisableCronJob(ctx, req.(*DisableCronJobReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_DeleteCronJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteCronJobReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).DeleteCronJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_DeleteCronJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).DeleteCronJob(ctx, req.(*DeleteCronJobReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TriggerRpc_PausePlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PausePlanReq)
 	if err := dec(in); err != nil {
@@ -2024,6 +2168,22 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreatePlanTask",
 			Handler:    _TriggerRpc_CreatePlanTask_Handler,
+		},
+		{
+			MethodName: "CreateCronJob",
+			Handler:    _TriggerRpc_CreateCronJob_Handler,
+		},
+		{
+			MethodName: "EnableCronJob",
+			Handler:    _TriggerRpc_EnableCronJob_Handler,
+		},
+		{
+			MethodName: "DisableCronJob",
+			Handler:    _TriggerRpc_DisableCronJob_Handler,
+		},
+		{
+			MethodName: "DeleteCronJob",
+			Handler:    _TriggerRpc_DeleteCronJob_Handler,
 		},
 		{
 			MethodName: "PausePlan",

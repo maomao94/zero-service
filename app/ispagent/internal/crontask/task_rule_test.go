@@ -390,7 +390,7 @@ func TestNewTaskConfigExpiredScheduleHasZeroNextRun(t *testing.T) {
 		IsEnable:       "0",
 	}
 
-	cfg, err := NewTaskConfig("", fields)
+	cfg, err := NewTaskConfig(nil, fields)
 	if err != nil {
 		t.Fatalf("NewTaskConfig: %v", err)
 	}
@@ -403,7 +403,7 @@ func TestNewTaskConfigExpiredScheduleHasZeroNextRun(t *testing.T) {
 }
 
 func TestNewTaskConfigReturnsScheduleError(t *testing.T) {
-	_, err := NewTaskConfig("", &IspTaskFields{TaskCode: "invalid"})
+	_, err := NewTaskConfig(nil, &IspTaskFields{TaskCode: "invalid"})
 	if err == nil {
 		t.Fatal("expected invalid task type error")
 	}

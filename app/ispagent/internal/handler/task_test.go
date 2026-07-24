@@ -40,7 +40,7 @@ func TestHandleTaskControlRejectsItems(t *testing.T) {
 			"plan_start_time":   "2025-12-16 10:00:00",
 			"start_time":        "2025-12-16 10:00:00",
 		}},
-	}, store, nil, "send", "receive", nil)
+	}, store, nil, nil, nil)
 	if err == nil {
 		t.Fatal("expected item error")
 	}
@@ -53,7 +53,7 @@ func TestHandleTaskControlReturnsTaskNotFound(t *testing.T) {
 	_, err := HandleTaskControl(context.Background(), &isp.Message{
 		Command: isp.CommandTaskStart,
 		Code:    "missing-task",
-	}, crontask.NewMemoryStore(), nil, "send", "receive", nil)
+	}, crontask.NewMemoryStore(), nil, nil, nil)
 	if err == nil {
 		t.Fatal("expected missing task error")
 	}
@@ -70,7 +70,7 @@ func TestHandleTaskControlRejectsMultipleItems(t *testing.T) {
 			{"plan_start_time": "2025-12-16 10:00:00"},
 			{"plan_start_time": "2025-12-16 10:00:00"},
 		},
-	}, crontask.NewMemoryStore(), nil, "send", "receive", nil)
+	}, crontask.NewMemoryStore(), nil, nil, nil)
 	if err == nil {
 		t.Fatal("expected multiple items error")
 	}
@@ -118,6 +118,40 @@ func TestHandleTaskDispatchDisableMissingTaskInsertsDisabledTask(t *testing.T) {
 	}
 }
 
+func TestHandleTaskDispatchPreservesExistingLockTimeout(t *testing.T) {
+	ctx := context.Background()
+	store := crontask.NewMemoryStore()
+	if err := store.Insert(ctx, &crontask.TaskConfig{
+		ID:          "existing-task",
+		TaskCode:    "task-lock-timeout",
+		TaskName:    "旧任务名称",
+		LockTimeout: 90 * time.Second,
+		Status:      crontask.StatusEnabled,
+		NextRun:     time.Date(2026, 12, 15, 10, 0, 0, 0, time.Local),
+	}); err != nil {
+		t.Fatalf("insert existing task: %v", err)
+	}
+	err := HandleTaskDispatch(ctx, &isp.Message{
+		Code: "SUB001",
+		Items: []isp.Item{{
+			"task_code":        "task-lock-timeout",
+			"task_name":        "锁超时测试",
+			"fixed_start_time": "2026-12-16 10:00:00",
+			"isenable":         "0",
+		}},
+	}, store)
+	if err != nil {
+		t.Fatalf("HandleTaskDispatch: %v", err)
+	}
+	task, err := store.GetByCode(ctx, "task-lock-timeout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if task.LockTimeout != 90*time.Second {
+		t.Fatalf("lock timeout = %v, want preserved %v", task.LockTimeout, 90*time.Second)
+	}
+}
+
 func TestHandleTaskControlParsesSubstationFromMessageCode(t *testing.T) {
 	ctx := context.Background()
 	store := crontask.NewMemoryStore()
@@ -146,7 +180,7 @@ func TestHandleTaskControlParsesSubstationFromMessageCode(t *testing.T) {
 	_, err := handleTaskControl(ctx, &isp.Message{
 		Command: isp.CommandTaskPause,
 		Code:    "SUB001_TASK001_20251216100000",
-	}, store, db, "send", "receive", func(ctx context.Context, code string, items []isp.Item) {
+	}, store, nil, db, func(ctx context.Context, code string, items []isp.Item) {
 		notified <- taskControlNotification{code: code, items: items}
 	}, 0)
 	if err != nil {
@@ -185,36 +219,81 @@ func TestHandleTaskControlParsesSubstationFromMessageCode(t *testing.T) {
 	}
 }
 
-func TestHandleTaskControlStartStoresSecondPrecisionTimes(t *testing.T) {
+func TestHandleTaskControlStartRunsTaskThroughScheduler(t *testing.T) {
 	ctx := context.Background()
 	store := crontask.NewMemoryStore()
-	db := newTaskControlTestDB(t)
 	fields := &ctask.IspTaskFields{SubstationCode: "SUB001", TaskCode: "TASK001"}
+	nextRun := time.Date(2025, 12, 16, 10, 0, 0, 0, time.Local)
 	if err := store.Insert(ctx, &crontask.TaskConfig{
+		ID:       "task-id",
 		TaskCode: "TASK001",
 		TaskName: "测试任务",
 		Extra:    []byte(ctask.SerializeExtra(fields)),
-		NextRun:  time.Date(2025, 12, 16, 10, 0, 0, 0, time.Local),
+		NextRun:  nextRun,
 	}); err != nil {
 		t.Fatalf("insert task: %v", err)
 	}
+	type manualExecution struct {
+		task            *crontask.TaskConfig
+		taskPatrolledID string
+		runAt           time.Time
+		ok              bool
+	}
+	executed := make(chan manualExecution, 1)
+	scheduler := crontask.NewScheduler(store, func(ctx context.Context, task *crontask.TaskConfig) error {
+		taskPatrolledID, runAt, ok := ctask.ManualExecutionFromContext(ctx)
+		executed <- manualExecution{task: task, taskPatrolledID: taskPatrolledID, runAt: runAt, ok: ok}
+		return nil
+	})
 
 	taskPatrolledID, err := HandleTaskControl(ctx, &isp.Message{
 		Command: isp.CommandTaskStart,
 		Code:    "TASK001",
-	}, store, db, "send", "receive", nil)
+	}, store, scheduler.RunNow, nil, nil)
 	if err != nil {
 		t.Fatalf("HandleTaskControl: %v", err)
 	}
-
-	var created gormmodel.GormIspPatrolTask
-	if err := db.Select("plan_start_time", "start_time").
-		Where("task_patrolled_id = ?", taskPatrolledID).
-		First(&created).Error; err != nil {
-		t.Fatalf("query created patrol task: %v", err)
+	if !strings.HasPrefix(taskPatrolledID, "SUB001_TASK001_") {
+		t.Fatalf("unexpected task patrolled id: %q", taskPatrolledID)
 	}
-	if created.PlanStartTime.Nanosecond() != 0 || created.StartTime.Nanosecond() != 0 {
-		t.Fatalf("expected second precision times, got plan=%v start=%v", created.PlanStartTime, created.StartTime)
+
+	select {
+	case execution := <-executed:
+		if execution.task.TaskCode != "TASK001" {
+			t.Fatalf("expected TASK001 to execute, got %q", execution.task.TaskCode)
+		}
+		if execution.task.NextRun.IsZero() || execution.task.NextRun.Nanosecond() != 0 {
+			t.Fatalf("expected current second execution time, got %v", execution.task.NextRun)
+		}
+		if !execution.ok {
+			t.Fatal("expected manual execution metadata")
+		}
+		if execution.taskPatrolledID != taskPatrolledID {
+			t.Fatalf("handler task patrolled id = %q, response id = %q", execution.taskPatrolledID, taskPatrolledID)
+		}
+		if execution.runAt.IsZero() || execution.runAt.Nanosecond() != 0 {
+			t.Fatalf("unexpected manual execution time: %v", execution.runAt)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for RunNow handler")
+	}
+
+	deadline := time.Now().Add(time.Second)
+	for {
+		stored, err := store.GetByCode(ctx, "TASK001")
+		if err != nil {
+			t.Fatalf("get task after RunNow: %v", err)
+		}
+		if !stored.NextRun.Equal(nextRun) {
+			t.Fatalf("RunNow changed periodic next run: %v", stored.NextRun)
+		}
+		if !stored.LastRun.IsZero() {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("timeout waiting for RunNow to update last run")
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 
@@ -242,7 +321,7 @@ func TestHandleTaskControlTreatsNilTaskAsNotFound(t *testing.T) {
 	_, err := HandleTaskControl(context.Background(), &isp.Message{
 		Command: isp.CommandTaskStart,
 		Code:    "nil-task",
-	}, nilTaskStore{}, nil, "send", "receive", nil)
+	}, nilTaskStore{}, nil, nil, nil)
 	if err == nil {
 		t.Fatal("expected nil task error")
 	}
@@ -253,11 +332,15 @@ func TestHandleTaskControlTreatsNilTaskAsNotFound(t *testing.T) {
 
 type nilTaskStore struct{}
 
-func (nilTaskStore) LockAndFetch(context.Context, time.Time, time.Duration) (*crontask.TaskConfig, error) {
+func (nilTaskStore) LockAndFetch(context.Context, time.Time, time.Duration) (*crontask.TaskClaim, error) {
 	return nil, crontask.ErrNotFound
 }
 
-func (nilTaskStore) UpdateNextRun(context.Context, string, time.Time, time.Time) error {
+func (nilTaskStore) Complete(context.Context, string, time.Time, time.Time, time.Time) error {
+	return crontask.ErrNotFound
+}
+
+func (nilTaskStore) UpdateLastRun(context.Context, string, time.Time) error {
 	return crontask.ErrNotFound
 }
 
@@ -273,7 +356,11 @@ func (nilTaskStore) Update(context.Context, *crontask.TaskConfig) error {
 	return nil
 }
 
-func (nilTaskStore) UpdateStatus(context.Context, string, crontask.TaskStatus) error {
+func (nilTaskStore) Enable(context.Context, string) error {
+	return nil
+}
+
+func (nilTaskStore) Disable(context.Context, string) error {
 	return nil
 }
 
@@ -281,6 +368,6 @@ func (nilTaskStore) Delete(context.Context, string) error {
 	return nil
 }
 
-func (nilTaskStore) ListEnabled(context.Context) ([]*crontask.TaskConfig, error) {
+func (nilTaskStore) List(context.Context, crontask.ListCondition) ([]*crontask.TaskConfig, error) {
 	return nil, nil
 }

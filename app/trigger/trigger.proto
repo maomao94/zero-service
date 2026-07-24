@@ -68,6 +68,14 @@ service TriggerRpc {
   rpc SetHolidaySourceEnabled(SetHolidaySourceEnabledReq) returns (SetHolidaySourceEnabledRes);
   // 创建计划任务
   rpc CreatePlanTask(CreatePlanTaskReq) returns (CreatePlanTaskRes);
+  // 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
+  rpc CreateCronJob(CreateCronJobReq) returns (CreateCronJobRes);
+  // 启用 Cron Job，并从当前时间重新计算未来执行时间
+  rpc EnableCronJob(EnableCronJobReq) returns (EnableCronJobRes);
+  // 禁用 Cron Job，禁用后调度器不再扫描该任务
+  rpc DisableCronJob(DisableCronJobReq) returns (DisableCronJobRes);
+  // 软删除 Cron Job，重复删除按幂等成功处理
+  rpc DeleteCronJob(DeleteCronJobReq) returns (DeleteCronJobRes);
   // 暂停计划
   rpc PausePlan(PausePlanReq) returns (PausePlanRes);
   // 终止计划
@@ -772,6 +780,91 @@ message CreatePlanTaskRes {
   int64 batchCnt = 3;
   // 执行计划数
   int64 execCnt = 4;
+}
+
+// CreateCronJobReq 是独立 RRULE 周期任务创建请求。
+// Trigger 根据业务规则生成 RRuleStr、JobId 和首次 NextRun，不预拆分批次或执行项。
+message CreateCronJobReq {
+  // 全局唯一业务任务编码；与 Trigger 生成的 JobId 是两个不同标识。
+  string taskCode = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  // 任务名称。
+  string taskName = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  // 任务类型。
+  string type = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  // 任务分组 ID，用于业务侧分组管理。
+  string groupId = 4 [(validate.rules).string = {max_len: 64}];
+  // 任务描述。
+  string description = 5 [(validate.rules).string = {max_len: 200}];
+  // 规则生效开始时间；不传时默认当前年份第一天，格式 yyyy-MM-dd HH:mm:ss。
+  string startTime = 6;
+  // 规则生效结束时间；不传时默认开始时间所在年份最后一天，格式 yyyy-MM-dd HH:mm:ss。
+  string endTime = 7;
+  // 业务周期规则，由 Trigger 编译为 RFC 5545 RRULE。
+  PlanRulePb rule = 8 [(validate.rules).message = {required: true}];
+  // 排除日期列表，格式 yyyy-MM-dd；这些日期的计划时间不会触发。
+  repeated string excludeDates = 9 [(validate.rules).repeated = {items: {string: {len: 10}}}];
+  // 调度优先级，数字越大越优先。
+  int32 priority = 10 [(validate.rules).int32 = {gte: 0}];
+  // 执行业务参数 JSON；为空表示没有业务参数。
+  string payload = 11;
+  // 调用方业务扩展 JSON；Trigger 将其放入 CronJobExtra.bizExtra。
+  string extra = 12;
+  // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
+  int64 lockTimeout = 13 [(validate.rules).int64 = {gte: 0}];
+  // 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
+  bool skipTimeFilter = 14;
+
+  // 扩展字段 1。
+  string ext1 = 50;
+  // 扩展字段 2。
+  string ext2 = 51;
+  // 扩展字段 3。
+  string ext3 = 52;
+  // 扩展字段 4。
+  string ext4 = 53;
+  // 扩展字段 5。
+  string ext5 = 54;
+
+  // 机构编码。
+  string deptCode = 101 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+// CreateCronJobRes 返回 Trigger 创建的周期任务标识和首次执行时间。
+message CreateCronJobRes {
+  // Trigger 生成的 JobId，对应 cron_job.id。
+  string jobId = 1;
+  // 首次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；规则已耗尽时为空字符串。
+  string nextRun = 2;
+}
+
+// EnableCronJobReq 启用指定 Cron Job。
+message EnableCronJobReq {
+  // Trigger 生成的 JobId。
+  string jobId = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+// EnableCronJobRes 表示启用操作已完成。
+message EnableCronJobRes {
+}
+
+// DisableCronJobReq 禁用指定 Cron Job。
+message DisableCronJobReq {
+  // Trigger 生成的 JobId。
+  string jobId = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+// DisableCronJobRes 表示禁用操作已完成。
+message DisableCronJobRes {
+}
+
+// DeleteCronJobReq 软删除指定 Cron Job。
+message DeleteCronJobReq {
+  // Trigger 生成的 JobId。
+  string jobId = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+// DeleteCronJobRes 表示删除操作已完成；任务原本不存在时也返回成功。
+message DeleteCronJobRes {
 }
 
 message PausePlanReq {

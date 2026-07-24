@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"zero-service/app/trigger/internal/cronjob"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
@@ -94,75 +95,5 @@ func (l *CalcPlanTaskDateLogic) CalcPlanTaskDate(in *trigger.CalcPlanTaskDateReq
 }
 
 func (l *CalcPlanTaskDateLogic) ConvertToRRuleOption(planRule *trigger.PlanRulePb, startTime, endTime *carbon.Carbon) (rrule.ROption, error) {
-	// 设置默认的rrule选项
-	opts := rrule.ROption{
-		Freq:     rrule.Frequency(planRule.Freq),
-		Dtstart:  startTime.StdTime(),
-		Until:    endTime.StdTime(),
-		Bysecond: []int{0}, // 默认秒为0
-	}
-
-	// 设置小时
-	if len(planRule.Hours) > 0 {
-		byhour := make([]int, len(planRule.Hours))
-		for i, h := range planRule.Hours {
-			byhour[i] = int(h)
-		}
-		opts.Byhour = byhour
-	}
-
-	// 设置分钟
-	if len(planRule.Minutes) > 0 {
-		byminute := make([]int, len(planRule.Minutes))
-		for i, m := range planRule.Minutes {
-			byminute[i] = int(m)
-		}
-		opts.Byminute = byminute
-	}
-
-	// 设置月份
-	if len(planRule.Month) > 0 {
-		bymonth := make([]int, len(planRule.Month))
-		for i, m := range planRule.Month {
-			bymonth[i] = int(m)
-		}
-		opts.Bymonth = bymonth
-	}
-
-	// 设置月中的天数
-	if len(planRule.Day) > 0 {
-		bymonthday := make([]int, len(planRule.Day))
-		for i, d := range planRule.Day {
-			bymonthday[i] = int(d)
-		}
-		opts.Bymonthday = bymonthday
-	}
-
-	// 设置星期几
-	if len(planRule.Week) > 0 {
-		byweekday := make([]rrule.Weekday, len(planRule.Week))
-		for i, w := range planRule.Week {
-			switch w {
-			case 1:
-				byweekday[i] = rrule.MO
-			case 2:
-				byweekday[i] = rrule.TU
-			case 3:
-				byweekday[i] = rrule.WE
-			case 4:
-				byweekday[i] = rrule.TH
-			case 5:
-				byweekday[i] = rrule.FR
-			case 6:
-				byweekday[i] = rrule.SA
-			case 7:
-				byweekday[i] = rrule.SU
-			default:
-				return rrule.ROption{}, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "星期参数不合法: %d", w)
-			}
-		}
-		opts.Byweekday = byweekday
-	}
-
-	return opts, nil
+	return cronjob.ConvertToRRuleOption(planRule, startTime.StdTime(), endTime.StdTime())
 }

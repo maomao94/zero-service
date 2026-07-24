@@ -2,7 +2,9 @@ package crontask
 
 import (
 	"context"
+	"errors"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -43,24 +45,37 @@ func TestMemoryStoreGetByCodeNotFound(t *testing.T) {
 	}
 }
 
-func TestMemoryStoreListEnabled(t *testing.T) {
+func TestMemoryStoreList(t *testing.T) {
 	store := NewMemoryStore()
 	ctx := context.Background()
 
-	store.Insert(ctx, &TaskConfig{TaskCode: "a", Status: StatusEnabled})
-	store.Insert(ctx, &TaskConfig{TaskCode: "b", Status: StatusDisabled})
-	store.Insert(ctx, &TaskConfig{TaskCode: "c", Status: StatusEnabled})
+	for _, task := range []*TaskConfig{
+		{TaskCode: "a", Status: StatusEnabled},
+		{TaskCode: "b", Status: StatusDisabled},
+		{TaskCode: "c", Status: StatusEnabled},
+	} {
+		if err := store.Insert(ctx, task); err != nil {
+			t.Fatal(err)
+		}
+	}
 
-	list, err := store.ListEnabled(ctx)
+	list, err := store.List(ctx, ListCondition{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(list) != 3 {
+		t.Fatalf("expected all 3 tasks, got %d", len(list))
+	}
+	list, err = store.List(ctx, ListCondition{Statuses: []TaskStatus{StatusEnabled}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(list) != 2 {
-		t.Fatalf("expected 2 enabled, got %d", len(list))
+		t.Fatalf("expected 2 enabled tasks, got %d", len(list))
 	}
 }
 
-func TestMemoryStoreUpdateStatus(t *testing.T) {
+func TestMemoryStoreEnableDisable(t *testing.T) {
 	store := NewMemoryStore()
 	ctx := context.Background()
 
@@ -69,13 +84,23 @@ func TestMemoryStoreUpdateStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := store.UpdateStatus(ctx, cfg.ID, StatusDisabled); err != nil {
+	if err := store.Disable(ctx, cfg.ID); err != nil {
 		t.Fatal(err)
 	}
 
 	got, _ := store.GetByCode(ctx, "t")
 	if got.Status != StatusDisabled {
 		t.Fatalf("expected disabled, got %v", got.Status)
+	}
+	if err := store.Enable(ctx, cfg.ID); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = store.GetByCode(ctx, "t")
+	if got.Status != StatusEnabled {
+		t.Fatalf("expected enabled, got %v", got.Status)
+	}
+	if err := store.Disable(ctx, "missing"); !errors.Is(err, ErrUpdate) {
+		t.Fatalf("disable missing task = %v, want ErrUpdate", err)
 	}
 }
 
@@ -89,10 +114,11 @@ func TestMemoryStoreLockAndFetch(t *testing.T) {
 	store.Insert(ctx, t1)
 	store.Insert(ctx, t2)
 
-	got, err := store.LockAndFetch(ctx, now, 30*time.Second)
+	claim, err := store.LockAndFetch(ctx, now, 30*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
+	got := claim.Task
 
 	// higher priority (t2, priority=2) should be fetched
 	if got.TaskCode != "t2" {
@@ -110,8 +136,84 @@ func TestMemoryStoreLockAndFetch(t *testing.T) {
 	if !stored.NextRun.After(now) {
 		t.Fatalf("expected nextRun extended in store, got %v", stored.NextRun)
 	}
-	if stored.Version != 1 {
-		t.Fatalf("expected version 1, got %d", stored.Version)
+	if !stored.NextRun.Equal(claim.LockedUntil) {
+		t.Fatalf("stored next run = %v, want locked until %v", stored.NextRun, claim.LockedUntil)
+	}
+	if claim.LockedUntil.Nanosecond() != 0 {
+		t.Fatalf("locked until must use database-safe second precision: %v", claim.LockedUntil)
+	}
+}
+
+func TestMemoryStoreLockAndFetchUsesTaskLockTimeout(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	now := time.Date(2026, 7, 24, 10, 0, 0, 0, time.Local)
+	configuredLockTimeout := 2 * time.Minute
+
+	if err := store.Insert(ctx, &TaskConfig{
+		TaskCode:    "task-lock-timeout",
+		Status:      StatusEnabled,
+		NextRun:     now.Add(-time.Minute),
+		LockTimeout: configuredLockTimeout,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	claim, err := store.LockAndFetch(ctx, now, 30*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantLockedUntil := now.Add(configuredLockTimeout)
+	if !claim.LockedUntil.Equal(wantLockedUntil) {
+		t.Fatalf("locked until = %v, want %v", claim.LockedUntil, wantLockedUntil)
+	}
+	if claim.Task.LockTimeout != configuredLockTimeout {
+		t.Fatalf("task lock timeout = %v, want %v", claim.Task.LockTimeout, configuredLockTimeout)
+	}
+}
+
+func TestResolveLockTimeout(t *testing.T) {
+	defaultLockTimeout := 5 * time.Minute
+	if got := ResolveLockTimeout(0, defaultLockTimeout); got != defaultLockTimeout {
+		t.Fatalf("zero task lock timeout = %v, want default %v", got, defaultLockTimeout)
+	}
+	if got := ResolveLockTimeout(-time.Second, defaultLockTimeout); got != defaultLockTimeout {
+		t.Fatalf("negative task lock timeout = %v, want default %v", got, defaultLockTimeout)
+	}
+	if got := ResolveLockTimeout(time.Minute, defaultLockTimeout); got != time.Minute {
+		t.Fatalf("configured task lock timeout = %v, want %v", got, time.Minute)
+	}
+	if got := ResolveLockTimeout(time.Second, defaultLockTimeout); got != MinLockTimeout {
+		t.Fatalf("short task lock timeout = %v, want minimum %v", got, MinLockTimeout)
+	}
+	if got := ResolveLockTimeout(0, time.Second); got != MinLockTimeout {
+		t.Fatalf("short default lock timeout = %v, want minimum %v", got, MinLockTimeout)
+	}
+}
+
+func TestMemoryStoreLockAndFetchClampsShortLockTimeout(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	now := time.Date(2026, 7, 24, 10, 0, 0, int(900*time.Millisecond), time.Local)
+	if err := store.Insert(ctx, &TaskConfig{
+		TaskCode:    "short-lock-timeout",
+		Status:      StatusEnabled,
+		NextRun:     now.Add(-time.Minute),
+		LockTimeout: time.Second,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	claim, err := store.LockAndFetch(ctx, now, time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantLockedUntil := now.Add(MinLockTimeout).Truncate(time.Second)
+	if !claim.LockedUntil.Equal(wantLockedUntil) {
+		t.Fatalf("locked until = %v, want %v", claim.LockedUntil, wantLockedUntil)
+	}
+	if _, err := store.LockAndFetch(ctx, now, time.Second); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("short lock timeout allowed immediate reclaim: %v", err)
 	}
 }
 
@@ -135,8 +237,8 @@ func TestMemoryStoreLockAndFetchPriorityRandom(t *testing.T) {
 		for _, task := range store.tasks {
 			task.NextRun = now.Add(-time.Hour)
 		}
-		got, _ := store.LockAndFetch(ctx, now, 30*time.Second)
-		seen[got.TaskCode] = true
+		claim, _ := store.LockAndFetch(ctx, now, 30*time.Second)
+		seen[claim.Task.TaskCode] = true
 	}
 
 	// with enough iterations, should see multiple different tasks
@@ -153,17 +255,17 @@ func TestMemoryStoreLockAndFetchNotFound(t *testing.T) {
 	}
 }
 
-func TestMemoryStoreUpdateNextRun(t *testing.T) {
+func TestMemoryStoreComplete(t *testing.T) {
 	store := NewMemoryStore()
 	ctx := context.Background()
 	now := carbon.Now().StdTime()
 
 	store.Insert(ctx, &TaskConfig{TaskCode: "t", Status: StatusEnabled, NextRun: now.Add(-time.Hour)})
 
-	cfg, _ := store.LockAndFetch(ctx, now, 30*time.Second)
+	claim, _ := store.LockAndFetch(ctx, now, 30*time.Second)
 	newNext := now.Add(time.Hour)
 
-	err := store.UpdateNextRun(ctx, cfg.ID, newNext, now)
+	err := store.Complete(ctx, claim.Task.ID, claim.LockedUntil, newNext, now)
 	if err != nil {
 		t.Fatalf("expected success, got %v", err)
 	}
@@ -174,6 +276,54 @@ func TestMemoryStoreUpdateNextRun(t *testing.T) {
 	}
 	if !got.LastRun.Equal(now) {
 		t.Fatalf("expected last run %v, got %v", now, got.LastRun)
+	}
+}
+
+func TestMemoryStoreCompleteRejectsLostClaim(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	now := carbon.Now().StdTime()
+	cfg := &TaskConfig{TaskCode: "lost", Status: StatusEnabled, NextRun: now.Add(-time.Minute)}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	claim, err := store.LockAndFetch(ctx, now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.mu.Lock()
+	store.tasks[cfg.ID].NextRun = claim.LockedUntil.Add(time.Second)
+	store.mu.Unlock()
+	if err := store.Complete(ctx, cfg.ID, claim.LockedUntil, now.Add(time.Hour), now); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected lost claim, got %v", err)
+	}
+}
+
+func TestMemoryStoreCompleteAllowsConcurrentDisable(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	now := carbon.Now().StdTime()
+	cfg := &TaskConfig{TaskCode: "disabled", Status: StatusEnabled, NextRun: now.Add(-time.Minute)}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	claim, err := store.LockAndFetch(ctx, now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Disable(ctx, cfg.ID); err != nil {
+		t.Fatal(err)
+	}
+	nextRun := now.Add(time.Hour)
+	if err := store.Complete(ctx, cfg.ID, claim.LockedUntil, nextRun, now); err != nil {
+		t.Fatalf("disabled in-flight task should complete: %v", err)
+	}
+	got, err := store.GetByCode(ctx, cfg.TaskCode)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Status != StatusDisabled || !got.NextRun.Equal(nextRun) || !got.LastRun.Equal(now) {
+		t.Fatalf("unexpected completed disabled task: %+v", got)
 	}
 }
 
@@ -274,7 +424,8 @@ func TestSchedulerTriggersHandler(t *testing.T) {
 
 func TestRunNow(t *testing.T) {
 	store := NewMemoryStore()
-	ctx := context.Background()
+	type contextKey struct{}
+	ctx := context.WithValue(context.Background(), contextKey{}, "manual-run")
 
 	store.Insert(ctx, &TaskConfig{
 		TaskCode: "t",
@@ -284,9 +435,11 @@ func TestRunNow(t *testing.T) {
 
 	var mu sync.Mutex
 	executed := false
+	contextValue := ""
 	handler := func(ctx context.Context, task *TaskConfig) error {
 		mu.Lock()
 		executed = true
+		contextValue, _ = ctx.Value(contextKey{}).(string)
 		mu.Unlock()
 		return nil
 	}
@@ -305,7 +458,20 @@ func TestRunNow(t *testing.T) {
 	if !executed {
 		t.Fatal("expected RunNow to trigger handler")
 	}
+	if contextValue != "manual-run" {
+		t.Fatalf("expected RunNow context value, got %q", contextValue)
+	}
 	mu.Unlock()
+	got, err := store.GetByCode(ctx, "t")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.NextRun.After(time.Now()) {
+		t.Fatalf("RunNow changed periodic next run: %v", got.NextRun)
+	}
+	if got.LastRun.IsZero() {
+		t.Fatal("expected RunNow to update last run")
+	}
 }
 
 func TestRunNowProvidesExecutionTimeForZeroNextRun(t *testing.T) {
@@ -515,6 +681,104 @@ func TestExecuteTaskErrorKeepsNextRun(t *testing.T) {
 	}
 }
 
+func TestExecuteTaskDeleteSignalDeletesTask(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	now := carbon.Now().StdTime()
+	cfg := &TaskConfig{
+		TaskCode: "deleted-by-handler",
+		Status:   StatusEnabled,
+		RRuleStr: "FREQ=DAILY",
+		NextRun:  now.Add(-time.Minute),
+	}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	claim, err := store.LockAndFetch(ctx, now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := NewScheduler(store, func(context.Context, *TaskConfig) error {
+		return errors.Join(errors.New("business task missing"), ErrDeleteTask)
+	})
+	s.executeTask(claim)
+	if _, err := store.GetByCode(ctx, cfg.TaskCode); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected task deleted, got %v", err)
+	}
+}
+
+func TestExecuteTaskDirectDeleteSignalDeletesTask(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	now := carbon.Now().StdTime()
+	cfg := &TaskConfig{
+		TaskCode: "deleted-directly",
+		Status:   StatusEnabled,
+		RRuleStr: "FREQ=DAILY",
+		NextRun:  now.Add(-time.Minute),
+	}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	claim, err := store.LockAndFetch(ctx, now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	NewScheduler(store, func(context.Context, *TaskConfig) error {
+		return ErrDeleteTask
+	}).executeTask(claim)
+	if _, err := store.GetByCode(ctx, cfg.TaskCode); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected task deleted, got %v", err)
+	}
+}
+
+type failOnceDeleteStore struct {
+	*MemoryStore
+	deleteCalls int
+}
+
+func (s *failOnceDeleteStore) Delete(ctx context.Context, id string) error {
+	s.deleteCalls++
+	if s.deleteCalls == 1 {
+		return errors.New("delete unavailable")
+	}
+	return s.MemoryStore.Delete(ctx, id)
+}
+
+func TestExecuteTaskDeleteFailureRetriesAfterLease(t *testing.T) {
+	store := &failOnceDeleteStore{MemoryStore: NewMemoryStore()}
+	ctx := context.Background()
+	now := carbon.Now().StdTime()
+	cfg := &TaskConfig{
+		TaskCode: "delete-retry",
+		Status:   StatusEnabled,
+		RRuleStr: "FREQ=DAILY",
+		NextRun:  now.Add(-time.Minute),
+	}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	scheduler := NewScheduler(store, func(context.Context, *TaskConfig) error {
+		return ErrDeleteTask
+	})
+	firstClaim, err := store.LockAndFetch(ctx, now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scheduler.executeTask(firstClaim)
+	if _, err := store.GetByCode(ctx, cfg.TaskCode); err != nil {
+		t.Fatalf("delete failure must keep task for retry: %v", err)
+	}
+	secondClaim, err := store.LockAndFetch(ctx, firstClaim.LockedUntil, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scheduler.executeTask(secondClaim)
+	if _, err := store.GetByCode(ctx, cfg.TaskCode); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected retry to delete task, got %v", err)
+	}
+}
+
 func TestSchedulerStopWithPendingTasks(t *testing.T) {
 	store := NewMemoryStore()
 	ctx := context.Background()
@@ -536,8 +800,47 @@ func TestSchedulerStopWithPendingTasks(t *testing.T) {
 	s.Start()
 	time.Sleep(60 * time.Millisecond)
 	s.Stop()
-	// should not panic
-	time.Sleep(100 * time.Millisecond)
+}
+
+func TestSchedulerStopWaitsForInFlightHandler(t *testing.T) {
+	store := NewMemoryStore()
+	now := carbon.Now().StdTime()
+	if err := store.Insert(context.Background(), &TaskConfig{
+		TaskCode: "graceful-stop",
+		Status:   StatusEnabled,
+		NextRun:  now.Add(-time.Minute),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	started := make(chan struct{})
+	release := make(chan struct{})
+	scheduler := NewScheduler(store, func(context.Context, *TaskConfig) error {
+		close(started)
+		<-release
+		return nil
+	}, WithInterval(time.Second), WithLockExpire(time.Minute))
+	scheduler.Start()
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("handler did not start")
+	}
+	stopped := make(chan struct{})
+	go func() {
+		scheduler.Stop()
+		close(stopped)
+	}()
+	select {
+	case <-stopped:
+		t.Fatal("Stop returned before in-flight handler completed")
+	case <-time.After(50 * time.Millisecond):
+	}
+	close(release)
+	select {
+	case <-stopped:
+	case <-time.After(time.Second):
+		t.Fatal("Stop did not return after handler completed")
+	}
 }
 
 func TestConcurrentLockAndFetch(t *testing.T) {
@@ -551,26 +854,23 @@ func TestConcurrentLockAndFetch(t *testing.T) {
 		NextRun:  now.Add(-time.Hour),
 	})
 
-	var mu sync.Mutex
-	winners := make(map[int64]bool)
+	var winners atomic.Int64
 	var wg sync.WaitGroup
 
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			got, err := store.LockAndFetch(ctx, now, 30*time.Second)
+			_, err := store.LockAndFetch(ctx, now, 30*time.Second)
 			if err == nil {
-				mu.Lock()
-				winners[got.Version] = true
-				mu.Unlock()
+				winners.Add(1)
 			}
 		}()
 	}
 	wg.Wait()
 
 	// only one instance should have won the lock
-	if len(winners) > 1 {
-		t.Fatalf("expected only 1 winner, got %d", len(winners))
+	if winners.Load() != 1 {
+		t.Fatalf("expected only 1 winner, got %d", winners.Load())
 	}
 }

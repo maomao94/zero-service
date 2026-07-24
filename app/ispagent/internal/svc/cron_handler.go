@@ -24,13 +24,10 @@ func NewCronHandler(svcCtx *ServiceContext) crontask.Handler {
 			return nil
 		}
 
-		nextTime := tool.CarbonFromTimeStartOfSecond(task.NextRun)
-		planStartTime := nextTime.StdTime()
-		planStartTimeText := nextTime.ToDateTimeString()
-		taskPatrolledID := fmt.Sprintf("%s_%s_%s",
-			fields.SubstationCode, task.TaskCode, nextTime.ToShortDateTimeString())
+		planStartTime, taskPatrolledID := taskExecution(ctx, task, fields)
+		planStartTimeText := tool.CarbonFromTimeStartOfSecond(planStartTime).ToDateTimeString()
 
-		logx.WithContext(ctx).Infof("[ispagent] cron 触发 task_code=%s patrol_id=%s plan=%s",
+		logx.WithContext(ctx).Infof("[ispagent] 任务触发 task_code=%s patrol_id=%s plan=%s",
 			task.TaskCode, taskPatrolledID, planStartTimeText)
 
 		sendStatus := func(state string) {
@@ -78,10 +75,19 @@ func NewCronHandler(svcCtx *ServiceContext) crontask.Handler {
 			upsertPatrolState(string(gormmodel.PatrolTaskStateFinished))
 			sendStatus(string(gormmodel.PatrolTaskStateFinished))
 
-			logx.WithContext(ctx).Infof("[ispagent] cron 任务完成 task_code=%s", task.TaskCode)
+			logx.WithContext(ctx).Infof("[ispagent] 任务完成 task_code=%s", task.TaskCode)
 		})
 
-		logx.WithContext(ctx).Infof("[ispagent] cron 任务开始执行 task_code=%s", task.TaskCode)
+		logx.WithContext(ctx).Infof("[ispagent] 任务开始执行 task_code=%s", task.TaskCode)
 		return nil
 	}
+}
+
+func taskExecution(ctx context.Context, task *crontask.TaskConfig, fields *ctask.IspTaskFields) (time.Time, string) {
+	if taskPatrolledID, runAt, ok := ctask.ManualExecutionFromContext(ctx); ok {
+		return runAt, taskPatrolledID
+	}
+	runAt := task.NextRun
+	runTime := tool.CarbonFromTimeStartOfSecond(runAt)
+	return runAt, fmt.Sprintf("%s_%s_%s", fields.SubstationCode, task.TaskCode, runTime.ToShortDateTimeString())
 }

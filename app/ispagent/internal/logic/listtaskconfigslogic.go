@@ -68,6 +68,7 @@ func (l *ListTaskConfigsLogic) ListTaskConfigs(in *ispagent.ListTaskConfigsReq) 
 			TaskCode:            r.TaskCode,
 			TaskName:            r.TaskName,
 			Priority:            int32(r.Priority),
+			LockTimeout:         r.LockTimeout,
 			RruleStr:            r.RRuleStr,
 			Status:              int32(r.Status),
 			SubstationCode:      r.SubstationCode,

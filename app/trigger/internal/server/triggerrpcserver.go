@@ -191,6 +191,30 @@ func (s *TriggerRpcServer) CreatePlanTask(ctx context.Context, in *trigger.Creat
 	return l.CreatePlanTask(in)
 }
 
+// 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
+func (s *TriggerRpcServer) CreateCronJob(ctx context.Context, in *trigger.CreateCronJobReq) (*trigger.CreateCronJobRes, error) {
+	l := logic.NewCreateCronJobLogic(ctx, s.svcCtx)
+	return l.CreateCronJob(in)
+}
+
+// 启用 Cron Job，并从当前时间重新计算未来执行时间
+func (s *TriggerRpcServer) EnableCronJob(ctx context.Context, in *trigger.EnableCronJobReq) (*trigger.EnableCronJobRes, error) {
+	l := logic.NewEnableCronJobLogic(ctx, s.svcCtx)
+	return l.EnableCronJob(in)
+}
+
+// 禁用 Cron Job，禁用后调度器不再扫描该任务
+func (s *TriggerRpcServer) DisableCronJob(ctx context.Context, in *trigger.DisableCronJobReq) (*trigger.DisableCronJobRes, error) {
+	l := logic.NewDisableCronJobLogic(ctx, s.svcCtx)
+	return l.DisableCronJob(in)
+}
+
+// 软删除 Cron Job，重复删除按幂等成功处理
+func (s *TriggerRpcServer) DeleteCronJob(ctx context.Context, in *trigger.DeleteCronJobReq) (*trigger.DeleteCronJobRes, error) {
+	l := logic.NewDeleteCronJobLogic(ctx, s.svcCtx)
+	return l.DeleteCronJob(in)
+}
+
 // 暂停计划
 func (s *TriggerRpcServer) PausePlan(ctx context.Context, in *trigger.PausePlanReq) (*trigger.PausePlanRes, error) {
 	l := logic.NewPausePlanLogic(ctx, s.svcCtx)

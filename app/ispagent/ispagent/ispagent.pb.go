@@ -1409,6 +1409,7 @@ type TaskConfigItem struct {
 	IntervalEndTime     string                 `protobuf:"bytes,26,opt,name=interval_end_time,json=intervalEndTime,proto3" json:"interval_end_time,omitempty"`             // 间隔结束时间
 	InvalidStartTime    string                 `protobuf:"bytes,27,opt,name=invalid_start_time,json=invalidStartTime,proto3" json:"invalid_start_time,omitempty"`          // 不可用开始时间
 	InvalidEndTime      string                 `protobuf:"bytes,28,opt,name=invalid_end_time,json=invalidEndTime,proto3" json:"invalid_end_time,omitempty"`                // 不可用结束时间
+	LockTimeout         int64                  `protobuf:"varint,29,opt,name=lock_timeout,json=lockTimeout,proto3" json:"lock_timeout,omitempty"`                          // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -1637,6 +1638,13 @@ func (x *TaskConfigItem) GetInvalidEndTime() string {
 		return x.InvalidEndTime
 	}
 	return ""
+}
+
+func (x *TaskConfigItem) GetLockTimeout() int64 {
+	if x != nil {
+		return x.LockTimeout
+	}
+	return 0
 }
 
 // ListTaskConfigsRes 任务配置分页响应
@@ -2256,7 +2264,7 @@ const file_ispagent_proto_rawDesc = "" +
 	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1b\n" +
 	"\ttask_code\x18\x03 \x01(\tR\btaskCode\x12'\n" +
-	"\x0fsubstation_code\x18\x04 \x01(\tR\x0esubstationCode\"\xf5\a\n" +
+	"\x0fsubstation_code\x18\x04 \x01(\tR\x0esubstationCode\"\x98\b\n" +
 	"\x0eTaskConfigItem\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\ttask_code\x18\x02 \x01(\tR\btaskCode\x12\x1b\n" +
@@ -2292,7 +2300,8 @@ const file_ispagent_proto_rawDesc = "" +
 	"\x13interval_start_time\x18\x19 \x01(\tR\x11intervalStartTime\x12*\n" +
 	"\x11interval_end_time\x18\x1a \x01(\tR\x0fintervalEndTime\x12,\n" +
 	"\x12invalid_start_time\x18\x1b \x01(\tR\x10invalidStartTime\x12(\n" +
-	"\x10invalid_end_time\x18\x1c \x01(\tR\x0einvalidEndTime\"Z\n" +
+	"\x10invalid_end_time\x18\x1c \x01(\tR\x0einvalidEndTime\x12!\n" +
+	"\flock_timeout\x18\x1d \x01(\x03R\vlockTimeout\"Z\n" +
 	"\x12ListTaskConfigsRes\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x03R\x05total\x12.\n" +
 	"\x05items\x18\x02 \x03(\v2\x18.ispagent.TaskConfigItemR\x05items\"2\n" +

@@ -2,6 +2,7 @@ package crontask
 
 import (
 	"testing"
+	"time"
 
 	"zero-service/app/ispagent/model/gormmodel"
 	"zero-service/common/crontask"
@@ -27,15 +28,15 @@ func TestConvertRoundTrip(t *testing.T) {
 	lastRun := carbon.Now().SubHour().StdTime()
 
 	cfg := &crontask.TaskConfig{
-		TaskCode: f.TaskCode,
-		TaskName: f.TaskName,
-		RRuleStr: f.ToRRuleStr(),
-		Priority: f.ToPriority(),
-		Status:   f.ToStatus(),
-		NextRun:  nextRun,
-		LastRun:  lastRun,
-		Extra:    []byte(extra),
-		Version:  1,
+		TaskCode:    f.TaskCode,
+		TaskName:    f.TaskName,
+		RRuleStr:    f.ToRRuleStr(),
+		Priority:    f.ToPriority(),
+		LockTimeout: 90 * time.Second,
+		Status:      f.ToStatus(),
+		NextRun:     nextRun,
+		LastRun:     lastRun,
+		Extra:       []byte(extra),
 	}
 
 	gorm := fromTaskConfig(cfg)
@@ -49,6 +50,9 @@ func TestConvertRoundTrip(t *testing.T) {
 	}
 	if back.Priority != cfg.Priority {
 		t.Fatal("round-trip priority mismatch")
+	}
+	if back.LockTimeout != cfg.LockTimeout {
+		t.Fatalf("round-trip lock timeout mismatch: %v vs %v", back.LockTimeout, cfg.LockTimeout)
 	}
 	if back.Status != cfg.Status {
 		t.Fatal("round-trip status mismatch")

@@ -64,6 +64,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			crontask.WithInvalidTimeFilter(ctask.NewInvalidTimeFilter()),
 			crontask.WithGuard(m.Connected),
 		)
+		m.SetTaskRun(svcCtx.Scheduler.RunNow)
 	}
 
 	return svcCtx
