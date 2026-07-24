@@ -882,3 +882,37 @@ Unified IEC104 server construction around Settings and go-zero ServerConfig, add
 ### Next Steps
 
 - None - task complete
+
+
+## Session 134: 完成 Trigger RRULE Cron Job
+
+**Date**: 2026-07-24
+**Task**: 完成 Trigger RRULE Cron Job
+**Branch**: `master`
+
+### Summary
+
+完成 Trigger RRULE 周期任务、通用 crontask 调度修正、ISP 立即执行与生命周期契约，并补齐相关 Trellis 规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9f5f353f` | (see git log) |
+| `7df969d0` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
