@@ -335,6 +335,33 @@ func TestDBStoreEnableDisableAreIdempotent(t *testing.T) {
 	}
 }
 
+func TestDBStoreEnablePreservesOneShotSchedule(t *testing.T) {
+	db := newDBStoreTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	scheduled := time.Now().Add(time.Hour).Truncate(time.Second)
+	record := &gormmodel.GormTaskConfig{
+		TaskCode: "ONE-SHOT-ENABLE",
+		Status:   int(commoncrontask.StatusEnabled),
+		NextRun:  sql.NullTime{Time: scheduled, Valid: true},
+	}
+	if err := db.Create(record).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Disable(context.Background(), record.Id); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Enable(context.Background(), record.Id); err != nil {
+		t.Fatal(err)
+	}
+	got, err := store.GetByID(context.Background(), record.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.NextRun.Equal(scheduled) {
+		t.Fatalf("one-shot next run = %v, want preserved %v", got.NextRun, scheduled)
+	}
+}
+
 func TestDBStoreDeleteIsIdempotent(t *testing.T) {
 	db := newDBStoreTestDB(t)
 	store := NewDBStore(&gormx.DB{DB: db})

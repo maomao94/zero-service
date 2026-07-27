@@ -3,10 +3,10 @@ package logic
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
-	"zero-service/app/trigger/internal/cronjob"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
@@ -52,23 +52,38 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	} else {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_ALREADY_EXIST)
 	}
-	now := time.Now()
-	schedule, err := cronjob.CompileSchedule(in.Rule, in.StartTime, in.EndTime, in.ExcludeDates, false, now)
+	calculated, err := NewCalcPlanTaskDateLogic(l.ctx, l.svcCtx).CalcPlanTaskDate(&trigger.CalcPlanTaskDateReq{
+		StartTime:    in.StartTime,
+		EndTime:      in.EndTime,
+		Rule:         in.Rule,
+		ExcludeDates: in.ExcludeDates,
+	})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "生成计划规则失败")
+		return nil, err
 	}
-	set, err := rrule.StrToRRuleSet(schedule.RRuleStr)
+	rruleStr := calculated.GetRruleStr()
+	set, err := rrule.StrToRRuleSet(rruleStr)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "解析计划规则失败")
 	}
-	// 获取所有触发时间
-	dates := set.All()
-	// 过滤掉小于当前时间的触发时间
+	rule := set.GetRRule()
+	if rule == nil {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "计划规则缺少 RRULE")
+	}
+	dates := make([]time.Time, 0, len(calculated.PlanDates))
+	for _, value := range calculated.PlanDates {
+		date := carbon.ParseByLayout(value, carbon.DateTimeLayout)
+		if date.Error != nil || date.IsInvalid() {
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, date.Error, "解析计划日期失败")
+		}
+		dates = append(dates, date.StdTime())
+	}
 	if !in.SkipTimeFilter {
-		var validDates []time.Time = make([]time.Time, 0)
-		for _, d := range dates {
-			if !d.Before(now) {
-				validDates = append(validDates, d)
+		now := time.Now()
+		validDates := make([]time.Time, 0, len(dates))
+		for _, date := range dates {
+			if !date.Before(now) {
+				validDates = append(validDates, date)
 			}
 		}
 		dates = validDates
@@ -76,8 +91,12 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "计划任务时间段内没有触发时间")
 		}
 	}
-	if len(dates)*len(in.ExecItems) > 5000 {
+	if len(dates) > 5000/len(in.ExecItems) {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "计划任务时间段内调度项过多")
+	}
+	ruleJSON, err := json.Marshal(in.Rule)
+	if err != nil {
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "序列化计划规则失败")
 	}
 	currentUserId := tool.GetCurrentUserId(l.ctx, nil)
 
@@ -89,10 +108,10 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		PlanName:         sql.NullString{String: in.PlanName, Valid: in.PlanName != ""},
 		Type:             sql.NullString{String: in.Type, Valid: in.Type != ""},
 		GroupId:          sql.NullString{String: in.GroupId, Valid: in.GroupId != ""},
-		RecurrenceRule:   string(schedule.RuleJSON),
-		RRuleStr:         schedule.RRuleStr,
-		StartTime:        schedule.StartTime,
-		EndTime:          schedule.EndTime,
+		RecurrenceRule:   string(ruleJSON),
+		RRuleStr:         rruleStr,
+		StartTime:        rule.Options.Dtstart,
+		EndTime:          rule.Options.Until,
 		Status:           model.PlanStatusEnabled,
 		TerminatedReason: sql.NullString{},
 		PausedTime:       sql.NullTime{},

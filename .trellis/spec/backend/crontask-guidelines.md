@@ -6,8 +6,11 @@
 
 ## 核心状态与时间
 
-- `TaskConfig.NextRun` 的 `time.Time{}` 表示无下一次调度；有效时间表示计划执行点。数据库适配器用 SQL `NULL` 保留同一语义，不使用远期哨兵时间。
-- `LastRun` 零值表示从未成功执行；只有 handler 成功才更新。
+- 非空 `TaskConfig.RRuleStr` 必须是至少包含 `DTSTART` 与 `RRULE` 的完整 RRULE Set；空字符串才表示一次性任务。业务生成和持久化不得使用裸 `FREQ=...` RRULE。
+- `TaskConfig.NextRun` 在未 claim 时表示下一计划点；Store claim 后对应数据库列临时保存 lease 截止时间，返回给 handler 的副本中置零，不能再借它表示本次计划点。
+- `TaskConfig.ScheduledTime` 表示当前 claim/retry 对应的原计划点；首次 claim 写入，重试保持稳定，成功完成或重新启用后清空。
+- `TaskConfig.LastRun` 表示最近一次 handler 成功完成的实际时间；`LastScheduledRun` 表示该次成功周期执行对应的原计划点。手动 `RunNow` 只更新 `LastRun`。
+- 数据库适配器用 SQL `NULL` 表达上述时间的零值，不使用远期哨兵时间。
 - RRULE 无候选或已耗尽返回零值；语法无效返回 error，不能当作“自然结束”。
 - Store 扫描只 claim 启用、`next_run` 非空且到期的任务。一次性/终止任务完成后不再参与扫描。
 
@@ -20,6 +23,7 @@
 - 调度结果由一次条件更新提交，检查 error 与 `RowsAffected`；竞争失败不是普通成功。
 - 完成条件不应额外依赖当前启停状态：执行中的任务被禁用后，合法持 lease 的 worker仍要完成自己的本次结果，但不能重新启用任务。
 - 有效锁时长经过 `ResolveLockTimeout` 规范化，最低为 30 秒；适配器不能绕过该下限。
+- 管理 `Update` 必须保留 `ScheduledTime`、`LastRun`、`LastScheduledRun`；任务在途时不得覆盖作为 lease token 的 `NextRun`。
 
 依据：`common/crontask/store.go`、`common/crontask/config.go`、`common/crontask/memory_store.go`、`app/trigger/internal/cronjob/db_store.go`、`app/ispagent/internal/crontask/db_store.go`。
 
@@ -43,7 +47,7 @@
 - Enable/Disable 先按业务 task code 查找并保持幂等；不存在与更新失败使用明确错误，直接检查更新结果，不添加冗余 Count 查询。
 - Delete 对不存在目标幂等成功，便于停用/清理重试。
 - DB 与 Memory Store 必须实现同一空值、lease、完成和启停语义；不能让测试内存实现掩盖数据库竞争条件。
-- Trigger CronJob 的 `scheduled_time` 在重试间保持稳定，代表原计划时间而非每次 claim 时间。
+- Trigger 与 ispagent 的 `scheduled_time` 在重试间保持稳定，代表首次原计划时间而非每次 claim/lease 时间。
 
 ## 反模式
 
@@ -51,6 +55,8 @@
 - `RunNow` 复用正常扫描完成路径，改变下一次计划或启停状态。
 - 用 Redis 锁叠加补偿未证明的低并发 ID 风险，却不修数据库所有权条件。
 - RRULE 错误被吞掉并写成零值，或 SQL `NULL` 被转换成远期时间。
+- 同一 `RRuleStr` 列同时写入裸 RRULE 和完整 Set，迫使执行、描述和排障维护双解析分支。
+- handler 从 `NextRun` 读取本次计划时间；claim 后应只读 `ScheduledTime`。
 
 ## 验证
 
@@ -62,6 +68,64 @@ go test -race ./common/crontask
 ```
 
 测试至少覆盖过期 lease、并发完成、执行中 Disable、终止 RRULE、无效 RRULE、panic、`RunNow` 状态保持、成功/失败 `LastRun` 和 Delete 幂等。
+
+## Scenario: 完整 RRULE Set 与执行时间状态
+
+### 1. Scope / Trigger
+
+- 生成、持久化、claim、重试、完成或展示周期任务规则与执行时间时适用。
+
+### 2. Signatures
+
+```go
+type TaskConfig struct {
+    RRuleStr        string
+    NextRun         time.Time
+    ScheduledTime   time.Time
+    LastRun         time.Time
+    LastScheduledRun time.Time
+}
+```
+
+### 3. Contracts
+
+- 写入：`RRuleStr == ""` 表示一次性任务；否则必须可由 `rrule.StrToRRuleSet` 解析，且 `GetDTStart()` 非零、`GetRRule()` 非 nil。
+- claim：数据库 `next_run` 变为 `LockedUntil`，`scheduled_time` 保存首次原计划点；返回 Task 的 `NextRun` 为零、`ScheduledTime` 为原计划点。
+- success：同一 CAS 写入未来 `next_run`、实际 `last_run`、原计划 `last_scheduled_run`，并清空 `scheduled_time`。
+- retry：继续返回首次 `scheduled_time`，不能把上次 lease 截止时间当成计划点。
+
+### 4. Validation & Error Matrix
+
+- 裸 `FREQ=...` -> 校验错误。
+- Set 缺少 DTSTART 或 RRULE -> 校验错误。
+- Set 耗尽 -> `NextAfter` 返回零时间和 nil error。
+- lease token 不匹配 -> `ErrNotFound`，不得写入成功时间。
+
+### 5. Good/Base/Bad Cases
+
+- Good: `DTSTART...\nRRULE...\nEXDATE...` 原样持久化并由同一字符串计算与描述。
+- Base: 一次性任务使用空 `RRuleStr`，完成后 `NextRun` 为零。
+- Bad: claim 后把 `Task.NextRun` 塄成原计划时间；该字段与数据库 lease 语义发生分叉。
+
+### 6. Tests Required
+
+- Memory、Trigger DB、ISP DB 均断言首次 claim、lease 重试、成功完成和 Enable 清理。
+- 断言 handler、日志和业务执行 ID 使用 `ScheduledTime`。
+- 断言裸 RRULE 被拒绝，Trigger/ISP 生成值均含 DTSTART 与 RRULE。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```go
+scheduled := task.NextRun
+```
+
+#### Correct
+
+```go
+scheduled := task.ScheduledTime
+```
 
 ## Scenario: RRULE 中文业务描述
 
@@ -77,15 +141,19 @@ func DescribeRRule(value string) (string, error)
 
 ### 3. Contracts
 
-- `value` 可为单条 RRULE，也可为包含 `DTSTART`、`RRULE`、`RDATE`、`EXDATE` 的 RRULE Set。
+- 非空 `value` 必须是至少包含 `DTSTART` 和 `RRULE` 的完整 RRULE Set，也可包含 `RDATE`、`EXDATE`；不接受裸 RRULE。
 - 描述按简体中文稳定输出；`DTSTART` 存在时，时间边界和日期列表统一转换到它的时区。
 - 同维度值是并集，不同 BY* 维度是交集；小时、分钟、秒按笛卡尔积解释。
+- `INTERVAL` 表示从 `DTSTART` 相位推进的频率步长，`BYHOUR`、`BYMINUTE`、`BYSECOND` 再按 RFC 5545 的频率层级过滤或展开候选；`INTERVAL > 1` 且存在离散 BY* 条件时描述为“按 N 单位间隔”并保留条件，不得简写成均匀的“每 N 单位”。
+- 只有 `INTERVAL = 1`，且低频规则的高位过滤与低位默认值可准确组成完整日内固定时刻集合时，才可等价描述为“每天 HH:mm…”。
+- `WEEKLY` 在 `INTERVAL > 1` 或使用 `BYSETPOS` 时必须展示 `WKST`；前者由周起始决定间隔相位，后者由周起始决定每周期候选分组。
+- 普通 `BYDAY` 与序号 `BYDAY` 混用时，`rrule-go` 会按内部普通/序号星期集合的交集筛选，不是同维度并集；描述器应返回 `ErrUnsupportedDescription`，不能将两组值用顿号连接。
 - 描述器只消费已生成的 RFC 5545 string，不依赖 Trigger proto 或业务 model。
 
 ### 4. Validation & Error Matrix
 
 - 空字符串 -> `"", nil`。
-- RRULE 语法无效或 Set 缺少 RRULE -> 解析 error。
+- RRULE 语法无效，或 Set 缺少 DTSTART/RRULE -> 解析 error。
 - `BYYEARDAY`、`BYWEEKNO`、`BYEASTER` 或无法准确表达的组合 -> 可被 `errors.Is(err, ErrUnsupportedDescription)` 识别。
 - 合法且可描述的规则 -> 非空中文描述。
 
@@ -99,6 +167,8 @@ func DescribeRRule(value string) (string, error)
 
 - 表驱动覆盖 YEARLY/MONTHLY/WEEKLY/DAILY/HOURLY/MINUTELY、INTERVAL、负数月日和序号星期。
 - 断言多小时与多分钟展开为笛卡尔积。
+- 断言 `INTERVAL > 1` 与稀疏 `BYHOUR` 保留 DTSTART 相位和过滤条件，不输出“每 N 小时”或“每天固定时刻”。
+- 断言 `WEEKLY + BYSETPOS` 的 `WKST` 文案与实际 occurrence 分组一致，并拒绝普通/序号 `BYDAY` 混用的误导描述。
 - 断言 UTC `UNTIL` 按 `DTSTART` 时区展示。
 - RRULE Set 有 `RDATE`/`EXDATE` 时，`COUNT` 文案只能描述周期规则生成次数，不能声称最终总执行次数。
 
@@ -115,3 +185,5 @@ description := translateEnglish(rule.ToText())
 ```go
 description, err := crontask.DescribeRRule(ruleSet.String())
 ```
+
+对于 `FREQ=HOURLY;INTERVAL=2;BYHOUR=1,5,7`，正确描述为“按 2 小时间隔，小时=01/05/07…”，不能描述为“每 2 小时”或直接展开成每天固定时刻。

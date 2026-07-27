@@ -65,7 +65,7 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, defaultLockTi
 	if record.ScheduledTime.Valid {
 		scheduledTime = record.ScheduledTime.Time
 	}
-	result := s.db.WithContext(quietCtx).
+	result := s.db.WithContext(ctx).
 		Model(&gormmodel.GormTaskConfig{}).
 		Where("id = ?", record.Id).
 		Where("status = ?", int(crontask.StatusEnabled)).
@@ -214,9 +214,16 @@ func (s *DBStore) Enable(ctx context.Context, id string) error {
 	if crontask.TaskStatus(record.Status) == crontask.StatusEnabled {
 		return nil
 	}
-	nextRun, err := crontask.NextAfter(record.RRuleStr, time.Now())
-	if err != nil {
-		return err
+	nextRun := record.NextRun.Time
+	if record.ScheduledTime.Valid {
+		nextRun = record.ScheduledTime.Time
+	}
+	if record.RRuleStr != "" {
+		var err error
+		nextRun, err = crontask.NextAfter(record.RRuleStr, time.Now())
+		if err != nil {
+			return err
+		}
 	}
 	result := s.db.WithContext(ctx).
 		Model(&gormmodel.GormTaskConfig{}).

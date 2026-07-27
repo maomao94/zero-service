@@ -114,6 +114,8 @@ service TriggerRpc {
   // 回调计划执行项 ongoing 回执
   rpc CallbackPlanExecItem(CallbackPlanExecItemReq) returns (CallbackPlanExecItemRes);
 
+  // ==================== CronTask / CronJob Service ====================
+
   // 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
   rpc CreateCronJob(CreateCronJobReq) returns (CreateCronJobRes);
   // 启用 Cron Job，并从当前时间重新计算未来执行时间
@@ -128,6 +130,8 @@ service TriggerRpc {
   rpc GetCronJob(GetCronJobReq) returns (GetCronJobRes);
   // 分页获取 Cron Job 列表
   rpc ListCronJobs(ListCronJobsReq) returns (ListCronJobsRes);
+
+  // ==================== ID Generation Service ====================
 
   // 生成业务唯一编码（如工单号、告警编码等），由中间件统一生成，非数据库自增序列
   rpc NextId (NextIdReq) returns (NextIdRes);
@@ -1326,6 +1330,8 @@ message DelayConfigPb {
 message CallbackPlanExecItemRes {
 }
 
+// ==================== CronTask / CronJob Messages ====================
+
 // CreateCronJobReq 是独立 RRULE 周期任务创建请求。
 // Trigger 根据业务规则生成 RRuleStr、JobId 和首次 NextRun，不预拆分批次或执行项。
 message CreateCronJobReq {
@@ -1520,6 +1526,8 @@ message CronJobPb {
   // 机构编码。
   string deptCode = 102;
 }
+
+// ==================== ID Generation Messages ====================
 
 message NextIdReq{
   // 输出描述类型 默认-P

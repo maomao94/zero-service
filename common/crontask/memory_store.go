@@ -202,9 +202,16 @@ func (m *MemoryStore) Enable(ctx context.Context, id string) error {
 	if task.Status == StatusEnabled {
 		return nil
 	}
-	nextRun, err := NextAfter(task.RRuleStr, time.Now())
-	if err != nil {
-		return err
+	nextRun := task.NextRun
+	if !task.ScheduledTime.IsZero() {
+		nextRun = task.ScheduledTime
+	}
+	if task.RRuleStr != "" {
+		var err error
+		nextRun, err = NextAfter(task.RRuleStr, time.Now())
+		if err != nil {
+			return err
+		}
 	}
 	task.Status = StatusEnabled
 	task.NextRun = nextRun

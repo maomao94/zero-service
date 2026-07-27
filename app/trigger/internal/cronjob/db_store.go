@@ -32,7 +32,7 @@ func NewDBStore(db *gormx.DB) *DBStore {
 // LockAndFetch 扫描并锁定一个到期任务。
 // Trigger 额外使用 scheduled_time 保存首次计划时间，保证自动重试期间回调时间稳定。
 func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, defaultLockTimeout time.Duration) (*crontask.TaskClaim, error) {
-	//quietCtx := gormx.WithoutSQLTrace(ctx)
+	quietCtx := gormx.WithoutSQLTrace(ctx)
 
 	var randomFn string
 	if s.dbType == gormx.DatabasePostgres || s.dbType == gormx.DatabaseSQLite {
@@ -42,7 +42,7 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, defaultLockTi
 	}
 
 	var records []gormmodel.CronJob
-	err := s.db.WithContext(ctx).
+	err := s.db.WithContext(quietCtx).
 		Where("status = ?", int(crontask.StatusEnabled)).
 		Where("next_run IS NOT NULL").
 		Where("next_run <= ?", now).
@@ -223,9 +223,16 @@ func (s *DBStore) Enable(ctx context.Context, id string) error {
 	if crontask.TaskStatus(record.Status) == crontask.StatusEnabled {
 		return nil
 	}
-	nextRun, err := crontask.NextAfter(record.RRuleStr, time.Now())
-	if err != nil {
-		return err
+	nextRun := record.NextRun.Time
+	if record.ScheduledTime.Valid {
+		nextRun = record.ScheduledTime.Time
+	}
+	if record.RRuleStr != "" {
+		var err error
+		nextRun, err = crontask.NextAfter(record.RRuleStr, time.Now())
+		if err != nil {
+			return err
+		}
 	}
 	result := s.db.WithContext(ctx).
 		Model(&gormmodel.CronJob{}).

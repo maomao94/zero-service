@@ -335,6 +335,31 @@ func TestDBStoreEnableRecalculatesOnceAndClearsInFlightSchedule(t *testing.T) {
 	}
 }
 
+func TestDBStoreEnablePreservesOneShotSchedule(t *testing.T) {
+	db := newCronJobTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	scheduled := time.Now().Add(time.Hour).Truncate(time.Second)
+	cfg := cronJobTestConfig(t, scheduled)
+	cfg.TaskCode = "ONE-SHOT-ENABLE"
+	cfg.RRuleStr = ""
+	if err := store.Insert(context.Background(), cfg); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Disable(context.Background(), cfg.ID); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Enable(context.Background(), cfg.ID); err != nil {
+		t.Fatal(err)
+	}
+	got, err := store.GetByID(context.Background(), cfg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.NextRun.Equal(scheduled) {
+		t.Fatalf("one-shot next run = %v, want preserved %v", got.NextRun, scheduled)
+	}
+}
+
 func TestDBStoreRejectsDuplicateTaskCode(t *testing.T) {
 	db := newCronJobTestDB(t)
 	store := NewDBStore(&gormx.DB{DB: db})

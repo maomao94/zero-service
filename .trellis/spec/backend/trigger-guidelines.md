@@ -27,6 +27,8 @@
 - `month` 是可选的 `BYMONTH` 过滤；只有需要显式限制月份时才传，字段为空不能被当作缺少连续月信息。
 - 日期展开必须受有效范围和现有跨度限制约束，保持时区与日历规则一致；节假日查询通过 Trigger 的 holiday 能力，不在调用服务复制日历数据。
 - ExecItem 只有通过 store 的所有权条件被当前 worker claim 后才能下发；回调按 `execResult` 和 delay 配置驱动状态，不用 HTTP/gRPC 成功替代业务结果。
+- Plan/Batch/ExecItem 与 CronJob 是不同状态机。两者可以复用 `CompileSchedule` 这类纯规则编译函数，但 Plan 仍在创建时用 `set.All()` 展开 Batch/ExecItem，不得接入 `TaskConfig`、lease 或 `TaskStore`。
+- `Plan.RRuleStr` 只保存创建时用于展开日期的完整 Set 快照，供审计、详情描述和核对 Batch 日期；它不是 Plan 的运行时调度来源。
 
 依据：`app/trigger/internal/logic/calcplantaskdatelogic.go`、`app/trigger/internal/task/scheduler`、`app/trigger/internal/logic/callbackplanexecitemlogic.go`、相关测试。
 
@@ -36,6 +38,7 @@
 - `scheduled_time` 表示原计划执行点，重试时保持不变；attempt/实际开始时间另行记录。
 - `RunCronJob` 触发人工执行，不改变周期 `next_run` 或启停状态。
 - CronJob Handler 注册集中在 `ServiceContext`/cronjob 组装边界，业务服务通过 task code 与 payload 解耦。
+- CronJob 详情/列表的 `rruleStr` 和 `scheduleDescription` 必须来自持久化 `TaskConfig.RRuleStr`，不能从业务 JSON 重新编译。
 
 ## 反模式
 
@@ -63,12 +66,14 @@
 message CalcPlanTaskDateRes {
   repeated string planDates = 1;
   string scheduleDescription = 2;
+  string rruleStr = 3;
 }
 ```
 
 ### 3. Contracts
 
 - `scheduleDescription` 必须由展开 `planDates` 的同一个 `rrule.Set` 生成。
+- `rruleStr` 返回该 Set 的 RFC 5545 原文，供排障和与持久化快照比对。
 - Logic 在完成 DTSTART、RRULE 和 EXDATE 组装后调用 `crontask.DescribeRRule(set.String())`。
 - proto 是契约源，修改后执行 `app/trigger/gen.sh`，不得手改生成文件。
 

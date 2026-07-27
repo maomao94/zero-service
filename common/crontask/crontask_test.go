@@ -147,6 +147,29 @@ func TestMemoryStoreEnableDisable(t *testing.T) {
 	}
 }
 
+func TestMemoryStoreEnablePreservesOneShotSchedule(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	scheduled := time.Now().Add(time.Hour).Truncate(time.Second)
+	cfg := &TaskConfig{TaskCode: "one-shot-enable", Status: StatusEnabled, NextRun: scheduled}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Disable(ctx, cfg.ID); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Enable(ctx, cfg.ID); err != nil {
+		t.Fatal(err)
+	}
+	got, err := store.GetByID(ctx, cfg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.NextRun.Equal(scheduled) {
+		t.Fatalf("one-shot next run = %v, want preserved %v", got.NextRun, scheduled)
+	}
+}
+
 func TestMemoryStoreLockAndFetch(t *testing.T) {
 	store := NewMemoryStore()
 	ctx := context.Background()
