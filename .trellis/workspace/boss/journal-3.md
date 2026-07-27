@@ -983,3 +983,38 @@ Unified IEC104 server construction around Settings and go-zero ServerConfig, add
 ### Next Steps
 
 - None - task complete
+
+
+## Session 137: 完善 CronTask 调度基础能力
+
+**Date**: 2026-07-27
+**Task**: 完善 CronTask 调度基础能力
+**Branch**: `master`
+
+### Summary
+
+完善 CronTask 执行时间契约、审计日志与 RRULE Set 中文描述；基于 rrule-go v1.8.2 核对 INTERVAL、BY*、WKST、BYSETPOS、时区及 DST 语义，并补充 occurrence 差分测试和 Trigger/ISP 接入。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7aaf0157` | (see git log) |
+| `276e4a34` | (see git log) |
+| `14bf1e6d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
