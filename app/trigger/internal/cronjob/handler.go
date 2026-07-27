@@ -34,7 +34,7 @@ func NewEventHandler(client EventClient) crontask.Handler {
 			Priority:      int32(task.Priority),
 			Payload:       string(task.Payload),
 			Extra:         string(task.Extra),
-			ScheduledTime: formatTime(task.NextRun),
+			ScheduledTime: formatTime(task.ScheduledTime),
 			Type:          extra.Type,
 			GroupId:       extra.GroupId,
 			Description:   extra.Description,

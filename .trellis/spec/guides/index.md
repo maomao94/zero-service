@@ -1,20 +1,15 @@
-# 思考指南索引
+# Thinking Guides
 
-> Guides 只帮助 AI 判断“开始前要想什么”。实现契约放在 `../backend/*.md`，不要在 guide 中复制 backend 细节。
+Guides 用于在动手前补齐分析路径，不直接定义实现规则。得出结论后，必须回到 [Backend Coding Specs](../backend/index.md) 选择对应 Code-Spec。
 
-## 路由表
-
-| Guide | When to read | Output expected | Then read |
+| Guide | 何时读取 | 需要产出 | 随后读取 |
 | --- | --- | --- | --- |
-| [code-reuse-thinking-guide.md](./code-reuse-thinking-guide.md) | 新增工具、SDK、client、常量、配置、协议转换，或相似逻辑出现多次 | 找到可复用位置，决定复用、扩展还是保留服务私有 | [`go-zero-conventions.md`](../backend/go-zero-conventions.md)，必要时 [`directory-structure.md`](../backend/directory-structure.md) |
-| [cross-layer-thinking-guide.md](./cross-layer-thinking-guide.md) | 任务跨 `.api` / `.proto`、Logic、Model/SDK、配置、外部系统、前端或消息协议 | 画清数据流、契约源、生成脚本、消费者和验证点 | [`go-zero-conventions.md`](../backend/go-zero-conventions.md)、[`error-handling.md`](../backend/error-handling.md)，SocketIO 读 [`socketiox-contracts.md`](../backend/socketiox-contracts.md) |
-| [documentation-guide.md](./documentation-guide.md) | 修改 README、docs/、CONTRIBUTING 或文档索引 | 确认文档层级、保留内容、链接和重复清理范围 | 只读相关项目文档，不读 backend 代码规范 |
-| [release-tagging-guide.md](./release-tagging-guide.md) | 打 tag、创建 GitHub Release 或发布版本 | 先形成 release plan，等待用户批准后再执行 | 需要 Git 操作时遵循用户批准和仓库规则 |
+| [跨层思考指南](./cross-layer-thinking-guide.md) | 字段、状态、错误、协议或消息跨两个以上目录/进程 | 契约源、写入者、读取者、消费者、失败与验证链路 | 契约/生成、数据访问、消息及领域规范 |
+| [代码复用思考指南](./code-reuse-thinking-guide.md) | 新增工具、client、SDK、常量、转换或公共包 | 复用、扩展、服务私有、窄接口或新公共包的决定 | 目录边界与公共包设计规范 |
+| [文档思考指南](./documentation-guide.md) | 修改 Spec、README、`docs/`、协议注释或包文档 | 权威来源、归档位置、去重与同步范围 | 质量规范及受影响主题规范 |
 
-## Guide 使用规则
+## 使用原则
 
-- 只读当前任务触发的 guide。
-- Guide 产出是问题清单和路由决定，不是代码契约。
-- 需要签名、字段、错误矩阵、Good/Base/Bad、测试断言时，回到 `../backend/` 的 canonical spec。
-- 修改字段、枚举、常量、配置、Topic、Method 或错误码前，先搜索所有引用。
-- 如果踩到稳定实现规则，更新 backend spec；如果只是新的思考检查项，更新 guide。
+- Guide 中的问题只用于发现风险，不能替代源码和测试证据。
+- 对外可靠性、顺序、重试、故障转移和 Exactly Once 必须由服务端实现、配置或故障测试证明。
+- 实验代码没有独立 Guide 或 Spec；只有转为稳定项目能力后才纳入。

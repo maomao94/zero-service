@@ -12,7 +12,7 @@ import (
 func TestTaskExecutionUsesManualIdentity(t *testing.T) {
 	scheduledAt := time.Date(2026, 7, 25, 10, 0, 0, 0, time.Local)
 	manualAt := time.Date(2026, 7, 24, 16, 30, 0, 0, time.Local)
-	task := &crontask.TaskConfig{TaskCode: "TASK001", NextRun: scheduledAt}
+	task := &crontask.TaskConfig{TaskCode: "TASK001", ScheduledTime: scheduledAt}
 	fields := &ctask.IspTaskFields{SubstationCode: "SUB001"}
 	ctx := ctask.WithManualExecution(context.Background(), "SUB001_TASK001_20260724163000", manualAt)
 
@@ -27,7 +27,7 @@ func TestTaskExecutionUsesManualIdentity(t *testing.T) {
 
 func TestTaskExecutionUsesScheduledIdentity(t *testing.T) {
 	scheduledAt := time.Date(2026, 7, 25, 10, 0, 0, 0, time.Local)
-	task := &crontask.TaskConfig{TaskCode: "TASK001", NextRun: scheduledAt}
+	task := &crontask.TaskConfig{TaskCode: "TASK001", ScheduledTime: scheduledAt}
 	fields := &ctask.IspTaskFields{SubstationCode: "SUB001"}
 
 	runAt, taskPatrolledID := taskExecution(context.Background(), task, fields)

@@ -83,11 +83,11 @@ func eventHandlerTask(t *testing.T) *crontask.TaskConfig {
 		t.Fatal(err)
 	}
 	return &crontask.TaskConfig{
-		ID:       "job-1",
-		TaskCode: "task-1",
-		TaskName: "test",
-		Payload:  json.RawMessage(`{"id":1}`),
-		Extra:    extra,
-		NextRun:  time.Date(2026, 7, 24, 11, 0, 0, 0, time.Local),
+		ID:            "job-1",
+		TaskCode:      "task-1",
+		TaskName:      "test",
+		Payload:       json.RawMessage(`{"id":1}`),
+		Extra:         extra,
+		ScheduledTime: time.Date(2026, 7, 24, 11, 0, 0, 0, time.Local),
 	}
 }

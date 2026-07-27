@@ -3,6 +3,9 @@ package crontask
 import (
 	"context"
 	"errors"
+	"fmt"
+	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 
@@ -100,6 +103,7 @@ func (s *Scheduler) scanLoop() {
 
 		claim, err := s.store.LockAndFetch(context.Background(), carbon.Now().StdTime(), s.lockExpire)
 		if err == nil && claim != nil {
+			logx.WithContext(taskLogContext(context.Background(), claim)).Info("[crontask] task claimed")
 			s.workerGroup.Add(1)
 			threading.GoSafe(func() {
 				defer s.workerGroup.Done()
@@ -146,40 +150,56 @@ func (s *Scheduler) executeTask(claim *TaskClaim) {
 	ctx = logx.ContextWithFields(ctx,
 		logx.Field("task_code", task.TaskCode),
 		logx.Field("task_id", task.ID),
+		logx.Field("scheduled_run", task.ScheduledTime),
+		logx.Field("locked_until", claim.LockedUntil),
 	)
 
 	stale := false
-	if s.maxDelay > 0 && !task.NextRun.IsZero() && time.Since(task.NextRun) > s.maxDelay {
-		logx.WithContext(ctx).Infof("[crontask] task %s skipped: delayed %v > max %v", task.TaskCode, time.Since(task.NextRun), s.maxDelay)
+	if s.maxDelay > 0 && !task.ScheduledTime.IsZero() && time.Since(task.ScheduledTime) > s.maxDelay {
+		logx.WithContext(ctx).Infof("[crontask] task skipped: delayed %v > max %v", time.Since(task.ScheduledTime), s.maxDelay)
 		stale = true
 	}
 
 	lastRun := time.Time{}
 	if !stale {
-		if err := s.handler(ctx, task); err != nil {
+		startedAt := time.Now()
+		logx.WithContext(ctx).Info("[crontask] handler started")
+		if err := invokeHandler(s.handler, ctx, task); err != nil {
+			logx.WithContext(ctx).WithDuration(time.Since(startedAt)).Errorf("[crontask] handler failed: %v", err)
 			if errors.Is(err, ErrDeleteTask) {
 				deleteErr := s.store.Delete(ctx, task.ID)
 				if deleteErr != nil && !errors.Is(deleteErr, ErrNotFound) {
-					logx.WithContext(ctx).Errorf("[crontask] task %s delete failed: %v", task.TaskCode, deleteErr)
+					logx.WithContext(ctx).Errorf("[crontask] task delete failed: %v", deleteErr)
+				} else {
+					logx.WithContext(ctx).Info("[crontask] task deleted")
 				}
 				return
 			}
-			logx.WithContext(ctx).Errorf("[crontask] task %s execute failed: %v", task.TaskCode, err)
 			return
 		}
 		lastRun = carbon.Now().StdTime()
+		logx.WithContext(ctx).WithDuration(time.Since(startedAt)).Info("[crontask] handler succeeded")
 	}
 
 	nextRun, err := computeNextRun(task)
 	if err != nil {
-		logx.WithContext(ctx).Errorf("[crontask] task %s compute next run failed: %v", task.TaskCode, err)
+		logx.WithContext(ctx).Errorf("[crontask] compute next run failed: %v", err)
 		return
 	}
 	if s.invalidTimeFilter != nil {
 		nextRun = s.invalidTimeFilter(task, nextRun)
 	}
-	if err := s.store.Complete(ctx, task.ID, claim.LockedUntil, nextRun, lastRun); err != nil {
-		logx.WithContext(ctx).Errorf("[crontask] task %s complete failed: %v", task.TaskCode, err)
+	completionCtx := logx.ContextWithFields(ctx, logx.Field("next_run", nextRun))
+	logx.WithContext(completionCtx).Info("[crontask] next run computed")
+	completion := Completion{NextRun: nextRun}
+	if !stale {
+		completion.LastRun = lastRun
+		completion.LastScheduledRun = task.ScheduledTime
+	}
+	if err := s.store.Complete(completionCtx, task.ID, claim.LockedUntil, completion); err != nil {
+		logx.WithContext(completionCtx).Errorf("[crontask] completion failed: %v", err)
+	} else {
+		logx.WithContext(completionCtx).Info("[crontask] completion committed")
 	}
 }
 
@@ -190,25 +210,56 @@ func (s *Scheduler) RunNow(ctx context.Context, taskCode string) error {
 	if err != nil {
 		return err
 	}
-	task.NextRun = carbon.Now().StartOfSecond().StdTime()
-	runCtx := context.WithoutCancel(ctx)
+	task.ScheduledTime = carbon.Now().StartOfSecond().StdTime()
+	runCtx := logx.ContextWithFields(context.WithoutCancel(ctx),
+		logx.Field("task_code", task.TaskCode),
+		logx.Field("task_id", task.ID),
+		logx.Field("scheduled_run", task.ScheduledTime),
+	)
+	logx.WithContext(runCtx).Info("[crontask] run now queued")
 	threading.GoSafe(func() {
-		if err := s.handler(runCtx, task); err != nil {
+		startedAt := time.Now()
+		logx.WithContext(runCtx).Info("[crontask] run now handler started")
+		if err := invokeHandler(s.handler, runCtx, task); err != nil {
+			logx.WithContext(runCtx).WithDuration(time.Since(startedAt)).Errorf("[crontask] run now handler failed: %v", err)
 			if errors.Is(err, ErrDeleteTask) {
 				deleteErr := s.store.Delete(runCtx, task.ID)
 				if deleteErr != nil && !errors.Is(deleteErr, ErrNotFound) {
-					logx.WithContext(runCtx).Errorf("[crontask] task %s run now delete failed: %v", task.TaskCode, deleteErr)
+					logx.WithContext(runCtx).Errorf("[crontask] run now delete failed: %v", deleteErr)
+				} else {
+					logx.WithContext(runCtx).Info("[crontask] run now task deleted")
 				}
 				return
 			}
-			logx.WithContext(runCtx).Errorf("[crontask] task %s run now failed: %v", task.TaskCode, err)
 			return
 		}
-		if err := s.store.UpdateLastRun(runCtx, task.ID, carbon.Now().StdTime()); err != nil {
-			logx.WithContext(runCtx).Errorf("[crontask] task %s update manual last run failed: %v", task.TaskCode, err)
+		lastRun := carbon.Now().StdTime()
+		logx.WithContext(runCtx).WithDuration(time.Since(startedAt)).Info("[crontask] run now handler succeeded")
+		if err := s.store.UpdateLastRun(runCtx, task.ID, lastRun); err != nil {
+			logx.WithContext(runCtx).Errorf("[crontask] run now completion failed: %v", err)
+		} else {
+			logx.WithContext(runCtx).Info("[crontask] run now completion committed")
 		}
 	})
 	return nil
+}
+
+func taskLogContext(ctx context.Context, claim *TaskClaim) context.Context {
+	return logx.ContextWithFields(ctx,
+		logx.Field("task_code", claim.Task.TaskCode),
+		logx.Field("task_id", claim.Task.ID),
+		logx.Field("scheduled_run", claim.Task.ScheduledTime),
+		logx.Field("locked_until", claim.LockedUntil),
+	)
+}
+
+func invokeHandler(handler Handler, ctx context.Context, task *TaskConfig) (err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("handler panic (%T)\n%s", recovered, debug.Stack())
+		}
+	}()
+	return handler(ctx, task)
 }
 
 // computeNextRun 基于 rrule 计算下一次调度时间。
@@ -220,48 +271,51 @@ func computeNextRun(cfg *TaskConfig) (time.Time, error) {
 	}
 	now := carbon.Now().StdTime()
 	base := now
-	if cfg.NextRun.After(now) {
-		base = cfg.NextRun
+	if cfg.ScheduledTime.After(now) {
+		base = cfg.ScheduledTime
 	}
 	return NextAfter(cfg.RRuleStr, base)
 }
 
-// NextAfter 返回 RRULE 或 RRULE set 在指定时间之后的首次计划时间。
+// NextAfter 返回 RRULE Set 在指定时间之后的首次计划时间。
 // 空规则和已耗尽规则都返回零时间；非法非空规则返回解析错误。
 func NextAfter(value string, after time.Time) (time.Time, error) {
 	if value == "" {
 		return time.Time{}, nil
 	}
 
-	set, err := rrule.StrToRRuleSet(value)
-	if err == nil {
-		next := set.After(after, false)
-		if next.IsZero() {
-			return time.Time{}, nil
-		}
-		return next, nil
-	}
-
-	rule, err := rrule.StrToRRule(value)
+	set, err := parseRRuleSet(value)
 	if err != nil {
 		return time.Time{}, err
 	}
-	next := rule.After(after, false)
+	next := set.After(after, false)
 	if next.IsZero() {
 		return time.Time{}, nil
 	}
 	return next, nil
 }
 
-// ValidateRRule 校验非空 RRULE 或 RRULE set 是否能被调度器解析。
+// ValidateRRule 校验非空 RRULE Set 是否包含显式 DTSTART 和 RRULE。
 // 空字符串表示一次性任务，是合法配置。
 func ValidateRRule(value string) error {
 	if value == "" {
 		return nil
 	}
-	if _, err := rrule.StrToRRuleSet(value); err == nil {
-		return nil
-	}
-	_, err := rrule.StrToRRule(value)
+	_, err := parseRRuleSet(value)
 	return err
+}
+
+func parseRRuleSet(value string) (*rrule.Set, error) {
+	value = strings.ReplaceAll(strings.TrimSpace(value), "\r\n", "\n")
+	set, err := rrule.StrToRRuleSet(value)
+	if err != nil {
+		return nil, err
+	}
+	if set.GetDTStart().IsZero() {
+		return nil, errors.New("RRULE Set requires DTSTART")
+	}
+	if set.GetRRule() == nil {
+		return nil, errors.New("RRULE Set requires RRULE")
+	}
+	return set, nil
 }

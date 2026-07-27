@@ -12,6 +12,18 @@ import (
 	"github.com/teambition/rrule-go"
 )
 
+func mustParseSetRule(t *testing.T, value string) *rrule.RRule {
+	t.Helper()
+	set, err := rrule.StrToRRuleSet(value)
+	if err != nil {
+		t.Fatalf("parse RRULE Set failed: %v, value=%q", err, value)
+	}
+	if set.GetDTStart().IsZero() || set.GetRRule() == nil {
+		t.Fatalf("incomplete RRULE Set: %q", value)
+	}
+	return set.GetRRule()
+}
+
 func TestTaskTypeDetection(t *testing.T) {
 	tests := []struct {
 		name string
@@ -36,15 +48,15 @@ func TestBuildFixedRRule(t *testing.T) {
 	f := &IspTaskFields{FixedStartTime: "2025-07-09 00:00:00"}
 	rruleStr := buildFixedRRule(f)
 
-	rule, err := rrule.StrToRRule(rruleStr)
-	if err != nil {
-		t.Fatalf("parse rrule failed: %v, str=%s", err, rruleStr)
-	}
+	rule := mustParseSetRule(t, rruleStr)
 	if rule.OrigOptions.Freq != rrule.DAILY {
 		t.Fatalf("expected DAILY, got %v", rule.OrigOptions.Freq)
 	}
 	if rule.OrigOptions.Count != 1 {
 		t.Fatalf("expected COUNT=1, got %d", rule.OrigOptions.Count)
+	}
+	if got := rule.OrigOptions.Dtstart.Location().String(); got != carbon.Shanghai {
+		t.Fatalf("DTSTART location = %q, want %q", got, carbon.Shanghai)
 	}
 }
 
@@ -58,10 +70,7 @@ func TestBuildCycleRRule(t *testing.T) {
 	}
 	rruleStr := buildCycleRRule(f)
 
-	rule, err := rrule.StrToRRule(rruleStr)
-	if err != nil {
-		t.Fatalf("parse rrule failed: %v, str=%s", err, rruleStr)
-	}
+	rule := mustParseSetRule(t, rruleStr)
 	if rule.OrigOptions.Freq != rrule.WEEKLY {
 		t.Fatalf("expected WEEKLY, got %v", rule.OrigOptions.Freq)
 	}
@@ -81,12 +90,10 @@ func TestBuildCycleRRuleMultiple(t *testing.T) {
 		CycleMonth:       "1,2,5",
 		CycleWeek:        "1,7",
 		CycleExecuteTime: "08:00:00",
+		CycleStartTime:   "2026-01-01 00:00:00",
 	}
 	rruleStr := buildCycleRRule(f)
-	rule, err := rrule.StrToRRule(rruleStr)
-	if err != nil {
-		t.Fatalf("parse rrule failed: %v", err)
-	}
+	rule := mustParseSetRule(t, rruleStr)
 	if len(rule.OrigOptions.Bymonth) != 3 {
 		t.Fatalf("expected 3 months, got %d", len(rule.OrigOptions.Bymonth))
 	}
@@ -103,12 +110,10 @@ func TestBuildIntervalRRuleHourly(t *testing.T) {
 		IntervalNumber:      "10",
 		IntervalType:        string(IntervalHour),
 		IntervalExecuteTime: "08:59:00",
+		IntervalStartTime:   "2026-01-01 00:00:00",
 	}
 	rruleStr := buildIntervalRRule(f)
-	rule, err := rrule.StrToRRule(rruleStr)
-	if err != nil {
-		t.Fatalf("parse rrule failed: %v", err)
-	}
+	rule := mustParseSetRule(t, rruleStr)
 	if rule.OrigOptions.Freq != rrule.HOURLY {
 		t.Fatalf("expected HOURLY, got %v", rule.OrigOptions.Freq)
 	}
@@ -122,12 +127,10 @@ func TestBuildIntervalRRuleDaily(t *testing.T) {
 		IntervalNumber:      "3",
 		IntervalType:        string(IntervalDay),
 		IntervalExecuteTime: "12:30:00",
+		IntervalStartTime:   "2026-01-01 00:00:00",
 	}
 	rruleStr := buildIntervalRRule(f)
-	rule, err := rrule.StrToRRule(rruleStr)
-	if err != nil {
-		t.Fatalf("parse rrule failed: %v", err)
-	}
+	rule := mustParseSetRule(t, rruleStr)
 	if rule.OrigOptions.Freq != rrule.DAILY {
 		t.Fatalf("expected DAILY, got %v", rule.OrigOptions.Freq)
 	}
@@ -138,8 +141,8 @@ func TestBuildIntervalRRuleDaily(t *testing.T) {
 
 func TestToRRuleStrDispatch(t *testing.T) {
 	fixed := &IspTaskFields{FixedStartTime: "2025-07-09 00:00:00"}
-	cycle := &IspTaskFields{CycleMonth: "2", CycleWeek: "1", CycleExecuteTime: "20:00:00"}
-	interval := &IspTaskFields{IntervalNumber: "10", IntervalType: "1", IntervalExecuteTime: "08:59:00"}
+	cycle := &IspTaskFields{CycleMonth: "2", CycleWeek: "1", CycleExecuteTime: "20:00:00", CycleStartTime: "2026-01-01 00:00:00"}
+	interval := &IspTaskFields{IntervalNumber: "10", IntervalType: "1", IntervalExecuteTime: "08:59:00", IntervalStartTime: "2026-01-01 00:00:00"}
 
 	if s := fixed.ToRRuleStr(); s == "" {
 		t.Fatal("fixed task should have rrule")
@@ -230,15 +233,20 @@ func TestCalcInitNextRunInterval(t *testing.T) {
 func TestFixedRRuleFiresOnce(t *testing.T) {
 	f := &IspTaskFields{FixedStartTime: "2025-07-09 00:00:00"}
 	rruleStr := f.ToRRuleStr()
-	rule, _ := rrule.StrToRRule(rruleStr)
 
-	base := carbon.Parse("2025-07-09 00:00:00").StdTime()
-	first := rule.After(base.Add(-time.Second), false)
+	base := carbon.Parse("2025-07-09 00:00:00", carbon.Shanghai).StdTime()
+	first, err := crontask.NextAfter(rruleStr, base.Add(-time.Second))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if first.IsZero() {
 		t.Fatal("expected first occurrence")
 	}
 
-	second := rule.After(first, false)
+	second, err := crontask.NextAfter(rruleStr, first)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !second.IsZero() {
 		t.Fatal("expected no second occurrence after COUNT=1")
 	}
@@ -255,13 +263,12 @@ func TestCycleRRuleNextOccurrence(t *testing.T) {
 	}
 
 	rruleStr := f.ToRRuleStr()
-	rule, err := rrule.StrToRRule(rruleStr)
-	if err != nil {
-		t.Fatalf("parse rrule: %v", err)
-	}
 
 	base := now.StartOfDay().StdTime()
-	next := rule.After(base, false)
+	next, err := crontask.NextAfter(rruleStr, base)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if next.IsZero() {
 		t.Fatal("expected next occurrence")
 	}
@@ -317,22 +324,20 @@ func TestInvalidTimeSkip(t *testing.T) {
 	}
 
 	rruleStr := f.ToRRuleStr()
-	rule, err := rrule.StrToRRule(rruleStr)
+	base := now.StartOfDay().StdTime()
+	first, err := crontask.NextAfter(rruleStr, base)
 	if err != nil {
-		t.Fatalf("parse rrule: %v", err)
+		t.Fatalf("parse RRULE Set: %v", err)
 	}
 
-	base := now.StartOfDay().StdTime()
-	first := rule.After(base, false)
-
 	// should be today 12:00 (within invalid range)
-	expectedToday := carbon.Parse(today + " 12:00:00").StdTime()
+	expectedToday := carbon.Parse(today+" 12:00:00", carbon.Shanghai).StdTime()
 	if !first.Equal(expectedToday) {
 		t.Fatalf("rrule should give today 12:00, got %v", first)
 	}
 
 	// skipInvalidTime should skip to next week
-	skipped := f.skipInvalidTime(rule, first)
+	skipped := f.skipInvalidTime(rruleStr, first)
 	if !skipped.After(parseTime(tomorrow + " 23:59:59")) {
 		t.Fatalf("expected skip to next week, got %v", skipped)
 	}
@@ -351,12 +356,13 @@ func TestNoInvalidTimeNoSkip(t *testing.T) {
 	}
 
 	rruleStr := f.ToRRuleStr()
-	rule, _ := rrule.StrToRRule(rruleStr)
-
 	base := now.StartOfDay().StdTime()
-	first := rule.After(base, false)
+	first, err := crontask.NextAfter(rruleStr, base)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	skipped := f.skipInvalidTime(rule, first)
+	skipped := f.skipInvalidTime(rruleStr, first)
 	if !skipped.Equal(first) {
 		t.Fatal("expected no skip when no invalid time")
 	}
@@ -367,16 +373,14 @@ func TestCycleExecuteTimeShortStringNoPanic(t *testing.T) {
 		CycleMonth:       "2",
 		CycleWeek:        "1",
 		CycleExecuteTime: "08",
+		CycleStartTime:   "2026-01-01 00:00:00",
 	}
 	s := buildCycleRRule(f)
 	if s == "" {
 		t.Fatal("expected rrule string for cycle task with short execute time")
 	}
 	// Should parse without panic: BYHOUR/BYMINUTE simply not set
-	rule, err := rrule.StrToRRule(s)
-	if err != nil {
-		t.Fatalf("parse rrule: %v", err)
-	}
+	rule := mustParseSetRule(t, s)
 	if len(rule.OrigOptions.Byhour) != 0 {
 		t.Fatal("expected no BYHOUR for short execute time")
 	}
@@ -410,7 +414,7 @@ func TestNewTaskConfigReturnsScheduleError(t *testing.T) {
 }
 
 func TestInvalidTimeFilterReturnsZeroWhenRuleExhausted(t *testing.T) {
-	runAt := carbon.Now().AddHour().StartOfSecond()
+	runAt := carbon.Now(carbon.Shanghai).AddHour().StartOfSecond()
 	fields := &IspTaskFields{
 		FixedStartTime:   runAt.ToDateTimeString(),
 		InvalidStartTime: runAt.SubMinute().ToDateTimeString(),

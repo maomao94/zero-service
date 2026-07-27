@@ -51,7 +51,7 @@ func (l *ListDevicesLogic) ListDevices(in *djicloud.ListDevicesReq) (*djicloud.L
 		db = db.Where("device_sn LIKE ? OR alias LIKE ?", "%"+in.Keyword+"%", "%"+in.Keyword+"%")
 	}
 	var devices []gormmodel.DjiDevice
-	pageResult, err := gormx.QueryPage(db.Order("id DESC"), int(in.GetPage()), int(in.GetPageSize()), &devices)
+	pageResult, err := gormx.QueryPage(db.Order("id DESC"), in.GetPage(), in.GetPageSize(), &devices)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询设备列表失败")
 	}

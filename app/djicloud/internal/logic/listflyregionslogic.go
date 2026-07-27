@@ -36,7 +36,7 @@ func (l *ListFlyRegionsLogic) ListFlyRegions(in *djicloud.ListFlyRegionsReq) (*d
 	}
 
 	var regions []gormmodel.DjiFlyRegion
-	pageResult, err := gormx.QueryPage(db.Order("id DESC"), int(in.GetPage()), int(in.GetPageSize()), &regions)
+	pageResult, err := gormx.QueryPage(db.Order("id DESC"), in.GetPage(), in.GetPageSize(), &regions)
 	if err != nil {
 		return nil, err
 	}

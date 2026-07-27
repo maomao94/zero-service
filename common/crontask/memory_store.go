@@ -56,17 +56,21 @@ func (m *MemoryStore) LockAndFetch(ctx context.Context, now time.Time, defaultLo
 	}
 	task := candidates[rand.Intn(last+1)]
 
-	originalNextRun := task.NextRun
+	scheduledTime := task.NextRun
+	if !task.ScheduledTime.IsZero() {
+		scheduledTime = task.ScheduledTime
+	}
 	lockTimeout := ResolveLockTimeout(task.LockTimeout, defaultLockTimeout)
 	task.NextRun = now.Add(lockTimeout).Truncate(time.Second)
+	task.ScheduledTime = scheduledTime
 
 	claimedTask := *task
-	claimedTask.NextRun = originalNextRun
+	claimedTask.NextRun = time.Time{}
 	return &TaskClaim{Task: &claimedTask, LockedUntil: task.NextRun}, nil
 }
 
 // Complete 使用 LockedUntil token 完成一次周期执行。
-func (m *MemoryStore) Complete(ctx context.Context, id string, expectedLockedUntil, nextRun, lastRun time.Time) error {
+func (m *MemoryStore) Complete(ctx context.Context, id string, expectedLockedUntil time.Time, completion Completion) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -74,9 +78,13 @@ func (m *MemoryStore) Complete(ctx context.Context, id string, expectedLockedUnt
 	if !ok || !task.NextRun.Equal(expectedLockedUntil) {
 		return ErrNotFound
 	}
-	task.NextRun = nextRun
-	if !lastRun.IsZero() {
-		task.LastRun = lastRun
+	task.NextRun = completion.NextRun
+	task.ScheduledTime = time.Time{}
+	if !completion.LastRun.IsZero() {
+		task.LastRun = completion.LastRun
+	}
+	if !completion.LastScheduledRun.IsZero() {
+		task.LastScheduledRun = completion.LastScheduledRun
 	}
 	return nil
 }
@@ -92,6 +100,19 @@ func (m *MemoryStore) UpdateLastRun(ctx context.Context, id string, lastRun time
 	}
 	task.LastRun = lastRun
 	return nil
+}
+
+// GetByID 按任务 ID 查询任务。
+func (m *MemoryStore) GetByID(ctx context.Context, id string) (*TaskConfig, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	task, ok := m.tasks[id]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	result := *task
+	return &result, nil
 }
 
 // GetByCode 按全局唯一的 task_code 查询任务。
@@ -155,8 +176,16 @@ func (m *MemoryStore) Update(ctx context.Context, cfg *TaskConfig) error {
 	}
 
 	lastRun := m.tasks[cfg.ID].LastRun
+	lastScheduledRun := m.tasks[cfg.ID].LastScheduledRun
+	nextRun := m.tasks[cfg.ID].NextRun
+	scheduledTime := m.tasks[cfg.ID].ScheduledTime
 	updated := *cfg
 	updated.LastRun = lastRun
+	updated.LastScheduledRun = lastScheduledRun
+	if !scheduledTime.IsZero() {
+		updated.NextRun = nextRun
+		updated.ScheduledTime = scheduledTime
+	}
 	m.tasks[cfg.ID] = &updated
 	return nil
 }
@@ -179,6 +208,7 @@ func (m *MemoryStore) Enable(ctx context.Context, id string) error {
 	}
 	task.Status = StatusEnabled
 	task.NextRun = nextRun
+	task.ScheduledTime = time.Time{}
 	return nil
 }
 

@@ -68,14 +68,6 @@ service TriggerRpc {
   rpc SetHolidaySourceEnabled(SetHolidaySourceEnabledReq) returns (SetHolidaySourceEnabledRes);
   // 创建计划任务
   rpc CreatePlanTask(CreatePlanTaskReq) returns (CreatePlanTaskRes);
-  // 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
-  rpc CreateCronJob(CreateCronJobReq) returns (CreateCronJobRes);
-  // 启用 Cron Job，并从当前时间重新计算未来执行时间
-  rpc EnableCronJob(EnableCronJobReq) returns (EnableCronJobRes);
-  // 禁用 Cron Job，禁用后调度器不再扫描该任务
-  rpc DisableCronJob(DisableCronJobReq) returns (DisableCronJobRes);
-  // 软删除 Cron Job，重复删除按幂等成功处理
-  rpc DeleteCronJob(DeleteCronJobReq) returns (DeleteCronJobRes);
   // 暂停计划
   rpc PausePlan(PausePlanReq) returns (PausePlanRes);
   // 终止计划
@@ -121,6 +113,21 @@ service TriggerRpc {
 
   // 回调计划执行项 ongoing 回执
   rpc CallbackPlanExecItem(CallbackPlanExecItemReq) returns (CallbackPlanExecItemRes);
+
+  // 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
+  rpc CreateCronJob(CreateCronJobReq) returns (CreateCronJobRes);
+  // 启用 Cron Job，并从当前时间重新计算未来执行时间
+  rpc EnableCronJob(EnableCronJobReq) returns (EnableCronJobRes);
+  // 禁用 Cron Job，禁用后调度器不再扫描该任务
+  rpc DisableCronJob(DisableCronJobReq) returns (DisableCronJobRes);
+  // 软删除 Cron Job，重复删除按幂等成功处理
+  rpc DeleteCronJob(DeleteCronJobReq) returns (DeleteCronJobRes);
+  // 立即异步执行一次 Cron Job，不改变周期计划
+  rpc RunCronJob(RunCronJobReq) returns (RunCronJobRes);
+  // 获取 Cron Job 详情
+  rpc GetCronJob(GetCronJobReq) returns (GetCronJobRes);
+  // 分页获取 Cron Job 列表
+  rpc ListCronJobs(ListCronJobsReq) returns (ListCronJobsRes);
 
   // 生成业务唯一编码（如工单号、告警编码等），由中间件统一生成，非数据库自增序列
   rpc NextId (NextIdReq) returns (NextIdRes);
@@ -383,8 +390,8 @@ message HistoricalStatsRes {
 }
 
 message ListActiveTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
@@ -394,8 +401,8 @@ message ListActiveTasksRes {
 }
 
 message ListPendingTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
@@ -405,8 +412,8 @@ message ListPendingTasksRes {
 }
 
 message ListAggregatingTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
   string group = 4 [(validate.rules).string = {min_len: 1}];
 }
@@ -417,8 +424,8 @@ message ListAggregatingTasksRes {
 }
 
 message ListScheduledTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
@@ -428,8 +435,8 @@ message ListScheduledTasksRes {
 }
 
 message ListRetryTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
@@ -439,8 +446,8 @@ message ListRetryTasksRes {
 }
 
 message ListArchivedTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
@@ -450,8 +457,8 @@ message ListArchivedTasksRes {
 }
 
 message ListCompletedTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
@@ -488,6 +495,10 @@ message CalcPlanTaskDateReq {
 
 message CalcPlanTaskDateRes {
   repeated string planDates = 1;
+  // 根据实际计划规则生成的简体中文描述，用于业务展示。
+  string scheduleDescription = 2;
+  // 实际用于日期计算和持久化的 RFC 5545 RRULE Set 原文，用于排障。
+  string rruleStr = 3;
 }
 
 enum HolidayDayKindPb {
@@ -782,91 +793,6 @@ message CreatePlanTaskRes {
   int64 execCnt = 4;
 }
 
-// CreateCronJobReq 是独立 RRULE 周期任务创建请求。
-// Trigger 根据业务规则生成 RRuleStr、JobId 和首次 NextRun，不预拆分批次或执行项。
-message CreateCronJobReq {
-  // 全局唯一业务任务编码；与 Trigger 生成的 JobId 是两个不同标识。
-  string taskCode = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
-  // 任务名称。
-  string taskName = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
-  // 任务类型。
-  string type = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
-  // 任务分组 ID，用于业务侧分组管理。
-  string groupId = 4 [(validate.rules).string = {max_len: 64}];
-  // 任务描述。
-  string description = 5 [(validate.rules).string = {max_len: 200}];
-  // 规则生效开始时间；不传时默认当前年份第一天，格式 yyyy-MM-dd HH:mm:ss。
-  string startTime = 6;
-  // 规则生效结束时间；不传时默认开始时间所在年份最后一天，格式 yyyy-MM-dd HH:mm:ss。
-  string endTime = 7;
-  // 业务周期规则，由 Trigger 编译为 RFC 5545 RRULE。
-  PlanRulePb rule = 8 [(validate.rules).message = {required: true}];
-  // 排除日期列表，格式 yyyy-MM-dd；这些日期的计划时间不会触发。
-  repeated string excludeDates = 9 [(validate.rules).repeated = {items: {string: {len: 10}}}];
-  // 调度优先级，数字越大越优先。
-  int32 priority = 10 [(validate.rules).int32 = {gte: 0}];
-  // 执行业务参数 JSON；为空表示没有业务参数。
-  string payload = 11;
-  // 调用方业务扩展 JSON；Trigger 将其放入 CronJobExtra.bizExtra。
-  string extra = 12;
-  // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-  int64 lockTimeout = 13 [(validate.rules).int64 = {gte: 0}];
-  // 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
-  bool skipTimeFilter = 14;
-
-  // 扩展字段 1。
-  string ext1 = 50;
-  // 扩展字段 2。
-  string ext2 = 51;
-  // 扩展字段 3。
-  string ext3 = 52;
-  // 扩展字段 4。
-  string ext4 = 53;
-  // 扩展字段 5。
-  string ext5 = 54;
-
-  // 机构编码。
-  string deptCode = 101 [(validate.rules).string = {min_len: 1, max_len: 64}];
-}
-
-// CreateCronJobRes 返回 Trigger 创建的周期任务标识和首次执行时间。
-message CreateCronJobRes {
-  // Trigger 生成的 JobId，对应 cron_job.id。
-  string jobId = 1;
-  // 首次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；规则已耗尽时为空字符串。
-  string nextRun = 2;
-}
-
-// EnableCronJobReq 启用指定 Cron Job。
-message EnableCronJobReq {
-  // Trigger 生成的 JobId。
-  string jobId = 1 [(validate.rules).string = {min_len: 1}];
-}
-
-// EnableCronJobRes 表示启用操作已完成。
-message EnableCronJobRes {
-}
-
-// DisableCronJobReq 禁用指定 Cron Job。
-message DisableCronJobReq {
-  // Trigger 生成的 JobId。
-  string jobId = 1 [(validate.rules).string = {min_len: 1}];
-}
-
-// DisableCronJobRes 表示禁用操作已完成。
-message DisableCronJobRes {
-}
-
-// DeleteCronJobReq 软删除指定 Cron Job。
-message DeleteCronJobReq {
-  // Trigger 生成的 JobId。
-  string jobId = 1 [(validate.rules).string = {min_len: 1}];
-}
-
-// DeleteCronJobRes 表示删除操作已完成；任务原本不存在时也返回成功。
-message DeleteCronJobRes {
-}
-
 message PausePlanReq {
   string id = 1;
   string planId = 2;
@@ -1022,13 +948,17 @@ message PlanPb {
   string ext4 = 18;
   // 扩展字段5
   string ext5 = 19;
+  // 创建时用于展开计划日期的 RFC 5545 RRULE Set 快照。
+  string rruleStr = 20;
+  // 根据 RRULE Set 快照生成的简体中文描述。
+  string scheduleDescription = 21;
 }
 
 message ListPlansReq {
   // 分页大小
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0}];
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 计划ID模糊查询
   string planId = 3;
   // 计划名称模糊查询
@@ -1057,9 +987,9 @@ message GetPlanBatchRes {
 
 message ListPlanBatchesReq {
   // 分页大小
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0}];
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 计划主键ID
   string planPk = 3;
   // 计划ID
@@ -1162,9 +1092,9 @@ message PlanExecItemPb {
 
 message ListPlanExecItemsReq {
   // 分页大小
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0}];
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 计划主键 id
   string id = 3;
   // 执行ID（唯一索引）
@@ -1199,9 +1129,9 @@ message GetPlanExecLogRes {
 // 分页获取计划触发日志列表请求
 message ListPlanExecLogsReq {
   // 分页大小
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0}];
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 计划ID
   string planId = 3;
   // 批ID
@@ -1394,6 +1324,201 @@ message DelayConfigPb {
 }
 
 message CallbackPlanExecItemRes {
+}
+
+// CreateCronJobReq 是独立 RRULE 周期任务创建请求。
+// Trigger 根据业务规则生成 RRuleStr、JobId 和首次 NextRun，不预拆分批次或执行项。
+message CreateCronJobReq {
+  // 全局唯一业务任务编码；与 Trigger 生成的 JobId 是两个不同标识。
+  string taskCode = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  // 任务名称。
+  string taskName = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  // 任务类型。
+  string type = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  // 任务分组 ID，用于业务侧分组管理。
+  string groupId = 4 [(validate.rules).string = {max_len: 64}];
+  // 任务描述。
+  string description = 5 [(validate.rules).string = {max_len: 200}];
+  // 规则生效开始时间；不传时默认当前年份第一天，格式 yyyy-MM-dd HH:mm:ss。
+  string startTime = 6;
+  // 规则生效结束时间；不传时默认开始时间所在年份最后一天，格式 yyyy-MM-dd HH:mm:ss。
+  string endTime = 7;
+  // 业务周期规则，由 Trigger 编译为 RFC 5545 RRULE。
+  PlanRulePb rule = 8 [(validate.rules).message = {required: true}];
+  // 排除日期列表，格式 yyyy-MM-dd；这些日期的计划时间不会触发。
+  repeated string excludeDates = 9 [(validate.rules).repeated = {items: {string: {len: 10}}}];
+  // 调度优先级，数字越大越优先。
+  int32 priority = 10 [(validate.rules).int32 = {gte: 0}];
+  // 执行业务参数 JSON；为空表示没有业务参数。
+  string payload = 11;
+  // 调用方业务扩展 JSON；Trigger 将其放入 CronJobExtra.bizExtra。
+  string extra = 12;
+  // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
+  int64 lockTimeout = 13 [(validate.rules).int64 = {gte: 0}];
+  // 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
+  bool skipTimeFilter = 14;
+
+  // 扩展字段 1。
+  string ext1 = 50;
+  // 扩展字段 2。
+  string ext2 = 51;
+  // 扩展字段 3。
+  string ext3 = 52;
+  // 扩展字段 4。
+  string ext4 = 53;
+  // 扩展字段 5。
+  string ext5 = 54;
+
+  // 机构编码。
+  string deptCode = 101 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+// CreateCronJobRes 返回 Trigger 创建的周期任务标识和首次执行时间。
+message CreateCronJobRes {
+  // Trigger 生成的 JobId，对应 cron_job.id。
+  string jobId = 1;
+  // 首次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；规则已耗尽时为空字符串。
+  string nextRun = 2;
+}
+
+// EnableCronJobReq 启用指定 Cron Job。
+message EnableCronJobReq {
+  // Trigger 生成的 JobId。
+  string jobId = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+// EnableCronJobRes 表示启用操作已完成。
+message EnableCronJobRes {
+}
+
+// DisableCronJobReq 禁用指定 Cron Job。
+message DisableCronJobReq {
+  // Trigger 生成的 JobId。
+  string jobId = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+// DisableCronJobRes 表示禁用操作已完成。
+message DisableCronJobRes {
+}
+
+// DeleteCronJobReq 软删除指定 Cron Job。
+message DeleteCronJobReq {
+  // Trigger 生成的 JobId。
+  string jobId = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+// DeleteCronJobRes 表示删除操作已完成；任务原本不存在时也返回成功。
+message DeleteCronJobRes {
+}
+
+// RunCronJobReq 是 Cron Job 立即执行请求。
+message RunCronJobReq {
+  // Trigger 生成的 JobId。
+  string jobId = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+// RunCronJobRes 表示立即执行请求已受理，不表示异步业务回调已经成功。
+message RunCronJobRes {
+}
+
+// GetCronJobReq 是 Cron Job 详情查询请求。
+message GetCronJobReq {
+  // Trigger 生成的 JobId。
+  string jobId = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+// GetCronJobRes 返回 Cron Job 详情。
+message GetCronJobRes {
+  // Cron Job 详情。
+  CronJobPb cronJob = 1;
+}
+
+// ListCronJobsReq 是 Cron Job 分页查询请求。
+message ListCronJobsReq {
+  // 分页大小；0 使用默认值。
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  // 页码；0 使用默认值。
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  // 业务任务编码模糊查询。
+  string taskCode = 3 [(validate.rules).string = {max_len: 64}];
+  // 任务名称模糊查询。
+  string taskName = 4 [(validate.rules).string = {max_len: 128}];
+  // 状态多选：0-禁用，1-启用。
+  repeated int32 status = 5 [(validate.rules).repeated = {items: {int32: {gte: 0, lte: 1}}}];
+  // 机构编码精确查询。
+  string deptCode = 6 [(validate.rules).string = {max_len: 64}];
+  // 任务类型精确查询。
+  string type = 7 [(validate.rules).string = {max_len: 64}];
+  // 任务分组 ID 精确查询。
+  string groupId = 8 [(validate.rules).string = {max_len: 64}];
+}
+
+// ListCronJobsRes 返回 Cron Job 分页列表。
+message ListCronJobsRes {
+  // Cron Job 列表。
+  repeated CronJobPb cronJobs = 1;
+  // 符合筛选条件的总记录数。
+  int64 total = 2;
+}
+
+// CronJobPb 是 Cron Job 对外管理视图。
+message CronJobPb {
+  // Trigger 生成的 JobId，对应 cron_job.id。
+  string jobId = 1;
+  // 全局唯一业务任务编码。
+  string taskCode = 2;
+  // 任务名称。
+  string taskName = 3;
+  // 调度优先级，数字越大越优先。
+  int32 priority = 4;
+  // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
+  int64 lockTimeout = 5;
+  // 执行业务参数 JSON；为空表示没有业务参数。
+  string payload = 6;
+  // 调用方业务扩展 JSON；为空表示没有业务扩展。
+  string extra = 7;
+  // 状态：0-禁用，1-启用。
+  int32 status = 8;
+  // 下次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；无下次调度时为空字符串。
+  string nextRun = 9;
+  // 上次成功执行时间，格式 yyyy-MM-dd HH:mm:ss；从未成功执行时为空字符串。
+  string lastRun = 10;
+  // 任务类型。
+  string type = 11;
+  // 任务分组 ID。
+  string groupId = 12;
+  // 任务描述。
+  string description = 13;
+  // 规则生效开始时间，格式 yyyy-MM-dd HH:mm:ss；调用方未指定时为空字符串。
+  string startTime = 14;
+  // 规则生效结束时间，格式 yyyy-MM-dd HH:mm:ss；调用方未指定时为空字符串。
+  string endTime = 15;
+  // 业务周期规则。
+  PlanRulePb rule = 16;
+  // 排除日期列表，格式 yyyy-MM-dd。
+  repeated string excludeDates = 17;
+  // 根据实际持久化 RRULE Set 生成的简体中文描述。
+  string scheduleDescription = 18;
+  // 实际持久化并用于调度的 RFC 5545 RRULE Set 原文。
+  string rruleStr = 19;
+
+  // 扩展字段 1。
+  string ext1 = 50;
+  // 扩展字段 2。
+  string ext2 = 51;
+  // 扩展字段 3。
+  string ext3 = 52;
+  // 扩展字段 4。
+  string ext4 = 53;
+  // 扩展字段 5。
+  string ext5 = 54;
+
+  // 创建时间，格式 yyyy-MM-dd HH:mm:ss。
+  string createTime = 100;
+  // 更新时间，格式 yyyy-MM-dd HH:mm:ss。
+  string updateTime = 101;
+  // 机构编码。
+  string deptCode = 102;
 }
 
 message NextIdReq{

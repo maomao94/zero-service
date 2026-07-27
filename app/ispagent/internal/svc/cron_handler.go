@@ -87,7 +87,7 @@ func taskExecution(ctx context.Context, task *crontask.TaskConfig, fields *ctask
 	if taskPatrolledID, runAt, ok := ctask.ManualExecutionFromContext(ctx); ok {
 		return runAt, taskPatrolledID
 	}
-	runAt := task.NextRun
+	runAt := task.ScheduledTime
 	runTime := tool.CarbonFromTimeStartOfSecond(runAt)
 	return runAt, fmt.Sprintf("%s_%s_%s", fields.SubstationCode, task.TaskCode, runTime.ToShortDateTimeString())
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"zero-service/app/trigger/model/gormmodel"
+	"zero-service/common/crontask"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -59,32 +60,38 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 	if err != nil {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "计划规则格式错误")
 	}
+	scheduleDescription, err := crontask.DescribeRRule(plan.RRuleStr)
+	if err != nil {
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "生成计划规则描述失败")
+	}
 
 	// 构建响应
 	pbPlan := &trigger.PlanPb{
-		CreateTime:       carbon.CreateFromStdTime(plan.CreateTime).ToDateTimeString(),
-		UpdateTime:       carbon.CreateFromStdTime(plan.UpdateTime).ToDateTimeString(),
-		CreateUser:       plan.CreateUser.String,
-		UpdateUser:       plan.UpdateUser.String,
-		DeptCode:         plan.DeptCode.String,
-		Id:               plan.Id,
-		PlanId:           plan.PlanId,
-		PlanName:         plan.PlanName.String,
-		Type:             plan.Type.String,
-		GroupId:          plan.GroupId.String,
-		Description:      plan.Description.String,
-		StartTime:        carbon.CreateFromStdTime(plan.StartTime).ToDateTimeString(),
-		EndTime:          carbon.CreateFromStdTime(plan.EndTime).ToDateTimeString(),
-		Rule:             &pbRule,
-		Status:           int32(plan.Status),
-		ScanFlg:          int32(plan.ScanFlg),
-		TerminatedReason: plan.TerminatedReason.String,
-		PausedReason:     plan.PausedReason.String,
-		Ext1:             plan.Ext1.String,
-		Ext2:             plan.Ext2.String,
-		Ext3:             plan.Ext3.String,
-		Ext4:             plan.Ext4.String,
-		Ext5:             plan.Ext5.String,
+		CreateTime:          carbon.CreateFromStdTime(plan.CreateTime).ToDateTimeString(),
+		UpdateTime:          carbon.CreateFromStdTime(plan.UpdateTime).ToDateTimeString(),
+		CreateUser:          plan.CreateUser.String,
+		UpdateUser:          plan.UpdateUser.String,
+		DeptCode:            plan.DeptCode.String,
+		Id:                  plan.Id,
+		PlanId:              plan.PlanId,
+		PlanName:            plan.PlanName.String,
+		Type:                plan.Type.String,
+		GroupId:             plan.GroupId.String,
+		Description:         plan.Description.String,
+		StartTime:           carbon.CreateFromStdTime(plan.StartTime).ToDateTimeString(),
+		EndTime:             carbon.CreateFromStdTime(plan.EndTime).ToDateTimeString(),
+		Rule:                &pbRule,
+		Status:              int32(plan.Status),
+		ScanFlg:             int32(plan.ScanFlg),
+		TerminatedReason:    plan.TerminatedReason.String,
+		PausedReason:        plan.PausedReason.String,
+		Ext1:                plan.Ext1.String,
+		Ext2:                plan.Ext2.String,
+		Ext3:                plan.Ext3.String,
+		Ext4:                plan.Ext4.String,
+		Ext5:                plan.Ext5.String,
+		RruleStr:            plan.RRuleStr,
+		ScheduleDescription: scheduleDescription,
 	}
 	// 设置暂停时间和原因
 	if plan.PausedTime.Valid {

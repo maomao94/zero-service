@@ -45,11 +45,12 @@ func TestDBStoreLockAndFetchUsesSQLiteRandomFunction(t *testing.T) {
 		t.Fatalf("LockAndFetch: %v", err)
 	}
 	got := claim.Task
+	originalScheduledRun := got.ScheduledTime
 	if got.TaskCode != "TASK001" {
 		t.Fatalf("task code = %q, want TASK001", got.TaskCode)
 	}
-	if !got.NextRun.Equal(now.Add(-time.Minute)) {
-		t.Fatalf("next run = %v, want original due time", got.NextRun)
+	if !got.ScheduledTime.Equal(now.Add(-time.Minute)) {
+		t.Fatalf("scheduled time = %v, want original due time", got.ScheduledTime)
 	}
 	if got.LockTimeout != 2*time.Minute {
 		t.Fatalf("lock timeout = %v, want %v", got.LockTimeout, 2*time.Minute)
@@ -58,7 +59,10 @@ func TestDBStoreLockAndFetchUsesSQLiteRandomFunction(t *testing.T) {
 		t.Fatalf("locked until = %v, want task-specific %v", claim.LockedUntil, want)
 	}
 
-	if err := store.Complete(context.Background(), got.ID, claim.LockedUntil, time.Time{}, now); err != nil {
+	if err := store.Complete(context.Background(), got.ID, claim.LockedUntil, commoncrontask.Completion{
+		LastRun:          now,
+		LastScheduledRun: originalScheduledRun,
+	}); err != nil {
 		t.Fatalf("Complete(zero): %v", err)
 	}
 	var updated gormmodel.GormTaskConfig
@@ -70,6 +74,9 @@ func TestDBStoreLockAndFetchUsesSQLiteRandomFunction(t *testing.T) {
 	}
 	if !updated.LastRun.Valid || !updated.LastRun.Time.Equal(now) {
 		t.Fatalf("last_run = %v, want %v", updated.LastRun, now)
+	}
+	if !updated.LastScheduledRun.Valid || !updated.LastScheduledRun.Time.Equal(originalScheduledRun) {
+		t.Fatalf("last_scheduled_run = %v, want %v", updated.LastScheduledRun, originalScheduledRun)
 	}
 
 	got.NextRun = time.Time{}
@@ -86,8 +93,88 @@ func TestDBStoreLockAndFetchUsesSQLiteRandomFunction(t *testing.T) {
 	if !updated.LastRun.Valid || !updated.LastRun.Time.Equal(now) {
 		t.Fatalf("full update changed last_run: %v", updated.LastRun)
 	}
+	if !updated.LastScheduledRun.Valid || !updated.LastScheduledRun.Time.Equal(originalScheduledRun) {
+		t.Fatalf("full update changed last_scheduled_run: %v", updated.LastScheduledRun)
+	}
 	if _, err := store.LockAndFetch(context.Background(), now, 30*time.Second); err != commoncrontask.ErrNotFound {
 		t.Fatalf("expected NULL next_run tasks not to be fetched, got %v", err)
+	}
+}
+
+func TestDBStoreRetryKeepsOriginalScheduledTime(t *testing.T) {
+	db := newDBStoreTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	now := time.Date(2026, 7, 15, 10, 0, 0, 0, time.Local)
+	originalScheduledRun := now.Add(-time.Minute)
+	record := &gormmodel.GormTaskConfig{
+		TaskCode: "RETRY",
+		Status:   int(commoncrontask.StatusEnabled),
+		NextRun:  sql.NullTime{Time: originalScheduledRun, Valid: true},
+	}
+	if err := db.Create(record).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	firstClaim, err := store.LockAndFetch(context.Background(), now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondClaim, err := store.LockAndFetch(context.Background(), firstClaim.LockedUntil, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !secondClaim.Task.ScheduledTime.Equal(originalScheduledRun) {
+		t.Fatalf("retry scheduled run = %v, want %v", secondClaim.Task.ScheduledTime, originalScheduledRun)
+	}
+	if err := store.Complete(context.Background(), record.Id, secondClaim.LockedUntil, commoncrontask.Completion{
+		LastRun:          now,
+		LastScheduledRun: secondClaim.Task.ScheduledTime,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	var completed gormmodel.GormTaskConfig
+	if err := db.Where("id = ?", record.Id).First(&completed).Error; err != nil {
+		t.Fatal(err)
+	}
+	if completed.ScheduledTime.Valid {
+		t.Fatalf("completed retry must clear scheduled_time: %v", completed.ScheduledTime)
+	}
+	if !completed.LastScheduledRun.Valid || !completed.LastScheduledRun.Time.Equal(originalScheduledRun) {
+		t.Fatalf("last scheduled run = %v, want %v", completed.LastScheduledRun, originalScheduledRun)
+	}
+}
+
+func TestDBStoreUpdatePreservesInFlightScheduledTime(t *testing.T) {
+	db := newDBStoreTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	now := time.Date(2026, 7, 15, 10, 0, 0, 0, time.Local)
+	record := &gormmodel.GormTaskConfig{
+		TaskCode: "IN-FLIGHT",
+		Status:   int(commoncrontask.StatusEnabled),
+		NextRun:  sql.NullTime{Time: now.Add(-time.Minute), Valid: true},
+	}
+	if err := db.Create(record).Error; err != nil {
+		t.Fatal(err)
+	}
+	claim, err := store.LockAndFetch(context.Background(), now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	claim.Task.TaskName = "updated"
+	if err := store.Update(context.Background(), claim.Task); err != nil {
+		t.Fatal(err)
+	}
+
+	var updated gormmodel.GormTaskConfig
+	if err := db.Where("id = ?", record.Id).First(&updated).Error; err != nil {
+		t.Fatal(err)
+	}
+	if !updated.ScheduledTime.Valid || !updated.ScheduledTime.Time.Equal(claim.Task.ScheduledTime) {
+		t.Fatalf("scheduled_time = %v, want in-flight %v", updated.ScheduledTime, claim.Task.ScheduledTime)
+	}
+	if !updated.NextRun.Valid || !updated.NextRun.Time.Equal(claim.LockedUntil) {
+		t.Fatalf("next_run = %v, want lease %v", updated.NextRun, claim.LockedUntil)
 	}
 }
 
@@ -134,6 +221,39 @@ func TestDBStoreLockAndFetchLocksOnlySelectedTask(t *testing.T) {
 	}
 }
 
+func TestDBStoreGetByID(t *testing.T) {
+	db := newDBStoreTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	record := &gormmodel.GormTaskConfig{
+		TaskCode: "GET-BY-ID",
+		TaskName: "按 ID 查询",
+		Status:   int(commoncrontask.StatusEnabled),
+	}
+	if err := db.Create(record).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	task, err := store.GetByID(context.Background(), record.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if task.ID != record.Id || task.TaskCode != record.TaskCode || task.Status != commoncrontask.StatusEnabled {
+		t.Fatalf("unexpected task: %+v", task)
+	}
+	if task.CreateTime.IsZero() || task.UpdateTime.IsZero() {
+		t.Fatalf("audit times not mapped: %+v", task)
+	}
+	if _, err := store.GetByID(context.Background(), "missing"); !errors.Is(err, commoncrontask.ErrNotFound) {
+		t.Fatalf("missing task error = %v, want ErrNotFound", err)
+	}
+	if err := store.Delete(context.Background(), record.Id); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.GetByID(context.Background(), record.Id); !errors.Is(err, commoncrontask.ErrNotFound) {
+		t.Fatalf("deleted task error = %v, want ErrNotFound", err)
+	}
+}
+
 func TestDBStoreCompleteUsesLeaseTokenNotStatus(t *testing.T) {
 	db := newDBStoreTestDB(t)
 	store := NewDBStore(&gormx.DB{DB: db})
@@ -155,7 +275,7 @@ func TestDBStoreCompleteUsesLeaseTokenNotStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 	nextRun := now.Add(time.Hour)
-	if err := store.Complete(context.Background(), record.Id, claim.LockedUntil, nextRun, now); err != nil {
+	if err := store.Complete(context.Background(), record.Id, claim.LockedUntil, commoncrontask.Completion{NextRun: nextRun, LastRun: now}); err != nil {
 		t.Fatalf("disabled in-flight task should complete: %v", err)
 	}
 
@@ -164,7 +284,7 @@ func TestDBStoreCompleteUsesLeaseTokenNotStatus(t *testing.T) {
 		Update("next_run", nextRun.Add(time.Second)).Error; err != nil {
 		t.Fatal(err)
 	}
-	if err := store.Complete(context.Background(), record.Id, nextRun, now.Add(2*time.Hour), now); !errors.Is(err, commoncrontask.ErrNotFound) {
+	if err := store.Complete(context.Background(), record.Id, nextRun, commoncrontask.Completion{NextRun: now.Add(2 * time.Hour), LastRun: now}); !errors.Is(err, commoncrontask.ErrNotFound) {
 		t.Fatalf("expected lost lease error, got %v", err)
 	}
 }
@@ -176,7 +296,7 @@ func TestDBStoreEnableDisableAreIdempotent(t *testing.T) {
 	record := &gormmodel.GormTaskConfig{
 		TaskCode: "ENABLE",
 		TaskName: "启停测试",
-		RRuleStr: "FREQ=DAILY",
+		RRuleStr: "DTSTART:20260701T000000Z\nRRULE:FREQ=DAILY",
 		Status:   int(commoncrontask.StatusEnabled),
 		NextRun:  sql.NullTime{Time: now.Add(time.Hour), Valid: true},
 	}

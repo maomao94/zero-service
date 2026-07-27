@@ -54,7 +54,7 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 	}
 
 	var planBatches []gormmodel.PlanBatch
-	page, err := gormx.QueryPage(db.Order("plan_batch.plan_trigger_time ASC, plan_batch.id DESC"), int(in.PageNum), int(in.PageSize), &planBatches)
+	page, err := gormx.QueryPage(db.Order("plan_batch.plan_trigger_time ASC, plan_batch.id DESC"), in.PageNum, in.PageSize, &planBatches)
 	if err != nil {
 		return nil, err
 	}

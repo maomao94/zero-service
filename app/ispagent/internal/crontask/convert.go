@@ -14,16 +14,18 @@ import (
 // Extra 中的 ISP 字段会被反序列化并平铺到 GormTaskConfig 对应列。
 func fromTaskConfig(cfg *crontask.TaskConfig) *gormmodel.GormTaskConfig {
 	g := &gormmodel.GormTaskConfig{
-		TaskCode:    cfg.TaskCode,
-		TaskName:    cfg.TaskName,
-		RRuleStr:    cfg.RRuleStr,
-		Priority:    cfg.Priority,
-		LockTimeout: cfg.LockTimeout.Milliseconds(),
-		Payload:     string(cfg.Payload),
-		Extra:       string(cfg.Extra),
-		Status:      int(cfg.Status),
-		NextRun:     toNullTime(cfg.NextRun),
-		LastRun:     toNullTime(cfg.LastRun),
+		TaskCode:         cfg.TaskCode,
+		TaskName:         cfg.TaskName,
+		RRuleStr:         cfg.RRuleStr,
+		Priority:         cfg.Priority,
+		LockTimeout:      cfg.LockTimeout.Milliseconds(),
+		Payload:          string(cfg.Payload),
+		Extra:            string(cfg.Extra),
+		Status:           int(cfg.Status),
+		NextRun:          toNullTime(cfg.NextRun),
+		ScheduledTime:    toNullTime(cfg.ScheduledTime),
+		LastRun:          toNullTime(cfg.LastRun),
+		LastScheduledRun: toNullTime(cfg.LastScheduledRun),
 	}
 	g.Id = cfg.ID
 
@@ -39,6 +41,8 @@ func fromTaskConfig(cfg *crontask.TaskConfig) *gormmodel.GormTaskConfig {
 func toTaskConfig(g *gormmodel.GormTaskConfig) *crontask.TaskConfig {
 	cfg := &crontask.TaskConfig{
 		ID:          g.Id,
+		CreateTime:  g.CreateTime,
+		UpdateTime:  g.UpdateTime,
 		TaskCode:    g.TaskCode,
 		TaskName:    g.TaskName,
 		RRuleStr:    g.RRuleStr,
@@ -50,8 +54,14 @@ func toTaskConfig(g *gormmodel.GormTaskConfig) *crontask.TaskConfig {
 	if g.NextRun.Valid {
 		cfg.NextRun = g.NextRun.Time
 	}
+	if g.ScheduledTime.Valid {
+		cfg.ScheduledTime = g.ScheduledTime.Time
+	}
 	if g.LastRun.Valid {
 		cfg.LastRun = g.LastRun.Time
+	}
+	if g.LastScheduledRun.Valid {
+		cfg.LastScheduledRun = g.LastScheduledRun.Time
 	}
 
 	fields := toFields(g)

@@ -71,7 +71,7 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 	}
 
 	var items []gormmodel.PlanExecItem
-	page, err := gormx.QueryPage(db.Order("next_trigger_time ASC, status ASC, id DESC"), int(in.PageNum), int(in.PageSize), &items)
+	page, err := gormx.QueryPage(db.Order("next_trigger_time ASC, status ASC, id DESC"), in.PageNum, in.PageSize, &items)
 	if err != nil {
 		return nil, err
 	}

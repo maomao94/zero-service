@@ -36,7 +36,7 @@ func (l *ListFlyRegionSyncStatusLogic) ListFlyRegionSyncStatus(in *djicloud.List
 	}
 
 	var statuses []gormmodel.DjiFlyRegionSyncStatus
-	pageResult, err := gormx.QueryPage(db.Order("id DESC"), int(in.GetPage()), int(in.GetPageSize()), &statuses)
+	pageResult, err := gormx.QueryPage(db.Order("id DESC"), in.GetPage(), in.GetPageSize(), &statuses)
 	if err != nil {
 		return nil, err
 	}

@@ -60,7 +60,7 @@ func (l *ListPlanExecLogsLogic) ListPlanExecLogs(in *trigger.ListPlanExecLogsReq
 	}
 
 	var logs []gormmodel.PlanExecLog
-	page, err := gormx.QueryPage(db.Order("create_time DESC, id DESC"), int(in.PageNum), int(in.PageSize), &logs)
+	page, err := gormx.QueryPage(db.Order("create_time DESC, id DESC"), in.PageNum, in.PageSize, &logs)
 	if err != nil {
 		return nil, err
 	}

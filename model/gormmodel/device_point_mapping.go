@@ -92,7 +92,7 @@ func (s *DevicePointMappingStore) FindPage(ctx context.Context, filter DevicePoi
 	}
 
 	var mappings []GormDevicePointMapping
-	result, err := gormx.QueryPage(db.Order("id DESC"), int(page), int(pageSize), &mappings)
+	result, err := gormx.QueryPage(db.Order("id DESC"), page, pageSize, &mappings)
 	if err != nil {
 		return nil, 0, err
 	}

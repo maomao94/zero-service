@@ -1,153 +1,52 @@
 # 编码规范
 
-> 全局协作、安全、命名和 Git 边界。go-zero 代码生成、服务结构和公共组件清单以 [`go-zero-conventions.md`](./go-zero-conventions.md) 为准。
+## 适用范围
 
-## 技术栈摘要
+编写或审查 Go、配置、SQL、协议、测试和项目文档时读取。更具体的服务、公共组件和领域规则优先于本文件。
 
-- Go 1.26，go-zero，gRPC，grpc-gateway，Protocol Buffers，go-zero `.api`。
-- AI 相关服务使用 CloudWeGo Eino / Eino ADK / MCP / OpenAI-compatible API。
-- 契约变更先改 `.api` / `.proto`，再执行服务目录的 `gen.sh`，详细流程见 [`go-zero-conventions.md`](./go-zero-conventions.md)。
+## 修改原则
 
-## AI 协作纪律
+- 默认使用中文沟通和任务文档；Go 标识符、协议字段、路径与命令保留原文。
+- 修改前先搜索定义、调用、测试和配置。对身份、状态和字段所有权给出代码证据，不按字段名猜业务含义。
+- 保持改动紧贴需求；不顺带重命名、全仓格式化、升级依赖或重构无关模块。
+- 遵循相邻包的构造、错误和测试风格。只有真正降低跨调用方复杂度时才增加抽象。
+- 使用结构化解析器处理 JSON、XML、Proto、URL、SQL 和时间规则，避免手工拼接已有类型能表达的数据。
 
-- 默认使用中文沟通、提问、任务清单和总结；用户明确要求其他语言时再切换。
-- 修改前先阅读相邻实现、配置、Trellis task 和相关 spec，不基于猜测改动。
-- 能通过搜索代码和读取配置推断的低风险事项自主推进；意图多解且影响大、不可逆操作、缺关键参数或规则冲突时再提问。
-- 按最小影响范围修改，避免无关重构、无关格式化和大范围重排。
-- 不主动创建额外文档或注释；但 `.api`、`.proto`、导出公共能力和复杂协议字段必须保留必要说明。
-- 总结时说明改动内容、影响范围、已执行验证和未验证原因。
+## Go 规则
 
-## 平台和配置边界
+- 传递取消、超时、trace 和业务元数据的调用以 `context.Context` 为第一个参数；不要用 `context.Background()` 截断请求链路，明确脱离请求生命周期的后台任务除外。
+- 错误必须返回、包装或在明确边界处理。包装使用 `%w` 或项目错误封装，确保 `errors.Is`、`errors.As` 和 gRPC 状态仍可识别。
+- goroutine 必须有退出、等待或所有权策略；异步接口要明确是排队成功、处理成功还是 best-effort。
+- 共享状态要写清由哪把锁或哪条事务/CAS 条件保护；锁外执行网络、数据库、回调等慢操作。
+- 导出能力、协议字段、复杂并发和非直观数据转换保留简短注释；不要给自解释代码添加逐行叙述。
+- 泛型用于消除真实重复，并把约束放在使用它的包内；不为一次性逻辑建立泛型框架。
 
-- `.opencode/agents/**`、`.opencode/skills/**`、`.opencode/commands/**`、`.opencode/plugins/**`、`.opencode/lib/**` 属于 Trellis/OpenCode 适配层，除非用户明确要求修改适配器，否则不要改。
-- `.opencode/rules/**` 与 `.aiassistant/rules/**` 分别供 OpenCode 和 GoLand AI 读取；修改规则时两边保持同步。
-- 不把个人绝对路径、API Key、Token、本机账号或私有基础设施写进 spec、规则、提交信息或总结。
-- Markdown LSP 未配置时，文档任务至少执行 `git diff --check` 并说明原因；不要在本规范保留安装教程。需要配置 LSP 时按用户要求单独处理。
+依据：`common/antsx/invoke.go`、`common/tool/errorutil.go`、`common/djisdk/drc.go`、`common/bytex/` 及其测试。
 
-## 命名摘要
+## 命名与边界
 
-| 场景 | 命名 |
-| --- | --- |
-| API 网关请求 | `xxxRequest` |
-| API 网关响应 | `xxxResponse` |
-| gRPC 请求 | `xxxReq` |
-| gRPC 响应 | `xxxRes` |
+- `.api` 请求/响应沿用目标服务的 `XxxRequest` / `XxxResponse`，gRPC 沿用 `XxxReq` / `XxxRes`；兼容性优先于机械改名。
+- 连接级 `SessionID`、业务设备或客户端 ID、消息关联 ID、任务 ID 必须使用语义明确的名字，不能用 `alias`、`id` 相互代替。
+- 公共 client/SDK 的函数式 option 修改构造配置对象，由构造函数生成运行态对象；禁止 option 绕过构造流程直接改锁、连接或缓存字段。
+- 领域错误留在领域/公共包，`status`、HTTP body 或 OpenAI-compatible body 等传输格式只在边界映射。
 
-- 请求和响应必须成对出现，并保持注释完整。
-- Go 包名、文件名、结构体和函数跟随相邻实现和 Go/go-zero 习惯。
-- 禁止 Java 风格命名、异常处理、无意义 getter/setter 和过度封装。
+依据：`common/isp/client.go`、`common/netx/client.go`、`common/djisdk/option.go`、`common/isp/errors.go`、`common/gtwx/`。
 
-## 编码边界
+## 安全基线
 
-- Handler/Server 负责参数接收、校验、调用 Logic 和返回结果；业务编排放在 Logic。
-- 跨服务复用能力沉淀到 `common/`，服务内部有状态逻辑保留在对应服务 `internal/`。
-- 新增依赖前先检查 `go.mod`、相邻模块和现有封装，不重复引入功能相近的库。
-- 涉及数据库、Redis、消息队列、MQTT、OSS、Docker、Eino 或 DJI Cloud API 时，优先复用已有 model、client、cache、config、SDK 和 `common/` 封装。
-- 工具函数、复杂协议转换和关键业务分支应有单元测试；生成代码非必要不写自定义测试。
+- 不新增、复制、打印或提交真实密码、Token、认证头、证书、数据库连接串、对象存储配置、个人信息、内网地址或个人绝对路径。
+- 配置示例使用占位值；日志只记录定位问题所需的标识和状态，对 payload 与认证信息默认脱敏。
+- 不在代码里硬编码环境地址或凭据；通过现有配置结构和启动配置注入。
+- 外部输入在进入数据库、文件系统、反射/动态工具、二进制解析或网络转发前进行边界校验和大小限制。
 
-## Go 泛型约定
+## 反模式
 
-Go 1.18+ 泛型用于消除重复的类型转换和切片操作。约束类型定义在使用该约束的包中。
+- 忽略错误或只记录后继续返回成功。
+- 用远期时间、空字符串或魔法数字掩盖明确的空值/状态语义。
+- 在公共包引入具体服务的 proto、model 或传输状态码。
+- 复制已有工具函数、client、配置或协议常量到新位置。
+- 在文档和错误信息中泄露本机或生产环境信息。
 
-### 约束定义
+## 验证
 
-```go
-// 数值类型约束（用于字节/寄存器转换）
-type Integer interface {
-    ~int16 | ~uint16 | ~int32 | ~uint32
-}
-```
-
-### 泛型切片转换
-
-```go
-// ConvertSlice 泛型切片转换，消除 XxxSliceToYyySlice 重复模式
-func ConvertSlice[From Integer, To Integer](values []From, convert func(From) To) []To {
-    result := make([]To, len(values))
-    for i, v := range values {
-        result[i] = convert(v)
-    }
-    return result
-}
-```
-
-Usage:
-
-```go
-// 替代 Uint16SliceToUint32Slice、Int16SliceToInt32Slice 等重复函数
-uint32s := bytex.ConvertSlice(uint16s, func(v uint16) uint32 { return uint32(v) })
-int16s := bytex.ConvertSlice(int32s, func(v int32) int16 { return int16(v) })
-```
-
-### 泛型使用原则
-
-- 泛型用于**消除重复模式**，不是为了炫技。
-- 约束类型放在使用它的包中（如 `bytex.Integer`），不建跨包共享约束文件。
-- 转换函数保持简单：一个 `convert func(From) To` 参数，不加更多泛型层。
-- 泛型函数的调用方负责类型安全（如 `int16(v)` 截断是预期行为）。
-
-## common/ 包复用原则
-
-- 工具函数只在一个 `common/` 包中定义，不在其他包中复制。
-- `common/bytex/` 是字节/寄存器转换的唯一来源（`tool/util.go` 中的重复已清除）。
-- 新增 `common/` 包前先搜索是否已有类似功能。
-- `common/tool/` 是混合工具包，不适合放特定领域的工具函数。
-
-### Convention: Client Option 构造配置边界
-
-**What**: 公共 client / SDK 的函数式 option 必须写入 `XxxOptions` 构造配置结构体，而不是直接写入运行态 `XxxClient` 或未导出实现结构体。
-
-**Why**: option 属于构造参数，直接接收 `*Client` 会把配置解析和运行态对象耦合在一起；后续 client 增加连接池、锁、缓存或状态字段时，option 容易绕过构造边界并误改运行态状态。
-
-**Contract**:
-
-```go
-type ClientOptions struct {
-    Engine Engine
-}
-
-type ClientOption func(*ClientOptions)
-
-func NewClient(opts ...ClientOption) *Client {
-    o := &ClientOptions{}
-    for _, opt := range opts {
-        opt(o)
-    }
-    return &Client{engine: o.Engine}
-}
-```
-
-**Good/Base/Bad Cases**:
-
-- Good: `WithEngine(e Engine) ClientOption` 只设置 `ClientOptions.Engine`，`NewClient` 负责把配置映射到 `Client`。
-- Base: 私有下载、请求、传输选项可以使用小写内部配置结构体，例如 `type downloadOptions struct`。
-- Bad: `type ClientOption func(*Client)`，让 option 直接修改运行态 client 内部字段。
-
-**Tests Required**: 修改 option 模式时，至少运行目标包测试并断言默认值、自定义 option、nil/默认 engine 路径行为不变。
-
-**Wrong vs Correct**:
-
-Wrong:
-
-```go
-type ClientOption func(*Client)
-```
-
-Correct:
-
-```go
-type ClientOption func(*ClientOptions)
-```
-
-## 安全规则
-
-- 不新增、打印或记录明文密码、Token、密钥、认证头、证书、数据库连接串、对象存储配置、手机号、身份证号、内网地址或个人本地路径。
-- 写入规则、文档、提交信息或总结时，对敏感信息脱敏；必要时改写为“项目内目录”“本地仓库配置”“用户级配置”等通用描述。
-- 不主动执行部署、发布、远程上传、删除数据、修改共享基础设施等有外部副作用的操作，除非用户明确要求并给出目标环境。
-
-## Git 规范
-
-- 不主动执行 `git commit`；只有用户明确要求提交时才提交。
-- 提交前必须查看实际 diff，提交说明结合改动内容，不写泛泛模板。
-- 提交标题优先中文，可使用 conventional commit 前缀，例如 `feat: 新增火情任务状态同步`。
-- 不在提交信息中写敏感信息、内网地址、账号、Token、密钥或完整异常堆栈。
+目标 Go 文件至少运行 `gofmt` 和目标包测试；并发变更按风险增加 `go test -race`。依赖、生成和跨模块验证见 [quality-guidelines.md](./quality-guidelines.md)。

@@ -12,16 +12,17 @@ type CronJob struct {
 	gormx.LegacyStringBaseModel
 
 	// crontask.TaskConfig 对齐字段。
-	TaskCode    string       `gorm:"column:task_code;size:64;uniqueIndex:uq_cron_job_task_code;comment:全局唯一任务编码"`
-	TaskName    string       `gorm:"column:task_name;size:128;comment:任务名称"`
-	RRuleStr    string       `gorm:"column:rrule_str;type:text;comment:RFC 5545 规则字符串"`
-	Priority    int          `gorm:"column:priority;default:0;index:idx_cron_job_priority;comment:调度优先级，数字越大越优先"`
-	LockTimeout int64        `gorm:"column:lock_timeout;default:0;comment:单次调度锁超时（毫秒），0 使用调度器默认值"`
-	Payload     string       `gorm:"column:payload;type:text;comment:业务执行参数 JSON"`
-	Extra       string       `gorm:"column:extra;type:text;comment:Trigger 业务扩展字段 JSON"`
-	Status      int          `gorm:"column:status;index:idx_cron_job_scan,priority:1;comment:状态：0-禁用，1-启用"`
-	NextRun     sql.NullTime `gorm:"column:next_run;type:timestamp;index:idx_cron_job_scan,priority:2;comment:下次计划调度时间，NULL 表示无下次调度"`
-	LastRun     sql.NullTime `gorm:"column:last_run;type:timestamp;comment:上次成功执行时间，NULL 表示从未成功执行"`
+	TaskCode         string       `gorm:"column:task_code;size:64;uniqueIndex:uq_cron_job_task_code;comment:全局唯一任务编码"`
+	TaskName         string       `gorm:"column:task_name;size:128;comment:任务名称"`
+	RRuleStr         string       `gorm:"column:rrule_str;type:text;comment:RFC 5545 规则字符串"`
+	Priority         int          `gorm:"column:priority;default:0;index:idx_cron_job_priority;comment:调度优先级，数字越大越优先"`
+	LockTimeout      int64        `gorm:"column:lock_timeout;default:0;comment:单次调度锁超时（毫秒），0 使用调度器默认值"`
+	Payload          string       `gorm:"column:payload;type:text;comment:业务执行参数 JSON"`
+	Extra            string       `gorm:"column:extra;type:text;comment:Trigger 业务扩展字段 JSON"`
+	Status           int          `gorm:"column:status;index:idx_cron_job_scan,priority:1;comment:状态：0-禁用，1-启用"`
+	NextRun          sql.NullTime `gorm:"column:next_run;type:timestamp;index:idx_cron_job_scan,priority:2;comment:下次计划调度时间，NULL 表示无下次调度"`
+	LastRun          sql.NullTime `gorm:"column:last_run;type:timestamp;comment:上次成功执行的实际完成时间，NULL 表示从未成功执行"`
+	LastScheduledRun sql.NullTime `gorm:"column:last_scheduled_run;type:timestamp;comment:上次成功周期执行的原计划时间，NULL 表示尚无成功周期执行"`
 	// ScheduledTime 在回调重试期间保存最初的计划时间，成功完成或重新启用后清空。
 	ScheduledTime sql.NullTime `gorm:"column:scheduled_time;type:timestamp;comment:在途执行的原计划时间，NULL 表示当前没有重试中的执行"`
 

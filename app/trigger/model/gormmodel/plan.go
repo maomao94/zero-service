@@ -30,6 +30,7 @@ type Plan struct {
 	Type             sql.NullString `gorm:"column:type;size:64;comment:任务类型;index:idx_plan_table_type"`
 	GroupId          sql.NullString `gorm:"column:group_id;size:64;comment:计划组ID,用于分组管理计划任务;index:idx_plan_table_group_id"`
 	RecurrenceRule   string         `gorm:"column:recurrence_rule;type:text;comment:重复规则，JSON格式存储"`
+	RRuleStr         string         `gorm:"column:rrule_str;type:text;comment:创建时用于展开日期的 RFC 5545 RRULE Set 快照"`
 	StartTime        time.Time      `gorm:"column:start_time;comment:规则生效开始时间;index:idx_plan_table_start_time"`
 	EndTime          time.Time      `gorm:"column:end_time;comment:规则生效结束时间;index:idx_plan_table_end_time"`
 	Status           int            `gorm:"column:status;comment:状态：0-禁用，1-启用，2-暂停，3-终止;index:idx_plan_table_status"`

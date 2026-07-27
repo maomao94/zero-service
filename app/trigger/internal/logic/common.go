@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"time"
+
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
@@ -11,6 +12,17 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/jsonx"
 )
+
+func asynqListOptions(pageNum, pageSize int64) []asynq.ListOption {
+	options := make([]asynq.ListOption, 0, 2)
+	if pageSize > 0 {
+		options = append(options, asynq.PageSize(int(pageSize)))
+	}
+	if pageNum > 0 {
+		options = append(options, asynq.Page(int(pageNum)))
+	}
+	return options
+}
 
 // prepareEnqueue 公共入队准备逻辑，提取 sendtriggerlogic 和 sendprototriggerlogic 重复代码
 func prepareEnqueue(

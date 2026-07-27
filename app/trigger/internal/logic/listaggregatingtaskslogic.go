@@ -4,7 +4,6 @@ import (
 	"context"
 	"zero-service/common/copierx"
 
-	"github.com/hibiken/asynq"
 	"github.com/jinzhu/copier"
 
 	"zero-service/app/trigger/internal/svc"
@@ -33,8 +32,7 @@ func (l *ListAggregatingTasksLogic) ListAggregatingTasks(in *trigger.ListAggrega
 	if err != nil {
 		return nil, err
 	}
-	tasks, err := l.svcCtx.AsynqInspector.ListAggregatingTasks(
-		in.Queue, in.Group, asynq.PageSize(int(in.PageSize)), asynq.Page(int(in.PageNum)))
+	tasks, err := l.svcCtx.AsynqInspector.ListAggregatingTasks(in.Queue, in.Group, asynqListOptions(in.PageNum, in.PageSize)...)
 	if err != nil {
 		return nil, err
 	}

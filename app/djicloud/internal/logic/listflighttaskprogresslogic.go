@@ -38,7 +38,7 @@ func (l *ListFlightTaskProgressLogic) ListFlightTaskProgress(in *djicloud.ListFl
 		db = db.Where("flight_id = ?", in.FlightId)
 	}
 	var records []gormmodel.DjiDockFlightTask
-	pageResult, err := gormx.QueryPage(db.Order("reported_at DESC,id DESC"), int(in.GetPage()), int(in.GetPageSize()), &records)
+	pageResult, err := gormx.QueryPage(db.Order("reported_at DESC,id DESC"), in.GetPage(), in.GetPageSize(), &records)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询航线任务列表失败")
 	}

@@ -61,13 +61,18 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, defaultLockTi
 
 	lockTimeout := crontask.ResolveLockTimeout(time.Duration(record.LockTimeout)*time.Millisecond, defaultLockTimeout)
 	lockedTime := now.Add(lockTimeout).Truncate(time.Second)
+	scheduledTime := record.NextRun.Time
+	if record.ScheduledTime.Valid {
+		scheduledTime = record.ScheduledTime.Time
+	}
 	result := s.db.WithContext(quietCtx).
 		Model(&gormmodel.GormTaskConfig{}).
 		Where("id = ?", record.Id).
 		Where("status = ?", int(crontask.StatusEnabled)).
 		Where("next_run = ?", record.NextRun.Time).
 		Updates(map[string]interface{}{
-			"next_run": lockedTime,
+			"next_run":       lockedTime,
+			"scheduled_time": scheduledTime,
 		})
 	if result.Error != nil {
 		return nil, result.Error
@@ -76,14 +81,23 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, defaultLockTi
 		return nil, crontask.ErrNotFound
 	}
 
-	return &crontask.TaskClaim{Task: toTaskConfig(&record), LockedUntil: lockedTime}, nil
+	task := toTaskConfig(&record)
+	task.ScheduledTime = scheduledTime
+	task.NextRun = time.Time{}
+	return &crontask.TaskClaim{Task: task, LockedUntil: lockedTime}, nil
 }
 
 // Complete 使用 LockedUntil token 完成一次周期执行。
-func (s *DBStore) Complete(ctx context.Context, id string, expectedLockedUntil, nextRun, lastRun time.Time) error {
-	updates := map[string]interface{}{"next_run": toNullTime(nextRun)}
-	if !lastRun.IsZero() {
-		updates["last_run"] = lastRun
+func (s *DBStore) Complete(ctx context.Context, id string, expectedLockedUntil time.Time, completion crontask.Completion) error {
+	updates := map[string]interface{}{
+		"next_run":       toNullTime(completion.NextRun),
+		"scheduled_time": nil,
+	}
+	if !completion.LastRun.IsZero() {
+		updates["last_run"] = completion.LastRun
+	}
+	if !completion.LastScheduledRun.IsZero() {
+		updates["last_scheduled_run"] = completion.LastScheduledRun
 	}
 	result := s.db.WithContext(ctx).
 		Model(&gormmodel.GormTaskConfig{}).
@@ -112,6 +126,19 @@ func (s *DBStore) UpdateLastRun(ctx context.Context, id string, lastRun time.Tim
 		return crontask.ErrNotFound
 	}
 	return nil
+}
+
+// GetByID 按任务 ID 查询任务配置。
+func (s *DBStore) GetByID(ctx context.Context, id string) (*crontask.TaskConfig, error) {
+	var record gormmodel.GormTaskConfig
+	err := s.db.WithContext(ctx).Where("id = ?", id).First(&record).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, crontask.ErrNotFound
+		}
+		return nil, err
+	}
+	return toTaskConfig(&record), nil
 }
 
 // GetByCode 按全局唯一的 task_code 查询任务配置。
@@ -149,20 +176,28 @@ func (s *DBStore) Update(ctx context.Context, cfg *crontask.TaskConfig) error {
 		return err
 	}
 	record := fromTaskConfig(cfg)
-	result := s.db.WithContext(ctx).
-		Model(&gormmodel.GormTaskConfig{}).
-		Where("id = ?", cfg.ID).
-		Select("*").
-		Omit("id", "create_time", "delete_time", "is_deleted", "last_run").
-		Updates(record)
-	if result.Error != nil {
-		if isDuplicateErr(result.Error) {
+	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		result := tx.Model(&gormmodel.GormTaskConfig{}).
+			Where("id = ?", cfg.ID).
+			Select("*").
+			Omit("id", "create_time", "delete_time", "is_deleted", "last_run", "last_scheduled_run", "scheduled_time", "next_run").
+			Updates(record)
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return crontask.ErrNotFound
+		}
+		return tx.Model(&gormmodel.GormTaskConfig{}).
+			Where("id = ?", cfg.ID).
+			Where("scheduled_time IS NULL").
+			Update("next_run", toNullTime(cfg.NextRun)).Error
+	})
+	if err != nil {
+		if isDuplicateErr(err) {
 			return crontask.ErrDuplicate
 		}
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return crontask.ErrNotFound
+		return err
 	}
 	return nil
 }
@@ -187,8 +222,9 @@ func (s *DBStore) Enable(ctx context.Context, id string) error {
 		Model(&gormmodel.GormTaskConfig{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"status":   int(crontask.StatusEnabled),
-			"next_run": toNullTime(nextRun),
+			"status":         int(crontask.StatusEnabled),
+			"next_run":       toNullTime(nextRun),
+			"scheduled_time": nil,
 		})
 	if result.Error != nil {
 		return result.Error

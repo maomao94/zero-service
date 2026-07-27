@@ -36,7 +36,7 @@ func (l *OssListLogic) OssList(in *file.OssListReq) (*file.OssListRes, error) {
 	db = db.Order(ossOrderBy(in.OrderBy))
 
 	var list []gormmodel.Oss
-	pageResult, err := gormx.QueryPage(db, int(in.Page), int(in.PageSize), &list)
+	pageResult, err := gormx.QueryPage(db, in.Page, in.PageSize, &list)
 	if err != nil {
 		return nil, err
 	}

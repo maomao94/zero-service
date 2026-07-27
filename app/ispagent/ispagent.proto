@@ -22,6 +22,8 @@ service IspAgent {
   rpc ListTaskExecutions(ListTaskExecutionsReq) returns(ListTaskExecutionsRes);
   // ListTaskConfigs 任务配置分页查询
   rpc ListTaskConfigs(ListTaskConfigsReq) returns(ListTaskConfigsRes);
+  // GetTaskConfig 按任务编码查询配置详情
+  rpc GetTaskConfig(GetTaskConfigReq) returns(GetTaskConfigRes);
   // TestFTPSUpload 测试 FTPS 上传（上传 local/test.txt）
   rpc TestFTPSUpload(TestFTPSUploadReq) returns(TestFTPSUploadRes);
   // ListFTPSDirectory 列出 FTPS 远程目录文件列表
@@ -206,12 +208,21 @@ message TaskConfigItem {
   string invalid_start_time = 27;  // 不可用开始时间
   string invalid_end_time = 28;    // 不可用结束时间
   int64 lock_timeout = 29;         // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值
+  string schedule_description = 30; // 根据实际持久化 RRULE Set 生成的简体中文描述
 }
 
 // ListTaskConfigsRes 任务配置分页响应
 message ListTaskConfigsRes {
   int64 total = 1;
   repeated TaskConfigItem items = 2;
+}
+
+message GetTaskConfigReq {
+  string task_code = 1;
+}
+
+message GetTaskConfigRes {
+  TaskConfigItem item = 1;
 }
 
 // TestFTPSUploadReq FTPS 上传测试请求

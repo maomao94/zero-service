@@ -191,30 +191,6 @@ func (s *TriggerRpcServer) CreatePlanTask(ctx context.Context, in *trigger.Creat
 	return l.CreatePlanTask(in)
 }
 
-// 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
-func (s *TriggerRpcServer) CreateCronJob(ctx context.Context, in *trigger.CreateCronJobReq) (*trigger.CreateCronJobRes, error) {
-	l := logic.NewCreateCronJobLogic(ctx, s.svcCtx)
-	return l.CreateCronJob(in)
-}
-
-// 启用 Cron Job，并从当前时间重新计算未来执行时间
-func (s *TriggerRpcServer) EnableCronJob(ctx context.Context, in *trigger.EnableCronJobReq) (*trigger.EnableCronJobRes, error) {
-	l := logic.NewEnableCronJobLogic(ctx, s.svcCtx)
-	return l.EnableCronJob(in)
-}
-
-// 禁用 Cron Job，禁用后调度器不再扫描该任务
-func (s *TriggerRpcServer) DisableCronJob(ctx context.Context, in *trigger.DisableCronJobReq) (*trigger.DisableCronJobRes, error) {
-	l := logic.NewDisableCronJobLogic(ctx, s.svcCtx)
-	return l.DisableCronJob(in)
-}
-
-// 软删除 Cron Job，重复删除按幂等成功处理
-func (s *TriggerRpcServer) DeleteCronJob(ctx context.Context, in *trigger.DeleteCronJobReq) (*trigger.DeleteCronJobRes, error) {
-	l := logic.NewDeleteCronJobLogic(ctx, s.svcCtx)
-	return l.DeleteCronJob(in)
-}
-
 // 暂停计划
 func (s *TriggerRpcServer) PausePlan(ctx context.Context, in *trigger.PausePlanReq) (*trigger.PausePlanRes, error) {
 	l := logic.NewPausePlanLogic(ctx, s.svcCtx)
@@ -333,6 +309,48 @@ func (s *TriggerRpcServer) GetExecItemDashboard(ctx context.Context, in *trigger
 func (s *TriggerRpcServer) CallbackPlanExecItem(ctx context.Context, in *trigger.CallbackPlanExecItemReq) (*trigger.CallbackPlanExecItemRes, error) {
 	l := logic.NewCallbackPlanExecItemLogic(ctx, s.svcCtx)
 	return l.CallbackPlanExecItem(in)
+}
+
+// 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
+func (s *TriggerRpcServer) CreateCronJob(ctx context.Context, in *trigger.CreateCronJobReq) (*trigger.CreateCronJobRes, error) {
+	l := logic.NewCreateCronJobLogic(ctx, s.svcCtx)
+	return l.CreateCronJob(in)
+}
+
+// 启用 Cron Job，并从当前时间重新计算未来执行时间
+func (s *TriggerRpcServer) EnableCronJob(ctx context.Context, in *trigger.EnableCronJobReq) (*trigger.EnableCronJobRes, error) {
+	l := logic.NewEnableCronJobLogic(ctx, s.svcCtx)
+	return l.EnableCronJob(in)
+}
+
+// 禁用 Cron Job，禁用后调度器不再扫描该任务
+func (s *TriggerRpcServer) DisableCronJob(ctx context.Context, in *trigger.DisableCronJobReq) (*trigger.DisableCronJobRes, error) {
+	l := logic.NewDisableCronJobLogic(ctx, s.svcCtx)
+	return l.DisableCronJob(in)
+}
+
+// 软删除 Cron Job，重复删除按幂等成功处理
+func (s *TriggerRpcServer) DeleteCronJob(ctx context.Context, in *trigger.DeleteCronJobReq) (*trigger.DeleteCronJobRes, error) {
+	l := logic.NewDeleteCronJobLogic(ctx, s.svcCtx)
+	return l.DeleteCronJob(in)
+}
+
+// 立即异步执行一次 Cron Job，不改变周期计划
+func (s *TriggerRpcServer) RunCronJob(ctx context.Context, in *trigger.RunCronJobReq) (*trigger.RunCronJobRes, error) {
+	l := logic.NewRunCronJobLogic(ctx, s.svcCtx)
+	return l.RunCronJob(in)
+}
+
+// 获取 Cron Job 详情
+func (s *TriggerRpcServer) GetCronJob(ctx context.Context, in *trigger.GetCronJobReq) (*trigger.GetCronJobRes, error) {
+	l := logic.NewGetCronJobLogic(ctx, s.svcCtx)
+	return l.GetCronJob(in)
+}
+
+// 分页获取 Cron Job 列表
+func (s *TriggerRpcServer) ListCronJobs(ctx context.Context, in *trigger.ListCronJobsReq) (*trigger.ListCronJobsRes, error) {
+	l := logic.NewListCronJobsLogic(ctx, s.svcCtx)
+	return l.ListCronJobs(in)
 }
 
 // 生成业务唯一编码（如工单号、告警编码等），由中间件统一生成，非数据库自增序列

@@ -40,7 +40,7 @@ func (l *PageListConfigLogic) PageListConfig(in *bridgemodbus.PageListConfigReq)
 
 	// 使用 gormx 分页
 	var list []gormmodel.ModbusSlaveConfig
-	pageResult, err := gormx.QueryPage(db, int(in.Page), int(in.PageSize), &list)
+	pageResult, err := gormx.QueryPage(db, in.Page, in.PageSize, &list)
 	if err != nil {
 		return nil, err
 	}

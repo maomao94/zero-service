@@ -32,18 +32,22 @@ func (s TaskStatus) String() string {
 // Extra 字段存储业务方自定义扩展字段 JSON，调度器不解析。
 // RRuleStr 为空表示一次性任务，成功执行后 NextRun 进入零值终态。
 type TaskConfig struct {
-	ID       string `json:"id"`
-	TaskCode string `json:"task_code"` // 全局唯一任务编码
-	TaskName string `json:"task_name"`
-	RRuleStr string `json:"rrule_str"` // RFC 5545 规则，空串为一次性任务
-	Priority int    `json:"priority"`  // 调度优先级，数字越大越优先
+	ID         string    `json:"id"`
+	CreateTime time.Time `json:"create_time,omitempty"`
+	UpdateTime time.Time `json:"update_time,omitempty"`
+	TaskCode   string    `json:"task_code"` // 全局唯一任务编码
+	TaskName   string    `json:"task_name"`
+	RRuleStr   string    `json:"rrule_str"` // RFC 5545 规则，空串为一次性任务
+	Priority   int       `json:"priority"`  // 调度优先级，数字越大越优先
 	// LockTimeout 是单次抢占的锁超时；零值表示使用 Scheduler 配置的默认锁超时。
-	LockTimeout time.Duration   `json:"lock_timeout"`
-	Payload     json.RawMessage `json:"payload"` // 执行业务参数
-	Extra       json.RawMessage `json:"extra"`   // 业务扩展字段 JSON
-	Status      TaskStatus      `json:"status"`
-	NextRun     time.Time       `json:"next_run"`           // 下次计划调度时间，零值表示无下次调度
-	LastRun     time.Time       `json:"last_run,omitempty"` // 上次执行时间，零值表示从未执行
+	LockTimeout      time.Duration   `json:"lock_timeout"`
+	Payload          json.RawMessage `json:"payload"` // 执行业务参数
+	Extra            json.RawMessage `json:"extra"`   // 业务扩展字段 JSON
+	Status           TaskStatus      `json:"status"`
+	NextRun          time.Time       `json:"next_run"`                     // 下次计划调度时间；claim 后 Store 内暂存 lease 截止时间
+	ScheduledTime    time.Time       `json:"scheduled_time,omitempty"`     // 当前在途执行的原计划时间，未 claim 时为零值
+	LastRun          time.Time       `json:"last_run,omitempty"`           // 最近一次 handler 成功完成的实际时间
+	LastScheduledRun time.Time       `json:"last_scheduled_run,omitempty"` // 最近一次成功周期执行的原计划时间，手动执行不更新
 }
 
 // ResolveLockTimeout 返回任务本次抢占实际使用的锁超时。

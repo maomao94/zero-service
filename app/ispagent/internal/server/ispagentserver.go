@@ -71,6 +71,12 @@ func (s *IspAgentServer) ListTaskConfigs(ctx context.Context, in *ispagent.ListT
 	return l.ListTaskConfigs(in)
 }
 
+// GetTaskConfig 按任务编码查询配置详情
+func (s *IspAgentServer) GetTaskConfig(ctx context.Context, in *ispagent.GetTaskConfigReq) (*ispagent.GetTaskConfigRes, error) {
+	l := logic.NewGetTaskConfigLogic(ctx, s.svcCtx)
+	return l.GetTaskConfig(in)
+}
+
 // TestFTPSUpload 测试 FTPS 上传（上传 local/test.txt）
 func (s *IspAgentServer) TestFTPSUpload(ctx context.Context, in *ispagent.TestFTPSUploadReq) (*ispagent.TestFTPSUploadRes, error) {
 	l := logic.NewTestFTPSUploadLogic(ctx, s.svcCtx)

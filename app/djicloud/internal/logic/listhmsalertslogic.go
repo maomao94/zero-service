@@ -45,7 +45,7 @@ func (l *ListHmsAlertsLogic) ListHmsAlerts(in *djicloud.ListHmsAlertsReq) (*djic
 	var alerts []gormmodel.DjiHmsAlert
 	queryDB := db.WithContext(l.ctx).Order("dha.reported_at DESC,dha.id DESC")
 	queryDB = queryDB.Select("dha.*, dd.is_online")
-	pageResult, err := gormx.QueryPage(queryDB, int(in.GetPage()), int(in.GetPageSize()), &alerts)
+	pageResult, err := gormx.QueryPage(queryDB, in.GetPage(), in.GetPageSize(), &alerts)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询HMS告警列表失败")
 	}

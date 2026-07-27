@@ -1,6 +1,7 @@
 package gormx
 
 import (
+	"math"
 	"strings"
 	"testing"
 )
@@ -64,6 +65,28 @@ func TestQueryPageFindSelectPreserved(t *testing.T) {
 	}
 	if page.Data[0].ID != 0 {
 		t.Fatalf("selected ID = %d, want 0 because find select should remain name-only", page.Data[0].ID)
+	}
+}
+
+func TestQueryPageHugePageReturnsEmptyAndKeepsTotal(t *testing.T) {
+	db := openTestDB(t, &pageTestModel{})
+	if err := db.Create(&pageTestModel{Name: "a"}).Error; err != nil {
+		t.Fatalf("create error = %v", err)
+	}
+
+	list := []pageTestModel{{Name: "stale"}}
+	page, err := QueryPage(db.Model(&pageTestModel{}).Order("id ASC"), math.MaxInt64, MaxPageSize, &list)
+	if err != nil {
+		t.Fatalf("query page error = %v", err)
+	}
+	if page.Total != 1 || page.TotalPages != 1 {
+		t.Fatalf("page totals = %d/%d, want 1/1", page.Total, page.TotalPages)
+	}
+	if page.Page != math.MaxInt64 || page.PageSize != MaxPageSize {
+		t.Fatalf("page params = %d/%d, want %d/%d", page.Page, page.PageSize, int64(math.MaxInt64), int64(MaxPageSize))
+	}
+	if len(page.Data) != 0 || len(list) != 0 {
+		t.Fatalf("out-of-range data = result %d dest %d, want both empty", len(page.Data), len(list))
 	}
 }
 
@@ -142,6 +165,29 @@ func TestQueryPageDataEmptyTable(t *testing.T) {
 	}
 	if len(got) != 0 {
 		t.Fatalf("data length = %d, want 0", len(got))
+	}
+}
+
+func TestQueryPageDataHugePageDoesNotOverflowOffset(t *testing.T) {
+	db := openTestDB(t, &pageTestModel{})
+	if err := db.Create(&pageTestModel{Name: "a"}).Error; err != nil {
+		t.Fatalf("create error = %v", err)
+	}
+
+	got, err := QueryPageData[pageTestModel](db.Model(&pageTestModel{}).Order("id ASC"), math.MaxInt64, MaxPageSize)
+	if err != nil {
+		t.Fatalf("query page data error = %v", err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("data length = %d, want 0", len(got))
+	}
+}
+
+func TestNewPageResultCalculatesLargeTotalExactly(t *testing.T) {
+	page := NewPageResult([]pageTestModel{}, math.MaxInt64, 1, MaxPageSize)
+	want := int64(math.MaxInt64/MaxPageSize + 1)
+	if page.TotalPages != want {
+		t.Fatalf("total pages = %d, want %d", page.TotalPages, want)
 	}
 }
 

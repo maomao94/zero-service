@@ -38,7 +38,7 @@ func TestDBStoreClaimCompleteAndExtraRoundTrip(t *testing.T) {
 	cfg := &crontask.TaskConfig{
 		TaskCode:    "CRON001",
 		TaskName:    "测试周期任务",
-		RRuleStr:    "FREQ=DAILY",
+		RRuleStr:    "DTSTART:20260701T000000Z\nRRULE:FREQ=DAILY",
 		Priority:    5,
 		LockTimeout: 2 * time.Minute,
 		Payload:     json.RawMessage(`{"id":1}`),
@@ -57,8 +57,8 @@ func TestDBStoreClaimCompleteAndExtraRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !claim.Task.NextRun.Equal(now.Add(-time.Minute)) {
-		t.Fatalf("scheduled time = %v, want original due time", claim.Task.NextRun)
+	if !claim.Task.ScheduledTime.Equal(now.Add(-time.Minute)) {
+		t.Fatalf("scheduled time = %v, want original due time", claim.Task.ScheduledTime)
 	}
 	if claim.Task.LockTimeout != 2*time.Minute {
 		t.Fatalf("lock timeout = %v, want %v", claim.Task.LockTimeout, 2*time.Minute)
@@ -74,7 +74,10 @@ func TestDBStoreClaimCompleteAndExtraRoundTrip(t *testing.T) {
 		t.Fatalf("unexpected rebuilt extra: %+v", parsed)
 	}
 
-	if err := store.Complete(context.Background(), cfg.ID, claim.LockedUntil, time.Time{}, now); err != nil {
+	if err := store.Complete(context.Background(), cfg.ID, claim.LockedUntil, crontask.Completion{
+		LastRun:          now,
+		LastScheduledRun: claim.Task.ScheduledTime,
+	}); err != nil {
 		t.Fatal(err)
 	}
 	var job gormmodel.CronJob
@@ -86,6 +89,16 @@ func TestDBStoreClaimCompleteAndExtraRoundTrip(t *testing.T) {
 	}
 	if !job.LastRun.Valid || !job.LastRun.Time.Equal(now) {
 		t.Fatalf("last run = %v, want %v", job.LastRun, now)
+	}
+	if !job.LastScheduledRun.Valid || !job.LastScheduledRun.Time.Equal(claim.Task.ScheduledTime) {
+		t.Fatalf("last scheduled run = %v, want %v", job.LastScheduledRun, claim.Task.ScheduledTime)
+	}
+	loaded, err := store.GetByID(context.Background(), cfg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !loaded.LastScheduledRun.Equal(claim.Task.ScheduledTime) {
+		t.Fatalf("loaded last scheduled run = %v, want %v", loaded.LastScheduledRun, claim.Task.ScheduledTime)
 	}
 	if !job.StartTime.Valid || !job.EndTime.Valid || !job.ExcludeDates.Valid {
 		t.Fatalf("expected supplied business fields to be non-NULL: start=%v end=%v exclude=%v", job.StartTime, job.EndTime, job.ExcludeDates)
@@ -112,17 +125,21 @@ func TestDBStoreRetryKeepsOriginalScheduledTime(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !firstClaim.Task.NextRun.Equal(originalScheduledTime) {
-		t.Fatalf("first scheduled time = %v, want %v", firstClaim.Task.NextRun, originalScheduledTime)
+	if !firstClaim.Task.ScheduledTime.Equal(originalScheduledTime) {
+		t.Fatalf("first scheduled time = %v, want %v", firstClaim.Task.ScheduledTime, originalScheduledTime)
 	}
 	secondClaim, err := store.LockAndFetch(context.Background(), firstClaim.LockedUntil, time.Minute)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !secondClaim.Task.NextRun.Equal(originalScheduledTime) {
-		t.Fatalf("retry scheduled time = %v, want stable %v", secondClaim.Task.NextRun, originalScheduledTime)
+	if !secondClaim.Task.ScheduledTime.Equal(originalScheduledTime) {
+		t.Fatalf("retry scheduled time = %v, want stable %v", secondClaim.Task.ScheduledTime, originalScheduledTime)
 	}
-	if err := store.Complete(context.Background(), config.ID, secondClaim.LockedUntil, now.Add(time.Hour), now); err != nil {
+	if err := store.Complete(context.Background(), config.ID, secondClaim.LockedUntil, crontask.Completion{
+		NextRun:          now.Add(time.Hour),
+		LastRun:          now,
+		LastScheduledRun: secondClaim.Task.ScheduledTime,
+	}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -132,6 +149,38 @@ func TestDBStoreRetryKeepsOriginalScheduledTime(t *testing.T) {
 	}
 	if job.ScheduledTime.Valid {
 		t.Fatalf("completed retry must clear scheduled_time: %v", job.ScheduledTime)
+	}
+	if !job.LastScheduledRun.Valid || !job.LastScheduledRun.Time.Equal(originalScheduledTime) {
+		t.Fatalf("last scheduled run = %v, want stable %v", job.LastScheduledRun, originalScheduledTime)
+	}
+}
+
+func TestDBStoreUpdatePreservesInFlightScheduledTime(t *testing.T) {
+	db := newCronJobTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	now := time.Date(2026, 7, 24, 10, 0, 0, 0, time.Local)
+	config := cronJobTestConfig(t, now.Add(-time.Minute))
+	if err := store.Insert(context.Background(), config); err != nil {
+		t.Fatal(err)
+	}
+	claim, err := store.LockAndFetch(context.Background(), now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	claim.Task.TaskName = "updated"
+	if err := store.Update(context.Background(), claim.Task); err != nil {
+		t.Fatal(err)
+	}
+
+	var updated gormmodel.CronJob
+	if err := db.Where("id = ?", config.ID).First(&updated).Error; err != nil {
+		t.Fatal(err)
+	}
+	if !updated.ScheduledTime.Valid || !updated.ScheduledTime.Time.Equal(claim.Task.ScheduledTime) {
+		t.Fatalf("scheduled_time = %v, want in-flight %v", updated.ScheduledTime, claim.Task.ScheduledTime)
+	}
+	if !updated.NextRun.Valid || !updated.NextRun.Time.Equal(claim.LockedUntil) {
+		t.Fatalf("next_run = %v, want lease %v", updated.NextRun, claim.LockedUntil)
 	}
 }
 
@@ -190,7 +239,7 @@ func TestDBStoreCompleteRejectsLostClaim(t *testing.T) {
 	if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", cfg.ID).Update("next_run", claim.LockedUntil.Add(time.Second)).Error; err != nil {
 		t.Fatal(err)
 	}
-	if err := store.Complete(context.Background(), cfg.ID, claim.LockedUntil, now.Add(time.Hour), now); !errors.Is(err, crontask.ErrNotFound) {
+	if err := store.Complete(context.Background(), cfg.ID, claim.LockedUntil, crontask.Completion{NextRun: now.Add(time.Hour), LastRun: now}); !errors.Is(err, crontask.ErrNotFound) {
 		t.Fatalf("expected lost claim, got %v", err)
 	}
 }
@@ -211,7 +260,7 @@ func TestDBStoreCompleteAllowsConcurrentDisable(t *testing.T) {
 		t.Fatal(err)
 	}
 	nextRun := now.Add(time.Hour)
-	if err := store.Complete(context.Background(), cfg.ID, claim.LockedUntil, nextRun, now); err != nil {
+	if err := store.Complete(context.Background(), cfg.ID, claim.LockedUntil, crontask.Completion{NextRun: nextRun, LastRun: now}); err != nil {
 		t.Fatalf("disabled in-flight task should complete: %v", err)
 	}
 	loaded, err := store.GetByID(context.Background(), cfg.ID)
@@ -281,7 +330,7 @@ func TestDBStoreEnableRecalculatesOnceAndClearsInFlightSchedule(t *testing.T) {
 	if !enabled.NextRun.Time.Equal(firstNextRun) {
 		t.Fatalf("repeated enable changed next_run: first=%v second=%v", firstNextRun, enabled.NextRun.Time)
 	}
-	if err := store.Complete(context.Background(), cfg.ID, claim.LockedUntil, now.Add(time.Hour), now); !errors.Is(err, crontask.ErrNotFound) {
+	if err := store.Complete(context.Background(), cfg.ID, claim.LockedUntil, crontask.Completion{NextRun: now.Add(time.Hour), LastRun: now}); !errors.Is(err, crontask.ErrNotFound) {
 		t.Fatalf("enable should invalidate the previous claim, got %v", err)
 	}
 }
@@ -355,6 +404,76 @@ func TestDBStoreListByStatuses(t *testing.T) {
 	}
 }
 
+func TestDBStoreGetByIDAndProto(t *testing.T) {
+	db := newCronJobTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	baseTime := time.Date(2026, 7, 27, 10, 0, 0, 0, time.Local)
+
+	newConfig := func(taskCode, taskName, deptCode, taskType, groupID string, status crontask.TaskStatus, nextRun time.Time) *crontask.TaskConfig {
+		config := cronJobTestConfig(t, nextRun)
+		config.TaskCode = taskCode
+		config.TaskName = taskName
+		config.Status = status
+		config.Payload = json.RawMessage(`{"job":"` + taskCode + `"}`)
+		extra, err := ParseExtra(config.Extra)
+		if err != nil {
+			t.Fatal(err)
+		}
+		extra.DeptCode = deptCode
+		extra.Type = taskType
+		extra.GroupId = groupID
+		extra.BizExtra = json.RawMessage(`{"source":"management"}`)
+		config.Extra, err = MarshalExtra(extra)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return config
+	}
+
+	alpha := newConfig("JOB-ALPHA", "巡检甲", "D001", "inspection", "G001", crontask.StatusEnabled, time.Time{})
+	deleted := newConfig("JOB-DELETED", "已删除", "D001", "inspection", "G001", crontask.StatusEnabled, baseTime.Add(2*time.Hour))
+	for i, config := range []*crontask.TaskConfig{alpha, deleted} {
+		if err := store.Insert(context.Background(), config); err != nil {
+			t.Fatal(err)
+		}
+		createdAt := baseTime.Add(time.Duration(i) * time.Hour)
+		if err := db.Model(&gormmodel.CronJob{}).
+			Where("id = ?", config.ID).
+			Updates(map[string]interface{}{"create_time": createdAt, "update_time": createdAt}).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := store.Delete(context.Background(), deleted.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := store.GetByID(context.Background(), deleted.ID); !errors.Is(err, crontask.ErrNotFound) {
+		t.Fatalf("deleted job lookup = %v, want ErrNotFound", err)
+	}
+
+	alphaRecord, err := store.GetByID(context.Background(), alpha.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pbJob, err := ToProto(alphaRecord)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pbJob.JobId != alpha.ID || pbJob.TaskCode != alpha.TaskCode || pbJob.NextRun != "" || pbJob.LastRun != "" {
+		t.Fatalf("unexpected proto identity or nullable times: %+v", pbJob)
+	}
+	wantAuditTime := baseTime.Format(dateTimeLayout)
+	if pbJob.CreateTime != wantAuditTime || pbJob.UpdateTime != wantAuditTime {
+		t.Fatalf("unexpected proto audit times: %+v", pbJob)
+	}
+	if pbJob.Rule == nil || pbJob.Rule.Freq != 3 || pbJob.Extra != `{"source":"management"}` {
+		t.Fatalf("unexpected proto business fields: %+v", pbJob)
+	}
+	if pbJob.RruleStr != alphaRecord.RRuleStr || pbJob.ScheduleDescription == "" {
+		t.Fatalf("unexpected proto schedule fields: %+v", pbJob)
+	}
+}
+
 func cronJobTestConfig(t *testing.T, nextRun time.Time) *crontask.TaskConfig {
 	t.Helper()
 	ruleJSON, _ := json.Marshal(&trigger.PlanRulePb{Freq: 3, Hours: []int32{11}, Minutes: []int32{0}})
@@ -371,7 +490,7 @@ func cronJobTestConfig(t *testing.T, nextRun time.Time) *crontask.TaskConfig {
 	return &crontask.TaskConfig{
 		TaskCode: "SAME",
 		TaskName: "same",
-		RRuleStr: "FREQ=DAILY",
+		RRuleStr: "DTSTART:20260701T000000Z\nRRULE:FREQ=DAILY",
 		Extra:    extra,
 		Status:   crontask.StatusEnabled,
 		NextRun:  nextRun,

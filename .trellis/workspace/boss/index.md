@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 134
-- **Last Active**: 2026-07-24
+- **Total Sessions**: 136
+- **Last Active**: 2026-07-27
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~918 | Active |
+| `journal-3.md` | ~985 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,8 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 136 | 2026-07-27 | 按官方模板重建 Trellis Spec | `95f03bd6` | `master` |
+| 135 | 2026-07-27 | 优化 CronJob 管理接口与分页工具 | `94a003d5`, `5e2baede` | `master` |
 | 134 | 2026-07-24 | 完成 Trigger RRULE Cron Job | `9f5f353f`, `7df969d0` | `master` |
 | 133 | 2026-07-24 | crontask 空值调度收尾与全局审阅 | `715a1233` | `master` |
 | 132 | 2026-07-23 | 修复 gnetx Session 绑定竞态与 ISP 注册状态发布 | `405d8094`, `109995c1` | `master` |

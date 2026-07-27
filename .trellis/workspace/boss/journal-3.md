@@ -916,3 +916,70 @@ Unified IEC104 server construction around Settings and go-zero ServerConfig, add
 ### Next Steps
 
 - None - task complete
+
+
+## Session 135: 优化 CronJob 管理接口与分页工具
+
+**Date**: 2026-07-27
+**Task**: 优化 CronJob 管理接口与分页工具
+**Branch**: `master`
+
+### Summary
+
+新增 CronJob 立即执行、详情和列表接口，补齐时间字段与分页校验；统一 gormx int64 分页契约并封装安全分页参数工具，完成 Trigger 及跨模块回归验证。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `94a003d5` | (see git log) |
+| `5e2baede` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 136: 按官方模板重建 Trellis Spec
+
+**Date**: 2026-07-27
+**Task**: 按官方模板重建 Trellis Spec
+**Branch**: `master`
+
+### Summary
+
+对照 Trellis 官方模板与当前 zero-service 源码，重建 README.md + backend/ + guides/ 规范结构；移除实验、Mock、历史和模板型独立规范，保留调度、数据访问、协议、身份、并发与实时通信等稳定契约，并完成索引、链接、证据路径和任务验收。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `95f03bd6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

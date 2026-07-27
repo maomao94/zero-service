@@ -1,63 +1,59 @@
 # 质量规范
 
-> 质量目标是最小影响、契约清晰、生成流程完整、验证真实执行，而不是扩大重构范围。
+## 适用范围
 
-## 禁止模式
+制定实施计划、补测试、执行生成脚本、审查 diff 和交付结果时读取。
 
-- 跳过 `gen.sh` 手写 go-zero Handler、Server、Routes、Types、pb 等生成代码。
-- 在 Handler/Server 中堆业务编排。
-- 套用 Java 风格命名、无意义 getter/setter、过度封装或 Builder 模式。
-- 为一次性逻辑创建过度抽象，或在 `common/` 中沉淀尚未证明复用价值的能力。
-- 新增功能相近依赖前不检查 `go.mod`、相邻模块和既有封装。
-- 无关格式化、无关重构、大范围重排 import 或改动生成文件。
-- 忽略错误、硬编码配置、提交真实密钥或在日志中打印敏感信息。
+## 风险决定验证范围
 
-## 必须遵循
+| 变更 | 最低验证 |
+| --- | --- |
+| 文档/Spec | 链接或路径检查、占位检查、`git diff --check` |
+| 纯函数/转换 | 目标包单元测试，覆盖边界和错误输入 |
+| Logic/Handler | 目标服务编译或测试，验证依赖和契约连接 |
+| `.proto` / `.api` | 对应 `gen.sh`、生成 diff、目标服务测试 |
+| 数据访问/迁移 | 目标 model/store 测试，检查事务、条件更新、空值和方言差异 |
+| 并发/连接/调度 | 状态与失败路径测试，必要时 `go test -race` 和重复运行 |
+| 公共 API/跨服务 | 所有直接调用方测试，再评估 `go test ./...` / `go vet ./...` |
 
-- `.api` / `.proto` 是契约源头；变更后执行对应模块 `gen.sh`，再实现 Logic。
-- API 请求响应命名使用 `xxxRequest` / `xxxResponse`；gRPC 请求响应命名使用 `xxxReq` / `xxxRes`。
-- `.api` / `.proto` 注释必须完整，并与实现行为保持一致。
-- 工具函数、复杂协议转换和关键业务分支需要单元测试。
-- gRPC Logic 层以业务编排为主，非必要不写单元测试；测试重心放在工具函数、model 方法和复杂协议转换上。
-- 先搜索相邻实现和 `common/`，再新增工具函数、SDK、client 或依赖。
-- 修改生成代码后必须检查 diff，确认生成结果符合预期。
+先运行最小相关集合，扩大范围要有依赖或风险依据。外部数据库、Redis、MQTT、设备或凭据不可用时，说明未验证项，不伪造成功。
 
-## 验证策略
+## 必查内容
 
-- 优先运行与变更相关的包或模块测试，不盲目全量测试。
-- 修改依赖时执行 `go mod tidy` 并检查 `go.mod` / `go.sum` diff。
-- 修改 `.api` / `.proto` 后执行对应 `gen.sh`，再检查生成代码 diff。
-- 跨模块或公共组件变更后扩大到 `go build ./...`、`go test ./...` 或 `go vet ./...`。
-- 未执行的验证必须说明原因，例如缺少外部服务、环境变量、数据库或部署凭据。
+- 契约源、生成产物、实现和文档是否一致。
+- 成功、业务失败、超时/取消、重复调用、空值和并发竞争是否有明确行为。
+- 持久化更新是否只拥有自己的字段，并用事务、唯一约束、版本或 CAS 保护竞争路径。
+- 日志和错误是否保留 trace/业务标识但不泄露敏感数据。
+- 新依赖是否必要；只有实际修改依赖时运行 `go mod tidy` 并审查 `go.mod`、`go.sum`。
+- Git diff 是否只包含任务范围，生成代码是否来自生成脚本。
 
-## 公共组件安全修复模式
+## 测试风格
 
-清理 `common/` 下的代码时，遵循以下边界，避免破坏已有协议：
+- 优先测试可观察契约，不依赖未导出实现细节或固定 goroutine 调度顺序。
+- 时间、重试和异步回执使用有上限的轮询或可控时钟，不使用无界等待和脆弱的固定长睡眠。
+- 数据库测试显式断言 `RowsAffected`、错误、状态与关键字段，不只断言查询成功。
+- 并发测试必须能失败于错误的所有权/CAS，而不是只通过 `go test` 证明“没有立刻报错”。
+- 生成代码通常不单独测试；测试源契约、Logic、公共包和数据转换。
 
-| 原则 | 说明 | 示例 |
-|------|------|------|
-| 不改公开事件名 | 事件字符串常量不变（如 `EventUp`/`EventDown`） | `EventUp = "__up__"` 不能改动 |
-| 不改 JSON 字段名 | 避免改动 `json:"xxx"` tag，除非文档对齐 | SocketIO 会话字段统一用 `socketId`，不新增 `sId` 兼容字段 |
-| 不改 payload 形态 | 下行消息的序列化方式（JSON object vs string）不变 | 当前是 JSON string emit，不改 object |
-| 不改推送语义 | socketpush 的 fan-out 和 best-effort 行为不变 | 不改成功/失败语义 |
-| 不改外部 API | gRPC 方法签名、返回类型、proto 字段不变 | 只修内部实现细节 |
+依据：`common/crontask/*_test.go`、`common/gormx/*_test.go`、`common/djisdk/protocol_drc_test.go`、`app/ispagent/internal/handler/*_test.go`。
 
-**允许的低风险改动**：
+## 反模式
 
-- 日志脱敏：用 `token_present=%t` 替代明文 token
-- nil 保护：`Close`、`Emit*` 等方法增加 nil 检查
-- 幂等性：`Stop()` 改用 `sync.Once`
-- 校验前置：先校验参数再构造 payload
-- 错误记录：原被忽略的错误改为 `logx.Error` 记录
-- 风格升级：`interface{}` → `any`、nil length 简化、`maps.Copy`/`slices.Contains`
+- 用全仓测试替代对真实风险的定向断言。
+- 只覆盖成功路径，忽略取消、重复回调、过期 lease、终止状态或部分失败。
+- 为让测试通过而扩大生产代码改动或修改不相关生成文件。
+- 测试未运行却用“应该通过”表述。
 
-## 代码审查清单
+## 验证
 
-- [ ] 变更范围是否只覆盖用户需求。
-- [ ] 是否遵循 Handler/Server → Logic → Model/SDK 分层。
-- [ ] 是否复用已有 model/client/cache/config/common 封装。
-- [ ] 是否需要更新 `.api`、`.proto`、Swagger、文档或 SQL。
-- [ ] 是否执行了必要生成脚本并检查 diff。
-- [ ] 是否存在敏感信息、硬编码配置或本地绝对路径。
-- [ ] 是否有必要单测、构建或手工验证结果。
-- [ ] 是否需要把稳定规则回填到 `.trellis/spec/**`。
+```bash
+gofmt -w <changed-go-files>
+go test ./path/to/package
+go test -race ./path/to/concurrent/package
+go vet ./path/to/package
+go test ./...
+git diff --check
+git status --short
+```
+
+只执行与本次风险相符的命令，并在交付时列出实际结果。

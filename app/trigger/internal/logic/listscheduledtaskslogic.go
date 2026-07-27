@@ -6,7 +6,6 @@ import (
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/copierx"
 
-	"github.com/hibiken/asynq"
 	"github.com/jinzhu/copier"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -32,8 +31,7 @@ func (l *ListScheduledTasksLogic) ListScheduledTasks(in *trigger.ListScheduledTa
 	if err != nil {
 		return nil, err
 	}
-	tasks, err := l.svcCtx.AsynqInspector.ListScheduledTasks(
-		in.Queue, asynq.PageSize(int(in.PageSize)), asynq.Page(int(in.PageNum)))
+	tasks, err := l.svcCtx.AsynqInspector.ListScheduledTasks(in.Queue, asynqListOptions(in.PageNum, in.PageSize)...)
 	if err != nil {
 		return nil, err
 	}

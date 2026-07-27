@@ -6,7 +6,7 @@ import (
 )
 
 // TaskClaim 表示一次成功的任务抢占。
-// Task.NextRun 保留原计划时间，LockedUntil 是完成更新必须携带的 lease token。
+// Task.ScheduledTime 是本次原计划时间，LockedUntil 是完成更新必须携带的 lease token。
 type TaskClaim struct {
 	Task        *TaskConfig
 	LockedUntil time.Time
@@ -18,21 +18,32 @@ type ListCondition struct {
 	Statuses []TaskStatus
 }
 
+// Completion 表示一次 claim 的原子完成结果。
+// NextRun 的零值表示无下次调度；LastRun 和 LastScheduledRun 的零值表示保留原值。
+type Completion struct {
+	NextRun          time.Time
+	LastRun          time.Time
+	LastScheduledRun time.Time
+}
+
 // TaskStore 任务持久化接口，支持 DB / Redis / Memory 多种后端实现。
 // task_code 全局唯一，Insert 违反时返回 ErrDuplicate。
 // LockAndFetch 与 Complete 必须使用同一个 LockedUntil token 完成 lease CAS。
 type TaskStore interface {
 	// LockAndFetch 扫描并锁定一个到期任务。defaultLockTimeout 是调度器默认锁超时。
-	// 任务配置了正数 LockTimeout 时优先使用任务值，否则使用默认值；选中后将 next_run 推迟到锁截止时间。
+	// 任务配置了正数 LockTimeout 时优先使用任务值，否则使用默认值；选中后将 next_run 推迟到锁截止时间，并设置 ScheduledTime。
 	LockAndFetch(ctx context.Context, now time.Time, defaultLockTimeout time.Duration) (*TaskClaim, error)
 
 	// Complete 完成一次已抢占的周期执行。
 	// expectedLockedUntil 必须匹配当前 next_run；任务执行期间被禁用不影响本次完成。
-	// nextRun 零值表示无下次调度，lastRun 零值表示保留原值。
-	Complete(ctx context.Context, id string, expectedLockedUntil, nextRun, lastRun time.Time) error
+	// completion 同时提交下一次计划与成功时间；历史时间字段的零值表示保留原值。
+	Complete(ctx context.Context, id string, expectedLockedUntil time.Time, completion Completion) error
 
 	// UpdateLastRun 只记录一次独立手动执行的成功时间，不修改周期计划。
 	UpdateLastRun(ctx context.Context, id string, lastRun time.Time) error
+
+	// GetByID 按任务 ID 查询任务。
+	GetByID(ctx context.Context, id string) (*TaskConfig, error)
 
 	// GetByCode 按全局唯一的 task_code 查询任务。
 	GetByCode(ctx context.Context, taskCode string) (*TaskConfig, error)

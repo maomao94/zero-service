@@ -3,82 +3,69 @@ package gormx
 import (
 	"context"
 	"fmt"
-	"math"
 	"reflect"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-const (
-	DefaultPage     = 1
-	DefaultPageSize = 10
-	MaxPageSize     = 500
-)
-
 type PageResult[T any] struct {
 	Data       []T   `json:"data"`
 	Total      int64 `json:"total"`
-	Page       int   `json:"page"`
-	PageSize   int   `json:"page_size"`
-	TotalPages int   `json:"total_pages"`
+	Page       int64 `json:"page"`
+	PageSize   int64 `json:"page_size"`
+	TotalPages int64 `json:"total_pages"`
 }
 
-func NormalizePage(page, pageSize int) (int, int) {
-	if page <= 0 {
-		page = DefaultPage
-	}
-	if pageSize <= 0 {
-		pageSize = DefaultPageSize
-	}
-	if pageSize > MaxPageSize {
-		pageSize = MaxPageSize
-	}
-	return page, pageSize
+// QueryPageData 分页查询数据，不计算总数。
+func QueryPageData[T any](db *gorm.DB, page, pageSize int64) ([]T, error) {
+	return queryPageData[T](db, NewPageParams(page, pageSize))
 }
 
-// QueryPage 分页查询，调用方必须同时提供 count 和查询两个 db。
-func QueryPageData[T any](db *gorm.DB, page, pageSize int) ([]T, error) {
-	page, pageSize = NormalizePage(page, pageSize)
-	offset := (page - 1) * pageSize
+func queryPageData[T any](db *gorm.DB, params PageParams) ([]T, error) {
+	offset, ok := params.Offset()
+	if !ok {
+		return []T{}, nil
+	}
 	var dest []T
-	if err := db.Offset(offset).Limit(pageSize).Find(&dest).Error; err != nil {
+	if err := db.Offset(offset).Limit(int(params.PageSize())).Find(&dest).Error; err != nil {
 		return nil, err
 	}
 	return dest, nil
 }
 
-func QueryPage[T any](db *gorm.DB, page, pageSize int, dest *[]T) (*PageResult[T], error) {
-	page, pageSize = NormalizePage(page, pageSize)
+func QueryPage[T any](db *gorm.DB, page, pageSize int64, dest *[]T) (*PageResult[T], error) {
+	params := NewPageParams(page, pageSize)
 
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
 		return nil, err
 	}
-	if total == 0 {
-		return NewPageResult([]T{}, 0, page, pageSize), nil
+	if !params.Contains(total) {
+		data := []T{}
+		*dest = data
+		return newPageResult(data, total, params), nil
 	}
 
-	data, err := QueryPageData[T](db, page, pageSize)
+	data, err := queryPageData[T](db, params)
 	if err != nil {
 		return nil, err
 	}
 	*dest = data
-	return NewPageResult(data, total, page, pageSize), nil
+	return newPageResult(data, total, params), nil
 }
 
-func NewPageResult[T any](data []T, total int64, page, pageSize int) *PageResult[T] {
-	page, pageSize = NormalizePage(page, pageSize)
-	totalPages := 0
-	if total > 0 {
-		totalPages = int(math.Ceil(float64(total) / float64(pageSize)))
-	}
+func NewPageResult[T any](data []T, total int64, page, pageSize int64) *PageResult[T] {
+	return newPageResult(data, total, NewPageParams(page, pageSize))
+}
+
+func newPageResult[T any](data []T, total int64, params PageParams) *PageResult[T] {
 	return &PageResult[T]{
 		Data:       data,
 		Total:      total,
-		Page:       page,
-		PageSize:   pageSize,
-		TotalPages: totalPages,
+		Page:       params.Page(),
+		PageSize:   params.PageSize(),
+		TotalPages: params.TotalPages(total),
 	}
 }
 

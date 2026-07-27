@@ -7,6 +7,7 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/crontask"
 	"zero-service/common/gormx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
@@ -57,7 +58,7 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 	}
 
 	var plans []gormmodel.Plan
-	page, err := gormx.QueryPage(db.Order("id DESC"), int(in.PageNum), int(in.PageSize), &plans)
+	page, err := gormx.QueryPage(db.Order("id DESC"), in.PageNum, in.PageSize, &plans)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划列表失败")
 	}
@@ -76,31 +77,37 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 		if err := json.Unmarshal([]byte(plans[i].RecurrenceRule), &pbRule); err != nil {
 			continue
 		}
+		scheduleDescription, err := crontask.DescribeRRule(plans[i].RRuleStr)
+		if err != nil {
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "生成计划规则描述失败")
+		}
 
 		pbPlan := &trigger.PlanPb{
-			CreateTime:       carbon.CreateFromStdTime(plans[i].CreateTime).ToDateTimeString(),
-			UpdateTime:       carbon.CreateFromStdTime(plans[i].UpdateTime).ToDateTimeString(),
-			CreateUser:       plans[i].CreateUser.String,
-			UpdateUser:       plans[i].UpdateUser.String,
-			DeptCode:         plans[i].DeptCode.String,
-			Id:               plans[i].Id,
-			PlanId:           plans[i].PlanId,
-			PlanName:         plans[i].PlanName.String,
-			Type:             plans[i].Type.String,
-			GroupId:          plans[i].GroupId.String,
-			Description:      plans[i].Description.String,
-			StartTime:        carbon.CreateFromStdTime(plans[i].StartTime).ToDateTimeString(),
-			EndTime:          carbon.CreateFromStdTime(plans[i].EndTime).ToDateTimeString(),
-			Rule:             &pbRule,
-			Status:           int32(plans[i].Status),
-			ScanFlg:          int32(plans[i].ScanFlg),
-			TerminatedReason: plans[i].TerminatedReason.String,
-			PausedReason:     plans[i].PausedReason.String,
-			Ext1:             plans[i].Ext1.String,
-			Ext2:             plans[i].Ext2.String,
-			Ext3:             plans[i].Ext3.String,
-			Ext4:             plans[i].Ext4.String,
-			Ext5:             plans[i].Ext5.String,
+			CreateTime:          carbon.CreateFromStdTime(plans[i].CreateTime).ToDateTimeString(),
+			UpdateTime:          carbon.CreateFromStdTime(plans[i].UpdateTime).ToDateTimeString(),
+			CreateUser:          plans[i].CreateUser.String,
+			UpdateUser:          plans[i].UpdateUser.String,
+			DeptCode:            plans[i].DeptCode.String,
+			Id:                  plans[i].Id,
+			PlanId:              plans[i].PlanId,
+			PlanName:            plans[i].PlanName.String,
+			Type:                plans[i].Type.String,
+			GroupId:             plans[i].GroupId.String,
+			Description:         plans[i].Description.String,
+			StartTime:           carbon.CreateFromStdTime(plans[i].StartTime).ToDateTimeString(),
+			EndTime:             carbon.CreateFromStdTime(plans[i].EndTime).ToDateTimeString(),
+			Rule:                &pbRule,
+			Status:              int32(plans[i].Status),
+			ScanFlg:             int32(plans[i].ScanFlg),
+			TerminatedReason:    plans[i].TerminatedReason.String,
+			PausedReason:        plans[i].PausedReason.String,
+			Ext1:                plans[i].Ext1.String,
+			Ext2:                plans[i].Ext2.String,
+			Ext3:                plans[i].Ext3.String,
+			Ext4:                plans[i].Ext4.String,
+			Ext5:                plans[i].Ext5.String,
+			RruleStr:            plans[i].RRuleStr,
+			ScheduleDescription: scheduleDescription,
 		}
 
 		// 设置暂停时间和原因

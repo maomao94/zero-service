@@ -26,17 +26,19 @@ func TestConvertRoundTrip(t *testing.T) {
 
 	nextRun := carbon.Now().AddDay().StdTime()
 	lastRun := carbon.Now().SubHour().StdTime()
+	lastScheduledRun := carbon.Now().SubHours(2).StdTime()
 
 	cfg := &crontask.TaskConfig{
-		TaskCode:    f.TaskCode,
-		TaskName:    f.TaskName,
-		RRuleStr:    f.ToRRuleStr(),
-		Priority:    f.ToPriority(),
-		LockTimeout: 90 * time.Second,
-		Status:      f.ToStatus(),
-		NextRun:     nextRun,
-		LastRun:     lastRun,
-		Extra:       []byte(extra),
+		TaskCode:         f.TaskCode,
+		TaskName:         f.TaskName,
+		RRuleStr:         f.ToRRuleStr(),
+		Priority:         f.ToPriority(),
+		LockTimeout:      90 * time.Second,
+		Status:           f.ToStatus(),
+		NextRun:          nextRun,
+		LastRun:          lastRun,
+		LastScheduledRun: lastScheduledRun,
+		Extra:            []byte(extra),
 	}
 
 	gorm := fromTaskConfig(cfg)
@@ -63,6 +65,9 @@ func TestConvertRoundTrip(t *testing.T) {
 	if !back.LastRun.Equal(lastRun) {
 		t.Fatalf("round-trip last_run mismatch: %v", back.LastRun)
 	}
+	if !back.LastScheduledRun.Equal(lastScheduledRun) {
+		t.Fatalf("round-trip last_scheduled_run mismatch: %v", back.LastScheduledRun)
+	}
 
 	parsed := DeserializeExtra(string(back.Extra))
 	if parsed.Creator != f.Creator {
@@ -84,12 +89,18 @@ func TestConvertRoundTripZeroNextRun(t *testing.T) {
 	if gorm.LastRun.Valid {
 		t.Fatalf("expected invalid SQL last run, got %v", gorm.LastRun)
 	}
+	if gorm.LastScheduledRun.Valid {
+		t.Fatalf("expected invalid SQL last scheduled run, got %v", gorm.LastScheduledRun)
+	}
 	back := toTaskConfig(gorm)
 	if !back.NextRun.IsZero() {
 		t.Fatalf("expected zero next run, got %v", back.NextRun)
 	}
 	if !back.LastRun.IsZero() {
 		t.Fatalf("expected zero last run, got %v", back.LastRun)
+	}
+	if !back.LastScheduledRun.IsZero() {
+		t.Fatalf("expected zero last scheduled run, got %v", back.LastScheduledRun)
 	}
 }
 

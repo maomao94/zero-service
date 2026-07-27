@@ -11,6 +11,38 @@ import (
 	"github.com/dromara/carbon/v2"
 )
 
+func testRRuleSet(rule string) string {
+	return "DTSTART:20260727T000000Z\nRRULE:" + rule
+}
+
+func TestNextAfterRejectsBareRRule(t *testing.T) {
+	after := time.Date(2026, 7, 27, 9, 0, 0, 0, time.UTC)
+	if _, err := NextAfter("FREQ=DAILY;BYHOUR=10;BYMINUTE=30;BYSECOND=0", after); err == nil {
+		t.Fatal("NextAfter must reject bare RRULE")
+	}
+	if err := ValidateRRule("FREQ=DAILY;BYHOUR=10;BYMINUTE=30;BYSECOND=0"); err == nil {
+		t.Fatal("ValidateRRule must reject bare RRULE")
+	}
+}
+
+func TestNextAfterSupportsCRLFRRuleSet(t *testing.T) {
+	value := "DTSTART;TZID=Asia/Shanghai:20260727T090000\r\n" +
+		"RRULE:FREQ=DAILY;COUNT=2\r\n" +
+		"EXDATE;TZID=Asia/Shanghai:20260728T090000"
+	after := time.Date(2026, 7, 27, 0, 0, 0, 0, time.FixedZone("UTC+8", 8*60*60))
+	next, err := NextAfter(value, after)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := time.Date(2026, 7, 27, 9, 0, 0, 0, next.Location())
+	if !next.Equal(want) {
+		t.Fatalf("next = %v, want %v", next, want)
+	}
+	if err := ValidateRRule(value); err != nil {
+		t.Fatalf("ValidateRRule(CRLF set): %v", err)
+	}
+}
+
 func TestMemoryStoreInsertAndGet(t *testing.T) {
 	store := NewMemoryStore()
 	ctx := context.Background()
@@ -35,6 +67,13 @@ func TestMemoryStoreInsertAndGet(t *testing.T) {
 	if got.TaskCode != "test-task" {
 		t.Fatalf("expected test-task, got %s", got.TaskCode)
 	}
+	got, err = store.GetByID(ctx, cfg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != cfg.ID || got.TaskCode != cfg.TaskCode {
+		t.Fatalf("unexpected task by ID: %+v", got)
+	}
 }
 
 func TestMemoryStoreGetByCodeNotFound(t *testing.T) {
@@ -42,6 +81,10 @@ func TestMemoryStoreGetByCodeNotFound(t *testing.T) {
 	_, err := store.GetByCode(context.Background(), "nonexistent")
 	if err != ErrNotFound {
 		t.Fatalf("expected ErrNotFound, got %v", err)
+	}
+	_, err = store.GetByID(context.Background(), "nonexistent")
+	if err != ErrNotFound {
+		t.Fatalf("GetByID expected ErrNotFound, got %v", err)
 	}
 }
 
@@ -265,7 +308,7 @@ func TestMemoryStoreComplete(t *testing.T) {
 	claim, _ := store.LockAndFetch(ctx, now, 30*time.Second)
 	newNext := now.Add(time.Hour)
 
-	err := store.Complete(ctx, claim.Task.ID, claim.LockedUntil, newNext, now)
+	err := store.Complete(ctx, claim.Task.ID, claim.LockedUntil, Completion{NextRun: newNext, LastRun: now, LastScheduledRun: claim.Task.ScheduledTime})
 	if err != nil {
 		t.Fatalf("expected success, got %v", err)
 	}
@@ -276,6 +319,35 @@ func TestMemoryStoreComplete(t *testing.T) {
 	}
 	if !got.LastRun.Equal(now) {
 		t.Fatalf("expected last run %v, got %v", now, got.LastRun)
+	}
+	if !got.LastScheduledRun.Equal(claim.Task.ScheduledTime) {
+		t.Fatalf("expected last scheduled run %v, got %v", claim.Task.ScheduledTime, got.LastScheduledRun)
+	}
+}
+
+func TestMemoryStoreCompleteWithZeroHistoryPreservesHistory(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	now := time.Date(2026, 7, 27, 9, 0, 0, 0, time.Local)
+	originalLastRun := now.Add(-2 * time.Hour)
+	originalScheduledRun := now.Add(-3 * time.Hour)
+	cfg := &TaskConfig{
+		TaskCode: "skip-history", Status: StatusEnabled, NextRun: now.Add(-time.Hour),
+		LastRun: originalLastRun, LastScheduledRun: originalScheduledRun,
+	}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	claim, err := store.LockAndFetch(ctx, now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Complete(ctx, cfg.ID, claim.LockedUntil, Completion{NextRun: now.Add(time.Hour)}); err != nil {
+		t.Fatal(err)
+	}
+	got, _ := store.GetByID(ctx, cfg.ID)
+	if !got.LastRun.Equal(originalLastRun) || !got.LastScheduledRun.Equal(originalScheduledRun) {
+		t.Fatalf("zero completion history changed successful runs: %+v", got)
 	}
 }
 
@@ -294,7 +366,7 @@ func TestMemoryStoreCompleteRejectsLostClaim(t *testing.T) {
 	store.mu.Lock()
 	store.tasks[cfg.ID].NextRun = claim.LockedUntil.Add(time.Second)
 	store.mu.Unlock()
-	if err := store.Complete(ctx, cfg.ID, claim.LockedUntil, now.Add(time.Hour), now); !errors.Is(err, ErrNotFound) {
+	if err := store.Complete(ctx, cfg.ID, claim.LockedUntil, Completion{NextRun: now.Add(time.Hour), LastRun: now}); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("expected lost claim, got %v", err)
 	}
 }
@@ -315,7 +387,7 @@ func TestMemoryStoreCompleteAllowsConcurrentDisable(t *testing.T) {
 		t.Fatal(err)
 	}
 	nextRun := now.Add(time.Hour)
-	if err := store.Complete(ctx, cfg.ID, claim.LockedUntil, nextRun, now); err != nil {
+	if err := store.Complete(ctx, cfg.ID, claim.LockedUntil, Completion{NextRun: nextRun, LastRun: now, LastScheduledRun: claim.Task.ScheduledTime}); err != nil {
 		t.Fatalf("disabled in-flight task should complete: %v", err)
 	}
 	got, err := store.GetByCode(ctx, cfg.TaskCode)
@@ -427,10 +499,12 @@ func TestRunNow(t *testing.T) {
 	type contextKey struct{}
 	ctx := context.WithValue(context.Background(), contextKey{}, "manual-run")
 
+	originalScheduledRun := carbon.Now().StdTime().Add(-time.Hour)
 	store.Insert(ctx, &TaskConfig{
-		TaskCode: "t",
-		Status:   StatusEnabled,
-		NextRun:  carbon.Now().StdTime().Add(time.Hour),
+		TaskCode:         "t",
+		Status:           StatusEnabled,
+		NextRun:          carbon.Now().StdTime().Add(time.Hour),
+		LastScheduledRun: originalScheduledRun,
 	})
 
 	var mu sync.Mutex
@@ -472,6 +546,9 @@ func TestRunNow(t *testing.T) {
 	if got.LastRun.IsZero() {
 		t.Fatal("expected RunNow to update last run")
 	}
+	if !got.LastScheduledRun.Equal(originalScheduledRun) {
+		t.Fatalf("RunNow changed last scheduled run: %v", got.LastScheduledRun)
+	}
 }
 
 func TestRunNowProvidesExecutionTimeForZeroNextRun(t *testing.T) {
@@ -480,14 +557,14 @@ func TestRunNowProvidesExecutionTimeForZeroNextRun(t *testing.T) {
 	if err := store.Insert(ctx, &TaskConfig{
 		TaskCode: "manual-exhausted",
 		Status:   StatusEnabled,
-		RRuleStr: "FREQ=DAILY;COUNT=1",
+		RRuleStr: testRRuleSet("FREQ=DAILY;COUNT=1"),
 	}); err != nil {
 		t.Fatal(err)
 	}
 
 	executed := make(chan time.Time, 1)
 	s := NewScheduler(store, func(ctx context.Context, task *TaskConfig) error {
-		executed <- task.NextRun
+		executed <- task.ScheduledTime
 		return nil
 	})
 	if err := s.RunNow(ctx, "manual-exhausted"); err != nil {
@@ -510,7 +587,7 @@ func TestRecurringTaskComputesNextRun(t *testing.T) {
 	now := carbon.Now().StdTime().Truncate(time.Hour)
 
 	// daily recurrence, DTSTART should be part of the rrule string
-	rruleStr := "FREQ=DAILY;INTERVAL=1"
+	rruleStr := testRRuleSet("FREQ=DAILY;INTERVAL=1")
 
 	cfg := &TaskConfig{
 		TaskCode: "recurring",
@@ -568,7 +645,12 @@ func TestMemoryStoreUpdate(t *testing.T) {
 	store := NewMemoryStore()
 	ctx := context.Background()
 
-	cfg := &TaskConfig{TaskCode: "t", TaskName: "test", Status: StatusEnabled}
+	lastRun := time.Now().Add(-time.Hour)
+	lastScheduledRun := lastRun.Add(-time.Hour)
+	cfg := &TaskConfig{
+		TaskCode: "t", TaskName: "test", Status: StatusEnabled,
+		LastRun: lastRun, LastScheduledRun: lastScheduledRun,
+	}
 	if err := store.Insert(ctx, cfg); err != nil {
 		t.Fatal(err)
 	}
@@ -581,6 +663,9 @@ func TestMemoryStoreUpdate(t *testing.T) {
 	got, _ := store.GetByCode(ctx, "t")
 	if got.TaskName != "updated" {
 		t.Fatalf("expected updated, got %s", got.TaskName)
+	}
+	if !got.LastRun.Equal(lastRun) || !got.LastScheduledRun.Equal(lastScheduledRun) {
+		t.Fatalf("Update changed execution history: %+v", got)
 	}
 }
 
@@ -625,7 +710,7 @@ func TestComputeNextRunInvalidRRule(t *testing.T) {
 func TestComputeNextRunExpiredTaskReturnsZero(t *testing.T) {
 	next, err := computeNextRun(&TaskConfig{
 		TaskCode: "t",
-		RRuleStr: "FREQ=DAILY;COUNT=1",
+		RRuleStr: testRRuleSet("FREQ=DAILY;COUNT=1"),
 		NextRun:  carbon.Now().StdTime(),
 	})
 	if err != nil {
@@ -639,7 +724,7 @@ func TestComputeNextRunExpiredTaskReturnsZero(t *testing.T) {
 func TestComputeNextRunAllowsZeroCurrentSchedule(t *testing.T) {
 	next, err := computeNextRun(&TaskConfig{
 		TaskCode: "manual",
-		RRuleStr: "FREQ=DAILY;COUNT=1",
+		RRuleStr: testRRuleSet("FREQ=DAILY;COUNT=1"),
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -657,7 +742,7 @@ func TestExecuteTaskErrorKeepsNextRun(t *testing.T) {
 	cfg := &TaskConfig{
 		TaskCode: "fail-task",
 		Status:   StatusEnabled,
-		RRuleStr: "FREQ=DAILY;INTERVAL=1",
+		RRuleStr: testRRuleSet("FREQ=DAILY;INTERVAL=1"),
 		NextRun:  now.Add(-time.Hour),
 	}
 	if err := store.Insert(ctx, cfg); err != nil {
@@ -681,6 +766,126 @@ func TestExecuteTaskErrorKeepsNextRun(t *testing.T) {
 	}
 }
 
+func TestExecuteTaskSuccessRecordsActualAndScheduledTimes(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	scheduledRun := time.Now().Add(-time.Hour).Truncate(time.Second)
+	cfg := &TaskConfig{
+		TaskCode: "delayed-success", Status: StatusEnabled,
+		RRuleStr: testRRuleSet("FREQ=DAILY"), NextRun: scheduledRun,
+	}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	claim, err := store.LockAndFetch(ctx, time.Now(), time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	handlerReturnedAfter := time.Now().Add(20 * time.Millisecond)
+	scheduler := NewScheduler(store, func(context.Context, *TaskConfig) error {
+		time.Sleep(time.Until(handlerReturnedAfter))
+		return nil
+	})
+	scheduler.executeTask(claim)
+
+	got, err := store.GetByID(ctx, cfg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.LastRun.Before(handlerReturnedAfter) {
+		t.Fatalf("LastRun = %v, want actual completion at or after %v", got.LastRun, handlerReturnedAfter)
+	}
+	if !got.LastScheduledRun.Equal(scheduledRun) {
+		t.Fatalf("LastScheduledRun = %v, want %v", got.LastScheduledRun, scheduledRun)
+	}
+}
+
+func TestExecuteTaskFailureAndPanicDoNotRecordSuccess(t *testing.T) {
+	tests := []struct {
+		name    string
+		handler Handler
+	}{
+		{name: "error", handler: func(context.Context, *TaskConfig) error { return errors.New("failed") }},
+		{name: "panic", handler: func(context.Context, *TaskConfig) error { panic("failed") }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := NewMemoryStore()
+			ctx := context.Background()
+			now := time.Now().Truncate(time.Second)
+			cfg := &TaskConfig{TaskCode: "no-success-" + tt.name, Status: StatusEnabled, RRuleStr: testRRuleSet("FREQ=DAILY"), NextRun: now.Add(-time.Minute)}
+			if err := store.Insert(ctx, cfg); err != nil {
+				t.Fatal(err)
+			}
+			claim, err := store.LockAndFetch(ctx, now, time.Minute)
+			if err != nil {
+				t.Fatal(err)
+			}
+			NewScheduler(store, tt.handler).executeTask(claim)
+			got, _ := store.GetByID(ctx, cfg.ID)
+			if !got.LastRun.IsZero() || !got.LastScheduledRun.IsZero() {
+				t.Fatalf("failed handler recorded success: %+v", got)
+			}
+			if !got.NextRun.Equal(claim.LockedUntil) {
+				t.Fatalf("failed handler completed claim: next=%v lease=%v", got.NextRun, claim.LockedUntil)
+			}
+		})
+	}
+}
+
+func TestExecuteTaskStaleSkipDoesNotRecordSuccess(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	now := time.Now().Truncate(time.Second)
+	originalLastRun := now.Add(-2 * time.Hour)
+	originalScheduledRun := now.Add(-3 * time.Hour)
+	cfg := &TaskConfig{
+		TaskCode: "stale", Status: StatusEnabled, RRuleStr: testRRuleSet("FREQ=DAILY"), NextRun: now.Add(-time.Hour),
+		LastRun: originalLastRun, LastScheduledRun: originalScheduledRun,
+	}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	claim, err := store.LockAndFetch(ctx, now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var called bool
+	NewScheduler(store, func(context.Context, *TaskConfig) error {
+		called = true
+		return nil
+	}, WithMaxDelay(time.Minute)).executeTask(claim)
+	got, _ := store.GetByID(ctx, cfg.ID)
+	if called {
+		t.Fatal("stale task invoked handler")
+	}
+	if !got.LastRun.Equal(originalLastRun) || !got.LastScheduledRun.Equal(originalScheduledRun) {
+		t.Fatalf("stale skip changed success history: %+v", got)
+	}
+}
+
+func TestExecuteTaskLostLeaseDoesNotRecordSuccess(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	now := time.Now().Truncate(time.Second)
+	cfg := &TaskConfig{TaskCode: "lost-execute", Status: StatusEnabled, RRuleStr: testRRuleSet("FREQ=DAILY"), NextRun: now.Add(-time.Minute)}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	claim, err := store.LockAndFetch(ctx, now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.mu.Lock()
+	store.tasks[cfg.ID].NextRun = claim.LockedUntil.Add(time.Second)
+	store.mu.Unlock()
+	NewScheduler(store, func(context.Context, *TaskConfig) error { return nil }).executeTask(claim)
+	got, _ := store.GetByID(ctx, cfg.ID)
+	if !got.LastRun.IsZero() || !got.LastScheduledRun.IsZero() {
+		t.Fatalf("lost lease recorded success: %+v", got)
+	}
+}
+
 func TestExecuteTaskDeleteSignalDeletesTask(t *testing.T) {
 	store := NewMemoryStore()
 	ctx := context.Background()
@@ -688,7 +893,7 @@ func TestExecuteTaskDeleteSignalDeletesTask(t *testing.T) {
 	cfg := &TaskConfig{
 		TaskCode: "deleted-by-handler",
 		Status:   StatusEnabled,
-		RRuleStr: "FREQ=DAILY",
+		RRuleStr: testRRuleSet("FREQ=DAILY"),
 		NextRun:  now.Add(-time.Minute),
 	}
 	if err := store.Insert(ctx, cfg); err != nil {
@@ -714,7 +919,7 @@ func TestExecuteTaskDirectDeleteSignalDeletesTask(t *testing.T) {
 	cfg := &TaskConfig{
 		TaskCode: "deleted-directly",
 		Status:   StatusEnabled,
-		RRuleStr: "FREQ=DAILY",
+		RRuleStr: testRRuleSet("FREQ=DAILY"),
 		NextRun:  now.Add(-time.Minute),
 	}
 	if err := store.Insert(ctx, cfg); err != nil {
@@ -752,7 +957,7 @@ func TestExecuteTaskDeleteFailureRetriesAfterLease(t *testing.T) {
 	cfg := &TaskConfig{
 		TaskCode: "delete-retry",
 		Status:   StatusEnabled,
-		RRuleStr: "FREQ=DAILY",
+		RRuleStr: testRRuleSet("FREQ=DAILY"),
 		NextRun:  now.Add(-time.Minute),
 	}
 	if err := store.Insert(ctx, cfg); err != nil {
@@ -788,7 +993,7 @@ func TestSchedulerStopWithPendingTasks(t *testing.T) {
 		TaskCode: "t",
 		Status:   StatusEnabled,
 		NextRun:  now.Add(-time.Hour),
-		RRuleStr: "FREQ=DAILY;INTERVAL=1",
+		RRuleStr: testRRuleSet("FREQ=DAILY;INTERVAL=1"),
 	})
 
 	handler := func(ctx context.Context, task *TaskConfig) error {

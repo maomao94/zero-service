@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"zero-service/app/trigger/internal/cronjob"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
@@ -17,7 +18,6 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/teambition/rrule-go"
-	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
 )
@@ -52,55 +52,19 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	} else {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_ALREADY_EXIST)
 	}
-	if len(in.StartTime) == 0 {
-		in.StartTime = fmt.Sprintf("%d-1-1 00:00:00", time.Now().Year())
-	}
-	startTime := carbon.Parse(in.StartTime)
-	if startTime.Error != nil {
-		return nil, startTime.Error
-	}
-	if len(in.EndTime) == 0 {
-		in.EndTime = fmt.Sprintf("%d-12-31 23:59:59", startTime.Year())
-	}
-	endTime := carbon.Parse(in.EndTime)
-	if endTime.Error != nil {
-		return nil, endTime.Error
-	}
-	if endTime.Lt(startTime) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "结束时间必须晚于开始时间")
-	}
-	if endTime.Gt(startTime.AddYears(3)) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "计划时间跨度不能超过3年")
-	}
-	rruleOption, err := NewCalcPlanTaskDateLogic(l.ctx, l.svcCtx).ConvertToRRuleOption(in.Rule, startTime, endTime)
+	now := time.Now()
+	schedule, err := cronjob.CompileSchedule(in.Rule, in.StartTime, in.EndTime, in.ExcludeDates, false, now)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "生成计划规则失败")
 	}
-	set := rrule.Set{}
-	r, err := rrule.NewRRule(rruleOption)
+	set, err := rrule.StrToRRuleSet(schedule.RRuleStr)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "计划规则格式无效")
-	}
-	set.RRule(r)
-	// 添加排除日期
-	for _, excludeDate := range in.ExcludeDates {
-		excludeTime := carbon.ParseByFormat(excludeDate, carbon.DateFormat)
-		if excludeTime.Error != nil || excludeTime.IsInvalid() {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "排除日期格式错误: "+excludeDate)
-		}
-		// 为每个排除日期添加一天中的所有小时分钟组合
-		for _, hour := range in.Rule.Hours {
-			for _, minute := range in.Rule.Minutes {
-				excludeDateTime := excludeTime.SetHour(int(hour)).SetMinute(int(minute)).SetSecond(0)
-				set.ExDate(excludeDateTime.StdTime())
-			}
-		}
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "解析计划规则失败")
 	}
 	// 获取所有触发时间
 	dates := set.All()
 	// 过滤掉小于当前时间的触发时间
 	if !in.SkipTimeFilter {
-		now := time.Now()
 		var validDates []time.Time = make([]time.Time, 0)
 		for _, d := range dates {
 			if !d.Before(now) {
@@ -115,7 +79,6 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	if len(dates)*len(in.ExecItems) > 5000 {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "计划任务时间段内调度项过多")
 	}
-	rule, _ := jsonx.Marshal(in.Rule)
 	currentUserId := tool.GetCurrentUserId(l.ctx, nil)
 
 	var insertPlan = gormmodel.Plan{
@@ -126,9 +89,10 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		PlanName:         sql.NullString{String: in.PlanName, Valid: in.PlanName != ""},
 		Type:             sql.NullString{String: in.Type, Valid: in.Type != ""},
 		GroupId:          sql.NullString{String: in.GroupId, Valid: in.GroupId != ""},
-		RecurrenceRule:   string(rule),
-		StartTime:        rruleOption.Dtstart,
-		EndTime:          rruleOption.Until,
+		RecurrenceRule:   string(schedule.RuleJSON),
+		RRuleStr:         schedule.RRuleStr,
+		StartTime:        schedule.StartTime,
+		EndTime:          schedule.EndTime,
 		Status:           model.PlanStatusEnabled,
 		TerminatedReason: sql.NullString{},
 		PausedTime:       sql.NullTime{},

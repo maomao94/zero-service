@@ -110,7 +110,7 @@ func (f *IspTaskFields) ToRRuleStr() string {
 	}
 }
 
-// toROption 返回 ISP 任务对应的 ROption。CalcInitNextRun 使用此方法避免字符串往返丢失时区。
+// toROption 返回 ISP 任务对应的 ROption。
 func (f *IspTaskFields) toROption() *rrule.ROption {
 	switch f.TaskType() {
 	case "fixed":
@@ -123,19 +123,17 @@ func (f *IspTaskFields) toROption() *rrule.ROption {
 	return nil
 }
 
-// CalcInitNextRun 根据 ISP 协议规则计算首次调度时间。
-// 使用 ROption 直传避免 ROption.String() → StrToRRule 往返丢失 Dtstart 时区。
+// CalcInitNextRun 根据完整 RRULE Set 计算首次调度时间。
 func (f *IspTaskFields) CalcInitNextRun() (time.Time, error) {
-	opt := f.toROption()
-	if opt == nil {
-		return time.Time{}, fmt.Errorf("unknown task type")
+	rruleStr := f.ToRRuleStr()
+	if rruleStr == "" {
+		return time.Time{}, fmt.Errorf("invalid task schedule")
 	}
-	rule, err := rrule.NewRRule(*opt)
+	next, err := crontask.NextAfter(rruleStr, carbon.Now().StdTime())
 	if err != nil {
 		return time.Time{}, err
 	}
-	next := rule.After(carbon.Now().StdTime(), false)
-	return f.skipInvalidTime(rule, next), nil
+	return f.skipInvalidTime(rruleStr, next), nil
 }
 
 // buildFixedRRule 为定期任务生成单次执行的 rrule。
@@ -145,7 +143,7 @@ func buildFixedRRule(f *IspTaskFields) string {
 	if opt == nil {
 		return ""
 	}
-	return opt.String()
+	return buildRRuleSet(opt)
 }
 
 func buildFixedROption(f *IspTaskFields) *rrule.ROption {
@@ -166,7 +164,7 @@ func buildCycleRRule(f *IspTaskFields) string {
 	if opt == nil {
 		return ""
 	}
-	return opt.String()
+	return buildRRuleSet(opt)
 }
 
 // buildIntervalRRule 为间隔任务生成 rrule。
@@ -175,19 +173,35 @@ func buildIntervalRRule(f *IspTaskFields) string {
 	if opt == nil {
 		return ""
 	}
-	return opt.String()
+	return buildRRuleSet(opt)
+}
+
+func buildRRuleSet(opt *rrule.ROption) string {
+	if opt == nil || opt.Dtstart.IsZero() {
+		return ""
+	}
+	rule, err := rrule.NewRRule(*opt)
+	if err != nil {
+		return ""
+	}
+	set := &rrule.Set{}
+	set.RRule(rule)
+	return set.String()
 }
 
 // skipInvalidTime 跳过不可用时间范围内的触发点。
-// 循环调用 rule.After() 直到找到第一个不在不可用区间内的时间。
-func (f *IspTaskFields) skipInvalidTime(rule *rrule.RRule, next time.Time) time.Time {
+func (f *IspTaskFields) skipInvalidTime(rruleStr string, next time.Time) time.Time {
 	is := parseTime(f.InvalidStartTime)
 	ie := parseTime(f.InvalidEndTime)
 	if is.IsZero() || ie.IsZero() {
 		return next
 	}
 	for !next.IsZero() && !next.Before(is) && !next.After(ie) {
-		next = rule.After(next, false)
+		var err error
+		next, err = crontask.NextAfter(rruleStr, next)
+		if err != nil {
+			return time.Time{}
+		}
 	}
 	return next
 }
@@ -252,8 +266,8 @@ func buildIntervalROption(f *IspTaskFields) *rrule.ROption {
 	// T0 = interval_start_time 日期 + interval_execute_time 时间
 	startT := parseTime(f.IntervalStartTime)
 	if !startT.IsZero() && f.IntervalExecuteTime != "" {
-		dateStr := carbon.CreateFromStdTime(startT).ToDateString()          // "2026-07-09"
-		t0 := carbon.Parse(dateStr + " " + f.IntervalExecuteTime).StdTime() // "2026-07-09 08:59:00"
+		dateStr := carbon.CreateFromStdTime(startT).ToDateString()                       // "2026-07-09"
+		t0 := carbon.Parse(dateStr+" "+f.IntervalExecuteTime, carbon.Shanghai).StdTime() // "2026-07-09 08:59:00"
 		if t0.Before(startT) {
 			t0 = t0.Add(24 * time.Hour)
 		}
@@ -270,7 +284,7 @@ func parseTime(s string) time.Time {
 	if s == "" {
 		return time.Time{}
 	}
-	if c := carbon.Parse(s); c.Error == nil {
+	if c := carbon.Parse(s, carbon.Shanghai); c.Error == nil {
 		return c.StdTime()
 	}
 	return time.Time{}
@@ -343,11 +357,7 @@ func NewInvalidTimeFilter() crontask.InvalidTimeFilter {
 		if is.IsZero() || ie.IsZero() {
 			return next
 		}
-		rule, err := rrule.StrToRRule(task.RRuleStr)
-		if err != nil {
-			return next
-		}
-		next = fields.skipInvalidTime(rule, next)
+		next = fields.skipInvalidTime(task.RRuleStr, next)
 		return next
 	}
 }

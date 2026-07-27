@@ -262,8 +262,8 @@ func TestHandleTaskControlStartRunsTaskThroughScheduler(t *testing.T) {
 		if execution.task.TaskCode != "TASK001" {
 			t.Fatalf("expected TASK001 to execute, got %q", execution.task.TaskCode)
 		}
-		if execution.task.NextRun.IsZero() || execution.task.NextRun.Nanosecond() != 0 {
-			t.Fatalf("expected current second execution time, got %v", execution.task.NextRun)
+		if execution.task.ScheduledTime.IsZero() || execution.task.ScheduledTime.Nanosecond() != 0 {
+			t.Fatalf("expected current second execution time, got %v", execution.task.ScheduledTime)
 		}
 		if !execution.ok {
 			t.Fatal("expected manual execution metadata")
@@ -336,12 +336,16 @@ func (nilTaskStore) LockAndFetch(context.Context, time.Time, time.Duration) (*cr
 	return nil, crontask.ErrNotFound
 }
 
-func (nilTaskStore) Complete(context.Context, string, time.Time, time.Time, time.Time) error {
+func (nilTaskStore) Complete(context.Context, string, time.Time, crontask.Completion) error {
 	return crontask.ErrNotFound
 }
 
 func (nilTaskStore) UpdateLastRun(context.Context, string, time.Time) error {
 	return crontask.ErrNotFound
+}
+
+func (nilTaskStore) GetByID(context.Context, string) (*crontask.TaskConfig, error) {
+	return nil, crontask.ErrNotFound
 }
 
 func (nilTaskStore) GetByCode(context.Context, string) (*crontask.TaskConfig, error) {

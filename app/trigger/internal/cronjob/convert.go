@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"zero-service/app/trigger/model/gormmodel"
+	"zero-service/app/trigger/trigger"
 	"zero-service/common/crontask"
 )
 
@@ -58,33 +59,36 @@ func fromTaskConfig(cfg *crontask.TaskConfig) (*gormmodel.CronJob, error) {
 		return nil, fmt.Errorf("序列化排除日期失败: %w", err)
 	}
 	return &gormmodel.CronJob{
-		TaskCode:     cfg.TaskCode,
-		TaskName:     cfg.TaskName,
-		RRuleStr:     cfg.RRuleStr,
-		Priority:     cfg.Priority,
-		LockTimeout:  cfg.LockTimeout.Milliseconds(),
-		Payload:      string(cfg.Payload),
-		Extra:        string(cfg.Extra),
-		Status:       int(cfg.Status),
-		NextRun:      toNullTime(cfg.NextRun),
-		LastRun:      toNullTime(cfg.LastRun),
-		DeptCode:     extra.DeptCode,
-		Type:         extra.Type,
-		GroupId:      extra.GroupId,
-		Description:  extra.Description,
-		StartTime:    startTime,
-		EndTime:      endTime,
-		Rule:         string(extra.Rule),
-		ExcludeDates: excludeDates,
-		Ext1:         extra.Ext1,
-		Ext2:         extra.Ext2,
-		Ext3:         extra.Ext3,
-		Ext4:         extra.Ext4,
-		Ext5:         extra.Ext5,
+		TaskCode:         cfg.TaskCode,
+		TaskName:         cfg.TaskName,
+		RRuleStr:         cfg.RRuleStr,
+		Priority:         cfg.Priority,
+		LockTimeout:      cfg.LockTimeout.Milliseconds(),
+		Payload:          string(cfg.Payload),
+		Extra:            string(cfg.Extra),
+		Status:           int(cfg.Status),
+		NextRun:          toNullTime(cfg.NextRun),
+		ScheduledTime:    toNullTime(cfg.ScheduledTime),
+		LastRun:          toNullTime(cfg.LastRun),
+		LastScheduledRun: toNullTime(cfg.LastScheduledRun),
+		DeptCode:         extra.DeptCode,
+		Type:             extra.Type,
+		GroupId:          extra.GroupId,
+		Description:      extra.Description,
+		StartTime:        startTime,
+		EndTime:          endTime,
+		Rule:             string(extra.Rule),
+		ExcludeDates:     excludeDates,
+		Ext1:             extra.Ext1,
+		Ext2:             extra.Ext2,
+		Ext3:             extra.Ext3,
+		Ext4:             extra.Ext4,
+		Ext5:             extra.Ext5,
 	}, nil
 }
 
-func toTaskConfig(job *gormmodel.CronJob) (*crontask.TaskConfig, error) {
+// ToTaskConfig 将 Cron Job 数据库记录转换为通用任务配置。
+func ToTaskConfig(job *gormmodel.CronJob) (*crontask.TaskConfig, error) {
 	extra, err := extraFromModel(job)
 	if err != nil {
 		return nil, err
@@ -95,6 +99,8 @@ func toTaskConfig(job *gormmodel.CronJob) (*crontask.TaskConfig, error) {
 	}
 	cfg := &crontask.TaskConfig{
 		ID:          job.Id,
+		CreateTime:  job.CreateTime,
+		UpdateTime:  job.UpdateTime,
 		TaskCode:    job.TaskCode,
 		TaskName:    job.TaskName,
 		RRuleStr:    job.RRuleStr,
@@ -107,8 +113,14 @@ func toTaskConfig(job *gormmodel.CronJob) (*crontask.TaskConfig, error) {
 	if job.NextRun.Valid {
 		cfg.NextRun = job.NextRun.Time
 	}
+	if job.ScheduledTime.Valid {
+		cfg.ScheduledTime = job.ScheduledTime.Time
+	}
 	if job.LastRun.Valid {
 		cfg.LastRun = job.LastRun.Time
+	}
+	if job.LastScheduledRun.Valid {
+		cfg.LastScheduledRun = job.LastScheduledRun.Time
 	}
 	return cfg, nil
 }
@@ -140,6 +152,57 @@ func extraFromModel(job *gormmodel.CronJob) (*CronJobExtra, error) {
 		Ext4:         job.Ext4,
 		Ext5:         job.Ext5,
 	}, nil
+}
+
+// ToProto 将 Cron Job 任务配置转换为对外管理视图。
+func ToProto(cfg *crontask.TaskConfig) (*trigger.CronJobPb, error) {
+	extra, err := ParseExtra(cfg.Extra)
+	if err != nil {
+		return nil, err
+	}
+	var rule trigger.PlanRulePb
+	if err := json.Unmarshal(extra.Rule, &rule); err != nil {
+		return nil, fmt.Errorf("解析 Cron Job 规则失败: %w", err)
+	}
+	scheduleDescription, err := crontask.DescribeRRule(cfg.RRuleStr)
+	if err != nil {
+		return nil, fmt.Errorf("生成 Cron Job 规则描述失败: %w", err)
+	}
+
+	result := &trigger.CronJobPb{
+		JobId:               cfg.ID,
+		TaskCode:            cfg.TaskCode,
+		TaskName:            cfg.TaskName,
+		Priority:            int32(cfg.Priority),
+		LockTimeout:         cfg.LockTimeout.Milliseconds(),
+		Payload:             string(cfg.Payload),
+		Extra:               string(extra.BizExtra),
+		Status:              int32(cfg.Status),
+		Type:                extra.Type,
+		GroupId:             extra.GroupId,
+		Description:         extra.Description,
+		StartTime:           extra.StartTime,
+		EndTime:             extra.EndTime,
+		Rule:                &rule,
+		ExcludeDates:        append([]string(nil), extra.ExcludeDates...),
+		ScheduleDescription: scheduleDescription,
+		RruleStr:            cfg.RRuleStr,
+		Ext1:                extra.Ext1,
+		Ext2:                extra.Ext2,
+		Ext3:                extra.Ext3,
+		Ext4:                extra.Ext4,
+		Ext5:                extra.Ext5,
+		CreateTime:          formatTime(cfg.CreateTime),
+		UpdateTime:          formatTime(cfg.UpdateTime),
+		DeptCode:            extra.DeptCode,
+	}
+	if !cfg.NextRun.IsZero() {
+		result.NextRun = formatTime(cfg.NextRun)
+	}
+	if !cfg.LastRun.IsZero() {
+		result.LastRun = formatTime(cfg.LastRun)
+	}
+	return result, nil
 }
 
 // ParseExtra 解析 TaskConfig.Extra 中的 Trigger 业务字段。
