@@ -1051,3 +1051,36 @@ Unified IEC104 server construction around Settings and go-zero ServerConfig, add
 ### Next Steps
 
 - None - task complete
+
+
+## Session 139: 完善 RRULE 中文描述语义
+
+**Date**: 2026-07-28
+**Task**: 完善 RRULE 中文描述语义
+**Branch**: `master`
+
+### Summary
+
+第二轮审查 jkbrzt/rrule human text 结构，修正耗尽规则条件式文案、BYSETPOS 候选语义、RDATE/EXDATE 集合措辞和危险序号星期边界，并补充 occurrence 差分测试与 crontask spec。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3b419640` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
