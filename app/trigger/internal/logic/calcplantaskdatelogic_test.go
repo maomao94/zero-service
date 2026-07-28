@@ -36,7 +36,7 @@ func TestCalcPlanTaskDateReturnsScheduleDescription(t *testing.T) {
 	for _, want := range []string{
 		"每天 09:30 执行",
 		"有效期：2026-07-27 00:00:00 至 2026-07-29 23:59:59",
-		"排除执行：2026-07-28 09:30:00",
+		"从周期规则与额外候选的合并结果中排除：2026-07-28 09:30:00",
 	} {
 		if !strings.Contains(result.ScheduleDescription, want) {
 			t.Fatalf("schedule description = %q, want substring %q", result.ScheduleDescription, want)

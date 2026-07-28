@@ -2,6 +2,7 @@ package crontask
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -111,7 +112,7 @@ func TestDescribeRRule(t *testing.T) {
 				"RDATE:20260730T100000\nEXDATE:20260728T090000",
 			contains: []string{
 				"每天 09:00 执行", "周期规则最多生成 2 次",
-				"额外执行：2026-07-30 10:00:00", "排除执行：2026-07-28 09:00:00",
+				"额外纳入候选：2026-07-30 10:00:00", "从周期规则与额外候选的合并结果中排除：2026-07-28 09:00:00",
 			},
 		},
 	}
@@ -153,8 +154,8 @@ func TestDescribeRRuleSupportsCRLFSet(t *testing.T) {
 	}
 	for _, want := range []string{
 		"每天 09:00 执行",
-		"额外执行：2026-07-30 10:00:00",
-		"排除执行：2026-07-28 09:00:00",
+		"额外纳入候选：2026-07-30 10:00:00",
+		"从周期规则与额外候选的合并结果中排除：2026-07-28 09:00:00",
 	} {
 		if !strings.Contains(description, want) {
 			t.Fatalf("description = %q, want substring %q", description, want)
@@ -179,6 +180,182 @@ func TestDescribeRRuleErrors(t *testing.T) {
 		testRRuleSet("FREQ=WEEKLY;BYDAY=1MO"),
 		testRRuleSet("FREQ=MONTHLY;BYDAY=1MO,TU"),
 		testRRuleSet("FREQ=YEARLY;BYDAY=1MO,TU"),
+	} {
+		if _, err := DescribeRRule(rule); !errors.Is(err, ErrUnsupportedDescription) {
+			t.Fatalf("DescribeRRule(%q) error = %v, want ErrUnsupportedDescription", rule, err)
+		}
+	}
+}
+
+func TestDescribeRRuleExhaustedRulesUseConditionalWording(t *testing.T) {
+	tests := []struct {
+		name string
+		rule string
+		want string
+	}{
+		{
+			name: "impossible calendar intersection",
+			rule: "DTSTART:20260101T090000Z\n" +
+				"RRULE:FREQ=YEARLY;UNTIL=20261231T090000Z;BYMONTH=2;BYMONTHDAY=30",
+			want: "执行（仅在上述条件形成匹配候选时）",
+		},
+		{
+			name: "until before dtstart",
+			rule: "DTSTART:20260727T090000Z\n" +
+				"RRULE:FREQ=DAILY;UNTIL=20260726T090000Z",
+			want: "周期规则边界已倒置：开始于 2026-07-27 09:00:00，截止于 2026-07-26 09:00:00",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			description, err := DescribeRRule(tt.rule)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(description, tt.want) {
+				t.Fatalf("DescribeRRule() = %q, want %q", description, tt.want)
+			}
+			if strings.Contains(description, "每天 09:00 执行，") || strings.Contains(description, "周期规则有效期：2026-07-27") {
+				t.Fatalf("DescribeRRule() makes an unconditional or inverted validity claim: %q", description)
+			}
+
+			set, err := rrule.StrToRRuleSet(tt.rule)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if occurrences := set.All(); len(occurrences) != 0 {
+				t.Fatalf("occurrences = %v, want exhausted rule", occurrences)
+			}
+		})
+	}
+}
+
+func TestDescribeRRuleRejectsDuplicateClockValuesWithBySetPos(t *testing.T) {
+	duplicateRule := "DTSTART:20260701T000000Z\n" +
+		"RRULE:FREQ=MONTHLY;COUNT=2;BYDAY=MO;BYHOUR=9,9;BYMINUTE=0;BYSECOND=0;BYSETPOS=2"
+	if _, err := DescribeRRule(duplicateRule); !errors.Is(err, ErrUnsupportedDescription) {
+		t.Fatalf("DescribeRRule() error = %v, want ErrUnsupportedDescription", err)
+	}
+
+	uniqueRule := strings.Replace(duplicateRule, "BYHOUR=9,9", "BYHOUR=9", 1)
+	duplicateSet, err := rrule.StrToRRuleSet(duplicateRule)
+	if err != nil {
+		t.Fatal(err)
+	}
+	uniqueSet, err := rrule.StrToRRuleSet(uniqueRule)
+	if err != nil {
+		t.Fatal(err)
+	}
+	start := time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	duplicateOccurrences := duplicateSet.Between(start, end, true)
+	uniqueOccurrences := uniqueSet.Between(start, end, true)
+	if len(duplicateOccurrences) != 1 || len(uniqueOccurrences) != 1 {
+		t.Fatalf("duplicate occurrences = %v, unique occurrences = %v", duplicateOccurrences, uniqueOccurrences)
+	}
+	if duplicateOccurrences[0].Equal(uniqueOccurrences[0]) {
+		t.Fatalf("duplicate clock value must change BYSETPOS selection: duplicate = %v, unique = %v", duplicateOccurrences, uniqueOccurrences)
+	}
+	if duplicateOccurrences[0].Day() != 6 || uniqueOccurrences[0].Day() != 13 {
+		t.Fatalf("duplicate occurrence = %v, unique occurrence = %v; want first and second Monday", duplicateOccurrences[0], uniqueOccurrences[0])
+	}
+
+	// At SECONDLY frequency BYSECOND filters the current period; it does not
+	// expand the single-element timeset indexed by BYSETPOS.
+	filterRule := "DTSTART:20260727T091005Z\n" +
+		"RRULE:FREQ=SECONDLY;COUNT=2;BYSECOND=5,5;BYSETPOS=1"
+	if _, err := DescribeRRule(filterRule); err != nil {
+		t.Fatalf("DescribeRRule() rejected duplicate filter values that do not change BYSETPOS slots: %v", err)
+	}
+	filterSet, err := rrule.StrToRRuleSet(filterRule)
+	if err != nil {
+		t.Fatal(err)
+	}
+	filterOccurrences := filterSet.All()
+	if len(filterOccurrences) != 2 || filterOccurrences[0].Second() != 5 || filterOccurrences[1].Second() != 5 {
+		t.Fatalf("filter occurrences = %v, want two :05 occurrences", filterOccurrences)
+	}
+}
+
+func TestDescribeRRuleSupportsSecondlyBySetPos(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		position int
+		want     string
+	}{
+		{name: "first candidate", position: 1, want: "第 1 个执行（仅在该位置存在候选时）"},
+		{name: "last candidate", position: -1, want: "最后一个执行（仅在该位置存在候选时）"},
+		{name: "nonexistent second candidate", position: 2, want: "第 2 个执行（仅在该位置存在候选时）"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			rule := fmt.Sprintf("DTSTART:20260727T091005Z\nRRULE:FREQ=SECONDLY;INTERVAL=2;COUNT=2;BYSETPOS=%d", tt.position)
+			description, err := DescribeRRule(rule)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(description, "按 2 秒间隔；每个周期先按上述条件形成候选，再选择"+tt.want) {
+				t.Fatalf("DescribeRRule() = %q, want position-aware conditional wording %q", description, tt.want)
+			}
+		})
+	}
+	// Only positions 1 and -1 select SECONDLY's single candidate. Do not iterate
+	// position 2: rrule-go checks UNTIL only after BYSETPOS selects a candidate,
+	// so a nonexistent position scans until its maximum year even with a bound.
+	rule := "DTSTART:20260727T091005Z\n" +
+		"RRULE:FREQ=SECONDLY;INTERVAL=2;COUNT=2;BYSETPOS=1"
+	set, err := rrule.StrToRRuleSet(rule)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantOccurrences := []time.Time{
+		time.Date(2026, 7, 27, 9, 10, 5, 0, time.UTC),
+		time.Date(2026, 7, 27, 9, 10, 7, 0, time.UTC),
+	}
+	got := set.All()
+	if len(got) != len(wantOccurrences) {
+		t.Fatalf("occurrences = %v, want %v", got, wantOccurrences)
+	}
+	for i := range wantOccurrences {
+		if !got[i].Equal(wantOccurrences[i]) {
+			t.Fatalf("occurrences[%d] = %v, want %v", i, got[i], wantOccurrences[i])
+		}
+	}
+}
+
+func TestDescribeRRuleSetDatesDescribeCombinedSetSemantics(t *testing.T) {
+	rule := "DTSTART:20260727T090000Z\n" +
+		"RRULE:FREQ=DAILY;COUNT=1\n" +
+		"RDATE:20260727T090000Z,20260730T100000Z\n" +
+		"EXDATE:20260727T090000Z,20260730T100000Z"
+	description, err := DescribeRRule(rule)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		"额外纳入候选：2026-07-27 09:00:00 +00:00、2026-07-30 10:00:00 +00:00",
+		"从周期规则与额外候选的合并结果中排除：2026-07-27 09:00:00 +00:00、2026-07-30 10:00:00 +00:00",
+	} {
+		if !strings.Contains(description, want) {
+			t.Fatalf("DescribeRRule() = %q, want %q", description, want)
+		}
+	}
+	if strings.Contains(description, "额外执行") {
+		t.Fatalf("DescribeRRule() must not promise RDATE execution: %q", description)
+	}
+
+	set, err := rrule.StrToRRuleSet(rule)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if occurrences := set.All(); len(occurrences) != 0 {
+		t.Fatalf("occurrences = %v, want empty combined set", occurrences)
+	}
+}
+
+func TestDescribeRRuleRejectsUnsafeNegativeMonthlyOrdinalWeekdays(t *testing.T) {
+	for _, rule := range []string{
+		"DTSTART:20260101T090000Z\nRRULE:FREQ=MONTHLY;COUNT=1;BYDAY=-6MO",
+		"DTSTART:20260101T090000Z\nRRULE:FREQ=YEARLY;COUNT=1;BYMONTH=1;BYDAY=-6MO",
 	} {
 		if _, err := DescribeRRule(rule); !errors.Is(err, ErrUnsupportedDescription) {
 			t.Fatalf("DescribeRRule(%q) error = %v, want ErrUnsupportedDescription", rule, err)
@@ -348,7 +525,7 @@ func TestDescribeRRuleFrequencyAndPhaseMatrix(t *testing.T) {
 		{
 			name:        "secondly interval phase",
 			rule:        "DTSTART:20260727T091005Z\nRRULE:FREQ=SECONDLY;INTERVAL=2;COUNT=2",
-			description: "按 2 秒间隔 执行",
+			description: "按 2 秒间隔执行",
 			occurrences: []time.Time{time.Date(2026, 7, 27, 9, 10, 5, 0, time.UTC), time.Date(2026, 7, 27, 9, 10, 7, 0, time.UTC)},
 		},
 	}
@@ -577,7 +754,7 @@ func TestDescribeRRuleDateFilterAndRDateBoundarySemantics(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !strings.Contains(description, "周期规则有效期：2024-01-10 09:00:00 至 2024-01-12 09:00:00") ||
-		!strings.Contains(description, "额外执行：2024-01-01 09:00:00 +00:00、2024-02-01 09:00:00 +00:00") {
+		!strings.Contains(description, "额外纳入候选：2024-01-01 09:00:00 +00:00、2024-02-01 09:00:00 +00:00") {
 		t.Fatalf("description = %q, want rule-only boundary and out-of-bound RDATE", description)
 	}
 }

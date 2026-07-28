@@ -148,6 +148,11 @@ func DescribeRRule(value string) (string, error)
 - 只有 `INTERVAL = 1`，且低频规则的高位过滤与低位默认值可准确组成完整日内固定时刻集合时，才可等价描述为“每天 HH:mm…”。
 - `WEEKLY` 在 `INTERVAL > 1` 或使用 `BYSETPOS` 时必须展示 `WKST`；前者由周起始决定间隔相位，后者由周起始决定每周期候选分组。
 - 普通 `BYDAY` 与序号 `BYDAY` 混用时，`rrule-go` 会按内部普通/序号星期集合的交集筛选，不是同维度并集；描述器应返回 `ErrUnsupportedDescription`，不能将两组值用顿号连接。
+- 周期条件只说明候选如何形成，不保证一定存在 occurrence；主句必须使用条件式执行表述。`UNTIL < DTSTART` 应保留两个边界并明确边界倒置，不能称为“有效期”，也不应通过遍历规则自行求解一般日历可达性。
+- `RDATE` 是加入 RRULE 候选并集的额外候选，`EXDATE` 从该合并结果中排除；不能把每个 `RDATE` 直接描述为最终执行。
+- `BYSETPOS` 按 `rrule-go` 当前频率的实际候选序列定位。若会扩展该频率 `timeset` 的显式时钟维度包含重复值，描述器必须返回 `ErrUnsupportedDescription`，不能去重显示后继续解释位置；只作为高位过滤的重复时钟值不占额外位置，不应误拒绝。
+- `SECONDLY` 的每个周期仍有当前秒这个单一候选，因此 `BYSETPOS=1/-1` 可描述；不存在的位置只能条件式描述，测试不得迭代无 `UNTIL` 的永久空位置规则。
+- 锁定的 `rrule-go v1.8.2` 对月作用域小于 `-5` 的序号星期可能发生负索引 panic。`DescribeRRule` 对 `MONTHLY` 及带 `BYMONTH` 的 `YEARLY` 规则安全拒绝该组合，但不得把限制扩散到 `parseRRuleSet`、`ValidateRRule` 或 `NextAfter`。
 - 可视化以 `rrule.Options` 的归一化生效配置为准，不区分字段是用户显式声明还是由 `rrule-go` 根据 `DTSTART` 补齐；由于默认时、分、秒不会全部回写到 `Options`，时间描述和 `BYSETPOS` 候选校验必须结合 `DTSTART` 补齐。
 - Set 的语法和组件处理完全采用 `parseRRuleSet` / `rrule-go` 的解析结果；描述器不得再次扫描原始 content lines、维护组件白名单或实现第二套 Set 形状校验。
 - 描述器只消费已生成的 RFC 5545 string，不依赖 Trigger proto 或业务 model。
@@ -157,13 +162,15 @@ func DescribeRRule(value string) (string, error)
 - 空字符串 -> `"", nil`。
 - RRULE 语法无效，或 Set 缺少 DTSTART/RRULE -> 解析 error。
 - `BYYEARDAY`、`BYWEEKNO`、`BYEASTER` 或无法准确表达的组合 -> 可被 `errors.Is(err, ErrUnsupportedDescription)` 识别。
+- `BYSETPOS` 候选 `timeset` 的扩展维度含重复值，或月作用域使用小于 `-5` 的序号星期 -> `ErrUnsupportedDescription`。
+- 永久无候选或 `UNTIL < DTSTART` -> 仍返回描述且不承诺 occurrence；后者明确显示倒置边界。
 - 合法且可描述的规则 -> 非空中文描述。
 
 ### 5. Good/Base/Bad Cases
 
 - Good: `DTSTART;TZID=Asia/Shanghai:20260727T000000\nRRULE:FREQ=DAILY;BYHOUR=9;BYMINUTE=30;BYSECOND=0` -> 包含“每天 09:30 执行”。
 - Base: 空规则用于一次性任务 -> 空描述。
-- Bad: 捕获描述错误后返回“自定义周期” -> 会掩盖规则和展示能力不一致。
+- Bad: 把 `RDATE` 写成“额外执行”，或把永久空候选写成必然执行 -> 会把候选集合误报为最终 occurrence。
 
 ### 6. Tests Required
 
@@ -174,6 +181,8 @@ func DescribeRRule(value string) (string, error)
 - 断言 YEARLY/MONTHLY/WEEKLY/DAILY 的默认日期或时刻与 `rrule-go` 实际 occurrence 一致，包括仅显式声明 `BYSETPOS` 的规则。
 - 断言 UTC `UNTIL` 按 `DTSTART` 时区展示。
 - RRULE Set 有 `RDATE`/`EXDATE` 时，`COUNT` 文案只能描述周期规则生成次数，不能声称最终总执行次数。
+- 断言永久空日历交集使用有界 `UNTIL` 验证，倒置边界为空，并避免迭代无边界的永久空 `SECONDLY + BYSETPOS`。
+- 用 occurrence 差分断言重复的 `timeset` 扩展值会改变 `BYSETPOS` 位置，并断言仅作高位过滤的重复值不会被误拒绝。
 
 ### 7. Wrong vs Correct
 

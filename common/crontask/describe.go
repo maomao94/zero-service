@@ -60,17 +60,21 @@ func DescribeRRule(value string) (string, error) {
 		description += separator + part
 	}
 	if text := renderSetPositions(parsed.option.Bysetpos); text != "" {
-		description += "；每个周期先按上述条件形成候选，再选择" + text + "执行"
+		description += "；每个周期先按上述条件形成候选，再选择" + text + "执行（仅在该位置存在候选时）"
 	} else {
-		description += " 执行"
+		separator := " "
+		if len(parts) == 1 && parsed.option.Freq == rrule.SECONDLY {
+			separator = ""
+		}
+		description += separator + "执行（仅在上述条件形成匹配候选时）"
 	}
 
 	if parsed.option.Count > 0 {
 		description += fmt.Sprintf("，周期规则最多生成 %d 次", parsed.option.Count)
 	}
 	description += renderBoundary(parsed.dtstart, parsed.option.Until, parsed.location)
-	description += renderDates("，额外执行：", parsed.rdates, parsed.location)
-	description += renderDates("，排除执行：", parsed.exdates, parsed.location)
+	description += renderDates("，额外纳入候选：", parsed.rdates, parsed.location)
+	description += renderDates("，从周期规则与额外候选的合并结果中排除：", parsed.exdates, parsed.location)
 	description += renderTimezoneNotice(parsed.location)
 	return description, nil
 }
@@ -101,6 +105,11 @@ type descriptionRule struct {
 	rdates   []time.Time
 	exdates  []time.Time
 	location *time.Location
+}
+
+type clockDimension struct {
+	name   string
+	values []int
 }
 
 func parseDescriptionRule(value string) (descriptionRule, error) {
@@ -135,8 +144,14 @@ func validateDescribable(parsed descriptionRule) error {
 		return fmt.Errorf("%w: %s", ErrUnsupportedDescription, strings.Join(unsupported, ","))
 	}
 	if len(option.Bysetpos) > 0 {
+		for _, clock := range bySetPosClockDimensions(option) {
+			if hasDuplicateInts(clock.values) {
+				return fmt.Errorf("%w: duplicate %s with BYSETPOS", ErrUnsupportedDescription, clock.name)
+			}
+		}
 		hours, minutes, seconds := effectiveClockParts(option, parsed.dtstart)
-		if !(option.Freq == rrule.YEARLY && len(option.Bymonth) > 0) &&
+		if option.Freq != rrule.SECONDLY &&
+			!(option.Freq == rrule.YEARLY && len(option.Bymonth) > 0) &&
 			len(option.Bymonthday) == 0 && len(option.Byweekday) == 0 &&
 			len(hours) == 0 && len(minutes) == 0 && len(seconds) == 0 {
 			return fmt.Errorf("%w: BYSETPOS without a selectable filter", ErrUnsupportedDescription)
@@ -152,6 +167,9 @@ func validateDescribable(parsed descriptionRule) error {
 	hasPlainWeekday := false
 	hasOrdinalWeekday := false
 	for _, weekday := range option.Byweekday {
+		if weekday.N() < -5 && (option.Freq == rrule.MONTHLY || option.Freq == rrule.YEARLY && len(option.Bymonth) > 0) {
+			return fmt.Errorf("%w: negative ordinal BYDAY exceeds monthly range", ErrUnsupportedDescription)
+		}
 		if weekday.N() == 0 {
 			hasPlainWeekday = true
 		} else {
@@ -162,6 +180,23 @@ func validateDescribable(parsed descriptionRule) error {
 		return fmt.Errorf("%w: mixed ordinal and plain BYDAY", ErrUnsupportedDescription)
 	}
 	return nil
+}
+
+// bySetPosClockDimensions returns only fields that expand rrule-go's timeset
+// for this frequency. Higher clock fields merely filter the current period and
+// duplicate values in those filters do not occupy additional BYSETPOS slots.
+func bySetPosClockDimensions(option rrule.ROption) []clockDimension {
+	dimensions := make([]clockDimension, 0, 3)
+	if option.Freq < rrule.HOURLY {
+		dimensions = append(dimensions, clockDimension{name: "BYHOUR", values: option.Byhour})
+	}
+	if option.Freq < rrule.MINUTELY {
+		dimensions = append(dimensions, clockDimension{name: "BYMINUTE", values: option.Byminute})
+	}
+	if option.Freq < rrule.SECONDLY {
+		dimensions = append(dimensions, clockDimension{name: "BYSECOND", values: option.Bysecond})
+	}
+	return dimensions
 }
 
 func frequencyText(freq rrule.Frequency, interval int, hasFilters bool) string {
@@ -432,6 +467,9 @@ func effectiveClockParts(option rrule.ROption, dtstart time.Time) ([]int, []int,
 func renderBoundary(dtstart, until time.Time, location *time.Location) string {
 	const layout = "2006-01-02 15:04:05"
 	if !dtstart.IsZero() && !until.IsZero() {
+		if until.Before(dtstart) {
+			return fmt.Sprintf("，周期规则边界已倒置：开始于 %s，截止于 %s", dtstart.In(location).Format(layout), until.In(location).Format(layout))
+		}
 		return fmt.Sprintf("，周期规则有效期：%s 至 %s", dtstart.In(location).Format(layout), until.In(location).Format(layout))
 	}
 	if !dtstart.IsZero() {
@@ -485,6 +523,17 @@ func sortedUniqueInts(values []int) []int {
 	result := append([]int(nil), values...)
 	sort.Ints(result)
 	return compactSorted(result)
+}
+
+func hasDuplicateInts(values []int) bool {
+	seen := make(map[int]struct{}, len(values))
+	for _, value := range values {
+		if _, ok := seen[value]; ok {
+			return true
+		}
+		seen[value] = struct{}{}
+	}
+	return false
 }
 
 func compactSorted(values []int) []int {
