@@ -37,5 +37,6 @@
 | --- | --- |
 | [开发指南](./development.md) | 环境搭建、代码生成、模块扩展和调试技巧 |
 | [部署指南](./deployment.md) | Docker、单服务和集群部署、配置管理 |
+| [Trigger Plan openGauss 迁移](./trigger-plan-opengauss-migration.md) | Plan 四表停服备份、字符串主键迁移、校验和回滚 |
 | [KML/KMZ 指南](./kml-kmz-guide.md) | 无人机航点任务 KML/KMZ 文件结构 |
 | [antsx 与响应式模式](./antsx-vs-reactive.md) | antsx Promise/Invoke 与响应式编排模式对比 |

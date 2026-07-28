@@ -189,7 +189,7 @@ func (s *GormSource) initializeEmbedded(ctx context.Context) error {
 
 func (s *GormSource) loadRows(ctx context.Context) (map[string]Entry, error) {
 	var rows []GormHoliday
-	if err := s.db.WithContext(ctx).Model(&GormHoliday{}).Where("enabled = ?", true).Find(&rows).Error; err != nil {
+	if err := s.db.WithContext(gormx.WithoutSQLTrace(ctx)).Model(&GormHoliday{}).Where("enabled = ?", true).Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	entries := make(map[string]Entry, len(rows))

@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/coding-standards.md","reason":"Go 实现与最小改动规范"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"纯函数、公共 API 和测试验证要求"}
+{"file":".trellis/spec/backend/crontask-guidelines.md","reason":"RRULE Set、描述和时区执行契约"}
+{"file":".trellis/tasks/07-28-audit-rrule-description/research/scenario-audit.md","reason":"场景矩阵、已确认缺陷与支持边界"}

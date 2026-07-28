@@ -1,6 +1,7 @@
 package cronjob
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"zero-service/common/crontask"
 
 	"github.com/dromara/carbon/v2"
+	"github.com/teambition/rrule-go"
 )
 
 func TestCompileScheduleNextRunAndExcludeDate(t *testing.T) {
@@ -31,6 +33,22 @@ func TestCompileScheduleNextRunAndExcludeDate(t *testing.T) {
 	}
 	if err := crontask.ValidateRRule(schedule.RRuleStr); err != nil {
 		t.Fatalf("serialized RRULE cannot be parsed: %v", err)
+	}
+	if !strings.Contains(schedule.RRuleStr, "DTSTART;TZID=Asia/Shanghai:") ||
+		!strings.Contains(schedule.RRuleStr, "EXDATE;TZID=Asia/Shanghai:") {
+		t.Fatalf("serialized RRULE must pin DTSTART and EXDATE to Asia/Shanghai: %q", schedule.RRuleStr)
+	}
+	set, err := rrule.StrToRRuleSet(schedule.RRuleStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := set.GetDTStart().Location().String(); got != carbon.Shanghai {
+		t.Fatalf("DTSTART location = %q, want %q", got, carbon.Shanghai)
+	}
+	for _, date := range set.GetExDate() {
+		if got := date.Location().String(); got != carbon.Shanghai {
+			t.Fatalf("EXDATE location = %q, want %q", got, carbon.Shanghai)
+		}
 	}
 }
 

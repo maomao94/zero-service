@@ -1018,3 +1018,36 @@ Unified IEC104 server construction around Settings and go-zero ServerConfig, add
 ### Next Steps
 
 - None - task complete
+
+
+## Session 138: 使用归一化配置生成 RRULE 描述
+
+**Date**: 2026-07-28
+**Task**: 使用归一化配置生成 RRULE 描述
+**Branch**: `master`
+
+### Summary
+
+将 DescribeRRule 统一改为使用 rrule.Options 与 DTSTART 的最终生效配置，补充默认日期、时刻和 BYSETPOS 的回归测试，并同步 crontask 规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4193ee60` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

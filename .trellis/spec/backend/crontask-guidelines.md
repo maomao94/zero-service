@@ -148,6 +148,8 @@ func DescribeRRule(value string) (string, error)
 - 只有 `INTERVAL = 1`，且低频规则的高位过滤与低位默认值可准确组成完整日内固定时刻集合时，才可等价描述为“每天 HH:mm…”。
 - `WEEKLY` 在 `INTERVAL > 1` 或使用 `BYSETPOS` 时必须展示 `WKST`；前者由周起始决定间隔相位，后者由周起始决定每周期候选分组。
 - 普通 `BYDAY` 与序号 `BYDAY` 混用时，`rrule-go` 会按内部普通/序号星期集合的交集筛选，不是同维度并集；描述器应返回 `ErrUnsupportedDescription`，不能将两组值用顿号连接。
+- 可视化以 `rrule.Options` 的归一化生效配置为准，不区分字段是用户显式声明还是由 `rrule-go` 根据 `DTSTART` 补齐；由于默认时、分、秒不会全部回写到 `Options`，时间描述和 `BYSETPOS` 候选校验必须结合 `DTSTART` 补齐。
+- Set 的语法和组件处理完全采用 `parseRRuleSet` / `rrule-go` 的解析结果；描述器不得再次扫描原始 content lines、维护组件白名单或实现第二套 Set 形状校验。
 - 描述器只消费已生成的 RFC 5545 string，不依赖 Trigger proto 或业务 model。
 
 ### 4. Validation & Error Matrix
@@ -169,6 +171,7 @@ func DescribeRRule(value string) (string, error)
 - 断言多小时与多分钟展开为笛卡尔积。
 - 断言 `INTERVAL > 1` 与稀疏 `BYHOUR` 保留 DTSTART 相位和过滤条件，不输出“每 N 小时”或“每天固定时刻”。
 - 断言 `WEEKLY + BYSETPOS` 的 `WKST` 文案与实际 occurrence 分组一致，并拒绝普通/序号 `BYDAY` 混用的误导描述。
+- 断言 YEARLY/MONTHLY/WEEKLY/DAILY 的默认日期或时刻与 `rrule-go` 实际 occurrence 一致，包括仅显式声明 `BYSETPOS` 的规则。
 - 断言 UTC `UNTIL` 按 `DTSTART` 时区展示。
 - RRULE Set 有 `RDATE`/`EXDATE` 时，`COUNT` 文案只能描述周期规则生成次数，不能声称最终总执行次数。
 

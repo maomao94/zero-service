@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 137
-- **Last Active**: 2026-07-27
+- **Total Sessions**: 138
+- **Last Active**: 2026-07-28
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~1020 | Active |
+| `journal-3.md` | ~1053 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 138 | 2026-07-28 | 使用归一化配置生成 RRULE 描述 | `4193ee60` | `master` |
 | 137 | 2026-07-27 | 完善 CronTask 调度基础能力 | `7aaf0157`, `276e4a34`, `14bf1e6d` | `master` |
 | 136 | 2026-07-27 | 按官方模板重建 Trellis Spec | `95f03bd6` | `master` |
 | 135 | 2026-07-27 | 优化 CronJob 管理接口与分页工具 | `94a003d5`, `5e2baede` | `master` |

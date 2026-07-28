@@ -30,8 +30,8 @@ func DescribeRRule(value string) (string, error) {
 	if fixedDailyTimes {
 		frequency = rrule.DAILY
 	}
-	parts := []string{frequencyText(frequency, parsed.option.Interval, hasLimitingDateFilter(parsed.original, frequency))}
-	if frequency == rrule.WEEKLY && (parsed.option.Interval > 1 || len(parsed.original.Bysetpos) > 0) {
+	parts := []string{frequencyText(frequency, parsed.option.Interval, hasLimitingDateFilter(parsed.option, frequency))}
+	if frequency == rrule.WEEKLY && (parsed.option.Interval > 1 || len(parsed.option.Bysetpos) > 0) {
 		parts[0] = fmt.Sprintf("以%s为一周起始，%s", weekdayText(parsed.option.Wkst), parts[0])
 	}
 	filters := renderDateFilters(parsed.option, parsed.dtstart)
@@ -41,11 +41,29 @@ func DescribeRRule(value string) (string, error) {
 	if text := renderTime(parsed.option, parsed.dtstart, parsed.option.Freq <= rrule.DAILY || fixedDailyTimes); text != "" {
 		parts = append(parts, text)
 	}
-	description := strings.Join(parts, " ")
-	if text := renderSetPositions(parsed.original.Bysetpos); text != "" {
-		description += "，每个周期内取符合上述条件的" + text
+	description := parts[0]
+	for i, part := range parts[1:] {
+		separator := " "
+		if i == 0 && strings.Contains(parts[0], "生成候选") {
+			separator = "，并"
+		} else if i == 0 && strings.HasPrefix(part, "仅") {
+			separator = "，"
+		} else if i == 0 && len(filters) > 0 {
+			separator = "，"
+			for _, suffix := range []string{"每年", "每月", "每周", "每天"} {
+				if strings.HasSuffix(parts[0], suffix) {
+					separator = ""
+					break
+				}
+			}
+		}
+		description += separator + part
 	}
-	description += " 执行"
+	if text := renderSetPositions(parsed.option.Bysetpos); text != "" {
+		description += "；每个周期先按上述条件形成候选，再选择" + text + "执行"
+	} else {
+		description += " 执行"
+	}
 
 	if parsed.option.Count > 0 {
 		description += fmt.Sprintf("，周期规则最多生成 %d 次", parsed.option.Count)
@@ -57,21 +75,21 @@ func DescribeRRule(value string) (string, error) {
 	return description, nil
 }
 
-// hasDailyFixedTimeSet 判断低频推进规则是否可等价展示为每日固定时刻集合。
+// hasDailyFixedTimeSet 判断低频规则是否可等价展示为每日固定时刻集合。
 // INTERVAL 大于 1 时，候选仍受 DTSTART 的小时/分钟相位影响，不能做此简化。
 func hasDailyFixedTimeSet(parsed descriptionRule) bool {
-	if parsed.option.Interval > 1 || len(parsed.original.Bysetpos) > 0 {
+	if parsed.option.Interval > 1 || len(parsed.option.Bysetpos) > 0 {
 		return false
 	}
 
-	original := parsed.original
+	option := parsed.option
 	switch parsed.option.Freq {
 	case rrule.HOURLY:
-		return len(original.Byhour) > 0
+		return len(option.Byhour) > 0
 	case rrule.MINUTELY:
-		return len(original.Byhour) > 0 && len(original.Byminute) > 0
+		return len(option.Byhour) > 0 && len(option.Byminute) > 0
 	case rrule.SECONDLY:
-		return len(original.Byhour) > 0 && len(original.Byminute) > 0 && len(original.Bysecond) > 0
+		return len(option.Byhour) > 0 && len(option.Byminute) > 0 && len(option.Bysecond) > 0
 	default:
 		return false
 	}
@@ -79,7 +97,6 @@ func hasDailyFixedTimeSet(parsed descriptionRule) bool {
 
 type descriptionRule struct {
 	option   rrule.ROption
-	original rrule.ROption
 	dtstart  time.Time
 	rdates   []time.Time
 	exdates  []time.Time
@@ -87,9 +104,6 @@ type descriptionRule struct {
 }
 
 func parseDescriptionRule(value string) (descriptionRule, error) {
-	if err := validateDescriptionSetShape(value); err != nil {
-		return descriptionRule{}, err
-	}
 	set, err := parseRRuleSet(value)
 	if err != nil {
 		return descriptionRule{}, fmt.Errorf("parse RRULE description: %w", err)
@@ -98,7 +112,6 @@ func parseDescriptionRule(value string) (descriptionRule, error) {
 	dtstart := set.GetDTStart()
 	return descriptionRule{
 		option:   rule.Options,
-		original: rule.OrigOptions,
 		dtstart:  dtstart,
 		rdates:   append([]time.Time(nil), set.GetRDate()...),
 		exdates:  append([]time.Time(nil), set.GetExDate()...),
@@ -106,34 +119,8 @@ func parseDescriptionRule(value string) (descriptionRule, error) {
 	}, nil
 }
 
-func validateDescriptionSetShape(value string) error {
-	lines := strings.Split(strings.ReplaceAll(strings.TrimSpace(value), "\r\n", "\n"), "\n")
-	counts := make(map[string]int, 4)
-	for _, line := range lines {
-		separator := strings.IndexAny(line, ";:")
-		if separator <= 0 {
-			return fmt.Errorf("parse RRULE description: invalid Set line %q", line)
-		}
-		name := strings.ToUpper(strings.TrimSpace(line[:separator]))
-		switch name {
-		case "DTSTART", "RRULE", "RDATE", "EXDATE":
-		default:
-			return fmt.Errorf("%w: unsupported Set component %s", ErrUnsupportedDescription, name)
-		}
-		counts[name]++
-		if name == "DTSTART" && counts[name] > 1 {
-			return fmt.Errorf("parse RRULE description: Set requires exactly one DTSTART")
-		}
-		if name == "RRULE" && counts[name] > 1 {
-			return fmt.Errorf("%w: multiple RRULE components", ErrUnsupportedDescription)
-		}
-	}
-	return nil
-}
-
 func validateDescribable(parsed descriptionRule) error {
 	option := parsed.option
-	original := parsed.original
 	unsupported := make([]string, 0, 3)
 	if len(option.Byyearday) > 0 {
 		unsupported = append(unsupported, "BYYEARDAY")
@@ -147,10 +134,13 @@ func validateDescribable(parsed descriptionRule) error {
 	if len(unsupported) > 0 {
 		return fmt.Errorf("%w: %s", ErrUnsupportedDescription, strings.Join(unsupported, ","))
 	}
-	if len(original.Bysetpos) > 0 && !(option.Freq == rrule.YEARLY && len(original.Bymonth) > 0) &&
-		len(original.Bymonthday) == 0 && len(original.Byweekday) == 0 &&
-		len(original.Byhour) == 0 && len(original.Byminute) == 0 && len(original.Bysecond) == 0 {
-		return fmt.Errorf("%w: BYSETPOS without a selectable filter", ErrUnsupportedDescription)
+	if len(option.Bysetpos) > 0 {
+		hours, minutes, seconds := effectiveClockParts(option, parsed.dtstart)
+		if !(option.Freq == rrule.YEARLY && len(option.Bymonth) > 0) &&
+			len(option.Bymonthday) == 0 && len(option.Byweekday) == 0 &&
+			len(hours) == 0 && len(minutes) == 0 && len(seconds) == 0 {
+			return fmt.Errorf("%w: BYSETPOS without a selectable filter", ErrUnsupportedDescription)
+		}
 	}
 	if option.Freq > rrule.MONTHLY {
 		for _, weekday := range option.Byweekday {
@@ -174,7 +164,7 @@ func validateDescribable(parsed descriptionRule) error {
 	return nil
 }
 
-func frequencyText(freq rrule.Frequency, interval int, advancesWithFilters bool) string {
+func frequencyText(freq rrule.Frequency, interval int, hasFilters bool) string {
 	if interval < 1 {
 		interval = 1
 	}
@@ -187,28 +177,33 @@ func frequencyText(freq rrule.Frequency, interval int, advancesWithFilters bool)
 			rrule.YEARLY: "每年", rrule.MONTHLY: "每月", rrule.WEEKLY: "每周", rrule.DAILY: "每天",
 			rrule.HOURLY: "每小时", rrule.MINUTELY: "每分钟", rrule.SECONDLY: "每秒",
 		}[freq]
-		if advancesWithFilters {
-			return text + "推进"
+		if hasFilters {
+			return "以" + text + "为周期生成候选"
 		}
 		return text
 	}
 	text := fmt.Sprintf("按 %d %s间隔", interval, unit)
-	if advancesWithFilters {
-		return text + "推进"
+	if hasFilters {
+		return "以开始时间为基准，" + text + "生成候选"
 	}
-	return text
+	return "以开始时间为基准，" + text
 }
 
 // hasLimitingDateFilter reports whether calendar BY parts filter the candidate
 // represented by the frequency instead of expanding dates inside that period.
-func hasLimitingDateFilter(original rrule.ROption, freq rrule.Frequency) bool {
-	if freq > rrule.YEARLY && len(original.Bymonth) > 0 {
+func hasLimitingDateFilter(option rrule.ROption, freq rrule.Frequency) bool {
+	if freq > rrule.YEARLY && len(option.Bymonth) > 0 {
 		return true
 	}
-	if freq > rrule.MONTHLY && len(original.Bymonthday) > 0 {
+	if freq > rrule.MONTHLY && len(option.Bymonthday) > 0 {
 		return true
 	}
-	return freq > rrule.WEEKLY && len(original.Byweekday) > 0
+	if freq <= rrule.WEEKLY || len(option.Byweekday) == 0 {
+		return false
+	}
+	weekdays := sortedUniqueWeekdays(option.Byweekday)
+	text, grouped := groupedWeekdayText(weekdays)
+	return !grouped || text != "周一至周日"
 }
 
 func renderDateFilters(option rrule.ROption, dtstart time.Time) []string {
@@ -234,7 +229,7 @@ func renderDateFilters(option rrule.ROption, dtstart time.Time) []string {
 		}
 		text := strings.Join(values, "、")
 		if option.Freq != rrule.YEARLY {
-			text = "仅在" + text
+			text = "仅限" + text
 		}
 		filters = append(filters, text)
 	}
@@ -254,22 +249,25 @@ func renderDateFilters(option rrule.ROption, dtstart time.Time) []string {
 		switch option.Freq {
 		case rrule.YEARLY:
 			if len(months) == 0 {
-				text = "每年内各月" + text
+				text = "各月的" + text
 			} else {
-				text = "各指定月份" + text
+				text = "各指定月份的" + text
 			}
 		case rrule.MONTHLY:
 		default:
-			text = "仅每月" + text
+			text = "仅限每月" + text
 		}
 		filters = append(filters, text)
 	}
 	if len(weekdays) > 0 {
-		values := make([]string, len(weekdays))
-		for i, weekday := range weekdays {
-			values[i] = weekdayText(weekday)
+		text, grouped := groupedWeekdayText(weekdays)
+		if !grouped {
+			values := make([]string, len(weekdays))
+			for i, weekday := range weekdays {
+				values[i] = weekdayText(weekday)
+			}
+			text = strings.Join(values, "、")
 		}
-		text := strings.Join(values, "、")
 		hasOrdinal := false
 		for _, weekday := range weekdays {
 			if weekday.N() != 0 {
@@ -283,17 +281,17 @@ func renderDateFilters(option rrule.ROption, dtstart time.Time) []string {
 			case len(monthDays) > 0 && hasOrdinal && len(months) > 0:
 				text = "仅限各指定月份的" + text
 			case len(monthDays) > 0 && hasOrdinal:
-				text = "仅限每年内的" + text
+				text = "仅限" + text
 			case len(monthDays) > 0:
 				text = "仅限" + text
 			case hasOrdinal && len(months) > 0:
 				text = "各指定月份的" + text
 			case hasOrdinal:
-				text = "每年内的" + text
+				// The leading YEARLY frequency already supplies the scope.
 			case len(months) > 0:
-				text = "各指定月份内每个" + text
+				text = "各指定月份内的" + weekdayScopeText(text, grouped)
 			default:
-				text = "每年内每个" + text
+				text = weekdayScopeText(text, grouped)
 			}
 		case rrule.MONTHLY:
 			if len(monthDays) > 0 {
@@ -301,41 +299,82 @@ func renderDateFilters(option rrule.ROption, dtstart time.Time) []string {
 			}
 		case rrule.WEEKLY:
 		default:
-			text = "仅" + text
+			text = "仅限" + text
 		}
 		filters = append(filters, text)
 	}
 	return filters
 }
 
+func groupedWeekdayText(weekdays []rrule.Weekday) (string, bool) {
+	if matchesPlainWeekdays(weekdays, 0, 1, 2, 3, 4) {
+		return "工作日", true
+	}
+	if matchesPlainWeekdays(weekdays, 5, 6) {
+		return "周末", true
+	}
+	if matchesPlainWeekdays(weekdays, 0, 1, 2, 3, 4, 5, 6) {
+		return "周一至周日", true
+	}
+	return "", false
+}
+
+func matchesPlainWeekdays(weekdays []rrule.Weekday, days ...int) bool {
+	if len(weekdays) != len(days) {
+		return false
+	}
+	for i, weekday := range weekdays {
+		if weekday.N() != 0 || weekday.Day() != days[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func weekdayScopeText(text string, grouped bool) string {
+	if grouped {
+		return text
+	}
+	return "每个" + text
+}
+
 func renderSetPositions(positions []int) string {
 	positions = sortedUniqueInts(positions)
+	sort.SliceStable(positions, func(i, j int) bool {
+		leftNegative := positions[i] < 0
+		rightNegative := positions[j] < 0
+		if leftNegative != rightNegative {
+			return !leftNegative
+		}
+		return positions[i] < positions[j]
+	})
 	values := make([]string, len(positions))
 	for i, position := range positions {
-		if position > 0 {
+		switch {
+		case position == -1:
+			values[i] = "最后一个"
+		case position > 0:
 			values[i] = fmt.Sprintf("第 %d 个", position)
-		} else {
+		default:
 			values[i] = fmt.Sprintf("倒数第 %d 个", -position)
 		}
 	}
-	return strings.Join(values, "、")
+	return joinChineseList(values)
+}
+
+func joinChineseList(values []string) string {
+	switch len(values) {
+	case 0:
+		return ""
+	case 1:
+		return values[0]
+	default:
+		return strings.Join(values[:len(values)-1], "、") + "和" + values[len(values)-1]
+	}
 }
 
 func renderTime(option rrule.ROption, dtstart time.Time, expandClockTimes bool) string {
-	hours := sortedUniqueInts(option.Byhour)
-	minutes := sortedUniqueInts(option.Byminute)
-	seconds := sortedUniqueInts(option.Bysecond)
-	if !dtstart.IsZero() {
-		if len(hours) == 0 && option.Freq < rrule.HOURLY {
-			hours = []int{dtstart.Hour()}
-		}
-		if len(minutes) == 0 && option.Freq < rrule.MINUTELY {
-			minutes = []int{dtstart.Minute()}
-		}
-		if len(seconds) == 0 && option.Freq < rrule.SECONDLY {
-			seconds = []int{dtstart.Second()}
-		}
-	}
+	hours, minutes, seconds := effectiveClockParts(option, dtstart)
 
 	if expandClockTimes && len(hours) > 0 && len(minutes) > 0 && len(seconds) > 0 {
 		if len(hours)*len(minutes)*len(seconds) <= 24 {
@@ -370,6 +409,24 @@ func renderTime(option rrule.ROption, dtstart time.Time, expandClockTimes bool) 
 		return ""
 	}
 	return "时间条件：" + strings.Join(dimensions, "，")
+}
+
+func effectiveClockParts(option rrule.ROption, dtstart time.Time) ([]int, []int, []int) {
+	hours := sortedUniqueInts(option.Byhour)
+	minutes := sortedUniqueInts(option.Byminute)
+	seconds := sortedUniqueInts(option.Bysecond)
+	if !dtstart.IsZero() {
+		if len(hours) == 0 && option.Freq < rrule.HOURLY {
+			hours = []int{dtstart.Hour()}
+		}
+		if len(minutes) == 0 && option.Freq < rrule.MINUTELY {
+			minutes = []int{dtstart.Minute()}
+		}
+		if len(seconds) == 0 && option.Freq < rrule.SECONDLY {
+			seconds = []int{dtstart.Second()}
+		}
+	}
+	return hours, minutes, seconds
 }
 
 func renderBoundary(dtstart, until time.Time, location *time.Location) string {

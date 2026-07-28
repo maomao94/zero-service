@@ -92,7 +92,7 @@ func TestDescribeRRule(t *testing.T) {
 		{
 			name:        "hourly interval with sparse hour filter",
 			rule:        "DTSTART:20260727T010000Z\nRRULE:FREQ=HOURLY;INTERVAL=2;BYHOUR=1,5,7;BYMINUTE=0;BYSECOND=0",
-			contains:    []string{"按 2 小时间隔", "时间条件：小时为 01、05、07，分钟为 00，秒为 00 执行"},
+			contains:    []string{"以开始时间为基准，按 2 小时间隔", "时间条件：小时为 01、05、07，分钟为 00，秒为 00 执行"},
 			notContains: []string{"每 2 小时", "每天 01:00"},
 		},
 		{
@@ -103,7 +103,7 @@ func TestDescribeRRule(t *testing.T) {
 		{
 			name:     "yearly filters and count",
 			rule:     testRRuleSet("FREQ=YEARLY;INTERVAL=2;BYMONTH=1,6;BYMONTHDAY=1;COUNT=4;BYHOUR=0;BYMINUTE=0;BYSECOND=0"),
-			contains: []string{"按 2 年间隔", "1月、6月，且各指定月份第 1 天", "周期规则最多生成 4 次"},
+			contains: []string{"按 2 年间隔，1月、6月，且各指定月份的第 1 天", "周期规则最多生成 4 次"},
 		},
 		{
 			name: "rrule set dates use dtstart timezone",
@@ -176,7 +176,6 @@ func TestDescribeRRuleErrors(t *testing.T) {
 		testRRuleSet("FREQ=YEARLY;BYYEARDAY=100"),
 		testRRuleSet("FREQ=YEARLY;BYWEEKNO=2"),
 		testRRuleSet("FREQ=YEARLY;BYEASTER=1"),
-		testRRuleSet("FREQ=MONTHLY;BYSETPOS=1"),
 		testRRuleSet("FREQ=WEEKLY;BYDAY=1MO"),
 		testRRuleSet("FREQ=MONTHLY;BYDAY=1MO,TU"),
 		testRRuleSet("FREQ=YEARLY;BYDAY=1MO,TU"),
@@ -185,13 +184,77 @@ func TestDescribeRRuleErrors(t *testing.T) {
 			t.Fatalf("DescribeRRule(%q) error = %v, want ErrUnsupportedDescription", rule, err)
 		}
 	}
-	for _, rule := range []string{
-		"DTSTART:20260727T000000Z\nRRULE:FREQ=DAILY\nEXRULE:FREQ=WEEKLY",
-		"DTSTART:20260727T000000Z\nRRULE:FREQ=DAILY\nRRULE:FREQ=WEEKLY",
-	} {
-		if _, err := DescribeRRule(rule); !errors.Is(err, ErrUnsupportedDescription) {
-			t.Fatalf("DescribeRRule(%q) error = %v, want ErrUnsupportedDescription", rule, err)
-		}
+}
+
+func TestDescribeRRuleUsesNormalizedOptions(t *testing.T) {
+	tests := []struct {
+		name        string
+		rule        string
+		description string
+		occurrences []time.Time
+	}{
+		{
+			name:        "yearly date defaults",
+			rule:        testRRuleSet("FREQ=YEARLY;COUNT=2;BYSETPOS=1"),
+			description: "每年7月，且各指定月份的第 27 天 00:00；每个周期先按上述条件形成候选，再选择第 1 个执行",
+			occurrences: []time.Time{
+				time.Date(2026, 7, 27, 0, 0, 0, 0, time.UTC),
+				time.Date(2027, 7, 27, 0, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			name:        "monthly date default",
+			rule:        testRRuleSet("FREQ=MONTHLY;COUNT=2;BYSETPOS=1"),
+			description: "每月第 27 天 00:00；每个周期先按上述条件形成候选，再选择第 1 个执行",
+			occurrences: []time.Time{
+				time.Date(2026, 7, 27, 0, 0, 0, 0, time.UTC),
+				time.Date(2026, 8, 27, 0, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			name:        "weekly weekday default",
+			rule:        testRRuleSet("FREQ=WEEKLY;COUNT=2;BYSETPOS=1"),
+			description: "以周一为一周起始，每周周一 00:00；每个周期先按上述条件形成候选，再选择第 1 个执行",
+			occurrences: []time.Time{
+				time.Date(2026, 7, 27, 0, 0, 0, 0, time.UTC),
+				time.Date(2026, 8, 3, 0, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			name:        "daily clock defaults",
+			rule:        testRRuleSet("FREQ=DAILY;COUNT=2;BYSETPOS=1"),
+			description: "每天 00:00；每个周期先按上述条件形成候选，再选择第 1 个执行",
+			occurrences: []time.Time{
+				time.Date(2026, 7, 27, 0, 0, 0, 0, time.UTC),
+				time.Date(2026, 7, 28, 0, 0, 0, 0, time.UTC),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			description, err := DescribeRRule(tt.rule)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(description, tt.description) {
+				t.Fatalf("DescribeRRule() = %q, want substring %q", description, tt.description)
+			}
+
+			set, err := rrule.StrToRRuleSet(tt.rule)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := set.All()
+			if len(got) != len(tt.occurrences) {
+				t.Fatalf("occurrences = %v, want %v", got, tt.occurrences)
+			}
+			for i := range tt.occurrences {
+				if !got[i].Equal(tt.occurrences[i]) {
+					t.Fatalf("occurrences[%d] = %v, want %v", i, got[i], tt.occurrences[i])
+				}
+			}
+		})
 	}
 }
 
@@ -203,7 +266,7 @@ func TestDescribeRRuleBySetPosFollowsDateAndTimeExpansion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "每月 周一、周二 09:00、17:00，每个周期内取符合上述条件的第 2 个 执行"
+	want := "每月周一、周二 09:00、17:00；每个周期先按上述条件形成候选，再选择第 2 个执行"
 	if !strings.Contains(description, want) {
 		t.Fatalf("DescribeRRule() = %q, want substring %q", description, want)
 	}
@@ -231,6 +294,14 @@ func TestDescribeRRuleBySetPosFollowsDateAndTimeExpansion(t *testing.T) {
 	}
 }
 
+func TestRenderSetPositionsUsesSelectionOrderAndNaturalConjunction(t *testing.T) {
+	got := renderSetPositions([]int{-1, 3, -3, 1, 3})
+	want := "第 1 个、第 3 个、倒数第 3 个和最后一个"
+	if got != want {
+		t.Fatalf("renderSetPositions() = %q, want %q", got, want)
+	}
+}
+
 func TestDescribeRRuleFrequencyAndPhaseMatrix(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -241,19 +312,19 @@ func TestDescribeRRuleFrequencyAndPhaseMatrix(t *testing.T) {
 		{
 			name:        "yearly defaults from dtstart",
 			rule:        "DTSTART:20260727T091005Z\nRRULE:FREQ=YEARLY;COUNT=2",
-			description: "每年 7月，且各指定月份第 27 天 09:10:05 执行",
+			description: "每年7月，且各指定月份的第 27 天 09:10:05 执行",
 			occurrences: []time.Time{time.Date(2026, 7, 27, 9, 10, 5, 0, time.UTC), time.Date(2027, 7, 27, 9, 10, 5, 0, time.UTC)},
 		},
 		{
 			name:        "monthly defaults from dtstart",
 			rule:        "DTSTART:20260727T091005Z\nRRULE:FREQ=MONTHLY;COUNT=2",
-			description: "每月 第 27 天 09:10:05 执行",
+			description: "每月第 27 天 09:10:05 执行",
 			occurrences: []time.Time{time.Date(2026, 7, 27, 9, 10, 5, 0, time.UTC), time.Date(2026, 8, 27, 9, 10, 5, 0, time.UTC)},
 		},
 		{
 			name:        "weekly defaults from dtstart",
 			rule:        "DTSTART:20260727T091005Z\nRRULE:FREQ=WEEKLY;COUNT=2",
-			description: "每周 周一 09:10:05 执行",
+			description: "每周周一 09:10:05 执行",
 			occurrences: []time.Time{time.Date(2026, 7, 27, 9, 10, 5, 0, time.UTC), time.Date(2026, 8, 3, 9, 10, 5, 0, time.UTC)},
 		},
 		{
@@ -461,7 +532,7 @@ func TestDescribeRRuleDateFilterAndRDateBoundarySemantics(t *testing.T) {
 	}{
 		{
 			rule: "DTSTART:20240115T090000Z\nRRULE:FREQ=YEARLY;COUNT=4;BYMONTHDAY=1",
-			want: "每年内各月第 1 天",
+			want: "每年各月的第 1 天",
 			occurrences: []time.Time{
 				time.Date(2024, 2, 1, 9, 0, 0, 0, time.UTC), time.Date(2024, 3, 1, 9, 0, 0, 0, time.UTC),
 				time.Date(2024, 4, 1, 9, 0, 0, 0, time.UTC), time.Date(2024, 5, 1, 9, 0, 0, 0, time.UTC),
@@ -469,7 +540,7 @@ func TestDescribeRRuleDateFilterAndRDateBoundarySemantics(t *testing.T) {
 		},
 		{
 			rule: "DTSTART:20240115T090000Z\nRRULE:FREQ=YEARLY;COUNT=4;BYDAY=MO",
-			want: "每年内每个周一",
+			want: "每年每个周一",
 			occurrences: []time.Time{
 				time.Date(2024, 1, 15, 9, 0, 0, 0, time.UTC), time.Date(2024, 1, 22, 9, 0, 0, 0, time.UTC),
 				time.Date(2024, 1, 29, 9, 0, 0, 0, time.UTC), time.Date(2024, 2, 5, 9, 0, 0, 0, time.UTC),
@@ -477,7 +548,7 @@ func TestDescribeRRuleDateFilterAndRDateBoundarySemantics(t *testing.T) {
 		},
 		{
 			rule: "DTSTART:20240115T090000Z\nRRULE:FREQ=DAILY;COUNT=4;BYMONTHDAY=1",
-			want: "每天推进 仅每月第 1 天",
+			want: "以每天为周期生成候选，并仅限每月第 1 天",
 			occurrences: []time.Time{
 				time.Date(2024, 2, 1, 9, 0, 0, 0, time.UTC), time.Date(2024, 3, 1, 9, 0, 0, 0, time.UTC),
 				time.Date(2024, 4, 1, 9, 0, 0, 0, time.UTC), time.Date(2024, 5, 1, 9, 0, 0, 0, time.UTC),
@@ -534,7 +605,7 @@ func TestDescribeRRuleOccurrenceDifferentials(t *testing.T) {
 			name: "hourly fixed times retain date filters and dtstart cutoff",
 			rule: "DTSTART:20260727T120000Z\n" +
 				"RRULE:FREQ=HOURLY;COUNT=5;BYMONTH=7;BYMONTHDAY=27,28;BYDAY=MO,TU;BYHOUR=9,13;BYMINUTE=30;BYSECOND=0",
-			description: "每天推进 仅在7月，且仅每月第 27 天、第 28 天，且仅周一、周二 09:30、13:30 执行",
+			description: "以每天为周期生成候选，并仅限7月，且仅限每月第 27 天、第 28 天，且仅限周一、周二 09:30、13:30 执行",
 			occurrences: []string{
 				"2026-07-27T13:30:00Z",
 				"2026-07-28T09:30:00Z",
@@ -547,7 +618,7 @@ func TestDescribeRRuleOccurrenceDifferentials(t *testing.T) {
 			name: "yearly ordinal weekday is scoped to year with monthday intersection",
 			rule: "DTSTART:20240101T090000Z\n" +
 				"RRULE:FREQ=YEARLY;COUNT=3;BYMONTHDAY=1,2,3,4,5,6,7;BYDAY=1MO;BYHOUR=9;BYMINUTE=0;BYSECOND=0",
-			description: "仅限每年内的第 1 个周一",
+			description: "仅限第 1 个周一",
 			occurrences: []string{
 				"2024-01-01T09:00:00Z",
 				"2025-01-06T09:00:00Z",
@@ -570,7 +641,7 @@ func TestDescribeRRuleOccurrenceDifferentials(t *testing.T) {
 			name: "bysetpos indexes the date and time cartesian product",
 			rule: "DTSTART:20260701T000000Z\n" +
 				"RRULE:FREQ=MONTHLY;COUNT=4;BYDAY=MO,TU;BYHOUR=9,17;BYMINUTE=0;BYSECOND=0;BYSETPOS=2,-1",
-			description: "每个周期内取符合上述条件的倒数第 1 个、第 2 个",
+			description: "每个周期先按上述条件形成候选，再选择第 2 个和最后一个执行",
 			occurrences: []string{
 				"2026-07-06T17:00:00Z",
 				"2026-07-28T17:00:00Z",
@@ -582,7 +653,7 @@ func TestDescribeRRuleOccurrenceDifferentials(t *testing.T) {
 			name: "weekly bysetpos uses wkst even without interval",
 			rule: "DTSTART:20240101T090000Z\n" +
 				"RRULE:FREQ=WEEKLY;COUNT=3;WKST=SU;BYDAY=SU,MO;BYSETPOS=1;BYHOUR=9;BYMINUTE=0;BYSECOND=0",
-			description: "以周日为一周起始，每周 周一、周日 09:00，每个周期内取符合上述条件的第 1 个",
+			description: "以周日为一周起始，每周周一、周日 09:00；每个周期先按上述条件形成候选，再选择第 1 个执行",
 			occurrences: []string{
 				"2024-01-01T09:00:00Z",
 				"2024-01-07T09:00:00Z",
@@ -593,7 +664,7 @@ func TestDescribeRRuleOccurrenceDifferentials(t *testing.T) {
 			name: "yearly bymonth supplies a describable bysetpos candidate set",
 			rule: "DTSTART:20240115T090000Z\n" +
 				"RRULE:FREQ=YEARLY;COUNT=3;BYMONTH=1,2;BYSETPOS=1;BYHOUR=9;BYMINUTE=0;BYSECOND=0",
-			description: "每年 1月、2月，且各指定月份第 15 天 09:00，每个周期内取符合上述条件的第 1 个",
+			description: "每年1月、2月，且各指定月份的第 15 天 09:00；每个周期先按上述条件形成候选，再选择第 1 个执行",
 			occurrences: []string{
 				"2024-01-15T09:00:00Z",
 				"2025-01-15T09:00:00Z",
@@ -612,6 +683,134 @@ func TestDescribeRRuleOccurrenceDifferentials(t *testing.T) {
 				t.Fatalf("description = %q, want %q", description, tt.description)
 			}
 
+			set, err := rrule.StrToRRuleSet(tt.rule)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := set.All()
+			if len(got) != len(tt.occurrences) {
+				t.Fatalf("occurrences = %v, want %v", got, tt.occurrences)
+			}
+			for i, want := range tt.occurrences {
+				if got[i].Format(time.RFC3339) != want {
+					t.Fatalf("occurrences[%d] = %s, want %s", i, got[i].Format(time.RFC3339), want)
+				}
+			}
+		})
+	}
+}
+
+func TestDescribeRRuleOptionFieldMatrix(t *testing.T) {
+	tests := []struct {
+		name        string
+		rule        string
+		want        string
+		unsupported bool
+	}{
+		{name: "freq yearly and dtstart", rule: "DTSTART:20260727T091005Z\nRRULE:FREQ=YEARLY;COUNT=1", want: "每年"},
+		{name: "freq monthly and interval", rule: testRRuleSet("FREQ=MONTHLY;INTERVAL=2;COUNT=1"), want: "按 2 个月间隔"},
+		{name: "freq weekly and wkst", rule: testRRuleSet("FREQ=WEEKLY;INTERVAL=2;WKST=SU;COUNT=1"), want: "以周日为一周起始"},
+		{name: "freq daily and until", rule: "DTSTART:20260727T000000Z\nRRULE:FREQ=DAILY;UNTIL=20260728T000000Z", want: "周期规则有效期"},
+		{name: "freq hourly", rule: testRRuleSet("FREQ=HOURLY;COUNT=1"), want: "每小时"},
+		{name: "freq minutely", rule: testRRuleSet("FREQ=MINUTELY;COUNT=1"), want: "每分钟"},
+		{name: "freq secondly", rule: testRRuleSet("FREQ=SECONDLY;COUNT=1"), want: "每秒"},
+		{name: "bysetpos", rule: testRRuleSet("FREQ=MONTHLY;COUNT=1;BYDAY=MO;BYSETPOS=1"), want: "第 1 个"},
+		{name: "bymonth", rule: testRRuleSet("FREQ=YEARLY;COUNT=1;BYMONTH=2"), want: "2月"},
+		{name: "bymonthday", rule: testRRuleSet("FREQ=MONTHLY;COUNT=1;BYMONTHDAY=-1"), want: "最后一天"},
+		{name: "byweekday", rule: testRRuleSet("FREQ=WEEKLY;COUNT=1;BYDAY=FR"), want: "周五"},
+		{name: "clock dimensions", rule: testRRuleSet("FREQ=DAILY;COUNT=1;BYHOUR=9;BYMINUTE=10;BYSECOND=5"), want: "09:10:05"},
+		{name: "byyearday", rule: testRRuleSet("FREQ=YEARLY;BYYEARDAY=100"), unsupported: true},
+		{name: "byweekno", rule: testRRuleSet("FREQ=YEARLY;BYWEEKNO=2"), unsupported: true},
+		{name: "byeaster", rule: testRRuleSet("FREQ=YEARLY;BYEASTER=1"), unsupported: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			description, err := DescribeRRule(tt.rule)
+			if tt.unsupported {
+				if !errors.Is(err, ErrUnsupportedDescription) {
+					t.Fatalf("error = %v, want ErrUnsupportedDescription", err)
+				}
+				return
+			}
+			if err != nil || !strings.Contains(description, tt.want) {
+				t.Fatalf("DescribeRRule() = %q, %v; want %q", description, err, tt.want)
+			}
+		})
+	}
+}
+
+func TestDescribeRRuleYearlyWordingDoesNotRepeatScope(t *testing.T) {
+	for _, rule := range []string{
+		"DTSTART:20240101T090000Z\nRRULE:FREQ=YEARLY;BYMONTHDAY=1;COUNT=1",
+		"DTSTART:20240101T090000Z\nRRULE:FREQ=YEARLY;BYMONTHDAY=1,2,3,4,5,6,7;BYDAY=1MO;COUNT=1",
+	} {
+		description, err := DescribeRRule(rule)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(description, "每年 每年内") {
+			t.Fatalf("description repeats YEARLY scope: %q", description)
+		}
+	}
+}
+
+func TestDescribeRRuleGroupsCommonWeekdaySets(t *testing.T) {
+	tests := []struct {
+		name        string
+		rule        string
+		want        string
+		occurrences []string
+	}{
+		{
+			name: "weekly weekdays",
+			rule: testRRuleSet("FREQ=WEEKLY;COUNT=5;BYDAY=MO,TU,WE,TH,FR;BYHOUR=9;BYMINUTE=0;BYSECOND=0"),
+			want: "每周工作日 09:00 执行",
+			occurrences: []string{
+				"2026-07-27T09:00:00Z", "2026-07-28T09:00:00Z", "2026-07-29T09:00:00Z",
+				"2026-07-30T09:00:00Z", "2026-07-31T09:00:00Z",
+			},
+		},
+		{
+			name: "daily weekdays filter",
+			rule: testRRuleSet("FREQ=DAILY;COUNT=5;BYDAY=MO,TU,WE,TH,FR;BYHOUR=9;BYMINUTE=0;BYSECOND=0"),
+			want: "以每天为周期生成候选，并仅限工作日 09:00 执行",
+			occurrences: []string{
+				"2026-07-27T09:00:00Z", "2026-07-28T09:00:00Z", "2026-07-29T09:00:00Z",
+				"2026-07-30T09:00:00Z", "2026-07-31T09:00:00Z",
+			},
+		},
+		{
+			name: "daily all weekdays remains visible",
+			rule: testRRuleSet("FREQ=DAILY;COUNT=3;BYDAY=MO,TU,WE,TH,FR,SA,SU;BYHOUR=9;BYMINUTE=0;BYSECOND=0"),
+			want: "每天，仅限周一至周日 09:00 执行",
+			occurrences: []string{
+				"2026-07-27T09:00:00Z", "2026-07-28T09:00:00Z", "2026-07-29T09:00:00Z",
+			},
+		},
+		{
+			name: "weekly weekend",
+			rule: testRRuleSet("FREQ=WEEKLY;COUNT=2;BYDAY=SA,SU;BYHOUR=9;BYMINUTE=0;BYSECOND=0"),
+			want: "每周周末 09:00 执行",
+			occurrences: []string{
+				"2026-08-01T09:00:00Z", "2026-08-02T09:00:00Z",
+			},
+		},
+		{
+			name: "yearly weekdays",
+			rule: testRRuleSet("FREQ=YEARLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=9;BYMINUTE=0;BYSECOND=0;COUNT=5"),
+			want: "每年工作日 09:00 执行",
+			occurrences: []string{
+				"2026-07-27T09:00:00Z", "2026-07-28T09:00:00Z", "2026-07-29T09:00:00Z",
+				"2026-07-30T09:00:00Z", "2026-07-31T09:00:00Z",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			description, err := DescribeRRule(tt.rule)
+			if err != nil || !strings.Contains(description, tt.want) {
+				t.Fatalf("DescribeRRule() = %q, %v; want %q", description, err, tt.want)
+			}
 			set, err := rrule.StrToRRuleSet(tt.rule)
 			if err != nil {
 				t.Fatal(err)

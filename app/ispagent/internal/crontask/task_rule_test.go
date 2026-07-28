@@ -3,6 +3,7 @@ package crontask
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -22,6 +23,16 @@ func mustParseSetRule(t *testing.T, value string) *rrule.RRule {
 		t.Fatalf("incomplete RRULE Set: %q", value)
 	}
 	return set.GetRRule()
+}
+
+func requireShanghaiDTStart(t *testing.T, value string) {
+	t.Helper()
+	if !strings.Contains(value, "DTSTART;TZID=Asia/Shanghai:") {
+		t.Fatalf("RRULE Set must pin DTSTART to Asia/Shanghai: %q", value)
+	}
+	if got := mustParseSetRule(t, value).OrigOptions.Dtstart.Location().String(); got != carbon.Shanghai {
+		t.Fatalf("DTSTART location = %q, want %q", got, carbon.Shanghai)
+	}
 }
 
 func TestTaskTypeDetection(t *testing.T) {
@@ -47,6 +58,7 @@ func TestTaskTypeDetection(t *testing.T) {
 func TestBuildFixedRRule(t *testing.T) {
 	f := &IspTaskFields{FixedStartTime: "2025-07-09 00:00:00"}
 	rruleStr := buildFixedRRule(f)
+	requireShanghaiDTStart(t, rruleStr)
 
 	rule := mustParseSetRule(t, rruleStr)
 	if rule.OrigOptions.Freq != rrule.DAILY {
@@ -69,6 +81,7 @@ func TestBuildCycleRRule(t *testing.T) {
 		CycleEndTime:     "2026-12-31 23:59:59",
 	}
 	rruleStr := buildCycleRRule(f)
+	requireShanghaiDTStart(t, rruleStr)
 
 	rule := mustParseSetRule(t, rruleStr)
 	if rule.OrigOptions.Freq != rrule.WEEKLY {
@@ -113,6 +126,7 @@ func TestBuildIntervalRRuleHourly(t *testing.T) {
 		IntervalStartTime:   "2026-01-01 00:00:00",
 	}
 	rruleStr := buildIntervalRRule(f)
+	requireShanghaiDTStart(t, rruleStr)
 	rule := mustParseSetRule(t, rruleStr)
 	if rule.OrigOptions.Freq != rrule.HOURLY {
 		t.Fatalf("expected HOURLY, got %v", rule.OrigOptions.Freq)
@@ -130,6 +144,7 @@ func TestBuildIntervalRRuleDaily(t *testing.T) {
 		IntervalStartTime:   "2026-01-01 00:00:00",
 	}
 	rruleStr := buildIntervalRRule(f)
+	requireShanghaiDTStart(t, rruleStr)
 	rule := mustParseSetRule(t, rruleStr)
 	if rule.OrigOptions.Freq != rrule.DAILY {
 		t.Fatalf("expected DAILY, got %v", rule.OrigOptions.Freq)
