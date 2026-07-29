@@ -14,7 +14,7 @@ Zero-Service 不是一个必须整体部署的单体应用。各服务可以按�
 
 - **IEC 104 数采**：多从站通信，通过 Kafka、MQTT 和 gRPC 并行分发采集数据，并支持 ASDU 合并与时序存储。
 - **DJI 云平台接入**：封装 Dock 3 Cloud API，支持航线任务、直播推流和 DRC 指令飞行。
-- **异步任务调度**：基于 asynq 与 Redis 提供分布式任务、计划任务以及 HTTP/gRPC 回调。
+- **任务调度**：提供 asynq 异步回调、Plan/Batch/ExecItem 计划任务和基于 RRULE 的 CronJob 周期调度。
 - **实时通信**：通过 SocketIO 网关完成连接管理、房间广播、服务端推送和 MQTT 桥接。
 - **工业协议桥接**：支持 Modbus TCP/RTU、MQTT、Kafka、gRPC-Gateway 及反向隔离装置接入。
 - **变电站巡检**：提供 ISP 协议服务端与代理，连接上级平台和下级巡检设备。
@@ -72,7 +72,7 @@ go run . -f etc/trigger.yaml
 | 服务 | 主要职责 | 相关文档 |
 | --- | --- | --- |
 | `ieccaller` / `iecstash` / `streamevent` | IEC 104 采集、消息分发、数据合并与落库 | [IEC 104 数采平台](./docs/iec104.md) |
-| `trigger` | 异步任务与计划任务调度 | [Trigger 服务](./docs/trigger.md) |
+| `trigger` | 异步回调、计划任务与 RRULE CronJob 调度 | [Trigger 服务](./docs/trigger.md) |
 | `djicloud` | DJI Dock 3 云平台接入 | [DJI 云平台](./docs/djicloud.md) |
 | `socketgtw` / `socketpush` | SocketIO 连接管理与服务端推送 | [SocketIO 实时通信](./docs/socketio.md) |
 | `bridge*` | Modbus、MQTT、Kafka 和网关协议桥接 | [服务端口清单](./docs/service-ports.md) |

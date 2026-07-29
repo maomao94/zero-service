@@ -26,7 +26,7 @@ go mod download
 
 各服务的配置文件通常位于对应目录的 `etc/` 下。以 Trigger 为例：
 
-1. 编辑 `app/trigger/etc/trigger.yaml`，配置 Redis 和关系数据库；如需计划任务回调，再配置 `StreamEventConf`。
+1. 编辑 `app/trigger/etc/trigger.yaml`，配置 Redis 和关系数据库；计划任务与 CronJob 回调还需要正确配置 `StreamEventConf`。
 2. 启动服务：
 
 ```bash
@@ -50,7 +50,7 @@ go run . -f etc/trigger.yaml
 
 | 服务 | 常见最小依赖 |
 | --- | --- |
-| `trigger` | Redis、MySQL/PostgreSQL；计划任务回调还需要 StreamEvent gRPC 服务 |
+| `trigger` | Redis、MySQL/PostgreSQL；计划任务与 CronJob 回调还需要 StreamEvent gRPC 服务 |
 | `ieccaller` | IEC 104 从站；至少配置 Kafka、MQTT 或 gRPC 推送通道之一 |
 | `iecstash` | Kafka、StreamEvent gRPC 服务；Nacos 为可选项 |
 | `djicloud` | PostgreSQL、MQTT Broker；使用飞行区能力时还需要对象存储 |

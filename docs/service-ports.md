@@ -39,7 +39,7 @@
 | file.rpc | `app/file/` | 21003 | 文件 / OSS 服务 |
 | ieccaller.rpc | `app/ieccaller/` | 21004 | IEC 104 主站 |
 | iecagent.rpc | `app/iecagent/` | 21005 | IEC 104 代理管理 |
-| trigger.rpc | `app/trigger/` | 21006 | 异步任务 / 计划任务 |
+| trigger.rpc | `app/trigger/` | 21006 | 异步任务 / 计划任务 / RRULE CronJob |
 | xfusionmock.rpc | `app/xfusionmock/` | 21007 | X-Fusion 模拟服务 |
 | iecstash.rpc | `app/iecstash/` | 21008 | IEC 104 数据合并 |
 | streamevent.rpc | `facade/streamevent/` | 21009 | 流事件处理与 TDengine 落库 |

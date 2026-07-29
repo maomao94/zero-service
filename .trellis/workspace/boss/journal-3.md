@@ -1118,3 +1118,36 @@ Unified IEC104 server construction around Settings and go-zero ServerConfig, add
 ### Next Steps
 
 - None - task complete
+
+
+## Session 141: 维护 Trigger CronJob 调度文档
+
+**Date**: 2026-07-29
+**Task**: 维护 Trigger CronJob 调度文档
+**Branch**: `master`
+
+### Summary
+
+基于当前实现重构 Trigger 功能文档，补充 RRULE CronJob 调度、回执、生命周期与数据模型，并同步项目首页、文档索引、快速开始和端口清单。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `da04b0f6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
