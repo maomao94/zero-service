@@ -81,13 +81,13 @@ func LogWarnings(ctx context.Context, scope planscope.Scope, r Result) {
 	for _, w := range r.Warnings {
 		switch w {
 		case WarnMissingDelayed:
-			scope.Logger(ctx).Error("延期重试（delayed）：下游未带 delay_config，将使用默认延后间隔")
+			scope.Logger(ctx).Error(scope.LogMessage("延期重试（delayed）：下游未带 delay_config，将使用默认延后间隔"))
 		case WarnMissingOngoing:
-			scope.Logger(ctx).Debug("进行中（ongoing）：无 delay_config，使用默认下次触发时间")
+			scope.Logger(ctx).Debug(scope.LogMessage("进行中（ongoing）：无 delay_config，使用默认下次触发时间"))
 		case WarnInvalidNext:
-			scope.Logger(ctx).Errorf("延期/进行中：下游给出的 next_trigger_time 无法解析 raw=%q", r.InvalidRaw)
+			scope.Logger(ctx).Errorf(scope.LogMessage("延期/进行中：下游给出的 next_trigger_time 无法解析 raw=%q"), r.InvalidRaw)
 		case WarnNextInPast:
-			scope.Logger(ctx).Errorf("延期/进行中：下游给出的 next_trigger_time 早于当前时间 next=%s now=%s", r.PastNext, r.PastNow)
+			scope.Logger(ctx).Errorf(scope.LogMessage("延期/进行中：下游给出的 next_trigger_time 早于当前时间 next=%s now=%s"), r.PastNext, r.PastNow)
 		}
 	}
 }

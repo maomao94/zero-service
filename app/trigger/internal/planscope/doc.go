@@ -7,6 +7,7 @@
 //   - notify_event：仅在调用 StreamEvent.NotifyPlanEvent 前打印，取值见 NotifyEvent* 常量。
 //
 // 消息前缀约定（message 首段，便于检索与对齐语义）：
+//   - 「[cron-plan]」：Plan/Batch/ExecItem 定时扫表及其下游处理链路。
 //   - 「RPC …」：gRPC 同步接口内、事务已提交类成功日志。
 //   - 「下游通知：」：调用 NotifyPlanEvent 之前的信息类日志。
 //   - 「定时扫表：」：Cron 抢占/锁定/扫表路径。

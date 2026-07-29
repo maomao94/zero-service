@@ -45,7 +45,7 @@ func (s *CronService) Start() {
 	}
 	// Create cancellation channel for proper goroutine termination
 	s.cancelChan = make(chan struct{})
-	logx.Info("cron service started")
+	logx.Info(planscope.CronPlanLogMessage("cron service started"))
 
 	go s.scanLoop()
 }
@@ -55,7 +55,7 @@ func (s *CronService) Stop() {
 		// Close the cancellation channel to signal goroutine termination
 		close(s.cancelChan)
 		s.cancelChan = nil
-		logx.Info("cron service stopped")
+		logx.Info(planscope.CronPlanLogMessage("cron service stopped"))
 	}
 }
 
@@ -92,7 +92,8 @@ func (s *CronService) ScanPlanExecItem() bool {
 		if errors.Is(err, model.ErrNotFound) {
 			return false
 		}
-		planscope.CronLockScope().Logger(ctx).Errorf("定时扫表：抢占待调度执行项失败: %v", err)
+		lockScope := planscope.CronLockScope()
+		lockScope.Logger(ctx).Errorf(lockScope.LogMessage("定时扫表：抢占待调度执行项失败: %v"), err)
 		return false
 	}
 	if execItem == nil {
@@ -102,30 +103,32 @@ func (s *CronService) ScanPlanExecItem() bool {
 	queryExecItem := &gormmodel.PlanExecItem{}
 	queryErr := s.svcCtx.DB.WithContext(ctx).DB.Where("id = ?", execItem.Id).First(queryExecItem).Error
 	if queryErr != nil {
-		planscope.ExecCron(execItem).Logger(ctx).Errorf("扫表锁定后重新加载执行项失败: %v", queryErr)
+		execScope := planscope.ExecCron(execItem)
+		execScope.Logger(ctx).Errorf(execScope.LogMessage("扫表锁定后重新加载执行项失败: %v"), queryErr)
 		return false
 	}
 	plan := &gormmodel.Plan{}
 	planErr := s.svcCtx.DB.WithContext(ctx).DB.Where("id = ?", queryExecItem.PlanPk).First(plan).Error
 	if planErr != nil {
-		planscope.ExecCron(execItem).Logger(ctx).Errorf("扫表锁定后加载计划失败: %v", planErr)
+		execScope := planscope.ExecCron(execItem)
+		execScope.Logger(ctx).Errorf(execScope.LogMessage("扫表锁定后加载计划失败: %v"), planErr)
 		return false
 	}
 
 	scope := planscope.TriggerScope(queryExecItem, plan)
 	scope.Logger(ctx).Infof(
-		"定时扫表：执行项已到调度时间，开始调用下游执行任务（HandlerPlanTaskEvent），next_trigger=%s",
+		scope.LogMessage("定时扫表：执行项已到调度时间，开始调用下游执行任务（HandlerPlanTaskEvent），next_trigger=%s"),
 		queryExecItem.NextTriggerTime.Format(time.RFC3339Nano),
 	)
 
 	// 更新计划 scan_flg
 	if err := s.svcCtx.DB.WithContext(ctx).Model(&gormmodel.Plan{}).Where("id = ?", queryExecItem.PlanPk).Update("scan_flg", 1).Error; err != nil {
-		scope.Logger(ctx).Errorf("更新计划 scan_flg 失败: %v", err)
+		scope.Logger(ctx).Errorf(scope.LogMessage("更新计划 scan_flg 失败: %v"), err)
 	}
 
 	// 更新批次 scan_flg
 	if err := s.svcCtx.DB.WithContext(ctx).Model(&gormmodel.PlanBatch{}).Where("id = ?", queryExecItem.BatchPk).Update("scan_flg", 1).Error; err != nil {
-		scope.Logger(ctx).Errorf("更新批次 scan_flg 失败: %v", err)
+		scope.Logger(ctx).Errorf(scope.LogMessage("更新批次 scan_flg 失败: %v"), err)
 	}
 
 	s.ExecuteCallback(ctx, queryExecItem, plan)
@@ -158,11 +161,11 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 	defer cancel()
 	scope := planscope.TriggerScope(execItem, plan)
 	log := scope.Logger(ctx)
-	log.Debug("计划执行回调：调用下游 HandlerPlanTaskEvent 开始")
+	log.Debug(scope.LogMessage("计划执行回调：调用下游 HandlerPlanTaskEvent 开始"))
 	db := s.svcCtx.DB.WithContext(ctx).DB
 
 	if err := gormmodel.UpdateExecItemStatusToRunning(ctx, db, execItem.Id, ""); err != nil {
-		log.Errorf("回写执行项状态为「执行中」失败: %v", err)
+		log.Errorf(scope.LogMessage("回写执行项状态为「执行中」失败: %v"), err)
 		return
 	}
 	callPlan := &streamevent.PlanPb{
@@ -227,10 +230,10 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 		defer func() {
 			ok, releaseErr := lock.ReleaseCtx(ctx)
 			if releaseErr != nil {
-				logx.WithContext(ctx).Errorf("执行回调 Redis 锁释放失败: %v", releaseErr)
+				logx.WithContext(ctx).Errorf(scope.LogMessage("执行回调 Redis 锁释放失败: %v"), releaseErr)
 			} else if !ok {
 				// 多见于锁 TTL 短于 RPC（默认未 SetExpire 仅 ~500ms）；已 SetExpire 后仅极端情况（key 被删/过期竞态）
-				logx.WithContext(ctx).Debug("执行回调 Redis 锁释放：未删除 key（多因锁已过期或 token 不一致）")
+				logx.WithContext(ctx).Debug(scope.LogMessage("执行回调 Redis 锁释放：未删除 key（多因锁已过期或 token 不一致）"))
 			}
 		}()
 		res, taskErr = s.svcCtx.StreamEventCli.HandlerPlanTaskEvent(ctx, req)
@@ -238,7 +241,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 	})
 	err = <-errCh
 	if err != nil {
-		log.Errorf("调用下游 HandlerPlanTaskEvent 失败: %v", err)
+		log.Errorf(scope.LogMessage("调用下游 HandlerPlanTaskEvent 失败: %v"), err)
 		return
 	}
 
@@ -270,22 +273,22 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 
 	switch res.ExecResult {
 	case model.ResultCompleted:
-		resultLog.Info("下游返回：执行完成（completed）")
+		resultLog.Info(scope.LogMessage("下游返回：执行完成（completed）"))
 		err = gormmodel.UpdateExecItemStatusToCompleted(ctx, db, execItem.Id, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		)
 		if err != nil {
-			log.Errorf("回写执行项为「已完成」失败: %v", err)
+			log.Errorf(scope.LogMessage("回写执行项为「已完成」失败: %v"), err)
 		}
 	case model.ResultFailed:
-		resultLog.Info("下游返回：执行失败（failed）")
+		resultLog.Info(scope.LogMessage("下游返回：执行失败（failed）"))
 		if err := gormmodel.UpdateExecItemStatusToFail(ctx, db, execItem.Id, model.ResultFailed, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		); err != nil {
-			log.Errorf("回写执行项为「失败」失败: %v", err)
+			log.Errorf(scope.LogMessage("回写执行项为「失败」失败: %v"), err)
 		}
 	case model.ResultDelayed:
-		resultLog.Info("下游返回：延期重试（delayed），将按规则更新下次触发时间")
+		resultLog.Info(scope.LogMessage("下游返回：延期重试（delayed），将按规则更新下次触发时间"))
 		currentTime := carbon.Now()
 		dr := execdelay.Resolve(res.DelayConfig, res.Message, res.Reason, currentTime, execdelay.ModeDelayed)
 		execdelay.LogWarnings(ctx, scope, dr)
@@ -293,17 +296,17 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 		execLog.Reason = sql.NullString{String: delayReason, Valid: true}
 		nextTime := carbon.Parse(dr.NextTrigger)
 		if nextTime.Error != nil {
-			log.Errorf("解析延期触发时间失败: %v", nextTime.Error)
+			log.Errorf(scope.LogMessage("解析延期触发时间失败: %v"), nextTime.Error)
 		} else {
 			err = gormmodel.UpdateExecItemStatusToDelayed(ctx, db, execItem.Id, res.ExecResult, res.Message, delayReason, nextTime.StdTime(),
 				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 			)
 			if err != nil {
-				log.Errorf("回写执行项为「延期等待」失败: %v", err)
+				log.Errorf(scope.LogMessage("回写执行项为「延期等待」失败: %v"), err)
 			}
 		}
 	case model.ResultOngoing:
-		resultLog.Info("下游返回：仍在进行（ongoing），将按规则更新下次触发时间")
+		resultLog.Info(scope.LogMessage("下游返回：仍在进行（ongoing），将按规则更新下次触发时间"))
 		currentTime := carbon.Now()
 		or := execdelay.Resolve(res.DelayConfig, res.Message, res.Reason, currentTime, execdelay.ModeOngoing)
 		execdelay.LogWarnings(ctx, scope, or)
@@ -313,7 +316,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 		if or.NextTrigger != "" {
 			nt := carbon.Parse(or.NextTrigger)
 			if nt.Error != nil {
-				log.Errorf("解析 ongoing 触发时间失败: %v", nt.Error)
+				log.Errorf(scope.LogMessage("解析 ongoing 触发时间失败: %v"), nt.Error)
 			} else {
 				t := nt.StdTime()
 				nextTime = &t
@@ -323,34 +326,34 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated}, nextTime, true,
 		)
 		if err != nil {
-			log.Errorf("回写执行项为「进行中」失败: %v", err)
+			log.Errorf(scope.LogMessage("回写执行项为「进行中」失败: %v"), err)
 		}
 	case model.ResultTerminated:
-		resultLog.Info("下游返回：已终止（terminated）")
+		resultLog.Info(scope.LogMessage("下游返回：已终止（terminated）"))
 		err = gormmodel.UpdateExecItemStatusToTerminated(ctx, db, execItem.Id, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		)
 		if err != nil {
-			log.Errorf("回写执行项为「已终止」失败: %v", err)
+			log.Errorf(scope.LogMessage("回写执行项为「已终止」失败: %v"), err)
 		}
 	default:
-		log.Errorf("下游返回未知结果 exec_result=%q，将按 completed 回写库", res.ExecResult)
+		log.Errorf(scope.LogMessage("下游返回未知结果 exec_result=%q，将按 completed 回写库"), res.ExecResult)
 		err = gormmodel.UpdateExecItemStatusToCompleted(ctx, db, execItem.Id, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		)
 		if err != nil {
-			log.Errorf("未知结果按「已完成」回写执行项失败: %v", err)
+			log.Errorf(scope.LogMessage("未知结果按「已完成」回写执行项失败: %v"), err)
 		}
 	}
 
 	// 插入执行日志
 	if err := db.Create(execLog).Error; err != nil {
-		log.Errorf("写入执行流水 plan_exec_log 失败: %v", err)
+		log.Errorf(scope.LogMessage("写入执行流水 plan_exec_log 失败: %v"), err)
 	}
 
 	batchCount, err := gormmodel.UpdatePlanBatchFinishedTime(ctx, db, execItem.BatchPk)
 	if err != nil {
-		log.Errorf("更新批次 finished_time（用于收尾判断）失败: %v", err)
+		log.Errorf(scope.LogMessage("更新批次 finished_time（用于收尾判断）失败: %v"), err)
 	}
 	if batchCount > 0 {
 		batchNotifyReq := streamevent.NotifyPlanEventReq{
@@ -360,12 +363,12 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 			BatchId:    execItem.BatchId,
 			Attributes: map[string]string{},
 		}
-		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Logger(ctx).Info("下游通知：调用 NotifyPlanEvent（批次收尾）")
+		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Logger(ctx).Info(scope.LogMessage("下游通知：调用 NotifyPlanEvent（批次收尾）"))
 		s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &batchNotifyReq)
 	}
 	planCount, err := gormmodel.UpdatePlanFinishedTime(ctx, db, execItem.PlanPk)
 	if err != nil {
-		log.Errorf("更新计划 finished_time（用于收尾判断）失败: %v", err)
+		log.Errorf(scope.LogMessage("更新计划 finished_time（用于收尾判断）失败: %v"), err)
 	}
 	if planCount > 0 {
 		planPlanReq := streamevent.NotifyPlanEventReq{
@@ -374,11 +377,11 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 			PlanType:   plan.Type.String,
 			Attributes: map[string]string{},
 		}
-		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Logger(ctx).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
+		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Logger(ctx).Info(scope.LogMessage("下游通知：调用 NotifyPlanEvent（计划收尾）"))
 		s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &planPlanReq)
 	}
 	scope.WithFields(
 		logx.Field("batch_notify_rows", batchCount),
 		logx.Field("plan_notify_rows", planCount),
-	).Logger(ctx).Info("计划执行回调：下游处理结束（batch_notify_rows、plan_notify_rows 为本次是否触发批次/计划收尾通知）")
+	).Logger(ctx).Info(scope.LogMessage("计划执行回调：下游处理结束（batch_notify_rows、plan_notify_rows 为本次是否触发批次/计划收尾通知）"))
 }

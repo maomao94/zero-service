@@ -32,6 +32,33 @@
 
 依据：`app/trigger/internal/logic/calcplantaskdatelogic.go`、`app/trigger/internal/task/scheduler`、`app/trigger/internal/logic/callbackplanexecitemlogic.go`、相关测试。
 
+## Plan Cron 日志正文标记
+
+- `app/trigger/cron` 的服务生命周期、扫表、下游调用、结果处理和收尾日志，正文统一以 `[cron-plan] ` 开头，便于在 plain 日志中直接检索。
+- `planscope.Scope.LogMessage` 是带具体 Scope 日志的统一格式入口；只有 `EntryCron` 增加 `[cron-plan]`，RPC 与 callback 正文保持不变。
+- 不依赖具体 Plan/ExecItem 的 cron 生命周期日志使用 `planscope.CronPlanLogMessage`，不得在各调用点重复硬编码前缀。
+- `common/crontask` 继续使用 `[crontask]`，表示公共 Scheduler/CronJob/RunNow；同一正文不得同时添加 `[cron-plan]` 与 `[crontask]`。
+
+```go
+// Plan 扫表链路
+scope.Logger(ctx).Info(scope.LogMessage("下游返回：执行完成（completed）"))
+
+// gRPC 主动操作或 callback
+scope.Logger(ctx).Info(scope.LogMessage("RPC 执行回调：收到下游回执"))
+```
+
+测试至少断言 cron Scope 会增加 `[cron-plan]`，RPC/callback Scope 不增加，并覆盖共享延期告警在两种入口下的差异。
+
+### Common Mistake: 使用无业务命名空间的 `[cron]`
+
+**Symptom**: Plan 扫表日志、公共 `common/crontask` 调度器日志和未来其他业务 cron 混在一起，无法只靠正文前缀定位一条业务链路。
+
+**Cause**: 把“执行方式是 cron”误当成唯一日志分类，忽略了 cron 还需要业务命名空间。
+
+**Fix**: Plan 扫表使用 `[cron-plan]`，公共调度器保持 `[crontask]`，未来业务按 `[cron-<business>]` 扩展；gRPC 主动操作不继承 cron 正文标记。
+
+**Prevention**: 新增或调整 cron 日志时，先确认日志生产组件和业务命名空间，再通过 `planscope.Scope.LogMessage` 或对应组件的统一格式入口生成正文，并补充前缀边界测试。
+
 ## CronJob 适配
 
 - Store 遵循 lease/complete CAS、SQL NULL 终止时间和字段所有权，详见公共调度规范。

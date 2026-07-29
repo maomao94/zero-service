@@ -31,6 +31,8 @@ const (
 	EntryCallback = "callback"
 )
 
+const cronPlanLogPrefix = "[cron-plan] "
+
 // NotifyEvent* 与日志字段 notify_event 对应，语义对齐 streamevent.PlanEventType（BATCH_FINISHED / PLAN_FINISHED）。
 const (
 	NotifyEventBatchFinished = "BATCH_FINISHED"
@@ -45,6 +47,19 @@ type Scope struct {
 
 func (s Scope) Logger(ctx context.Context) logx.Logger {
 	return logx.WithContext(ctx).WithFields(s.Fields...)
+}
+
+// LogMessage 为 Plan cron 日志增加可直接检索的正文前缀，RPC 与 callback 正文保持不变。
+func (s Scope) LogMessage(message string) string {
+	if s.Entry == EntryCron {
+		return CronPlanLogMessage(message)
+	}
+	return message
+}
+
+// CronPlanLogMessage 格式化不依赖具体计划对象的 Plan cron 生命周期日志。
+func CronPlanLogMessage(message string) string {
+	return cronPlanLogPrefix + message
 }
 
 func (s Scope) WithFields(extra ...logx.LogField) Scope {
