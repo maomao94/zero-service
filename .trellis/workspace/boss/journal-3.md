@@ -1151,3 +1151,36 @@ Unified IEC104 server construction around Settings and go-zero ServerConfig, add
 ### Next Steps
 
 - None - task complete
+
+
+## Session 142: Trigger 终止运行项校验
+
+**Date**: 2026-07-30
+**Task**: Trigger 终止运行项校验
+**Branch**: `master`
+
+### Summary
+
+为 Plan/Batch 终止增加 StatusRunning 校验，保留 ExecItem 状态；完善 cron 父级补查、callback CAS 零行处理、ErrNotFound 与 ErrNoRowsUpdate 语义，并补充测试和 Trigger/GORM 并发规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1a81af4f` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
