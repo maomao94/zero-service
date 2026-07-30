@@ -70,6 +70,17 @@ func TestLogWarningsPrefixesCronScopeOnly(t *testing.T) {
 	}
 }
 
+func TestFinalReasonDistinguishesMode(t *testing.T) {
+	delayed := FinalReason("base", "2026-04-21 08:00:00", ModeDelayed)
+	if delayed != "base, 下次重试时间: 2026-04-21 08:00:00" {
+		t.Fatalf("delayed=%q", delayed)
+	}
+	ongoing := FinalReason("base", "2026-04-21 08:00:00", ModeOngoing)
+	if ongoing != "base, 下次进度复查时间: 2026-04-21 08:00:00" {
+		t.Fatalf("ongoing=%q", ongoing)
+	}
+}
+
 type testCfg struct {
 	next, reason string
 }

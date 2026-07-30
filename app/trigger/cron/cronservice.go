@@ -292,7 +292,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 		currentTime := carbon.Now()
 		dr := execdelay.Resolve(res.DelayConfig, res.Message, res.Reason, currentTime, execdelay.ModeDelayed)
 		execdelay.LogWarnings(ctx, scope, dr)
-		delayReason := execdelay.FinalReason(dr.ReasonStem, dr.NextTrigger)
+		delayReason := execdelay.FinalReason(dr.ReasonStem, dr.NextTrigger, execdelay.ModeDelayed)
 		execLog.Reason = sql.NullString{String: delayReason, Valid: true}
 		nextTime := carbon.Parse(dr.NextTrigger)
 		if nextTime.Error != nil {
@@ -310,7 +310,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 		currentTime := carbon.Now()
 		or := execdelay.Resolve(res.DelayConfig, res.Message, res.Reason, currentTime, execdelay.ModeOngoing)
 		execdelay.LogWarnings(ctx, scope, or)
-		delayReason := execdelay.FinalReason(or.ReasonStem, or.NextTrigger)
+		delayReason := execdelay.FinalReason(or.ReasonStem, or.NextTrigger, execdelay.ModeOngoing)
 		execLog.Reason = sql.NullString{String: delayReason, Valid: true}
 		var nextTime *time.Time
 		if or.NextTrigger != "" {

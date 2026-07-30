@@ -129,7 +129,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 			currentTime := carbon.Now()
 			dr := execdelay.Resolve(in.DelayConfig, in.Message, in.Reason, currentTime, execdelay.ModeDelayed)
 			execdelay.LogWarnings(l.ctx, scope, dr)
-			delayReason := execdelay.FinalReason(dr.ReasonStem, dr.NextTrigger)
+			delayReason := execdelay.FinalReason(dr.ReasonStem, dr.NextTrigger, execdelay.ModeDelayed)
 			reason = delayReason
 			parsedTime := carbon.Parse(dr.NextTrigger)
 			if parsedTime.Error != nil {
@@ -140,7 +140,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 			currentTime := carbon.Now()
 			or := execdelay.Resolve(in.DelayConfig, in.Message, in.Reason, currentTime, execdelay.ModeOngoing)
 			execdelay.LogWarnings(l.ctx, scope, or)
-			delayReason := execdelay.FinalReason(or.ReasonStem, or.NextTrigger)
+			delayReason := execdelay.FinalReason(or.ReasonStem, or.NextTrigger, execdelay.ModeOngoing)
 			reason = delayReason
 			var nextTime *time.Time
 			if or.NextTrigger != "" {

@@ -92,6 +92,13 @@ func LogWarnings(ctx context.Context, scope planscope.Scope, r Result) {
 	}
 }
 
-func FinalReason(reasonStem, nextTrigger string) string {
-	return fmt.Sprintf("%s, 下次触发时间: %s", reasonStem, nextTrigger)
+// FinalReason 拼接对业务人员展示的原因文案。
+// delayed 的时间点是「重新下发」的时刻，ongoing 的时间点只是扫表来查一次进度、不会重复下发，
+// 两者措辞必须区分，否则业务人员会把 ongoing 误读成任务还要再执行一次。
+func FinalReason(reasonStem, nextTrigger string, mode Mode) string {
+	label := "下次重试时间"
+	if mode == ModeOngoing {
+		label = "下次进度复查时间"
+	}
+	return fmt.Sprintf("%s, %s: %s", reasonStem, label, nextTrigger)
 }
