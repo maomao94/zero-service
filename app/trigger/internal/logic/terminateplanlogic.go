@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 	"zero-service/facade/streamevent/streamevent"
 
@@ -64,20 +65,29 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 
 	// 执行事务
 	err = db.Transaction(func(tx *gorm.DB) error {
-		now := time.Now()
-		// 更新计划状态为已终止
-		plan.Status = model.PlanStatusTerminated // 终止
-		plan.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
-		plan.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
-		plan.FinishedTime = sql.NullTime{Time: now, Valid: true}
-		plan.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
-		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
-
-		// 更新计划
-		transErr := tx.Save(&plan).Error
+		var runningCount int64
+		runningCount, transErr := gormmodel.CountRunningExecItemsByPlan(l.ctx, tx, plan.Id)
 		if transErr != nil {
 			return transErr
 		}
+		if runningCount > 0 {
+			return errPlanExecItemRunning
+		}
+
+		now := time.Now()
+		// 只更新父级状态；cron claim 后会重新加载父级并在非 enabled/finished 时停止下发。
+		updated, transErr := gormmodel.UpdatePlanTerminated(
+			l.ctx, tx, plan.Id, in.Reason, tool.GetCurrentUserId(l.ctx, nil), now,
+		)
+		if transErr != nil {
+			return transErr
+		}
+		if updated == 0 {
+			return model.ErrNoRowsUpdate
+		}
+		plan.Status = model.PlanStatusTerminated
+		plan.FinishedTime.Time = now
+		plan.FinishedTime.Valid = true
 
 		// 更新批次
 		transErr = tx.Model(&gormmodel.PlanBatch{}).
@@ -94,6 +104,12 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 	})
 
 	if err != nil {
+		if errors.Is(err, errPlanExecItemRunning) {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划存在正在执行的执行项，请执行项结束后再终止")
+		}
+		if errors.Is(err, model.ErrNoRowsUpdate) {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态已变化，无法终止")
+		}
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "终止计划事务失败")
 	}
 	planPlanReq := streamevent.NotifyPlanEventReq{

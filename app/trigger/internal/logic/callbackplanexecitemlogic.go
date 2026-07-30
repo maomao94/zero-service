@@ -155,7 +155,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		case model.ResultTerminated:
 			transErr = gormmodel.UpdateExecItemStatusToTerminated(l.ctx, txCtx, execItem.Id, in.Message, in.Reason, statusIn, statusOut)
 		default:
-			return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "无效的回执执行结果: "+in.GetExecResult())
+			return fmt.Errorf("%w: %s", errInvalidPlanExecItemResult, in.GetExecResult())
 		}
 		if transErr != nil {
 			return transErr
@@ -187,6 +187,12 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		return nil
 	})
 	if err != nil {
+		if errors.Is(err, model.ErrNoRowsUpdate) {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "执行项状态已变化，回调未生效")
+		}
+		if errors.Is(err, errInvalidPlanExecItemResult) {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "无效的回执执行结果: "+in.GetExecResult())
+		}
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "回调事务失败")
 	}
 

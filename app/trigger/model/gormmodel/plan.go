@@ -217,13 +217,69 @@ func GetBatchTotalExecItems(ctx context.Context, db *gorm.DB, batchPk string) (i
 	return count, err
 }
 
+// CountRunningExecItemsByPlan returns the number of currently running items in a plan.
+func CountRunningExecItemsByPlan(ctx context.Context, db *gorm.DB, planPk string) (int64, error) {
+	var count int64
+	err := db.WithContext(ctx).Model(&PlanExecItem{}).
+		Where("plan_pk = ?", planPk).
+		Where("status = ?", model.StatusRunning).
+		Count(&count).Error
+	return count, err
+}
+
+// CountRunningExecItemsByBatch returns the number of currently running items in a batch.
+func CountRunningExecItemsByBatch(ctx context.Context, db *gorm.DB, batchPk string) (int64, error) {
+	var count int64
+	err := db.WithContext(ctx).Model(&PlanExecItem{}).
+		Where("batch_pk = ?", batchPk).
+		Where("status = ?", model.StatusRunning).
+		Count(&count).Error
+	return count, err
+}
+
+// UpdatePlanTerminated terminates only the plan row and leaves all exec items unchanged.
+// The caller owns the running-item check; this update only guards the parent state.
+func UpdatePlanTerminated(ctx context.Context, db *gorm.DB, id, reason, updateUser string, now time.Time) (int64, error) {
+	result := db.WithContext(ctx).Model(&Plan{}).
+		Where("id = ?", id).
+		Where("status != ?", model.PlanStatusTerminated).
+		Where("finished_time IS NULL").
+		Updates(map[string]any{
+			"status":            model.PlanStatusTerminated,
+			"paused_time":       sql.NullTime{Time: now, Valid: true},
+			"paused_reason":     sql.NullString{String: reason, Valid: reason != ""},
+			"finished_time":     sql.NullTime{Time: now, Valid: true},
+			"terminated_reason": sql.NullString{String: reason, Valid: reason != ""},
+			"update_user":       sql.NullString{String: updateUser, Valid: updateUser != ""},
+		})
+	return result.RowsAffected, result.Error
+}
+
+// UpdatePlanBatchTerminated terminates only the batch row and leaves all exec items unchanged.
+// The caller owns the running-item check; this update only guards the parent state.
+func UpdatePlanBatchTerminated(ctx context.Context, db *gorm.DB, id, reason, updateUser string, now time.Time) (int64, error) {
+	result := db.WithContext(ctx).Model(&PlanBatch{}).
+		Where("id = ?", id).
+		Where("status != ?", model.PlanStatusTerminated).
+		Where("finished_time IS NULL").
+		Updates(map[string]any{
+			"status":            model.PlanStatusTerminated,
+			"terminated_reason": sql.NullString{String: reason, Valid: reason != ""},
+			"paused_time":       sql.NullTime{},
+			"paused_reason":     sql.NullString{},
+			"finished_time":     sql.NullTime{Time: now, Valid: true},
+			"update_user":       sql.NullString{String: updateUser, Valid: updateUser != ""},
+		})
+	return result.RowsAffected, result.Error
+}
+
 // LockTriggerItem atomically locks one pending exec item for dispatch.
 func LockTriggerItem(ctx context.Context, db *gorm.DB, dbType gormx.DatabaseType, expireIn time.Duration) (*PlanExecItem, error) {
 	currentTime := time.Now()
 	nextTriggerTime := currentTime.Add(expireIn)
 	var item PlanExecItem
 	query := db.WithContext(gormx.WithoutSQLTrace(ctx)).Table("plan_exec_item AS pei").
-		Select("pei.version, pei.id, pei.plan_pk, pei.plan_id, pei.batch_pk, pei.batch_id, pei.exec_id, pei.item_id, pei.item_name, pei.point_id, pei.next_trigger_time, pei.payload, pei.plan_trigger_time, pei.request_timeout").
+		Select("pei.version, pei.id, pei.plan_pk, pei.plan_id, pei.batch_pk, pei.batch_id, pei.exec_id, pei.item_id, pei.item_name, pei.point_id, pei.status, pei.next_trigger_time, pei.payload, pei.plan_trigger_time, pei.request_timeout").
 		Joins("JOIN plan p ON p.id = pei.plan_pk").
 		Joins("JOIN plan_batch pb ON pb.id = pei.batch_pk").
 		Where("pei.is_deleted = ?", 0).
@@ -241,17 +297,18 @@ func LockTriggerItem(ctx context.Context, db *gorm.DB, dbType gormx.DatabaseType
 	if item.Id == "" {
 		return nil, model.ErrNotFound
 	}
+
 	result := db.WithContext(ctx).Model(&PlanExecItem{}).
 		Where("id = ?", item.Id).
-		Where("next_trigger_time <= ?", currentTime).
-		Where("status IN (?, ?, ?)", model.StatusWaiting, model.StatusDelayed, model.StatusRunning).
+		Where("next_trigger_time = ?", item.NextTriggerTime).
+		Where("status = ?", item.Status).
 		Where("version = ?", item.Version.Int64).
 		Updates(map[string]any{"status": model.StatusRunning, "next_trigger_time": nextTriggerTime, "last_trigger_time": currentTime, "version": item.Version.Int64 + 1})
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	if result.RowsAffected == 0 {
-		return nil, model.ErrNotFound
+		return nil, model.ErrNoRowsUpdate
 	}
 	return &item, nil
 }
@@ -275,9 +332,17 @@ func UpdateExecItemStatusToRunning(ctx context.Context, db *gorm.DB, id string, 
 	if lastResult != "" {
 		updates["last_result"] = lastResult
 	}
-	return db.WithContext(ctx).Model(&PlanExecItem{}).
+	result := db.WithContext(ctx).Model(&PlanExecItem{}).
 		Where("id = ?", id).
-		Updates(updates).Error
+		Where("status = ?", model.StatusRunning).
+		Updates(updates)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return model.ErrNoRowsUpdate
+	}
+	return nil
 }
 
 // UpdateExecItemStatusToFail handles exec item failure with retry backoff.
@@ -313,7 +378,7 @@ func UpdateExecItemStatusToFail(ctx context.Context, db *gorm.DB, id string, las
 	if len(statusOut) > 0 {
 		q = q.Where("status NOT IN ?", statusOut)
 	}
-	return q.Updates(updates).Error
+	return execItemUpdateError(q.Updates(updates))
 }
 
 // UpdateExecItemStatusToCompleted 将执行项状态更新为已完成。
@@ -328,14 +393,14 @@ func UpdateExecItemStatusToCompleted(ctx context.Context, db *gorm.DB, id, lastM
 	if len(statusOut) > 0 {
 		q = q.Where("status NOT IN ?", statusOut)
 	}
-	return q.Updates(map[string]any{
+	return execItemUpdateError(q.Updates(map[string]any{
 		"status":            model.StatusCompleted,
 		"last_result":       model.ResultCompleted,
 		"last_message":      lastMessage,
 		"last_reason":       lastReason,
 		"last_trigger_time": time.Now(),
 		"trigger_count":     gorm.Expr("trigger_count + 1"),
-	}).Error
+	}))
 }
 
 // UpdateExecItemStatusToDelayed 将执行项状态更新为延期等待。
@@ -350,7 +415,7 @@ func UpdateExecItemStatusToDelayed(ctx context.Context, db *gorm.DB, id, lastRes
 	if len(statusOut) > 0 {
 		q = q.Where("status NOT IN ?", statusOut)
 	}
-	return q.Updates(map[string]any{
+	return execItemUpdateError(q.Updates(map[string]any{
 		"status":            model.StatusDelayed,
 		"last_result":       lastResult,
 		"last_message":      lastMessage,
@@ -358,7 +423,7 @@ func UpdateExecItemStatusToDelayed(ctx context.Context, db *gorm.DB, id, lastRes
 		"next_trigger_time": nextTriggerTime,
 		"last_trigger_time": time.Now(),
 		"trigger_count":     gorm.Expr("trigger_count + 1"),
-	}).Error
+	}))
 }
 
 // UpdateExecItemStatusToOngoing 将执行项状态更新为执行中（下游返回 ongoing 回执）。
@@ -389,7 +454,7 @@ func UpdateExecItemStatusToOngoing(ctx context.Context, db *gorm.DB, id, lastMes
 		updates["last_trigger_time"] = time.Now()
 		updates["trigger_count"] = gorm.Expr("trigger_count + 1")
 	}
-	return q.Updates(updates).Error
+	return execItemUpdateError(q.Updates(updates))
 }
 
 // UpdateExecItemStatusToTerminated 将执行项状态更新为已终止。
@@ -404,7 +469,7 @@ func UpdateExecItemStatusToTerminated(ctx context.Context, db *gorm.DB, id, last
 	if len(statusOut) > 0 {
 		q = q.Where("status NOT IN ?", statusOut)
 	}
-	return q.Updates(map[string]any{
+	return execItemUpdateError(q.Updates(map[string]any{
 		"status":            model.StatusTerminated,
 		"last_result":       model.ResultTerminated,
 		"last_message":      lastMessage,
@@ -412,7 +477,17 @@ func UpdateExecItemStatusToTerminated(ctx context.Context, db *gorm.DB, id, last
 		"last_trigger_time": time.Now(),
 		"trigger_count":     gorm.Expr("trigger_count + 1"),
 		"terminated_reason": lastReason,
-	}).Error
+	}))
+}
+
+func execItemUpdateError(result *gorm.DB) error {
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return model.ErrNoRowsUpdate
+	}
+	return nil
 }
 
 const (

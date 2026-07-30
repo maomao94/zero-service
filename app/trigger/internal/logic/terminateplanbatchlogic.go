@@ -2,7 +2,7 @@ package logic
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"time"
 	"zero-service/facade/streamevent/streamevent"
 
@@ -75,20 +75,39 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 
 	// 执行事务
 	err = db.Transaction(func(tx *gorm.DB) error {
-		now := time.Now()
-		// 更新计划批次状态为终止
-		planBatch.Status = model.PlanStatusTerminated // 终止
-		planBatch.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
-		planBatch.PausedTime = sql.NullTime{}
-		planBatch.PausedReason = sql.NullString{}
-		planBatch.FinishedTime = sql.NullTime{Time: now, Valid: true}
-		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
+		var runningCount int64
+		runningCount, transErr := gormmodel.CountRunningExecItemsByBatch(l.ctx, tx, planBatch.Id)
+		if transErr != nil {
+			return transErr
+		}
+		if runningCount > 0 {
+			return errPlanExecItemRunning
+		}
 
-		// 更新计划批次
-		return tx.Save(&planBatch).Error
+		now := time.Now()
+		// 只更新父级状态；cron claim 后会重新加载父级并在非 enabled/finished 时停止下发。
+		updated, transErr := gormmodel.UpdatePlanBatchTerminated(
+			l.ctx, tx, planBatch.Id, in.Reason, tool.GetCurrentUserId(l.ctx, nil), now,
+		)
+		if transErr != nil {
+			return transErr
+		}
+		if updated == 0 {
+			return model.ErrNoRowsUpdate
+		}
+		planBatch.Status = model.PlanStatusTerminated
+		planBatch.FinishedTime.Time = now
+		planBatch.FinishedTime.Valid = true
+		return nil
 	})
 
 	if err != nil {
+		if errors.Is(err, errPlanExecItemRunning) {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划批次存在正在执行的执行项，请执行项结束后再终止")
+		}
+		if errors.Is(err, model.ErrNoRowsUpdate) {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划批次状态已变化，无法终止")
+		}
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "终止批次事务失败")
 	}
 	bScope := planscope.BatchScope(&plan, &planBatch)

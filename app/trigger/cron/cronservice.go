@@ -93,25 +93,43 @@ func (s *CronService) ScanPlanExecItem() bool {
 			return false
 		}
 		lockScope := planscope.CronLockScope()
+		if errors.Is(err, model.ErrNoRowsUpdate) {
+			lockScope.Logger(ctx).Info(lockScope.LogMessage("定时扫表：待调度执行项已被其他调度器抢占"))
+			return false
+		}
 		lockScope.Logger(ctx).Errorf(lockScope.LogMessage("定时扫表：抢占待调度执行项失败: %v"), err)
 		return false
 	}
 	if execItem == nil {
 		return false
 	}
+	execScope := planscope.ExecCron(execItem)
+	execLog := execScope.Logger(ctx)
 
 	queryExecItem := &gormmodel.PlanExecItem{}
 	queryErr := s.svcCtx.DB.WithContext(ctx).DB.Where("id = ?", execItem.Id).First(queryExecItem).Error
 	if queryErr != nil {
-		execScope := planscope.ExecCron(execItem)
-		execScope.Logger(ctx).Errorf(execScope.LogMessage("扫表锁定后重新加载执行项失败: %v"), queryErr)
+		execLog.Errorf(execScope.LogMessage("扫表锁定后重新加载执行项失败: %v"), queryErr)
 		return false
 	}
 	plan := &gormmodel.Plan{}
 	planErr := s.svcCtx.DB.WithContext(ctx).DB.Where("id = ?", queryExecItem.PlanPk).First(plan).Error
 	if planErr != nil {
-		execScope := planscope.ExecCron(execItem)
-		execScope.Logger(ctx).Errorf(execScope.LogMessage("扫表锁定后加载计划失败: %v"), planErr)
+		execLog.Errorf(execScope.LogMessage("扫表锁定后加载计划失败: %v"), planErr)
+		return false
+	}
+	if plan.Status != model.PlanStatusEnabled || plan.FinishedTime.Valid {
+		execLog.Info(execScope.LogMessage("扫表锁定后计划已非启用状态，停止调用下游"))
+		return false
+	}
+	planBatch := &gormmodel.PlanBatch{}
+	batchErr := s.svcCtx.DB.WithContext(ctx).DB.Where("id = ?", queryExecItem.BatchPk).First(planBatch).Error
+	if batchErr != nil {
+		execLog.Errorf(execScope.LogMessage("扫表锁定后加载计划批次失败: %v"), batchErr)
+		return false
+	}
+	if planBatch.Status != model.PlanStatusEnabled || planBatch.FinishedTime.Valid {
+		execLog.Info(execScope.LogMessage("扫表锁定后计划批次已非启用状态，停止调用下游"))
 		return false
 	}
 
@@ -282,11 +300,9 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 		}
 	case model.ResultFailed:
 		resultLog.Info(scope.LogMessage("下游返回：执行失败（failed）"))
-		if err := gormmodel.UpdateExecItemStatusToFail(ctx, db, execItem.Id, model.ResultFailed, res.Message, res.Reason,
+		err = gormmodel.UpdateExecItemStatusToFail(ctx, db, execItem.Id, model.ResultFailed, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
-		); err != nil {
-			log.Errorf(scope.LogMessage("回写执行项为「失败」失败: %v"), err)
-		}
+		)
 	case model.ResultDelayed:
 		resultLog.Info(scope.LogMessage("下游返回：延期重试（delayed），将按规则更新下次触发时间"))
 		currentTime := carbon.Now()
@@ -297,6 +313,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 		nextTime := carbon.Parse(dr.NextTrigger)
 		if nextTime.Error != nil {
 			log.Errorf(scope.LogMessage("解析延期触发时间失败: %v"), nextTime.Error)
+			return
 		} else {
 			err = gormmodel.UpdateExecItemStatusToDelayed(ctx, db, execItem.Id, res.ExecResult, res.Message, delayReason, nextTime.StdTime(),
 				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
@@ -344,6 +361,10 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 		if err != nil {
 			log.Errorf(scope.LogMessage("未知结果按「已完成」回写执行项失败: %v"), err)
 		}
+	}
+	if err != nil {
+		log.Errorf(scope.LogMessage("执行结果条件回写失败，停止写入流水和聚合收尾: %v"), err)
+		return
 	}
 
 	// 插入执行日志

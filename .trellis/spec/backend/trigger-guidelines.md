@@ -30,6 +30,80 @@
 - Plan/Batch/ExecItem 与 CronJob 是不同状态机。两者可以复用 `CompileSchedule` 这类纯规则编译函数，但 Plan 仍在创建时用 `set.All()` 展开 Batch/ExecItem，不得接入 `TaskConfig`、lease 或 `TaskStore`。
 - `Plan.RRuleStr` 只保存创建时用于展开日期的完整 Set 快照，供审计、详情描述和核对 Batch 日期；它不是 Plan 的运行时调度来源。
 
+## Scenario: Plan/Batch 终止与 ExecItem Claim
+
+### 1. Scope / Trigger
+
+- 修改 `TerminatePlan`、`TerminatePlanBatch`、`LockTriggerItem` 或执行回执状态更新时适用。
+
+### 2. Signatures
+
+```go
+func CountRunningExecItemsByPlan(ctx context.Context, db *gorm.DB, planPk string) (int64, error)
+func CountRunningExecItemsByBatch(ctx context.Context, db *gorm.DB, batchPk string) (int64, error)
+func UpdatePlanTerminated(ctx context.Context, db *gorm.DB, id, reason, updateUser string, now time.Time) (int64, error)
+func UpdatePlanBatchTerminated(ctx context.Context, db *gorm.DB, id, reason, updateUser string, now time.Time) (int64, error)
+func LockTriggerItem(ctx context.Context, db *gorm.DB, dbType gormx.DatabaseType, expireIn time.Duration) (*PlanExecItem, error)
+```
+
+### 3. Contracts
+
+- `StatusRunning` 是唯一禁止终止父 plan/batch 的 ExecItem 状态；它覆盖刚下发尚未回调和 `last_result=ongoing` 两种情况。
+- `waiting/delayed/paused/completed/terminated` 不阻止父级终止，且父级终止不得批量修改这些 ExecItem 状态。
+- claim 的候选查询通过 JOIN 筛选 enabled 的 plan/batch，最终更新使用 ExecItem 的 `version/status/next_trigger_time` 乐观 CAS；claim 后重新加载 exec、plan 和 batch，在调用下游前补查父级状态，不使用父级 `FOR UPDATE` 或额外父级子查询。
+- 终止入口在事务中查询 running 数量，父级更新只保护父级当前状态，不加入父级锁或 ExecItem `EXISTS` 子查询。
+- claim 与终止竞争时，claim 后重新加载 ExecItem、Plan 和 Batch；父级非 enabled 或已有 finished time 时不得调用下游。该补查只保证“不再调用下游”，不保证 ExecItem 不会已被 CAS 为 running。
+- 条件更新 `RowsAffected == 0` 表示状态竞争失败，不是成功。
+- callback/cron 的 ExecItem 状态更新竞争失败时，不得写成功流水或继续聚合 finished 通知。
+
+### 4. Validation & Error Matrix
+
+- 作用域内存在 `StatusRunning` -> `BIZ_STATE`，父级、finished time、ExecItem 和通知均不变。
+- 父级已 terminated/finished -> `BIZ_STATE`。
+- claim 候选查询无可调度记录或父级非 enabled -> `model.ErrNotFound`；ExecItem CAS 竞争失败 -> `model.ErrNoRowsUpdate`。两者均不调用下游。
+- callback 条件更新零行 -> `BIZ_STATE`，不写 `plan_exec_log`。
+
+### 5. Good/Base/Bad Cases
+
+- Good: claim 先完成并可见，ExecItem 进入 running，随后终止请求明确失败；若终止先提交且 cron 已取得候选，claim 后父级复查至少停止下游调用。
+- Base: 只有 waiting/delayed/paused/completed/terminated，终止成功且 ExecItem 状态原样保留。
+- Bad: claim 后直接调用下游，不重新加载并检查父级状态。
+
+> **Warning**: 当前无父级锁、无 claim UPDATE 父级条件、无 CAS 补偿的设计仍有窗口：终止提交后，旧候选可能被 ExecItem CAS 改为 running，随后父级复查阻止下游。不要把“未调用下游”描述为“父级终止后不会产生 running”。若产品要求后者，必须增加共同同步点、父级条件或版本化补偿，并补真实并发测试。
+
+### 6. Tests Required
+
+- 覆盖所有 ExecItem 状态，断言只有 running 拒绝终止。
+- 断言终止成功后 ExecItem 状态不变。
+- 断言 plan 或 batch 非 enabled 时 claim 返回 `ErrNotFound`；均 enabled 时 claim 转为 running。
+- 断言两个 claim 竞争同一 ExecItem 时只有匹配原 version/status/next_trigger_time 的 CAS 成功。
+- 断言 completed/delayed/ongoing/terminated 等条件更新零行返回 `ErrNoRowsUpdate`，且调用路径不写成功流水。
+- 对 model、logic 和 cron 相关包运行 race test。
+- 并发验收分别断言“主状态不变化”和“下游副作用不发生”；只断言未调用下游不能证明没有遗留 running 状态。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```go
+if runningCount == 0 {
+	db.Save(&plan)
+}
+```
+
+#### Correct
+
+```go
+running, err := CountRunningExecItemsByPlan(ctx, tx, plan.ID)
+if err != nil || running > 0 {
+	// 数据库错误或已有 running item，均不得更新父级或发送 finished 通知。
+}
+rows, err := UpdatePlanTerminated(ctx, tx, plan.ID, reason, userID, now)
+if err != nil || rows == 0 {
+	// 数据库错误或父级状态冲突，均不得发送 finished 通知。
+}
+```
+
 依据：`app/trigger/internal/logic/calcplantaskdatelogic.go`、`app/trigger/internal/task/scheduler`、`app/trigger/internal/logic/callbackplanexecitemlogic.go`、相关测试。
 
 ## Plan Cron 日志正文标记

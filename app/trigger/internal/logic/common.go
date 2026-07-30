@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"zero-service/app/trigger/internal/svc"
@@ -12,6 +13,10 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/jsonx"
 )
+
+var errPlanExecItemRunning = errors.New("plan exec item is running")
+
+var errInvalidPlanExecItemResult = errors.New("invalid plan exec item result")
 
 func asynqListOptions(pageNum, pageSize int64) []asynq.ListOption {
 	options := make([]asynq.ListOption, 0, 2)
