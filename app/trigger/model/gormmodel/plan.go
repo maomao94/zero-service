@@ -480,6 +480,21 @@ func UpdateExecItemStatusToTerminated(ctx context.Context, db *gorm.DB, id, last
 	}))
 }
 
+// MarkExecItemUnresolved 标记一次「无法确定下游真实状态」的交互（如请求没通）。
+// 只写结果字段，不动 status / next_trigger_time / trigger_count，
+// 执行项保持原状态，靠 next_trigger_time 过期后重投自愈。
+// RowsAffected 为 0 属正常情况（并发回调已将其收敛为终态），不视为错误。
+func MarkExecItemUnresolved(ctx context.Context, db *gorm.DB, id, result, message string) error {
+	message = truncateExecItemResultText(message)
+	return db.WithContext(ctx).Model(&PlanExecItem{}).
+		Where("id = ?", id).
+		Where("status = ?", model.StatusRunning).
+		Updates(map[string]any{
+			"last_result":  result,
+			"last_message": message,
+		}).Error
+}
+
 func execItemUpdateError(result *gorm.DB) error {
 	if result.Error != nil {
 		return result.Error

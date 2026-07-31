@@ -209,7 +209,9 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 			Attributes: map[string]string{},
 		}
 		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Logger(l.ctx).Info("下游通知：调用 NotifyPlanEvent（批次收尾）")
-		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq)
+		if _, notifyErr := l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq); notifyErr != nil {
+			scope.Logger(l.ctx).Errorf("下游通知失败（BATCH_FINISHED 事件已丢失，需人工补发）: %v", notifyErr)
+		}
 	}
 
 	planCount, err := gormmodel.UpdatePlanFinishedTime(l.ctx, db, execItem.PlanPk)
@@ -224,7 +226,9 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 			Attributes: map[string]string{},
 		}
 		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Logger(l.ctx).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
-		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
+		if _, notifyErr := l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq); notifyErr != nil {
+			scope.Logger(l.ctx).Errorf("下游通知失败（PLAN_FINISHED 事件已丢失，需人工补发）: %v", notifyErr)
+		}
 	}
 
 	return &trigger.CallbackPlanExecItemRes{}, nil

@@ -110,7 +110,9 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 			Attributes: map[string]string{},
 		}
 		log.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Info("下游通知：调用 NotifyPlanEvent（批次收尾）")
-		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq)
+		if _, notifyErr := l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq); notifyErr != nil {
+			log.Errorf("下游通知失败（BATCH_FINISHED 事件已丢失，需人工补发）: %v", notifyErr)
+		}
 	}
 
 	planCount, err := gormmodel.UpdatePlanFinishedTime(l.ctx, db, execItem.PlanPk)
@@ -125,7 +127,9 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 			Attributes: map[string]string{},
 		}
 		log.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
-		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
+		if _, notifyErr := l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq); notifyErr != nil {
+			log.Errorf("下游通知失败（PLAN_FINISHED 事件已丢失，需人工补发）: %v", notifyErr)
+		}
 	}
 
 	log.Info("RPC 终止执行项：执行项状态已更新，事务已提交")

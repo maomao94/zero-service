@@ -260,6 +260,13 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 	err = <-errCh
 	if err != nil {
 		log.Errorf(scope.LogMessage("调用下游 HandlerPlanTaskEvent 失败: %v"), err)
+		// 请求没通，下游是否已收到未知：不改 status，仅打标记，靠 next_trigger_time 过期后重投。
+		// 使用独立短超时，避免任务排队或调用链耗尽外层 deadline 时阻止失败标记落库。
+		markCtx, markCancel := context.WithTimeout(context.WithoutCancel(ctx), 3*time.Second)
+		defer markCancel()
+		if markErr := gormmodel.MarkExecItemUnresolved(markCtx, db, execItem.Id, model.ResultDispatchFailed, err.Error()); markErr != nil {
+			log.Errorf(scope.LogMessage("标记执行项投递失败状态失败: %v"), markErr)
+		}
 		return
 	}
 
@@ -354,12 +361,13 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 			log.Errorf(scope.LogMessage("回写执行项为「已终止」失败: %v"), err)
 		}
 	default:
-		log.Errorf(scope.LogMessage("下游返回未知结果 exec_result=%q，将按 completed 回写库"), res.ExecResult)
-		err = gormmodel.UpdateExecItemStatusToCompleted(ctx, db, execItem.Id, res.Message, res.Reason,
+		log.Errorf(scope.LogMessage("下游返回未知结果 exec_result=%q，按失败退避重试处理"), res.ExecResult)
+		err = gormmodel.UpdateExecItemStatusToFail(ctx, db, execItem.Id, model.ResultUnknown,
+			fmt.Sprintf("未知 exec_result=%q; %s", res.ExecResult, res.Message), res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		)
 		if err != nil {
-			log.Errorf(scope.LogMessage("未知结果按「已完成」回写执行项失败: %v"), err)
+			log.Errorf(scope.LogMessage("未知结果按「失败重试」回写执行项失败: %v"), err)
 		}
 	}
 	if err != nil {
@@ -385,7 +393,9 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 			Attributes: map[string]string{},
 		}
 		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Logger(ctx).Info(scope.LogMessage("下游通知：调用 NotifyPlanEvent（批次收尾）"))
-		s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &batchNotifyReq)
+		if _, notifyErr := s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &batchNotifyReq); notifyErr != nil {
+			log.Errorf(scope.LogMessage("下游通知失败（BATCH_FINISHED 事件已丢失，需人工补发）: %v"), notifyErr)
+		}
 	}
 	planCount, err := gormmodel.UpdatePlanFinishedTime(ctx, db, execItem.PlanPk)
 	if err != nil {
@@ -399,7 +409,9 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 			Attributes: map[string]string{},
 		}
 		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Logger(ctx).Info(scope.LogMessage("下游通知：调用 NotifyPlanEvent（计划收尾）"))
-		s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &planPlanReq)
+		if _, notifyErr := s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &planPlanReq); notifyErr != nil {
+			log.Errorf(scope.LogMessage("下游通知失败（PLAN_FINISHED 事件已丢失，需人工补发）: %v"), notifyErr)
+		}
 	}
 	scope.WithFields(
 		logx.Field("batch_notify_rows", batchCount),

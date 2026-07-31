@@ -166,6 +166,10 @@ const (
 	ResultFailed     string = "failed"     // 业务执行失败
 	ResultDelayed    string = "delayed"    // 业务执行延期
 	ResultOngoing    string = "ongoing"    // 业务正在执行（未回调或部分异步）
+
+	// 以下两个不是下游给出的业务回执，是调度侧对「无法确定下游真实状态」的标记。
+	ResultDispatchFailed string = "dispatch_failed" // 请求没通，下游是否收到未知；不改 status，靠重投自愈
+	ResultUnknown        string = "unknown"         // 收到回执但 exec_result 无法识别；按失败退避重试
 )
 
 func getFieldMetas(t reflect.Type) []fieldMeta {

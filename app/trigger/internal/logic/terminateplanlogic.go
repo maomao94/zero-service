@@ -120,7 +120,9 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 	}
 	planLog := planscope.PlanScope(&plan).Logger(l.ctx)
 	planLog.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
-	l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
+	if _, notifyErr := l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq); notifyErr != nil {
+		planLog.Errorf("下游通知失败（PLAN_FINISHED 事件已丢失，需人工补发）: %v", notifyErr)
+	}
 
 	planLog.Info("RPC 终止计划：计划状态已更新，事务已提交")
 	return &trigger.TerminatePlanRes{}, nil
