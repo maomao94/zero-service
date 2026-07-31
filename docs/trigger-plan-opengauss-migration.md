@@ -281,7 +281,7 @@ plan -> plan_batch -> plan_exec_item -> plan_exec_log
 ### 7.1 复制 plan
 
 ```sql
-NSERT INTO public.plan (
+INSERT INTO public.plan (
     id,
     create_time,
     update_time,

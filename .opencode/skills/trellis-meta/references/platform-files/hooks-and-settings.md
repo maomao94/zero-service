@@ -19,7 +19,7 @@ Common files:
 | Claude Code | `.claude/settings.json` |
 | Cursor | `.cursor/hooks.json` |
 | Codex | `.codex/hooks.json`, `.codex/config.toml` |
-| OpenCode | `.opencode/package.json`, `.opencode/plugins/*` |
+| OpenCode | `.opencode/package.json`, `.opencode/plugins/*`, `.opencode/hooks/inject-spec-context.py` |
 | Kiro | `.kiro/hooks/` + platform config |
 | Gemini CLI | `.gemini/settings.json` |
 | Qoder | `.qoder/settings.json` |
@@ -27,6 +27,9 @@ Common files:
 | GitHub Copilot | `.github/copilot/hooks.json` |
 | Factory Droid | `.factory/settings.json` |
 | Pi Agent | `.pi/settings.json`, `.pi/extensions/trellis/` |
+| Trae IDE | `.trae/hooks.json` |
+
+Reasonix is a pull-based platform whose agent files contain prelude instructions to read context after startup. ZCode uses `.zcode/config.json` with shared hooks, including PreToolUse for sub-agent prompt injection. Kimi Code is likewise pull-based and has no project-level settings/hooks file Trellis writes (hooks live only in the user-level `~/.kimi-code/config.toml`), so its agent prompts ship as skills with the same prelude.
 
 Whether these files exist in a project depends on which `trellis init --<platform>` flags the user ran.
 
@@ -37,6 +40,7 @@ Whether these files exist in a project depends on which `trellis init --<platfor
 | `session-start.py` | Generates session-start context. |
 | `inject-workflow-state.py` | Parses `[workflow-state:STATUS]` blocks in `.trellis/workflow.md` and emits the body matching the current task status. Falls back to `Refer to workflow.md for current step.` when no matching block exists. |
 | `inject-subagent-context.py` | Injects PRD, JSONL context, and related spec/research into sub-agents. |
+| `inject-spec-context.py` | Matches path-scoped specs and manages budgeted delivery state. |
 | `inject-shell-session-context.py` | Lets shell commands inherit Trellis session identity. |
 
 Not every platform has every hook. Do not copy files from another platform just because a platform lacks a hook; first confirm whether that platform supports the corresponding event.

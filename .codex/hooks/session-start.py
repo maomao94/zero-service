@@ -33,12 +33,12 @@ if sys.platform.startswith("win"):
             try:
                 _stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
             except Exception:
-                pass
+                pass  # Optional Windows stream setup; keep hook startup non-fatal.
         elif hasattr(_stream, "detach"):
             try:
                 setattr(sys, _stream_name, _io.TextIOWrapper(_stream.detach(), encoding="utf-8", errors="replace"))
             except Exception:
-                pass
+                pass  # Optional Windows stream setup; keep hook startup non-fatal.
 
 
 def _normalize_windows_shell_path(path_str: str) -> str:
@@ -92,10 +92,16 @@ def _normalize_windows_shell_path(path_str: str) -> str:
 warnings.filterwarnings("ignore")
 
 FIRST_REPLY_NOTICE = """<first-reply-notice>
-On the first visible assistant reply in this session, begin with exactly one short Chinese sentence:
-Trellis SessionStart 已注入：workflow、当前任务状态、开发者身份、git 状态、active tasks、spec 索引已加载。
-Then continue directly with the user's request. This notice is one-shot: do not repeat it after the first assistant reply in the same session.
+On the first visible assistant reply in this session, briefly acknowledge that Trellis SessionStart context loaded.
+Choose the acknowledgment language in this order:
+1. Use the language of the user's current request (the user message that triggered this reply).
+2. If that request has no clear natural language, use an explicitly established project communication language.
+3. If neither provides a language, output the language-neutral fallback exactly: `Trellis SessionStart ✓`.
+Continue directly with the user's request after the acknowledgment.
+The acknowledgment must not alter the language used for the remainder of the response.
+This notice is one-shot: do not repeat it after the first visible assistant reply in this session.
 </first-reply-notice>"""
+
 
 def should_skip_injection() -> bool:
     if os.environ.get("TRELLIS_HOOKS") == "0":
@@ -116,7 +122,7 @@ def configure_project_encoding(project_dir: Path) -> None:
 
         configure_encoding()
     except Exception:
-        pass
+        pass  # Optional encoding helper; host defaults are still usable.
 
 
 def _has_curated_jsonl_entry(jsonl_path: Path) -> bool:
@@ -243,7 +249,7 @@ def _get_task_status(trellis_dir: Path, hook_input: dict) -> str:
         try:
             task_data = json.loads(task_json_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, PermissionError):
-            pass
+            pass  # Optional task metadata; fall back to generic status.
 
     task_title = task_data.get("title", task_ref)
     task_status = task_data.get("status", "unknown")
@@ -386,7 +392,7 @@ def _build_compact_current_state(
                 if isinstance(data, dict):
                     status = str(data.get("status") or "unknown")
             except (json.JSONDecodeError, OSError):
-                pass
+                pass  # Optional task metadata; fall back to generic status.
         lines.append(f"Current task: {_repo_relative(repo_root, task_dir)}; status={status}.")
     else:
         lines.append("Current task: none.")
@@ -398,7 +404,7 @@ def _build_compact_current_state(
                 f"Active tasks: {task_count} total. Use `python3 ./.trellis/scripts/task.py list --mine` only if needed."
             )
         except Exception:
-            pass
+            pass  # Optional task summary; keep compact state available.
 
     if get_active_journal_file and count_lines:
         journal = get_active_journal_file(repo_root)
@@ -444,6 +450,25 @@ def _strip_breadcrumb_tag_blocks(content: str) -> str:
     stripped = re.sub(r"<!--.*?-->", "", stripped, flags=re.DOTALL)
     stripped = re.sub(r"^\[(?!/?workflow-state:)/?[^\]\n]+\]\s*\n?", "", stripped, flags=re.MULTILINE)
     return re.sub(r"\n{3,}", "\n\n", stripped).strip()
+
+
+def _resolve_workflow_md(root: Path, input_data: dict) -> Path:
+    """Resolve the active task's workflow file, falling back to the global one.
+
+    The per-task resolution rule lives in common.workflow_selection inside
+    .trellis/scripts. Older installed projects may not ship that module, and
+    hooks must never crash the session — ANY failure (import error, old
+    scripts tree, resolver bug) falls back to the global workflow.md.
+    """
+    try:
+        scripts_dir = root / ".trellis" / "scripts"
+        if str(scripts_dir) not in sys.path:
+            sys.path.insert(0, str(scripts_dir))
+        from common.workflow_selection import resolve_workflow_md  # type: ignore[import-not-found]
+
+        return resolve_workflow_md(root, input_data, platform="codex")
+    except Exception:
+        return root / ".trellis" / "workflow.md"
 
 
 def _build_workflow_toc(workflow_path: Path) -> str:
@@ -499,7 +524,7 @@ Trellis compact SessionStart context. Use it to orient the session; load details
     output.write("\n</current-state>\n\n")
 
     output.write("<trellis-workflow>\n")
-    output.write(_build_workflow_toc(trellis_dir / "workflow.md"))
+    output.write(_build_workflow_toc(_resolve_workflow_md(project_dir, hook_input)))
     output.write("\n</trellis-workflow>\n\n")
 
     output.write("<guidelines>\n")
