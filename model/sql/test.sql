@@ -127,3 +127,6 @@ WHERE
 -- AND p.create_user = :user_id
 GROUP BY p.type
 ORDER BY p.type;
+
+
+INSERT INTO `zero`.`oss` (`id`, `create_time`, `update_time`, `version`, `tenant_id`, `category`, `oss_code`, `endpoint`, `access_key`, `secret_key`, `bucket_name`, `app_id`, `region`, `remark`, `status`) VALUES (1, '2022-08-25 16:33:42.000000', '2025-09-18 19:10:35.000000',  0, 0, '000000', 1, 'minio', '10.10.1.103:9000', 'minioadmin', 'adminbfd123', 'default', '', '', '', 1);
