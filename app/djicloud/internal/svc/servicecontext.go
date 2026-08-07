@@ -28,6 +28,7 @@ const dockOnlineTTL = 60 * time.Second
 type ServiceContext struct {
 	Config      config.Config
 	DjiClient   *djisdk.Client
+	HmsResolver *djisdk.HmsResolver
 	DB          *gormx.DB
 	OnlineCache *collection.Cache
 	OssTemplate ossx.OssTemplate
@@ -61,6 +62,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
 
 	db := initDB(c)
+	hmsResolver := djisdk.MustNewHmsResolver(c.Dji.Hms)
 
 	onlineCache, err := collection.NewCache(dockOnlineTTL, collection.WithName("dock-online-cache"))
 	logx.Must(err)
@@ -145,6 +147,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 	handlerOpts = append(handlerOpts, hooks.WithDjiClientOptions(hooks.RegisterDjiClientOptions{
 		DB:                 db,
+		HmsResolver:        hmsResolver,
 		OnlineCache:        onlineCache,
 		PushCli:            pushCli,
 		DisableOsdSQLTrace: c.Telemetry.DisableOsdSQLTrace,
@@ -160,6 +163,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	return &ServiceContext{
 		Config:      c,
 		DjiClient:   djiCli,
+		HmsResolver: hmsResolver,
 		DB:          db,
 		OnlineCache: onlineCache,
 		OssTemplate: ossTemplate,

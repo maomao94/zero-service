@@ -59,6 +59,7 @@ func (l *ListHmsAlertsLogic) ListHmsAlerts(in *djicloud.ListHmsAlertsReq) (*djic
 			Module:         int32(item.Module),
 			Code:           item.Code,
 			DeviceType:     item.DeviceType,
+			DeviceTypeName: item.DeviceTypeName,
 			Imminent:       int32(item.Imminent),
 			InTheSky:       int32(item.InTheSky),
 			ComponentIndex: int32(item.ComponentIndex),
@@ -68,6 +69,14 @@ func (l *ListHmsAlertsLogic) ListHmsAlerts(in *djicloud.ListHmsAlertsReq) (*djic
 			AckedBy:        item.AckedBy,
 			ReportedAt:     carbon.CreateFromStdTime(item.ReportedAt).ToDateTimeMicroString(),
 			ItemJson:       item.ItemJSON,
+			Message:        item.Message,
+			DeviceDomain:   int32(item.DeviceDomain),
+			DeviceTypeId:   int32(item.DeviceTypeID),
+			DeviceSubtype:  int32(item.DeviceSubtype),
+			AlarmId:        item.AlarmID,
+			GimbalIndex:    int32(item.GimbalIndex),
+			LidarIndex:     int32(item.LidarIndex),
+			LteIndex:       int32(item.LteIndex),
 		})
 	}
 	return &djicloud.ListHmsAlertsRes{Total: pageResult.Total, List: list}, nil

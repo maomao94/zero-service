@@ -1705,6 +1705,17 @@ message HmsAlertInfo {
   // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
   string reported_at = 14;
   string item_json = 15;
+  // message 按服务配置语言解析并在上报时持久化的 HMS 告警文案。
+  string message = 16;
+  int32 device_domain = 17;
+  int32 device_type_id = 18;
+  int32 device_subtype = 19;
+  string alarm_id = 20;
+  int32 gimbal_index = 21;
+  int32 lidar_index = 22;
+  int32 lte_index = 23;
+  // device_type_name 根据官方设备三元组查询到的大疆产品名称，未知时为空。
+  string device_type_name = 24;
 }
 
 // ListHmsAlertsReq 查询 HMS 告警请求。

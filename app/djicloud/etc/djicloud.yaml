@@ -17,8 +17,10 @@ Dji:
     Password: "password"
     Qos: 0
   PendingTTL: 30s
+  Hms:
+    Language: zh
   Reply:
-    EnableEventReply: true
+    EnableEventReply: false
     EnableStatusReply: false
     EnableRequestReply: false
   Drc:

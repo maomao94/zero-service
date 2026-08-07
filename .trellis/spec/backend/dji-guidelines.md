@@ -22,6 +22,73 @@
 
 依据：`app/djicloud/internal/hooks`、`app/djicloud/model/gormmodel` 及其测试。
 
+## HMS 文案与设备型号契约
+
+### 1. Scope / Trigger
+
+- 修改 HMS `device_type`、`args`、文案字典、告警入库字段或 `ListHmsAlerts` 时适用。
+- `common/djisdk` 拥有设备三元组、产品名称注册表、HMS key 和模板渲染；hook 只消费 SDK 结果并追加写入历史。
+
+### 2. Signatures
+
+- 设备型号格式固定为 `{domain}-{type}-{sub_type}`，domain 为 `0飞机/1负载/2遥控器/3机场`。
+- 使用 `ParseDeviceType(string) (DeviceType, error)` 严格解析，使用 `LookupDeviceTypeName(string) (string, bool)` 查询官方中文产品名称。
+- `gimbalindex` 不属于设备身份三元组；负载位置通过 `PayloadPlacement` / `PayloadGimbalIndex.Position()` 单独描述。
+- `HmsItem.Args` 使用开放 `HmsArgs map[string]any`，读取已知参数时调用 `Args.Int(name)` 或 `Args.String(name)`，hook 不自行断言动态类型。
+
+### 3. Contracts
+
+- HMS key 仅有两类：domain 0 使用 `fpv_tip_{code}`，且 `in_the_sky=1` 时优先 `fpv_tip_{code}_in_the_sky`；domain 3 使用 `dock_tip_{code}`。
+- domain 1/2 或非法 `device_type` 没有官方 HMS 前缀，不跨 `fpv`/`dock` 类别猜测同 code，不构造 `remote_tip_`。
+- `Dji.Hms.Language` 空值规范化为 `zh`；非空语言只精确读取字典同名 key。该语言文案为空或缺失时返回该语言环境的未知告警，不静默切换语言。
+- 官方 args 字段使用 `alarmid`；十六进制文本原样替换 `%alarmid`。`%index/%component_index` 使用索引加一，电池/舱盖为 0 左、其他右，充电杆 0/1/2/3 为前/后/左/右。
+- HMS 历史同时保存原始 `device_type`、产品中文名、三元组、已知 args 派生字段、解析 message 和完整 `item_json`；未知产品名称保存空字符串。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 行为 |
+| --- | --- |
+| `device_type` 不是三段非负整数或 domain 不在 0..3 | 解析返回 error；HMS 返回未知告警，不猜 key |
+| 三元组合法但产品注册表未收录 | 型号解析成功，产品名称查询返回 `"", false` |
+| domain 1/2 | 不查 HMS 字典，返回未知告警 |
+| 配置语言文案缺失/空值 | 保留配置 language，返回包含 code 的未知告警 |
+| args 整数是小数、溢出、NaN/Inf 或不支持类型 | `Args.Int` 返回 `false`，占位符保留并记录日志 |
+| 模板参数缺失 | 不丢弃事件；保留占位符，继续入库 |
+
+### 5. Good/Base/Bad Cases
+
+- Good: `0-67-0` 查询到 `Matrice 30`，使用 `fpv_tip_...`；`3-3-0` 查询到 `大疆机场 3`，使用 `dock_tip_...`。
+- Base: 未收录但格式合法的三元组保留数值字段，`device_type_name` 为空。
+- Bad: 把 domain 1 当遥控器、生成 `remote_tip_`、跨类别按 code 回退，或配置 `fr` 时静默写入中文/英文文案。
+
+### 6. Tests Required
+
+- 设备注册表覆盖飞机、负载、遥控器、机场当前官方三元组和中文展示名；至少断言 `0-67-0`、`1-83-0`、`2-174-0`、`3-3-0`。
+- HMS 测试断言 domain 0/3 key、domain 1/2 无 key、空中 key 优先与普通 key 回退。
+- 文案测试断言语言精确匹配、`alarmid` 原值、索引加一、左右/前后方向和缺参保留。
+- Hook/model/Logic 测试断言 message、device_type_name、三元组、args 派生字段、`item_json` 与 RPC 字段一致。
+
+### 7. Wrong vs Correct
+
+```go
+// Wrong: 通用 domain 被错误当成 HMS 前缀，并隐式切换语言。
+prefix := map[int]string{0: "fpv", 1: "remote", 3: "dock"}[domain]
+message := translations[preferred]
+if message == "" {
+	message = translations["zh"]
+}
+
+// Correct: HMS 只接受官方飞机/机场分类，语言只做精准读取。
+deviceType, err := ParseDeviceType(raw)
+if err != nil {
+	return unknown
+}
+prefix := hmsTipPrefix(deviceType.Domain) // 仅 domain 0/3 非空
+message := strings.TrimSpace(translations[language])
+```
+
+依据：`common/djisdk/device_type.go`、`common/djisdk/hms.go`、`common/djisdk/hms.json`、`app/djicloud/internal/hooks/event_notify_up.go` 及对应测试。
+
 ## DRC 并发模型
 
 - Manager map 由 manager 锁保护，session 可变字段由 session 锁保护；统一按 manager -> session 的顺序取得，不允许反向。

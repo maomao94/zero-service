@@ -7530,10 +7530,21 @@ type HmsAlertInfo struct {
 	AckedAt        int64                  `protobuf:"varint,12,opt,name=acked_at,json=ackedAt,proto3" json:"acked_at,omitempty"`
 	AckedBy        string                 `protobuf:"bytes,13,opt,name=acked_by,json=ackedBy,proto3" json:"acked_by,omitempty"`
 	// reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
-	ReportedAt    string `protobuf:"bytes,14,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
-	ItemJson      string `protobuf:"bytes,15,opt,name=item_json,json=itemJson,proto3" json:"item_json,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	ReportedAt string `protobuf:"bytes,14,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	ItemJson   string `protobuf:"bytes,15,opt,name=item_json,json=itemJson,proto3" json:"item_json,omitempty"`
+	// message 按服务配置语言解析并在上报时持久化的 HMS 告警文案。
+	Message       string `protobuf:"bytes,16,opt,name=message,proto3" json:"message,omitempty"`
+	DeviceDomain  int32  `protobuf:"varint,17,opt,name=device_domain,json=deviceDomain,proto3" json:"device_domain,omitempty"`
+	DeviceTypeId  int32  `protobuf:"varint,18,opt,name=device_type_id,json=deviceTypeId,proto3" json:"device_type_id,omitempty"`
+	DeviceSubtype int32  `protobuf:"varint,19,opt,name=device_subtype,json=deviceSubtype,proto3" json:"device_subtype,omitempty"`
+	AlarmId       string `protobuf:"bytes,20,opt,name=alarm_id,json=alarmId,proto3" json:"alarm_id,omitempty"`
+	GimbalIndex   int32  `protobuf:"varint,21,opt,name=gimbal_index,json=gimbalIndex,proto3" json:"gimbal_index,omitempty"`
+	LidarIndex    int32  `protobuf:"varint,22,opt,name=lidar_index,json=lidarIndex,proto3" json:"lidar_index,omitempty"`
+	LteIndex      int32  `protobuf:"varint,23,opt,name=lte_index,json=lteIndex,proto3" json:"lte_index,omitempty"`
+	// device_type_name 根据官方设备三元组查询到的大疆产品名称，未知时为空。
+	DeviceTypeName string `protobuf:"bytes,24,opt,name=device_type_name,json=deviceTypeName,proto3" json:"device_type_name,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *HmsAlertInfo) Reset() {
@@ -7667,6 +7678,69 @@ func (x *HmsAlertInfo) GetReportedAt() string {
 func (x *HmsAlertInfo) GetItemJson() string {
 	if x != nil {
 		return x.ItemJson
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetDeviceDomain() int32 {
+	if x != nil {
+		return x.DeviceDomain
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetDeviceTypeId() int32 {
+	if x != nil {
+		return x.DeviceTypeId
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetDeviceSubtype() int32 {
+	if x != nil {
+		return x.DeviceSubtype
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetAlarmId() string {
+	if x != nil {
+		return x.AlarmId
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetGimbalIndex() int32 {
+	if x != nil {
+		return x.GimbalIndex
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetLidarIndex() int32 {
+	if x != nil {
+		return x.LidarIndex
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetLteIndex() int32 {
+	if x != nil {
+		return x.LteIndex
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetDeviceTypeName() string {
+	if x != nil {
+		return x.DeviceTypeName
 	}
 	return ""
 }
@@ -9948,7 +10022,7 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x17GetDeviceOsdSnapshotReq\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\"8\n" +
 	"\x19GetDeviceStateSnapshotReq\x12\x1b\n" +
-	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\"\xb0\x03\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\"\xe2\x05\n" +
 	"\fHmsAlertInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -9969,7 +10043,17 @@ const file_djicloud_proto_rawDesc = "" +
 	"\backed_by\x18\r \x01(\tR\aackedBy\x12\x1f\n" +
 	"\vreported_at\x18\x0e \x01(\tR\n" +
 	"reportedAt\x12\x1b\n" +
-	"\titem_json\x18\x0f \x01(\tR\bitemJson\"\x9b\x01\n" +
+	"\titem_json\x18\x0f \x01(\tR\bitemJson\x12\x18\n" +
+	"\amessage\x18\x10 \x01(\tR\amessage\x12#\n" +
+	"\rdevice_domain\x18\x11 \x01(\x05R\fdeviceDomain\x12$\n" +
+	"\x0edevice_type_id\x18\x12 \x01(\x05R\fdeviceTypeId\x12%\n" +
+	"\x0edevice_subtype\x18\x13 \x01(\x05R\rdeviceSubtype\x12\x19\n" +
+	"\balarm_id\x18\x14 \x01(\tR\aalarmId\x12!\n" +
+	"\fgimbal_index\x18\x15 \x01(\x05R\vgimbalIndex\x12\x1f\n" +
+	"\vlidar_index\x18\x16 \x01(\x05R\n" +
+	"lidarIndex\x12\x1b\n" +
+	"\tlte_index\x18\x17 \x01(\x05R\blteIndex\x12(\n" +
+	"\x10device_type_name\x18\x18 \x01(\tR\x0edeviceTypeName\"\x9b\x01\n" +
 	"\x10ListHmsAlertsReq\x12\x12\n" +
 	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x03R\bpageSize\x12\x1d\n" +

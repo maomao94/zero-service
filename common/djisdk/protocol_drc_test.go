@@ -207,7 +207,7 @@ func TestFlightTaskProgressEventUnmarshalCanonicalStructure(t *testing.T) {
 }
 
 func TestHmsEventDataUnmarshalOfficialShape(t *testing.T) {
-	payload := []byte(`{"list":[{"level":2,"module":3,"in_the_sky":0,"code":"dock_tip_foo","device_type":"dock","imminent":1,"args":{"component_index":2,"sensor_index":7}}]}`)
+	payload := []byte(`{"list":[{"level":2,"module":3,"in_the_sky":0,"code":"dock_tip_foo","device_type":"dock","imminent":1,"args":{"component_index":2,"sensor_index":7,"future_field":{"enabled":true}}}]}`)
 
 	var event HmsEventData
 	if err := json.Unmarshal(payload, &event); err != nil {
@@ -220,8 +220,13 @@ func TestHmsEventDataUnmarshalOfficialShape(t *testing.T) {
 	if item.Level != 2 || item.Module != 3 || item.InTheSky != 0 || item.Code != "dock_tip_foo" || item.DeviceType != "dock" || item.Imminent != 1 {
 		t.Fatalf("unexpected hms item: %+v", item)
 	}
-	if item.Args.ComponentIndex != 2 || item.Args.SensorIndex != 7 {
+	componentIndex, componentOK := item.Args.Int("component_index")
+	sensorIndex, sensorOK := item.Args.Int("sensor_index")
+	if !componentOK || componentIndex != 2 || !sensorOK || sensorIndex != 7 {
 		t.Fatalf("unexpected hms args: %+v", item.Args)
+	}
+	if _, ok := item.Args["future_field"].(map[string]any); !ok {
+		t.Fatalf("future HMS arg was not preserved: %+v", item.Args)
 	}
 }
 

@@ -20,10 +20,19 @@ type DjiHmsAlert struct {
 	Module         int          `gorm:"column:module;not null;default:0;comment:告警模块"`
 	Code           string       `gorm:"column:code;type:varchar(64);not null;default:'';comment:大疆HMS告警码"`
 	DeviceType     string       `gorm:"column:device_type;type:varchar(32);default:'';comment:告警设备类型"`
+	DeviceTypeName string       `gorm:"column:device_type_name;type:varchar(128);default:'';comment:大疆产品名称"`
+	DeviceDomain   int          `gorm:"column:device_domain;default:0;comment:告警设备域"`
+	DeviceTypeID   int          `gorm:"column:device_type_id;default:0;comment:告警设备类型编号"`
+	DeviceSubtype  int          `gorm:"column:device_subtype;default:0;comment:告警设备子类型编号"`
 	Imminent       int          `gorm:"column:imminent;default:0;comment:是否紧急"`
 	InTheSky       int          `gorm:"column:in_the_sky;default:0;comment:是否空中告警"`
 	ComponentIndex int          `gorm:"column:component_index;default:0;comment:部件索引"`
 	SensorIndex    int          `gorm:"column:sensor_index;default:0;comment:传感器索引"`
+	AlarmID        string       `gorm:"column:alarm_id;type:varchar(64);default:'';comment:HMS告警ID"`
+	GimbalIndex    int          `gorm:"column:gimbal_index;default:0;comment:云台索引"`
+	LidarIndex     int          `gorm:"column:lidar_index;default:0;comment:激光雷达索引"`
+	LteIndex       int          `gorm:"column:lte_index;default:0;comment:LTE索引"`
+	Message        string       `gorm:"column:message;type:text;comment:按服务配置语言解析的HMS告警文案"`
 	ItemJSON       string       `gorm:"column:item_json;type:text;comment:HMS告警条目原始JSON"`
 	Acked          int          `gorm:"column:acked;index;not null;default:0;comment:确认状态，0未确认，1已确认"`
 	AckedAt        sql.NullTime `gorm:"column:acked_at;comment:确认时间"`

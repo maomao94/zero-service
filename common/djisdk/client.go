@@ -31,6 +31,7 @@ type Config struct {
 	PendingTTL time.Duration `json:",default=30s"`
 	Reply      ReplyConfig
 	Drc        DrcConfig
+	Hms        HmsConfig
 }
 
 func MustNewClient(cfg Config, opts ...ClientOption) *Client {

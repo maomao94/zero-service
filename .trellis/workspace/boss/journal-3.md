@@ -1206,3 +1206,25 @@ Unified IEC104 server construction around Settings and go-zero ServerConfig, add
 ### Status
 
 [OK] **Completed**
+
+
+## Session 144: 深化 DJI HMS 本地化与告警持久化
+
+**Date**: 2026-08-07
+**Task**: 深化 DJI HMS 本地化与告警持久化
+**Branch**: `master`
+
+### Summary
+
+实现 DJI 产品三元组与中文名称注册表、HMS 官方 key 和精准语言解析、开放 HmsArgs getter、告警 message/device_type_name 持久化与 RPC 字段，并补充测试和 DJI 规范。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `990939b9` | (see git log) |
+| `57966fb2` | (see git log) |
+
+### Status
+
+[OK] **Completed**

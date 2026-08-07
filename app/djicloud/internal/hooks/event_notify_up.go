@@ -153,28 +153,49 @@ func HandleCustomDataFromPsdkEvent(ctx context.Context, gatewaySn string, data *
 	return nil
 }
 
-func NewHmsEventNotifyHandler(db *gormx.DB) func(ctx context.Context, gatewaySn string, data *djisdk.HmsEventData) error {
+func NewHmsEventNotifyHandler(db *gormx.DB, resolver *djisdk.HmsResolver) func(ctx context.Context, gatewaySn string, data *djisdk.HmsEventData) error {
 	return func(ctx context.Context, gatewaySn string, data *djisdk.HmsEventData) error {
 		if data == nil {
 			return nil
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] hms: sn=%s items=%d", gatewaySn, len(data.List))
 		for _, item := range data.List {
+			resolved := resolver.Resolve(item)
+			deviceType, deviceTypeErr := djisdk.ParseDeviceType(item.DeviceType)
+			deviceTypeName, _ := djisdk.LookupDeviceTypeName(item.DeviceType)
+			componentIndex, _ := item.Args.Int("component_index")
+			sensorIndex, _ := item.Args.Int("sensor_index")
+			alarmID, _ := item.Args.String("alarmid")
+			gimbalIndex, _ := item.Args.Int("gimbal_index")
+			lidarIndex, _ := item.Args.Int("lidar_index")
+			lteIndex, _ := item.Args.Int("lte_index")
 			logx.WithContext(ctx).Infof("[dji-cloud] hms item: level=%d module=%d in_the_sky=%d code=%s device_type=%s imminent=%d component_index=%d sensor_index=%d",
-				item.Level, item.Module, item.InTheSky, item.Code, item.DeviceType, item.Imminent, item.Args.ComponentIndex, item.Args.SensorIndex)
-			if err := db.WithContext(ctx).Create(&gormmodel.DjiHmsAlert{
+				item.Level, item.Module, item.InTheSky, item.Code, item.DeviceType, item.Imminent, componentIndex, sensorIndex)
+			alert := &gormmodel.DjiHmsAlert{
 				GatewaySn:      gatewaySn,
 				Level:          item.Level,
 				Module:         item.Module,
 				Code:           item.Code,
 				DeviceType:     item.DeviceType,
+				DeviceTypeName: deviceTypeName,
+				AlarmID:        alarmID,
 				Imminent:       item.Imminent,
 				InTheSky:       item.InTheSky,
-				ComponentIndex: item.Args.ComponentIndex,
-				SensorIndex:    item.Args.SensorIndex,
+				ComponentIndex: componentIndex,
+				SensorIndex:    sensorIndex,
+				GimbalIndex:    gimbalIndex,
+				LidarIndex:     lidarIndex,
+				LteIndex:       lteIndex,
+				Message:        resolved.Message,
 				ItemJSON:       toJSONString(item),
 				ReportedAt:     time.Now(),
-			}).Error; err != nil {
+			}
+			if deviceTypeErr == nil {
+				alert.DeviceDomain = int(deviceType.Domain)
+				alert.DeviceTypeID = deviceType.Type
+				alert.DeviceSubtype = deviceType.SubType
+			}
+			if err := db.WithContext(ctx).Create(alert).Error; err != nil {
 				logx.WithContext(ctx).Errorf("[dji-cloud] create hms alert failed: %v", err)
 			}
 		}

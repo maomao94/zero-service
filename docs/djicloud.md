@@ -371,6 +371,20 @@ SDK 通过 `SubscribeAll()` 订阅 6 个通配符主题，每个主题对应一�
 - Logic 层通过 `errRes(tid, err)` 将 SDK 错误映射到 `CommonRes`，自动提取 `reason_code` 和中文描述
 - 部分模块（HMS、Organization、AirSense、PSDK）仅处理上行消息，gRPC 暂未暴露下行接口
 
+#### 错误码编码规则
+
+错误码资料来源于 DJI 官方论坛、交流群等公开渠道，整理文档见[《DJI 错误码》](https://www.kdocs.cn/l/clOp5VzfiTYE)。该资料由个人维护，内容可能不完整；因文档曾被无意修改，为避免误导，公开编辑权限已关闭。如需补充，可向原文档申请编辑权限。原作者已说明后续不再维护，使用时应结合 DJI 官方资料和实际设备返回结果核验。
+
+DJI 错误码整体采用 `ABCDEF` 六位格式：
+
+| 位段 | 含义 |
+|------|------|
+| `A` | 错误上报来源 |
+| `BC` | 功能模块 |
+| `DEF` | 对应模块自定义错误 |
+
+各位段对应的具体业务域以 DJI 官方资料为准。本项目已收录的错误码及中文描述见 `common/djisdk/error_descriptions.go`；未收录的错误码会回退为 `third_party/dji_error_code` 中的枚举名称。
+
 ### 蛙跳拓扑
 
 同一飞行器可被多个机巢绑定，`DjiDeviceTopo` 允许同一 `sub_device_sn` 存在多条记录：

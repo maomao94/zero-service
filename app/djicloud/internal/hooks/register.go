@@ -11,13 +11,14 @@ import (
 
 type RegisterDjiClientOptions struct {
 	DB                 *gormx.DB
+	HmsResolver        *djisdk.HmsResolver
 	OnlineCache        *collection.Cache
 	PushCli            socketpush.SocketPushClient
 	DisableOsdSQLTrace bool
 	OssTemplate        ossx.OssTemplate
 }
 
-func eventHandlerOptions(db *gormx.DB) []djisdk.ClientOption {
+func eventHandlerOptions(db *gormx.DB, hmsResolver *djisdk.HmsResolver) []djisdk.ClientOption {
 	return []djisdk.ClientOption{
 		djisdk.WithFlightTaskProgressHandler(NewFlightTaskProgressHandler(db)),
 		djisdk.WithFlightTaskReadyHandler(NewFlightTaskReadyHandler(db)),
@@ -25,7 +26,7 @@ func eventHandlerOptions(db *gormx.DB) []djisdk.ClientOption {
 		djisdk.WithCustomDataFromPsdkHandler(HandleCustomDataFromPsdkEvent),
 		djisdk.WithCustomDataFromEsdkHandler(HandleCustomDataFromEsdkEvent),
 		djisdk.WithOtaProgressHandler(HandleOtaProgressEvent),
-		djisdk.WithHmsEventNotifyHandler(NewHmsEventNotifyHandler(db)),
+		djisdk.WithHmsEventNotifyHandler(NewHmsEventNotifyHandler(db, hmsResolver)),
 		djisdk.WithRemoteLogFileUploadProgressHandler(NewRemoteLogFileUploadProgressHandler(db)),
 		djisdk.WithFlightAreasSyncProgressHandler(NewFlightAreasSyncProgressHandler(db)),
 		djisdk.WithFlightAreasDroneLocationHandler(HandleFlightAreasDroneLocation),
@@ -60,7 +61,7 @@ func onlineCheckerOption(onlineCache *collection.Cache) djisdk.ClientOption {
 func WithDjiClientOptions(o RegisterDjiClientOptions) []djisdk.ClientOption {
 	var opts []djisdk.ClientOption
 	if o.DB != nil {
-		opts = append(opts, eventHandlerOptions(o.DB)...)
+		opts = append(opts, eventHandlerOptions(o.DB, o.HmsResolver)...)
 		opts = append(opts, telemetryHandlerOptions(o.DB, o.OnlineCache, o.PushCli, o.DisableOsdSQLTrace)...)
 		opts = append(opts, drcHandlerOptions(o.DB, o.PushCli)...)
 	}

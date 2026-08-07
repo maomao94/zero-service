@@ -19,16 +19,16 @@ type DrcUpHandler func(ctx context.Context, gatewaySn string, msg *DrcUpMessage,
 type RequestHandler func(ctx context.Context, gatewaySn string, msg *RequestMessage) (output any, err error)
 
 type ReplyConfig struct {
-	EnableEventReply   bool `json:",default=true"`
-	EnableStatusReply  bool `json:",default=true"`
-	EnableRequestReply bool `json:",default=true"`
+	EnableEventReply   bool `json:",default=false"`
+	EnableStatusReply  bool `json:",default=false"`
+	EnableRequestReply bool `json:",default=false"`
 }
 
 func DefaultReplyConfig() ReplyConfig {
 	return ReplyConfig{
-		EnableEventReply:   true,
-		EnableStatusReply:  true,
-		EnableRequestReply: true,
+		EnableEventReply:   false,
+		EnableStatusReply:  false,
+		EnableRequestReply: false,
 	}
 }
 

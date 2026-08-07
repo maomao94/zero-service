@@ -35,3 +35,16 @@ func TestDockFlightTaskTrackIdAllowsNullWithoutDatabaseDefault(t *testing.T) {
 		})
 	}
 }
+
+func TestDjiHmsAlertStoresTextAlarmIDAndDeviceTypeName(t *testing.T) {
+	parsed, err := schema.Parse(&DjiHmsAlert{}, &sync.Map{}, schema.NamingStrategy{})
+	if err != nil {
+		t.Fatalf("parse schema error = %v", err)
+	}
+	if field := parsed.LookUpField("alarm_id"); field == nil || field.DataType != "varchar(64)" || field.TagSettings["TYPE"] != "varchar(64)" {
+		t.Fatalf("alarm_id field = %+v, want varchar(64)", field)
+	}
+	if field := parsed.LookUpField("device_type_name"); field == nil || field.DataType != "varchar(128)" || field.TagSettings["TYPE"] != "varchar(128)" {
+		t.Fatalf("device_type_name field = %+v, want varchar(128)", field)
+	}
+}

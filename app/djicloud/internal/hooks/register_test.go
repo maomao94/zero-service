@@ -56,6 +56,7 @@ func TestRegisterDjiClientRegistersHandlersAndOnlineChecker(t *testing.T) {
 	db := newHookTestDB(t)
 	handlerOpts := WithDjiClientOptions(RegisterDjiClientOptions{
 		DB:          db,
+		HmsResolver: djisdk.MustNewHmsResolver(djisdk.HmsConfig{}),
 		OnlineCache: onlineCache,
 	})
 	allOpts := []djisdk.ClientOption{
@@ -894,30 +895,69 @@ func TestHmsAlertStoresOfficialItemJSON(t *testing.T) {
 	db := newHookTestDB(t)
 	ctx := context.Background()
 
-	NewHmsEventNotifyHandler(db)(ctx, "dock-hms", &djisdk.HmsEventData{List: []djisdk.HmsItem{{
+	resolver := djisdk.MustNewHmsResolver(djisdk.HmsConfig{})
+	NewHmsEventNotifyHandler(db, resolver)(ctx, "dock-hms", &djisdk.HmsEventData{List: []djisdk.HmsItem{{
 		Level:      2,
 		Module:     3,
 		InTheSky:   1,
 		Code:       "0x16100083",
-		DeviceType: "dock",
+		DeviceType: "0-67-0",
 		Imminent:   1,
-		Args:       djisdk.HmsItemArgs{ComponentIndex: 4, SensorIndex: 5},
+		Args: map[string]any{
+			"component_index": 4, "sensor_index": 2, "alarmid": "0x16100001",
+			"gimbal_index": 6, "lidar_index": 7, "lte_index": 8, "future_arg": "kept",
+		},
 	}}})
 
 	var alert struct {
-		ItemJSON string
+		ItemJSON       string
+		Message        string
+		DeviceDomain   int
+		DeviceTypeID   int
+		DeviceSubtype  int
+		DeviceTypeName string
+		AlarmID        string
+		GimbalIndex    int
+		LidarIndex     int
+		LteIndex       int
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiHmsAlert{}).Select("item_json").Where("gateway_sn = ?", "dock-hms").First(&alert).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiHmsAlert{}).Where("gateway_sn = ?", "dock-hms").First(&alert).Error; err != nil {
 		t.Fatalf("find hms alert error = %v", err)
 	}
 	if alert.ItemJSON == "" || alert.ItemJSON == "{}" {
 		t.Fatalf("ItemJSON = %q, want raw hms item", alert.ItemJSON)
 	}
+	if alert.Message == "" {
+		t.Fatal("Message is empty, want resolved HMS message")
+	}
+	if !strings.Contains(alert.ItemJSON, `"future_arg":"kept"`) {
+		t.Fatalf("ItemJSON = %q, want unknown args preserved", alert.ItemJSON)
+	}
+	if alert.DeviceDomain != 0 || alert.DeviceTypeID != 67 || alert.DeviceSubtype != 0 || alert.DeviceTypeName != "Matrice 30" || alert.AlarmID != "0x16100001" || alert.GimbalIndex != 6 || alert.LidarIndex != 7 || alert.LteIndex != 8 {
+		t.Fatalf("flattened HMS fields = %+v", alert)
+	}
 	if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiHmsAlert{}, "device_sn") {
 		t.Fatal("expected hms alert not to have guessed device_sn column")
 	}
-	if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiHmsAlert{}, "message") {
-		t.Fatal("expected hms alert not to have guessed message column")
+	if !db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiHmsAlert{}, "message") {
+		t.Fatal("expected hms alert to have message column")
+	}
+}
+
+func TestHmsAlertLeavesUnknownDeviceTypeNameEmpty(t *testing.T) {
+	db := newHookTestDB(t)
+	resolver := djisdk.MustNewHmsResolver(djisdk.HmsConfig{})
+	NewHmsEventNotifyHandler(db, resolver)(context.Background(), "dock-hms-unknown", &djisdk.HmsEventData{List: []djisdk.HmsItem{{
+		Code:       "0xDEADBEEF",
+		DeviceType: "0-999-0",
+	}}})
+
+	var alert gormmodel.DjiHmsAlert
+	if err := db.Where("gateway_sn = ?", "dock-hms-unknown").First(&alert).Error; err != nil {
+		t.Fatalf("find hms alert error = %v", err)
+	}
+	if alert.DeviceTypeName != "" || alert.DeviceDomain != 0 || alert.DeviceTypeID != 999 || alert.DeviceSubtype != 0 {
+		t.Fatalf("unknown device fields = %+v", alert)
 	}
 }
 
