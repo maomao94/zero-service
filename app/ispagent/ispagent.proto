@@ -6,29 +6,29 @@ option go_package = "./ispagent";
 
 
 service IspAgent {
-  // ExecuteCommand 通用指令透传（调用方指定 type/command）
+  // 通用指令透传，调用方指定 type 和 command。
   rpc ExecuteCommand(CommandReq) returns(CommandRes);
-  // SendPatrolDeviceRunData 巡视装置运行数据上报（表 J.34）
+  // 巡视装置运行数据上报（表 J.34）。
   rpc SendPatrolDeviceRunData(SendPatrolDeviceRunDataReq) returns(SendPatrolDeviceRunDataRes);
-  // SendPatrolDeviceStatusData 巡视装置状态数据上报
+  // 巡视装置状态数据上报。
   rpc SendPatrolDeviceStatusData(SendPatrolDeviceStatusDataReq) returns(SendPatrolDeviceStatusDataRes);
-  // SendPatrolDeviceCoordinates 巡视装置坐标上报（表 O.45）
+  // 巡视装置坐标上报（表 O.45）。
   rpc SendPatrolDeviceCoordinates(SendPatrolDeviceCoordinatesReq) returns(SendPatrolDeviceCoordinatesRes);
-  // SendDroneNestRunData 无人机机巢运行数据上报（表 O.40）
+  // 无人机机巢运行数据上报（表 O.40）。
   rpc SendDroneNestRunData(SendDroneNestRunDataReq) returns(SendDroneNestRunDataRes);
-  // SendEnvData 环境/微气象数据上报（表 J.41）
+  // 环境及微气象数据上报（表 J.41）。
   rpc SendEnvData(SendEnvDataReq) returns(SendEnvDataRes);
-  // ListTaskExecutions 查询任务未来执行时间（用于验证 rrule 配置）
+  // 查询任务未来执行时间，用于验证 RRULE 配置。
   rpc ListTaskExecutions(ListTaskExecutionsReq) returns(ListTaskExecutionsRes);
-  // ListTaskConfigs 任务配置分页查询
+  // 任务配置分页查询。
   rpc ListTaskConfigs(ListTaskConfigsReq) returns(ListTaskConfigsRes);
-  // GetTaskConfig 按任务编码查询配置详情
+  // 按任务编码查询配置详情。
   rpc GetTaskConfig(GetTaskConfigReq) returns(GetTaskConfigRes);
-  // TestFTPSUpload 测试 FTPS 上传（上传 local/test.txt）
+  // 测试 FTPS 上传，上传 local_path 指定的文件；未指定时使用 local/test.txt。
   rpc TestFTPSUpload(TestFTPSUploadReq) returns(TestFTPSUploadRes);
-  // ListFTPSDirectory 列出 FTPS 远程目录文件列表
+  // 列出 FTPS 远程目录文件列表。
   rpc ListFTPSDirectory(ListFTPSDirectoryReq) returns(ListFTPSDirectoryRes);
-  // ListReportIntervals 查询上报间隔配置
+  // 查询上报间隔配置。
   rpc ListReportIntervals(ListReportIntervalsReq) returns(ListReportIntervalsRes);
 }
 
@@ -101,7 +101,7 @@ message SendPatrolDeviceStatusDataRes {
 message PatrolDeviceCoordinate {
   string patrol_device_name = 1;   // 巡视装置名称
   string patrol_device_code = 2;   // 巡视装置编码
-  string coordinate_pixel = 3;     // 格式 x,y,z,a（地图坐标 + 航向角）
+  string coordinate_pixel = 3;     // 格式 x,y,z,a（地图坐标 + 航向角）, eg."coordinate_pixel": "1806.768,1202.373,0,1.964270"
   string coordinate_geography = 4; // 格式 x,y（经纬度）
   string task_patrolled_id = 5;    // 巡视任务执行ID，无巡视任务时可为空
 }
