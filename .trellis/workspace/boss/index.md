@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 150
+- **Total Sessions**: 151
 - **Last Active**: 2026-08-10
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~1360 | Active |
+| `journal-3.md` | ~1381 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 151 | 2026-08-10 | djicloud-error-contracts: proto response rename + logic error boundary + spec refresh | `e5e3dd6b` | `master` |
 | 150 | 2026-08-10 | 优化 ISP Agent proto 注释 | `b9fa58f6` | `master` |
 | 149 | 2026-08-10 | Refresh repository Trellis specs | `37e4928c` | `master` |
 | 148 | 2026-08-10 | Clarify DJI topology device identity | `fde9ab55` | `master` |

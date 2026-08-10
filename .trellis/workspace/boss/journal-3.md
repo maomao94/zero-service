@@ -1358,3 +1358,24 @@ Audited all repository Trellis specs against current source evidence; corrected 
 ### Status
 
 [OK] **Completed**
+
+
+## Session 151: djicloud-error-contracts: proto response rename + logic error boundary + spec refresh
+
+**Date**: 2026-08-10
+**Task**: djicloud-error-contracts: proto response rename + logic error boundary + spec refresh
+**Branch**: `master`
+
+### Summary
+
+Phase A (proto): renamed 6 mismatched platform response types to <RpcName>Res, added empty AckHmsAlertRes. Phase B (logic): unified error boundary - platform failures use extproto gRPC errors, DJI ACK failures retain tid/reason_code in typed responses. Added helper_test.go, unit tests for DJIError/PlatformError/topic/protocol/option/DRC. Refreshed dji-guidelines.md and error-handling.md specs from current code.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e5e3dd6b` | (see git log) |
+
+### Status
+
+[OK] **Completed**
