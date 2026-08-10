@@ -32,7 +32,7 @@ func (l *CameraFocalLengthSetLogic) CameraFocalLengthSet(in *djicloud.CameraFoca
 	}
 	tid, err := l.svcCtx.DjiClient.CameraFocalLengthSet(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

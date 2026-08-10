@@ -30,7 +30,7 @@ func (l *LiveStopPushLogic) LiveStopPush(in *djicloud.LiveStopPushReq) (*djiclou
 	}
 	tid, err := l.svcCtx.DjiClient.LiveStopPush(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

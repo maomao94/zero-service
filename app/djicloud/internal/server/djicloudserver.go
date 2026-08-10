@@ -540,7 +540,7 @@ func (s *DjiCloudServer) DrcCameraDewarpingSet(ctx context.Context, in *djicloud
 }
 
 // IsDeviceOnline 查询设备在线状态。
-func (s *DjiCloudServer) IsDeviceOnline(ctx context.Context, in *djicloud.IsDeviceOnlineReq) (*djicloud.DeviceOnlineRes, error) {
+func (s *DjiCloudServer) IsDeviceOnline(ctx context.Context, in *djicloud.IsDeviceOnlineReq) (*djicloud.IsDeviceOnlineRes, error) {
 	l := logic.NewIsDeviceOnlineLogic(ctx, s.svcCtx)
 	return l.IsDeviceOnline(in)
 }
@@ -552,19 +552,19 @@ func (s *DjiCloudServer) ListDevices(ctx context.Context, in *djicloud.ListDevic
 }
 
 // GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
-func (s *DjiCloudServer) GetDeviceDetail(ctx context.Context, in *djicloud.GetDeviceDetailReq) (*djicloud.DeviceDetailRes, error) {
+func (s *DjiCloudServer) GetDeviceDetail(ctx context.Context, in *djicloud.GetDeviceDetailReq) (*djicloud.GetDeviceDetailRes, error) {
 	l := logic.NewGetDeviceDetailLogic(ctx, s.svcCtx)
 	return l.GetDeviceDetail(in)
 }
 
 // GetDeviceOsdSnapshot 查询设备最近一次 OSD 遥测快照。
-func (s *DjiCloudServer) GetDeviceOsdSnapshot(ctx context.Context, in *djicloud.GetDeviceOsdSnapshotReq) (*djicloud.DeviceOsdSnapshotRes, error) {
+func (s *DjiCloudServer) GetDeviceOsdSnapshot(ctx context.Context, in *djicloud.GetDeviceOsdSnapshotReq) (*djicloud.GetDeviceOsdSnapshotRes, error) {
 	l := logic.NewGetDeviceOsdSnapshotLogic(ctx, s.svcCtx)
 	return l.GetDeviceOsdSnapshot(in)
 }
 
 // GetDeviceStateSnapshot 查询设备最近一次 State 状态快照。
-func (s *DjiCloudServer) GetDeviceStateSnapshot(ctx context.Context, in *djicloud.GetDeviceStateSnapshotReq) (*djicloud.DeviceStateSnapshotRes, error) {
+func (s *DjiCloudServer) GetDeviceStateSnapshot(ctx context.Context, in *djicloud.GetDeviceStateSnapshotReq) (*djicloud.GetDeviceStateSnapshotRes, error) {
 	l := logic.NewGetDeviceStateSnapshotLogic(ctx, s.svcCtx)
 	return l.GetDeviceStateSnapshot(in)
 }
@@ -576,7 +576,7 @@ func (s *DjiCloudServer) ListHmsAlerts(ctx context.Context, in *djicloud.ListHms
 }
 
 // AckHmsAlert 确认 HMS 告警。
-func (s *DjiCloudServer) AckHmsAlert(ctx context.Context, in *djicloud.AckHmsAlertReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) AckHmsAlert(ctx context.Context, in *djicloud.AckHmsAlertReq) (*djicloud.AckHmsAlertRes, error) {
 	l := logic.NewAckHmsAlertLogic(ctx, s.svcCtx)
 	return l.AckHmsAlert(in)
 }
@@ -588,13 +588,13 @@ func (s *DjiCloudServer) ListFlightTaskProgress(ctx context.Context, in *djiclou
 }
 
 // GetFlightTaskProgressLast 查询最近一次 flighttask_progress 上行记录。
-func (s *DjiCloudServer) GetFlightTaskProgressLast(ctx context.Context, in *djicloud.GetFlightTaskProgressLastReq) (*djicloud.FlightTaskProgressLastRes, error) {
+func (s *DjiCloudServer) GetFlightTaskProgressLast(ctx context.Context, in *djicloud.GetFlightTaskProgressLastReq) (*djicloud.GetFlightTaskProgressLastRes, error) {
 	l := logic.NewGetFlightTaskProgressLastLogic(ctx, s.svcCtx)
 	return l.GetFlightTaskProgressLast(in)
 }
 
 // QueryDrcStatus 查询设备 DRC 运行状态。
-func (s *DjiCloudServer) QueryDrcStatus(ctx context.Context, in *djicloud.QueryDrcStatusReq) (*djicloud.DrcStatusRes, error) {
+func (s *DjiCloudServer) QueryDrcStatus(ctx context.Context, in *djicloud.QueryDrcStatusReq) (*djicloud.QueryDrcStatusRes, error) {
 	l := logic.NewQueryDrcStatusLogic(ctx, s.svcCtx)
 	return l.QueryDrcStatus(in)
 }

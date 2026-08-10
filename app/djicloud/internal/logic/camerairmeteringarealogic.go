@@ -34,7 +34,7 @@ func (l *CameraIrMeteringAreaLogic) CameraIrMeteringArea(in *djicloud.CameraIrMe
 	}
 	tid, err := l.svcCtx.DjiClient.CameraIrMeteringArea(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

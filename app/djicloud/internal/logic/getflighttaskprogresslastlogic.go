@@ -6,6 +6,8 @@ import (
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -27,18 +29,18 @@ func NewGetFlightTaskProgressLastLogic(ctx context.Context, svcCtx *svc.ServiceC
 }
 
 // GetFlightTaskProgressLast 查询机巢当前航线任务状态。
-func (l *GetFlightTaskProgressLastLogic) GetFlightTaskProgressLast(in *djicloud.GetFlightTaskProgressLastReq) (*djicloud.FlightTaskProgressLastRes, error) {
+func (l *GetFlightTaskProgressLastLogic) GetFlightTaskProgressLast(in *djicloud.GetFlightTaskProgressLastReq) (*djicloud.GetFlightTaskProgressLastRes, error) {
 	var progress gormmodel.DjiDockDeviceFlightTaskState
 	err := l.svcCtx.DB.WithContext(l.ctx).
 		Where("gateway_sn = ?", in.DeviceSn).
 		First(&progress).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return &djicloud.FlightTaskProgressLastRes{}, nil
+			return &djicloud.GetFlightTaskProgressLastRes{}, nil
 		}
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询最近航线任务进度失败")
 	}
-	return &djicloud.FlightTaskProgressLastRes{
+	return &djicloud.GetFlightTaskProgressLastRes{
 		HasProgress:  true,
 		ReportedAt:   carbon.CreateFromStdTime(progress.ReportedAt).ToDateTimeMicroString(),
 		ProgressJson: progress.RawJSON,

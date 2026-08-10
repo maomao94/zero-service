@@ -27,7 +27,7 @@ func NewChargeCloseLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Charg
 func (l *ChargeCloseLogic) ChargeClose(in *djicloud.ChargeCloseReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.ChargeClose(l.ctx, in.DeviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

@@ -27,7 +27,7 @@ func NewDebugModeCloseLogic(ctx context.Context, svcCtx *svc.ServiceContext) *De
 func (l *DebugModeCloseLogic) DebugModeClose(in *djicloud.DebugModeCloseReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DebugModeClose(l.ctx, in.DeviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

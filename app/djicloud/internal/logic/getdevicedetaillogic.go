@@ -26,14 +26,14 @@ func NewGetDeviceDetailLogic(ctx context.Context, svcCtx *svc.ServiceContext) *G
 	}
 }
 
-func (l *GetDeviceDetailLogic) GetDeviceDetail(in *djicloud.GetDeviceDetailReq) (*djicloud.DeviceDetailRes, error) {
+func (l *GetDeviceDetailLogic) GetDeviceDetail(in *djicloud.GetDeviceDetailReq) (*djicloud.GetDeviceDetailRes, error) {
 	var device gormmodel.DjiDevice
 	if err := l.svcCtx.DB.WithContext(l.ctx).
 		Where("device_sn = ?", in.DeviceSn).
 		First(&device).Error; err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_RECORD_NOT_EXIST, err, "查询设备详情失败")
 	}
-	res := &djicloud.DeviceDetailRes{Device: toDeviceInfo(&device)}
+	res := &djicloud.GetDeviceDetailRes{Device: toDeviceInfo(&device)}
 	var osd gormmodel.DjiDeviceOsdSnapshot
 	if err := l.svcCtx.DB.WithContext(l.ctx).
 		Where("device_sn = ?", in.DeviceSn).

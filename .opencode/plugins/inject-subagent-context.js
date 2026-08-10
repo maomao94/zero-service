@@ -402,8 +402,10 @@ function commandStartsWithTrellisContext(command) {
 }
 
 /**
- * OpenCode TUI may not expose OPENCODE_RUN_ID to Bash. The plugin hook still
- * receives session identity, so inject it into Bash commands before execution.
+ * OpenCode exposes no session identity to Bash at all — it sets no session env
+ * var in any process. The plugin hook does receive it, so inject it into Bash
+ * commands before execution; that prefix is the only channel by which an
+ * AI-run `task.py` sees the OpenCode session.
  */
 function injectTrellisContextIntoBash(ctx, input, output, hostPlatform, env) {
   const args = output?.args

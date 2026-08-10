@@ -27,7 +27,7 @@ func NewDeviceRebootLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Devi
 func (l *DeviceRebootLogic) DeviceReboot(in *djicloud.DeviceRebootReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DeviceReboot(l.ctx, in.DeviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

@@ -22,7 +22,7 @@ func TestGeofencePolygon_JSON(t *testing.T) {
 			ID           string `json:"id"`
 			GeofenceType string `json:"geofence_type"`
 			Geometry     struct {
-				Type        string        `json:"type"`
+				Type        string         `json:"type"`
 				Coordinates [][][2]float64 `json:"coordinates"`
 			} `json:"geometry"`
 			Properties struct {
@@ -55,7 +55,7 @@ func TestGeofenceCircle_JSON(t *testing.T) {
 		Features []struct {
 			GeofenceType string `json:"geofence_type"`
 			Geometry     struct {
-				Type        string    `json:"type"`
+				Type        string     `json:"type"`
 				Coordinates [2]float64 `json:"coordinates"`
 			} `json:"geometry"`
 			Properties struct {

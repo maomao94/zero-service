@@ -31,7 +31,7 @@ func (l *CameraPhotoStorageSetLogic) CameraPhotoStorageSet(in *djicloud.CameraPh
 	}
 	tid, err := l.svcCtx.DjiClient.CameraPhotoStorageSet(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

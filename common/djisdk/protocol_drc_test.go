@@ -33,7 +33,7 @@ func TestNewClientWithPendingTTLOption(t *testing.T) {
 	}
 }
 
-func TestNewClientDefaultOptionsEnableReplies(t *testing.T) {
+func TestNewClientDefaultReplyConfig(t *testing.T) {
 	client := NewClient(nil, nil)
 
 	if client.reply != DefaultReplyConfig() {
@@ -41,11 +41,11 @@ func TestNewClientDefaultOptionsEnableReplies(t *testing.T) {
 	}
 }
 
-func TestDefaultReplyConfigEnableReplies(t *testing.T) {
+func TestDefaultReplyConfigDefaultsAreDisabled(t *testing.T) {
 	options := DefaultReplyConfig()
 
-	if !options.EnableEventReply || !options.EnableStatusReply || !options.EnableRequestReply {
-		t.Fatalf("DefaultReplyConfig() = %+v, want all replies enabled", options)
+	if options.EnableEventReply || options.EnableStatusReply || options.EnableRequestReply {
+		t.Fatalf("DefaultReplyConfig() = %+v, want all replies disabled by default", options)
 	}
 }
 

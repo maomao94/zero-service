@@ -27,7 +27,7 @@ func NewDeviceFormatLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Devi
 func (l *DeviceFormatLogic) DeviceFormat(in *djicloud.DeviceFormatReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DeviceFormat(l.ctx, in.DeviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

@@ -534,25 +534,25 @@ service DjiCloud {
   // IsDeviceOnline 查询设备在线状态。
   // device_sn 可传机巢SN或子设备SN；机巢在线和子设备在线分开判定。
   // 当前服务应配置数据库用于持久化设备状态；内存 onlineCache 保存热数据以提升高频在线判断性能，数据库保存最近一次在线快照并通过 last_online_at 懒过期清理。
-  rpc IsDeviceOnline(IsDeviceOnlineReq) returns (DeviceOnlineRes);
+  rpc IsDeviceOnline(IsDeviceOnlineReq) returns (IsDeviceOnlineRes);
 
   // ListDevices 查询设备列表，包含机巢、无人机、负载等设备。
   rpc ListDevices(ListDevicesReq) returns (ListDevicesRes);
 
   // GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
-  rpc GetDeviceDetail(GetDeviceDetailReq) returns (DeviceDetailRes);
+  rpc GetDeviceDetail(GetDeviceDetailReq) returns (GetDeviceDetailRes);
 
   // GetDeviceOsdSnapshot 查询设备最近一次 OSD 遥测快照。
-  rpc GetDeviceOsdSnapshot(GetDeviceOsdSnapshotReq) returns (DeviceOsdSnapshotRes);
+  rpc GetDeviceOsdSnapshot(GetDeviceOsdSnapshotReq) returns (GetDeviceOsdSnapshotRes);
 
   // GetDeviceStateSnapshot 查询设备最近一次 State 状态快照。
-  rpc GetDeviceStateSnapshot(GetDeviceStateSnapshotReq) returns (DeviceStateSnapshotRes);
+  rpc GetDeviceStateSnapshot(GetDeviceStateSnapshotReq) returns (GetDeviceStateSnapshotRes);
 
   // ListHmsAlerts 查询 HMS 告警记录。
   rpc ListHmsAlerts(ListHmsAlertsReq) returns (ListHmsAlertsRes);
 
   // AckHmsAlert 确认 HMS 告警。
-  rpc AckHmsAlert(AckHmsAlertReq) returns (CommonRes);
+  rpc AckHmsAlert(AckHmsAlertReq) returns (AckHmsAlertRes);
 
   // ListFlightTaskProgress 查询飞行任务进度上行记录。
   // 仅记录 flighttask_progress 推送，不在本服务内维护完整任务状态机。
@@ -561,11 +561,11 @@ service DjiCloud {
   // GetFlightTaskProgressLast 查询最近一次 flighttask_progress 上行记录。
   // 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），由 SDK 分发至钩子后写入数据库。
   // 该接口只返回最近一条进度记录，不代表完整任务状态机；非大疆标准查询接口。
-  rpc GetFlightTaskProgressLast(GetFlightTaskProgressLastReq) returns (FlightTaskProgressLastRes);
+  rpc GetFlightTaskProgressLast(GetFlightTaskProgressLastReq) returns (GetFlightTaskProgressLastRes);
 
   // QueryDrcStatus 查询设备 DRC 运行状态。
   // 返回 DRC 模式启用状态、启动时间、最近设备心跳时间、序号和存活状态。
-  rpc QueryDrcStatus(QueryDrcStatusReq) returns (DrcStatusRes);
+  rpc QueryDrcStatus(QueryDrcStatusReq) returns (QueryDrcStatusRes);
 
   // —————————————————— 自定义飞行区（平台能力） ——————————————————
   //
@@ -592,11 +592,12 @@ service DjiCloud {
 
 // ==================== 通用消息 ====================
 
-// CommonRes 通用响应，用于返回命令执行结果。
+// CommonRes DJI 命令执行结果响应。
+// 仅用于等待 DJI 设备 ACK 的下行命令；平台参数、数据库、配置、MQTT、超时等错误通过 gRPC error 返回。
 message CommonRes {
-  // code 结果码，0 表示成功，-1 表示失败。
+  // code DJI 命令结果码，0 表示设备执行成功，-1 表示设备拒绝执行。
   int32 code = 1;
-  // message 结果描述信息，成功时为 "success"，失败时为错误详情（含中文描述）。
+  // message DJI 命令结果描述，成功时为 "success"，设备拒绝时为错误详情。
   string message = 2;
   // tid 事务 ID（DJI Cloud API 中的 tid），用于追踪本次请求在 MQTT 链路中的唯一标识。
   string tid = 3;
@@ -1508,8 +1509,8 @@ message DrcCameraDewarpingSetRes { int32 seq = 1; }
 // IsDeviceOnlineReq 查询设备在线状态请求。
 message IsDeviceOnlineReq { string device_sn = 1; }
 
-// DeviceOnlineRes 设备在线状态查询响应。
-message DeviceOnlineRes {
+// IsDeviceOnlineRes 查询设备在线状态响应。
+message IsDeviceOnlineRes {
   // is_online 设备是否在线。
   bool is_online = 1;
 }
@@ -1661,8 +1662,8 @@ message DeviceOsdSnapshot {
   string reported_at = 4;
 }
 
-// DeviceOsdSnapshotRes 设备 OSD 快照响应。
-message DeviceOsdSnapshotRes {
+// GetDeviceOsdSnapshotRes 查询设备 OSD 快照响应。
+message GetDeviceOsdSnapshotRes {
   DeviceOsdSnapshot data = 1;
 }
 
@@ -1675,13 +1676,13 @@ message DeviceStateSnapshot {
   string reported_at = 4;
 }
 
-// DeviceStateSnapshotRes 设备 State 快照响应。
-message DeviceStateSnapshotRes {
+// GetDeviceStateSnapshotRes 查询设备 State 快照响应。
+message GetDeviceStateSnapshotRes {
   DeviceStateSnapshot data = 1;
 }
 
-// DeviceDetailRes 设备详情响应。
-message DeviceDetailRes {
+// GetDeviceDetailRes 查询设备详情响应。
+message GetDeviceDetailRes {
   DeviceInfo device = 1;
   DeviceOsdSnapshot osd = 2;
   DeviceStateSnapshot state = 3;
@@ -1769,6 +1770,10 @@ message AckHmsAlertReq {
   string acked_by = 2;
 }
 
+// AckHmsAlertRes 确认 HMS 告警响应。
+// 成功返回空响应，失败通过 gRPC error 返回。
+message AckHmsAlertRes {}
+
 // FlightTaskProgressInfo 飞行任务进度推送记录。
 message FlightTaskProgressInfo {
   string id = 1;
@@ -1810,8 +1815,8 @@ message ListFlightTaskProgressRes {
 // GetFlightTaskProgressLastReq 查询最近一次航线进度请求。
 message GetFlightTaskProgressLastReq { string device_sn = 1; }
 
-// FlightTaskProgressLastRes 最近一次航线任务进度（flighttask_progress）数据库记录。
-message FlightTaskProgressLastRes {
+// GetFlightTaskProgressLastRes 查询最近一次航线任务进度响应。
+message GetFlightTaskProgressLastRes {
   // has_progress 是否已有进度记录。
   bool has_progress = 1;
   // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
@@ -1823,8 +1828,8 @@ message FlightTaskProgressLastRes {
 // QueryDrcStatusReq 查询 DRC 运行状态请求。
 message QueryDrcStatusReq { string device_sn = 1; }
 
-// DrcStatusRes DRC 运行状态查询响应。
-message DrcStatusRes {
+// QueryDrcStatusRes 查询 DRC 运行状态响应。
+message QueryDrcStatusRes {
   // enabled DRC 模式是否已启用。
   bool enabled = 1;
   // started_at_millis DRC 模式启用时间字符串。
@@ -1879,6 +1884,7 @@ message SubmitCustomFlyRegionReq {
 }
 
 // SubmitCustomFlyRegionRes 提交自定义飞行区响应。
+// 平台处理失败通过 gRPC error 返回；DJI flight_areas_update ACK 结果通过以下字段返回。
 message SubmitCustomFlyRegionRes {
   int32 code = 1;
   string message = 2;
@@ -1893,6 +1899,7 @@ message DeleteCustomFlyRegionReq {
 }
 
 // DeleteCustomFlyRegionRes 删除自定义飞行区响应。
+// 平台处理失败通过 gRPC error 返回；DJI flight_areas_update ACK 结果通过以下字段返回。
 message DeleteCustomFlyRegionRes {
   int32 code = 1;
   string message = 2;
@@ -1906,6 +1913,7 @@ message DeleteCustomFlyRegionByFileIdReq {
 }
 
 // DeleteCustomFlyRegionByFileIdRes 按文件 ID 删除飞行区响应。
+// 平台处理失败通过 gRPC error 返回；DJI flight_areas_update ACK 结果通过以下字段返回。
 message DeleteCustomFlyRegionByFileIdRes {
   int32 code = 1;
   string message = 2;

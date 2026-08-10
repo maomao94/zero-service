@@ -27,7 +27,7 @@ func NewDroneCloseLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DroneC
 func (l *DroneCloseLogic) DroneClose(in *djicloud.DroneCloseReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DroneClose(l.ctx, in.DeviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

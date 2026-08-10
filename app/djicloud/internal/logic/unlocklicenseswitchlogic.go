@@ -29,7 +29,7 @@ func (l *UnlockLicenseSwitchLogic) UnlockLicenseSwitch(in *djicloud.UnlockLicens
 	data := &djisdk.UnlockLicenseSwitchData{LicenseID: in.GetLicenseId(), Enable: in.GetEnable()}
 	tid, err := l.svcCtx.DjiClient.UnlockLicenseSwitch(l.ctx, in.GetDeviceSn(), data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

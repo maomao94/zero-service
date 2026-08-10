@@ -26,7 +26,7 @@ func NewFlightTaskUndoLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Fl
 func (l *FlightTaskUndoLogic) FlightTaskUndo(in *djicloud.FlightTaskUndoReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.FlightTaskUndo(l.ctx, in.DeviceSn, in.FlightIds)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

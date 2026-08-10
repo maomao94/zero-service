@@ -29,12 +29,12 @@ func (l *DrcVideoResolutionSetLogic) DrcVideoResolutionSet(in *djicloud.DrcVideo
 	deviceSn := in.GetDeviceSn()
 	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	videoRes, _ := strconv.Atoi(in.GetVideoResolution())
 	data := &djisdk.DrcVideoResolutionSetData{PayloadIndex: in.GetPayloadIndex(), VideoResolution: videoRes}
 	if _, err := l.svcCtx.DjiClient.DrcVideoResolutionSet(l.ctx, deviceSn, seq, data); err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	return &djicloud.DrcVideoResolutionSetRes{Seq: int32(seq)}, nil
 }

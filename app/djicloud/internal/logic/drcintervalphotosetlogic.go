@@ -29,12 +29,12 @@ func (l *DrcIntervalPhotoSetLogic) DrcIntervalPhotoSet(in *djicloud.DrcIntervalP
 	deviceSn := in.GetDeviceSn()
 	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	interval, _ := strconv.ParseFloat(in.GetInterval(), 64)
 	data := &djisdk.DrcIntervalPhotoSetData{PayloadIndex: in.GetPayloadIndex(), Interval: interval}
 	if _, err := l.svcCtx.DjiClient.DrcIntervalPhotoSet(l.ctx, deviceSn, seq, data); err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	return &djicloud.DrcIntervalPhotoSetRes{Seq: int32(seq)}, nil
 }

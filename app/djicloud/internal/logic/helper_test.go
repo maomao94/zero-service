@@ -2,10 +2,41 @@ package logic
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
 	"testing"
 
 	"zero-service/app/djicloud/model/gormmodel"
+	"zero-service/common/djisdk"
 )
+
+func TestCommandResWrapsOnlyDJIError(t *testing.T) {
+	djiErr := djisdk.NewDJIError(123)
+	res, err := commandRes("tid-1", fmt.Errorf("device rejected command: %w", djiErr))
+	if err != nil {
+		t.Fatalf("commandRes() error = %v, want nil", err)
+	}
+	if res == nil {
+		t.Fatal("commandRes() response = nil")
+	}
+	if res.Code != -1 || res.Message != djiErr.Message || res.Tid != "tid-1" || res.ReasonCode != int32(djiErr.Code) {
+		t.Fatalf("commandRes() response = %+v, want wrapped DJI error", res)
+	}
+}
+
+func TestCommandResReturnsInfrastructureError(t *testing.T) {
+	cause := errors.New("mqtt unavailable")
+	res, err := commandRes("tid-2", cause)
+	if res != nil {
+		t.Fatalf("commandRes() response = %+v, want nil", res)
+	}
+	if err == nil {
+		t.Fatal("commandRes() error = nil")
+	}
+	if !errors.Is(err, cause) {
+		t.Fatalf("commandRes() error = %v, want original cause", err)
+	}
+}
 
 func TestToDeviceInfoReturnsPersistedDeviceTypeAndName(t *testing.T) {
 	item := &gormmodel.DjiDevice{

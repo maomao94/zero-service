@@ -8,6 +8,8 @@ import (
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -27,7 +29,7 @@ func NewAckHmsAlertLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AckHm
 }
 
 // AckHmsAlert 确认 HMS 告警。
-func (l *AckHmsAlertLogic) AckHmsAlert(in *djicloud.AckHmsAlertReq) (*djicloud.CommonRes, error) {
+func (l *AckHmsAlertLogic) AckHmsAlert(in *djicloud.AckHmsAlertReq) (*djicloud.AckHmsAlertRes, error) {
 	result := l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.DjiHmsAlert{}).Where("id = ?", in.Id).Updates(map[string]any{
 		"acked":       1,
 		"acked_at":    sql.NullTime{Time: time.Now(), Valid: true},
@@ -35,10 +37,10 @@ func (l *AckHmsAlertLogic) AckHmsAlert(in *djicloud.AckHmsAlertReq) (*djicloud.C
 		"update_time": time.Now(),
 	})
 	if result.Error != nil {
-		return &djicloud.CommonRes{Code: -1, Message: result.Error.Error()}, nil
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, result.Error, "确认 HMS 告警失败")
 	}
 	if result.RowsAffected == 0 {
-		return &djicloud.CommonRes{Code: -1, Message: "alert not found"}, nil
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "HMS 告警不存在")
 	}
-	return &djicloud.CommonRes{Code: 0, Message: "success"}, nil
+	return &djicloud.AckHmsAlertRes{}, nil
 }

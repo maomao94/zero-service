@@ -28,11 +28,11 @@ func (l *DrcCameraDewarpingSetLogic) DrcCameraDewarpingSet(in *djicloud.DrcCamer
 	deviceSn := in.GetDeviceSn()
 	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	data := &djisdk.DrcCameraDewarpingSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), DewarpingState: int(in.GetDewarpingState())}
 	if _, err := l.svcCtx.DjiClient.DrcCameraDewarpingSet(l.ctx, deviceSn, seq, data); err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	return &djicloud.DrcCameraDewarpingSetRes{Seq: int32(seq)}, nil
 }

@@ -37,7 +37,7 @@ func (l *OtaCreateLogic) OtaCreate(in *djicloud.OtaCreateReq) (*djicloud.CommonR
 	data := &djisdk.OtaCreateData{Devices: devices}
 	tid, err := l.svcCtx.DjiClient.OtaCreate(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

@@ -27,7 +27,7 @@ func NewDroneFormatLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Drone
 func (l *DroneFormatLogic) DroneFormat(in *djicloud.DroneFormatReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DroneFormat(l.ctx, in.DeviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

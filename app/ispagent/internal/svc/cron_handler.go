@@ -67,6 +67,7 @@ func NewCronHandler(svcCtx *ServiceContext) crontask.Handler {
 
 		// 开始执行
 		upsertPatrolState(string(gormmodel.PatrolTaskStateRunning))
+		time.Sleep(10 * time.Second)
 		sendStatus(string(gormmodel.PatrolTaskStateRunning))
 
 		threading.GoSafe(func() {

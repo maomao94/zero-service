@@ -6,21 +6,30 @@
 
 ## SDK 与协议所有权
 
-- `common/djisdk` 的协议包拥有 topic 构造、method、typed payload 和结果解析；`app/djicloud` Logic/hook 不手工拼 topic 或通用 map。
-- client option 只写构造配置；`NewClient` 负责连接、handler、reply router 和运行态初始化。
-- `SendCommand` 表达需要设备响应的 request/reply；fire-and-forget publish 是另一种语义，不能因返回 error 形式相似而互换。
-- 请求应答使用 TID/BID 等协议关联标识，先注册后发送，区分 broker publish、设备回复和 reply result。
+- `common/djisdk` 的协议包拥有 topic 构造（`topic.go`）、method 常量（`method.go`）、typed payload（`protocol.go`）、DRC 载荷（`protocol_drc.go`）和结果解析；`app/djicloud` Logic/hook 不手工拼 topic 或 `map[string]any`。
+- `MustNewClient(cfg Config, opts ...ClientOption)` 为 go-zero 风格构造，接收 `mqttx.MqttConfig`、`PendingTTL`、`ReplyConfig`、`DrcConfig`、`HmsConfig`；`NewClient(mqttx.Client, opts ...ClientOption)` 接收已建好的 MQTT client。
+- `Config.PendingTTL` 默认 30s，控制在 `mqttx.RequestReply` 中等待设备 `services_reply` / `property/set_reply` 的超时。
+- handler 注册通过 `With*Handler` 系列 option：`WithFlightTaskProgressHandler`、`WithHmsEventNotifyHandler`、`WithUpdateTopoHandler`、`WithOsdHandler`、`WithStateHandler`、`WithStatusHandler`、`WithRequestHandler`、`WithDrcUpHandler`、`WithOnlineChecker` 等。handler 无返回值的方法也可用 `WithFlightTaskReadyHandler` 等注册。
+- `SendCommand` 经 `services` 下发并等待 `services_reply`，应答中 `result != 0` 转换为 `*DJIError`；`SendCommandFireAndForget` 只发布不等待应答；两者语义不同，不能互换。
+- `PropertySet` 经 `property/set` 下发并等待 `property/set_reply`，与 `SendCommand` 共用同一 request/reply 机制但走独立 topic。
+- 请求应答使用 TID/BID 关联，在 `mqttx.ReplyRouter` 中通过 TID 匹配请求与回复。
+- `onlineChecker` 在 `SendCommand` 入口提前拦截离线设备，不经 MQTT 发布直接返回错误。
 
-依据：`common/djisdk/client.go`、`common/djisdk/option.go`、`common/djisdk/handler.go`、`common/djisdk` 协议目录与测试。
+依据：`common/djisdk/client.go:37-49`、`common/djisdk/option.go:21-217`、`common/djisdk/handler.go:43-78`、`common/djisdk/client.go:80-117`。
 
 ## 上行处理与数据所有权
 
-- `app/djicloud` 的 event、telemetry、DRC、request hooks 按 DJI 上行类型分工；新增 method 放到对应注册边界，不建立第二套总分发器。
-- 设备/拓扑/最新状态属于快照，使用查询后更新或现有 `FirstOrCreate` + `Assign` 模式；事件/告警历史使用追加 `Create`，不得 Upsert 覆盖历史。
-- 在线语义由当前设备/topology/heartbeat 处理链路拥有；单条旧消息或迟到 callback 不能覆盖更新 session 的在线状态。
+- SDK 通配订阅 `SubscribeAll()` 注册六路 handler：`HandleOsd`、`HandleState`、`HandleEvents`、`HandleRequests`、`HandleStatus`、`HandleDrcUp`。`app/djicloud` 的 hook 各自注册到对应 handler option，不建立第二套总分发器。
+- `HandleEvents` 内按 method 预分发强类型处理（`tryDispatchEventNotify`）：`flighttask_progress` → `OnFlightTaskProgress`、`flighttask_ready` → `OnFlightTaskReady`、`hms` → `OnHmsEventNotify`、`return_home_info` → `OnReturnHomeInfo`、`ota_progress` → `OnOtaProgress`、`remote_log_file_upload_progress` → `OnRemoteLogFileUploadProgress`、`flight_areas_sync_progress` → `OnFlightAreasSyncProgress`、`flight_areas_drone_location` → `OnFlightAreasDroneLocation`、`custom_data_transmission_from_psdk` / `_from_esdk` 等；未命中 method 打印日志不报错。`need_reply` 由 `ReplyConfig.EnableEventReply` 控制。
+- `HandleStatus` 内按 method 预分发 `update_topo` → `OnUpdateTopo`，未命中则由 `OnStatus` 全局回调兜底；`ReplyConfig.EnableStatusReply` 控制 `status_reply` 发送。
+- `HandleRequests` 将整条 `RequestMessage` 交给 `OnRequest` handler，返回 `output` 写入 `requests_reply.data.output`；handler 返回 `ErrSkipRequestReply` 时不发送回复。`ReplyConfig.EnableRequestReply` 控制回复行为。
+- `HandleDrcUp` 解析为 `DrcUpMessage` + typed data（`DrcUnmarshalUpData`），未知 method 保留 `*DrcUnknownUpData`；`drc/up` 上的心跳 `heart_beat` 自动路由到 DRC manager 的 `OnDeviceHeartbeat`。
+- handler 返回的 error 若为 `*PlatformError`，其 `Code` 作为 `status_reply` / `events_reply` / `requests_reply` 的 `result`；否则默认 `PlatformResultHandlerError`（1）。
+- 设备/拓扑/最新状态属于快照，使用查询后更新或 `FirstOrCreate` + `Assign` 模式；事件/告警历史使用追加 `Create`，不得 Upsert 覆盖历史。
+- 在线语义由当前 OSD/拓扑/heartbeat 处理链路拥有；单条旧消息或迟到 callback 不能覆盖更新 session 的在线状态。内存缓存 (`OnlineCache`) 做在线判断短路，缓存未命中时回退数据库 `last_online_at` 懒过期。
 - Store/model 决定事务和更新字段。不要从 hook 整行 `Save`，也不要以方言专属 Upsert SQL 替换已经测试的写入模式。
 
-依据：`app/djicloud/internal/hooks`、`app/djicloud/model/gormmodel` 及其测试。
+依据：`app/djicloud/internal/hooks`、`app/djicloud/internal/logic/helper.go`、`common/djisdk/handler.go:90-567`、`app/djicloud/model/gormmodel` 及其测试。
 
 ## 设备主表与拓扑型号契约
 
@@ -177,19 +186,89 @@ message := resolver.Resolve(item).Message
 
 ## DRC 并发模型
 
-- Manager map 由 manager 锁保护，session 可变字段由 session 锁保护；统一按 manager -> session 的顺序取得，不允许反向。
+- Manager map 由 `drcManager.mu` 保护，session 可变字段由 `drcDeviceSession.mu` 保护；统一按 manager -> session 的顺序取得，不允许反向。
 - 取得 session 后的网络写入只持 session 所需锁，避免长期占用 manager 锁阻塞其他设备。
-- 每次新会话分配新的 session ID/version；旧 read/heartbeat/cleanup goroutine 在修改状态前验证自己仍是当前 session。
-- `heartbeatCancel` 属于对应 session，只能由该 session 的替换/关闭路径调用和清除。
+- 每次新会话分配新的 `sessionID`（UUID）；旧 heartbeat/cleanup goroutine 在修改状态前验证自己的 `sessionID` 与当前 session 一致。
+- `heartbeatCancel()` 属于对应 session，只能由该 session 的替换 (`DeleteSession`) 或关闭 (`Disable`) 路径调用和清除。
 - 清理采用锁内标记/快照、锁外关闭与回调，避免持锁 I/O 和 callback 重入死锁。
+- `cleanupExpiredSessions` 在 heartbeat goroutine 内每秒执行：锁内遍历所有 session，收集过期项（`lastHb + timeout < now`），锁外调用 `DeleteSession`。
+- `Enable` 支持 `max_deadline` 时间上限（`WithDrcMaxTimeout`），到期自动退场。
+- `GetNextSeq` 原子增 1，`seq` 在 session 替换后重置为 1。
+- DRC manager 的 lifecycle hook 通过 `WithDrcSessionEnabled` / `WithDrcSessionDisabled` / `WithDrcSessionExpired` 注册到 client option。
 
-依据：`common/djisdk/drc.go`、`common/djisdk/protocol_drc_test.go`。
+依据：`common/djisdk/drc.go:73-460`、`common/djisdk/client.go:1042-1078`、`common/djisdk/drc_test.go`。
 
 ## 飞行区与外部资源
 
-- DJI 自定义飞行区 payload、坐标和文件字段复用现有 protocol/model helper；GIS 规则见 [gis-guidelines.md](./gis-guidelines.md)。
-- OSS 上传、设备同步和数据库记录是多个阶段。失败时保留可重试状态，删除按现有 device/file ID 所有权执行，不把部分成功报告为全部完成。
+- DJI 自定义飞行区 payload、坐标和文件字段复用 `djisdk.GeofenceFeature`、`djisdk.NewGeofencePolygonFeature`、`djisdk.NewGeofenceCircleFeature`、`djisdk.NewGeofenceFeatureCollection`；GIS 规则见 [gis-guidelines.md](./gis-guidelines.md)。
+- 飞行区交互时序：Logic 将 proto 几何参数转为 DJI GeoJSON → 上传 OSS → 写入 `DjiDeviceFlyRegion` 记录 → `FlightAreasUpdate` 通知设备 → 设备经 `flight_areas_get` requests 拉取文件 → 云平台 `requests_reply` 返回 OSS URL。
+- OSS 上传失败、数据库写入失败和 `FlightAreasUpdate` 通知失败都是平台阶段错误，使用 gRPC error（`tool.NewErrorByPbCode*`）。`FlightAreasUpdate` 等待设备 ACK 后的 DJI rejection 保留在响应的 `tid/reason_code` 中。
+- 删除按现有 fly region record ID 所有权执行；`DeleteCustomFlyRegionByFileId` 按 fileId 精确删除。不把部分成功报告为全部完成。
+- 飞行区同步进度（`flight_areas_sync_progress`）和告警（`flight_areas_drone_location`）由 events hook 处理。
 - 外部设备返回原始结构在 SDK 边界转换，业务 model 不直接绑定所有上游字段。
+
+## DJI RPC 错误边界
+
+### 1. Scope / Trigger
+
+- 修改 `app/djicloud/djicloud.proto`、返回 `CommonRes` 的 Logic、`drc/down` 即发即忘接口或平台组合接口时适用。
+- 目标是区分“设备已 ACK 但拒绝执行”和“平台调用链失败”，避免将数据库、MQTT、超时等错误伪装为正常 gRPC 响应。
+
+### 2. Signatures
+
+- 等待设备 ACK 的命令返回 `(*djicloud.CommonRes, error)`。
+- `CommonRes` 固定包含 `code/message/tid/reason_code`；平台专用响应按 `<RpcName>Res` 命名。
+- `AckHmsAlert` 返回 `(*djicloud.AckHmsAlertRes, error)`；成功响应为空，失败返回 extproto error。
+- `commandRes(tid string, err error) (*djicloud.CommonRes, error)` 仅把 `djisdk.DJIError` 转为 `CommonRes`。
+
+### 3. Contracts
+
+- DJI 设备 ACK 的 `result != 0`：返回 `CommonRes{Code:-1, Message, Tid, ReasonCode}` 和 `nil` error。
+- 设备 ACK 成功：返回 `CommonRes{Code:0, Message:"success", Tid}`。
+- 参数、数据库、OSS、配置和 DRC 序列分配失败：返回 `tool.NewErrorByPbCode*`，响应为 `nil`。
+- 等待 DJI ACK 的 SDK 调用若返回非 `DJIError`（如设备离线、MQTT 发布或等待超时），直接返回 SDK 原始 error，保留其具体错误信息。
+- `drc/down` 接口无设备 ACK；成功响应只表达已分配/发布的 `seq`，不得使用 `CommonRes` 推断设备执行成功。
+- 自定义飞行区写接口的平台阶段失败走 extproto error；末尾 `FlightAreasUpdate` 的 typed DJI 拒绝保留在专用响应的 `tid/reason_code`。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 返回行为 |
+| --- | --- |
+| `djisdk.IsDJIError(err)` 成功 | `code=-1`、原始 `reason_code`、对应 `tid`，gRPC error 为 `nil` |
+| 等待 ACK 命令的 MQTT/request-reply/超时/离线错误 | 直接返回 SDK error，响应为 `nil` |
+| 平台参数或 JSON 非法 | `_1_01_PARAM_INVALID` / `_1_01_PARAM_MISSING` |
+| 平台数据库失败 | `_1_02_DB` |
+| 平台记录不存在 | `_1_02_RECORD_NOT_EXIST` |
+| OSS 未配置或上传/签名失败 | `_1_00_INTERNAL` 或 `_1_06_THIRD_PARTY` |
+| DRC fire-and-forget 发布成功 | 返回对应 `*Res{Seq}`，不等待设备结果 |
+
+### 5. Good/Base/Bad Cases
+
+- Good: 设备回复 DJI 错误码时，调用方收到 `tid/reason_code`，可按 DJI 业务原因处理。
+- Base: 平台查询无记录时按该 RPC 契约返回空数据或 `_1_02_RECORD_NOT_EXIST`，不构造 `CommonRes`。
+- Bad: MQTT 超时、设备离线或数据库错误返回 `CommonRes{Code:-1, Message:err.Error()}`，导致调用方误判为设备业务拒绝。
+
+### 6. Tests Required
+
+- Helper 单测断言 typed `DJIError` 产生 `CommonRes`，并保留 `tid/reason_code`。
+- Helper 单测断言普通 error 原样返回，且 `errors.Is` 仍能识别原 cause。
+- 平台 Logic 测试覆盖数据库错误、记录不存在和空成功响应。
+- DRC fire-and-forget 测试覆盖序列分配失败与 publish 失败，断言响应为 `nil` 且错误为 `_1_06_THIRD_PARTY`。
+- Proto 变更执行 `app/djicloud/gen.sh`，并运行 `go test ./app/djicloud/...`。
+
+### 7. Wrong vs Correct
+
+```go
+// Wrong: 将所有 SDK 错误都包装成设备业务结果。
+if err != nil {
+	return &djicloud.CommonRes{Code: -1, Message: err.Error(), Tid: tid}, nil
+}
+
+// Correct: 只有 typed DJI ACK 错误进入响应，其余错误走 gRPC error。
+if err != nil {
+	return commandRes(tid, err)
+}
+```
 
 ## 反模式
 

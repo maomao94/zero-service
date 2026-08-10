@@ -28,11 +28,11 @@ func (l *StickControlLogic) StickControl(in *djicloud.StickControlReq) (*djiclou
 	deviceSn := in.GetDeviceSn()
 	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	data := buildDrcStickControlData(in)
 	if _, err := l.svcCtx.DjiClient.StickControl(l.ctx, deviceSn, int(seq), data); err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	return &djicloud.StickControlRes{Seq: int32(seq)}, nil
 }

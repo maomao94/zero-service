@@ -26,7 +26,7 @@ func NewFlightTaskExecuteLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 func (l *FlightTaskExecuteLogic) FlightTaskExecute(in *djicloud.FlightTaskExecuteReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.FlightTaskExecute(l.ctx, in.DeviceSn, in.FlightId)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

@@ -488,29 +488,29 @@ type DjiCloudClient interface {
 	// IsDeviceOnline 查询设备在线状态。
 	// device_sn 可传机巢SN或子设备SN；机巢在线和子设备在线分开判定。
 	// 当前服务应配置数据库用于持久化设备状态；内存 onlineCache 保存热数据以提升高频在线判断性能，数据库保存最近一次在线快照并通过 last_online_at 懒过期清理。
-	IsDeviceOnline(ctx context.Context, in *IsDeviceOnlineReq, opts ...grpc.CallOption) (*DeviceOnlineRes, error)
+	IsDeviceOnline(ctx context.Context, in *IsDeviceOnlineReq, opts ...grpc.CallOption) (*IsDeviceOnlineRes, error)
 	// ListDevices 查询设备列表，包含机巢、无人机、负载等设备。
 	ListDevices(ctx context.Context, in *ListDevicesReq, opts ...grpc.CallOption) (*ListDevicesRes, error)
 	// GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
-	GetDeviceDetail(ctx context.Context, in *GetDeviceDetailReq, opts ...grpc.CallOption) (*DeviceDetailRes, error)
+	GetDeviceDetail(ctx context.Context, in *GetDeviceDetailReq, opts ...grpc.CallOption) (*GetDeviceDetailRes, error)
 	// GetDeviceOsdSnapshot 查询设备最近一次 OSD 遥测快照。
-	GetDeviceOsdSnapshot(ctx context.Context, in *GetDeviceOsdSnapshotReq, opts ...grpc.CallOption) (*DeviceOsdSnapshotRes, error)
+	GetDeviceOsdSnapshot(ctx context.Context, in *GetDeviceOsdSnapshotReq, opts ...grpc.CallOption) (*GetDeviceOsdSnapshotRes, error)
 	// GetDeviceStateSnapshot 查询设备最近一次 State 状态快照。
-	GetDeviceStateSnapshot(ctx context.Context, in *GetDeviceStateSnapshotReq, opts ...grpc.CallOption) (*DeviceStateSnapshotRes, error)
+	GetDeviceStateSnapshot(ctx context.Context, in *GetDeviceStateSnapshotReq, opts ...grpc.CallOption) (*GetDeviceStateSnapshotRes, error)
 	// ListHmsAlerts 查询 HMS 告警记录。
 	ListHmsAlerts(ctx context.Context, in *ListHmsAlertsReq, opts ...grpc.CallOption) (*ListHmsAlertsRes, error)
 	// AckHmsAlert 确认 HMS 告警。
-	AckHmsAlert(ctx context.Context, in *AckHmsAlertReq, opts ...grpc.CallOption) (*CommonRes, error)
+	AckHmsAlert(ctx context.Context, in *AckHmsAlertReq, opts ...grpc.CallOption) (*AckHmsAlertRes, error)
 	// ListFlightTaskProgress 查询飞行任务进度上行记录。
 	// 仅记录 flighttask_progress 推送，不在本服务内维护完整任务状态机。
 	ListFlightTaskProgress(ctx context.Context, in *ListFlightTaskProgressReq, opts ...grpc.CallOption) (*ListFlightTaskProgressRes, error)
 	// GetFlightTaskProgressLast 查询最近一次 flighttask_progress 上行记录。
 	// 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），由 SDK 分发至钩子后写入数据库。
 	// 该接口只返回最近一条进度记录，不代表完整任务状态机；非大疆标准查询接口。
-	GetFlightTaskProgressLast(ctx context.Context, in *GetFlightTaskProgressLastReq, opts ...grpc.CallOption) (*FlightTaskProgressLastRes, error)
+	GetFlightTaskProgressLast(ctx context.Context, in *GetFlightTaskProgressLastReq, opts ...grpc.CallOption) (*GetFlightTaskProgressLastRes, error)
 	// QueryDrcStatus 查询设备 DRC 运行状态。
 	// 返回 DRC 模式启用状态、启动时间、最近设备心跳时间、序号和存活状态。
-	QueryDrcStatus(ctx context.Context, in *QueryDrcStatusReq, opts ...grpc.CallOption) (*DrcStatusRes, error)
+	QueryDrcStatus(ctx context.Context, in *QueryDrcStatusReq, opts ...grpc.CallOption) (*QueryDrcStatusRes, error)
 	// SubmitCustomFlyRegion 提交自定义飞行区（新增/更新）。
 	// 接收结构化几何参数，生成 DJI GeoJSON 上传 OSS，写入 DB 后通知目标机巢拉取。
 	SubmitCustomFlyRegion(ctx context.Context, in *SubmitCustomFlyRegionReq, opts ...grpc.CallOption) (*SubmitCustomFlyRegionRes, error)
@@ -1392,9 +1392,9 @@ func (c *djiCloudClient) DrcCameraDewarpingSet(ctx context.Context, in *DrcCamer
 	return out, nil
 }
 
-func (c *djiCloudClient) IsDeviceOnline(ctx context.Context, in *IsDeviceOnlineReq, opts ...grpc.CallOption) (*DeviceOnlineRes, error) {
+func (c *djiCloudClient) IsDeviceOnline(ctx context.Context, in *IsDeviceOnlineReq, opts ...grpc.CallOption) (*IsDeviceOnlineRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeviceOnlineRes)
+	out := new(IsDeviceOnlineRes)
 	err := c.cc.Invoke(ctx, DjiCloud_IsDeviceOnline_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1412,9 +1412,9 @@ func (c *djiCloudClient) ListDevices(ctx context.Context, in *ListDevicesReq, op
 	return out, nil
 }
 
-func (c *djiCloudClient) GetDeviceDetail(ctx context.Context, in *GetDeviceDetailReq, opts ...grpc.CallOption) (*DeviceDetailRes, error) {
+func (c *djiCloudClient) GetDeviceDetail(ctx context.Context, in *GetDeviceDetailReq, opts ...grpc.CallOption) (*GetDeviceDetailRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeviceDetailRes)
+	out := new(GetDeviceDetailRes)
 	err := c.cc.Invoke(ctx, DjiCloud_GetDeviceDetail_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1422,9 +1422,9 @@ func (c *djiCloudClient) GetDeviceDetail(ctx context.Context, in *GetDeviceDetai
 	return out, nil
 }
 
-func (c *djiCloudClient) GetDeviceOsdSnapshot(ctx context.Context, in *GetDeviceOsdSnapshotReq, opts ...grpc.CallOption) (*DeviceOsdSnapshotRes, error) {
+func (c *djiCloudClient) GetDeviceOsdSnapshot(ctx context.Context, in *GetDeviceOsdSnapshotReq, opts ...grpc.CallOption) (*GetDeviceOsdSnapshotRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeviceOsdSnapshotRes)
+	out := new(GetDeviceOsdSnapshotRes)
 	err := c.cc.Invoke(ctx, DjiCloud_GetDeviceOsdSnapshot_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1432,9 +1432,9 @@ func (c *djiCloudClient) GetDeviceOsdSnapshot(ctx context.Context, in *GetDevice
 	return out, nil
 }
 
-func (c *djiCloudClient) GetDeviceStateSnapshot(ctx context.Context, in *GetDeviceStateSnapshotReq, opts ...grpc.CallOption) (*DeviceStateSnapshotRes, error) {
+func (c *djiCloudClient) GetDeviceStateSnapshot(ctx context.Context, in *GetDeviceStateSnapshotReq, opts ...grpc.CallOption) (*GetDeviceStateSnapshotRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeviceStateSnapshotRes)
+	out := new(GetDeviceStateSnapshotRes)
 	err := c.cc.Invoke(ctx, DjiCloud_GetDeviceStateSnapshot_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1452,9 +1452,9 @@ func (c *djiCloudClient) ListHmsAlerts(ctx context.Context, in *ListHmsAlertsReq
 	return out, nil
 }
 
-func (c *djiCloudClient) AckHmsAlert(ctx context.Context, in *AckHmsAlertReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) AckHmsAlert(ctx context.Context, in *AckHmsAlertReq, opts ...grpc.CallOption) (*AckHmsAlertRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
+	out := new(AckHmsAlertRes)
 	err := c.cc.Invoke(ctx, DjiCloud_AckHmsAlert_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1472,9 +1472,9 @@ func (c *djiCloudClient) ListFlightTaskProgress(ctx context.Context, in *ListFli
 	return out, nil
 }
 
-func (c *djiCloudClient) GetFlightTaskProgressLast(ctx context.Context, in *GetFlightTaskProgressLastReq, opts ...grpc.CallOption) (*FlightTaskProgressLastRes, error) {
+func (c *djiCloudClient) GetFlightTaskProgressLast(ctx context.Context, in *GetFlightTaskProgressLastReq, opts ...grpc.CallOption) (*GetFlightTaskProgressLastRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(FlightTaskProgressLastRes)
+	out := new(GetFlightTaskProgressLastRes)
 	err := c.cc.Invoke(ctx, DjiCloud_GetFlightTaskProgressLast_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1482,9 +1482,9 @@ func (c *djiCloudClient) GetFlightTaskProgressLast(ctx context.Context, in *GetF
 	return out, nil
 }
 
-func (c *djiCloudClient) QueryDrcStatus(ctx context.Context, in *QueryDrcStatusReq, opts ...grpc.CallOption) (*DrcStatusRes, error) {
+func (c *djiCloudClient) QueryDrcStatus(ctx context.Context, in *QueryDrcStatusReq, opts ...grpc.CallOption) (*QueryDrcStatusRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DrcStatusRes)
+	out := new(QueryDrcStatusRes)
 	err := c.cc.Invoke(ctx, DjiCloud_QueryDrcStatus_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1905,29 +1905,29 @@ type DjiCloudServer interface {
 	// IsDeviceOnline 查询设备在线状态。
 	// device_sn 可传机巢SN或子设备SN；机巢在线和子设备在线分开判定。
 	// 当前服务应配置数据库用于持久化设备状态；内存 onlineCache 保存热数据以提升高频在线判断性能，数据库保存最近一次在线快照并通过 last_online_at 懒过期清理。
-	IsDeviceOnline(context.Context, *IsDeviceOnlineReq) (*DeviceOnlineRes, error)
+	IsDeviceOnline(context.Context, *IsDeviceOnlineReq) (*IsDeviceOnlineRes, error)
 	// ListDevices 查询设备列表，包含机巢、无人机、负载等设备。
 	ListDevices(context.Context, *ListDevicesReq) (*ListDevicesRes, error)
 	// GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
-	GetDeviceDetail(context.Context, *GetDeviceDetailReq) (*DeviceDetailRes, error)
+	GetDeviceDetail(context.Context, *GetDeviceDetailReq) (*GetDeviceDetailRes, error)
 	// GetDeviceOsdSnapshot 查询设备最近一次 OSD 遥测快照。
-	GetDeviceOsdSnapshot(context.Context, *GetDeviceOsdSnapshotReq) (*DeviceOsdSnapshotRes, error)
+	GetDeviceOsdSnapshot(context.Context, *GetDeviceOsdSnapshotReq) (*GetDeviceOsdSnapshotRes, error)
 	// GetDeviceStateSnapshot 查询设备最近一次 State 状态快照。
-	GetDeviceStateSnapshot(context.Context, *GetDeviceStateSnapshotReq) (*DeviceStateSnapshotRes, error)
+	GetDeviceStateSnapshot(context.Context, *GetDeviceStateSnapshotReq) (*GetDeviceStateSnapshotRes, error)
 	// ListHmsAlerts 查询 HMS 告警记录。
 	ListHmsAlerts(context.Context, *ListHmsAlertsReq) (*ListHmsAlertsRes, error)
 	// AckHmsAlert 确认 HMS 告警。
-	AckHmsAlert(context.Context, *AckHmsAlertReq) (*CommonRes, error)
+	AckHmsAlert(context.Context, *AckHmsAlertReq) (*AckHmsAlertRes, error)
 	// ListFlightTaskProgress 查询飞行任务进度上行记录。
 	// 仅记录 flighttask_progress 推送，不在本服务内维护完整任务状态机。
 	ListFlightTaskProgress(context.Context, *ListFlightTaskProgressReq) (*ListFlightTaskProgressRes, error)
 	// GetFlightTaskProgressLast 查询最近一次 flighttask_progress 上行记录。
 	// 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），由 SDK 分发至钩子后写入数据库。
 	// 该接口只返回最近一条进度记录，不代表完整任务状态机；非大疆标准查询接口。
-	GetFlightTaskProgressLast(context.Context, *GetFlightTaskProgressLastReq) (*FlightTaskProgressLastRes, error)
+	GetFlightTaskProgressLast(context.Context, *GetFlightTaskProgressLastReq) (*GetFlightTaskProgressLastRes, error)
 	// QueryDrcStatus 查询设备 DRC 运行状态。
 	// 返回 DRC 模式启用状态、启动时间、最近设备心跳时间、序号和存活状态。
-	QueryDrcStatus(context.Context, *QueryDrcStatusReq) (*DrcStatusRes, error)
+	QueryDrcStatus(context.Context, *QueryDrcStatusReq) (*QueryDrcStatusRes, error)
 	// SubmitCustomFlyRegion 提交自定义飞行区（新增/更新）。
 	// 接收结构化几何参数，生成 DJI GeoJSON 上传 OSS，写入 DB 后通知目标机巢拉取。
 	SubmitCustomFlyRegion(context.Context, *SubmitCustomFlyRegionReq) (*SubmitCustomFlyRegionRes, error)
@@ -2207,34 +2207,34 @@ func (UnimplementedDjiCloudServer) DrcCameraMechanicalShutterSet(context.Context
 func (UnimplementedDjiCloudServer) DrcCameraDewarpingSet(context.Context, *DrcCameraDewarpingSetReq) (*DrcCameraDewarpingSetRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method DrcCameraDewarpingSet not implemented")
 }
-func (UnimplementedDjiCloudServer) IsDeviceOnline(context.Context, *IsDeviceOnlineReq) (*DeviceOnlineRes, error) {
+func (UnimplementedDjiCloudServer) IsDeviceOnline(context.Context, *IsDeviceOnlineReq) (*IsDeviceOnlineRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method IsDeviceOnline not implemented")
 }
 func (UnimplementedDjiCloudServer) ListDevices(context.Context, *ListDevicesReq) (*ListDevicesRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListDevices not implemented")
 }
-func (UnimplementedDjiCloudServer) GetDeviceDetail(context.Context, *GetDeviceDetailReq) (*DeviceDetailRes, error) {
+func (UnimplementedDjiCloudServer) GetDeviceDetail(context.Context, *GetDeviceDetailReq) (*GetDeviceDetailRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetDeviceDetail not implemented")
 }
-func (UnimplementedDjiCloudServer) GetDeviceOsdSnapshot(context.Context, *GetDeviceOsdSnapshotReq) (*DeviceOsdSnapshotRes, error) {
+func (UnimplementedDjiCloudServer) GetDeviceOsdSnapshot(context.Context, *GetDeviceOsdSnapshotReq) (*GetDeviceOsdSnapshotRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetDeviceOsdSnapshot not implemented")
 }
-func (UnimplementedDjiCloudServer) GetDeviceStateSnapshot(context.Context, *GetDeviceStateSnapshotReq) (*DeviceStateSnapshotRes, error) {
+func (UnimplementedDjiCloudServer) GetDeviceStateSnapshot(context.Context, *GetDeviceStateSnapshotReq) (*GetDeviceStateSnapshotRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetDeviceStateSnapshot not implemented")
 }
 func (UnimplementedDjiCloudServer) ListHmsAlerts(context.Context, *ListHmsAlertsReq) (*ListHmsAlertsRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListHmsAlerts not implemented")
 }
-func (UnimplementedDjiCloudServer) AckHmsAlert(context.Context, *AckHmsAlertReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) AckHmsAlert(context.Context, *AckHmsAlertReq) (*AckHmsAlertRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method AckHmsAlert not implemented")
 }
 func (UnimplementedDjiCloudServer) ListFlightTaskProgress(context.Context, *ListFlightTaskProgressReq) (*ListFlightTaskProgressRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListFlightTaskProgress not implemented")
 }
-func (UnimplementedDjiCloudServer) GetFlightTaskProgressLast(context.Context, *GetFlightTaskProgressLastReq) (*FlightTaskProgressLastRes, error) {
+func (UnimplementedDjiCloudServer) GetFlightTaskProgressLast(context.Context, *GetFlightTaskProgressLastReq) (*GetFlightTaskProgressLastRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetFlightTaskProgressLast not implemented")
 }
-func (UnimplementedDjiCloudServer) QueryDrcStatus(context.Context, *QueryDrcStatusReq) (*DrcStatusRes, error) {
+func (UnimplementedDjiCloudServer) QueryDrcStatus(context.Context, *QueryDrcStatusReq) (*QueryDrcStatusRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method QueryDrcStatus not implemented")
 }
 func (UnimplementedDjiCloudServer) SubmitCustomFlyRegion(context.Context, *SubmitCustomFlyRegionReq) (*SubmitCustomFlyRegionRes, error) {

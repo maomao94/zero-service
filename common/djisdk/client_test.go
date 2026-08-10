@@ -3,6 +3,8 @@ package djisdk
 import (
 	"context"
 	"errors"
+	"strings"
+	"testing"
 
 	"zero-service/common/mqttx"
 )
@@ -54,3 +56,20 @@ func (c *recordingMQTTClient) GetClientID() string {
 }
 
 var errPublishFailed = errors.New("publish failed")
+
+func TestSendCommandRejectsOfflineDeviceBeforePublish(t *testing.T) {
+	mqtt := &recordingMQTTClient{}
+	client := NewClient(mqtt,
+		WithPendingTTL(0),
+		WithOnlineChecker(func(gatewaySn string) bool { return gatewaySn == "online-1" }),
+	)
+
+	if _, err := client.SendCommand(context.Background(), "offline-1", MethodFlightTaskExecute, map[string]any{}); err == nil {
+		t.Fatal("SendCommand() succeeded for offline device, want error")
+	} else if !strings.Contains(err.Error(), "device offline") {
+		t.Fatalf("SendCommand() error = %v, want device offline message", err)
+	}
+	if len(mqtt.published) != 0 {
+		t.Fatalf("SendCommand() published %d messages, want 0", len(mqtt.published))
+	}
+}

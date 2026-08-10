@@ -32,7 +32,7 @@ func (l *UnlockLicenseUpdateLogic) UnlockLicenseUpdate(in *djicloud.UnlockLicens
 	}
 	tid, err := l.svcCtx.DjiClient.UnlockLicenseUpdate(l.ctx, in.GetDeviceSn(), data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

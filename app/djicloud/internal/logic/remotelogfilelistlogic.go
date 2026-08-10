@@ -32,7 +32,7 @@ func (l *RemoteLogFileListLogic) RemoteLogFileList(in *djicloud.RemoteLogFileLis
 	}
 	tid, err := l.svcCtx.DjiClient.RemoteLogFileList(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

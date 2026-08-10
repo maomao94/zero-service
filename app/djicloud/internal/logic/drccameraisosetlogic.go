@@ -28,11 +28,11 @@ func (l *DrcCameraIsoSetLogic) DrcCameraIsoSet(in *djicloud.DrcCameraIsoSetReq) 
 	deviceSn := in.GetDeviceSn()
 	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	data := &djisdk.DrcCameraIsoSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), ISOValue: int(in.GetIsoValue())}
 	if _, err := l.svcCtx.DjiClient.DrcCameraIsoSet(l.ctx, deviceSn, seq, data); err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	return &djicloud.DrcCameraIsoSetRes{Seq: int32(seq)}, nil
 }

@@ -40,7 +40,7 @@ func (l *RemoteLogFileUploadCancelLogic) RemoteLogFileUploadCancel(in *djicloud.
 	data := &djisdk.RemoteLogFileUploadCancelData{Files: files}
 	tid, err := l.svcCtx.DjiClient.RemoteLogFileUploadCancel(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

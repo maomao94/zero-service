@@ -34,7 +34,7 @@ func (l *CameraAimLogic) CameraAim(in *djicloud.CameraAimReq) (*djicloud.CommonR
 	}
 	tid, err := l.svcCtx.DjiClient.CameraAim(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

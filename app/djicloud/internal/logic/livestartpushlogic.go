@@ -33,7 +33,7 @@ func (l *LiveStartPushLogic) LiveStartPush(in *djicloud.LiveStartPushReq) (*djic
 	}
 	tid, err := l.svcCtx.DjiClient.LiveStartPush(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

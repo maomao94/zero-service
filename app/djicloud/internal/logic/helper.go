@@ -7,20 +7,34 @@ import (
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/model/gormmodel"
 	"zero-service/common/djisdk"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/dromara/carbon/v2"
 )
 
-func errRes(tid string, err error) *djicloud.CommonRes {
-	if djiErr, ok := djisdk.IsDJIError(err); ok {
+func commandRes(tid string, err error) (*djicloud.CommonRes, error) {
+	message, reasonCode, err := commandError(err)
+	if err == nil {
 		return &djicloud.CommonRes{
 			Code:       -1,
-			Message:    djiErr.Message,
+			Message:    message,
 			Tid:        tid,
-			ReasonCode: int32(djiErr.Code),
-		}
+			ReasonCode: reasonCode,
+		}, nil
 	}
-	return &djicloud.CommonRes{Code: -1, Message: err.Error(), Tid: tid}
+	return nil, err
+}
+
+func commandError(err error) (string, int32, error) {
+	if djiErr, ok := djisdk.IsDJIError(err); ok {
+		return djiErr.Message, int32(djiErr.Code), nil
+	}
+	return "", 0, err
+}
+
+func drcError(err error, operation string) error {
+	return tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, operation)
 }
 
 func okRes(tid string) *djicloud.CommonRes {

@@ -33,7 +33,7 @@ func (l *PsdkUIResourceUploadLogic) PsdkUIResourceUpload(in *djicloud.PsdkUIReso
 	}
 	tid, err := l.svcCtx.DjiClient.PsdkUIResourceUpload(l.ctx, in.GetDeviceSn(), data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

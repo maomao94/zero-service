@@ -29,7 +29,7 @@ func (l *MediaFastUploadLogic) MediaFastUpload(in *djicloud.MediaFastUploadReq) 
 	data := &djisdk.MediaFastUploadData{FileID: in.FileId}
 	tid, err := l.svcCtx.DjiClient.MediaFastUpload(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

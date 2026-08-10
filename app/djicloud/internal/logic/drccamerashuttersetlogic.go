@@ -28,11 +28,11 @@ func (l *DrcCameraShutterSetLogic) DrcCameraShutterSet(in *djicloud.DrcCameraShu
 	deviceSn := in.GetDeviceSn()
 	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	data := &djisdk.DrcCameraShutterSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), ShutterValue: int(in.GetShutterValue())}
 	if _, err := l.svcCtx.DjiClient.DrcCameraShutterSet(l.ctx, deviceSn, seq, data); err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	return &djicloud.DrcCameraShutterSetRes{Seq: int32(seq)}, nil
 }

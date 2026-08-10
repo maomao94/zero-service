@@ -32,7 +32,7 @@ func (l *CameraModeSwitchLogic) CameraModeSwitch(in *djicloud.CameraModeSwitchRe
 	}
 	tid, err := l.svcCtx.DjiClient.CameraModeSwitch(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

@@ -1,0 +1,5 @@
+{"path":".trellis/spec/backend/contract-generation.md","reason":"Proto 契约与生成规范"}
+{"path":".trellis/spec/backend/error-handling.md","reason":"gRPC 与业务错误边界"}
+{"path":".trellis/spec/backend/dji-guidelines.md","reason":"DJI ACK、DRC 与飞行区语义"}
+{"path":"app/djicloud/djicloud.proto","reason":"RPC 契约源"}
+{"path":".trellis/tasks/08-10-djicloud-error-contracts/proto-review.md","reason":"已批准的逐接口评审结论"}

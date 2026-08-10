@@ -29,7 +29,7 @@ func (l *FlyToPointStopLogic) FlyToPointStop(in *djicloud.FlyToPointStopReq) (*d
 		FlyToID: in.GetFlyToId(),
 	})
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

@@ -31,7 +31,7 @@ func (l *LiveCameraChangeLogic) LiveCameraChange(in *djicloud.LiveCameraChangeRe
 	}
 	tid, err := l.svcCtx.DjiClient.LiveCameraChange(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

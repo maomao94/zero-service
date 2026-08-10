@@ -28,11 +28,11 @@ func (l *DrcCameraApertureValueSetLogic) DrcCameraApertureValueSet(in *djicloud.
 	deviceSn := in.GetDeviceSn()
 	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	data := &djisdk.DrcCameraApertureValueSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), ApertureValue: int(in.GetApertureValue())}
 	if _, err := l.svcCtx.DjiClient.DrcCameraApertureValueSet(l.ctx, deviceSn, seq, data); err != nil {
-		return nil, err
+		return nil, drcError(err, "DRC 命令调用失败")
 	}
 	return &djicloud.DrcCameraApertureValueSetRes{Seq: int32(seq)}, nil
 }

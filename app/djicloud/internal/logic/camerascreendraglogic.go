@@ -32,7 +32,7 @@ func (l *CameraScreenDragLogic) CameraScreenDrag(in *djicloud.CameraScreenDragRe
 	}
 	tid, err := l.svcCtx.DjiClient.CameraScreenDrag(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

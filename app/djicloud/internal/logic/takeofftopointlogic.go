@@ -38,7 +38,7 @@ func (l *TakeoffToPointLogic) TakeoffToPoint(in *djicloud.TakeoffToPointReq) (*d
 	}
 	tid, err := l.svcCtx.DjiClient.TakeoffToPoint(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

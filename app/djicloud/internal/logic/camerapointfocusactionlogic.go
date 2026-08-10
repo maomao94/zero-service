@@ -33,7 +33,7 @@ func (l *CameraPointFocusActionLogic) CameraPointFocusAction(in *djicloud.Camera
 	}
 	tid, err := l.svcCtx.DjiClient.CameraPointFocusAction(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

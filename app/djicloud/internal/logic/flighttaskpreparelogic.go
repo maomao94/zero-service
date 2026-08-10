@@ -61,7 +61,7 @@ func (l *FlightTaskPrepareLogic) FlightTaskPrepare(in *djicloud.FlightTaskPrepar
 
 	tid, err := l.svcCtx.DjiClient.FlightTaskPrepare(l.ctx, in.DeviceSn, prepare)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

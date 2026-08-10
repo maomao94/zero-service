@@ -1,0 +1,5 @@
+{"path":".trellis/spec/backend/quality-guidelines.md","reason":"质量门禁"}
+{"path":".trellis/spec/backend/contract-generation.md","reason":"生成物审查和消费者检索"}
+{"path":".trellis/spec/backend/error-handling.md","reason":"结构化错误验证"}
+{"path":"app/djicloud/internal/logic","reason":"受影响 Logic 错误返回检查"}
+{"path":"common/djisdk","reason":"DJIError 与基础设施错误区分"}

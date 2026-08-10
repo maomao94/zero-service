@@ -8,6 +8,8 @@ import (
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
 	"zero-service/common/gormx"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/mr"
@@ -38,10 +40,13 @@ func (l *ListFlyRegionsLogic) ListFlyRegions(in *djicloud.ListFlyRegionsReq) (*d
 	var regions []gormmodel.DjiFlyRegion
 	pageResult, err := gormx.QueryPage(db.Order("id DESC"), in.GetPage(), in.GetPageSize(), &regions)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询飞行区列表失败")
 	}
 
-	needSign := in.GetSignUrl() && l.svcCtx.OssTemplate != nil
+	needSign := in.GetSignUrl()
+	if needSign && l.svcCtx.OssTemplate == nil {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_INTERNAL, "OSS 未配置")
+	}
 
 	list := make([]*djicloud.FlyRegionInfo, len(regions))
 	fns := make([]func() error, len(regions))
@@ -62,10 +67,9 @@ func (l *ListFlyRegionsLogic) ListFlyRegions(in *djicloud.ListFlyRegionsReq) (*d
 			if needSign && r.BucketName != "" {
 				u, err := l.svcCtx.OssTemplate.SignUrl(l.ctx, "", r.BucketName, r.FileName, 7*24*time.Hour)
 				if err != nil {
-					logx.WithContext(l.ctx).Errorf("[dji-cloud] ListFlyRegions: sign url failed: %v", err)
-				} else {
-					info.Url = u
+					return err
 				}
+				info.Url = u
 			}
 			list[i] = info
 			return nil

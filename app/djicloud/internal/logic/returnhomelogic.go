@@ -26,7 +26,7 @@ func NewReturnHomeLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Return
 func (l *ReturnHomeLogic) ReturnHome(in *djicloud.ReturnHomeReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.ReturnHome(l.ctx, in.DeviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

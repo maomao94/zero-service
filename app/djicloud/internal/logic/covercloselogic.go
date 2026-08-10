@@ -27,7 +27,7 @@ func NewCoverCloseLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CoverC
 func (l *CoverCloseLogic) CoverClose(in *djicloud.CoverCloseReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.CoverClose(l.ctx, in.DeviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

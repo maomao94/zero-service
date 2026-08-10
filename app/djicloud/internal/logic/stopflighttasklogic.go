@@ -31,7 +31,7 @@ func (l *StopFlightTaskLogic) StopFlightTask(in *djicloud.StopFlightTaskReq) (*d
 		WaylineID: int(in.GetWaylineId()),
 	})
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

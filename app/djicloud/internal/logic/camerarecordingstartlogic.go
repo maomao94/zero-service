@@ -30,7 +30,7 @@ func (l *CameraRecordingStartLogic) CameraRecordingStart(in *djicloud.CameraReco
 	}
 	tid, err := l.svcCtx.DjiClient.CameraRecordingStart(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

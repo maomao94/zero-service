@@ -27,7 +27,7 @@ func NewChargeOpenLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Charge
 func (l *ChargeOpenLogic) ChargeOpen(in *djicloud.ChargeOpenReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.ChargeOpen(l.ctx, in.DeviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

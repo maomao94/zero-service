@@ -7,6 +7,8 @@ import (
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
 	"zero-service/common/gormx"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -38,7 +40,7 @@ func (l *ListFlyRegionSyncStatusLogic) ListFlyRegionSyncStatus(in *djicloud.List
 	var statuses []gormmodel.DjiFlyRegionSyncStatus
 	pageResult, err := gormx.QueryPage(db.Order("id DESC"), in.GetPage(), in.GetPageSize(), &statuses)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询飞行区同步状态失败")
 	}
 
 	list := make([]*djicloud.FlyRegionSyncStatusInfo, 0, len(statuses))

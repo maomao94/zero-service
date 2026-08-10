@@ -27,7 +27,7 @@ func NewBatteryStoreModeSwitchLogic(ctx context.Context, svcCtx *svc.ServiceCont
 func (l *BatteryStoreModeSwitchLogic) BatteryStoreModeSwitch(in *djicloud.BatteryStoreModeReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.BatteryStoreModeSwitch(l.ctx, in.DeviceSn, int(in.Enable))
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

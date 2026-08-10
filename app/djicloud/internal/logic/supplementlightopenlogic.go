@@ -27,7 +27,7 @@ func NewSupplementLightOpenLogic(ctx context.Context, svcCtx *svc.ServiceContext
 func (l *SupplementLightOpenLogic) SupplementLightOpen(in *djicloud.SupplementLightOpenReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.SupplementLightOpen(l.ctx, in.DeviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

@@ -23,10 +23,10 @@ func NewQueryDrcStatusLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Qu
 	}
 }
 
-func (l *QueryDrcStatusLogic) QueryDrcStatus(in *djicloud.QueryDrcStatusReq) (*djicloud.DrcStatusRes, error) {
+func (l *QueryDrcStatusLogic) QueryDrcStatus(in *djicloud.QueryDrcStatusReq) (*djicloud.QueryDrcStatusRes, error) {
 	deviceSn := in.GetDeviceSn()
 	enabled, startedAt, lastHb, nextSeq, alive := l.svcCtx.DjiClient.DrcStatus(deviceSn)
-	return &djicloud.DrcStatusRes{
+	return &djicloud.QueryDrcStatusRes{
 		Enabled:                   enabled,
 		StartedAtMillis:           timeString(startedAt),
 		LastDeviceHeartbeatMillis: timeString(lastHb),

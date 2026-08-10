@@ -32,7 +32,7 @@ func (l *CameraIrMeteringPointLogic) CameraIrMeteringPoint(in *djicloud.CameraIr
 	}
 	tid, err := l.svcCtx.DjiClient.CameraIrMeteringPoint(l.ctx, in.DeviceSn, data)
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

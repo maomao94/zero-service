@@ -28,7 +28,7 @@ func NewFlightAreasUpdateLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 func (l *FlightAreasUpdateLogic) FlightAreasUpdate(in *djicloud.FlightAreasUpdateReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.FlightAreasUpdate(l.ctx, in.GetDeviceSn())
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

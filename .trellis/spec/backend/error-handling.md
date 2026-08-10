@@ -19,6 +19,9 @@
 - Proto 错误码到 Go error 的统一入口是 `common/tool/errorutil.go`，契约源是 `third_party/extproto.proto`。
 - gRPC `status` / `codes`、标准 HTTP 网关 body、OpenAI-compatible body 和 MCP 错误只在对应边界映射。
 - ISP 等协议内“对端业务拒绝”与本地超时、断连、关闭等运行错误要分开，不能全部变成 `codes.Internal`。
+- DJI `*djisdk.DJIError` 是设备业务拒绝的 typed error，通过 `djisdk.NewDJIError(code)` 构造并由 `djisdk.IsDJIError(err)` 解包；支持 `errors.As` 链。Logic 层通过 `commandError(err)` 区分：DJIError → `CommonRes{Code:-1}` + nil gRPC error；非 DJIError → 原样返回为 gRPC error。
+- DJI `*djisdk.PlatformError` 是 handler 侧传输中立错误，携带 `PlatformResult` 码供 `status_reply` / `events_reply` / `requests_reply` 的 `data.result` 使用。普通 error 默认 `PlatformResultHandlerError`；`nil` 默认 `PlatformResultOK`。
+- `common/djisdk.ErrSkipRequestReply` 是 sentinel error，request handler 返回它时 `HandleRequests` 跳过 `requests_reply`。
 - 不要在底层公共包直接依赖具体网关响应类型。
 
 ## 日志边界

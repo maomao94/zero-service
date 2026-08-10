@@ -26,7 +26,7 @@ func NewCustomDataTransmissionToEsdkLogic(ctx context.Context, svcCtx *svc.Servi
 func (l *CustomDataTransmissionToEsdkLogic) CustomDataTransmissionToEsdk(in *djicloud.CustomDataTransmissionToEsdkReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.CustomDataTransmissionToEsdk(l.ctx, in.GetDeviceSn(), in.GetValue())
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }

@@ -27,7 +27,7 @@ func NewAlarmStateSwitchLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 func (l *AlarmStateSwitchLogic) AlarmStateSwitch(in *djicloud.AlarmStateSwitchReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.AlarmStateSwitch(l.ctx, in.DeviceSn, int(in.Action))
 	if err != nil {
-		return errRes(tid, err), nil
+		return commandRes(tid, err)
 	}
 	return okRes(tid), nil
 }
