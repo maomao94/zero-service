@@ -1337,3 +1337,24 @@ Audited all repository Trellis specs against current source evidence; corrected 
 ### Status
 
 [OK] **Completed**
+
+
+## Session 150: 优化 ISP Agent proto 注释
+
+**Date**: 2026-08-10
+**Task**: 优化 ISP Agent proto 注释
+**Branch**: `master`
+
+### Summary
+
+保留每个 RPC 的中文业务说明，移除重复的英文方法名，并补充表编号、RRULE 校验和 FTPS 默认路径等关键信息。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b9fa58f6` | (see git log) |
+
+### Status
+
+[OK] **Completed**
