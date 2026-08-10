@@ -15,29 +15,32 @@ import (
 // 使用场景：查询未确认告警、按设备/机巢/等级筛选告警、人工确认处理。
 type DjiHmsAlert struct {
 	gormx.LegacyStringBaseModel
-	GatewaySn      string       `gorm:"column:gateway_sn;type:varchar(64);index;not null;comment:上报告警的网关机巢SN"`
-	Level          int          `gorm:"column:level;index;not null;default:0;comment:告警等级"`
-	Module         int          `gorm:"column:module;not null;default:0;comment:告警模块"`
-	Code           string       `gorm:"column:code;type:varchar(64);not null;default:'';comment:大疆HMS告警码"`
-	DeviceType     string       `gorm:"column:device_type;type:varchar(32);default:'';comment:告警设备类型"`
-	DeviceTypeName string       `gorm:"column:device_type_name;type:varchar(128);default:'';comment:大疆产品名称"`
-	DeviceDomain   int          `gorm:"column:device_domain;default:0;comment:告警设备域"`
-	DeviceTypeID   int          `gorm:"column:device_type_id;default:0;comment:告警设备类型编号"`
-	DeviceSubtype  int          `gorm:"column:device_subtype;default:0;comment:告警设备子类型编号"`
-	Imminent       int          `gorm:"column:imminent;default:0;comment:是否紧急"`
-	InTheSky       int          `gorm:"column:in_the_sky;default:0;comment:是否空中告警"`
-	ComponentIndex int          `gorm:"column:component_index;default:0;comment:部件索引"`
-	SensorIndex    int          `gorm:"column:sensor_index;default:0;comment:传感器索引"`
-	AlarmID        string       `gorm:"column:alarm_id;type:varchar(64);default:'';comment:HMS告警ID"`
-	GimbalIndex    int          `gorm:"column:gimbal_index;default:0;comment:云台索引"`
-	LidarIndex     int          `gorm:"column:lidar_index;default:0;comment:激光雷达索引"`
-	LteIndex       int          `gorm:"column:lte_index;default:0;comment:LTE索引"`
-	Message        string       `gorm:"column:message;type:text;comment:按服务配置语言解析的HMS告警文案"`
-	ItemJSON       string       `gorm:"column:item_json;type:text;comment:HMS告警条目原始JSON"`
-	Acked          int          `gorm:"column:acked;index;not null;default:0;comment:确认状态，0未确认，1已确认"`
-	AckedAt        sql.NullTime `gorm:"column:acked_at;comment:确认时间"`
-	AckedBy        string       `gorm:"column:acked_by;type:varchar(64);default:'';comment:确认人"`
-	ReportedAt     time.Time    `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
+	GatewaySn string `gorm:"column:gateway_sn;type:varchar(64);index;not null;comment:上报告警的网关机巢SN"`
+	Tid       string `gorm:"column:tid;type:varchar(64);index;default:'';comment:外层事件事务ID"`
+	Bid       string `gorm:"column:bid;type:varchar(64);index;default:'';comment:外层事件业务ID"`
+	TraceID   string `gorm:"column:trace_id;type:varchar(64);index;default:'';comment:消费链路追踪ID"`
+
+	Level    int    `gorm:"column:level;index;not null;default:0;comment:告警等级"`
+	Module   int    `gorm:"column:module;not null;default:0;comment:告警模块"`
+	Code     string `gorm:"column:code;type:varchar(64);not null;default:'';comment:大疆HMS告警码"`
+	Imminent int    `gorm:"column:imminent;default:0;comment:是否即时告警"`
+	InTheSky int    `gorm:"column:in_the_sky;default:0;comment:是否空中告警"`
+
+	DeviceType     string `gorm:"column:device_type;type:varchar(32);default:'';comment:告警设备类型"`
+	DeviceTypeName string `gorm:"column:device_type_name;type:varchar(128);default:'';comment:大疆产品名称"`
+	DeviceDomain   int    `gorm:"column:device_domain;default:0;comment:告警设备域"`
+	DeviceTypeID   int    `gorm:"column:device_type_id;default:0;comment:告警设备类型编号"`
+	DeviceSubtype  int    `gorm:"column:device_subtype;default:0;comment:告警设备子类型编号"`
+
+	MessageKey string `gorm:"column:message_key;type:varchar(128);default:'';comment:HMS实际命中的文案字典键"`
+	Message    string `gorm:"column:message;type:text;comment:按服务配置语言解析的HMS告警文案"`
+	AlarmID    string `gorm:"column:alarm_id;type:varchar(64);default:'';comment:上报args中的原始alarmid文本"`
+	ItemJSON   string `gorm:"column:item_json;type:text;comment:HMS告警条目原始JSON"`
+
+	Acked      int          `gorm:"column:acked;index;not null;default:0;comment:确认状态，0未确认，1已确认"`
+	AckedAt    sql.NullTime `gorm:"column:acked_at;comment:确认时间"`
+	AckedBy    string       `gorm:"column:acked_by;type:varchar(64);default:'';comment:确认人"`
+	ReportedAt time.Time    `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
 }
 
 func (DjiHmsAlert) TableName() string { return "dji_hms_alert" }

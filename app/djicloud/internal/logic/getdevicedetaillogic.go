@@ -51,21 +51,7 @@ func (l *GetDeviceDetailLogic) GetDeviceDetail(in *djicloud.GetDeviceDetailReq) 
 		Where("gateway_sn = ? OR sub_device_sn = ?", in.DeviceSn, in.DeviceSn).
 		Order("update_time DESC, id DESC").
 		Find(&topo).Error; err == nil {
-		appendTopoInfo(res, topo)
+		res.Topo = toTopoInfoList(topo)
 	}
 	return res, nil
-}
-
-func appendTopoInfo(res *djicloud.DeviceDetailRes, topo []gormmodel.DjiDeviceTopo) {
-	for i := range topo {
-		res.Topo = append(res.Topo, &djicloud.DeviceTopoInfo{
-			GatewaySn:        topo[i].GatewaySn,
-			SubDeviceSn:      topo[i].SubDeviceSn,
-			Domain:           topo[i].Domain,
-			SubDeviceType:    int32(topo[i].SubDeviceType),
-			SubDeviceSubType: int32(topo[i].SubDeviceSubType),
-			SubDeviceIndex:   topo[i].SubDeviceIndex,
-			ThingVersion:     topo[i].ThingVersion,
-		})
-	}
 }

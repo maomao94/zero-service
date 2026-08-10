@@ -35,13 +35,13 @@
 
 ## 租户、用户与并发所有权
 
-- 用户/租户通过 `common/gormx` context helper 传递；普通 `TenantScope` 与缺失租户即失败的 strict 版本不可混用。
+- 用户/租户通过 `common/gormx` context helper 传递；普通 `TenantScope` 在缺失租户时不加过滤，`TenantScopeStrict` / `WithTenantStrict` 则追加恒假条件并返回空结果，两种语义不可混用。context 中存在租户 ID 时，两类 scope 都会查询 `tenant_id`；目标 model 无该列会返回数据库错误。
 - 条件更新必须检查 error 和 `RowsAffected`。幂等成功、目标不存在和竞争失败是不同契约，应由 store 明确返回。
 - 查询无记录使用 `ErrNotFound`；条件更新 `RowsAffected == 0` 使用 `ErrNoRowsUpdate` 或领域专用竞争错误，不能把 CAS 未命中伪装成记录不存在。
 - 并发状态更新使用事务、唯一约束、版本或 CAS 条件；完成路径只能更新自己拥有的字段，不能用整行 `Save` 覆盖调度/配置字段。
 - 数据库可空时间使用 `sql.NullTime` 或指针；转换层与领域 `time.Time{}` 语义一一对应，禁止用远期时间伪装“无下次执行”。
 
-依据：`common/gormx/user_context.go`、`common/gormx/model.go`、`app/trigger/internal/cronjob/db_store.go`、`app/ispagent/internal/crontask/db_store.go`。
+依据：`common/gormx/user_context.go`、`common/gormx/tenant_scope.go`、`common/gormx/tenant_scope_test.go`、`common/gormx/db_test.go`、`app/trigger/internal/cronjob/db_store.go`、`app/ispagent/internal/crontask/db_store.go`。
 
 ## 反模式
 

@@ -26,7 +26,7 @@ require (
 	github.com/docker/go-connections v0.8.1
 	github.com/doquangtan/socketio/v4 v4.1.8
 	github.com/doug-martin/goqu/v9 v9.19.0
-	github.com/dromara/carbon/v2 v2.6.16
+	github.com/dromara/carbon/v2 v2.6.17
 	github.com/dsoprea/go-exif/v3 v3.0.1
 	github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd
 	github.com/duke-git/lancet/v2 v2.3.9
@@ -78,7 +78,7 @@ require (
 	golang.org/x/net v0.57.0
 	golang.org/x/sync v0.22.0
 	golang.org/x/term v0.45.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20260803160001-6ac0973c030d
+	google.golang.org/genproto/googleapis/api v0.0.0-20260807164820-c8921c73eeea
 	google.golang.org/grpc v1.83.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1

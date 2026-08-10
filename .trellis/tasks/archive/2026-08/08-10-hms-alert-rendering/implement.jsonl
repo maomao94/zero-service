@@ -1,0 +1,5 @@
+{"file":".trellis/spec/backend/coding-standards.md","reason":"Go 代码、协议注释和最小改动规范"}
+{"file":".trellis/spec/backend/dji-guidelines.md","reason":"DJI HMS key、args、事件和持久化领域契约"}
+{"file":".trellis/spec/backend/contract-generation.md","reason":"Proto 字段兼容性、reserved 和生成流程"}
+{"file":".trellis/spec/backend/gormx-guidelines.md","reason":"HMS 历史模型字段与数据库迁移边界"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"context trace、日志和事件失败边界"}

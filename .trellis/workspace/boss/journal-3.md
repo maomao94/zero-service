@@ -1228,3 +1228,112 @@ Unified IEC104 server construction around Settings and go-zero ServerConfig, add
 ### Status
 
 [OK] **Completed**
+
+
+## Session 145: 完善 DJI HMS 告警文案与推送链路
+
+**Date**: 2026-08-10
+**Task**: 完善 DJI HMS 告警文案与推送链路
+**Branch**: `master`
+
+### Summary
+
+完成 HMS 文案 Key 查询与参数填充、设备名称解析、事件 tid/bid/trace_id 持久化、模型精简及 HmsAlertInfo 连续编号契约；目标服务与 HMS 定向测试通过，归档父任务及四个子任务。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ed75e105` | (see git log) |
+| `23b5bb0f` | (see git log) |
+| `70345381` | (see git log) |
+| `991f3d8a` | (see git log) |
+| `9d93085f` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 146: Document dynamic map cast boundaries
+
+**Date**: 2026-08-10
+**Task**: Document dynamic map cast boundaries
+**Branch**: `master`
+
+### Summary
+
+Documented dynamic map presence checks and spf13/cast conversion boundaries in the shared code reuse guide and DJI HMS specification.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `88e80fe7` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 147: Persist topology device name and type
+
+**Date**: 2026-08-10
+**Task**: Persist topology device name and type
+**Branch**: `master`
+
+### Summary
+
+Persisted normalized DJI topology device types and registry names, exposed them through generated RPC fields, and added coverage for known, unknown, update, and restore flows.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `27c9a74c` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 148: Clarify DJI topology device identity
+
+**Date**: 2026-08-10
+**Task**: Clarify DJI topology device identity
+**Branch**: `master`
+
+### Summary
+
+Documented DjiDevice device_sn uniqueness, topology pair uniqueness, domain-specific GatewaySn ownership, and unconditional device type/name updates from update_topo.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `fde9ab55` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 149: Refresh repository Trellis specs
+
+**Date**: 2026-08-10
+**Task**: Refresh repository Trellis specs
+**Branch**: `master`
+
+### Summary
+
+Audited all repository Trellis specs against current source evidence; corrected GORM tenant scope, realtime broadcast error semantics, Trigger evidence paths, and a crontask typo; verified indexes, links, paths, placeholders, and diff scope.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `37e4928c` | (see git log) |
+
+### Status
+
+[OK] **Completed**

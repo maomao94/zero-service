@@ -39,16 +39,31 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 			logx.WithContext(ctx).Errorf("[dji-cloud] status update topo skipped: db is nil")
 			return nil
 		}
+		resolveDevice := func(domain string, deviceType, subType int) (string, string) {
+			rawDeviceType := fmt.Sprintf("%s-%d-%d", domain, deviceType, subType)
+			if parsedDeviceType, err := djisdk.ParseDeviceType(rawDeviceType); err == nil {
+				rawDeviceType = parsedDeviceType.String()
+			}
+			deviceName, _ := djisdk.LookupDeviceTypeName(rawDeviceType)
+			return rawDeviceType, deviceName
+		}
 
 		if err := db.WithContext(ctx).Transact(func(tx *gormx.DB) error {
+			gatewayDeviceType, gatewayDeviceName := resolveDevice(topo.Domain, topo.Type, topo.SubType)
 			gatewayDevice := gormmodel.DjiDevice{
 				DeviceSn:     gatewaySn,
 				GatewaySn:    gatewaySn,
+				DeviceType:   gatewayDeviceType,
+				DeviceName:   gatewayDeviceName,
 				IsOnline:     true,
 				LastOnlineAt: sqlNullTime(now),
 			}
 			c := tx.WithContext(ctx)
-			if err := c.Where(map[string]any{"device_sn": gatewaySn}).Assign(map[string]any{"gateway_sn": gatewaySn}).FirstOrCreate(&gatewayDevice).Error; err != nil {
+			if err := c.Where(map[string]any{"device_sn": gatewaySn}).Assign(map[string]any{
+				"gateway_sn":  gatewaySn,
+				"device_type": gatewayDeviceType,
+				"device_name": gatewayDeviceName,
+			}).FirstOrCreate(&gatewayDevice).Error; err != nil {
 				return err
 			}
 
@@ -71,12 +86,15 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 					return err
 				}
 				subDomain := sub.Domain
+				deviceType, deviceName := resolveDevice(sub.Domain, sub.Type, sub.SubType)
 				topoRecord := gormmodel.DjiDeviceTopo{
 					GatewaySn:        gatewaySn,
 					SubDeviceSn:      sub.SN,
 					Domain:           subDomain,
 					SubDeviceType:    sub.Type,
 					SubDeviceSubType: sub.SubType,
+					DeviceType:       deviceType,
+					DeviceName:       deviceName,
 					SubDeviceIndex:   sub.Index,
 					ThingVersion:     sub.ThingVersion,
 				}
@@ -84,6 +102,8 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 					"domain":              topoRecord.Domain,
 					"sub_device_type":     topoRecord.SubDeviceType,
 					"sub_device_sub_type": topoRecord.SubDeviceSubType,
+					"device_type":         topoRecord.DeviceType,
+					"device_name":         topoRecord.DeviceName,
 					"sub_device_index":    topoRecord.SubDeviceIndex,
 					"thing_version":       topoRecord.ThingVersion,
 				}
@@ -91,11 +111,18 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 					return err
 				}
 
-				updateData := map[string]any{}
-				subDevice := gormmodel.DjiDevice{DeviceSn: sub.SN}
+				updateData := map[string]any{
+					"device_type": topoRecord.DeviceType,
+					"device_name": topoRecord.DeviceName,
+				}
+				subDevice := gormmodel.DjiDevice{
+					DeviceSn:   sub.SN,
+					DeviceType: topoRecord.DeviceType,
+					DeviceName: topoRecord.DeviceName,
+				}
 				if sub.Domain == gormmodel.DjiDeviceDomainAircraft || sub.Domain == gormmodel.DjiDeviceDomainPayload {
 					// 蛙跳场景：飞机及挂载负载（domain=0/1）可能被多个机巢绑定，
-					// GatewaySn 由 OSD/State 更新，不从 update_topo 覆盖，绑定关系由 DjiDeviceTopo 维护。
+					// GatewaySn 由 OSD/State 更新，不从 update_topo 覆盖；型号和名称仍按设备 SN 更新。
 				} else {
 					updateData["gateway_sn"] = gatewaySn
 					subDevice.GatewaySn = gatewaySn

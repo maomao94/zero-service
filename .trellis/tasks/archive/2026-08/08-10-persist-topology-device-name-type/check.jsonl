@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"按 Proto、数据访问和跨层变更风险执行定向及服务级验证"}
+{"file":".trellis/spec/backend/dji-guidelines.md","reason":"检查拓扑快照字段所有权、设备型号格式与产品名称复用"}
+{"file":".trellis/spec/backend/gormx-guidelines.md","reason":"检查更新字段范围、事务、重复上报和软删除恢复"}
+{"file":".trellis/spec/backend/contract-generation.md","reason":"检查 Proto 字段号、生成产物和直接消费者一致性"}

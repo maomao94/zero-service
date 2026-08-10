@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -14,6 +16,7 @@ import (
 	"zero-service/common/gormx"
 
 	"github.com/zeromicro/go-zero/core/collection"
+	gooteltrace "go.opentelemetry.io/otel/trace"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -346,7 +349,7 @@ func TestStateTelemetryRejectsMissingGateway(t *testing.T) {
 	}
 }
 
-func TestStatusUpdateTopoStoresTypeOnlyInTopo(t *testing.T) {
+func TestStatusUpdateTopoStoresGatewayAndSubDeviceIdentity(t *testing.T) {
 	db := newHookTestDB(t)
 	onlineCache, err := collection.NewCache(time.Minute)
 	if err != nil {
@@ -374,10 +377,12 @@ func TestStatusUpdateTopoStoresTypeOnlyInTopo(t *testing.T) {
 
 	var dock struct {
 		GatewaySn    string
+		DeviceType   string
+		DeviceName   string
 		IsOnline     bool
 		LastOnlineAt sql.NullTime
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn", "is_online", "last_online_at").Where("device_sn = ?", "dock3-1").First(&dock).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn", "device_type", "device_name", "is_online", "last_online_at").Where("device_sn = ?", "dock3-1").First(&dock).Error; err != nil {
 		t.Fatalf("find dock error = %v", err)
 	}
 	if dock.GatewaySn != "dock3-1" {
@@ -389,21 +394,31 @@ func TestStatusUpdateTopoStoresTypeOnlyInTopo(t *testing.T) {
 	if !dock.IsOnline {
 		t.Fatalf("dock IsOnline = false, want true because status handler sets online on first create")
 	}
-	var aircraft struct {
-		GatewaySn string
+	if dock.DeviceType != "3-119-0" || dock.DeviceName != "" {
+		t.Fatalf("dock device type/name = %q/%q, want 3-119-0/empty", dock.DeviceType, dock.DeviceName)
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn").Where("device_sn = ?", "m4d-1").First(&aircraft).Error; err != nil {
+	var aircraft struct {
+		GatewaySn  string
+		DeviceType string
+		DeviceName string
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn", "device_type", "device_name").Where("device_sn = ?", "m4d-1").First(&aircraft).Error; err != nil {
 		t.Fatalf("find aircraft error = %v", err)
 	}
 	if aircraft.GatewaySn != "" {
 		t.Fatalf("aircraft GatewaySn = %s, want empty (蛙跳场景 update_topo 不覆盖飞机 gateway_sn)", aircraft.GatewaySn)
 	}
+	if aircraft.DeviceType != "0-60-0" || aircraft.DeviceName != "Matrice 300 RTK" {
+		t.Fatalf("aircraft device type/name = %q/%q, want 0-60-0/Matrice 300 RTK", aircraft.DeviceType, aircraft.DeviceName)
+	}
 	var topo struct {
 		Domain         string
 		SubDeviceType  int
 		SubDeviceIndex string
+		DeviceType     string
+		DeviceName     string
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceTopo{}).Select("domain", "sub_device_type", "sub_device_index").Where("gateway_sn = ? AND sub_device_sn = ?", "dock3-1", "m4d-1").First(&topo).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceTopo{}).Select("domain", "sub_device_type", "sub_device_index", "device_type", "device_name").Where("gateway_sn = ? AND sub_device_sn = ?", "dock3-1", "m4d-1").First(&topo).Error; err != nil {
 		t.Fatalf("find topo error = %v", err)
 	}
 	if topo.Domain != gormmodel.DjiDeviceDomainAircraft {
@@ -411,6 +426,107 @@ func TestStatusUpdateTopoStoresTypeOnlyInTopo(t *testing.T) {
 	}
 	if topo.SubDeviceType != 60 || topo.SubDeviceIndex != "A" {
 		t.Fatalf("topo type/index = %d/%s, want 60/A", topo.SubDeviceType, topo.SubDeviceIndex)
+	}
+	if topo.DeviceType != "0-60-0" || topo.DeviceName != "Matrice 300 RTK" {
+		t.Fatalf("topo device type/name = %q/%q, want 0-60-0/Matrice 300 RTK", topo.DeviceType, topo.DeviceName)
+	}
+}
+
+func TestStatusUpdateTopoPreservesAircraftAndPayloadGatewayOwnership(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+	for _, device := range []gormmodel.DjiDevice{
+		{DeviceSn: "aircraft-owned", GatewaySn: "dock-aircraft-current"},
+		{DeviceSn: "payload-owned", GatewaySn: "dock-payload-current"},
+		{DeviceSn: "remote-owned", GatewaySn: "dock-remote-old"},
+	} {
+		if err := db.WithContext(ctx).Create(&device).Error; err != nil {
+			t.Fatalf("create %s error = %v", device.DeviceSn, err)
+		}
+	}
+
+	msg := &djisdk.StatusMessage{
+		Timestamp: 1710000000000,
+		Method:    djisdk.MethodUpdateTopo,
+		Data: map[string]any{
+			"domain":   "3",
+			"type":     3,
+			"sub_type": 0,
+			"sub_devices": []any{
+				map[string]any{"sn": "aircraft-owned", "domain": "0", "type": 60, "sub_type": 0},
+				map[string]any{"sn": "payload-owned", "domain": "1", "type": 83, "sub_type": 0},
+				map[string]any{"sn": "remote-owned", "domain": "2", "type": 174, "sub_type": 0},
+			},
+		},
+	}
+	if err := NewStatusHandler(db, nil)(ctx, "dock-topology", msg); err != nil {
+		t.Fatalf("status handler error = %v, want nil", err)
+	}
+
+	tests := []struct {
+		deviceSn   string
+		gatewaySn  string
+		deviceType string
+		deviceName string
+	}{
+		{deviceSn: "aircraft-owned", gatewaySn: "dock-aircraft-current", deviceType: "0-60-0", deviceName: "Matrice 300 RTK"},
+		{deviceSn: "payload-owned", gatewaySn: "dock-payload-current", deviceType: "1-83-0", deviceName: "禅思 H30T"},
+		{deviceSn: "remote-owned", gatewaySn: "dock-topology", deviceType: "2-174-0", deviceName: "DJI RC Plus 2"},
+	}
+	for _, tt := range tests {
+		var device gormmodel.DjiDevice
+		if err := db.WithContext(ctx).Where("device_sn = ?", tt.deviceSn).First(&device).Error; err != nil {
+			t.Fatalf("find %s error = %v", tt.deviceSn, err)
+		}
+		if device.GatewaySn != tt.gatewaySn || device.DeviceType != tt.deviceType || device.DeviceName != tt.deviceName {
+			t.Fatalf("%s gateway/type/name = %q/%q/%q, want %q/%q/%q", tt.deviceSn, device.GatewaySn, device.DeviceType, device.DeviceName, tt.gatewaySn, tt.deviceType, tt.deviceName)
+		}
+	}
+}
+
+func TestStatusUpdateTopoStoresUnknownDeviceTypeAndUpdatesDerivedFields(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+	handler := NewStatusHandler(db, nil)
+
+	message := func(domain string, deviceType, subType int) *djisdk.StatusMessage {
+		return &djisdk.StatusMessage{
+			Timestamp: 1710000000000,
+			Method:    djisdk.MethodUpdateTopo,
+			Data: map[string]any{
+				"sub_devices": []any{
+					map[string]any{"sn": "device-derived", "domain": domain, "type": deviceType, "sub_type": subType},
+				},
+			},
+		}
+	}
+
+	if err := handler(ctx, "dock-derived", message("0", 999, 7)); err != nil {
+		t.Fatalf("store unknown device type error = %v", err)
+	}
+	var topo gormmodel.DjiDeviceTopo
+	if err := db.WithContext(ctx).Where("gateway_sn = ? AND sub_device_sn = ?", "dock-derived", "device-derived").First(&topo).Error; err != nil {
+		t.Fatalf("find unknown device type error = %v", err)
+	}
+	if topo.DeviceType != "0-999-7" || topo.DeviceName != "" {
+		t.Fatalf("unknown device type/name = %q/%q, want 0-999-7/empty", topo.DeviceType, topo.DeviceName)
+	}
+
+	if err := handler(ctx, "dock-derived", message("1", 83, 0)); err != nil {
+		t.Fatalf("update known device type error = %v", err)
+	}
+	if err := db.WithContext(ctx).Where("gateway_sn = ? AND sub_device_sn = ?", "dock-derived", "device-derived").First(&topo).Error; err != nil {
+		t.Fatalf("find updated device type error = %v", err)
+	}
+	if topo.Domain != "1" || topo.SubDeviceType != 83 || topo.SubDeviceSubType != 0 || topo.DeviceType != "1-83-0" || topo.DeviceName != "禅思 H30T" {
+		t.Fatalf("updated topo fields = %+v", topo)
+	}
+	var device gormmodel.DjiDevice
+	if err := db.WithContext(ctx).Where("device_sn = ?", "device-derived").First(&device).Error; err != nil {
+		t.Fatalf("find updated device error = %v", err)
+	}
+	if device.DeviceType != "1-83-0" || device.DeviceName != "禅思 H30T" {
+		t.Fatalf("updated device type/name = %q/%q, want 1-83-0/禅思 H30T", device.DeviceType, device.DeviceName)
 	}
 }
 
@@ -514,11 +630,21 @@ func TestStatusUpdateTopoClearsOfflineSubDevices(t *testing.T) {
 func TestStatusUpdateTopoRestoresSoftDeletedSubDevice(t *testing.T) {
 	db := newHookTestDB(t)
 	ctx := context.Background()
+	if err := db.WithContext(ctx).Create(&gormmodel.DjiDevice{
+		DeviceSn:   "drone-restore",
+		GatewaySn:  "dock-current-link",
+		DeviceType: "0-999-0",
+		DeviceName: "stale device name",
+	}).Error; err != nil {
+		t.Fatalf("create device error = %v", err)
+	}
 	softDeleted := gormmodel.DjiDeviceTopo{
 		GatewaySn:     "dock-restore",
 		SubDeviceSn:   "drone-restore",
 		Domain:        gormmodel.DjiDeviceDomainAircraft,
 		SubDeviceType: 60,
+		DeviceType:    "0-60-0",
+		DeviceName:    "stale name",
 		ThingVersion:  "old",
 	}
 	if err := db.WithContext(ctx).Create(&softDeleted).Error; err != nil {
@@ -549,12 +675,27 @@ func TestStatusUpdateTopoRestoresSoftDeletedSubDevice(t *testing.T) {
 	var restored struct {
 		SubDeviceIndex string
 		ThingVersion   string
+		DeviceType     string
+		DeviceName     string
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceTopo{}).Select("sub_device_index", "thing_version").Where("gateway_sn = ? AND sub_device_sn = ?", "dock-restore", "drone-restore").First(&restored).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceTopo{}).Select("sub_device_index", "thing_version", "device_type", "device_name").Where("gateway_sn = ? AND sub_device_sn = ?", "dock-restore", "drone-restore").First(&restored).Error; err != nil {
 		t.Fatalf("find restored topo error = %v", err)
 	}
 	if restored.SubDeviceIndex != "A" || restored.ThingVersion != "1.2.3" {
 		t.Fatalf("restored topo index/version = %s/%s, want A/1.2.3", restored.SubDeviceIndex, restored.ThingVersion)
+	}
+	if restored.DeviceType != "0-60-0" || restored.DeviceName != "Matrice 300 RTK" {
+		t.Fatalf("restored device type/name = %q/%q, want latest registry values", restored.DeviceType, restored.DeviceName)
+	}
+	var device gormmodel.DjiDevice
+	if err := db.WithContext(ctx).Where("device_sn = ?", "drone-restore").First(&device).Error; err != nil {
+		t.Fatalf("find restored main device error = %v", err)
+	}
+	if device.GatewaySn != "dock-current-link" {
+		t.Fatalf("restored main device GatewaySn = %q, want existing aircraft owner", device.GatewaySn)
+	}
+	if device.DeviceType != "0-60-0" || device.DeviceName != "Matrice 300 RTK" {
+		t.Fatalf("restored main device type/name = %q/%q, want latest registry values", device.DeviceType, device.DeviceName)
 	}
 }
 
@@ -912,14 +1053,12 @@ func TestHmsAlertStoresOfficialItemJSON(t *testing.T) {
 	var alert struct {
 		ItemJSON       string
 		Message        string
+		MessageKey     string
 		DeviceDomain   int
 		DeviceTypeID   int
 		DeviceSubtype  int
 		DeviceTypeName string
 		AlarmID        string
-		GimbalIndex    int
-		LidarIndex     int
-		LteIndex       int
 	}
 	if err := db.WithContext(ctx).Model(&gormmodel.DjiHmsAlert{}).Where("gateway_sn = ?", "dock-hms").First(&alert).Error; err != nil {
 		t.Fatalf("find hms alert error = %v", err)
@@ -933,14 +1072,75 @@ func TestHmsAlertStoresOfficialItemJSON(t *testing.T) {
 	if !strings.Contains(alert.ItemJSON, `"future_arg":"kept"`) {
 		t.Fatalf("ItemJSON = %q, want unknown args preserved", alert.ItemJSON)
 	}
-	if alert.DeviceDomain != 0 || alert.DeviceTypeID != 67 || alert.DeviceSubtype != 0 || alert.DeviceTypeName != "Matrice 30" || alert.AlarmID != "0x16100001" || alert.GimbalIndex != 6 || alert.LidarIndex != 7 || alert.LteIndex != 8 {
+	if alert.DeviceDomain != 0 || alert.DeviceTypeID != 67 || alert.DeviceSubtype != 0 || alert.DeviceTypeName != "Matrice 30" || alert.AlarmID != "0x16100001" || alert.MessageKey != "fpv_tip_0x16100083_in_the_sky" {
 		t.Fatalf("flattened HMS fields = %+v", alert)
+	}
+	for _, column := range []string{"component_index", "sensor_index", "gimbal_index", "lidar_index", "lte_index"} {
+		if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiHmsAlert{}, column) {
+			t.Fatalf("expected HMS alert not to have flattened %s column", column)
+		}
 	}
 	if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiHmsAlert{}, "device_sn") {
 		t.Fatal("expected hms alert not to have guessed device_sn column")
 	}
 	if !db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiHmsAlert{}, "message") {
 		t.Fatal("expected hms alert to have message column")
+	}
+}
+
+func TestHmsAlertStoresCorrelationTraceAndItemSnapshots(t *testing.T) {
+	db := newHookTestDB(t)
+	dictionaryPath := filepath.Join(t.TempDir(), "hms.json")
+	if err := os.WriteFile(dictionaryPath, []byte(`{
+  "fpv_tip_exact_in_the_sky": {"zh": "空中命中文案"},
+  "fpv_tip_fallback": {"zh": "空中回退文案，云台索引 %gimbal_index"}
+}`), 0o600); err != nil {
+		t.Fatalf("write HMS dictionary error = %v", err)
+	}
+
+	traceID := gooteltrace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
+	ctx := gooteltrace.ContextWithRemoteSpanContext(context.Background(), gooteltrace.NewSpanContext(gooteltrace.SpanContextConfig{
+		TraceID: traceID,
+		SpanID:  gooteltrace.SpanID{1, 2, 3, 4, 5, 6, 7, 8},
+		Remote:  true,
+	}))
+	resolver := djisdk.MustNewHmsResolver(djisdk.HmsConfig{DictionaryPath: dictionaryPath})
+	client := djisdk.NewClient(nil, djisdk.WithHmsEventNotifyHandler(NewHmsEventNotifyHandler(db, resolver)))
+	payload := []byte(`{"tid":"tid-placement","bid":"bid-placement","gateway":"dock-placement","method":"hms","data":{"list":[{"code":"exact","device_type":"0-67-0","in_the_sky":1},{"code":"fallback","device_type":"0-67-0","in_the_sky":1,"args":{"gimbal_index":7}},{"code":"unknown","device_type":"1-83-0","args":{"gimbal_index":0}}]}}`)
+	if err := client.HandleEvents(ctx, payload, djisdk.EventsTopic("dock-placement"), ""); err != nil {
+		t.Fatalf("handle HMS event error = %v", err)
+	}
+
+	var alerts []gormmodel.DjiHmsAlert
+	if err := db.Where("gateway_sn = ?", "dock-placement").Find(&alerts).Error; err != nil {
+		t.Fatalf("find HMS alerts error = %v", err)
+	}
+	if len(alerts) != 3 {
+		t.Fatalf("HMS alert count = %d, want 3", len(alerts))
+	}
+	wantSnapshots := map[string]struct {
+		messageKey     string
+		message        string
+		deviceTypeName string
+	}{
+		"exact":    {messageKey: "fpv_tip_exact_in_the_sky", message: "空中命中文案", deviceTypeName: "Matrice 30"},
+		"fallback": {messageKey: "fpv_tip_fallback", message: "空中回退文案，云台索引 7", deviceTypeName: "Matrice 30"},
+		"unknown":  {message: "未知 HMS 告警（unknown）", deviceTypeName: "禅思 H30T"},
+	}
+	for _, alert := range alerts {
+		if alert.Tid != "tid-placement" || alert.Bid != "bid-placement" || alert.TraceID != traceID.String() {
+			t.Fatalf("HMS correlation = %q/%q/%q", alert.Tid, alert.Bid, alert.TraceID)
+		}
+		want, ok := wantSnapshots[alert.Code]
+		if !ok {
+			t.Fatalf("unexpected HMS code %q", alert.Code)
+		}
+		if alert.DeviceTypeName != want.deviceTypeName || alert.MessageKey != want.messageKey || alert.Message != want.message || alert.ItemJSON == "" {
+			t.Fatalf("HMS snapshot fields = %+v", alert)
+		}
+	}
+	if alerts[0].ItemJSON == alerts[1].ItemJSON || alerts[1].ItemJSON == alerts[2].ItemJSON {
+		t.Fatalf("HMS items were not persisted as distinct history rows: %+v", alerts)
 	}
 }
 
@@ -956,7 +1156,7 @@ func TestHmsAlertLeavesUnknownDeviceTypeNameEmpty(t *testing.T) {
 	if err := db.Where("gateway_sn = ?", "dock-hms-unknown").First(&alert).Error; err != nil {
 		t.Fatalf("find hms alert error = %v", err)
 	}
-	if alert.DeviceTypeName != "" || alert.DeviceDomain != 0 || alert.DeviceTypeID != 999 || alert.DeviceSubtype != 0 {
+	if alert.DeviceTypeName != "" || alert.MessageKey != "" || alert.DeviceDomain != 0 || alert.DeviceTypeID != 999 || alert.DeviceSubtype != 0 {
 		t.Fatalf("unknown device fields = %+v", alert)
 	}
 }

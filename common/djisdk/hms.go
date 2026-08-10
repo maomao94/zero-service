@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/duke-git/lancet/v2/slice"
+	"github.com/spf13/cast"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -131,30 +132,44 @@ func hmsTipPrefix(domain DeviceDomain) string {
 
 func renderHmsTemplate(_ string, template string, args HmsArgs, language string) (string, []string) {
 	replacements := make(map[string]string)
-	if value, ok := args.Int("component_index"); ok {
-		component := strconv.Itoa(value + 1)
-		replacements["%component_index"] = component
-	}
-	if value, ok := args.Int("sensor_index"); ok {
-		index := strconv.Itoa(value + 1)
-		replacements["%index"] = index
-		replacements["%battery_index"] = localizedSide(value, language)
-		replacements["%dock_cover_index"] = localizedSide(value, language)
-		if direction, ok := localizedDirection(value, language); ok {
-			replacements["%charging_rod_index"] = direction
+	if raw, ok := args["component_index"]; ok && raw != nil {
+		value, err := cast.ToIntE(raw)
+		if err == nil {
+			component := strconv.Itoa(value + 1)
+			replacements["%component_index"] = component
 		}
 	}
-	if value, ok := args.String("alarmid"); ok {
-		replacements["%alarmid"] = value
+	if raw, ok := args["sensor_index"]; ok && raw != nil {
+		value, err := cast.ToIntE(raw)
+		if err == nil {
+			index := strconv.Itoa(value + 1)
+			replacements["%index"] = index
+			replacements["%battery_index"] = localizedSide(value, language)
+			replacements["%dock_cover_index"] = localizedSide(value, language)
+			if direction, ok := localizedDirection(value, language); ok {
+				replacements["%charging_rod_index"] = direction
+			}
+		}
 	}
-	if value, ok := args.Int("gimbal_index"); ok {
-		replacements["%gimbal_index"] = strconv.Itoa(value)
+	if raw, ok := args["alarmid"]; ok && raw != nil {
+		if value, err := cast.ToStringE(raw); err == nil && value != "" {
+			replacements["%alarmid"] = value
+		}
 	}
-	if value, ok := args.Int("lidar_index"); ok {
-		replacements["%lidar_index"] = strconv.Itoa(value)
+	if raw, ok := args["gimbal_index"]; ok && raw != nil {
+		if value, err := cast.ToIntE(raw); err == nil {
+			replacements["%gimbal_index"] = strconv.Itoa(value)
+		}
 	}
-	if value, ok := args.Int("lte_index"); ok {
-		replacements["%lte_index"] = strconv.Itoa(value)
+	if raw, ok := args["lidar_index"]; ok && raw != nil {
+		if value, err := cast.ToIntE(raw); err == nil {
+			replacements["%lidar_index"] = strconv.Itoa(value)
+		}
+	}
+	if raw, ok := args["lte_index"]; ok && raw != nil {
+		if value, err := cast.ToIntE(raw); err == nil {
+			replacements["%lte_index"] = strconv.Itoa(value)
+		}
 	}
 
 	message := hmsReplacementPattern.ReplaceAllStringFunc(template, func(placeholder string) string {

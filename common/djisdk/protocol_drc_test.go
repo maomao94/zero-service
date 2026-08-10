@@ -220,8 +220,8 @@ func TestHmsEventDataUnmarshalOfficialShape(t *testing.T) {
 	if item.Level != 2 || item.Module != 3 || item.InTheSky != 0 || item.Code != "dock_tip_foo" || item.DeviceType != "dock" || item.Imminent != 1 {
 		t.Fatalf("unexpected hms item: %+v", item)
 	}
-	componentIndex, componentOK := item.Args.Int("component_index")
-	sensorIndex, sensorOK := item.Args.Int("sensor_index")
+	componentIndex, componentOK := item.Args["component_index"].(float64)
+	sensorIndex, sensorOK := item.Args["sensor_index"].(float64)
 	if !componentOK || componentIndex != 2 || !sensorOK || sensorIndex != 7 {
 		t.Fatalf("unexpected hms args: %+v", item.Args)
 	}
@@ -657,6 +657,37 @@ func TestRemoteLogProgressEventHook(t *testing.T) {
 	}
 	if !progressCalled {
 		t.Fatalf("progress hook not called")
+	}
+}
+
+func TestHmsEventHandlerReceivesOuterCorrelationFromContext(t *testing.T) {
+	called := false
+	client := NewClient(nil, WithHmsEventNotifyHandler(func(ctx context.Context, gatewaySn string, data *HmsEventData) error {
+		called = true
+		tid, bid := EventCorrelationFromContext(ctx)
+		if tid != "tid-hms" || bid != "bid-hms" {
+			t.Fatalf("event correlation = %q/%q, want tid-hms/bid-hms", tid, bid)
+		}
+		if gatewaySn != "gateway-hms" || len(data.List) != 2 {
+			t.Fatalf("unexpected HMS event: gateway=%q data=%+v", gatewaySn, data)
+		}
+		return nil
+	}))
+	client.mqttClient = &recordingMQTTClient{}
+
+	payload := []byte(`{"tid":"tid-hms","bid":"bid-hms","gateway":"gateway-hms","timestamp":1710000000000,"method":"hms","data":{"list":[{"code":"one"},{"code":"two"}]}}`)
+	if err := client.HandleEvents(context.Background(), payload, EventsTopic("gateway-hms"), ""); err != nil {
+		t.Fatalf("HandleEvents(HMS) error = %v", err)
+	}
+	if !called {
+		t.Fatal("HMS handler was not called")
+	}
+}
+
+func TestEventCorrelationFromContextWithoutEvent(t *testing.T) {
+	tid, bid := EventCorrelationFromContext(context.Background())
+	if tid != "" || bid != "" {
+		t.Fatalf("event correlation = %q/%q, want empty", tid, bid)
 	}
 }
 

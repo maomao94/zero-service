@@ -105,7 +105,7 @@ type TaskConfig struct {
 
 - Good: `DTSTART...\nRRULE...\nEXDATE...` 原样持久化并由同一字符串计算与描述。
 - Base: 一次性任务使用空 `RRuleStr`，完成后 `NextRun` 为零。
-- Bad: claim 后把 `Task.NextRun` 塄成原计划时间；该字段与数据库 lease 语义发生分叉。
+- Bad: claim 后把 `Task.NextRun` 填成原计划时间；该字段与数据库 lease 语义发生分叉。
 
 ### 6. Tests Required
 

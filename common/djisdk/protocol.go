@@ -1,9 +1,6 @@
 package djisdk
 
 import (
-	"encoding/json"
-	"math"
-	"strconv"
 	"time"
 )
 
@@ -1142,95 +1139,12 @@ type HmsArgs map[string]any
 
 // HmsItem HMS 健康告警条目。
 type HmsItem struct {
-	Level      int     `json:"level"`
-	Module     int     `json:"module"`
-	InTheSky   int     `json:"in_the_sky"`
-	Code       string  `json:"code"`
-	DeviceType string  `json:"device_type"`
-	Imminent   int     `json:"imminent"`
-	Args       HmsArgs `json:"args,omitempty"`
-}
-
-// Int 严格读取整数参数，拒绝小数、溢出、空值及不支持的类型。
-func (a HmsArgs) Int(name string) (int, bool) {
-	value, ok := a[name]
-	if !ok || value == nil {
-		return 0, false
-	}
-	switch value := value.(type) {
-	case int:
-		return value, true
-	case int8:
-		return parseHmsInt(strconv.FormatInt(int64(value), 10))
-	case int16:
-		return parseHmsInt(strconv.FormatInt(int64(value), 10))
-	case int32:
-		return parseHmsInt(strconv.FormatInt(int64(value), 10))
-	case int64:
-		return parseHmsInt(strconv.FormatInt(value, 10))
-	case uint:
-		return parseHmsInt(strconv.FormatUint(uint64(value), 10))
-	case uint8:
-		return parseHmsInt(strconv.FormatUint(uint64(value), 10))
-	case uint16:
-		return parseHmsInt(strconv.FormatUint(uint64(value), 10))
-	case uint32:
-		return parseHmsInt(strconv.FormatUint(uint64(value), 10))
-	case uint64:
-		return parseHmsInt(strconv.FormatUint(value, 10))
-	case float64:
-		if math.IsNaN(value) || math.IsInf(value, 0) || math.Trunc(value) != value {
-			return 0, false
-		}
-		return parseHmsInt(strconv.FormatFloat(value, 'f', 0, 64))
-	case json.Number:
-		return parseHmsInt(value.String())
-	case string:
-		return parseHmsInt(value)
-	default:
-		return 0, false
-	}
-}
-
-func parseHmsInt(value string) (int, bool) {
-	parsed, err := strconv.ParseInt(value, 10, strconv.IntSize)
-	return int(parsed), err == nil
-}
-
-// String 严格读取字符串或数字参数，并保留协议原始字符串格式。
-func (a HmsArgs) String(name string) (string, bool) {
-	value, ok := a[name]
-	if !ok || value == nil {
-		return "", false
-	}
-	switch value := value.(type) {
-	case string:
-		return value, true
-	case json.Number:
-		return value.String(), true
-	case int:
-		return strconv.Itoa(value), true
-	case int8:
-		return strconv.FormatInt(int64(value), 10), true
-	case int16:
-		return strconv.FormatInt(int64(value), 10), true
-	case int32:
-		return strconv.FormatInt(int64(value), 10), true
-	case int64:
-		return strconv.FormatInt(value, 10), true
-	case uint:
-		return strconv.FormatUint(uint64(value), 10), true
-	case uint8:
-		return strconv.FormatUint(uint64(value), 10), true
-	case uint16:
-		return strconv.FormatUint(uint64(value), 10), true
-	case uint32:
-		return strconv.FormatUint(uint64(value), 10), true
-	case uint64:
-		return strconv.FormatUint(value, 10), true
-	case float64:
-		return strconv.FormatFloat(value, 'g', -1, 64), true
-	default:
-		return "", false
-	}
+	Level      int    `json:"level"`
+	Module     int    `json:"module"`
+	InTheSky   int    `json:"in_the_sky"`
+	Code       string `json:"code"`
+	DeviceType string `json:"device_type"`
+	// Imminent 表示即时性/瞬时性告警标记。
+	Imminent int     `json:"imminent"`
+	Args     HmsArgs `json:"args,omitempty"`
 }

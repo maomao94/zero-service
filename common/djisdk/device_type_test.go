@@ -1,9 +1,6 @@
 package djisdk
 
-import (
-	"encoding/json"
-	"testing"
-)
+import "testing"
 
 func TestParseDeviceTypeAndRegistry(t *testing.T) {
 	tests := []struct {
@@ -100,58 +97,44 @@ func TestDeviceTypeRegistryMatchesOfficialProductList(t *testing.T) {
 	}
 }
 
-func TestHmsArgStringPreservesOfficialAlarmID(t *testing.T) {
-	args := HmsArgs{"alarmid": "0x00AbCdEf", "numeric": json.Number("42")}
-	if got, ok := args.String("alarmid"); !ok || got != "0x00AbCdEf" {
-		t.Fatalf("args.String(alarmid) = %q, %v", got, ok)
-	}
-	if got, ok := args.String("numeric"); !ok || got != "42" {
-		t.Fatalf("args.String(numeric) = %q, %v", got, ok)
-	}
-	if _, ok := args.String("missing"); ok {
-		t.Fatal("args.String(missing) succeeded")
-	}
-}
-
-func TestHmsArgsIntStrict(t *testing.T) {
-	args := HmsArgs{
-		"integer":         float64(7),
-		"integer_decimal": float64(7.0),
-		"fraction":        1.5,
-		"overflow":        uint64(^uint(0)),
-		"number_decimal":  json.Number("2.5"),
-		"nil":             nil,
-		"unsupported":     true,
-	}
-	if got, ok := args.Int("integer"); !ok || got != 7 {
-		t.Fatalf("args.Int(integer) = %d, %v", got, ok)
-	}
-	if got, ok := args.Int("integer_decimal"); !ok || got != 7 {
-		t.Fatalf("args.Int(integer_decimal) = %d, %v", got, ok)
-	}
-	for _, name := range []string{"fraction", "overflow", "number_decimal", "nil", "unsupported", "missing"} {
-		if got, ok := args.Int(name); ok {
-			t.Errorf("args.Int(%s) = %d, true; want rejected", name, got)
-		}
-	}
-}
-
-func TestPayloadPlacementIsSeparateFromDeviceType(t *testing.T) {
+func TestPayloadPlacementUsesHostAircraftType(t *testing.T) {
 	sharedFPV, ok := LookupDeviceType(DeviceType{Domain: DeviceDomainPayload, Type: 39, SubType: 0})
 	if !ok || sharedFPV.Name != "飞行器 FPV 相机" {
 		t.Fatalf("shared FPV definition = %+v, %v", sharedFPV, ok)
 	}
 
-	wants := map[PayloadGimbalIndex]PayloadGimbalPosition{
-		PayloadGimbalMainOrLowerLeft: "主云台（M300 RTK 为机身下方左云台）",
-		PayloadGimbalLowerRight:      "机身下方右云台（M300 RTK）",
-		PayloadGimbalUpper:           "机身上方云台（M300 RTK）",
-		PayloadGimbalFPV:             "FPV 相机",
+	m300RTK := DeviceType{Domain: DeviceDomainAircraft, Type: 60, SubType: 0}
+	matrice350RTK := DeviceType{Domain: DeviceDomainAircraft, Type: 89, SubType: 0}
+	tests := []struct {
+		name         string
+		hostAircraft DeviceType
+		index        PayloadGimbalIndex
+		want         PayloadGimbalPosition
+		wantOK       bool
+	}{
+		{name: "M300 lower left", hostAircraft: m300RTK, index: PayloadGimbalMain, want: PayloadPositionLowerLeft, wantOK: true},
+		{name: "M300 lower right", hostAircraft: m300RTK, index: PayloadGimbalLowerRight, want: PayloadPositionLowerRight, wantOK: true},
+		{name: "M300 upper", hostAircraft: m300RTK, index: PayloadGimbalUpper, want: PayloadPositionUpper, wantOK: true},
+		{name: "M300 FPV", hostAircraft: m300RTK, index: PayloadGimbalFPV, want: PayloadPositionFPV, wantOK: true},
+		{name: "other aircraft main", hostAircraft: matrice350RTK, index: PayloadGimbalMain, want: PayloadPositionMain, wantOK: true},
+		{name: "other aircraft FPV", hostAircraft: matrice350RTK, index: PayloadGimbalFPV, want: PayloadPositionFPV, wantOK: true},
+		{name: "other aircraft M300-only lower right", hostAircraft: matrice350RTK, index: PayloadGimbalLowerRight},
+		{name: "other aircraft M300-only upper", hostAircraft: matrice350RTK, index: PayloadGimbalUpper},
+		{name: "reserved index", hostAircraft: matrice350RTK, index: PayloadGimbalIndex(3)},
+		{name: "unknown host does not imply main", hostAircraft: DeviceType{}, index: PayloadGimbalMain},
+		{name: "non-aircraft host does not imply main", hostAircraft: DeviceType{Domain: DeviceDomainRemoteController, Type: 119, SubType: 0}, index: PayloadGimbalMain},
+		{name: "unknown host still supports FPV", hostAircraft: DeviceType{}, index: PayloadGimbalFPV, want: PayloadPositionFPV, wantOK: true},
 	}
-	for index, want := range wants {
-		definition, position, ok := DescribePayload(PayloadPlacement{DeviceType: sharedFPV.DeviceType, GimbalIndex: index})
-		if !ok || definition != sharedFPV || position != want {
-			t.Errorf("DescribePayload(index=%d) = %+v, %q, %v", index, definition, position, ok)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			definition, position, ok := DescribePayload(PayloadPlacement{
+				DeviceType:       sharedFPV.DeviceType,
+				HostAircraftType: tt.hostAircraft,
+				GimbalIndex:      tt.index,
+			})
+			if ok != tt.wantOK || definition != sharedFPV || position != tt.want {
+				t.Errorf("DescribePayload(host=%s, index=%d) = %+v, %q, %v; want %q, %v", tt.hostAircraft, tt.index, definition, position, ok, tt.want, tt.wantOK)
+			}
+		})
 	}
 }

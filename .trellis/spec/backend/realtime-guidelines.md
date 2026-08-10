@@ -25,11 +25,11 @@
 ## 推送与交付语义
 
 - `socketpush.BroadcastRoom` 对当前 socketgtw client 快照异步 fan-out，并立即返回；它是 best-effort，不提供远端确认、可靠重试、顺序或 Exactly Once。
-- 单个 gateway 失败不应阻止其他 gateway 的 fan-out；错误通过日志/指标观察，除非契约明确增加聚合回执。
+- 每个 gateway 调用在独立 goroutine 中执行，因此单点失败不阻止其他 fan-out；当前 Broadcast Logic 不检查、汇总或记录单个调用错误，调用方不能从 RPC 返回值观察投递结果。若要增加可靠性或可观测性，必须先定义聚合回执、日志或指标契约。
 - Kafka producer 返回的是 broker publish 结果；有 key 与无 key 影响分区选择，必须按调用契约传递，不能声称消费者已处理。
 - MQTT/StreamEvent/Socket.IO 多跳链路分别保留 trace 与业务 correlation ID，不用一个字段替代所有身份。
 
-依据：`socketapp/socketpush/internal/logic`、`app/bridgekafka/internal`、`common/mqttx`。
+依据：`socketapp/socketpush/internal/logic/broadcastroomlogic.go`、`socketapp/socketpush/internal/logic/broadcastgloballogic.go`、`common/socketiox/container.go`、`app/bridgekafka/internal`、`common/mqttx`。
 
 ## 反模式
 

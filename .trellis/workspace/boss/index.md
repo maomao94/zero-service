@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 144
-- **Last Active**: 2026-08-07
+- **Total Sessions**: 149
+- **Last Active**: 2026-08-10
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~1230 | Active |
+| `journal-3.md` | ~1339 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,11 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 149 | 2026-08-10 | Refresh repository Trellis specs | `37e4928c` | `master` |
+| 148 | 2026-08-10 | Clarify DJI topology device identity | `fde9ab55` | `master` |
+| 147 | 2026-08-10 | Persist topology device name and type | `27c9a74c` | `master` |
+| 146 | 2026-08-10 | Document dynamic map cast boundaries | `88e80fe7` | `master` |
+| 145 | 2026-08-10 | 完善 DJI HMS 告警文案与推送链路 | `ed75e105`, `23b5bb0f`, `70345381`, `991f3d8a`, `9d93085f` | `master` |
 | 144 | 2026-08-07 | 深化 DJI HMS 本地化与告警持久化 | `990939b9`, `57966fb2` | `master` |
 | 143 | 2026-08-03 | Trigger 补偿上下文超时分析 | `bdedfd7c`, `5eb30f23` | `master` |
 | 142 | 2026-07-30 | Trigger 终止运行项校验 | `1a81af4f` | `master` |

@@ -1,0 +1,5 @@
+{"file":".trellis/spec/README.md","reason":"Defines the current spec tree, repository scope, and exclusions that the refresh must preserve or justify changing."}
+{"file":".trellis/spec/backend/index.md","reason":"Primary backend navigation and checklist; source of the existing spec inventory and routing contract."}
+{"file":".trellis/spec/guides/index.md","reason":"Primary cross-cutting guide navigation; must remain aligned with the final guide set."}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Defines evidence, validation, diff scope, and quality expectations for the spec refresh."}
+{"file":".trellis/spec/guides/documentation-guide.md","reason":"Defines authority and placement rules for Trellis specs versus README, docs, and task artifacts."}

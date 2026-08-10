@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"纯函数、hook、Proto 和公共 API 的风险分级验证"}
+{"file":".trellis/spec/backend/dji-guidelines.md","reason":"复核 HMS 查询、填充、入库和 RPC 数据流"}
+{"file":".trellis/spec/backend/contract-generation.md","reason":"复核生成物、字段号和调用方兼容性"}
+{"file":".trellis/spec/backend/gormx-guidelines.md","reason":"复核历史追加写入和 schema 字段所有权"}

@@ -23,16 +23,18 @@ const (
 //   - 固件版本、硬件版本从 state 物模型快照中提取，对应 DJI 物模型 pushMode=1 的状态数据，空值不上屏覆盖；
 //   - 在线状态由 osd 上行刷新，内存缓存用于高频在线判断，数据库保存最新在线快照并按 LastOnlineAt 懒过期清理。
 //
-	// 蛙跳场景：同一架飞机可能先后或同时与多个机巢建立拓扑关系，多机巢绑定关系不放在本表表达，而由 DjiDeviceTopo 按 gateway_sn + sub_device_sn 保存；
-	// 本表 GatewaySn 对飞机及挂载负载域（Domain=0/1）仅由 OSD/State 上行更新（反映设备当前通信通道），
-	// update_topo 上行不覆盖其 GatewaySn，绑定关系由 DjiDeviceTopo 维护；
-	// 对机巢/遥控器等非 0/1 域，GatewaySn 由 update_topo 和 OSD/State 共同维护。用于快速展示和控制路由兜底。
-	// 在线状态：数据库默认 IsOnline=false，表示离线或尚未收到在线上报；收到设备 osd 有效上行后置为 true，status/update_topo 与 state 仅维护设备归属和状态快照。
+// 蛙跳场景：同一架飞机可能先后或同时与多个机巢建立拓扑关系，多机巢绑定关系不放在本表表达，而由 DjiDeviceTopo 按 gateway_sn + sub_device_sn 保存；
+// 本表 GatewaySn 对飞机及挂载负载域（Domain=0/1）仅由 OSD/State 上行更新（反映设备当前通信通道），
+// update_topo 上行不覆盖其 GatewaySn，但仍按 device_sn 更新型号和名称；
+// 对机巢/遥控器等非 0/1 域，GatewaySn 由 update_topo 和 OSD/State 共同维护。
+// 在线状态：数据库默认 IsOnline=false，表示离线或尚未收到在线上报；收到设备 osd 有效上行后置为 true，status/update_topo 与 state 仅维护设备归属和状态快照。
 // 使用场景：设备列表、机巢详情、无人机详情、设备在线判断、后续设备分组/别名管理。
 type DjiDevice struct {
 	gormx.LegacyStringBaseModel
 	DeviceSn        string       `gorm:"column:device_sn;type:varchar(64);uniqueIndex;not null;comment:设备SN，机巢/无人机/负载设备唯一标识"`
 	GatewaySn       string       `gorm:"column:gateway_sn;type:varchar(64);index;not null;default:'';comment:最近一次上报关联的网关机巢SN，机巢自身等于device_sn；蛙跳多绑定关系以dji_device_topo为准"`
+	DeviceType      string       `gorm:"column:device_type;type:varchar(32);not null;default:'';comment:规范设备三元组，格式为domain-type-sub_type"`
+	DeviceName      string       `gorm:"column:device_name;type:varchar(128);not null;default:'';comment:设备三元组对应的产品名称"`
 	Alias           string       `gorm:"column:alias;type:varchar(128);default:'';comment:设备别名"`
 	GroupName       string       `gorm:"column:group_name;type:varchar(128);default:'';comment:业务分组"`
 	FirmwareVersion string       `gorm:"column:firmware_version;type:varchar(64);default:'';comment:固件版本"`
@@ -62,6 +64,8 @@ func (d *DjiDevice) TouchOnline(now time.Time) {
 type DjiDeviceTopo struct {
 	gormx.LegacyStringBaseModel
 	GatewaySn        string `gorm:"column:gateway_sn;uniqueIndex:idx_topo_pair;type:varchar(64);not null;comment:网关机巢SN"`
+	DeviceType       string `gorm:"column:device_type;type:varchar(32);not null;default:'';comment:规范设备三元组，格式为domain-type-sub_type"`
+	DeviceName       string `gorm:"column:device_name;type:varchar(128);not null;default:'';comment:设备三元组对应的产品名称"`
 	SubDeviceSn      string `gorm:"column:sub_device_sn;uniqueIndex:idx_topo_pair;index:idx_topo_sub;type:varchar(64);not null;comment:子设备SN"`
 	Domain           string `gorm:"column:domain;type:varchar(8);not null;default:'';comment:大疆设备领域domain，0飞机类，1负载类，2遥控器类，3机场类"`
 	SubDeviceType    int    `gorm:"column:sub_device_type;not null;default:0;comment:子设备类型"`

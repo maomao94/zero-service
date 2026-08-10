@@ -102,6 +102,7 @@ func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string,
 		logx.Field("need_reply", event.NeedReply),
 	)
 	eventCtx = logx.ContextWithFields(eventCtx, tsFields(event.Timestamp)...)
+	eventCtx = withEventCorrelation(eventCtx, event.Tid, event.Bid)
 	logx.WithContext(eventCtx).Info("[dji-sdk] events")
 
 	handled, replyResult := c.tryDispatchEventNotify(eventCtx, event.Gateway, event.Method, payload)

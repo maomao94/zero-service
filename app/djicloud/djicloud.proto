@@ -1525,24 +1525,27 @@ message DeviceInfo {
   // device_sn 设备 SN，机巢/无人机/负载设备唯一标识。
   string device_sn = 2;
   // gateway_sn 最近一次上报关联的网关机巢 SN；机巢自身等于 device_sn。
-  // 对飞机及挂载负载域（Domain=0/1）仅由 OSD/State 上行更新（反映设备当前通信通道），
-  // update_topo 上行不覆盖此字段，绑定关系以 DeviceTopoInfo 为准。
+  // 对飞机及挂载负载域（Domain=0/1）仅由 OSD/State 上行更新；update_topo 仍会按 device_sn 更新型号和名称。
   // 蛙跳场景下，一架飞机可能存在多个机巢绑定关系，完整绑定关系以 DeviceTopoInfo 为准。
   string gateway_sn = 3;
+  // device_type 规范设备三元组，格式为 {domain}-{type}-{sub_type}。
+  string device_type = 4;
+  // device_name 设备三元组对应的产品名称；未收录型号为空。
+  string device_name = 5;
   // alias 设备别名。
-  string alias = 4;
+  string alias = 6;
   // group_name 业务分组。
-  string group_name = 5;
+  string group_name = 7;
   // firmware_version 固件版本，来自大疆物模型属性 firmware_version。
-  string firmware_version = 6;
+  string firmware_version = 8;
   // hardware_version 硬件版本，来自大疆物模型属性 hardware_version。
-  string hardware_version = 7;
+  string hardware_version = 9;
   // is_online 是否在线；当前以设备 OSD 有效上行为在线刷新依据，State/update_topo 不刷新在线状态。
-  bool is_online = 8;
+  bool is_online = 10;
   // first_online_at 首次上线时间，毫秒时间戳。
-  int64 first_online_at = 9;
+  int64 first_online_at = 11;
   // last_online_at 最后在线时间，毫秒时间戳。
-  int64 last_online_at = 10;
+  int64 last_online_at = 12;
 }
 
 // DeviceTopoInfo 设备拓扑信息。
@@ -1562,6 +1565,10 @@ message DeviceTopoInfo {
   string sub_device_index = 6;
   // thing_version 物模型版本。
   string thing_version = 7;
+  // device_type 规范设备三元组，格式为 {domain}-{type}-{sub_type}。
+  string device_type = 8;
+  // device_name 设备三元组对应的产品名称；未收录型号为空。
+  string device_name = 9;
 }
 
 // DeviceTelemetrySnapshotBrief 设备遥测/状态快照摘要。
@@ -1689,33 +1696,50 @@ message GetDeviceStateSnapshotReq { string device_sn = 1; }
 
 // HmsAlertInfo HMS 告警信息。
 message HmsAlertInfo {
+  // 记录身份。
   string id = 1;
   string gateway_sn = 2;
-  int32 level = 3;
-  int32 module = 4;
-  string code = 5;
-  string device_type = 6;
-  int32 imminent = 7;
-  int32 in_the_sky = 8;
-  int32 component_index = 9;
-  int32 sensor_index = 10;
-  int32 acked = 11;
-  int64 acked_at = 12;
-  string acked_by = 13;
-  // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
-  string reported_at = 14;
-  string item_json = 15;
+
+  // 推送关联。
+  // tid 外层 HMS 推送事件的事务 ID。
+  string tid = 3;
+  // bid 外层 HMS 推送事件的业务 ID。
+  string bid = 4;
+  // trace_id 服务消费该 HMS 推送时持久化的链路追踪 ID。
+  string trace_id = 5;
+
+  // 告警主体。
+  int32 level = 6;
+  int32 module = 7;
+  string code = 8;
+  // imminent 是否即时告警，0: 否，1: 是。
+  int32 imminent = 9;
+  int32 in_the_sky = 10;
+
+  // 当前告警设备身份。
+  string device_type = 11;
+  // device_type_name 当前告警 device_type 对应的大疆产品名称，未知时为空。
+  string device_type_name = 12;
+  int32 device_domain = 13;
+  int32 device_type_id = 14;
+  int32 device_subtype = 15;
+
+  // 展示文案与上报原始数据，均为告警上报时的持久化快照。
+  // message_key 上报时实际命中的 HMS 文案字典键，未知文案时为空。
+  string message_key = 16;
   // message 按服务配置语言解析并在上报时持久化的 HMS 告警文案。
-  string message = 16;
-  int32 device_domain = 17;
-  int32 device_type_id = 18;
-  int32 device_subtype = 19;
-  string alarm_id = 20;
-  int32 gimbal_index = 21;
-  int32 lidar_index = 22;
-  int32 lte_index = 23;
-  // device_type_name 根据官方设备三元组查询到的大疆产品名称，未知时为空。
-  string device_type_name = 24;
+  string message = 17;
+  // alarm_id 上报 args 中的原始 alarmid 文本，缺失或类型非法时为空。
+  string alarm_id = 18;
+  string item_json = 19;
+
+  // 确认信息。
+  int32 acked = 20;
+  int64 acked_at = 21;
+  string acked_by = 22;
+
+  // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+  string reported_at = 23;
 }
 
 // ListHmsAlertsReq 查询 HMS 告警请求。
@@ -1741,7 +1765,7 @@ message ListHmsAlertsRes {
 
 // AckHmsAlertReq 确认 HMS 告警请求。
 message AckHmsAlertReq {
-  int64 id = 1;
+  string id = 1;
   string acked_by = 2;
 }
 

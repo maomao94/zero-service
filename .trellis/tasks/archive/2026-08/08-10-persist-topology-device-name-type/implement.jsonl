@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/dji-guidelines.md","reason":"DJI 上行拓扑快照、SDK 设备三元组与产品名称的所有权规则"}
+{"file":".trellis/spec/backend/gormx-guidelines.md","reason":"模型字段、事务、FirstOrCreate/Assign 和软删除写入约束"}
+{"file":".trellis/spec/backend/contract-generation.md","reason":"Proto 契约源、字段兼容性和 gen.sh 生成流程"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"核对协议入口、持久化和 RPC 查询的完整字段传播链"}

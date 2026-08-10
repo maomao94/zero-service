@@ -1,0 +1,31 @@
+{
+  "id": "hms-alert-rendering",
+  "name": "hms-alert-rendering",
+  "title": "检查并修正 HMS 告警文案查询与填充",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "boss",
+  "assignee": "boss",
+  "createdAt": "2026-08-10",
+  "completedAt": "2026-08-10",
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "08-10-hms-template-resolution",
+    "08-10-hms-device-placement",
+    "08-10-hms-event-persistence",
+    "08-10-hms-proto-query"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

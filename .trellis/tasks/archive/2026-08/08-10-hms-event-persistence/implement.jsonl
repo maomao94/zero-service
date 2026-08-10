@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/dji-guidelines.md","reason":"HMS 上行、历史追加和设备拓扑契约"}
+{"file":".trellis/spec/backend/gormx-guidelines.md","reason":"模型字段与历史写入规范"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"context trace 和日志边界"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"事件信封到数据库的跨层数据流"}

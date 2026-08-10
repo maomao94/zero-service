@@ -104,7 +104,7 @@ if err != nil || rows == 0 {
 }
 ```
 
-依据：`app/trigger/internal/logic/calcplantaskdatelogic.go`、`app/trigger/internal/task/scheduler`、`app/trigger/internal/logic/callbackplanexecitemlogic.go`、相关测试。
+依据：`app/trigger/model/gormmodel/plan.go`、`app/trigger/model/gormmodel/plan_test.go`、`app/trigger/internal/logic/terminateplanlogic.go`、`app/trigger/internal/logic/terminateplanbatchlogic.go`、`app/trigger/cron/cronservice.go`、`app/trigger/internal/logic/callbackplanexecitemlogic.go`。
 
 ## Plan Cron 日志正文标记
 

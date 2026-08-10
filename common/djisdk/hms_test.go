@@ -36,39 +36,41 @@ func TestHmsResolverEmbeddedDictionaryAndOfficialDomains(t *testing.T) {
 	}
 }
 
-func TestHmsResolverOnlyUsesOfficialCategory(t *testing.T) {
+func TestHmsResolverSelectsOfficialKey(t *testing.T) {
 	resolver := newTestHmsResolver(t, HmsConfig{Language: "en"}, map[string]map[string]string{
 		"fpv_tip_code":             {"en": "ground"},
 		"fpv_tip_code_in_the_sky":  {"en": "air"},
+		"fpv_tip_fallback":         {"en": "fallback"},
 		"dock_tip_code":            {"en": "dock"},
 		"dock_tip_code_in_the_sky": {"en": "unsupported dock sky"},
 		"remote_tip_code":          {"en": "unsupported remote"},
 	})
 
-	if result := resolver.Resolve(HmsItem{DeviceType: "0-67-0", Code: "code", InTheSky: 1}); result.Key != "fpv_tip_code_in_the_sky" || result.Message != "air" {
-		t.Fatalf("aircraft sky result = %+v", result)
+	tests := []struct {
+		name    string
+		item    HmsItem
+		wantKey string
+		wantMsg string
+	}{
+		{name: "aircraft ground", item: HmsItem{DeviceType: "0-67-0", Code: "code"}, wantKey: "fpv_tip_code", wantMsg: "ground"},
+		{name: "aircraft sky", item: HmsItem{DeviceType: "0-67-0", Code: "code", InTheSky: 1}, wantKey: "fpv_tip_code_in_the_sky", wantMsg: "air"},
+		{name: "aircraft sky fallback", item: HmsItem{DeviceType: "0-67-0", Code: "fallback", InTheSky: 1}, wantKey: "fpv_tip_fallback", wantMsg: "fallback"},
+		{name: "dock ignores sky key", item: HmsItem{DeviceType: "3-3-0", Code: "code", InTheSky: 1}, wantKey: "dock_tip_code", wantMsg: "dock"},
 	}
-	if result := resolver.Resolve(HmsItem{DeviceType: "0-67-0", Code: "code"}); result.Key != "fpv_tip_code" || result.Message != "ground" {
-		t.Fatalf("aircraft ground result = %+v", result)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := resolver.Resolve(tt.item)
+			if result.Key != tt.wantKey || result.Message != tt.wantMsg {
+				t.Fatalf("Resolve() = %+v, want key %q and message %q", result, tt.wantKey, tt.wantMsg)
+			}
+		})
 	}
-	if result := resolver.Resolve(HmsItem{DeviceType: "3-3-0", Code: "code", InTheSky: 1}); result.Key != "dock_tip_code" || result.Message != "dock" {
-		t.Fatalf("dock result = %+v", result)
-	}
+
 	for _, deviceType := range []string{"1-83-0", "2-174-0", "dock", "4-1-0", "invalid"} {
 		result := resolver.Resolve(HmsItem{DeviceType: deviceType, Code: "code", InTheSky: 1})
 		if result.Key != "" || !strings.Contains(result.Message, "code") {
 			t.Errorf("Resolve(%q) = %+v, want unknown alert without dictionary key", deviceType, result)
 		}
-	}
-}
-
-func TestHmsResolverFallsBackFromMissingSkyKey(t *testing.T) {
-	resolver := newTestHmsResolver(t, HmsConfig{}, map[string]map[string]string{
-		"fpv_tip_code": {"zh": "地面文案"},
-	})
-	result := resolver.Resolve(HmsItem{DeviceType: "0-67-0", Code: "code", InTheSky: 1})
-	if result.Key != "fpv_tip_code" || result.Message != "地面文案" {
-		t.Fatalf("Resolve() = %+v", result)
 	}
 }
 
@@ -95,13 +97,48 @@ func TestHmsResolverMatchesConfiguredLanguageExactly(t *testing.T) {
 
 func TestHmsResolverRendersOfficialArguments(t *testing.T) {
 	resolver := newTestHmsResolver(t, HmsConfig{}, map[string]map[string]string{
-		"fpv_tip_args": {"zh": "%component_index/%index/%battery_index/%dock_cover_index/%charging_rod_index/%alarmid/%gimbal_index/%lidar_index/%lte_index/%s/%1$d"},
+		"fpv_tip_0x16100001": {"zh": "%component_index/%index/%battery_index/%dock_cover_index/%charging_rod_index/%alarmid/%gimbal_index/%lidar_index/%lte_index/%s/%1$d"},
 	})
-	args := decodeHmsArgs(t, `{"component_index":0,"sensor_index":2,"alarmid":"0x16100001","gimbal_index":2,"lidar_index":"3","lte_index":4}`)
+	args := decodeHmsArgs(t, `{"component_index":99,"sensor_index":2,"alarmid":"0x00AbCdEf","gimbal_index":2,"lidar_index":"3","lte_index":4}`)
 
-	result := resolver.Resolve(HmsItem{DeviceType: "0-67-0", Code: "args", Args: args})
-	if result.Message != "1/3/右/右/左/0x16100001/2/3/4/%s/%1$d" {
+	result := resolver.Resolve(HmsItem{DeviceType: "0-67-0", Code: "0x16100001", Args: args})
+	if result.Message != "100/3/右/右/左/0x00AbCdEf/2/3/4/%s/%1$d" {
 		t.Fatalf("Message = %q", result.Message)
+	}
+}
+
+func TestHmsResolverRendersAlarmID(t *testing.T) {
+	resolver := newTestHmsResolver(t, HmsConfig{}, map[string]map[string]string{
+		"fpv_tip_0x16100001": {"zh": "%alarmid"},
+	})
+
+	result := resolver.Resolve(HmsItem{
+		DeviceType: "0-67-0",
+		Code:       "0x16100001",
+		Args:       decodeHmsArgs(t, `{"alarmid":"0x00AbCdEf"}`),
+	})
+	if result.Message != "0x00AbCdEf" {
+		t.Fatalf("Message = %q, want %q", result.Message, "0x00AbCdEf")
+	}
+}
+
+func TestHmsResolverSidePlaceholders(t *testing.T) {
+	resolver := newTestHmsResolver(t, HmsConfig{}, map[string]map[string]string{
+		"dock_tip_side": {"zh": "%battery_index/%dock_cover_index"},
+	})
+	tests := []struct {
+		sensorIndex int
+		want        string
+	}{
+		{sensorIndex: 0, want: "左/左"},
+		{sensorIndex: 1, want: "右/右"},
+		{sensorIndex: 8, want: "右/右"},
+	}
+	for _, tt := range tests {
+		result := resolver.Resolve(HmsItem{DeviceType: "3-3-0", Code: "side", Args: HmsArgs{"sensor_index": tt.sensorIndex}})
+		if result.Message != tt.want {
+			t.Errorf("sensor_index=%d Message = %q, want %q", tt.sensorIndex, result.Message, tt.want)
+		}
 	}
 }
 
@@ -111,7 +148,7 @@ func TestHmsResolverChargingRodDirections(t *testing.T) {
 	})
 	wants := map[int]string{0: "前", 1: "后", 2: "左", 3: "右", 4: "%charging_rod_index", -1: "%charging_rod_index"}
 	for sensorIndex, want := range wants {
-		result := resolver.Resolve(HmsItem{DeviceType: "3-3-0", Code: "direction", Args: map[string]any{"sensor_index": sensorIndex}})
+		result := resolver.Resolve(HmsItem{DeviceType: "3-3-0", Code: "direction", Args: HmsArgs{"sensor_index": sensorIndex}})
 		if result.Message != want {
 			t.Errorf("sensor_index=%d Message = %q, want %q", sensorIndex, result.Message, want)
 		}
@@ -120,13 +157,27 @@ func TestHmsResolverChargingRodDirections(t *testing.T) {
 
 func TestHmsResolverKeepsMissingArgumentsAndUnknownCode(t *testing.T) {
 	resolver := newTestHmsResolver(t, HmsConfig{}, map[string]map[string]string{
-		"fpv_tip_missing": {"zh": "云台%component_index异常（%alarmid）"},
+		"fpv_tip_missing": {"zh": "%component_index/%index/%battery_index/%dock_cover_index/%charging_rod_index/%alarmid"},
 	})
 
-	result := resolver.Resolve(HmsItem{DeviceType: "0-67-0", Code: "missing"})
-	if result.Message != "云台%component_index异常（%alarmid）" {
-		t.Fatalf("Message = %q, want unresolved placeholders preserved", result.Message)
+	template := "%component_index/%index/%battery_index/%dock_cover_index/%charging_rod_index/%alarmid"
+	tests := []struct {
+		name string
+		args HmsArgs
+	}{
+		{name: "missing", args: nil},
+		{name: "explicit nil", args: HmsArgs{"component_index": nil, "sensor_index": nil, "alarmid": nil}},
+		{name: "illegal types", args: HmsArgs{"component_index": []int{1}, "sensor_index": []int{0}, "alarmid": map[string]any{"raw": "0x1"}}},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := resolver.Resolve(HmsItem{DeviceType: "0-67-0", Code: "missing", Args: tt.args})
+			if result.Message != template {
+				t.Fatalf("Message = %q, want unresolved placeholders preserved", result.Message)
+			}
+		})
+	}
+
 	unknown := resolver.Resolve(HmsItem{DeviceType: "3-3-0", Code: "0xDEADBEEF"})
 	if unknown.Message == "" || !strings.Contains(unknown.Message, "0xDEADBEEF") {
 		t.Fatalf("unknown result = %+v, want non-empty message containing code", unknown)

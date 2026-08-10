@@ -131,8 +131,8 @@ func LookupDeviceTypeName(raw string) (string, bool) {
 type PayloadGimbalIndex int
 
 const (
-	// PayloadGimbalMainOrLowerLeft 表示主云台，M300 RTK 上表示机身下方左云台。
-	PayloadGimbalMainOrLowerLeft PayloadGimbalIndex = 0
+	// PayloadGimbalMain 表示主云台，M300 RTK 上表示机身下方左云台。
+	PayloadGimbalMain PayloadGimbalIndex = 0
 	// PayloadGimbalLowerRight 表示 M300 RTK 机身下方右云台。
 	PayloadGimbalLowerRight PayloadGimbalIndex = 1
 	// PayloadGimbalUpper 表示 M300 RTK 机身上方云台。
@@ -145,36 +145,49 @@ const (
 type PayloadGimbalPosition string
 
 const (
-	// PayloadPositionMainOrLowerLeft 描述索引 0 在不同机型上的官方语义。
-	PayloadPositionMainOrLowerLeft PayloadGimbalPosition = "主云台（M300 RTK 为机身下方左云台）"
-	// PayloadPositionLowerRight 描述索引 1 的官方语义。
-	PayloadPositionLowerRight PayloadGimbalPosition = "机身下方右云台（M300 RTK）"
-	// PayloadPositionUpper 描述索引 2 的官方语义。
-	PayloadPositionUpper PayloadGimbalPosition = "机身上方云台（M300 RTK）"
+	// PayloadPositionMain 描述非 M300 RTK 飞机的主云台。
+	PayloadPositionMain PayloadGimbalPosition = "主云台"
+	// PayloadPositionLowerLeft 描述 M300 RTK 机身下方左云台。
+	PayloadPositionLowerLeft PayloadGimbalPosition = "机身下方左云台"
+	// PayloadPositionLowerRight 描述 M300 RTK 机身下方右云台。
+	PayloadPositionLowerRight PayloadGimbalPosition = "机身下方右云台"
+	// PayloadPositionUpper 描述 M300 RTK 机身上方云台。
+	PayloadPositionUpper PayloadGimbalPosition = "机身上方云台"
 	// PayloadPositionFPV 描述索引 7 的官方语义。
 	PayloadPositionFPV PayloadGimbalPosition = "FPV 相机"
 )
 
-// Position 返回官方 gimbalindex 对应的中文挂载位置。
-func (index PayloadGimbalIndex) Position() (PayloadGimbalPosition, bool) {
-	switch index {
-	case PayloadGimbalMainOrLowerLeft:
-		return PayloadPositionMainOrLowerLeft, true
-	case PayloadGimbalLowerRight:
-		return PayloadPositionLowerRight, true
-	case PayloadGimbalUpper:
-		return PayloadPositionUpper, true
-	case PayloadGimbalFPV:
+// Position 根据宿主飞机型号返回官方 gimbalindex 对应的中文挂载位置。
+func (index PayloadGimbalIndex) Position(hostAircraftType DeviceType) (PayloadGimbalPosition, bool) {
+	if index == PayloadGimbalFPV {
 		return PayloadPositionFPV, true
-	default:
+	}
+	if hostAircraftType == (DeviceType{Domain: DeviceDomainAircraft, Type: 60, SubType: 0}) {
+		switch index {
+		case PayloadGimbalMain:
+			return PayloadPositionLowerLeft, true
+		case PayloadGimbalLowerRight:
+			return PayloadPositionLowerRight, true
+		case PayloadGimbalUpper:
+			return PayloadPositionUpper, true
+		default:
+			return "", false
+		}
+	}
+	if definition, ok := LookupDeviceType(hostAircraftType); !ok || definition.DeviceType.Domain != DeviceDomainAircraft {
 		return "", false
 	}
+	if index == PayloadGimbalMain {
+		return PayloadPositionMain, true
+	}
+	return "", false
 }
 
-// PayloadPlacement 将负载三元组与独立的 gimbalindex 挂载位置关联。
+// PayloadPlacement 将负载三元组、宿主飞机型号与独立的 gimbalindex 挂载位置关联。
 type PayloadPlacement struct {
-	DeviceType  DeviceType
-	GimbalIndex PayloadGimbalIndex
+	DeviceType       DeviceType
+	HostAircraftType DeviceType
+	GimbalIndex      PayloadGimbalIndex
 }
 
 // DescribePayload 查询负载产品定义及其独立挂载位置。
@@ -186,6 +199,6 @@ func DescribePayload(placement PayloadPlacement) (DeviceTypeDefinition, PayloadG
 	if !ok {
 		return DeviceTypeDefinition{}, "", false
 	}
-	position, ok := placement.GimbalIndex.Position()
+	position, ok := placement.GimbalIndex.Position(placement.HostAircraftType)
 	return definition, position, ok
 }

@@ -6424,24 +6424,27 @@ type DeviceInfo struct {
 	// device_sn 设备 SN，机巢/无人机/负载设备唯一标识。
 	DeviceSn string `protobuf:"bytes,2,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
 	// gateway_sn 最近一次上报关联的网关机巢 SN；机巢自身等于 device_sn。
-	// 对飞机及挂载负载域（Domain=0/1）仅由 OSD/State 上行更新（反映设备当前通信通道），
-	// update_topo 上行不覆盖此字段，绑定关系以 DeviceTopoInfo 为准。
+	// 对飞机及挂载负载域（Domain=0/1）仅由 OSD/State 上行更新；update_topo 仍会按 device_sn 更新型号和名称。
 	// 蛙跳场景下，一架飞机可能存在多个机巢绑定关系，完整绑定关系以 DeviceTopoInfo 为准。
 	GatewaySn string `protobuf:"bytes,3,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	// device_type 规范设备三元组，格式为 {domain}-{type}-{sub_type}。
+	DeviceType string `protobuf:"bytes,4,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
+	// device_name 设备三元组对应的产品名称；未收录型号为空。
+	DeviceName string `protobuf:"bytes,5,opt,name=device_name,json=deviceName,proto3" json:"device_name,omitempty"`
 	// alias 设备别名。
-	Alias string `protobuf:"bytes,4,opt,name=alias,proto3" json:"alias,omitempty"`
+	Alias string `protobuf:"bytes,6,opt,name=alias,proto3" json:"alias,omitempty"`
 	// group_name 业务分组。
-	GroupName string `protobuf:"bytes,5,opt,name=group_name,json=groupName,proto3" json:"group_name,omitempty"`
+	GroupName string `protobuf:"bytes,7,opt,name=group_name,json=groupName,proto3" json:"group_name,omitempty"`
 	// firmware_version 固件版本，来自大疆物模型属性 firmware_version。
-	FirmwareVersion string `protobuf:"bytes,6,opt,name=firmware_version,json=firmwareVersion,proto3" json:"firmware_version,omitempty"`
+	FirmwareVersion string `protobuf:"bytes,8,opt,name=firmware_version,json=firmwareVersion,proto3" json:"firmware_version,omitempty"`
 	// hardware_version 硬件版本，来自大疆物模型属性 hardware_version。
-	HardwareVersion string `protobuf:"bytes,7,opt,name=hardware_version,json=hardwareVersion,proto3" json:"hardware_version,omitempty"`
+	HardwareVersion string `protobuf:"bytes,9,opt,name=hardware_version,json=hardwareVersion,proto3" json:"hardware_version,omitempty"`
 	// is_online 是否在线；当前以设备 OSD 有效上行为在线刷新依据，State/update_topo 不刷新在线状态。
-	IsOnline bool `protobuf:"varint,8,opt,name=is_online,json=isOnline,proto3" json:"is_online,omitempty"`
+	IsOnline bool `protobuf:"varint,10,opt,name=is_online,json=isOnline,proto3" json:"is_online,omitempty"`
 	// first_online_at 首次上线时间，毫秒时间戳。
-	FirstOnlineAt int64 `protobuf:"varint,9,opt,name=first_online_at,json=firstOnlineAt,proto3" json:"first_online_at,omitempty"`
+	FirstOnlineAt int64 `protobuf:"varint,11,opt,name=first_online_at,json=firstOnlineAt,proto3" json:"first_online_at,omitempty"`
 	// last_online_at 最后在线时间，毫秒时间戳。
-	LastOnlineAt  int64 `protobuf:"varint,10,opt,name=last_online_at,json=lastOnlineAt,proto3" json:"last_online_at,omitempty"`
+	LastOnlineAt  int64 `protobuf:"varint,12,opt,name=last_online_at,json=lastOnlineAt,proto3" json:"last_online_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6493,6 +6496,20 @@ func (x *DeviceInfo) GetDeviceSn() string {
 func (x *DeviceInfo) GetGatewaySn() string {
 	if x != nil {
 		return x.GatewaySn
+	}
+	return ""
+}
+
+func (x *DeviceInfo) GetDeviceType() string {
+	if x != nil {
+		return x.DeviceType
+	}
+	return ""
+}
+
+func (x *DeviceInfo) GetDeviceName() string {
+	if x != nil {
+		return x.DeviceName
 	}
 	return ""
 }
@@ -6563,7 +6580,11 @@ type DeviceTopoInfo struct {
 	// sub_device_index 子设备索引。
 	SubDeviceIndex string `protobuf:"bytes,6,opt,name=sub_device_index,json=subDeviceIndex,proto3" json:"sub_device_index,omitempty"`
 	// thing_version 物模型版本。
-	ThingVersion  string `protobuf:"bytes,7,opt,name=thing_version,json=thingVersion,proto3" json:"thing_version,omitempty"`
+	ThingVersion string `protobuf:"bytes,7,opt,name=thing_version,json=thingVersion,proto3" json:"thing_version,omitempty"`
+	// device_type 规范设备三元组，格式为 {domain}-{type}-{sub_type}。
+	DeviceType string `protobuf:"bytes,8,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
+	// device_name 设备三元组对应的产品名称；未收录型号为空。
+	DeviceName    string `protobuf:"bytes,9,opt,name=device_name,json=deviceName,proto3" json:"device_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6643,6 +6664,20 @@ func (x *DeviceTopoInfo) GetSubDeviceIndex() string {
 func (x *DeviceTopoInfo) GetThingVersion() string {
 	if x != nil {
 		return x.ThingVersion
+	}
+	return ""
+}
+
+func (x *DeviceTopoInfo) GetDeviceType() string {
+	if x != nil {
+		return x.DeviceType
+	}
+	return ""
+}
+
+func (x *DeviceTopoInfo) GetDeviceName() string {
+	if x != nil {
+		return x.DeviceName
 	}
 	return ""
 }
@@ -7515,36 +7550,47 @@ func (x *GetDeviceStateSnapshotReq) GetDeviceSn() string {
 
 // HmsAlertInfo HMS 告警信息。
 type HmsAlertInfo struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	GatewaySn      string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
-	Level          int32                  `protobuf:"varint,3,opt,name=level,proto3" json:"level,omitempty"`
-	Module         int32                  `protobuf:"varint,4,opt,name=module,proto3" json:"module,omitempty"`
-	Code           string                 `protobuf:"bytes,5,opt,name=code,proto3" json:"code,omitempty"`
-	DeviceType     string                 `protobuf:"bytes,6,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
-	Imminent       int32                  `protobuf:"varint,7,opt,name=imminent,proto3" json:"imminent,omitempty"`
-	InTheSky       int32                  `protobuf:"varint,8,opt,name=in_the_sky,json=inTheSky,proto3" json:"in_the_sky,omitempty"`
-	ComponentIndex int32                  `protobuf:"varint,9,opt,name=component_index,json=componentIndex,proto3" json:"component_index,omitempty"`
-	SensorIndex    int32                  `protobuf:"varint,10,opt,name=sensor_index,json=sensorIndex,proto3" json:"sensor_index,omitempty"`
-	Acked          int32                  `protobuf:"varint,11,opt,name=acked,proto3" json:"acked,omitempty"`
-	AckedAt        int64                  `protobuf:"varint,12,opt,name=acked_at,json=ackedAt,proto3" json:"acked_at,omitempty"`
-	AckedBy        string                 `protobuf:"bytes,13,opt,name=acked_by,json=ackedBy,proto3" json:"acked_by,omitempty"`
-	// reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
-	ReportedAt string `protobuf:"bytes,14,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
-	ItemJson   string `protobuf:"bytes,15,opt,name=item_json,json=itemJson,proto3" json:"item_json,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 记录身份。
+	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	GatewaySn string `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	// 推送关联。
+	// tid 外层 HMS 推送事件的事务 ID。
+	Tid string `protobuf:"bytes,3,opt,name=tid,proto3" json:"tid,omitempty"`
+	// bid 外层 HMS 推送事件的业务 ID。
+	Bid string `protobuf:"bytes,4,opt,name=bid,proto3" json:"bid,omitempty"`
+	// trace_id 服务消费该 HMS 推送时持久化的链路追踪 ID。
+	TraceId string `protobuf:"bytes,5,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
+	// 告警主体。
+	Level  int32  `protobuf:"varint,6,opt,name=level,proto3" json:"level,omitempty"`
+	Module int32  `protobuf:"varint,7,opt,name=module,proto3" json:"module,omitempty"`
+	Code   string `protobuf:"bytes,8,opt,name=code,proto3" json:"code,omitempty"`
+	// imminent 是否即时告警，0: 否，1: 是。
+	Imminent int32 `protobuf:"varint,9,opt,name=imminent,proto3" json:"imminent,omitempty"`
+	InTheSky int32 `protobuf:"varint,10,opt,name=in_the_sky,json=inTheSky,proto3" json:"in_the_sky,omitempty"`
+	// 当前告警设备身份。
+	DeviceType string `protobuf:"bytes,11,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
+	// device_type_name 当前告警 device_type 对应的大疆产品名称，未知时为空。
+	DeviceTypeName string `protobuf:"bytes,12,opt,name=device_type_name,json=deviceTypeName,proto3" json:"device_type_name,omitempty"`
+	DeviceDomain   int32  `protobuf:"varint,13,opt,name=device_domain,json=deviceDomain,proto3" json:"device_domain,omitempty"`
+	DeviceTypeId   int32  `protobuf:"varint,14,opt,name=device_type_id,json=deviceTypeId,proto3" json:"device_type_id,omitempty"`
+	DeviceSubtype  int32  `protobuf:"varint,15,opt,name=device_subtype,json=deviceSubtype,proto3" json:"device_subtype,omitempty"`
+	// 展示文案与上报原始数据，均为告警上报时的持久化快照。
+	// message_key 上报时实际命中的 HMS 文案字典键，未知文案时为空。
+	MessageKey string `protobuf:"bytes,16,opt,name=message_key,json=messageKey,proto3" json:"message_key,omitempty"`
 	// message 按服务配置语言解析并在上报时持久化的 HMS 告警文案。
-	Message       string `protobuf:"bytes,16,opt,name=message,proto3" json:"message,omitempty"`
-	DeviceDomain  int32  `protobuf:"varint,17,opt,name=device_domain,json=deviceDomain,proto3" json:"device_domain,omitempty"`
-	DeviceTypeId  int32  `protobuf:"varint,18,opt,name=device_type_id,json=deviceTypeId,proto3" json:"device_type_id,omitempty"`
-	DeviceSubtype int32  `protobuf:"varint,19,opt,name=device_subtype,json=deviceSubtype,proto3" json:"device_subtype,omitempty"`
-	AlarmId       string `protobuf:"bytes,20,opt,name=alarm_id,json=alarmId,proto3" json:"alarm_id,omitempty"`
-	GimbalIndex   int32  `protobuf:"varint,21,opt,name=gimbal_index,json=gimbalIndex,proto3" json:"gimbal_index,omitempty"`
-	LidarIndex    int32  `protobuf:"varint,22,opt,name=lidar_index,json=lidarIndex,proto3" json:"lidar_index,omitempty"`
-	LteIndex      int32  `protobuf:"varint,23,opt,name=lte_index,json=lteIndex,proto3" json:"lte_index,omitempty"`
-	// device_type_name 根据官方设备三元组查询到的大疆产品名称，未知时为空。
-	DeviceTypeName string `protobuf:"bytes,24,opt,name=device_type_name,json=deviceTypeName,proto3" json:"device_type_name,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	Message string `protobuf:"bytes,17,opt,name=message,proto3" json:"message,omitempty"`
+	// alarm_id 上报 args 中的原始 alarmid 文本，缺失或类型非法时为空。
+	AlarmId  string `protobuf:"bytes,18,opt,name=alarm_id,json=alarmId,proto3" json:"alarm_id,omitempty"`
+	ItemJson string `protobuf:"bytes,19,opt,name=item_json,json=itemJson,proto3" json:"item_json,omitempty"`
+	// 确认信息。
+	Acked   int32  `protobuf:"varint,20,opt,name=acked,proto3" json:"acked,omitempty"`
+	AckedAt int64  `protobuf:"varint,21,opt,name=acked_at,json=ackedAt,proto3" json:"acked_at,omitempty"`
+	AckedBy string `protobuf:"bytes,22,opt,name=acked_by,json=ackedBy,proto3" json:"acked_by,omitempty"`
+	// reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
+	ReportedAt    string `protobuf:"bytes,23,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *HmsAlertInfo) Reset() {
@@ -7591,6 +7637,27 @@ func (x *HmsAlertInfo) GetGatewaySn() string {
 	return ""
 }
 
+func (x *HmsAlertInfo) GetTid() string {
+	if x != nil {
+		return x.Tid
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetBid() string {
+	if x != nil {
+		return x.Bid
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetTraceId() string {
+	if x != nil {
+		return x.TraceId
+	}
+	return ""
+}
+
 func (x *HmsAlertInfo) GetLevel() int32 {
 	if x != nil {
 		return x.Level
@@ -7612,13 +7679,6 @@ func (x *HmsAlertInfo) GetCode() string {
 	return ""
 }
 
-func (x *HmsAlertInfo) GetDeviceType() string {
-	if x != nil {
-		return x.DeviceType
-	}
-	return ""
-}
-
 func (x *HmsAlertInfo) GetImminent() int32 {
 	if x != nil {
 		return x.Imminent
@@ -7633,18 +7693,67 @@ func (x *HmsAlertInfo) GetInTheSky() int32 {
 	return 0
 }
 
-func (x *HmsAlertInfo) GetComponentIndex() int32 {
+func (x *HmsAlertInfo) GetDeviceType() string {
 	if x != nil {
-		return x.ComponentIndex
+		return x.DeviceType
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetDeviceTypeName() string {
+	if x != nil {
+		return x.DeviceTypeName
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetDeviceDomain() int32 {
+	if x != nil {
+		return x.DeviceDomain
 	}
 	return 0
 }
 
-func (x *HmsAlertInfo) GetSensorIndex() int32 {
+func (x *HmsAlertInfo) GetDeviceTypeId() int32 {
 	if x != nil {
-		return x.SensorIndex
+		return x.DeviceTypeId
 	}
 	return 0
+}
+
+func (x *HmsAlertInfo) GetDeviceSubtype() int32 {
+	if x != nil {
+		return x.DeviceSubtype
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetMessageKey() string {
+	if x != nil {
+		return x.MessageKey
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetAlarmId() string {
+	if x != nil {
+		return x.AlarmId
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetItemJson() string {
+	if x != nil {
+		return x.ItemJson
+	}
+	return ""
 }
 
 func (x *HmsAlertInfo) GetAcked() int32 {
@@ -7671,76 +7780,6 @@ func (x *HmsAlertInfo) GetAckedBy() string {
 func (x *HmsAlertInfo) GetReportedAt() string {
 	if x != nil {
 		return x.ReportedAt
-	}
-	return ""
-}
-
-func (x *HmsAlertInfo) GetItemJson() string {
-	if x != nil {
-		return x.ItemJson
-	}
-	return ""
-}
-
-func (x *HmsAlertInfo) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *HmsAlertInfo) GetDeviceDomain() int32 {
-	if x != nil {
-		return x.DeviceDomain
-	}
-	return 0
-}
-
-func (x *HmsAlertInfo) GetDeviceTypeId() int32 {
-	if x != nil {
-		return x.DeviceTypeId
-	}
-	return 0
-}
-
-func (x *HmsAlertInfo) GetDeviceSubtype() int32 {
-	if x != nil {
-		return x.DeviceSubtype
-	}
-	return 0
-}
-
-func (x *HmsAlertInfo) GetAlarmId() string {
-	if x != nil {
-		return x.AlarmId
-	}
-	return ""
-}
-
-func (x *HmsAlertInfo) GetGimbalIndex() int32 {
-	if x != nil {
-		return x.GimbalIndex
-	}
-	return 0
-}
-
-func (x *HmsAlertInfo) GetLidarIndex() int32 {
-	if x != nil {
-		return x.LidarIndex
-	}
-	return 0
-}
-
-func (x *HmsAlertInfo) GetLteIndex() int32 {
-	if x != nil {
-		return x.LteIndex
-	}
-	return 0
-}
-
-func (x *HmsAlertInfo) GetDeviceTypeName() string {
-	if x != nil {
-		return x.DeviceTypeName
 	}
 	return ""
 }
@@ -7884,7 +7923,7 @@ func (x *ListHmsAlertsRes) GetList() []*HmsAlertInfo {
 // AckHmsAlertReq 确认 HMS 告警请求。
 type AckHmsAlertReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	AckedBy       string                 `protobuf:"bytes,2,opt,name=acked_by,json=ackedBy,proto3" json:"acked_by,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -7920,11 +7959,11 @@ func (*AckHmsAlertReq) Descriptor() ([]byte, []int) {
 	return file_djicloud_proto_rawDescGZIP(), []int{126}
 }
 
-func (x *AckHmsAlertReq) GetId() int64 {
+func (x *AckHmsAlertReq) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *AckHmsAlertReq) GetAckedBy() string {
@@ -9929,22 +9968,26 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x11IsDeviceOnlineReq\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\".\n" +
 	"\x0fDeviceOnlineRes\x12\x1b\n" +
-	"\tis_online\x18\x01 \x01(\bR\bisOnline\"\xce\x02\n" +
+	"\tis_online\x18\x01 \x01(\bR\bisOnline\"\x90\x03\n" +
 	"\n" +
 	"DeviceInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tdevice_sn\x18\x02 \x01(\tR\bdeviceSn\x12\x1d\n" +
 	"\n" +
-	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x12\x14\n" +
-	"\x05alias\x18\x04 \x01(\tR\x05alias\x12\x1d\n" +
+	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x12\x1f\n" +
+	"\vdevice_type\x18\x04 \x01(\tR\n" +
+	"deviceType\x12\x1f\n" +
+	"\vdevice_name\x18\x05 \x01(\tR\n" +
+	"deviceName\x12\x14\n" +
+	"\x05alias\x18\x06 \x01(\tR\x05alias\x12\x1d\n" +
 	"\n" +
-	"group_name\x18\x05 \x01(\tR\tgroupName\x12)\n" +
-	"\x10firmware_version\x18\x06 \x01(\tR\x0ffirmwareVersion\x12)\n" +
-	"\x10hardware_version\x18\a \x01(\tR\x0fhardwareVersion\x12\x1b\n" +
-	"\tis_online\x18\b \x01(\bR\bisOnline\x12&\n" +
-	"\x0ffirst_online_at\x18\t \x01(\x03R\rfirstOnlineAt\x12$\n" +
-	"\x0elast_online_at\x18\n" +
-	" \x01(\x03R\flastOnlineAt\"\x91\x02\n" +
+	"group_name\x18\a \x01(\tR\tgroupName\x12)\n" +
+	"\x10firmware_version\x18\b \x01(\tR\x0ffirmwareVersion\x12)\n" +
+	"\x10hardware_version\x18\t \x01(\tR\x0fhardwareVersion\x12\x1b\n" +
+	"\tis_online\x18\n" +
+	" \x01(\bR\bisOnline\x12&\n" +
+	"\x0ffirst_online_at\x18\v \x01(\x03R\rfirstOnlineAt\x12$\n" +
+	"\x0elast_online_at\x18\f \x01(\x03R\flastOnlineAt\"\xd3\x02\n" +
 	"\x0eDeviceTopoInfo\x12\x1d\n" +
 	"\n" +
 	"gateway_sn\x18\x01 \x01(\tR\tgatewaySn\x12\"\n" +
@@ -9953,7 +9996,11 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x0fsub_device_type\x18\x04 \x01(\x05R\rsubDeviceType\x12-\n" +
 	"\x13sub_device_sub_type\x18\x05 \x01(\x05R\x10subDeviceSubType\x12(\n" +
 	"\x10sub_device_index\x18\x06 \x01(\tR\x0esubDeviceIndex\x12#\n" +
-	"\rthing_version\x18\a \x01(\tR\fthingVersion\"{\n" +
+	"\rthing_version\x18\a \x01(\tR\fthingVersion\x12\x1f\n" +
+	"\vdevice_type\x18\b \x01(\tR\n" +
+	"deviceType\x12\x1f\n" +
+	"\vdevice_name\x18\t \x01(\tR\n" +
+	"deviceName\"{\n" +
 	"\x1cDeviceTelemetrySnapshotBrief\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1d\n" +
 	"\n" +
@@ -10022,38 +10069,37 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x17GetDeviceOsdSnapshotReq\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\"8\n" +
 	"\x19GetDeviceStateSnapshotReq\x12\x1b\n" +
-	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\"\xe2\x05\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\"\x95\x05\n" +
 	"\fHmsAlertInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
-	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12\x14\n" +
-	"\x05level\x18\x03 \x01(\x05R\x05level\x12\x16\n" +
-	"\x06module\x18\x04 \x01(\x05R\x06module\x12\x12\n" +
-	"\x04code\x18\x05 \x01(\tR\x04code\x12\x1f\n" +
-	"\vdevice_type\x18\x06 \x01(\tR\n" +
-	"deviceType\x12\x1a\n" +
-	"\bimminent\x18\a \x01(\x05R\bimminent\x12\x1c\n" +
+	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12\x10\n" +
+	"\x03tid\x18\x03 \x01(\tR\x03tid\x12\x10\n" +
+	"\x03bid\x18\x04 \x01(\tR\x03bid\x12\x19\n" +
+	"\btrace_id\x18\x05 \x01(\tR\atraceId\x12\x14\n" +
+	"\x05level\x18\x06 \x01(\x05R\x05level\x12\x16\n" +
+	"\x06module\x18\a \x01(\x05R\x06module\x12\x12\n" +
+	"\x04code\x18\b \x01(\tR\x04code\x12\x1a\n" +
+	"\bimminent\x18\t \x01(\x05R\bimminent\x12\x1c\n" +
 	"\n" +
-	"in_the_sky\x18\b \x01(\x05R\binTheSky\x12'\n" +
-	"\x0fcomponent_index\x18\t \x01(\x05R\x0ecomponentIndex\x12!\n" +
-	"\fsensor_index\x18\n" +
-	" \x01(\x05R\vsensorIndex\x12\x14\n" +
-	"\x05acked\x18\v \x01(\x05R\x05acked\x12\x19\n" +
-	"\backed_at\x18\f \x01(\x03R\aackedAt\x12\x19\n" +
-	"\backed_by\x18\r \x01(\tR\aackedBy\x12\x1f\n" +
-	"\vreported_at\x18\x0e \x01(\tR\n" +
-	"reportedAt\x12\x1b\n" +
-	"\titem_json\x18\x0f \x01(\tR\bitemJson\x12\x18\n" +
-	"\amessage\x18\x10 \x01(\tR\amessage\x12#\n" +
-	"\rdevice_domain\x18\x11 \x01(\x05R\fdeviceDomain\x12$\n" +
-	"\x0edevice_type_id\x18\x12 \x01(\x05R\fdeviceTypeId\x12%\n" +
-	"\x0edevice_subtype\x18\x13 \x01(\x05R\rdeviceSubtype\x12\x19\n" +
-	"\balarm_id\x18\x14 \x01(\tR\aalarmId\x12!\n" +
-	"\fgimbal_index\x18\x15 \x01(\x05R\vgimbalIndex\x12\x1f\n" +
-	"\vlidar_index\x18\x16 \x01(\x05R\n" +
-	"lidarIndex\x12\x1b\n" +
-	"\tlte_index\x18\x17 \x01(\x05R\blteIndex\x12(\n" +
-	"\x10device_type_name\x18\x18 \x01(\tR\x0edeviceTypeName\"\x9b\x01\n" +
+	"in_the_sky\x18\n" +
+	" \x01(\x05R\binTheSky\x12\x1f\n" +
+	"\vdevice_type\x18\v \x01(\tR\n" +
+	"deviceType\x12(\n" +
+	"\x10device_type_name\x18\f \x01(\tR\x0edeviceTypeName\x12#\n" +
+	"\rdevice_domain\x18\r \x01(\x05R\fdeviceDomain\x12$\n" +
+	"\x0edevice_type_id\x18\x0e \x01(\x05R\fdeviceTypeId\x12%\n" +
+	"\x0edevice_subtype\x18\x0f \x01(\x05R\rdeviceSubtype\x12\x1f\n" +
+	"\vmessage_key\x18\x10 \x01(\tR\n" +
+	"messageKey\x12\x18\n" +
+	"\amessage\x18\x11 \x01(\tR\amessage\x12\x19\n" +
+	"\balarm_id\x18\x12 \x01(\tR\aalarmId\x12\x1b\n" +
+	"\titem_json\x18\x13 \x01(\tR\bitemJson\x12\x14\n" +
+	"\x05acked\x18\x14 \x01(\x05R\x05acked\x12\x19\n" +
+	"\backed_at\x18\x15 \x01(\x03R\aackedAt\x12\x19\n" +
+	"\backed_by\x18\x16 \x01(\tR\aackedBy\x12\x1f\n" +
+	"\vreported_at\x18\x17 \x01(\tR\n" +
+	"reportedAt\"\x9b\x01\n" +
 	"\x10ListHmsAlertsReq\x12\x12\n" +
 	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x03R\bpageSize\x12\x1d\n" +
@@ -10065,7 +10111,7 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x05total\x18\x01 \x01(\x03R\x05total\x12*\n" +
 	"\x04list\x18\x02 \x03(\v2\x16.djicloud.HmsAlertInfoR\x04list\";\n" +
 	"\x0eAckHmsAlertReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\backed_by\x18\x02 \x01(\tR\aackedBy\"\x90\x04\n" +
 	"\x16FlightTaskProgressInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +

@@ -75,6 +75,8 @@ func toDeviceInfo(m *gormmodel.DjiDevice) *djicloud.DeviceInfo {
 		Id:              m.Id,
 		DeviceSn:        m.DeviceSn,
 		GatewaySn:       m.GatewaySn,
+		DeviceType:      m.DeviceType,
+		DeviceName:      m.DeviceName,
 		Alias:           m.Alias,
 		GroupName:       m.GroupName,
 		FirmwareVersion: m.FirmwareVersion,
@@ -145,6 +147,8 @@ func toTopoInfoList(items []gormmodel.DjiDeviceTopo) []*djicloud.DeviceTopoInfo 
 			SubDeviceSubType: int32(items[i].SubDeviceSubType),
 			SubDeviceIndex:   items[i].SubDeviceIndex,
 			ThingVersion:     items[i].ThingVersion,
+			DeviceType:       items[i].DeviceType,
+			DeviceName:       items[i].DeviceName,
 		})
 	}
 	return list
@@ -159,16 +163,16 @@ func toDockFlightTaskStateInfo(m *gormmodel.DjiDockDeviceFlightTaskState) *djicl
 		trackId = m.TrackId.String
 	}
 	return &djicloud.DockFlightTaskStateInfo{
-		GatewaySn:           m.GatewaySn,
-		FlightId:            m.FlightId,
-		Status:              m.Status,
-		CurrentStep:         int32(m.CurrentStep),
-		WaylineMissionState: int32(m.WaylineMissionState),
+		GatewaySn:            m.GatewaySn,
+		FlightId:             m.FlightId,
+		Status:               m.Status,
+		CurrentStep:          int32(m.CurrentStep),
+		WaylineMissionState:  int32(m.WaylineMissionState),
 		CurrentWaypointIndex: int32(m.CurrentWaypointIndex),
-		MediaCount:          int32(m.MediaCount),
-		ProgressPercent:     m.ProgressPercent,
-		TrackId:             trackId,
-		WaylineId:           int32(m.WaylineId),
-		ReportedAt:          carbon.CreateFromStdTime(m.ReportedAt).ToDateTimeMicroString(),
+		MediaCount:           int32(m.MediaCount),
+		ProgressPercent:      m.ProgressPercent,
+		TrackId:              trackId,
+		WaylineId:            int32(m.WaylineId),
+		ReportedAt:           carbon.CreateFromStdTime(m.ReportedAt).ToDateTimeMicroString(),
 	}
 }

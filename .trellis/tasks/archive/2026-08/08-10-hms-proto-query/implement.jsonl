@@ -1,0 +1,3 @@
+{"file":".trellis/spec/backend/contract-generation.md","reason":"Proto reserved、兼容性和生成流程"}
+{"file":".trellis/spec/backend/dji-guidelines.md","reason":"HMS 查询响应领域契约"}
+{"file":".trellis/spec/backend/coding-standards.md","reason":"Logic 映射和最小改动规范"}

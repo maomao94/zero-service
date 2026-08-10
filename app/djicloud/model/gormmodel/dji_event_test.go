@@ -47,4 +47,20 @@ func TestDjiHmsAlertStoresTextAlarmIDAndDeviceTypeName(t *testing.T) {
 	if field := parsed.LookUpField("device_type_name"); field == nil || field.DataType != "varchar(128)" || field.TagSettings["TYPE"] != "varchar(128)" {
 		t.Fatalf("device_type_name field = %+v, want varchar(128)", field)
 	}
+	for _, name := range []string{"message_key", "tid", "bid", "trace_id"} {
+		if field := parsed.LookUpField(name); field == nil {
+			t.Fatalf("%s field not found", name)
+		}
+	}
+	if field := parsed.LookUpField("gimbal_position"); field != nil {
+		t.Fatalf("HMS must not persist protocol-absent gimbal_position field = %+v", field)
+	}
+	for _, name := range []string{"component_index", "sensor_index", "gimbal_index", "lidar_index", "lte_index"} {
+		if field := parsed.LookUpField(name); field != nil {
+			t.Fatalf("obsolete persisted field %s = %+v", name, field)
+		}
+	}
+	if field := parsed.LookUpField("imminent"); field == nil || field.TagSettings["COMMENT"] != "是否即时告警" {
+		t.Fatalf("imminent field = %+v, want immediacy comment", field)
+	}
 }

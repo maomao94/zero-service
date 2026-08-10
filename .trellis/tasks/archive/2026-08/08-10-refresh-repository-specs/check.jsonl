@@ -1,0 +1,5 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Provides the final verification contract for documentation-only changes and diff review."}
+{"file":".trellis/spec/guides/documentation-guide.md","reason":"Provides content ownership, evidence, deduplication, and index consistency rules."}
+{"file":".trellis/spec/README.md","reason":"Final checker must verify the documented tree and exclusions match the resulting spec set."}
+{"file":".trellis/spec/backend/index.md","reason":"Final checker must verify every backend spec is correctly navigated and trigger descriptions are accurate."}
+{"file":".trellis/spec/guides/index.md","reason":"Final checker must verify every guide is correctly navigated and does not replace executable code specs."}

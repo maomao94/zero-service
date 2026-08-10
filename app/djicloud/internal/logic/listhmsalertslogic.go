@@ -51,33 +51,35 @@ func (l *ListHmsAlertsLogic) ListHmsAlerts(in *djicloud.ListHmsAlertsReq) (*djic
 	}
 	list := make([]*djicloud.HmsAlertInfo, 0, len(alerts))
 	for i := range alerts {
-		item := alerts[i]
-		list = append(list, &djicloud.HmsAlertInfo{
-			Id:             item.Id,
-			GatewaySn:      item.GatewaySn,
-			Level:          int32(item.Level),
-			Module:         int32(item.Module),
-			Code:           item.Code,
-			DeviceType:     item.DeviceType,
-			DeviceTypeName: item.DeviceTypeName,
-			Imminent:       int32(item.Imminent),
-			InTheSky:       int32(item.InTheSky),
-			ComponentIndex: int32(item.ComponentIndex),
-			SensorIndex:    int32(item.SensorIndex),
-			Acked:          int32(item.Acked),
-			AckedAt:        nullTimeMillis(item.AckedAt),
-			AckedBy:        item.AckedBy,
-			ReportedAt:     carbon.CreateFromStdTime(item.ReportedAt).ToDateTimeMicroString(),
-			ItemJson:       item.ItemJSON,
-			Message:        item.Message,
-			DeviceDomain:   int32(item.DeviceDomain),
-			DeviceTypeId:   int32(item.DeviceTypeID),
-			DeviceSubtype:  int32(item.DeviceSubtype),
-			AlarmId:        item.AlarmID,
-			GimbalIndex:    int32(item.GimbalIndex),
-			LidarIndex:     int32(item.LidarIndex),
-			LteIndex:       int32(item.LteIndex),
-		})
+		list = append(list, toHmsAlertInfo(alerts[i]))
 	}
 	return &djicloud.ListHmsAlertsRes{Total: pageResult.Total, List: list}, nil
+}
+
+func toHmsAlertInfo(item gormmodel.DjiHmsAlert) *djicloud.HmsAlertInfo {
+	return &djicloud.HmsAlertInfo{
+		Id:             item.Id,
+		GatewaySn:      item.GatewaySn,
+		Tid:            item.Tid,
+		Bid:            item.Bid,
+		TraceId:        item.TraceID,
+		Level:          int32(item.Level),
+		Module:         int32(item.Module),
+		Code:           item.Code,
+		Imminent:       int32(item.Imminent),
+		InTheSky:       int32(item.InTheSky),
+		DeviceType:     item.DeviceType,
+		DeviceTypeName: item.DeviceTypeName,
+		DeviceDomain:   int32(item.DeviceDomain),
+		DeviceTypeId:   int32(item.DeviceTypeID),
+		DeviceSubtype:  int32(item.DeviceSubtype),
+		MessageKey:     item.MessageKey,
+		Message:        item.Message,
+		AlarmId:        item.AlarmID,
+		ItemJson:       item.ItemJSON,
+		Acked:          int32(item.Acked),
+		AckedAt:        nullTimeMillis(item.AckedAt),
+		AckedBy:        item.AckedBy,
+		ReportedAt:     carbon.CreateFromStdTime(item.ReportedAt).ToDateTimeMicroString(),
+	}
 }

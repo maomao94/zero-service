@@ -9,7 +9,10 @@ import (
 	"zero-service/common/djisdk"
 	"zero-service/common/gormx"
 
+	"github.com/spf13/cast"
+
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/trace"
 )
 
 func NewFlightTaskProgressHandler(db *gormx.DB) func(ctx context.Context, gatewaySn string, data *djisdk.FlightTaskProgressEvent) error {
@@ -159,34 +162,30 @@ func NewHmsEventNotifyHandler(db *gormx.DB, resolver *djisdk.HmsResolver) func(c
 			return nil
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] hms: sn=%s items=%d", gatewaySn, len(data.List))
+		traceID := trace.TraceIDFromContext(ctx)
+		tid, bid := djisdk.EventCorrelationFromContext(ctx)
 		for _, item := range data.List {
 			resolved := resolver.Resolve(item)
 			deviceType, deviceTypeErr := djisdk.ParseDeviceType(item.DeviceType)
 			deviceTypeName, _ := djisdk.LookupDeviceTypeName(item.DeviceType)
-			componentIndex, _ := item.Args.Int("component_index")
-			sensorIndex, _ := item.Args.Int("sensor_index")
-			alarmID, _ := item.Args.String("alarmid")
-			gimbalIndex, _ := item.Args.Int("gimbal_index")
-			lidarIndex, _ := item.Args.Int("lidar_index")
-			lteIndex, _ := item.Args.Int("lte_index")
-			logx.WithContext(ctx).Infof("[dji-cloud] hms item: level=%d module=%d in_the_sky=%d code=%s device_type=%s imminent=%d component_index=%d sensor_index=%d",
-				item.Level, item.Module, item.InTheSky, item.Code, item.DeviceType, item.Imminent, componentIndex, sensorIndex)
+			alarmID := cast.ToString(item.Args["alarmid"])
+			logx.WithContext(ctx).Infof("[dji-cloud] hms item: level=%d module=%d in_the_sky=%d code=%s device_type=%s imminent=%d",
+				item.Level, item.Module, item.InTheSky, item.Code, item.DeviceType, item.Imminent)
 			alert := &gormmodel.DjiHmsAlert{
 				GatewaySn:      gatewaySn,
+				Tid:            tid,
+				Bid:            bid,
+				TraceID:        traceID,
 				Level:          item.Level,
 				Module:         item.Module,
 				Code:           item.Code,
-				DeviceType:     item.DeviceType,
-				DeviceTypeName: deviceTypeName,
-				AlarmID:        alarmID,
 				Imminent:       item.Imminent,
 				InTheSky:       item.InTheSky,
-				ComponentIndex: componentIndex,
-				SensorIndex:    sensorIndex,
-				GimbalIndex:    gimbalIndex,
-				LidarIndex:     lidarIndex,
-				LteIndex:       lteIndex,
+				DeviceType:     item.DeviceType,
+				DeviceTypeName: deviceTypeName,
+				MessageKey:     resolved.Key,
 				Message:        resolved.Message,
+				AlarmID:        alarmID,
 				ItemJSON:       toJSONString(item),
 				ReportedAt:     time.Now(),
 			}
