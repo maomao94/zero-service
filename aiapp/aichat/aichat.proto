@@ -30,7 +30,7 @@ message ChatMessagePb {
 
   // 模型的推理思考过程（仅 assistant 角色有值）。
   // 不同厂商返回字段名相同（reasoningContent），但启用方式不同，参见 enableThinking。
-  string reasoningContent = 3;
+  string reasoning_content = 3 [json_name = "reasoningContent"];
 }
 
 // ============================================================
@@ -56,11 +56,11 @@ message ChatCompletionReq {
   // 核采样参数，取值范围 0.0~1.0。
   // 模型只从累计概率质量达到 topP 的最小 token 集合中采样。
   // 建议与 temperature 二选一使用，不同时调整
-  double topP = 4;
+  double top_p = 4 [json_name = "topP"];
 
   // 单次回复的最大 token 数限制。
   // 用于控制回复长度，防止生成过长内容
-  int32 maxTokens = 5;
+  int32 max_tokens = 5 [json_name = "maxTokens"];
 
   // 停止序列，当模型生成这些字符串时停止输出。
   // 可指定多个停止词，用于精确控制生成结束位置
@@ -72,7 +72,7 @@ message ChatCompletionReq {
   // 是否启用深度思考模式。
   // 启用后模型会先生成推理过程（reasoningContent），再给出最终回答。
   // 不同厂商启用方式可能不同
-  bool enableThinking = 8;
+  bool enable_thinking = 8 [json_name = "enableThinking"];
 }
 
 // ChoicePb 对话补全的单个候选回复。
@@ -88,19 +88,19 @@ message ChoicePb {
   // - stop: 模型自然停止（遇到 stop 序列或达到 max_tokens）
   // - length: 达到 max_tokens 限制
   // - content_filter: 内容被过滤
-  string finishReason = 3;
+  string finish_reason = 3 [json_name = "finishReason"];
 }
 
 // UsagePb token 使用量统计信息。
 message UsagePb {
   // 输入 prompt 消耗的 token 数量
-  int32 promptTokens = 1;
+  int32 prompt_tokens = 1 [json_name = "promptTokens"];
 
   // 输出 completion 消耗的 token 数量
-  int32 completionTokens = 2;
+  int32 completion_tokens = 2 [json_name = "completionTokens"];
 
   // 总消耗 token 数量 = prompt_tokens + completionTokens
-  int32 totalTokens = 3;
+  int32 total_tokens = 3 [json_name = "totalTokens"];
 }
 
 // ChatCompletionRes 非流式对话补全响应。
@@ -139,10 +139,10 @@ message ChatDeltaPb {
 
   // 推理思考过程的增量内容。流式场景下先于 content 输出，
   // 当 reasoningContent 结束、content 开始时，表示模型已从思考阶段切换到回答阶段
-  string reasoningContent = 3;
+  string reasoning_content = 3 [json_name = "reasoningContent"];
 
   // 工具调用的增量数据列表
-  repeated ToolCallDeltaPb toolCalls = 4;
+  repeated ToolCallDeltaPb tool_calls = 4 [json_name = "toolCalls"];
 }
 
 // ToolCallDeltaPb 流式场景中工具调用的增量数据
@@ -168,7 +168,7 @@ message ChunkChoicePb {
   ChatDeltaPb delta = 2;
 
   // 片段结束原因，有效值：stop、length、content_filter、toolCalls
-  string finishReason = 3;
+  string finish_reason = 3 [json_name = "finishReason"];
 }
 
 // ChatCompletionStreamChunk 流式对话补全的 SSE chunk 格式，
@@ -209,19 +209,19 @@ message ModelObjectPb {
   int64 created = 3;
 
   // 模型所属的 provider 名称，如 zhipu、dashscope
-  string ownedBy = 4;
+  string owned_by = 4 [json_name = "ownedBy"];
 
   // 模型的友好显示名称，用于 UI 展示
-  string displayName = 5;
+  string display_name = 5 [json_name = "displayName"];
 
   // 模型的详细描述，说明模型的能力和适用场景
   string description = 6;
 
   // 是否支持流式输出（SSE）
-  bool supportsStreaming = 7;
+  bool supports_streaming = 7 [json_name = "supportsStreaming"];
 
   // 模型支持的最大 token 数（输入+输出）
-  int32 maxTokens = 8;
+  int32 max_tokens = 8 [json_name = "maxTokens"];
 }
 
 // ListModelsRes 模型列表响应
@@ -261,7 +261,7 @@ message AsyncToolCallReq {
 // AsyncToolCallRes 异步调用 MCP 工具的响应。
 message AsyncToolCallRes {
   // 任务唯一标识符，用于后续查询任务状态和结果
-  string taskId = 1;
+  string task_id = 1 [json_name = "taskId"];
 
   // 任务初始状态，固定为 "pending"
   string status = 2;
@@ -270,13 +270,13 @@ message AsyncToolCallRes {
 // AsyncToolResultReq 查询异步工具调用结果的请求。
 message AsyncToolResultReq {
   // 任务标识符，即 AsyncToolCall 返回的 taskId
-  string taskId = 1;
+  string task_id = 1 [json_name = "taskId"];
 }
 
 // AsyncToolResultRes 查询异步工具调用结果响应。
 message AsyncToolResultRes {
   // 任务标识符
-  string taskId = 1;
+  string task_id = 1 [json_name = "taskId"];
 
   // 任务状态，有效值：
   // - pending: 任务等待执行
@@ -327,22 +327,22 @@ message ListAsyncResultsReq {
   string status = 1;
 
   // 开始时间戳（毫秒），0 表示不限制
-  int64 startTime = 2;
+  int64 start_time = 2 [json_name = "startTime"];
 
   // 结束时间戳（毫秒），0 表示不限制
-  int64 endTime = 3;
+  int64 end_time = 3 [json_name = "endTime"];
 
   // 页码，从 1 开始
   int32 page = 4;
 
   // 每页数量
-  int32 pageSize = 5;
+  int32 page_size = 5 [json_name = "pageSize"];
 
   // 排序字段：created_at/updated_at/progress
-  string sortField = 6;
+  string sort_field = 6 [json_name = "sortField"];
 
   // 排序方向：asc/desc
-  string sortOrder = 7;
+  string sort_order = 7 [json_name = "sortOrder"];
 }
 
 // ListAsyncResultsResp 分页查询异步结果响应
@@ -357,10 +357,10 @@ message ListAsyncResultsResp {
   int32 page = 3;
 
   // 每页数量
-  int32 pageSize = 4;
+  int32 page_size = 4 [json_name = "pageSize"];
 
   // 总页数
-  int32 totalPages = 5;
+  int32 total_pages = 5 [json_name = "totalPages"];
 }
 
 // AsyncResultStat 异步结果统计
@@ -378,7 +378,7 @@ message AsyncResultStat {
   int64 failed = 4;
 
   // 成功率（百分比）
-  double successRate = 5;
+  double success_rate = 5 [json_name = "successRate"];
 }
 
 // ============================================================

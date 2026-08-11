@@ -155,8 +155,12 @@ func (s *Scheduler) executeTask(claim *TaskClaim) {
 	)
 
 	stale := false
-	if s.maxDelay > 0 && !task.ScheduledTime.IsZero() && time.Since(task.ScheduledTime) > s.maxDelay {
-		logx.WithContext(ctx).Infof("[crontask] task skipped: delayed %v > max %v", time.Since(task.ScheduledTime), s.maxDelay)
+	maxDelay := s.maxDelay
+	if task.MaxDelay > 0 {
+		maxDelay = task.MaxDelay
+	}
+	if maxDelay > 0 && !task.ScheduledTime.IsZero() && time.Since(task.ScheduledTime) > maxDelay {
+		logx.WithContext(ctx).Infof("[crontask] task skipped: delayed %v > max %v", time.Since(task.ScheduledTime), maxDelay)
 		stale = true
 	}
 
@@ -205,10 +209,11 @@ func (s *Scheduler) executeTask(claim *TaskClaim) {
 
 // RunNow 立即异步触发一次任务执行，成功时只记录 LastRun，不修改周期计划。
 // 异步执行保留 ctx value，但不继承调用方的取消信号和截止时间。
-func (s *Scheduler) RunNow(ctx context.Context, taskCode string) error {
+// 返回当前 trace_id 供调用方追踪异步执行结果。
+func (s *Scheduler) RunNow(ctx context.Context, taskCode string) (string, error) {
 	task, err := s.store.GetByCode(ctx, taskCode)
 	if err != nil {
-		return err
+		return "", err
 	}
 	task.ScheduledTime = carbon.Now().StartOfSecond().StdTime()
 	runCtx := logx.ContextWithFields(context.WithoutCancel(ctx),
@@ -217,6 +222,7 @@ func (s *Scheduler) RunNow(ctx context.Context, taskCode string) error {
 		logx.Field("scheduled_run", task.ScheduledTime),
 	)
 	logx.WithContext(runCtx).Info("[crontask] run now queued")
+	traceID := trace.TraceIDFromContext(ctx)
 	threading.GoSafe(func() {
 		startedAt := time.Now()
 		logx.WithContext(runCtx).Info("[crontask] run now handler started")
@@ -241,7 +247,7 @@ func (s *Scheduler) RunNow(ctx context.Context, taskCode string) error {
 			logx.WithContext(runCtx).Info("[crontask] run now completion committed")
 		}
 	})
-	return nil
+	return traceID, nil
 }
 
 func taskLogContext(ctx context.Context, claim *TaskClaim) context.Context {

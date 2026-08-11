@@ -545,7 +545,7 @@ func TestRunNow(t *testing.T) {
 	s.Start()
 	defer s.Stop()
 
-	if err := s.RunNow(ctx, "t"); err != nil {
+	if _, err := s.RunNow(ctx, "t"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -590,7 +590,7 @@ func TestRunNowProvidesExecutionTimeForZeroNextRun(t *testing.T) {
 		executed <- task.ScheduledTime
 		return nil
 	})
-	if err := s.RunNow(ctx, "manual-exhausted"); err != nil {
+	if _, err := s.RunNow(ctx, "manual-exhausted"); err != nil {
 		t.Fatal(err)
 	}
 

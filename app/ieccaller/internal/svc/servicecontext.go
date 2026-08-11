@@ -30,6 +30,8 @@ import (
 	"github.com/zeromicro/go-zero/core/timex"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 type ServiceContext struct {
@@ -301,7 +303,7 @@ func (svc ServiceContext) PushPbBroadcastWithAck(ctx context.Context, method str
 		return broadcastAckError(ack)
 	}
 
-	if err := jsonx.Unmarshal([]byte(ack.ResponseBody), res); err != nil {
+	if err := protojson.Unmarshal([]byte(ack.ResponseBody), res.(proto.Message)); err != nil {
 		return fmt.Errorf("unmarshal response error: %w", err)
 	}
 	return nil
@@ -312,7 +314,7 @@ func (svc ServiceContext) pushBroadcast(ctx context.Context, method string, in a
 		return fmt.Errorf("mqtt client is nil")
 	}
 
-	pbData, err := json.Marshal(in)
+	pbData, err := protojson.Marshal(in.(proto.Message))
 	if err != nil {
 		return err
 	}

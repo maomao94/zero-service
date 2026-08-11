@@ -1,0 +1,31 @@
+{
+  "id": "refresh-all-specs",
+  "name": "refresh-all-specs",
+  "title": "全量刷新 Trellis Spec 并补缺 domain spec",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "boss",
+  "assignee": "boss",
+  "createdAt": "2026-08-11",
+  "completedAt": "2026-08-11",
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "08-11-refresh-base-specs",
+    "08-11-refresh-domain-specs",
+    "08-11-add-bridge-specs",
+    "08-11-add-remaining-specs"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

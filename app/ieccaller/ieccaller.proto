@@ -92,7 +92,7 @@ message SendCommandReq {
   string host = 1;
   uint32 port = 2;
   uint32 coa = 3;
-  uint32 typeId = 4; // 指令类型，例如 45=C_SC_NA_1, 46=C_DC_NA_1 ...
+  uint32 type_id = 4 [json_name = "typeId"]; // 指令类型，例如 45=C_SC_NA_1, 46=C_DC_NA_1 ...
   uint32 ioa = 5;
   string value = 6; // 通用值，例如 "1","true","12.3"
 }
@@ -134,7 +134,7 @@ message SendSingleCommandReq {
   uint32 coa = 3;
   uint32 ioa = 4;
   bool value = 5;  // true=合, false=分
-  bool withTime = 6; // true=带CP56Time2a时标(C_SC_TA_1=58), false=不带(C_SC_NA_1=45)
+  bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_SC_TA_1=58), false=不带(C_SC_NA_1=45)
 }
 
 message SendDoubleCommandReq {
@@ -143,7 +143,7 @@ message SendDoubleCommandReq {
   uint32 coa = 3;
   uint32 ioa = 4;
   DoubleCommandValue value = 5;  // DCO_ON=合, DCO_OFF=分
-  bool withTime = 6; // true=带CP56Time2a时标(C_DC_TA_1=59), false=不带(C_DC_NA_1=46)
+  bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_DC_TA_1=59), false=不带(C_DC_NA_1=46)
 }
 
 enum DoubleCommandValue {
@@ -158,7 +158,7 @@ message SendStepCommandReq {
   uint32 coa = 3;
   uint32 ioa = 4;
   StepCommandValue value = 5;  // SCO_DOWN=降一步, SCO_UP=升一步
-  bool withTime = 6; // true=带CP56Time2a时标(C_RC_TA_1=60), false=不带(C_RC_NA_1=47)
+  bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_RC_TA_1=60), false=不带(C_RC_NA_1=47)
 }
 
 enum StepCommandValue {
@@ -173,7 +173,7 @@ message SendSetpointNormalizedReq {
   uint32 coa = 3;
   uint32 ioa = 4;
   int32 value = 5;
-  bool withTime = 6; // true=带CP56Time2a时标(C_SE_TA_1=61), false=不带(C_SE_NA_1=48)
+  bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_SE_TA_1=61), false=不带(C_SE_NA_1=48)
 }
 
 message SendSetpointScaledReq {
@@ -182,7 +182,7 @@ message SendSetpointScaledReq {
   uint32 coa = 3;
   uint32 ioa = 4;
   int32 value = 5;
-  bool withTime = 6; // true=带CP56Time2a时标(C_SE_TB_1=62), false=不带(C_SE_NB_1=49)
+  bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_SE_TB_1=62), false=不带(C_SE_NB_1=49)
 }
 
 message SendSetpointFloatReq {
@@ -191,7 +191,7 @@ message SendSetpointFloatReq {
   uint32 coa = 3;
   uint32 ioa = 4;
   string value = 5;
-  bool withTime = 6; // true=带CP56Time2a时标(C_SE_TC_1=63), false=不带(C_SE_NC_1=50)
+  bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_SE_TC_1=63), false=不带(C_SE_NC_1=50)
 }
 
 message SendBitstringCommandReq {
@@ -200,20 +200,20 @@ message SendBitstringCommandReq {
   uint32 coa = 3;
   uint32 ioa = 4;
   uint64 value = 5;
-  bool withTime = 6; // true=带CP56Time2a时标(C_BO_TA_1=64), false=不带(C_BO_NA_1=51)
+  bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_BO_TA_1=64), false=不带(C_BO_NA_1=51)
 }
 
 message PbDevicePointMapping {
   int64 id = 1;
-  string createTime = 2;
-  string updateTime = 3;
-  string tagStation = 4;
+  string create_time = 2 [json_name = "createTime"];
+  string update_time = 3 [json_name = "updateTime"];
+  string tag_station = 4 [json_name = "tagStation"];
   int64 coa = 5;
   int64 ioa = 6;
-  string deviceId = 7;
-  string deviceName = 8;
-  string tdTableType = 9;
-  int32 enablePush = 10; // 0: 禁用推送, 1: 启用推送
+  string device_id = 7 [json_name = "deviceId"];
+  string device_name = 8 [json_name = "deviceName"];
+  string td_table_type = 9 [json_name = "tdTableType"];
+  int32 enable_push = 10 [json_name = "enablePush"]; // 0: 禁用推送, 1: 启用推送
   string description = 11; // 点位描述信息
   string ext1 = 12;
   string ext2 = 13;
@@ -231,7 +231,7 @@ message QueryPointMappingByIdRes {
 }
 
 message QueryPointMappingByKeyReq {
-  string tagStation = 1;
+  string tag_station = 1 [json_name = "tagStation"];
   int64 coa = 2;
   int64 ioa = 3;
 }
@@ -242,10 +242,10 @@ message QueryPointMappingByKeyRes {
 
 message PageListPointMappingReq {
   int64 page = 1; // 页码
-  int64 pageSize = 2; // 每页大小
-  string tagStation = 3;
+  int64 page_size = 2 [json_name = "pageSize"]; // 每页大小
+  string tag_station = 3 [json_name = "tagStation"];
   int64 coa = 4;
-  string deviceId = 5;
+  string device_id = 5 [json_name = "deviceId"];
 }
 
 message PageListPointMappingRes {
@@ -255,15 +255,15 @@ message PageListPointMappingRes {
 
 message ClearPointMappingCacheReq {
   repeated string keys = 1; // 缓存key列表
-  repeated CacheKeyInfo keyInfos = 2; // 缓存key信息列表，用于根据tagStation、coa、ioa生成key
+  repeated CacheKeyInfo key_infos = 2 [json_name = "keyInfos"]; // 缓存key信息列表，用于根据tagStation、coa、ioa生成key
 }
 
 message CacheKeyInfo {
-  string tagStation = 1;
+  string tag_station = 1 [json_name = "tagStation"];
   int64 coa = 2;
   int64 ioa = 3;
 }
 
 message ClearPointMappingCacheRes {
-  int64 clearedCount = 1; // 清除的缓存数量
+  int64 cleared_count = 1 [json_name = "clearedCount"]; // 清除的缓存数量
 }

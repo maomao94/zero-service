@@ -140,6 +140,7 @@ scope.Logger(ctx).Info(scope.LogMessage("RPC 执行回调：收到下游回执")
 - `RunCronJob` 触发人工执行，不改变周期 `next_run` 或启停状态。
 - CronJob Handler 注册集中在 `ServiceContext`/cronjob 组装边界，业务服务通过 task code 与 payload 解耦。
 - CronJob 详情/列表的 `rruleStr` 和 `scheduleDescription` 必须来自持久化 `TaskConfig.RRuleStr`，不能从业务 JSON 重新编译。
+- 使用 `NewLoggingEventHandler(db, client)` 装饰 Handler：每次 cron job 执行后自动写入 `CronExecLog` 记录（字段：job_id、task_code、task_name、scheduled_time、start_time、end_time、cost_ms、status、error_message）。执行日志写入失败不影响 handler 返回结果，错误静默忽略。`CronExecLog` 已在 `ServiceContext` 的 Dev/Test 模式下通过 `db.MustAutoMigrate` 自动建表。
 
 ## 反模式
 

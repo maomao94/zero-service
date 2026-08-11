@@ -29,5 +29,5 @@ message PublishWithTraceReq {
 }
 
 message PublishWithTraceRes {
-  string traceId = 1;
+  string trace_id = 1 [json_name = "traceId"];
 }

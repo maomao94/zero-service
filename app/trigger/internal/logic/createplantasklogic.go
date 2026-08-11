@@ -3,7 +3,6 @@ package logic
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -18,6 +17,7 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/teambition/rrule-go"
+	"google.golang.org/protobuf/encoding/protojson"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
 )
@@ -94,7 +94,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	if len(dates) > 5000/len(in.ExecItems) {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "计划任务时间段内调度项过多")
 	}
-	ruleJSON, err := json.Marshal(in.Rule)
+	ruleJSON, err := protojson.Marshal(in.Rule)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "序列化计划规则失败")
 	}

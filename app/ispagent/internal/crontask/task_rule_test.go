@@ -197,7 +197,7 @@ func TestToStatus(t *testing.T) {
 }
 
 func TestCalcInitNextRunCycle(t *testing.T) {
-	now := carbon.Now()
+	now := carbon.Now(carbon.Shanghai)
 	nextYear := now.AddYear().Year()
 
 	f := &IspTaskFields{
@@ -221,7 +221,7 @@ func TestCalcInitNextRunCycle(t *testing.T) {
 }
 
 func TestCalcInitNextRunInterval(t *testing.T) {
-	now := carbon.Now()
+	now := carbon.Now(carbon.Shanghai)
 	start := now.StartOfDay().AddHours(8)
 	end := now.StartOfDay().AddDay()
 

@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"encoding/json"
 	"zero-service/app/gis/gis"
 	"zero-service/app/gis/internal/svc"
 	"zero-service/common/tool"
@@ -12,6 +11,7 @@ import (
 	"github.com/paulmach/orb/geo"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/timex"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type PointsWithinRadiusLogic struct {
@@ -49,7 +49,7 @@ func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusR
 			})
 		}
 	}
-	centerJson, _ := json.Marshal(in.Center)
+	centerJson, _ := protojson.Marshal(in.Center)
 	duration := timex.Since(startTime)
 	l.Logger.WithDuration(duration).Infof("获取半径内的点 center: %s, points: %d, hit count: %d", string(centerJson), len(in.Points), len(hits))
 	return &gis.PointsWithinRadiusRes{

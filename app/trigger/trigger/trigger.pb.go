@@ -160,13 +160,13 @@ type TaskInfoPb struct {
 	// State indicates the task state.
 	State int32 `protobuf:"varint,5,opt,name=state,proto3" json:"state,omitempty"` // 建议配合 enum TaskState 使用
 	// MaxRetry is the maximum number of times the task can be retried.
-	MaxRetry int32 `protobuf:"varint,6,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`
+	MaxRetry int32 `protobuf:"varint,6,opt,name=max_retry,json=maxRetry,proto3" json:"max_retry,omitempty"`
 	// Retried is the number of times the task has retried so far.
 	Retried int32 `protobuf:"varint,7,opt,name=retried,proto3" json:"retried,omitempty"`
 	// LastErr is the error message from the last failure.
-	LastErr string `protobuf:"bytes,8,opt,name=lastErr,proto3" json:"lastErr,omitempty"`
+	LastErr string `protobuf:"bytes,8,opt,name=last_err,json=lastErr,proto3" json:"last_err,omitempty"`
 	// LastFailedAt is the time of the last failure.
-	LastFailedAt string `protobuf:"bytes,9,opt,name=lastFailedAt,proto3" json:"lastFailedAt,omitempty"`
+	LastFailedAt string `protobuf:"bytes,9,opt,name=last_failed_at,json=lastFailedAt,proto3" json:"last_failed_at,omitempty"`
 	// Timeout is the duration the task can be processed before being retried.
 	Timeout int64 `protobuf:"varint,10,opt,name=timeout,proto3" json:"timeout,omitempty"` // 使用秒为单位的 duration
 	// Deadline is the deadline for the task.
@@ -174,13 +174,13 @@ type TaskInfoPb struct {
 	// Group is the name of the group in which the task belongs.
 	Group string `protobuf:"bytes,12,opt,name=group,proto3" json:"group,omitempty"`
 	// NextProcessAt is the time the task is scheduled to be processed.
-	NextProcessAt string `protobuf:"bytes,13,opt,name=nextProcessAt,proto3" json:"nextProcessAt,omitempty"`
+	NextProcessAt string `protobuf:"bytes,13,opt,name=next_process_at,json=nextProcessAt,proto3" json:"next_process_at,omitempty"`
 	// IsOrphaned indicates if the task is left in active state with no worker.
-	IsOrphaned bool `protobuf:"varint,14,opt,name=isOrphaned,proto3" json:"isOrphaned,omitempty"`
+	IsOrphaned bool `protobuf:"varint,14,opt,name=is_orphaned,json=isOrphaned,proto3" json:"is_orphaned,omitempty"`
 	// Retention is duration of the retention period.
 	Retention int64 `protobuf:"varint,15,opt,name=retention,proto3" json:"retention,omitempty"` // 使用秒为单位的 duration
 	// CompletedAt is the time when the task is processed successfully.
-	CompletedAt string `protobuf:"bytes,16,opt,name=completedAt,proto3" json:"completedAt,omitempty"` // 或 google.protobuf.Timestamp
+	CompletedAt string `protobuf:"bytes,16,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"` // 或 google.protobuf.Timestamp
 	// Result holds the result data associated with the task.
 	Result        string `protobuf:"bytes,17,opt,name=result,proto3" json:"result,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -412,10 +412,10 @@ func (x *DailyStatsPb) GetDate() string {
 type QueueInfoPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Name of the queue.
-	Queue string `protobuf:"bytes,1,opt,name=Queue,proto3" json:"Queue,omitempty"`
+	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"`
 	// Total number of bytes that the queue and its tasks require to be stored in redis.
 	// It is an approximate memory usage value in bytes since the value is computed by sampling.
-	MemoryUsage int64 `protobuf:"varint,2,opt,name=memoryUsage,proto3" json:"memoryUsage,omitempty"`
+	MemoryUsage int64 `protobuf:"varint,2,opt,name=memory_usage,json=memoryUsage,proto3" json:"memory_usage,omitempty"`
 	// Latency of the queue, measured by the oldest pending task in the queue.
 	Latency string `protobuf:"bytes,3,opt,name=latency,proto3" json:"latency,omitempty"`
 	// Size is the total number of tasks in the queue.
@@ -443,9 +443,9 @@ type QueueInfoPb struct {
 	// Total number of tasks failed to be processed within the given date (counter resets daily).
 	Failed int64 `protobuf:"varint,14,opt,name=failed,proto3" json:"failed,omitempty"`
 	// Total number of tasks processed (cumulative).
-	ProcessedTotal int64 `protobuf:"varint,15,opt,name=processedTotal,proto3" json:"processedTotal,omitempty"`
+	ProcessedTotal int64 `protobuf:"varint,15,opt,name=processed_total,json=processedTotal,proto3" json:"processed_total,omitempty"`
 	// Total number of tasks failed (cumulative).
-	FailedTotal int64 `protobuf:"varint,16,opt,name=failedTotal,proto3" json:"failedTotal,omitempty"`
+	FailedTotal int64 `protobuf:"varint,16,opt,name=failed_total,json=failedTotal,proto3" json:"failed_total,omitempty"`
 	// Paused indicates whether the queue is paused.
 	// If true, tasks in the queue will not be processed.
 	Paused bool `protobuf:"varint,17,opt,name=paused,proto3" json:"paused,omitempty"`
@@ -614,15 +614,15 @@ func (x *QueueInfoPb) GetTimestamp() string {
 type SendTriggerReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 秒
-	ProcessIn uint64 `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`
+	ProcessIn uint64 `protobuf:"varint,1,opt,name=process_in,json=processIn,proto3" json:"process_in,omitempty"`
 	// 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
-	TriggerTime string `protobuf:"bytes,2,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"`
+	TriggerTime string `protobuf:"bytes,2,opt,name=trigger_time,json=triggerTime,proto3" json:"trigger_time,omitempty"`
 	// POST json提交 不可为空
 	Url string `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
 	// 重试次数 可为空 默认: 25
-	MaxRetry int64 `protobuf:"varint,4,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`
+	MaxRetry int64 `protobuf:"varint,4,opt,name=max_retry,json=maxRetry,proto3" json:"max_retry,omitempty"`
 	// 唯一消息 id 可为空
-	MsgId string `protobuf:"bytes,5,opt,name=msgId,proto3" json:"msgId,omitempty"`
+	MsgId string `protobuf:"bytes,5,opt,name=msg_id,json=msgId,proto3" json:"msg_id,omitempty"`
 	// 触发内容，可为空
 	Body          string `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -704,7 +704,7 @@ func (x *SendTriggerReq) GetBody() string {
 type SendTriggerRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 唯一追踪 id
-	TraceId string `protobuf:"bytes,1,opt,name=traceId,proto3" json:"traceId,omitempty"`
+	TraceId string `protobuf:"bytes,1,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
 	// Queue is the name of the queue in which the task belongs.
 	Queue string `protobuf:"bytes,2,opt,name=queue,proto3" json:"queue,omitempty"`
 	// ID is the identifier of the task.
@@ -767,9 +767,9 @@ func (x *SendTriggerRes) GetId() string {
 type SendProtoTriggerReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 秒
-	ProcessIn uint64 `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`
+	ProcessIn uint64 `protobuf:"varint,1,opt,name=process_in,json=processIn,proto3" json:"process_in,omitempty"`
 	// 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
-	TriggerTime string `protobuf:"bytes,2,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"`
+	TriggerTime string `protobuf:"bytes,2,opt,name=trigger_time,json=triggerTime,proto3" json:"trigger_time,omitempty"`
 	// 最大重试次数（可为空，默认 25 次）
 	//
 	// 任务失败后会重试，重试间隔采用指数退避策略，时间间隔随重试次数成倍增长：
@@ -788,17 +788,17 @@ type SendProtoTriggerReq struct {
 	//	12 次及以上重试：间隔固定为 30 分钟
 	//
 	// 总之，重试间隔从秒级开始，逐步增长到分钟、十几分钟，最终封顶 30 分钟。
-	MaxRetry int64 `protobuf:"varint,3,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`
+	MaxRetry int64 `protobuf:"varint,3,opt,name=max_retry,json=maxRetry,proto3" json:"max_retry,omitempty"`
 	// 唯一消息 id 可为空
-	MsgId string `protobuf:"bytes,4,opt,name=msgId,proto3" json:"msgId,omitempty"`
+	MsgId string `protobuf:"bytes,4,opt,name=msg_id,json=msgId,proto3" json:"msg_id,omitempty"`
 	// 服务名称 不可为空 示例 127.0.0.1:8080 direct:///127.0.0.1:8080,127.0.0.2:8080,nacos://nacos:nacos@127.0.0.1:8848/service?namespaceid=public&timeout=5000s
-	GrpcServer string `protobuf:"bytes,5,opt,name=grpcServer,proto3" json:"grpcServer,omitempty"`
+	GrpcServer string `protobuf:"bytes,5,opt,name=grpc_server,json=grpcServer,proto3" json:"grpc_server,omitempty"`
 	// 方法 不可为空
 	Method string `protobuf:"bytes,6,opt,name=method,proto3" json:"method,omitempty"`
 	// pb 字节数据 不可为空
 	Payload []byte `protobuf:"bytes,7,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 请求超时时间 单位: 毫秒 可为空
-	RequestTimeout int64 `protobuf:"varint,8,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"`
+	RequestTimeout int64 `protobuf:"varint,8,opt,name=request_timeout,json=requestTimeout,proto3" json:"request_timeout,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -892,7 +892,7 @@ func (x *SendProtoTriggerReq) GetRequestTimeout() int64 {
 type SendProtoTriggerRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 唯一追踪 id
-	TraceId string `protobuf:"bytes,1,opt,name=traceId,proto3" json:"traceId,omitempty"`
+	TraceId string `protobuf:"bytes,1,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
 	// Queue is the name of the queue in which the task belongs.
 	Queue string `protobuf:"bytes,2,opt,name=queue,proto3" json:"queue,omitempty"`
 	// ID is the identifier of the task.
@@ -1079,7 +1079,7 @@ func (x *GetQueueInfoReq) GetQueue() string {
 
 type GetQueueInfoRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queueInfo,proto3" json:"queueInfo,omitempty"`
+	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queue_info,json=queueInfo,proto3" json:"queue_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1357,7 +1357,7 @@ func (x *GetTaskInfoReq) GetId() string {
 
 type GetTaskInfoRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TaskInfo      *TaskInfoPb            `protobuf:"bytes,1,opt,name=taskInfo,proto3" json:"taskInfo,omitempty"`
+	TaskInfo      *TaskInfoPb            `protobuf:"bytes,1,opt,name=task_info,json=taskInfo,proto3" json:"task_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1633,7 +1633,7 @@ func (x *HistoricalStatsReq) GetN() uint32 {
 
 type HistoricalStatsRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	DailyStat     []*DailyStatsPb        `protobuf:"bytes,1,rep,name=dailyStat,proto3" json:"dailyStat,omitempty"`
+	DailyStat     []*DailyStatsPb        `protobuf:"bytes,1,rep,name=daily_stat,json=dailyStat,proto3" json:"daily_stat,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1677,8 +1677,8 @@ func (x *HistoricalStatsRes) GetDailyStat() []*DailyStatsPb {
 
 type ListActiveTasksReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PageSize      int64                  `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
-	PageNum       int64                  `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
+	PageSize      int64                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageNum       int64                  `protobuf:"varint,2,opt,name=page_num,json=pageNum,proto3" json:"page_num,omitempty"`
 	Queue         string                 `protobuf:"bytes,3,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1737,8 +1737,8 @@ func (x *ListActiveTasksReq) GetQueue() string {
 
 type ListActiveTasksRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queueInfo,proto3" json:"queueInfo,omitempty"`
-	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasksInfo,proto3" json:"tasksInfo,omitempty"`
+	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queue_info,json=queueInfo,proto3" json:"queue_info,omitempty"`
+	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasks_info,json=tasksInfo,proto3" json:"tasks_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1789,8 +1789,8 @@ func (x *ListActiveTasksRes) GetTasksInfo() []*TaskInfoPb {
 
 type ListPendingTasksReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PageSize      int64                  `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
-	PageNum       int64                  `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
+	PageSize      int64                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageNum       int64                  `protobuf:"varint,2,opt,name=page_num,json=pageNum,proto3" json:"page_num,omitempty"`
 	Queue         string                 `protobuf:"bytes,3,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1849,8 +1849,8 @@ func (x *ListPendingTasksReq) GetQueue() string {
 
 type ListPendingTasksRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queueInfo,proto3" json:"queueInfo,omitempty"`
-	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasksInfo,proto3" json:"tasksInfo,omitempty"`
+	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queue_info,json=queueInfo,proto3" json:"queue_info,omitempty"`
+	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasks_info,json=tasksInfo,proto3" json:"tasks_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1901,8 +1901,8 @@ func (x *ListPendingTasksRes) GetTasksInfo() []*TaskInfoPb {
 
 type ListAggregatingTasksReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PageSize      int64                  `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
-	PageNum       int64                  `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
+	PageSize      int64                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageNum       int64                  `protobuf:"varint,2,opt,name=page_num,json=pageNum,proto3" json:"page_num,omitempty"`
 	Queue         string                 `protobuf:"bytes,3,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	Group         string                 `protobuf:"bytes,4,opt,name=group,proto3" json:"group,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1969,8 +1969,8 @@ func (x *ListAggregatingTasksReq) GetGroup() string {
 
 type ListAggregatingTasksRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queueInfo,proto3" json:"queueInfo,omitempty"`
-	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasksInfo,proto3" json:"tasksInfo,omitempty"`
+	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queue_info,json=queueInfo,proto3" json:"queue_info,omitempty"`
+	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasks_info,json=tasksInfo,proto3" json:"tasks_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2021,8 +2021,8 @@ func (x *ListAggregatingTasksRes) GetTasksInfo() []*TaskInfoPb {
 
 type ListScheduledTasksReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PageSize      int64                  `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
-	PageNum       int64                  `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
+	PageSize      int64                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageNum       int64                  `protobuf:"varint,2,opt,name=page_num,json=pageNum,proto3" json:"page_num,omitempty"`
 	Queue         string                 `protobuf:"bytes,3,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2081,8 +2081,8 @@ func (x *ListScheduledTasksReq) GetQueue() string {
 
 type ListScheduledTasksRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queueInfo,proto3" json:"queueInfo,omitempty"`
-	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasksInfo,proto3" json:"tasksInfo,omitempty"`
+	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queue_info,json=queueInfo,proto3" json:"queue_info,omitempty"`
+	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasks_info,json=tasksInfo,proto3" json:"tasks_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2133,8 +2133,8 @@ func (x *ListScheduledTasksRes) GetTasksInfo() []*TaskInfoPb {
 
 type ListRetryTasksReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PageSize      int64                  `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
-	PageNum       int64                  `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
+	PageSize      int64                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageNum       int64                  `protobuf:"varint,2,opt,name=page_num,json=pageNum,proto3" json:"page_num,omitempty"`
 	Queue         string                 `protobuf:"bytes,3,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2193,8 +2193,8 @@ func (x *ListRetryTasksReq) GetQueue() string {
 
 type ListRetryTasksRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queueInfo,proto3" json:"queueInfo,omitempty"`
-	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasksInfo,proto3" json:"tasksInfo,omitempty"`
+	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queue_info,json=queueInfo,proto3" json:"queue_info,omitempty"`
+	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasks_info,json=tasksInfo,proto3" json:"tasks_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2245,8 +2245,8 @@ func (x *ListRetryTasksRes) GetTasksInfo() []*TaskInfoPb {
 
 type ListArchivedTasksReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PageSize      int64                  `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
-	PageNum       int64                  `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
+	PageSize      int64                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageNum       int64                  `protobuf:"varint,2,opt,name=page_num,json=pageNum,proto3" json:"page_num,omitempty"`
 	Queue         string                 `protobuf:"bytes,3,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2305,8 +2305,8 @@ func (x *ListArchivedTasksReq) GetQueue() string {
 
 type ListArchivedTasksRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queueInfo,proto3" json:"queueInfo,omitempty"`
-	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasksInfo,proto3" json:"tasksInfo,omitempty"`
+	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queue_info,json=queueInfo,proto3" json:"queue_info,omitempty"`
+	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasks_info,json=tasksInfo,proto3" json:"tasks_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2357,8 +2357,8 @@ func (x *ListArchivedTasksRes) GetTasksInfo() []*TaskInfoPb {
 
 type ListCompletedTasksReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PageSize      int64                  `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
-	PageNum       int64                  `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
+	PageSize      int64                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageNum       int64                  `protobuf:"varint,2,opt,name=page_num,json=pageNum,proto3" json:"page_num,omitempty"`
 	Queue         string                 `protobuf:"bytes,3,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2417,8 +2417,8 @@ func (x *ListCompletedTasksReq) GetQueue() string {
 
 type ListCompletedTasksRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queueInfo,proto3" json:"queueInfo,omitempty"`
-	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasksInfo,proto3" json:"tasksInfo,omitempty"`
+	QueueInfo     *QueueInfoPb           `protobuf:"bytes,1,opt,name=queue_info,json=queueInfo,proto3" json:"queue_info,omitempty"`
+	TasksInfo     []*TaskInfoPb          `protobuf:"bytes,2,rep,name=tasks_info,json=tasksInfo,proto3" json:"tasks_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2562,16 +2562,16 @@ type CalcPlanTaskDateReq struct {
 	// 规则生效开始时间
 	// 不传默认本年
 	// 格式：yyyy-MM-dd HH:mm:ss
-	StartTime string `protobuf:"bytes,1,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	StartTime string `protobuf:"bytes,1,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// 规则生效结束时间
 	// 不传默认本年
 	// 格式：yyyy-MM-dd HH:mm:ss
-	EndTime string `protobuf:"bytes,2,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	EndTime string `protobuf:"bytes,2,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	// 计划规则项 默认 规则项 MINUTELY
 	Rule *PlanRulePb `protobuf:"bytes,3,opt,name=rule,proto3" json:"rule,omitempty"`
 	// 排除日期列表
 	// 格式：yyyy-MM-dd
-	ExcludeDates  []string `protobuf:"bytes,4,rep,name=excludeDates,proto3" json:"excludeDates,omitempty"`
+	ExcludeDates  []string `protobuf:"bytes,4,rep,name=exclude_dates,json=excludeDates,proto3" json:"exclude_dates,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2636,11 +2636,11 @@ func (x *CalcPlanTaskDateReq) GetExcludeDates() []string {
 
 type CalcPlanTaskDateRes struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
-	PlanDates []string               `protobuf:"bytes,1,rep,name=planDates,proto3" json:"planDates,omitempty"`
+	PlanDates []string               `protobuf:"bytes,1,rep,name=plan_dates,json=planDates,proto3" json:"plan_dates,omitempty"`
 	// 根据实际计划规则生成的简体中文描述，用于业务展示。
-	ScheduleDescription string `protobuf:"bytes,2,opt,name=scheduleDescription,proto3" json:"scheduleDescription,omitempty"`
+	ScheduleDescription string `protobuf:"bytes,2,opt,name=schedule_description,json=scheduleDescription,proto3" json:"schedule_description,omitempty"`
 	// 实际用于日期计算和持久化的 RFC 5545 RRULE Set 原文，用于排障。
-	RruleStr      string `protobuf:"bytes,3,opt,name=rruleStr,proto3" json:"rruleStr,omitempty"`
+	RruleStr      string `protobuf:"bytes,3,opt,name=rrule_str,json=rruleStr,proto3" json:"rrule_str,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2709,11 +2709,11 @@ type HolidayDayPb struct {
 	// 日期说明
 	Note string `protobuf:"bytes,5,opt,name=note,proto3" json:"note,omitempty"`
 	// 是否假日
-	IsHoliday bool `protobuf:"varint,6,opt,name=isHoliday,proto3" json:"isHoliday,omitempty"`
+	IsHoliday bool `protobuf:"varint,6,opt,name=is_holiday,json=isHoliday,proto3" json:"is_holiday,omitempty"`
 	// 是否工作日
-	IsWorkday bool `protobuf:"varint,7,opt,name=isWorkday,proto3" json:"isWorkday,omitempty"`
+	IsWorkday bool `protobuf:"varint,7,opt,name=is_workday,json=isWorkday,proto3" json:"is_workday,omitempty"`
 	// 是否节日当天，如春节正月初一、国庆节 10 月 1 日
-	IsFestivalDay bool `protobuf:"varint,8,opt,name=isFestivalDay,proto3" json:"isFestivalDay,omitempty"`
+	IsFestivalDay bool `protobuf:"varint,8,opt,name=is_festival_day,json=isFestivalDay,proto3" json:"is_festival_day,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2815,7 +2815,7 @@ type HolidaySourcePb struct {
 	// 日期说明
 	Note string `protobuf:"bytes,4,opt,name=note,proto3" json:"note,omitempty"`
 	// 是否节日当天，如春节正月初一、国庆节 10 月 1 日
-	IsFestivalDay bool `protobuf:"varint,5,opt,name=isFestivalDay,proto3" json:"isFestivalDay,omitempty"`
+	IsFestivalDay bool `protobuf:"varint,5,opt,name=is_festival_day,json=isFestivalDay,proto3" json:"is_festival_day,omitempty"`
 	// 是否启用；禁用后查询会按普通周末/工作日兜底
 	Enabled       bool `protobuf:"varint,6,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -2901,15 +2901,15 @@ type HolidayFestivalPb struct {
 	// 节日名称，如 国庆节、中秋国庆
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// 假期开始日期，格式 yyyy-MM-dd；只按 holidayDays 计算
-	StartDate string `protobuf:"bytes,3,opt,name=startDate,proto3" json:"startDate,omitempty"`
+	StartDate string `protobuf:"bytes,3,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"`
 	// 假期结束日期，格式 yyyy-MM-dd；只按 holidayDays 计算
-	EndDate string `protobuf:"bytes,4,opt,name=endDate,proto3" json:"endDate,omitempty"`
+	EndDate string `protobuf:"bytes,4,opt,name=end_date,json=endDate,proto3" json:"end_date,omitempty"`
 	// 假日日期列表，包含法定节假日和调休放假日
-	HolidayDays []string `protobuf:"bytes,5,rep,name=holidayDays,proto3" json:"holidayDays,omitempty"`
+	HolidayDays []string `protobuf:"bytes,5,rep,name=holiday_days,json=holidayDays,proto3" json:"holiday_days,omitempty"`
 	// 调休补班日期列表
-	MakeupWorkdays []string `protobuf:"bytes,6,rep,name=makeupWorkdays,proto3" json:"makeupWorkdays,omitempty"`
+	MakeupWorkdays []string `protobuf:"bytes,6,rep,name=makeup_workdays,json=makeupWorkdays,proto3" json:"makeup_workdays,omitempty"`
 	// 节日当天日期列表，如国庆节 10-01、春节正月初一
-	FestivalDays  []string `protobuf:"bytes,7,rep,name=festivalDays,proto3" json:"festivalDays,omitempty"`
+	FestivalDays  []string `protobuf:"bytes,7,rep,name=festival_days,json=festivalDays,proto3" json:"festival_days,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2998,11 +2998,11 @@ type HolidayYearSummaryPb struct {
 	// 年份
 	Year int32 `protobuf:"varint,1,opt,name=year,proto3" json:"year,omitempty"`
 	// 全年特殊假日日期列表，包含法定节假日和调休放假日
-	HolidayDays []string `protobuf:"bytes,2,rep,name=holidayDays,proto3" json:"holidayDays,omitempty"`
+	HolidayDays []string `protobuf:"bytes,2,rep,name=holiday_days,json=holidayDays,proto3" json:"holiday_days,omitempty"`
 	// 全年调休补班日期列表
-	MakeupWorkdays []string `protobuf:"bytes,3,rep,name=makeupWorkdays,proto3" json:"makeupWorkdays,omitempty"`
+	MakeupWorkdays []string `protobuf:"bytes,3,rep,name=makeup_workdays,json=makeupWorkdays,proto3" json:"makeup_workdays,omitempty"`
 	// 全年节日当天日期列表
-	FestivalDays []string `protobuf:"bytes,4,rep,name=festivalDays,proto3" json:"festivalDays,omitempty"`
+	FestivalDays []string `protobuf:"bytes,4,rep,name=festival_days,json=festivalDays,proto3" json:"festival_days,omitempty"`
 	// 全年涉及的节日名称列表，按节日首次出现时间排序
 	Names         []string `protobuf:"bytes,5,rep,name=names,proto3" json:"names,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -3167,9 +3167,9 @@ func (x *QueryHolidayRes) GetDay() *HolidayDayPb {
 type ListHolidayFestivalsReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 开始年份；不传时默认当前年
-	StartYear int32 `protobuf:"varint,1,opt,name=startYear,proto3" json:"startYear,omitempty"`
+	StartYear int32 `protobuf:"varint,1,opt,name=start_year,json=startYear,proto3" json:"start_year,omitempty"`
 	// 结束年份；不传时默认 startYear
-	EndYear int32 `protobuf:"varint,2,opt,name=endYear,proto3" json:"endYear,omitempty"`
+	EndYear int32 `protobuf:"varint,2,opt,name=end_year,json=endYear,proto3" json:"end_year,omitempty"`
 	// 节日名称，如 国庆节、中秋国庆；为空表示不过滤，组合节日支持按部分名称匹配
 	Name          string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -3565,7 +3565,7 @@ type ListHolidaySourceReq struct {
 	// 年份
 	Year int32 `protobuf:"varint,1,opt,name=year,proto3" json:"year,omitempty"`
 	// 是否包含禁用配置
-	IncludeDisabled bool `protobuf:"varint,2,opt,name=includeDisabled,proto3" json:"includeDisabled,omitempty"`
+	IncludeDisabled bool `protobuf:"varint,2,opt,name=include_disabled,json=includeDisabled,proto3" json:"include_disabled,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -3670,7 +3670,7 @@ type SaveHolidaySourceReq struct {
 	// 日期说明
 	Note string `protobuf:"bytes,4,opt,name=note,proto3" json:"note,omitempty"`
 	// 是否节日当天，如春节正月初一、国庆节 10 月 1 日
-	IsFestivalDay bool `protobuf:"varint,5,opt,name=isFestivalDay,proto3" json:"isFestivalDay,omitempty"`
+	IsFestivalDay bool `protobuf:"varint,5,opt,name=is_festival_day,json=isFestivalDay,proto3" json:"is_festival_day,omitempty"`
 	// 是否启用；禁用后查询会按普通周末/工作日兜底
 	Enabled       bool `protobuf:"varint,6,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -3878,40 +3878,40 @@ func (*SetHolidaySourceEnabledRes) Descriptor() ([]byte, []int) {
 type CreatePlanTaskReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 机构code
-	DeptCode string `protobuf:"bytes,101,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
+	DeptCode string `protobuf:"bytes,101,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	// 计划任务ID,全局唯一
-	PlanId string `protobuf:"bytes,1,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 计划任务名称
-	PlanName string `protobuf:"bytes,2,opt,name=planName,proto3" json:"planName,omitempty"`
+	PlanName string `protobuf:"bytes,2,opt,name=plan_name,json=planName,proto3" json:"plan_name,omitempty"`
 	// 任务类型
 	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
 	// 计划组ID,用于分组管理计划任务
-	GroupId string `protobuf:"bytes,4,opt,name=groupId,proto3" json:"groupId,omitempty"`
+	GroupId string `protobuf:"bytes,4,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	// 描述
 	Description string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
 	// 规则生效开始时间
 	// 不传默认本年
 	// 格式：yyyy-MM-dd HH:mm:ss
-	StartTime string `protobuf:"bytes,6,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	StartTime string `protobuf:"bytes,6,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// 规则生效结束时间
 	// 不传默认本年
 	// 格式：yyyy-MM-dd HH:mm:ss
-	EndTime string `protobuf:"bytes,7,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	EndTime string `protobuf:"bytes,7,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	// 计划规则项 默认 规则项 MINUTELY
 	Rule *PlanRulePb `protobuf:"bytes,8,opt,name=rule,proto3" json:"rule,omitempty"`
 	// 排除日期列表
 	// 格式：yyyy-MM-dd
-	ExcludeDates []string `protobuf:"bytes,9,rep,name=excludeDates,proto3" json:"excludeDates,omitempty"`
+	ExcludeDates []string `protobuf:"bytes,9,rep,name=exclude_dates,json=excludeDates,proto3" json:"exclude_dates,omitempty"`
 	// 间隔时间 单位: 毫秒
-	IntervalTime int64 `protobuf:"varint,10,opt,name=intervalTime,proto3" json:"intervalTime,omitempty"`
+	IntervalTime int64 `protobuf:"varint,10,opt,name=interval_time,json=intervalTime,proto3" json:"interval_time,omitempty"`
 	// 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
-	IntervalType int32 `protobuf:"varint,11,opt,name=intervalType,proto3" json:"intervalType,omitempty"`
+	IntervalType int32 `protobuf:"varint,11,opt,name=interval_type,json=intervalType,proto3" json:"interval_type,omitempty"`
 	// 计划执行项-根据规则项生成日期批次-batchId 并生成对应批次执行项-execId
-	ExecItems []*CreatePlanExecItemPb `protobuf:"bytes,12,rep,name=execItems,proto3" json:"execItems,omitempty"`
+	ExecItems []*CreatePlanExecItemPb `protobuf:"bytes,12,rep,name=exec_items,json=execItems,proto3" json:"exec_items,omitempty"`
 	// batchNum 前缀
-	BatchNumPrefix string `protobuf:"bytes,13,opt,name=batchNumPrefix,proto3" json:"batchNumPrefix,omitempty"`
+	BatchNumPrefix string `protobuf:"bytes,13,opt,name=batch_num_prefix,json=batchNumPrefix,proto3" json:"batch_num_prefix,omitempty"`
 	// 是否跳过时间过滤，用于立即执行的计划
-	SkipTimeFilter bool `protobuf:"varint,14,opt,name=skipTimeFilter,proto3" json:"skipTimeFilter,omitempty"`
+	SkipTimeFilter bool `protobuf:"varint,14,opt,name=skip_time_filter,json=skipTimeFilter,proto3" json:"skip_time_filter,omitempty"`
 	// 扩展字段
 	Ext1          string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	Ext2          string `protobuf:"bytes,51,opt,name=ext2,proto3" json:"ext2,omitempty"`
@@ -4186,17 +4186,17 @@ func (x *PlanRulePb) GetMinutes() []int32 {
 type CreatePlanExecItemPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 执行项ID,业务字段,例如工单号
-	ItemId string `protobuf:"bytes,1,opt,name=itemId,proto3" json:"itemId,omitempty"`
+	ItemId string `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
 	// 执行项类型,业务字段
-	ItemType string `protobuf:"bytes,2,opt,name=itemType,proto3" json:"itemType,omitempty"`
+	ItemType string `protobuf:"bytes,2,opt,name=item_type,json=itemType,proto3" json:"item_type,omitempty"`
 	// 执行项名称,业务字段
-	ItemName string `protobuf:"bytes,3,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	ItemName string `protobuf:"bytes,3,opt,name=item_name,json=itemName,proto3" json:"item_name,omitempty"`
 	// 点位id,业务字段
-	PointId string `protobuf:"bytes,4,opt,name=pointId,proto3" json:"pointId,omitempty"`
+	PointId string `protobuf:"bytes,4,opt,name=point_id,json=pointId,proto3" json:"point_id,omitempty"`
 	// 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
 	Payload string `protobuf:"bytes,5,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 请求超时时间 单位: 毫秒 可为空
-	RequestTimeout int64 `protobuf:"varint,6,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"`
+	RequestTimeout int64 `protobuf:"varint,6,opt,name=request_timeout,json=requestTimeout,proto3" json:"request_timeout,omitempty"`
 	// 扩展字段
 	Ext1          string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	Ext2          string `protobuf:"bytes,51,opt,name=ext2,proto3" json:"ext2,omitempty"`
@@ -4319,11 +4319,11 @@ type CreatePlanTaskRes struct {
 	// 计划主键ID
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// 计划ID
-	PlanId string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 计划批次数
-	BatchCnt int64 `protobuf:"varint,3,opt,name=batchCnt,proto3" json:"batchCnt,omitempty"`
+	BatchCnt int64 `protobuf:"varint,3,opt,name=batch_cnt,json=batchCnt,proto3" json:"batch_cnt,omitempty"`
 	// 执行计划数
-	ExecCnt       int64 `protobuf:"varint,4,opt,name=execCnt,proto3" json:"execCnt,omitempty"`
+	ExecCnt       int64 `protobuf:"varint,4,opt,name=exec_cnt,json=execCnt,proto3" json:"exec_cnt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4389,7 +4389,7 @@ func (x *CreatePlanTaskRes) GetExecCnt() int64 {
 type PausePlanReq struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Id     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	PlanId string                 `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string                 `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 暂停原因
 	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -4486,7 +4486,7 @@ func (*PausePlanRes) Descriptor() ([]byte, []int) {
 type TerminatePlanReq struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Id     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	PlanId string                 `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string                 `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 终止原因
 	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -4583,7 +4583,7 @@ func (*TerminatePlanRes) Descriptor() ([]byte, []int) {
 type ResumePlanReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	PlanId        string                 `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId        string                 `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4671,7 +4671,7 @@ func (*ResumePlanRes) Descriptor() ([]byte, []int) {
 type PausePlanBatchReq struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	Id      string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	BatchId string                 `protobuf:"bytes,2,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	BatchId string                 `protobuf:"bytes,2,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	// 暂停原因
 	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -4768,7 +4768,7 @@ func (*PausePlanBatchRes) Descriptor() ([]byte, []int) {
 type TerminatePlanBatchReq struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	Id      string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	BatchId string                 `protobuf:"bytes,2,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	BatchId string                 `protobuf:"bytes,2,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	// 终止原因
 	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -4865,7 +4865,7 @@ func (*TerminatePlanBatchRes) Descriptor() ([]byte, []int) {
 type ResumePlanBatchReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	BatchId       string                 `protobuf:"bytes,2,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	BatchId       string                 `protobuf:"bytes,2,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4953,7 +4953,7 @@ func (*ResumePlanBatchRes) Descriptor() ([]byte, []int) {
 type PausePlanExecItemReq struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Id     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ExecId string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
+	ExecId string                 `protobuf:"bytes,2,opt,name=exec_id,json=execId,proto3" json:"exec_id,omitempty"`
 	// 暂停原因
 	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -5050,7 +5050,7 @@ func (*PausePlanExecItemRes) Descriptor() ([]byte, []int) {
 type TerminatePlanExecItemReq struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Id     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ExecId string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
+	ExecId string                 `protobuf:"bytes,2,opt,name=exec_id,json=execId,proto3" json:"exec_id,omitempty"`
 	// 终止原因
 	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -5147,7 +5147,7 @@ func (*TerminatePlanExecItemRes) Descriptor() ([]byte, []int) {
 type ResumePlanExecItemReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ExecId        string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
+	ExecId        string                 `protobuf:"bytes,2,opt,name=exec_id,json=execId,proto3" json:"exec_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5236,7 +5236,7 @@ func (*ResumePlanExecItemRes) Descriptor() ([]byte, []int) {
 type RunPlanExecItemReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ExecId        string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
+	ExecId        string                 `protobuf:"bytes,2,opt,name=exec_id,json=execId,proto3" json:"exec_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5325,7 +5325,7 @@ func (*RunPlanExecItemRes) Descriptor() ([]byte, []int) {
 type GetPlanReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	PlanId        string                 `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId        string                 `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5421,43 +5421,43 @@ func (x *GetPlanRes) GetPlan() *PlanPb {
 type PlanPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 创建时间
-	CreateTime string `protobuf:"bytes,101,opt,name=createTime,proto3" json:"createTime,omitempty"`
+	CreateTime string `protobuf:"bytes,101,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// 更新时间
-	UpdateTime string `protobuf:"bytes,102,opt,name=updateTime,proto3" json:"updateTime,omitempty"`
+	UpdateTime string `protobuf:"bytes,102,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// 创建人
-	CreateUser string `protobuf:"bytes,103,opt,name=createUser,proto3" json:"createUser,omitempty"`
+	CreateUser string `protobuf:"bytes,103,opt,name=create_user,json=createUser,proto3" json:"create_user,omitempty"`
 	// 更新人
-	UpdateUser string `protobuf:"bytes,104,opt,name=updateUser,proto3" json:"updateUser,omitempty"`
+	UpdateUser string `protobuf:"bytes,104,opt,name=update_user,json=updateUser,proto3" json:"update_user,omitempty"`
 	// 机构code
-	DeptCode string `protobuf:"bytes,105,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
+	DeptCode string `protobuf:"bytes,105,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	// UUID主键ID
 	Id string `protobuf:"bytes,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 计划ID
-	PlanId string `protobuf:"bytes,1,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 计划名称
-	PlanName string `protobuf:"bytes,2,opt,name=planName,proto3" json:"planName,omitempty"`
+	PlanName string `protobuf:"bytes,2,opt,name=plan_name,json=planName,proto3" json:"plan_name,omitempty"`
 	// 任务类型
 	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
 	// 计划组ID,用于分组管理计划任务
-	GroupId string `protobuf:"bytes,4,opt,name=groupId,proto3" json:"groupId,omitempty"`
+	GroupId string `protobuf:"bytes,4,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	// 描述
 	Description string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
 	// 规则生效开始时间
-	StartTime string `protobuf:"bytes,6,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	StartTime string `protobuf:"bytes,6,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// 规则生效结束时间
-	EndTime string `protobuf:"bytes,7,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	EndTime string `protobuf:"bytes,7,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	// 计划规则项
 	Rule *PlanRulePb `protobuf:"bytes,8,opt,name=rule,proto3" json:"rule,omitempty"`
 	// 状态：1-启用，2-暂停，3-终止
 	Status int32 `protobuf:"varint,9,opt,name=status,proto3" json:"status,omitempty"`
 	// 扫表标记, 0-未扫表, 1-已扫表
-	ScanFlg int32 `protobuf:"varint,10,opt,name=scanFlg,proto3" json:"scanFlg,omitempty"`
+	ScanFlg int32 `protobuf:"varint,10,opt,name=scan_flg,json=scanFlg,proto3" json:"scan_flg,omitempty"`
 	// 终止原因
-	TerminatedReason string `protobuf:"bytes,11,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
+	TerminatedReason string `protobuf:"bytes,11,opt,name=terminated_reason,json=terminatedReason,proto3" json:"terminated_reason,omitempty"`
 	// 暂停时间
-	PausedTime string `protobuf:"bytes,12,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
+	PausedTime string `protobuf:"bytes,12,opt,name=paused_time,json=pausedTime,proto3" json:"paused_time,omitempty"`
 	// 暂停原因
-	PausedReason string `protobuf:"bytes,13,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
+	PausedReason string `protobuf:"bytes,13,opt,name=paused_reason,json=pausedReason,proto3" json:"paused_reason,omitempty"`
 	// 执行进度 0.00-100.00
 	Progress float32 `protobuf:"fixed32,14,opt,name=progress,proto3" json:"progress,omitempty"`
 	// 扩展字段1
@@ -5471,9 +5471,9 @@ type PlanPb struct {
 	// 扩展字段5
 	Ext5 string `protobuf:"bytes,19,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	// 创建时用于展开计划日期的 RFC 5545 RRULE Set 快照。
-	RruleStr string `protobuf:"bytes,20,opt,name=rruleStr,proto3" json:"rruleStr,omitempty"`
+	RruleStr string `protobuf:"bytes,20,opt,name=rrule_str,json=rruleStr,proto3" json:"rrule_str,omitempty"`
 	// 根据 RRULE Set 快照生成的简体中文描述。
-	ScheduleDescription string `protobuf:"bytes,21,opt,name=scheduleDescription,proto3" json:"scheduleDescription,omitempty"`
+	ScheduleDescription string `protobuf:"bytes,21,opt,name=schedule_description,json=scheduleDescription,proto3" json:"schedule_description,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -5700,13 +5700,13 @@ func (x *PlanPb) GetScheduleDescription() string {
 type ListPlansReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 分页大小
-	PageSize int64 `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
+	PageSize int64 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// 页码
-	PageNum int64 `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
+	PageNum int64 `protobuf:"varint,2,opt,name=page_num,json=pageNum,proto3" json:"page_num,omitempty"`
 	// 计划ID模糊查询
-	PlanId string `protobuf:"bytes,3,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string `protobuf:"bytes,3,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 计划名称模糊查询
-	PlanName string `protobuf:"bytes,4,opt,name=planName,proto3" json:"planName,omitempty"`
+	PlanName string `protobuf:"bytes,4,opt,name=plan_name,json=planName,proto3" json:"plan_name,omitempty"`
 	// 状态：1-启用，2-暂停，3-终止
 	Status []int32 `protobuf:"varint,5,rep,packed,name=status,proto3" json:"status,omitempty"`
 	// 任务类型
@@ -5844,7 +5844,7 @@ func (x *ListPlansRes) GetTotal() int64 {
 type GetPlanBatchReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	BatchId       string                 `protobuf:"bytes,2,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	BatchId       string                 `protobuf:"bytes,2,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5895,7 +5895,7 @@ func (x *GetPlanBatchReq) GetBatchId() string {
 
 type GetPlanBatchRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PlanBatch     *PlanBatchPb           `protobuf:"bytes,1,opt,name=planBatch,proto3" json:"planBatch,omitempty"`
+	PlanBatch     *PlanBatchPb           `protobuf:"bytes,1,opt,name=plan_batch,json=planBatch,proto3" json:"plan_batch,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5940,19 +5940,19 @@ func (x *GetPlanBatchRes) GetPlanBatch() *PlanBatchPb {
 type ListPlanBatchesReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 分页大小
-	PageSize int64 `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
+	PageSize int64 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// 页码
-	PageNum int64 `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
+	PageNum int64 `protobuf:"varint,2,opt,name=page_num,json=pageNum,proto3" json:"page_num,omitempty"`
 	// 计划主键ID
-	PlanPk string `protobuf:"bytes,3,opt,name=planPk,proto3" json:"planPk,omitempty"`
+	PlanPk string `protobuf:"bytes,3,opt,name=plan_pk,json=planPk,proto3" json:"plan_pk,omitempty"`
 	// 计划ID
-	PlanId string `protobuf:"bytes,4,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string `protobuf:"bytes,4,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 批次ID
-	BatchId string `protobuf:"bytes,5,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	BatchId string `protobuf:"bytes,5,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	// 状态：1-启用，2-暂停，3-终止
 	Status []int32 `protobuf:"varint,6,rep,packed,name=status,proto3" json:"status,omitempty"`
 	// 计划类型
-	PlanType      string `protobuf:"bytes,7,opt,name=planType,proto3" json:"planType,omitempty"`
+	PlanType      string `protobuf:"bytes,7,opt,name=plan_type,json=planType,proto3" json:"plan_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6039,7 +6039,7 @@ func (x *ListPlanBatchesReq) GetPlanType() string {
 type ListPlanBatchesRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 批次列表
-	PlanBatches []*PlanBatchPb `protobuf:"bytes,1,rep,name=planBatches,proto3" json:"planBatches,omitempty"`
+	PlanBatches []*PlanBatchPb `protobuf:"bytes,1,rep,name=plan_batches,json=planBatches,proto3" json:"plan_batches,omitempty"`
 	// 总记录数
 	Total         int64 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -6093,7 +6093,7 @@ func (x *ListPlanBatchesRes) GetTotal() int64 {
 type GetPlanExecItemReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ExecId        string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
+	ExecId        string                 `protobuf:"bytes,2,opt,name=exec_id,json=execId,proto3" json:"exec_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6144,7 +6144,7 @@ func (x *GetPlanExecItemReq) GetExecId() string {
 
 type GetPlanExecItemRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PlanExecItem  []*PlanExecItemPb      `protobuf:"bytes,1,rep,name=planExecItem,proto3" json:"planExecItem,omitempty"`
+	PlanExecItem  []*PlanExecItemPb      `protobuf:"bytes,1,rep,name=plan_exec_item,json=planExecItem,proto3" json:"plan_exec_item,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6189,63 +6189,63 @@ func (x *GetPlanExecItemRes) GetPlanExecItem() []*PlanExecItemPb {
 type PlanExecItemPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 创建时间
-	CreateTime string `protobuf:"bytes,101,opt,name=createTime,proto3" json:"createTime,omitempty"`
+	CreateTime string `protobuf:"bytes,101,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// 更新时间
-	UpdateTime string `protobuf:"bytes,102,opt,name=updateTime,proto3" json:"updateTime,omitempty"`
+	UpdateTime string `protobuf:"bytes,102,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// 创建人
-	CreateUser string `protobuf:"bytes,103,opt,name=createUser,proto3" json:"createUser,omitempty"`
+	CreateUser string `protobuf:"bytes,103,opt,name=create_user,json=createUser,proto3" json:"create_user,omitempty"`
 	// 更新人
-	UpdateUser string `protobuf:"bytes,104,opt,name=updateUser,proto3" json:"updateUser,omitempty"`
+	UpdateUser string `protobuf:"bytes,104,opt,name=update_user,json=updateUser,proto3" json:"update_user,omitempty"`
 	// 机构code
-	DeptCode string `protobuf:"bytes,105,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
+	DeptCode string `protobuf:"bytes,105,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	// UUID主键ID
 	Id string `protobuf:"bytes,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 关联的计划主键ID
-	PlanPk string `protobuf:"bytes,1,opt,name=planPk,proto3" json:"planPk,omitempty"`
+	PlanPk string `protobuf:"bytes,1,opt,name=plan_pk,json=planPk,proto3" json:"plan_pk,omitempty"`
 	// 计划ID
-	PlanId string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 批主键ID
-	BatchPk string `protobuf:"bytes,4,opt,name=batchPk,proto3" json:"batchPk,omitempty"`
+	BatchPk string `protobuf:"bytes,4,opt,name=batch_pk,json=batchPk,proto3" json:"batch_pk,omitempty"`
 	// 批ID
-	BatchId string `protobuf:"bytes,5,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	BatchId string `protobuf:"bytes,5,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	// 执行ID 全局唯一
-	ExecId string `protobuf:"bytes,6,opt,name=execId,proto3" json:"execId,omitempty"`
+	ExecId string `protobuf:"bytes,6,opt,name=exec_id,json=execId,proto3" json:"exec_id,omitempty"`
 	// 执行项ID
-	ItemId string `protobuf:"bytes,7,opt,name=itemId,proto3" json:"itemId,omitempty"`
+	ItemId string `protobuf:"bytes,7,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
 	// 执行项类型
-	ItemType string `protobuf:"bytes,8,opt,name=itemType,proto3" json:"itemType,omitempty"`
+	ItemType string `protobuf:"bytes,8,opt,name=item_type,json=itemType,proto3" json:"item_type,omitempty"`
 	// 执行项名称
-	ItemName string `protobuf:"bytes,9,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	ItemName string `protobuf:"bytes,9,opt,name=item_name,json=itemName,proto3" json:"item_name,omitempty"`
 	// 执行项行ID
-	ItemRowId int64 `protobuf:"varint,10,opt,name=itemRowId,proto3" json:"itemRowId,omitempty"`
+	ItemRowId int64 `protobuf:"varint,10,opt,name=item_row_id,json=itemRowId,proto3" json:"item_row_id,omitempty"`
 	// 点位id
-	PointId string `protobuf:"bytes,11,opt,name=PointId,proto3" json:"PointId,omitempty"`
+	PointId string `protobuf:"bytes,11,opt,name=point_id,json=pointId,proto3" json:"point_id,omitempty"`
 	// 业务负载
 	Payload string `protobuf:"bytes,12,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 请求超时时间（毫秒）
-	RequestTimeout int64 `protobuf:"varint,13,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"`
+	RequestTimeout int64 `protobuf:"varint,13,opt,name=request_timeout,json=requestTimeout,proto3" json:"request_timeout,omitempty"`
 	// 计划触发时间
-	PlanTriggerTime string `protobuf:"bytes,14,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
+	PlanTriggerTime string `protobuf:"bytes,14,opt,name=plan_trigger_time,json=planTriggerTime,proto3" json:"plan_trigger_time,omitempty"`
 	// 下次触发时间
-	NextTriggerTime string `protobuf:"bytes,15,opt,name=nextTriggerTime,proto3" json:"nextTriggerTime,omitempty"`
+	NextTriggerTime string `protobuf:"bytes,15,opt,name=next_trigger_time,json=nextTriggerTime,proto3" json:"next_trigger_time,omitempty"`
 	// 上次触发时间
-	LastTriggerTime string `protobuf:"bytes,16,opt,name=lastTriggerTime,proto3" json:"lastTriggerTime,omitempty"`
+	LastTriggerTime string `protobuf:"bytes,16,opt,name=last_trigger_time,json=lastTriggerTime,proto3" json:"last_trigger_time,omitempty"`
 	// 触发次数
-	TriggerCount int32 `protobuf:"varint,17,opt,name=triggerCount,proto3" json:"triggerCount,omitempty"`
+	TriggerCount int32 `protobuf:"varint,17,opt,name=trigger_count,json=triggerCount,proto3" json:"trigger_count,omitempty"`
 	// 状态
 	Status ExecItemStatusPb `protobuf:"varint,18,opt,name=status,proto3,enum=trigger.ExecItemStatusPb" json:"status,omitempty"`
 	// 上次执行结果
-	LastResult string `protobuf:"bytes,19,opt,name=lastResult,proto3" json:"lastResult,omitempty"`
+	LastResult string `protobuf:"bytes,19,opt,name=last_result,json=lastResult,proto3" json:"last_result,omitempty"`
 	// 上次结果描述
-	LastMessage string `protobuf:"bytes,20,opt,name=lastMessage,proto3" json:"lastMessage,omitempty"`
+	LastMessage string `protobuf:"bytes,20,opt,name=last_message,json=lastMessage,proto3" json:"last_message,omitempty"`
 	// 上次结果原因
-	LastReason string `protobuf:"bytes,21,opt,name=lastReason,proto3" json:"lastReason,omitempty"`
+	LastReason string `protobuf:"bytes,21,opt,name=last_reason,json=lastReason,proto3" json:"last_reason,omitempty"`
 	// 终止原因
-	TerminatedReason string `protobuf:"bytes,22,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
+	TerminatedReason string `protobuf:"bytes,22,opt,name=terminated_reason,json=terminatedReason,proto3" json:"terminated_reason,omitempty"`
 	// 暂停时间
-	PausedTime string `protobuf:"bytes,23,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
+	PausedTime string `protobuf:"bytes,23,opt,name=paused_time,json=pausedTime,proto3" json:"paused_time,omitempty"`
 	// 暂停原因
-	PausedReason string `protobuf:"bytes,24,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
+	PausedReason string `protobuf:"bytes,24,opt,name=paused_reason,json=pausedReason,proto3" json:"paused_reason,omitempty"`
 	// 扩展字段1
 	Ext1 string `protobuf:"bytes,51,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段2
@@ -6531,21 +6531,21 @@ func (x *PlanExecItemPb) GetExt5() string {
 type ListPlanExecItemsReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 分页大小
-	PageSize int64 `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
+	PageSize int64 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// 页码
-	PageNum int64 `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
+	PageNum int64 `protobuf:"varint,2,opt,name=page_num,json=pageNum,proto3" json:"page_num,omitempty"`
 	// 计划主键 id
 	Id string `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
 	// 执行ID（唯一索引）
-	ExecId string `protobuf:"bytes,4,opt,name=execId,proto3" json:"execId,omitempty"`
+	ExecId string `protobuf:"bytes,4,opt,name=exec_id,json=execId,proto3" json:"exec_id,omitempty"`
 	// 计划ID
-	PlanId string `protobuf:"bytes,5,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string `protobuf:"bytes,5,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 批ID
-	BatchId string `protobuf:"bytes,6,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	BatchId string `protobuf:"bytes,6,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	// 执行项ID模糊查询
-	ItemId string `protobuf:"bytes,7,opt,name=itemId,proto3" json:"itemId,omitempty"`
+	ItemId string `protobuf:"bytes,7,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
 	// 执行项名称模糊查询
-	ItemName      string             `protobuf:"bytes,8,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	ItemName      string             `protobuf:"bytes,8,opt,name=item_name,json=itemName,proto3" json:"item_name,omitempty"`
 	Status        []ExecItemStatusPb `protobuf:"varint,9,rep,packed,name=status,proto3,enum=trigger.ExecItemStatusPb" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -6647,7 +6647,7 @@ func (x *ListPlanExecItemsReq) GetStatus() []ExecItemStatusPb {
 type ListPlanExecItemsRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 执行项列表
-	PlanExecItems []*PlanExecItemPb `protobuf:"bytes,1,rep,name=planExecItems,proto3" json:"planExecItems,omitempty"`
+	PlanExecItems []*PlanExecItemPb `protobuf:"bytes,1,rep,name=plan_exec_items,json=planExecItems,proto3" json:"plan_exec_items,omitempty"`
 	// 总记录数
 	Total         int64 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -6744,7 +6744,7 @@ func (x *GetPlanExecLogReq) GetId() string {
 
 type GetPlanExecLogRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PlanExecLog   *PlanExecLogPb         `protobuf:"bytes,1,opt,name=planExecLog,proto3" json:"planExecLog,omitempty"`
+	PlanExecLog   *PlanExecLogPb         `protobuf:"bytes,1,opt,name=plan_exec_log,json=planExecLog,proto3" json:"plan_exec_log,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6790,23 +6790,23 @@ func (x *GetPlanExecLogRes) GetPlanExecLog() *PlanExecLogPb {
 type ListPlanExecLogsReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 分页大小
-	PageSize int64 `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
+	PageSize int64 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// 页码
-	PageNum int64 `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
+	PageNum int64 `protobuf:"varint,2,opt,name=page_num,json=pageNum,proto3" json:"page_num,omitempty"`
 	// 计划ID
-	PlanId string `protobuf:"bytes,3,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string `protobuf:"bytes,3,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 批ID
-	BatchId string `protobuf:"bytes,4,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	BatchId string `protobuf:"bytes,4,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	// 执行项ID
-	ItemId string `protobuf:"bytes,5,opt,name=itemId,proto3" json:"itemId,omitempty"`
+	ItemId string `protobuf:"bytes,5,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
 	// 执行ID
-	ExecId string `protobuf:"bytes,6,opt,name=execId,proto3" json:"execId,omitempty"`
+	ExecId string `protobuf:"bytes,6,opt,name=exec_id,json=execId,proto3" json:"exec_id,omitempty"`
 	// 开始时间
-	StartTime string `protobuf:"bytes,7,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	StartTime string `protobuf:"bytes,7,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// 结束时间
-	EndTime string `protobuf:"bytes,8,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	EndTime string `protobuf:"bytes,8,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	// 执行结果：1-成功，2-失败，3-延期
-	ExecResult    []int32 `protobuf:"varint,9,rep,packed,name=execResult,proto3" json:"execResult,omitempty"`
+	ExecResult    []int32 `protobuf:"varint,9,rep,packed,name=exec_result,json=execResult,proto3" json:"exec_result,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6908,7 +6908,7 @@ func (x *ListPlanExecLogsReq) GetExecResult() []int32 {
 type ListPlanExecLogsRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 日志列表
-	PlanExecLogs []*PlanExecLogPb `protobuf:"bytes,1,rep,name=planExecLogs,proto3" json:"planExecLogs,omitempty"`
+	PlanExecLogs []*PlanExecLogPb `protobuf:"bytes,1,rep,name=plan_exec_logs,json=planExecLogs,proto3" json:"plan_exec_logs,omitempty"`
 	// 总记录数
 	Total         int64 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -6962,43 +6962,43 @@ func (x *ListPlanExecLogsRes) GetTotal() int64 {
 type PlanExecLogPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 创建时间
-	CreateTime string `protobuf:"bytes,101,opt,name=createTime,proto3" json:"createTime,omitempty"`
+	CreateTime string `protobuf:"bytes,101,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// 更新时间
-	UpdateTime string `protobuf:"bytes,102,opt,name=updateTime,proto3" json:"updateTime,omitempty"`
+	UpdateTime string `protobuf:"bytes,102,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// 创建人
-	CreateUser string `protobuf:"bytes,103,opt,name=createUser,proto3" json:"createUser,omitempty"`
+	CreateUser string `protobuf:"bytes,103,opt,name=create_user,json=createUser,proto3" json:"create_user,omitempty"`
 	// 更新人
-	UpdateUser string `protobuf:"bytes,104,opt,name=updateUser,proto3" json:"updateUser,omitempty"`
+	UpdateUser string `protobuf:"bytes,104,opt,name=update_user,json=updateUser,proto3" json:"update_user,omitempty"`
 	// 机构code
-	DeptCode string `protobuf:"bytes,105,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
+	DeptCode string `protobuf:"bytes,105,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	// UUID主键ID
 	Id string `protobuf:"bytes,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 关联的计划主键ID
-	PlanPk string `protobuf:"bytes,1,opt,name=planPk,proto3" json:"planPk,omitempty"`
+	PlanPk string `protobuf:"bytes,1,opt,name=plan_pk,json=planPk,proto3" json:"plan_pk,omitempty"`
 	// 计划ID
-	PlanId string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 计划名称
-	PlanName string `protobuf:"bytes,3,opt,name=planName,proto3" json:"planName,omitempty"`
+	PlanName string `protobuf:"bytes,3,opt,name=plan_name,json=planName,proto3" json:"plan_name,omitempty"`
 	// 批主键ID
-	BatchPk string `protobuf:"bytes,4,opt,name=batchPk,proto3" json:"batchPk,omitempty"`
+	BatchPk string `protobuf:"bytes,4,opt,name=batch_pk,json=batchPk,proto3" json:"batch_pk,omitempty"`
 	// 批ID
-	BatchId string `protobuf:"bytes,5,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	BatchId string `protobuf:"bytes,5,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	// 关联的执行项主键ID
-	ItemPk string `protobuf:"bytes,6,opt,name=itemPk,proto3" json:"itemPk,omitempty"`
+	ItemPk string `protobuf:"bytes,6,opt,name=item_pk,json=itemPk,proto3" json:"item_pk,omitempty"`
 	// 执行ID 全局唯一
-	ExecId string `protobuf:"bytes,7,opt,name=execId,proto3" json:"execId,omitempty"`
+	ExecId string `protobuf:"bytes,7,opt,name=exec_id,json=execId,proto3" json:"exec_id,omitempty"`
 	// 执行项ID
-	ItemId string `protobuf:"bytes,8,opt,name=itemId,proto3" json:"itemId,omitempty"`
+	ItemId string `protobuf:"bytes,8,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
 	// 执行项类型
-	ItemType string `protobuf:"bytes,9,opt,name=itemType,proto3" json:"itemType,omitempty"`
+	ItemType string `protobuf:"bytes,9,opt,name=item_type,json=itemType,proto3" json:"item_type,omitempty"`
 	// 执行项名称
-	ItemName string `protobuf:"bytes,10,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	ItemName string `protobuf:"bytes,10,opt,name=item_name,json=itemName,proto3" json:"item_name,omitempty"`
 	// 点位id
-	PointId string `protobuf:"bytes,11,opt,name=pointId,proto3" json:"pointId,omitempty"`
+	PointId string `protobuf:"bytes,11,opt,name=point_id,json=pointId,proto3" json:"point_id,omitempty"`
 	// 触发时间
-	TriggerTime string `protobuf:"bytes,12,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"`
+	TriggerTime string `protobuf:"bytes,12,opt,name=trigger_time,json=triggerTime,proto3" json:"trigger_time,omitempty"`
 	// 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，ongoing-业务正在执行
-	ExecResult string `protobuf:"bytes,13,opt,name=execResult,proto3" json:"execResult,omitempty"`
+	ExecResult string `protobuf:"bytes,13,opt,name=exec_result,json=execResult,proto3" json:"exec_result,omitempty"`
 	// 结果描述
 	Message       string `protobuf:"bytes,14,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -7179,45 +7179,45 @@ func (x *PlanExecLogPb) GetMessage() string {
 type PlanBatchPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 创建时间
-	CreateTime string `protobuf:"bytes,101,opt,name=createTime,proto3" json:"createTime,omitempty"`
+	CreateTime string `protobuf:"bytes,101,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// 更新时间
-	UpdateTime string `protobuf:"bytes,102,opt,name=updateTime,proto3" json:"updateTime,omitempty"`
+	UpdateTime string `protobuf:"bytes,102,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// 创建人
-	CreateUser string `protobuf:"bytes,103,opt,name=createUser,proto3" json:"createUser,omitempty"`
+	CreateUser string `protobuf:"bytes,103,opt,name=create_user,json=createUser,proto3" json:"create_user,omitempty"`
 	// 更新人
-	UpdateUser string `protobuf:"bytes,104,opt,name=updateUser,proto3" json:"updateUser,omitempty"`
+	UpdateUser string `protobuf:"bytes,104,opt,name=update_user,json=updateUser,proto3" json:"update_user,omitempty"`
 	// 机构code
-	DeptCode string `protobuf:"bytes,105,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
+	DeptCode string `protobuf:"bytes,105,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	// UUID主键ID
 	Id string `protobuf:"bytes,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 关联的计划主键ID
-	PlanPk string `protobuf:"bytes,1,opt,name=planPk,proto3" json:"planPk,omitempty"`
+	PlanPk string `protobuf:"bytes,1,opt,name=plan_pk,json=planPk,proto3" json:"plan_pk,omitempty"`
 	// 计划ID
-	PlanId string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 批ID
-	BatchId string `protobuf:"bytes,3,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	BatchId string `protobuf:"bytes,3,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	// 批次名称
-	BatchName string `protobuf:"bytes,4,opt,name=batchName,proto3" json:"batchName,omitempty"`
+	BatchName string `protobuf:"bytes,4,opt,name=batch_name,json=batchName,proto3" json:"batch_name,omitempty"`
 	// 批次序号
-	BatchNum string `protobuf:"bytes,5,opt,name=batchNum,proto3" json:"batchNum,omitempty"`
+	BatchNum string `protobuf:"bytes,5,opt,name=batch_num,json=batchNum,proto3" json:"batch_num,omitempty"`
 	// 状态：1-启用，2-暂停，3-终止
 	Status int32 `protobuf:"varint,6,opt,name=status,proto3" json:"status,omitempty"`
 	// 扫表标记, 0-未扫表, 1-已扫表
-	ScanFlg int32 `protobuf:"varint,7,opt,name=scanFlg,proto3" json:"scanFlg,omitempty"`
+	ScanFlg int32 `protobuf:"varint,7,opt,name=scan_flg,json=scanFlg,proto3" json:"scan_flg,omitempty"`
 	// 计划触发时间
-	PlanTriggerTime string `protobuf:"bytes,8,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
+	PlanTriggerTime string `protobuf:"bytes,8,opt,name=plan_trigger_time,json=planTriggerTime,proto3" json:"plan_trigger_time,omitempty"`
 	// 终止原因
-	TerminatedReason string `protobuf:"bytes,9,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
+	TerminatedReason string `protobuf:"bytes,9,opt,name=terminated_reason,json=terminatedReason,proto3" json:"terminated_reason,omitempty"`
 	// 暂停时间
-	PausedTime string `protobuf:"bytes,10,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
+	PausedTime string `protobuf:"bytes,10,opt,name=paused_time,json=pausedTime,proto3" json:"paused_time,omitempty"`
 	// 暂停原因
-	PausedReason string `protobuf:"bytes,11,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
+	PausedReason string `protobuf:"bytes,11,opt,name=paused_reason,json=pausedReason,proto3" json:"paused_reason,omitempty"`
 	// 结束时间
-	FinishedTime string `protobuf:"bytes,12,opt,name=finishedTime,proto3" json:"finishedTime,omitempty"`
+	FinishedTime string `protobuf:"bytes,12,opt,name=finished_time,json=finishedTime,proto3" json:"finished_time,omitempty"`
 	// 状态统计map，key为状态值，value为对应数量
-	StatusCountMap map[string]int64 `protobuf:"bytes,13,rep,name=statusCountMap,proto3" json:"statusCountMap,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	StatusCountMap map[string]int64 `protobuf:"bytes,13,rep,name=status_count_map,json=statusCountMap,proto3" json:"status_count_map,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
 	// 执行计划数
-	ExecCnt int64 `protobuf:"varint,51,opt,name=execCnt,proto3" json:"execCnt,omitempty"`
+	ExecCnt int64 `protobuf:"varint,51,opt,name=exec_cnt,json=execCnt,proto3" json:"exec_cnt,omitempty"`
 	// 扩展字段1
 	Ext1 string `protobuf:"bytes,52,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段2
@@ -7441,11 +7441,11 @@ func (x *PlanBatchPb) GetExt5() string {
 type GetExecItemDashboardReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 部门code，可选
-	DeptCode string `protobuf:"bytes,1,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
+	DeptCode string `protobuf:"bytes,1,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	// 用户ID，可选
-	UserId string `protobuf:"bytes,2,opt,name=userId,proto3" json:"userId,omitempty"`
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	// 计划类型，可选，为空时统计所有类型
-	PlanType      string `protobuf:"bytes,3,opt,name=planType,proto3" json:"planType,omitempty"`
+	PlanType      string `protobuf:"bytes,3,opt,name=plan_type,json=planType,proto3" json:"plan_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7661,7 +7661,7 @@ func (x *GetExecItemDashboardRes) GetStats() []*ExecItemDashboardItemPb {
 type ExecItemDashboardItemPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 计划类型
-	PlanType string `protobuf:"bytes,1,opt,name=planType,proto3" json:"planType,omitempty"`
+	PlanType string `protobuf:"bytes,1,opt,name=plan_type,json=planType,proto3" json:"plan_type,omitempty"`
 	// 当前执行项总数
 	Total int64 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	// 已结束执行项统计
@@ -7735,16 +7735,16 @@ type CallbackPlanExecItemReq struct {
 	// UUID主键ID
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// 执行ID 全局唯一
-	ExecId string `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
+	ExecId string `protobuf:"bytes,2,opt,name=exec_id,json=execId,proto3" json:"exec_id,omitempty"`
 	// 回调设计 参考 grpc status 用于分布式事务
 	// 执行结果：completed-业务执行完成, terminated-业务终止, failed-业务执行失败, delayed-业务执行延期, ongoing-业务正在执行（未回调或部分异步）
-	ExecResult string `protobuf:"bytes,3,opt,name=execResult,proto3" json:"execResult,omitempty"`
+	ExecResult string `protobuf:"bytes,3,opt,name=exec_result,json=execResult,proto3" json:"exec_result,omitempty"`
 	// 结果描述  可以定义自己状态码，等下次回调判断业务场景
 	Message string `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
 	// 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
 	Reason string `protobuf:"bytes,5,opt,name=reason,proto3" json:"reason,omitempty"`
 	// 延期配置-默认延期5分钟：delayed,ongoing-自定义延期
-	DelayConfig   *DelayConfigPb `protobuf:"bytes,6,opt,name=delayConfig,proto3" json:"delayConfig,omitempty"`
+	DelayConfig   *DelayConfigPb `protobuf:"bytes,6,opt,name=delay_config,json=delayConfig,proto3" json:"delay_config,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7824,9 +7824,9 @@ func (x *CallbackPlanExecItemReq) GetDelayConfig() *DelayConfigPb {
 type DelayConfigPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
-	NextTriggerTime string `protobuf:"bytes,1,opt,name=nextTriggerTime,proto3" json:"nextTriggerTime,omitempty"`
+	NextTriggerTime string `protobuf:"bytes,1,opt,name=next_trigger_time,json=nextTriggerTime,proto3" json:"next_trigger_time,omitempty"`
 	// 延期原因
-	DelayReason   string `protobuf:"bytes,2,opt,name=delayReason,proto3" json:"delayReason,omitempty"`
+	DelayReason   string `protobuf:"bytes,2,opt,name=delay_reason,json=delayReason,proto3" json:"delay_reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7916,23 +7916,23 @@ func (*CallbackPlanExecItemRes) Descriptor() ([]byte, []int) {
 type CreateCronJobReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 全局唯一业务任务编码；与 Trigger 生成的 JobId 是两个不同标识。
-	TaskCode string `protobuf:"bytes,1,opt,name=taskCode,proto3" json:"taskCode,omitempty"`
+	TaskCode string `protobuf:"bytes,1,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"`
 	// 任务名称。
-	TaskName string `protobuf:"bytes,2,opt,name=taskName,proto3" json:"taskName,omitempty"`
+	TaskName string `protobuf:"bytes,2,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
 	// 任务类型。
 	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
 	// 任务分组 ID，用于业务侧分组管理。
-	GroupId string `protobuf:"bytes,4,opt,name=groupId,proto3" json:"groupId,omitempty"`
+	GroupId string `protobuf:"bytes,4,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	// 任务描述。
 	Description string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
 	// 规则生效开始时间；不传时默认当前年份第一天，格式 yyyy-MM-dd HH:mm:ss。
-	StartTime string `protobuf:"bytes,6,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	StartTime string `protobuf:"bytes,6,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// 规则生效结束时间；不传时默认开始时间所在年份最后一天，格式 yyyy-MM-dd HH:mm:ss。
-	EndTime string `protobuf:"bytes,7,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	EndTime string `protobuf:"bytes,7,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	// 业务周期规则，由 Trigger 编译为 RFC 5545 RRULE。
 	Rule *PlanRulePb `protobuf:"bytes,8,opt,name=rule,proto3" json:"rule,omitempty"`
 	// 排除日期列表，格式 yyyy-MM-dd；这些日期的计划时间不会触发。
-	ExcludeDates []string `protobuf:"bytes,9,rep,name=excludeDates,proto3" json:"excludeDates,omitempty"`
+	ExcludeDates []string `protobuf:"bytes,9,rep,name=exclude_dates,json=excludeDates,proto3" json:"exclude_dates,omitempty"`
 	// 调度优先级，数字越大越优先。
 	Priority int32 `protobuf:"varint,10,opt,name=priority,proto3" json:"priority,omitempty"`
 	// 执行业务参数 JSON；为空表示没有业务参数。
@@ -7940,9 +7940,11 @@ type CreateCronJobReq struct {
 	// 调用方业务扩展 JSON；Trigger 将其放入 CronJobExtra.bizExtra。
 	Extra string `protobuf:"bytes,12,opt,name=extra,proto3" json:"extra,omitempty"`
 	// 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-	LockTimeout int64 `protobuf:"varint,13,opt,name=lockTimeout,proto3" json:"lockTimeout,omitempty"`
+	LockTimeout int64 `protobuf:"varint,13,opt,name=lock_timeout,json=lockTimeout,proto3" json:"lock_timeout,omitempty"`
+	// 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
+	MaxDelay int64 `protobuf:"varint,14,opt,name=max_delay,json=maxDelay,proto3" json:"max_delay,omitempty"`
 	// 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
-	SkipTimeFilter bool `protobuf:"varint,14,opt,name=skipTimeFilter,proto3" json:"skipTimeFilter,omitempty"`
+	SkipTimeFilter bool `protobuf:"varint,15,opt,name=skip_time_filter,json=skipTimeFilter,proto3" json:"skip_time_filter,omitempty"`
 	// 扩展字段 1。
 	Ext1 string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段 2。
@@ -7954,7 +7956,7 @@ type CreateCronJobReq struct {
 	// 扩展字段 5。
 	Ext5 string `protobuf:"bytes,54,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	// 机构编码。
-	DeptCode      string `protobuf:"bytes,101,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
+	DeptCode      string `protobuf:"bytes,101,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8080,6 +8082,13 @@ func (x *CreateCronJobReq) GetLockTimeout() int64 {
 	return 0
 }
 
+func (x *CreateCronJobReq) GetMaxDelay() int64 {
+	if x != nil {
+		return x.MaxDelay
+	}
+	return 0
+}
+
 func (x *CreateCronJobReq) GetSkipTimeFilter() bool {
 	if x != nil {
 		return x.SkipTimeFilter
@@ -8133,9 +8142,9 @@ func (x *CreateCronJobReq) GetDeptCode() string {
 type CreateCronJobRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Trigger 生成的 JobId，对应 cron_job.id。
-	JobId string `protobuf:"bytes,1,opt,name=jobId,proto3" json:"jobId,omitempty"`
+	JobId string `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	// 首次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；规则已耗尽时为空字符串。
-	NextRun       string `protobuf:"bytes,2,opt,name=nextRun,proto3" json:"nextRun,omitempty"`
+	NextRun       string `protobuf:"bytes,2,opt,name=next_run,json=nextRun,proto3" json:"next_run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8188,7 +8197,7 @@ func (x *CreateCronJobRes) GetNextRun() string {
 type EnableCronJobReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Trigger 生成的 JobId。
-	JobId         string `protobuf:"bytes,1,opt,name=jobId,proto3" json:"jobId,omitempty"`
+	JobId         string `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8271,7 +8280,7 @@ func (*EnableCronJobRes) Descriptor() ([]byte, []int) {
 type DisableCronJobReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Trigger 生成的 JobId。
-	JobId         string `protobuf:"bytes,1,opt,name=jobId,proto3" json:"jobId,omitempty"`
+	JobId         string `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8354,7 +8363,7 @@ func (*DisableCronJobRes) Descriptor() ([]byte, []int) {
 type DeleteCronJobReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Trigger 生成的 JobId。
-	JobId         string `protobuf:"bytes,1,opt,name=jobId,proto3" json:"jobId,omitempty"`
+	JobId         string `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8437,7 +8446,7 @@ func (*DeleteCronJobRes) Descriptor() ([]byte, []int) {
 type RunCronJobReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Trigger 生成的 JobId。
-	JobId         string `protobuf:"bytes,1,opt,name=jobId,proto3" json:"jobId,omitempty"`
+	JobId         string `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8481,7 +8490,9 @@ func (x *RunCronJobReq) GetJobId() string {
 
 // RunCronJobRes 表示立即执行请求已受理，不表示异步业务回调已经成功。
 type RunCronJobRes struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// traceId 用于追踪异步执行过程，未接入 OTEL 时为空字符串。
+	TraceId       string `protobuf:"bytes,1,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8516,11 +8527,18 @@ func (*RunCronJobRes) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{122}
 }
 
+func (x *RunCronJobRes) GetTraceId() string {
+	if x != nil {
+		return x.TraceId
+	}
+	return ""
+}
+
 // GetCronJobReq 是 Cron Job 详情查询请求。
 type GetCronJobReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Trigger 生成的 JobId。
-	JobId         string `protobuf:"bytes,1,opt,name=jobId,proto3" json:"jobId,omitempty"`
+	JobId         string `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8566,7 +8584,7 @@ func (x *GetCronJobReq) GetJobId() string {
 type GetCronJobRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Cron Job 详情。
-	CronJob       *CronJobPb `protobuf:"bytes,1,opt,name=cronJob,proto3" json:"cronJob,omitempty"`
+	CronJob       *CronJobPb `protobuf:"bytes,1,opt,name=cron_job,json=cronJob,proto3" json:"cron_job,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8612,21 +8630,21 @@ func (x *GetCronJobRes) GetCronJob() *CronJobPb {
 type ListCronJobsReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 分页大小；0 使用默认值。
-	PageSize int64 `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
+	PageSize int64 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// 页码；0 使用默认值。
-	PageNum int64 `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
+	PageNum int64 `protobuf:"varint,2,opt,name=page_num,json=pageNum,proto3" json:"page_num,omitempty"`
 	// 业务任务编码模糊查询。
-	TaskCode string `protobuf:"bytes,3,opt,name=taskCode,proto3" json:"taskCode,omitempty"`
+	TaskCode string `protobuf:"bytes,3,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"`
 	// 任务名称模糊查询。
-	TaskName string `protobuf:"bytes,4,opt,name=taskName,proto3" json:"taskName,omitempty"`
+	TaskName string `protobuf:"bytes,4,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
 	// 状态多选：0-禁用，1-启用。
 	Status []int32 `protobuf:"varint,5,rep,packed,name=status,proto3" json:"status,omitempty"`
 	// 机构编码精确查询。
-	DeptCode string `protobuf:"bytes,6,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
+	DeptCode string `protobuf:"bytes,6,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	// 任务类型精确查询。
 	Type string `protobuf:"bytes,7,opt,name=type,proto3" json:"type,omitempty"`
 	// 任务分组 ID 精确查询。
-	GroupId       string `protobuf:"bytes,8,opt,name=groupId,proto3" json:"groupId,omitempty"`
+	GroupId       string `protobuf:"bytes,8,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8721,7 +8739,7 @@ func (x *ListCronJobsReq) GetGroupId() string {
 type ListCronJobsRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Cron Job 列表。
-	CronJobs []*CronJobPb `protobuf:"bytes,1,rep,name=cronJobs,proto3" json:"cronJobs,omitempty"`
+	CronJobs []*CronJobPb `protobuf:"bytes,1,rep,name=cron_jobs,json=cronJobs,proto3" json:"cron_jobs,omitempty"`
 	// 符合筛选条件的总记录数。
 	Total         int64 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -8776,43 +8794,45 @@ func (x *ListCronJobsRes) GetTotal() int64 {
 type CronJobPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Trigger 生成的 JobId，对应 cron_job.id。
-	JobId string `protobuf:"bytes,1,opt,name=jobId,proto3" json:"jobId,omitempty"`
+	JobId string `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	// 全局唯一业务任务编码。
-	TaskCode string `protobuf:"bytes,2,opt,name=taskCode,proto3" json:"taskCode,omitempty"`
+	TaskCode string `protobuf:"bytes,2,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"`
 	// 任务名称。
-	TaskName string `protobuf:"bytes,3,opt,name=taskName,proto3" json:"taskName,omitempty"`
+	TaskName string `protobuf:"bytes,3,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
 	// 调度优先级，数字越大越优先。
 	Priority int32 `protobuf:"varint,4,opt,name=priority,proto3" json:"priority,omitempty"`
 	// 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-	LockTimeout int64 `protobuf:"varint,5,opt,name=lockTimeout,proto3" json:"lockTimeout,omitempty"`
+	LockTimeout int64 `protobuf:"varint,5,opt,name=lock_timeout,json=lockTimeout,proto3" json:"lock_timeout,omitempty"`
+	// 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
+	MaxDelay int64 `protobuf:"varint,6,opt,name=max_delay,json=maxDelay,proto3" json:"max_delay,omitempty"`
 	// 执行业务参数 JSON；为空表示没有业务参数。
-	Payload string `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`
+	Payload string `protobuf:"bytes,7,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 调用方业务扩展 JSON；为空表示没有业务扩展。
-	Extra string `protobuf:"bytes,7,opt,name=extra,proto3" json:"extra,omitempty"`
+	Extra string `protobuf:"bytes,8,opt,name=extra,proto3" json:"extra,omitempty"`
 	// 状态：0-禁用，1-启用。
-	Status int32 `protobuf:"varint,8,opt,name=status,proto3" json:"status,omitempty"`
+	Status int32 `protobuf:"varint,9,opt,name=status,proto3" json:"status,omitempty"`
 	// 下次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；无下次调度时为空字符串。
-	NextRun string `protobuf:"bytes,9,opt,name=nextRun,proto3" json:"nextRun,omitempty"`
+	NextRun string `protobuf:"bytes,10,opt,name=next_run,json=nextRun,proto3" json:"next_run,omitempty"`
 	// 上次成功执行时间，格式 yyyy-MM-dd HH:mm:ss；从未成功执行时为空字符串。
-	LastRun string `protobuf:"bytes,10,opt,name=lastRun,proto3" json:"lastRun,omitempty"`
+	LastRun string `protobuf:"bytes,11,opt,name=last_run,json=lastRun,proto3" json:"last_run,omitempty"`
 	// 任务类型。
-	Type string `protobuf:"bytes,11,opt,name=type,proto3" json:"type,omitempty"`
+	Type string `protobuf:"bytes,12,opt,name=type,proto3" json:"type,omitempty"`
 	// 任务分组 ID。
-	GroupId string `protobuf:"bytes,12,opt,name=groupId,proto3" json:"groupId,omitempty"`
+	GroupId string `protobuf:"bytes,13,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	// 任务描述。
-	Description string `protobuf:"bytes,13,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,14,opt,name=description,proto3" json:"description,omitempty"`
 	// 规则生效开始时间，格式 yyyy-MM-dd HH:mm:ss；调用方未指定时为空字符串。
-	StartTime string `protobuf:"bytes,14,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	StartTime string `protobuf:"bytes,15,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// 规则生效结束时间，格式 yyyy-MM-dd HH:mm:ss；调用方未指定时为空字符串。
-	EndTime string `protobuf:"bytes,15,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	EndTime string `protobuf:"bytes,16,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	// 业务周期规则。
-	Rule *PlanRulePb `protobuf:"bytes,16,opt,name=rule,proto3" json:"rule,omitempty"`
+	Rule *PlanRulePb `protobuf:"bytes,17,opt,name=rule,proto3" json:"rule,omitempty"`
 	// 排除日期列表，格式 yyyy-MM-dd。
-	ExcludeDates []string `protobuf:"bytes,17,rep,name=excludeDates,proto3" json:"excludeDates,omitempty"`
+	ExcludeDates []string `protobuf:"bytes,18,rep,name=exclude_dates,json=excludeDates,proto3" json:"exclude_dates,omitempty"`
 	// 根据实际持久化 RRULE Set 生成的简体中文描述。
-	ScheduleDescription string `protobuf:"bytes,18,opt,name=scheduleDescription,proto3" json:"scheduleDescription,omitempty"`
+	ScheduleDescription string `protobuf:"bytes,19,opt,name=schedule_description,json=scheduleDescription,proto3" json:"schedule_description,omitempty"`
 	// 实际持久化并用于调度的 RFC 5545 RRULE Set 原文。
-	RruleStr string `protobuf:"bytes,19,opt,name=rruleStr,proto3" json:"rruleStr,omitempty"`
+	RruleStr string `protobuf:"bytes,20,opt,name=rrule_str,json=rruleStr,proto3" json:"rrule_str,omitempty"`
 	// 扩展字段 1。
 	Ext1 string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段 2。
@@ -8824,11 +8844,11 @@ type CronJobPb struct {
 	// 扩展字段 5。
 	Ext5 string `protobuf:"bytes,54,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	// 创建时间，格式 yyyy-MM-dd HH:mm:ss。
-	CreateTime string `protobuf:"bytes,100,opt,name=createTime,proto3" json:"createTime,omitempty"`
+	CreateTime string `protobuf:"bytes,100,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// 更新时间，格式 yyyy-MM-dd HH:mm:ss。
-	UpdateTime string `protobuf:"bytes,101,opt,name=updateTime,proto3" json:"updateTime,omitempty"`
+	UpdateTime string `protobuf:"bytes,101,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// 机构编码。
-	DeptCode      string `protobuf:"bytes,102,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
+	DeptCode      string `protobuf:"bytes,102,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8894,6 +8914,13 @@ func (x *CronJobPb) GetPriority() int32 {
 func (x *CronJobPb) GetLockTimeout() int64 {
 	if x != nil {
 		return x.LockTimeout
+	}
+	return 0
+}
+
+func (x *CronJobPb) GetMaxDelay() int64 {
+	if x != nil {
+		return x.MaxDelay
 	}
 	return 0
 }
@@ -9055,7 +9082,7 @@ func (x *CronJobPb) GetDeptCode() string {
 type NextIdReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 输出描述类型 默认-P
-	OutDescType string `protobuf:"bytes,1,opt,name=outDescType,proto3" json:"outDescType,omitempty"`
+	OutDescType string `protobuf:"bytes,1,opt,name=out_desc_type,json=outDescType,proto3" json:"out_desc_type,omitempty"`
 	// true: 按维度/分类分开生成 ID
 	// false: 全局统一生成 ID
 	Separate      bool `protobuf:"varint,2,opt,name=separate,proto3" json:"separate,omitempty"`
@@ -9109,7 +9136,7 @@ func (x *NextIdReq) GetSeparate() bool {
 
 type NextIdRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	NextId        string                 `protobuf:"bytes,1,opt,name=nextId,proto3" json:"nextId,omitempty"`
+	NextId        string                 `protobuf:"bytes,1,opt,name=next_id,json=nextId,proto3" json:"next_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -9154,7 +9181,7 @@ func (x *NextIdRes) GetNextId() string {
 type BatchNextIdReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 输出描述类型 默认-P
-	OutDescType string `protobuf:"bytes,1,opt,name=outDescType,proto3" json:"outDescType,omitempty"`
+	OutDescType string `protobuf:"bytes,1,opt,name=out_desc_type,json=outDescType,proto3" json:"out_desc_type,omitempty"`
 	// true: 按维度/分类分开生成 ID
 	// false: 全局统一生成 ID
 	Separate bool `protobuf:"varint,2,opt,name=separate,proto3" json:"separate,omitempty"`
@@ -9218,7 +9245,7 @@ func (x *BatchNextIdReq) GetCount() uint32 {
 type BatchNextIdRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 批量编码，按生成顺序返回
-	NextIds       []string `protobuf:"bytes,1,rep,name=nextIds,proto3" json:"nextIds,omitempty"`
+	NextIds       []string `protobuf:"bytes,1,rep,name=next_ids,json=nextIds,proto3" json:"next_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -9273,14 +9300,14 @@ type InvokeTaskPb struct {
 	// 请求地址
 	Url string `protobuf:"bytes,10,opt,name=url,proto3" json:"url,omitempty"`
 	// HTTP 方法: GET / POST / PUT / DELETE 等
-	HttpMethod string `protobuf:"bytes,11,opt,name=httpMethod,proto3" json:"httpMethod,omitempty"`
+	HttpMethod string `protobuf:"bytes,11,opt,name=http_method,json=httpMethod,proto3" json:"http_method,omitempty"`
 	// 自定义请求头
 	Headers map[string]string `protobuf:"bytes,12,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// 请求体（JSON 格式；当 Content-Type 为 application/x-www-form-urlencoded 或 multipart/form-data 时，会将 JSON 键值对转为对应表单编码）
 	Body []byte `protobuf:"bytes,13,opt,name=body,proto3" json:"body,omitempty"`
 	// === gRPC 字段 ===
 	// gRPC 服务地址
-	GrpcServer string `protobuf:"bytes,20,opt,name=grpcServer,proto3" json:"grpcServer,omitempty"`
+	GrpcServer string `protobuf:"bytes,20,opt,name=grpc_server,json=grpcServer,proto3" json:"grpc_server,omitempty"`
 	// gRPC 方法全路径，如 /pb.Service/Method
 	Method string `protobuf:"bytes,21,opt,name=method,proto3" json:"method,omitempty"`
 	// pb 字节数据
@@ -9395,7 +9422,7 @@ type InvokeReq struct {
 	// 调用任务列表
 	Tasks []*InvokeTaskPb `protobuf:"bytes,1,rep,name=tasks,proto3" json:"tasks,omitempty"`
 	// 最大并发数，0 或不设表示不限制
-	MaxConcurrency int32 `protobuf:"varint,2,opt,name=maxConcurrency,proto3" json:"maxConcurrency,omitempty"`
+	MaxConcurrency int32 `protobuf:"varint,2,opt,name=max_concurrency,json=maxConcurrency,proto3" json:"max_concurrency,omitempty"`
 	// 调试模式，开启后在日志中打印每个任务的响应数据
 	Debug         bool `protobuf:"varint,3,opt,name=debug,proto3" json:"debug,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -9461,15 +9488,15 @@ type InvokeTaskResultPb struct {
 	// 是否执行成功
 	Success bool `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
 	// HTTP 状态码或 gRPC 状态码
-	StatusCode int32 `protobuf:"varint,3,opt,name=statusCode,proto3" json:"statusCode,omitempty"`
+	StatusCode int32 `protobuf:"varint,3,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"`
 	// 错误信息（失败时）
 	Error string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
 	// 返回数据
 	Data []byte `protobuf:"bytes,5,opt,name=data,proto3" json:"data,omitempty"`
 	// 执行耗时（毫秒）
-	CostMs int64 `protobuf:"varint,6,opt,name=costMs,proto3" json:"costMs,omitempty"`
+	CostMs int64 `protobuf:"varint,6,opt,name=cost_ms,json=costMs,proto3" json:"cost_ms,omitempty"`
 	// 格式化耗时，如 "123ms"、"1.5s"
-	CostFormatted string `protobuf:"bytes,7,opt,name=costFormatted,proto3" json:"costFormatted,omitempty"`
+	CostFormatted string `protobuf:"bytes,7,opt,name=cost_formatted,json=costFormatted,proto3" json:"cost_formatted,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -9603,37 +9630,36 @@ var File_trigger_proto protoreflect.FileDescriptor
 
 const file_trigger_proto_rawDesc = "" +
 	"\n" +
-	"\rtrigger.proto\x12\atrigger\x1a\x17validate/validate.proto\"\xd4\x03\n" +
+	"\rtrigger.proto\x12\atrigger\x1a\x17validate/validate.proto\"\xdc\x03\n" +
 	"\n" +
 	"TaskInfoPb\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05queue\x18\x02 \x01(\tR\x05queue\x12\x12\n" +
 	"\x04type\x18\x03 \x01(\tR\x04type\x12\x18\n" +
 	"\apayload\x18\x04 \x01(\tR\apayload\x12\x14\n" +
-	"\x05state\x18\x05 \x01(\x05R\x05state\x12\x1a\n" +
-	"\bmaxRetry\x18\x06 \x01(\x05R\bmaxRetry\x12\x18\n" +
-	"\aretried\x18\a \x01(\x05R\aretried\x12\x18\n" +
-	"\alastErr\x18\b \x01(\tR\alastErr\x12\"\n" +
-	"\flastFailedAt\x18\t \x01(\tR\flastFailedAt\x12\x18\n" +
+	"\x05state\x18\x05 \x01(\x05R\x05state\x12\x1b\n" +
+	"\tmax_retry\x18\x06 \x01(\x05R\bmaxRetry\x12\x18\n" +
+	"\aretried\x18\a \x01(\x05R\aretried\x12\x19\n" +
+	"\blast_err\x18\b \x01(\tR\alastErr\x12$\n" +
+	"\x0elast_failed_at\x18\t \x01(\tR\flastFailedAt\x12\x18\n" +
 	"\atimeout\x18\n" +
 	" \x01(\x03R\atimeout\x12\x1a\n" +
 	"\bdeadline\x18\v \x01(\tR\bdeadline\x12\x14\n" +
-	"\x05group\x18\f \x01(\tR\x05group\x12$\n" +
-	"\rnextProcessAt\x18\r \x01(\tR\rnextProcessAt\x12\x1e\n" +
-	"\n" +
-	"isOrphaned\x18\x0e \x01(\bR\n" +
+	"\x05group\x18\f \x01(\tR\x05group\x12&\n" +
+	"\x0fnext_process_at\x18\r \x01(\tR\rnextProcessAt\x12\x1f\n" +
+	"\vis_orphaned\x18\x0e \x01(\bR\n" +
 	"isOrphaned\x12\x1c\n" +
-	"\tretention\x18\x0f \x01(\x03R\tretention\x12 \n" +
-	"\vcompletedAt\x18\x10 \x01(\tR\vcompletedAt\x12\x16\n" +
+	"\tretention\x18\x0f \x01(\x03R\tretention\x12!\n" +
+	"\fcompleted_at\x18\x10 \x01(\tR\vcompletedAt\x12\x16\n" +
 	"\x06result\x18\x11 \x01(\tR\x06result\"n\n" +
 	"\fDailyStatsPb\x12\x14\n" +
 	"\x05queue\x18\x01 \x01(\tR\x05queue\x12\x1c\n" +
 	"\tprocessed\x18\x02 \x01(\x03R\tprocessed\x12\x16\n" +
 	"\x06failed\x18\x03 \x01(\x03R\x06failed\x12\x12\n" +
-	"\x04date\x18\x04 \x01(\tR\x04date\"\x83\x04\n" +
+	"\x04date\x18\x04 \x01(\tR\x04date\"\x86\x04\n" +
 	"\vQueueInfoPb\x12\x14\n" +
-	"\x05Queue\x18\x01 \x01(\tR\x05Queue\x12 \n" +
-	"\vmemoryUsage\x18\x02 \x01(\x03R\vmemoryUsage\x12\x18\n" +
+	"\x05queue\x18\x01 \x01(\tR\x05queue\x12!\n" +
+	"\fmemory_usage\x18\x02 \x01(\x03R\vmemoryUsage\x12\x18\n" +
 	"\alatency\x18\x03 \x01(\tR\alatency\x12\x12\n" +
 	"\x04size\x18\x04 \x01(\x03R\x04size\x12\x16\n" +
 	"\x06groups\x18\x05 \x01(\x03R\x06groups\x12\x18\n" +
@@ -9646,44 +9672,46 @@ const file_trigger_proto_rawDesc = "" +
 	"\tcompleted\x18\v \x01(\x03R\tcompleted\x12 \n" +
 	"\vaggregating\x18\f \x01(\x03R\vaggregating\x12\x1c\n" +
 	"\tprocessed\x18\r \x01(\x03R\tprocessed\x12\x16\n" +
-	"\x06failed\x18\x0e \x01(\x03R\x06failed\x12&\n" +
-	"\x0eprocessedTotal\x18\x0f \x01(\x03R\x0eprocessedTotal\x12 \n" +
-	"\vfailedTotal\x18\x10 \x01(\x03R\vfailedTotal\x12\x16\n" +
+	"\x06failed\x18\x0e \x01(\x03R\x06failed\x12'\n" +
+	"\x0fprocessed_total\x18\x0f \x01(\x03R\x0eprocessedTotal\x12!\n" +
+	"\ffailed_total\x18\x10 \x01(\x03R\vfailedTotal\x12\x16\n" +
 	"\x06paused\x18\x11 \x01(\bR\x06paused\x12\x1c\n" +
-	"\ttimestamp\x18\x12 \x01(\tR\ttimestamp\"\xa8\x01\n" +
-	"\x0eSendTriggerReq\x12\x1c\n" +
-	"\tprocessIn\x18\x01 \x01(\x04R\tprocessIn\x12 \n" +
-	"\vtriggerTime\x18\x02 \x01(\tR\vtriggerTime\x12\x10\n" +
-	"\x03url\x18\x03 \x01(\tR\x03url\x12\x1a\n" +
-	"\bmaxRetry\x18\x04 \x01(\x03R\bmaxRetry\x12\x14\n" +
-	"\x05msgId\x18\x05 \x01(\tR\x05msgId\x12\x12\n" +
-	"\x04body\x18\x06 \x01(\tR\x04body\"P\n" +
-	"\x0eSendTriggerRes\x12\x18\n" +
-	"\atraceId\x18\x01 \x01(\tR\atraceId\x12\x14\n" +
-	"\x05queue\x18\x02 \x01(\tR\x05queue\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\tR\x02id\"\x81\x02\n" +
-	"\x13SendProtoTriggerReq\x12\x1c\n" +
-	"\tprocessIn\x18\x01 \x01(\x04R\tprocessIn\x12 \n" +
-	"\vtriggerTime\x18\x02 \x01(\tR\vtriggerTime\x12\x1a\n" +
-	"\bmaxRetry\x18\x03 \x01(\x03R\bmaxRetry\x12\x14\n" +
-	"\x05msgId\x18\x04 \x01(\tR\x05msgId\x12\x1e\n" +
+	"\ttimestamp\x18\x12 \x01(\tR\ttimestamp\"\xac\x01\n" +
+	"\x0eSendTriggerReq\x12\x1d\n" +
 	"\n" +
-	"grpcServer\x18\x05 \x01(\tR\n" +
+	"process_in\x18\x01 \x01(\x04R\tprocessIn\x12!\n" +
+	"\ftrigger_time\x18\x02 \x01(\tR\vtriggerTime\x12\x10\n" +
+	"\x03url\x18\x03 \x01(\tR\x03url\x12\x1b\n" +
+	"\tmax_retry\x18\x04 \x01(\x03R\bmaxRetry\x12\x15\n" +
+	"\x06msg_id\x18\x05 \x01(\tR\x05msgId\x12\x12\n" +
+	"\x04body\x18\x06 \x01(\tR\x04body\"Q\n" +
+	"\x0eSendTriggerRes\x12\x19\n" +
+	"\btrace_id\x18\x01 \x01(\tR\atraceId\x12\x14\n" +
+	"\x05queue\x18\x02 \x01(\tR\x05queue\x12\x0e\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\"\x87\x02\n" +
+	"\x13SendProtoTriggerReq\x12\x1d\n" +
+	"\n" +
+	"process_in\x18\x01 \x01(\x04R\tprocessIn\x12!\n" +
+	"\ftrigger_time\x18\x02 \x01(\tR\vtriggerTime\x12\x1b\n" +
+	"\tmax_retry\x18\x03 \x01(\x03R\bmaxRetry\x12\x15\n" +
+	"\x06msg_id\x18\x04 \x01(\tR\x05msgId\x12\x1f\n" +
+	"\vgrpc_server\x18\x05 \x01(\tR\n" +
 	"grpcServer\x12\x16\n" +
 	"\x06method\x18\x06 \x01(\tR\x06method\x12\x18\n" +
-	"\apayload\x18\a \x01(\fR\apayload\x12&\n" +
-	"\x0erequestTimeout\x18\b \x01(\x03R\x0erequestTimeout\"U\n" +
-	"\x13SendProtoTriggerRes\x12\x18\n" +
-	"\atraceId\x18\x01 \x01(\tR\atraceId\x12\x14\n" +
+	"\apayload\x18\a \x01(\fR\apayload\x12'\n" +
+	"\x0frequest_timeout\x18\b \x01(\x03R\x0erequestTimeout\"V\n" +
+	"\x13SendProtoTriggerRes\x12\x19\n" +
+	"\btrace_id\x18\x01 \x01(\tR\atraceId\x12\x14\n" +
 	"\x05queue\x18\x02 \x01(\tR\x05queue\x12\x0e\n" +
 	"\x02id\x18\x03 \x01(\tR\x02id\"\v\n" +
 	"\tQueuesReq\"#\n" +
 	"\tQueuesRes\x12\x16\n" +
 	"\x06queues\x18\x01 \x03(\tR\x06queues\"0\n" +
 	"\x0fGetQueueInfoReq\x12\x1d\n" +
-	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\"E\n" +
-	"\x0fGetQueueInfoRes\x122\n" +
-	"\tqueueInfo\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\"H\n" +
+	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\"F\n" +
+	"\x0fGetQueueInfoRes\x123\n" +
+	"\n" +
+	"queue_info\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\"H\n" +
 	"\x0eArchiveTaskReq\x12\x1d\n" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"\x10\n" +
@@ -9694,9 +9722,9 @@ const file_trigger_proto_rawDesc = "" +
 	"\rDeleteTaskRes\"H\n" +
 	"\x0eGetTaskInfoReq\x12\x1d\n" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
-	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"A\n" +
-	"\x0eGetTaskInfoRes\x12/\n" +
-	"\btaskInfo\x18\x01 \x01(\v2\x13.trigger.TaskInfoPbR\btaskInfo\";\n" +
+	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"B\n" +
+	"\x0eGetTaskInfoRes\x120\n" +
+	"\ttask_info\x18\x01 \x01(\v2\x13.trigger.TaskInfoPbR\btaskInfo\";\n" +
 	"\x1aDeleteAllCompletedTasksReq\x12\x1d\n" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\"2\n" +
 	"\x1aDeleteAllCompletedTasksRes\x12\x14\n" +
@@ -9707,120 +9735,141 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05count\x18\x01 \x01(\x03R\x05count\"L\n" +
 	"\x12HistoricalStatsReq\x12\x1d\n" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
-	"\x01n\x18\x02 \x01(\rB\t\xfaB\x06*\x04\x18Z(\x01R\x01n\"I\n" +
-	"\x12HistoricalStatsRes\x123\n" +
-	"\tdailyStat\x18\x01 \x03(\v2\x15.trigger.DailyStatsPbR\tdailyStat\"\x82\x01\n" +
-	"\x12ListActiveTasksReq\x12&\n" +
-	"\bpageSize\x18\x01 \x01(\x03B\n" +
-	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12%\n" +
-	"\apageNum\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
-	"\x05queue\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\"{\n" +
-	"\x12ListActiveTasksRes\x122\n" +
-	"\tqueueInfo\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x121\n" +
-	"\ttasksInfo\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"\x83\x01\n" +
-	"\x13ListPendingTasksReq\x12&\n" +
-	"\bpageSize\x18\x01 \x01(\x03B\n" +
-	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12%\n" +
-	"\apageNum\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
-	"\x05queue\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\"|\n" +
-	"\x13ListPendingTasksRes\x122\n" +
-	"\tqueueInfo\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x121\n" +
-	"\ttasksInfo\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"\xa6\x01\n" +
-	"\x17ListAggregatingTasksReq\x12&\n" +
-	"\bpageSize\x18\x01 \x01(\x03B\n" +
-	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12%\n" +
-	"\apageNum\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
-	"\x05queue\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x1d\n" +
-	"\x05group\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05group\"\x80\x01\n" +
-	"\x17ListAggregatingTasksRes\x122\n" +
-	"\tqueueInfo\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x121\n" +
-	"\ttasksInfo\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"\x85\x01\n" +
-	"\x15ListScheduledTasksReq\x12&\n" +
-	"\bpageSize\x18\x01 \x01(\x03B\n" +
-	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12%\n" +
-	"\apageNum\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
-	"\x05queue\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\"~\n" +
-	"\x15ListScheduledTasksRes\x122\n" +
-	"\tqueueInfo\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x121\n" +
-	"\ttasksInfo\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"\x81\x01\n" +
-	"\x11ListRetryTasksReq\x12&\n" +
-	"\bpageSize\x18\x01 \x01(\x03B\n" +
-	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12%\n" +
-	"\apageNum\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
-	"\x05queue\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\"z\n" +
-	"\x11ListRetryTasksRes\x122\n" +
-	"\tqueueInfo\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x121\n" +
-	"\ttasksInfo\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"\x84\x01\n" +
-	"\x14ListArchivedTasksReq\x12&\n" +
-	"\bpageSize\x18\x01 \x01(\x03B\n" +
-	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12%\n" +
-	"\apageNum\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
+	"\x01n\x18\x02 \x01(\rB\t\xfaB\x06*\x04\x18Z(\x01R\x01n\"J\n" +
+	"\x12HistoricalStatsRes\x124\n" +
+	"\n" +
+	"daily_stat\x18\x01 \x03(\v2\x15.trigger.DailyStatsPbR\tdailyStat\"\x84\x01\n" +
+	"\x12ListActiveTasksReq\x12'\n" +
+	"\tpage_size\x18\x01 \x01(\x03B\n" +
+	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12&\n" +
+	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
 	"\x05queue\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\"}\n" +
-	"\x14ListArchivedTasksRes\x122\n" +
-	"\tqueueInfo\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x121\n" +
-	"\ttasksInfo\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"\x85\x01\n" +
-	"\x15ListCompletedTasksReq\x12&\n" +
-	"\bpageSize\x18\x01 \x01(\x03B\n" +
-	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12%\n" +
-	"\apageNum\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
+	"\x12ListActiveTasksRes\x123\n" +
+	"\n" +
+	"queue_info\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x122\n" +
+	"\n" +
+	"tasks_info\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"\x85\x01\n" +
+	"\x13ListPendingTasksReq\x12'\n" +
+	"\tpage_size\x18\x01 \x01(\x03B\n" +
+	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12&\n" +
+	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
 	"\x05queue\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\"~\n" +
-	"\x15ListCompletedTasksRes\x122\n" +
-	"\tqueueInfo\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x121\n" +
-	"\ttasksInfo\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"D\n" +
+	"\x13ListPendingTasksRes\x123\n" +
+	"\n" +
+	"queue_info\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x122\n" +
+	"\n" +
+	"tasks_info\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"\xa8\x01\n" +
+	"\x17ListAggregatingTasksReq\x12'\n" +
+	"\tpage_size\x18\x01 \x01(\x03B\n" +
+	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12&\n" +
+	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
+	"\x05queue\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x1d\n" +
+	"\x05group\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05group\"\x82\x01\n" +
+	"\x17ListAggregatingTasksRes\x123\n" +
+	"\n" +
+	"queue_info\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x122\n" +
+	"\n" +
+	"tasks_info\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"\x87\x01\n" +
+	"\x15ListScheduledTasksReq\x12'\n" +
+	"\tpage_size\x18\x01 \x01(\x03B\n" +
+	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12&\n" +
+	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
+	"\x05queue\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\"\x80\x01\n" +
+	"\x15ListScheduledTasksRes\x123\n" +
+	"\n" +
+	"queue_info\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x122\n" +
+	"\n" +
+	"tasks_info\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"\x83\x01\n" +
+	"\x11ListRetryTasksReq\x12'\n" +
+	"\tpage_size\x18\x01 \x01(\x03B\n" +
+	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12&\n" +
+	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
+	"\x05queue\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\"|\n" +
+	"\x11ListRetryTasksRes\x123\n" +
+	"\n" +
+	"queue_info\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x122\n" +
+	"\n" +
+	"tasks_info\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"\x86\x01\n" +
+	"\x14ListArchivedTasksReq\x12'\n" +
+	"\tpage_size\x18\x01 \x01(\x03B\n" +
+	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12&\n" +
+	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
+	"\x05queue\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\"\x7f\n" +
+	"\x14ListArchivedTasksRes\x123\n" +
+	"\n" +
+	"queue_info\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x122\n" +
+	"\n" +
+	"tasks_info\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"\x87\x01\n" +
+	"\x15ListCompletedTasksReq\x12'\n" +
+	"\tpage_size\x18\x01 \x01(\x03B\n" +
+	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12&\n" +
+	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x1d\n" +
+	"\x05queue\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\"\x80\x01\n" +
+	"\x15ListCompletedTasksRes\x123\n" +
+	"\n" +
+	"queue_info\x18\x01 \x01(\v2\x14.trigger.QueueInfoPbR\tqueueInfo\x122\n" +
+	"\n" +
+	"tasks_info\x18\x02 \x03(\v2\x13.trigger.TaskInfoPbR\ttasksInfo\"D\n" +
 	"\n" +
 	"RunTaskReq\x12\x1d\n" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"\f\n" +
 	"\n" +
-	"RunTaskRes\"\xb2\x01\n" +
-	"\x13CalcPlanTaskDateReq\x12\x1c\n" +
-	"\tstartTime\x18\x01 \x01(\tR\tstartTime\x12\x18\n" +
-	"\aendTime\x18\x02 \x01(\tR\aendTime\x121\n" +
-	"\x04rule\x18\x03 \x01(\v2\x13.trigger.PlanRulePbB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x120\n" +
-	"\fexcludeDates\x18\x04 \x03(\tB\f\xfaB\t\x92\x01\x06\"\x04r\x02\x10\x01R\fexcludeDates\"\x81\x01\n" +
-	"\x13CalcPlanTaskDateRes\x12\x1c\n" +
-	"\tplanDates\x18\x01 \x03(\tR\tplanDates\x120\n" +
-	"\x13scheduleDescription\x18\x02 \x01(\tR\x13scheduleDescription\x12\x1a\n" +
-	"\brruleStr\x18\x03 \x01(\tR\brruleStr\"\xef\x01\n" +
+	"RunTaskRes\"\xb5\x01\n" +
+	"\x13CalcPlanTaskDateReq\x12\x1d\n" +
+	"\n" +
+	"start_time\x18\x01 \x01(\tR\tstartTime\x12\x19\n" +
+	"\bend_time\x18\x02 \x01(\tR\aendTime\x121\n" +
+	"\x04rule\x18\x03 \x01(\v2\x13.trigger.PlanRulePbB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x121\n" +
+	"\rexclude_dates\x18\x04 \x03(\tB\f\xfaB\t\x92\x01\x06\"\x04r\x02\x10\x01R\fexcludeDates\"\x84\x01\n" +
+	"\x13CalcPlanTaskDateRes\x12\x1d\n" +
+	"\n" +
+	"plan_dates\x18\x01 \x03(\tR\tplanDates\x121\n" +
+	"\x14schedule_description\x18\x02 \x01(\tR\x13scheduleDescription\x12\x1b\n" +
+	"\trrule_str\x18\x03 \x01(\tR\brruleStr\"\xf3\x01\n" +
 	"\fHolidayDayPb\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
 	"\x04type\x18\x03 \x01(\tR\x04type\x12-\n" +
 	"\x04kind\x18\x04 \x01(\x0e2\x19.trigger.HolidayDayKindPbR\x04kind\x12\x12\n" +
-	"\x04note\x18\x05 \x01(\tR\x04note\x12\x1c\n" +
-	"\tisHoliday\x18\x06 \x01(\bR\tisHoliday\x12\x1c\n" +
-	"\tisWorkday\x18\a \x01(\bR\tisWorkday\x12$\n" +
-	"\risFestivalDay\x18\b \x01(\bR\risFestivalDay\"\xa1\x01\n" +
+	"\x04note\x18\x05 \x01(\tR\x04note\x12\x1d\n" +
+	"\n" +
+	"is_holiday\x18\x06 \x01(\bR\tisHoliday\x12\x1d\n" +
+	"\n" +
+	"is_workday\x18\a \x01(\bR\tisWorkday\x12&\n" +
+	"\x0fis_festival_day\x18\b \x01(\bR\risFestivalDay\"\xa3\x01\n" +
 	"\x0fHolidaySourcePb\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
 	"\x04type\x18\x03 \x01(\tR\x04type\x12\x12\n" +
-	"\x04note\x18\x04 \x01(\tR\x04note\x12$\n" +
-	"\risFestivalDay\x18\x05 \x01(\bR\risFestivalDay\x12\x18\n" +
-	"\aenabled\x18\x06 \x01(\bR\aenabled\"\xe1\x01\n" +
+	"\x04note\x18\x04 \x01(\tR\x04note\x12&\n" +
+	"\x0fis_festival_day\x18\x05 \x01(\bR\risFestivalDay\x12\x18\n" +
+	"\aenabled\x18\x06 \x01(\bR\aenabled\"\xe6\x01\n" +
 	"\x11HolidayFestivalPb\x12\x12\n" +
 	"\x04year\x18\x01 \x01(\x05R\x04year\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1c\n" +
-	"\tstartDate\x18\x03 \x01(\tR\tstartDate\x12\x18\n" +
-	"\aendDate\x18\x04 \x01(\tR\aendDate\x12 \n" +
-	"\vholidayDays\x18\x05 \x03(\tR\vholidayDays\x12&\n" +
-	"\x0emakeupWorkdays\x18\x06 \x03(\tR\x0emakeupWorkdays\x12\"\n" +
-	"\ffestivalDays\x18\a \x03(\tR\ffestivalDays\"\xae\x01\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
+	"\n" +
+	"start_date\x18\x03 \x01(\tR\tstartDate\x12\x19\n" +
+	"\bend_date\x18\x04 \x01(\tR\aendDate\x12!\n" +
+	"\fholiday_days\x18\x05 \x03(\tR\vholidayDays\x12'\n" +
+	"\x0fmakeup_workdays\x18\x06 \x03(\tR\x0emakeupWorkdays\x12#\n" +
+	"\rfestival_days\x18\a \x03(\tR\ffestivalDays\"\xb1\x01\n" +
 	"\x14HolidayYearSummaryPb\x12\x12\n" +
-	"\x04year\x18\x01 \x01(\x05R\x04year\x12 \n" +
-	"\vholidayDays\x18\x02 \x03(\tR\vholidayDays\x12&\n" +
-	"\x0emakeupWorkdays\x18\x03 \x03(\tR\x0emakeupWorkdays\x12\"\n" +
-	"\ffestivalDays\x18\x04 \x03(\tR\ffestivalDays\x12\x14\n" +
+	"\x04year\x18\x01 \x01(\x05R\x04year\x12!\n" +
+	"\fholiday_days\x18\x02 \x03(\tR\vholidayDays\x12'\n" +
+	"\x0fmakeup_workdays\x18\x03 \x03(\tR\x0emakeupWorkdays\x12#\n" +
+	"\rfestival_days\x18\x04 \x03(\tR\ffestivalDays\x12\x14\n" +
 	"\x05names\x18\x05 \x03(\tR\x05names\".\n" +
 	"\x0fQueryHolidayReq\x12\x1b\n" +
 	"\x04date\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18\n" +
 	"R\x04date\":\n" +
 	"\x0fQueryHolidayRes\x12'\n" +
-	"\x03day\x18\x01 \x01(\v2\x15.trigger.HolidayDayPbR\x03day\"\x86\x01\n" +
-	"\x17ListHolidayFestivalsReq\x12(\n" +
-	"\tstartYear\x18\x01 \x01(\x05B\n" +
-	"\xfaB\a\x1a\x05\x18\x8fN(\x00R\tstartYear\x12$\n" +
-	"\aendYear\x18\x02 \x01(\x05B\n" +
+	"\x03day\x18\x01 \x01(\v2\x15.trigger.HolidayDayPbR\x03day\"\x88\x01\n" +
+	"\x17ListHolidayFestivalsReq\x12)\n" +
+	"\n" +
+	"start_year\x18\x01 \x01(\x05B\n" +
+	"\xfaB\a\x1a\x05\x18\x8fN(\x00R\tstartYear\x12%\n" +
+	"\bend_year\x18\x02 \x01(\x05B\n" +
 	"\xfaB\a\x1a\x05\x18\x8fN(\x00R\aendYear\x12\x1b\n" +
 	"\x04name\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18 R\x04name\"K\n" +
 	"\x17ListHolidayFestivalsRes\x120\n" +
@@ -9838,44 +9887,46 @@ const file_trigger_proto_rawDesc = "" +
 	"\asummary\x18\x02 \x01(\v2\x1d.trigger.HolidayYearSummaryPbR\asummary\"\x15\n" +
 	"\x13ListHolidayYearsReq\"+\n" +
 	"\x13ListHolidayYearsRes\x12\x14\n" +
-	"\x05years\x18\x01 \x03(\x05R\x05years\"a\n" +
+	"\x05years\x18\x01 \x03(\x05R\x05years\"b\n" +
 	"\x14ListHolidaySourceReq\x12\x1f\n" +
-	"\x04year\x18\x01 \x01(\x05B\v\xfaB\b\x1a\x06\x18\x8fN(\xec\x0eR\x04year\x12(\n" +
-	"\x0fincludeDisabled\x18\x02 \x01(\bR\x0fincludeDisabled\"F\n" +
+	"\x04year\x18\x01 \x01(\x05B\v\xfaB\b\x1a\x06\x18\x8fN(\xec\x0eR\x04year\x12)\n" +
+	"\x10include_disabled\x18\x02 \x01(\bR\x0fincludeDisabled\"F\n" +
 	"\x14ListHolidaySourceRes\x12.\n" +
-	"\x05items\x18\x01 \x03(\v2\x18.trigger.HolidaySourcePbR\x05items\"\xe0\x01\n" +
+	"\x05items\x18\x01 \x03(\v2\x18.trigger.HolidaySourcePbR\x05items\"\xe2\x01\n" +
 	"\x14SaveHolidaySourceReq\x12\x1c\n" +
 	"\x04date\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\n" +
 	"R\x04date\x12\x1d\n" +
 	"\x04name\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18 R\x04name\x12+\n" +
 	"\x04type\x18\x03 \x01(\tB\x17\xfaB\x14r\x12R\aholidayR\aworkdayR\x04type\x12\x1e\n" +
 	"\x04note\x18\x04 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x04note\x12$\n" +
-	"\risFestivalDay\x18\x05 \x01(\bR\risFestivalDay\x12\x18\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\x04note\x12&\n" +
+	"\x0fis_festival_day\x18\x05 \x01(\bR\risFestivalDay\x12\x18\n" +
 	"\aenabled\x18\x06 \x01(\bR\aenabled\"\x16\n" +
 	"\x14SaveHolidaySourceRes\"T\n" +
 	"\x1aSetHolidaySourceEnabledReq\x12\x1c\n" +
 	"\x04date\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\n" +
 	"R\x04date\x12\x18\n" +
 	"\aenabled\x18\x02 \x01(\bR\aenabled\"\x1c\n" +
-	"\x1aSetHolidaySourceEnabledRes\"\xd5\x05\n" +
-	"\x11CreatePlanTaskReq\x12#\n" +
-	"\bdeptCode\x18e \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdeptCode\x12\x1f\n" +
-	"\x06planId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\x12#\n" +
-	"\bplanName\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bplanName\x12\x1b\n" +
-	"\x04type\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04type\x12\x18\n" +
-	"\agroupId\x18\x04 \x01(\tR\agroupId\x12*\n" +
-	"\vdescription\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\vdescription\x12\x1c\n" +
-	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
-	"\aendTime\x18\a \x01(\tR\aendTime\x121\n" +
-	"\x04rule\x18\b \x01(\v2\x13.trigger.PlanRulePbB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x120\n" +
-	"\fexcludeDates\x18\t \x03(\tB\f\xfaB\t\x92\x01\x06\"\x04r\x02\x10\x01R\fexcludeDates\x12+\n" +
-	"\fintervalTime\x18\n" +
-	" \x01(\x03B\a\xfaB\x04\"\x02(\x00R\fintervalTime\x12-\n" +
-	"\fintervalType\x18\v \x01(\x05B\t\xfaB\x06\x1a\x04\x18\x02(\x00R\fintervalType\x12E\n" +
-	"\texecItems\x18\f \x03(\v2\x1d.trigger.CreatePlanExecItemPbB\b\xfaB\x05\x92\x01\x02\b\x01R\texecItems\x12&\n" +
-	"\x0ebatchNumPrefix\x18\r \x01(\tR\x0ebatchNumPrefix\x12&\n" +
-	"\x0eskipTimeFilter\x18\x0e \x01(\bR\x0eskipTimeFilter\x12\x12\n" +
+	"\x1aSetHolidaySourceEnabledRes\"\xe3\x05\n" +
+	"\x11CreatePlanTaskReq\x12$\n" +
+	"\tdept_code\x18e \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdeptCode\x12 \n" +
+	"\aplan_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\x12$\n" +
+	"\tplan_name\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bplanName\x12\x1b\n" +
+	"\x04type\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04type\x12\x19\n" +
+	"\bgroup_id\x18\x04 \x01(\tR\agroupId\x12*\n" +
+	"\vdescription\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\vdescription\x12\x1d\n" +
+	"\n" +
+	"start_time\x18\x06 \x01(\tR\tstartTime\x12\x19\n" +
+	"\bend_time\x18\a \x01(\tR\aendTime\x121\n" +
+	"\x04rule\x18\b \x01(\v2\x13.trigger.PlanRulePbB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x121\n" +
+	"\rexclude_dates\x18\t \x03(\tB\f\xfaB\t\x92\x01\x06\"\x04r\x02\x10\x01R\fexcludeDates\x12,\n" +
+	"\rinterval_time\x18\n" +
+	" \x01(\x03B\a\xfaB\x04\"\x02(\x00R\fintervalTime\x12.\n" +
+	"\rinterval_type\x18\v \x01(\x05B\t\xfaB\x06\x1a\x04\x18\x02(\x00R\fintervalType\x12F\n" +
+	"\n" +
+	"exec_items\x18\f \x03(\v2\x1d.trigger.CreatePlanExecItemPbB\b\xfaB\x05\x92\x01\x02\b\x01R\texecItems\x12(\n" +
+	"\x10batch_num_prefix\x18\r \x01(\tR\x0ebatchNumPrefix\x12(\n" +
+	"\x10skip_time_filter\x18\x0e \x01(\bR\x0eskipTimeFilter\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
@@ -9890,297 +9941,278 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05hours\x18\x05 \x03(\x05B\x10\xfaB\r\x92\x01\n" +
 	"\b\x01\"\x06\x1a\x04\x18\x17(\x00R\x05hours\x12*\n" +
 	"\aminutes\x18\x06 \x03(\x05B\x10\xfaB\r\x92\x01\n" +
-	"\b\x01\"\x06\x1a\x04\x18;(\x00R\aminutes\"\xaf\x02\n" +
-	"\x14CreatePlanExecItemPb\x12\x1f\n" +
-	"\x06itemId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06itemId\x12\x1a\n" +
-	"\bitemType\x18\x02 \x01(\tR\bitemType\x12\x1a\n" +
-	"\bitemName\x18\x03 \x01(\tR\bitemName\x12\x18\n" +
-	"\apointId\x18\x04 \x01(\tR\apointId\x12\x18\n" +
-	"\apayload\x18\x05 \x01(\tR\apayload\x12&\n" +
-	"\x0erequestTimeout\x18\x06 \x01(\x03R\x0erequestTimeout\x12\x12\n" +
+	"\b\x01\"\x06\x1a\x04\x18;(\x00R\aminutes\"\xb4\x02\n" +
+	"\x14CreatePlanExecItemPb\x12 \n" +
+	"\aitem_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06itemId\x12\x1b\n" +
+	"\titem_type\x18\x02 \x01(\tR\bitemType\x12\x1b\n" +
+	"\titem_name\x18\x03 \x01(\tR\bitemName\x12\x19\n" +
+	"\bpoint_id\x18\x04 \x01(\tR\apointId\x12\x18\n" +
+	"\apayload\x18\x05 \x01(\tR\apayload\x12'\n" +
+	"\x0frequest_timeout\x18\x06 \x01(\x03R\x0erequestTimeout\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x185 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x186 \x01(\tR\x04ext5\"q\n" +
+	"\x04ext5\x186 \x01(\tR\x04ext5\"t\n" +
 	"\x11CreatePlanTaskRes\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x1a\n" +
-	"\bbatchCnt\x18\x03 \x01(\x03R\bbatchCnt\x12\x18\n" +
-	"\aexecCnt\x18\x04 \x01(\x03R\aexecCnt\"X\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x1b\n" +
+	"\tbatch_cnt\x18\x03 \x01(\x03R\bbatchCnt\x12\x19\n" +
+	"\bexec_cnt\x18\x04 \x01(\x03R\aexecCnt\"Y\n" +
 	"\fPausePlanReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06planId\x18\x02 \x01(\tR\x06planId\x12 \n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x0e\n" +
-	"\fPausePlanRes\"\\\n" +
+	"\fPausePlanRes\"]\n" +
 	"\x10TerminatePlanReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06planId\x18\x02 \x01(\tR\x06planId\x12 \n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x12\n" +
-	"\x10TerminatePlanRes\"7\n" +
+	"\x10TerminatePlanRes\"8\n" +
 	"\rResumePlanReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06planId\x18\x02 \x01(\tR\x06planId\"\x0f\n" +
-	"\rResumePlanRes\"_\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aplan_id\x18\x02 \x01(\tR\x06planId\"\x0f\n" +
+	"\rResumePlanRes\"`\n" +
 	"\x11PausePlanBatchReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
-	"\abatchId\x18\x02 \x01(\tR\abatchId\x12 \n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
+	"\bbatch_id\x18\x02 \x01(\tR\abatchId\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x13\n" +
-	"\x11PausePlanBatchRes\"c\n" +
+	"\x11PausePlanBatchRes\"d\n" +
 	"\x15TerminatePlanBatchReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
-	"\abatchId\x18\x02 \x01(\tR\abatchId\x12 \n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
+	"\bbatch_id\x18\x02 \x01(\tR\abatchId\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x17\n" +
-	"\x15TerminatePlanBatchRes\">\n" +
+	"\x15TerminatePlanBatchRes\"?\n" +
 	"\x12ResumePlanBatchReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
-	"\abatchId\x18\x02 \x01(\tR\abatchId\"\x14\n" +
-	"\x12ResumePlanBatchRes\"`\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
+	"\bbatch_id\x18\x02 \x01(\tR\abatchId\"\x14\n" +
+	"\x12ResumePlanBatchRes\"a\n" +
 	"\x14PausePlanExecItemReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06execId\x18\x02 \x01(\tR\x06execId\x12 \n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aexec_id\x18\x02 \x01(\tR\x06execId\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x16\n" +
-	"\x14PausePlanExecItemRes\"d\n" +
+	"\x14PausePlanExecItemRes\"e\n" +
 	"\x18TerminatePlanExecItemReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06execId\x18\x02 \x01(\tR\x06execId\x12 \n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aexec_id\x18\x02 \x01(\tR\x06execId\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x1a\n" +
-	"\x18TerminatePlanExecItemRes\"?\n" +
+	"\x18TerminatePlanExecItemRes\"@\n" +
 	"\x15ResumePlanExecItemReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06execId\x18\x02 \x01(\tR\x06execId\"\x17\n" +
-	"\x15ResumePlanExecItemRes\"<\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aexec_id\x18\x02 \x01(\tR\x06execId\"\x17\n" +
+	"\x15ResumePlanExecItemRes\"=\n" +
 	"\x12RunPlanExecItemReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06execId\x18\x02 \x01(\tR\x06execId\"\x14\n" +
-	"\x12RunPlanExecItemRes\"4\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aexec_id\x18\x02 \x01(\tR\x06execId\"\x14\n" +
+	"\x12RunPlanExecItemRes\"5\n" +
 	"\n" +
 	"GetPlanReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06planId\x18\x02 \x01(\tR\x06planId\"1\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aplan_id\x18\x02 \x01(\tR\x06planId\"1\n" +
 	"\n" +
 	"GetPlanRes\x12#\n" +
-	"\x04plan\x18\x01 \x01(\v2\x0f.trigger.PlanPbR\x04plan\"\x89\x06\n" +
-	"\x06PlanPb\x12\x1e\n" +
+	"\x04plan\x18\x01 \x01(\v2\x0f.trigger.PlanPbR\x04plan\"\x99\x06\n" +
+	"\x06PlanPb\x12\x1f\n" +
+	"\vcreate_time\x18e \x01(\tR\n" +
+	"createTime\x12\x1f\n" +
+	"\vupdate_time\x18f \x01(\tR\n" +
+	"updateTime\x12\x1f\n" +
+	"\vcreate_user\x18g \x01(\tR\n" +
+	"createUser\x12\x1f\n" +
+	"\vupdate_user\x18h \x01(\tR\n" +
+	"updateUser\x12\x1b\n" +
+	"\tdept_code\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
+	"\x02id\x182 \x01(\tR\x02id\x12\x17\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12\x1b\n" +
+	"\tplan_name\x18\x02 \x01(\tR\bplanName\x12\x12\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x19\n" +
+	"\bgroup_id\x18\x04 \x01(\tR\agroupId\x12 \n" +
+	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1d\n" +
 	"\n" +
-	"createTime\x18e \x01(\tR\n" +
-	"createTime\x12\x1e\n" +
-	"\n" +
-	"updateTime\x18f \x01(\tR\n" +
-	"updateTime\x12\x1e\n" +
-	"\n" +
-	"createUser\x18g \x01(\tR\n" +
-	"createUser\x12\x1e\n" +
-	"\n" +
-	"updateUser\x18h \x01(\tR\n" +
-	"updateUser\x12\x1a\n" +
-	"\bdeptCode\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
-	"\x02id\x182 \x01(\tR\x02id\x12\x16\n" +
-	"\x06planId\x18\x01 \x01(\tR\x06planId\x12\x1a\n" +
-	"\bplanName\x18\x02 \x01(\tR\bplanName\x12\x12\n" +
-	"\x04type\x18\x03 \x01(\tR\x04type\x12\x18\n" +
-	"\agroupId\x18\x04 \x01(\tR\agroupId\x12 \n" +
-	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1c\n" +
-	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
-	"\aendTime\x18\a \x01(\tR\aendTime\x12'\n" +
+	"start_time\x18\x06 \x01(\tR\tstartTime\x12\x19\n" +
+	"\bend_time\x18\a \x01(\tR\aendTime\x12'\n" +
 	"\x04rule\x18\b \x01(\v2\x13.trigger.PlanRulePbR\x04rule\x12\x16\n" +
-	"\x06status\x18\t \x01(\x05R\x06status\x12\x18\n" +
-	"\ascanFlg\x18\n" +
-	" \x01(\x05R\ascanFlg\x12*\n" +
-	"\x10terminatedReason\x18\v \x01(\tR\x10terminatedReason\x12\x1e\n" +
-	"\n" +
-	"pausedTime\x18\f \x01(\tR\n" +
-	"pausedTime\x12\"\n" +
-	"\fpausedReason\x18\r \x01(\tR\fpausedReason\x12\x1a\n" +
+	"\x06status\x18\t \x01(\x05R\x06status\x12\x19\n" +
+	"\bscan_flg\x18\n" +
+	" \x01(\x05R\ascanFlg\x12+\n" +
+	"\x11terminated_reason\x18\v \x01(\tR\x10terminatedReason\x12\x1f\n" +
+	"\vpaused_time\x18\f \x01(\tR\n" +
+	"pausedTime\x12#\n" +
+	"\rpaused_reason\x18\r \x01(\tR\fpausedReason\x12\x1a\n" +
 	"\bprogress\x18\x0e \x01(\x02R\bprogress\x12\x12\n" +
 	"\x04ext1\x18\x0f \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x18\x10 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x18\x11 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x18\x12 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x18\x13 \x01(\tR\x04ext5\x12\x1a\n" +
-	"\brruleStr\x18\x14 \x01(\tR\brruleStr\x120\n" +
-	"\x13scheduleDescription\x18\x15 \x01(\tR\x13scheduleDescription\"\xbd\x01\n" +
-	"\fListPlansReq\x12&\n" +
-	"\bpageSize\x18\x01 \x01(\x03B\n" +
-	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12%\n" +
-	"\apageNum\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x16\n" +
-	"\x06planId\x18\x03 \x01(\tR\x06planId\x12\x1a\n" +
-	"\bplanName\x18\x04 \x01(\tR\bplanName\x12\x16\n" +
+	"\x04ext5\x18\x13 \x01(\tR\x04ext5\x12\x1b\n" +
+	"\trrule_str\x18\x14 \x01(\tR\brruleStr\x121\n" +
+	"\x14schedule_description\x18\x15 \x01(\tR\x13scheduleDescription\"\xc1\x01\n" +
+	"\fListPlansReq\x12'\n" +
+	"\tpage_size\x18\x01 \x01(\x03B\n" +
+	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12&\n" +
+	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x17\n" +
+	"\aplan_id\x18\x03 \x01(\tR\x06planId\x12\x1b\n" +
+	"\tplan_name\x18\x04 \x01(\tR\bplanName\x12\x16\n" +
 	"\x06status\x18\x05 \x03(\x05R\x06status\x12\x12\n" +
 	"\x04type\x18\x06 \x01(\tR\x04type\"K\n" +
 	"\fListPlansRes\x12%\n" +
 	"\x05plans\x18\x01 \x03(\v2\x0f.trigger.PlanPbR\x05plans\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total\";\n" +
-	"\x0fGetPlanBatchReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
-	"\abatchId\x18\x02 \x01(\tR\abatchId\"E\n" +
-	"\x0fGetPlanBatchRes\x122\n" +
-	"\tplanBatch\x18\x01 \x01(\v2\x14.trigger.PlanBatchPbR\tplanBatch\"\xe1\x01\n" +
-	"\x12ListPlanBatchesReq\x12&\n" +
-	"\bpageSize\x18\x01 \x01(\x03B\n" +
-	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12%\n" +
-	"\apageNum\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x16\n" +
-	"\x06planPk\x18\x03 \x01(\tR\x06planPk\x12\x16\n" +
-	"\x06planId\x18\x04 \x01(\tR\x06planId\x12\x18\n" +
-	"\abatchId\x18\x05 \x01(\tR\abatchId\x12\x16\n" +
-	"\x06status\x18\x06 \x03(\x05R\x06status\x12\x1a\n" +
-	"\bplanType\x18\a \x01(\tR\bplanType\"b\n" +
-	"\x12ListPlanBatchesRes\x126\n" +
-	"\vplanBatches\x18\x01 \x03(\v2\x14.trigger.PlanBatchPbR\vplanBatches\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\"<\n" +
+	"\x0fGetPlanBatchReq\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
+	"\bbatch_id\x18\x02 \x01(\tR\abatchId\"F\n" +
+	"\x0fGetPlanBatchRes\x123\n" +
+	"\n" +
+	"plan_batch\x18\x01 \x01(\v2\x14.trigger.PlanBatchPbR\tplanBatch\"\xe7\x01\n" +
+	"\x12ListPlanBatchesReq\x12'\n" +
+	"\tpage_size\x18\x01 \x01(\x03B\n" +
+	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12&\n" +
+	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x17\n" +
+	"\aplan_pk\x18\x03 \x01(\tR\x06planPk\x12\x17\n" +
+	"\aplan_id\x18\x04 \x01(\tR\x06planId\x12\x19\n" +
+	"\bbatch_id\x18\x05 \x01(\tR\abatchId\x12\x16\n" +
+	"\x06status\x18\x06 \x03(\x05R\x06status\x12\x1b\n" +
+	"\tplan_type\x18\a \x01(\tR\bplanType\"c\n" +
+	"\x12ListPlanBatchesRes\x127\n" +
+	"\fplan_batches\x18\x01 \x03(\v2\x14.trigger.PlanBatchPbR\vplanBatches\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"=\n" +
 	"\x12GetPlanExecItemReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06execId\x18\x02 \x01(\tR\x06execId\"Q\n" +
-	"\x12GetPlanExecItemRes\x12;\n" +
-	"\fplanExecItem\x18\x01 \x03(\v2\x17.trigger.PlanExecItemPbR\fplanExecItem\"\x8d\b\n" +
-	"\x0ePlanExecItemPb\x12\x1e\n" +
-	"\n" +
-	"createTime\x18e \x01(\tR\n" +
-	"createTime\x12\x1e\n" +
-	"\n" +
-	"updateTime\x18f \x01(\tR\n" +
-	"updateTime\x12\x1e\n" +
-	"\n" +
-	"createUser\x18g \x01(\tR\n" +
-	"createUser\x12\x1e\n" +
-	"\n" +
-	"updateUser\x18h \x01(\tR\n" +
-	"updateUser\x12\x1a\n" +
-	"\bdeptCode\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
-	"\x02id\x182 \x01(\tR\x02id\x12\x16\n" +
-	"\x06planPk\x18\x01 \x01(\tR\x06planPk\x12\x16\n" +
-	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x18\n" +
-	"\abatchPk\x18\x04 \x01(\tR\abatchPk\x12\x18\n" +
-	"\abatchId\x18\x05 \x01(\tR\abatchId\x12\x16\n" +
-	"\x06execId\x18\x06 \x01(\tR\x06execId\x12\x16\n" +
-	"\x06itemId\x18\a \x01(\tR\x06itemId\x12\x1a\n" +
-	"\bitemType\x18\b \x01(\tR\bitemType\x12\x1a\n" +
-	"\bitemName\x18\t \x01(\tR\bitemName\x12\x1c\n" +
-	"\titemRowId\x18\n" +
-	" \x01(\x03R\titemRowId\x12\x18\n" +
-	"\aPointId\x18\v \x01(\tR\aPointId\x12\x18\n" +
-	"\apayload\x18\f \x01(\tR\apayload\x12&\n" +
-	"\x0erequestTimeout\x18\r \x01(\x03R\x0erequestTimeout\x12(\n" +
-	"\x0fplanTriggerTime\x18\x0e \x01(\tR\x0fplanTriggerTime\x12(\n" +
-	"\x0fnextTriggerTime\x18\x0f \x01(\tR\x0fnextTriggerTime\x12(\n" +
-	"\x0flastTriggerTime\x18\x10 \x01(\tR\x0flastTriggerTime\x12\"\n" +
-	"\ftriggerCount\x18\x11 \x01(\x05R\ftriggerCount\x121\n" +
-	"\x06status\x18\x12 \x01(\x0e2\x19.trigger.ExecItemStatusPbR\x06status\x12\x1e\n" +
-	"\n" +
-	"lastResult\x18\x13 \x01(\tR\n" +
-	"lastResult\x12 \n" +
-	"\vlastMessage\x18\x14 \x01(\tR\vlastMessage\x12\x1e\n" +
-	"\n" +
-	"lastReason\x18\x15 \x01(\tR\n" +
-	"lastReason\x12*\n" +
-	"\x10terminatedReason\x18\x16 \x01(\tR\x10terminatedReason\x12\x1e\n" +
-	"\n" +
-	"pausedTime\x18\x17 \x01(\tR\n" +
-	"pausedTime\x12\"\n" +
-	"\fpausedReason\x18\x18 \x01(\tR\fpausedReason\x12\x12\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aexec_id\x18\x02 \x01(\tR\x06execId\"S\n" +
+	"\x12GetPlanExecItemRes\x12=\n" +
+	"\x0eplan_exec_item\x18\x01 \x03(\v2\x17.trigger.PlanExecItemPbR\fplanExecItem\"\xab\b\n" +
+	"\x0ePlanExecItemPb\x12\x1f\n" +
+	"\vcreate_time\x18e \x01(\tR\n" +
+	"createTime\x12\x1f\n" +
+	"\vupdate_time\x18f \x01(\tR\n" +
+	"updateTime\x12\x1f\n" +
+	"\vcreate_user\x18g \x01(\tR\n" +
+	"createUser\x12\x1f\n" +
+	"\vupdate_user\x18h \x01(\tR\n" +
+	"updateUser\x12\x1b\n" +
+	"\tdept_code\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
+	"\x02id\x182 \x01(\tR\x02id\x12\x17\n" +
+	"\aplan_pk\x18\x01 \x01(\tR\x06planPk\x12\x17\n" +
+	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x19\n" +
+	"\bbatch_pk\x18\x04 \x01(\tR\abatchPk\x12\x19\n" +
+	"\bbatch_id\x18\x05 \x01(\tR\abatchId\x12\x17\n" +
+	"\aexec_id\x18\x06 \x01(\tR\x06execId\x12\x17\n" +
+	"\aitem_id\x18\a \x01(\tR\x06itemId\x12\x1b\n" +
+	"\titem_type\x18\b \x01(\tR\bitemType\x12\x1b\n" +
+	"\titem_name\x18\t \x01(\tR\bitemName\x12\x1e\n" +
+	"\vitem_row_id\x18\n" +
+	" \x01(\x03R\titemRowId\x12\x19\n" +
+	"\bpoint_id\x18\v \x01(\tR\apointId\x12\x18\n" +
+	"\apayload\x18\f \x01(\tR\apayload\x12'\n" +
+	"\x0frequest_timeout\x18\r \x01(\x03R\x0erequestTimeout\x12*\n" +
+	"\x11plan_trigger_time\x18\x0e \x01(\tR\x0fplanTriggerTime\x12*\n" +
+	"\x11next_trigger_time\x18\x0f \x01(\tR\x0fnextTriggerTime\x12*\n" +
+	"\x11last_trigger_time\x18\x10 \x01(\tR\x0flastTriggerTime\x12#\n" +
+	"\rtrigger_count\x18\x11 \x01(\x05R\ftriggerCount\x121\n" +
+	"\x06status\x18\x12 \x01(\x0e2\x19.trigger.ExecItemStatusPbR\x06status\x12\x1f\n" +
+	"\vlast_result\x18\x13 \x01(\tR\n" +
+	"lastResult\x12!\n" +
+	"\flast_message\x18\x14 \x01(\tR\vlastMessage\x12\x1f\n" +
+	"\vlast_reason\x18\x15 \x01(\tR\n" +
+	"lastReason\x12+\n" +
+	"\x11terminated_reason\x18\x16 \x01(\tR\x10terminatedReason\x12\x1f\n" +
+	"\vpaused_time\x18\x17 \x01(\tR\n" +
+	"pausedTime\x12#\n" +
+	"\rpaused_reason\x18\x18 \x01(\tR\fpausedReason\x12\x12\n" +
 	"\x04ext1\x183 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x184 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x185 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x186 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x187 \x01(\tR\x04ext5\"\xa6\x02\n" +
-	"\x14ListPlanExecItemsReq\x12&\n" +
-	"\bpageSize\x18\x01 \x01(\x03B\n" +
-	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12%\n" +
-	"\apageNum\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\tR\x02id\x12\x16\n" +
-	"\x06execId\x18\x04 \x01(\tR\x06execId\x12\x16\n" +
-	"\x06planId\x18\x05 \x01(\tR\x06planId\x12\x18\n" +
-	"\abatchId\x18\x06 \x01(\tR\abatchId\x12\x16\n" +
-	"\x06itemId\x18\a \x01(\tR\x06itemId\x12\x1a\n" +
-	"\bitemName\x18\b \x01(\tR\bitemName\x121\n" +
-	"\x06status\x18\t \x03(\x0e2\x19.trigger.ExecItemStatusPbR\x06status\"k\n" +
-	"\x14ListPlanExecItemsRes\x12=\n" +
-	"\rplanExecItems\x18\x01 \x03(\v2\x17.trigger.PlanExecItemPbR\rplanExecItems\x12\x14\n" +
+	"\x04ext5\x187 \x01(\tR\x04ext5\"\xad\x02\n" +
+	"\x14ListPlanExecItemsReq\x12'\n" +
+	"\tpage_size\x18\x01 \x01(\x03B\n" +
+	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12&\n" +
+	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x0e\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\x12\x17\n" +
+	"\aexec_id\x18\x04 \x01(\tR\x06execId\x12\x17\n" +
+	"\aplan_id\x18\x05 \x01(\tR\x06planId\x12\x19\n" +
+	"\bbatch_id\x18\x06 \x01(\tR\abatchId\x12\x17\n" +
+	"\aitem_id\x18\a \x01(\tR\x06itemId\x12\x1b\n" +
+	"\titem_name\x18\b \x01(\tR\bitemName\x121\n" +
+	"\x06status\x18\t \x03(\x0e2\x19.trigger.ExecItemStatusPbR\x06status\"m\n" +
+	"\x14ListPlanExecItemsRes\x12?\n" +
+	"\x0fplan_exec_items\x18\x01 \x03(\v2\x17.trigger.PlanExecItemPbR\rplanExecItems\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\",\n" +
 	"\x11GetPlanExecLogReq\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"M\n" +
-	"\x11GetPlanExecLogRes\x128\n" +
-	"\vplanExecLog\x18\x01 \x01(\v2\x16.trigger.PlanExecLogPbR\vplanExecLog\"\x9e\x02\n" +
-	"\x13ListPlanExecLogsReq\x12&\n" +
-	"\bpageSize\x18\x01 \x01(\x03B\n" +
-	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12%\n" +
-	"\apageNum\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x16\n" +
-	"\x06planId\x18\x03 \x01(\tR\x06planId\x12\x18\n" +
-	"\abatchId\x18\x04 \x01(\tR\abatchId\x12\x16\n" +
-	"\x06itemId\x18\x05 \x01(\tR\x06itemId\x12\x16\n" +
-	"\x06execId\x18\x06 \x01(\tR\x06execId\x12\x1c\n" +
-	"\tstartTime\x18\a \x01(\tR\tstartTime\x12\x18\n" +
-	"\aendTime\x18\b \x01(\tR\aendTime\x12\x1e\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"O\n" +
+	"\x11GetPlanExecLogRes\x12:\n" +
+	"\rplan_exec_log\x18\x01 \x01(\v2\x16.trigger.PlanExecLogPbR\vplanExecLog\"\xa7\x02\n" +
+	"\x13ListPlanExecLogsReq\x12'\n" +
+	"\tpage_size\x18\x01 \x01(\x03B\n" +
+	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12&\n" +
+	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12\x17\n" +
+	"\aplan_id\x18\x03 \x01(\tR\x06planId\x12\x19\n" +
+	"\bbatch_id\x18\x04 \x01(\tR\abatchId\x12\x17\n" +
+	"\aitem_id\x18\x05 \x01(\tR\x06itemId\x12\x17\n" +
+	"\aexec_id\x18\x06 \x01(\tR\x06execId\x12\x1d\n" +
 	"\n" +
-	"execResult\x18\t \x03(\x05R\n" +
-	"execResult\"g\n" +
-	"\x13ListPlanExecLogsRes\x12:\n" +
-	"\fplanExecLogs\x18\x01 \x03(\v2\x16.trigger.PlanExecLogPbR\fplanExecLogs\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total\"\xb1\x04\n" +
-	"\rPlanExecLogPb\x12\x1e\n" +
-	"\n" +
-	"createTime\x18e \x01(\tR\n" +
-	"createTime\x12\x1e\n" +
-	"\n" +
-	"updateTime\x18f \x01(\tR\n" +
-	"updateTime\x12\x1e\n" +
-	"\n" +
-	"createUser\x18g \x01(\tR\n" +
-	"createUser\x12\x1e\n" +
-	"\n" +
-	"updateUser\x18h \x01(\tR\n" +
-	"updateUser\x12\x1a\n" +
-	"\bdeptCode\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
-	"\x02id\x182 \x01(\tR\x02id\x12\x16\n" +
-	"\x06planPk\x18\x01 \x01(\tR\x06planPk\x12\x16\n" +
-	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x1a\n" +
-	"\bplanName\x18\x03 \x01(\tR\bplanName\x12\x18\n" +
-	"\abatchPk\x18\x04 \x01(\tR\abatchPk\x12\x18\n" +
-	"\abatchId\x18\x05 \x01(\tR\abatchId\x12\x16\n" +
-	"\x06itemPk\x18\x06 \x01(\tR\x06itemPk\x12\x16\n" +
-	"\x06execId\x18\a \x01(\tR\x06execId\x12\x16\n" +
-	"\x06itemId\x18\b \x01(\tR\x06itemId\x12\x1a\n" +
-	"\bitemType\x18\t \x01(\tR\bitemType\x12\x1a\n" +
-	"\bitemName\x18\n" +
-	" \x01(\tR\bitemName\x12\x18\n" +
-	"\apointId\x18\v \x01(\tR\apointId\x12 \n" +
-	"\vtriggerTime\x18\f \x01(\tR\vtriggerTime\x12\x1e\n" +
-	"\n" +
-	"execResult\x18\r \x01(\tR\n" +
+	"start_time\x18\a \x01(\tR\tstartTime\x12\x19\n" +
+	"\bend_time\x18\b \x01(\tR\aendTime\x12\x1f\n" +
+	"\vexec_result\x18\t \x03(\x05R\n" +
+	"execResult\"i\n" +
+	"\x13ListPlanExecLogsRes\x12<\n" +
+	"\x0eplan_exec_logs\x18\x01 \x03(\v2\x16.trigger.PlanExecLogPbR\fplanExecLogs\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"\xc3\x04\n" +
+	"\rPlanExecLogPb\x12\x1f\n" +
+	"\vcreate_time\x18e \x01(\tR\n" +
+	"createTime\x12\x1f\n" +
+	"\vupdate_time\x18f \x01(\tR\n" +
+	"updateTime\x12\x1f\n" +
+	"\vcreate_user\x18g \x01(\tR\n" +
+	"createUser\x12\x1f\n" +
+	"\vupdate_user\x18h \x01(\tR\n" +
+	"updateUser\x12\x1b\n" +
+	"\tdept_code\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
+	"\x02id\x182 \x01(\tR\x02id\x12\x17\n" +
+	"\aplan_pk\x18\x01 \x01(\tR\x06planPk\x12\x17\n" +
+	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x1b\n" +
+	"\tplan_name\x18\x03 \x01(\tR\bplanName\x12\x19\n" +
+	"\bbatch_pk\x18\x04 \x01(\tR\abatchPk\x12\x19\n" +
+	"\bbatch_id\x18\x05 \x01(\tR\abatchId\x12\x17\n" +
+	"\aitem_pk\x18\x06 \x01(\tR\x06itemPk\x12\x17\n" +
+	"\aexec_id\x18\a \x01(\tR\x06execId\x12\x17\n" +
+	"\aitem_id\x18\b \x01(\tR\x06itemId\x12\x1b\n" +
+	"\titem_type\x18\t \x01(\tR\bitemType\x12\x1b\n" +
+	"\titem_name\x18\n" +
+	" \x01(\tR\bitemName\x12\x19\n" +
+	"\bpoint_id\x18\v \x01(\tR\apointId\x12!\n" +
+	"\ftrigger_time\x18\f \x01(\tR\vtriggerTime\x12\x1f\n" +
+	"\vexec_result\x18\r \x01(\tR\n" +
 	"execResult\x12\x18\n" +
-	"\amessage\x18\x0e \x01(\tR\amessage\"\xc0\x06\n" +
-	"\vPlanBatchPb\x12\x1e\n" +
+	"\amessage\x18\x0e \x01(\tR\amessage\"\xd4\x06\n" +
+	"\vPlanBatchPb\x12\x1f\n" +
+	"\vcreate_time\x18e \x01(\tR\n" +
+	"createTime\x12\x1f\n" +
+	"\vupdate_time\x18f \x01(\tR\n" +
+	"updateTime\x12\x1f\n" +
+	"\vcreate_user\x18g \x01(\tR\n" +
+	"createUser\x12\x1f\n" +
+	"\vupdate_user\x18h \x01(\tR\n" +
+	"updateUser\x12\x1b\n" +
+	"\tdept_code\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
+	"\x02id\x182 \x01(\tR\x02id\x12\x17\n" +
+	"\aplan_pk\x18\x01 \x01(\tR\x06planPk\x12\x17\n" +
+	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x19\n" +
+	"\bbatch_id\x18\x03 \x01(\tR\abatchId\x12\x1d\n" +
 	"\n" +
-	"createTime\x18e \x01(\tR\n" +
-	"createTime\x12\x1e\n" +
-	"\n" +
-	"updateTime\x18f \x01(\tR\n" +
-	"updateTime\x12\x1e\n" +
-	"\n" +
-	"createUser\x18g \x01(\tR\n" +
-	"createUser\x12\x1e\n" +
-	"\n" +
-	"updateUser\x18h \x01(\tR\n" +
-	"updateUser\x12\x1a\n" +
-	"\bdeptCode\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
-	"\x02id\x182 \x01(\tR\x02id\x12\x16\n" +
-	"\x06planPk\x18\x01 \x01(\tR\x06planPk\x12\x16\n" +
-	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x18\n" +
-	"\abatchId\x18\x03 \x01(\tR\abatchId\x12\x1c\n" +
-	"\tbatchName\x18\x04 \x01(\tR\tbatchName\x12\x1a\n" +
-	"\bbatchNum\x18\x05 \x01(\tR\bbatchNum\x12\x16\n" +
-	"\x06status\x18\x06 \x01(\x05R\x06status\x12\x18\n" +
-	"\ascanFlg\x18\a \x01(\x05R\ascanFlg\x12(\n" +
-	"\x0fplanTriggerTime\x18\b \x01(\tR\x0fplanTriggerTime\x12*\n" +
-	"\x10terminatedReason\x18\t \x01(\tR\x10terminatedReason\x12\x1e\n" +
-	"\n" +
-	"pausedTime\x18\n" +
+	"batch_name\x18\x04 \x01(\tR\tbatchName\x12\x1b\n" +
+	"\tbatch_num\x18\x05 \x01(\tR\bbatchNum\x12\x16\n" +
+	"\x06status\x18\x06 \x01(\x05R\x06status\x12\x19\n" +
+	"\bscan_flg\x18\a \x01(\x05R\ascanFlg\x12*\n" +
+	"\x11plan_trigger_time\x18\b \x01(\tR\x0fplanTriggerTime\x12+\n" +
+	"\x11terminated_reason\x18\t \x01(\tR\x10terminatedReason\x12\x1f\n" +
+	"\vpaused_time\x18\n" +
 	" \x01(\tR\n" +
-	"pausedTime\x12\"\n" +
-	"\fpausedReason\x18\v \x01(\tR\fpausedReason\x12\"\n" +
-	"\ffinishedTime\x18\f \x01(\tR\ffinishedTime\x12P\n" +
-	"\x0estatusCountMap\x18\r \x03(\v2(.trigger.PlanBatchPb.StatusCountMapEntryR\x0estatusCountMap\x12\x18\n" +
-	"\aexecCnt\x183 \x01(\x03R\aexecCnt\x12\x12\n" +
+	"pausedTime\x12#\n" +
+	"\rpaused_reason\x18\v \x01(\tR\fpausedReason\x12#\n" +
+	"\rfinished_time\x18\f \x01(\tR\ffinishedTime\x12R\n" +
+	"\x10status_count_map\x18\r \x03(\v2(.trigger.PlanBatchPb.StatusCountMapEntryR\x0estatusCountMap\x12\x19\n" +
+	"\bexec_cnt\x183 \x01(\x03R\aexecCnt\x12\x12\n" +
 	"\x04ext1\x184 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x185 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x186 \x01(\tR\x04ext3\x12\x12\n" +
@@ -10188,11 +10220,11 @@ const file_trigger_proto_rawDesc = "" +
 	"\x04ext5\x188 \x01(\tR\x04ext5\x1aA\n" +
 	"\x13StatusCountMapEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"i\n" +
-	"\x17GetExecItemDashboardReq\x12\x1a\n" +
-	"\bdeptCode\x18\x01 \x01(\tR\bdeptCode\x12\x16\n" +
-	"\x06userId\x18\x02 \x01(\tR\x06userId\x12\x1a\n" +
-	"\bplanType\x18\x03 \x01(\tR\bplanType\"L\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"l\n" +
+	"\x17GetExecItemDashboardReq\x12\x1b\n" +
+	"\tdept_code\x18\x01 \x01(\tR\bdeptCode\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1b\n" +
+	"\tplan_type\x18\x03 \x01(\tR\bplanType\"L\n" +
 	"\x14FinishedItemsStatsPb\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x03R\x05total\x12\x1e\n" +
 	"\n" +
@@ -10202,160 +10234,159 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05total\x18\x01 \x01(\x03R\x05total\x12\x18\n" +
 	"\adelayed\x18\x02 \x01(\x03R\adelayed\"Q\n" +
 	"\x17GetExecItemDashboardRes\x126\n" +
-	"\x05stats\x18\x01 \x03(\v2 .trigger.ExecItemDashboardItemPbR\x05stats\"\xbe\x01\n" +
-	"\x17ExecItemDashboardItemPb\x12\x1a\n" +
-	"\bplanType\x18\x01 \x01(\tR\bplanType\x12\x14\n" +
+	"\x05stats\x18\x01 \x03(\v2 .trigger.ExecItemDashboardItemPbR\x05stats\"\xbf\x01\n" +
+	"\x17ExecItemDashboardItemPb\x12\x1b\n" +
+	"\tplan_type\x18\x01 \x01(\tR\bplanType\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\x129\n" +
 	"\bfinished\x18\x03 \x01(\v2\x1d.trigger.FinishedItemsStatsPbR\bfinished\x126\n" +
-	"\apending\x18\x04 \x01(\v2\x1c.trigger.PendingItemsStatsPbR\apending\"\x99\x02\n" +
+	"\apending\x18\x04 \x01(\v2\x1c.trigger.PendingItemsStatsPbR\apending\"\x9c\x02\n" +
 	"\x17CallbackPlanExecItemReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06execId\x18\x02 \x01(\tR\x06execId\x12V\n" +
-	"\n" +
-	"execResult\x18\x03 \x01(\tB6\xfaB3r1R\tcompletedR\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aexec_id\x18\x02 \x01(\tR\x06execId\x12W\n" +
+	"\vexec_result\x18\x03 \x01(\tB6\xfaB3r1R\tcompletedR\n" +
 	"terminatedR\x06failedR\adelayedR\aongoingR\n" +
 	"execResult\x12\"\n" +
 	"\amessage\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\amessage\x12 \n" +
-	"\x06reason\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\x06reason\x128\n" +
-	"\vdelayConfig\x18\x06 \x01(\v2\x16.trigger.DelayConfigPbR\vdelayConfig\"e\n" +
-	"\rDelayConfigPb\x12(\n" +
-	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12*\n" +
-	"\vdelayReason\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\vdelayReason\"\x19\n" +
-	"\x17CallbackPlanExecItemRes\"\xa0\x05\n" +
-	"\x10CreateCronJobReq\x12%\n" +
-	"\btaskCode\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btaskCode\x12&\n" +
-	"\btaskName\x18\x02 \x01(\tB\n" +
+	"\x06reason\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\x06reason\x129\n" +
+	"\fdelay_config\x18\x06 \x01(\v2\x16.trigger.DelayConfigPbR\vdelayConfig\"h\n" +
+	"\rDelayConfigPb\x12*\n" +
+	"\x11next_trigger_time\x18\x01 \x01(\tR\x0fnextTriggerTime\x12+\n" +
+	"\fdelay_reason\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\vdelayReason\"\x19\n" +
+	"\x17CallbackPlanExecItemRes\"\xd0\x05\n" +
+	"\x10CreateCronJobReq\x12&\n" +
+	"\ttask_code\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btaskCode\x12'\n" +
+	"\ttask_name\x18\x02 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\btaskName\x12\x1d\n" +
-	"\x04type\x18\x03 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x04type\x12!\n" +
-	"\agroupId\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x18@R\agroupId\x12*\n" +
-	"\vdescription\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\vdescription\x12\x1c\n" +
-	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
-	"\aendTime\x18\a \x01(\tR\aendTime\x121\n" +
-	"\x04rule\x18\b \x01(\v2\x13.trigger.PlanRulePbB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x121\n" +
-	"\fexcludeDates\x18\t \x03(\tB\r\xfaB\n" +
+	"\x04type\x18\x03 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x04type\x12\"\n" +
+	"\bgroup_id\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x18@R\agroupId\x12*\n" +
+	"\vdescription\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\vdescription\x12\x1d\n" +
+	"\n" +
+	"start_time\x18\x06 \x01(\tR\tstartTime\x12\x19\n" +
+	"\bend_time\x18\a \x01(\tR\aendTime\x121\n" +
+	"\x04rule\x18\b \x01(\v2\x13.trigger.PlanRulePbB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x122\n" +
+	"\rexclude_dates\x18\t \x03(\tB\r\xfaB\n" +
 	"\x92\x01\a\"\x05r\x03\x98\x01\n" +
 	"R\fexcludeDates\x12#\n" +
 	"\bpriority\x18\n" +
 	" \x01(\x05B\a\xfaB\x04\x1a\x02(\x00R\bpriority\x12\x18\n" +
 	"\apayload\x18\v \x01(\tR\apayload\x12\x14\n" +
-	"\x05extra\x18\f \x01(\tR\x05extra\x12)\n" +
-	"\vlockTimeout\x18\r \x01(\x03B\a\xfaB\x04\"\x02(\x00R\vlockTimeout\x12&\n" +
-	"\x0eskipTimeFilter\x18\x0e \x01(\bR\x0eskipTimeFilter\x12\x12\n" +
+	"\x05extra\x18\f \x01(\tR\x05extra\x12*\n" +
+	"\flock_timeout\x18\r \x01(\x03B\a\xfaB\x04\"\x02(\x00R\vlockTimeout\x12$\n" +
+	"\tmax_delay\x18\x0e \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bmaxDelay\x12(\n" +
+	"\x10skip_time_filter\x18\x0f \x01(\bR\x0eskipTimeFilter\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x185 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x186 \x01(\tR\x04ext5\x12%\n" +
-	"\bdeptCode\x18e \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\bdeptCode\"B\n" +
-	"\x10CreateCronJobRes\x12\x14\n" +
-	"\x05jobId\x18\x01 \x01(\tR\x05jobId\x12\x18\n" +
-	"\anextRun\x18\x02 \x01(\tR\anextRun\"1\n" +
-	"\x10EnableCronJobReq\x12\x1d\n" +
-	"\x05jobId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05jobId\"\x12\n" +
-	"\x10EnableCronJobRes\"2\n" +
-	"\x11DisableCronJobReq\x12\x1d\n" +
-	"\x05jobId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05jobId\"\x13\n" +
-	"\x11DisableCronJobRes\"1\n" +
-	"\x10DeleteCronJobReq\x12\x1d\n" +
-	"\x05jobId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05jobId\"\x12\n" +
-	"\x10DeleteCronJobRes\".\n" +
-	"\rRunCronJobReq\x12\x1d\n" +
-	"\x05jobId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05jobId\"\x0f\n" +
-	"\rRunCronJobRes\".\n" +
-	"\rGetCronJobReq\x12\x1d\n" +
-	"\x05jobId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05jobId\"=\n" +
-	"\rGetCronJobRes\x12,\n" +
-	"\acronJob\x18\x01 \x01(\v2\x12.trigger.CronJobPbR\acronJob\"\xb8\x02\n" +
-	"\x0fListCronJobsReq\x12&\n" +
-	"\bpageSize\x18\x01 \x01(\x03B\n" +
-	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12%\n" +
-	"\apageNum\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12#\n" +
-	"\btaskCode\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\btaskCode\x12$\n" +
-	"\btaskName\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\btaskName\x12&\n" +
-	"\x06status\x18\x05 \x03(\x05B\x0e\xfaB\v\x92\x01\b\"\x06\x1a\x04\x18\x01(\x00R\x06status\x12#\n" +
-	"\bdeptCode\x18\x06 \x01(\tB\a\xfaB\x04r\x02\x18@R\bdeptCode\x12\x1b\n" +
-	"\x04type\x18\a \x01(\tB\a\xfaB\x04r\x02\x18@R\x04type\x12!\n" +
-	"\agroupId\x18\b \x01(\tB\a\xfaB\x04r\x02\x18@R\agroupId\"W\n" +
-	"\x0fListCronJobsRes\x12.\n" +
-	"\bcronJobs\x18\x01 \x03(\v2\x12.trigger.CronJobPbR\bcronJobs\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total\"\xf6\x05\n" +
-	"\tCronJobPb\x12\x14\n" +
-	"\x05jobId\x18\x01 \x01(\tR\x05jobId\x12\x1a\n" +
-	"\btaskCode\x18\x02 \x01(\tR\btaskCode\x12\x1a\n" +
-	"\btaskName\x18\x03 \x01(\tR\btaskName\x12\x1a\n" +
-	"\bpriority\x18\x04 \x01(\x05R\bpriority\x12 \n" +
-	"\vlockTimeout\x18\x05 \x01(\x03R\vlockTimeout\x12\x18\n" +
-	"\apayload\x18\x06 \x01(\tR\apayload\x12\x14\n" +
-	"\x05extra\x18\a \x01(\tR\x05extra\x12\x16\n" +
-	"\x06status\x18\b \x01(\x05R\x06status\x12\x18\n" +
-	"\anextRun\x18\t \x01(\tR\anextRun\x12\x18\n" +
-	"\alastRun\x18\n" +
-	" \x01(\tR\alastRun\x12\x12\n" +
-	"\x04type\x18\v \x01(\tR\x04type\x12\x18\n" +
-	"\agroupId\x18\f \x01(\tR\agroupId\x12 \n" +
-	"\vdescription\x18\r \x01(\tR\vdescription\x12\x1c\n" +
-	"\tstartTime\x18\x0e \x01(\tR\tstartTime\x12\x18\n" +
-	"\aendTime\x18\x0f \x01(\tR\aendTime\x12'\n" +
-	"\x04rule\x18\x10 \x01(\v2\x13.trigger.PlanRulePbR\x04rule\x12\"\n" +
-	"\fexcludeDates\x18\x11 \x03(\tR\fexcludeDates\x120\n" +
-	"\x13scheduleDescription\x18\x12 \x01(\tR\x13scheduleDescription\x12\x1a\n" +
-	"\brruleStr\x18\x13 \x01(\tR\brruleStr\x12\x12\n" +
+	"\x04ext5\x186 \x01(\tR\x04ext5\x12&\n" +
+	"\tdept_code\x18e \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\bdeptCode\"D\n" +
+	"\x10CreateCronJobRes\x12\x15\n" +
+	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x19\n" +
+	"\bnext_run\x18\x02 \x01(\tR\anextRun\"2\n" +
+	"\x10EnableCronJobReq\x12\x1e\n" +
+	"\x06job_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05jobId\"\x12\n" +
+	"\x10EnableCronJobRes\"3\n" +
+	"\x11DisableCronJobReq\x12\x1e\n" +
+	"\x06job_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05jobId\"\x13\n" +
+	"\x11DisableCronJobRes\"2\n" +
+	"\x10DeleteCronJobReq\x12\x1e\n" +
+	"\x06job_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05jobId\"\x12\n" +
+	"\x10DeleteCronJobRes\"/\n" +
+	"\rRunCronJobReq\x12\x1e\n" +
+	"\x06job_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05jobId\"*\n" +
+	"\rRunCronJobRes\x12\x19\n" +
+	"\btrace_id\x18\x01 \x01(\tR\atraceId\"/\n" +
+	"\rGetCronJobReq\x12\x1e\n" +
+	"\x06job_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05jobId\">\n" +
+	"\rGetCronJobRes\x12-\n" +
+	"\bcron_job\x18\x01 \x01(\v2\x12.trigger.CronJobPbR\acronJob\"\xbe\x02\n" +
+	"\x0fListCronJobsReq\x12'\n" +
+	"\tpage_size\x18\x01 \x01(\x03B\n" +
+	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12&\n" +
+	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12$\n" +
+	"\ttask_code\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\btaskCode\x12%\n" +
+	"\ttask_name\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\btaskName\x12&\n" +
+	"\x06status\x18\x05 \x03(\x05B\x0e\xfaB\v\x92\x01\b\"\x06\x1a\x04\x18\x01(\x00R\x06status\x12$\n" +
+	"\tdept_code\x18\x06 \x01(\tB\a\xfaB\x04r\x02\x18@R\bdeptCode\x12\x1b\n" +
+	"\x04type\x18\a \x01(\tB\a\xfaB\x04r\x02\x18@R\x04type\x12\"\n" +
+	"\bgroup_id\x18\b \x01(\tB\a\xfaB\x04r\x02\x18@R\agroupId\"X\n" +
+	"\x0fListCronJobsRes\x12/\n" +
+	"\tcron_jobs\x18\x01 \x03(\v2\x12.trigger.CronJobPbR\bcronJobs\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"\xa2\x06\n" +
+	"\tCronJobPb\x12\x15\n" +
+	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x1b\n" +
+	"\ttask_code\x18\x02 \x01(\tR\btaskCode\x12\x1b\n" +
+	"\ttask_name\x18\x03 \x01(\tR\btaskName\x12\x1a\n" +
+	"\bpriority\x18\x04 \x01(\x05R\bpriority\x12!\n" +
+	"\flock_timeout\x18\x05 \x01(\x03R\vlockTimeout\x12\x1b\n" +
+	"\tmax_delay\x18\x06 \x01(\x03R\bmaxDelay\x12\x18\n" +
+	"\apayload\x18\a \x01(\tR\apayload\x12\x14\n" +
+	"\x05extra\x18\b \x01(\tR\x05extra\x12\x16\n" +
+	"\x06status\x18\t \x01(\x05R\x06status\x12\x19\n" +
+	"\bnext_run\x18\n" +
+	" \x01(\tR\anextRun\x12\x19\n" +
+	"\blast_run\x18\v \x01(\tR\alastRun\x12\x12\n" +
+	"\x04type\x18\f \x01(\tR\x04type\x12\x19\n" +
+	"\bgroup_id\x18\r \x01(\tR\agroupId\x12 \n" +
+	"\vdescription\x18\x0e \x01(\tR\vdescription\x12\x1d\n" +
+	"\n" +
+	"start_time\x18\x0f \x01(\tR\tstartTime\x12\x19\n" +
+	"\bend_time\x18\x10 \x01(\tR\aendTime\x12'\n" +
+	"\x04rule\x18\x11 \x01(\v2\x13.trigger.PlanRulePbR\x04rule\x12#\n" +
+	"\rexclude_dates\x18\x12 \x03(\tR\fexcludeDates\x121\n" +
+	"\x14schedule_description\x18\x13 \x01(\tR\x13scheduleDescription\x12\x1b\n" +
+	"\trrule_str\x18\x14 \x01(\tR\brruleStr\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x185 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x186 \x01(\tR\x04ext5\x12\x1e\n" +
-	"\n" +
-	"createTime\x18d \x01(\tR\n" +
-	"createTime\x12\x1e\n" +
-	"\n" +
-	"updateTime\x18e \x01(\tR\n" +
-	"updateTime\x12\x1a\n" +
-	"\bdeptCode\x18f \x01(\tR\bdeptCode\"R\n" +
-	"\tNextIdReq\x12)\n" +
-	"\voutDescType\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\voutDescType\x12\x1a\n" +
-	"\bseparate\x18\x02 \x01(\bR\bseparate\"#\n" +
-	"\tNextIdRes\x12\x16\n" +
-	"\x06nextId\x18\x01 \x01(\tR\x06nextId\"v\n" +
-	"\x0eBatchNextIdReq\x12)\n" +
-	"\voutDescType\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\voutDescType\x12\x1a\n" +
+	"\x04ext5\x186 \x01(\tR\x04ext5\x12\x1f\n" +
+	"\vcreate_time\x18d \x01(\tR\n" +
+	"createTime\x12\x1f\n" +
+	"\vupdate_time\x18e \x01(\tR\n" +
+	"updateTime\x12\x1b\n" +
+	"\tdept_code\x18f \x01(\tR\bdeptCode\"T\n" +
+	"\tNextIdReq\x12+\n" +
+	"\rout_desc_type\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\voutDescType\x12\x1a\n" +
+	"\bseparate\x18\x02 \x01(\bR\bseparate\"$\n" +
+	"\tNextIdRes\x12\x17\n" +
+	"\anext_id\x18\x01 \x01(\tR\x06nextId\"x\n" +
+	"\x0eBatchNextIdReq\x12+\n" +
+	"\rout_desc_type\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\voutDescType\x12\x1a\n" +
 	"\bseparate\x18\x02 \x01(\bR\bseparate\x12\x1d\n" +
-	"\x05count\x18\x03 \x01(\rB\a\xfaB\x04*\x02(\x01R\x05count\"*\n" +
-	"\x0eBatchNextIdRes\x12\x18\n" +
-	"\anextIds\x18\x01 \x03(\tR\anextIds\"\x8b\x03\n" +
+	"\x05count\x18\x03 \x01(\rB\a\xfaB\x04*\x02(\x01R\x05count\"+\n" +
+	"\x0eBatchNextIdRes\x12\x19\n" +
+	"\bnext_ids\x18\x01 \x03(\tR\anextIds\"\x8d\x03\n" +
 	"\fInvokeTaskPb\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12-\n" +
 	"\bprotocol\x18\x02 \x01(\tB\x11\xfaB\x0er\fR\x04httpR\x04grpcR\bprotocol\x12!\n" +
 	"\atimeout\x18\x03 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\atimeout\x12\x10\n" +
 	"\x03url\x18\n" +
-	" \x01(\tR\x03url\x12\x1e\n" +
-	"\n" +
-	"httpMethod\x18\v \x01(\tR\n" +
+	" \x01(\tR\x03url\x12\x1f\n" +
+	"\vhttp_method\x18\v \x01(\tR\n" +
 	"httpMethod\x12<\n" +
 	"\aheaders\x18\f \x03(\v2\".trigger.InvokeTaskPb.HeadersEntryR\aheaders\x12\x12\n" +
-	"\x04body\x18\r \x01(\fR\x04body\x12\x1e\n" +
-	"\n" +
-	"grpcServer\x18\x14 \x01(\tR\n" +
+	"\x04body\x18\r \x01(\fR\x04body\x12\x1f\n" +
+	"\vgrpc_server\x18\x14 \x01(\tR\n" +
 	"grpcServer\x12\x16\n" +
 	"\x06method\x18\x15 \x01(\tR\x06method\x12\x18\n" +
 	"\apayload\x18\x16 \x01(\fR\apayload\x1a:\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x89\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8a\x01\n" +
 	"\tInvokeReq\x125\n" +
-	"\x05tasks\x18\x01 \x03(\v2\x15.trigger.InvokeTaskPbB\b\xfaB\x05\x92\x01\x02\b\x01R\x05tasks\x12/\n" +
-	"\x0emaxConcurrency\x18\x02 \x01(\x05B\a\xfaB\x04\x1a\x02(\x00R\x0emaxConcurrency\x12\x14\n" +
-	"\x05debug\x18\x03 \x01(\bR\x05debug\"\xc6\x01\n" +
+	"\x05tasks\x18\x01 \x03(\v2\x15.trigger.InvokeTaskPbB\b\xfaB\x05\x92\x01\x02\b\x01R\x05tasks\x120\n" +
+	"\x0fmax_concurrency\x18\x02 \x01(\x05B\a\xfaB\x04\x1a\x02(\x00R\x0emaxConcurrency\x12\x14\n" +
+	"\x05debug\x18\x03 \x01(\bR\x05debug\"\xc9\x01\n" +
 	"\x12InvokeTaskResultPb\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
-	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x1e\n" +
-	"\n" +
-	"statusCode\x18\x03 \x01(\x05R\n" +
+	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x1f\n" +
+	"\vstatus_code\x18\x03 \x01(\x05R\n" +
 	"statusCode\x12\x14\n" +
 	"\x05error\x18\x04 \x01(\tR\x05error\x12\x12\n" +
-	"\x04data\x18\x05 \x01(\fR\x04data\x12\x16\n" +
-	"\x06costMs\x18\x06 \x01(\x03R\x06costMs\x12$\n" +
-	"\rcostFormatted\x18\a \x01(\tR\rcostFormatted\"B\n" +
+	"\x04data\x18\x05 \x01(\fR\x04data\x12\x17\n" +
+	"\acost_ms\x18\x06 \x01(\x03R\x06costMs\x12%\n" +
+	"\x0ecost_formatted\x18\a \x01(\tR\rcostFormatted\"B\n" +
 	"\tInvokeRes\x125\n" +
 	"\aresults\x18\x01 \x03(\v2\x1b.trigger.InvokeTaskResultPbR\aresults*\xcd\x01\n" +
 	"\x10ExecItemStatusPb\x12\x1c\n" +
@@ -10595,23 +10626,23 @@ var file_trigger_proto_goTypes = []any{
 	nil,                                // 139: trigger.InvokeTaskPb.HeadersEntry
 }
 var file_trigger_proto_depIdxs = []int32{
-	4,   // 0: trigger.GetQueueInfoRes.queueInfo:type_name -> trigger.QueueInfoPb
-	2,   // 1: trigger.GetTaskInfoRes.taskInfo:type_name -> trigger.TaskInfoPb
-	3,   // 2: trigger.HistoricalStatsRes.dailyStat:type_name -> trigger.DailyStatsPb
-	4,   // 3: trigger.ListActiveTasksRes.queueInfo:type_name -> trigger.QueueInfoPb
-	2,   // 4: trigger.ListActiveTasksRes.tasksInfo:type_name -> trigger.TaskInfoPb
-	4,   // 5: trigger.ListPendingTasksRes.queueInfo:type_name -> trigger.QueueInfoPb
-	2,   // 6: trigger.ListPendingTasksRes.tasksInfo:type_name -> trigger.TaskInfoPb
-	4,   // 7: trigger.ListAggregatingTasksRes.queueInfo:type_name -> trigger.QueueInfoPb
-	2,   // 8: trigger.ListAggregatingTasksRes.tasksInfo:type_name -> trigger.TaskInfoPb
-	4,   // 9: trigger.ListScheduledTasksRes.queueInfo:type_name -> trigger.QueueInfoPb
-	2,   // 10: trigger.ListScheduledTasksRes.tasksInfo:type_name -> trigger.TaskInfoPb
-	4,   // 11: trigger.ListRetryTasksRes.queueInfo:type_name -> trigger.QueueInfoPb
-	2,   // 12: trigger.ListRetryTasksRes.tasksInfo:type_name -> trigger.TaskInfoPb
-	4,   // 13: trigger.ListArchivedTasksRes.queueInfo:type_name -> trigger.QueueInfoPb
-	2,   // 14: trigger.ListArchivedTasksRes.tasksInfo:type_name -> trigger.TaskInfoPb
-	4,   // 15: trigger.ListCompletedTasksRes.queueInfo:type_name -> trigger.QueueInfoPb
-	2,   // 16: trigger.ListCompletedTasksRes.tasksInfo:type_name -> trigger.TaskInfoPb
+	4,   // 0: trigger.GetQueueInfoRes.queue_info:type_name -> trigger.QueueInfoPb
+	2,   // 1: trigger.GetTaskInfoRes.task_info:type_name -> trigger.TaskInfoPb
+	3,   // 2: trigger.HistoricalStatsRes.daily_stat:type_name -> trigger.DailyStatsPb
+	4,   // 3: trigger.ListActiveTasksRes.queue_info:type_name -> trigger.QueueInfoPb
+	2,   // 4: trigger.ListActiveTasksRes.tasks_info:type_name -> trigger.TaskInfoPb
+	4,   // 5: trigger.ListPendingTasksRes.queue_info:type_name -> trigger.QueueInfoPb
+	2,   // 6: trigger.ListPendingTasksRes.tasks_info:type_name -> trigger.TaskInfoPb
+	4,   // 7: trigger.ListAggregatingTasksRes.queue_info:type_name -> trigger.QueueInfoPb
+	2,   // 8: trigger.ListAggregatingTasksRes.tasks_info:type_name -> trigger.TaskInfoPb
+	4,   // 9: trigger.ListScheduledTasksRes.queue_info:type_name -> trigger.QueueInfoPb
+	2,   // 10: trigger.ListScheduledTasksRes.tasks_info:type_name -> trigger.TaskInfoPb
+	4,   // 11: trigger.ListRetryTasksRes.queue_info:type_name -> trigger.QueueInfoPb
+	2,   // 12: trigger.ListRetryTasksRes.tasks_info:type_name -> trigger.TaskInfoPb
+	4,   // 13: trigger.ListArchivedTasksRes.queue_info:type_name -> trigger.QueueInfoPb
+	2,   // 14: trigger.ListArchivedTasksRes.tasks_info:type_name -> trigger.TaskInfoPb
+	4,   // 15: trigger.ListCompletedTasksRes.queue_info:type_name -> trigger.QueueInfoPb
+	2,   // 16: trigger.ListCompletedTasksRes.tasks_info:type_name -> trigger.TaskInfoPb
 	64,  // 17: trigger.CalcPlanTaskDateReq.rule:type_name -> trigger.PlanRulePb
 	1,   // 18: trigger.HolidayDayPb.kind:type_name -> trigger.HolidayDayKindPb
 	43,  // 19: trigger.QueryHolidayRes.day:type_name -> trigger.HolidayDayPb
@@ -10620,26 +10651,26 @@ var file_trigger_proto_depIdxs = []int32{
 	46,  // 22: trigger.GetHolidayYearSummaryRes.summary:type_name -> trigger.HolidayYearSummaryPb
 	44,  // 23: trigger.ListHolidaySourceRes.items:type_name -> trigger.HolidaySourcePb
 	64,  // 24: trigger.CreatePlanTaskReq.rule:type_name -> trigger.PlanRulePb
-	65,  // 25: trigger.CreatePlanTaskReq.execItems:type_name -> trigger.CreatePlanExecItemPb
+	65,  // 25: trigger.CreatePlanTaskReq.exec_items:type_name -> trigger.CreatePlanExecItemPb
 	89,  // 26: trigger.GetPlanRes.plan:type_name -> trigger.PlanPb
 	64,  // 27: trigger.PlanPb.rule:type_name -> trigger.PlanRulePb
 	89,  // 28: trigger.ListPlansRes.plans:type_name -> trigger.PlanPb
-	106, // 29: trigger.GetPlanBatchRes.planBatch:type_name -> trigger.PlanBatchPb
-	106, // 30: trigger.ListPlanBatchesRes.planBatches:type_name -> trigger.PlanBatchPb
-	98,  // 31: trigger.GetPlanExecItemRes.planExecItem:type_name -> trigger.PlanExecItemPb
+	106, // 29: trigger.GetPlanBatchRes.plan_batch:type_name -> trigger.PlanBatchPb
+	106, // 30: trigger.ListPlanBatchesRes.plan_batches:type_name -> trigger.PlanBatchPb
+	98,  // 31: trigger.GetPlanExecItemRes.plan_exec_item:type_name -> trigger.PlanExecItemPb
 	0,   // 32: trigger.PlanExecItemPb.status:type_name -> trigger.ExecItemStatusPb
 	0,   // 33: trigger.ListPlanExecItemsReq.status:type_name -> trigger.ExecItemStatusPb
-	98,  // 34: trigger.ListPlanExecItemsRes.planExecItems:type_name -> trigger.PlanExecItemPb
-	105, // 35: trigger.GetPlanExecLogRes.planExecLog:type_name -> trigger.PlanExecLogPb
-	105, // 36: trigger.ListPlanExecLogsRes.planExecLogs:type_name -> trigger.PlanExecLogPb
-	138, // 37: trigger.PlanBatchPb.statusCountMap:type_name -> trigger.PlanBatchPb.StatusCountMapEntry
+	98,  // 34: trigger.ListPlanExecItemsRes.plan_exec_items:type_name -> trigger.PlanExecItemPb
+	105, // 35: trigger.GetPlanExecLogRes.plan_exec_log:type_name -> trigger.PlanExecLogPb
+	105, // 36: trigger.ListPlanExecLogsRes.plan_exec_logs:type_name -> trigger.PlanExecLogPb
+	138, // 37: trigger.PlanBatchPb.status_count_map:type_name -> trigger.PlanBatchPb.StatusCountMapEntry
 	111, // 38: trigger.GetExecItemDashboardRes.stats:type_name -> trigger.ExecItemDashboardItemPb
 	108, // 39: trigger.ExecItemDashboardItemPb.finished:type_name -> trigger.FinishedItemsStatsPb
 	109, // 40: trigger.ExecItemDashboardItemPb.pending:type_name -> trigger.PendingItemsStatsPb
-	113, // 41: trigger.CallbackPlanExecItemReq.delayConfig:type_name -> trigger.DelayConfigPb
+	113, // 41: trigger.CallbackPlanExecItemReq.delay_config:type_name -> trigger.DelayConfigPb
 	64,  // 42: trigger.CreateCronJobReq.rule:type_name -> trigger.PlanRulePb
-	129, // 43: trigger.GetCronJobRes.cronJob:type_name -> trigger.CronJobPb
-	129, // 44: trigger.ListCronJobsRes.cronJobs:type_name -> trigger.CronJobPb
+	129, // 43: trigger.GetCronJobRes.cron_job:type_name -> trigger.CronJobPb
+	129, // 44: trigger.ListCronJobsRes.cron_jobs:type_name -> trigger.CronJobPb
 	64,  // 45: trigger.CronJobPb.rule:type_name -> trigger.PlanRulePb
 	139, // 46: trigger.InvokeTaskPb.headers:type_name -> trigger.InvokeTaskPb.HeadersEntry
 	134, // 47: trigger.InvokeReq.tasks:type_name -> trigger.InvokeTaskPb

@@ -40,6 +40,8 @@ DB:
   IgnoreRecordNotFoundError: false
   # 是否按字段名显式查询，默认 false。
   QueryFields: false
+CronTask:
+  MaxDelay: 30m
 StreamEventConf:
   # nacos://[user:passwd]@host/service?param=value'
   #  Target: nacos://nacos:nacos@127.0.0.1:8848/stream-event?namespaceid=public&timeout=5000s

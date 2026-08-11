@@ -11,6 +11,7 @@ import (
 	"zero-service/common/gormx"
 	"zero-service/facade/streamevent/streamevent"
 
+	"github.com/zeromicro/go-zero/core/trace"
 	"google.golang.org/grpc"
 )
 
@@ -82,6 +83,7 @@ func NewLoggingEventHandler(db *gormx.DB, client EventClient) crontask.Handler {
 		}
 
 		log := &gormmodel.CronExecLog{
+			TraceId:       trace.TraceIDFromContext(ctx),
 			JobId:         task.ID,
 			TaskCode:      task.TaskCode,
 			TaskName:      task.TaskName,

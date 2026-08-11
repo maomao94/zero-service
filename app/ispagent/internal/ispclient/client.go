@@ -20,7 +20,7 @@ import (
 const reportTaskConcurrency = 4
 
 // TaskRunFunc 立即执行指定任务。
-type TaskRunFunc func(ctx context.Context, taskCode string) error
+type TaskRunFunc func(ctx context.Context, taskCode string) (string, error)
 
 // IspClient 组合 common/isp.Client 的 TCP 通信能力，并注册 ispagent 私有业务 handler。
 //
@@ -46,10 +46,10 @@ func (c *IspClient) SetTaskRun(run TaskRunFunc) {
 	c.taskRun.Store(&run)
 }
 
-func (c *IspClient) runTask(ctx context.Context, taskCode string) error {
+func (c *IspClient) runTask(ctx context.Context, taskCode string) (string, error) {
 	run := c.taskRun.Load()
 	if run == nil {
-		return errors.New("任务调度器未初始化")
+		return "", errors.New("任务调度器未初始化")
 	}
 	return (*run)(ctx, taskCode)
 }

@@ -169,13 +169,13 @@ message TaskInfoPb {
   // State indicates the task state.
   int32 state = 5; // 建议配合 enum TaskState 使用
   // MaxRetry is the maximum number of times the task can be retried.
-  int32 maxRetry = 6;
+  int32 max_retry = 6;
   // Retried is the number of times the task has retried so far.
   int32 retried = 7;
   // LastErr is the error message from the last failure.
-  string lastErr = 8;
+  string last_err = 8;
   // LastFailedAt is the time of the last failure.
-  string lastFailedAt = 9;
+  string last_failed_at = 9;
   // Timeout is the duration the task can be processed before being retried.
   int64 timeout = 10; // 使用秒为单位的 duration
   // Deadline is the deadline for the task.
@@ -183,13 +183,13 @@ message TaskInfoPb {
   // Group is the name of the group in which the task belongs.
   string group = 12;
   // NextProcessAt is the time the task is scheduled to be processed.
-  string nextProcessAt = 13;
+  string next_process_at = 13;
   // IsOrphaned indicates if the task is left in active state with no worker.
-  bool isOrphaned = 14;
+  bool is_orphaned = 14;
   // Retention is duration of the retention period.
   int64 retention = 15; // 使用秒为单位的 duration
   // CompletedAt is the time when the task is processed successfully.
-  string completedAt = 16; // 或 google.protobuf.Timestamp
+  string completed_at = 16; // 或 google.protobuf.Timestamp
   // Result holds the result data associated with the task.
   string result = 17;
 }
@@ -208,10 +208,10 @@ message DailyStatsPb {
 
 message QueueInfoPb {
   // Name of the queue.
-  string Queue = 1;
+  string queue = 1;
   // Total number of bytes that the queue and its tasks require to be stored in redis.
   // It is an approximate memory usage value in bytes since the value is computed by sampling.
-  int64 memoryUsage = 2;
+  int64 memory_usage = 2;
   // Latency of the queue, measured by the oldest pending task in the queue.
   string latency = 3;
   // Size is the total number of tasks in the queue.
@@ -239,9 +239,9 @@ message QueueInfoPb {
   // Total number of tasks failed to be processed within the given date (counter resets daily).
   int64 failed = 14;
   // Total number of tasks processed (cumulative).
-  int64 processedTotal = 15;
+  int64 processed_total = 15;
   // Total number of tasks failed (cumulative).
-  int64 failedTotal = 16;
+  int64 failed_total = 16;
   // Paused indicates whether the queue is paused.
   // If true, tasks in the queue will not be processed.
   bool paused = 17;
@@ -251,22 +251,22 @@ message QueueInfoPb {
 
 message SendTriggerReq {
   // 秒
-  uint64 processIn = 1;
+  uint64 process_in = 1;
   // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
-  string triggerTime = 2;
+  string trigger_time = 2;
   // POST json提交 不可为空
   string url = 3;
   // 重试次数 可为空 默认: 25
-  int64 maxRetry = 4;
+  int64 max_retry = 4;
   // 唯一消息 id 可为空
-  string msgId = 5;
+  string msg_id = 5;
   // 触发内容，可为空
   string body = 6;
 }
 
 message SendTriggerRes {
   // 唯一追踪 id
-  string traceId = 1;
+  string trace_id = 1;
   // Queue is the name of the queue in which the task belongs.
   string queue = 2;
   // ID is the identifier of the task.
@@ -275,9 +275,9 @@ message SendTriggerRes {
 
 message SendProtoTriggerReq {
   // 秒
-  uint64 processIn = 1;
+  uint64 process_in = 1;
   // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
-  string triggerTime = 2;
+  string trigger_time = 2;
   // 最大重试次数（可为空，默认 25 次）
   //
   // 任务失败后会重试，重试间隔采用指数退避策略，时间间隔随重试次数成倍增长：
@@ -295,22 +295,22 @@ message SendProtoTriggerReq {
   //   12 次及以上重试：间隔固定为 30 分钟
   //
   // 总之，重试间隔从秒级开始，逐步增长到分钟、十几分钟，最终封顶 30 分钟。
-  int64 maxRetry = 3;
+  int64 max_retry = 3;
   // 唯一消息 id 可为空
-  string msgId = 4;
+  string msg_id = 4;
   // 服务名称 不可为空 示例 127.0.0.1:8080 direct:///127.0.0.1:8080,127.0.0.2:8080,nacos://nacos:nacos@127.0.0.1:8848/service?namespaceid=public&timeout=5000s
-  string grpcServer = 5;
+  string grpc_server = 5;
   // 方法 不可为空
   string method = 6;
   // pb 字节数据 不可为空
   bytes payload = 7;
   // 请求超时时间 单位: 毫秒 可为空
-  int64 requestTimeout = 8;
+  int64 request_timeout = 8;
 }
 
 message SendProtoTriggerRes {
   // 唯一追踪 id
-  string traceId = 1;
+  string trace_id = 1;
   // Queue is the name of the queue in which the task belongs.
   string queue = 2;
   // ID is the identifier of the task.
@@ -330,7 +330,7 @@ message GetQueueInfoReq {
 }
 
 message GetQueueInfoRes {
-  QueueInfoPb queueInfo = 1;
+  QueueInfoPb queue_info = 1;
 }
 
 message ArchiveTaskReq {
@@ -361,7 +361,7 @@ message GetTaskInfoReq {
 }
 
 message GetTaskInfoRes {
-  TaskInfoPb taskInfo = 1;
+  TaskInfoPb task_info = 1;
 }
 
 message DeleteAllCompletedTasksReq {
@@ -390,85 +390,85 @@ message HistoricalStatsReq {
 }
 
 message HistoricalStatsRes {
-  repeated DailyStatsPb dailyStat = 1;
+  repeated DailyStatsPb daily_stat = 1;
 }
 
 message ListActiveTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message ListActiveTasksRes {
-  QueueInfoPb queueInfo = 1;
-  repeated TaskInfoPb tasksInfo = 2;
+  QueueInfoPb queue_info = 1;
+  repeated TaskInfoPb tasks_info = 2;
 }
 
 message ListPendingTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message ListPendingTasksRes {
-  QueueInfoPb queueInfo = 1;
-  repeated TaskInfoPb tasksInfo = 2;
+  QueueInfoPb queue_info = 1;
+  repeated TaskInfoPb tasks_info = 2;
 }
 
 message ListAggregatingTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
   string group = 4 [(validate.rules).string = {min_len: 1}];
 }
 
 message ListAggregatingTasksRes {
-  QueueInfoPb queueInfo = 1;
-  repeated TaskInfoPb tasksInfo = 2;
+  QueueInfoPb queue_info = 1;
+  repeated TaskInfoPb tasks_info = 2;
 }
 
 message ListScheduledTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message ListScheduledTasksRes {
-  QueueInfoPb queueInfo = 1;
-  repeated TaskInfoPb tasksInfo = 2;
+  QueueInfoPb queue_info = 1;
+  repeated TaskInfoPb tasks_info = 2;
 }
 
 message ListRetryTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message ListRetryTasksRes {
-  QueueInfoPb queueInfo = 1;
-  repeated TaskInfoPb tasksInfo = 2;
+  QueueInfoPb queue_info = 1;
+  repeated TaskInfoPb tasks_info = 2;
 }
 
 message ListArchivedTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message ListArchivedTasksRes {
-  QueueInfoPb queueInfo = 1;
-  repeated TaskInfoPb tasksInfo = 2;
+  QueueInfoPb queue_info = 1;
+  repeated TaskInfoPb tasks_info = 2;
 }
 
 message ListCompletedTasksReq {
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message ListCompletedTasksRes {
-  QueueInfoPb queueInfo = 1;
-  repeated TaskInfoPb tasksInfo = 2;
+  QueueInfoPb queue_info = 1;
+  repeated TaskInfoPb tasks_info = 2;
 }
 
 message RunTaskReq {
@@ -485,24 +485,24 @@ message CalcPlanTaskDateReq {
   // 规则生效开始时间
   // 不传默认本年
   // 格式：yyyy-MM-dd HH:mm:ss
-  string startTime = 1;
+  string start_time = 1;
   // 规则生效结束时间
   // 不传默认本年
   // 格式：yyyy-MM-dd HH:mm:ss
-  string endTime = 2;
+  string end_time = 2;
   // 计划规则项 默认 规则项 MINUTELY
   PlanRulePb rule = 3 [(validate.rules).message = {required: true}];
   // 排除日期列表
   // 格式：yyyy-MM-dd
-  repeated string excludeDates = 4 [(validate.rules).repeated = {items: {string: {min_len: 1}}}];
+  repeated string exclude_dates = 4 [(validate.rules).repeated = {items: {string: {min_len: 1}}}];
 }
 
 message CalcPlanTaskDateRes {
-  repeated string planDates = 1;
+  repeated string plan_dates = 1;
   // 根据实际计划规则生成的简体中文描述，用于业务展示。
-  string scheduleDescription = 2;
+  string schedule_description = 2;
   // 实际用于日期计算和持久化的 RFC 5545 RRULE Set 原文，用于排障。
-  string rruleStr = 3;
+  string rrule_str = 3;
 }
 
 enum HolidayDayKindPb {
@@ -530,11 +530,11 @@ message HolidayDayPb {
   // 日期说明
   string note = 5;
   // 是否假日
-  bool isHoliday = 6;
+  bool is_holiday = 6;
   // 是否工作日
-  bool isWorkday = 7;
+  bool is_workday = 7;
   // 是否节日当天，如春节正月初一、国庆节 10 月 1 日
-  bool isFestivalDay = 8;
+  bool is_festival_day = 8;
 }
 
 message HolidaySourcePb {
@@ -547,7 +547,7 @@ message HolidaySourcePb {
   // 日期说明
   string note = 4;
   // 是否节日当天，如春节正月初一、国庆节 10 月 1 日
-  bool isFestivalDay = 5;
+  bool is_festival_day = 5;
   // 是否启用；禁用后查询会按普通周末/工作日兜底
   bool enabled = 6;
 }
@@ -558,26 +558,26 @@ message HolidayFestivalPb {
   // 节日名称，如 国庆节、中秋国庆
   string name = 2;
   // 假期开始日期，格式 yyyy-MM-dd；只按 holidayDays 计算
-  string startDate = 3;
+  string start_date = 3;
   // 假期结束日期，格式 yyyy-MM-dd；只按 holidayDays 计算
-  string endDate = 4;
+  string end_date = 4;
   // 假日日期列表，包含法定节假日和调休放假日
-  repeated string holidayDays = 5;
+  repeated string holiday_days = 5;
   // 调休补班日期列表
-  repeated string makeupWorkdays = 6;
+  repeated string makeup_workdays = 6;
   // 节日当天日期列表，如国庆节 10-01、春节正月初一
-  repeated string festivalDays = 7;
+  repeated string festival_days = 7;
 }
 
 message HolidayYearSummaryPb {
   // 年份
   int32 year = 1;
   // 全年特殊假日日期列表，包含法定节假日和调休放假日
-  repeated string holidayDays = 2;
+  repeated string holiday_days = 2;
   // 全年调休补班日期列表
-  repeated string makeupWorkdays = 3;
+  repeated string makeup_workdays = 3;
   // 全年节日当天日期列表
-  repeated string festivalDays = 4;
+  repeated string festival_days = 4;
   // 全年涉及的节日名称列表，按节日首次出现时间排序
   repeated string names = 5;
 }
@@ -594,9 +594,9 @@ message QueryHolidayRes {
 
 message ListHolidayFestivalsReq {
   // 开始年份；不传时默认当前年
-  int32 startYear = 1 [(validate.rules).int32 = {gte: 0, lte: 9999}];
+  int32 start_year = 1 [(validate.rules).int32 = {gte: 0, lte: 9999}];
   // 结束年份；不传时默认 startYear
-  int32 endYear = 2 [(validate.rules).int32 = {gte: 0, lte: 9999}];
+  int32 end_year = 2 [(validate.rules).int32 = {gte: 0, lte: 9999}];
   // 节日名称，如 国庆节、中秋国庆；为空表示不过滤，组合节日支持按部分名称匹配
   string name = 3 [(validate.rules).string = {max_len: 32}];
 }
@@ -644,7 +644,7 @@ message ListHolidaySourceReq {
   // 年份
   int32 year = 1 [(validate.rules).int32 = {gte: 1900, lte: 9999}];
   // 是否包含禁用配置
-  bool includeDisabled = 2;
+  bool include_disabled = 2;
 }
 
 message ListHolidaySourceRes {
@@ -662,7 +662,7 @@ message SaveHolidaySourceReq {
   // 日期说明
   string note = 4 [(validate.rules).string = {min_len: 1, max_len: 128}];
   // 是否节日当天，如春节正月初一、国庆节 10 月 1 日
-  bool isFestivalDay = 5;
+  bool is_festival_day = 5;
   // 是否启用；禁用后查询会按普通周末/工作日兜底
   bool enabled = 6;
 }
@@ -682,41 +682,41 @@ message SetHolidaySourceEnabledRes {
 
 message CreatePlanTaskReq {
   // 机构code
-  string deptCode = 101 [(validate.rules).string = {min_len: 1}];
+  string dept_code = 101 [(validate.rules).string = {min_len: 1}];
 
   // 计划任务ID,全局唯一
-  string planId = 1 [(validate.rules).string = {min_len: 1}];
+  string plan_id = 1 [(validate.rules).string = {min_len: 1}];
   // 计划任务名称
-  string planName = 2 [(validate.rules).string = {min_len: 1}];
+  string plan_name = 2 [(validate.rules).string = {min_len: 1}];
   // 任务类型
   string type = 3 [(validate.rules).string = {min_len: 1}];
   // 计划组ID,用于分组管理计划任务
-  string groupId = 4;
+  string group_id = 4;
   // 描述
   string description = 5 [(validate.rules).string = {max_len: 200}];
   // 规则生效开始时间
   // 不传默认本年
   // 格式：yyyy-MM-dd HH:mm:ss
-  string startTime = 6;
+  string start_time = 6;
   // 规则生效结束时间
   // 不传默认本年
   // 格式：yyyy-MM-dd HH:mm:ss
-  string endTime = 7;
+  string end_time = 7;
   // 计划规则项 默认 规则项 MINUTELY
   PlanRulePb rule = 8 [(validate.rules).message = {required: true}];
   // 排除日期列表
   // 格式：yyyy-MM-dd
-  repeated string excludeDates = 9 [(validate.rules).repeated = {items: {string: {min_len: 1}}}];
+  repeated string exclude_dates = 9 [(validate.rules).repeated = {items: {string: {min_len: 1}}}];
   // 间隔时间 单位: 毫秒
-  int64 intervalTime = 10 [(validate.rules).int64 = {gte: 0}];
+  int64 interval_time = 10 [(validate.rules).int64 = {gte: 0}];
   // 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
-  int32 intervalType = 11 [(validate.rules).int32 = {gte: 0, lte: 2}];
+  int32 interval_type = 11 [(validate.rules).int32 = {gte: 0, lte: 2}];
   // 计划执行项-根据规则项生成日期批次-batchId 并生成对应批次执行项-execId
-  repeated CreatePlanExecItemPb execItems = 12 [(validate.rules).repeated = {min_items: 1}];
+  repeated CreatePlanExecItemPb exec_items = 12 [(validate.rules).repeated = {min_items: 1}];
   // batchNum 前缀
-  string batchNumPrefix = 13;
+  string batch_num_prefix = 13;
   // 是否跳过时间过滤，用于立即执行的计划
-  bool skipTimeFilter = 14;
+  bool skip_time_filter = 14;
 
   // 扩展字段
   string ext1 = 50;
@@ -766,17 +766,17 @@ message PlanRulePb {
 // 计划执行项创建数据模型
 message CreatePlanExecItemPb {
   // 执行项ID,业务字段,例如工单号
-  string itemId = 1 [(validate.rules).string = {min_len: 1}];
+  string item_id = 1 [(validate.rules).string = {min_len: 1}];
   // 执行项类型,业务字段
-  string itemType = 2;
+  string item_type = 2;
   // 执行项名称,业务字段
-  string itemName = 3;
+  string item_name = 3;
   // 点位id,业务字段
-  string pointId = 4;
+  string point_id = 4;
   // 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
   string payload = 5;
   // 请求超时时间 单位: 毫秒 可为空
-  int64 requestTimeout = 6;
+  int64 request_timeout = 6;
 
   // 扩展字段
   string ext1 = 50;
@@ -790,16 +790,16 @@ message CreatePlanTaskRes {
   // 计划主键ID
   string id = 1;
   // 计划ID
-  string planId = 2;
+  string plan_id = 2;
   // 计划批次数
-  int64 batchCnt = 3;
+  int64 batch_cnt = 3;
   // 执行计划数
-  int64 execCnt = 4;
+  int64 exec_cnt = 4;
 }
 
 message PausePlanReq {
   string id = 1;
-  string planId = 2;
+  string plan_id = 2;
   // 暂停原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
 }
@@ -809,7 +809,7 @@ message PausePlanRes {
 
 message TerminatePlanReq {
   string id = 1;
-  string planId = 2;
+  string plan_id = 2;
   // 终止原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
 }
@@ -819,7 +819,7 @@ message TerminatePlanRes {
 
 message ResumePlanReq {
   string id = 1;
-  string planId = 2;
+  string plan_id = 2;
 }
 
 message ResumePlanRes {
@@ -827,7 +827,7 @@ message ResumePlanRes {
 
 message PausePlanBatchReq {
   string id = 1;
-  string batchId = 2;
+  string batch_id = 2;
   // 暂停原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
 }
@@ -837,7 +837,7 @@ message PausePlanBatchRes {
 
 message TerminatePlanBatchReq {
   string id = 1;
-  string batchId = 2;
+  string batch_id = 2;
   // 终止原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
 }
@@ -847,7 +847,7 @@ message TerminatePlanBatchRes {
 
 message ResumePlanBatchReq {
   string id = 1;
-  string batchId = 2;
+  string batch_id = 2;
 }
 
 message ResumePlanBatchRes {
@@ -855,7 +855,7 @@ message ResumePlanBatchRes {
 
 message PausePlanExecItemReq {
   string id = 1;
-  string execId = 2;
+  string exec_id = 2;
   // 暂停原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
 }
@@ -865,7 +865,7 @@ message PausePlanExecItemRes {
 
 message TerminatePlanExecItemReq {
   string id = 1;
-  string execId = 2;
+  string exec_id = 2;
   // 终止原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
 }
@@ -875,7 +875,7 @@ message TerminatePlanExecItemRes {
 
 message ResumePlanExecItemReq {
   string id = 1;
-  string execId = 2;
+  string exec_id = 2;
 }
 
 message ResumePlanExecItemRes {
@@ -884,7 +884,7 @@ message ResumePlanExecItemRes {
 // 立即执行计划项请求
 message RunPlanExecItemReq {
   string id = 1;
-  string execId = 2;
+  string exec_id = 2;
 }
 
 // 立即执行计划项响应
@@ -893,7 +893,7 @@ message RunPlanExecItemRes {
 
 message GetPlanReq {
   string id = 1;
-  string planId = 2;
+  string plan_id = 2;
 }
 
 message GetPlanRes {
@@ -902,44 +902,44 @@ message GetPlanRes {
 
 message PlanPb {
   // 创建时间
-  string createTime = 101;
+  string create_time = 101;
   // 更新时间
-  string updateTime = 102;
+  string update_time = 102;
   // 创建人
-  string createUser = 103;
+  string create_user = 103;
   // 更新人
-  string updateUser = 104;
+  string update_user = 104;
   // 机构code
-  string deptCode = 105;
+  string dept_code = 105;
 
   // UUID主键ID
   string id = 50;
   // 计划ID
-  string planId = 1;
+  string plan_id = 1;
   // 计划名称
-  string planName = 2;
+  string plan_name = 2;
   // 任务类型
   string type = 3;
   // 计划组ID,用于分组管理计划任务
-  string groupId = 4;
+  string group_id = 4;
   // 描述
   string description = 5;
   // 规则生效开始时间
-  string startTime = 6;
+  string start_time = 6;
   // 规则生效结束时间
-  string endTime = 7;
+  string end_time = 7;
   // 计划规则项
   PlanRulePb rule = 8;
   // 状态：1-启用，2-暂停，3-终止
   int32 status = 9;
   // 扫表标记, 0-未扫表, 1-已扫表
-  int32 scanFlg = 10;
+  int32 scan_flg = 10;
   // 终止原因
-  string terminatedReason = 11;
+  string terminated_reason = 11;
   // 暂停时间
-  string pausedTime = 12;
+  string paused_time = 12;
   // 暂停原因
-  string pausedReason = 13;
+  string paused_reason = 13;
   // 执行进度 0.00-100.00
   float progress = 14;
   // 扩展字段1
@@ -953,20 +953,20 @@ message PlanPb {
   // 扩展字段5
   string ext5 = 19;
   // 创建时用于展开计划日期的 RFC 5545 RRULE Set 快照。
-  string rruleStr = 20;
+  string rrule_str = 20;
   // 根据 RRULE Set 快照生成的简体中文描述。
-  string scheduleDescription = 21;
+  string schedule_description = 21;
 }
 
 message ListPlansReq {
   // 分页大小
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 计划ID模糊查询
-  string planId = 3;
+  string plan_id = 3;
   // 计划名称模糊查询
-  string planName = 4;
+  string plan_name = 4;
   // 状态：1-启用，2-暂停，3-终止
   repeated int32 status = 5;
   // 任务类型
@@ -982,106 +982,106 @@ message ListPlansRes {
 
 message GetPlanBatchReq {
   string id = 1;
-  string batchId = 2;
+  string batch_id = 2;
 }
 
 message GetPlanBatchRes {
-  PlanBatchPb planBatch = 1;
+  PlanBatchPb plan_batch = 1;
 }
 
 message ListPlanBatchesReq {
   // 分页大小
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 计划主键ID
-  string planPk = 3;
+  string plan_pk = 3;
   // 计划ID
-  string planId = 4;
+  string plan_id = 4;
   // 批次ID
-  string batchId = 5;
+  string batch_id = 5;
   // 状态：1-启用，2-暂停，3-终止
   repeated int32 status = 6;
   // 计划类型
-  string planType = 7;
+  string plan_type = 7;
 }
 
 message ListPlanBatchesRes {
   // 批次列表
-  repeated PlanBatchPb planBatches = 1;
+  repeated PlanBatchPb plan_batches = 1;
   // 总记录数
   int64 total = 2;
 }
 
 message GetPlanExecItemReq {
   string id = 1;
-  string execId = 2;
+  string exec_id = 2;
 }
 
 message GetPlanExecItemRes {
-  repeated PlanExecItemPb planExecItem = 1;
+  repeated PlanExecItemPb plan_exec_item = 1;
 }
 
 message PlanExecItemPb {
   // 创建时间
-  string createTime = 101;
+  string create_time = 101;
   // 更新时间
-  string updateTime = 102;
+  string update_time = 102;
   // 创建人
-  string createUser = 103;
+  string create_user = 103;
   // 更新人
-  string updateUser = 104;
+  string update_user = 104;
   // 机构code
-  string deptCode = 105;
+  string dept_code = 105;
 
   // UUID主键ID
   string id = 50;
   // 关联的计划主键ID
-  string planPk = 1;
+  string plan_pk = 1;
   // 计划ID
-  string planId = 2;
+  string plan_id = 2;
   // 批主键ID
-  string batchPk = 4;
+  string batch_pk = 4;
   // 批ID
-  string batchId = 5;
+  string batch_id = 5;
   // 执行ID 全局唯一
-  string execId = 6;
+  string exec_id = 6;
   // 执行项ID
-  string itemId = 7;
+  string item_id = 7;
   // 执行项类型
-  string itemType = 8;
+  string item_type = 8;
   // 执行项名称
-  string itemName = 9;
+  string item_name = 9;
   // 执行项行ID
-  int64 itemRowId = 10;
+  int64 item_row_id = 10;
   // 点位id
-  string PointId = 11;
+  string point_id = 11;
   // 业务负载
   string payload = 12;
   // 请求超时时间（毫秒）
-  int64 requestTimeout = 13;
+  int64 request_timeout = 13;
   // 计划触发时间
-  string planTriggerTime = 14;
+  string plan_trigger_time = 14;
   // 下次触发时间
-  string nextTriggerTime = 15;
+  string next_trigger_time = 15;
   // 上次触发时间
-  string lastTriggerTime = 16;
+  string last_trigger_time = 16;
   // 触发次数
-  int32 triggerCount = 17;
+  int32 trigger_count = 17;
   // 状态
   ExecItemStatusPb status = 18;
   // 上次执行结果
-  string lastResult = 19;
+  string last_result = 19;
   // 上次结果描述
-  string lastMessage = 20;
+  string last_message = 20;
   // 上次结果原因
-  string lastReason = 21;
+  string last_reason = 21;
   // 终止原因
-  string terminatedReason = 22;
+  string terminated_reason = 22;
   // 暂停时间
-  string pausedTime = 23;
+  string paused_time = 23;
   // 暂停原因
-  string pausedReason = 24;
+  string paused_reason = 24;
   // 扩展字段1
   string ext1 = 51;
   // 扩展字段2
@@ -1096,27 +1096,27 @@ message PlanExecItemPb {
 
 message ListPlanExecItemsReq {
   // 分页大小
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 计划主键 id
   string id = 3;
   // 执行ID（唯一索引）
-  string execId = 4;
+  string exec_id = 4;
   // 计划ID
-  string planId = 5;
+  string plan_id = 5;
   // 批ID
-  string batchId = 6;
+  string batch_id = 6;
   // 执行项ID模糊查询
-  string itemId = 7;
+  string item_id = 7;
   // 执行项名称模糊查询
-  string itemName = 8;
+  string item_name = 8;
   repeated ExecItemStatusPb status = 9;
 }
 
 message ListPlanExecItemsRes {
   // 执行项列表
-  repeated PlanExecItemPb  planExecItems = 1;
+  repeated PlanExecItemPb plan_exec_items = 1;
   // 总记录数
   int64 total = 2;
 }
@@ -1126,80 +1126,80 @@ message GetPlanExecLogReq {
 }
 
 message GetPlanExecLogRes {
-  PlanExecLogPb planExecLog = 1;
+  PlanExecLogPb plan_exec_log = 1;
 }
 
 
 // 分页获取计划触发日志列表请求
 message ListPlanExecLogsReq {
   // 分页大小
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 计划ID
-  string planId = 3;
+  string plan_id = 3;
   // 批ID
-  string batchId = 4;
+  string batch_id = 4;
   // 执行项ID
-  string itemId = 5;
+  string item_id = 5;
   // 执行ID
-  string execId = 6;
+  string exec_id = 6;
   // 开始时间
-  string startTime = 7;
+  string start_time = 7;
   // 结束时间
-  string endTime = 8;
+  string end_time = 8;
   // 执行结果：1-成功，2-失败，3-延期
-  repeated int32 execResult = 9;
+  repeated int32 exec_result = 9;
 }
 
 // 分页获取计划触发日志列表响应
 message ListPlanExecLogsRes {
   // 日志列表
-  repeated PlanExecLogPb planExecLogs = 1;
+  repeated PlanExecLogPb plan_exec_logs = 1;
   // 总记录数
   int64 total = 2;
 }
 
 message PlanExecLogPb {
   // 创建时间
-  string createTime = 101;
+  string create_time = 101;
   // 更新时间
-  string updateTime = 102;
+  string update_time = 102;
   // 创建人
-  string createUser = 103;
+  string create_user = 103;
   // 更新人
-  string updateUser = 104;
+  string update_user = 104;
   // 机构code
-  string deptCode = 105;
+  string dept_code = 105;
 
   // UUID主键ID
   string id = 50;
   // 关联的计划主键ID
-  string planPk = 1;
+  string plan_pk = 1;
   // 计划ID
-  string planId = 2;
+  string plan_id = 2;
   // 计划名称
-  string planName = 3;
+  string plan_name = 3;
   // 批主键ID
-  string batchPk = 4;
+  string batch_pk = 4;
   // 批ID
-  string batchId = 5;
+  string batch_id = 5;
   // 关联的执行项主键ID
-  string itemPk = 6;
+  string item_pk = 6;
   // 执行ID 全局唯一
-  string execId = 7;
+  string exec_id = 7;
   // 执行项ID
-  string itemId = 8;
+  string item_id = 8;
   // 执行项类型
-  string itemType = 9;
+  string item_type = 9;
   // 执行项名称
-  string itemName = 10;
+  string item_name = 10;
   // 点位id
-  string pointId = 11;
+  string point_id = 11;
   // 触发时间
-  string triggerTime = 12;
+  string trigger_time = 12;
   // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，ongoing-业务正在执行
-  string execResult = 13;
+  string exec_result = 13;
   // 结果描述
   string message = 14;
 }
@@ -1207,46 +1207,46 @@ message PlanExecLogPb {
 // 计划批次数据模型
 message PlanBatchPb {
   // 创建时间
-  string createTime = 101;
+  string create_time = 101;
   // 更新时间
-  string updateTime = 102;
+  string update_time = 102;
   // 创建人
-  string createUser = 103;
+  string create_user = 103;
   // 更新人
-  string updateUser = 104;
+  string update_user = 104;
   // 机构code
-  string deptCode = 105;
+  string dept_code = 105;
 
   // UUID主键ID
   string id = 50;
   // 关联的计划主键ID
-  string planPk = 1;
+  string plan_pk = 1;
   // 计划ID
-  string planId = 2;
+  string plan_id = 2;
   // 批ID
-  string batchId = 3;
+  string batch_id = 3;
   // 批次名称
-  string batchName = 4;
+  string batch_name = 4;
   // 批次序号
-  string batchNum = 5;
+  string batch_num = 5;
   // 状态：1-启用，2-暂停，3-终止
   int32 status = 6;
   // 扫表标记, 0-未扫表, 1-已扫表
-  int32 scanFlg = 7;
+  int32 scan_flg = 7;
   // 计划触发时间
-  string planTriggerTime = 8;
+  string plan_trigger_time = 8;
   // 终止原因
-  string terminatedReason = 9;
+  string terminated_reason = 9;
   // 暂停时间
-  string pausedTime = 10;
+  string paused_time = 10;
   // 暂停原因
-  string pausedReason = 11;
+  string paused_reason = 11;
   // 结束时间
-  string finishedTime = 12;
+  string finished_time = 12;
   // 状态统计map，key为状态值，value为对应数量
-  map<string, int64> statusCountMap = 13;
+  map<string, int64> status_count_map = 13;
   // 执行计划数
-  int64 execCnt = 51;
+  int64 exec_cnt = 51;
   // 扩展字段1
   string ext1 = 52;
   // 扩展字段2
@@ -1263,11 +1263,11 @@ message PlanBatchPb {
 // 获取执行项仪表板统计信息请求
 message GetExecItemDashboardReq {
   // 部门code，可选
-  string deptCode = 1;
+  string dept_code = 1;
   // 用户ID，可选
-  string userId = 2;
+  string user_id = 2;
   // 计划类型，可选，为空时统计所有类型
-  string planType = 3;
+  string plan_type = 3;
 }
 
 // 已结束执行项统计
@@ -1295,7 +1295,7 @@ message GetExecItemDashboardRes {
 // 执行项仪表板统计项
 message ExecItemDashboardItemPb {
   // 计划类型
-  string planType = 1;
+  string plan_type = 1;
   // 当前执行项总数
   int64 total = 2;
   // 已结束执行项统计
@@ -1308,23 +1308,23 @@ message CallbackPlanExecItemReq {
   // UUID主键ID
   string id = 1;
   // 执行ID 全局唯一
-  string execId = 2;
+  string exec_id = 2;
   // 回调设计 参考 grpc status 用于分布式事务
   // 执行结果：completed-业务执行完成, terminated-业务终止, failed-业务执行失败, delayed-业务执行延期, ongoing-业务正在执行（未回调或部分异步）
-  string execResult = 3 [(validate.rules).string = {in: ["completed", "terminated", "failed", "delayed", "ongoing"]}];
+  string exec_result = 3 [(validate.rules).string = {in: ["completed", "terminated", "failed", "delayed", "ongoing"]}];
   // 结果描述  可以定义自己状态码，等下次回调判断业务场景
   string message = 4 [(validate.rules).string = {max_len: 1000}];
   // 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
   string reason = 5 [(validate.rules).string = {max_len: 1000}];
   // 延期配置-默认延期5分钟：delayed,ongoing-自定义延期
-  DelayConfigPb delayConfig = 6;
+  DelayConfigPb delay_config = 6;
 }
 
 message DelayConfigPb {
   // 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
-  string nextTriggerTime = 1;
+  string next_trigger_time = 1;
   // 延期原因
-  string delayReason = 2 [(validate.rules).string = {max_len: 1000}];
+  string delay_reason = 2 [(validate.rules).string = {max_len: 1000}];
 }
 
 message CallbackPlanExecItemRes {
@@ -1336,23 +1336,23 @@ message CallbackPlanExecItemRes {
 // Trigger 根据业务规则生成 RRuleStr、JobId 和首次 NextRun，不预拆分批次或执行项。
 message CreateCronJobReq {
   // 全局唯一业务任务编码；与 Trigger 生成的 JobId 是两个不同标识。
-  string taskCode = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  string task_code = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
   // 任务名称。
-  string taskName = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  string task_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
   // 任务类型。
   string type = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
   // 任务分组 ID，用于业务侧分组管理。
-  string groupId = 4 [(validate.rules).string = {max_len: 64}];
+  string group_id = 4 [(validate.rules).string = {max_len: 64}];
   // 任务描述。
   string description = 5 [(validate.rules).string = {max_len: 200}];
   // 规则生效开始时间；不传时默认当前年份第一天，格式 yyyy-MM-dd HH:mm:ss。
-  string startTime = 6;
+  string start_time = 6;
   // 规则生效结束时间；不传时默认开始时间所在年份最后一天，格式 yyyy-MM-dd HH:mm:ss。
-  string endTime = 7;
+  string end_time = 7;
   // 业务周期规则，由 Trigger 编译为 RFC 5545 RRULE。
   PlanRulePb rule = 8 [(validate.rules).message = {required: true}];
   // 排除日期列表，格式 yyyy-MM-dd；这些日期的计划时间不会触发。
-  repeated string excludeDates = 9 [(validate.rules).repeated = {items: {string: {len: 10}}}];
+  repeated string exclude_dates = 9 [(validate.rules).repeated = {items: {string: {len: 10}}}];
   // 调度优先级，数字越大越优先。
   int32 priority = 10 [(validate.rules).int32 = {gte: 0}];
   // 执行业务参数 JSON；为空表示没有业务参数。
@@ -1360,9 +1360,11 @@ message CreateCronJobReq {
   // 调用方业务扩展 JSON；Trigger 将其放入 CronJobExtra.bizExtra。
   string extra = 12;
   // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-  int64 lockTimeout = 13 [(validate.rules).int64 = {gte: 0}];
+  int64 lock_timeout = 13 [(validate.rules).int64 = {gte: 0}];
+  // 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
+  int64 max_delay = 14 [(validate.rules).int64 = {gte: 0}];
   // 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
-  bool skipTimeFilter = 14;
+  bool skip_time_filter = 15;
 
   // 扩展字段 1。
   string ext1 = 50;
@@ -1376,21 +1378,21 @@ message CreateCronJobReq {
   string ext5 = 54;
 
   // 机构编码。
-  string deptCode = 101 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  string dept_code = 101 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
 // CreateCronJobRes 返回 Trigger 创建的周期任务标识和首次执行时间。
 message CreateCronJobRes {
   // Trigger 生成的 JobId，对应 cron_job.id。
-  string jobId = 1;
+  string job_id = 1;
   // 首次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；规则已耗尽时为空字符串。
-  string nextRun = 2;
+  string next_run = 2;
 }
 
 // EnableCronJobReq 启用指定 Cron Job。
 message EnableCronJobReq {
   // Trigger 生成的 JobId。
-  string jobId = 1 [(validate.rules).string = {min_len: 1}];
+  string job_id = 1 [(validate.rules).string = {min_len: 1}];
 }
 
 // EnableCronJobRes 表示启用操作已完成。
@@ -1400,7 +1402,7 @@ message EnableCronJobRes {
 // DisableCronJobReq 禁用指定 Cron Job。
 message DisableCronJobReq {
   // Trigger 生成的 JobId。
-  string jobId = 1 [(validate.rules).string = {min_len: 1}];
+  string job_id = 1 [(validate.rules).string = {min_len: 1}];
 }
 
 // DisableCronJobRes 表示禁用操作已完成。
@@ -1410,7 +1412,7 @@ message DisableCronJobRes {
 // DeleteCronJobReq 软删除指定 Cron Job。
 message DeleteCronJobReq {
   // Trigger 生成的 JobId。
-  string jobId = 1 [(validate.rules).string = {min_len: 1}];
+  string job_id = 1 [(validate.rules).string = {min_len: 1}];
 }
 
 // DeleteCronJobRes 表示删除操作已完成；任务原本不存在时也返回成功。
@@ -1420,49 +1422,51 @@ message DeleteCronJobRes {
 // RunCronJobReq 是 Cron Job 立即执行请求。
 message RunCronJobReq {
   // Trigger 生成的 JobId。
-  string jobId = 1 [(validate.rules).string = {min_len: 1}];
+  string job_id = 1 [(validate.rules).string = {min_len: 1}];
 }
 
 // RunCronJobRes 表示立即执行请求已受理，不表示异步业务回调已经成功。
 message RunCronJobRes {
+  // traceId 用于追踪异步执行过程，未接入 OTEL 时为空字符串。
+  string trace_id = 1;
 }
 
 // GetCronJobReq 是 Cron Job 详情查询请求。
 message GetCronJobReq {
   // Trigger 生成的 JobId。
-  string jobId = 1 [(validate.rules).string = {min_len: 1}];
+  string job_id = 1 [(validate.rules).string = {min_len: 1}];
 }
 
 // GetCronJobRes 返回 Cron Job 详情。
 message GetCronJobRes {
   // Cron Job 详情。
-  CronJobPb cronJob = 1;
+  CronJobPb cron_job = 1;
 }
 
 // ListCronJobsReq 是 Cron Job 分页查询请求。
 message ListCronJobsReq {
   // 分页大小；0 使用默认值。
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码；0 使用默认值。
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 业务任务编码模糊查询。
-  string taskCode = 3 [(validate.rules).string = {max_len: 64}];
+  string task_code = 3 [(validate.rules).string = {max_len: 64}];
   // 任务名称模糊查询。
-  string taskName = 4 [(validate.rules).string = {max_len: 128}];
+  string task_name = 4 [(validate.rules).string = {max_len: 128}];
   // 状态多选：0-禁用，1-启用。
   repeated int32 status = 5 [(validate.rules).repeated = {items: {int32: {gte: 0, lte: 1}}}];
   // 机构编码精确查询。
-  string deptCode = 6 [(validate.rules).string = {max_len: 64}];
+  string dept_code = 6 [(validate.rules).string = {max_len: 64}];
   // 任务类型精确查询。
   string type = 7 [(validate.rules).string = {max_len: 64}];
   // 任务分组 ID 精确查询。
-  string groupId = 8 [(validate.rules).string = {max_len: 64}];
+  string group_id = 8 [(validate.rules).string = {max_len: 64}];
 }
 
 // ListCronJobsRes 返回 Cron Job 分页列表。
 message ListCronJobsRes {
   // Cron Job 列表。
-  repeated CronJobPb cronJobs = 1;
+  repeated CronJobPb cron_jobs = 1;
   // 符合筛选条件的总记录数。
   int64 total = 2;
 }
@@ -1470,43 +1474,45 @@ message ListCronJobsRes {
 // CronJobPb 是 Cron Job 对外管理视图。
 message CronJobPb {
   // Trigger 生成的 JobId，对应 cron_job.id。
-  string jobId = 1;
+  string job_id = 1;
   // 全局唯一业务任务编码。
-  string taskCode = 2;
+  string task_code = 2;
   // 任务名称。
-  string taskName = 3;
+  string task_name = 3;
   // 调度优先级，数字越大越优先。
   int32 priority = 4;
   // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-  int64 lockTimeout = 5;
+  int64 lock_timeout = 5;
+  // 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
+  int64 max_delay = 6;
   // 执行业务参数 JSON；为空表示没有业务参数。
-  string payload = 6;
+  string payload = 7;
   // 调用方业务扩展 JSON；为空表示没有业务扩展。
-  string extra = 7;
+  string extra = 8;
   // 状态：0-禁用，1-启用。
-  int32 status = 8;
+  int32 status = 9;
   // 下次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；无下次调度时为空字符串。
-  string nextRun = 9;
+  string next_run = 10;
   // 上次成功执行时间，格式 yyyy-MM-dd HH:mm:ss；从未成功执行时为空字符串。
-  string lastRun = 10;
+  string last_run = 11;
   // 任务类型。
-  string type = 11;
+  string type = 12;
   // 任务分组 ID。
-  string groupId = 12;
+  string group_id = 13;
   // 任务描述。
-  string description = 13;
+  string description = 14;
   // 规则生效开始时间，格式 yyyy-MM-dd HH:mm:ss；调用方未指定时为空字符串。
-  string startTime = 14;
+  string start_time = 15;
   // 规则生效结束时间，格式 yyyy-MM-dd HH:mm:ss；调用方未指定时为空字符串。
-  string endTime = 15;
+  string end_time = 16;
   // 业务周期规则。
-  PlanRulePb rule = 16;
+  PlanRulePb rule = 17;
   // 排除日期列表，格式 yyyy-MM-dd。
-  repeated string excludeDates = 17;
+  repeated string exclude_dates = 18;
   // 根据实际持久化 RRULE Set 生成的简体中文描述。
-  string scheduleDescription = 18;
+  string schedule_description = 19;
   // 实际持久化并用于调度的 RFC 5545 RRULE Set 原文。
-  string rruleStr = 19;
+  string rrule_str = 20;
 
   // 扩展字段 1。
   string ext1 = 50;
@@ -1520,18 +1526,18 @@ message CronJobPb {
   string ext5 = 54;
 
   // 创建时间，格式 yyyy-MM-dd HH:mm:ss。
-  string createTime = 100;
+  string create_time = 100;
   // 更新时间，格式 yyyy-MM-dd HH:mm:ss。
-  string updateTime = 101;
+  string update_time = 101;
   // 机构编码。
-  string deptCode = 102;
+  string dept_code = 102;
 }
 
 // ==================== ID Generation Messages ====================
 
 message NextIdReq{
   // 输出描述类型 默认-P
-  string outDescType = 1 [(validate.rules).string = {max_len: 64}];
+  string out_desc_type = 1 [(validate.rules).string = {max_len: 64}];
 
   // true: 按维度/分类分开生成 ID
   // false: 全局统一生成 ID
@@ -1539,12 +1545,12 @@ message NextIdReq{
 }
 
 message NextIdRes{
-  string nextId = 1;
+  string next_id = 1;
 }
 
 message BatchNextIdReq{
   // 输出描述类型 默认-P
-  string outDescType = 1 [(validate.rules).string = {max_len: 64}];
+  string out_desc_type = 1 [(validate.rules).string = {max_len: 64}];
 
   // true: 按维度/分类分开生成 ID
   // false: 全局统一生成 ID
@@ -1556,7 +1562,7 @@ message BatchNextIdReq{
 
 message BatchNextIdRes{
   // 批量编码，按生成顺序返回
-  repeated string nextIds = 1;
+  repeated string next_ids = 1;
 }
 
 // ==================== Invoke Service ====================
@@ -1574,7 +1580,7 @@ message InvokeTaskPb {
   // 请求地址
   string url = 10;
   // HTTP 方法: GET / POST / PUT / DELETE 等
-  string httpMethod = 11;
+  string http_method = 11;
   // 自定义请求头
   map<string, string> headers = 12;
   // 请求体（JSON 格式；当 Content-Type 为 application/x-www-form-urlencoded 或 multipart/form-data 时，会将 JSON 键值对转为对应表单编码）
@@ -1582,7 +1588,7 @@ message InvokeTaskPb {
 
   // === gRPC 字段 ===
   // gRPC 服务地址
-  string grpcServer = 20;
+  string grpc_server = 20;
   // gRPC 方法全路径，如 /pb.Service/Method
   string method = 21;
   // pb 字节数据
@@ -1594,7 +1600,7 @@ message InvokeReq {
   // 调用任务列表
   repeated InvokeTaskPb tasks = 1 [(validate.rules).repeated = {min_items: 1}];
   // 最大并发数，0 或不设表示不限制
-  int32 maxConcurrency = 2 [(validate.rules).int32 = {gte: 0}];
+  int32 max_concurrency = 2 [(validate.rules).int32 = {gte: 0}];
   // 调试模式，开启后在日志中打印每个任务的响应数据
   bool debug = 3;
 }
@@ -1606,15 +1612,15 @@ message InvokeTaskResultPb {
   // 是否执行成功
   bool success = 2;
   // HTTP 状态码或 gRPC 状态码
-  int32 statusCode = 3;
+  int32 status_code = 3;
   // 错误信息（失败时）
   string error = 4;
   // 返回数据
   bytes data = 5;
   // 执行耗时（毫秒）
-  int64 costMs = 6;
+  int64 cost_ms = 6;
   // 格式化耗时，如 "123ms"、"1.5s"
-  string costFormatted = 7;
+  string cost_formatted = 7;
 }
 
 // 并发调用响应
@@ -1622,3 +1628,4 @@ message InvokeRes {
   // 每个任务的独立执行结果
   repeated InvokeTaskResultPb results = 1;
 }
+

@@ -35,6 +35,14 @@
 | [GIS 与电子围栏](./gis-guidelines.md) | 修改坐标、GEOS、H3、FenceStore 或围栏事务 |
 | [实时事件](./realtime-guidelines.md) | 修改 Socket.IO、Kafka、StreamEvent 或实时 payload |
 | [AI 与 MCP](./ai-guidelines.md) | 修改 Eino tool/runner、会话执行状态、MCP client/server |
+| [Bridge 协议网关](./bridge-guidelines.md) | 修改 bridgegtw/kafka/modbus/mqtt/dump 或 mqttx/modbusx/stream |
+| [Alarm 飞书告警](./alarm-guidelines.md) | 修改 alarm 告警发送或 alarmx Lark SDK 封装 |
+| [File OSS 文件](./file-guidelines.md) | 修改 file OSS 管理/上传/中继或 ossx/filex 公共库 |
+| [LAL 流媒体](./lal-guidelines.md) | 修改 lalhook/lalproxy 服务或 lalx/mediax 公共库 |
+| [Pod Engine 编排](./podengine-guidelines.md) | 修改 podengine 容器编排或 dockerx/executorx 公共库 |
+| [网络通信](./networking-guidelines.md) | 修改 netx/wsx/socketiox/ssex HTTP/WebSocket/SSE 通信层 |
+| [Log Dump 日志汇聚](./logdump-guidelines.md) | 修改 logdump gRPC-to-logx 桥接或日志字段白名单 |
+| [Flow 工作流](./flow-guidelines.md) | 修改 flowx Azure go-workflow 编排或日志拦截器 |
 
 ## Pre-Development Checklist
 

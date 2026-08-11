@@ -10,6 +10,7 @@ import (
 	"zero-service/app/xfusionmock/xfusionmock"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type PushTerminalBindLogic struct {
@@ -31,7 +32,7 @@ func (l *PushTerminalBindLogic) PushTerminalBind(in *xfusionmock.ReqPushTerminal
 	var jsonData []byte
 	var err error
 	if in.PushMode {
-		jsonData, err = json.Marshal(in.Data)
+		jsonData, err = protojson.Marshal(in.Data)
 		if err != nil {
 			return nil, err
 		}

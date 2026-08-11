@@ -10,6 +10,7 @@ import (
 
 	"github.com/dromara/carbon/v2"
 	"github.com/teambition/rrule-go"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 const dateTimeLayout = "2006-01-02 15:04:05"
@@ -71,7 +72,7 @@ func CompileSchedule(rule *trigger.PlanRulePb, startText, endText string, exclud
 			nextRun = previous
 		}
 	}
-	ruleJSON, err := json.Marshal(rule)
+	ruleJSON, err := protojson.Marshal(rule)
 	if err != nil {
 		return nil, fmt.Errorf("序列化计划规则失败: %w", err)
 	}

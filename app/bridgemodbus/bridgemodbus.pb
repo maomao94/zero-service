@@ -1,201 +1,184 @@
 
-¿=
-bridgemodbus.protobridgemodbus"¥
+˝=
+bridgemodbus.protobridgemodbus"≈
 PbModbusConfig
-id (	Rid
-
-createTime (	R
-createTime
-
-updateTime (	R
-updateTime
-
-modbusCode (	R
-modbusCode"
-slaveAddress (	RslaveAddress
+id (	Rid
+create_time (	R
+createTime
+update_time (	R
+updateTime
+modbus_code (	R
+modbusCode#
+slave_address (	RslaveAddress
 slave (Rslave
-timeout (Rtimeout 
-idleTimeout (RidleTimeout0
-linkRecoveryTimeout	 (RlinkRecoveryTimeout8
-protocolRecoveryTimeout
- (RprotocolRecoveryTimeout"
-connectDelay (RconnectDelay
-	enableTls (R	enableTls 
-tlsCertFile (	RtlsCertFile
+timeout (Rtimeout!
+idle_timeout (RidleTimeout2
+link_recovery_timeout	 (RlinkRecoveryTimeout:
+protocol_recovery_timeout
+ (RprotocolRecoveryTimeout#
+connect_delay (RconnectDelay
 
-tlsKeyFile (	R
-tlsKeyFile
-	tlsCaFile (	R	tlsCaFile
+enable_tls (R	enableTls"
+tls_cert_file (	RtlsCertFile 
+tls_key_file (	R
+tlsKeyFile
+tls_ca_file (	R	tlsCaFile
 status (Rstatus
-remark (	Rremark"i
-SaveConfigReq
-
-modbusCode (	R
-modbusCode"
-slaveAddress (	RslaveAddress
+remark (	Rremark"k
+SaveConfigReq
+modbus_code (	R
+modbusCode#
+slave_address (	RslaveAddress
 slave (Rslave"
 SaveConfigRes
 id (	Rid"#
 DeleteConfigReq
 ids (	Rids"
-DeleteConfigRes"u
+DeleteConfigRes"v
 PageListConfigReq
-page (Rpage
-pageSize (RpageSize
+page (Rpage
+	page_size (RpageSize
 keyword (	Rkeyword
 status (Rstatus"Y
 PageListConfigRes
 total (Rtotal.
-cfg (2.bridgemodbus.PbModbusConfigRcfg"4
-GetConfigByCodeReq
-
-modbusCode (	R
+cfg (2.bridgemodbus.PbModbusConfigRcfg"5
+GetConfigByCodeReq
+modbus_code (	R
 modbusCode"D
 GetConfigByCodeRes.
-cfg (2.bridgemodbus.PbModbusConfigRcfg"9
-BatchGetConfigByCodeReq
-
-modbusCode (	R
+cfg (2.bridgemodbus.PbModbusConfigRcfg":
+BatchGetConfigByCodeReq
+modbus_code (	R
 modbusCode"I
 BatchGetConfigByCodeRes.
-cfg (2.bridgemodbus.PbModbusConfigRcfg"d
-ReadCoilsReq
-
-modbusCode (	R
+cfg (2.bridgemodbus.PbModbusConfigRcfg"e
+ReadCoilsReq
+modbus_code (	R
 modbusCode
 address (Raddress
 quantity (Rquantity"@
 ReadCoilsRes
 results (Rresults
-values (Rvalues"m
-ReadDiscreteInputsReq
-
-modbusCode (	R
+values (Rvalues"n
+ReadDiscreteInputsReq
+modbus_code (	R
 modbusCode
 address (Raddress
 quantity (Rquantity"I
 ReadDiscreteInputsRes
 results (Rresults
-values (Rvalues"d
-WriteSingleCoilReq
-
-modbusCode (	R
+values (Rvalues"e
+WriteSingleCoilReq
+modbus_code (	R
 modbusCode
 address (Raddress
 value (Rvalue".
 WriteSingleCoilRes
-results (Rresults"Ö
-WriteMultipleCoilsReq
-
-modbusCode (	R
+results (Rresults"Ü
+WriteMultipleCoilsReq
+modbus_code (	R
 modbusCode
 address (Raddress
 quantity (Rquantity
 values (Rvalues"1
 WriteMultipleCoilsRes
-results (Rresults"m
-ReadInputRegistersReq
-
-modbusCode (	R
+results (Rresults"n
+ReadInputRegistersReq
+modbus_code (	R
 modbusCode
 address (Raddress
-quantity (Rquantity"±
+quantity (Rquantity"µ
 ReadInputRegistersRes
-results (Rresults
+results (Rresults
+uint_values (R
+uintValues
 
-uintValues (R
-uintValues
-	intValues (R	intValues
-	hexValues (	R	hexValues"
-binaryValues (	RbinaryValues"o
-ReadHoldingRegistersReq
+int_values (R	intValues
 
-modbusCode (	R
+hex_values (	R	hexValues#
+binary_values (	RbinaryValues"p
+ReadHoldingRegistersReq
+modbus_code (	R
 modbusCode
 address (Raddress
-quantity (Rquantity"≥
+quantity (Rquantity"∑
 ReadHoldingRegistersRes
-results (Rresults
+results (Rresults
+uint_values (R
+uintValues
 
-uintValues (R
-uintValues
-	intValues (R	intValues
-	hexValues (	R	hexValues"
-binaryValues (	RbinaryValues"h
-WriteSingleRegisterReq
+int_values (R	intValues
 
-modbusCode (	R
+hex_values (	R	hexValues#
+binary_values (	RbinaryValues"i
+WriteSingleRegisterReq
+modbus_code (	R
 modbusCode
 address (Raddress
 value (Rvalue"2
 WriteSingleRegisterRes
-results (Rresults"è
-!WriteSingleRegisterWithDecimalReq
-
-modbusCode (	R
+results (Rresults"ê
+!WriteSingleRegisterWithDecimalReq
+modbus_code (	R
 modbusCode
 address (Raddress
 value (Rvalue
 unsigned (Runsigned"=
 !WriteSingleRegisterWithDecimalRes
-results (Rresults"â
-WriteMultipleRegistersReq
-
-modbusCode (	R
+results (Rresults"ä
+WriteMultipleRegistersReq
+modbus_code (	R
 modbusCode
 address (Raddress
 quantity (Rquantity
 values (Rvalues"5
 WriteMultipleRegistersRes
-results (Rresults"∞
-$WriteMultipleRegistersWithDecimalReq
-
-modbusCode (	R
+results (Rresults"±
+$WriteMultipleRegistersWithDecimalReq
+modbus_code (	R
 modbusCode
 address (Raddress
 quantity (Rquantity
 values (Rvalues
 unsigned (Runsigned"@
 $WriteMultipleRegistersWithDecimalRes
-results (Rresults"Á
-ReadWriteMultipleRegistersReq
-
-modbusCode (	R
-modbusCode 
-readAddress (RreadAddress"
-readQuantity (RreadQuantity"
-writeAddress (RwriteAddress$
-writeQuantity (RwriteQuantity
-values (Rvalues"π
+results (Rresults"Ï
+ReadWriteMultipleRegistersReq
+modbus_code (	R
+modbusCode!
+read_address (RreadAddress#
+read_quantity (RreadQuantity#
+write_address (RwriteAddress%
+write_quantity (RwriteQuantity
+values (Rvalues"Ω
 ReadWriteMultipleRegistersRes
-results (Rresults
+results (Rresults
+uint_values (R
+uintValues
 
-uintValues (R
-uintValues
-	intValues (R	intValues
-	hexValues (	R	hexValues"
-binaryValues (	RbinaryValues"Ç
-MaskWriteRegisterReq
+int_values (R	intValues
 
-modbusCode (	R
+hex_values (	R	hexValues#
+binary_values (	RbinaryValues"Ö
+MaskWriteRegisterReq
+modbus_code (	R
 modbusCode
-address (Raddress
-andMask (RandMask
-orMask (RorMask"0
+address (Raddress
+and_mask (RandMask
+or_mask (RorMask"0
 MaskWriteRegisterRes
-results (Rresults"L
-ReadFIFOQueueReq
-
-modbusCode (	R
+results (Rresults"M
+ReadFIFOQueueReq
+modbus_code (	R
 modbusCode
 address (Raddress",
 ReadFIFOQueueRes
-results (Rresults"i
-ReadDeviceIdentificationReq
-
-modbusCode (	R
-modbusCode*
-readDeviceIdCode (RreadDeviceIdCode"Û
+results (Rresults"m
+ReadDeviceIdentificationReq
+modbus_code (	R
+modbusCode-
+read_device_id_code (RreadDeviceIdCode"Û
 ReadDeviceIdentificationResP
 results (26.bridgemodbus.ReadDeviceIdentificationRes.ResultsEntryRresultsY
 
@@ -210,12 +193,11 @@ hexResultsh
 value (	Rvalue:8B
 SemanticResultsEntry
 key (	Rkey
-value (	Rvalue:8"g
-)ReadDeviceIdentificationSpecificObjectReq
-
-modbusCode (	R
-modbusCode
-objectId (RobjectId"´
+value (	Rvalue:8"i
+)ReadDeviceIdentificationSpecificObjectReq
+modbus_code (	R
+modbusCode
+	object_id (RobjectId"´
 )ReadDeviceIdentificationSpecificObjectRes^
 results (2D.bridgemodbus.ReadDeviceIdentificationSpecificObjectRes.ResultsEntryRresultsg
 
@@ -233,12 +215,13 @@ hexResultsv
 value (	Rvalue:8"V
  BatchConvertDecimalToRegisterReq
 values (Rvalues
-unsigned (Runsigned"¿
+unsigned (Runsigned"¬
  BatchConvertDecimalToRegisterRes"
 uint16Values (Ruint16Values 
-int16Values (Rint16Values
-	hexValues (	R	hexValues"
-binaryValues (	RbinaryValues
+int16Values (Rint16Values
+
+hex_values (	R	hexValues#
+binary_values (	RbinaryValues
 bytes (Rbytes2Ô
 BridgeModbusF
 

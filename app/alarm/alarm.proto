@@ -12,15 +12,15 @@ message Res {
 }
 
 message AlarmReq {
-  string chatName = 1; // 服务告警 P0:线上事故处理 P1:线上事故处理 P2:线上事故处理 P3:线上事故处理 其他会新建群
+  string chat_name = 1 [json_name = "chatName"]; // 服务告警 P0:线上事故处理 P1:线上事故处理 P2:线上事故处理 P3:线上事故处理 其他会新建群
   string description = 2; // 报警描述
   string title = 3; // 报警标题
   string project = 4; // 项目名称
-  string dateTime = 5; // 2019-01-01 00:00:00
-  string alarmId = 6; // 唯一报警 id
+  string date_time = 5 [json_name = "dateTime"]; // 2019-01-01 00:00:00
+  string alarm_id = 6 [json_name = "alarmId"]; // 唯一报警 id
   string content = 7; // 报警内容
   string error = 8; // 错误信息
-  repeated string userId = 9; // 报警人 userId
+  repeated string user_id = 9 [json_name = "userId"]; // 报警人 userId
   string ip = 10; // 报警 ip
 }
 

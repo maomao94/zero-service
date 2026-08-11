@@ -16,6 +16,7 @@ import (
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type Broadcast struct {
@@ -45,7 +46,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 	switch broadcastBody.Method {
 	case ieccaller.IecCaller_SendCounterInterrogationCmd_FullMethodName:
 		in := &ieccaller.SendCounterInterrogationCmdReq{}
-		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		err = protojson.Unmarshal([]byte(broadcastBody.Body), in)
 		if err != nil {
 			return err
 		}
@@ -61,7 +62,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, "{}", nil)
 	case ieccaller.IecCaller_SendInterrogationCmd_FullMethodName:
 		in := &ieccaller.SendInterrogationCmdReq{}
-		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		err = protojson.Unmarshal([]byte(broadcastBody.Body), in)
 		if err != nil {
 			return err
 		}
@@ -77,7 +78,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, "{}", nil)
 	case ieccaller.IecCaller_SendReadCmd_FullMethodName:
 		in := &ieccaller.SendReadCmdReq{}
-		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		err = protojson.Unmarshal([]byte(broadcastBody.Body), in)
 		if err != nil {
 			return err
 		}
@@ -93,7 +94,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, "{}", nil)
 	case ieccaller.IecCaller_SendTestCmd_FullMethodName:
 		in := &ieccaller.SendTestCmdReq{}
-		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		err = protojson.Unmarshal([]byte(broadcastBody.Body), in)
 		if err != nil {
 			return err
 		}
@@ -109,7 +110,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, "{}", nil)
 	case ieccaller.IecCaller_SendCommand_FullMethodName:
 		in := &ieccaller.SendCommandReq{}
-		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		err = protojson.Unmarshal([]byte(broadcastBody.Body), in)
 		if err != nil {
 			return err
 		}
@@ -125,7 +126,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, "{}", nil)
 	case ieccaller.IecCaller_SendSingleCommand_FullMethodName:
 		in := &ieccaller.SendSingleCommandReq{}
-		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		err = protojson.Unmarshal([]byte(broadcastBody.Body), in)
 		if err != nil {
 			return err
 		}
@@ -144,11 +145,11 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
-		resJson, _ := jsonx.Marshal(&ieccaller.SendSingleCommandRes{Value: value})
+		resJson, _ := protojson.Marshal(&ieccaller.SendSingleCommandRes{Value: value})
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendDoubleCommand_FullMethodName:
 		in := &ieccaller.SendDoubleCommandReq{}
-		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		err = protojson.Unmarshal([]byte(broadcastBody.Body), in)
 		if err != nil {
 			return err
 		}
@@ -167,11 +168,11 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
-		resJson, _ := jsonx.Marshal(&ieccaller.SendDoubleCommandRes{Value: ieccaller.DoubleCommandValue(int32(value))})
+		resJson, _ := protojson.Marshal(&ieccaller.SendDoubleCommandRes{Value: ieccaller.DoubleCommandValue(int32(value))})
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendStepCommand_FullMethodName:
 		in := &ieccaller.SendStepCommandReq{}
-		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		err = protojson.Unmarshal([]byte(broadcastBody.Body), in)
 		if err != nil {
 			return err
 		}
@@ -190,11 +191,11 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
-		resJson, _ := jsonx.Marshal(&ieccaller.SendStepCommandRes{Value: int32(value)})
+		resJson, _ := protojson.Marshal(&ieccaller.SendStepCommandRes{Value: int32(value)})
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendSetpointNormalized_FullMethodName:
 		in := &ieccaller.SendSetpointNormalizedReq{}
-		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		err = protojson.Unmarshal([]byte(broadcastBody.Body), in)
 		if err != nil {
 			return err
 		}
@@ -213,11 +214,11 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
-		resJson, _ := jsonx.Marshal(&ieccaller.SendSetpointNormalizedRes{Value: int32(value)})
+		resJson, _ := protojson.Marshal(&ieccaller.SendSetpointNormalizedRes{Value: int32(value)})
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendSetpointScaled_FullMethodName:
 		in := &ieccaller.SendSetpointScaledReq{}
-		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		err = protojson.Unmarshal([]byte(broadcastBody.Body), in)
 		if err != nil {
 			return err
 		}
@@ -236,11 +237,11 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
-		resJson, _ := jsonx.Marshal(&ieccaller.SendSetpointScaledRes{Value: int32(value)})
+		resJson, _ := protojson.Marshal(&ieccaller.SendSetpointScaledRes{Value: int32(value)})
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendSetpointFloat_FullMethodName:
 		in := &ieccaller.SendSetpointFloatReq{}
-		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		err = protojson.Unmarshal([]byte(broadcastBody.Body), in)
 		if err != nil {
 			return err
 		}
@@ -264,11 +265,11 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
-		resJson, _ := jsonx.Marshal(&ieccaller.SendSetpointFloatRes{Value: convertor.ToString(ackValue)})
+		resJson, _ := protojson.Marshal(&ieccaller.SendSetpointFloatRes{Value: convertor.ToString(ackValue)})
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendBitstringCommand_FullMethodName:
 		in := &ieccaller.SendBitstringCommandReq{}
-		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		err = protojson.Unmarshal([]byte(broadcastBody.Body), in)
 		if err != nil {
 			return err
 		}
@@ -287,11 +288,11 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
-		resJson, _ := jsonx.Marshal(&ieccaller.SendBitstringCommandRes{Value: uint64(value)})
+		resJson, _ := protojson.Marshal(&ieccaller.SendBitstringCommandRes{Value: uint64(value)})
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_ClearPointMappingCache_FullMethodName:
 		in := &ieccaller.ClearPointMappingCacheReq{}
-		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		err = protojson.Unmarshal([]byte(broadcastBody.Body), in)
 		if err != nil {
 			return err
 		}

@@ -13,6 +13,7 @@ import (
 	"zero-service/app/xfusionmock/xfusionmock"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 var (
@@ -71,7 +72,7 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 	var jsonData []byte
 	var err error
 	if in.PushMode {
-		jsonData, err = json.Marshal(in.Data)
+		jsonData, err = protojson.Marshal(in.Data)
 		if err != nil {
 			return nil, err
 		}

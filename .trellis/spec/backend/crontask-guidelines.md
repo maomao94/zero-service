@@ -37,10 +37,24 @@
 
 ## `RunNow`
 
-- `RunNow(ctx, taskCode)` 是异步人工触发，使用正常 handler 但不 claim、不重算周期 `NextRun`、不修改 `Status`。
+- `RunNow(ctx, taskCode)` 返回 `(traceID string, err error)`，是异步人工触发，使用正常 handler 但不 claim、不重算周期 `NextRun`、不修改 `Status`。
+- traceID 通过 `trace.TraceIDFromContext(ctx)` 获取（go-zero 内置），同步返回给调用方以便追踪异步执行结果。
 - 用 `context.WithoutCancel` 保留 trace/业务 metadata，让执行不随发起 RPC 返回而取消；执行自身仍要有可控超时和 panic 保护。
 - 仅成功时更新 `LastRun`；失败或 panic 不伪造成功时间。
 - 无周期计划的任务副本可用当前时间作为本次 handler 的执行时间，但不能持久化为新的周期计划。
+
+## MaxDelay 任务级覆盖
+
+- `SchedulerOptions.MaxDelay` 是调度器级兜底值，由 yaml 配置注入（默认 30m）。
+- `TaskConfig.MaxDelay` 为任务级覆盖值；零值时走调度器默认值。
+- `executeTask` 中取 `max(task.MaxDelay, s.maxDelay)` 语义：若 `task.MaxDelay > 0` 则用它替代 `s.maxDelay`；任务延迟超过该值跳过本次执行直接计算下次时间。
+- 存储层使用**秒**（`int64`），API 层也使用秒；Go 内使用 `time.Duration`。
+- 转换规则：
+  - DB -> TaskConfig: `time.Duration(dbValue) * time.Second`
+  - TaskConfig -> DB: `int64(d.Milliseconds() / 1000)`
+  - TaskConfig -> API: `int64(d.Seconds())`
+
+依据：`common/crontask/config.go`、`common/crontask/crontask.go`、`app/trigger/model/gormmodel/cron_job.go`、`app/trigger/internal/cronjob/convert.go`。
 
 ## 管理操作与适配器
 

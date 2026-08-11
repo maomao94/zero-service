@@ -58,7 +58,7 @@ message PodConditionPb {
   bool status = 2;
   string reason = 3;
   string message = 4;
-  string lastTransitionTime = 5;
+  string last_transition_time = 5 [json_name = "lastTransitionTime"];
 }
 
 
@@ -69,9 +69,9 @@ message ContainerStatePb {
   bool waiting = 3;        // 等待中（创建 / 重启等）
   string reason = 4;       // 状态原因
   string message = 5;      // 状态描述
-  string startedTime = 6;    // 启动时间
-  string finishedTime = 7;   // 结束时间
-  string exitCode = 8;     // 退出码
+  string started_time = 6 [json_name = "startedTime"];    // 启动时间
+  string finished_time = 7 [json_name = "finishedTime"];   // 结束时间
+  string exit_code = 8 [json_name = "exitCode"];     // 退出码
 }
 
 
@@ -97,7 +97,7 @@ message ContainerPb {
   map<string, string> resources = 7;
 
   // 卷挂载信息
-  repeated string volumeMounts = 8;
+  repeated string volume_mounts = 8 [json_name = "volumeMounts"];
 }
 
 
@@ -117,7 +117,7 @@ message ContainerSpecPb {
   map<string, string> resources = 6;
 
   // 卷挂载声明（runtime 自行解析）
-  repeated string volumeMounts = 7;
+  repeated string volume_mounts = 7 [json_name = "volumeMounts"];
 }
 
 
@@ -142,13 +142,13 @@ message PodSpecPb {
   string restartPolicy = 5 [(validate.rules).string = {in: ["no", "onFailure", "always"]}];
 
   // 优雅终止时间（秒）
-  int32 terminationGracePeriodSeconds = 6;
+  int32 termination_grace_period_seconds = 6 [json_name = "terminationGracePeriodSeconds"];
 
   // 网络模式：bridge / host / none / 自定义网络名称
   string networkMode = 7 [(validate.rules).string = {in: ["bridge", "host", "none"]}];
 
   // 网络名称：指定要使用的自定义网络名称
-  string networkName = 8;
+  string network_name = 8 [json_name = "networkName"];
 
   // 网络配置：额外的网络配置参数
   map<string, string> networkConfig = 9;
@@ -170,11 +170,11 @@ message PodPb {
 
   map<string, string> labels = 6;
   map<string, string> annotations = 7;
-  string networkMode = 8; // 网络模式
+  string network_mode = 8 [json_name = "networkMode"]; // 网络模式
 
-  string creationTime = 9;  // 创建时间
-  string startTime = 10;          // 启动时间
-  string deletedTime = 11; // 删除时间
+  string creation_time = 9 [json_name = "creationTime"];  // 创建时间
+  string start_time = 10 [json_name = "startTime"];          // 启动时间
+  string deleted_time = 11 [json_name = "deletedTime"]; // 删除时间
 }
 
 
@@ -246,17 +246,17 @@ message ListPodItemPb {
   string id = 1;
   string name = 2;
   PodPhasePb phase = 3;
-  string createTime = 4;
+  string create_time = 4 [json_name = "createTime"];
   string image = 5;
-  string imageId = 6;
+  string image_id = 6 [json_name = "imageId"];
   string command = 7;
   repeated string ports = 8;
-  int64 sizeRw = 9;
-  int64 sizeRootFs = 10;
+  int64 size_rw = 9 [json_name = "sizeRw"];
+  int64 size_root_fs = 10 [json_name = "sizeRootFs"];
   map<string, string> labels = 11;
   string state = 12;
   string status = 13;
-  string networkMode = 14;
+  string network_mode = 14 [json_name = "networkMode"];
   repeated string mounts = 15;
 }
 
@@ -264,7 +264,7 @@ message DeletePodReq {
   string node = 50; // docker 运行节点 默认-local
   string id = 1 [(validate.rules).string.min_len = 1];
   bool force = 2;
-  bool removeVolumes = 3;
+  bool remove_volumes = 3 [json_name = "removeVolumes"];
 }
 
 message DeletePodRes {
@@ -280,34 +280,34 @@ message GetPodStatsRes {
 }
 
 message ContainerStatsPb {
-  string containerId = 1;
-  string containerName = 2;
+  string container_id = 1 [json_name = "containerId"];
+  string container_name = 2 [json_name = "containerName"];
 
   // CPU 统计信息
-  double cpuUsagePercent = 3;
-  string cpuUsagePercentDisplay = 4; // 用于展示
-  int64 cpuUsageTotal = 5;
-  string cpuUsageTotalDisplay = 6; // 用于展示
+  double cpu_usage_percent = 3 [json_name = "cpuUsagePercent"];
+  string cpu_usage_percent_display = 4 [json_name = "cpuUsagePercentDisplay"]; // 用于展示
+  int64 cpu_usage_total = 5 [json_name = "cpuUsageTotal"];
+  string cpu_usage_total_display = 6 [json_name = "cpuUsageTotalDisplay"]; // 用于展示
 
   // 内存统计信息
-  int64 memoryUsage = 7;
-  string memoryUsageDisplay = 8; // 用于展示
-  int64 memoryLimit = 9;
-  string memoryLimitDisplay = 10; // 用于展示
-  double memoryUsagePercent = 11;
-  string memoryUsagePercentDisplay = 12; // 用于展示
+  int64 memory_usage = 7 [json_name = "memoryUsage"];
+  string memory_usage_display = 8 [json_name = "memoryUsageDisplay"]; // 用于展示
+  int64 memory_limit = 9 [json_name = "memoryLimit"];
+  string memory_limit_display = 10 [json_name = "memoryLimitDisplay"]; // 用于展示
+  double memory_usage_percent = 11 [json_name = "memoryUsagePercent"];
+  string memory_usage_percent_display = 12 [json_name = "memoryUsagePercentDisplay"]; // 用于展示
 
   // 网络统计信息
-  int64 networkRxBytes = 13;
-  string networkRxBytesDisplay = 14; // 用于展示
-  int64 networkTxBytes = 15;
-  string networkTxBytesDisplay = 16; // 用于展示
+  int64 network_rx_bytes = 13 [json_name = "networkRxBytes"];
+  string network_rx_bytes_display = 14 [json_name = "networkRxBytesDisplay"]; // 用于展示
+  int64 network_tx_bytes = 15 [json_name = "networkTxBytes"];
+  string network_tx_bytes_display = 16 [json_name = "networkTxBytesDisplay"]; // 用于展示
 
   // 存储统计信息
-  int64 storageReadBytes = 17;
-  string storageReadBytesDisplay = 18; // 用于展示
-  int64 storageWriteBytes = 19;
-  string storageWriteBytesDisplay = 20; // 用于展示
+  int64 storage_read_bytes = 17 [json_name = "storageReadBytes"];
+  string storage_read_bytes_display = 18 [json_name = "storageReadBytesDisplay"]; // 用于展示
+  int64 storage_write_bytes = 19 [json_name = "storageWriteBytes"];
+  string storage_write_bytes_display = 20 [json_name = "storageWriteBytesDisplay"]; // 用于展示
 
   // 统计时间
   string timestamp = 21;
@@ -318,7 +318,7 @@ message ListImagesReq {
   int32 limit = 1 [(validate.rules).int32.lte = 1000];
   int32 offset = 2 [(validate.rules).int32.lte = 1000];
   repeated string references = 3;
-  bool includeDigests = 4;
+  bool include_digests = 4 [json_name = "includeDigests"];
 }
 
 message ListImagesRes {
@@ -332,7 +332,7 @@ message ImagePb {
   repeated string references = 2;    // 镜像标签列表（完整引用，如 ubuntu:latest）
   repeated string digests = 3; // 镜像摘要列表
   int64 size = 4;              // 镜像大小（字节）
-  string sizeDisplay = 5;      // 用于展示的大小
-  string createdAt = 6;        // 创建时间
+  string size_display = 5 [json_name = "sizeDisplay"];      // 用于展示的大小
+  string created_at = 6 [json_name = "createdAt"];        // 创建时间
   map<string, string> labels = 7; // 镜像标签
 }

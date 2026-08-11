@@ -41,7 +41,8 @@ type TaskConfig struct {
 	Priority   int       `json:"priority"`  // 调度优先级，数字越大越优先
 	// LockTimeout 是单次抢占的锁超时；零值表示使用 Scheduler 配置的默认锁超时。
 	LockTimeout      time.Duration   `json:"lock_timeout"`
-	Payload          json.RawMessage `json:"payload"` // 执行业务参数
+	MaxDelay         time.Duration   `json:"max_delay,omitempty"` // 最大延迟容忍，0 使用调度器默认值
+	Payload          json.RawMessage `json:"payload"`             // 执行业务参数
 	Extra            json.RawMessage `json:"extra"`   // 业务扩展字段 JSON
 	Status           TaskStatus      `json:"status"`
 	NextRun          time.Time       `json:"next_run"`                     // 下次计划调度时间；claim 后 Store 内暂存 lease 截止时间

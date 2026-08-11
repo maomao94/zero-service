@@ -124,11 +124,11 @@ const taskControlNotifyDelay = 3 * time.Second
 // HandleTaskControl 处理任务控制指令 (41-1/2/3/4)。
 // Command=1(启动): msg.Code 为 task_code。
 // Command=2/3/4(暂停/继续/停止): msg.Code 为 变电站编码_任务编码_时间。
-func HandleTaskControl(ctx context.Context, msg *isp.Message, store crontask.TaskStore, runTask func(context.Context, string) error, db *gormx.DB, notify func(ctx context.Context, code string, items []isp.Item)) (string, error) {
+func HandleTaskControl(ctx context.Context, msg *isp.Message, store crontask.TaskStore, runTask func(context.Context, string) (string, error), db *gormx.DB, notify func(ctx context.Context, code string, items []isp.Item)) (string, error) {
 	return handleTaskControl(ctx, msg, store, runTask, db, notify, taskControlNotifyDelay)
 }
 
-func handleTaskControl(ctx context.Context, msg *isp.Message, store crontask.TaskStore, runTask func(context.Context, string) error, db *gormx.DB, notify func(ctx context.Context, code string, items []isp.Item), notifyDelay time.Duration) (string, error) {
+func handleTaskControl(ctx context.Context, msg *isp.Message, store crontask.TaskStore, runTask func(context.Context, string) (string, error), db *gormx.DB, notify func(ctx context.Context, code string, items []isp.Item), notifyDelay time.Duration) (string, error) {
 	if msg == nil {
 		return "", fmt.Errorf("任务控制消息为空")
 	}
@@ -198,7 +198,7 @@ func handleTaskControl(ctx context.Context, msg *isp.Message, store crontask.Tas
 			return "", fmt.Errorf("任务调度器未初始化")
 		}
 		runCtx := ctask.WithManualExecution(ctx, taskPatrolledID, now.AddSeconds(10).StdTime())
-		if err := runTask(runCtx, taskCode); err != nil {
+		if _, err := runTask(runCtx, taskCode); err != nil {
 			return "", fmt.Errorf("立即执行任务 %s 失败: %w", taskCode, err)
 		}
 		return taskPatrolledID, nil

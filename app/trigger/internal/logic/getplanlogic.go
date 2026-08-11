@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/crontask"
@@ -15,6 +14,7 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
+	"google.golang.org/protobuf/encoding/protojson"
 	"gorm.io/gorm"
 )
 
@@ -56,7 +56,7 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 	}
 	// 解析规则
 	var pbRule trigger.PlanRulePb
-	err = json.Unmarshal([]byte(plan.RecurrenceRule), &pbRule)
+	err = protojson.Unmarshal([]byte(plan.RecurrenceRule), &pbRule)
 	if err != nil {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "计划规则格式错误")
 	}

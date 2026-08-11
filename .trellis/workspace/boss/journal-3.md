@@ -1402,3 +1402,67 @@ Phase A (proto): renamed 6 mismatched platform response types to <RpcName>Res, a
 ### Status
 
 [OK] **Completed**
+
+
+## Session 153: 全量刷新 Trellis Spec — 修复陈旧引用，新增 8 个 domain spec
+
+**Date**: 2026-08-11
+**Task**: 全量刷新 Trellis Spec — 修复陈旧引用，新增 8 个 domain spec
+**Branch**: `master`
+
+### Summary
+
+审视全部 19 个已有 spec，修复 gormx-guidelines.md 模型类型名称过时和错误 sentinel 引用问题，在 trigger-guidelines.md 补充 CronExecLog 模式。新增 8 个 domain spec：bridge-guidelines(5个bridge服务+mqttx/modbusx)、alarm-guidelines、file-guidelines(含ossx/filex)、lal-guidelines(含mediax)、podengine-guidelines(含dockerx/executorx)、networking-guidelines(netx/wsx/socketiox/ssex)、logdump-guidelines、flow-guidelines。合并 mcpx/einox 到 ai-guidelines.md，asynqx 到 concurrency-guidelines.md。共 33 个 spec 文件，无占位符。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f330da6a` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 154: CronJob per-task MaxDelay + RunCronJob traceId
+
+**Date**: 2026-08-11
+**Task**: CronJob per-task MaxDelay + RunCronJob traceId
+**Branch**: `master`
+
+### Summary
+
+新增 cron_job 表 max_delay 持久化列（秒），crontask.TaskConfig 支持任务级 MaxDelay 覆盖调度器默认值；RunNow 返回 traceID（trace.TraceIDFromContext）；CronExecLog 记录 trace_id；Trigger MaxDelay yaml 可配；ispagent TaskRunFunc 签名同步更新
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d555be8c` | (see git log) |
+| `72f7e3b4` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 155: 全项目 Proto 规范化迁移
+
+**Date**: 2026-08-11
+**Task**: 全项目 Proto 规范化迁移
+**Branch**: `master`
+
+### Summary
+
+将全项目 20+ 个 proto 文件中的 camelCase 字段统一迁移为 snake_case + json_name 格式；将所有 proto 类型的 JSON 序列化从 encoding/json 替换为 protojson；修复 extproto 自定义 option 引用；修复 ispagent 时区测试；更新 contract-generation.md spec 文档
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `407a1eee` | (see git log) |
+
+### Status
+
+[OK] **Completed**

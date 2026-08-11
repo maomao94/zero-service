@@ -108,6 +108,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		HolidaySource:    holidaySource,
 		HolidayCalendar:  holidayCal,
 		CronJobStore:     cronJobStore,
-		CronJobScheduler: commoncrontask.NewScheduler(cronJobStore, cronjob.NewLoggingEventHandler(db, streamEventCli)),
+		CronJobScheduler: commoncrontask.NewScheduler(cronJobStore, cronjob.NewLoggingEventHandler(db, streamEventCli), commoncrontask.WithMaxDelay(c.CronTask.MaxDelay)),
 	}
 }

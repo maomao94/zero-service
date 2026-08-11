@@ -10,6 +10,8 @@ import (
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/crontask"
+
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // CronJobExtra 是 Trigger 业务字段在 TaskConfig.Extra 中的稳定封装。
@@ -64,6 +66,7 @@ func fromTaskConfig(cfg *crontask.TaskConfig) (*gormmodel.CronJob, error) {
 		RRuleStr:         cfg.RRuleStr,
 		Priority:         cfg.Priority,
 		LockTimeout:      cfg.LockTimeout.Milliseconds(),
+		MaxDelay:         cfg.MaxDelay.Milliseconds() / 1000,
 		Payload:          string(cfg.Payload),
 		Extra:            string(cfg.Extra),
 		Status:           int(cfg.Status),
@@ -106,6 +109,7 @@ func ToTaskConfig(job *gormmodel.CronJob) (*crontask.TaskConfig, error) {
 		RRuleStr:    job.RRuleStr,
 		Priority:    job.Priority,
 		LockTimeout: time.Duration(job.LockTimeout) * time.Millisecond,
+		MaxDelay:    time.Duration(job.MaxDelay) * time.Second,
 		Payload:     json.RawMessage(job.Payload),
 		Extra:       extraJSON,
 		Status:      crontask.TaskStatus(job.Status),
@@ -161,7 +165,7 @@ func ToProto(cfg *crontask.TaskConfig) (*trigger.CronJobPb, error) {
 		return nil, err
 	}
 	var rule trigger.PlanRulePb
-	if err := json.Unmarshal(extra.Rule, &rule); err != nil {
+	if err := protojson.Unmarshal(extra.Rule, &rule); err != nil {
 		return nil, fmt.Errorf("解析 Cron Job 规则失败: %w", err)
 	}
 	scheduleDescription, err := crontask.DescribeRRule(cfg.RRuleStr)
@@ -175,6 +179,7 @@ func ToProto(cfg *crontask.TaskConfig) (*trigger.CronJobPb, error) {
 		TaskName:            cfg.TaskName,
 		Priority:            int32(cfg.Priority),
 		LockTimeout:         cfg.LockTimeout.Milliseconds(),
+		MaxDelay:            int64(cfg.MaxDelay.Seconds()),
 		Payload:             string(cfg.Payload),
 		Extra:               string(extra.BizExtra),
 		Status:              int32(cfg.Status),

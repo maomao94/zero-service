@@ -10,6 +10,7 @@ import (
 	"zero-service/model"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type PushPointLogic struct {
@@ -34,7 +35,7 @@ func (l *PushPointLogic) PushPoint(in *xfusionmock.ReqPushPoint) (*xfusionmock.R
 		return 0.0001 * float64(random.RandInt(0, 10))
 	}
 	if in.PushMode {
-		jsonData, err = json.Marshal(in.Data)
+		jsonData, err = protojson.Marshal(in.Data)
 		if err != nil {
 			return nil, err
 		}

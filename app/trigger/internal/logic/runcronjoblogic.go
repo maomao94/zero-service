@@ -39,11 +39,12 @@ func (l *RunCronJobLogic) RunCronJob(in *trigger.RunCronJobReq) (*trigger.RunCro
 		}
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询 Cron Job 失败")
 	}
-	if err := l.svcCtx.CronJobScheduler.RunNow(l.ctx, task.TaskCode); err != nil {
+	traceID, err := l.svcCtx.CronJobScheduler.RunNow(l.ctx, task.TaskCode)
+	if err != nil {
 		if errors.Is(err, crontask.ErrNotFound) {
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
 		}
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "立即执行 Cron Job 失败")
 	}
-	return &trigger.RunCronJobRes{}, nil
+	return &trigger.RunCronJobRes{TraceId: traceID}, nil
 }

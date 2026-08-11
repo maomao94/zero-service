@@ -209,17 +209,17 @@ func (*ReceiveMQTTMessageRes) Descriptor() ([]byte, []int) {
 type MqttMessage struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 会话ID
-	SessionId string `protobuf:"bytes,1,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
+	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	// 消息唯一标识
-	MsgId string `protobuf:"bytes,2,opt,name=msgId,proto3" json:"msgId,omitempty"`
+	MsgId string `protobuf:"bytes,2,opt,name=msg_id,json=msgId,proto3" json:"msg_id,omitempty"`
 	// 订阅主题模板
-	TopicTemplate string `protobuf:"bytes,3,opt,name=topicTemplate,proto3" json:"topicTemplate,omitempty"`
+	TopicTemplate string `protobuf:"bytes,3,opt,name=topic_template,json=topicTemplate,proto3" json:"topic_template,omitempty"`
 	// MQTT主题
 	Topic string `protobuf:"bytes,4,opt,name=topic,proto3" json:"topic,omitempty"`
 	// 消息体
 	Payload []byte `protobuf:"bytes,5,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 消息发送时间
-	SendTime      string `protobuf:"bytes,6,opt,name=sendTime,proto3" json:"sendTime,omitempty"`
+	SendTime      string `protobuf:"bytes,6,opt,name=send_time,json=sendTime,proto3" json:"send_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -299,13 +299,13 @@ func (x *MqttMessage) GetSendTime() string {
 type ReceiveWSMessageReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 会话ID
-	SessionId string `protobuf:"bytes,1,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
+	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	// 消息唯一标识
-	MsgId string `protobuf:"bytes,2,opt,name=msgId,proto3" json:"msgId,omitempty"`
+	MsgId string `protobuf:"bytes,2,opt,name=msg_id,json=msgId,proto3" json:"msg_id,omitempty"`
 	// 消息体
 	Payload []byte `protobuf:"bytes,3,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 消息发送时间
-	SendTime      string `protobuf:"bytes,4,opt,name=sendTime,proto3" json:"sendTime,omitempty"`
+	SendTime      string `protobuf:"bytes,4,opt,name=send_time,json=sendTime,proto3" json:"send_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -487,12 +487,12 @@ func (*ReceiveKafkaMessageRes) Descriptor() ([]byte, []int) {
 
 type KafkaMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	MsgId         string                 `protobuf:"bytes,1,opt,name=msgId,proto3" json:"msgId,omitempty"`
+	MsgId         string                 `protobuf:"bytes,1,opt,name=msg_id,json=msgId,proto3" json:"msg_id,omitempty"`
 	Topic         string                 `protobuf:"bytes,2,opt,name=topic,proto3" json:"topic,omitempty"`
 	Group         string                 `protobuf:"bytes,3,opt,name=group,proto3" json:"group,omitempty"`
 	Key           string                 `protobuf:"bytes,4,opt,name=key,proto3" json:"key,omitempty"`
 	Value         []byte                 `protobuf:"bytes,5,opt,name=value,proto3" json:"value,omitempty"`
-	SendTime      string                 `protobuf:"bytes,6,opt,name=sendTime,proto3" json:"sendTime,omitempty"`
+	SendTime      string                 `protobuf:"bytes,6,opt,name=send_time,json=sendTime,proto3" json:"send_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -572,8 +572,8 @@ func (x *KafkaMessage) GetSendTime() string {
 // -------------------- 104协议 --------------------
 type PushChunkAsduReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TId           string                 `protobuf:"bytes,1,opt,name=tId,proto3" json:"tId,omitempty"` // 事务（Transaction）的 UUID
-	MsgBody       []*MsgBody             `protobuf:"bytes,2,rep,name=msgBody,proto3" json:"msgBody,omitempty"`
+	TId           string                 `protobuf:"bytes,1,opt,name=t_id,json=tId,proto3" json:"t_id,omitempty"` // 事务（Transaction）的 UUID
+	MsgBody       []*MsgBody             `protobuf:"bytes,2,rep,name=msg_body,json=msgBody,proto3" json:"msg_body,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -662,7 +662,7 @@ func (*PushChunkAsduRes) Descriptor() ([]byte, []int) {
 type MsgBody struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 消息ID
-	MsgId string `protobuf:"bytes,1,opt,name=msgId,proto3" json:"msgId,omitempty"`
+	MsgId string `protobuf:"bytes,1,opt,name=msg_id,json=msgId,proto3" json:"msg_id,omitempty"`
 	// 采集设备地址
 	Host string `protobuf:"bytes,2,opt,name=host,proto3" json:"host,omitempty"`
 	// 采集设备端口号
@@ -670,20 +670,20 @@ type MsgBody struct {
 	// ASDU类型名称
 	Asdu string `protobuf:"bytes,4,opt,name=asdu,proto3" json:"asdu,omitempty"`
 	// ASDU类型标识符
-	TypeId int32 `protobuf:"varint,5,opt,name=typeId,proto3" json:"typeId,omitempty"`
+	TypeId int32 `protobuf:"varint,5,opt,name=type_id,json=typeId,proto3" json:"type_id,omitempty"`
 	// 信息体类型标识符
-	DataType int32 `protobuf:"varint,6,opt,name=dataType,proto3" json:"dataType,omitempty"`
+	DataType int32 `protobuf:"varint,6,opt,name=data_type,json=dataType,proto3" json:"data_type,omitempty"`
 	// 公共地址（范围：1-65534,全局地址65535保留）
 	Coa uint32 `protobuf:"varint,7,opt,name=coa,proto3" json:"coa,omitempty"`
 	// 信息体对象（结构随typeId变化）
-	BodyRaw string `protobuf:"bytes,8,opt,name=bodyRaw,proto3" json:"bodyRaw,omitempty"`
+	BodyRaw string `protobuf:"bytes,8,opt,name=body_raw,json=bodyRaw,proto3" json:"body_raw,omitempty"`
 	// 消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`,UTC+8时区）
 	Time string `protobuf:"bytes,9,opt,name=time,proto3" json:"time,omitempty"`
 	// 应用级元数据（如：应用ID、用户信息、场站信息等）
-	MetaDataRaw string        `protobuf:"bytes,10,opt,name=metaDataRaw,proto3" json:"metaDataRaw,omitempty"`
+	MetaDataRaw string        `protobuf:"bytes,10,opt,name=meta_data_raw,json=metaDataRaw,proto3" json:"meta_data_raw,omitempty"`
 	Pm          *PointMapping `protobuf:"bytes,11,opt,name=pm,proto3" json:"pm,omitempty"`
 	// IEC104 帧关联ID（同一帧拆分出来的多条消息共享）
-	TraceId string `protobuf:"bytes,12,opt,name=traceId,proto3" json:"traceId,omitempty"`
+	TraceId string `protobuf:"bytes,12,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
 	// OTel propagation headers（traceparent, tracestate）
 	Headers       map[string]string `protobuf:"bytes,13,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
@@ -814,11 +814,11 @@ func (x *MsgBody) GetHeaders() map[string]string {
 type PointMapping struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 设备编号/ID
-	DeviceId string `protobuf:"bytes,1,opt,name=deviceId,proto3" json:"deviceId,omitempty"`
+	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	// 设备名称
-	DeviceName string `protobuf:"bytes,2,opt,name=deviceName,proto3" json:"deviceName,omitempty"`
+	DeviceName string `protobuf:"bytes,2,opt,name=device_name,json=deviceName,proto3" json:"device_name,omitempty"`
 	// TDengine 表类型（遥信表/遥测表等，逗号分隔）
-	TdTableType string `protobuf:"bytes,3,opt,name=tdTableType,proto3" json:"tdTableType,omitempty"`
+	TdTableType string `protobuf:"bytes,3,opt,name=td_table_type,json=tdTableType,proto3" json:"td_table_type,omitempty"`
 	// 扩展字段1，如：alarm, normal, control等，用于主题拆分
 	Ext1 string `protobuf:"bytes,4,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段2
@@ -929,7 +929,7 @@ type SinglePointInfo struct {
 	// 品质
 	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
 	// 品质描述
-	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	QdsDesc string `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
 	// Overflow `true`=溢出,`false`=未溢出
 	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁
@@ -1056,7 +1056,7 @@ type DoublePointInfo struct {
 	// 品质
 	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
 	// 品质描述
-	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	QdsDesc string `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
 	// Overflow `true`=溢出,`false`=未溢出
 	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁
@@ -1183,7 +1183,7 @@ type MeasuredValueScaledInfo struct {
 	// 品质
 	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
 	// 品质描述
-	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	QdsDesc string `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
 	// Overflow `true`=溢出,`false`=未溢出
 	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁`
@@ -1312,7 +1312,7 @@ type MeasuredValueNormalInfo struct {
 	// 品质
 	Qds uint32 `protobuf:"varint,4,opt,name=qds,proto3" json:"qds,omitempty"`
 	// 品质描述
-	QdsDesc string `protobuf:"bytes,5,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	QdsDesc string `protobuf:"bytes,5,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
 	// Overflow `true`=溢出,`false`=未溢出
 	Ov bool `protobuf:"varint,6,opt,name=ov,proto3" json:"ov,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁
@@ -1446,7 +1446,7 @@ type StepPositionInfo struct {
 	// 品质
 	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
 	// 品质描述
-	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	QdsDesc string `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
 	// Overflow `true`=溢出,`false`=未溢出
 	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁
@@ -1569,7 +1569,7 @@ type StepPosition struct {
 	// 步位置值
 	Val int32 `protobuf:"varint,1,opt,name=val,proto3" json:"val,omitempty"`
 	// `true`=设备处于瞬变状态
-	HasTransient  bool `protobuf:"varint,2,opt,name=hasTransient,proto3" json:"hasTransient,omitempty"`
+	HasTransient  bool `protobuf:"varint,2,opt,name=has_transient,json=hasTransient,proto3" json:"has_transient,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1628,7 +1628,7 @@ type BitString32Info struct {
 	// 品质
 	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
 	// 品质描述
-	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	QdsDesc string `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
 	// Overflow `true`=溢出,`false`=未溢出
 	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁
@@ -1755,7 +1755,7 @@ type MeasuredValueFloatInfo struct {
 	// 品质
 	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
 	// 品质描述
-	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	QdsDesc string `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
 	// Overflow `true`=溢出,`false`=未溢出
 	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁
@@ -1939,15 +1939,15 @@ func (x *BinaryCounterReadingInfo) GetTime() string {
 type BinaryCounterReading struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 计数器读数（32位有符号整数）
-	CounterReading int32 `protobuf:"varint,1,opt,name=counterReading,proto3" json:"counterReading,omitempty"`
+	CounterReading int32 `protobuf:"varint,1,opt,name=counter_reading,json=counterReading,proto3" json:"counter_reading,omitempty"`
 	// 顺序号（范围：`0`-`31`）
-	SeqNumber uint32 `protobuf:"varint,2,opt,name=seqNumber,proto3" json:"seqNumber,omitempty"`
+	SeqNumber uint32 `protobuf:"varint,2,opt,name=seq_number,json=seqNumber,proto3" json:"seq_number,omitempty"`
 	// `true`=计数器溢出
-	HasCarry bool `protobuf:"varint,3,opt,name=hasCarry,proto3" json:"hasCarry,omitempty"`
+	HasCarry bool `protobuf:"varint,3,opt,name=has_carry,json=hasCarry,proto3" json:"has_carry,omitempty"`
 	// `true`=计数量被人工调整
-	IsAdjusted bool `protobuf:"varint,4,opt,name=isAdjusted,proto3" json:"isAdjusted,omitempty"`
+	IsAdjusted bool `protobuf:"varint,4,opt,name=is_adjusted,json=isAdjusted,proto3" json:"is_adjusted,omitempty"`
 	// `true`=数据无效
-	IsInvalid     bool `protobuf:"varint,5,opt,name=isInvalid,proto3" json:"isInvalid,omitempty"`
+	IsInvalid     bool `protobuf:"varint,5,opt,name=is_invalid,json=isInvalid,proto3" json:"is_invalid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2027,7 +2027,7 @@ type EventOfProtectionEquipmentInfo struct {
 	// 保护事件品质
 	Qdp uint32 `protobuf:"varint,3,opt,name=qdp,proto3" json:"qdp,omitempty"`
 	// 保护事件品质描述
-	QdpDesc string `protobuf:"bytes,4,opt,name=qdpDesc,proto3" json:"qdpDesc,omitempty"`
+	QdpDesc string `protobuf:"bytes,4,opt,name=qdp_desc,json=qdpDesc,proto3" json:"qdp_desc,omitempty"`
 	// ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效
 	Ei bool `protobuf:"varint,5,opt,name=ei,proto3" json:"ei,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁
@@ -2163,7 +2163,7 @@ type PackedStartEventsOfProtectionEquipmentInfo struct {
 	// 保护事件品质
 	Qdp uint32 `protobuf:"varint,3,opt,name=qdp,proto3" json:"qdp,omitempty"`
 	// 保护事件品质描述
-	QdpDesc string `protobuf:"bytes,4,opt,name=qdpDesc,proto3" json:"qdpDesc,omitempty"`
+	QdpDesc string `protobuf:"bytes,4,opt,name=qdp_desc,json=qdpDesc,proto3" json:"qdp_desc,omitempty"`
 	// ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效
 	Ei bool `protobuf:"varint,5,opt,name=ei,proto3" json:"ei,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁
@@ -2307,7 +2307,7 @@ type PackedOutputCircuitInfo struct {
 	// 保护事件品质
 	Qdp uint32 `protobuf:"varint,7,opt,name=qdp,proto3" json:"qdp,omitempty"`
 	// 保护事件品质描述
-	QdpDesc string `protobuf:"bytes,8,opt,name=qdpDesc,proto3" json:"qdpDesc,omitempty"`
+	QdpDesc string `protobuf:"bytes,8,opt,name=qdp_desc,json=qdpDesc,proto3" json:"qdp_desc,omitempty"`
 	// ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效
 	Ei bool `protobuf:"varint,9,opt,name=ei,proto3" json:"ei,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁
@@ -2475,7 +2475,7 @@ type PackedSinglePointWithSCDInfo struct {
 	// 品质
 	Qds uint32 `protobuf:"varint,5,opt,name=qds,proto3" json:"qds,omitempty"`
 	// 品质描述
-	QdsDesc string `protobuf:"bytes,6,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	QdsDesc string `protobuf:"bytes,6,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
 	// Overflow `true`=溢出,`false`=未溢出
 	Ov bool `protobuf:"varint,7,opt,name=ov,proto3" json:"ov,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁
@@ -2627,9 +2627,9 @@ type UpSocketMessageReq struct {
 	// 请求唯一标识。
 	// __connection__ 和 __disconnect__ 由 socketgtw 生成;
 	// __join_room_up__ 和 __up__ 通常来自浏览器请求中的 reqId。
-	ReqId string `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
+	ReqId string `protobuf:"bytes,1,opt,name=req_id,json=reqId,proto3" json:"req_id,omitempty"`
 	// SocketIO session ID, 对应当前连接的 socket id。
-	SId string `protobuf:"bytes,2,opt,name=sId,proto3" json:"sId,omitempty"`
+	SId string `protobuf:"bytes,2,opt,name=s_id,json=sId,proto3" json:"s_id,omitempty"`
 	// 上行事件名。系统保留值包括:
 	// __connection__、__disconnect__、__join_room_up__、__up__。
 	Event string `protobuf:"bytes,3,opt,name=event,proto3" json:"event,omitempty"`
@@ -2749,31 +2749,31 @@ func (x *UpSocketMessageRes) GetPayload() string {
 type PlanPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 创建时间
-	CreateTime string `protobuf:"bytes,101,opt,name=createTime,proto3" json:"createTime,omitempty"`
+	CreateTime string `protobuf:"bytes,101,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// 更新时间
-	UpdateTime string `protobuf:"bytes,102,opt,name=updateTime,proto3" json:"updateTime,omitempty"`
+	UpdateTime string `protobuf:"bytes,102,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// 创建人
-	CreateUser string `protobuf:"bytes,103,opt,name=createUser,proto3" json:"createUser,omitempty"`
+	CreateUser string `protobuf:"bytes,103,opt,name=create_user,json=createUser,proto3" json:"create_user,omitempty"`
 	// 更新人
-	UpdateUser string `protobuf:"bytes,104,opt,name=updateUser,proto3" json:"updateUser,omitempty"`
+	UpdateUser string `protobuf:"bytes,104,opt,name=update_user,json=updateUser,proto3" json:"update_user,omitempty"`
 	// 机构code
-	DeptCode string `protobuf:"bytes,105,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
+	DeptCode string `protobuf:"bytes,105,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	// 自增主键ID
 	Id string `protobuf:"bytes,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 计划ID
-	PlanId string `protobuf:"bytes,1,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 计划名称
-	PlanName string `protobuf:"bytes,2,opt,name=planName,proto3" json:"planName,omitempty"`
+	PlanName string `protobuf:"bytes,2,opt,name=plan_name,json=planName,proto3" json:"plan_name,omitempty"`
 	// 任务类型
 	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
 	// 计划组ID,用于分组管理计划任务
-	GroupId string `protobuf:"bytes,4,opt,name=groupId,proto3" json:"groupId,omitempty"`
+	GroupId string `protobuf:"bytes,4,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	// 描述
 	Description string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
 	// 规则生效开始时间
-	StartTime string `protobuf:"bytes,6,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	StartTime string `protobuf:"bytes,6,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// 规则生效结束时间
-	EndTime string `protobuf:"bytes,7,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	EndTime string `protobuf:"bytes,7,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	// 扩展字段1
 	Ext1 string `protobuf:"bytes,8,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段2
@@ -2950,37 +2950,37 @@ type HandlerPlanTaskEventReq struct {
 	// 自增主键ID
 	Id string `protobuf:"bytes,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 关联的计划主键ID
-	PlanPk string `protobuf:"bytes,1,opt,name=planPk,proto3" json:"planPk,omitempty"`
+	PlanPk string `protobuf:"bytes,1,opt,name=plan_pk,json=planPk,proto3" json:"plan_pk,omitempty"`
 	// 计划ID 全局唯一
-	PlanId string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
 	// 批主键ID
-	BatchPk string `protobuf:"bytes,3,opt,name=batchPk,proto3" json:"batchPk,omitempty"`
+	BatchPk string `protobuf:"bytes,3,opt,name=batch_pk,json=batchPk,proto3" json:"batch_pk,omitempty"`
 	// 批ID
-	BatchId string `protobuf:"bytes,4,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	BatchId string `protobuf:"bytes,4,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	// 执行ID 全局唯一
-	ExecId string `protobuf:"bytes,5,opt,name=execId,proto3" json:"execId,omitempty"`
+	ExecId string `protobuf:"bytes,5,opt,name=exec_id,json=execId,proto3" json:"exec_id,omitempty"`
 	// 执行项ID
-	ItemId string `protobuf:"bytes,6,opt,name=itemId,proto3" json:"itemId,omitempty"`
+	ItemId string `protobuf:"bytes,6,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
 	// 执行项类型
-	ItemType string `protobuf:"bytes,7,opt,name=itemType,proto3" json:"itemType,omitempty"`
+	ItemType string `protobuf:"bytes,7,opt,name=item_type,json=itemType,proto3" json:"item_type,omitempty"`
 	// 执行项名称
-	ItemName string `protobuf:"bytes,8,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	ItemName string `protobuf:"bytes,8,opt,name=item_name,json=itemName,proto3" json:"item_name,omitempty"`
 	// 执行项行ID
-	ItemRowId int64 `protobuf:"varint,9,opt,name=itemRowId,proto3" json:"itemRowId,omitempty"`
+	ItemRowId int64 `protobuf:"varint,9,opt,name=item_row_id,json=itemRowId,proto3" json:"item_row_id,omitempty"`
 	// 点位id
-	PointId string `protobuf:"bytes,10,opt,name=PointId,proto3" json:"PointId,omitempty"`
+	PointId string `protobuf:"bytes,10,opt,name=point_id,json=PointId,proto3" json:"point_id,omitempty"`
 	// 业务负载
 	Payload string `protobuf:"bytes,11,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 计划触发时间
-	PlanTriggerTime string `protobuf:"bytes,12,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
+	PlanTriggerTime string `protobuf:"bytes,12,opt,name=plan_trigger_time,json=planTriggerTime,proto3" json:"plan_trigger_time,omitempty"`
 	// 上次触发时间
-	LastTriggerTime string `protobuf:"bytes,13,opt,name=lastTriggerTime,proto3" json:"lastTriggerTime,omitempty"`
+	LastTriggerTime string `protobuf:"bytes,13,opt,name=last_trigger_time,json=lastTriggerTime,proto3" json:"last_trigger_time,omitempty"`
 	// 上次执行结果
-	LastResult string `protobuf:"bytes,14,opt,name=lastResult,proto3" json:"lastResult,omitempty"`
+	LastResult string `protobuf:"bytes,14,opt,name=last_result,json=lastResult,proto3" json:"last_result,omitempty"`
 	// 上次结果描述
-	LastMessage string `protobuf:"bytes,15,opt,name=lastMessage,proto3" json:"lastMessage,omitempty"`
+	LastMessage string `protobuf:"bytes,15,opt,name=last_message,json=lastMessage,proto3" json:"last_message,omitempty"`
 	// 上次结果原因
-	LastReason    string `protobuf:"bytes,16,opt,name=lastReason,proto3" json:"lastReason,omitempty"`
+	LastReason    string `protobuf:"bytes,16,opt,name=last_reason,json=lastReason,proto3" json:"last_reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3145,13 +3145,13 @@ type HandlerPlanTaskEventRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 回调设计 参考 grpc status 用于分布式事务
 	// 执行结果：completed-业务执行完成, terminated-业务终止, failed-业务执行失败, delayed-业务执行延期, ongoing-业务正在执行（未回调或部分异步）
-	ExecResult string `protobuf:"bytes,1,opt,name=execResult,proto3" json:"execResult,omitempty"`
+	ExecResult string `protobuf:"bytes,1,opt,name=exec_result,json=execResult,proto3" json:"exec_result,omitempty"`
 	// 结果描述  可以定义自己状态码，等下次回调判断业务场景
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	// 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
 	Reason string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	// 延期配置-默认延期5分钟：delayed,ongoing-自定义延期
-	DelayConfig   *DelayConfigPb `protobuf:"bytes,4,opt,name=delayConfig,proto3" json:"delayConfig,omitempty"`
+	DelayConfig   *DelayConfigPb `protobuf:"bytes,4,opt,name=delay_config,json=delayConfig,proto3" json:"delay_config,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3217,9 +3217,9 @@ func (x *HandlerPlanTaskEventRes) GetDelayConfig() *DelayConfigPb {
 type DelayConfigPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
-	NextTriggerTime string `protobuf:"bytes,1,opt,name=nextTriggerTime,proto3" json:"nextTriggerTime,omitempty"`
+	NextTriggerTime string `protobuf:"bytes,1,opt,name=next_trigger_time,json=nextTriggerTime,proto3" json:"next_trigger_time,omitempty"`
 	// 延期原因
-	DelayReason   string `protobuf:"bytes,2,opt,name=delayReason,proto3" json:"delayReason,omitempty"`
+	DelayReason   string `protobuf:"bytes,2,opt,name=delay_reason,json=delayReason,proto3" json:"delay_reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3271,12 +3271,12 @@ func (x *DelayConfigPb) GetDelayReason() string {
 type NotifyPlanEventReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 事件类型
-	EventType PlanEventType `protobuf:"varint,1,opt,name=eventType,proto3,enum=streamevent.PlanEventType" json:"eventType,omitempty"`
+	EventType PlanEventType `protobuf:"varint,1,opt,name=event_type,json=eventType,proto3,enum=streamevent.PlanEventType" json:"event_type,omitempty"`
 	// 关联的计划ID
-	PlanId   string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
-	PlanType string `protobuf:"bytes,3,opt,name=planType,proto3" json:"planType,omitempty"`
+	PlanId   string `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	PlanType string `protobuf:"bytes,3,opt,name=plan_type,json=planType,proto3" json:"plan_type,omitempty"`
 	// 关联的批次ID（可选，plan完成时可为空）
-	BatchId string `protobuf:"bytes,4,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	BatchId string `protobuf:"bytes,4,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	// 扩展字段，给未来留空间
 	Attributes    map[string]string `protobuf:"bytes,5,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
@@ -3388,11 +3388,11 @@ func (*NotifyPlanEventRes) Descriptor() ([]byte, []int) {
 type HandleCronJobEventReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Trigger 生成的 JobId，对应 cron_job.id。
-	JobId string `protobuf:"bytes,1,opt,name=jobId,proto3" json:"jobId,omitempty"`
+	JobId string `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	// 调用方提供的全局唯一业务任务编码。
-	TaskCode string `protobuf:"bytes,2,opt,name=taskCode,proto3" json:"taskCode,omitempty"`
+	TaskCode string `protobuf:"bytes,2,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"`
 	// 任务名称。
-	TaskName string `protobuf:"bytes,3,opt,name=taskName,proto3" json:"taskName,omitempty"`
+	TaskName string `protobuf:"bytes,3,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
 	// 调度优先级，数字越大越优先。
 	Priority int32 `protobuf:"varint,4,opt,name=priority,proto3" json:"priority,omitempty"`
 	// 创建任务时提交的业务参数 JSON。
@@ -3400,11 +3400,11 @@ type HandleCronJobEventReq struct {
 	// Trigger 生成的 CronJobExtra JSON，包含调用方 bizExtra 和规则业务字段。
 	Extra string `protobuf:"bytes,6,opt,name=extra,proto3" json:"extra,omitempty"`
 	// 本次执行原计划时间，格式 yyyy-MM-dd HH:mm:ss；自动重试期间保持不变。
-	ScheduledTime string `protobuf:"bytes,7,opt,name=scheduledTime,proto3" json:"scheduledTime,omitempty"`
+	ScheduledTime string `protobuf:"bytes,7,opt,name=scheduled_time,json=scheduledTime,proto3" json:"scheduled_time,omitempty"`
 	// 任务类型。
 	Type string `protobuf:"bytes,8,opt,name=type,proto3" json:"type,omitempty"`
 	// 任务分组 ID。
-	GroupId string `protobuf:"bytes,9,opt,name=groupId,proto3" json:"groupId,omitempty"`
+	GroupId string `protobuf:"bytes,9,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	// 任务描述。
 	Description string `protobuf:"bytes,10,opt,name=description,proto3" json:"description,omitempty"`
 	// 扩展字段 1。
@@ -3418,7 +3418,7 @@ type HandleCronJobEventReq struct {
 	// 扩展字段 5。
 	Ext5 string `protobuf:"bytes,54,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	// 机构编码。
-	DeptCode      string `protobuf:"bytes,101,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
+	DeptCode      string `protobuf:"bytes,101,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3627,80 +3627,133 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x11streamevent.proto\x12\vstreamevent\"M\n" +
 	"\x15ReceiveMQTTMessageReq\x124\n" +
 	"\bmessages\x18\x01 \x03(\v2\x18.streamevent.MqttMessageR\bmessages\"\x17\n" +
-	"\x15ReceiveMQTTMessageRes\"\xb3\x01\n" +
-	"\vMqttMessage\x12\x1c\n" +
-	"\tsessionId\x18\x01 \x01(\tR\tsessionId\x12\x14\n" +
-	"\x05msgId\x18\x02 \x01(\tR\x05msgId\x12$\n" +
-	"\rtopicTemplate\x18\x03 \x01(\tR\rtopicTemplate\x12\x14\n" +
+	"\x15ReceiveMQTTMessageRes\"\xb7\x01\n" +
+	"\vMqttMessage\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x15\n" +
+	"\x06msg_id\x18\x02 \x01(\tR\x05msgId\x12%\n" +
+	"\x0etopic_template\x18\x03 \x01(\tR\rtopicTemplate\x12\x14\n" +
 	"\x05topic\x18\x04 \x01(\tR\x05topic\x12\x18\n" +
-	"\apayload\x18\x05 \x01(\fR\apayload\x12\x1a\n" +
-	"\bsendTime\x18\x06 \x01(\tR\bsendTime\"\x7f\n" +
-	"\x13ReceiveWSMessageReq\x12\x1c\n" +
-	"\tsessionId\x18\x01 \x01(\tR\tsessionId\x12\x14\n" +
-	"\x05msgId\x18\x02 \x01(\tR\x05msgId\x12\x18\n" +
-	"\apayload\x18\x03 \x01(\fR\apayload\x12\x1a\n" +
-	"\bsendTime\x18\x04 \x01(\tR\bsendTime\"\x15\n" +
+	"\apayload\x18\x05 \x01(\fR\apayload\x12\x1b\n" +
+	"\tsend_time\x18\x06 \x01(\tR\bsendTime\"\x82\x01\n" +
+	"\x13ReceiveWSMessageReq\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x15\n" +
+	"\x06msg_id\x18\x02 \x01(\tR\x05msgId\x12\x18\n" +
+	"\apayload\x18\x03 \x01(\fR\apayload\x12\x1b\n" +
+	"\tsend_time\x18\x04 \x01(\tR\bsendTime\"\x15\n" +
 	"\x13ReceiveWSMessageRes\"O\n" +
 	"\x16ReceiveKafkaMessageReq\x125\n" +
 	"\bmessages\x18\x01 \x03(\v2\x19.streamevent.KafkaMessageR\bmessages\"\x18\n" +
-	"\x16ReceiveKafkaMessageRes\"\x94\x01\n" +
-	"\fKafkaMessage\x12\x14\n" +
-	"\x05msgId\x18\x01 \x01(\tR\x05msgId\x12\x14\n" +
+	"\x16ReceiveKafkaMessageRes\"\x96\x01\n" +
+	"\fKafkaMessage\x12\x15\n" +
+	"\x06msg_id\x18\x01 \x01(\tR\x05msgId\x12\x14\n" +
 	"\x05topic\x18\x02 \x01(\tR\x05topic\x12\x14\n" +
 	"\x05group\x18\x03 \x01(\tR\x05group\x12\x10\n" +
 	"\x03key\x18\x04 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x05 \x01(\fR\x05value\x12\x1a\n" +
-	"\bsendTime\x18\x06 \x01(\tR\bsendTime\"T\n" +
-	"\x10PushChunkAsduReq\x12\x10\n" +
-	"\x03tId\x18\x01 \x01(\tR\x03tId\x12.\n" +
-	"\amsgBody\x18\x02 \x03(\v2\x14.streamevent.MsgBodyR\amsgBody\"\x12\n" +
-	"\x10PushChunkAsduRes\"\xaf\x03\n" +
-	"\aMsgBody\x12\x14\n" +
-	"\x05msgId\x18\x01 \x01(\tR\x05msgId\x12\x12\n" +
+	"\x05value\x18\x05 \x01(\fR\x05value\x12\x1b\n" +
+	"\tsend_time\x18\x06 \x01(\tR\bsendTime\"V\n" +
+	"\x10PushChunkAsduReq\x12\x11\n" +
+	"\x04t_id\x18\x01 \x01(\tR\x03tId\x12/\n" +
+	"\bmsg_body\x18\x02 \x03(\v2\x14.streamevent.MsgBodyR\amsgBody\"\x12\n" +
+	"\x10PushChunkAsduRes\"\xb6\x03\n" +
+	"\aMsgBody\x12\x15\n" +
+	"\x06msg_id\x18\x01 \x01(\tR\x05msgId\x12\x12\n" +
 	"\x04host\x18\x02 \x01(\tR\x04host\x12\x12\n" +
 	"\x04port\x18\x03 \x01(\x05R\x04port\x12\x12\n" +
-	"\x04asdu\x18\x04 \x01(\tR\x04asdu\x12\x16\n" +
-	"\x06typeId\x18\x05 \x01(\x05R\x06typeId\x12\x1a\n" +
-	"\bdataType\x18\x06 \x01(\x05R\bdataType\x12\x10\n" +
-	"\x03coa\x18\a \x01(\rR\x03coa\x12\x18\n" +
-	"\abodyRaw\x18\b \x01(\tR\abodyRaw\x12\x12\n" +
-	"\x04time\x18\t \x01(\tR\x04time\x12 \n" +
-	"\vmetaDataRaw\x18\n" +
+	"\x04asdu\x18\x04 \x01(\tR\x04asdu\x12\x17\n" +
+	"\atype_id\x18\x05 \x01(\x05R\x06typeId\x12\x1b\n" +
+	"\tdata_type\x18\x06 \x01(\x05R\bdataType\x12\x10\n" +
+	"\x03coa\x18\a \x01(\rR\x03coa\x12\x19\n" +
+	"\bbody_raw\x18\b \x01(\tR\abodyRaw\x12\x12\n" +
+	"\x04time\x18\t \x01(\tR\x04time\x12\"\n" +
+	"\rmeta_data_raw\x18\n" +
 	" \x01(\tR\vmetaDataRaw\x12)\n" +
-	"\x02pm\x18\v \x01(\v2\x19.streamevent.PointMappingR\x02pm\x12\x18\n" +
-	"\atraceId\x18\f \x01(\tR\atraceId\x12;\n" +
+	"\x02pm\x18\v \x01(\v2\x19.streamevent.PointMappingR\x02pm\x12\x19\n" +
+	"\btrace_id\x18\f \x01(\tR\atraceId\x12;\n" +
 	"\aheaders\x18\r \x03(\v2!.streamevent.MsgBody.HeadersEntryR\aheaders\x1a:\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd0\x01\n" +
-	"\fPointMapping\x12\x1a\n" +
-	"\bdeviceId\x18\x01 \x01(\tR\bdeviceId\x12\x1e\n" +
-	"\n" +
-	"deviceName\x18\x02 \x01(\tR\n" +
-	"deviceName\x12 \n" +
-	"\vtdTableType\x18\x03 \x01(\tR\vtdTableType\x12\x12\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd4\x01\n" +
+	"\fPointMapping\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1f\n" +
+	"\vdevice_name\x18\x02 \x01(\tR\n" +
+	"deviceName\x12\"\n" +
+	"\rtd_table_type\x18\x03 \x01(\tR\vtdTableType\x12\x12\n" +
 	"\x04ext1\x18\x04 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x18\x05 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x18\x06 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x18\a \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x18\b \x01(\tR\x04ext5\"\xc9\x01\n" +
+	"\x04ext5\x18\b \x01(\tR\x04ext5\"\xca\x01\n" +
 	"\x0fSinglePointInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\bR\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
-	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
+	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
 	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
 	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
 	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
 	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
 	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
 	"\x04time\x18\n" +
-	" \x01(\tR\x04time\"\xc9\x01\n" +
+	" \x01(\tR\x04time\"\xca\x01\n" +
 	"\x0fDoublePointInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\rR\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
-	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
+	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
+	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
+	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
+	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
+	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
+	"\x04time\x18\n" +
+	" \x01(\tR\x04time\"\xd2\x01\n" +
+	"\x17MeasuredValueScaledInfo\x12\x10\n" +
+	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value\x12\x10\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
+	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
+	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
+	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
+	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
+	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
+	"\x04time\x18\n" +
+	" \x01(\tR\x04time\"\xe4\x01\n" +
+	"\x17MeasuredValueNormalInfo\x12\x10\n" +
+	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value\x12\x10\n" +
+	"\x03nva\x18\x03 \x01(\x02R\x03nva\x12\x10\n" +
+	"\x03qds\x18\x04 \x01(\rR\x03qds\x12\x19\n" +
+	"\bqds_desc\x18\x05 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x02ov\x18\x06 \x01(\bR\x02ov\x12\x0e\n" +
+	"\x02bl\x18\a \x01(\bR\x02bl\x12\x0e\n" +
+	"\x02sb\x18\b \x01(\bR\x02sb\x12\x0e\n" +
+	"\x02nt\x18\t \x01(\bR\x02nt\x12\x0e\n" +
+	"\x02iv\x18\n" +
+	" \x01(\bR\x02iv\x12\x12\n" +
+	"\x04time\x18\v \x01(\tR\x04time\"\xe6\x01\n" +
+	"\x10StepPositionInfo\x12\x10\n" +
+	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12/\n" +
+	"\x05value\x18\x02 \x01(\v2\x19.streamevent.StepPositionR\x05value\x12\x10\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
+	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
+	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
+	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
+	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
+	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
+	"\x04time\x18\n" +
+	" \x01(\tR\x04time\"E\n" +
+	"\fStepPosition\x12\x10\n" +
+	"\x03val\x18\x01 \x01(\x05R\x03val\x12#\n" +
+	"\rhas_transient\x18\x02 \x01(\bR\fhasTransient\"\xca\x01\n" +
+	"\x0fBitString32Info\x12\x10\n" +
+	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\rR\x05value\x12\x10\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
+	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
 	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
 	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
 	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
@@ -3708,63 +3761,11 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
 	"\x04time\x18\n" +
 	" \x01(\tR\x04time\"\xd1\x01\n" +
-	"\x17MeasuredValueScaledInfo\x12\x10\n" +
-	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x05R\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
-	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
-	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
-	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
-	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
-	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
-	"\x04time\x18\n" +
-	" \x01(\tR\x04time\"\xe3\x01\n" +
-	"\x17MeasuredValueNormalInfo\x12\x10\n" +
-	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x05R\x05value\x12\x10\n" +
-	"\x03nva\x18\x03 \x01(\x02R\x03nva\x12\x10\n" +
-	"\x03qds\x18\x04 \x01(\rR\x03qds\x12\x18\n" +
-	"\aqdsDesc\x18\x05 \x01(\tR\aqdsDesc\x12\x0e\n" +
-	"\x02ov\x18\x06 \x01(\bR\x02ov\x12\x0e\n" +
-	"\x02bl\x18\a \x01(\bR\x02bl\x12\x0e\n" +
-	"\x02sb\x18\b \x01(\bR\x02sb\x12\x0e\n" +
-	"\x02nt\x18\t \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\n" +
-	" \x01(\bR\x02iv\x12\x12\n" +
-	"\x04time\x18\v \x01(\tR\x04time\"\xe5\x01\n" +
-	"\x10StepPositionInfo\x12\x10\n" +
-	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12/\n" +
-	"\x05value\x18\x02 \x01(\v2\x19.streamevent.StepPositionR\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
-	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
-	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
-	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
-	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
-	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
-	"\x04time\x18\n" +
-	" \x01(\tR\x04time\"D\n" +
-	"\fStepPosition\x12\x10\n" +
-	"\x03val\x18\x01 \x01(\x05R\x03val\x12\"\n" +
-	"\fhasTransient\x18\x02 \x01(\bR\fhasTransient\"\xc9\x01\n" +
-	"\x0fBitString32Info\x12\x10\n" +
-	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\rR\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
-	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
-	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
-	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
-	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
-	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
-	"\x04time\x18\n" +
-	" \x01(\tR\x04time\"\xd0\x01\n" +
 	"\x16MeasuredValueFloatInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x02R\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
-	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
+	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
 	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
 	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
 	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
@@ -3775,20 +3776,21 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x18BinaryCounterReadingInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x127\n" +
 	"\x05value\x18\x02 \x01(\v2!.streamevent.BinaryCounterReadingR\x05value\x12\x12\n" +
-	"\x04time\x18\x03 \x01(\tR\x04time\"\xb6\x01\n" +
-	"\x14BinaryCounterReading\x12&\n" +
-	"\x0ecounterReading\x18\x01 \x01(\x05R\x0ecounterReading\x12\x1c\n" +
-	"\tseqNumber\x18\x02 \x01(\rR\tseqNumber\x12\x1a\n" +
-	"\bhasCarry\x18\x03 \x01(\bR\bhasCarry\x12\x1e\n" +
+	"\x04time\x18\x03 \x01(\tR\x04time\"\xbb\x01\n" +
+	"\x14BinaryCounterReading\x12'\n" +
+	"\x0fcounter_reading\x18\x01 \x01(\x05R\x0ecounterReading\x12\x1d\n" +
 	"\n" +
-	"isAdjusted\x18\x04 \x01(\bR\n" +
-	"isAdjusted\x12\x1c\n" +
-	"\tisInvalid\x18\x05 \x01(\bR\tisInvalid\"\xec\x01\n" +
+	"seq_number\x18\x02 \x01(\rR\tseqNumber\x12\x1b\n" +
+	"\thas_carry\x18\x03 \x01(\bR\bhasCarry\x12\x1f\n" +
+	"\vis_adjusted\x18\x04 \x01(\bR\n" +
+	"isAdjusted\x12\x1d\n" +
+	"\n" +
+	"is_invalid\x18\x05 \x01(\bR\tisInvalid\"\xed\x01\n" +
 	"\x1eEventOfProtectionEquipmentInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05event\x18\x02 \x01(\rR\x05event\x12\x10\n" +
-	"\x03qdp\x18\x03 \x01(\rR\x03qdp\x12\x18\n" +
-	"\aqdpDesc\x18\x04 \x01(\tR\aqdpDesc\x12\x0e\n" +
+	"\x03qdp\x18\x03 \x01(\rR\x03qdp\x12\x19\n" +
+	"\bqdp_desc\x18\x04 \x01(\tR\aqdpDesc\x12\x0e\n" +
 	"\x02ei\x18\x05 \x01(\bR\x02ei\x12\x0e\n" +
 	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
 	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
@@ -3796,12 +3798,12 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
 	"\x04msec\x18\n" +
 	" \x01(\rR\x04msec\x12\x12\n" +
-	"\x04time\x18\v \x01(\tR\x04time\"\xf8\x01\n" +
+	"\x04time\x18\v \x01(\tR\x04time\"\xf9\x01\n" +
 	"*PackedStartEventsOfProtectionEquipmentInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05event\x18\x02 \x01(\rR\x05event\x12\x10\n" +
-	"\x03qdp\x18\x03 \x01(\rR\x03qdp\x12\x18\n" +
-	"\aqdpDesc\x18\x04 \x01(\tR\aqdpDesc\x12\x0e\n" +
+	"\x03qdp\x18\x03 \x01(\rR\x03qdp\x12\x19\n" +
+	"\bqdp_desc\x18\x04 \x01(\tR\aqdpDesc\x12\x0e\n" +
 	"\x02ei\x18\x05 \x01(\bR\x02ei\x12\x0e\n" +
 	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
 	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
@@ -3809,7 +3811,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
 	"\x04msec\x18\n" +
 	" \x01(\rR\x04msec\x12\x12\n" +
-	"\x04time\x18\v \x01(\tR\x04time\"\xa7\x02\n" +
+	"\x04time\x18\v \x01(\tR\x04time\"\xa8\x02\n" +
 	"\x17PackedOutputCircuitInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x10\n" +
 	"\x03oci\x18\x02 \x01(\rR\x03oci\x12\x0e\n" +
@@ -3817,8 +3819,8 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x03cl1\x18\x04 \x01(\bR\x03cl1\x12\x10\n" +
 	"\x03cl2\x18\x05 \x01(\bR\x03cl2\x12\x10\n" +
 	"\x03cl3\x18\x06 \x01(\bR\x03cl3\x12\x10\n" +
-	"\x03qdp\x18\a \x01(\rR\x03qdp\x12\x18\n" +
-	"\aqdpDesc\x18\b \x01(\tR\aqdpDesc\x12\x0e\n" +
+	"\x03qdp\x18\a \x01(\rR\x03qdp\x12\x19\n" +
+	"\bqdp_desc\x18\b \x01(\tR\aqdpDesc\x12\x0e\n" +
 	"\x02ei\x18\t \x01(\bR\x02ei\x12\x0e\n" +
 	"\x02bl\x18\n" +
 	" \x01(\bR\x02bl\x12\x0e\n" +
@@ -3826,119 +3828,114 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x02nt\x18\f \x01(\bR\x02nt\x12\x0e\n" +
 	"\x02iv\x18\r \x01(\bR\x02iv\x12\x12\n" +
 	"\x04msec\x18\x0e \x01(\rR\x04msec\x12\x12\n" +
-	"\x04time\x18\x0f \x01(\tR\x04time\"\xe2\x01\n" +
+	"\x04time\x18\x0f \x01(\tR\x04time\"\xe3\x01\n" +
 	"\x1cPackedSinglePointWithSCDInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x10\n" +
 	"\x03scd\x18\x02 \x01(\rR\x03scd\x12\x10\n" +
 	"\x03stn\x18\x03 \x01(\tR\x03stn\x12\x10\n" +
 	"\x03cdn\x18\x04 \x01(\tR\x03cdn\x12\x10\n" +
-	"\x03qds\x18\x05 \x01(\rR\x03qds\x12\x18\n" +
-	"\aqdsDesc\x18\x06 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x03qds\x18\x05 \x01(\rR\x03qds\x12\x19\n" +
+	"\bqds_desc\x18\x06 \x01(\tR\aqdsDesc\x12\x0e\n" +
 	"\x02ov\x18\a \x01(\bR\x02ov\x12\x0e\n" +
 	"\x02bl\x18\b \x01(\bR\x02bl\x12\x0e\n" +
 	"\x02sb\x18\t \x01(\bR\x02sb\x12\x0e\n" +
 	"\x02nt\x18\n" +
 	" \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\v \x01(\bR\x02iv\"l\n" +
-	"\x12UpSocketMessageReq\x12\x14\n" +
-	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
-	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
+	"\x02iv\x18\v \x01(\bR\x02iv\"n\n" +
+	"\x12UpSocketMessageReq\x12\x15\n" +
+	"\x06req_id\x18\x01 \x01(\tR\x05reqId\x12\x11\n" +
+	"\x04s_id\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
 	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
 	"\apayload\x18\x04 \x01(\tR\apayload\".\n" +
 	"\x12UpSocketMessageRes\x12\x18\n" +
-	"\apayload\x18\x01 \x01(\tR\apayload\"\xd4\x03\n" +
-	"\x06PlanPb\x12\x1e\n" +
+	"\apayload\x18\x01 \x01(\tR\apayload\"\xde\x03\n" +
+	"\x06PlanPb\x12\x1f\n" +
+	"\vcreate_time\x18e \x01(\tR\n" +
+	"createTime\x12\x1f\n" +
+	"\vupdate_time\x18f \x01(\tR\n" +
+	"updateTime\x12\x1f\n" +
+	"\vcreate_user\x18g \x01(\tR\n" +
+	"createUser\x12\x1f\n" +
+	"\vupdate_user\x18h \x01(\tR\n" +
+	"updateUser\x12\x1b\n" +
+	"\tdept_code\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
+	"\x02id\x182 \x01(\tR\x02id\x12\x17\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12\x1b\n" +
+	"\tplan_name\x18\x02 \x01(\tR\bplanName\x12\x12\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x19\n" +
+	"\bgroup_id\x18\x04 \x01(\tR\agroupId\x12 \n" +
+	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1d\n" +
 	"\n" +
-	"createTime\x18e \x01(\tR\n" +
-	"createTime\x12\x1e\n" +
-	"\n" +
-	"updateTime\x18f \x01(\tR\n" +
-	"updateTime\x12\x1e\n" +
-	"\n" +
-	"createUser\x18g \x01(\tR\n" +
-	"createUser\x12\x1e\n" +
-	"\n" +
-	"updateUser\x18h \x01(\tR\n" +
-	"updateUser\x12\x1a\n" +
-	"\bdeptCode\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
-	"\x02id\x182 \x01(\tR\x02id\x12\x16\n" +
-	"\x06planId\x18\x01 \x01(\tR\x06planId\x12\x1a\n" +
-	"\bplanName\x18\x02 \x01(\tR\bplanName\x12\x12\n" +
-	"\x04type\x18\x03 \x01(\tR\x04type\x12\x18\n" +
-	"\agroupId\x18\x04 \x01(\tR\agroupId\x12 \n" +
-	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1c\n" +
-	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
-	"\aendTime\x18\a \x01(\tR\aendTime\x12\x12\n" +
+	"start_time\x18\x06 \x01(\tR\tstartTime\x12\x19\n" +
+	"\bend_time\x18\a \x01(\tR\aendTime\x12\x12\n" +
 	"\x04ext1\x18\b \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x18\t \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x18\n" +
 	" \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x18\v \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x18\f \x01(\tR\x04ext5\"\xa6\x04\n" +
+	"\x04ext5\x18\f \x01(\tR\x04ext5\"\xb8\x04\n" +
 	"\x17HandlerPlanTaskEventReq\x12'\n" +
 	"\x04plan\x18d \x01(\v2\x13.streamevent.PlanPbR\x04plan\x12\x0e\n" +
-	"\x02id\x182 \x01(\tR\x02id\x12\x16\n" +
-	"\x06planPk\x18\x01 \x01(\tR\x06planPk\x12\x16\n" +
-	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x18\n" +
-	"\abatchPk\x18\x03 \x01(\tR\abatchPk\x12\x18\n" +
-	"\abatchId\x18\x04 \x01(\tR\abatchId\x12\x16\n" +
-	"\x06execId\x18\x05 \x01(\tR\x06execId\x12\x16\n" +
-	"\x06itemId\x18\x06 \x01(\tR\x06itemId\x12\x1a\n" +
-	"\bitemType\x18\a \x01(\tR\bitemType\x12\x1a\n" +
-	"\bitemName\x18\b \x01(\tR\bitemName\x12\x1c\n" +
-	"\titemRowId\x18\t \x01(\x03R\titemRowId\x12\x18\n" +
-	"\aPointId\x18\n" +
+	"\x02id\x182 \x01(\tR\x02id\x12\x17\n" +
+	"\aplan_pk\x18\x01 \x01(\tR\x06planPk\x12\x17\n" +
+	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x19\n" +
+	"\bbatch_pk\x18\x03 \x01(\tR\abatchPk\x12\x19\n" +
+	"\bbatch_id\x18\x04 \x01(\tR\abatchId\x12\x17\n" +
+	"\aexec_id\x18\x05 \x01(\tR\x06execId\x12\x17\n" +
+	"\aitem_id\x18\x06 \x01(\tR\x06itemId\x12\x1b\n" +
+	"\titem_type\x18\a \x01(\tR\bitemType\x12\x1b\n" +
+	"\titem_name\x18\b \x01(\tR\bitemName\x12\x1e\n" +
+	"\vitem_row_id\x18\t \x01(\x03R\titemRowId\x12\x19\n" +
+	"\bpoint_id\x18\n" +
 	" \x01(\tR\aPointId\x12\x18\n" +
-	"\apayload\x18\v \x01(\tR\apayload\x12(\n" +
-	"\x0fplanTriggerTime\x18\f \x01(\tR\x0fplanTriggerTime\x12(\n" +
-	"\x0flastTriggerTime\x18\r \x01(\tR\x0flastTriggerTime\x12\x1e\n" +
-	"\n" +
-	"lastResult\x18\x0e \x01(\tR\n" +
-	"lastResult\x12 \n" +
-	"\vlastMessage\x18\x0f \x01(\tR\vlastMessage\x12\x1e\n" +
-	"\n" +
-	"lastReason\x18\x10 \x01(\tR\n" +
-	"lastReason\"\xa9\x01\n" +
-	"\x17HandlerPlanTaskEventRes\x12\x1e\n" +
-	"\n" +
-	"execResult\x18\x01 \x01(\tR\n" +
+	"\apayload\x18\v \x01(\tR\apayload\x12*\n" +
+	"\x11plan_trigger_time\x18\f \x01(\tR\x0fplanTriggerTime\x12*\n" +
+	"\x11last_trigger_time\x18\r \x01(\tR\x0flastTriggerTime\x12\x1f\n" +
+	"\vlast_result\x18\x0e \x01(\tR\n" +
+	"lastResult\x12!\n" +
+	"\flast_message\x18\x0f \x01(\tR\vlastMessage\x12\x1f\n" +
+	"\vlast_reason\x18\x10 \x01(\tR\n" +
+	"lastReason\"\xab\x01\n" +
+	"\x17HandlerPlanTaskEventRes\x12\x1f\n" +
+	"\vexec_result\x18\x01 \x01(\tR\n" +
 	"execResult\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x16\n" +
-	"\x06reason\x18\x03 \x01(\tR\x06reason\x12<\n" +
-	"\vdelayConfig\x18\x04 \x01(\v2\x1a.streamevent.DelayConfigPbR\vdelayConfig\"[\n" +
-	"\rDelayConfigPb\x12(\n" +
-	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12 \n" +
-	"\vdelayReason\x18\x02 \x01(\tR\vdelayReason\"\xac\x02\n" +
-	"\x12NotifyPlanEventReq\x128\n" +
-	"\teventType\x18\x01 \x01(\x0e2\x1a.streamevent.PlanEventTypeR\teventType\x12\x16\n" +
-	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x1a\n" +
-	"\bplanType\x18\x03 \x01(\tR\bplanType\x12\x18\n" +
-	"\abatchId\x18\x04 \x01(\tR\abatchId\x12O\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\x12=\n" +
+	"\fdelay_config\x18\x04 \x01(\v2\x1a.streamevent.DelayConfigPbR\vdelayConfig\"^\n" +
+	"\rDelayConfigPb\x12*\n" +
+	"\x11next_trigger_time\x18\x01 \x01(\tR\x0fnextTriggerTime\x12!\n" +
+	"\fdelay_reason\x18\x02 \x01(\tR\vdelayReason\"\xb0\x02\n" +
+	"\x12NotifyPlanEventReq\x129\n" +
+	"\n" +
+	"event_type\x18\x01 \x01(\x0e2\x1a.streamevent.PlanEventTypeR\teventType\x12\x17\n" +
+	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x1b\n" +
+	"\tplan_type\x18\x03 \x01(\tR\bplanType\x12\x19\n" +
+	"\bbatch_id\x18\x04 \x01(\tR\abatchId\x12O\n" +
 	"\n" +
 	"attributes\x18\x05 \x03(\v2/.streamevent.NotifyPlanEventReq.AttributesEntryR\n" +
 	"attributes\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x14\n" +
-	"\x12NotifyPlanEventRes\"\xa7\x03\n" +
-	"\x15HandleCronJobEventReq\x12\x14\n" +
-	"\x05jobId\x18\x01 \x01(\tR\x05jobId\x12\x1a\n" +
-	"\btaskCode\x18\x02 \x01(\tR\btaskCode\x12\x1a\n" +
-	"\btaskName\x18\x03 \x01(\tR\btaskName\x12\x1a\n" +
+	"\x12NotifyPlanEventRes\"\xad\x03\n" +
+	"\x15HandleCronJobEventReq\x12\x15\n" +
+	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x1b\n" +
+	"\ttask_code\x18\x02 \x01(\tR\btaskCode\x12\x1b\n" +
+	"\ttask_name\x18\x03 \x01(\tR\btaskName\x12\x1a\n" +
 	"\bpriority\x18\x04 \x01(\x05R\bpriority\x12\x18\n" +
 	"\apayload\x18\x05 \x01(\tR\apayload\x12\x14\n" +
-	"\x05extra\x18\x06 \x01(\tR\x05extra\x12$\n" +
-	"\rscheduledTime\x18\a \x01(\tR\rscheduledTime\x12\x12\n" +
-	"\x04type\x18\b \x01(\tR\x04type\x12\x18\n" +
-	"\agroupId\x18\t \x01(\tR\agroupId\x12 \n" +
+	"\x05extra\x18\x06 \x01(\tR\x05extra\x12%\n" +
+	"\x0escheduled_time\x18\a \x01(\tR\rscheduledTime\x12\x12\n" +
+	"\x04type\x18\b \x01(\tR\x04type\x12\x19\n" +
+	"\bgroup_id\x18\t \x01(\tR\agroupId\x12 \n" +
 	"\vdescription\x18\n" +
 	" \x01(\tR\vdescription\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x185 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x186 \x01(\tR\x04ext5\x12\x1a\n" +
-	"\bdeptCode\x18e \x01(\tR\bdeptCode\"j\n" +
+	"\x04ext5\x186 \x01(\tR\x04ext5\x12\x1b\n" +
+	"\tdept_code\x18e \x01(\tR\bdeptCode\"j\n" +
 	"\x15HandleCronJobEventRes\x127\n" +
 	"\areceipt\x18\x01 \x01(\x0e2\x1d.streamevent.CronJobReceiptPbR\areceipt\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage*N\n" +
@@ -4020,14 +4017,14 @@ var file_streamevent_proto_goTypes = []any{
 var file_streamevent_proto_depIdxs = []int32{
 	4,  // 0: streamevent.ReceiveMQTTMessageReq.messages:type_name -> streamevent.MqttMessage
 	9,  // 1: streamevent.ReceiveKafkaMessageReq.messages:type_name -> streamevent.KafkaMessage
-	12, // 2: streamevent.PushChunkAsduReq.msgBody:type_name -> streamevent.MsgBody
+	12, // 2: streamevent.PushChunkAsduReq.msg_body:type_name -> streamevent.MsgBody
 	13, // 3: streamevent.MsgBody.pm:type_name -> streamevent.PointMapping
 	38, // 4: streamevent.MsgBody.headers:type_name -> streamevent.MsgBody.HeadersEntry
 	19, // 5: streamevent.StepPositionInfo.value:type_name -> streamevent.StepPosition
 	23, // 6: streamevent.BinaryCounterReadingInfo.value:type_name -> streamevent.BinaryCounterReading
 	30, // 7: streamevent.HandlerPlanTaskEventReq.plan:type_name -> streamevent.PlanPb
-	33, // 8: streamevent.HandlerPlanTaskEventRes.delayConfig:type_name -> streamevent.DelayConfigPb
-	0,  // 9: streamevent.NotifyPlanEventReq.eventType:type_name -> streamevent.PlanEventType
+	33, // 8: streamevent.HandlerPlanTaskEventRes.delay_config:type_name -> streamevent.DelayConfigPb
+	0,  // 9: streamevent.NotifyPlanEventReq.event_type:type_name -> streamevent.PlanEventType
 	39, // 10: streamevent.NotifyPlanEventReq.attributes:type_name -> streamevent.NotifyPlanEventReq.AttributesEntry
 	1,  // 11: streamevent.HandleCronJobEventRes.receipt:type_name -> streamevent.CronJobReceiptPb
 	2,  // 12: streamevent.StreamEvent.ReceiveMQTTMessage:input_type -> streamevent.ReceiveMQTTMessageReq

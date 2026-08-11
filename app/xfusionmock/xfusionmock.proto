@@ -52,7 +52,7 @@ message ResPushTest {
 
 message ReqPushPoint {
   // 是否手动推送 默认 false-自动 true-手动
-  bool pushMode = 1;
+  bool push_mode = 1 [json_name = "pushMode"];
   // 推送数据
   TerminalData data = 2;
 }
@@ -62,7 +62,7 @@ message ResPushPoint {
 
 message ReqPushAlarm {
   // 是否手动推送 默认 false-自动 true-手动
-  bool pushMode = 1;
+  bool push_mode = 1 [json_name = "pushMode"];
   // 推送数据
   AlarmData data = 2;
 }
@@ -72,7 +72,7 @@ message ResPushAlarm {
 
 message ReqPushEvent {
   // 是否手动推送 默认 false-自动 true-手动
-  bool pushMode = 1;
+  bool push_mode = 1 [json_name = "pushMode"];
   // 推送数据
   EventData data = 2;
 }
@@ -82,7 +82,7 @@ message ResPushEvent {
 
 message ReqPushTerminalBind {
   // 是否手动推送 默认 false-自动 true-手动
-  bool pushMode = 1;
+  bool push_mode = 1 [json_name = "pushMode"];
   // 推送数据
   TerminalBind data = 2;
 }

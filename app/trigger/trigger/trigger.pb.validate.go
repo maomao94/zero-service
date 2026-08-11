@@ -14409,6 +14409,17 @@ func (m *CreateCronJobReq) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if m.GetMaxDelay() < 0 {
+		err := CreateCronJobReqValidationError{
+			field:  "MaxDelay",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	// no validation rules for SkipTimeFilter
 
 	// no validation rules for Ext1
@@ -15384,6 +15395,8 @@ func (m *RunCronJobRes) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for TraceId
+
 	if len(errors) > 0 {
 		return RunCronJobResMultiError(errors)
 	}
@@ -16062,6 +16075,8 @@ func (m *CronJobPb) validate(all bool) error {
 	// no validation rules for Priority
 
 	// no validation rules for LockTimeout
+
+	// no validation rules for MaxDelay
 
 	// no validation rules for Payload
 

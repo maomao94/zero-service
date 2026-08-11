@@ -12,20 +12,20 @@ message Res {
 }
 
 message SendDelayTaskReq {
-  string msgId = 1; // 唯一消息 id
+  string msg_id = 1 [json_name = "msgId"]; // 唯一消息 id
   string type = 2;
   string body = 3;
-  int64 processIn = 4; // 分钟
+  int64 process_in = 4 [json_name = "processIn"]; // 分钟
 }
 
 message SendDelayTaskRes {
 }
 
 message ForwardTaskReq {
-  string msgId = 1; // 唯一消息 id
+  string msg_id = 1 [json_name = "msgId"]; // 唯一消息 id
   string body = 2;
-  int64 processIn = 3; // 秒
-  string triggerTime = 4; // 触发时间 2019-01-01 00:00:00 二选一
+  int64 process_in = 3 [json_name = "processIn"]; // 秒
+  string trigger_time = 4 [json_name = "triggerTime"]; // 触发时间 2019-01-01 00:00:00 二选一
   string url = 5; // 转发地址 POST json提交
 }
 
@@ -41,7 +41,7 @@ message SendSMSVerifyCodeRes {
 }
 
 message GetRegionListReq {
-  string parentCode = 1;
+  string parent_code = 1 [json_name = "parentCode"];
 }
 
 message GetRegionListRes {
@@ -50,37 +50,37 @@ message GetRegionListRes {
 
 message Region {
   string code = 1; // 区划编号
-  string parentCode = 2; // 父区划编号
+  string parent_code = 2 [json_name = "parentCode"]; // 父区划编号
   string name = 3; // 区划名称
-  string provinceCode = 4; // 省级区划编号
-  string provinceName = 5; // 省级名称
-  string cityCode = 6; // 市级区划编号
-  string cityName = 7; // 市级名称
-  string districtCode = 8; // 区级区划编号
-  string districtName = 9; // 区级名称
-  int64 regionLevel = 10; // 层级
+  string province_code = 4 [json_name = "provinceCode"]; // 省级区划编号
+  string province_name = 5 [json_name = "provinceName"]; // 省级名称
+  string city_code = 6 [json_name = "cityCode"]; // 市级区划编号
+  string city_name = 7 [json_name = "cityName"]; // 市级名称
+  string district_code = 8 [json_name = "districtCode"]; // 区级区划编号
+  string district_name = 9 [json_name = "districtName"]; // 区级名称
+  int64 region_level = 10 [json_name = "regionLevel"]; // 层级
 }
 
 message GenerateTokenReq {
-  int64 userId = 1;
+  int64 user_id = 1 [json_name = "userId"];
 }
 
 message GenerateTokenRes {
-  string accessToken = 1;
-  int64  accessExpire = 2;
-  int64  refreshAfter = 3;
+  string access_token = 1 [json_name = "accessToken"];
+  int64  access_expire = 2 [json_name = "accessExpire"];
+  int64  refresh_after = 3 [json_name = "refreshAfter"];
 }
 
 message LoginReq{
-  string authType = 1; // miniProgram-小程序一键登录,mobile-手机号,unionId-微信unionId
-  string authKey = 2; // miniProgram-Code,mobile-验证码,unionId-sessionKey
+  string auth_type = 1 [json_name = "authType"]; // miniProgram-小程序一键登录,mobile-手机号,unionId-微信unionId
+  string auth_key = 2 [json_name = "authKey"]; // miniProgram-Code,mobile-验证码,unionId-sessionKey
   string password = 3;
 }
 
 message LoginRes{
-  string accessToken = 1;
-  int64  accessExpire = 2;
-  int64  refreshAfter = 3;
+  string access_token = 1 [json_name = "accessToken"];
+  int64  access_expire = 2 [json_name = "accessExpire"];
+  int64  refresh_after = 3 [json_name = "refreshAfter"];
 }
 
 message MiniProgramLoginReq{
@@ -88,9 +88,9 @@ message MiniProgramLoginReq{
 }
 
 message MiniProgramLoginRes{
-  string openId = 1;
-  string unionId = 2;
-  string sessionKey = 3;
+  string open_id = 1 [json_name = "openId"];
+  string union_id = 2 [json_name = "unionId"];
+  string session_key = 3 [json_name = "sessionKey"];
 }
 
 message GetUserInfoReq {
@@ -118,23 +118,23 @@ message User {
   string nickname = 3;
   int64  sex = 4;
   string avatar = 5;
-  string openId = 6;
+  string open_id = 6 [json_name = "openId"];
 }
 
 message WxPayJsApiReq {
-  string openId = 1;
-  string mchId = 2; // 商户id
-  string mchOrderNo = 3; // 商户订单号
-  int64 txnAmt = 4; // 支付金额 分
-  int64 realAmt = 5; // 实付金额 分
+  string open_id = 1 [json_name = "openId"];
+  string mch_id = 2 [json_name = "mchId"]; // 商户id
+  string mch_order_no = 3 [json_name = "mchOrderNo"]; // 商户订单号
+  int64 txn_amt = 4 [json_name = "txnAmt"]; // 支付金额 分
+  int64 real_amt = 5 [json_name = "realAmt"]; // 实付金额 分
   string body = 6; // 商品描述信息
-  int64 userId = 7; // 用户id
+  int64 user_id = 7 [json_name = "userId"]; // 用户id
 }
 
 message WxPayJsApiRes {
-  string txnId = 1; // 支付订单号
-  string payConf = 2; // 调起支付 json
-  string prepayId = 7; // 预支付交易会话标识
+  string txn_id = 1 [json_name = "txnId"]; // 支付订单号
+  string pay_conf = 2 [json_name = "payConf"]; // 调起支付 json
+  string prepay_id = 7 [json_name = "prepayId"]; // 预支付交易会话标识
 }
 
 service Zerorpc {

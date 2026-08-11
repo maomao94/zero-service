@@ -79,6 +79,7 @@ func (l *CreateCronJobLogic) CreateCronJob(in *trigger.CreateCronJobReq) (*trigg
 		RRuleStr:    schedule.RRuleStr,
 		Priority:    int(in.Priority),
 		LockTimeout: time.Duration(in.LockTimeout) * time.Millisecond,
+		MaxDelay:    time.Duration(in.MaxDelay) * time.Second,
 		Payload:     payload,
 		Extra:       extra,
 		Status:      crontask.StatusEnabled,

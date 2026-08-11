@@ -38,29 +38,29 @@ message ReceiveMQTTMessageRes {
 
 message MqttMessage {
   // 会话ID
-  string sessionId = 1;
+  string session_id = 1 [json_name = "sessionId"];
   // 消息唯一标识
-  string msgId = 2;
+  string msg_id = 2 [json_name = "msgId"];
   // 订阅主题模板
-  string topicTemplate = 3;
+  string topic_template = 3 [json_name = "topicTemplate"];
   // MQTT主题
   string topic = 4;
   // 消息体
   bytes payload = 5;
   // 消息发送时间
-  string sendTime = 6;
+  string send_time = 6 [json_name = "sendTime"];
 }
 
 
 message ReceiveWSMessageReq {
   // 会话ID
-  string sessionId = 1;
+  string session_id = 1 [json_name = "sessionId"];
   // 消息唯一标识
-  string msgId = 2;
+  string msg_id = 2 [json_name = "msgId"];
   // 消息体
   bytes payload = 3;
   // 消息发送时间
-  string sendTime = 4;
+  string send_time = 4 [json_name = "sendTime"];
 }
 
 message ReceiveWSMessageRes {
@@ -75,18 +75,18 @@ message ReceiveKafkaMessageRes {
 }
 
 message KafkaMessage {
-  string msgId = 1;
+  string msg_id = 1 [json_name = "msgId"];
   string topic = 2;
   string group = 3;
   string key = 4;
   bytes value = 5;
-  string sendTime = 6;
+  string send_time = 6 [json_name = "sendTime"];
 }
 
 // -------------------- 104协议 --------------------
 message PushChunkAsduReq {
-  string tId = 1; // 事务（Transaction）的 UUID
-  repeated MsgBody msgBody = 2;
+  string t_id = 1 [json_name = "tId"]; // 事务（Transaction）的 UUID
+  repeated MsgBody msg_body = 2 [json_name = "msgBody"];
 }
 
 message PushChunkAsduRes {
@@ -95,7 +95,7 @@ message PushChunkAsduRes {
 // 消息体结构
 message MsgBody {
   // 消息ID
-  string msgId = 1 [json_name = "msgId"];
+  string msg_id = 1 [json_name = "msgId"];
   // 采集设备地址
   string host = 2 [json_name = "host"];
   // 采集设备端口号
@@ -103,31 +103,31 @@ message MsgBody {
   // ASDU类型名称
   string asdu = 4 [json_name = "asdu"];
   // ASDU类型标识符
-  int32 typeId = 5 [json_name = "typeId"];
+  int32 type_id = 5 [json_name = "typeId"];
   // 信息体类型标识符
-  int32 dataType = 6 [json_name = "dataType"];
+  int32 data_type = 6 [json_name = "dataType"];
   // 公共地址（范围：1-65534,全局地址65535保留）
   uint32 coa = 7 [json_name = "coa"];
   // 信息体对象（结构随typeId变化）
-  string bodyRaw = 8 [json_name = "bodyRaw"];
+  string body_raw = 8 [json_name = "bodyRaw"];
   // 消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`,UTC+8时区）
   string time = 9 [json_name = "time"];
   // 应用级元数据（如：应用ID、用户信息、场站信息等）
-  string metaDataRaw = 10 [json_name = "metaDataRaw"];
+  string meta_data_raw = 10 [json_name = "metaDataRaw"];
   PointMapping pm = 11 [json_name = "pm"];
   // IEC104 帧关联ID（同一帧拆分出来的多条消息共享）
-  string traceId = 12 [json_name = "traceId"];
+  string trace_id = 12 [json_name = "traceId"];
   // OTel propagation headers（traceparent, tracestate）
   map<string, string> headers = 13 [json_name = "headers"];
 }
 
 message PointMapping {
   // 设备编号/ID
-  string deviceId = 1 [json_name = "deviceId"];
+  string device_id = 1 [json_name = "deviceId"];
   // 设备名称
-  string deviceName = 2 [json_name = "deviceName"];
+  string device_name = 2 [json_name = "deviceName"];
   // TDengine 表类型（遥信表/遥测表等，逗号分隔）
-  string tdTableType = 3 [json_name = "tdTableType"];
+  string td_table_type = 3 [json_name = "tdTableType"];
   // 扩展字段1，如：alarm, normal, control等，用于主题拆分
   string ext1 = 4 [json_name = "ext1"];
   // 扩展字段2
@@ -149,7 +149,7 @@ message SinglePointInfo {
   // 品质
   uint32 qds = 3 [json_name = "qds"];
   // 品质描述
-  string qdsDesc = 4 [json_name = "qdsDesc"];
+  string qds_desc = 4 [json_name = "qdsDesc"];
   // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
   // Blocked `true`=闭锁,`false`=未闭锁
@@ -173,7 +173,7 @@ message DoublePointInfo {
   // 品质
   uint32 qds = 3 [json_name = "qds"];
   // 品质描述
-  string qdsDesc = 4 [json_name = "qdsDesc"];
+  string qds_desc = 4 [json_name = "qdsDesc"];
   // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
   // Blocked `true`=闭锁,`false`=未闭锁
@@ -197,7 +197,7 @@ message MeasuredValueScaledInfo {
   // 品质
   uint32 qds = 3 [json_name = "qds"];
   // 品质描述
-  string qdsDesc = 4 [json_name = "qdsDesc"];
+  string qds_desc = 4 [json_name = "qdsDesc"];
   // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
   // Blocked `true`=闭锁,`false`=未闭锁`
@@ -223,7 +223,7 @@ message MeasuredValueNormalInfo {
   // 品质
   uint32 qds = 4 [json_name = "qds"];
   // 品质描述
-  string qdsDesc = 5 [json_name = "qdsDesc"];
+  string qds_desc = 5 [json_name = "qdsDesc"];
   // Overflow `true`=溢出,`false`=未溢出
   bool ov = 6 [json_name = "ov"];
   // Blocked `true`=闭锁,`false`=未闭锁
@@ -247,7 +247,7 @@ message StepPositionInfo {
   // 品质
   uint32 qds = 3 [json_name = "qds"];
   // 品质描述
-  string qdsDesc = 4 [json_name = "qdsDesc"];
+  string qds_desc = 4 [json_name = "qdsDesc"];
   // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
   // Blocked `true`=闭锁,`false`=未闭锁
@@ -267,7 +267,7 @@ message StepPosition {
   // 步位置值
   int32 val = 1 [json_name = "val"];
   // `true`=设备处于瞬变状态
-  bool hasTransient = 2 [json_name = "hasTransient"];
+  bool has_transient = 2 [json_name = "hasTransient"];
 }
 
 // 32位比特串
@@ -279,7 +279,7 @@ message BitString32Info {
   // 品质
   uint32 qds = 3 [json_name = "qds"];
   // 品质描述
-  string qdsDesc = 4 [json_name = "qdsDesc"];
+  string qds_desc = 4 [json_name = "qdsDesc"];
   // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
   // Blocked `true`=闭锁,`false`=未闭锁
@@ -303,7 +303,7 @@ message MeasuredValueFloatInfo {
   // 品质
   uint32 qds = 3 [json_name = "qds"];
   // 品质描述
-  string qdsDesc = 4 [json_name = "qdsDesc"];
+  string qds_desc = 4 [json_name = "qdsDesc"];
   // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
   // Blocked `true`=闭锁,`false`=未闭锁
@@ -330,15 +330,15 @@ message BinaryCounterReadingInfo {
 // 累计量值
 message BinaryCounterReading {
   // 计数器读数（32位有符号整数）
-  int32 counterReading = 1 [json_name = "counterReading"];
+  int32 counter_reading = 1 [json_name = "counterReading"];
   // 顺序号（范围：`0`-`31`）
-  uint32 seqNumber = 2 [json_name = "seqNumber"];
+  uint32 seq_number = 2 [json_name = "seqNumber"];
   // `true`=计数器溢出
-  bool hasCarry = 3  [json_name = "hasCarry"];
+  bool has_carry = 3  [json_name = "hasCarry"];
   // `true`=计数量被人工调整
-  bool isAdjusted = 4 [json_name = "isAdjusted"];
+  bool is_adjusted = 4 [json_name = "isAdjusted"];
   // `true`=数据无效
-  bool isInvalid = 5 [json_name = "isInvalid"];
+  bool is_invalid = 5 [json_name = "isInvalid"];
 }
 
 // 继电保护事件
@@ -350,7 +350,7 @@ message EventOfProtectionEquipmentInfo {
   // 保护事件品质
   uint32 qdp = 3 [json_name = "qdp"];
   // 保护事件品质描述
-  string qdpDesc = 4 [json_name = "qdpDesc"];
+  string qdp_desc = 4 [json_name = "qdpDesc"];
   // ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效
   bool ei = 5 [json_name = "ei"];
   // Blocked `true`=闭锁,`false`=未闭锁
@@ -376,7 +376,7 @@ message PackedStartEventsOfProtectionEquipmentInfo {
   // 保护事件品质
   uint32 qdp = 3 [json_name = "qdp"];
   // 保护事件品质描述
-  string qdpDesc = 4 [json_name = "qdpDesc"];
+  string qdp_desc = 4 [json_name = "qdpDesc"];
   // ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效
   bool ei = 5 [json_name = "ei"];
   // Blocked `true`=闭锁,`false`=未闭锁
@@ -410,7 +410,7 @@ message PackedOutputCircuitInfo {
   // 保护事件品质
   uint32 qdp = 7 [json_name = "qdp"];
   // 保护事件品质描述
-  string qdpDesc = 8 [json_name = "qdpDesc"];
+  string qdp_desc = 8 [json_name = "qdpDesc"];
   // ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效
   bool ei = 9 [json_name = "ei"];
   // Blocked `true`=闭锁,`false`=未闭锁
@@ -440,7 +440,7 @@ message PackedSinglePointWithSCDInfo {
   // 品质
   uint32 qds = 5 [json_name = "qds"];
   // 品质描述
-  string qdsDesc = 6 [json_name = "qdsDesc"];
+  string qds_desc = 6 [json_name = "qdsDesc"];
   // Overflow `true`=溢出,`false`=未溢出
   bool ov = 7 [json_name = "ov"];
   // Blocked `true`=闭锁,`false`=未闭锁
@@ -484,9 +484,9 @@ message UpSocketMessageReq{
   // 请求唯一标识。
   // __connection__ 和 __disconnect__ 由 socketgtw 生成;
   // __join_room_up__ 和 __up__ 通常来自浏览器请求中的 reqId。
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
   // SocketIO session ID, 对应当前连接的 socket id。
-  string sId = 2;
+  string s_id = 2 [json_name = "sId"];
   // 上行事件名。系统保留值包括:
   // __connection__、__disconnect__、__join_room_up__、__up__。
   string event = 3;
@@ -505,32 +505,32 @@ message UpSocketMessageRes{
 
 message PlanPb{
   // 创建时间
-  string createTime = 101;
+  string create_time = 101 [json_name = "createTime"];
   // 更新时间
-  string updateTime = 102;
+  string update_time = 102 [json_name = "updateTime"];
   // 创建人
-  string createUser = 103;
+  string create_user = 103 [json_name = "createUser"];
   // 更新人
-  string updateUser = 104;
+  string update_user = 104 [json_name = "updateUser"];
   // 机构code
-  string deptCode = 105;
+  string dept_code = 105 [json_name = "deptCode"];
 
   // 自增主键ID
   string id = 50;
   // 计划ID
-  string planId = 1;
+  string plan_id = 1 [json_name = "planId"];
   // 计划名称
-  string planName = 2;
+  string plan_name = 2 [json_name = "planName"];
   // 任务类型
   string type = 3;
   // 计划组ID,用于分组管理计划任务
-  string groupId = 4;
+  string group_id = 4 [json_name = "groupId"];
   // 描述
   string description = 5;
   // 规则生效开始时间
-  string startTime = 6;
+  string start_time = 6 [json_name = "startTime"];
   // 规则生效结束时间
-  string endTime = 7;
+  string end_time = 7 [json_name = "endTime"];
   // 扩展字段1
   string ext1 = 8;
   // 扩展字段2
@@ -549,67 +549,67 @@ message HandlerPlanTaskEventReq{
   // 自增主键ID
   string id = 50;
   // 关联的计划主键ID
-  string planPk = 1;
+  string plan_pk = 1 [json_name = "planPk"];
   // 计划ID 全局唯一
-  string planId = 2;
+  string plan_id = 2 [json_name = "planId"];
   // 批主键ID
-  string batchPk = 3;
+  string batch_pk = 3 [json_name = "batchPk"];
   // 批ID
-  string batchId = 4;
+  string batch_id = 4 [json_name = "batchId"];
   // 执行ID 全局唯一
-  string execId = 5;
+  string exec_id = 5 [json_name = "execId"];
   // 执行项ID
-  string itemId = 6;
+  string item_id = 6 [json_name = "itemId"];
   // 执行项类型
-  string itemType = 7;
+  string item_type = 7 [json_name = "itemType"];
   // 执行项名称
-  string itemName = 8;
+  string item_name = 8 [json_name = "itemName"];
   // 执行项行ID
-  int64 itemRowId = 9;
+  int64 item_row_id = 9 [json_name = "itemRowId"];
   // 点位id
-  string PointId = 10;
+  string point_id = 10 [json_name = "PointId"];
   // 业务负载
   string payload = 11;
   // 计划触发时间
-  string planTriggerTime = 12;
+  string plan_trigger_time = 12 [json_name = "planTriggerTime"];
   // 上次触发时间
-  string lastTriggerTime = 13;
+  string last_trigger_time = 13 [json_name = "lastTriggerTime"];
   // 上次执行结果
-  string lastResult = 14;
+  string last_result = 14 [json_name = "lastResult"];
   // 上次结果描述
-  string lastMessage = 15;
+  string last_message = 15 [json_name = "lastMessage"];
   // 上次结果原因
-  string lastReason = 16;
+  string last_reason = 16 [json_name = "lastReason"];
 }
 
 message HandlerPlanTaskEventRes{
   // 回调设计 参考 grpc status 用于分布式事务
   // 执行结果：completed-业务执行完成, terminated-业务终止, failed-业务执行失败, delayed-业务执行延期, ongoing-业务正在执行（未回调或部分异步）
-  string execResult = 1;
+  string exec_result = 1 [json_name = "execResult"];
   // 结果描述  可以定义自己状态码，等下次回调判断业务场景
   string message = 2;
   // 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
   string reason = 3;
   // 延期配置-默认延期5分钟：delayed,ongoing-自定义延期
-  DelayConfigPb delayConfig = 4;
+  DelayConfigPb delay_config = 4 [json_name = "delayConfig"];
 }
 
 message DelayConfigPb {
   // 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
-  string nextTriggerTime = 1;
+  string next_trigger_time = 1 [json_name = "nextTriggerTime"];
   // 延期原因
-  string delayReason = 2;
+  string delay_reason = 2 [json_name = "delayReason"];
 }
 
 
 message NotifyPlanEventReq {
   // 事件类型
-  PlanEventType eventType = 1;
+  PlanEventType event_type = 1 [json_name = "eventType"];
   // 关联的计划ID
-  string planId = 2;
-  string planType = 3;
+  string plan_id = 2 [json_name = "planId"];
+  string plan_type = 3 [json_name = "planType"];
   // 关联的批次ID（可选，plan完成时可为空）
-  string batchId = 4;
+  string batch_id = 4 [json_name = "batchId"];
   // 扩展字段，给未来留空间
   map<string, string> attributes = 5;
 }
@@ -628,11 +628,11 @@ message NotifyPlanEventRes {
 // HandleCronJobEventReq 是 Trigger 到点调用 Eventstream 的独立周期任务事件。
 message HandleCronJobEventReq {
   // Trigger 生成的 JobId，对应 cron_job.id。
-  string jobId = 1;
+  string job_id = 1 [json_name = "jobId"];
   // 调用方提供的全局唯一业务任务编码。
-  string taskCode = 2;
+  string task_code = 2 [json_name = "taskCode"];
   // 任务名称。
-  string taskName = 3;
+  string task_name = 3 [json_name = "taskName"];
   // 调度优先级，数字越大越优先。
   int32 priority = 4;
   // 创建任务时提交的业务参数 JSON。
@@ -640,11 +640,11 @@ message HandleCronJobEventReq {
   // Trigger 生成的 CronJobExtra JSON，包含调用方 bizExtra 和规则业务字段。
   string extra = 6;
   // 本次执行原计划时间，格式 yyyy-MM-dd HH:mm:ss；自动重试期间保持不变。
-  string scheduledTime = 7;
+  string scheduled_time = 7 [json_name = "scheduledTime"];
   // 任务类型。
   string type = 8;
   // 任务分组 ID。
-  string groupId = 9;
+  string group_id = 9 [json_name = "groupId"];
   // 任务描述。
   string description = 10;
 
@@ -660,7 +660,7 @@ message HandleCronJobEventReq {
   string ext5 = 54;
 
   // 机构编码。
-  string deptCode = 101;
+  string dept_code = 101 [json_name = "deptCode"];
 }
 
 // CronJobReceiptPb 是 Eventstream 对一次 Cron Job 触发的业务回执。

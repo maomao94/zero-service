@@ -23,4 +23,9 @@ type Config struct {
 	DB              gormx.Config  `json:",optional"`
 	GracePeriod     time.Duration `json:",default=30s"`
 	StreamEventConf zrpc.RpcClientConf
+	CronTask        CronTaskConfig `json:",optional"`
+}
+
+type CronTaskConfig struct {
+	MaxDelay time.Duration `json:",default=30m"`
 }

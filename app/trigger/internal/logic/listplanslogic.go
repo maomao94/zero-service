@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"encoding/json"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type ListPlansLogic struct {
@@ -74,7 +74,7 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 	for i := range plans {
 		// 解析规则
 		var pbRule trigger.PlanRulePb
-		if err := json.Unmarshal([]byte(plans[i].RecurrenceRule), &pbRule); err != nil {
+		if err := protojson.Unmarshal([]byte(plans[i].RecurrenceRule), &pbRule); err != nil {
 			continue
 		}
 		scheduleDescription, err := crontask.DescribeRRule(plans[i].RRuleStr)

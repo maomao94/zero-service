@@ -2,7 +2,7 @@
 
 ## 适用范围
 
-使用 goroutine、go-zero `mr`、`common/antsx`、Promise、ReplyPool、工作流拦截器或共享 map/state 时读取。
+使用 goroutine、go-zero `mr`、`common/antsx`、`common/asynqx`、Promise、ReplyPool、工作流拦截器或共享 map/state 时读取。
 
 ## 选择工具
 
@@ -14,10 +14,47 @@
 | 需要限制并发度 | `antsx.Reactor` 对应方法，所有者负责关闭 |
 | 单个未来结果及组合 | `antsx.Promise`，所有等待都带可取消/超时 context |
 | correlation ID 请求应答 | `antsx.ReplyPool` 或 `mqttx.ReplyRouter`，先注册后发送 |
+| Redis 后台任务队列 | `asynqx` 封装 asynq Client/TaskServer/SchedulerServer，见下方 |
 
 不要为简单同步流程引入 Promise，也不要用裸 goroutine 重写已有并发/关联组件。
 
-依据：`common/antsx/invoke.go`、`common/antsx/promise.go`、`common/antsx/replypool.go`、仓库内 `mr.` 调用点。
+依据：`common/antsx/invoke.go`、`common/antsx/promise.go`、`common/antsx/replypool.go`、`common/asynqx/`、仓库内 `mr.` 调用点。
+
+## asynqx — asynq 任务队列封装
+
+### 组件
+
+| 组件 | 用途 |
+|------|------|
+| `NewAsynqClient(addr, pass, db)` | 创建任务生产者，将任务入队到 Redis |
+| `NewTaskServer(server, mux)` | 任务消费者，`Start()` 运行 worker，`Stop()` 优雅关闭 |
+| `NewSchedulerServer(server)` | 周期调度器，按 cron 表达式注册周期任务，`Start()`/`Stop()` |
+| `LoggingMiddleware` | asynq 中间件，记录每次任务处理的耗时、类型、taskId |
+| `BaseLogger` | asynq.Logger 实现，适配 go-zero logx |
+
+### 配置约定
+
+- Redis 连接统一设置 5s DialTimeout/ReadTimeout/WriteTimeout，连接池 50。
+- TaskServer 默认并发度 20，队列优先级: `critical:6 / default:3 / low:1`。
+- SchedulerServer 使用 `Asia/Shanghai` 时区，`PostEnqueueFunc` 记录入队错误。
+- `IsFailure` 对所有 error 返回 true（失败触发 asynq 重试）。
+
+依据：`common/asynqx/asynqClient.go`、`common/asynqx/asynqTaskServer.go`、`common/asynqx/asynqSchedulerServer.go`、`common/asynqx/log.go`。
+
+### OTel 追踪
+
+- `StartAsynqProducerSpan(ctx, typename)` — 生产者端创建 trace span（`SpanKindProducer`），设置 `asynq.type` 属性。
+- `StartAsynqConsumerSpan(ctx, typename)` — 消费者端创建 trace span（`SpanKindConsumer`），设置 `asynq.type` 属性。
+- 调用方负责在 span 内入队/处理任务，结束后关闭 span。
+
+依据：`common/asynqx/asynqClient.go`、`common/asynqx/asynqTaskServer.go`。
+
+### 反模式 (asynqx)
+
+- 将 asynq 入队成功当作任务处理成功（队列成功 ≠ 消费成功）。
+- 在 TaskServer handler 中 panic 而不返回 error（asynq 依赖 error 决定重试）。
+- SchedulerServer 注册的 cron 任务没有 `Retention` 配置（任务过期被清理）。
+- 绕过 `LoggingMiddleware` 直接注册 handler（丢失统一日志）。
 
 ## 生命周期与错误
 

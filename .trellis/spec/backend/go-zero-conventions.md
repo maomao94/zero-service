@@ -29,6 +29,14 @@
 - 跨服务调用使用生成 client 或现有 facade，不直接导入另一个服务的 `internal/`。
 - 多个入口共享业务时提取服务私有组件或公共领域接口，避免 Handler 互相调用。
 
+## trace ID 获取
+
+- 获取当前 trace ID 统一使用 `trace.TraceIDFromContext(ctx)`（`"github.com/zeromicro/go-zero/core/trace"`）。
+- 不要直接使用 `oteltrace.SpanFromContext(ctx).SpanContext().TraceID().String()`，go-zero 已封装好零值安全的一行调用。
+- 未接入 OTEL 时返回空字符串，调用方无需做 nil span 判断。
+
+依据：`zerorpc/internal/task/deferforwardtask.go`、`zerorpc/internal/logic/forwardtasklogic.go`、`app/trigger/cron/cronservice.go`、`app/trigger/internal/logic/sendtriggerlogic.go`、`common/crontask/crontask.go`。
+
 ## 反模式
 
 - 手写或长期修改生成的 Server/Handler/Routes/Types。

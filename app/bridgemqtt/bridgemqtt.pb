@@ -1,5 +1,5 @@
 
-É
+Ê
 bridgemqtt.proto
 bridgemqtt"<
 
@@ -10,9 +10,9 @@ PublishReq
 PublishRes"E
 PublishWithTraceReq
 topic (	Rtopic
-payload (Rpayload"/
-PublishWithTraceRes
-traceId (	RtraceId2
+payload (Rpayload"0
+PublishWithTraceRes
+trace_id (	RtraceId2
 
 BridgeMqtt9
 Publish.bridgemqtt.PublishReq.bridgemqtt.PublishResT

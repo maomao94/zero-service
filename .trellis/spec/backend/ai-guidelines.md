@@ -11,7 +11,29 @@
 - Lite/runtime runner 通过协议事件输出模型、工具调用和结果；新增事件保持顺序和结束语义，不把内部 callback 直接暴露。
 - 工具迭代必须有上限并响应 context，避免模型/工具循环无限运行。工具 panic/error 转成明确事件或错误，不吞掉。
 
-依据：`common/einox/runtime/runner.go`、`common/einox/tool/kit.go`、`common/einox` 测试。
+### einox 子包速览
+
+| 子包 | 职责 |
+|------|------|
+| `agent/` | Agent 工厂、配置选项（基于 eino） |
+| `runtime/` | Runner 执行器，协调模型调用、工具执行、RAG 检索 |
+| `tool/` | 工具注册（capability/policy/mcp adapter）、内置工具（compute/io/human） |
+| `model/` | ChatModel 封装与选项 |
+| `memory/` | 会话记忆存储（GORM/JSONL/内存） |
+| `knowledge/` | 知识库服务（GORM/Redis/Milvus 存储、embedding、分块） |
+| `checkpoint/` | 执行检查点持久化（GORM/JSONL），支持 resume |
+| `protocol/` | 协议事件定义与 codec |
+| `middleware/` | 中间件（如审批流 approval） |
+| `metrics/` | 执行指标采集 |
+| `fsrestrict/` | 文件系统访问控制，限制工具只能访问会话 workspace |
+
+mcpx 额外能力：
+- `async_result.go` — 异步工具结果存储接口与实现
+- `auth.go` — JWT/ServiceToken 双认证验证器
+- `config.go` — 多 Server 配置、SSE/Streamable transport 切换
+- `wrapper.go` — HTTP handler 包装（CORS、超时）
+
+依据：`common/einox/runtime/runner.go`、`common/einox/tool/kit.go`、`common/einox/tool/policy.go`、`common/mcpx/client.go`、`common/mcpx/server.go`、`common/mcpx/auth.go`、`common/einox` 测试。
 
 ## 会话执行所有权
 

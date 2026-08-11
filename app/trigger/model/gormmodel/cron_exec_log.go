@@ -10,6 +10,7 @@ import (
 type CronExecLog struct {
 	gormx.LegacyStringBaseModel
 
+	TraceId       string    `gorm:"column:trace_id;size:64;comment:追踪 ID"`
 	JobId         string    `gorm:"column:job_id;size:64;index:idx_cron_exec_log_job_id;comment:cron_job ID"`
 	TaskCode      string    `gorm:"column:task_code;size:64;index:idx_cron_exec_log_task_code;comment:任务编码"`
 	TaskName      string    `gorm:"column:task_name;size:128;comment:任务名称"`

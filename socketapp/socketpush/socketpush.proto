@@ -51,103 +51,103 @@ message GenTokenReq {
 }
 
 message GenTokenRes {
-  string accessToken = 1;
-  int64 accessExpire = 2;
-  int64 refreshAfter = 3;
+  string access_token = 1 [json_name = "accessToken"];
+  int64 access_expire = 2 [json_name = "accessExpire"];
+  int64 refresh_after = 3 [json_name = "refreshAfter"];
 }
 
 message VerifyTokenReq {
-  string accessToken = 1;
+  string access_token = 1 [json_name = "accessToken"];
 }
 
 message VerifyTokenRes {
-  string claimJson = 1;
+  string claim_json = 1 [json_name = "claimJson"];
 }
 
 message JoinRoomReq {
-  string reqId = 1;
-  string socketId = 2;
+  string req_id = 1 [json_name = "reqId"];
+  string socket_id = 2 [json_name = "socketId"];
   string room = 3;
 }
 
 message JoinRoomRes {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
 }
 
 message LeaveRoomReq {
-  string reqId = 1;
-  string socketId = 2;
+  string req_id = 1 [json_name = "reqId"];
+  string socket_id = 2 [json_name = "socketId"];
   string room = 3;
 }
 
 message LeaveRoomRes {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
 }
 
 message BroadcastRoomReq {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
   string room = 2;
   string event = 3;
   string payload = 4;
 }
 
 message BroadcastRoomRes {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
 }
 
 message BroadcastGlobalReq {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
   string event = 2;
   string payload = 3;
 }
 
 message BroadcastGlobalRes {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
 }
 
 message KickSessionReq {
-  string reqId = 1;
-  string socketId = 2;
+  string req_id = 1 [json_name = "reqId"];
+  string socket_id = 2 [json_name = "socketId"];
 }
 
 message KickSessionRes {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
 }
 
 message KickMetaSessionReq {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
   string key = 2;
   string value = 3;
 }
 
 message KickMetaSessionRes {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
 }
 
 message SendToSessionReq {
-  string reqId = 1;
-  string socketId = 2;
+  string req_id = 1 [json_name = "reqId"];
+  string socket_id = 2 [json_name = "socketId"];
   string event = 3;
   string payload = 4;
 }
 
 message SendToSessionRes {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
 }
 
 message SendToSessionsReq {
-  string reqId = 1;
-  repeated string socketIds = 2;
+  string req_id = 1 [json_name = "reqId"];
+  repeated string socket_ids = 2 [json_name = "socketIds"];
   string event = 3;
   string payload = 4;
 }
 
 message SendToSessionsRes {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
 }
 
 message SendToMetaSessionReq {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
   string key = 2;
   string value = 3;
   string event = 4;
@@ -155,18 +155,18 @@ message SendToMetaSessionReq {
 }
 
 message SendToMetaSessionRes {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
 }
 
 message SendToMetaSessionsReq {
-  string reqId = 1;
-  repeated PbMetaSession metaSessions = 2;
+  string req_id = 1 [json_name = "reqId"];
+  repeated PbMetaSession meta_sessions = 2 [json_name = "metaSessions"];
   string event = 3;
   string payload = 4;
 }
 
 message SendToMetaSessionsRes {
-  string reqId = 1;
+  string req_id = 1 [json_name = "reqId"];
 }
 
 message SocketGtwStatReq {
