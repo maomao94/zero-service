@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/crontask"
+	"zero-service/common/gormx"
 	"zero-service/facade/streamevent/streamevent"
 
 	"google.golang.org/grpc"
@@ -59,6 +61,43 @@ func NewEventHandler(client EventClient) crontask.Handler {
 		default:
 			return fmt.Errorf("Eventstream Cron Job 回执未知: receipt=%s message=%s", response.Receipt.String(), response.Message)
 		}
+	}
+}
+
+// NewLoggingEventHandler 创建带执行日志记录的调度 Handler。
+// 每次 handler 执行后自动写入 CronExecLog 记录。
+func NewLoggingEventHandler(db *gormx.DB, client EventClient) crontask.Handler {
+	inner := NewEventHandler(client)
+	return func(ctx context.Context, task *crontask.TaskConfig) error {
+		startTime := time.Now()
+		err := inner(ctx, task)
+		endTime := time.Now()
+		costMs := endTime.Sub(startTime).Milliseconds()
+
+		status := 1
+		errMsg := ""
+		if err != nil {
+			status = 0
+			errMsg = err.Error()
+		}
+
+		log := &gormmodel.CronExecLog{
+			JobId:         task.ID,
+			TaskCode:      task.TaskCode,
+			TaskName:      task.TaskName,
+			ScheduledTime: task.ScheduledTime,
+			StartTime:     startTime,
+			EndTime:       endTime,
+			CostMs:        costMs,
+			Status:        status,
+			ErrorMessage:  errMsg,
+		}
+		// 执行日志写入失败不影响 handler 返回结果。
+		if createErr := db.WithContext(ctx).Create(log).Error; createErr != nil {
+			_ = createErr // silently ignore log write errors
+		}
+
+		return err
 	}
 }
 

@@ -1379,3 +1379,26 @@ Phase A (proto): renamed 6 mismatched platform response types to <RpcName>Res, a
 ### Status
 
 [OK] **Completed**
+
+
+## Session 152: feat(trigger): 新增 CronExecLog 模型记录 crontask 执行日志
+
+**Date**: 2026-08-11
+**Task**: feat(trigger): 新增 CronExecLog 模型记录 crontask 执行日志
+**Branch**: `master`
+
+### Summary
+
+新增 CronExecLog gorm 模型，通过 NewLoggingEventHandler 装饰器在每次 crontask 调度执行完成后自动写入执行日志（job_id/task_code/task_name/scheduled_time/start_time/end_time/cost_ms/status/error_message），并注册 auto-migrate。编译及测试均通过。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c0990c08` | (see git log) |
+| `8f385761` | (see git log) |
+| `63a0f136` | (see git log) |
+
+### Status
+
+[OK] **Completed**

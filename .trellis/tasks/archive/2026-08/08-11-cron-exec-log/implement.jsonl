@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/backend/gormx-guidelines.md", "reason": "Model 创建规范：组合 LegacyStringBaseModel、字段命名、sql.NullTime 空值处理"}
+{"file": ".trellis/spec/backend/trigger-guidelines.md", "reason": "CronJob handler 注册边界、ServiceContext 组装模式、Store 所有权"}
+{"file": ".trellis/spec/backend/crontask-guidelines.md", "reason": "Handler 签名与执行生命周期、执行结果处理"}

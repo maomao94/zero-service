@@ -73,6 +73,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			&gormmodel.PlanExecItem{},
 			&gormmodel.PlanExecLog{},
 			&gormmodel.CronJob{},
+			&gormmodel.CronExecLog{},
 			&holiday.GormHoliday{})
 	}
 	holidaySource := holiday.NewGormSource(db, holiday.WithGormAutoMigrate(c.Mode == service.DevMode || c.Mode == service.TestMode))
@@ -107,6 +108,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		HolidaySource:    holidaySource,
 		HolidayCalendar:  holidayCal,
 		CronJobStore:     cronJobStore,
-		CronJobScheduler: commoncrontask.NewScheduler(cronJobStore, cronjob.NewEventHandler(streamEventCli)),
+		CronJobScheduler: commoncrontask.NewScheduler(cronJobStore, cronjob.NewLoggingEventHandler(db, streamEventCli)),
 	}
 }
