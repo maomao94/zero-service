@@ -175,7 +175,7 @@ func (s *DBStore) Insert(ctx context.Context, cfg *crontask.TaskConfig) error {
 	return nil
 }
 
-// Update 按 id 全量更新 Cron Job 配置，并保留运行态历史时间。
+// Update 按 id 全量更新 Cron Job 配置，并保留控制状态与运行态历史时间。
 func (s *DBStore) Update(ctx context.Context, cfg *crontask.TaskConfig) error {
 	if err := crontask.ValidateRRule(cfg.RRuleStr); err != nil {
 		return err
@@ -188,14 +188,17 @@ func (s *DBStore) Update(ctx context.Context, cfg *crontask.TaskConfig) error {
 	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		result := tx.Model(&gormmodel.CronJob{}).
 			Where("id = ?", cfg.ID).
-			Select("*").
-			Omit("id", "create_time", "delete_time", "is_deleted", "last_run", "last_scheduled_run", "scheduled_time", "next_run").
+			Select(
+				"task_name", "rrule_str", "priority", "lock_timeout", "max_delay", "payload", "extra",
+				"dept_code", "type", "group_id", "description", "start_time", "end_time", "rule", "exclude_dates",
+				"ext_1", "ext_2", "ext_3", "ext_4", "ext_5",
+			).
 			Updates(record)
 		if result.Error != nil {
 			return result.Error
 		}
 		if result.RowsAffected == 0 {
-			return crontask.ErrNotFound
+			return crontask.ErrUpdate
 		}
 		return tx.Model(&gormmodel.CronJob{}).
 			Where("id = ?", cfg.ID).

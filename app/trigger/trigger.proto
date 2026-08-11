@@ -118,6 +118,10 @@ service TriggerRpc {
 
   // 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
   rpc CreateCronJob(CreateCronJobReq) returns (CreateCronJobRes);
+  // 按 Trigger JobId 更新完整 Cron Job 配置，不允许修改 TaskCode
+  rpc UpdateCronJob(UpdateCronJobReq) returns (UpdateCronJobRes);
+  // 按 TaskCode 幂等提交完整 Cron Job 配置，不存在时创建，存在时更新
+  rpc SubmitCronJob(SubmitCronJobReq) returns (SubmitCronJobRes);
   // 启用 Cron Job，并从当前时间重新计算未来执行时间
   rpc EnableCronJob(EnableCronJobReq) returns (EnableCronJobRes);
   // 禁用 Cron Job，禁用后调度器不再扫描该任务
@@ -128,6 +132,8 @@ service TriggerRpc {
   rpc RunCronJob(RunCronJobReq) returns (RunCronJobRes);
   // 获取 Cron Job 详情
   rpc GetCronJob(GetCronJobReq) returns (GetCronJobRes);
+  // 预览指定 Cron Job 从当前时间之后的计划执行时间，不改变任务状态
+  rpc PreviewCronJobSchedule(PreviewCronJobScheduleReq) returns (PreviewCronJobScheduleRes);
   // 分页获取 Cron Job 列表
   rpc ListCronJobs(ListCronJobsReq) returns (ListCronJobsRes);
 
@@ -1389,6 +1395,122 @@ message CreateCronJobRes {
   string next_run = 2;
 }
 
+// UpdateCronJobReq 使用 JobId 定位任务，并提交扁平的完整 Cron Job 配置。
+message UpdateCronJobReq {
+  // Trigger 生成的 JobId。
+  string job_id = 1 [(validate.rules).string = {min_len: 1}];
+  // 任务名称。
+  string task_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  // 任务类型。
+  string type = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  // 任务分组 ID，用于业务侧分组管理。
+  string group_id = 4 [(validate.rules).string = {max_len: 64}];
+  // 任务描述。
+  string description = 5 [(validate.rules).string = {max_len: 200}];
+  // 规则生效开始时间；不传时默认当前年份第一天，格式 yyyy-MM-dd HH:mm:ss。
+  string start_time = 6;
+  // 规则生效结束时间；不传时默认开始时间所在年份最后一天，格式 yyyy-MM-dd HH:mm:ss。
+  string end_time = 7;
+  // 业务周期规则，由 Trigger 编译为 RFC 5545 RRULE。
+  PlanRulePb rule = 8 [(validate.rules).message = {required: true}];
+  // 排除日期列表，格式 yyyy-MM-dd；这些日期的计划时间不会触发。
+  repeated string exclude_dates = 9 [(validate.rules).repeated = {items: {string: {len: 10}}}];
+  // 调度优先级，数字越大越优先。
+  int32 priority = 10 [(validate.rules).int32 = {gte: 0}];
+  // 执行业务参数 JSON；为空表示没有业务参数。
+  string payload = 11;
+  // 调用方业务扩展 JSON；Trigger 将其放入 CronJobExtra.bizExtra。
+  string extra = 12;
+  // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
+  int64 lock_timeout = 13 [(validate.rules).int64 = {gte: 0}];
+  // 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
+  int64 max_delay = 14 [(validate.rules).int64 = {gte: 0}];
+  // 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
+  bool skip_time_filter = 15;
+
+  // 扩展字段 1。
+  string ext1 = 50;
+  // 扩展字段 2。
+  string ext2 = 51;
+  // 扩展字段 3。
+  string ext3 = 52;
+  // 扩展字段 4。
+  string ext4 = 53;
+  // 扩展字段 5。
+  string ext5 = 54;
+
+  // 机构编码。
+  string dept_code = 101 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+// UpdateCronJobRes 返回更新后的任务标识和当前可展示的下次执行时间。
+message UpdateCronJobRes {
+  // Trigger 生成的 JobId，对应 cron_job.id。
+  string job_id = 1;
+  // 当前可展示的下次执行时间，格式 yyyy-MM-dd HH:mm:ss；无下次调度时为空字符串。
+  string next_run = 2;
+  // 上游业务任务编码。
+  string task_code = 3;
+}
+
+// SubmitCronJobReq 按 TaskCode 提交扁平的完整 Cron Job 配置。
+message SubmitCronJobReq {
+  // 全局唯一业务任务编码；与 Trigger 生成的 JobId 是两个不同标识。
+  string task_code = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  // 任务名称。
+  string task_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  // 任务类型。
+  string type = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  // 任务分组 ID，用于业务侧分组管理。
+  string group_id = 4 [(validate.rules).string = {max_len: 64}];
+  // 任务描述。
+  string description = 5 [(validate.rules).string = {max_len: 200}];
+  // 规则生效开始时间；不传时默认当前年份第一天，格式 yyyy-MM-dd HH:mm:ss。
+  string start_time = 6;
+  // 规则生效结束时间；不传时默认开始时间所在年份最后一天，格式 yyyy-MM-dd HH:mm:ss。
+  string end_time = 7;
+  // 业务周期规则，由 Trigger 编译为 RFC 5545 RRULE。
+  PlanRulePb rule = 8 [(validate.rules).message = {required: true}];
+  // 排除日期列表，格式 yyyy-MM-dd；这些日期的计划时间不会触发。
+  repeated string exclude_dates = 9 [(validate.rules).repeated = {items: {string: {len: 10}}}];
+  // 调度优先级，数字越大越优先。
+  int32 priority = 10 [(validate.rules).int32 = {gte: 0}];
+  // 执行业务参数 JSON；为空表示没有业务参数。
+  string payload = 11;
+  // 调用方业务扩展 JSON；Trigger 将其放入 CronJobExtra.bizExtra。
+  string extra = 12;
+  // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
+  int64 lock_timeout = 13 [(validate.rules).int64 = {gte: 0}];
+  // 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
+  int64 max_delay = 14 [(validate.rules).int64 = {gte: 0}];
+  // 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
+  bool skip_time_filter = 15;
+
+  // 扩展字段 1。
+  string ext1 = 50;
+  // 扩展字段 2。
+  string ext2 = 51;
+  // 扩展字段 3。
+  string ext3 = 52;
+  // 扩展字段 4。
+  string ext4 = 53;
+  // 扩展字段 5。
+  string ext5 = 54;
+
+  // 机构编码。
+  string dept_code = 101 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+
+// SubmitCronJobRes 返回创建或更新后的任务标识和当前下次执行时间。
+message SubmitCronJobRes {
+  // Trigger 生成的 JobId，对应 cron_job.id。
+  string job_id = 1;
+  // 当前可展示的下次执行时间，格式 yyyy-MM-dd HH:mm:ss；无下次调度时为空字符串。
+  string next_run = 2;
+  // 上游业务任务编码。
+  string task_code = 3;
+}
+
 // EnableCronJobReq 启用指定 Cron Job。
 message EnableCronJobReq {
   // Trigger 生成的 JobId。
@@ -1441,6 +1563,28 @@ message GetCronJobReq {
 message GetCronJobRes {
   // Cron Job 详情。
   CronJobPb cron_job = 1;
+}
+
+// PreviewCronJobScheduleReq 是 Cron Job 未来执行时间预览请求。
+message PreviewCronJobScheduleReq {
+  // Trigger 生成的 JobId。
+  string job_id = 1 [json_name = "jobId", (validate.rules).string = {min_len: 1}];
+  // 返回的执行时间数量；0 使用默认值 10，最大 100。
+  int32 count = 2 [(validate.rules).int32 = {gte: 0, lte: 100}];
+}
+
+// PreviewCronJobScheduleRes 返回基于持久化 RRULE Set 计算的未来执行时间。
+message PreviewCronJobScheduleRes {
+  // Trigger 生成的 JobId。
+  string job_id = 1 [json_name = "jobId"];
+  // 上游业务任务编码。
+  string task_code = 2 [json_name = "taskCode"];
+  // 严格晚于请求处理时刻的计划执行时间，格式 yyyy-MM-dd HH:mm:ss。
+  repeated string execution_times = 3 [json_name = "executionTimes"];
+  // 根据实际持久化 RRULE Set 生成的简体中文描述。
+  string schedule_description = 4 [json_name = "scheduleDescription"];
+  // 实际持久化并用于调度的 RFC 5545 RRULE Set 原文。
+  string rrule_str = 5 [json_name = "rruleStr"];
 }
 
 // ListCronJobsReq 是 Cron Job 分页查询请求。
@@ -1628,4 +1772,3 @@ message InvokeRes {
   // 每个任务的独立执行结果
   repeated InvokeTaskResultPb results = 1;
 }
-

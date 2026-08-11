@@ -14625,6 +14625,770 @@ var _ interface {
 	ErrorName() string
 } = CreateCronJobResValidationError{}
 
+// Validate checks the field values on UpdateCronJobReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *UpdateCronJobReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UpdateCronJobReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// UpdateCronJobReqMultiError, or nil if none found.
+func (m *UpdateCronJobReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UpdateCronJobReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetJobId()) < 1 {
+		err := UpdateCronJobReqValidationError{
+			field:  "JobId",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetTaskName()); l < 1 || l > 128 {
+		err := UpdateCronJobReqValidationError{
+			field:  "TaskName",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetType()); l < 1 || l > 64 {
+		err := UpdateCronJobReqValidationError{
+			field:  "Type",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetGroupId()) > 64 {
+		err := UpdateCronJobReqValidationError{
+			field:  "GroupId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetDescription()) > 200 {
+		err := UpdateCronJobReqValidationError{
+			field:  "Description",
+			reason: "value length must be at most 200 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for StartTime
+
+	// no validation rules for EndTime
+
+	if m.GetRule() == nil {
+		err := UpdateCronJobReqValidationError{
+			field:  "Rule",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetRule()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, UpdateCronJobReqValidationError{
+					field:  "Rule",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, UpdateCronJobReqValidationError{
+					field:  "Rule",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRule()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return UpdateCronJobReqValidationError{
+				field:  "Rule",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetExcludeDates() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) != 10 {
+			err := UpdateCronJobReqValidationError{
+				field:  fmt.Sprintf("ExcludeDates[%v]", idx),
+				reason: "value length must be 10 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+
+		}
+
+	}
+
+	if m.GetPriority() < 0 {
+		err := UpdateCronJobReqValidationError{
+			field:  "Priority",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Payload
+
+	// no validation rules for Extra
+
+	if m.GetLockTimeout() < 0 {
+		err := UpdateCronJobReqValidationError{
+			field:  "LockTimeout",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetMaxDelay() < 0 {
+		err := UpdateCronJobReqValidationError{
+			field:  "MaxDelay",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for SkipTimeFilter
+
+	// no validation rules for Ext1
+
+	// no validation rules for Ext2
+
+	// no validation rules for Ext3
+
+	// no validation rules for Ext4
+
+	// no validation rules for Ext5
+
+	if l := utf8.RuneCountInString(m.GetDeptCode()); l < 1 || l > 64 {
+		err := UpdateCronJobReqValidationError{
+			field:  "DeptCode",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return UpdateCronJobReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// UpdateCronJobReqMultiError is an error wrapping multiple validation errors
+// returned by UpdateCronJobReq.ValidateAll() if the designated constraints
+// aren't met.
+type UpdateCronJobReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UpdateCronJobReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UpdateCronJobReqMultiError) AllErrors() []error { return m }
+
+// UpdateCronJobReqValidationError is the validation error returned by
+// UpdateCronJobReq.Validate if the designated constraints aren't met.
+type UpdateCronJobReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateCronJobReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateCronJobReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateCronJobReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateCronJobReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateCronJobReqValidationError) ErrorName() string { return "UpdateCronJobReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e UpdateCronJobReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateCronJobReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateCronJobReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateCronJobReqValidationError{}
+
+// Validate checks the field values on UpdateCronJobRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *UpdateCronJobRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UpdateCronJobRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// UpdateCronJobResMultiError, or nil if none found.
+func (m *UpdateCronJobRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UpdateCronJobRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for JobId
+
+	// no validation rules for NextRun
+
+	// no validation rules for TaskCode
+
+	if len(errors) > 0 {
+		return UpdateCronJobResMultiError(errors)
+	}
+
+	return nil
+}
+
+// UpdateCronJobResMultiError is an error wrapping multiple validation errors
+// returned by UpdateCronJobRes.ValidateAll() if the designated constraints
+// aren't met.
+type UpdateCronJobResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UpdateCronJobResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UpdateCronJobResMultiError) AllErrors() []error { return m }
+
+// UpdateCronJobResValidationError is the validation error returned by
+// UpdateCronJobRes.Validate if the designated constraints aren't met.
+type UpdateCronJobResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateCronJobResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateCronJobResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateCronJobResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateCronJobResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateCronJobResValidationError) ErrorName() string { return "UpdateCronJobResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e UpdateCronJobResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateCronJobRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateCronJobResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateCronJobResValidationError{}
+
+// Validate checks the field values on SubmitCronJobReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *SubmitCronJobReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SubmitCronJobReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SubmitCronJobReqMultiError, or nil if none found.
+func (m *SubmitCronJobReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SubmitCronJobReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTaskCode()); l < 1 || l > 64 {
+		err := SubmitCronJobReqValidationError{
+			field:  "TaskCode",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetTaskName()); l < 1 || l > 128 {
+		err := SubmitCronJobReqValidationError{
+			field:  "TaskName",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetType()); l < 1 || l > 64 {
+		err := SubmitCronJobReqValidationError{
+			field:  "Type",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetGroupId()) > 64 {
+		err := SubmitCronJobReqValidationError{
+			field:  "GroupId",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetDescription()) > 200 {
+		err := SubmitCronJobReqValidationError{
+			field:  "Description",
+			reason: "value length must be at most 200 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for StartTime
+
+	// no validation rules for EndTime
+
+	if m.GetRule() == nil {
+		err := SubmitCronJobReqValidationError{
+			field:  "Rule",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetRule()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SubmitCronJobReqValidationError{
+					field:  "Rule",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SubmitCronJobReqValidationError{
+					field:  "Rule",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRule()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SubmitCronJobReqValidationError{
+				field:  "Rule",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetExcludeDates() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) != 10 {
+			err := SubmitCronJobReqValidationError{
+				field:  fmt.Sprintf("ExcludeDates[%v]", idx),
+				reason: "value length must be 10 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+
+		}
+
+	}
+
+	if m.GetPriority() < 0 {
+		err := SubmitCronJobReqValidationError{
+			field:  "Priority",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Payload
+
+	// no validation rules for Extra
+
+	if m.GetLockTimeout() < 0 {
+		err := SubmitCronJobReqValidationError{
+			field:  "LockTimeout",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetMaxDelay() < 0 {
+		err := SubmitCronJobReqValidationError{
+			field:  "MaxDelay",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for SkipTimeFilter
+
+	// no validation rules for Ext1
+
+	// no validation rules for Ext2
+
+	// no validation rules for Ext3
+
+	// no validation rules for Ext4
+
+	// no validation rules for Ext5
+
+	if l := utf8.RuneCountInString(m.GetDeptCode()); l < 1 || l > 64 {
+		err := SubmitCronJobReqValidationError{
+			field:  "DeptCode",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return SubmitCronJobReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// SubmitCronJobReqMultiError is an error wrapping multiple validation errors
+// returned by SubmitCronJobReq.ValidateAll() if the designated constraints
+// aren't met.
+type SubmitCronJobReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SubmitCronJobReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SubmitCronJobReqMultiError) AllErrors() []error { return m }
+
+// SubmitCronJobReqValidationError is the validation error returned by
+// SubmitCronJobReq.Validate if the designated constraints aren't met.
+type SubmitCronJobReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SubmitCronJobReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SubmitCronJobReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SubmitCronJobReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SubmitCronJobReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SubmitCronJobReqValidationError) ErrorName() string { return "SubmitCronJobReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e SubmitCronJobReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSubmitCronJobReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SubmitCronJobReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SubmitCronJobReqValidationError{}
+
+// Validate checks the field values on SubmitCronJobRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *SubmitCronJobRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SubmitCronJobRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SubmitCronJobResMultiError, or nil if none found.
+func (m *SubmitCronJobRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SubmitCronJobRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for JobId
+
+	// no validation rules for NextRun
+
+	// no validation rules for TaskCode
+
+	if len(errors) > 0 {
+		return SubmitCronJobResMultiError(errors)
+	}
+
+	return nil
+}
+
+// SubmitCronJobResMultiError is an error wrapping multiple validation errors
+// returned by SubmitCronJobRes.ValidateAll() if the designated constraints
+// aren't met.
+type SubmitCronJobResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SubmitCronJobResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SubmitCronJobResMultiError) AllErrors() []error { return m }
+
+// SubmitCronJobResValidationError is the validation error returned by
+// SubmitCronJobRes.Validate if the designated constraints aren't met.
+type SubmitCronJobResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SubmitCronJobResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SubmitCronJobResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SubmitCronJobResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SubmitCronJobResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SubmitCronJobResValidationError) ErrorName() string { return "SubmitCronJobResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e SubmitCronJobResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSubmitCronJobRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SubmitCronJobResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SubmitCronJobResValidationError{}
+
 // Validate checks the field values on EnableCronJobReq with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -15714,6 +16478,240 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = GetCronJobResValidationError{}
+
+// Validate checks the field values on PreviewCronJobScheduleReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *PreviewCronJobScheduleReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PreviewCronJobScheduleReq with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PreviewCronJobScheduleReqMultiError, or nil if none found.
+func (m *PreviewCronJobScheduleReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PreviewCronJobScheduleReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetJobId()) < 1 {
+		err := PreviewCronJobScheduleReqValidationError{
+			field:  "JobId",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if val := m.GetCount(); val < 0 || val > 100 {
+		err := PreviewCronJobScheduleReqValidationError{
+			field:  "Count",
+			reason: "value must be inside range [0, 100]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return PreviewCronJobScheduleReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// PreviewCronJobScheduleReqMultiError is an error wrapping multiple validation
+// errors returned by PreviewCronJobScheduleReq.ValidateAll() if the
+// designated constraints aren't met.
+type PreviewCronJobScheduleReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PreviewCronJobScheduleReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PreviewCronJobScheduleReqMultiError) AllErrors() []error { return m }
+
+// PreviewCronJobScheduleReqValidationError is the validation error returned by
+// PreviewCronJobScheduleReq.Validate if the designated constraints aren't met.
+type PreviewCronJobScheduleReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PreviewCronJobScheduleReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PreviewCronJobScheduleReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PreviewCronJobScheduleReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PreviewCronJobScheduleReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PreviewCronJobScheduleReqValidationError) ErrorName() string {
+	return "PreviewCronJobScheduleReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PreviewCronJobScheduleReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPreviewCronJobScheduleReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PreviewCronJobScheduleReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PreviewCronJobScheduleReqValidationError{}
+
+// Validate checks the field values on PreviewCronJobScheduleRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *PreviewCronJobScheduleRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PreviewCronJobScheduleRes with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PreviewCronJobScheduleResMultiError, or nil if none found.
+func (m *PreviewCronJobScheduleRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PreviewCronJobScheduleRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for JobId
+
+	// no validation rules for TaskCode
+
+	// no validation rules for ScheduleDescription
+
+	// no validation rules for RruleStr
+
+	if len(errors) > 0 {
+		return PreviewCronJobScheduleResMultiError(errors)
+	}
+
+	return nil
+}
+
+// PreviewCronJobScheduleResMultiError is an error wrapping multiple validation
+// errors returned by PreviewCronJobScheduleRes.ValidateAll() if the
+// designated constraints aren't met.
+type PreviewCronJobScheduleResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PreviewCronJobScheduleResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PreviewCronJobScheduleResMultiError) AllErrors() []error { return m }
+
+// PreviewCronJobScheduleResValidationError is the validation error returned by
+// PreviewCronJobScheduleRes.Validate if the designated constraints aren't met.
+type PreviewCronJobScheduleResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PreviewCronJobScheduleResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PreviewCronJobScheduleResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PreviewCronJobScheduleResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PreviewCronJobScheduleResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PreviewCronJobScheduleResValidationError) ErrorName() string {
+	return "PreviewCronJobScheduleResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PreviewCronJobScheduleResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPreviewCronJobScheduleRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PreviewCronJobScheduleResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PreviewCronJobScheduleResValidationError{}
 
 // Validate checks the field values on ListCronJobsReq with the rules defined
 // in the proto definition for this message. If any rules are violated, the

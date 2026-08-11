@@ -43,6 +43,101 @@ func TestNextAfterSupportsCRLFRRuleSet(t *testing.T) {
 	}
 }
 
+func TestSchedulerPreviewNextRunsHonorsExdateAndCount(t *testing.T) {
+	after := time.Date(2026, 7, 27, 8, 0, 0, 0, time.UTC)
+	task := &TaskConfig{RRuleStr: "DTSTART:20260727T090000Z\n" +
+		"RRULE:FREQ=DAILY;COUNT=5\n" +
+		"EXDATE:20260728T090000Z"}
+	scheduler := NewScheduler(nil, nil)
+
+	runs, err := scheduler.PreviewNextRuns(task, after, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []time.Time{
+		time.Date(2026, 7, 27, 9, 0, 0, 0, time.UTC),
+		time.Date(2026, 7, 29, 9, 0, 0, 0, time.UTC),
+	}
+	if len(runs) != len(want) {
+		t.Fatalf("runs = %v, want %v", runs, want)
+	}
+	for i := range want {
+		if !runs[i].Equal(want[i]) {
+			t.Fatalf("runs[%d] = %v, want %v", i, runs[i], want[i])
+		}
+	}
+	strictRuns, err := scheduler.PreviewNextRuns(task, want[0], 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(strictRuns) != 1 || !strictRuns[0].Equal(want[1]) {
+		t.Fatalf("strict-after runs = %v, want %v", strictRuns, want[1])
+	}
+}
+
+func TestSchedulerPreviewNextRunsAppliesInvalidTimeFilter(t *testing.T) {
+	after := time.Date(2026, 7, 27, 8, 0, 0, 0, time.UTC)
+	task := &TaskConfig{RRuleStr: "DTSTART:20260727T080000Z\nRRULE:FREQ=HOURLY;COUNT=8"}
+	filterCalls := 0
+	scheduler := NewScheduler(nil, nil, WithInvalidTimeFilter(func(task *TaskConfig, next time.Time) time.Time {
+		filterCalls++
+		for next.Hour() >= 9 && next.Hour() <= 12 {
+			var err error
+			next, err = NextAfter(task.RRuleStr, next)
+			if err != nil {
+				t.Fatalf("advance filtered time: %v", err)
+			}
+		}
+		return next
+	}))
+
+	runs, err := scheduler.PreviewNextRuns(task, after, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 2 || runs[0].Hour() != 13 || runs[1].Hour() != 14 {
+		t.Fatalf("filtered runs = %v", runs)
+	}
+	if filterCalls != 2 {
+		t.Fatalf("filter calls = %d, want 2 bounded result iterations", filterCalls)
+	}
+}
+
+func TestSchedulerPreviewNextRunsRejectsNonAdvancingFilterResult(t *testing.T) {
+	after := time.Date(2026, 7, 27, 8, 0, 0, 0, time.UTC)
+	task := &TaskConfig{RRuleStr: "DTSTART:20260727T090000Z\nRRULE:FREQ=HOURLY;COUNT=3"}
+	scheduler := NewScheduler(nil, nil, WithInvalidTimeFilter(func(_ *TaskConfig, _ time.Time) time.Time {
+		return after
+	}))
+	if _, err := scheduler.PreviewNextRuns(task, after, 1); err == nil {
+		t.Fatal("non-advancing filter result must return an error")
+	}
+}
+
+func TestSchedulerPreviewNextRunsExhausted(t *testing.T) {
+	task := &TaskConfig{RRuleStr: testRRuleSet("FREQ=DAILY;COUNT=1")}
+	runs, err := NewScheduler(nil, nil).PreviewNextRuns(task, time.Date(2026, 7, 28, 0, 0, 0, 0, time.UTC), 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 0 {
+		t.Fatalf("exhausted runs = %v, want empty", runs)
+	}
+}
+
+func TestSchedulerPreviewNextRunsRejectsInvalidInputs(t *testing.T) {
+	after := time.Date(2026, 7, 27, 0, 0, 0, 0, time.UTC)
+	if _, err := (*Scheduler)(nil).PreviewNextRuns(&TaskConfig{RRuleStr: testRRuleSet("FREQ=DAILY")}, after, 1); err == nil {
+		t.Fatal("nil scheduler must return an error")
+	}
+	if _, err := NewScheduler(nil, nil).PreviewNextRuns(nil, after, 1); err == nil {
+		t.Fatal("nil task must return an error")
+	}
+	if _, err := NewScheduler(nil, nil).PreviewNextRuns(&TaskConfig{}, after, 1); err == nil {
+		t.Fatal("empty recurring rule must return an error")
+	}
+}
+
 func TestMemoryStoreInsertAndGet(t *testing.T) {
 	store := NewMemoryStore()
 	ctx := context.Background()
@@ -679,6 +774,9 @@ func TestMemoryStoreUpdate(t *testing.T) {
 	}
 
 	cfg.TaskName = "updated"
+	if err := store.Disable(ctx, cfg.ID); err != nil {
+		t.Fatal(err)
+	}
 	if err := store.Update(ctx, cfg); err != nil {
 		t.Fatal(err)
 	}
@@ -689,6 +787,9 @@ func TestMemoryStoreUpdate(t *testing.T) {
 	}
 	if !got.LastRun.Equal(lastRun) || !got.LastScheduledRun.Equal(lastScheduledRun) {
 		t.Fatalf("Update changed execution history: %+v", got)
+	}
+	if got.Status != StatusDisabled {
+		t.Fatalf("Update changed control status: %+v", got)
 	}
 }
 
@@ -716,6 +817,14 @@ func TestMemoryStoreUpdateDuplicateCode(t *testing.T) {
 	err := store.Update(ctx, a)
 	if err != ErrDuplicate {
 		t.Fatalf("expected ErrDuplicate, got %v", err)
+	}
+}
+
+func TestMemoryStoreUpdateMissingReturnsErrUpdate(t *testing.T) {
+	store := NewMemoryStore()
+	err := store.Update(context.Background(), &TaskConfig{ID: "missing", TaskCode: "missing"})
+	if !errors.Is(err, ErrUpdate) {
+		t.Fatalf("missing update = %v, want ErrUpdate", err)
 	}
 }
 

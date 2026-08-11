@@ -78,6 +78,196 @@ func TestCronJobLifecycle(t *testing.T) {
 	}
 }
 
+func TestCreateCronJobRemainsStrict(t *testing.T) {
+	store, db := newCronJobLogicTestStore(t)
+	serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store}
+	logic := NewCreateCronJobLogic(context.Background(), serviceContext)
+	req := validCronJobRequest("strict-create")
+	if _, err := logic.CreateCronJob(req); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := logic.CreateCronJob(req); !tool.IsErrorByPbCode(err, extproto.Code__1_02_RECORD_ALREADY_EXIST) {
+		t.Fatalf("duplicate create error = %v, want RECORD_ALREADY_EXIST", err)
+	}
+}
+
+func TestBuildCronJobTaskCompilesValidRule(t *testing.T) {
+	task, err := buildCronJobTask(cronJobTaskData{
+		taskCode: "valid-rule", taskName: "合法规则", taskType: "test",
+		groupID: "G001", description: "rule test", deptCode: "D001",
+		rule: &trigger.PlanRulePb{
+			Freq: 3, Hours: []int32{11}, Minutes: []int32{0},
+		},
+		startTime: "2026-08-01 00:00:00", endTime: "2026-08-31 23:59:59",
+		excludeDates: []string{"2026-08-12"}, payload: `{"id":1}`, bizExtra: `{"source":"test"}`,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := crontask.ValidateRRule(task.RRuleStr); err != nil {
+		t.Fatalf("compiled rule is invalid: %v", err)
+	}
+	extra, err := cronjob.ParseExtra(task.Extra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if extra.DeptCode != "D001" || extra.Type != "test" || extra.GroupId != "G001" || len(extra.Rule) == 0 {
+		t.Fatalf("unexpected cron job extra: %+v", extra)
+	}
+}
+
+func TestUpdateCronJobPreservesIdentityAndRuntimeState(t *testing.T) {
+	for _, status := range []crontask.TaskStatus{crontask.StatusEnabled, crontask.StatusDisabled} {
+		t.Run(status.String(), func(t *testing.T) {
+			store, db := newCronJobLogicTestStore(t)
+			ctx := context.Background()
+			serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store}
+			created, err := NewCreateCronJobLogic(ctx, serviceContext).CreateCronJob(validCronJobRequest("update-" + status.String()))
+			if err != nil {
+				t.Fatal(err)
+			}
+			scheduledTime := time.Now().Add(-time.Minute).Truncate(time.Second)
+			leaseTime := time.Now().Add(time.Minute).Truncate(time.Second)
+			lastRun := time.Now().Add(-2 * time.Hour).Truncate(time.Second)
+			lastScheduledRun := lastRun.Add(-time.Minute)
+			if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", created.JobId).Updates(map[string]interface{}{
+				"status":             int(status),
+				"next_run":           leaseTime,
+				"scheduled_time":     scheduledTime,
+				"last_run":           lastRun,
+				"last_scheduled_run": lastScheduledRun,
+			}).Error; err != nil {
+				t.Fatal(err)
+			}
+
+			config := validUpdateCronJobRequest(created.JobId)
+			config.TaskName = "更新后的任务"
+			updated, err := NewUpdateCronJobLogic(ctx, serviceContext).UpdateCronJob(config)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if updated.JobId != created.JobId || updated.NextRun == "" {
+				t.Fatalf("unexpected update response: %+v", updated)
+			}
+			if updated.TaskCode != "update-"+status.String() {
+				t.Fatalf("update task code = %q", updated.TaskCode)
+			}
+			loaded, err := store.GetByID(ctx, created.JobId)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if loaded.Status != status || loaded.TaskName != config.TaskName {
+				t.Fatalf("updated config/state = %+v", loaded)
+			}
+			if !loaded.NextRun.Equal(leaseTime) || !loaded.ScheduledTime.Equal(scheduledTime) ||
+				!loaded.LastRun.Equal(lastRun) || !loaded.LastScheduledRun.Equal(lastScheduledRun) {
+				t.Fatalf("runtime fields changed: %+v", loaded)
+			}
+		})
+	}
+}
+
+func TestUpdateCronJobRejectsMissing(t *testing.T) {
+	store, db := newCronJobLogicTestStore(t)
+	ctx := context.Background()
+	serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store}
+	if _, err := NewUpdateCronJobLogic(ctx, serviceContext).UpdateCronJob(validUpdateCronJobRequest("missing")); !tool.IsErrorByPbCode(err, extproto.Code__1_02_RECORD_NOT_EXIST) {
+		t.Fatalf("missing update error = %v, want RECORD_NOT_EXIST", err)
+	}
+}
+
+func TestSubmitCronJobCreatesUpdatesAndRejectsDeletedCode(t *testing.T) {
+	store, db := newCronJobLogicTestStore(t)
+	ctx := context.Background()
+	serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store}
+	submit := NewSubmitCronJobLogic(ctx, serviceContext)
+	created, err := submit.SubmitCronJob(validSubmitCronJobRequest("submit-active"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if repeated, err := submit.SubmitCronJob(validSubmitCronJobRequest("submit-active")); err != nil {
+		t.Fatalf("identical submit must be idempotent: %v", err)
+	} else if repeated.JobId != created.JobId {
+		t.Fatalf("identical submit changed job id: got %q want %q", repeated.JobId, created.JobId)
+	}
+	if err := store.Disable(ctx, created.JobId); err != nil {
+		t.Fatal(err)
+	}
+	updatedReq := validSubmitCronJobRequest("submit-active")
+	updatedReq.TaskName = "提交更新后的任务"
+	updated, err := submit.SubmitCronJob(updatedReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated.JobId != created.JobId {
+		t.Fatalf("submit changed job id: got %q want %q", updated.JobId, created.JobId)
+	}
+	if updated.TaskCode != updatedReq.TaskCode {
+		t.Fatalf("submit task code = %q, want %q", updated.TaskCode, updatedReq.TaskCode)
+	}
+	loaded, err := store.GetByID(ctx, created.JobId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Status != crontask.StatusDisabled || loaded.TaskName != updatedReq.TaskName {
+		t.Fatalf("submit did not preserve state/update config: %+v", loaded)
+	}
+
+	deleted, err := submit.SubmitCronJob(validSubmitCronJobRequest("submit-deleted"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Delete(ctx, deleted.JobId); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := submit.SubmitCronJob(validSubmitCronJobRequest("submit-deleted")); !tool.IsErrorByPbCode(err, extproto.Code__1_02_RECORD_ALREADY_EXIST) {
+		t.Fatalf("deleted code submit error = %v, want RECORD_ALREADY_EXIST", err)
+	}
+}
+
+func validCronJobRequest(taskCode string) *trigger.CreateCronJobReq {
+	return &trigger.CreateCronJobReq{
+		TaskCode: taskCode,
+		TaskName: "测试周期任务",
+		Type:     "test",
+		DeptCode: "D001",
+		Rule: &trigger.PlanRulePb{
+			Freq:    3,
+			Hours:   []int32{int32(time.Now().Add(time.Hour).Hour())},
+			Minutes: []int32{0},
+		},
+	}
+}
+
+func validUpdateCronJobRequest(jobID string) *trigger.UpdateCronJobReq {
+	return updateCronJobRequestFromCreate(jobID, validCronJobRequest("unused"))
+}
+
+func validSubmitCronJobRequest(taskCode string) *trigger.SubmitCronJobReq {
+	return submitCronJobRequestFromCreate(validCronJobRequest(taskCode))
+}
+
+func updateCronJobRequestFromCreate(jobID string, req *trigger.CreateCronJobReq) *trigger.UpdateCronJobReq {
+	return &trigger.UpdateCronJobReq{
+		JobId: jobID, TaskName: req.TaskName, Type: req.Type,
+		GroupId: req.GroupId, Description: req.Description, StartTime: req.StartTime, EndTime: req.EndTime,
+		Rule: req.Rule, ExcludeDates: append([]string(nil), req.ExcludeDates...), Priority: req.Priority,
+		Payload: req.Payload, Extra: req.Extra, LockTimeout: req.LockTimeout, MaxDelay: req.MaxDelay,
+		SkipTimeFilter: req.SkipTimeFilter, Ext1: req.Ext1, Ext2: req.Ext2, Ext3: req.Ext3,
+		Ext4: req.Ext4, Ext5: req.Ext5, DeptCode: req.DeptCode,
+	}
+}
+
+func submitCronJobRequestFromCreate(req *trigger.CreateCronJobReq) *trigger.SubmitCronJobReq {
+	return &trigger.SubmitCronJobReq{
+		TaskCode: req.TaskCode, TaskName: req.TaskName, Type: req.Type, GroupId: req.GroupId,
+		Description: req.Description, StartTime: req.StartTime, EndTime: req.EndTime, Rule: req.Rule,
+		ExcludeDates: append([]string(nil), req.ExcludeDates...), Priority: req.Priority, Payload: req.Payload,
+		Extra: req.Extra, LockTimeout: req.LockTimeout, MaxDelay: req.MaxDelay, SkipTimeFilter: req.SkipTimeFilter,
+		Ext1: req.Ext1, Ext2: req.Ext2, Ext3: req.Ext3, Ext4: req.Ext4, Ext5: req.Ext5, DeptCode: req.DeptCode,
+	}
+}
+
 func TestCronJobRunGetAndList(t *testing.T) {
 	store, db := newCronJobLogicTestStore(t)
 	ctx := context.Background()
@@ -220,6 +410,144 @@ func TestCronJobRunGetAndList(t *testing.T) {
 	}
 	if _, err := NewRunCronJobLogic(ctx, serviceContext).RunCronJob(&trigger.RunCronJobReq{JobId: "missing"}); !tool.IsErrorByPbCode(err, extproto.Code__1_02_RECORD_NOT_EXIST) {
 		t.Fatalf("run missing error = %v, want RECORD_NOT_EXIST", err)
+	}
+}
+
+func TestPreviewCronJobSchedule(t *testing.T) {
+	store, db := newCronJobLogicTestStore(t)
+	ctx := context.Background()
+	after := time.Now().Add(24 * time.Hour).UTC().Truncate(time.Hour)
+	excluded := after.Add(24 * time.Hour)
+	task := &crontask.TaskConfig{
+		TaskCode: "preview-disabled",
+		TaskName: "预览禁用任务",
+		Status:   crontask.StatusDisabled,
+		Extra:    json.RawMessage(`{"rule":{}}`),
+		RRuleStr: "DTSTART:" + after.Format("20060102T150405Z") + "\n" +
+			"RRULE:FREQ=DAILY;COUNT=12\n" +
+			"EXDATE:" + excluded.Format("20060102T150405Z"),
+	}
+	if err := store.Insert(ctx, task); err != nil {
+		t.Fatal(err)
+	}
+	serviceContext := &svc.ServiceContext{
+		DB:               db,
+		CronJobStore:     store,
+		CronJobScheduler: crontask.NewScheduler(store, nil),
+	}
+	logic := NewPreviewCronJobScheduleLogic(ctx, serviceContext)
+
+	preview, err := logic.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: task.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if preview.JobId != task.ID || preview.TaskCode != task.TaskCode || preview.RruleStr != task.RRuleStr {
+		t.Fatalf("unexpected preview identity/rule: %+v", preview)
+	}
+	if len(preview.ExecutionTimes) != 10 {
+		t.Fatalf("default execution time count = %d, want 10", len(preview.ExecutionTimes))
+	}
+	if preview.ScheduleDescription == "" {
+		t.Fatal("schedule description must not be empty")
+	}
+	excludedText := tool.CarbonFromTimeStartOfSecond(excluded).ToDateTimeString()
+	for _, executionTime := range preview.ExecutionTimes {
+		if executionTime == excludedText {
+			t.Fatalf("EXDATE time %q was included", excludedText)
+		}
+	}
+	loaded, err := store.GetByID(ctx, task.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Status != crontask.StatusDisabled || !loaded.NextRun.IsZero() || !loaded.LastRun.IsZero() {
+		t.Fatalf("preview changed disabled task state: %+v", loaded)
+	}
+
+	limited, err := logic.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: task.ID, Count: 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(limited.ExecutionTimes) != 2 {
+		t.Fatalf("explicit execution time count = %d, want 2", len(limited.ExecutionTimes))
+	}
+	if _, err := logic.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: task.ID, Count: 101}); err == nil {
+		t.Fatal("count above 100 must fail validation")
+	}
+}
+
+func TestPreviewCronJobScheduleErrorsAndExhaustion(t *testing.T) {
+	store, db := newCronJobLogicTestStore(t)
+	ctx := context.Background()
+	serviceContext := &svc.ServiceContext{
+		DB:               db,
+		CronJobStore:     store,
+		CronJobScheduler: crontask.NewScheduler(store, nil),
+	}
+	logic := NewPreviewCronJobScheduleLogic(ctx, serviceContext)
+
+	if _, err := logic.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: "missing"}); !tool.IsErrorByPbCode(err, extproto.Code__1_02_RECORD_NOT_EXIST) {
+		t.Fatalf("missing preview error = %v, want RECORD_NOT_EXIST", err)
+	}
+
+	exhausted := &crontask.TaskConfig{
+		TaskCode: "preview-exhausted",
+		TaskName: "已耗尽预览任务",
+		Status:   crontask.StatusEnabled,
+		Extra:    json.RawMessage(`{"rule":{}}`),
+		RRuleStr: "DTSTART:20200101T000000Z\nRRULE:FREQ=DAILY;COUNT=1",
+	}
+	if err := store.Insert(ctx, exhausted); err != nil {
+		t.Fatal(err)
+	}
+	preview, err := logic.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: exhausted.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(preview.ExecutionTimes) != 0 {
+		t.Fatalf("exhausted execution times = %v, want empty", preview.ExecutionTimes)
+	}
+
+	malformed := &crontask.TaskConfig{
+		TaskCode: "preview-malformed",
+		TaskName: "非法规则预览任务",
+		Status:   crontask.StatusEnabled,
+		Extra:    json.RawMessage(`{"rule":{}}`),
+		RRuleStr: "DTSTART:20300101T000000Z\nRRULE:FREQ=DAILY;COUNT=1",
+	}
+	if err := store.Insert(ctx, malformed); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", malformed.ID).Update("rrule_str", "FREQ=DAILY").Error; err != nil {
+		t.Fatal(err)
+	}
+	if _, err := logic.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: malformed.ID}); !tool.IsErrorByPbCode(err, extproto.Code__1_01_PARAM_INVALID) {
+		t.Fatalf("malformed preview error = %v, want PARAM_INVALID", err)
+	}
+
+	emptyRule := &crontask.TaskConfig{
+		TaskCode: "preview-empty-rule",
+		TaskName: "空规则预览任务",
+		Status:   crontask.StatusEnabled,
+		Extra:    json.RawMessage(`{"rule":{}}`),
+		RRuleStr: "DTSTART:20300101T000000Z\nRRULE:FREQ=DAILY;COUNT=1",
+	}
+	if err := store.Insert(ctx, emptyRule); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", emptyRule.ID).Update("rrule_str", "").Error; err != nil {
+		t.Fatal(err)
+	}
+	if _, err := logic.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: emptyRule.ID}); !tool.IsErrorByPbCode(err, extproto.Code__1_01_PARAM_INVALID) {
+		t.Fatalf("empty rule preview error = %v, want PARAM_INVALID", err)
+	}
+
+	if _, err := logic.PreviewCronJobSchedule(nil); err == nil {
+		t.Fatal("nil request must return an error")
+	}
+	missingScheduler := NewPreviewCronJobScheduleLogic(ctx, &svc.ServiceContext{CronJobStore: store})
+	if _, err := missingScheduler.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: exhausted.ID}); !tool.IsErrorByPbCode(err, extproto.Code__1_02_DB) {
+		t.Fatalf("missing scheduler error = %v, want DB", err)
 	}
 }
 

@@ -51,7 +51,7 @@ type TaskStore interface {
 	// Insert 新增任务，task_code 冲突时返回 ErrDuplicate。
 	Insert(ctx context.Context, cfg *TaskConfig) error
 
-	// Update 按 id 全量更新任务配置。
+	// Update 按 id 全量更新任务配置；更新未影响任何任务时返回 ErrUpdate。
 	Update(ctx context.Context, cfg *TaskConfig) error
 
 	// Enable 启用任务，并根据已保存的 RRULE 从当前时间重新计算未来 NextRun。

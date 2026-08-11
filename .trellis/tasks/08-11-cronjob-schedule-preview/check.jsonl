@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Defines test scope and final diff verification."}
+{"file":".trellis/spec/backend/crontask-guidelines.md","reason":"Checks RRULE/filter behavior and exhaustion semantics."}
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"Checks Trigger persisted-rule and no-side-effect contracts."}
+{"file":".trellis/spec/backend/contract-generation.md","reason":"Checks proto and generated artifacts remain synchronized."}

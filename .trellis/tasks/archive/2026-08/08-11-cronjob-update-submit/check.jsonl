@@ -1,0 +1,5 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"核对 proto 生成、重复/并发/软删边界测试及最终 diff。"}
+{"file":".trellis/spec/backend/contract-generation.md","reason":"检查契约源、生成物、注释和校验一致。"}
+{"file":".trellis/spec/backend/gormx-guidelines.md","reason":"检查唯一约束竞争、RowsAffected 和字段所有权。"}
+{"file":".trellis/spec/backend/crontask-guidelines.md","reason":"检查管理 Update 不覆盖运行历史与 lease。"}
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"检查 CronJob 管理接口的领域语义和定向验证。"}

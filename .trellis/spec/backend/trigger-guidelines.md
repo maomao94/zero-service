@@ -140,7 +140,79 @@ scope.Logger(ctx).Info(scope.LogMessage("RPC 执行回调：收到下游回执")
 - `RunCronJob` 触发人工执行，不改变周期 `next_run` 或启停状态。
 - CronJob Handler 注册集中在 `ServiceContext`/cronjob 组装边界，业务服务通过 task code 与 payload 解耦。
 - CronJob 详情/列表的 `rruleStr` 和 `scheduleDescription` 必须来自持久化 `TaskConfig.RRuleStr`，不能从业务 JSON 重新编译。
+- `PreviewCronJobSchedule` 按 `job_id` 查询现有任务，并通过同一个 `CronJobScheduler.PreviewNextRuns` 预览未来时间；禁用任务仍可预览。
+- 预览必须消费持久化完整 RRULE Set，不能用管理视图中的 `rule/start_time/end_time/exclude_dates` 重新编译。创建时默认补齐的时间范围和 `EXDATE` 已固化在 `RRuleStr` 中，重新编译可能改变实际调度语义。
+- `count=0` 由 Logic 默认成 10，Proto 限制最大 100；返回数量不足只表示规则或过滤器已耗尽，不是错误。
+- 预览严格只读：不得修改 `next_run`、`scheduled_time`、启停状态或运行历史，不得调用 Handler、`RunNow` 或写 `CronExecLog`。
+- 预览时间来自当前请求时刻之后的规则候选，不以数据库 `next_run` 为游标；`next_run` 在 claim 期间可能承载 lease 截止时间，不等同于纯规则 occurrence。
 - 使用 `NewLoggingEventHandler(db, client)` 装饰 Handler：每次 cron job 执行后自动写入 `CronExecLog` 记录（字段：job_id、task_code、task_name、scheduled_time、start_time、end_time、cost_ms、status、error_message）。执行日志写入失败不影响 handler 返回结果，错误静默忽略。`CronExecLog` 已在 `ServiceContext` 的 Dev/Test 模式下通过 `db.MustAutoMigrate` 自动建表。
+
+依据：`app/trigger/trigger.proto`、`app/trigger/internal/logic/previewcronjobschedulelogic.go`、`app/trigger/internal/logic/cronjoblogic_test.go`、`common/crontask/crontask.go`。
+
+## Scenario: CronJob 更新与幂等提交
+
+### 1. Scope / Trigger
+
+- 管理端按 Trigger `job_id` 更新 CronJob，或上游按稳定 `task_code` 重复提交完整配置时适用。
+
+### 2. Signatures
+
+```protobuf
+rpc UpdateCronJob(UpdateCronJobReq) returns (UpdateCronJobRes);
+rpc SubmitCronJob(SubmitCronJobReq) returns (SubmitCronJobRes);
+```
+
+### 3. Contracts
+
+- `UpdateCronJobReq` 用 `job_id` 定位任务，不接收 `task_code`；服务端保留原 `task_code`、状态和运行历史。
+- `SubmitCronJobReq` 用 `task_code` 定位：有效记录存在时更新并保留 `job_id`，不存在时创建。
+- Update/Submit 响应均返回 `job_id`、`task_code`、`next_run`。
+- 写入响应直接使用本次编译得到的 `NextRun`，成功后不为组装响应再次查询数据库。
+- 共享配置编译使用 Logic helper 的传输中立内部数据对象，不让 Update/Submit 构造其他 RPC 的 PB 请求。
+- Create/Update/Submit 必须通过同一个 `CompileSchedule` 调用生成 `RRuleStr`、`RuleJSON` 和首次 `NextRun`，不能分别计算或从业务 JSON 反推。
+- `CompileSchedule` 使用 `Asia/Shanghai`，生成完整的 `DTSTART + RRULE + EXDATE` Set，并固定 `BYSECOND=0`；`skip_time_filter` 只影响首次 `NextRun`，最多补一个过去计划点。
+- Store 配置更新只拥有任务名称、RRULE、优先级、超时、payload、业务扩展和 Trigger 配置列；`task_code`、状态、软删除、执行历史和在途 lease 不属于配置更新。
+- Store 在同一事务中先更新普通配置，再以 `scheduled_time IS NULL` 条件更新 `next_run`：前者零行返回 `ErrUpdate`，后者零行表示保留在途 lease并按成功处理。
+
+### 4. Validation & Error Matrix
+
+- 请求校验、JSON 或 RRULE 无效 -> `PARAM_INVALID`。
+- Update 的 `job_id` 不存在或已删除 -> `RECORD_NOT_EXIST`。
+- Create 重复 `task_code` -> `RECORD_ALREADY_EXIST`。
+- Submit 插入唯一冲突后二次查询仍无有效记录 -> `RECORD_ALREADY_EXIST`，表示软删除历史占用编码。
+- Submit 对相同 `task_code` 和相同配置重复提交 -> 取决于数据库 changed-rows 语义；配置 UPDATE 零行时返回 Store 更新失败。
+- 其他 Store 错误 -> `DB`。
+
+### 5. Good/Base/Bad Cases
+
+- Good: Submit 同一 `task_code` 更新原 `job_id`，禁用任务保持禁用。
+- Base: Submit 新 `task_code` 创建新任务；Update 按 `job_id` 修改规则并返回原 `task_code`。
+- Bad: Update 暴露可修改的 `task_code`，或写入成功后仅为返回 `next_run` 再查一次数据库。
+- Bad: 配置 Update 无条件覆盖 `next_run`，导致正在执行任务的 lease token 丢失。
+
+### 6. Tests Required
+
+- 断言 Create 重复仍返回冲突。
+- 断言 Update 保留 `task_code`、状态、执行历史和在途 lease。
+- 断言 Submit 创建、更新及软删除编码冲突。
+- 断言 Submit 更新已有任务时保留原 `job_id`；零行更新按 Store `ErrUpdate` 契约处理。
+- 使用合法 `PlanRulePb` 验证生成的完整 Set 可通过 `crontask.ValidateRRule`，并断言时区、`EXDATE` 和 `next_run`。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```go
+task, err := buildCronJobTask(&trigger.CreateCronJobReq{/* copy another RPC */})
+updated, err := store.GetByID(ctx, task.ID) // only for response
+```
+
+#### Correct
+
+```go
+task, err := buildCronJobTask(cronJobTaskData{/* key configuration */})
+nextRun := tool.CarbonFromTimeStartOfSecond(task.NextRun).ToDateTimeString()
+```
 
 ## 反模式
 

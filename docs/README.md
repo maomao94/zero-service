@@ -26,6 +26,7 @@
 | [IEC 104 消息对接](./iec104-message.md) | 消息格式、ASDU 类型、信息体结构和消费指南 |
 | [IEC 104 控制命令](./iec104-command.md) | 控制命令接口、响应机制、错误码和 TypeId 对照表 |
 | [Trigger 服务](./trigger.md) | 异步任务、计划任务、RRULE CronJob、API 和状态流转 |
+| [Trigger CronJob API 场景指南](./trigger-cronjob-api-guide.md) | CronJob 周期规则、时间区间、固定时间单次任务、创建后补触发和人工执行示例 |
 | [SocketIO 实时通信](./socketio.md) | 网关对接、事件体系、房间广播和鉴权 |
 | [DJI 云平台](./djicloud.md) | DJI Dock 3 Cloud API、RPC 接口和配置说明 |
 | [ISP 巡检协议](./isp.md) | ISP 服务端/代理、帧格式、任务和模型同步 |

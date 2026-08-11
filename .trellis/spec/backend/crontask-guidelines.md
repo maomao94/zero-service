@@ -24,6 +24,7 @@
 - 完成条件不应额外依赖当前启停状态：执行中的任务被禁用后，合法持 lease 的 worker仍要完成自己的本次结果，但不能重新启用任务。
 - 有效锁时长经过 `ResolveLockTimeout` 规范化，最低为 30 秒；适配器不能绕过该下限。
 - 管理 `Update` 必须保留 `ScheduledTime`、`LastRun`、`LastScheduledRun`；任务在途时不得覆盖作为 lease token 的 `NextRun`。
+- 管理 `Update` 可以在同一事务中拆成两条 SQL：第一条用显式白名单更新普通配置，第二条仅在 `scheduled_time IS NULL` 时更新 `next_run`。两条 SQL 的零行语义不同：配置 UPDATE 零行返回 `ErrUpdate`；`next_run` 条件 UPDATE 零行表示在途 lease 被保留，整体更新仍成功。
 
 依据：`common/crontask/store.go`、`common/crontask/config.go`、`common/crontask/memory_store.go`、`app/trigger/internal/cronjob/db_store.go`、`app/ispagent/internal/crontask/db_store.go`。
 
@@ -63,14 +64,28 @@
 - DB 与 Memory Store 必须实现同一空值、lease、完成和启停语义；不能让测试内存实现掩盖数据库竞争条件。
 - Trigger 与 ispagent 的 `scheduled_time` 在重试间保持稳定，代表首次原计划时间而非每次 claim/lease 时间。
 
+## 调度时间预览
+
+- `Scheduler.PreviewNextRuns(task, after, count)` 是只读的有界预览能力：不访问 Store、不 claim、不执行 Handler，也不修改任务状态。
+- 预览直接解析 `TaskConfig.RRuleStr` 的完整 RRULE Set，并使用 `Set.After(cursor, false)` 取得严格晚于游标的候选；`DTSTART`、`UNTIL`、BY*、`RDATE` 与 `EXDATE` 均由 Set 自身处理。
+- `count` 只统计最终接受的有效时间点。循环持续到有效结果达到 `count`，或 RRULE / 过滤器返回零时间表示耗尽；禁止用 `Set.All()` 展开长期规则。
+- `InvalidTimeFilter` 是 RRULE Set 之外的 Scheduler 策略。过滤器收到一个 RRULE 候选后，负责沿同一任务规则持续跳过不可用区间，最终返回有效时间或零值；`app/ispagent/internal/crontask.NewInvalidTimeFilter` 是现有实现。
+- 预览对过滤器返回值只检查是否为零以及是否严格晚于当前游标，防止重复和死循环。不要在过滤后再次调用 `Set.After` 验证或推进，否则会建立一条不同于 `executeTask` 的过滤语义并产生重复计算。
+- 空或非法的周期 RRULE 是配置错误；规则自然耗尽则返回已收集结果和 nil error。调用层负责设置默认数量和最大数量。
+
+依据：`common/crontask/crontask.go` 的 `PreviewNextRuns`、`common/crontask/crontask_test.go`、`common/crontask/options.go`、`app/ispagent/internal/crontask/task_rule.go`。
+
 ## 反模式
 
 - 完成时按 ID 整行更新，没有 `locked_until` CAS。
+- 把管理配置和 `next_run` 放进同一条无条件 UPDATE，覆盖调度器持有的 lease。
 - `RunNow` 复用正常扫描完成路径，改变下一次计划或启停状态。
 - 用 Redis 锁叠加补偿未证明的低并发 ID 风险，却不修数据库所有权条件。
 - RRULE 错误被吞掉并写成零值，或 SQL `NULL` 被转换成远期时间。
 - 同一 `RRuleStr` 列同时写入裸 RRULE 和完整 Set，迫使执行、描述和排障维护双解析分支。
 - handler 从 `NextRun` 读取本次计划时间；claim 后应只读 `ScheduledTime`。
+- 预览用 `Set.All()` 展开全部 occurrence，或按原始候选次数消耗 `count`，导致长期规则放大内存或连续非法区间返回数量不足。
+- `InvalidTimeFilter` 返回后再次调用 `Set.After` 推进或确认，导致过滤器已跳过的候选被重复计算。
 
 ## 验证
 
@@ -81,7 +96,7 @@ go test ./app/ispagent/internal/crontask
 go test -race ./common/crontask
 ```
 
-测试至少覆盖过期 lease、并发完成、执行中 Disable、终止 RRULE、无效 RRULE、panic、`RunNow` 状态保持、成功/失败 `LastRun` 和 Delete 幂等。
+测试至少覆盖过期 lease、并发完成、执行中 Disable、终止 RRULE、无效 RRULE、panic、`RunNow` 状态保持、成功/失败 `LastRun`、Delete 幂等，以及预览的严格 after、`EXDATE`、连续非法区间、耗尽和不前进 filter。
 
 ## Scenario: 完整 RRULE Set 与执行时间状态
 

@@ -1,6 +1,6 @@
 # Trigger 服务
 
-Trigger 是基于 go-zero 的任务调度服务，对外契约见 [`trigger.proto`](../app/trigger/trigger.proto)。服务同时提供 asynq 异步任务、Plan 计划任务和 RRULE CronJob；三者的存储、状态和回调语义不同，调用方应按业务目标选择。
+Trigger 是基于 go-zero 的统一任务调度服务，对外契约见 [`trigger.proto`](../app/trigger/trigger.proto)。服务同时提供 asynq 异步任务、Plan 计划任务和 RRULE CronJob；三者分别解决队列投递、可管理计划生命周期和稳定周期 Handler 调度问题，存储、状态与回调语义互不混用。
 
 ## 能力选择
 
@@ -8,7 +8,7 @@ Trigger 是基于 go-zero 的任务调度服务，对外契约见 [`trigger.prot
 | --- | --- | --- | --- |
 | 异步任务 | asynq + Redis | Redis 队列及任务状态 | 一次性或延时的 HTTP/gRPC 回调，需要队列重试与任务查询 |
 | 计划任务 | 数据库扫表 + `Plan -> Batch -> ExecItem` | `plan`、`plan_batch`、`plan_exec_item`、`plan_exec_log` | 一个计划需要拆分为日期批次和多个执行项，并支持分层暂停、恢复、终止及结果聚合 |
-| CronJob | `common/crontask` + RRULE lease 调度 | `cron_job` | 以稳定 `taskCode` 注册一个周期 handler，不预展开批次或执行项 |
+| CronJob | `common/crontask` + RRULE lease 调度 | `cron_job` | 以稳定 `taskCode` 注册周期 Handler，或人工执行已注册任务；不预展开批次或执行项 |
 
 选择原则：
 
@@ -137,9 +137,11 @@ ExecItem 的核心扫表索引为 `(is_deleted, next_trigger_time, status)`。
 
 ## RRULE CronJob
 
-CronJob 面向“一个稳定任务编码对应一个周期 handler”的场景。它复用 `PlanRulePb` 表达周期，但不会创建 Plan、Batch 或 ExecItem，也没有计划任务的多级状态聚合。
+CronJob 面向“一个稳定任务编码对应一个周期 Handler”的场景，适合固定频率回调、周期同步、巡检或报表等不需要预展开执行项的任务。它复用 `PlanRulePb` 表达周期，但不会创建 Plan、Batch 或 ExecItem，也没有计划任务的多级状态聚合。
 
 `taskCode` 是调用方提供的全局唯一业务编码，供调度器和业务侧稳定识别任务；`jobId` 是 Trigger 创建的 `cron_job.id`，用于管理 RPC。两者不能混用。
+
+常见周期、固定时间单次执行、创建后补触发和人工执行的完整请求见 [Trigger CronJob API 场景指南](./trigger-cronjob-api-guide.md)。本节只保留能力边界和运行语义。
 
 ### 规则编译
 
@@ -147,11 +149,11 @@ CronJob 面向“一个稳定任务编码对应一个周期 handler”的场景�
 
 | 输入 | 行为 |
 | --- | --- |
-| `startTime` | 不传时使用当前年份第一天，格式为 `yyyy-MM-dd HH:mm:ss` |
-| `endTime` | 不传时使用开始时间所在年份最后一天；有效期跨度不能超过 3 年 |
+| `startTime` | 可为空；为空时使用当前上海年份第一天，格式为 `yyyy-MM-dd HH:mm:ss` |
+| `endTime` | 可为空；为空时使用补齐后开始时间所在年份最后一天；允许与开始时间相等，不能早于开始时间，跨度不能超过 3 年 |
 | `rule` | 必填，支持频率、小时、分钟、星期、日期和可选月份过滤 |
 | `excludeDates` | 按 `yyyy-MM-dd` 排除当天规则中的全部小时和分钟组合 |
-| `skipTimeFilter` | 为 `true` 时，首次执行最多补触发一个已经发生的计划点，不追赶全部历史周期 |
+| `skipTimeFilter` | 为 `true` 时，首次执行最多选择一个已经发生的计划点，不追赶全部历史周期；该计划点仍受 `maxDelay` 检查 |
 | `priority` | 数字越大越优先参与到期任务选择 |
 | `lockTimeout` | 单次 claim 的 lease 超时；0 使用调度器默认值，实际值不会低于 30 秒 |
 
@@ -186,29 +188,35 @@ StreamEvent.HandleCronJobEvent
 | `CRON_JOB_RECEIPT_TASK_NOT_FOUND` | 业务任务已经不存在，软删除当前 CronJob，停止后续触发 |
 | `CRON_JOB_RECEIPT_UNKNOWN`、空响应或 RPC 错误 | 按执行失败处理，不推进 RRULE，等待 lease 过期后重试 |
 
-### 生命周期与人工执行
+### 创建、提交与人工执行
 
 | 操作 | 行为 |
 | --- | --- |
-| 创建 | 校验 JSON 和规则，生成 `jobId`、RRULE Set 与首次 `next_run`；`taskCode` 冲突返回重复记录错误 |
+| 创建 | `CreateCronJob` 创建新任务，校验 JSON 和规则，生成 `jobId`、RRULE Set 与首次 `next_run`；`taskCode` 冲突返回重复记录错误 |
+| 提交 | `SubmitCronJob` 按稳定 `taskCode` 提交完整配置；不存在时创建，存在时更新并保留原 `jobId` 和启停状态 |
 | 启用 | 从当前时间按已保存 RRULE 重新计算未来 `next_run`；重复启用幂等 |
 | 禁用 | 状态改为禁用，后续扫表不再选择；已经 claim 的在途执行仍可完成 |
 | 删除 | 幂等软删除，不再参与查询和调度 |
-| 立即执行 | `RunCronJob` 异步调用同一 Handler；只在成功后更新 `last_run`，不修改周期 `next_run`、启停状态或 `last_scheduled_run` |
+| 创建后补触发 | 创建请求设置 `skipTimeFilter=true`，首次最多选择一个过去计划点；该点未超过 `maxDelay` 时调用 Handler，不追赶全部历史周期，后续仍按原 RRULE 执行 |
+| 人工执行 | `RunCronJob` 基于已有 `jobId` 异步调用同一 Handler；只在成功后更新 `last_run`，不修改周期 `next_run`、启停状态或 `last_scheduled_run` |
 
-CronJob 的启停状态只控制周期扫描，禁用任务仍可通过 `RunCronJob` 人工触发。该方法的空响应只表示异步执行请求已受理，不表示 Eventstream 已经成功处理。
+“创建后立即补触发”与“人工执行已有任务”是两个不同场景：前者属于 Create/Submit 的首次计划时间选择，后者由 `RunCronJob` 触发。CronJob 的启停状态只控制周期扫描，禁用任务仍可通过 `RunCronJob` 人工触发。`RunCronJob` 返回 `traceId`，仅表示异步执行请求已受理，不表示 Eventstream 已经成功处理。
 
 ### CronJob API
 
 | 方法 | 说明 |
 | --- | --- |
 | `CreateCronJob` | 创建 RRULE CronJob，返回 `jobId` 和首次 `nextRun` |
+| `UpdateCronJob` | 按 `jobId` 更新完整配置，保留原 `taskCode`、状态和运行历史 |
+| `SubmitCronJob` | 按稳定 `taskCode` 创建或更新完整配置，并保留已有任务的 `jobId` 与状态 |
 | `EnableCronJob` | 启用任务并重新计算未来执行时间 |
 | `DisableCronJob` | 禁用后续扫描 |
 | `DeleteCronJob` | 幂等软删除任务 |
 | `RunCronJob` | 不改变周期计划地异步执行一次 |
 | `GetCronJob` | 按 `jobId` 获取详情、RRULE 原文和中文规则描述 |
 | `ListCronJobs` | 按任务编码、名称、状态、机构、类型和分组分页查询 |
+
+完整字段说明和 JSON 场景示例见 [Trigger CronJob API 场景指南](./trigger-cronjob-api-guide.md)。
 
 ### `cron_job` 数据模型
 
@@ -294,4 +302,5 @@ go run . -f etc/trigger.yaml
 - [`streamevent.proto`](../facade/streamevent/streamevent.proto) - Plan 与 CronJob 业务回调契约
 - [`app/trigger/internal/cronjob`](../app/trigger/internal/cronjob) - CronJob 规则编译、Store 和 Handler 适配
 - [`common/crontask`](../common/crontask) - 通用 RRULE 调度器与 lease 契约
+- [Trigger CronJob API 场景指南](./trigger-cronjob-api-guide.md) - 常见周期、规则区间、固定时间单次任务与人工执行示例
 - [Trigger Plan openGauss 迁移指南](./trigger-plan-opengauss-migration.md) - Plan 四表迁移、校验和回滚

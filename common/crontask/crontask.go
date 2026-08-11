@@ -250,6 +250,46 @@ func (s *Scheduler) RunNow(ctx context.Context, taskCode string) (string, error)
 	return traceID, nil
 }
 
+// PreviewNextRuns 返回严格晚于 after 的后续有效计划时间，并应用调度器的不可用时间过滤策略。
+// count 只统计过滤后接受的时间点；过滤器可跨过任意数量的 RRULE 候选，直到返回有效时间或零值。
+// 该方法只读取任务配置，不访问 Store，也不改变任务运行状态。
+func (s *Scheduler) PreviewNextRuns(task *TaskConfig, after time.Time, count int) ([]time.Time, error) {
+	if s == nil {
+		return nil, errors.New("scheduler is nil")
+	}
+	if task == nil {
+		return nil, errors.New("task is nil")
+	}
+	if count <= 0 {
+		return []time.Time{}, nil
+	}
+
+	set, err := parseRRuleSet(task.RRuleStr)
+	if err != nil {
+		return nil, err
+	}
+	runs := make([]time.Time, 0, count)
+	cursor := after
+	for len(runs) < count {
+		next := set.After(cursor, false)
+		if next.IsZero() {
+			break
+		}
+		if s.invalidTimeFilter != nil {
+			next = s.invalidTimeFilter(task, next)
+		}
+		if next.IsZero() {
+			break
+		}
+		if !next.After(cursor) {
+			return nil, errors.New("invalid time filter returned a non-advancing time")
+		}
+		runs = append(runs, next)
+		cursor = next
+	}
+	return runs, nil
+}
+
 func taskLogContext(ctx context.Context, claim *TaskClaim) context.Context {
 	return logx.ContextWithFields(ctx,
 		logx.Field("task_code", claim.Task.TaskCode),

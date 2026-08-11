@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 155
+- **Total Sessions**: 158
 - **Last Active**: 2026-08-11
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~1468 | Active |
+| `journal-3.md` | ~1537 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,9 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 158 | 2026-08-11 | Document CronJob scheduling API scenarios | `a699f5a3`, `8164d2cd`, `9bab1dc7` | `master` |
+| 157 | 2026-08-11 | Document CronJob update ownership | `63611fc0` | `master` |
+| 156 | 2026-08-11 | CronJob 更新与提交接口 | `8041aaeb`, `bdf70e28`, `6f9e956a`, `eb0580ae`, `e6ceeee3` | `master` |
 | 155 | 2026-08-11 | 全项目 Proto 规范化迁移 | `407a1eee` | `master` |
 | 154 | 2026-08-11 | CronJob per-task MaxDelay + RunCronJob traceId | `d555be8c`, `72f7e3b4` | `master` |
 | 153 | 2026-08-11 | 全量刷新 Trellis Spec — 修复陈旧引用，新增 8 个 domain spec | `f330da6a` | `master` |

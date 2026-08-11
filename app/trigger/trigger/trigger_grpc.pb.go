@@ -68,11 +68,14 @@ const (
 	TriggerRpc_GetExecItemDashboard_FullMethodName    = "/trigger.TriggerRpc/GetExecItemDashboard"
 	TriggerRpc_CallbackPlanExecItem_FullMethodName    = "/trigger.TriggerRpc/CallbackPlanExecItem"
 	TriggerRpc_CreateCronJob_FullMethodName           = "/trigger.TriggerRpc/CreateCronJob"
+	TriggerRpc_UpdateCronJob_FullMethodName           = "/trigger.TriggerRpc/UpdateCronJob"
+	TriggerRpc_SubmitCronJob_FullMethodName           = "/trigger.TriggerRpc/SubmitCronJob"
 	TriggerRpc_EnableCronJob_FullMethodName           = "/trigger.TriggerRpc/EnableCronJob"
 	TriggerRpc_DisableCronJob_FullMethodName          = "/trigger.TriggerRpc/DisableCronJob"
 	TriggerRpc_DeleteCronJob_FullMethodName           = "/trigger.TriggerRpc/DeleteCronJob"
 	TriggerRpc_RunCronJob_FullMethodName              = "/trigger.TriggerRpc/RunCronJob"
 	TriggerRpc_GetCronJob_FullMethodName              = "/trigger.TriggerRpc/GetCronJob"
+	TriggerRpc_PreviewCronJobSchedule_FullMethodName  = "/trigger.TriggerRpc/PreviewCronJobSchedule"
 	TriggerRpc_ListCronJobs_FullMethodName            = "/trigger.TriggerRpc/ListCronJobs"
 	TriggerRpc_NextId_FullMethodName                  = "/trigger.TriggerRpc/NextId"
 	TriggerRpc_BatchNextId_FullMethodName             = "/trigger.TriggerRpc/BatchNextId"
@@ -181,6 +184,10 @@ type TriggerRpcClient interface {
 	CallbackPlanExecItem(ctx context.Context, in *CallbackPlanExecItemReq, opts ...grpc.CallOption) (*CallbackPlanExecItemRes, error)
 	// 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
 	CreateCronJob(ctx context.Context, in *CreateCronJobReq, opts ...grpc.CallOption) (*CreateCronJobRes, error)
+	// 按 Trigger JobId 更新完整 Cron Job 配置，不允许修改 TaskCode
+	UpdateCronJob(ctx context.Context, in *UpdateCronJobReq, opts ...grpc.CallOption) (*UpdateCronJobRes, error)
+	// 按 TaskCode 幂等提交完整 Cron Job 配置，不存在时创建，存在时更新
+	SubmitCronJob(ctx context.Context, in *SubmitCronJobReq, opts ...grpc.CallOption) (*SubmitCronJobRes, error)
 	// 启用 Cron Job，并从当前时间重新计算未来执行时间
 	EnableCronJob(ctx context.Context, in *EnableCronJobReq, opts ...grpc.CallOption) (*EnableCronJobRes, error)
 	// 禁用 Cron Job，禁用后调度器不再扫描该任务
@@ -191,6 +198,8 @@ type TriggerRpcClient interface {
 	RunCronJob(ctx context.Context, in *RunCronJobReq, opts ...grpc.CallOption) (*RunCronJobRes, error)
 	// 获取 Cron Job 详情
 	GetCronJob(ctx context.Context, in *GetCronJobReq, opts ...grpc.CallOption) (*GetCronJobRes, error)
+	// 预览指定 Cron Job 从当前时间之后的计划执行时间，不改变任务状态
+	PreviewCronJobSchedule(ctx context.Context, in *PreviewCronJobScheduleReq, opts ...grpc.CallOption) (*PreviewCronJobScheduleRes, error)
 	// 分页获取 Cron Job 列表
 	ListCronJobs(ctx context.Context, in *ListCronJobsReq, opts ...grpc.CallOption) (*ListCronJobsRes, error)
 	// 生成业务唯一编码（如工单号、告警编码等），由中间件统一生成，非数据库自增序列
@@ -699,6 +708,26 @@ func (c *triggerRpcClient) CreateCronJob(ctx context.Context, in *CreateCronJobR
 	return out, nil
 }
 
+func (c *triggerRpcClient) UpdateCronJob(ctx context.Context, in *UpdateCronJobReq, opts ...grpc.CallOption) (*UpdateCronJobRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateCronJobRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_UpdateCronJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) SubmitCronJob(ctx context.Context, in *SubmitCronJobReq, opts ...grpc.CallOption) (*SubmitCronJobRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SubmitCronJobRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_SubmitCronJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *triggerRpcClient) EnableCronJob(ctx context.Context, in *EnableCronJobReq, opts ...grpc.CallOption) (*EnableCronJobRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EnableCronJobRes)
@@ -743,6 +772,16 @@ func (c *triggerRpcClient) GetCronJob(ctx context.Context, in *GetCronJobReq, op
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetCronJobRes)
 	err := c.cc.Invoke(ctx, TriggerRpc_GetCronJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) PreviewCronJobSchedule(ctx context.Context, in *PreviewCronJobScheduleReq, opts ...grpc.CallOption) (*PreviewCronJobScheduleRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PreviewCronJobScheduleRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_PreviewCronJobSchedule_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -891,6 +930,10 @@ type TriggerRpcServer interface {
 	CallbackPlanExecItem(context.Context, *CallbackPlanExecItemReq) (*CallbackPlanExecItemRes, error)
 	// 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
 	CreateCronJob(context.Context, *CreateCronJobReq) (*CreateCronJobRes, error)
+	// 按 Trigger JobId 更新完整 Cron Job 配置，不允许修改 TaskCode
+	UpdateCronJob(context.Context, *UpdateCronJobReq) (*UpdateCronJobRes, error)
+	// 按 TaskCode 幂等提交完整 Cron Job 配置，不存在时创建，存在时更新
+	SubmitCronJob(context.Context, *SubmitCronJobReq) (*SubmitCronJobRes, error)
 	// 启用 Cron Job，并从当前时间重新计算未来执行时间
 	EnableCronJob(context.Context, *EnableCronJobReq) (*EnableCronJobRes, error)
 	// 禁用 Cron Job，禁用后调度器不再扫描该任务
@@ -901,6 +944,8 @@ type TriggerRpcServer interface {
 	RunCronJob(context.Context, *RunCronJobReq) (*RunCronJobRes, error)
 	// 获取 Cron Job 详情
 	GetCronJob(context.Context, *GetCronJobReq) (*GetCronJobRes, error)
+	// 预览指定 Cron Job 从当前时间之后的计划执行时间，不改变任务状态
+	PreviewCronJobSchedule(context.Context, *PreviewCronJobScheduleReq) (*PreviewCronJobScheduleRes, error)
 	// 分页获取 Cron Job 列表
 	ListCronJobs(context.Context, *ListCronJobsReq) (*ListCronJobsRes, error)
 	// 生成业务唯一编码（如工单号、告警编码等），由中间件统一生成，非数据库自增序列
@@ -1066,6 +1111,12 @@ func (UnimplementedTriggerRpcServer) CallbackPlanExecItem(context.Context, *Call
 func (UnimplementedTriggerRpcServer) CreateCronJob(context.Context, *CreateCronJobReq) (*CreateCronJobRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateCronJob not implemented")
 }
+func (UnimplementedTriggerRpcServer) UpdateCronJob(context.Context, *UpdateCronJobReq) (*UpdateCronJobRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateCronJob not implemented")
+}
+func (UnimplementedTriggerRpcServer) SubmitCronJob(context.Context, *SubmitCronJobReq) (*SubmitCronJobRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method SubmitCronJob not implemented")
+}
 func (UnimplementedTriggerRpcServer) EnableCronJob(context.Context, *EnableCronJobReq) (*EnableCronJobRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method EnableCronJob not implemented")
 }
@@ -1080,6 +1131,9 @@ func (UnimplementedTriggerRpcServer) RunCronJob(context.Context, *RunCronJobReq)
 }
 func (UnimplementedTriggerRpcServer) GetCronJob(context.Context, *GetCronJobReq) (*GetCronJobRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetCronJob not implemented")
+}
+func (UnimplementedTriggerRpcServer) PreviewCronJobSchedule(context.Context, *PreviewCronJobScheduleReq) (*PreviewCronJobScheduleRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method PreviewCronJobSchedule not implemented")
 }
 func (UnimplementedTriggerRpcServer) ListCronJobs(context.Context, *ListCronJobsReq) (*ListCronJobsRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListCronJobs not implemented")
@@ -1996,6 +2050,42 @@ func _TriggerRpc_CreateCronJob_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TriggerRpc_UpdateCronJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCronJobReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).UpdateCronJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_UpdateCronJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).UpdateCronJob(ctx, req.(*UpdateCronJobReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_SubmitCronJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitCronJobReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).SubmitCronJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_SubmitCronJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).SubmitCronJob(ctx, req.(*SubmitCronJobReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TriggerRpc_EnableCronJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(EnableCronJobReq)
 	if err := dec(in); err != nil {
@@ -2082,6 +2172,24 @@ func _TriggerRpc_GetCronJob_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TriggerRpcServer).GetCronJob(ctx, req.(*GetCronJobReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_PreviewCronJobSchedule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PreviewCronJobScheduleReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).PreviewCronJobSchedule(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_PreviewCronJobSchedule_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).PreviewCronJobSchedule(ctx, req.(*PreviewCronJobScheduleReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2362,6 +2470,14 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TriggerRpc_CreateCronJob_Handler,
 		},
 		{
+			MethodName: "UpdateCronJob",
+			Handler:    _TriggerRpc_UpdateCronJob_Handler,
+		},
+		{
+			MethodName: "SubmitCronJob",
+			Handler:    _TriggerRpc_SubmitCronJob_Handler,
+		},
+		{
 			MethodName: "EnableCronJob",
 			Handler:    _TriggerRpc_EnableCronJob_Handler,
 		},
@@ -2380,6 +2496,10 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetCronJob",
 			Handler:    _TriggerRpc_GetCronJob_Handler,
+		},
+		{
+			MethodName: "PreviewCronJobSchedule",
+			Handler:    _TriggerRpc_PreviewCronJobSchedule_Handler,
 		},
 		{
 			MethodName: "ListCronJobs",

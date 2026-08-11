@@ -2,11 +2,8 @@ package logic
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"time"
 
-	"zero-service/app/trigger/internal/cronjob"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/crontask"
@@ -35,55 +32,16 @@ func (l *CreateCronJobLogic) CreateCronJob(in *trigger.CreateCronJobReq) (*trigg
 	if err := in.Validate(); err != nil {
 		return nil, err
 	}
-	payload, err := optionalJSON(in.Payload, "payload")
-	if err != nil {
-		return nil, err
-	}
-	bizExtra, err := optionalJSON(in.Extra, "extra")
-	if err != nil {
-		return nil, err
-	}
-	schedule, err := cronjob.CompileSchedule(
-		in.Rule,
-		in.StartTime,
-		in.EndTime,
-		in.ExcludeDates,
-		in.SkipTimeFilter,
-		tool.NowStartOfSecond().StdTime(),
-	)
-	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "Cron Job 规则无效")
-	}
-	extra, err := cronjob.MarshalExtra(&cronjob.CronJobExtra{
-		DeptCode:     in.DeptCode,
-		Type:         in.Type,
-		GroupId:      in.GroupId,
-		Description:  in.Description,
-		StartTime:    in.StartTime,
-		EndTime:      in.EndTime,
-		Rule:         schedule.RuleJSON,
-		ExcludeDates: append([]string(nil), in.ExcludeDates...),
-		BizExtra:     bizExtra,
-		Ext1:         in.Ext1,
-		Ext2:         in.Ext2,
-		Ext3:         in.Ext3,
-		Ext4:         in.Ext4,
-		Ext5:         in.Ext5,
+	task, err := buildCronJobTask(cronJobTaskData{
+		taskCode: in.TaskCode, taskName: in.TaskName, taskType: in.Type,
+		groupID: in.GroupId, description: in.Description, deptCode: in.DeptCode, rule: in.Rule,
+		startTime: in.StartTime, endTime: in.EndTime, excludeDates: in.ExcludeDates,
+		priority: in.Priority, payload: in.Payload, bizExtra: in.Extra,
+		lockTimeout: in.LockTimeout, maxDelay: in.MaxDelay, skipTimeFilter: in.SkipTimeFilter,
+		ext1: in.Ext1, ext2: in.Ext2, ext3: in.Ext3, ext4: in.Ext4, ext5: in.Ext5,
 	})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "Cron Job 扩展字段无效")
-	}
-	task := &crontask.TaskConfig{
-		TaskCode:    in.TaskCode,
-		TaskName:    in.TaskName,
-		RRuleStr:    schedule.RRuleStr,
-		Priority:    int(in.Priority),
-		LockTimeout: time.Duration(in.LockTimeout) * time.Millisecond,
-		MaxDelay:    time.Duration(in.MaxDelay) * time.Second,
-		Payload:     payload,
-		Extra:       extra,
-		Status:      crontask.StatusEnabled,
-		NextRun:     schedule.NextRun,
+		return nil, err
 	}
 	if err := l.svcCtx.CronJobStore.Insert(l.ctx, task); err != nil {
 		if errors.Is(err, crontask.ErrDuplicate) {
@@ -96,14 +54,4 @@ func (l *CreateCronJobLogic) CreateCronJob(in *trigger.CreateCronJobReq) (*trigg
 		nextRun = tool.CarbonFromTimeStartOfSecond(task.NextRun).ToDateTimeString()
 	}
 	return &trigger.CreateCronJobRes{JobId: task.ID, NextRun: nextRun}, nil
-}
-
-func optionalJSON(value, field string) (json.RawMessage, error) {
-	if value == "" {
-		return nil, nil
-	}
-	if !json.Valid([]byte(value)) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, field+" 必须是合法 JSON")
-	}
-	return json.RawMessage(value), nil
 }

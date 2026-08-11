@@ -184,6 +184,76 @@ func TestDBStoreUpdatePreservesInFlightScheduledTime(t *testing.T) {
 	}
 }
 
+func TestDBStoreUpdateOwnsOnlyConfigurationFields(t *testing.T) {
+	db := newCronJobTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	now := time.Date(2026, 7, 24, 10, 0, 0, 0, time.Local)
+	config := cronJobTestConfig(t, now.Add(time.Hour))
+	if err := store.Insert(context.Background(), config); err != nil {
+		t.Fatal(err)
+	}
+
+	lastRun := now.Add(-time.Hour)
+	lastScheduledRun := now.Add(-2 * time.Hour)
+	if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", config.ID).Updates(map[string]interface{}{
+		"status":             int(crontask.StatusDisabled),
+		"last_run":           lastRun,
+		"last_scheduled_run": lastScheduledRun,
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	updated, err := store.GetByID(context.Background(), config.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated.TaskCode = "must-not-change"
+	updated.TaskName = "updated"
+	updated.Payload = nil
+	extra, err := ParseExtra(updated.Extra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	extra.GroupId = ""
+	extra.Description = ""
+	extra.StartTime = ""
+	extra.EndTime = ""
+	extra.ExcludeDates = nil
+	extra.Ext1 = ""
+	updated.Extra, err = MarshalExtra(extra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Update(context.Background(), updated); err != nil {
+		t.Fatal(err)
+	}
+
+	var record gormmodel.CronJob
+	if err := db.Where("id = ?", config.ID).First(&record).Error; err != nil {
+		t.Fatal(err)
+	}
+	if record.TaskCode != config.TaskCode || record.Status != int(crontask.StatusDisabled) {
+		t.Fatalf("protected identity/state changed: task_code=%q status=%d", record.TaskCode, record.Status)
+	}
+	if !record.LastRun.Valid || !record.LastRun.Time.Equal(lastRun) ||
+		!record.LastScheduledRun.Valid || !record.LastScheduledRun.Time.Equal(lastScheduledRun) {
+		t.Fatalf("execution history changed: last_run=%v last_scheduled_run=%v", record.LastRun, record.LastScheduledRun)
+	}
+	if record.TaskName != "updated" || record.Payload != "" || record.GroupId != "" || record.Description != "" ||
+		record.StartTime.Valid || record.EndTime.Valid || record.ExcludeDates.Valid || record.Ext1 != "" {
+		t.Fatalf("configuration fields were not updated/cleared: %+v", record)
+	}
+}
+
+func TestDBStoreUpdateMissingReturnsErrUpdate(t *testing.T) {
+	store := NewDBStore(&gormx.DB{DB: newCronJobTestDB(t)})
+	config := cronJobTestConfig(t, time.Now().Add(time.Hour))
+	config.ID = "missing"
+	if err := store.Update(context.Background(), config); !errors.Is(err, crontask.ErrUpdate) {
+		t.Fatalf("missing update = %v, want ErrUpdate", err)
+	}
+}
+
 func TestDBStoreOptionalBusinessFieldsPersistAsNull(t *testing.T) {
 	db := newCronJobTestDB(t)
 	store := NewDBStore(&gormx.DB{DB: db})

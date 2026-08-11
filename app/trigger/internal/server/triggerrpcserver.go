@@ -317,6 +317,18 @@ func (s *TriggerRpcServer) CreateCronJob(ctx context.Context, in *trigger.Create
 	return l.CreateCronJob(in)
 }
 
+// 按 Trigger JobId 更新完整 Cron Job 配置，不允许修改 TaskCode
+func (s *TriggerRpcServer) UpdateCronJob(ctx context.Context, in *trigger.UpdateCronJobReq) (*trigger.UpdateCronJobRes, error) {
+	l := logic.NewUpdateCronJobLogic(ctx, s.svcCtx)
+	return l.UpdateCronJob(in)
+}
+
+// 按 TaskCode 幂等提交完整 Cron Job 配置，不存在时创建，存在时更新
+func (s *TriggerRpcServer) SubmitCronJob(ctx context.Context, in *trigger.SubmitCronJobReq) (*trigger.SubmitCronJobRes, error) {
+	l := logic.NewSubmitCronJobLogic(ctx, s.svcCtx)
+	return l.SubmitCronJob(in)
+}
+
 // 启用 Cron Job，并从当前时间重新计算未来执行时间
 func (s *TriggerRpcServer) EnableCronJob(ctx context.Context, in *trigger.EnableCronJobReq) (*trigger.EnableCronJobRes, error) {
 	l := logic.NewEnableCronJobLogic(ctx, s.svcCtx)
@@ -345,6 +357,12 @@ func (s *TriggerRpcServer) RunCronJob(ctx context.Context, in *trigger.RunCronJo
 func (s *TriggerRpcServer) GetCronJob(ctx context.Context, in *trigger.GetCronJobReq) (*trigger.GetCronJobRes, error) {
 	l := logic.NewGetCronJobLogic(ctx, s.svcCtx)
 	return l.GetCronJob(in)
+}
+
+// 预览指定 Cron Job 从当前时间之后的计划执行时间，不改变任务状态
+func (s *TriggerRpcServer) PreviewCronJobSchedule(ctx context.Context, in *trigger.PreviewCronJobScheduleReq) (*trigger.PreviewCronJobScheduleRes, error) {
+	l := logic.NewPreviewCronJobScheduleLogic(ctx, s.svcCtx)
+	return l.PreviewCronJobSchedule(in)
 }
 
 // 分页获取 Cron Job 列表

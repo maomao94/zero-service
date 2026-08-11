@@ -172,14 +172,16 @@ func (m *MemoryStore) Update(ctx context.Context, cfg *TaskConfig) error {
 	}
 
 	if _, ok := m.tasks[cfg.ID]; !ok {
-		return ErrNotFound
+		return ErrUpdate
 	}
 
 	lastRun := m.tasks[cfg.ID].LastRun
 	lastScheduledRun := m.tasks[cfg.ID].LastScheduledRun
 	nextRun := m.tasks[cfg.ID].NextRun
 	scheduledTime := m.tasks[cfg.ID].ScheduledTime
+	status := m.tasks[cfg.ID].Status
 	updated := *cfg
+	updated.Status = status
 	updated.LastRun = lastRun
 	updated.LastScheduledRun = lastScheduledRun
 	if !scheduledTime.IsZero() {

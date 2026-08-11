@@ -1,0 +1,5 @@
+{"file":".trellis/spec/backend/contract-generation.md","reason":"新增 Trigger RPC 与 proto 消息，必须按服务生成脚本维护契约和生成物。"}
+{"file":".trellis/spec/backend/go-zero-conventions.md","reason":"新增 Server/Logic 方法并保持 go-zero 分层边界。"}
+{"file":".trellis/spec/backend/gormx-guidelines.md","reason":"Submit 涉及唯一约束竞争与 Update 字段所有权。"}
+{"file":".trellis/spec/backend/crontask-guidelines.md","reason":"更新必须保留运行历史、scheduled_time 和在途 lease next_run。"}
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"CronJob RPC、Store 和 task code 语义属于 Trigger 调度领域。"}

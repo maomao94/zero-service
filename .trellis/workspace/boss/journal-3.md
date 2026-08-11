@@ -1466,3 +1466,72 @@ Phase A (proto): renamed 6 mismatched platform response types to <RpcName>Res, a
 ### Status
 
 [OK] **Completed**
+
+
+## Session 156: CronJob 更新与提交接口
+
+**Date**: 2026-08-11
+**Task**: CronJob 更新与提交接口
+**Branch**: `master`
+
+### Summary
+
+新增并收敛 CronJob Update/Submit RPC；Update 按 job_id 保留 task_code，Submit 按 task_code 创建或更新；统一 RRULE 编译工具数据结构，验证状态/lease 保护、软删除冲突和规则合法性。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8041aaeb` | (see git log) |
+| `bdf70e28` | (see git log) |
+| `6f9e956a` | (see git log) |
+| `eb0580ae` | (see git log) |
+| `e6ceeee3` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 157: Document CronJob update ownership
+
+**Date**: 2026-08-11
+**Task**: Document CronJob update ownership
+**Branch**: `master`
+
+### Summary
+
+Documented the two-phase CronJob configuration update contract: configuration zero-row updates return ErrUpdate, while conditional next_run zero-row updates preserve an in-flight lease and succeed.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `63611fc0` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 158: Document CronJob scheduling API scenarios
+
+**Date**: 2026-08-11
+**Task**: Document CronJob scheduling API scenarios
+**Branch**: `master`
+
+### Summary
+
+Added and expanded the Trigger CronJob API guide with complete creation examples, date-range defaults, create-time catch-up and RunNow semantics, additional supported calendar scenarios, unsupported-rule boundaries, and polished Trigger documentation navigation.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a699f5a3` | (see git log) |
+| `8164d2cd` | (see git log) |
+| `9bab1dc7` | (see git log) |
+
+### Status
+
+[OK] **Completed**

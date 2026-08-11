@@ -1,0 +1,5 @@
+{"file":".trellis/spec/backend/common-package-design.md","reason":"Defines boundaries for adding a transport-neutral preview capability to common/crontask."}
+{"file":".trellis/spec/backend/crontask-guidelines.md","reason":"Defines complete RRULE Set, NextAfter, InvalidTimeFilter, exhaustion, and scheduler time semantics."}
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"Defines Trigger CronJob persisted-rule and read-only management API boundaries."}
+{"file":".trellis/spec/backend/contract-generation.md","reason":"Defines proto source-of-truth and generated code workflow."}
+{"file":".trellis/spec/backend/go-zero-conventions.md","reason":"Defines RPC Server and Logic layering."}
