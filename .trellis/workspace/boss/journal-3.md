@@ -1535,3 +1535,24 @@ Added and expanded the Trigger CronJob API guide with complete creation examples
 ### Status
 
 [OK] **Completed**
+
+
+## Session 159: CronJob schedule preview
+
+**Date**: 2026-08-11
+**Task**: CronJob schedule preview
+**Branch**: `master`
+
+### Summary
+
+Added a read-only CronJob future schedule preview API backed by bounded common/crontask iteration, complete RRULE Set exclusions, Scheduler InvalidTimeFilter semantics, Trigger validation/error handling, tests, documentation, and refreshed scheduling specs.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5ff3e321` | (see git log) |
+
+### Status
+
+[OK] **Completed**
