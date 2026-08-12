@@ -1,0 +1,8 @@
+{
+  "2031-01-01": {"name": "元旦", "type": "holiday", "isFestivalDay": true, "note": "元旦"},
+  "2031-01-23": {"name": "春节", "type": "holiday", "isFestivalDay": true, "note": "春节"},
+  "2031-04-05": {"name": "清明节", "type": "holiday", "isFestivalDay": true, "note": "清明节"},
+  "2031-05-01": {"name": "劳动节", "type": "holiday", "isFestivalDay": true, "note": "劳动节"},
+  "2031-06-24": {"name": "端午节", "type": "holiday", "isFestivalDay": true, "note": "端午节"},
+  "2031-10-01": {"name": "中秋国庆", "type": "holiday", "isFestivalDay": true, "note": "中秋节、国庆节"}
+}

@@ -22,7 +22,7 @@
 
 ## Requirements
 
-- 新增独立文档 `docs/trigger-cronjob-api-guide.md`，定位为 CronJob 创建和执行场景指南。
+- 新增的独立文档现为 `docs/trigger-rrule-api-guide.md`，最初定位为 CronJob 创建和执行场景指南。
 - 说明 `CreateCronJob`、`SubmitCronJob` 与 `RunCronJob` 的使用边界；周期示例以 `CreateCronJob` 请求体为主。
 - 提供 `PlanRulePb` 频率值、月份、月日、星期、小时、分钟和生效区间的字段说明。
 - 单独提供“开始与结束时间”章节，使用表格说明必填性、格式、时区、四种传值组合、默认值、最大 3 年跨度和结束时间不能早于开始时间。

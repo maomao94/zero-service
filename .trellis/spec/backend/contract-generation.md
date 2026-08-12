@@ -47,18 +47,24 @@ err = protojson.Unmarshal([]byte(pbJSON), &rule)  // 正确
 
 ```go
 type CronJobExtra struct {
-    Rule     json.RawMessage `json:"rule"`      // protojson 数据透传
-    BizExtra json.RawMessage `json:"biz_extra"` // 业务 JSON
+    Rule json.RawMessage `json:"rule"` // protojson 数据透传
 }
 ```
 
 **流程**：
 ```
-序列化:   PlanRulePb → protojson.Marshal → json.RawMessage(Rule) → json.Marshal(CronJobExtra) → 存储
-反序列化: 存储 → json.Unmarshal(CronJobExtra) → json.RawMessage(Rule) → protojson.Unmarshal → PlanRulePb
+写入适配: PlanRulePb → protojson.Marshal → json.RawMessage(Rule) → json.Marshal(CronJobExtra) → TaskConfig.Extra → 平铺到业务模型列
+读取适配: 业务模型列 → 重建 CronJobExtra → json.Marshal → TaskConfig.Extra → json.Unmarshal → protojson.Unmarshal(Rule) → PlanRulePb
 ```
 
-`json.Marshal` 写入 `json.RawMessage` 时原样输出字节，protojson 编码的 JSON 完整透传。
+`json.Marshal` 写入 `json.RawMessage` 时原样输出字节，protojson 编码的 JSON 完整透传。这里的 `TaskConfig.Extra` 是运行时适配载体，不要求业务表保留同名 JSON 列；Trigger CronJob 和 ISP 均可把字段平铺到专属列后在读取时重建。
+
+### Trigger Exact-Time Lists
+
+- `CalcPlanTaskDateReq`、`CreatePlanTaskReq`、`CreateCronJobReq`、`UpdateCronJobReq`、`SubmitCronJobReq` 使用 `repeated string specified_times` / `excluded_times`，并显式标注 `json_name = "specifiedTimes"` / `"excludedTimes"`。
+- 请求列表允许为空，每个列表至多 1000 项，每项长度必须为 19；格式和时区范围由 Trigger Schedule 编译器进一步校验。
+- `CronJobPb` 回显同名字段但不重复请求校验。Proto 修改必须经 `app/trigger/gen.sh` 生成，业务转换不得直接编辑生成类型。
+- gRPC JSON 使用 `specifiedTimes` / `excludedTimes`；两者是 repeated 完整配置字段，Update/Submit 中空数组或省略均表示空列表，不表示保留旧值。非空项由 Trigger 编译器按 `Asia/Shanghai` 解析并校验位于规范化闭区间。
 
 ### extproto 自定义 Option 引用
 
@@ -81,6 +87,8 @@ _1_00_UNKNOWN = 100999 [(name) = "未知错误", (http_code) = 500];
 - 区分缺省值与业务空值，尤其是时间、状态、分页游标和可选过滤条件；不要用魔法值代替明确语义。
 - 修改请求/响应字段后搜索生成 client、网关、消息消费者、前端/外部文档与测试，不能只改服务端。
 - 对第三方协议保持原始结构，在适配层转换为项目类型，不让上游变化扩散到业务层。
+- 服务间回调/事件请求只携带下游业务处理所需的关键字段，不把调用方内部运行状态（lease、`next_run`、调度规则等）复制进契约；回调契约是否需要 PGV validation 由契约所有方显式决定，不默认引入。
+- 契约所有方明确允许覆盖时，字段号可直接顺延对齐（从 1 连续排列）并在任务文档中声明不保留兼容；Go 字段名由 proto 字段名派生，仅调整序号不影响 Go 调用方。
 
 ## 生成流程
 

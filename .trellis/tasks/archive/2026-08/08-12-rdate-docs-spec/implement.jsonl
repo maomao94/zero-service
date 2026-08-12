@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"Update shared Plan/CronJob exact-time compilation and runtime boundaries."}
+{"file":".trellis/spec/backend/crontask-guidelines.md","reason":"Document complete Set authority for RDATE/EXDATE progression and preview."}
+{"file":".trellis/spec/backend/contract-generation.md","reason":"Document exact-time Proto naming, validation, JSON, and generated-contract rules."}
+{"file":".trellis/spec/backend/gormx-guidelines.md","reason":"Document nullable JSON list persistence, clear semantics, and atomic in-flight updates."}

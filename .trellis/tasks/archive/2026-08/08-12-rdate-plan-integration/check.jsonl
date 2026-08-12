@@ -1,0 +1,2 @@
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"Verify Plan uses the final Set and retains 3-year/expansion semantics."}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Verify tests, diff scope, and regression coverage."}

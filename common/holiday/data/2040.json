@@ -1,0 +1,9 @@
+{
+  "2040-01-01": {"name": "元旦", "type": "holiday", "isFestivalDay": true, "note": "元旦"},
+  "2040-02-12": {"name": "春节", "type": "holiday", "isFestivalDay": true, "note": "春节"},
+  "2040-04-04": {"name": "清明节", "type": "holiday", "isFestivalDay": true, "note": "清明节"},
+  "2040-05-01": {"name": "劳动节", "type": "holiday", "isFestivalDay": true, "note": "劳动节"},
+  "2040-06-14": {"name": "端午节", "type": "holiday", "isFestivalDay": true, "note": "端午节"},
+  "2040-09-20": {"name": "中秋节", "type": "holiday", "isFestivalDay": true, "note": "中秋节"},
+  "2040-10-01": {"name": "国庆节", "type": "holiday", "isFestivalDay": true, "note": "国庆节"}
+}

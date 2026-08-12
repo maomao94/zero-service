@@ -501,6 +501,10 @@ message CalcPlanTaskDateReq {
   // 排除日期列表
   // 格式：yyyy-MM-dd
   repeated string exclude_dates = 4 [(validate.rules).repeated = {items: {string: {min_len: 1}}}];
+  // 指定执行时间列表，格式：yyyy-MM-dd HH:mm:ss。
+  repeated string specified_times = 5 [json_name = "specifiedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
+  // 精确排除时间列表，格式：yyyy-MM-dd HH:mm:ss。
+  repeated string excluded_times = 6 [json_name = "excludedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
 }
 
 message CalcPlanTaskDateRes {
@@ -723,6 +727,10 @@ message CreatePlanTaskReq {
   string batch_num_prefix = 13;
   // 是否跳过时间过滤，用于立即执行的计划
   bool skip_time_filter = 14;
+  // 指定执行时间列表，格式：yyyy-MM-dd HH:mm:ss。
+  repeated string specified_times = 15 [json_name = "specifiedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
+  // 精确排除时间列表，格式：yyyy-MM-dd HH:mm:ss。
+  repeated string excluded_times = 16 [json_name = "excludedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
 
   // 扩展字段
   string ext1 = 50;
@@ -1342,7 +1350,7 @@ message CallbackPlanExecItemRes {
 // Trigger 根据业务规则生成 RRuleStr、JobId 和首次 NextRun，不预拆分批次或执行项。
 message CreateCronJobReq {
   // 全局唯一业务任务编码；与 Trigger 生成的 JobId 是两个不同标识。
-  string task_code = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  string task_code = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
   // 任务名称。
   string task_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
   // 任务类型。
@@ -1363,14 +1371,16 @@ message CreateCronJobReq {
   int32 priority = 10 [(validate.rules).int32 = {gte: 0}];
   // 执行业务参数 JSON；为空表示没有业务参数。
   string payload = 11;
-  // 调用方业务扩展 JSON；Trigger 将其放入 CronJobExtra.bizExtra。
-  string extra = 12;
   // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-  int64 lock_timeout = 13 [(validate.rules).int64 = {gte: 0}];
+  int64 lock_timeout = 12 [(validate.rules).int64 = {gte: 0}];
   // 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
-  int64 max_delay = 14 [(validate.rules).int64 = {gte: 0}];
+  int64 max_delay = 13 [(validate.rules).int64 = {gte: 0}];
   // 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
-  bool skip_time_filter = 15;
+  bool skip_time_filter = 14;
+  // 指定执行时间列表，格式 yyyy-MM-dd HH:mm:ss。
+  repeated string specified_times = 15 [json_name = "specifiedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
+  // 精确排除时间列表，格式 yyyy-MM-dd HH:mm:ss。
+  repeated string excluded_times = 16 [json_name = "excludedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
 
   // 扩展字段 1。
   string ext1 = 50;
@@ -1393,40 +1403,40 @@ message CreateCronJobRes {
   string job_id = 1;
   // 首次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；规则已耗尽时为空字符串。
   string next_run = 2;
+  // 最终持久化的任务分组 ID；请求未传时由 Trigger 自动生成 UUID。
+  string group_id = 3;
 }
 
-// UpdateCronJobReq 使用 JobId 定位任务，并提交扁平的完整 Cron Job 配置。
+// UpdateCronJobReq 使用 JobId 定位任务，只更新可变配置，不修改身份字段。
 message UpdateCronJobReq {
   // Trigger 生成的 JobId。
   string job_id = 1 [(validate.rules).string = {min_len: 1}];
   // 任务名称。
   string task_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
-  // 任务类型。
-  string type = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
-  // 任务分组 ID，用于业务侧分组管理。
-  string group_id = 4 [(validate.rules).string = {max_len: 64}];
   // 任务描述。
-  string description = 5 [(validate.rules).string = {max_len: 200}];
+  string description = 3 [(validate.rules).string = {max_len: 200}];
   // 规则生效开始时间；不传时默认当前年份第一天，格式 yyyy-MM-dd HH:mm:ss。
-  string start_time = 6;
+  string start_time = 4;
   // 规则生效结束时间；不传时默认开始时间所在年份最后一天，格式 yyyy-MM-dd HH:mm:ss。
-  string end_time = 7;
+  string end_time = 5;
   // 业务周期规则，由 Trigger 编译为 RFC 5545 RRULE。
-  PlanRulePb rule = 8 [(validate.rules).message = {required: true}];
+  PlanRulePb rule = 6 [(validate.rules).message = {required: true}];
   // 排除日期列表，格式 yyyy-MM-dd；这些日期的计划时间不会触发。
-  repeated string exclude_dates = 9 [(validate.rules).repeated = {items: {string: {len: 10}}}];
+  repeated string exclude_dates = 7 [(validate.rules).repeated = {items: {string: {len: 10}}}];
   // 调度优先级，数字越大越优先。
-  int32 priority = 10 [(validate.rules).int32 = {gte: 0}];
+  int32 priority = 8 [(validate.rules).int32 = {gte: 0}];
   // 执行业务参数 JSON；为空表示没有业务参数。
-  string payload = 11;
-  // 调用方业务扩展 JSON；Trigger 将其放入 CronJobExtra.bizExtra。
-  string extra = 12;
+  string payload = 9;
   // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-  int64 lock_timeout = 13 [(validate.rules).int64 = {gte: 0}];
+  int64 lock_timeout = 10 [(validate.rules).int64 = {gte: 0}];
   // 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
-  int64 max_delay = 14 [(validate.rules).int64 = {gte: 0}];
+  int64 max_delay = 11 [(validate.rules).int64 = {gte: 0}];
   // 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
-  bool skip_time_filter = 15;
+  bool skip_time_filter = 12;
+  // 指定执行时间列表，格式 yyyy-MM-dd HH:mm:ss。
+  repeated string specified_times = 13 [json_name = "specifiedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
+  // 精确排除时间列表，格式 yyyy-MM-dd HH:mm:ss。
+  repeated string excluded_times = 14 [json_name = "excludedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
 
   // 扩展字段 1。
   string ext1 = 50;
@@ -1438,9 +1448,6 @@ message UpdateCronJobReq {
   string ext4 = 53;
   // 扩展字段 5。
   string ext5 = 54;
-
-  // 机构编码。
-  string dept_code = 101 [(validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
 // UpdateCronJobRes 返回更新后的任务标识和当前可展示的下次执行时间。
@@ -1451,16 +1458,18 @@ message UpdateCronJobRes {
   string next_run = 2;
   // 上游业务任务编码。
   string task_code = 3;
+  // 原任务分组 ID；更新操作不会修改任务分组。
+  string group_id = 4;
 }
 
 // SubmitCronJobReq 按 TaskCode 提交扁平的完整 Cron Job 配置。
 message SubmitCronJobReq {
   // 全局唯一业务任务编码；与 Trigger 生成的 JobId 是两个不同标识。
-  string task_code = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  string task_code = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
   // 任务名称。
   string task_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
-  // 任务类型。
-  string type = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  // 任务类型；新建时必填，更新时为空表示不声明变更，非空时必须与已有值一致。
+  string type = 3 [(validate.rules).string = {max_len: 64}];
   // 任务分组 ID，用于业务侧分组管理。
   string group_id = 4 [(validate.rules).string = {max_len: 64}];
   // 任务描述。
@@ -1477,14 +1486,16 @@ message SubmitCronJobReq {
   int32 priority = 10 [(validate.rules).int32 = {gte: 0}];
   // 执行业务参数 JSON；为空表示没有业务参数。
   string payload = 11;
-  // 调用方业务扩展 JSON；Trigger 将其放入 CronJobExtra.bizExtra。
-  string extra = 12;
   // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-  int64 lock_timeout = 13 [(validate.rules).int64 = {gte: 0}];
+  int64 lock_timeout = 12 [(validate.rules).int64 = {gte: 0}];
   // 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
-  int64 max_delay = 14 [(validate.rules).int64 = {gte: 0}];
+  int64 max_delay = 13 [(validate.rules).int64 = {gte: 0}];
   // 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
-  bool skip_time_filter = 15;
+  bool skip_time_filter = 14;
+  // 指定执行时间列表，格式 yyyy-MM-dd HH:mm:ss。
+  repeated string specified_times = 15 [json_name = "specifiedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
+  // 精确排除时间列表，格式 yyyy-MM-dd HH:mm:ss。
+  repeated string excluded_times = 16 [json_name = "excludedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
 
   // 扩展字段 1。
   string ext1 = 50;
@@ -1497,8 +1508,8 @@ message SubmitCronJobReq {
   // 扩展字段 5。
   string ext5 = 54;
 
-  // 机构编码。
-  string dept_code = 101 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  // 机构编码；新建时必填，更新时为空表示不声明变更，非空时必须与已有值一致。
+  string dept_code = 101 [(validate.rules).string = {max_len: 64}];
 }
 
 // SubmitCronJobRes 返回创建或更新后的任务标识和当前下次执行时间。
@@ -1509,6 +1520,8 @@ message SubmitCronJobRes {
   string next_run = 2;
   // 上游业务任务编码。
   string task_code = 3;
+  // 最终持久化的任务分组 ID；更新已有任务时保留原值。
+  string group_id = 4;
 }
 
 // EnableCronJobReq 启用指定 Cron Job。
@@ -1594,7 +1607,7 @@ message ListCronJobsReq {
   // 页码；0 使用默认值。
   int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 业务任务编码模糊查询。
-  string task_code = 3 [(validate.rules).string = {max_len: 64}];
+  string task_code = 3 [(validate.rules).string = {max_len: 128}];
   // 任务名称模糊查询。
   string task_name = 4 [(validate.rules).string = {max_len: 128}];
   // 状态多选：0-禁用，1-启用。
@@ -1631,8 +1644,6 @@ message CronJobPb {
   int64 max_delay = 6;
   // 执行业务参数 JSON；为空表示没有业务参数。
   string payload = 7;
-  // 调用方业务扩展 JSON；为空表示没有业务扩展。
-  string extra = 8;
   // 状态：0-禁用，1-启用。
   int32 status = 9;
   // 下次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；无下次调度时为空字符串。
@@ -1657,6 +1668,10 @@ message CronJobPb {
   string schedule_description = 19;
   // 实际持久化并用于调度的 RFC 5545 RRULE Set 原文。
   string rrule_str = 20;
+  // 指定执行时间列表，格式 yyyy-MM-dd HH:mm:ss。
+  repeated string specified_times = 21 [json_name = "specifiedTimes"];
+  // 精确排除时间列表，格式 yyyy-MM-dd HH:mm:ss。
+  repeated string excluded_times = 22 [json_name = "excludedTimes"];
 
   // 扩展字段 1。
   string ext1 = 50;

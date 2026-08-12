@@ -1,0 +1,3 @@
+{"file":".trellis/spec/guides/documentation-guide.md","reason":"Defines documentation ownership, navigation, deduplication, examples, and verification."}
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"Defines the distinct Plan and CronJob execution models that the unified guide must preserve."}
+{"file":".trellis/spec/backend/crontask-guidelines.md","reason":"Defines common RRULE Set semantics and CronJob-only scheduling behavior."}

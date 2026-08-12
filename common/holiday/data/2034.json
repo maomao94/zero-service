@@ -1,0 +1,9 @@
+{
+  "2034-01-01": {"name": "元旦", "type": "holiday", "isFestivalDay": true, "note": "元旦"},
+  "2034-02-19": {"name": "春节", "type": "holiday", "isFestivalDay": true, "note": "春节"},
+  "2034-04-05": {"name": "清明节", "type": "holiday", "isFestivalDay": true, "note": "清明节"},
+  "2034-05-01": {"name": "劳动节", "type": "holiday", "isFestivalDay": true, "note": "劳动节"},
+  "2034-06-20": {"name": "端午节", "type": "holiday", "isFestivalDay": true, "note": "端午节"},
+  "2034-09-27": {"name": "中秋节", "type": "holiday", "isFestivalDay": true, "note": "中秋节"},
+  "2034-10-01": {"name": "国庆节", "type": "holiday", "isFestivalDay": true, "note": "国庆节"}
+}

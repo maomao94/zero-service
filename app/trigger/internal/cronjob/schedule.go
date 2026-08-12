@@ -14,10 +14,12 @@ import (
 )
 
 const dateTimeLayout = "2006-01-02 15:04:05"
+const maxPlanScheduleYears = 3
+const maxCronJobScheduleYears = 100
 
 // Schedule 是 Trigger 业务规则编译后的调度配置。
 type Schedule struct {
-	// RRuleStr 是包含 DTSTART、RRULE 和 EXDATE 的 RFC 5545 规则集。
+	// RRuleStr 是包含 DTSTART、RRULE、RDATE 和 EXDATE 的 RFC 5545 规则集。
 	RRuleStr string
 	// StartTime 是补齐默认值后参与 RRULE 编译的生效开始时间。
 	StartTime time.Time
@@ -31,14 +33,23 @@ type Schedule struct {
 
 // CompileSchedule 将 Trigger 业务规则编译为 crontask 可直接消费的 RRULE set。
 // skipTimeFilter 仅影响首次 NextRun：允许时最多选择一个已发生计划用于立即补触发。
-func CompileSchedule(rule *trigger.PlanRulePb, startText, endText string, excludeDates []string, skipTimeFilter bool, now time.Time) (*Schedule, error) {
+func CompileSchedule(rule *trigger.PlanRulePb, startText, endText string, excludeDates, specifiedTimes, excludedTimes []string, skipTimeFilter bool, now time.Time) (*Schedule, error) {
+	return compileSchedule(rule, startText, endText, excludeDates, specifiedTimes, excludedTimes, skipTimeFilter, now, maxPlanScheduleYears)
+}
+
+// CompileCronJobSchedule 编译不预展开执行数据的 CronJob 规则，允许最长 100 年有效期。
+func CompileCronJobSchedule(rule *trigger.PlanRulePb, startText, endText string, excludeDates, specifiedTimes, excludedTimes []string, skipTimeFilter bool, now time.Time) (*Schedule, error) {
+	return compileSchedule(rule, startText, endText, excludeDates, specifiedTimes, excludedTimes, skipTimeFilter, now, maxCronJobScheduleYears)
+}
+
+func compileSchedule(rule *trigger.PlanRulePb, startText, endText string, excludeDates, specifiedTimes, excludedTimes []string, skipTimeFilter bool, now time.Time, maxYears int) (*Schedule, error) {
 	if rule == nil {
 		return nil, errors.New("计划规则不能为空")
 	}
 	if err := rule.Validate(); err != nil {
 		return nil, fmt.Errorf("计划规则无效: %w", err)
 	}
-	startTime, endTime, err := normalizeRange(startText, endText, now)
+	startTime, endTime, err := normalizeRange(startText, endText, now, maxYears)
 	if err != nil {
 		return nil, err
 	}
@@ -52,6 +63,20 @@ func CompileSchedule(rule *trigger.PlanRulePb, startText, endText string, exclud
 	}
 	set := &rrule.Set{}
 	set.RRule(r)
+	parsedSpecifiedTimes, err := parseExactTimes(specifiedTimes, startTime, endTime, "指定执行时间")
+	if err != nil {
+		return nil, err
+	}
+	for _, specifiedTime := range parsedSpecifiedTimes {
+		set.RDate(specifiedTime)
+	}
+	parsedExcludedTimes, err := parseExactTimes(excludedTimes, startTime, endTime, "精确排除时间")
+	if err != nil {
+		return nil, err
+	}
+	for _, excludedTime := range parsedExcludedTimes {
+		set.ExDate(excludedTime)
+	}
 	for _, value := range excludeDates {
 		exclude := carbon.ParseByFormat(value, carbon.DateFormat, carbon.Shanghai)
 		if exclude.Error != nil || exclude.IsInvalid() {
@@ -61,6 +86,11 @@ func CompileSchedule(rule *trigger.PlanRulePb, startText, endText string, exclud
 			for _, minute := range rule.Minutes {
 				excludeTime := exclude.Copy().SetHour(int(hour)).SetMinute(int(minute)).SetSecond(0).StartOfSecond()
 				set.ExDate(excludeTime.StdTime())
+			}
+		}
+		for _, specifiedTime := range parsedSpecifiedTimes {
+			if specifiedTime.Format("2006-01-02") == value {
+				set.ExDate(specifiedTime)
 			}
 		}
 	}
@@ -83,6 +113,35 @@ func CompileSchedule(rule *trigger.PlanRulePb, startText, endText string, exclud
 		NextRun:   nextRun,
 		RuleJSON:  ruleJSON,
 	}, nil
+}
+
+func parseExactTimes(values []string, startTime, endTime time.Time, fieldName string) ([]time.Time, error) {
+	if len(values) == 0 {
+		return nil, nil
+	}
+	location, err := time.LoadLocation(carbon.Shanghai)
+	if err != nil {
+		return nil, fmt.Errorf("加载时区失败: %w", err)
+	}
+	result := make([]time.Time, 0, len(values))
+	for _, value := range values {
+		if len(value) != len(dateTimeLayout) {
+			return nil, fmt.Errorf("%s格式错误 %q: 必须为 yyyy-MM-dd HH:mm:ss", fieldName, value)
+		}
+		exactTime, err := time.ParseInLocation(dateTimeLayout, value, location)
+		if err != nil {
+			return nil, fmt.Errorf("%s格式错误 %q: %w", fieldName, value, err)
+		}
+		if exactTime.Format(dateTimeLayout) != value {
+			return nil, fmt.Errorf("%s格式错误 %q: 必须为 yyyy-MM-dd HH:mm:ss", fieldName, value)
+		}
+		exactTime = exactTime.Truncate(time.Second)
+		if exactTime.Before(startTime) || exactTime.After(endTime) {
+			return nil, fmt.Errorf("%s超出计划时间范围 %q", fieldName, value)
+		}
+		result = append(result, exactTime)
+	}
+	return result, nil
 }
 
 // ConvertToRRuleOption 将 PlanRulePb 映射为 rrule.ROption。
@@ -123,7 +182,7 @@ func ConvertToRRuleOption(planRule *trigger.PlanRulePb, startTime, endTime time.
 	return opts, nil
 }
 
-func normalizeRange(startText, endText string, now time.Time) (time.Time, time.Time, error) {
+func normalizeRange(startText, endText string, now time.Time, maxYears int) (time.Time, time.Time, error) {
 	current := carbon.CreateFromStdTime(now, carbon.Shanghai).StartOfSecond()
 	var start *carbon.Carbon
 	if startText == "" {
@@ -146,8 +205,8 @@ func normalizeRange(startText, endText string, now time.Time) (time.Time, time.T
 	if end.Lt(start) {
 		return time.Time{}, time.Time{}, errors.New("结束时间必须晚于开始时间")
 	}
-	if end.Gt(start.AddYears(3)) {
-		return time.Time{}, time.Time{}, errors.New("计划时间跨度不能超过 3 年")
+	if end.Gt(start.AddYears(maxYears)) {
+		return time.Time{}, time.Time{}, fmt.Errorf("计划时间跨度不能超过 %d 年", maxYears)
 	}
 	return start.StdTime(), end.StdTime(), nil
 }

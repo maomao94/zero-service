@@ -76,6 +76,8 @@ func (s *DBStore) Update(ctx context.Context, cfg *crontask.TaskConfig) error
 - 完整更新必须允许把可选配置清空，因此白名单更新要写入字符串零值、`sql.NullTime{Valid:false}` 和 `sql.NullString{Valid:false}`。
 - 身份、状态、审计、软删除、执行历史和 lease 字段不得进入配置更新白名单。
 - `next_run` 有独立所有权条件时单独更新；例如 CronJob 只有 `scheduled_time IS NULL` 时才允许配置更新覆盖 `next_run`。
+- Trigger CronJob 的 `specified_times` / `excluded_times` 为可空 JSON 文本配置列：空列表应写 `NULL`，并且两列必须与完整 `rrule_str` 在同一显式白名单事务中替换或清空；在途 `scheduled_time` 任务更新失败时，这些列和 lease 均不得变化。
+- 从数据库读取 SQL `NULL` 时，转换层将两个字段重建为空 slice，并通过同一 `CronJobExtra -> CronJobPb` 链路供 Get/List 回显；不得从 `rrule_str` 反推调用方原始列表。
 - 配置白名单 UPDATE 与 `next_run` 条件 UPDATE 应放在同一事务，但不得合并所有权：前者确认配置写入，后者只在无在途 lease 时推进新计划。
 
 ### 4. Validation & Error Matrix

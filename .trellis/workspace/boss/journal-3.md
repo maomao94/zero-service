@@ -1556,3 +1556,48 @@ Added a read-only CronJob future schedule preview API backed by bounded common/c
 ### Status
 
 [OK] **Completed**
+
+
+## Session 160: CronJob 分组更新文档 & ISP Extra 移除收敛
+
+**Date**: 2026-08-12
+**Task**: CronJob 分组更新文档 & ISP Extra 移除收敛
+**Branch**: `master`
+
+### Summary
+
+完成 CronJob group_id 默认 UUID、Update 字段收敛、100 年跨度、执行日志 message、Payload 清理；新增文档分组/节日示例；移除 ispagent GormTaskConfig.Extra 持久化并重命名表为 isp_cron_task_config
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `58297486` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 161: Add exact-time RRULE scheduling
+
+**Date**: 2026-08-12
+**Task**: Add exact-time RRULE scheduling
+**Branch**: `master`
+
+### Summary
+
+Added specified/excluded exact-time contracts and RRULE compilation, integrated Plan and CronJob scheduling with persistence and atomic updates, expanded regression coverage, and published a unified Plan/CronJob RRULE guide and executable Specs.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3bc7ad8f` | (see git log) |
+| `22d5a71b` | (see git log) |
+| `7f9a077a` | (see git log) |
+| `44e0a16a` | (see git log) |
+
+### Status
+
+[OK] **Completed**

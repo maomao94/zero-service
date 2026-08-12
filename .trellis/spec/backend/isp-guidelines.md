@@ -39,6 +39,14 @@
 
 依据：`app/ispagent/internal/handler`、`app/ispagent/internal/crontask`、`app/ispagent/internal/svc/servicecontext.go` 及测试。
 
+## 周期任务存储适配
+
+- `GormTaskConfig` 的核心调度列与 `crontask.TaskConfig` 对齐；ISP 业务字段使用 `substation_code`、`cycle_*`、`interval_*`、`invalid_*` 等专属列平铺存储，数据库模型不再保留通用 `extra` 列。
+- `TaskConfig.Extra` 仍可作为 Scheduler/Handler 之间的运行时适配载体：写入模型前解析并平铺，模型加载后从专属列重建。删除数据库 `extra` 列不等于可以让 Handler 失去 ISP 字段。
+- `TaskConfig.StartTime` / `EndTime` 是公共规则范围；ISP 适配器如果使用这两个字段，必须显式映射到有明确语义的模型列，不能误用 `CycleStartTime`、`IntervalStartTime` 或不可用区间字段替代。
+
+依据：`common/crontask/config.go`、`app/ispagent/model/gormmodel/isp_task.go`、`app/ispagent/internal/crontask/convert.go`、`app/ispagent/internal/crontask/convert_test.go`。
+
 ## 反模式
 
 - 用 SessionID 作为 ClientID，或注册前发布业务路由。
@@ -46,9 +54,12 @@
 - 先发送后注册响应 Promise，留下快速响应丢失窗口。
 - 人工执行直接调用 handler 并更新周期 `NextRun`。
 - response、持久化和回报各生成不同 patrol ID。
+- 删除 `GormTaskConfig.Extra` 后同时删除运行时字段重建，导致巡检 Handler 无法取得 ISP 业务配置。
+- 把公共 `TaskConfig.StartTime/EndTime` 与 ISP 的周期、间隔或不可用区间字符串字段混为一组时间。
 
 ## 验证
 
 - `common/isp` 测试覆盖帧边界、序列、注册原子性、身份查询、快速响应、超时、关闭和协议错误。
 - `app/ispagent` 测试覆盖 41-1 接受语义、同一 patrol ID、成功/失败回执、人工执行不改周期状态。
+- 转换测试覆盖无数据库 `extra` 列时的 ISP 字段平铺与运行时 `TaskConfig.Extra` 重建；涉及公共范围时覆盖 `StartTime/EndTime` 往返。
 - 涉及并发运行 `go test -race ./common/isp ./app/ispagent/internal/handler ./app/ispagent/internal/crontask`。

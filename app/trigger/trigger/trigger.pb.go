@@ -2571,7 +2571,11 @@ type CalcPlanTaskDateReq struct {
 	Rule *PlanRulePb `protobuf:"bytes,3,opt,name=rule,proto3" json:"rule,omitempty"`
 	// 排除日期列表
 	// 格式：yyyy-MM-dd
-	ExcludeDates  []string `protobuf:"bytes,4,rep,name=exclude_dates,json=excludeDates,proto3" json:"exclude_dates,omitempty"`
+	ExcludeDates []string `protobuf:"bytes,4,rep,name=exclude_dates,json=excludeDates,proto3" json:"exclude_dates,omitempty"`
+	// 指定执行时间列表，格式：yyyy-MM-dd HH:mm:ss。
+	SpecifiedTimes []string `protobuf:"bytes,5,rep,name=specified_times,json=specifiedTimes,proto3" json:"specified_times,omitempty"`
+	// 精确排除时间列表，格式：yyyy-MM-dd HH:mm:ss。
+	ExcludedTimes []string `protobuf:"bytes,6,rep,name=excluded_times,json=excludedTimes,proto3" json:"excluded_times,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2630,6 +2634,20 @@ func (x *CalcPlanTaskDateReq) GetRule() *PlanRulePb {
 func (x *CalcPlanTaskDateReq) GetExcludeDates() []string {
 	if x != nil {
 		return x.ExcludeDates
+	}
+	return nil
+}
+
+func (x *CalcPlanTaskDateReq) GetSpecifiedTimes() []string {
+	if x != nil {
+		return x.SpecifiedTimes
+	}
+	return nil
+}
+
+func (x *CalcPlanTaskDateReq) GetExcludedTimes() []string {
+	if x != nil {
+		return x.ExcludedTimes
 	}
 	return nil
 }
@@ -3912,6 +3930,10 @@ type CreatePlanTaskReq struct {
 	BatchNumPrefix string `protobuf:"bytes,13,opt,name=batch_num_prefix,json=batchNumPrefix,proto3" json:"batch_num_prefix,omitempty"`
 	// 是否跳过时间过滤，用于立即执行的计划
 	SkipTimeFilter bool `protobuf:"varint,14,opt,name=skip_time_filter,json=skipTimeFilter,proto3" json:"skip_time_filter,omitempty"`
+	// 指定执行时间列表，格式：yyyy-MM-dd HH:mm:ss。
+	SpecifiedTimes []string `protobuf:"bytes,15,rep,name=specified_times,json=specifiedTimes,proto3" json:"specified_times,omitempty"`
+	// 精确排除时间列表，格式：yyyy-MM-dd HH:mm:ss。
+	ExcludedTimes []string `protobuf:"bytes,16,rep,name=excluded_times,json=excludedTimes,proto3" json:"excluded_times,omitempty"`
 	// 扩展字段
 	Ext1          string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	Ext2          string `protobuf:"bytes,51,opt,name=ext2,proto3" json:"ext2,omitempty"`
@@ -4055,6 +4077,20 @@ func (x *CreatePlanTaskReq) GetSkipTimeFilter() bool {
 		return x.SkipTimeFilter
 	}
 	return false
+}
+
+func (x *CreatePlanTaskReq) GetSpecifiedTimes() []string {
+	if x != nil {
+		return x.SpecifiedTimes
+	}
+	return nil
+}
+
+func (x *CreatePlanTaskReq) GetExcludedTimes() []string {
+	if x != nil {
+		return x.ExcludedTimes
+	}
+	return nil
 }
 
 func (x *CreatePlanTaskReq) GetExt1() string {
@@ -7937,14 +7973,16 @@ type CreateCronJobReq struct {
 	Priority int32 `protobuf:"varint,10,opt,name=priority,proto3" json:"priority,omitempty"`
 	// 执行业务参数 JSON；为空表示没有业务参数。
 	Payload string `protobuf:"bytes,11,opt,name=payload,proto3" json:"payload,omitempty"`
-	// 调用方业务扩展 JSON；Trigger 将其放入 CronJobExtra.bizExtra。
-	Extra string `protobuf:"bytes,12,opt,name=extra,proto3" json:"extra,omitempty"`
 	// 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-	LockTimeout int64 `protobuf:"varint,13,opt,name=lock_timeout,json=lockTimeout,proto3" json:"lock_timeout,omitempty"`
+	LockTimeout int64 `protobuf:"varint,12,opt,name=lock_timeout,json=lockTimeout,proto3" json:"lock_timeout,omitempty"`
 	// 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
-	MaxDelay int64 `protobuf:"varint,14,opt,name=max_delay,json=maxDelay,proto3" json:"max_delay,omitempty"`
+	MaxDelay int64 `protobuf:"varint,13,opt,name=max_delay,json=maxDelay,proto3" json:"max_delay,omitempty"`
 	// 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
-	SkipTimeFilter bool `protobuf:"varint,15,opt,name=skip_time_filter,json=skipTimeFilter,proto3" json:"skip_time_filter,omitempty"`
+	SkipTimeFilter bool `protobuf:"varint,14,opt,name=skip_time_filter,json=skipTimeFilter,proto3" json:"skip_time_filter,omitempty"`
+	// 指定执行时间列表，格式 yyyy-MM-dd HH:mm:ss。
+	SpecifiedTimes []string `protobuf:"bytes,15,rep,name=specified_times,json=specifiedTimes,proto3" json:"specified_times,omitempty"`
+	// 精确排除时间列表，格式 yyyy-MM-dd HH:mm:ss。
+	ExcludedTimes []string `protobuf:"bytes,16,rep,name=excluded_times,json=excludedTimes,proto3" json:"excluded_times,omitempty"`
 	// 扩展字段 1。
 	Ext1 string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段 2。
@@ -8068,13 +8106,6 @@ func (x *CreateCronJobReq) GetPayload() string {
 	return ""
 }
 
-func (x *CreateCronJobReq) GetExtra() string {
-	if x != nil {
-		return x.Extra
-	}
-	return ""
-}
-
 func (x *CreateCronJobReq) GetLockTimeout() int64 {
 	if x != nil {
 		return x.LockTimeout
@@ -8094,6 +8125,20 @@ func (x *CreateCronJobReq) GetSkipTimeFilter() bool {
 		return x.SkipTimeFilter
 	}
 	return false
+}
+
+func (x *CreateCronJobReq) GetSpecifiedTimes() []string {
+	if x != nil {
+		return x.SpecifiedTimes
+	}
+	return nil
+}
+
+func (x *CreateCronJobReq) GetExcludedTimes() []string {
+	if x != nil {
+		return x.ExcludedTimes
+	}
+	return nil
 }
 
 func (x *CreateCronJobReq) GetExt1() string {
@@ -8144,7 +8189,9 @@ type CreateCronJobRes struct {
 	// Trigger 生成的 JobId，对应 cron_job.id。
 	JobId string `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	// 首次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；规则已耗尽时为空字符串。
-	NextRun       string `protobuf:"bytes,2,opt,name=next_run,json=nextRun,proto3" json:"next_run,omitempty"`
+	NextRun string `protobuf:"bytes,2,opt,name=next_run,json=nextRun,proto3" json:"next_run,omitempty"`
+	// 最终持久化的任务分组 ID；请求未传时由 Trigger 自动生成 UUID。
+	GroupId       string `protobuf:"bytes,3,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8193,39 +8240,44 @@ func (x *CreateCronJobRes) GetNextRun() string {
 	return ""
 }
 
-// UpdateCronJobReq 使用 JobId 定位任务，并提交扁平的完整 Cron Job 配置。
+func (x *CreateCronJobRes) GetGroupId() string {
+	if x != nil {
+		return x.GroupId
+	}
+	return ""
+}
+
+// UpdateCronJobReq 使用 JobId 定位任务，只更新可变配置，不修改身份字段。
 type UpdateCronJobReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Trigger 生成的 JobId。
 	JobId string `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	// 任务名称。
 	TaskName string `protobuf:"bytes,2,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
-	// 任务类型。
-	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
-	// 任务分组 ID，用于业务侧分组管理。
-	GroupId string `protobuf:"bytes,4,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	// 任务描述。
-	Description string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	// 规则生效开始时间；不传时默认当前年份第一天，格式 yyyy-MM-dd HH:mm:ss。
-	StartTime string `protobuf:"bytes,6,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	StartTime string `protobuf:"bytes,4,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// 规则生效结束时间；不传时默认开始时间所在年份最后一天，格式 yyyy-MM-dd HH:mm:ss。
-	EndTime string `protobuf:"bytes,7,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
+	EndTime string `protobuf:"bytes,5,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	// 业务周期规则，由 Trigger 编译为 RFC 5545 RRULE。
-	Rule *PlanRulePb `protobuf:"bytes,8,opt,name=rule,proto3" json:"rule,omitempty"`
+	Rule *PlanRulePb `protobuf:"bytes,6,opt,name=rule,proto3" json:"rule,omitempty"`
 	// 排除日期列表，格式 yyyy-MM-dd；这些日期的计划时间不会触发。
-	ExcludeDates []string `protobuf:"bytes,9,rep,name=exclude_dates,json=excludeDates,proto3" json:"exclude_dates,omitempty"`
+	ExcludeDates []string `protobuf:"bytes,7,rep,name=exclude_dates,json=excludeDates,proto3" json:"exclude_dates,omitempty"`
 	// 调度优先级，数字越大越优先。
-	Priority int32 `protobuf:"varint,10,opt,name=priority,proto3" json:"priority,omitempty"`
+	Priority int32 `protobuf:"varint,8,opt,name=priority,proto3" json:"priority,omitempty"`
 	// 执行业务参数 JSON；为空表示没有业务参数。
-	Payload string `protobuf:"bytes,11,opt,name=payload,proto3" json:"payload,omitempty"`
-	// 调用方业务扩展 JSON；Trigger 将其放入 CronJobExtra.bizExtra。
-	Extra string `protobuf:"bytes,12,opt,name=extra,proto3" json:"extra,omitempty"`
+	Payload string `protobuf:"bytes,9,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-	LockTimeout int64 `protobuf:"varint,13,opt,name=lock_timeout,json=lockTimeout,proto3" json:"lock_timeout,omitempty"`
+	LockTimeout int64 `protobuf:"varint,10,opt,name=lock_timeout,json=lockTimeout,proto3" json:"lock_timeout,omitempty"`
 	// 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
-	MaxDelay int64 `protobuf:"varint,14,opt,name=max_delay,json=maxDelay,proto3" json:"max_delay,omitempty"`
+	MaxDelay int64 `protobuf:"varint,11,opt,name=max_delay,json=maxDelay,proto3" json:"max_delay,omitempty"`
 	// 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
-	SkipTimeFilter bool `protobuf:"varint,15,opt,name=skip_time_filter,json=skipTimeFilter,proto3" json:"skip_time_filter,omitempty"`
+	SkipTimeFilter bool `protobuf:"varint,12,opt,name=skip_time_filter,json=skipTimeFilter,proto3" json:"skip_time_filter,omitempty"`
+	// 指定执行时间列表，格式 yyyy-MM-dd HH:mm:ss。
+	SpecifiedTimes []string `protobuf:"bytes,13,rep,name=specified_times,json=specifiedTimes,proto3" json:"specified_times,omitempty"`
+	// 精确排除时间列表，格式 yyyy-MM-dd HH:mm:ss。
+	ExcludedTimes []string `protobuf:"bytes,14,rep,name=excluded_times,json=excludedTimes,proto3" json:"excluded_times,omitempty"`
 	// 扩展字段 1。
 	Ext1 string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段 2。
@@ -8235,9 +8287,7 @@ type UpdateCronJobReq struct {
 	// 扩展字段 4。
 	Ext4 string `protobuf:"bytes,53,opt,name=ext4,proto3" json:"ext4,omitempty"`
 	// 扩展字段 5。
-	Ext5 string `protobuf:"bytes,54,opt,name=ext5,proto3" json:"ext5,omitempty"`
-	// 机构编码。
-	DeptCode      string `protobuf:"bytes,101,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
+	Ext5          string `protobuf:"bytes,54,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8282,20 +8332,6 @@ func (x *UpdateCronJobReq) GetJobId() string {
 func (x *UpdateCronJobReq) GetTaskName() string {
 	if x != nil {
 		return x.TaskName
-	}
-	return ""
-}
-
-func (x *UpdateCronJobReq) GetType() string {
-	if x != nil {
-		return x.Type
-	}
-	return ""
-}
-
-func (x *UpdateCronJobReq) GetGroupId() string {
-	if x != nil {
-		return x.GroupId
 	}
 	return ""
 }
@@ -8349,13 +8385,6 @@ func (x *UpdateCronJobReq) GetPayload() string {
 	return ""
 }
 
-func (x *UpdateCronJobReq) GetExtra() string {
-	if x != nil {
-		return x.Extra
-	}
-	return ""
-}
-
 func (x *UpdateCronJobReq) GetLockTimeout() int64 {
 	if x != nil {
 		return x.LockTimeout
@@ -8375,6 +8404,20 @@ func (x *UpdateCronJobReq) GetSkipTimeFilter() bool {
 		return x.SkipTimeFilter
 	}
 	return false
+}
+
+func (x *UpdateCronJobReq) GetSpecifiedTimes() []string {
+	if x != nil {
+		return x.SpecifiedTimes
+	}
+	return nil
+}
+
+func (x *UpdateCronJobReq) GetExcludedTimes() []string {
+	if x != nil {
+		return x.ExcludedTimes
+	}
+	return nil
 }
 
 func (x *UpdateCronJobReq) GetExt1() string {
@@ -8412,13 +8455,6 @@ func (x *UpdateCronJobReq) GetExt5() string {
 	return ""
 }
 
-func (x *UpdateCronJobReq) GetDeptCode() string {
-	if x != nil {
-		return x.DeptCode
-	}
-	return ""
-}
-
 // UpdateCronJobRes 返回更新后的任务标识和当前可展示的下次执行时间。
 type UpdateCronJobRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -8427,7 +8463,9 @@ type UpdateCronJobRes struct {
 	// 当前可展示的下次执行时间，格式 yyyy-MM-dd HH:mm:ss；无下次调度时为空字符串。
 	NextRun string `protobuf:"bytes,2,opt,name=next_run,json=nextRun,proto3" json:"next_run,omitempty"`
 	// 上游业务任务编码。
-	TaskCode      string `protobuf:"bytes,3,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"`
+	TaskCode string `protobuf:"bytes,3,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"`
+	// 原任务分组 ID；更新操作不会修改任务分组。
+	GroupId       string `protobuf:"bytes,4,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8483,6 +8521,13 @@ func (x *UpdateCronJobRes) GetTaskCode() string {
 	return ""
 }
 
+func (x *UpdateCronJobRes) GetGroupId() string {
+	if x != nil {
+		return x.GroupId
+	}
+	return ""
+}
+
 // SubmitCronJobReq 按 TaskCode 提交扁平的完整 Cron Job 配置。
 type SubmitCronJobReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -8490,7 +8535,7 @@ type SubmitCronJobReq struct {
 	TaskCode string `protobuf:"bytes,1,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"`
 	// 任务名称。
 	TaskName string `protobuf:"bytes,2,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
-	// 任务类型。
+	// 任务类型；新建时必填，更新时为空表示不声明变更，非空时必须与已有值一致。
 	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
 	// 任务分组 ID，用于业务侧分组管理。
 	GroupId string `protobuf:"bytes,4,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
@@ -8508,14 +8553,16 @@ type SubmitCronJobReq struct {
 	Priority int32 `protobuf:"varint,10,opt,name=priority,proto3" json:"priority,omitempty"`
 	// 执行业务参数 JSON；为空表示没有业务参数。
 	Payload string `protobuf:"bytes,11,opt,name=payload,proto3" json:"payload,omitempty"`
-	// 调用方业务扩展 JSON；Trigger 将其放入 CronJobExtra.bizExtra。
-	Extra string `protobuf:"bytes,12,opt,name=extra,proto3" json:"extra,omitempty"`
 	// 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-	LockTimeout int64 `protobuf:"varint,13,opt,name=lock_timeout,json=lockTimeout,proto3" json:"lock_timeout,omitempty"`
+	LockTimeout int64 `protobuf:"varint,12,opt,name=lock_timeout,json=lockTimeout,proto3" json:"lock_timeout,omitempty"`
 	// 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
-	MaxDelay int64 `protobuf:"varint,14,opt,name=max_delay,json=maxDelay,proto3" json:"max_delay,omitempty"`
+	MaxDelay int64 `protobuf:"varint,13,opt,name=max_delay,json=maxDelay,proto3" json:"max_delay,omitempty"`
 	// 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
-	SkipTimeFilter bool `protobuf:"varint,15,opt,name=skip_time_filter,json=skipTimeFilter,proto3" json:"skip_time_filter,omitempty"`
+	SkipTimeFilter bool `protobuf:"varint,14,opt,name=skip_time_filter,json=skipTimeFilter,proto3" json:"skip_time_filter,omitempty"`
+	// 指定执行时间列表，格式 yyyy-MM-dd HH:mm:ss。
+	SpecifiedTimes []string `protobuf:"bytes,15,rep,name=specified_times,json=specifiedTimes,proto3" json:"specified_times,omitempty"`
+	// 精确排除时间列表，格式 yyyy-MM-dd HH:mm:ss。
+	ExcludedTimes []string `protobuf:"bytes,16,rep,name=excluded_times,json=excludedTimes,proto3" json:"excluded_times,omitempty"`
 	// 扩展字段 1。
 	Ext1 string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段 2。
@@ -8526,7 +8573,7 @@ type SubmitCronJobReq struct {
 	Ext4 string `protobuf:"bytes,53,opt,name=ext4,proto3" json:"ext4,omitempty"`
 	// 扩展字段 5。
 	Ext5 string `protobuf:"bytes,54,opt,name=ext5,proto3" json:"ext5,omitempty"`
-	// 机构编码。
+	// 机构编码；新建时必填，更新时为空表示不声明变更，非空时必须与已有值一致。
 	DeptCode      string `protobuf:"bytes,101,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -8639,13 +8686,6 @@ func (x *SubmitCronJobReq) GetPayload() string {
 	return ""
 }
 
-func (x *SubmitCronJobReq) GetExtra() string {
-	if x != nil {
-		return x.Extra
-	}
-	return ""
-}
-
 func (x *SubmitCronJobReq) GetLockTimeout() int64 {
 	if x != nil {
 		return x.LockTimeout
@@ -8665,6 +8705,20 @@ func (x *SubmitCronJobReq) GetSkipTimeFilter() bool {
 		return x.SkipTimeFilter
 	}
 	return false
+}
+
+func (x *SubmitCronJobReq) GetSpecifiedTimes() []string {
+	if x != nil {
+		return x.SpecifiedTimes
+	}
+	return nil
+}
+
+func (x *SubmitCronJobReq) GetExcludedTimes() []string {
+	if x != nil {
+		return x.ExcludedTimes
+	}
+	return nil
 }
 
 func (x *SubmitCronJobReq) GetExt1() string {
@@ -8717,7 +8771,9 @@ type SubmitCronJobRes struct {
 	// 当前可展示的下次执行时间，格式 yyyy-MM-dd HH:mm:ss；无下次调度时为空字符串。
 	NextRun string `protobuf:"bytes,2,opt,name=next_run,json=nextRun,proto3" json:"next_run,omitempty"`
 	// 上游业务任务编码。
-	TaskCode      string `protobuf:"bytes,3,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"`
+	TaskCode string `protobuf:"bytes,3,opt,name=task_code,json=taskCode,proto3" json:"task_code,omitempty"`
+	// 最终持久化的任务分组 ID；更新已有任务时保留原值。
+	GroupId       string `protobuf:"bytes,4,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8769,6 +8825,13 @@ func (x *SubmitCronJobRes) GetNextRun() string {
 func (x *SubmitCronJobRes) GetTaskCode() string {
 	if x != nil {
 		return x.TaskCode
+	}
+	return ""
+}
+
+func (x *SubmitCronJobRes) GetGroupId() string {
+	if x != nil {
+		return x.GroupId
 	}
 	return ""
 }
@@ -9524,8 +9587,6 @@ type CronJobPb struct {
 	MaxDelay int64 `protobuf:"varint,6,opt,name=max_delay,json=maxDelay,proto3" json:"max_delay,omitempty"`
 	// 执行业务参数 JSON；为空表示没有业务参数。
 	Payload string `protobuf:"bytes,7,opt,name=payload,proto3" json:"payload,omitempty"`
-	// 调用方业务扩展 JSON；为空表示没有业务扩展。
-	Extra string `protobuf:"bytes,8,opt,name=extra,proto3" json:"extra,omitempty"`
 	// 状态：0-禁用，1-启用。
 	Status int32 `protobuf:"varint,9,opt,name=status,proto3" json:"status,omitempty"`
 	// 下次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；无下次调度时为空字符串。
@@ -9550,6 +9611,10 @@ type CronJobPb struct {
 	ScheduleDescription string `protobuf:"bytes,19,opt,name=schedule_description,json=scheduleDescription,proto3" json:"schedule_description,omitempty"`
 	// 实际持久化并用于调度的 RFC 5545 RRULE Set 原文。
 	RruleStr string `protobuf:"bytes,20,opt,name=rrule_str,json=rruleStr,proto3" json:"rrule_str,omitempty"`
+	// 指定执行时间列表，格式 yyyy-MM-dd HH:mm:ss。
+	SpecifiedTimes []string `protobuf:"bytes,21,rep,name=specified_times,json=specifiedTimes,proto3" json:"specified_times,omitempty"`
+	// 精确排除时间列表，格式 yyyy-MM-dd HH:mm:ss。
+	ExcludedTimes []string `protobuf:"bytes,22,rep,name=excluded_times,json=excludedTimes,proto3" json:"excluded_times,omitempty"`
 	// 扩展字段 1。
 	Ext1 string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段 2。
@@ -9649,13 +9714,6 @@ func (x *CronJobPb) GetPayload() string {
 	return ""
 }
 
-func (x *CronJobPb) GetExtra() string {
-	if x != nil {
-		return x.Extra
-	}
-	return ""
-}
-
 func (x *CronJobPb) GetStatus() int32 {
 	if x != nil {
 		return x.Status
@@ -9738,6 +9796,20 @@ func (x *CronJobPb) GetRruleStr() string {
 		return x.RruleStr
 	}
 	return ""
+}
+
+func (x *CronJobPb) GetSpecifiedTimes() []string {
+	if x != nil {
+		return x.SpecifiedTimes
+	}
+	return nil
+}
+
+func (x *CronJobPb) GetExcludedTimes() []string {
+	if x != nil {
+		return x.ExcludedTimes
+	}
+	return nil
 }
 
 func (x *CronJobPb) GetExt1() string {
@@ -10532,13 +10604,17 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"\f\n" +
 	"\n" +
-	"RunTaskRes\"\xb5\x01\n" +
+	"RunTaskRes\"\xa9\x02\n" +
 	"\x13CalcPlanTaskDateReq\x12\x1d\n" +
 	"\n" +
 	"start_time\x18\x01 \x01(\tR\tstartTime\x12\x19\n" +
 	"\bend_time\x18\x02 \x01(\tR\aendTime\x121\n" +
 	"\x04rule\x18\x03 \x01(\v2\x13.trigger.PlanRulePbB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x121\n" +
-	"\rexclude_dates\x18\x04 \x03(\tB\f\xfaB\t\x92\x01\x06\"\x04r\x02\x10\x01R\fexcludeDates\"\x84\x01\n" +
+	"\rexclude_dates\x18\x04 \x03(\tB\f\xfaB\t\x92\x01\x06\"\x04r\x02\x10\x01R\fexcludeDates\x129\n" +
+	"\x0fspecified_times\x18\x05 \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\xe8\a\"\x05r\x03\x98\x01\x13R\x0especifiedTimes\x127\n" +
+	"\x0eexcluded_times\x18\x06 \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\xe8\a\"\x05r\x03\x98\x01\x13R\rexcludedTimes\"\x84\x01\n" +
 	"\x13CalcPlanTaskDateRes\x12\x1d\n" +
 	"\n" +
 	"plan_dates\x18\x01 \x03(\tR\tplanDates\x121\n" +
@@ -10624,7 +10700,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\x04date\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\n" +
 	"R\x04date\x12\x18\n" +
 	"\aenabled\x18\x02 \x01(\bR\aenabled\"\x1c\n" +
-	"\x1aSetHolidaySourceEnabledRes\"\xe3\x05\n" +
+	"\x1aSetHolidaySourceEnabledRes\"\xd7\x06\n" +
 	"\x11CreatePlanTaskReq\x12$\n" +
 	"\tdept_code\x18e \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdeptCode\x12 \n" +
 	"\aplan_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\x12$\n" +
@@ -10643,7 +10719,11 @@ const file_trigger_proto_rawDesc = "" +
 	"\n" +
 	"exec_items\x18\f \x03(\v2\x1d.trigger.CreatePlanExecItemPbB\b\xfaB\x05\x92\x01\x02\b\x01R\texecItems\x12(\n" +
 	"\x10batch_num_prefix\x18\r \x01(\tR\x0ebatchNumPrefix\x12(\n" +
-	"\x10skip_time_filter\x18\x0e \x01(\bR\x0eskipTimeFilter\x12\x12\n" +
+	"\x10skip_time_filter\x18\x0e \x01(\bR\x0eskipTimeFilter\x129\n" +
+	"\x0fspecified_times\x18\x0f \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\xe8\a\"\x05r\x03\x98\x01\x13R\x0especifiedTimes\x127\n" +
+	"\x0eexcluded_times\x18\x10 \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\xe8\a\"\x05r\x03\x98\x01\x13R\rexcludedTimes\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
@@ -10969,9 +11049,10 @@ const file_trigger_proto_rawDesc = "" +
 	"\rDelayConfigPb\x12*\n" +
 	"\x11next_trigger_time\x18\x01 \x01(\tR\x0fnextTriggerTime\x12+\n" +
 	"\fdelay_reason\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\vdelayReason\"\x19\n" +
-	"\x17CallbackPlanExecItemRes\"\xd0\x05\n" +
-	"\x10CreateCronJobReq\x12&\n" +
-	"\ttask_code\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btaskCode\x12'\n" +
+	"\x17CallbackPlanExecItemRes\"\xaf\x06\n" +
+	"\x10CreateCronJobReq\x12'\n" +
+	"\ttask_code\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\btaskCode\x12'\n" +
 	"\ttask_name\x18\x02 \x01(\tB\n" +
 	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\btaskName\x12\x1d\n" +
 	"\x04type\x18\x03 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x04type\x12\"\n" +
@@ -10986,56 +11067,62 @@ const file_trigger_proto_rawDesc = "" +
 	"R\fexcludeDates\x12#\n" +
 	"\bpriority\x18\n" +
 	" \x01(\x05B\a\xfaB\x04\x1a\x02(\x00R\bpriority\x12\x18\n" +
-	"\apayload\x18\v \x01(\tR\apayload\x12\x14\n" +
-	"\x05extra\x18\f \x01(\tR\x05extra\x12*\n" +
-	"\flock_timeout\x18\r \x01(\x03B\a\xfaB\x04\"\x02(\x00R\vlockTimeout\x12$\n" +
-	"\tmax_delay\x18\x0e \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bmaxDelay\x12(\n" +
-	"\x10skip_time_filter\x18\x0f \x01(\bR\x0eskipTimeFilter\x12\x12\n" +
+	"\apayload\x18\v \x01(\tR\apayload\x12*\n" +
+	"\flock_timeout\x18\f \x01(\x03B\a\xfaB\x04\"\x02(\x00R\vlockTimeout\x12$\n" +
+	"\tmax_delay\x18\r \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bmaxDelay\x12(\n" +
+	"\x10skip_time_filter\x18\x0e \x01(\bR\x0eskipTimeFilter\x129\n" +
+	"\x0fspecified_times\x18\x0f \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\xe8\a\"\x05r\x03\x98\x01\x13R\x0especifiedTimes\x127\n" +
+	"\x0eexcluded_times\x18\x10 \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\xe8\a\"\x05r\x03\x98\x01\x13R\rexcludedTimes\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x185 \x01(\tR\x04ext4\x12\x12\n" +
 	"\x04ext5\x186 \x01(\tR\x04ext5\x12&\n" +
-	"\tdept_code\x18e \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\bdeptCode\"D\n" +
+	"\tdept_code\x18e \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\bdeptCode\"_\n" +
 	"\x10CreateCronJobRes\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x19\n" +
-	"\bnext_run\x18\x02 \x01(\tR\anextRun\"\xc8\x05\n" +
+	"\bnext_run\x18\x02 \x01(\tR\anextRun\x12\x19\n" +
+	"\bgroup_id\x18\x03 \x01(\tR\agroupId\"\xbb\x05\n" +
 	"\x10UpdateCronJobReq\x12\x1e\n" +
 	"\x06job_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05jobId\x12'\n" +
 	"\ttask_name\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\btaskName\x12\x1d\n" +
-	"\x04type\x18\x03 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x04type\x12\"\n" +
-	"\bgroup_id\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x18@R\agroupId\x12*\n" +
-	"\vdescription\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\vdescription\x12\x1d\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\btaskName\x12*\n" +
+	"\vdescription\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\vdescription\x12\x1d\n" +
 	"\n" +
-	"start_time\x18\x06 \x01(\tR\tstartTime\x12\x19\n" +
-	"\bend_time\x18\a \x01(\tR\aendTime\x121\n" +
-	"\x04rule\x18\b \x01(\v2\x13.trigger.PlanRulePbB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x122\n" +
-	"\rexclude_dates\x18\t \x03(\tB\r\xfaB\n" +
+	"start_time\x18\x04 \x01(\tR\tstartTime\x12\x19\n" +
+	"\bend_time\x18\x05 \x01(\tR\aendTime\x121\n" +
+	"\x04rule\x18\x06 \x01(\v2\x13.trigger.PlanRulePbB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x122\n" +
+	"\rexclude_dates\x18\a \x03(\tB\r\xfaB\n" +
 	"\x92\x01\a\"\x05r\x03\x98\x01\n" +
 	"R\fexcludeDates\x12#\n" +
-	"\bpriority\x18\n" +
-	" \x01(\x05B\a\xfaB\x04\x1a\x02(\x00R\bpriority\x12\x18\n" +
-	"\apayload\x18\v \x01(\tR\apayload\x12\x14\n" +
-	"\x05extra\x18\f \x01(\tR\x05extra\x12*\n" +
-	"\flock_timeout\x18\r \x01(\x03B\a\xfaB\x04\"\x02(\x00R\vlockTimeout\x12$\n" +
-	"\tmax_delay\x18\x0e \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bmaxDelay\x12(\n" +
-	"\x10skip_time_filter\x18\x0f \x01(\bR\x0eskipTimeFilter\x12\x12\n" +
+	"\bpriority\x18\b \x01(\x05B\a\xfaB\x04\x1a\x02(\x00R\bpriority\x12\x18\n" +
+	"\apayload\x18\t \x01(\tR\apayload\x12*\n" +
+	"\flock_timeout\x18\n" +
+	" \x01(\x03B\a\xfaB\x04\"\x02(\x00R\vlockTimeout\x12$\n" +
+	"\tmax_delay\x18\v \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bmaxDelay\x12(\n" +
+	"\x10skip_time_filter\x18\f \x01(\bR\x0eskipTimeFilter\x129\n" +
+	"\x0fspecified_times\x18\r \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\xe8\a\"\x05r\x03\x98\x01\x13R\x0especifiedTimes\x127\n" +
+	"\x0eexcluded_times\x18\x0e \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\xe8\a\"\x05r\x03\x98\x01\x13R\rexcludedTimes\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x185 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x186 \x01(\tR\x04ext5\x12&\n" +
-	"\tdept_code\x18e \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\bdeptCode\"a\n" +
+	"\x04ext5\x186 \x01(\tR\x04ext5\"|\n" +
 	"\x10UpdateCronJobRes\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x19\n" +
 	"\bnext_run\x18\x02 \x01(\tR\anextRun\x12\x1b\n" +
-	"\ttask_code\x18\x03 \x01(\tR\btaskCode\"\xd0\x05\n" +
-	"\x10SubmitCronJobReq\x12&\n" +
-	"\ttask_code\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btaskCode\x12'\n" +
+	"\ttask_code\x18\x03 \x01(\tR\btaskCode\x12\x19\n" +
+	"\bgroup_id\x18\x04 \x01(\tR\agroupId\"\xab\x06\n" +
+	"\x10SubmitCronJobReq\x12'\n" +
+	"\ttask_code\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\btaskCode\x12'\n" +
 	"\ttask_name\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\btaskName\x12\x1d\n" +
-	"\x04type\x18\x03 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x04type\x12\"\n" +
+	"\xfaB\ar\x05\x10\x01\x18\x80\x01R\btaskName\x12\x1b\n" +
+	"\x04type\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\x04type\x12\"\n" +
 	"\bgroup_id\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x18@R\agroupId\x12*\n" +
 	"\vdescription\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\vdescription\x12\x1d\n" +
 	"\n" +
@@ -11047,21 +11134,25 @@ const file_trigger_proto_rawDesc = "" +
 	"R\fexcludeDates\x12#\n" +
 	"\bpriority\x18\n" +
 	" \x01(\x05B\a\xfaB\x04\x1a\x02(\x00R\bpriority\x12\x18\n" +
-	"\apayload\x18\v \x01(\tR\apayload\x12\x14\n" +
-	"\x05extra\x18\f \x01(\tR\x05extra\x12*\n" +
-	"\flock_timeout\x18\r \x01(\x03B\a\xfaB\x04\"\x02(\x00R\vlockTimeout\x12$\n" +
-	"\tmax_delay\x18\x0e \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bmaxDelay\x12(\n" +
-	"\x10skip_time_filter\x18\x0f \x01(\bR\x0eskipTimeFilter\x12\x12\n" +
+	"\apayload\x18\v \x01(\tR\apayload\x12*\n" +
+	"\flock_timeout\x18\f \x01(\x03B\a\xfaB\x04\"\x02(\x00R\vlockTimeout\x12$\n" +
+	"\tmax_delay\x18\r \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bmaxDelay\x12(\n" +
+	"\x10skip_time_filter\x18\x0e \x01(\bR\x0eskipTimeFilter\x129\n" +
+	"\x0fspecified_times\x18\x0f \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\xe8\a\"\x05r\x03\x98\x01\x13R\x0especifiedTimes\x127\n" +
+	"\x0eexcluded_times\x18\x10 \x03(\tB\x10\xfaB\r\x92\x01\n" +
+	"\x10\xe8\a\"\x05r\x03\x98\x01\x13R\rexcludedTimes\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x185 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x186 \x01(\tR\x04ext5\x12&\n" +
-	"\tdept_code\x18e \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\bdeptCode\"a\n" +
+	"\x04ext5\x186 \x01(\tR\x04ext5\x12$\n" +
+	"\tdept_code\x18e \x01(\tB\a\xfaB\x04r\x02\x18@R\bdeptCode\"|\n" +
 	"\x10SubmitCronJobRes\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x19\n" +
 	"\bnext_run\x18\x02 \x01(\tR\anextRun\x12\x1b\n" +
-	"\ttask_code\x18\x03 \x01(\tR\btaskCode\"2\n" +
+	"\ttask_code\x18\x03 \x01(\tR\btaskCode\x12\x19\n" +
+	"\bgroup_id\x18\x04 \x01(\tR\agroupId\"2\n" +
 	"\x10EnableCronJobReq\x12\x1e\n" +
 	"\x06job_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05jobId\"\x12\n" +
 	"\x10EnableCronJobRes\"3\n" +
@@ -11087,12 +11178,12 @@ const file_trigger_proto_rawDesc = "" +
 	"\ttask_code\x18\x02 \x01(\tR\btaskCode\x12'\n" +
 	"\x0fexecution_times\x18\x03 \x03(\tR\x0eexecutionTimes\x121\n" +
 	"\x14schedule_description\x18\x04 \x01(\tR\x13scheduleDescription\x12\x1b\n" +
-	"\trrule_str\x18\x05 \x01(\tR\brruleStr\"\xbe\x02\n" +
+	"\trrule_str\x18\x05 \x01(\tR\brruleStr\"\xbf\x02\n" +
 	"\x0fListCronJobsReq\x12'\n" +
 	"\tpage_size\x18\x01 \x01(\x03B\n" +
 	"\xfaB\a\"\x05\x18\xf4\x03(\x00R\bpageSize\x12&\n" +
-	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12$\n" +
-	"\ttask_code\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x18@R\btaskCode\x12%\n" +
+	"\bpage_num\x18\x02 \x01(\x03B\v\xfaB\b\"\x06\x18\xc0\x84=(\x00R\apageNum\x12%\n" +
+	"\ttask_code\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\btaskCode\x12%\n" +
 	"\ttask_name\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\btaskName\x12&\n" +
 	"\x06status\x18\x05 \x03(\x05B\x0e\xfaB\v\x92\x01\b\"\x06\x1a\x04\x18\x01(\x00R\x06status\x12$\n" +
 	"\tdept_code\x18\x06 \x01(\tB\a\xfaB\x04r\x02\x18@R\bdeptCode\x12\x1b\n" +
@@ -11100,7 +11191,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\bgroup_id\x18\b \x01(\tB\a\xfaB\x04r\x02\x18@R\agroupId\"X\n" +
 	"\x0fListCronJobsRes\x12/\n" +
 	"\tcron_jobs\x18\x01 \x03(\v2\x12.trigger.CronJobPbR\bcronJobs\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total\"\xa2\x06\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"\xdc\x06\n" +
 	"\tCronJobPb\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x1b\n" +
 	"\ttask_code\x18\x02 \x01(\tR\btaskCode\x12\x1b\n" +
@@ -11108,8 +11199,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\bpriority\x18\x04 \x01(\x05R\bpriority\x12!\n" +
 	"\flock_timeout\x18\x05 \x01(\x03R\vlockTimeout\x12\x1b\n" +
 	"\tmax_delay\x18\x06 \x01(\x03R\bmaxDelay\x12\x18\n" +
-	"\apayload\x18\a \x01(\tR\apayload\x12\x14\n" +
-	"\x05extra\x18\b \x01(\tR\x05extra\x12\x16\n" +
+	"\apayload\x18\a \x01(\tR\apayload\x12\x16\n" +
 	"\x06status\x18\t \x01(\x05R\x06status\x12\x19\n" +
 	"\bnext_run\x18\n" +
 	" \x01(\tR\anextRun\x12\x19\n" +
@@ -11123,7 +11213,9 @@ const file_trigger_proto_rawDesc = "" +
 	"\x04rule\x18\x11 \x01(\v2\x13.trigger.PlanRulePbR\x04rule\x12#\n" +
 	"\rexclude_dates\x18\x12 \x03(\tR\fexcludeDates\x121\n" +
 	"\x14schedule_description\x18\x13 \x01(\tR\x13scheduleDescription\x12\x1b\n" +
-	"\trrule_str\x18\x14 \x01(\tR\brruleStr\x12\x12\n" +
+	"\trrule_str\x18\x14 \x01(\tR\brruleStr\x12'\n" +
+	"\x0fspecified_times\x18\x15 \x03(\tR\x0especifiedTimes\x12%\n" +
+	"\x0eexcluded_times\x18\x16 \x03(\tR\rexcludedTimes\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +

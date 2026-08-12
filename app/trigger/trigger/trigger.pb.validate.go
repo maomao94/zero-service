@@ -5094,6 +5094,62 @@ func (m *CalcPlanTaskDateReq) validate(all bool) error {
 
 	}
 
+	if len(m.GetSpecifiedTimes()) > 1000 {
+		err := CalcPlanTaskDateReqValidationError{
+			field:  "SpecifiedTimes",
+			reason: "value must contain no more than 1000 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetSpecifiedTimes() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) != 19 {
+			err := CalcPlanTaskDateReqValidationError{
+				field:  fmt.Sprintf("SpecifiedTimes[%v]", idx),
+				reason: "value length must be 19 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+
+		}
+
+	}
+
+	if len(m.GetExcludedTimes()) > 1000 {
+		err := CalcPlanTaskDateReqValidationError{
+			field:  "ExcludedTimes",
+			reason: "value must contain no more than 1000 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetExcludedTimes() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) != 19 {
+			err := CalcPlanTaskDateReqValidationError{
+				field:  fmt.Sprintf("ExcludedTimes[%v]", idx),
+				reason: "value length must be 19 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return CalcPlanTaskDateReqMultiError(errors)
 	}
@@ -7875,6 +7931,62 @@ func (m *CreatePlanTaskReq) validate(all bool) error {
 	// no validation rules for BatchNumPrefix
 
 	// no validation rules for SkipTimeFilter
+
+	if len(m.GetSpecifiedTimes()) > 1000 {
+		err := CreatePlanTaskReqValidationError{
+			field:  "SpecifiedTimes",
+			reason: "value must contain no more than 1000 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetSpecifiedTimes() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) != 19 {
+			err := CreatePlanTaskReqValidationError{
+				field:  fmt.Sprintf("SpecifiedTimes[%v]", idx),
+				reason: "value length must be 19 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+
+		}
+
+	}
+
+	if len(m.GetExcludedTimes()) > 1000 {
+		err := CreatePlanTaskReqValidationError{
+			field:  "ExcludedTimes",
+			reason: "value must contain no more than 1000 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetExcludedTimes() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) != 19 {
+			err := CreatePlanTaskReqValidationError{
+				field:  fmt.Sprintf("ExcludedTimes[%v]", idx),
+				reason: "value length must be 19 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+
+		}
+
+	}
 
 	// no validation rules for Ext1
 
@@ -14267,10 +14379,10 @@ func (m *CreateCronJobReq) validate(all bool) error {
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetTaskCode()); l < 1 || l > 64 {
+	if l := utf8.RuneCountInString(m.GetTaskCode()); l < 1 || l > 128 {
 		err := CreateCronJobReqValidationError{
 			field:  "TaskCode",
-			reason: "value length must be between 1 and 64 runes, inclusive",
+			reason: "value length must be between 1 and 128 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -14396,8 +14508,6 @@ func (m *CreateCronJobReq) validate(all bool) error {
 
 	// no validation rules for Payload
 
-	// no validation rules for Extra
-
 	if m.GetLockTimeout() < 0 {
 		err := CreateCronJobReqValidationError{
 			field:  "LockTimeout",
@@ -14421,6 +14531,62 @@ func (m *CreateCronJobReq) validate(all bool) error {
 	}
 
 	// no validation rules for SkipTimeFilter
+
+	if len(m.GetSpecifiedTimes()) > 1000 {
+		err := CreateCronJobReqValidationError{
+			field:  "SpecifiedTimes",
+			reason: "value must contain no more than 1000 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetSpecifiedTimes() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) != 19 {
+			err := CreateCronJobReqValidationError{
+				field:  fmt.Sprintf("SpecifiedTimes[%v]", idx),
+				reason: "value length must be 19 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+
+		}
+
+	}
+
+	if len(m.GetExcludedTimes()) > 1000 {
+		err := CreateCronJobReqValidationError{
+			field:  "ExcludedTimes",
+			reason: "value must contain no more than 1000 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetExcludedTimes() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) != 19 {
+			err := CreateCronJobReqValidationError{
+				field:  fmt.Sprintf("ExcludedTimes[%v]", idx),
+				reason: "value length must be 19 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+
+		}
+
+	}
 
 	// no validation rules for Ext1
 
@@ -14547,6 +14713,8 @@ func (m *CreateCronJobRes) validate(all bool) error {
 
 	// no validation rules for NextRun
 
+	// no validation rules for GroupId
+
 	if len(errors) > 0 {
 		return CreateCronJobResMultiError(errors)
 	}
@@ -14669,28 +14837,6 @@ func (m *UpdateCronJobReq) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if l := utf8.RuneCountInString(m.GetType()); l < 1 || l > 64 {
-		err := UpdateCronJobReqValidationError{
-			field:  "Type",
-			reason: "value length must be between 1 and 64 runes, inclusive",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetGroupId()) > 64 {
-		err := UpdateCronJobReqValidationError{
-			field:  "GroupId",
-			reason: "value length must be at most 64 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if utf8.RuneCountInString(m.GetDescription()) > 200 {
 		err := UpdateCronJobReqValidationError{
 			field:  "Description",
@@ -14776,8 +14922,6 @@ func (m *UpdateCronJobReq) validate(all bool) error {
 
 	// no validation rules for Payload
 
-	// no validation rules for Extra
-
 	if m.GetLockTimeout() < 0 {
 		err := UpdateCronJobReqValidationError{
 			field:  "LockTimeout",
@@ -14802,6 +14946,62 @@ func (m *UpdateCronJobReq) validate(all bool) error {
 
 	// no validation rules for SkipTimeFilter
 
+	if len(m.GetSpecifiedTimes()) > 1000 {
+		err := UpdateCronJobReqValidationError{
+			field:  "SpecifiedTimes",
+			reason: "value must contain no more than 1000 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetSpecifiedTimes() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) != 19 {
+			err := UpdateCronJobReqValidationError{
+				field:  fmt.Sprintf("SpecifiedTimes[%v]", idx),
+				reason: "value length must be 19 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+
+		}
+
+	}
+
+	if len(m.GetExcludedTimes()) > 1000 {
+		err := UpdateCronJobReqValidationError{
+			field:  "ExcludedTimes",
+			reason: "value must contain no more than 1000 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetExcludedTimes() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) != 19 {
+			err := UpdateCronJobReqValidationError{
+				field:  fmt.Sprintf("ExcludedTimes[%v]", idx),
+				reason: "value length must be 19 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+
+		}
+
+	}
+
 	// no validation rules for Ext1
 
 	// no validation rules for Ext2
@@ -14811,17 +15011,6 @@ func (m *UpdateCronJobReq) validate(all bool) error {
 	// no validation rules for Ext4
 
 	// no validation rules for Ext5
-
-	if l := utf8.RuneCountInString(m.GetDeptCode()); l < 1 || l > 64 {
-		err := UpdateCronJobReqValidationError{
-			field:  "DeptCode",
-			reason: "value length must be between 1 and 64 runes, inclusive",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
 
 	if len(errors) > 0 {
 		return UpdateCronJobReqMultiError(errors)
@@ -14929,6 +15118,8 @@ func (m *UpdateCronJobRes) validate(all bool) error {
 
 	// no validation rules for TaskCode
 
+	// no validation rules for GroupId
+
 	if len(errors) > 0 {
 		return UpdateCronJobResMultiError(errors)
 	}
@@ -15029,10 +15220,10 @@ func (m *SubmitCronJobReq) validate(all bool) error {
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetTaskCode()); l < 1 || l > 64 {
+	if l := utf8.RuneCountInString(m.GetTaskCode()); l < 1 || l > 128 {
 		err := SubmitCronJobReqValidationError{
 			field:  "TaskCode",
-			reason: "value length must be between 1 and 64 runes, inclusive",
+			reason: "value length must be between 1 and 128 runes, inclusive",
 		}
 		if !all {
 			return err
@@ -15051,10 +15242,10 @@ func (m *SubmitCronJobReq) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if l := utf8.RuneCountInString(m.GetType()); l < 1 || l > 64 {
+	if utf8.RuneCountInString(m.GetType()) > 64 {
 		err := SubmitCronJobReqValidationError{
 			field:  "Type",
-			reason: "value length must be between 1 and 64 runes, inclusive",
+			reason: "value length must be at most 64 runes",
 		}
 		if !all {
 			return err
@@ -15158,8 +15349,6 @@ func (m *SubmitCronJobReq) validate(all bool) error {
 
 	// no validation rules for Payload
 
-	// no validation rules for Extra
-
 	if m.GetLockTimeout() < 0 {
 		err := SubmitCronJobReqValidationError{
 			field:  "LockTimeout",
@@ -15184,6 +15373,62 @@ func (m *SubmitCronJobReq) validate(all bool) error {
 
 	// no validation rules for SkipTimeFilter
 
+	if len(m.GetSpecifiedTimes()) > 1000 {
+		err := SubmitCronJobReqValidationError{
+			field:  "SpecifiedTimes",
+			reason: "value must contain no more than 1000 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetSpecifiedTimes() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) != 19 {
+			err := SubmitCronJobReqValidationError{
+				field:  fmt.Sprintf("SpecifiedTimes[%v]", idx),
+				reason: "value length must be 19 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+
+		}
+
+	}
+
+	if len(m.GetExcludedTimes()) > 1000 {
+		err := SubmitCronJobReqValidationError{
+			field:  "ExcludedTimes",
+			reason: "value must contain no more than 1000 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetExcludedTimes() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) != 19 {
+			err := SubmitCronJobReqValidationError{
+				field:  fmt.Sprintf("ExcludedTimes[%v]", idx),
+				reason: "value length must be 19 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+
+		}
+
+	}
+
 	// no validation rules for Ext1
 
 	// no validation rules for Ext2
@@ -15194,10 +15439,10 @@ func (m *SubmitCronJobReq) validate(all bool) error {
 
 	// no validation rules for Ext5
 
-	if l := utf8.RuneCountInString(m.GetDeptCode()); l < 1 || l > 64 {
+	if utf8.RuneCountInString(m.GetDeptCode()) > 64 {
 		err := SubmitCronJobReqValidationError{
 			field:  "DeptCode",
-			reason: "value length must be between 1 and 64 runes, inclusive",
+			reason: "value length must be at most 64 runes",
 		}
 		if !all {
 			return err
@@ -15310,6 +15555,8 @@ func (m *SubmitCronJobRes) validate(all bool) error {
 	// no validation rules for NextRun
 
 	// no validation rules for TaskCode
+
+	// no validation rules for GroupId
 
 	if len(errors) > 0 {
 		return SubmitCronJobResMultiError(errors)
@@ -16757,10 +17004,10 @@ func (m *ListCronJobsReq) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetTaskCode()) > 64 {
+	if utf8.RuneCountInString(m.GetTaskCode()) > 128 {
 		err := ListCronJobsReqValidationError{
 			field:  "TaskCode",
-			reason: "value length must be at most 64 runes",
+			reason: "value length must be at most 128 runes",
 		}
 		if !all {
 			return err
@@ -17077,8 +17324,6 @@ func (m *CronJobPb) validate(all bool) error {
 	// no validation rules for MaxDelay
 
 	// no validation rules for Payload
-
-	// no validation rules for Extra
 
 	// no validation rules for Status
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -21,15 +22,11 @@ func TestDBStoreClaimCompleteAndExtraRoundTrip(t *testing.T) {
 	store := NewDBStore(&gormx.DB{DB: db})
 	now := time.Date(2026, 7, 24, 10, 0, 0, 0, time.Local)
 	ruleJSON, _ := json.Marshal(&trigger.PlanRulePb{Freq: 3, Hours: []int32{11}, Minutes: []int32{0}})
-	bizExtra := json.RawMessage(`{"source":"test"}`)
 	extra, err := MarshalExtra(&CronJobExtra{
 		DeptCode:     "D001",
 		Type:         "inspection",
-		StartTime:    "2026-07-01 00:00:00",
-		EndTime:      "2026-07-31 23:59:59",
 		Rule:         ruleJSON,
 		ExcludeDates: []string{"2026-07-26"},
-		BizExtra:     bizExtra,
 		Ext1:         "ext",
 	})
 	if err != nil {
@@ -70,7 +67,7 @@ func TestDBStoreClaimCompleteAndExtraRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if parsed.DeptCode != "D001" || string(parsed.BizExtra) != string(bizExtra) || len(parsed.ExcludeDates) != 1 {
+	if parsed.DeptCode != "D001" || len(parsed.ExcludeDates) != 1 {
 		t.Fatalf("unexpected rebuilt extra: %+v", parsed)
 	}
 
@@ -100,8 +97,8 @@ func TestDBStoreClaimCompleteAndExtraRoundTrip(t *testing.T) {
 	if !loaded.LastScheduledRun.Equal(claim.Task.ScheduledTime) {
 		t.Fatalf("loaded last scheduled run = %v, want %v", loaded.LastScheduledRun, claim.Task.ScheduledTime)
 	}
-	if !job.StartTime.Valid || !job.EndTime.Valid || !job.ExcludeDates.Valid {
-		t.Fatalf("expected supplied business fields to be non-NULL: start=%v end=%v exclude=%v", job.StartTime, job.EndTime, job.ExcludeDates)
+	if !job.ExcludeDates.Valid {
+		t.Fatalf("expected exclude dates to be non-NULL: %v", job.ExcludeDates)
 	}
 	if job.LockTimeout != int64((2*time.Minute)/time.Millisecond) {
 		t.Fatalf("persisted lock timeout = %d, want %d", job.LockTimeout, int64((2*time.Minute)/time.Millisecond))
@@ -155,7 +152,52 @@ func TestDBStoreRetryKeepsOriginalScheduledTime(t *testing.T) {
 	}
 }
 
-func TestDBStoreUpdatePreservesInFlightScheduledTime(t *testing.T) {
+func TestDBStoreCompletionProgressesFromPersistedExactTimeSet(t *testing.T) {
+	db := newCronJobTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	now := time.Now().Truncate(time.Second)
+	ruleCursor := now.UTC()
+	specified := ruleCursor.Add(-time.Hour)
+	excluded := ruleCursor.Add(time.Hour)
+	wantNext := ruleCursor.Add(2 * time.Hour)
+	cfg := cronJobTestConfig(t, now.Add(-time.Minute))
+	cfg.TaskCode = "COMPLETE-EXACT-TIME"
+	cfg.RRuleStr = "DTSTART:" + specified.Format("20060102T150405Z") + "\n" +
+		"RRULE:FREQ=HOURLY;COUNT=4\n" +
+		"RDATE:" + specified.Format("20060102T150405Z") + "\n" +
+		"EXDATE:" + excluded.Format("20060102T150405Z")
+	if err := store.Insert(context.Background(), cfg); err != nil {
+		t.Fatal(err)
+	}
+
+	claim, err := store.LockAndFetch(context.Background(), now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	nextRun, err := crontask.NextAfter(claim.Task.RRuleStr, ruleCursor)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !nextRun.Equal(wantNext) {
+		t.Fatalf("completion progression = %v, want %v after exact EXDATE", nextRun, wantNext)
+	}
+	if err := store.Complete(context.Background(), cfg.ID, claim.LockedUntil, crontask.Completion{
+		NextRun:          nextRun,
+		LastRun:          now,
+		LastScheduledRun: claim.Task.ScheduledTime,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := store.GetByID(context.Background(), cfg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !loaded.NextRun.Equal(wantNext) || loaded.RRuleStr != cfg.RRuleStr {
+		t.Fatalf("completed exact-time schedule changed unexpectedly: %+v", loaded)
+	}
+}
+
+func TestDBStoreUpdateRejectsInFlightTask(t *testing.T) {
 	db := newCronJobTestDB(t)
 	store := NewDBStore(&gormx.DB{DB: db})
 	now := time.Date(2026, 7, 24, 10, 0, 0, 0, time.Local)
@@ -168,8 +210,19 @@ func TestDBStoreUpdatePreservesInFlightScheduledTime(t *testing.T) {
 		t.Fatal(err)
 	}
 	claim.Task.TaskName = "updated"
-	if err := store.Update(context.Background(), claim.Task); err != nil {
+	extra, err := ParseExtra(claim.Task.Extra)
+	if err != nil {
 		t.Fatal(err)
+	}
+	extra.SpecifiedTimes = []string{"2026-07-28 12:00:00"}
+	extra.ExcludedTimes = []string{"2026-07-29 12:00:00"}
+	claim.Task.Extra, err = MarshalExtra(extra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	claim.Task.RRuleStr = "DTSTART:20260701T000000Z\nRRULE:FREQ=DAILY\nRDATE:20260728T120000Z\nEXDATE:20260729T120000Z"
+	if err := store.Update(context.Background(), claim.Task); !errors.Is(err, crontask.ErrUpdate) {
+		t.Fatalf("in-flight update = %v, want ErrUpdate", err)
 	}
 
 	var updated gormmodel.CronJob
@@ -181,6 +234,12 @@ func TestDBStoreUpdatePreservesInFlightScheduledTime(t *testing.T) {
 	}
 	if !updated.NextRun.Valid || !updated.NextRun.Time.Equal(claim.LockedUntil) {
 		t.Fatalf("next_run = %v, want lease %v", updated.NextRun, claim.LockedUntil)
+	}
+	if updated.TaskName == claim.Task.TaskName {
+		t.Fatalf("in-flight task configuration changed: %+v", updated)
+	}
+	if updated.SpecifiedTimes.Valid || updated.ExcludedTimes.Valid || strings.Contains(updated.RRuleStr, "RDATE") || strings.Contains(updated.RRuleStr, "EXDATE") {
+		t.Fatalf("in-flight exact-time configuration changed partially: %+v", updated)
 	}
 }
 
@@ -214,10 +273,10 @@ func TestDBStoreUpdateOwnsOnlyConfigurationFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	extra.GroupId = ""
+	extra.GroupId = "must-not-change"
+	extra.DeptCode = "must-not-change"
+	extra.Type = "must-not-change"
 	extra.Description = ""
-	extra.StartTime = ""
-	extra.EndTime = ""
 	extra.ExcludeDates = nil
 	extra.Ext1 = ""
 	updated.Extra, err = MarshalExtra(extra)
@@ -232,14 +291,15 @@ func TestDBStoreUpdateOwnsOnlyConfigurationFields(t *testing.T) {
 	if err := db.Where("id = ?", config.ID).First(&record).Error; err != nil {
 		t.Fatal(err)
 	}
-	if record.TaskCode != config.TaskCode || record.Status != int(crontask.StatusDisabled) {
-		t.Fatalf("protected identity/state changed: task_code=%q status=%d", record.TaskCode, record.Status)
+	if record.TaskCode != config.TaskCode || record.GroupId != "G001" || record.DeptCode != "D001" || record.Type != "test" ||
+		record.Status != int(crontask.StatusDisabled) {
+		t.Fatalf("protected identity/state changed: %+v", record)
 	}
 	if !record.LastRun.Valid || !record.LastRun.Time.Equal(lastRun) ||
 		!record.LastScheduledRun.Valid || !record.LastScheduledRun.Time.Equal(lastScheduledRun) {
 		t.Fatalf("execution history changed: last_run=%v last_scheduled_run=%v", record.LastRun, record.LastScheduledRun)
 	}
-	if record.TaskName != "updated" || record.Payload != "" || record.GroupId != "" || record.Description != "" ||
+	if record.TaskName != "updated" || record.Payload != "" || record.Description != "" ||
 		record.StartTime.Valid || record.EndTime.Valid || record.ExcludeDates.Valid || record.Ext1 != "" {
 		t.Fatalf("configuration fields were not updated/cleared: %+v", record)
 	}
@@ -262,9 +322,9 @@ func TestDBStoreOptionalBusinessFieldsPersistAsNull(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	extra.StartTime = ""
-	extra.EndTime = ""
 	extra.ExcludeDates = nil
+	extra.SpecifiedTimes = nil
+	extra.ExcludedTimes = nil
 	config.Extra, err = MarshalExtra(extra)
 	if err != nil {
 		t.Fatal(err)
@@ -277,8 +337,8 @@ func TestDBStoreOptionalBusinessFieldsPersistAsNull(t *testing.T) {
 	if err := db.Where("id = ?", config.ID).First(&job).Error; err != nil {
 		t.Fatal(err)
 	}
-	if job.StartTime.Valid || job.EndTime.Valid || job.ExcludeDates.Valid {
-		t.Fatalf("optional fields must be SQL NULL: start=%v end=%v exclude=%v", job.StartTime, job.EndTime, job.ExcludeDates)
+	if job.StartTime.Valid || job.EndTime.Valid || job.ExcludeDates.Valid || job.SpecifiedTimes.Valid || job.ExcludedTimes.Valid {
+		t.Fatalf("optional fields must be SQL NULL: start=%v end=%v exclude=%v specified=%v excluded=%v", job.StartTime, job.EndTime, job.ExcludeDates, job.SpecifiedTimes, job.ExcludedTimes)
 	}
 
 	loaded, err := store.GetByID(context.Background(), config.ID)
@@ -289,8 +349,61 @@ func TestDBStoreOptionalBusinessFieldsPersistAsNull(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if loadedExtra.StartTime != "" || loadedExtra.EndTime != "" || len(loadedExtra.ExcludeDates) != 0 {
+	if len(loadedExtra.ExcludeDates) != 0 {
 		t.Fatalf("unexpected optional field round trip: %+v", loadedExtra)
+	}
+}
+
+func TestDBStoreExactTimesReplaceAndClear(t *testing.T) {
+	db := newCronJobTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	config := cronJobTestConfig(t, time.Now().Add(time.Hour))
+	extra, err := ParseExtra(config.Extra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	extra.SpecifiedTimes = []string{"2026-07-25 09:00:00"}
+	extra.ExcludedTimes = []string{"2026-07-26 09:00:00"}
+	config.RRuleStr = "DTSTART:20260701T000000Z\nRRULE:FREQ=DAILY\nRDATE:20260725T090000Z\nEXDATE:20260726T090000Z"
+	config.Extra, err = MarshalExtra(extra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Insert(context.Background(), config); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := store.GetByID(context.Background(), config.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	loadedExtra, err := ParseExtra(loaded.Extra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(loadedExtra.SpecifiedTimes) != 1 || len(loadedExtra.ExcludedTimes) != 1 {
+		t.Fatalf("exact times did not round trip: %+v", loadedExtra)
+	}
+
+	loadedExtra.SpecifiedTimes = []string{"2026-07-27 10:00:00"}
+	loadedExtra.ExcludedTimes = nil
+	loaded.Extra, err = MarshalExtra(loadedExtra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded.RRuleStr = "DTSTART:20260701T000000Z\nRRULE:FREQ=DAILY\nRDATE:20260727T100000Z"
+	if err := store.Update(context.Background(), loaded); err != nil {
+		t.Fatal(err)
+	}
+	var record gormmodel.CronJob
+	if err := db.Where("id = ?", config.ID).First(&record).Error; err != nil {
+		t.Fatal(err)
+	}
+	if !record.SpecifiedTimes.Valid || record.SpecifiedTimes.String != `["2026-07-27 10:00:00"]` || record.ExcludedTimes.Valid {
+		t.Fatalf("replacement/clear not persisted atomically: %+v", record)
+	}
+	if !strings.Contains(record.RRuleStr, "RDATE:20260727T100000Z") ||
+		strings.Contains(record.RRuleStr, "20260725T090000Z") || strings.Contains(record.RRuleStr, "EXDATE") {
+		t.Fatalf("compiled set was not replaced with exact-time configuration: %q", record.RRuleStr)
 	}
 }
 
@@ -402,6 +515,36 @@ func TestDBStoreEnableRecalculatesOnceAndClearsInFlightSchedule(t *testing.T) {
 	}
 	if err := store.Complete(context.Background(), cfg.ID, claim.LockedUntil, crontask.Completion{NextRun: now.Add(time.Hour), LastRun: now}); !errors.Is(err, crontask.ErrNotFound) {
 		t.Fatalf("enable should invalidate the previous claim, got %v", err)
+	}
+}
+
+func TestDBStoreEnableRecalculatesFromPersistedExactTimeSet(t *testing.T) {
+	db := newCronJobTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	now := time.Now().UTC().Truncate(time.Second)
+	specified := now.Add(2 * time.Hour)
+	excluded := now.Add(time.Hour)
+	periodicStart := now.Add(24 * time.Hour)
+	cfg := cronJobTestConfig(t, excluded)
+	cfg.TaskCode = "ENABLE-EXACT-TIME"
+	cfg.Status = crontask.StatusDisabled
+	cfg.RRuleStr = "DTSTART:" + periodicStart.Format("20060102T150405Z") + "\n" +
+		"RRULE:FREQ=DAILY;COUNT=2\n" +
+		"RDATE:" + excluded.Format("20060102T150405Z") + "," + specified.Format("20060102T150405Z") + "\n" +
+		"EXDATE:" + excluded.Format("20060102T150405Z")
+	if err := store.Insert(context.Background(), cfg); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := store.Enable(context.Background(), cfg.ID); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := store.GetByID(context.Background(), cfg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !loaded.NextRun.Equal(specified) {
+		t.Fatalf("enable next run = %v, want persisted RDATE %v", loaded.NextRun, specified)
 	}
 }
 
@@ -517,7 +660,6 @@ func TestDBStoreGetByIDAndProto(t *testing.T) {
 		extra.DeptCode = deptCode
 		extra.Type = taskType
 		extra.GroupId = groupID
-		extra.BizExtra = json.RawMessage(`{"source":"management"}`)
 		config.Extra, err = MarshalExtra(extra)
 		if err != nil {
 			t.Fatal(err)
@@ -561,7 +703,7 @@ func TestDBStoreGetByIDAndProto(t *testing.T) {
 	if pbJob.CreateTime != wantAuditTime || pbJob.UpdateTime != wantAuditTime {
 		t.Fatalf("unexpected proto audit times: %+v", pbJob)
 	}
-	if pbJob.Rule == nil || pbJob.Rule.Freq != 3 || pbJob.Extra != `{"source":"management"}` {
+	if pbJob.Rule == nil || pbJob.Rule.Freq != 3 {
 		t.Fatalf("unexpected proto business fields: %+v", pbJob)
 	}
 	if pbJob.RruleStr != alphaRecord.RRuleStr || pbJob.ScheduleDescription == "" {
@@ -573,11 +715,10 @@ func cronJobTestConfig(t *testing.T, nextRun time.Time) *crontask.TaskConfig {
 	t.Helper()
 	ruleJSON, _ := json.Marshal(&trigger.PlanRulePb{Freq: 3, Hours: []int32{11}, Minutes: []int32{0}})
 	extra, err := MarshalExtra(&CronJobExtra{
-		DeptCode:  "D001",
-		Type:      "test",
-		StartTime: "2026-07-01 00:00:00",
-		EndTime:   "2026-07-31 23:59:59",
-		Rule:      ruleJSON,
+		DeptCode: "D001",
+		Type:     "test",
+		GroupId:  "G001",
+		Rule:     ruleJSON,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -603,7 +744,7 @@ func newCronJobTestDB(t *testing.T) *gorm.DB {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = sqlDB.Close() })
-	if err := db.AutoMigrate(&gormmodel.CronJob{}); err != nil {
+	if err := db.AutoMigrate(&gormmodel.CronJob{}, &gormmodel.CronExecLog{}); err != nil {
 		t.Fatal(err)
 	}
 	return db

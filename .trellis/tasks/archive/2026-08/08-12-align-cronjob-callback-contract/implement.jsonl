@@ -1,0 +1,3 @@
+{"file":".trellis/spec/backend/contract-generation.md","reason":"Proto validation, JSON compatibility, and service-specific generation scripts."}
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"CronJob identity, handler callback, and persistence contracts."}
+{"file":".trellis/spec/backend/gormx-guidelines.md","reason":"TaskCode column width, unique index, and production schema implications."}

@@ -1,0 +1,9 @@
+{
+  "2029-01-01": {"name": "元旦", "type": "holiday", "isFestivalDay": true, "note": "元旦"},
+  "2029-02-13": {"name": "春节", "type": "holiday", "isFestivalDay": true, "note": "春节"},
+  "2029-04-04": {"name": "清明节", "type": "holiday", "isFestivalDay": true, "note": "清明节"},
+  "2029-05-01": {"name": "劳动节", "type": "holiday", "isFestivalDay": true, "note": "劳动节"},
+  "2029-06-16": {"name": "端午节", "type": "holiday", "isFestivalDay": true, "note": "端午节"},
+  "2029-09-22": {"name": "中秋节", "type": "holiday", "isFestivalDay": true, "note": "中秋节"},
+  "2029-10-01": {"name": "国庆节", "type": "holiday", "isFestivalDay": true, "note": "国庆节"}
+}

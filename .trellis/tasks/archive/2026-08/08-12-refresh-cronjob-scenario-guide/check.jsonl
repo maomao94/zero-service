@@ -1,0 +1,3 @@
+{"file":".trellis/spec/guides/documentation-guide.md","reason":"Verify final document placement, links, examples, and absence of duplicated authority."}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Verify documentation diff scope, placeholders, links, and git diff formatting."}
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"Verify Plan and CronJob boundaries remain accurate in the unified guide."}

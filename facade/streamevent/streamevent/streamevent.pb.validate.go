@@ -4182,8 +4182,6 @@ func (m *HandleCronJobEventReq) validate(all bool) error {
 
 	// no validation rules for Payload
 
-	// no validation rules for Extra
-
 	// no validation rules for ScheduledTime
 
 	// no validation rules for Type

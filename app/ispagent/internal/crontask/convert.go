@@ -20,7 +20,6 @@ func fromTaskConfig(cfg *crontask.TaskConfig) *gormmodel.GormTaskConfig {
 		Priority:         cfg.Priority,
 		LockTimeout:      cfg.LockTimeout.Milliseconds(),
 		Payload:          string(cfg.Payload),
-		Extra:            string(cfg.Extra),
 		Status:           int(cfg.Status),
 		NextRun:          toNullTime(cfg.NextRun),
 		ScheduledTime:    toNullTime(cfg.ScheduledTime),

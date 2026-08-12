@@ -1,6 +1,7 @@
 package crontask
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -42,6 +43,9 @@ func TestConvertRoundTrip(t *testing.T) {
 	}
 
 	gorm := fromTaskConfig(cfg)
+	if got := toFields(gorm); !reflect.DeepEqual(got, f) {
+		t.Fatalf("flattened fields mismatch: got %+v, want %+v", got, f)
+	}
 	back := toTaskConfig(gorm)
 
 	if back.TaskCode != cfg.TaskCode {
@@ -70,8 +74,8 @@ func TestConvertRoundTrip(t *testing.T) {
 	}
 
 	parsed := DeserializeExtra(string(back.Extra))
-	if parsed.Creator != f.Creator {
-		t.Fatal("round-trip creator mismatch")
+	if !reflect.DeepEqual(parsed, f) {
+		t.Fatalf("runtime extra mismatch: got %+v, want %+v", parsed, f)
 	}
 }
 

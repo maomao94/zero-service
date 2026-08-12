@@ -12,6 +12,7 @@ import (
 	"zero-service/third_party/extproto"
 
 	"github.com/dromara/carbon/v2"
+	"github.com/google/uuid"
 )
 
 type cronJobTaskData struct {
@@ -25,9 +26,10 @@ type cronJobTaskData struct {
 	startTime      string
 	endTime        string
 	excludeDates   []string
+	specifiedTimes []string
+	excludedTimes  []string
 	priority       int32
 	payload        string
-	bizExtra       string
 	lockTimeout    int64
 	maxDelay       int64
 	skipTimeFilter bool
@@ -38,44 +40,45 @@ type cronJobTaskData struct {
 	ext5           string
 }
 
-func buildCronJobTask(data cronJobTaskData) (*crontask.TaskConfig, error) {
+func buildCronJobTask(data cronJobTaskData) (*crontask.TaskConfig, string, error) {
+	groupID := data.groupID
+	if groupID == "" {
+		groupID = uuid.NewString()
+	}
 	payload, err := optionalJSON(data.payload, "payload")
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	bizExtra, err := optionalJSON(data.bizExtra, "extra")
-	if err != nil {
-		return nil, err
-	}
-	schedule, err := cronjob.CompileSchedule(
+	schedule, err := cronjob.CompileCronJobSchedule(
 		data.rule,
 		data.startTime,
 		data.endTime,
 		data.excludeDates,
+		data.specifiedTimes,
+		data.excludedTimes,
 		data.skipTimeFilter,
 		tool.NowStartOfSecond().StdTime(),
 	)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "Cron Job 规则无效")
+		return nil, "", tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "Cron Job 规则无效")
 	}
 	extra, err := cronjob.MarshalExtra(&cronjob.CronJobExtra{
-		DeptCode:     data.deptCode,
-		Type:         data.taskType,
-		GroupId:      data.groupID,
-		Description:  data.description,
-		StartTime:    data.startTime,
-		EndTime:      data.endTime,
-		Rule:         schedule.RuleJSON,
-		ExcludeDates: append([]string(nil), data.excludeDates...),
-		BizExtra:     bizExtra,
-		Ext1:         data.ext1,
-		Ext2:         data.ext2,
-		Ext3:         data.ext3,
-		Ext4:         data.ext4,
-		Ext5:         data.ext5,
+		DeptCode:       data.deptCode,
+		Type:           data.taskType,
+		GroupId:        groupID,
+		Description:    data.description,
+		Rule:           schedule.RuleJSON,
+		ExcludeDates:   append([]string(nil), data.excludeDates...),
+		SpecifiedTimes: append([]string(nil), data.specifiedTimes...),
+		ExcludedTimes:  append([]string(nil), data.excludedTimes...),
+		Ext1:           data.ext1,
+		Ext2:           data.ext2,
+		Ext3:           data.ext3,
+		Ext4:           data.ext4,
+		Ext5:           data.ext5,
 	})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "Cron Job 扩展字段无效")
+		return nil, "", tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "Cron Job 扩展字段无效")
 	}
 	return &crontask.TaskConfig{
 		TaskCode:    data.taskCode,
@@ -86,9 +89,11 @@ func buildCronJobTask(data cronJobTaskData) (*crontask.TaskConfig, error) {
 		MaxDelay:    time.Duration(data.maxDelay) * time.Second,
 		Payload:     payload,
 		Extra:       extra,
+		StartTime:   schedule.StartTime,
+		EndTime:     schedule.EndTime,
 		Status:      crontask.StatusEnabled,
 		NextRun:     schedule.NextRun,
-	}, nil
+	}, groupID, nil
 }
 
 func optionalJSON(value, field string) (json.RawMessage, error) {

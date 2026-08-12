@@ -3397,28 +3397,26 @@ type HandleCronJobEventReq struct {
 	Priority int32 `protobuf:"varint,4,opt,name=priority,proto3" json:"priority,omitempty"`
 	// 创建任务时提交的业务参数 JSON。
 	Payload string `protobuf:"bytes,5,opt,name=payload,proto3" json:"payload,omitempty"`
-	// Trigger 生成的 CronJobExtra JSON，包含调用方 bizExtra 和规则业务字段。
-	Extra string `protobuf:"bytes,6,opt,name=extra,proto3" json:"extra,omitempty"`
 	// 本次执行原计划时间，格式 yyyy-MM-dd HH:mm:ss；自动重试期间保持不变。
-	ScheduledTime string `protobuf:"bytes,7,opt,name=scheduled_time,json=scheduledTime,proto3" json:"scheduled_time,omitempty"`
+	ScheduledTime string `protobuf:"bytes,6,opt,name=scheduled_time,json=scheduledTime,proto3" json:"scheduled_time,omitempty"`
 	// 任务类型。
-	Type string `protobuf:"bytes,8,opt,name=type,proto3" json:"type,omitempty"`
+	Type string `protobuf:"bytes,7,opt,name=type,proto3" json:"type,omitempty"`
 	// 任务分组 ID。
-	GroupId string `protobuf:"bytes,9,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	GroupId string `protobuf:"bytes,8,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	// 任务描述。
-	Description string `protobuf:"bytes,10,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,9,opt,name=description,proto3" json:"description,omitempty"`
 	// 扩展字段 1。
-	Ext1 string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
+	Ext1 string `protobuf:"bytes,10,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段 2。
-	Ext2 string `protobuf:"bytes,51,opt,name=ext2,proto3" json:"ext2,omitempty"`
+	Ext2 string `protobuf:"bytes,11,opt,name=ext2,proto3" json:"ext2,omitempty"`
 	// 扩展字段 3。
-	Ext3 string `protobuf:"bytes,52,opt,name=ext3,proto3" json:"ext3,omitempty"`
+	Ext3 string `protobuf:"bytes,12,opt,name=ext3,proto3" json:"ext3,omitempty"`
 	// 扩展字段 4。
-	Ext4 string `protobuf:"bytes,53,opt,name=ext4,proto3" json:"ext4,omitempty"`
+	Ext4 string `protobuf:"bytes,13,opt,name=ext4,proto3" json:"ext4,omitempty"`
 	// 扩展字段 5。
-	Ext5 string `protobuf:"bytes,54,opt,name=ext5,proto3" json:"ext5,omitempty"`
+	Ext5 string `protobuf:"bytes,14,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	// 机构编码。
-	DeptCode      string `protobuf:"bytes,101,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
+	DeptCode      string `protobuf:"bytes,15,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3484,13 +3482,6 @@ func (x *HandleCronJobEventReq) GetPriority() int32 {
 func (x *HandleCronJobEventReq) GetPayload() string {
 	if x != nil {
 		return x.Payload
-	}
-	return ""
-}
-
-func (x *HandleCronJobEventReq) GetExtra() string {
-	if x != nil {
-		return x.Extra
 	}
 	return ""
 }
@@ -3917,25 +3908,24 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x14\n" +
-	"\x12NotifyPlanEventRes\"\xad\x03\n" +
+	"\x12NotifyPlanEventRes\"\x97\x03\n" +
 	"\x15HandleCronJobEventReq\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x1b\n" +
 	"\ttask_code\x18\x02 \x01(\tR\btaskCode\x12\x1b\n" +
 	"\ttask_name\x18\x03 \x01(\tR\btaskName\x12\x1a\n" +
 	"\bpriority\x18\x04 \x01(\x05R\bpriority\x12\x18\n" +
-	"\apayload\x18\x05 \x01(\tR\apayload\x12\x14\n" +
-	"\x05extra\x18\x06 \x01(\tR\x05extra\x12%\n" +
-	"\x0escheduled_time\x18\a \x01(\tR\rscheduledTime\x12\x12\n" +
-	"\x04type\x18\b \x01(\tR\x04type\x12\x19\n" +
-	"\bgroup_id\x18\t \x01(\tR\agroupId\x12 \n" +
-	"\vdescription\x18\n" +
-	" \x01(\tR\vdescription\x12\x12\n" +
-	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
-	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
-	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
-	"\x04ext4\x185 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x186 \x01(\tR\x04ext5\x12\x1b\n" +
-	"\tdept_code\x18e \x01(\tR\bdeptCode\"j\n" +
+	"\apayload\x18\x05 \x01(\tR\apayload\x12%\n" +
+	"\x0escheduled_time\x18\x06 \x01(\tR\rscheduledTime\x12\x12\n" +
+	"\x04type\x18\a \x01(\tR\x04type\x12\x19\n" +
+	"\bgroup_id\x18\b \x01(\tR\agroupId\x12 \n" +
+	"\vdescription\x18\t \x01(\tR\vdescription\x12\x12\n" +
+	"\x04ext1\x18\n" +
+	" \x01(\tR\x04ext1\x12\x12\n" +
+	"\x04ext2\x18\v \x01(\tR\x04ext2\x12\x12\n" +
+	"\x04ext3\x18\f \x01(\tR\x04ext3\x12\x12\n" +
+	"\x04ext4\x18\r \x01(\tR\x04ext4\x12\x12\n" +
+	"\x04ext5\x18\x0e \x01(\tR\x04ext5\x12\x1b\n" +
+	"\tdept_code\x18\x0f \x01(\tR\bdeptCode\"j\n" +
 	"\x15HandleCronJobEventRes\x127\n" +
 	"\areceipt\x18\x01 \x01(\x0e2\x1d.streamevent.CronJobReceiptPbR\areceipt\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage*N\n" +

@@ -10,6 +10,9 @@
 - `TaskConfig.NextRun` 在未 claim 时表示下一计划点；Store claim 后对应数据库列临时保存 lease 截止时间，返回给 handler 的副本中置零，不能再借它表示本次计划点。
 - `TaskConfig.ScheduledTime` 表示当前 claim/retry 对应的原计划点；首次 claim 写入，重试保持稳定，成功完成或重新启用后清空。
 - `TaskConfig.LastRun` 表示最近一次 handler 成功完成的实际时间；`LastScheduledRun` 表示该次成功周期执行对应的原计划点。手动 `RunNow` 只更新 `LastRun`。
+- `TaskConfig.StartTime` / `EndTime` 表示规则生效边界，属于通用任务配置；适配器必须在公共配置和业务模型之间双向转换，零值按各存储的 NULL/空值约定处理。
+- `TaskConfig.Extra` 当前仍是业务适配器的运行时载体，调度器不解析。业务表可以把其中字段平铺到专属列，并且不必额外持久化通用 `extra` blob；从数据库加载时由适配器重建运行时 `Extra`。
+- 完整 Set 可以包含 `RDATE` 与 `EXDATE`；调度器不从业务 `specified_times`、`excluded_times` 或 `exclude_dates` 重建规则。首次 `NextRun`、Enable、成功完成推进和 Preview 必须消费持久化的同一个 `RRuleStr`。
 - 数据库适配器用 SQL `NULL` 表达上述时间的零值，不使用远期哨兵时间。
 - RRULE 无候选或已耗尽返回零值；语法无效返回 error，不能当作“自然结束”。
 - Store 扫描只 claim 启用、`next_run` 非空且到期的任务。一次性/终止任务完成后不再参与扫描。
@@ -24,7 +27,7 @@
 - 完成条件不应额外依赖当前启停状态：执行中的任务被禁用后，合法持 lease 的 worker仍要完成自己的本次结果，但不能重新启用任务。
 - 有效锁时长经过 `ResolveLockTimeout` 规范化，最低为 30 秒；适配器不能绕过该下限。
 - 管理 `Update` 必须保留 `ScheduledTime`、`LastRun`、`LastScheduledRun`；任务在途时不得覆盖作为 lease token 的 `NextRun`。
-- 管理 `Update` 可以在同一事务中拆成两条 SQL：第一条用显式白名单更新普通配置，第二条仅在 `scheduled_time IS NULL` 时更新 `next_run`。两条 SQL 的零行语义不同：配置 UPDATE 零行返回 `ErrUpdate`；`next_run` 条件 UPDATE 零行表示在途 lease 被保留，整体更新仍成功。
+- 管理 `Update` 可以在同一事务中拆成两条 SQL：第一条用显式白名单更新普通配置，业务适配器可通过 `scheduled_time IS NULL` 拒绝会改变 RRULE 的在途更新；第二条更新 `next_run`。Trigger CronJob 的配置 UPDATE 零行返回 `ErrUpdate`，避免旧 worker 按旧 RRULE 回写下一计划点。
 
 依据：`common/crontask/store.go`、`common/crontask/config.go`、`common/crontask/memory_store.go`、`app/trigger/internal/cronjob/db_store.go`、`app/ispagent/internal/crontask/db_store.go`。
 
@@ -68,6 +71,7 @@
 
 - `Scheduler.PreviewNextRuns(task, after, count)` 是只读的有界预览能力：不访问 Store、不 claim、不执行 Handler，也不修改任务状态。
 - 预览直接解析 `TaskConfig.RRuleStr` 的完整 RRULE Set，并使用 `Set.After(cursor, false)` 取得严格晚于游标的候选；`DTSTART`、`UNTIL`、BY*、`RDATE` 与 `EXDATE` 均由 Set 自身处理。
+- 业务适配器若把 RDATE/EXDATE 的原始输入平铺为数据库列，读取后仍必须重建同一个 `TaskConfig.RRuleStr` 和运行时 Extra；Scheduler 不解析 Extra，首次 next-run、Enable、完成推进和 Preview 全部只消费持久化完整 Set。
 - `count` 只统计最终接受的有效时间点。循环持续到有效结果达到 `count`，或 RRULE / 过滤器返回零时间表示耗尽；禁止用 `Set.All()` 展开长期规则。
 - `InvalidTimeFilter` 是 RRULE Set 之外的 Scheduler 策略。过滤器收到一个 RRULE 候选后，负责沿同一任务规则持续跳过不可用区间，最终返回有效时间或零值；`app/ispagent/internal/crontask.NewInvalidTimeFilter` 是现有实现。
 - 预览对过滤器返回值只检查是否为零以及是否严格晚于当前游标，防止重复和死循环。不要在过滤后再次调用 `Set.After` 验证或推进，否则会建立一条不同于 `executeTask` 的过滤语义并产生重复计算。
@@ -108,10 +112,13 @@ go test -race ./common/crontask
 
 ```go
 type TaskConfig struct {
-    RRuleStr        string
-    NextRun         time.Time
-    ScheduledTime   time.Time
-    LastRun         time.Time
+    RRuleStr         string
+    StartTime        time.Time
+    EndTime          time.Time
+    Extra            json.RawMessage
+    NextRun          time.Time
+    ScheduledTime    time.Time
+    LastRun          time.Time
     LastScheduledRun time.Time
 }
 ```
@@ -119,6 +126,8 @@ type TaskConfig struct {
 ### 3. Contracts
 
 - 写入：`RRuleStr == ""` 表示一次性任务；否则必须可由 `rrule.StrToRRuleSet` 解析，且 `GetDTStart()` 非零、`GetRRule()` 非 nil。
+- 范围：`StartTime` / `EndTime` 必须由拥有规则编译的业务适配器写入并在模型转换时保留；它们不能被塞回 `Extra` 作为第二份权威值。
+- 适配：业务模型已将扩展字段平铺为列时，可以不提供 `extra` 列，但 `ToTaskConfig` 必须从这些列重建 Handler 所需的运行时 `Extra`。
 - claim：数据库 `next_run` 变为 `LockedUntil`，`scheduled_time` 保存首次原计划点；返回 Task 的 `NextRun` 为零、`ScheduledTime` 为原计划点。
 - success：同一 CAS 写入未来 `next_run`、实际 `last_run`、原计划 `last_scheduled_run`，并清空 `scheduled_time`。
 - retry：继续返回首次 `scheduled_time`，不能把上次 lease 截止时间当成计划点。
@@ -135,10 +144,12 @@ type TaskConfig struct {
 - Good: `DTSTART...\nRRULE...\nEXDATE...` 原样持久化并由同一字符串计算与描述。
 - Base: 一次性任务使用空 `RRuleStr`，完成后 `NextRun` 为零。
 - Bad: claim 后把 `Task.NextRun` 填成原计划时间；该字段与数据库 lease 语义发生分叉。
+- Bad: 同时把开始/结束边界写入 `TaskConfig` 和业务 `Extra`，或删除表的 `extra` 列后不再从平铺列重建运行时 `Extra`。
 
 ### 6. Tests Required
 
 - Memory、Trigger DB、ISP DB 均断言首次 claim、lease 重试、成功完成和 Enable 清理。
+- Trigger/ISP 转换测试断言 `StartTime` / `EndTime` 往返不丢失；平铺业务模型不依赖数据库 `extra` 列，加载后仍能重建 Handler 所需字段。
 - 断言 handler、日志和业务执行 ID 使用 `ScheduledTime`。
 - 断言裸 RRULE 被拒绝，Trigger/ISP 生成值均含 DTSTART 与 RRULE。
 

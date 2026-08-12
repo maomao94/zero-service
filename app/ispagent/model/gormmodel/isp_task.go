@@ -19,7 +19,6 @@ type GormTaskConfig struct {
 	Priority         int          `gorm:"column:priority;default:1;index;comment:任务优先级"`                // 任务优先级
 	LockTimeout      int64        `gorm:"column:lock_timeout;default:0;comment:单次调度锁超时（毫秒），0 使用调度器默认值"` // 单次调度锁超时，单位毫秒
 	Payload          string       `gorm:"column:payload;type:text;comment:业务参数（如 device_list）"`         // 业务参数（如 device_list）
-	Extra            string       `gorm:"column:extra;type:text;comment:业务扩展字段 JSON"`                   // 业务扩展字段 JSON
 	Status           int          `gorm:"column:status;default:1;index;comment:任务配置状态"`                 // 任务配置状态
 	NextRun          sql.NullTime `gorm:"column:next_run;type:timestamp;index;comment:下次执行时间"`          // 下次执行时间，NULL 表示无下次调度
 	LastRun          sql.NullTime `gorm:"column:last_run;type:timestamp;comment:上次成功执行的实际完成时间"`
@@ -49,7 +48,7 @@ type GormTaskConfig struct {
 	IspCreateTime       string `gorm:"column:isp_create_time;size:32;comment:编制时间"`                  // 编制时间
 }
 
-func (GormTaskConfig) TableName() string { return "cron_task_config" }
+func (GormTaskConfig) TableName() string { return "isp_cron_task_config" }
 
 // PatrolTaskState 记录 ISP 协议任务状态上报中的 task_state。
 type PatrolTaskState string

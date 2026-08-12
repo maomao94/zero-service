@@ -61,7 +61,9 @@ Plan（计划）
         +-- ExecItem 3
 ```
 
-创建时，Trigger 根据 `PlanRulePb`、`startTime`、`endTime` 和排除日期生成 RFC 5545 RRULE Set，再将有效日期预展开为 Batch 和 ExecItem；规则有效期跨度不能超过 3 年。`plan.rrule_str` 保存创建时的规则快照，实际运行仍由 ExecItem 的 `next_trigger_time` 驱动。
+创建时，Trigger 根据 `PlanRulePb`、`startTime`、`endTime`、`specifiedTimes`、`excludedTimes` 和 `excludeDates` 生成 RFC 5545 RRULE Set，再将有效候选预展开为 Batch 和 ExecItem；规则有效期跨度不能超过 3 年，且最终候选数与执行项数的乘积不能超过 5000。`skipTimeFilter=false` 时创建会过滤过去候选。`plan.rrule_str` 保存创建时的规则快照，实际运行仍由 ExecItem 的 `next_trigger_time` 驱动。
+
+Plan 与 CronJob 共用 `(RRULE ∪ specifiedTimes) - excludedTimes - expanded(excludeDates)` 集合语义：指定时间编译为 RDATE，精确时间和整日排除编译为 EXDATE，排除优先且同一秒去重。完整字段与请求示例见 [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md)。
 
 ### 执行流程
 
@@ -141,7 +143,7 @@ CronJob 面向“一个稳定任务编码对应一个周期 Handler”的场景�
 
 `taskCode` 是调用方提供的全局唯一业务编码，供调度器和业务侧稳定识别任务；`jobId` 是 Trigger 创建的 `cron_job.id`，用于管理 RPC。两者不能混用。
 
-常见周期、固定时间单次执行、创建后补触发和人工执行的完整请求见 [Trigger CronJob API 场景指南](./trigger-cronjob-api-guide.md)。本节只保留能力边界和运行语义。
+常见周期、指定时间、精确排除、固定时间单次执行、创建后补触发和人工执行的完整请求见 [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md)。本节只保留能力边界和运行语义。
 
 ### 规则编译
 
@@ -150,14 +152,17 @@ CronJob 面向“一个稳定任务编码对应一个周期 Handler”的场景�
 | 输入 | 行为 |
 | --- | --- |
 | `startTime` | 可为空；为空时使用当前上海年份第一天，格式为 `yyyy-MM-dd HH:mm:ss` |
-| `endTime` | 可为空；为空时使用补齐后开始时间所在年份最后一天；允许与开始时间相等，不能早于开始时间，跨度不能超过 3 年 |
+| `endTime` | 可为空；为空时使用补齐后开始时间所在年份最后一天；允许与开始时间相等，不能早于开始时间，跨度不能超过 100 年 |
 | `rule` | 必填，支持频率、小时、分钟、星期、日期和可选月份过滤 |
 | `excludeDates` | 按 `yyyy-MM-dd` 排除当天规则中的全部小时和分钟组合 |
+| `specifiedTimes` | 按上海时区的 `yyyy-MM-dd HH:mm:ss` 加入精确 RDATE 候选；最多 1000 项 |
+| `excludedTimes` | 按上海时区的 `yyyy-MM-dd HH:mm:ss` 排除同一秒候选；最多 1000 项 |
 | `skipTimeFilter` | 为 `true` 时，首次执行最多选择一个已经发生的计划点，不追赶全部历史周期；该计划点仍受 `maxDelay` 检查 |
 | `priority` | 数字越大越优先参与到期任务选择 |
 | `lockTimeout` | 单次 claim 的 lease 超时；0 使用调度器默认值，实际值不会低于 30 秒 |
+| `group_id` | 创建时为空自动生成 UUID，响应中返回；同一分组下的多个 CronJob 独立调度，不会自动合并或去重 |
 
-创建成功后任务默认为启用状态。规则已经耗尽时 `nextRun` 返回空字符串，数据库中的 `next_run` 为 `NULL`。
+CronJob 不预展开执行数据，100 年仅是显式生效区间的上限。传统计划任务（Plan）创建时会展开日期，仍保持 3 年限制。
 
 ### 周期执行流程
 
@@ -192,8 +197,9 @@ StreamEvent.HandleCronJobEvent
 
 | 操作 | 行为 |
 | --- | --- |
-| 创建 | `CreateCronJob` 创建新任务，校验 JSON 和规则，生成 `jobId`、RRULE Set 与首次 `next_run`；`taskCode` 冲突返回重复记录错误 |
-| 提交 | `SubmitCronJob` 按稳定 `taskCode` 提交完整配置；不存在时创建，存在时更新并保留原 `jobId` 和启停状态 |
+| 创建 | `CreateCronJob` 创建新任务，校验 JSON 和规则，生成 `jobId`、RRULE Set 与首次 `next_run`；`taskCode` 冲突返回重复记录错误；`group_id` 为空时自动生成 UUID 并在响应中返回 |
+| 更新 | `UpdateCronJob` 按 `jobId` 只更新可变配置（名称、描述、规则、时间范围、排除日期、优先级、payload、超时策略和扩展字段），不修改身份字段和状态；在途任务更新失败 |
+| 提交 | `SubmitCronJob` 按 `taskCode` 提交；存在时委托更新保留原 `jobId/groupId` 和状态，不存在时委托创建 |
 | 启用 | 从当前时间按已保存 RRULE 重新计算未来 `next_run`；重复启用幂等 |
 | 禁用 | 状态改为禁用，后续扫表不再选择；已经 claim 的在途执行仍可完成 |
 | 删除 | 幂等软删除，不再参与查询和调度 |
@@ -206,17 +212,18 @@ StreamEvent.HandleCronJobEvent
 
 | 方法 | 说明 |
 | --- | --- |
-| `CreateCronJob` | 创建 RRULE CronJob，返回 `jobId` 和首次 `nextRun` |
-| `UpdateCronJob` | 按 `jobId` 更新完整配置，保留原 `taskCode`、状态和运行历史 |
-| `SubmitCronJob` | 按稳定 `taskCode` 创建或更新完整配置，并保留已有任务的 `jobId` 与状态 |
+| `CreateCronJob` | 创建 RRULE CronJob，返回 `jobId`、`group_id` 和首次 `nextRun` |
+| `UpdateCronJob` | 按 `jobId` 只更新可变配置，不修改身份字段和状态 |
+| `SubmitCronJob` | 按 `taskCode` 创建或更新，不存在时创建、存在时委托更新保留身份 |
 | `EnableCronJob` | 启用任务并重新计算未来执行时间 |
 | `DisableCronJob` | 禁用后续扫描 |
 | `DeleteCronJob` | 幂等软删除任务 |
 | `RunCronJob` | 不改变周期计划地异步执行一次 |
 | `GetCronJob` | 按 `jobId` 获取详情、RRULE 原文和中文规则描述 |
 | `ListCronJobs` | 按任务编码、名称、状态、机构、类型和分组分页查询 |
+| `PreviewCronJobSchedule` | 预览从当前时间之后的计划执行时间，严格只读不修改状态 |
 
-完整字段说明和 JSON 场景示例见 [Trigger CronJob API 场景指南](./trigger-cronjob-api-guide.md)。
+完整字段说明和 JSON 场景示例见 [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md)。
 
 ### `cron_job` 数据模型
 
@@ -232,9 +239,10 @@ StreamEvent.HandleCronJobEvent
 | `scheduled_time` | 当前在途执行最初的计划时间，自动重试期间保持不变 |
 | `last_run` | 最近一次 Handler 成功完成的实际时间，包括人工执行 |
 | `last_scheduled_run` | 最近一次成功周期执行的原计划时间，人工执行不更新 |
-| `payload` / `extra` | 业务参数 JSON 与 Trigger 扩展 JSON |
-| `dept_code` / `type` / `group_id` | 机构、任务类型和业务分组查询字段 |
-| `start_time` / `end_time` / `rule` / `exclude_dates` | 调用方规则输入的持久化视图 |
+| `payload` | 业务参数 JSON |
+| `dept_code` / `type` / `group_id` | 机构、任务类型和业务分组（创建时确定，不可通过更新修改） |
+| `start_time` / `end_time` / `rule` / `exclude_dates` / `specified_times` / `excluded_times` | 调用方规则输入的持久化视图；空精确时间列表以 SQL `NULL` 保存并在 API 回显为空列表 |
+| `cron_exec_log` | 每次回调执行的审计日志，含 `traceId`、`scheduledTime`、`cost_ms`、`status`、`message` 和 `error_message` |
 
 核心扫描索引为 `(status, next_run)`；任务选择还会按 `priority` 降序排序。
 
@@ -294,7 +302,7 @@ go run . -f etc/trigger.yaml
 - asynq 任务可通过队列、任务详情、状态列表和历史统计 RPC 查询。
 - Plan 通过 `plan_exec_log` 和 `GetExecItemDashboard` 查询执行历史及统计。
 - Plan 扫表链路的日志正文以 `[cron-plan]` 开头；CronJob 公共调度器日志以 `[crontask]` 开头。
-- CronJob 日志包含 `task_code`、`task_id`、`scheduled_run` 和 `locked_until` 等定位字段；当前没有独立的 CronJob 执行流水表，最近成功时间保存在 `cron_job`。
+- CronJob 日志包含 `task_code`、`task_id`、`scheduled_run` 和 `locked_until` 等定位字段；每次执行写入 `cron_exec_log` 记录成本、回执和错误。
 
 ## 参考
 
@@ -302,5 +310,5 @@ go run . -f etc/trigger.yaml
 - [`streamevent.proto`](../facade/streamevent/streamevent.proto) - Plan 与 CronJob 业务回调契约
 - [`app/trigger/internal/cronjob`](../app/trigger/internal/cronjob) - CronJob 规则编译、Store 和 Handler 适配
 - [`common/crontask`](../common/crontask) - 通用 RRULE 调度器与 lease 契约
-- [Trigger CronJob API 场景指南](./trigger-cronjob-api-guide.md) - 常见周期、规则区间、固定时间单次任务与人工执行示例
+- [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md) - 周期规则、指定时间、精确与整日排除及 Plan/CronJob 示例
 - [Trigger Plan openGauss 迁移指南](./trigger-plan-opengauss-migration.md) - Plan 四表迁移、校验和回滚

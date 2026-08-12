@@ -1,0 +1,3 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Validate documentation links, examples, placeholders, diff scope, and whitespace."}
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"Check user documentation against final Plan/CronJob scheduling contracts."}
+{"file":".trellis/spec/backend/contract-generation.md","reason":"Check external field names and JSON examples against the Proto contract."}

@@ -1,0 +1,9 @@
+{
+  "2042-01-01": {"name": "元旦", "type": "holiday", "isFestivalDay": true, "note": "元旦"},
+  "2042-01-22": {"name": "春节", "type": "holiday", "isFestivalDay": true, "note": "春节"},
+  "2042-04-04": {"name": "清明节", "type": "holiday", "isFestivalDay": true, "note": "清明节"},
+  "2042-05-01": {"name": "劳动节", "type": "holiday", "isFestivalDay": true, "note": "劳动节"},
+  "2042-06-22": {"name": "端午节", "type": "holiday", "isFestivalDay": true, "note": "端午节"},
+  "2042-09-28": {"name": "中秋节", "type": "holiday", "isFestivalDay": true, "note": "中秋节"},
+  "2042-10-01": {"name": "国庆节", "type": "holiday", "isFestivalDay": true, "note": "国庆节"}
+}

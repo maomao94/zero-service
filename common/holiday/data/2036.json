@@ -1,0 +1,9 @@
+{
+  "2036-01-01": {"name": "元旦", "type": "holiday", "isFestivalDay": true, "note": "元旦"},
+  "2036-01-28": {"name": "春节", "type": "holiday", "isFestivalDay": true, "note": "春节"},
+  "2036-04-04": {"name": "清明节", "type": "holiday", "isFestivalDay": true, "note": "清明节"},
+  "2036-05-01": {"name": "劳动节", "type": "holiday", "isFestivalDay": true, "note": "劳动节"},
+  "2036-05-30": {"name": "端午节", "type": "holiday", "isFestivalDay": true, "note": "端午节"},
+  "2036-10-04": {"name": "中秋节", "type": "holiday", "isFestivalDay": true, "note": "中秋节"},
+  "2036-10-01": {"name": "国庆节", "type": "holiday", "isFestivalDay": true, "note": "国庆节"}
+}

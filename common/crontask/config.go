@@ -43,7 +43,9 @@ type TaskConfig struct {
 	LockTimeout      time.Duration   `json:"lock_timeout"`
 	MaxDelay         time.Duration   `json:"max_delay,omitempty"` // 最大延迟容忍，0 使用调度器默认值
 	Payload          json.RawMessage `json:"payload"`             // 执行业务参数
-	Extra            json.RawMessage `json:"extra"`   // 业务扩展字段 JSON
+	Extra            json.RawMessage `json:"extra"`               // 业务扩展字段 JSON
+	StartTime        time.Time       `json:"start_time,omitempty"`
+	EndTime          time.Time       `json:"end_time,omitempty"`
 	Status           TaskStatus      `json:"status"`
 	NextRun          time.Time       `json:"next_run"`                     // 下次计划调度时间；claim 后 Store 内暂存 lease 截止时间
 	ScheduledTime    time.Time       `json:"scheduled_time,omitempty"`     // 当前在途执行的原计划时间，未 claim 时为零值

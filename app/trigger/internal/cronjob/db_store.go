@@ -188,9 +188,10 @@ func (s *DBStore) Update(ctx context.Context, cfg *crontask.TaskConfig) error {
 	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		result := tx.Model(&gormmodel.CronJob{}).
 			Where("id = ?", cfg.ID).
+			Where("scheduled_time IS NULL").
 			Select(
-				"task_name", "rrule_str", "priority", "lock_timeout", "max_delay", "payload", "extra",
-				"dept_code", "type", "group_id", "description", "start_time", "end_time", "rule", "exclude_dates",
+				"task_name", "rrule_str", "priority", "lock_timeout", "max_delay", "payload",
+				"description", "start_time", "end_time", "rule", "exclude_dates", "specified_times", "excluded_times",
 				"ext_1", "ext_2", "ext_3", "ext_4", "ext_5",
 			).
 			Updates(record)
@@ -200,10 +201,17 @@ func (s *DBStore) Update(ctx context.Context, cfg *crontask.TaskConfig) error {
 		if result.RowsAffected == 0 {
 			return crontask.ErrUpdate
 		}
-		return tx.Model(&gormmodel.CronJob{}).
+		result = tx.Model(&gormmodel.CronJob{}).
 			Where("id = ?", cfg.ID).
 			Where("scheduled_time IS NULL").
-			Update("next_run", toNullTime(cfg.NextRun)).Error
+			Update("next_run", toNullTime(cfg.NextRun))
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return crontask.ErrUpdate
+		}
+		return nil
 	})
 	if err != nil {
 		if isDuplicateErr(err) {

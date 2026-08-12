@@ -14,53 +14,29 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-// CronJobExtra 是 Trigger 业务字段在 TaskConfig.Extra 中的稳定封装。
-// BizExtra 保存调用方原始扩展 JSON，避免与 Trigger 保留字段发生冲突。
+// CronJobExtra 是 Trigger 业务字段在 TaskConfig.Extra 中的运行时封装。
+// 不持久化到数据库，在 fromTaskConfig 时平铺到模型各列，
+// 在 ToTaskConfig 时从模型列重建。
 type CronJobExtra struct {
-	// DeptCode 是机构编码。
-	DeptCode string `json:"deptCode"`
-	// Type 是调用方定义的任务类型。
-	Type string `json:"type"`
-	// GroupId 是调用方的任务分组 ID。
-	GroupId string `json:"groupId,omitempty"`
-	// Description 是任务描述。
-	Description string `json:"description,omitempty"`
-	// StartTime 是调用方提交的规则开始时间；未提交时为空。
-	StartTime string `json:"startTime,omitempty"`
-	// EndTime 是调用方提交的规则结束时间；未提交时为空。
-	EndTime string `json:"endTime,omitempty"`
-	// Rule 是调用方提交的 PlanRulePb JSON。
-	Rule json.RawMessage `json:"rule"`
-	// ExcludeDates 是调用方提交的排除日期列表；未提交时为空。
-	ExcludeDates []string `json:"excludeDates,omitempty"`
-	// BizExtra 保存调用方原始扩展 JSON。
-	BizExtra json.RawMessage `json:"bizExtra,omitempty"`
-	// Ext1 至 Ext5 是调用方保留扩展字段。
-	Ext1 string `json:"ext1,omitempty"`
-	Ext2 string `json:"ext2,omitempty"`
-	Ext3 string `json:"ext3,omitempty"`
-	Ext4 string `json:"ext4,omitempty"`
-	Ext5 string `json:"ext5,omitempty"`
+	DeptCode       string          `json:"deptCode"`
+	Type           string          `json:"type"`
+	GroupId        string          `json:"groupId,omitempty"`
+	Description    string          `json:"description,omitempty"`
+	Rule           json.RawMessage `json:"rule"`
+	ExcludeDates   []string        `json:"excludeDates,omitempty"`
+	SpecifiedTimes []string        `json:"specifiedTimes,omitempty"`
+	ExcludedTimes  []string        `json:"excludedTimes,omitempty"`
+	Ext1           string          `json:"ext1,omitempty"`
+	Ext2           string          `json:"ext2,omitempty"`
+	Ext3           string          `json:"ext3,omitempty"`
+	Ext4           string          `json:"ext4,omitempty"`
+	Ext5           string          `json:"ext5,omitempty"`
 }
 
+// fromTaskConfig 将 TaskConfig 转为 CronJob 模型。
+// cfg.Extra 应为 CronJobExtra JSON，在此平铺到各 Trigger 专属列。
 func fromTaskConfig(cfg *crontask.TaskConfig) (*gormmodel.CronJob, error) {
-	extra, err := ParseExtra(cfg.Extra)
-	if err != nil {
-		return nil, err
-	}
-	startTime, err := parseOptionalTime(extra.StartTime)
-	if err != nil {
-		return nil, fmt.Errorf("解析开始时间失败: %w", err)
-	}
-	endTime, err := parseOptionalTime(extra.EndTime)
-	if err != nil {
-		return nil, fmt.Errorf("解析结束时间失败: %w", err)
-	}
-	excludeDates, err := marshalOptionalStrings(extra.ExcludeDates)
-	if err != nil {
-		return nil, fmt.Errorf("序列化排除日期失败: %w", err)
-	}
-	return &gormmodel.CronJob{
+	record := &gormmodel.CronJob{
 		TaskCode:         cfg.TaskCode,
 		TaskName:         cfg.TaskName,
 		RRuleStr:         cfg.RRuleStr,
@@ -68,37 +44,56 @@ func fromTaskConfig(cfg *crontask.TaskConfig) (*gormmodel.CronJob, error) {
 		LockTimeout:      cfg.LockTimeout.Milliseconds(),
 		MaxDelay:         cfg.MaxDelay.Milliseconds() / 1000,
 		Payload:          string(cfg.Payload),
-		Extra:            string(cfg.Extra),
 		Status:           int(cfg.Status),
+		StartTime:        toNullTime(cfg.StartTime),
+		EndTime:          toNullTime(cfg.EndTime),
 		NextRun:          toNullTime(cfg.NextRun),
 		ScheduledTime:    toNullTime(cfg.ScheduledTime),
 		LastRun:          toNullTime(cfg.LastRun),
 		LastScheduledRun: toNullTime(cfg.LastScheduledRun),
-		DeptCode:         extra.DeptCode,
-		Type:             extra.Type,
-		GroupId:          extra.GroupId,
-		Description:      extra.Description,
-		StartTime:        startTime,
-		EndTime:          endTime,
-		Rule:             string(extra.Rule),
-		ExcludeDates:     excludeDates,
-		Ext1:             extra.Ext1,
-		Ext2:             extra.Ext2,
-		Ext3:             extra.Ext3,
-		Ext4:             extra.Ext4,
-		Ext5:             extra.Ext5,
-	}, nil
+	}
+	extra, err := ParseExtra(cfg.Extra)
+	if err != nil {
+		return nil, err
+	}
+	record.DeptCode = extra.DeptCode
+	record.Type = extra.Type
+	record.GroupId = extra.GroupId
+	record.Description = extra.Description
+	record.Rule = string(extra.Rule)
+	excludeDates, err := marshalOptionalStrings(extra.ExcludeDates)
+	if err != nil {
+		return nil, err
+	}
+	record.ExcludeDates = excludeDates
+	specifiedTimes, err := marshalOptionalStrings(extra.SpecifiedTimes)
+	if err != nil {
+		return nil, err
+	}
+	record.SpecifiedTimes = specifiedTimes
+	excludedTimes, err := marshalOptionalStrings(extra.ExcludedTimes)
+	if err != nil {
+		return nil, err
+	}
+	record.ExcludedTimes = excludedTimes
+	record.Ext1 = extra.Ext1
+	record.Ext2 = extra.Ext2
+	record.Ext3 = extra.Ext3
+	record.Ext4 = extra.Ext4
+	record.Ext5 = extra.Ext5
+	return record, nil
 }
 
 // ToTaskConfig 将 Cron Job 数据库记录转换为通用任务配置。
+// TaskConfig.Extra 由模型各列重建 CronJobExtra 填入。
 func ToTaskConfig(job *gormmodel.CronJob) (*crontask.TaskConfig, error) {
 	extra, err := extraFromModel(job)
 	if err != nil {
 		return nil, err
 	}
-	extraJSON, err := json.Marshal(extra)
+	extraJSON, err := MarshalExtra(extra)
 	if err != nil {
-		return nil, fmt.Errorf("序列化 Cron Job Extra 失败: %w", err)
+		return nil, err
 	}
 	cfg := &crontask.TaskConfig{
 		ID:          job.Id,
@@ -113,6 +108,12 @@ func ToTaskConfig(job *gormmodel.CronJob) (*crontask.TaskConfig, error) {
 		Payload:     json.RawMessage(job.Payload),
 		Extra:       extraJSON,
 		Status:      crontask.TaskStatus(job.Status),
+	}
+	if job.StartTime.Valid {
+		cfg.StartTime = job.StartTime.Time
+	}
+	if job.EndTime.Valid {
+		cfg.EndTime = job.EndTime.Time
 	}
 	if job.NextRun.Valid {
 		cfg.NextRun = job.NextRun.Time
@@ -129,35 +130,6 @@ func ToTaskConfig(job *gormmodel.CronJob) (*crontask.TaskConfig, error) {
 	return cfg, nil
 }
 
-func extraFromModel(job *gormmodel.CronJob) (*CronJobExtra, error) {
-	stored, err := ParseExtra(json.RawMessage(job.Extra))
-	if err != nil {
-		return nil, err
-	}
-	var excludeDates []string
-	if job.ExcludeDates.Valid {
-		if err := json.Unmarshal([]byte(job.ExcludeDates.String), &excludeDates); err != nil {
-			return nil, fmt.Errorf("解析排除日期失败: %w", err)
-		}
-	}
-	return &CronJobExtra{
-		DeptCode:     job.DeptCode,
-		Type:         job.Type,
-		GroupId:      job.GroupId,
-		Description:  job.Description,
-		StartTime:    formatOptionalTime(job.StartTime),
-		EndTime:      formatOptionalTime(job.EndTime),
-		Rule:         json.RawMessage(job.Rule),
-		ExcludeDates: excludeDates,
-		BizExtra:     stored.BizExtra,
-		Ext1:         job.Ext1,
-		Ext2:         job.Ext2,
-		Ext3:         job.Ext3,
-		Ext4:         job.Ext4,
-		Ext5:         job.Ext5,
-	}, nil
-}
-
 // ToProto 将 Cron Job 任务配置转换为对外管理视图。
 func ToProto(cfg *crontask.TaskConfig) (*trigger.CronJobPb, error) {
 	extra, err := ParseExtra(cfg.Extra)
@@ -172,7 +144,6 @@ func ToProto(cfg *crontask.TaskConfig) (*trigger.CronJobPb, error) {
 	if err != nil {
 		return nil, fmt.Errorf("生成 Cron Job 规则描述失败: %w", err)
 	}
-
 	result := &trigger.CronJobPb{
 		JobId:               cfg.ID,
 		TaskCode:            cfg.TaskCode,
@@ -181,15 +152,16 @@ func ToProto(cfg *crontask.TaskConfig) (*trigger.CronJobPb, error) {
 		LockTimeout:         cfg.LockTimeout.Milliseconds(),
 		MaxDelay:            int64(cfg.MaxDelay.Seconds()),
 		Payload:             string(cfg.Payload),
-		Extra:               string(extra.BizExtra),
 		Status:              int32(cfg.Status),
 		Type:                extra.Type,
 		GroupId:             extra.GroupId,
 		Description:         extra.Description,
-		StartTime:           extra.StartTime,
-		EndTime:             extra.EndTime,
+		StartTime:           formatTime(cfg.StartTime),
+		EndTime:             formatTime(cfg.EndTime),
 		Rule:                &rule,
 		ExcludeDates:        append([]string(nil), extra.ExcludeDates...),
+		SpecifiedTimes:      append([]string(nil), extra.SpecifiedTimes...),
+		ExcludedTimes:       append([]string(nil), extra.ExcludedTimes...),
 		ScheduleDescription: scheduleDescription,
 		RruleStr:            cfg.RRuleStr,
 		Ext1:                extra.Ext1,
@@ -210,6 +182,36 @@ func ToProto(cfg *crontask.TaskConfig) (*trigger.CronJobPb, error) {
 	return result, nil
 }
 
+func extraFromModel(job *gormmodel.CronJob) (*CronJobExtra, error) {
+	excludeDates, err := unmarshalOptionalStrings(job.ExcludeDates, "排除日期")
+	if err != nil {
+		return nil, err
+	}
+	specifiedTimes, err := unmarshalOptionalStrings(job.SpecifiedTimes, "指定执行时间")
+	if err != nil {
+		return nil, err
+	}
+	excludedTimes, err := unmarshalOptionalStrings(job.ExcludedTimes, "精确排除时间")
+	if err != nil {
+		return nil, err
+	}
+	return &CronJobExtra{
+		DeptCode:       job.DeptCode,
+		Type:           job.Type,
+		GroupId:        job.GroupId,
+		Description:    job.Description,
+		Rule:           json.RawMessage(job.Rule),
+		ExcludeDates:   excludeDates,
+		SpecifiedTimes: specifiedTimes,
+		ExcludedTimes:  excludedTimes,
+		Ext1:           job.Ext1,
+		Ext2:           job.Ext2,
+		Ext3:           job.Ext3,
+		Ext4:           job.Ext4,
+		Ext5:           job.Ext5,
+	}, nil
+}
+
 // ParseExtra 解析 TaskConfig.Extra 中的 Trigger 业务字段。
 func ParseExtra(value json.RawMessage) (*CronJobExtra, error) {
 	if len(value) == 0 {
@@ -222,7 +224,7 @@ func ParseExtra(value json.RawMessage) (*CronJobExtra, error) {
 	return &extra, nil
 }
 
-// MarshalExtra 序列化 Trigger 业务字段，供创建 Logic 构造 TaskConfig 使用。
+// MarshalExtra 序列化 Trigger 业务字段。
 func MarshalExtra(extra *CronJobExtra) (json.RawMessage, error) {
 	value, err := json.Marshal(extra)
 	if err != nil {
@@ -262,4 +264,15 @@ func marshalOptionalStrings(values []string) (sql.NullString, error) {
 		return sql.NullString{}, err
 	}
 	return sql.NullString{String: string(encoded), Valid: true}, nil
+}
+
+func unmarshalOptionalStrings(value sql.NullString, field string) ([]string, error) {
+	if !value.Valid || value.String == "" {
+		return nil, nil
+	}
+	var values []string
+	if err := json.Unmarshal([]byte(value.String), &values); err != nil {
+		return nil, fmt.Errorf("解析%s失败: %w", field, err)
+	}
+	return values, nil
 }

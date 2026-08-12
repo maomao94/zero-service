@@ -1,0 +1,9 @@
+{
+  "2045-01-01": {"name": "元旦", "type": "holiday", "isFestivalDay": true, "note": "元旦"},
+  "2045-02-17": {"name": "春节", "type": "holiday", "isFestivalDay": true, "note": "春节"},
+  "2045-04-04": {"name": "清明节", "type": "holiday", "isFestivalDay": true, "note": "清明节"},
+  "2045-05-01": {"name": "劳动节", "type": "holiday", "isFestivalDay": true, "note": "劳动节"},
+  "2045-06-19": {"name": "端午节", "type": "holiday", "isFestivalDay": true, "note": "端午节"},
+  "2045-09-25": {"name": "中秋节", "type": "holiday", "isFestivalDay": true, "note": "中秋节"},
+  "2045-10-01": {"name": "国庆节", "type": "holiday", "isFestivalDay": true, "note": "国庆节"}
+}

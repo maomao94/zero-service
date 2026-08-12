@@ -36,7 +36,7 @@ func (l *CalcPlanTaskDateLogic) CalcPlanTaskDate(in *trigger.CalcPlanTaskDateReq
 	if err != nil {
 		return nil, err
 	}
-	schedule, err := cronjob.CompileSchedule(in.Rule, in.StartTime, in.EndTime, in.ExcludeDates, false, time.Now())
+	schedule, err := cronjob.CompileSchedule(in.Rule, in.StartTime, in.EndTime, in.ExcludeDates, in.SpecifiedTimes, in.ExcludedTimes, false, time.Now())
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "生成计划规则失败")
 	}

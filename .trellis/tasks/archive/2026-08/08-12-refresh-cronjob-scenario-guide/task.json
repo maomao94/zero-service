@@ -1,0 +1,31 @@
+{
+  "id": "refresh-cronjob-scenario-guide",
+  "name": "refresh-cronjob-scenario-guide",
+  "title": "Refresh CronJob scheduling scenario guide",
+  "description": "Review and update the existing CronJob API guide with practical scheduling JSON scenarios against the latest Trigger contracts.",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "boss",
+  "assignee": "boss",
+  "createdAt": "2026-08-12",
+  "completedAt": "2026-08-12",
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "08-12-rdate-contract-compiler",
+    "08-12-rdate-plan-integration",
+    "08-12-rdate-cronjob-integration",
+    "08-12-rdate-docs-spec"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"reflect"
 	"testing"
 	"time"
 
@@ -254,6 +255,75 @@ func TestDBStoreGetByID(t *testing.T) {
 	}
 }
 
+func TestDBStorePersistsFlattenedFieldsAndRebuildsRuntimeExtra(t *testing.T) {
+	db := newDBStoreTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	fields := &IspTaskFields{
+		SubstationCode:      "station-1",
+		PatrolType:          "1",
+		TaskCode:            "FLAT-EXTRA",
+		TaskName:            "flattened task",
+		Priority:            "2",
+		DeviceLevel:         3,
+		DeviceList:          "device-1,device-2",
+		FixedStartTime:      "2026-08-13 10:00:00",
+		CycleMonth:          "1,2",
+		CycleWeek:           "1,3",
+		CycleExecuteTime:    "10:00:00",
+		CycleStartTime:      "2026-08-01 00:00:00",
+		CycleEndTime:        "2026-12-31 23:59:59",
+		IntervalNumber:      "2",
+		IntervalType:        "1",
+		IntervalExecuteTime: "10:30:00",
+		IntervalStartTime:   "2026-08-01 00:00:00",
+		IntervalEndTime:     "2026-08-31 23:59:59",
+		InvalidStartTime:    "2026-08-15 00:00:00",
+		InvalidEndTime:      "2026-08-16 23:59:59",
+		IsEnable:            "0",
+		Creator:             "operator-1",
+		CreateTime:          "2026-08-12 09:00:00",
+	}
+	cfg := &commoncrontask.TaskConfig{
+		ID:       "flat-extra-id",
+		TaskCode: fields.TaskCode,
+		TaskName: fields.TaskName,
+		Priority: fields.ToPriority(),
+		Status:   fields.ToStatus(),
+		Extra:    []byte(SerializeExtra(fields)),
+	}
+	if err := store.Insert(context.Background(), cfg); err != nil {
+		t.Fatalf("insert task config: %v", err)
+	}
+
+	assertPersistedFields := func(want *IspTaskFields) {
+		t.Helper()
+		var record gormmodel.GormTaskConfig
+		if err := db.Where("id = ?", cfg.ID).First(&record).Error; err != nil {
+			t.Fatalf("load persisted task config: %v", err)
+		}
+		if got := toFields(&record); !reflect.DeepEqual(got, want) {
+			t.Fatalf("persisted flattened fields mismatch: got %+v, want %+v", got, want)
+		}
+		got, err := store.GetByID(context.Background(), cfg.ID)
+		if err != nil {
+			t.Fatalf("get task config: %v", err)
+		}
+		if gotFields := DeserializeExtra(string(got.Extra)); !reflect.DeepEqual(gotFields, want) {
+			t.Fatalf("rebuilt runtime extra mismatch: got %+v, want %+v", gotFields, want)
+		}
+	}
+	assertPersistedFields(fields)
+
+	updatedFields := *fields
+	updatedFields.DeviceList = "device-3"
+	updatedFields.Creator = "operator-2"
+	cfg.Extra = []byte(SerializeExtra(&updatedFields))
+	if err := store.Update(context.Background(), cfg); err != nil {
+		t.Fatalf("update task config: %v", err)
+	}
+	assertPersistedFields(&updatedFields)
+}
+
 func TestDBStoreCompleteUsesLeaseTokenNotStatus(t *testing.T) {
 	db := newDBStoreTestDB(t)
 	store := NewDBStore(&gormx.DB{DB: db})
@@ -393,6 +463,9 @@ func newDBStoreTestDB(t *testing.T) *gorm.DB {
 	t.Cleanup(func() { _ = sqlDB.Close() })
 	if err := db.AutoMigrate(&gormmodel.GormTaskConfig{}); err != nil {
 		t.Fatalf("migrate task config: %v", err)
+	}
+	if db.Migrator().HasColumn(&gormmodel.GormTaskConfig{}, "extra") {
+		t.Fatal("task config schema must not persist runtime extra")
 	}
 	return db
 }

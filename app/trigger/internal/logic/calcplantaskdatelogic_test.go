@@ -55,7 +55,7 @@ func TestCalcPlanTaskDateUsesPersistedScheduleCompiler(t *testing.T) {
 		},
 		ExcludeDates: []string{"2026-07-28"},
 	}
-	schedule, err := cronjob.CompileSchedule(request.Rule, request.StartTime, request.EndTime, request.ExcludeDates, false, time.Now())
+	schedule, err := cronjob.CompileSchedule(request.Rule, request.StartTime, request.EndTime, request.ExcludeDates, request.SpecifiedTimes, request.ExcludedTimes, false, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,5 +73,67 @@ func TestCalcPlanTaskDateUsesPersistedScheduleCompiler(t *testing.T) {
 	}
 	if result.RruleStr != schedule.RRuleStr {
 		t.Fatalf("rruleStr = %q, want compiler output %q", result.RruleStr, schedule.RRuleStr)
+	}
+}
+
+func TestCalcPlanTaskDateAppliesExactTimeSetSemantics(t *testing.T) {
+	request := &trigger.CalcPlanTaskDateReq{
+		StartTime: "2099-07-01 00:00:00",
+		EndTime:   "2099-07-04 23:59:59",
+		Rule: &trigger.PlanRulePb{
+			Freq:    3,
+			Hours:   []int32{9},
+			Minutes: []int32{0},
+		},
+		ExcludeDates: []string{"2099-07-03"},
+		SpecifiedTimes: []string{
+			"2099-07-01 09:00:00", // Duplicate of the RRULE occurrence.
+			"2099-07-01 09:00:00", // Duplicate RDATE input.
+			"2099-07-02 12:34:56", // Precisely excluded below.
+			"2099-07-03 12:34:56", // Excluded by the whole-day exclusion.
+			"2099-07-04 12:34:56",
+		},
+		ExcludedTimes: []string{"2099-07-02 12:34:56"},
+	}
+
+	result, err := NewCalcPlanTaskDateLogic(context.Background(), nil).CalcPlanTaskDate(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantDates := []string{
+		"2099-07-01 09:00:00",
+		"2099-07-02 09:00:00",
+		"2099-07-04 09:00:00",
+		"2099-07-04 12:34:56",
+	}
+	if len(result.PlanDates) != len(wantDates) {
+		t.Fatalf("plan dates = %v, want %v", result.PlanDates, wantDates)
+	}
+	for i := range wantDates {
+		if result.PlanDates[i] != wantDates[i] {
+			t.Fatalf("plan date[%d] = %q, want %q", i, result.PlanDates[i], wantDates[i])
+		}
+	}
+	for _, want := range []string{"RDATE;TZID=Asia/Shanghai:", "EXDATE;TZID=Asia/Shanghai:"} {
+		if !strings.Contains(result.RruleStr, want) {
+			t.Fatalf("rruleStr = %q, want substring %q", result.RruleStr, want)
+		}
+	}
+	for _, want := range []string{"额外纳入候选", "2099-07-04 12:34:56", "2099-07-02 12:34:56", "2099-07-03 12:34:56"} {
+		if !strings.Contains(result.ScheduleDescription, want) {
+			t.Fatalf("schedule description = %q, want substring %q", result.ScheduleDescription, want)
+		}
+	}
+
+	schedule, err := cronjob.CompileSchedule(request.Rule, request.StartTime, request.EndTime, request.ExcludeDates, request.SpecifiedTimes, request.ExcludedTimes, false, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantDescription, err := crontask.DescribeRRule(schedule.RRuleStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.RruleStr != schedule.RRuleStr || result.ScheduleDescription != wantDescription {
+		t.Fatal("plan dates, description, and rruleStr must derive from the same compiled set")
 	}
 }

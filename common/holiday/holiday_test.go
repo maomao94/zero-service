@@ -34,6 +34,33 @@ func TestLookupConfiguredHoliday(t *testing.T) {
 	}
 }
 
+func TestLookupFutureYearFestivalDays(t *testing.T) {
+	cases := []struct {
+		date     string
+		wantName string
+		wantDay  bool
+	}{
+		{"2033-01-31", "春节", true},
+		{"2031-10-01", "中秋国庆", true},
+		{"2036-10-04", "中秋节", true},
+		{"2044-10-05", "中秋节", true},
+		{"2046-09-15", "中秋节", true},
+	}
+	for _, c := range cases {
+		day, err := time.Parse(time.DateOnly, c.date)
+		if err != nil {
+			t.Fatalf("parse %s: %v", c.date, err)
+		}
+		info := Lookup(day.Add(12 * time.Hour))
+		if info.Name != c.wantName || info.IsFestivalDay != c.wantDay || !info.IsHoliday {
+			t.Fatalf("Lookup(%s) = %+v, want %s festival day", c.date, info, c.wantName)
+		}
+	}
+	if info := Lookup(time.Date(2030, time.January, 1, 12, 0, 0, 0, time.Local)); info.Name != "元旦" {
+		t.Fatalf("2030-01-01 = %+v, want 元旦", info)
+	}
+}
+
 func TestLookupFestivalDay(t *testing.T) {
 	festivalDay := Lookup(time.Date(2026, time.February, 17, 12, 0, 0, 0, time.Local))
 	if festivalDay.Name != "春节" || !festivalDay.IsFestivalDay {
@@ -105,7 +132,7 @@ func TestLookupUsesChinaDate(t *testing.T) {
 }
 
 func TestSupportedYears(t *testing.T) {
-	want := []int{2023, 2024, 2025, 2026}
+	want := []int{2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040, 2041, 2042, 2043, 2044, 2045, 2046}
 	if got := SupportedYears(); !reflect.DeepEqual(got, want) {
 		t.Fatalf("SupportedYears() = %v, want %v", got, want)
 	}

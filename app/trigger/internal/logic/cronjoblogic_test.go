@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -32,7 +34,6 @@ func TestCronJobLifecycle(t *testing.T) {
 		Type:        "test",
 		DeptCode:    "D001",
 		Payload:     `{"id":1}`,
-		Extra:       `{"source":"test"}`,
 		LockTimeout: 90_000,
 		Rule: &trigger.PlanRulePb{
 			Freq:    3,
@@ -45,6 +46,9 @@ func TestCronJobLifecycle(t *testing.T) {
 	}
 	if created.JobId == "" {
 		t.Fatal("create must return jobId")
+	}
+	if created.GroupId == "" {
+		t.Fatal("create must return generated groupId")
 	}
 	loaded, err := store.GetByID(ctx, created.JobId)
 	if err != nil {
@@ -78,6 +82,10 @@ func TestCronJobLifecycle(t *testing.T) {
 	}
 }
 
+func TestUpdateCronJobRejectsStableIdentityChange(t *testing.T) {
+	t.Skip("UpdateCronJobReq no longer carries Type, GroupId or DeptCode")
+}
+
 func TestCreateCronJobRemainsStrict(t *testing.T) {
 	store, db := newCronJobLogicTestStore(t)
 	serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store}
@@ -92,14 +100,14 @@ func TestCreateCronJobRemainsStrict(t *testing.T) {
 }
 
 func TestBuildCronJobTaskCompilesValidRule(t *testing.T) {
-	task, err := buildCronJobTask(cronJobTaskData{
+	task, _, err := buildCronJobTask(cronJobTaskData{
 		taskCode: "valid-rule", taskName: "合法规则", taskType: "test",
 		groupID: "G001", description: "rule test", deptCode: "D001",
 		rule: &trigger.PlanRulePb{
 			Freq: 3, Hours: []int32{11}, Minutes: []int32{0},
 		},
 		startTime: "2026-08-01 00:00:00", endTime: "2026-08-31 23:59:59",
-		excludeDates: []string{"2026-08-12"}, payload: `{"id":1}`, bizExtra: `{"source":"test"}`,
+		excludeDates: []string{"2026-08-12"}, payload: `{"id":1}`,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -116,7 +124,116 @@ func TestBuildCronJobTaskCompilesValidRule(t *testing.T) {
 	}
 }
 
-func TestUpdateCronJobPreservesIdentityAndRuntimeState(t *testing.T) {
+func TestBuildCronJobTaskCompilesExactTimesIntoSetAndExtra(t *testing.T) {
+	now := time.Date(2099, 7, 1, 0, 0, 0, 0, time.Local)
+	specified := "2099-07-01 08:00:00"
+	task, _, err := buildCronJobTask(cronJobTaskData{
+		taskCode: "exact-rule", taskName: "精确时间", taskType: "test", deptCode: "D001",
+		rule:      &trigger.PlanRulePb{Freq: 3, Hours: []int32{9}, Minutes: []int32{0}},
+		startTime: "2099-07-01 00:00:00", endTime: "2099-07-31 23:59:59",
+		specifiedTimes: []string{specified},
+		excludedTimes:  []string{"2099-07-01 09:00:00"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(task.RRuleStr, "RDATE") || !strings.Contains(task.RRuleStr, "EXDATE") {
+		t.Fatalf("compiled set lacks exact-time components: %s", task.RRuleStr)
+	}
+	extra, err := cronjob.ParseExtra(task.Extra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(extra.SpecifiedTimes, []string{specified}) || !reflect.DeepEqual(extra.ExcludedTimes, []string{"2099-07-01 09:00:00"}) {
+		t.Fatalf("exact times missing from extra: %+v", extra)
+	}
+	wantNext, err := time.ParseInLocation("2006-01-02 15:04:05", specified, task.NextRun.Location())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if task.NextRun.Before(now) || !task.NextRun.Equal(wantNext) {
+		t.Fatalf("initial next run = %v, want specified time %v", task.NextRun, wantNext)
+	}
+}
+
+func TestCronJobWritePathsPersistAndClearExactTimes(t *testing.T) {
+	store, db := newCronJobLogicTestStore(t)
+	ctx := context.Background()
+	serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store}
+
+	createReq := validCronJobRequest("exact-create-update")
+	createReq.StartTime = "2099-07-01 00:00:00"
+	createReq.EndTime = "2099-07-31 23:59:59"
+	createReq.SpecifiedTimes = []string{"2099-07-01 08:00:00"}
+	createReq.ExcludedTimes = []string{"2099-07-01 09:00:00"}
+	created, err := NewCreateCronJobLogic(ctx, serviceContext).CreateCronJob(createReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	createdTask, err := store.GetByID(ctx, created.JobId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertCronJobExactTimes(t, createdTask, createReq.SpecifiedTimes, createReq.ExcludedTimes, true, true)
+
+	updateReq := updateCronJobRequestFromCreate(created.JobId, createReq)
+	updateReq.SpecifiedTimes = nil
+	updateReq.ExcludedTimes = nil
+	if _, err := NewUpdateCronJobLogic(ctx, serviceContext).UpdateCronJob(updateReq); err != nil {
+		t.Fatal(err)
+	}
+	updatedTask, err := store.GetByID(ctx, created.JobId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertCronJobExactTimes(t, updatedTask, nil, nil, false, false)
+
+	submitReq := validSubmitCronJobRequest("exact-submit")
+	submitReq.StartTime = "2099-08-01 00:00:00"
+	submitReq.EndTime = "2099-08-31 23:59:59"
+	submitReq.SpecifiedTimes = []string{"2099-08-01 08:00:00"}
+	submitReq.ExcludedTimes = []string{"2099-08-01 09:00:00"}
+	submitted, err := NewSubmitCronJobLogic(ctx, serviceContext).SubmitCronJob(submitReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	submittedTask, err := store.GetByID(ctx, submitted.JobId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertCronJobExactTimes(t, submittedTask, submitReq.SpecifiedTimes, submitReq.ExcludedTimes, true, true)
+
+	submitReq.SpecifiedTimes = []string{"2099-08-02 07:30:00"}
+	submitReq.ExcludedTimes = nil
+	resubmitted, err := NewSubmitCronJobLogic(ctx, serviceContext).SubmitCronJob(submitReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resubmitted.JobId != submitted.JobId {
+		t.Fatalf("submit update changed job id: got %q want %q", resubmitted.JobId, submitted.JobId)
+	}
+	resubmittedTask, err := store.GetByID(ctx, submitted.JobId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertCronJobExactTimes(t, resubmittedTask, submitReq.SpecifiedTimes, nil, true, false)
+}
+
+func assertCronJobExactTimes(t *testing.T, task *crontask.TaskConfig, specified, excluded []string, wantRDATE, wantEXDATE bool) {
+	t.Helper()
+	extra, err := cronjob.ParseExtra(task.Extra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(extra.SpecifiedTimes, specified) || !reflect.DeepEqual(extra.ExcludedTimes, excluded) {
+		t.Fatalf("exact-time lists = specified %v excluded %v, want %v and %v", extra.SpecifiedTimes, extra.ExcludedTimes, specified, excluded)
+	}
+	if strings.Contains(task.RRuleStr, "RDATE") != wantRDATE || strings.Contains(task.RRuleStr, "EXDATE") != wantEXDATE {
+		t.Fatalf("compiled set exact-time components mismatch: %q", task.RRuleStr)
+	}
+}
+
+func TestUpdateCronJobRejectsInFlightTask(t *testing.T) {
 	for _, status := range []crontask.TaskStatus{crontask.StatusEnabled, crontask.StatusDisabled} {
 		t.Run(status.String(), func(t *testing.T) {
 			store, db := newCronJobLogicTestStore(t)
@@ -142,22 +259,15 @@ func TestUpdateCronJobPreservesIdentityAndRuntimeState(t *testing.T) {
 
 			config := validUpdateCronJobRequest(created.JobId)
 			config.TaskName = "更新后的任务"
-			updated, err := NewUpdateCronJobLogic(ctx, serviceContext).UpdateCronJob(config)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if updated.JobId != created.JobId || updated.NextRun == "" {
-				t.Fatalf("unexpected update response: %+v", updated)
-			}
-			if updated.TaskCode != "update-"+status.String() {
-				t.Fatalf("update task code = %q", updated.TaskCode)
+			if _, err := NewUpdateCronJobLogic(ctx, serviceContext).UpdateCronJob(config); !tool.IsErrorByPbCode(err, extproto.Code__1_02_DB) {
+				t.Fatalf("in-flight update error = %v, want DB", err)
 			}
 			loaded, err := store.GetByID(ctx, created.JobId)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if loaded.Status != status || loaded.TaskName != config.TaskName {
-				t.Fatalf("updated config/state = %+v", loaded)
+			if loaded.Status != status || loaded.TaskName == config.TaskName {
+				t.Fatalf("in-flight config/state changed = %+v", loaded)
 			}
 			if !loaded.NextRun.Equal(leaseTime) || !loaded.ScheduledTime.Equal(scheduledTime) ||
 				!loaded.LastRun.Equal(lastRun) || !loaded.LastScheduledRun.Equal(lastScheduledRun) {
@@ -176,6 +286,58 @@ func TestUpdateCronJobRejectsMissing(t *testing.T) {
 	}
 }
 
+func TestUpdateCronJobPreservesGroupAndReturnsIt(t *testing.T) {
+	store, db := newCronJobLogicTestStore(t)
+	ctx := context.Background()
+	serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store}
+	createReq := validCronJobRequest("update-group")
+	createReq.GroupId = "stable-group"
+	created, err := NewCreateCronJobLogic(ctx, serviceContext).CreateCronJob(createReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updateReq := updateCronJobRequestFromCreate(created.JobId, createReq)
+	updateReq.TaskName = "更新后的任务"
+	updated, err := NewUpdateCronJobLogic(ctx, serviceContext).UpdateCronJob(updateReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated.GroupId != "stable-group" || updated.TaskCode != createReq.TaskCode {
+		t.Fatalf("unexpected update response: %+v", updated)
+	}
+}
+
+func TestUpdateCronJobAcceptsOmittedStableIdentity(t *testing.T) {
+	store, db := newCronJobLogicTestStore(t)
+	ctx := context.Background()
+	serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store}
+	createReq := validCronJobRequest("update-omitted-identity")
+	createReq.GroupId = "stable-group"
+	created, err := NewCreateCronJobLogic(ctx, serviceContext).CreateCronJob(createReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updateReq := updateCronJobRequestFromCreate(created.JobId, createReq)
+	updated, err := NewUpdateCronJobLogic(ctx, serviceContext).UpdateCronJob(updateReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated.GroupId != created.GroupId {
+		t.Fatalf("update group id = %q, want %q", updated.GroupId, created.GroupId)
+	}
+	loaded, err := store.GetByID(ctx, created.JobId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	extra, err := cronjob.ParseExtra(loaded.Extra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if extra.GroupId != created.GroupId || extra.DeptCode != createReq.DeptCode || extra.Type != createReq.Type {
+		t.Fatalf("stable identity changed: %+v", extra)
+	}
+}
+
 func TestSubmitCronJobCreatesUpdatesAndRejectsDeletedCode(t *testing.T) {
 	store, db := newCronJobLogicTestStore(t)
 	ctx := context.Background()
@@ -184,6 +346,9 @@ func TestSubmitCronJobCreatesUpdatesAndRejectsDeletedCode(t *testing.T) {
 	created, err := submit.SubmitCronJob(validSubmitCronJobRequest("submit-active"))
 	if err != nil {
 		t.Fatal(err)
+	}
+	if created.GroupId == "" {
+		t.Fatal("submit create must return generated groupId")
 	}
 	if repeated, err := submit.SubmitCronJob(validSubmitCronJobRequest("submit-active")); err != nil {
 		t.Fatalf("identical submit must be idempotent: %v", err)
@@ -225,6 +390,67 @@ func TestSubmitCronJobCreatesUpdatesAndRejectsDeletedCode(t *testing.T) {
 	}
 }
 
+func TestSubmitCronJobAcceptsOmittedIdentityOnlyForUpdate(t *testing.T) {
+	store, db := newCronJobLogicTestStore(t)
+	ctx := context.Background()
+	serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store}
+	submit := NewSubmitCronJobLogic(ctx, serviceContext)
+	createReq := validSubmitCronJobRequest("submit-omitted-identity")
+	createReq.GroupId = "stable-group"
+	created, err := submit.SubmitCronJob(createReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updateReq := validSubmitCronJobRequest(createReq.TaskCode)
+	updateReq.GroupId = ""
+	updateReq.DeptCode = ""
+	updateReq.Type = ""
+	updated, err := submit.SubmitCronJob(updateReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated.GroupId != created.GroupId || updated.JobId != created.JobId {
+		t.Fatalf("unexpected submit update response: %+v", updated)
+	}
+	newReq := validSubmitCronJobRequest("submit-missing-create-identity")
+	newReq.DeptCode = ""
+	newReq.Type = ""
+	if _, err := submit.SubmitCronJob(newReq); !tool.IsErrorByPbCode(err, extproto.Code__1_01_PARAM_INVALID) {
+		t.Fatalf("submit create identity error = %v, want PARAM_INVALID", err)
+	}
+}
+
+func TestSubmitCronJobRejectsInFlightTask(t *testing.T) {
+	store, db := newCronJobLogicTestStore(t)
+	ctx := context.Background()
+	serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store}
+	submit := NewSubmitCronJobLogic(ctx, serviceContext)
+	created, err := submit.SubmitCronJob(validSubmitCronJobRequest("submit-in-flight"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	scheduledTime := time.Now().Add(-time.Minute).Truncate(time.Second)
+	leaseTime := time.Now().Add(time.Minute).Truncate(time.Second)
+	if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", created.JobId).Updates(map[string]interface{}{
+		"next_run":       leaseTime,
+		"scheduled_time": scheduledTime,
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+	req := validSubmitCronJobRequest("submit-in-flight")
+	req.TaskName = "must-not-change"
+	if _, err := submit.SubmitCronJob(req); !tool.IsErrorByPbCode(err, extproto.Code__1_02_DB) {
+		t.Fatalf("in-flight submit error = %v, want DB", err)
+	}
+	loaded, err := store.GetByID(ctx, created.JobId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.TaskName == req.TaskName || !loaded.NextRun.Equal(leaseTime) || !loaded.ScheduledTime.Equal(scheduledTime) {
+		t.Fatalf("in-flight submit changed configuration or lease: %+v", loaded)
+	}
+}
+
 func validCronJobRequest(taskCode string) *trigger.CreateCronJobReq {
 	return &trigger.CreateCronJobReq{
 		TaskCode: taskCode,
@@ -249,12 +475,13 @@ func validSubmitCronJobRequest(taskCode string) *trigger.SubmitCronJobReq {
 
 func updateCronJobRequestFromCreate(jobID string, req *trigger.CreateCronJobReq) *trigger.UpdateCronJobReq {
 	return &trigger.UpdateCronJobReq{
-		JobId: jobID, TaskName: req.TaskName, Type: req.Type,
-		GroupId: req.GroupId, Description: req.Description, StartTime: req.StartTime, EndTime: req.EndTime,
-		Rule: req.Rule, ExcludeDates: append([]string(nil), req.ExcludeDates...), Priority: req.Priority,
-		Payload: req.Payload, Extra: req.Extra, LockTimeout: req.LockTimeout, MaxDelay: req.MaxDelay,
+		JobId: jobID, TaskName: req.TaskName, Description: req.Description,
+		StartTime: req.StartTime, EndTime: req.EndTime, Rule: req.Rule,
+		ExcludeDates: append([]string(nil), req.ExcludeDates...), Priority: req.Priority,
+		SpecifiedTimes: append([]string(nil), req.SpecifiedTimes...), ExcludedTimes: append([]string(nil), req.ExcludedTimes...),
+		Payload: req.Payload, LockTimeout: req.LockTimeout, MaxDelay: req.MaxDelay,
 		SkipTimeFilter: req.SkipTimeFilter, Ext1: req.Ext1, Ext2: req.Ext2, Ext3: req.Ext3,
-		Ext4: req.Ext4, Ext5: req.Ext5, DeptCode: req.DeptCode,
+		Ext4: req.Ext4, Ext5: req.Ext5,
 	}
 }
 
@@ -263,7 +490,8 @@ func submitCronJobRequestFromCreate(req *trigger.CreateCronJobReq) *trigger.Subm
 		TaskCode: req.TaskCode, TaskName: req.TaskName, Type: req.Type, GroupId: req.GroupId,
 		Description: req.Description, StartTime: req.StartTime, EndTime: req.EndTime, Rule: req.Rule,
 		ExcludeDates: append([]string(nil), req.ExcludeDates...), Priority: req.Priority, Payload: req.Payload,
-		Extra: req.Extra, LockTimeout: req.LockTimeout, MaxDelay: req.MaxDelay, SkipTimeFilter: req.SkipTimeFilter,
+		SpecifiedTimes: append([]string(nil), req.SpecifiedTimes...), ExcludedTimes: append([]string(nil), req.ExcludedTimes...),
+		LockTimeout: req.LockTimeout, MaxDelay: req.MaxDelay, SkipTimeFilter: req.SkipTimeFilter,
 		Ext1: req.Ext1, Ext2: req.Ext2, Ext3: req.Ext3, Ext4: req.Ext4, Ext5: req.Ext5, DeptCode: req.DeptCode,
 	}
 }
@@ -277,13 +505,14 @@ func TestCronJobRunGetAndList(t *testing.T) {
 		t.Fatal(err)
 	}
 	extra, err := cronjob.MarshalExtra(&cronjob.CronJobExtra{
-		DeptCode:     "D001",
-		Type:         "inspection",
-		GroupId:      "G001",
-		Description:  "立即执行测试",
-		Rule:         ruleJSON,
-		ExcludeDates: []string{"2026-07-28"},
-		BizExtra:     json.RawMessage(`{"source":"logic-test"}`),
+		DeptCode:       "D001",
+		Type:           "inspection",
+		GroupId:        "G001",
+		Description:    "立即执行测试",
+		Rule:           ruleJSON,
+		ExcludeDates:   []string{"2026-07-28"},
+		SpecifiedTimes: []string{"2026-07-29 12:34:56"},
+		ExcludedTimes:  []string{"2026-07-30 12:34:56"},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -378,8 +607,12 @@ func TestCronJobRunGetAndList(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if detail.CronJob == nil || detail.CronJob.TaskCode != config.TaskCode || detail.CronJob.Extra != `{"source":"logic-test"}` {
+	if detail.CronJob == nil || detail.CronJob.TaskCode != config.TaskCode {
 		t.Fatalf("unexpected Cron Job detail: %+v", detail.CronJob)
+	}
+	if !reflect.DeepEqual(detail.CronJob.SpecifiedTimes, []string{"2026-07-29 12:34:56"}) ||
+		!reflect.DeepEqual(detail.CronJob.ExcludedTimes, []string{"2026-07-30 12:34:56"}) {
+		t.Fatalf("detail exact times did not round trip: %+v", detail.CronJob)
 	}
 	wantAuditTime := baseTime.Format("2006-01-02 15:04:05")
 	if detail.CronJob.CreateTime != wantAuditTime || detail.CronJob.UpdateTime == "" {
@@ -404,6 +637,10 @@ func TestCronJobRunGetAndList(t *testing.T) {
 	if list.CronJobs[0].CreateTime != baseTime.Add(time.Hour).Format("2006-01-02 15:04:05") {
 		t.Fatalf("unexpected list audit time: %+v", list.CronJobs[0])
 	}
+	if !reflect.DeepEqual(list.CronJobs[0].SpecifiedTimes, []string{"2026-07-29 12:34:56"}) ||
+		!reflect.DeepEqual(list.CronJobs[0].ExcludedTimes, []string{"2026-07-30 12:34:56"}) {
+		t.Fatalf("list exact times did not round trip: %+v", list.CronJobs[0])
+	}
 
 	if _, err := NewGetCronJobLogic(ctx, serviceContext).GetCronJob(&trigger.GetCronJobReq{JobId: "missing"}); !tool.IsErrorByPbCode(err, extproto.Code__1_02_RECORD_NOT_EXIST) {
 		t.Fatalf("get missing error = %v, want RECORD_NOT_EXIST", err)
@@ -418,14 +655,29 @@ func TestPreviewCronJobSchedule(t *testing.T) {
 	ctx := context.Background()
 	after := time.Now().Add(24 * time.Hour).UTC().Truncate(time.Hour)
 	excluded := after.Add(24 * time.Hour)
+	specified := time.Now().UTC().Add(time.Hour).Truncate(time.Second)
+	exactExcluded := specified.Add(time.Hour)
+	ruleJSON, err := json.Marshal(&trigger.PlanRulePb{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	extra, err := cronjob.MarshalExtra(&cronjob.CronJobExtra{
+		Rule:           ruleJSON,
+		SpecifiedTimes: []string{tool.CarbonFromTimeStartOfSecond(specified).ToDateTimeString()},
+		ExcludedTimes:  []string{tool.CarbonFromTimeStartOfSecond(exactExcluded).ToDateTimeString()},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	task := &crontask.TaskConfig{
 		TaskCode: "preview-disabled",
 		TaskName: "预览禁用任务",
 		Status:   crontask.StatusDisabled,
-		Extra:    json.RawMessage(`{"rule":{}}`),
+		Extra:    extra,
 		RRuleStr: "DTSTART:" + after.Format("20060102T150405Z") + "\n" +
 			"RRULE:FREQ=DAILY;COUNT=12\n" +
-			"EXDATE:" + excluded.Format("20060102T150405Z"),
+			"RDATE:" + specified.Format("20060102T150405Z") + "," + exactExcluded.Format("20060102T150405Z") + "\n" +
+			"EXDATE:" + excluded.Format("20060102T150405Z") + "," + exactExcluded.Format("20060102T150405Z"),
 	}
 	if err := store.Insert(ctx, task); err != nil {
 		t.Fatal(err)
@@ -447,13 +699,17 @@ func TestPreviewCronJobSchedule(t *testing.T) {
 	if len(preview.ExecutionTimes) != 10 {
 		t.Fatalf("default execution time count = %d, want 10", len(preview.ExecutionTimes))
 	}
+	if preview.ExecutionTimes[0] != tool.CarbonFromTimeStartOfSecond(specified).ToDateTimeString() {
+		t.Fatalf("first preview time = %q, want persisted RDATE %v", preview.ExecutionTimes[0], specified)
+	}
 	if preview.ScheduleDescription == "" {
 		t.Fatal("schedule description must not be empty")
 	}
 	excludedText := tool.CarbonFromTimeStartOfSecond(excluded).ToDateTimeString()
+	exactExcludedText := tool.CarbonFromTimeStartOfSecond(exactExcluded).ToDateTimeString()
 	for _, executionTime := range preview.ExecutionTimes {
-		if executionTime == excludedText {
-			t.Fatalf("EXDATE time %q was included", excludedText)
+		if executionTime == excludedText || executionTime == exactExcludedText {
+			t.Fatalf("EXDATE time %q was included", executionTime)
 		}
 	}
 	loaded, err := store.GetByID(ctx, task.ID)

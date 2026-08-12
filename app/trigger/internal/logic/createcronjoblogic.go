@@ -27,16 +27,16 @@ func NewCreateCronJobLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cre
 	}
 }
 
-// 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
 func (l *CreateCronJobLogic) CreateCronJob(in *trigger.CreateCronJobReq) (*trigger.CreateCronJobRes, error) {
 	if err := in.Validate(); err != nil {
 		return nil, err
 	}
-	task, err := buildCronJobTask(cronJobTaskData{
+	task, groupID, err := buildCronJobTask(cronJobTaskData{
 		taskCode: in.TaskCode, taskName: in.TaskName, taskType: in.Type,
 		groupID: in.GroupId, description: in.Description, deptCode: in.DeptCode, rule: in.Rule,
 		startTime: in.StartTime, endTime: in.EndTime, excludeDates: in.ExcludeDates,
-		priority: in.Priority, payload: in.Payload, bizExtra: in.Extra,
+		specifiedTimes: in.SpecifiedTimes, excludedTimes: in.ExcludedTimes,
+		priority: in.Priority, payload: in.Payload,
 		lockTimeout: in.LockTimeout, maxDelay: in.MaxDelay, skipTimeFilter: in.SkipTimeFilter,
 		ext1: in.Ext1, ext2: in.Ext2, ext3: in.Ext3, ext4: in.Ext4, ext5: in.Ext5,
 	})
@@ -53,5 +53,5 @@ func (l *CreateCronJobLogic) CreateCronJob(in *trigger.CreateCronJobReq) (*trigg
 	if !task.NextRun.IsZero() {
 		nextRun = tool.CarbonFromTimeStartOfSecond(task.NextRun).ToDateTimeString()
 	}
-	return &trigger.CreateCronJobRes{JobId: task.ID, NextRun: nextRun}, nil
+	return &trigger.CreateCronJobRes{JobId: task.ID, NextRun: nextRun, GroupId: groupID}, nil
 }

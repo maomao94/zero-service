@@ -17,8 +17,8 @@
 | `app/trigger/internal/cronjob/schedule_test.go:15` | Verifies DAILY scheduling, date exclusion, timezone preservation, inclusive current occurrence, range defaults, and exhaustion. |
 | `app/trigger/internal/logic/calcplantaskdatelogic_test.go:14` | Verifies compiled dates and descriptions use the same RRULE Set and EXDATE behavior. |
 | `common/crontask/describe_test.go:704` | Provides occurrence-level evidence for date filters, intersections, and frequency semantics in the pinned rrule library. |
-| `docs/trigger-cronjob-api-guide.md:17` | Current field and boundary documentation. |
-| `docs/trigger-cronjob-api-guide.md:80` | Current scenarios: every minute, fixed 10-minute marks, hourly, fixed quarter months, first day monthly, M/W/F, bounded daily with one excluded date, and one-shot. |
+| `docs/trigger-rrule-api-guide.md` | Current field and boundary documentation. |
+| `docs/trigger-rrule-api-guide.md` | Current scenarios: every minute, fixed 10-minute marks, hourly, fixed quarter months, first day monthly, M/W/F, bounded daily with one excluded date, and one-shot. |
 | `go.mod:65` | Pins `github.com/teambition/rrule-go v1.8.2`. |
 
 ### Code Patterns

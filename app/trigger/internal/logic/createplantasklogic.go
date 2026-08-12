@@ -17,8 +17,8 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/teambition/rrule-go"
-	"google.golang.org/protobuf/encoding/protojson"
 	"github.com/zeromicro/go-zero/core/logx"
+	"google.golang.org/protobuf/encoding/protojson"
 	"gorm.io/gorm"
 )
 
@@ -53,10 +53,12 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_ALREADY_EXIST)
 	}
 	calculated, err := NewCalcPlanTaskDateLogic(l.ctx, l.svcCtx).CalcPlanTaskDate(&trigger.CalcPlanTaskDateReq{
-		StartTime:    in.StartTime,
-		EndTime:      in.EndTime,
-		Rule:         in.Rule,
-		ExcludeDates: in.ExcludeDates,
+		StartTime:      in.StartTime,
+		EndTime:        in.EndTime,
+		Rule:           in.Rule,
+		ExcludeDates:   in.ExcludeDates,
+		SpecifiedTimes: in.SpecifiedTimes,
+		ExcludedTimes:  in.ExcludedTimes,
 	})
 	if err != nil {
 		return nil, err
@@ -72,7 +74,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	}
 	dates := make([]time.Time, 0, len(calculated.PlanDates))
 	for _, value := range calculated.PlanDates {
-		date := carbon.ParseByLayout(value, carbon.DateTimeLayout)
+		date := carbon.ParseByLayout(value, carbon.DateTimeLayout, carbon.Shanghai)
 		if date.Error != nil || date.IsInvalid() {
 			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, date.Error, "解析计划日期失败")
 		}

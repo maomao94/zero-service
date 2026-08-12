@@ -20,58 +20,61 @@ type EventClient interface {
 	HandleCronJobEvent(ctx context.Context, in *streamevent.HandleCronJobEventReq, opts ...grpc.CallOption) (*streamevent.HandleCronJobEventRes, error)
 }
 
-// NewEventHandler 创建把 Cron Job 到点事件转发到 Eventstream 的调度 Handler。
+func handleEvent(ctx context.Context, task *crontask.TaskConfig, client EventClient) (string, error) {
+	if client == nil {
+		return "", errors.New("Eventstream 客户端不能为空")
+	}
+	extra, err := ParseExtra(task.Extra)
+	if err != nil {
+		return "", err
+	}
+	response, err := client.HandleCronJobEvent(ctx, &streamevent.HandleCronJobEventReq{
+		JobId:         task.ID,
+		TaskCode:      task.TaskCode,
+		TaskName:      task.TaskName,
+		Priority:      int32(task.Priority),
+		Payload:       string(task.Payload),
+		ScheduledTime: formatTime(task.ScheduledTime),
+		Type:          extra.Type,
+		GroupId:       extra.GroupId,
+		Description:   extra.Description,
+		Ext1:          extra.Ext1,
+		Ext2:          extra.Ext2,
+		Ext3:          extra.Ext3,
+		Ext4:          extra.Ext4,
+		Ext5:          extra.Ext5,
+		DeptCode:      extra.DeptCode,
+	})
+	if err != nil {
+		return "", fmt.Errorf("调用 Eventstream Cron Job 回调失败: %w", err)
+	}
+	if response == nil {
+		return "", errors.New("Eventstream Cron Job 回调返回为空")
+	}
+	switch response.Receipt {
+	case streamevent.CronJobReceiptPb_CRON_JOB_RECEIPT_SUCCESS:
+		return response.Message, nil
+	case streamevent.CronJobReceiptPb_CRON_JOB_RECEIPT_TASK_NOT_FOUND:
+		return response.Message, fmt.Errorf("%w: %s", crontask.ErrDeleteTask, response.Message)
+	default:
+		return response.Message, fmt.Errorf("Eventstream Cron Job 回执未知: receipt=%s message=%s", response.Receipt.String(), response.Message)
+	}
+}
+
+// NewEventHandler 创建将 Cron Job 到点事件转发到 Eventstream 的调度 Handler（无日志）。
 func NewEventHandler(client EventClient) crontask.Handler {
 	return func(ctx context.Context, task *crontask.TaskConfig) error {
-		if client == nil {
-			return errors.New("Eventstream 客户端不能为空")
-		}
-		extra, err := ParseExtra(task.Extra)
-		if err != nil {
-			return err
-		}
-		response, err := client.HandleCronJobEvent(ctx, &streamevent.HandleCronJobEventReq{
-			JobId:         task.ID,
-			TaskCode:      task.TaskCode,
-			TaskName:      task.TaskName,
-			Priority:      int32(task.Priority),
-			Payload:       string(task.Payload),
-			Extra:         string(task.Extra),
-			ScheduledTime: formatTime(task.ScheduledTime),
-			Type:          extra.Type,
-			GroupId:       extra.GroupId,
-			Description:   extra.Description,
-			Ext1:          extra.Ext1,
-			Ext2:          extra.Ext2,
-			Ext3:          extra.Ext3,
-			Ext4:          extra.Ext4,
-			Ext5:          extra.Ext5,
-			DeptCode:      extra.DeptCode,
-		})
-		if err != nil {
-			return fmt.Errorf("调用 Eventstream Cron Job 回调失败: %w", err)
-		}
-		if response == nil {
-			return errors.New("Eventstream Cron Job 回调返回为空")
-		}
-		switch response.Receipt {
-		case streamevent.CronJobReceiptPb_CRON_JOB_RECEIPT_SUCCESS:
-			return nil
-		case streamevent.CronJobReceiptPb_CRON_JOB_RECEIPT_TASK_NOT_FOUND:
-			return fmt.Errorf("%w: %s", crontask.ErrDeleteTask, response.Message)
-		default:
-			return fmt.Errorf("Eventstream Cron Job 回执未知: receipt=%s message=%s", response.Receipt.String(), response.Message)
-		}
+		_, err := handleEvent(ctx, task, client)
+		return err
 	}
 }
 
 // NewLoggingEventHandler 创建带执行日志记录的调度 Handler。
 // 每次 handler 执行后自动写入 CronExecLog 记录。
 func NewLoggingEventHandler(db *gormx.DB, client EventClient) crontask.Handler {
-	inner := NewEventHandler(client)
 	return func(ctx context.Context, task *crontask.TaskConfig) error {
 		startTime := time.Now()
-		err := inner(ctx, task)
+		message, err := handleEvent(ctx, task, client)
 		endTime := time.Now()
 		costMs := endTime.Sub(startTime).Milliseconds()
 
@@ -92,6 +95,7 @@ func NewLoggingEventHandler(db *gormx.DB, client EventClient) crontask.Handler {
 			EndTime:       endTime,
 			CostMs:        costMs,
 			Status:        status,
+			Message:       message,
 			ErrorMessage:  errMsg,
 		}
 		// 执行日志写入失败不影响 handler 返回结果。

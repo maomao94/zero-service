@@ -637,30 +637,28 @@ message HandleCronJobEventReq {
   int32 priority = 4;
   // 创建任务时提交的业务参数 JSON。
   string payload = 5;
-  // Trigger 生成的 CronJobExtra JSON，包含调用方 bizExtra 和规则业务字段。
-  string extra = 6;
   // 本次执行原计划时间，格式 yyyy-MM-dd HH:mm:ss；自动重试期间保持不变。
-  string scheduled_time = 7 [json_name = "scheduledTime"];
+  string scheduled_time = 6 [json_name = "scheduledTime"];
   // 任务类型。
-  string type = 8;
+  string type = 7;
   // 任务分组 ID。
-  string group_id = 9 [json_name = "groupId"];
+  string group_id = 8 [json_name = "groupId"];
   // 任务描述。
-  string description = 10;
+  string description = 9;
 
   // 扩展字段 1。
-  string ext1 = 50;
+  string ext1 = 10;
   // 扩展字段 2。
-  string ext2 = 51;
+  string ext2 = 11;
   // 扩展字段 3。
-  string ext3 = 52;
+  string ext3 = 12;
   // 扩展字段 4。
-  string ext4 = 53;
+  string ext4 = 13;
   // 扩展字段 5。
-  string ext5 = 54;
+  string ext5 = 14;
 
   // 机构编码。
-  string dept_code = 101 [json_name = "deptCode"];
+  string dept_code = 15 [json_name = "deptCode"];
 }
 
 // CronJobReceiptPb 是 Eventstream 对一次 Cron Job 触发的业务回执。
