@@ -1622,3 +1622,25 @@ task_code 端到端 64→128（Create/Submit/List 校验 + GORM 列）；HandleC
 ### Status
 
 [OK] **Completed**
+
+
+## Session 163: rrule Set.After 性能修复 + PlanRulePb interval 字段 + 文档完善
+
+**Date**: 2026-08-12
+**Task**: rrule Set.After 性能修复 + PlanRulePb interval 字段 + 文档完善
+**Branch**: `master`
+
+### Summary
+
+修复 rrule-go Set.After 从 DTSTART 逐点遍历的线性退化(预览 13s→µs,每次执行 next_run 1.2s→µs)。新增 ShiftSetForQuery 整周期重锚+兜底、NextRuns count批量查询、parseQuerySet 共享核心。PlanRulePb 新增 interval 字段(仅>1时写入 RRULE)、INTERVAL 相位对齐修复。文档: interval 语义三表实例化、10年滚动示例、清除过时表述。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1c7eeea6` | (see git log) |
+| `5f0afd91` | (see git log) |
+
+### Status
+
+[OK] **Completed**
