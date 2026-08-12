@@ -1601,3 +1601,24 @@ Added specified/excluded exact-time contracts and RRULE compilation, integrated 
 ### Status
 
 [OK] **Completed**
+
+
+## Session 162: 对齐 CronJob 回调契约
+
+**Date**: 2026-08-12
+**Task**: 对齐 CronJob 回调契约
+**Branch**: `master`
+
+### Summary
+
+task_code 端到端 64→128（Create/Submit/List 校验 + GORM 列）；HandleCronJobEventReq 覆盖为扁平关键业务字段（job_id/task_code/task_name/priority/payload/scheduled_time/type/group_id/description/ext1-5/dept_code，序号 1-15 连续），删除 extra 与 PGV validation；补充 128/129 边界测试、模型 schema 测试与 handler 回调断言；code-spec 沉淀 CronJob 到点回调契约场景与回调契约兼容性规则
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3fef6bd3` | (see git log) |
+
+### Status
+
+[OK] **Completed**

@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 161
+- **Total Sessions**: 162
 - **Last Active**: 2026-08-12
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~1603 | Active |
+| `journal-3.md` | ~1624 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 162 | 2026-08-12 | 对齐 CronJob 回调契约 | `3fef6bd3` | `master` |
 | 161 | 2026-08-12 | Add exact-time RRULE scheduling | `3bc7ad8f`, `22d5a71b`, `7f9a077a`, `44e0a16a` | `master` |
 | 160 | 2026-08-12 | CronJob 分组更新文档 & ISP Extra 移除收敛 | `58297486` | `master` |
 | 159 | 2026-08-11 | CronJob schedule preview | `5ff3e321` | `master` |
