@@ -153,7 +153,7 @@ CronJob 面向“一个稳定任务编码对应一个周期 Handler”的场景�
 | --- | --- |
 | `startTime` | 可为空；为空时使用当前上海年份第一天，格式为 `yyyy-MM-dd HH:mm:ss` |
 | `endTime` | 可为空；为空时使用补齐后开始时间所在年份最后一天；允许与开始时间相等，不能早于开始时间，跨度不能超过 100 年 |
-| `rule` | 必填，支持频率、小时、分钟、星期、日期和可选月份过滤 |
+| `rule` | 必填，支持频率、小时、分钟、星期、日期、可选月份过滤和可选 `interval` 周期步进 |
 | `excludeDates` | 按 `yyyy-MM-dd` 排除当天规则中的全部小时和分钟组合 |
 | `specifiedTimes` | 按上海时区的 `yyyy-MM-dd HH:mm:ss` 加入精确 RDATE 候选；最多 1000 项 |
 | `excludedTimes` | 按上海时区的 `yyyy-MM-dd HH:mm:ss` 排除同一秒候选；最多 1000 项 |

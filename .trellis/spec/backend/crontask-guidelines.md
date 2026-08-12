@@ -70,14 +70,15 @@
 ## 调度时间预览
 
 - `Scheduler.PreviewNextRuns(task, after, count)` 是只读的有界预览能力：不访问 Store、不 claim、不执行 Handler，也不修改任务状态。
-- 预览直接解析 `TaskConfig.RRuleStr` 的完整 RRULE Set，并使用 `Set.After(cursor, false)` 取得严格晚于游标的候选；`DTSTART`、`UNTIL`、BY*、`RDATE` 与 `EXDATE` 均由 Set 自身处理。
+- 预览直接解析 `TaskConfig.RRuleStr` 的完整 RRULE Set，并使用与 `NextRuns` 相同的平移起点单迭代器语义（过滤器需逐候选介入，内联推进而非调用 `NextRuns`）取得严格晚于游标的候选；`DTSTART`、`UNTIL`、BY*、`RDATE` 与 `EXDATE` 均由 Set 自身处理。
+- 查询前通过 `ShiftSetForQuery` 将迭代起点按整周期平移到查询点前一拍，避免从远古 `DTSTART` 逐点遍历导致的线性退化（查询成本与 `now - DTSTART` 无关）。周期计数必须按 `INTERVAL` 取整对齐：rrule-go 迭代以锚点所在周期为第一个候选周期，`INTERVAL > 1` 时锚点不在间隔相位上会使整条序列偏移一个周期。带 `COUNT`、`BYWEEKNO`、`BYYEARDAY`、`BYEASTER`、`BYSETPOS`，或平移被钳制/无法对齐间隔相位而改变相位的规则返回 nil，调用方回退原始 Set；平移只用于向前查询（`After` / 迭代器），向后查询（`set.Before`）必须使用原始 Set。
 - 业务适配器若把 RDATE/EXDATE 的原始输入平铺为数据库列，读取后仍必须重建同一个 `TaskConfig.RRuleStr` 和运行时 Extra；Scheduler 不解析 Extra，首次 next-run、Enable、完成推进和 Preview 全部只消费持久化完整 Set。
 - `count` 只统计最终接受的有效时间点。循环持续到有效结果达到 `count`，或 RRULE / 过滤器返回零时间表示耗尽；禁止用 `Set.All()` 展开长期规则。
 - `InvalidTimeFilter` 是 RRULE Set 之外的 Scheduler 策略。过滤器收到一个 RRULE 候选后，负责沿同一任务规则持续跳过不可用区间，最终返回有效时间或零值；`app/ispagent/internal/crontask.NewInvalidTimeFilter` 是现有实现。
 - 预览对过滤器返回值只检查是否为零以及是否严格晚于当前游标，防止重复和死循环。不要在过滤后再次调用 `Set.After` 验证或推进，否则会建立一条不同于 `executeTask` 的过滤语义并产生重复计算。
 - 空或非法的周期 RRULE 是配置错误；规则自然耗尽则返回已收集结果和 nil error。调用层负责设置默认数量和最大数量。
 
-依据：`common/crontask/crontask.go` 的 `PreviewNextRuns`、`common/crontask/crontask_test.go`、`common/crontask/options.go`、`app/ispagent/internal/crontask/task_rule.go`。
+依据：`common/crontask/crontask.go` 的 `PreviewNextRuns`、`common/crontask/query.go` 的 `ShiftSetForQuery` 与 `NextRuns`、`common/crontask/crontask_test.go`、`common/crontask/options.go`、`app/ispagent/internal/crontask/task_rule.go`。
 
 ## 反模式
 

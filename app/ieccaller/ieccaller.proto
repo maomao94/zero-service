@@ -44,105 +44,105 @@ service IecCaller {
 }
 
 message Req {
-  string ping = 1;
+  string ping = 1 [json_name = "ping"];
 }
 
 message Res {
-  string pong = 1;
+  string pong = 1 [json_name = "pong"];
 }
 
 message SendTestCmdReq {
-  string host = 1;
-  uint32 port = 2;
-  uint32 coa = 3;
+  string host = 1 [json_name = "host"];
+  uint32 port = 2 [json_name = "port"];
+  uint32 coa = 3 [json_name = "coa"];
 }
 
 message SendTestCmdRes {
 }
 
 message SendReadCmdReq {
-  string host = 1;
-  uint32 port = 2;
-  uint32 coa = 3;
-  uint32 ioa = 4;
+  string host = 1 [json_name = "host"];
+  uint32 port = 2 [json_name = "port"];
+  uint32 coa = 3 [json_name = "coa"];
+  uint32 ioa = 4 [json_name = "ioa"];
 }
 
 message SendReadCmdRes {
 }
 
 message SendInterrogationCmdReq {
-  string host = 1;
-  uint32 port = 2;
-  uint32 coa = 3;
+  string host = 1 [json_name = "host"];
+  uint32 port = 2 [json_name = "port"];
+  uint32 coa = 3 [json_name = "coa"];
 }
 
 message SendInterrogationCmdRes {
 }
 
 message SendCounterInterrogationCmdReq {
-  string host = 1;
-  uint32 port = 2;
-  uint32 coa = 3;
+  string host = 1 [json_name = "host"];
+  uint32 port = 2 [json_name = "port"];
+  uint32 coa = 3 [json_name = "coa"];
 }
 
 message SendCounterInterrogationCmdRes {
 }
 
 message SendCommandReq {
-  string host = 1;
-  uint32 port = 2;
-  uint32 coa = 3;
+  string host = 1 [json_name = "host"];
+  uint32 port = 2 [json_name = "port"];
+  uint32 coa = 3 [json_name = "coa"];
   uint32 type_id = 4 [json_name = "typeId"]; // 指令类型，例如 45=C_SC_NA_1, 46=C_DC_NA_1 ...
-  uint32 ioa = 5;
-  string value = 6; // 通用值，例如 "1","true","12.3"
+  uint32 ioa = 5 [json_name = "ioa"];
+  string value = 6 [json_name = "value"]; // 通用值，例如 "1","true","12.3"
 }
 
 message SendCommandRes {
 }
 
 message SendSingleCommandRes {
-  bool value = 1; // 从站回显的单点命令值（true=合, false=分）
+  bool value = 1 [json_name = "value"]; // 从站回显的单点命令值（true=合, false=分）
 }
 
 message SendDoubleCommandRes {
-  DoubleCommandValue value = 1; // 从站回显的双点命令值（DCO_ON=合, DCO_OFF=分）
+  DoubleCommandValue value = 1 [json_name = "value"]; // 从站回显的双点命令值（DCO_ON=合, DCO_OFF=分）
 }
 
 message SendStepCommandRes {
-  int32 value = 1; // 从站回显的档位调节命令值（1=降一步, 2=升一步）
+  int32 value = 1 [json_name = "value"]; // 从站回显的档位调节命令值（1=降一步, 2=升一步）
 }
 
 message SendSetpointNormalizedRes {
-  int32 value = 1; // 从站回显的归一化设点值（-32768～32767，对应-1.0～1.0）
+  int32 value = 1 [json_name = "value"]; // 从站回显的归一化设点值（-32768～32767，对应-1.0～1.0）
 }
 
 message SendSetpointScaledRes {
-  int32 value = 1; // 从站回显的标度化设点值（与请求相同的原始标度值）
+  int32 value = 1 [json_name = "value"]; // 从站回显的标度化设点值（与请求相同的原始标度值）
 }
 
 message SendSetpointFloatRes {
-  string value = 1; // 从站回显的短浮点设点值（IEEE 754 单精度浮点，格式化为字符串）
+  string value = 1 [json_name = "value"]; // 从站回显的短浮点设点值（IEEE 754 单精度浮点，格式化为字符串）
 }
 
 message SendBitstringCommandRes {
-  uint64 value = 1; // 从站回显的32位位串命令值（低32位有效）
+  uint64 value = 1 [json_name = "value"]; // 从站回显的32位位串命令值（低32位有效）
 }
 
 message SendSingleCommandReq {
-  string host = 1;
-  uint32 port = 2;
-  uint32 coa = 3;
-  uint32 ioa = 4;
-  bool value = 5;  // true=合, false=分
+  string host = 1 [json_name = "host"];
+  uint32 port = 2 [json_name = "port"];
+  uint32 coa = 3 [json_name = "coa"];
+  uint32 ioa = 4 [json_name = "ioa"];
+  bool value = 5 [json_name = "value"];  // true=合, false=分
   bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_SC_TA_1=58), false=不带(C_SC_NA_1=45)
 }
 
 message SendDoubleCommandReq {
-  string host = 1;
-  uint32 port = 2;
-  uint32 coa = 3;
-  uint32 ioa = 4;
-  DoubleCommandValue value = 5;  // DCO_ON=合, DCO_OFF=分
+  string host = 1 [json_name = "host"];
+  uint32 port = 2 [json_name = "port"];
+  uint32 coa = 3 [json_name = "coa"];
+  uint32 ioa = 4 [json_name = "ioa"];
+  DoubleCommandValue value = 5 [json_name = "value"];  // DCO_ON=合, DCO_OFF=分
   bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_DC_TA_1=59), false=不带(C_DC_NA_1=46)
 }
 
@@ -153,11 +153,11 @@ enum DoubleCommandValue {
 }
 
 message SendStepCommandReq {
-  string host = 1;
-  uint32 port = 2;
-  uint32 coa = 3;
-  uint32 ioa = 4;
-  StepCommandValue value = 5;  // SCO_DOWN=降一步, SCO_UP=升一步
+  string host = 1 [json_name = "host"];
+  uint32 port = 2 [json_name = "port"];
+  uint32 coa = 3 [json_name = "coa"];
+  uint32 ioa = 4 [json_name = "ioa"];
+  StepCommandValue value = 5 [json_name = "value"];  // SCO_DOWN=降一步, SCO_UP=升一步
   bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_RC_TA_1=60), false=不带(C_RC_NA_1=47)
 }
 
@@ -168,100 +168,100 @@ enum StepCommandValue {
 }
 
 message SendSetpointNormalizedReq {
-  string host = 1;
-  uint32 port = 2;
-  uint32 coa = 3;
-  uint32 ioa = 4;
-  int32 value = 5;
+  string host = 1 [json_name = "host"];
+  uint32 port = 2 [json_name = "port"];
+  uint32 coa = 3 [json_name = "coa"];
+  uint32 ioa = 4 [json_name = "ioa"];
+  int32 value = 5 [json_name = "value"];
   bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_SE_TA_1=61), false=不带(C_SE_NA_1=48)
 }
 
 message SendSetpointScaledReq {
-  string host = 1;
-  uint32 port = 2;
-  uint32 coa = 3;
-  uint32 ioa = 4;
-  int32 value = 5;
+  string host = 1 [json_name = "host"];
+  uint32 port = 2 [json_name = "port"];
+  uint32 coa = 3 [json_name = "coa"];
+  uint32 ioa = 4 [json_name = "ioa"];
+  int32 value = 5 [json_name = "value"];
   bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_SE_TB_1=62), false=不带(C_SE_NB_1=49)
 }
 
 message SendSetpointFloatReq {
-  string host = 1;
-  uint32 port = 2;
-  uint32 coa = 3;
-  uint32 ioa = 4;
-  string value = 5;
+  string host = 1 [json_name = "host"];
+  uint32 port = 2 [json_name = "port"];
+  uint32 coa = 3 [json_name = "coa"];
+  uint32 ioa = 4 [json_name = "ioa"];
+  string value = 5 [json_name = "value"];
   bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_SE_TC_1=63), false=不带(C_SE_NC_1=50)
 }
 
 message SendBitstringCommandReq {
-  string host = 1;
-  uint32 port = 2;
-  uint32 coa = 3;
-  uint32 ioa = 4;
-  uint64 value = 5;
+  string host = 1 [json_name = "host"];
+  uint32 port = 2 [json_name = "port"];
+  uint32 coa = 3 [json_name = "coa"];
+  uint32 ioa = 4 [json_name = "ioa"];
+  uint64 value = 5 [json_name = "value"];
   bool with_time = 6 [json_name = "withTime"]; // true=带CP56Time2a时标(C_BO_TA_1=64), false=不带(C_BO_NA_1=51)
 }
 
 message PbDevicePointMapping {
-  int64 id = 1;
+  int64 id = 1 [json_name = "id"];
   string create_time = 2 [json_name = "createTime"];
   string update_time = 3 [json_name = "updateTime"];
   string tag_station = 4 [json_name = "tagStation"];
-  int64 coa = 5;
-  int64 ioa = 6;
+  int64 coa = 5 [json_name = "coa"];
+  int64 ioa = 6 [json_name = "ioa"];
   string device_id = 7 [json_name = "deviceId"];
   string device_name = 8 [json_name = "deviceName"];
   string td_table_type = 9 [json_name = "tdTableType"];
   int32 enable_push = 10 [json_name = "enablePush"]; // 0: 禁用推送, 1: 启用推送
-  string description = 11; // 点位描述信息
-  string ext1 = 12;
-  string ext2 = 13;
-  string ext3 = 14;
-  string ext4 = 15;
-  string ext5 = 16;
+  string description = 11 [json_name = "description"]; // 点位描述信息
+  string ext1 = 12 [json_name = "ext1"];
+  string ext2 = 13 [json_name = "ext2"];
+  string ext3 = 14 [json_name = "ext3"];
+  string ext4 = 15 [json_name = "ext4"];
+  string ext5 = 16 [json_name = "ext5"];
 }
 
 message QueryPointMappingByIdReq {
-  int64 id = 1;
+  int64 id = 1 [json_name = "id"];
 }
 
 message QueryPointMappingByIdRes {
-  PbDevicePointMapping mapping = 1;
+  PbDevicePointMapping mapping = 1 [json_name = "mapping"];
 }
 
 message QueryPointMappingByKeyReq {
   string tag_station = 1 [json_name = "tagStation"];
-  int64 coa = 2;
-  int64 ioa = 3;
+  int64 coa = 2 [json_name = "coa"];
+  int64 ioa = 3 [json_name = "ioa"];
 }
 
 message QueryPointMappingByKeyRes {
-  PbDevicePointMapping mapping = 1;
+  PbDevicePointMapping mapping = 1 [json_name = "mapping"];
 }
 
 message PageListPointMappingReq {
-  int64 page = 1; // 页码
+  int64 page = 1 [json_name = "page"]; // 页码
   int64 page_size = 2 [json_name = "pageSize"]; // 每页大小
   string tag_station = 3 [json_name = "tagStation"];
-  int64 coa = 4;
+  int64 coa = 4 [json_name = "coa"];
   string device_id = 5 [json_name = "deviceId"];
 }
 
 message PageListPointMappingRes {
-  int64 total = 1;
-  repeated PbDevicePointMapping mappings = 2;
+  int64 total = 1 [json_name = "total"];
+  repeated PbDevicePointMapping mappings = 2 [json_name = "mappings"];
 }
 
 message ClearPointMappingCacheReq {
-  repeated string keys = 1; // 缓存key列表
+  repeated string keys = 1 [json_name = "keys"]; // 缓存key列表
   repeated CacheKeyInfo key_infos = 2 [json_name = "keyInfos"]; // 缓存key信息列表，用于根据tagStation、coa、ioa生成key
 }
 
 message CacheKeyInfo {
   string tag_station = 1 [json_name = "tagStation"];
-  int64 coa = 2;
-  int64 ioa = 3;
+  int64 coa = 2 [json_name = "coa"];
+  int64 ioa = 3 [json_name = "ioa"];
 }
 
 message ClearPointMappingCacheRes {

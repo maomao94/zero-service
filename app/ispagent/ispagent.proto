@@ -34,45 +34,45 @@ service IspAgent {
 
 // Item 对应 XML <Item attr="value"/> 的动态属性映射
 message Item {
-  map<string, string> attributes = 1;
+  map<string, string> attributes = 1 [json_name = "attributes"];
 }
 
 // CommandReq 通用指令请求（ExecuteCommand 使用）
 message CommandReq {
-  int32 type = 1;              // 消息类型（高 16 位 messageId）
-  int32 command = 2;           // 命令（低 16 位 messageId）
-  string code = 3;             // 目标对象唯一标识（变电站编码/任务编码/巡视ID 等）
-  repeated Item items = 4;     // 业务数据
+  int32 type = 1 [json_name = "type"];              // 消息类型（高 16 位 messageId）
+  int32 command = 2 [json_name = "command"];           // 命令（低 16 位 messageId）
+  string code = 3 [json_name = "code"];             // 目标对象唯一标识（变电站编码/任务编码/巡视ID 等）
+  repeated Item items = 4 [json_name = "items"];     // 业务数据
 }
 
 // CommandRes 指令响应（透传解析后的 SIP 回包）
 message CommandRes {
-  bool success = 1;            // type=251 时表示应答成功，其他类型默认 true
-  string code = 2;             // 响应状态码（200/500/100/400）
-  repeated Item items = 3;     // 解析后的 Item 列表
-  string rawXml = 4;           // 原始 XML（诊断用）
+  bool success = 1 [json_name = "success"];            // type=251 时表示应答成功，其他类型默认 true
+  string code = 2 [json_name = "code"];             // 响应状态码（200/500/100/400）
+  repeated Item items = 3 [json_name = "items"];     // 解析后的 Item 列表
+  string rawXml = 4 [json_name = "rawXml"];           // 原始 XML（诊断用）
 }
 
 // PatrolItemsReq 特定巡视上报请求（type/command 固定，仅填 code + items）
 message PatrolItemsReq {
-  string code = 1;             // 变电站编码
-  repeated Item items = 2;     // 业务数据
+  string code = 1 [json_name = "code"];             // 变电站编码
+  repeated Item items = 2 [json_name = "items"];     // 业务数据
 }
 
 // PatrolDeviceRunData 巡视装置运行数据（表 J.34）
 message PatrolDeviceRunData {
-  string patrol_device_name = 1;   // 巡视装置名称
-  string patrol_device_code = 2;   // 巡视装置编码
-  int32 type = 3;                  // 1=水平速度, 2=行驶里程, 3=电池电量, 4=垂直速度, 5=飞行距离, 6=飞行高度, 7=飞行时长, 8=云台俯仰角, 9=云台横滚角, 10=云台偏航角, 11=充电电流
-  string value = 4;
-  string value_unit = 5;
-  string unit = 6;
+  string patrol_device_name = 1 [json_name = "patrolDeviceName"];   // 巡视装置名称
+  string patrol_device_code = 2 [json_name = "patrolDeviceCode"];   // 巡视装置编码
+  int32 type = 3 [json_name = "type"];                  // 1=水平速度, 2=行驶里程, 3=电池电量, 4=垂直速度, 5=飞行距离, 6=飞行高度, 7=飞行时长, 8=云台俯仰角, 9=云台横滚角, 10=云台偏航角, 11=充电电流
+  string value = 4 [json_name = "value"];
+  string value_unit = 5 [json_name = "valueUnit"];
+  string unit = 6 [json_name = "unit"];
 }
 
 // SendPatrolDeviceRunDataReq 巡视装置运行数据上报
 message SendPatrolDeviceRunDataReq {
-  string code = 1;                           // 目标对象唯一标识（可为空）
-  repeated PatrolDeviceRunData items = 2;
+  string code = 1 [json_name = "code"];                           // 目标对象唯一标识（可为空）
+  repeated PatrolDeviceRunData items = 2 [json_name = "items"];
 }
 
 message SendPatrolDeviceRunDataRes {
@@ -80,18 +80,18 @@ message SendPatrolDeviceRunDataRes {
 
 // PatrolDeviceStatusData 巡视装置状态数据
 message PatrolDeviceStatusData {
-  string patrol_device_name = 1;   // 巡视装置名称
-  string patrol_device_code = 2;   // 巡视装置编码
-  string type = 3;                 // 状态类型编码
-  string value = 4;
-  string value_unit = 5;
-  string unit = 6;
+  string patrol_device_name = 1 [json_name = "patrolDeviceName"];   // 巡视装置名称
+  string patrol_device_code = 2 [json_name = "patrolDeviceCode"];   // 巡视装置编码
+  string type = 3 [json_name = "type"];                 // 状态类型编码
+  string value = 4 [json_name = "value"];
+  string value_unit = 5 [json_name = "valueUnit"];
+  string unit = 6 [json_name = "unit"];
 }
 
 // SendPatrolDeviceStatusDataReq 巡视装置状态数据上报
 message SendPatrolDeviceStatusDataReq {
-  string code = 1;                           // 目标对象唯一标识（可为空）
-  repeated PatrolDeviceStatusData items = 2;
+  string code = 1 [json_name = "code"];                           // 目标对象唯一标识（可为空）
+  repeated PatrolDeviceStatusData items = 2 [json_name = "items"];
 }
 
 message SendPatrolDeviceStatusDataRes {
@@ -99,17 +99,17 @@ message SendPatrolDeviceStatusDataRes {
 
 // PatrolDeviceCoordinate 巡视装置坐标（表 O.45）
 message PatrolDeviceCoordinate {
-  string patrol_device_name = 1;   // 巡视装置名称
-  string patrol_device_code = 2;   // 巡视装置编码
-  string coordinate_pixel = 3;     // 格式 x,y,z,a（地图坐标 + 航向角）, eg."coordinate_pixel": "1806.768,1202.373,0,1.964270"
-  string coordinate_geography = 4; // 格式 x,y（经纬度）
-  string task_patrolled_id = 5;    // 巡视任务执行ID，无巡视任务时可为空
+  string patrol_device_name = 1 [json_name = "patrolDeviceName"];   // 巡视装置名称
+  string patrol_device_code = 2 [json_name = "patrolDeviceCode"];   // 巡视装置编码
+  string coordinate_pixel = 3 [json_name = "coordinatePixel"];     // 格式 x,y,z,a（地图坐标 + 航向角）, eg."coordinate_pixel": "1806.768,1202.373,0,1.964270"
+  string coordinate_geography = 4 [json_name = "coordinateGeography"]; // 格式 x,y（经纬度）
+  string task_patrolled_id = 5 [json_name = "taskPatrolledId"];    // 巡视任务执行ID，无巡视任务时可为空
 }
 
 // SendPatrolDeviceCoordinatesReq 巡视装置坐标上报
 message SendPatrolDeviceCoordinatesReq {
-  string code = 1;                           // 目标对象唯一标识（可为空）
-  repeated PatrolDeviceCoordinate items = 2;
+  string code = 1 [json_name = "code"];                           // 目标对象唯一标识（可为空）
+  repeated PatrolDeviceCoordinate items = 2 [json_name = "items"];
 }
 
 message SendPatrolDeviceCoordinatesRes {
@@ -117,19 +117,19 @@ message SendPatrolDeviceCoordinatesRes {
 
 // DroneNestRunData 无人机机巢运行数据（表 O.40）
 message DroneNestRunData {
-  string nest_name = 1;     // 机巢名称
-  string nest_code = 2;     // 机巢编码
-  string module_no = 3;     // 模块序号，非必须，用于区分多个模块
-  string type = 4;          // 1=电池电量, 2=电池使用状态, 3=电池状态, 4=电池电压, 5=舱内温度, 6=舱内湿度
-  string value = 5;
-  string value_unit = 6;    // 值带单位
-  string unit = 7;          // 单位
+  string nest_name = 1 [json_name = "nestName"];     // 机巢名称
+  string nest_code = 2 [json_name = "nestCode"];     // 机巢编码
+  string module_no = 3 [json_name = "moduleNo"];     // 模块序号，非必须，用于区分多个模块
+  string type = 4 [json_name = "type"];          // 1=电池电量, 2=电池使用状态, 3=电池状态, 4=电池电压, 5=舱内温度, 6=舱内湿度
+  string value = 5 [json_name = "value"];
+  string value_unit = 6 [json_name = "valueUnit"];    // 值带单位
+  string unit = 7 [json_name = "unit"];          // 单位
 }
 
 // SendDroneNestRunDataReq 无人机机巢运行数据上报
 message SendDroneNestRunDataReq {
-  string code = 1;                           // 变电站编码
-  repeated DroneNestRunData items = 2;
+  string code = 1 [json_name = "code"];                           // 变电站编码
+  repeated DroneNestRunData items = 2 [json_name = "items"];
 }
 
 message SendDroneNestRunDataRes {
@@ -137,19 +137,19 @@ message SendDroneNestRunDataRes {
 
 // EnvData 环境/微气象数据（表 J.41）
 message EnvData {
-  string patrol_device_name = 1;   // 巡视装置名称，环境采集装置属于巡视装置时填写
-  string patrol_device_code = 2;   // 巡视装置编码，环境采集装置属于巡视装置时填写
-  string time = 3;                 // 时间
-  string type = 4;                 // 1=环境温度, 2=环境湿度, 3=风速, 4=雨量, 5=风向, 6=气压, 7=氧气, 8=SF6
-  string value = 5;
-  string value_unit = 6;           // 值带单位
-  string unit = 7;                 // 单位
+  string patrol_device_name = 1 [json_name = "patrolDeviceName"];   // 巡视装置名称，环境采集装置属于巡视装置时填写
+  string patrol_device_code = 2 [json_name = "patrolDeviceCode"];   // 巡视装置编码，环境采集装置属于巡视装置时填写
+  string time = 3 [json_name = "time"];                 // 时间
+  string type = 4 [json_name = "type"];                 // 1=环境温度, 2=环境湿度, 3=风速, 4=雨量, 5=风向, 6=气压, 7=氧气, 8=SF6
+  string value = 5 [json_name = "value"];
+  string value_unit = 6 [json_name = "valueUnit"];           // 值带单位
+  string unit = 7 [json_name = "unit"];                 // 单位
 }
 
 // SendEnvDataReq 环境/微气象数据上报
 message SendEnvDataReq {
-  string code = 1;                           // 变电站编码
-  repeated EnvData items = 2;
+  string code = 1 [json_name = "code"];                           // 变电站编码
+  repeated EnvData items = 2 [json_name = "items"];
 }
 
 message SendEnvDataRes {
@@ -157,84 +157,84 @@ message SendEnvDataRes {
 
 // ListTaskExecutionsReq 查询任务未来执行时间
 message ListTaskExecutionsReq {
-  string task_code = 1;        // 任务编码
-  int32 count = 2;             // 返回数量上限（默认 20）
+  string task_code = 1 [json_name = "taskCode"];        // 任务编码
+  int32 count = 2 [json_name = "count"];             // 返回数量上限（默认 20）
 }
 
 // ListTaskExecutionsRes 任务未来执行时间响应
 message ListTaskExecutionsRes {
-  string task_code = 1;        // 任务编码
-  string task_name = 2;
-  string rrule_str = 3;        // 当前 rrule 字符串
-  repeated string exec_times = 4; // 未来执行时间列表
+  string task_code = 1 [json_name = "taskCode"];        // 任务编码
+  string task_name = 2 [json_name = "taskName"];
+  string rrule_str = 3 [json_name = "rruleStr"];        // 当前 rrule 字符串
+  repeated string exec_times = 4 [json_name = "execTimes"]; // 未来执行时间列表
 }
 
 // ListTaskConfigsReq 任务配置分页查询
 message ListTaskConfigsReq {
-  int32 page = 1;              // 页码（从 1 开始）
-  int32 page_size = 2;         // 每页数量（默认 20）
-  string task_code = 3;        // 任务编码（模糊匹配，可选）
-  string substation_code = 4;  // 变电站编码（精确匹配，可选）
+  int32 page = 1 [json_name = "page"];              // 页码（从 1 开始）
+  int32 page_size = 2 [json_name = "pageSize"];         // 每页数量（默认 20）
+  string task_code = 3 [json_name = "taskCode"];        // 任务编码（模糊匹配，可选）
+  string substation_code = 4 [json_name = "substationCode"];  // 变电站编码（精确匹配，可选）
 }
 
 // TaskConfigItem 任务配置条目（平铺 ISP 业务字段）
 message TaskConfigItem {
-  string id = 1;
-  string task_code = 2;
-  string task_name = 3;
-  string patrol_type = 4;          // 巡视类型: 1=例行,2=特殊,3=专项,4=自定义
-  int32 priority = 5;              // 优先级 1-4
-  int32 device_level = 6;          // 设备层级: 1=间隔,2=主设备,3=设备点位,4=部件
-  string device_list = 7;          // 设备列表(逗号分隔)
-  int32 status = 8;                // 0=禁用,1=启用
-  string rrule_str = 9;
-  string next_run = 10;            // 下次执行时间
-  string last_run = 11;            // 上次执行时间
-  string substation_code = 12;     // 变电站编码
-  string isp_enable = 13;           // ISP 启用标记: 0=启用,1=禁用,2=删除
-  string isp_creator = 14;          // 编制人
-  string isp_create_time = 15;      // 编制时间
-  string fixed_start_time = 16;    // 定期开始时间
-  string cycle_month = 17;         // 周期(月)
-  string cycle_week = 18;          // 周期(周)
-  string cycle_execute_time = 19;  // 周期执行时间
-  string cycle_start_time = 20;    // 周期开始时间
-  string cycle_end_time = 21;      // 周期结束时间
-  string interval_number = 22;     // 间隔数量
-  string interval_type = 23;       // 间隔类型: 1=小时,2=天
-  string interval_execute_time = 24; // 间隔执行时间
-  string interval_start_time = 25; // 间隔开始时间
-  string interval_end_time = 26;   // 间隔结束时间
-  string invalid_start_time = 27;  // 不可用开始时间
-  string invalid_end_time = 28;    // 不可用结束时间
-  int64 lock_timeout = 29;         // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值
-  string schedule_description = 30; // 根据实际持久化 RRULE Set 生成的简体中文描述
+  string id = 1 [json_name = "id"];
+  string task_code = 2 [json_name = "taskCode"];
+  string task_name = 3 [json_name = "taskName"];
+  string patrol_type = 4 [json_name = "patrolType"];          // 巡视类型: 1=例行,2=特殊,3=专项,4=自定义
+  int32 priority = 5 [json_name = "priority"];              // 优先级 1-4
+  int32 device_level = 6 [json_name = "deviceLevel"];          // 设备层级: 1=间隔,2=主设备,3=设备点位,4=部件
+  string device_list = 7 [json_name = "deviceList"];          // 设备列表(逗号分隔)
+  int32 status = 8 [json_name = "status"];                // 0=禁用,1=启用
+  string rrule_str = 9 [json_name = "rruleStr"];
+  string next_run = 10 [json_name = "nextRun"];            // 下次执行时间
+  string last_run = 11 [json_name = "lastRun"];            // 上次执行时间
+  string substation_code = 12 [json_name = "substationCode"];     // 变电站编码
+  string isp_enable = 13 [json_name = "ispEnable"];           // ISP 启用标记: 0=启用,1=禁用,2=删除
+  string isp_creator = 14 [json_name = "ispCreator"];          // 编制人
+  string isp_create_time = 15 [json_name = "ispCreateTime"];      // 编制时间
+  string fixed_start_time = 16 [json_name = "fixedStartTime"];    // 定期开始时间
+  string cycle_month = 17 [json_name = "cycleMonth"];         // 周期(月)
+  string cycle_week = 18 [json_name = "cycleWeek"];          // 周期(周)
+  string cycle_execute_time = 19 [json_name = "cycleExecuteTime"];  // 周期执行时间
+  string cycle_start_time = 20 [json_name = "cycleStartTime"];    // 周期开始时间
+  string cycle_end_time = 21 [json_name = "cycleEndTime"];      // 周期结束时间
+  string interval_number = 22 [json_name = "intervalNumber"];     // 间隔数量
+  string interval_type = 23 [json_name = "intervalType"];       // 间隔类型: 1=小时,2=天
+  string interval_execute_time = 24 [json_name = "intervalExecuteTime"]; // 间隔执行时间
+  string interval_start_time = 25 [json_name = "intervalStartTime"]; // 间隔开始时间
+  string interval_end_time = 26 [json_name = "intervalEndTime"];   // 间隔结束时间
+  string invalid_start_time = 27 [json_name = "invalidStartTime"];  // 不可用开始时间
+  string invalid_end_time = 28 [json_name = "invalidEndTime"];    // 不可用结束时间
+  int64 lock_timeout = 29 [json_name = "lockTimeout"];         // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值
+  string schedule_description = 30 [json_name = "scheduleDescription"]; // 根据实际持久化 RRULE Set 生成的简体中文描述
 }
 
 // ListTaskConfigsRes 任务配置分页响应
 message ListTaskConfigsRes {
-  int64 total = 1;
-  repeated TaskConfigItem items = 2;
+  int64 total = 1 [json_name = "total"];
+  repeated TaskConfigItem items = 2 [json_name = "items"];
 }
 
 message GetTaskConfigReq {
-  string task_code = 1;
+  string task_code = 1 [json_name = "taskCode"];
 }
 
 message GetTaskConfigRes {
-  TaskConfigItem item = 1;
+  TaskConfigItem item = 1 [json_name = "item"];
 }
 
 // TestFTPSUploadReq FTPS 上传测试请求
 message TestFTPSUploadReq {
-  string local_path = 1;  // 测试文件本地路径，默认 local/test.txt
+  string local_path = 1 [json_name = "localPath"];  // 测试文件本地路径，默认 local/test.txt
 }
 
 // TestFTPSUploadRes FTPS 上传测试响应
 message TestFTPSUploadRes {
-  bool success = 1;
-  string remote_path = 2; // 上传成功后的远端路径
-  string error = 3;       // 错误信息
+  bool success = 1 [json_name = "success"];
+  string remote_path = 2 [json_name = "remotePath"]; // 上传成功后的远端路径
+  string error = 3 [json_name = "error"];       // 错误信息
 }
 
 enum EntryType {
@@ -246,34 +246,34 @@ enum EntryType {
 
 // FTPSDirEntry FTPS 目录条目
 message FTPSDirEntry {
-  string name = 1;          // 文件/目录名
-  bool is_dir = 2;          // 是否为目录
-  uint64 size = 3;          // 文件大小（目录为 0）
-  EntryType entry_type = 4; // 条目类型
-  string size_display = 5;  // 格式化大小（如 "1.2 GB"、"345 KB"）
+  string name = 1 [json_name = "name"];          // 文件/目录名
+  bool is_dir = 2 [json_name = "isDir"];          // 是否为目录
+  uint64 size = 3 [json_name = "size"];          // 文件大小（目录为 0）
+  EntryType entry_type = 4 [json_name = "entryType"]; // 条目类型
+  string size_display = 5 [json_name = "sizeDisplay"];  // 格式化大小（如 "1.2 GB"、"345 KB"）
 }
 
 // ListFTPSDirectoryReq FTPS 目录列表请求
 message ListFTPSDirectoryReq {
-  string path = 1; // 子目录路径，空则列出根目录
+  string path = 1 [json_name = "path"]; // 子目录路径，空则列出根目录
 }
 
 // ListFTPSDirectoryRes FTPS 目录列表响应
 message ListFTPSDirectoryRes {
-  bool success = 1;
-  repeated FTPSDirEntry entries = 2; // 目录下条目列表
-  string error = 3;                  // 错误信息
+  bool success = 1 [json_name = "success"];
+  repeated FTPSDirEntry entries = 2 [json_name = "entries"]; // 目录下条目列表
+  string error = 3 [json_name = "error"];                  // 错误信息
 }
 
 // ReportCategoryInfo 上报类别完整信息
 message ReportCategoryInfo {
-  int32 category = 1;            // 上报类别 messageId
-  string name = 2;               // 中文名称
-  int64 interval_seconds = 3;    // 当前间隔（秒）
-  bool no_fresh_check = 4;       // 是否跳过新鲜度检查
-  int32 type = 5;                // ISP Type
-  int32 command = 6;             // ISP Command
-  repeated string key_attrs = 7; // 缓存 key 属性列表
+  int32 category = 1 [json_name = "category"];            // 上报类别 messageId
+  string name = 2 [json_name = "name"];               // 中文名称
+  int64 interval_seconds = 3 [json_name = "intervalSeconds"];    // 当前间隔（秒）
+  bool no_fresh_check = 4 [json_name = "noFreshCheck"];       // 是否跳过新鲜度检查
+  int32 type = 5 [json_name = "type"];                // ISP Type
+  int32 command = 6 [json_name = "command"];             // ISP Command
+  repeated string key_attrs = 7 [json_name = "keyAttrs"]; // 缓存 key 属性列表
 }
 
 // ListReportIntervalsReq 上报间隔查询请求（空）
@@ -281,5 +281,5 @@ message ListReportIntervalsReq {}
 
 // ListReportIntervalsRes 上报间隔查询响应
 message ListReportIntervalsRes {
-  repeated ReportCategoryInfo categories = 1;       // 所有已注册上报类别完整信息
+  repeated ReportCategoryInfo categories = 1 [json_name = "categories"];       // 所有已注册上报类别完整信息
 }

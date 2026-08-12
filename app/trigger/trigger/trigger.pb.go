@@ -4141,7 +4141,10 @@ type PlanRulePb struct {
 	// 执行小时（0-23）
 	Hours []int32 `protobuf:"varint,5,rep,packed,name=hours,proto3" json:"hours,omitempty"`
 	// 执行分钟（0-59）
-	Minutes       []int32 `protobuf:"varint,6,rep,packed,name=minutes,proto3" json:"minutes,omitempty"`
+	Minutes []int32 `protobuf:"varint,6,rep,packed,name=minutes,proto3" json:"minutes,omitempty"`
+	// 周期步进：每隔 N 个 freq 周期执行一次（INTERVAL），0 或 1 表示每个周期都执行；
+	// 例如 freq=1(MONTHLY) 且 interval=3 表示从任务开始时间起每 3 个月执行
+	Interval      int32 `protobuf:"varint,7,opt,name=interval,proto3" json:"interval,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4216,6 +4219,13 @@ func (x *PlanRulePb) GetMinutes() []int32 {
 		return x.Minutes
 	}
 	return nil
+}
+
+func (x *PlanRulePb) GetInterval() int32 {
+	if x != nil {
+		return x.Interval
+	}
+	return 0
 }
 
 // 计划执行项创建数据模型
@@ -10728,7 +10738,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x185 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x186 \x01(\tR\x04ext5\"\xf6\x01\n" +
+	"\x04ext5\x186 \x01(\tR\x04ext5\"\x92\x02\n" +
 	"\n" +
 	"PlanRulePb\x12\x1d\n" +
 	"\x04freq\x18\x01 \x01(\x05B\t\xfaB\x06\x1a\x04\x18\x05(\x00R\x04freq\x12$\n" +
@@ -10738,7 +10748,8 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05hours\x18\x05 \x03(\x05B\x10\xfaB\r\x92\x01\n" +
 	"\b\x01\"\x06\x1a\x04\x18\x17(\x00R\x05hours\x12*\n" +
 	"\aminutes\x18\x06 \x03(\x05B\x10\xfaB\r\x92\x01\n" +
-	"\b\x01\"\x06\x1a\x04\x18;(\x00R\aminutes\"\xb4\x02\n" +
+	"\b\x01\"\x06\x1a\x04\x18;(\x00R\aminutes\x12\x1a\n" +
+	"\binterval\x18\a \x01(\x05R\binterval\"\xb4\x02\n" +
 	"\x14CreatePlanExecItemPb\x12 \n" +
 	"\aitem_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06itemId\x12\x1b\n" +
 	"\titem_type\x18\x02 \x01(\tR\bitemType\x12\x1b\n" +

@@ -596,13 +596,13 @@ service DjiCloud {
 // 仅用于等待 DJI 设备 ACK 的下行命令；平台参数、数据库、配置、MQTT、超时等错误通过 gRPC error 返回。
 message CommonRes {
   // code DJI 命令结果码，0 表示设备执行成功，-1 表示设备拒绝执行。
-  int32 code = 1;
+  int32 code = 1 [json_name = "code"];
   // message DJI 命令结果描述，成功时为 "success"，设备拒绝时为错误详情。
-  string message = 2;
+  string message = 2 [json_name = "message"];
   // tid 事务 ID（DJI Cloud API 中的 tid），用于追踪本次请求在 MQTT 链路中的唯一标识。
-  string tid = 3;
+  string tid = 3 [json_name = "tid"];
   // reason_code DJI 设备原始错误码（对应 DJIErrorCode 枚举值），仅在设备返回错误时有值，成功时为 0。
-  int32 reason_code = 4;
+  int32 reason_code = 4 [json_name = "reasonCode"];
 }
 
 // ==================== 属性设置（Properties）请求消息 ====================
@@ -610,9 +610,9 @@ message CommonRes {
 // PropertySetReq 设备属性设置请求。
 message PropertySetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // properties JSON 格式的属性键值对字符串。
-  string properties = 2;
+  string properties = 2 [json_name = "properties"];
 }
 
 
@@ -624,55 +624,55 @@ message PropertySetReq {
 // LiveStartPushReq 开始直播推流请求。
 message LiveStartPushReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // url_type 推流协议类型，0: AGORA, 1: RTMP, 2: RTSP, 3: GB28181。
-  int32 url_type = 2;
+  int32 url_type = 2 [json_name = "urlType"];
   // url 推流地址。
-  string url = 3;
+  string url = 3 [json_name = "url"];
   // video_id 视频流 ID，格式 "SN/机型-挂载位置/镜头类型"。
-  string video_id = 4;
+  string video_id = 4 [json_name = "videoId"];
   // video_quality 视频质量，0: 自适应, 1: 流畅, 2: 标清, 3: 高清, 4: 超清。
-  int32 video_quality = 5;
+  int32 video_quality = 5 [json_name = "videoQuality"];
 }
 
 // LiveStopPushReq 停止直播推流请求。
 message LiveStopPushReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // video_id 视频流 ID，与启动时一致。
-  string video_id = 2;
+  string video_id = 2 [json_name = "videoId"];
 }
 
 // LiveSetQualityReq 设置直播画质请求。
 message LiveSetQualityReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // video_id 视频流 ID。
-  string video_id = 2;
+  string video_id = 2 [json_name = "videoId"];
   // video_quality 视频质量，0: 自适应, 1: 流畅, 2: 标清, 3: 高清, 4: 超清。
-  int32 video_quality = 3;
+  int32 video_quality = 3 [json_name = "videoQuality"];
 }
 
 // LiveLensChangeReq 切换直播镜头请求。
 // 对应 DJI Cloud API method: live_lens_change（Services, down）。
 message LiveLensChangeReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // video_id 视频流 ID。
-  string video_id = 2;
+  string video_id = 2 [json_name = "videoId"];
   // video_type 镜头类型，0: 广角, 1: 变焦, 2: 红外。
-  int32 video_type = 3;
+  int32 video_type = 3 [json_name = "videoType"];
 }
 
 // LiveCameraChangeReq 切换直播相机请求。
 // 对应 DJI Cloud API method: live_camera_change（Services, down）。
 message LiveCameraChangeReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // video_id 视频流 ID。
-  string video_id = 2;
+  string video_id = 2 [json_name = "videoId"];
   // camera_index 目标相机索引，格式 type-subtype-gimbalIndex（与 data.camera_index 一致）。
-  string camera_index = 3;
+  string camera_index = 3 [json_name = "cameraIndex"];
 }
 
 // ==================== 媒体功能（Media）请求消息 ====================
@@ -680,17 +680,17 @@ message LiveCameraChangeReq {
 // MediaFlighttaskReq 航线任务媒体上传请求。
 message MediaFlighttaskReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // flight_id 航线任务 ID，对应 data.flight_id。
-  string flight_id = 2;
+  string flight_id = 2 [json_name = "flightId"];
 }
 
 // MediaFastUploadReq 媒体文件快速上传请求。
 message MediaFastUploadReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // file_id 媒体文件 ID，对应 data.file_id。
-  string file_id = 2;
+  string file_id = 2 [json_name = "fileId"];
 }
 
 // ==================== 航线功能（Wayline）请求消息 ====================
@@ -699,111 +699,111 @@ message MediaFastUploadReq {
 // 对应 flighttask_prepare.data.file。
 message FlightTaskFileRef {
   // url 航线文件（WPML）下载地址。必填。
-  string url = 1;
+  string url = 1 [json_name = "url"];
   // fingerprint 文件指纹（如 MD5），用于校验。可选。
-  string fingerprint = 2;
+  string fingerprint = 2 [json_name = "fingerprint"];
 }
 
 // FlightTaskPrepareSimulateMission 模拟任务配置。
 // 对应 flighttask_prepare.data.simulate_mission。
 message FlightTaskPrepareSimulateMission {
   // is_enable 是否启用模拟任务。
-  bool is_enable = 1;
+  bool is_enable = 1 [json_name = "isEnable"];
   // latitude 模拟起点纬度，启用时必填。
-  double latitude = 2;
+  double latitude = 2 [json_name = "latitude"];
   // longitude 模拟起点经度，启用时必填。
-  double longitude = 3;
+  double longitude = 3 [json_name = "longitude"];
 }
 
 // FlightTaskPrepareBreakPoint 断点续飞信息。
 // 对应 flighttask_prepare.data.break_point。
 message FlightTaskPrepareBreakPoint {
   // index 断点序号（航点索引，从 0 开始）。
-  int32 index = 1;
+  int32 index = 1 [json_name = "index"];
   // state 断点状态，0: 在航段上, 1: 在航点上。
-  int32 state = 2;
+  int32 state = 2 [json_name = "state"];
   // progress 断点进度 [0, 1]。
-  double progress = 3;
+  double progress = 3 [json_name = "progress"];
   // wayline_id 断点所在航线 ID。
-  int32 wayline_id = 4;
+  int32 wayline_id = 4 [json_name = "waylineId"];
 }
 
 // FlightTaskPrepareReq 航线任务准备请求。
 // 对应 DJI Cloud API method: flighttask_prepare（Services, down）。
 message FlightTaskPrepareReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // flight_id 航线任务 ID，全局唯一。必填。
-  string flight_id = 2;
+  string flight_id = 2 [json_name = "flightId"];
   // task_type 任务类型，0: 立即执行, 1: 定时执行, 2: 条件触发。必填。
-  int32 task_type = 3;
+  int32 task_type = 3 [json_name = "taskType"];
   // execute_time 计划执行时间，Unix 毫秒时间戳；0 表示立即执行。
-  int64 execute_time = 4;
+  int64 execute_time = 4 [json_name = "executeTime"];
   // wayline_type 航线类型，0: 普通航线, 1: 协调航线。
-  int32 wayline_type = 5;
+  int32 wayline_type = 5 [json_name = "waylineType"];
   // file 航线文件信息。必填。
-  FlightTaskFileRef file = 6;
+  FlightTaskFileRef file = 6 [json_name = "file"];
   // break_point 断点续飞信息；无需续飞时可省略。
-  FlightTaskPrepareBreakPoint break_point = 7;
+  FlightTaskPrepareBreakPoint break_point = 7 [json_name = "breakPoint"];
   // rth_altitude 返航高度（米），取值范围 [20, 500]。
-  int32 rth_altitude = 8;
+  int32 rth_altitude = 8 [json_name = "rthAltitude"];
   // out_of_control_action 失控动作，0: 返航, 1: 悬停, 2: 降落。
-  int32 out_of_control_action = 9;
+  int32 out_of_control_action = 9 [json_name = "outOfControlAction"];
   // exit_wayline_when_rc_lost 遥控器失联是否退出航线，0: 不退出, 1: 退出。
-  int32 exit_wayline_when_rc_lost = 10;
+  int32 exit_wayline_when_rc_lost = 10 [json_name = "exitWaylineWhenRcLost"];
   // simulate_mission 仿真调试；未启用时可省略或 is_enable=false。
-  FlightTaskPrepareSimulateMission simulate_mission = 11;
+  FlightTaskPrepareSimulateMission simulate_mission = 11 [json_name = "simulateMission"];
 }
 
 // FlightTaskExecuteReq 航线任务执行请求。
 // 对应 DJI Cloud API method: flighttask_execute（Services, down）。
 message FlightTaskExecuteReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // flight_id 航线任务 ID，须与航线任务准备请求中的 flight_id 一致。
-  string flight_id = 2;
+  string flight_id = 2 [json_name = "flightId"];
 }
 
 // FlightTaskUndoReq 取消航线任务请求。
 // 对应 DJI Cloud API method: flighttask_undo（Services, down）。
 message FlightTaskUndoReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // flight_ids 待取消的航线任务 ID 列表。
-  repeated string flight_ids = 2;
+  repeated string flight_ids = 2 [json_name = "flightIds"];
 }
 
 // PauseFlightTaskReq 暂停航线任务请求。
 // 对应 DJI Cloud API method: flighttask_pause（Services, down）。
 message PauseFlightTaskReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // flight_id 航线任务 ID。必填。
-  string flight_id = 2;
+  string flight_id = 2 [json_name = "flightId"];
   // wayline_id 航线 ID，用于标识暂停的航线。可选。
-  int32 wayline_id = 3;
+  int32 wayline_id = 3 [json_name = "waylineId"];
 }
 
 // FlightTaskRecoveryReq 恢复航线任务请求。
 // 对应 DJI Cloud API method: flighttask_recovery（Services, down）。
 message FlightTaskRecoveryReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // flight_id 航线任务 ID。必填。
-  string flight_id = 2;
+  string flight_id = 2 [json_name = "flightId"];
   // wayline_id 航线 ID，用于标识恢复的航线。可选。
-  int32 wayline_id = 3;
+  int32 wayline_id = 3 [json_name = "waylineId"];
 }
 
 // StopFlightTaskReq 停止航线任务请求。
 // 对应 DJI Cloud API method: flighttask_stop（Services, down）。
 message StopFlightTaskReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // flight_id 航线任务 ID。必填。
-  string flight_id = 2;
+  string flight_id = 2 [json_name = "flightId"];
   // wayline_id 航线 ID，用于标识停止的航线。可选。
-  int32 wayline_id = 3;
+  int32 wayline_id = 3 [json_name = "waylineId"];
 }
 
 // ReturnHomeReq 一键返航请求。
@@ -816,13 +816,13 @@ message ReturnHomeCancelAutoReturnReq { string device_sn = 1; }
 // 对应 DJI Cloud API method: return_specific_home（Services, down）。
 message ReturnSpecificHomeReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // latitude 指定返航点纬度，取值范围 [-90, 90]。
-  double latitude = 2;
+  double latitude = 2 [json_name = "latitude"];
   // longitude 指定返航点经度，取值范围 [-180, 180]。
-  double longitude = 3;
+  double longitude = 3 [json_name = "longitude"];
   // height 指定返航点高度，单位米。
-  double height = 4;
+  double height = 4 [json_name = "height"];
 }
 
 // ==================== HMS 管理（HMS）消息 ====================
@@ -875,25 +875,25 @@ message SupplementLightCloseReq { string device_sn = 1; }
 // BatteryStoreModeReq 电池保养存储模式切换请求。
 message BatteryStoreModeReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // enable 开关状态，1 为开启，0 为关闭。
-  int32 enable = 2;
+  int32 enable = 2 [json_name = "enable"];
 }
 
 // AlarmStateSwitchReq 声光报警开关切换请求。
 message AlarmStateSwitchReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // action 动作标识，具体含义参考 DJI Cloud API 文档。
-  int32 action = 2;
+  int32 action = 2 [json_name = "action"];
 }
 
 // AirConditionerModeSwitchReq 空调模式切换请求。
 message AirConditionerModeSwitchReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // action 空调模式，0: 关闭, 1: 制冷, 2: 制热, 3: 除湿。
-  int32 action = 2;
+  int32 action = 2 [json_name = "action"];
 }
 
 // ==================== 固件升级（Firmware）请求消息 ====================
@@ -901,20 +901,20 @@ message AirConditionerModeSwitchReq {
 // OtaDevice OTA 升级目标设备信息。
 message OtaDevice {
   // sn 待升级设备序列号。
-  string sn = 1;
+  string sn = 1 [json_name = "sn"];
   // product_version 目标固件版本号。
-  string product_version = 2;
+  string product_version = 2 [json_name = "productVersion"];
   // firmware_upgrade_type 升级类型，1: 普通升级, 2: 一致性升级。
-  int32 firmware_upgrade_type = 3;
+  int32 firmware_upgrade_type = 3 [json_name = "firmwareUpgradeType"];
 }
 
 // OtaCreateReq 创建固件升级任务请求。
 // 对应 DJI Cloud API method: ota_create（Services, down）。
 message OtaCreateReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // devices 待升级设备列表。
-  repeated OtaDevice devices = 2;
+  repeated OtaDevice devices = 2 [json_name = "devices"];
 }
 
 // ==================== 远程日志（Log）请求消息 ====================
@@ -922,35 +922,35 @@ message OtaCreateReq {
 // RemoteLogFileListReq 远程日志文件列表请求。
 message RemoteLogFileListReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // target_device_sn 需要查询日志的设备序列号，对应 data.device_sn；为空时由设备默认处理。
-  string target_device_sn = 2;
+  string target_device_sn = 2 [json_name = "targetDeviceSn"];
   // module 日志模块标识，对应 data.module。
-  string module = 3;
+  string module = 3 [json_name = "module"];
 }
 
 // RemoteLogFile 远程日志文件描述。
 message RemoteLogFile {
   // device_sn 日志所属设备序列号，对应 data.files[].device_sn。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // module 日志模块标识，对应 data.files[].module。
-  string module = 2;
+  string module = 2 [json_name = "module"];
   // key 日志文件唯一键，对应 data.files[].key。
-  string key = 3;
+  string key = 3 [json_name = "key"];
   // name 日志文件名，对应 data.files[].name。
-  string name = 4;
+  string name = 4 [json_name = "name"];
   // url 日志上传或下载地址，对应 data.files[].url。
-  string url = 5;
+  string url = 5 [json_name = "url"];
   // size 日志文件大小，单位字节，对应 data.files[].size。
-  int64 size = 6;
+  int64 size = 6 [json_name = "size"];
 }
 
 // RemoteLogFileUploadReq 远程日志文件上传控制请求。
 message RemoteLogFileUploadReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // files 远程日志文件列表，对应 data.files。
-  repeated RemoteLogFile files = 2;
+  repeated RemoteLogFile files = 2 [json_name = "files"];
 }
 
 // ==================== 配置更新（Config）请求消息 ====================
@@ -958,11 +958,11 @@ message RemoteLogFileUploadReq {
 // ConfigUpdateReq 设备配置更新请求。
 message ConfigUpdateReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // config_scope 配置作用域，对应 data.config_scope。
-  string config_scope = 2;
+  string config_scope = 2 [json_name = "configScope"];
   // config JSON 格式配置对象，对应 data.config。
-  string config = 3;
+  string config = 3 [json_name = "config"];
 }
 
 // ==================== 指令飞行（DRC）请求消息 ====================
@@ -977,56 +977,56 @@ message PayloadAuthorityGrabReq { string device_sn = 1; }
 // FlyToPointReq 飞向指定航点请求。
 message FlyToPointReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // fly_to_id 飞行任务 ID，全局唯一标识。
-  string fly_to_id = 2;
+  string fly_to_id = 2 [json_name = "flyToId"];
   // max_speed 最大飞行速度，单位 m/s。
-  double max_speed = 3;
+  double max_speed = 3 [json_name = "maxSpeed"];
   // points 航点列表，按顺序飞行。
-  repeated Waypoint points = 4;
+  repeated Waypoint points = 4 [json_name = "points"];
 }
 
 // Waypoint 飞行航点坐标。
 message Waypoint {
   // latitude 航点纬度，取值范围 [-90, 90]。
-  double latitude = 1;
+  double latitude = 1 [json_name = "latitude"];
   // longitude 航点经度，取值范围 [-180, 180]。
-  double longitude = 2;
+  double longitude = 2 [json_name = "longitude"];
   // height 航点高度，单位米。
-  double height = 3;
+  double height = 3 [json_name = "height"];
 }
 
 // FlyToPointStopReq 停止飞向指定航点请求。
 // 对应 DJI Cloud API method: fly_to_point_stop（DRC, down）。
 message FlyToPointStopReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // fly_to_id 飞行任务 ID，与发起 FlyToPoint 时一致。必填。
-  string fly_to_id = 2;
+  string fly_to_id = 2 [json_name = "flyToId"];
 }
 
 // TakeoffToPointReq 一键起飞到指定坐标点请求。
 message TakeoffToPointReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // flight_id 飞行任务 ID，全局唯一标识。
-  string flight_id = 2;
+  string flight_id = 2 [json_name = "flightId"];
   // target_latitude 目标纬度，取值范围 [-90, 90]。
-  double target_latitude = 3;
+  double target_latitude = 3 [json_name = "targetLatitude"];
   // target_longitude 目标经度，取值范围 [-180, 180]。
-  double target_longitude = 4;
+  double target_longitude = 4 [json_name = "targetLongitude"];
   // target_height 目标高度，单位米。
-  double target_height = 5;
+  double target_height = 5 [json_name = "targetHeight"];
   // security_takeoff_height 安全起飞高度，单位米。
-  double security_takeoff_height = 6;
+  double security_takeoff_height = 6 [json_name = "securityTakeoffHeight"];
   // rth_altitude 返航高度，单位米。可选。
-  double rth_altitude = 7;
+  double rth_altitude = 7 [json_name = "rthAltitude"];
   // rc_lost_action 遥控器信号丢失动作，0: 返航, 1: 悬停, 2: 降落。可选。
-  int32 rc_lost_action = 8;
+  int32 rc_lost_action = 8 [json_name = "rcLostAction"];
   // max_speed 最大飞行速度，单位 m/s。可选。
-  double max_speed = 9;
+  double max_speed = 9 [json_name = "maxSpeed"];
   // commander_flight_height 指令飞行高度，单位米。可选。
-  double commander_flight_height = 10;
+  double commander_flight_height = 10 [json_name = "commanderFlightHeight"];
 }
 
 // ==================== 指令飞行（DRC）相机/云台请求消息 ====================
@@ -1034,185 +1034,185 @@ message TakeoffToPointReq {
 // CameraModeSwitchReq 相机模式切换请求。
 message CameraModeSwitchReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引，格式 "机型-挂载位置"，如 "53-0"。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // camera_mode 相机模式，0: 拍照, 1: 录像。
-  int32 camera_mode = 3;
+  int32 camera_mode = 3 [json_name = "cameraMode"];
 }
 
 // CameraPhotoTakeReq 相机拍照请求。
 message CameraPhotoTakeReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引，格式 "机型-挂载位置"。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
 }
 
 // CameraPhotoStopReq 停止连续拍照请求。
 message CameraPhotoStopReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
 }
 
 // CameraRecordingStartReq 开始录像请求。
 message CameraRecordingStartReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引，格式 "机型-挂载位置"。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
 }
 
 // CameraRecordingStopReq 停止录像请求。
 message CameraRecordingStopReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引，格式 "机型-挂载位置"。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
 }
 
 // CameraFocalLengthSetReq 相机焦距设置请求。
 message CameraFocalLengthSetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引，格式 "机型-挂载位置"。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // camera_type 相机类型，0: 广角, 1: 变焦, 2: 红外。
-  int32 camera_type = 3;
+  int32 camera_type = 3 [json_name = "cameraType"];
   // zoom_factor 变焦倍数。
-  double zoom_factor = 4;
+  double zoom_factor = 4 [json_name = "zoomFactor"];
 }
 
 // GimbalResetReq 云台重置请求。
 message GimbalResetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引，格式 "机型-挂载位置"。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // reset_mode 重置模式，0: 回中, 1: 朝下, 2: 偏航回中。
-  int32 reset_mode = 3;
+  int32 reset_mode = 3 [json_name = "resetMode"];
 }
 
 // CameraAimReq 相机指点对准请求。
 message CameraAimReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // camera_type 相机类型，0: 广角, 1: 变焦, 2: 红外。
-  int32 camera_type = 3;
+  int32 camera_type = 3 [json_name = "cameraType"];
   // x 屏幕归一化坐标X，取值范围 [0, 1]。
-  double x = 4;
+  double x = 4 [json_name = "x"];
   // y 屏幕归一化坐标Y，取值范围 [0, 1]。
-  double y = 5;
+  double y = 5 [json_name = "y"];
   // locked 是否锁定目标。
-  bool locked = 6;
+  bool locked = 6 [json_name = "locked"];
 }
 
 // CameraPointFocusActionReq 相机指点对焦请求。
 message CameraPointFocusActionReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // camera_type 相机类型，0: 广角, 1: 变焦, 2: 红外。
-  int32 camera_type = 3;
+  int32 camera_type = 3 [json_name = "cameraType"];
   // x 对焦点归一化X，取值范围 [0, 1]。
-  double x = 4;
+  double x = 4 [json_name = "x"];
   // y 对焦点归一化Y，取值范围 [0, 1]。
-  double y = 5;
+  double y = 5 [json_name = "y"];
 }
 
 // CameraScreenSplitReq 相机分屏控制请求。
 message CameraScreenSplitReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // enable 是否开启分屏。
-  bool enable = 3;
+  bool enable = 3 [json_name = "enable"];
 }
 
 // CameraPhotoStorageSetReq 拍照存储位置设置请求。
 message CameraPhotoStorageSetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // photo_storage_type 拍照存储类型，0: 机载存储, 1: SD卡。
-  int32 photo_storage_type = 3;
+  int32 photo_storage_type = 3 [json_name = "photoStorageType"];
 }
 
 // CameraVideoStorageSetReq 录像存储位置设置请求。
 message CameraVideoStorageSetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // video_storage_type 录像存储类型，0: 机载存储, 1: SD卡。
-  int32 video_storage_type = 3;
+  int32 video_storage_type = 3 [json_name = "videoStorageType"];
 }
 
 // CameraLookAtReq 相机朝向指定坐标请求。
 message CameraLookAtReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // latitude 目标纬度。
-  double latitude = 3;
+  double latitude = 3 [json_name = "latitude"];
   // longitude 目标经度。
-  double longitude = 4;
+  double longitude = 4 [json_name = "longitude"];
   // height 目标高度，单位米。
-  double height = 5;
+  double height = 5 [json_name = "height"];
   // locked 是否持续跟踪。
-  bool locked = 6;
+  bool locked = 6 [json_name = "locked"];
 }
 
 // CameraScreenDragReq 相机屏幕拖拽控制请求。
 message CameraScreenDragReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // x 拖拽起点X。
-  double x = 3;
+  double x = 3 [json_name = "x"];
   // y 拖拽起点Y。
-  double y = 4;
+  double y = 4 [json_name = "y"];
   // x_speed X方向速度。
-  double x_speed = 5;
+  double x_speed = 5 [json_name = "xSpeed"];
   // y_speed Y方向速度。
-  double y_speed = 6;
+  double y_speed = 6 [json_name = "ySpeed"];
 }
 
 // CameraIrMeteringPointReq 红外测温点设置请求。
 message CameraIrMeteringPointReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // x 测温点归一化X，取值范围 [0, 1]。
-  double x = 3;
+  double x = 3 [json_name = "x"];
   // y 测温点归一化Y，取值范围 [0, 1]。
-  double y = 4;
+  double y = 4 [json_name = "y"];
 }
 
 // CameraIrMeteringAreaReq 红外区域测温设置请求。
 message CameraIrMeteringAreaReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 负载设备索引。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // x 区域左上角X。
-  double x = 3;
+  double x = 3 [json_name = "x"];
   // y 区域左上角Y。
-  double y = 4;
+  double y = 4 [json_name = "y"];
   // width 区域宽度。
-  double width = 5;
+  double width = 5 [json_name = "width"];
   // height 区域高度。
-  double height = 6;
+  double height = 6 [json_name = "height"];
 }
 
 // ==================== 自定义飞行区（Custom Fly Region）消息 ====================
@@ -1221,7 +1221,7 @@ message CameraIrMeteringAreaReq {
 // flight_areas_update 仅为触发信号不含文件数据；设备收到通知后通过 flight_areas_get 拉取文件。
 message FlightAreasUpdateReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
 }
 
 // ==================== PSDK 功能与互联互通请求消息 ====================
@@ -1229,22 +1229,22 @@ message FlightAreasUpdateReq {
 // PsdkUIResourceUploadReq PSDK UI 资源上传请求。
 message PsdkUIResourceUploadReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // name 资源名称。
-  string name = 2;
+  string name = 2 [json_name = "name"];
   // url 资源下载地址。
-  string url = 3;
+  string url = 3 [json_name = "url"];
   // fingerprint 资源指纹，可选。
-  string fingerprint = 4;
+  string fingerprint = 4 [json_name = "fingerprint"];
 }
 
 // CustomDataTransmissionToPsdkReq PSDK 自定义数据透传请求。
 // 对应 DJI Cloud API method: custom_data_transmission_to_psdk（Services, down）。
 message CustomDataTransmissionToPsdkReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // value 自定义透传数据内容，长度应小于 256 字符。
-  string value = 2;
+  string value = 2 [json_name = "value"];
 }
 
 // ==================== ESDK 互联互通（ESDK Transmit）消息 ====================
@@ -1253,9 +1253,9 @@ message CustomDataTransmissionToPsdkReq {
 // 对应 DJI Cloud API method: custom_data_transmission_to_esdk（Services, down）。
 message CustomDataTransmissionToEsdkReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // value 自定义透传数据内容，长度应小于 256 字符。
-  string value = 2;
+  string value = 2 [json_name = "value"];
 }
 
 // ==================== 远程解禁（Flysafe）消息 ====================
@@ -1263,35 +1263,35 @@ message CustomDataTransmissionToEsdkReq {
 // UnlockLicenseSwitchReq 启用或禁用设备的单个解禁证书请求。
 message UnlockLicenseSwitchReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // license_id 解禁证书唯一标识。
-  int64 license_id = 2;
+  int64 license_id = 2 [json_name = "licenseId"];
   // enable 是否启用。
-  bool enable = 3;
+  bool enable = 3 [json_name = "enable"];
 }
 
 // UnlockLicenseFileRef 解禁证书文件引用。
 message UnlockLicenseFileRef {
   // url 离线证书文件 URL。
-  string url = 1;
+  string url = 1 [json_name = "url"];
   // fingerprint 文件签名。
-  string fingerprint = 2;
+  string fingerprint = 2 [json_name = "fingerprint"];
 }
 
 // UnlockLicenseUpdateReq 更新设备的解禁证书请求。
 message UnlockLicenseUpdateReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // file 离线证书文件；为空时按 Flysafe 服务器最新证书更新。
-  UnlockLicenseFileRef file = 2;
+  UnlockLicenseFileRef file = 2 [json_name = "file"];
 }
 
 // UnlockLicenseListReq 获取设备解禁证书列表请求。
 message UnlockLicenseListReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // device_model_domain 证书拉取位置，0: 飞行器, 3: 机场。
-  int32 device_model_domain = 2;
+  int32 device_model_domain = 2 [json_name = "deviceModelDomain"];
 }
 
 // ==================== DRC 生命周期管理消息 ====================
@@ -1301,14 +1301,14 @@ message UnlockLicenseListReq {
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
 message DrcModeEnterReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // osd_frequency OSD 遥测数据上报频率，取值范围 [1, 30]，单位 Hz。
-  int32 osd_frequency = 2;
+  int32 osd_frequency = 2 [json_name = "osdFrequency"];
   // hsi_frequency HSI（水平态势感知）数据上报频率，取值范围 [1, 30]，单位 Hz。
-  int32 hsi_frequency = 3;
+  int32 hsi_frequency = 3 [json_name = "hsiFrequency"];
   // max_control_time_millis 最大控制时间，单位毫秒；未传或小于等于 0 时服务端默认 30 分钟。
   // 从 DRC 模式启用开始计时，到期后强制退出，不受设备心跳续期影响。
-  int64 max_control_time_millis = 4;
+  int64 max_control_time_millis = 4 [json_name = "maxControlTimeMillis"];
 }
 
 // DrcModeExitReq 退出指令飞行模式请求。
@@ -1324,17 +1324,17 @@ message DroneEmergencyStopReq { string device_sn = 1; }
 // 文档: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6
 message StickControlReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // roll 左右平移速度（m/s），俯视机头朝前时：正值为向左、负值为向右。
-  double roll = 2;
+  double roll = 2 [json_name = "roll"];
   // pitch 前后平移速度（m/s），正值为向前、负值为向后。
-  double pitch = 3;
+  double pitch = 3 [json_name = "pitch"];
   // throttle 垂直速度（m/s），正值为上升、负值为下降。
-  double throttle = 4;
+  double throttle = 4 [json_name = "throttle"];
   // yaw 机体偏航角速度（°/s），正值为顺时针、负值为逆时针。
-  double yaw = 5;
+  double yaw = 5 [json_name = "yaw"];
   // gimbal_pitch 云台俯仰角速度（°/s），正值为向上、负值为向下。
-  double gimbal_pitch = 6;
+  double gimbal_pitch = 6 [json_name = "gimbalPitch"];
 }
 
 // DrcForceLandingReq 强制降落请求。
@@ -1348,31 +1348,31 @@ message DrcEmergencyLandingReq { string device_sn = 1; }
 // DrcLinkageZoomSetReq 红外联动变焦设置请求。
 message DrcLinkageZoomSetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 相机枚举，格式 type-subtype-gimbalIndex。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // state 联动变焦状态。
-  bool state = 3;
+  bool state = 3 [json_name = "state"];
 }
 
 // DrcVideoResolutionSetReq 视频分辨率设置请求。
 message DrcVideoResolutionSetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 相机枚举，格式 type-subtype-gimbalIndex。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // video_resolution 视频分辨率枚举字符串。
-  string video_resolution = 3;
+  string video_resolution = 3 [json_name = "videoResolution"];
 }
 
 // DrcIntervalPhotoSetReq 定时拍设置请求。
 message DrcIntervalPhotoSetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 相机枚举，格式 type-subtype-gimbalIndex。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // interval 定时拍照间隔枚举字符串。
-  string interval = 3;
+  string interval = 3 [json_name = "interval"];
 }
 
 // DrcInitialStateSubscribeReq 订阅 DRC 初始状态请求。
@@ -1381,77 +1381,77 @@ message DrcInitialStateSubscribeReq { string device_sn = 1; }
 // DrcNightLightsStateSetReq 夜航灯状态设置请求。
 message DrcNightLightsStateSetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // night_lights_state 夜航灯状态，0: 关闭, 1: 开启。
-  int32 night_lights_state = 2;
+  int32 night_lights_state = 2 [json_name = "nightLightsState"];
 }
 
 // DrcStealthStateSetReq 隐蔽模式状态设置请求。
 message DrcStealthStateSetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // stealth_state 隐蔽模式状态，0: 关闭, 1: 开启。
-  int32 stealth_state = 2;
+  int32 stealth_state = 2 [json_name = "stealthState"];
 }
 
 // DrcCameraApertureValueSetReq 相机光圈设置请求。
 message DrcCameraApertureValueSetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 相机枚举，格式 type-subtype-gimbalIndex。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // camera_type 相机类型，如 wide、zoom。
-  string camera_type = 3;
+  string camera_type = 3 [json_name = "cameraType"];
   // aperture_value 光圈值枚举。
-  int32 aperture_value = 4;
+  int32 aperture_value = 4 [json_name = "apertureValue"];
 }
 
 // DrcCameraShutterSetReq 相机快门设置请求。
 message DrcCameraShutterSetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 相机枚举，格式 type-subtype-gimbalIndex。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // camera_type 相机类型，如 wide、zoom。
-  string camera_type = 3;
+  string camera_type = 3 [json_name = "cameraType"];
   // shutter_value 快门值枚举。
-  int32 shutter_value = 4;
+  int32 shutter_value = 4 [json_name = "shutterValue"];
 }
 
 // DrcCameraIsoSetReq 相机 ISO 设置请求。
 message DrcCameraIsoSetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 相机枚举，格式 type-subtype-gimbalIndex。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // camera_type 相机类型，如 wide、zoom。
-  string camera_type = 3;
+  string camera_type = 3 [json_name = "cameraType"];
   // iso_value ISO 值枚举。
-  int32 iso_value = 4;
+  int32 iso_value = 4 [json_name = "isoValue"];
 }
 
 // DrcCameraMechanicalShutterSetReq 机械快门设置请求。
 message DrcCameraMechanicalShutterSetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 相机枚举，格式 type-subtype-gimbalIndex。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // camera_type 相机类型，如 wide。
-  string camera_type = 3;
+  string camera_type = 3 [json_name = "cameraType"];
   // dewarping_state 机械快门状态，0: 关闭, 1: 开启。
-  int32 dewarping_state = 4;
+  int32 dewarping_state = 4 [json_name = "dewarpingState"];
 }
 
 // DrcCameraDewarpingSetReq 镜头去畸变设置请求。
 message DrcCameraDewarpingSetReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // payload_index 相机枚举，格式 type-subtype-gimbalIndex。
-  string payload_index = 2;
+  string payload_index = 2 [json_name = "payloadIndex"];
   // camera_type 相机类型，如 wide。
-  string camera_type = 3;
+  string camera_type = 3 [json_name = "cameraType"];
   // dewarping_state 去畸变状态，0: 关闭, 1: 开启。
-  int32 dewarping_state = 4;
+  int32 dewarping_state = 4 [json_name = "dewarpingState"];
 }
 
 // ==================== DRC 指令响应消息（drc/down 即发即忘，仅返回已下发的序号） ====================
@@ -1512,7 +1512,7 @@ message IsDeviceOnlineReq { string device_sn = 1; }
 // IsDeviceOnlineRes 查询设备在线状态响应。
 message IsDeviceOnlineRes {
   // is_online 设备是否在线。
-  bool is_online = 1;
+  bool is_online = 1 [json_name = "isOnline"];
 }
 
 // ==================== 设备管理（Device）消息 ====================
@@ -1522,132 +1522,132 @@ message IsDeviceOnlineRes {
 // firmware_version 与 hardware_version 从 DJI state 物模型快照中提取，对应 pushMode=1 的状态数据；空上报不会覆盖已有非空版本。
 message DeviceInfo {
   // id 数据库主键。
-  string id = 1;
+  string id = 1 [json_name = "id"];
   // device_sn 设备 SN，机巢/无人机/负载设备唯一标识。
-  string device_sn = 2;
+  string device_sn = 2 [json_name = "deviceSn"];
   // gateway_sn 最近一次上报关联的网关机巢 SN；机巢自身等于 device_sn。
   // 对飞机及挂载负载域（Domain=0/1）仅由 OSD/State 上行更新；update_topo 仍会按 device_sn 更新型号和名称。
   // 蛙跳场景下，一架飞机可能存在多个机巢绑定关系，完整绑定关系以 DeviceTopoInfo 为准。
-  string gateway_sn = 3;
+  string gateway_sn = 3 [json_name = "gatewaySn"];
   // device_type 规范设备三元组，格式为 {domain}-{type}-{sub_type}。
-  string device_type = 4;
+  string device_type = 4 [json_name = "deviceType"];
   // device_name 设备三元组对应的产品名称；未收录型号为空。
-  string device_name = 5;
+  string device_name = 5 [json_name = "deviceName"];
   // alias 设备别名。
-  string alias = 6;
+  string alias = 6 [json_name = "alias"];
   // group_name 业务分组。
-  string group_name = 7;
+  string group_name = 7 [json_name = "groupName"];
   // firmware_version 固件版本，来自大疆物模型属性 firmware_version。
-  string firmware_version = 8;
+  string firmware_version = 8 [json_name = "firmwareVersion"];
   // hardware_version 硬件版本，来自大疆物模型属性 hardware_version。
-  string hardware_version = 9;
+  string hardware_version = 9 [json_name = "hardwareVersion"];
   // is_online 是否在线；当前以设备 OSD 有效上行为在线刷新依据，State/update_topo 不刷新在线状态。
-  bool is_online = 10;
+  bool is_online = 10 [json_name = "isOnline"];
   // first_online_at 首次上线时间，毫秒时间戳。
-  int64 first_online_at = 11;
+  int64 first_online_at = 11 [json_name = "firstOnlineAt"];
   // last_online_at 最后在线时间，毫秒时间戳。
-  int64 last_online_at = 12;
+  int64 last_online_at = 12 [json_name = "lastOnlineAt"];
 }
 
 // DeviceTopoInfo 设备拓扑信息。
 // 同一个 sub_device_sn 可出现在多个 gateway_sn 下，用于表达大疆蛙跳场景下飞机与多个机巢的绑定关系。
 message DeviceTopoInfo {
   // gateway_sn 网关机巢 SN。
-  string gateway_sn = 1;
+  string gateway_sn = 1 [json_name = "gatewaySn"];
   // sub_device_sn 子设备 SN。
-  string sub_device_sn = 2;
+  string sub_device_sn = 2 [json_name = "subDeviceSn"];
   // domain 大疆设备领域 domain，0: 飞机类，1: 负载类，2: 遥控器类，3: 机场类，按 DJI 原始字符串透传。
-  string domain = 3;
+  string domain = 3 [json_name = "domain"];
   // sub_device_type 子设备类型。
-  int32 sub_device_type = 4;
+  int32 sub_device_type = 4 [json_name = "subDeviceType"];
   // sub_device_sub_type 子设备子类型。
-  int32 sub_device_sub_type = 5;
+  int32 sub_device_sub_type = 5 [json_name = "subDeviceSubType"];
   // sub_device_index 子设备索引。
-  string sub_device_index = 6;
+  string sub_device_index = 6 [json_name = "subDeviceIndex"];
   // thing_version 物模型版本。
-  string thing_version = 7;
+  string thing_version = 7 [json_name = "thingVersion"];
   // device_type 规范设备三元组，格式为 {domain}-{type}-{sub_type}。
-  string device_type = 8;
+  string device_type = 8 [json_name = "deviceType"];
   // device_name 设备三元组对应的产品名称；未收录型号为空。
-  string device_name = 9;
+  string device_name = 9 [json_name = "deviceName"];
 }
 
 // DeviceTelemetrySnapshotBrief 设备遥测/状态快照摘要。
 // 列表页只返回快照归属和上报时间，完整 raw_json 通过 GetDeviceOsdSnapshot / GetDeviceStateSnapshot 查询。
 message DeviceTelemetrySnapshotBrief {
   // device_sn 快照对应设备 SN。
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
   // gateway_sn 快照上报时关联的网关机巢 SN。
-  string gateway_sn = 2;
+  string gateway_sn = 2 [json_name = "gatewaySn"];
   // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
-  string reported_at = 3;
+  string reported_at = 3 [json_name = "reportedAt"];
 }
 
 // DockFlightTaskStateInfo 机巢当前航线任务状态摘要。
 // 该状态按 gateway_sn 维护；子设备列表项如需展示，表示其所属机巢的当前任务状态。
 message DockFlightTaskStateInfo {
   // gateway_sn 网关机巢 SN。
-  string gateway_sn = 1;
+  string gateway_sn = 1 [json_name = "gatewaySn"];
   // flight_id 大疆航线任务 ID。
-  string flight_id = 2;
+  string flight_id = 2 [json_name = "flightId"];
   // status 官方 flighttask_progress status 字段。
-  string status = 3;
+  string status = 3 [json_name = "status"];
   // current_step 官方 progress.current_step 字段。
-  int32 current_step = 4;
+  int32 current_step = 4 [json_name = "currentStep"];
   // wayline_mission_state 官方 ext.wayline_mission_state 字段。
-  int32 wayline_mission_state = 5;
+  int32 wayline_mission_state = 5 [json_name = "waylineMissionState"];
   // current_waypoint_index 官方 ext.current_waypoint_index 字段。
-  int32 current_waypoint_index = 6;
+  int32 current_waypoint_index = 6 [json_name = "currentWaypointIndex"];
   // media_count 官方 ext.media_count 字段。
-  int32 media_count = 7;
+  int32 media_count = 7 [json_name = "mediaCount"];
   // progress_percent 官方 progress.percent 字段。
-  double progress_percent = 8;
+  double progress_percent = 8 [json_name = "progressPercent"];
   // track_id 官方 ext.track_id 字段。
-  string track_id = 9;
+  string track_id = 9 [json_name = "trackId"];
   // wayline_id 官方 ext.wayline_id 字段。
-  int32 wayline_id = 10;
+  int32 wayline_id = 10 [json_name = "waylineId"];
   // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
-  string reported_at = 11;
+  string reported_at = 11 [json_name = "reportedAt"];
 }
 
 // DeviceListItem 设备列表项。
 // device 保持基础信息；topo/osd/state/flight_task_state 为批量关联补充数据。
 message DeviceListItem {
   // device 设备基础信息。
-  DeviceInfo device = 1;
+  DeviceInfo device = 1 [json_name = "device"];
   // topo 与该设备相关的机巢拓扑关系。
-  repeated DeviceTopoInfo topo = 2;
+  repeated DeviceTopoInfo topo = 2 [json_name = "topo"];
   // osd 最近一次 OSD 快照摘要，不含 raw_json。
-  DeviceTelemetrySnapshotBrief osd = 3;
+  DeviceTelemetrySnapshotBrief osd = 3 [json_name = "osd"];
   // state 最近一次 State 快照摘要，不含 raw_json。
-  DeviceTelemetrySnapshotBrief state = 4;
+  DeviceTelemetrySnapshotBrief state = 4 [json_name = "state"];
   // flight_task_state 所属机巢当前航线任务状态摘要。
-  DockFlightTaskStateInfo flight_task_state = 5;
+  DockFlightTaskStateInfo flight_task_state = 5 [json_name = "flightTaskState"];
 }
 
 // ListDevicesReq 查询设备列表请求。
 message ListDevicesReq {
   // page 页码，从 1 开始。
-  int64 page = 1;
+  int64 page = 1 [json_name = "page"];
   // page_size 每页条数，默认由服务端兜底。
-  int64 page_size = 2;
+  int64 page_size = 2 [json_name = "pageSize"];
   // gateway_sn 按设备最新归属机巢过滤（DjiDevice.gateway_sn），空表示不过滤。
-  string gateway_sn = 3;
+  string gateway_sn = 3 [json_name = "gatewaySn"];
   // topo_gateway_sn 按拓扑绑定关系过滤（DjiDeviceTopo.gateway_sn），空表示不过滤。
   // 适配蛙跳场景：飞机与多个机巢对频绑定后，通过此字段查询所有绑定到该机巢的设备。
-  string topo_gateway_sn = 6;
+  string topo_gateway_sn = 6 [json_name = "topoGatewaySn"];
   // online_status 在线状态过滤，0: 全部，1: 在线，2: 离线。
-  int32 online_status = 4;
+  int32 online_status = 4 [json_name = "onlineStatus"];
   // keyword 按 SN/别名模糊查询。
-  string keyword = 5;
+  string keyword = 5 [json_name = "keyword"];
 }
 
 // ListDevicesRes 查询设备列表响应。
 message ListDevicesRes {
   // total 当前过滤条件下的总数量，不受 page/page_size 限制。
-  int64 total = 1;
+  int64 total = 1 [json_name = "total"];
   // list 当前页设备列表，包含基础信息和关联快照摘要。
-  repeated DeviceListItem list = 2;
+  repeated DeviceListItem list = 2 [json_name = "list"];
 }
 
 // GetDeviceDetailReq 查询设备详情请求。
@@ -1655,38 +1655,38 @@ message GetDeviceDetailReq { string device_sn = 1; }
 
 // DeviceOsdSnapshot 设备 OSD 快照。
 message DeviceOsdSnapshot {
-  string device_sn = 1;
-  string gateway_sn = 2;
-  string raw_json = 3;
+  string device_sn = 1 [json_name = "deviceSn"];
+  string gateway_sn = 2 [json_name = "gatewaySn"];
+  string raw_json = 3 [json_name = "rawJson"];
   // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
-  string reported_at = 4;
+  string reported_at = 4 [json_name = "reportedAt"];
 }
 
 // GetDeviceOsdSnapshotRes 查询设备 OSD 快照响应。
 message GetDeviceOsdSnapshotRes {
-  DeviceOsdSnapshot data = 1;
+  DeviceOsdSnapshot data = 1 [json_name = "data"];
 }
 
 // DeviceStateSnapshot 设备 State 快照。
 message DeviceStateSnapshot {
-  string device_sn = 1;
-  string gateway_sn = 2;
-  string raw_json = 3;
+  string device_sn = 1 [json_name = "deviceSn"];
+  string gateway_sn = 2 [json_name = "gatewaySn"];
+  string raw_json = 3 [json_name = "rawJson"];
   // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
-  string reported_at = 4;
+  string reported_at = 4 [json_name = "reportedAt"];
 }
 
 // GetDeviceStateSnapshotRes 查询设备 State 快照响应。
 message GetDeviceStateSnapshotRes {
-  DeviceStateSnapshot data = 1;
+  DeviceStateSnapshot data = 1 [json_name = "data"];
 }
 
 // GetDeviceDetailRes 查询设备详情响应。
 message GetDeviceDetailRes {
-  DeviceInfo device = 1;
-  DeviceOsdSnapshot osd = 2;
-  DeviceStateSnapshot state = 3;
-  repeated DeviceTopoInfo topo = 4;
+  DeviceInfo device = 1 [json_name = "device"];
+  DeviceOsdSnapshot osd = 2 [json_name = "osd"];
+  DeviceStateSnapshot state = 3 [json_name = "state"];
+  repeated DeviceTopoInfo topo = 4 [json_name = "topo"];
 }
 
 // GetDeviceOsdSnapshotReq 查询 OSD 快照请求。
@@ -1698,76 +1698,76 @@ message GetDeviceStateSnapshotReq { string device_sn = 1; }
 // HmsAlertInfo HMS 告警信息。
 message HmsAlertInfo {
   // 记录身份。
-  string id = 1;
-  string gateway_sn = 2;
+  string id = 1 [json_name = "id"];
+  string gateway_sn = 2 [json_name = "gatewaySn"];
 
   // 推送关联。
   // tid 外层 HMS 推送事件的事务 ID。
-  string tid = 3;
+  string tid = 3 [json_name = "tid"];
   // bid 外层 HMS 推送事件的业务 ID。
-  string bid = 4;
+  string bid = 4 [json_name = "bid"];
   // trace_id 服务消费该 HMS 推送时持久化的链路追踪 ID。
-  string trace_id = 5;
+  string trace_id = 5 [json_name = "traceId"];
 
   // 告警主体。
-  int32 level = 6;
-  int32 module = 7;
-  string code = 8;
+  int32 level = 6 [json_name = "level"];
+  int32 module = 7 [json_name = "module"];
+  string code = 8 [json_name = "code"];
   // imminent 是否即时告警，0: 否，1: 是。
-  int32 imminent = 9;
-  int32 in_the_sky = 10;
+  int32 imminent = 9 [json_name = "imminent"];
+  int32 in_the_sky = 10 [json_name = "inTheSky"];
 
   // 当前告警设备身份。
-  string device_type = 11;
+  string device_type = 11 [json_name = "deviceType"];
   // device_type_name 当前告警 device_type 对应的大疆产品名称，未知时为空。
-  string device_type_name = 12;
-  int32 device_domain = 13;
-  int32 device_type_id = 14;
-  int32 device_subtype = 15;
+  string device_type_name = 12 [json_name = "deviceTypeName"];
+  int32 device_domain = 13 [json_name = "deviceDomain"];
+  int32 device_type_id = 14 [json_name = "deviceTypeId"];
+  int32 device_subtype = 15 [json_name = "deviceSubtype"];
 
   // 展示文案与上报原始数据，均为告警上报时的持久化快照。
   // message_key 上报时实际命中的 HMS 文案字典键，未知文案时为空。
-  string message_key = 16;
+  string message_key = 16 [json_name = "messageKey"];
   // message 按服务配置语言解析并在上报时持久化的 HMS 告警文案。
-  string message = 17;
+  string message = 17 [json_name = "message"];
   // alarm_id 上报 args 中的原始 alarmid 文本，缺失或类型非法时为空。
-  string alarm_id = 18;
-  string item_json = 19;
+  string alarm_id = 18 [json_name = "alarmId"];
+  string item_json = 19 [json_name = "itemJson"];
 
   // 确认信息。
-  int32 acked = 20;
-  int64 acked_at = 21;
-  string acked_by = 22;
+  int32 acked = 20 [json_name = "acked"];
+  int64 acked_at = 21 [json_name = "ackedAt"];
+  string acked_by = 22 [json_name = "ackedBy"];
 
   // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
-  string reported_at = 23;
+  string reported_at = 23 [json_name = "reportedAt"];
 }
 
 // ListHmsAlertsReq 查询 HMS 告警请求。
 message ListHmsAlertsReq {
   // page 页码，从 1 开始。
-  int64 page = 1;
+  int64 page = 1 [json_name = "page"];
   // page_size 每页条数，默认由服务端兜底。
-  int64 page_size = 2;
-  string gateway_sn = 3;
+  int64 page_size = 2 [json_name = "pageSize"];
+  string gateway_sn = 3 [json_name = "gatewaySn"];
   // level 告警等级过滤，0: 全部，其余值按大疆 HMS level 过滤。
-  int32 level = 4;
+  int32 level = 4 [json_name = "level"];
   // acked_status 确认状态过滤，-1: 全部，0: 未确认，1: 已确认。
-  int32 acked_status = 5;
+  int32 acked_status = 5 [json_name = "ackedStatus"];
 }
 
 // ListHmsAlertsRes 查询 HMS 告警响应。
 message ListHmsAlertsRes {
   // total 当前过滤条件下的总数量，不受 page/page_size 限制。
-  int64 total = 1;
+  int64 total = 1 [json_name = "total"];
   // list 当前页 HMS 告警列表。
-  repeated HmsAlertInfo list = 2;
+  repeated HmsAlertInfo list = 2 [json_name = "list"];
 }
 
 // AckHmsAlertReq 确认 HMS 告警请求。
 message AckHmsAlertReq {
-  string id = 1;
-  string acked_by = 2;
+  string id = 1 [json_name = "id"];
+  string acked_by = 2 [json_name = "ackedBy"];
 }
 
 // AckHmsAlertRes 确认 HMS 告警响应。
@@ -1776,40 +1776,40 @@ message AckHmsAlertRes {}
 
 // FlightTaskProgressInfo 飞行任务进度推送记录。
 message FlightTaskProgressInfo {
-  string id = 1;
-  string flight_id = 2;
-  string gateway_sn = 3;
-  int32 wayline_mission_state = 4;
-  int32 current_waypoint_index = 5;
-  int32 media_count = 6;
-  double progress_percent = 7;
-  string ext_json = 8;
+  string id = 1 [json_name = "id"];
+  string flight_id = 2 [json_name = "flightId"];
+  string gateway_sn = 3 [json_name = "gatewaySn"];
+  int32 wayline_mission_state = 4 [json_name = "waylineMissionState"];
+  int32 current_waypoint_index = 5 [json_name = "currentWaypointIndex"];
+  int32 media_count = 6 [json_name = "mediaCount"];
+  double progress_percent = 7 [json_name = "progressPercent"];
+  string ext_json = 8 [json_name = "extJson"];
   // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
-  string reported_at = 9;
-  string status = 10;
-  int32 current_step = 11;
-  string track_id = 12;
-  int32 wayline_id = 13;
-  string break_point_json = 14;
-  string raw_json = 15;
+  string reported_at = 9 [json_name = "reportedAt"];
+  string status = 10 [json_name = "status"];
+  int32 current_step = 11 [json_name = "currentStep"];
+  string track_id = 12 [json_name = "trackId"];
+  int32 wayline_id = 13 [json_name = "waylineId"];
+  string break_point_json = 14 [json_name = "breakPointJson"];
+  string raw_json = 15 [json_name = "rawJson"];
 }
 
 // ListFlightTaskProgressReq 查询飞行任务进度推送记录请求。
 message ListFlightTaskProgressReq {
   // page 页码，从 1 开始。
-  int64 page = 1;
+  int64 page = 1 [json_name = "page"];
   // page_size 每页条数，默认由服务端兜底。
-  int64 page_size = 2;
-  string gateway_sn = 3;
-  string flight_id = 4;
+  int64 page_size = 2 [json_name = "pageSize"];
+  string gateway_sn = 3 [json_name = "gatewaySn"];
+  string flight_id = 4 [json_name = "flightId"];
 }
 
 // ListFlightTaskProgressRes 查询飞行任务进度推送记录响应。
 message ListFlightTaskProgressRes {
   // total 当前过滤条件下的总数量，不受 page/page_size 限制。
-  int64 total = 1;
+  int64 total = 1 [json_name = "total"];
   // list 当前页飞行任务进度推送记录列表。
-  repeated FlightTaskProgressInfo list = 2;
+  repeated FlightTaskProgressInfo list = 2 [json_name = "list"];
 }
 
 // GetFlightTaskProgressLastReq 查询最近一次航线进度请求。
@@ -1818,11 +1818,11 @@ message GetFlightTaskProgressLastReq { string device_sn = 1; }
 // GetFlightTaskProgressLastRes 查询最近一次航线任务进度响应。
 message GetFlightTaskProgressLastRes {
   // has_progress 是否已有进度记录。
-  bool has_progress = 1;
+  bool has_progress = 1 [json_name = "hasProgress"];
   // reported_at 设备上报时间，UTC+8 格式：YYYY-MM-DD HH:mm:ss.SSSSSS。
-  string reported_at = 2;
+  string reported_at = 2 [json_name = "reportedAt"];
   // progress_json flighttask_progress 原始扩展数据 JSON；无记录时为空。
-  string progress_json = 3;
+  string progress_json = 3 [json_name = "progressJson"];
 }
 
 // QueryDrcStatusReq 查询 DRC 运行状态请求。
@@ -1831,15 +1831,15 @@ message QueryDrcStatusReq { string device_sn = 1; }
 // QueryDrcStatusRes 查询 DRC 运行状态响应。
 message QueryDrcStatusRes {
   // enabled DRC 模式是否已启用。
-  bool enabled = 1;
+  bool enabled = 1 [json_name = "enabled"];
   // started_at_millis DRC 模式启用时间字符串。
-  string started_at_millis = 2;
+  string started_at_millis = 2 [json_name = "startedAtMillis"];
   // last_device_heartbeat_millis 最近一次收到设备心跳的时间字符串。
-  string last_device_heartbeat_millis = 3;
+  string last_device_heartbeat_millis = 3 [json_name = "lastDeviceHeartbeatMillis"];
   // next_seq 下一个 DRC 指令序号。
-  int32 next_seq = 4;
+  int32 next_seq = 4 [json_name = "nextSeq"];
   // is_alive 设备是否存活
-  bool is_alive = 5;
+  bool is_alive = 5 [json_name = "isAlive"];
 }
 
 // ==================== 自定义飞行区（平台能力）消息 ====================
@@ -1849,126 +1849,126 @@ message QueryDrcStatusRes {
 
 // PointCoordinate WGS84 坐标点，[lng, lat] 顺序。
 message PointCoordinate {
-  double lng = 1;
-  double lat = 2;
+  double lng = 1 [json_name = "lng"];
+  double lat = 2 [json_name = "lat"];
 }
 
 // FlyRegionFeature 飞行区要素。
 // geofence_type 为 "dfence"（围栏）或 "nfz"（禁飞区），通过 geometry oneof 选择几何类型。
 message FlyRegionFeature {
-  string id = 1; // 推荐 UUID，为空时自动生成 UUID
-  string geofence_type = 2;
-  bool enable = 3;
+  string id = 1 [json_name = "id"]; // 推荐 UUID，为空时自动生成 UUID
+  string geofence_type = 2 [json_name = "geofenceType"];
+  bool enable = 3 [json_name = "enable"];
   oneof geometry {
-    FlyRegionPolygon polygon = 4;
-    FlyRegionCircle circle = 5;
+    FlyRegionPolygon polygon = 4 [json_name = "polygon"];
+    FlyRegionCircle circle = 5 [json_name = "circle"];
   }
 }
 
 // FlyRegionPolygon 多边形几何。
 message FlyRegionPolygon {
-  repeated PointCoordinate coordinates = 1;
+  repeated PointCoordinate coordinates = 1 [json_name = "coordinates"];
 }
 
 // FlyRegionCircle 圆形几何。
 message FlyRegionCircle {
-  PointCoordinate center = 1;
-  double radius = 2;
+  PointCoordinate center = 1 [json_name = "center"];
+  double radius = 2 [json_name = "radius"];
 }
 
 // SubmitCustomFlyRegionReq 提交自定义飞行区请求（新增/更新）。
 message SubmitCustomFlyRegionReq {
-  string device_sn = 1;
-  string name = 2;
-  repeated FlyRegionFeature features = 3;
+  string device_sn = 1 [json_name = "deviceSn"];
+  string name = 2 [json_name = "name"];
+  repeated FlyRegionFeature features = 3 [json_name = "features"];
 }
 
 // SubmitCustomFlyRegionRes 提交自定义飞行区响应。
 // 平台处理失败通过 gRPC error 返回；DJI flight_areas_update ACK 结果通过以下字段返回。
 message SubmitCustomFlyRegionRes {
-  int32 code = 1;
-  string message = 2;
-  string tid = 3;
-  int32 reason_code = 4;
-  string file_id = 5;
+  int32 code = 1 [json_name = "code"];
+  string message = 2 [json_name = "message"];
+  string tid = 3 [json_name = "tid"];
+  int32 reason_code = 4 [json_name = "reasonCode"];
+  string file_id = 5 [json_name = "fileId"];
 }
 
 // DeleteCustomFlyRegionReq 删除自定义飞行区请求（清除该设备下所有飞行区配置）。
 message DeleteCustomFlyRegionReq {
-  string device_sn = 1;
+  string device_sn = 1 [json_name = "deviceSn"];
 }
 
 // DeleteCustomFlyRegionRes 删除自定义飞行区响应。
 // 平台处理失败通过 gRPC error 返回；DJI flight_areas_update ACK 结果通过以下字段返回。
 message DeleteCustomFlyRegionRes {
-  int32 code = 1;
-  string message = 2;
-  string tid = 3;
-  int32 reason_code = 4;
+  int32 code = 1 [json_name = "code"];
+  string message = 2 [json_name = "message"];
+  string tid = 3 [json_name = "tid"];
+  int32 reason_code = 4 [json_name = "reasonCode"];
 }
 
 // DeleteCustomFlyRegionByFileIdReq 按文件 ID 删除指定飞行区请求。
 message DeleteCustomFlyRegionByFileIdReq {
-  string file_id = 1;
+  string file_id = 1 [json_name = "fileId"];
 }
 
 // DeleteCustomFlyRegionByFileIdRes 按文件 ID 删除飞行区响应。
 // 平台处理失败通过 gRPC error 返回；DJI flight_areas_update ACK 结果通过以下字段返回。
 message DeleteCustomFlyRegionByFileIdRes {
-  int32 code = 1;
-  string message = 2;
-  string tid = 3;
-  int32 reason_code = 4;
+  int32 code = 1 [json_name = "code"];
+  string message = 2 [json_name = "message"];
+  string tid = 3 [json_name = "tid"];
+  int32 reason_code = 4 [json_name = "reasonCode"];
 }
 
 // ListFlyRegionsReq 查询飞行区配置记录请求。
 message ListFlyRegionsReq {
-  int64 page = 1;
-  int64 page_size = 2;
-  string gateway_sn = 3;
-  bool sign_url = 4; // 是否返回 OSS 签名下载地址
+  int64 page = 1 [json_name = "page"];
+  int64 page_size = 2 [json_name = "pageSize"];
+  string gateway_sn = 3 [json_name = "gatewaySn"];
+  bool sign_url = 4 [json_name = "signUrl"]; // 是否返回 OSS 签名下载地址
 }
 
 // ListFlyRegionsRes 查询飞行区配置记录响应。
 message ListFlyRegionsRes {
-  int64 total = 1;
-  repeated FlyRegionInfo list = 2;
+  int64 total = 1 [json_name = "total"];
+  repeated FlyRegionInfo list = 2 [json_name = "list"];
 }
 
 // FlyRegionInfo 飞行区配置记录。
 message FlyRegionInfo {
-  string id = 1;
-  string gateway_sn = 2;
-  string name = 3;
-  string file_id = 4;
-  string file_name = 5;
-  int64 file_size = 6;
-  string checksum = 7;
-  int64 create_time = 8;
-  string url = 9; // OSS 签名下载地址（sign_url=true 时返回）
+  string id = 1 [json_name = "id"];
+  string gateway_sn = 2 [json_name = "gatewaySn"];
+  string name = 3 [json_name = "name"];
+  string file_id = 4 [json_name = "fileId"];
+  string file_name = 5 [json_name = "fileName"];
+  int64 file_size = 6 [json_name = "fileSize"];
+  string checksum = 7 [json_name = "checksum"];
+  int64 create_time = 8 [json_name = "createTime"];
+  string url = 9 [json_name = "url"]; // OSS 签名下载地址（sign_url=true 时返回）
 }
 
 // ListFlyRegionSyncStatusReq 查询飞行区同步状态请求。
 message ListFlyRegionSyncStatusReq {
-  int64 page = 1;
-  int64 page_size = 2;
-  string gateway_sn = 3;
-  string sync_status = 4;
+  int64 page = 1 [json_name = "page"];
+  int64 page_size = 2 [json_name = "pageSize"];
+  string gateway_sn = 3 [json_name = "gatewaySn"];
+  string sync_status = 4 [json_name = "syncStatus"];
 }
 
 // ListFlyRegionSyncStatusRes 查询飞行区同步状态响应。
 message ListFlyRegionSyncStatusRes {
-  int64 total = 1;
-  repeated FlyRegionSyncStatusInfo list = 2;
+  int64 total = 1 [json_name = "total"];
+  repeated FlyRegionSyncStatusInfo list = 2 [json_name = "list"];
 }
 
 // FlyRegionSyncStatusInfo 飞行区同步状态。
 message FlyRegionSyncStatusInfo {
-  string id = 1;
-  string gateway_sn = 2;
-  string fly_region_id = 3;
-  string sync_status = 4;
-  int32 sync_reason = 5;
-  int64 create_time = 6;
-  int64 update_time = 7;
+  string id = 1 [json_name = "id"];
+  string gateway_sn = 2 [json_name = "gatewaySn"];
+  string fly_region_id = 3 [json_name = "flyRegionId"];
+  string sync_status = 4 [json_name = "syncStatus"];
+  int32 sync_reason = 5 [json_name = "syncReason"];
+  int64 create_time = 6 [json_name = "createTime"];
+  int64 update_time = 7 [json_name = "updateTime"];
 }

@@ -14,9 +14,9 @@ service BridgeKafka {
 
 // -------------------- 通用请求/响应 --------------------
 message PublishReq {
-  string topic = 1;
-  string key = 2;
-  bytes value = 3;
+  string topic = 1 [json_name = "topic"];
+  string key = 2 [json_name = "key"];
+  bytes value = 3 [json_name = "value"];
 }
 
 message PublishRes {

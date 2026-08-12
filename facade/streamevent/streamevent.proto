@@ -30,7 +30,7 @@ service StreamEvent {
 
 message ReceiveMQTTMessageReq {
   // MQTT消息 数据量大 考虑聚合
-  repeated MqttMessage messages = 1;
+  repeated MqttMessage messages = 1 [json_name = "messages"];
 }
 
 message ReceiveMQTTMessageRes {
@@ -44,9 +44,9 @@ message MqttMessage {
   // 订阅主题模板
   string topic_template = 3 [json_name = "topicTemplate"];
   // MQTT主题
-  string topic = 4;
+  string topic = 4 [json_name = "topic"];
   // 消息体
-  bytes payload = 5;
+  bytes payload = 5 [json_name = "payload"];
   // 消息发送时间
   string send_time = 6 [json_name = "sendTime"];
 }
@@ -58,7 +58,7 @@ message ReceiveWSMessageReq {
   // 消息唯一标识
   string msg_id = 2 [json_name = "msgId"];
   // 消息体
-  bytes payload = 3;
+  bytes payload = 3 [json_name = "payload"];
   // 消息发送时间
   string send_time = 4 [json_name = "sendTime"];
 }
@@ -68,7 +68,7 @@ message ReceiveWSMessageRes {
 
 message ReceiveKafkaMessageReq {
   // Kafka消息 数据量大 考虑聚合
-  repeated KafkaMessage messages = 1;
+  repeated KafkaMessage messages = 1 [json_name = "messages"];
 }
 
 message ReceiveKafkaMessageRes {
@@ -76,10 +76,10 @@ message ReceiveKafkaMessageRes {
 
 message KafkaMessage {
   string msg_id = 1 [json_name = "msgId"];
-  string topic = 2;
-  string group = 3;
-  string key = 4;
-  bytes value = 5;
+  string topic = 2 [json_name = "topic"];
+  string group = 3 [json_name = "group"];
+  string key = 4 [json_name = "key"];
+  bytes value = 5 [json_name = "value"];
   string send_time = 6 [json_name = "sendTime"];
 }
 
@@ -489,9 +489,9 @@ message UpSocketMessageReq{
   string s_id = 2 [json_name = "sId"];
   // 上行事件名。系统保留值包括:
   // __connection__、__disconnect__、__join_room_up__、__up__。
-  string event = 3;
+  string event = 3 [json_name = "event"];
   // JSON 字符串负载。结构由 event 决定, 详见 UpSocketMessageReq 注释。
-  string payload = 4;
+  string payload = 4 [json_name = "payload"];
 }
 
 message UpSocketMessageRes{
@@ -500,7 +500,7 @@ message UpSocketMessageRes{
   // - __join_room_up__: 拒绝时返回 gRPC 错误。
   // - __up__: 返回业务数据, socketgtw 包装成 SocketResp。
   // - __disconnect__: 通常为空。
-  string payload = 1;
+  string payload = 1 [json_name = "payload"];
 }
 
 message PlanPb{
@@ -516,38 +516,38 @@ message PlanPb{
   string dept_code = 105 [json_name = "deptCode"];
 
   // 自增主键ID
-  string id = 50;
+  string id = 50 [json_name = "id"];
   // 计划ID
   string plan_id = 1 [json_name = "planId"];
   // 计划名称
   string plan_name = 2 [json_name = "planName"];
   // 任务类型
-  string type = 3;
+  string type = 3 [json_name = "type"];
   // 计划组ID,用于分组管理计划任务
   string group_id = 4 [json_name = "groupId"];
   // 描述
-  string description = 5;
+  string description = 5 [json_name = "description"];
   // 规则生效开始时间
   string start_time = 6 [json_name = "startTime"];
   // 规则生效结束时间
   string end_time = 7 [json_name = "endTime"];
   // 扩展字段1
-  string ext1 = 8;
+  string ext1 = 8 [json_name = "ext1"];
   // 扩展字段2
-  string ext2 = 9;
+  string ext2 = 9 [json_name = "ext2"];
   // 扩展字段3
-  string ext3 = 10;
+  string ext3 = 10 [json_name = "ext3"];
   // 扩展字段4
-  string ext4 = 11;
+  string ext4 = 11 [json_name = "ext4"];
   // 扩展字段5
-  string ext5 = 12;
+  string ext5 = 12 [json_name = "ext5"];
 }
 
 message HandlerPlanTaskEventReq{
-  PlanPb plan = 100;
+  PlanPb plan = 100 [json_name = "plan"];
 
   // 自增主键ID
-  string id = 50;
+  string id = 50 [json_name = "id"];
   // 关联的计划主键ID
   string plan_pk = 1 [json_name = "planPk"];
   // 计划ID 全局唯一
@@ -569,7 +569,7 @@ message HandlerPlanTaskEventReq{
   // 点位id
   string point_id = 10 [json_name = "PointId"];
   // 业务负载
-  string payload = 11;
+  string payload = 11 [json_name = "payload"];
   // 计划触发时间
   string plan_trigger_time = 12 [json_name = "planTriggerTime"];
   // 上次触发时间
@@ -587,9 +587,9 @@ message HandlerPlanTaskEventRes{
   // 执行结果：completed-业务执行完成, terminated-业务终止, failed-业务执行失败, delayed-业务执行延期, ongoing-业务正在执行（未回调或部分异步）
   string exec_result = 1 [json_name = "execResult"];
   // 结果描述  可以定义自己状态码，等下次回调判断业务场景
-  string message = 2;
+  string message = 2 [json_name = "message"];
   // 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
-  string reason = 3;
+  string reason = 3 [json_name = "reason"];
   // 延期配置-默认延期5分钟：delayed,ongoing-自定义延期
   DelayConfigPb delay_config = 4 [json_name = "delayConfig"];
 }
@@ -611,7 +611,7 @@ message NotifyPlanEventReq {
   // 关联的批次ID（可选，plan完成时可为空）
   string batch_id = 4 [json_name = "batchId"];
   // 扩展字段，给未来留空间
-  map<string, string> attributes = 5;
+  map<string, string> attributes = 5 [json_name = "attributes"];
 }
 
 enum PlanEventType {
@@ -634,28 +634,28 @@ message HandleCronJobEventReq {
   // 任务名称。
   string task_name = 3 [json_name = "taskName"];
   // 调度优先级，数字越大越优先。
-  int32 priority = 4;
+  int32 priority = 4 [json_name = "priority"];
   // 创建任务时提交的业务参数 JSON。
-  string payload = 5;
+  string payload = 5 [json_name = "payload"];
   // 本次执行原计划时间，格式 yyyy-MM-dd HH:mm:ss；自动重试期间保持不变。
   string scheduled_time = 6 [json_name = "scheduledTime"];
   // 任务类型。
-  string type = 7;
+  string type = 7 [json_name = "type"];
   // 任务分组 ID。
   string group_id = 8 [json_name = "groupId"];
   // 任务描述。
-  string description = 9;
+  string description = 9 [json_name = "description"];
 
   // 扩展字段 1。
-  string ext1 = 10;
+  string ext1 = 10 [json_name = "ext1"];
   // 扩展字段 2。
-  string ext2 = 11;
+  string ext2 = 11 [json_name = "ext2"];
   // 扩展字段 3。
-  string ext3 = 12;
+  string ext3 = 12 [json_name = "ext3"];
   // 扩展字段 4。
-  string ext4 = 13;
+  string ext4 = 13 [json_name = "ext4"];
   // 扩展字段 5。
-  string ext5 = 14;
+  string ext5 = 14 [json_name = "ext5"];
 
   // 机构编码。
   string dept_code = 15 [json_name = "deptCode"];
@@ -674,7 +674,7 @@ enum CronJobReceiptPb {
 // HandleCronJobEventRes 返回 Eventstream 对本次触发的明确处理结果。
 message HandleCronJobEventRes {
   // 业务回执；UNKNOWN 不会被视为成功。
-  CronJobReceiptPb receipt = 1;
+  CronJobReceiptPb receipt = 1 [json_name = "receipt"];
   // 可选业务说明，仅用于诊断，不参与调度状态判断。
-  string message = 2;
+  string message = 2 [json_name = "message"];
 }

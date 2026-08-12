@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/crontask"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/teambition/rrule-go"
@@ -96,7 +97,11 @@ func compileSchedule(rule *trigger.PlanRulePb, startText, endText string, exclud
 	}
 
 	current := carbon.CreateFromStdTime(now, carbon.Shanghai).StartOfSecond()
-	nextRun := set.After(current.StdTime(), true)
+	querySet := set
+	if shifted := crontask.ShiftSetForQuery(set, current.StdTime()); shifted != nil {
+		querySet = shifted
+	}
+	nextRun := querySet.After(current.StdTime(), true)
 	if skipTimeFilter {
 		if previous := set.Before(current.StdTime(), true); !previous.IsZero() {
 			nextRun = previous
@@ -151,6 +156,11 @@ func ConvertToRRuleOption(planRule *trigger.PlanRulePb, startTime, endTime time.
 		Dtstart:  startTime,
 		Until:    endTime,
 		Bysecond: []int{0},
+	}
+	// INTERVAL 仅在大于 1 时显式设置：缺省 0 由 rrule-go 归一化为 1，
+	// 且序列化时不会输出 INTERVAL 段，保证存量规则的 rrule_str 不变。
+	if planRule.Interval > 1 {
+		opts.Interval = int(planRule.Interval)
 	}
 	opts.Byhour = int32sToInts(planRule.Hours)
 	opts.Byminute = int32sToInts(planRule.Minutes)

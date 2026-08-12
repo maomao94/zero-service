@@ -252,6 +252,7 @@ func (s *Scheduler) RunNow(ctx context.Context, taskCode string) (string, error)
 
 // PreviewNextRuns 返回严格晚于 after 的后续有效计划时间，并应用调度器的不可用时间过滤策略。
 // count 只统计过滤后接受的时间点；过滤器可跨过任意数量的 RRULE 候选，直到返回有效时间或零值。
+// 查询前通过 ShiftSetForQuery 将迭代起点平移到 after 附近，避免从远古 DTSTART 逐点遍历。
 // 该方法只读取任务配置，不访问 Store，也不改变任务运行状态。
 func (s *Scheduler) PreviewNextRuns(task *TaskConfig, after time.Time, count int) ([]time.Time, error) {
 	if s == nil {
@@ -263,29 +264,31 @@ func (s *Scheduler) PreviewNextRuns(task *TaskConfig, after time.Time, count int
 	if count <= 0 {
 		return []time.Time{}, nil
 	}
-
-	set, err := parseRRuleSet(task.RRuleStr)
+	set, err := parseQuerySet(task.RRuleStr, after)
 	if err != nil {
 		return nil, err
 	}
 	runs := make([]time.Time, 0, count)
-	cursor := after
+	next := set.Iterator()
 	for len(runs) < count {
-		next := set.After(cursor, false)
-		if next.IsZero() {
+		dt, ok := next()
+		if !ok {
 			break
+		}
+		if !dt.After(after) {
+			continue
 		}
 		if s.invalidTimeFilter != nil {
-			next = s.invalidTimeFilter(task, next)
+			dt = s.invalidTimeFilter(task, dt)
+			if dt.IsZero() {
+				break
+			}
 		}
-		if next.IsZero() {
-			break
-		}
-		if !next.After(cursor) {
+		if !dt.After(after) {
 			return nil, errors.New("invalid time filter returned a non-advancing time")
 		}
-		runs = append(runs, next)
-		cursor = next
+		runs = append(runs, dt)
+		after = dt
 	}
 	return runs, nil
 }
@@ -324,13 +327,14 @@ func computeNextRun(cfg *TaskConfig) (time.Time, error) {
 }
 
 // NextAfter 返回 RRULE Set 在指定时间之后的首次计划时间。
+// 查询前通过 ShiftSetForQuery 将迭代起点平移到 after 附近，避免从远古 DTSTART 逐点遍历。
 // 空规则和已耗尽规则都返回零时间；非法非空规则返回解析错误。
 func NextAfter(value string, after time.Time) (time.Time, error) {
 	if value == "" {
 		return time.Time{}, nil
 	}
 
-	set, err := parseRRuleSet(value)
+	set, err := parseQuerySet(value, after)
 	if err != nil {
 		return time.Time{}, err
 	}

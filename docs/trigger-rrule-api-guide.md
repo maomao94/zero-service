@@ -2,6 +2,8 @@
 
 本文面向 Trigger Plan 和 CronJob 对接方，说明周期规则、指定时间与排除条件如何组成同一个 RRULE Set，并给出可直接用于构造 gRPC JSON 请求的示例。RPC 字段与校验以 [`trigger.proto`](../app/trigger/trigger.proto) 为准，服务能力总览见 [Trigger 服务](./trigger.md)。
 
+> 约定：示例 JSON 一律使用 snake_case 字段名，与 proto 字段名一致（如 `task_code`、`specified_times`、`exclude_dates`）。
+
 ## 统一候选集合
 
 Plan 与 CronJob 使用同一套编译语义：
@@ -41,8 +43,8 @@ Plan 的 `rrule_str` 是创建时展开所用 Set 的审计快照，运行时由
 
 ```json
 {
-  "startTime": "2027-08-13 00:00:00",
-  "endTime": "2027-08-14 23:59:59",
+  "start_time": "2027-08-13 00:00:00",
+  "end_time": "2027-08-14 23:59:59",
   "rule": {
     "freq": 3,
     "month": [],
@@ -51,25 +53,25 @@ Plan 的 `rrule_str` 是创建时展开所用 Set 的审计快照，运行时由
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": ["2027-08-14"],
-  "specifiedTimes": ["2027-08-13 17:30:00", "2027-08-14 14:15:00"],
-  "excludedTimes": ["2027-08-13 09:00:00"]
+  "exclude_dates": ["2027-08-14"],
+  "specified_times": ["2027-08-13 17:30:00", "2027-08-14 14:15:00"],
+  "excluded_times": ["2027-08-13 09:00:00"]
 }
 ```
 
-响应同时返回最终 `planDates`、由同一个 Set 生成的 `scheduleDescription` 和完整 `rruleStr`。建议先预览再创建，但创建时仍会独立校验并编译请求。
+响应同时返回最终 `plan_dates`、由同一个 Set 生成的 `schedule_description` 和完整 `rrule_str`。建议先预览再创建，但创建时仍会独立校验并编译请求。
 
 ### 创建 `CreatePlanTask`
 
 ```json
 {
-  "planId": "demo-irregular-plan-202708",
-  "planName": "不规则指定时间计划",
+  "plan_id": "demo-irregular-plan-202708",
+  "plan_name": "不规则指定时间计划",
   "type": "demo",
-  "groupId": "rrule-guide",
+  "group_id": "rrule-guide",
   "description": "周期候选与精确时间合并示例",
-  "startTime": "2027-08-13 00:00:00",
-  "endTime": "2027-08-14 23:59:59",
+  "start_time": "2027-08-13 00:00:00",
+  "end_time": "2027-08-14 23:59:59",
   "rule": {
     "freq": 3,
     "month": [],
@@ -78,27 +80,27 @@ Plan 的 `rrule_str` 是创建时展开所用 Set 的审计快照，运行时由
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": ["2027-08-14"],
-  "intervalTime": 0,
-  "intervalType": 0,
-  "execItems": [
+  "exclude_dates": ["2027-08-14"],
+  "interval_time": 0,
+  "interval_type": 0,
+  "exec_items": [
     {
-      "itemId": "order-demo-001",
-      "itemType": "order",
-      "itemName": "示例执行项",
+      "item_id": "order-demo-001",
+      "item_type": "order",
+      "item_name": "示例执行项",
       "payload": "{\"orderId\":\"demo-001\"}",
-      "requestTimeout": 60000
+      "request_timeout": 60000
     }
   ],
-  "batchNumPrefix": "RRULE",
-  "skipTimeFilter": false,
-  "specifiedTimes": ["2027-08-13 17:30:00", "2027-08-14 14:15:00"],
-  "excludedTimes": ["2027-08-13 09:00:00"],
-  "deptCode": "DEMO"
+  "batch_num_prefix": "RRULE",
+  "skip_time_filter": false,
+  "specified_times": ["2027-08-13 17:30:00", "2027-08-14 14:15:00"],
+  "excluded_times": ["2027-08-13 09:00:00"],
+  "dept_code": "DEMO"
 }
 ```
 
-`skipTimeFilter=false` 时，创建时刻之前的最终候选会被过滤；若过滤后没有候选则创建失败。`skipTimeFilter=true` 会保留范围内的过去候选并为其创建执行项，不等于 CronJob 的“最多补一个过去计划点”。
+`skip_time_filter=false` 时，创建时刻之前的最终候选会被过滤；若过滤后没有候选则创建失败。`skip_time_filter=true` 会保留范围内的过去候选并为其创建执行项，不等于 CronJob 的“最多补一个过去计划点”。
 
 ## CronJob 精确时间生命周期
 
@@ -108,13 +110,13 @@ Plan 的 `rrule_str` 是创建时展开所用 Set 的审计快照，运行时由
 
 ```json
 {
-  "taskCode": "demo-daily-irregular-times",
-  "taskName": "每天不规则时间示例",
+  "task_code": "demo-daily-irregular-times",
+  "task_name": "每天不规则时间示例",
   "type": "demo",
-  "groupId": "rrule-guide",
+  "group_id": "rrule-guide",
   "description": "每天 09:00，并为两个日期指定加入 17:30",
-  "startTime": "2027-08-01 00:00:00",
-  "endTime": "2027-08-31 23:59:59",
+  "start_time": "2027-08-01 00:00:00",
+  "end_time": "2027-08-31 23:59:59",
   "rule": {
     "freq": 3,
     "month": [],
@@ -123,15 +125,15 @@ Plan 的 `rrule_str` 是创建时展开所用 Set 的审计快照，运行时由
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": ["2027-08-14"],
-  "specifiedTimes": ["2027-08-13 17:30:00", "2027-08-14 17:30:00"],
-  "excludedTimes": ["2027-08-13 09:00:00"],
+  "exclude_dates": ["2027-08-14"],
+  "specified_times": ["2027-08-13 17:30:00", "2027-08-14 17:30:00"],
+  "excluded_times": ["2027-08-13 09:00:00"],
   "priority": 10,
   "payload": "{\"source\":\"rrule-guide\"}",
-  "lockTimeout": 60000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 60000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
@@ -139,15 +141,15 @@ Plan 的 `rrule_str` 是创建时展开所用 Set 的审计快照，运行时由
 
 ### Update/Submit 替换或清空列表
 
-`UpdateCronJob` 和 `SubmitCronJob` 接收完整配置，列表采用替换语义。传空数组会清空已保存的精确时间列表，并重新编译 Set；省略 repeated 字段在 gRPC JSON 中也表示空列表，不是“保持原值”。例如按 `jobId` 清空两个列表：
+`UpdateCronJob` 和 `SubmitCronJob` 接收完整配置，列表采用替换语义。传空数组会清空已保存的精确时间列表，并重新编译 Set；省略 repeated 字段在 gRPC JSON 中也表示空列表，不是“保持原值”。例如按 `job_id` 清空两个列表：
 
 ```json
 {
-  "jobId": "0198-demo-cron-job-id",
-  "taskName": "每天不规则时间示例",
+  "job_id": "0198-demo-cron-job-id",
+  "task_name": "每天不规则时间示例",
   "description": "清空精确时间列表，仅保留周期规则",
-  "startTime": "2027-08-01 00:00:00",
-  "endTime": "2027-08-31 23:59:59",
+  "start_time": "2027-08-01 00:00:00",
+  "end_time": "2027-08-31 23:59:59",
   "rule": {
     "freq": 3,
     "month": [],
@@ -156,30 +158,30 @@ Plan 的 `rrule_str` 是创建时展开所用 Set 的审计快照，运行时由
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": [],
-  "specifiedTimes": [],
-  "excludedTimes": [],
+  "exclude_dates": [],
+  "specified_times": [],
+  "excluded_times": [],
   "priority": 10,
   "payload": "{\"source\":\"rrule-guide\"}",
-  "lockTimeout": 60000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false
+  "lock_timeout": 60000,
+  "max_delay": 1800,
+  "skip_time_filter": false
 }
 ```
 
-`SubmitCronJob` 使用同样的 `specifiedTimes: []` 和 `excludedTimes: []` 清空列表，但以稳定 `taskCode` 定位；已有任务保留原 `jobId`、`groupId` 和启停状态，不存在时创建。Update/Submit 会在同一事务内替换规则、两个列表和 `next_run`。只要 `scheduled_time` 非空，说明任务正在执行或重试，更新会被原子拒绝，不会部分清空列表或覆盖 lease；调用方应等待本次执行完成后重试。
+`SubmitCronJob` 使用同样的 `specified_times: []` 和 `excluded_times: []` 清空列表，但以稳定 `task_code` 定位；已有任务保留原 `job_id`、`group_id` 和启停状态，不存在时创建。Update/Submit 会在同一事务内替换规则、两个列表和 `next_run`。只要 `scheduled_time` 非空，说明任务正在执行或重试，更新会被原子拒绝，不会部分清空列表或覆盖 lease；调用方应等待本次执行完成后重试。
 
-例如按 `taskCode` 提交完整配置并清空两个列表：
+例如按 `task_code` 提交完整配置并清空两个列表：
 
 ```json
 {
-  "taskCode": "demo-daily-irregular-times",
-  "taskName": "每天不规则时间示例",
+  "task_code": "demo-daily-irregular-times",
+  "task_name": "每天不规则时间示例",
   "type": "demo",
-  "groupId": "rrule-guide",
+  "group_id": "rrule-guide",
   "description": "提交后清空精确时间列表，仅保留周期规则",
-  "startTime": "2027-08-01 00:00:00",
-  "endTime": "2027-08-31 23:59:59",
+  "start_time": "2027-08-01 00:00:00",
+  "end_time": "2027-08-31 23:59:59",
   "rule": {
     "freq": 3,
     "month": [],
@@ -188,30 +190,30 @@ Plan 的 `rrule_str` 是创建时展开所用 Set 的审计快照，运行时由
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": [],
-  "specifiedTimes": [],
-  "excludedTimes": [],
+  "exclude_dates": [],
+  "specified_times": [],
+  "excluded_times": [],
   "priority": 10,
   "payload": "{\"source\":\"submit-demo\"}",
-  "lockTimeout": 60000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 60000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
-Create、Update 和 Submit 成功响应都直接返回本次编译得到的 `nextRun`；Update/Submit 还返回最终 `jobId`、`taskCode` 和 `groupId`，不会为了组装响应再次从数据库读取旧配置。下例展示清空之前 Get/List 中单个 `CronJobPb` 的精确时间字段；清空之后两个字段均为 `[]`：
+Create、Update 和 Submit 成功响应都直接返回本次编译得到的 `next_run`；Update/Submit 还返回最终 `job_id`、`task_code` 和 `group_id`，不会为了组装响应再次从数据库读取旧配置。下例展示清空之前 Get/List 中单个 `CronJobPb` 的精确时间字段；清空之后两个字段均为 `[]`：
 
 ```json
 {
-  "jobId": "0198-demo-cron-job-id",
-  "taskCode": "demo-daily-irregular-times",
-  "taskName": "每天不规则时间示例",
+  "job_id": "0198-demo-cron-job-id",
+  "task_code": "demo-daily-irregular-times",
+  "task_name": "每天不规则时间示例",
   "status": 1,
-  "nextRun": "2027-08-01 09:00:00",
-  "groupId": "rrule-guide",
-  "specifiedTimes": ["2027-08-13 17:30:00", "2027-08-20 17:30:00"],
-  "excludedTimes": ["2027-08-13 09:00:00"]
+  "next_run": "2027-08-01 09:00:00",
+  "group_id": "rrule-guide",
+  "specified_times": ["2027-08-13 17:30:00", "2027-08-20 17:30:00"],
+  "excluded_times": ["2027-08-13 09:00:00"]
 }
 ```
 
@@ -221,7 +223,7 @@ Create、Update 和 Submit 成功响应都直接返回本次编译得到的 `nex
 
 ```json
 {
-  "jobId": "0198-demo-cron-job-id"
+  "job_id": "0198-demo-cron-job-id"
 }
 ```
 
@@ -229,15 +231,15 @@ Create、Update 和 Submit 成功响应都直接返回本次编译得到的 `nex
 
 ```json
 {
-  "pageSize": 20,
-  "pageNum": 1,
-  "taskCode": "demo-daily-irregular-times",
+  "page_size": 20,
+  "page_num": 1,
+  "task_code": "demo-daily-irregular-times",
   "status": [0, 1],
-  "groupId": "rrule-guide"
+  "group_id": "rrule-guide"
 }
 ```
 
-两者返回的 `CronJobPb` 都直接回显持久化的 `specifiedTimes` 和 `excludedTimes`；数据库用可空 JSON 文本列保存原始列表，未配置或已清空时写入 SQL `NULL`，API 统一返回空列表。`rruleStr` 与 `scheduleDescription` 来自持久化完整 Set，不会从回显列表重新推导。Preview 请求和响应示例见[预览未来计划时间](#预览未来计划时间)，其结果自然包含 RDATE 并应用精确与整日 EXDATE，且严格只读。
+两者返回的 `CronJobPb` 都直接回显持久化的 `specified_times` 和 `excluded_times`；数据库用可空 JSON 文本列保存原始列表，未配置或已清空时写入 SQL `NULL`，API 统一返回空列表。`rrule_str` 与 `schedule_description` 来自持久化完整 Set，不会从回显列表重新推导。Preview 请求和响应示例见[预览未来计划时间](#预览未来计划时间)，其结果自然包含 RDATE 并应用精确与整日 EXDATE，且严格只读。
 
 ## API 边界
 
@@ -279,12 +281,31 @@ group_id = monthly-or-friday
 | `week` | 否 | 星期过滤，`1-7` 分别表示周一至周日 |
 | `hours` | 是 | 至少一个元素，范围 `0-23` |
 | `minutes` | 是 | 至少一个元素，范围 `0-59` |
+| `interval` | 否 | 周期步进，缺省 `0` 或 `1` 表示每个周期都执行；`N>1` 表示每隔 `N` 个 `freq` 周期执行一次，相位从任务开始时间起算。例如 `{"freq":1,"day":[5],"hours":[9],"minutes":[0],"interval":3}` 表示从开始时间所在周期起每 3 个月的 5 号 09:00 执行 |
 
-Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`、`BYHOUR` 和 `BYMINUTE`，并固定加入 `BYSECOND=0`。因此所有示例都在第 0 秒执行，请求中没有秒字段。
+Trigger 会把以上字段映射为 RRULE 的 `INTERVAL`、`BYMONTH`、`BYMONTHDAY`、`BYDAY`、`BYHOUR` 和 `BYMINUTE`，并固定加入 `BYSECOND=0`。因此所有示例都在第 0 秒执行，请求中没有秒字段。
 
 `month`、`day`、`week`、`hours` 和 `minutes` 都是过滤条件。要表达全天每分钟或每小时执行，需要像下文示例一样覆盖全部小时；只传 `hours: [0]` 会把执行时间限制在 00 点。
 
-当前请求没有 `interval` 字段，不能表达“从任意开始月份起滚动每隔三个月”。“每三个月”只能按固定月份集合表达，例如每年 1、4、7、10 月执行。
+`interval` 不是"从任意位置开始滚 N 个周期"，它的步进锚定任务的 `start_time`。例如 `freq=1`（MONTHLY）、开始时间 2027 年 1 月 5 日、`interval=3` → 固定落在 1、4、7、10 月的 5 号。要表达"每年固定 1、4、7、10 月"应直接用 `freq=0`（YEARLY）的固定 `month` 集合，两者语义不同。
+
+`interval` 在各频次中的效果：
+
+| freq | interval 行为 | 注意 |
+|---|---|---|
+| YEARLY / MONTHLY / WEEKLY / DAILY | 每天/周/月/年隔 interval 个周期执行 | 直接生效，`freq=3, interval=2` = 隔天 |
+| HOURLY | 每隔 interval 个小时执行 | `minutes` 照常过滤；`minutes:[30], interval:2` = 每 2 小时的 :30 |
+| MINUTELY | 每隔 interval 个分钟**从 start_time 分钟起跳**，但 `minutes` 是必填过滤条件 | ⚠️ 步长落点**必须落在 `minutes` 列表内**，否则该步被跳过 |
+
+MINUTELY + interval 的三种实际效果（以 `start_time` 分钟为 00 为例）：
+
+| `minutes` | `interval` | 实际发生时间 | 说明 |
+|---|---|---|---|
+| `[0,10,20,30,40,50]` | `10` | 每 10 分钟：:00、:10、:20… | 步长 10 分钟的落点全在列表里 |
+| `[0]` | `10` | 每小时**仅 :00 一次** | 步长 10 分钟，但只有 :00 落在列表里，其余被丢弃 |
+| `[15]` | `10` | **空规则，永不执行** | 步长 10 分钟的落点永远是 00,10,20…，一个都不在列表里 |
+
+因此"每 N 分钟"直接用 `minutes` 列表表达，不要叠加 `interval`。
 
 ### 开始与结束时间
 
@@ -347,13 +368,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "taskCode": "demo-every-minute",
-  "taskName": "每分钟执行示例",
+  "task_code": "demo-every-minute",
+  "task_name": "每分钟执行示例",
   "type": "demo",
-  "groupId": "cron-guide",
+  "group_id": "cron-guide",
   "description": "每天每分钟第 0 秒执行",
-  "startTime": "2027-01-01 00:00:00",
-  "endTime": "2027-12-31 23:59:59",
+  "start_time": "2027-01-01 00:00:00",
+  "end_time": "2027-12-31 23:59:59",
   "rule": {
     "freq": 5,
     "month": [],
@@ -362,29 +383,29 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
     "minutes": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59]
   },
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 10,
   "payload": "{\"source\":\"cron-guide\"}",
-  "lockTimeout": 60000,
-  "maxDelay": 120,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 60000,
+  "max_delay": 120,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
 ### 每 10 分钟第 0 秒执行一次
 
-当前 API 没有 `interval`，因此使用固定分钟集合 `0,10,20,30,40,50`。
+`MINUTELY` 的 `interval` 与 `minutes` 不应叠加（原因见[规则字段](#规则字段)中 MINUTELY + interval 的说明），因此用固定分钟列表表达：
 
 ```json
 {
-  "taskCode": "demo-every-10-minutes",
-  "taskName": "每 10 分钟执行示例",
+  "task_code": "demo-every-10-minutes",
+  "task_name": "每 10 分钟执行示例",
   "type": "demo",
-  "groupId": "cron-guide",
+  "group_id": "cron-guide",
   "description": "每天每小时的 0、10、20、30、40、50 分执行",
-  "startTime": "2027-01-01 00:00:00",
-  "endTime": "2027-12-31 23:59:59",
+  "start_time": "2027-01-01 00:00:00",
+  "end_time": "2027-12-31 23:59:59",
   "rule": {
     "freq": 5,
     "month": [],
@@ -393,13 +414,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
     "minutes": [0, 10, 20, 30, 40, 50]
   },
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 10,
   "payload": "{\"source\":\"cron-guide\"}",
-  "lockTimeout": 60000,
-  "maxDelay": 300,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 60000,
+  "max_delay": 300,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
@@ -407,13 +428,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "taskCode": "demo-hourly",
-  "taskName": "每小时整点执行示例",
+  "task_code": "demo-hourly",
+  "task_name": "每小时整点执行示例",
   "type": "demo",
-  "groupId": "cron-guide",
+  "group_id": "cron-guide",
   "description": "每天每小时的 00 分 00 秒执行",
-  "startTime": "2027-01-01 00:00:00",
-  "endTime": "2027-12-31 23:59:59",
+  "start_time": "2027-01-01 00:00:00",
+  "end_time": "2027-12-31 23:59:59",
   "rule": {
     "freq": 4,
     "month": [],
@@ -422,29 +443,29 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
     "minutes": [0]
   },
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 10,
   "payload": "{\"source\":\"cron-guide\"}",
-  "lockTimeout": 60000,
-  "maxDelay": 300,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 60000,
+  "max_delay": 300,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
 ### 每年固定季度月份 1 日 09:00 执行
 
-该示例固定在每年 1、4、7、10 月执行，常用于表达当前 API 下的“每三个月”。它不是通用的滚动三个月间隔，因为请求没有 `interval` 字段。
+该示例固定在每年 1、4、7、10 月执行，不随任务开始时间变化。需要"从任务开始时间起滚动每 3 个月"时使用 `interval: 3`，见下一个示例；两者语义不同，不能混用。
 
 ```json
 {
-  "taskCode": "demo-quarter-months",
-  "taskName": "固定季度月份执行示例",
+  "task_code": "demo-quarter-months",
+  "task_name": "固定季度月份执行示例",
   "type": "demo",
-  "groupId": "cron-guide",
+  "group_id": "cron-guide",
   "description": "每年 1、4、7、10 月 1 日 09:00 执行",
-  "startTime": "2027-01-01 00:00:00",
-  "endTime": "2029-12-31 23:59:59",
+  "start_time": "2027-01-01 00:00:00",
+  "end_time": "2029-12-31 23:59:59",
   "rule": {
     "freq": 0,
     "month": [1, 4, 7, 10],
@@ -453,15 +474,49 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 20,
   "payload": "{\"reportType\":\"quarterly\"}",
-  "lockTimeout": 120000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 120000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
+
+### 每 3 个月 5 号 09:00 执行一次（10 年滚动示例）
+
+`interval: 3` 从任务开始时间所在周期起滚动步进，适合"每季度一次"且不固定日历月份的业务。下面示例跨度 10 年（2027-2036），开始时间所在月份为 1 月，因此发生在每年 1、4、7、10 月的 5 号 09:00，共 40 个候选点；若开始时间改为 2 月 5 日，则依次落在 2、5、8、11 月。
+
+```json
+{
+  "task_code": "demo-rolling-quarter-10y",
+  "task_name": "滚动每 3 个月执行示例",
+  "type": "demo",
+  "group_id": "cron-guide",
+  "description": "从 2027 年 1 月起每 3 个月 5 号 09:00 执行，共 40 次",
+  "start_time": "2027-01-05 00:00:00",
+  "end_time": "2036-12-31 23:59:59",
+  "rule": {
+    "freq": 1,
+    "month": [],
+    "day": [5],
+    "week": [],
+    "hours": [9],
+    "minutes": [0],
+    "interval": 3
+  },
+  "exclude_dates": [],
+  "priority": 20,
+  "payload": "{\"reportType\":\"rolling-quarterly\"}",
+  "lock_timeout": 120000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
+}
+```
+
+编译得到的 RRULE 为 `FREQ=MONTHLY;INTERVAL=3;BYMONTHDAY=5;BYHOUR=9;BYMINUTE=0;BYSECOND=0`，中文描述为"以开始时间为基准，按 3 个月间隔，第 5 天 09:00 执行"。候选点依次为 2027-01-05、2027-04-05、2027-07-05、2027-10-05……最后一个为 2036-10-05。`end_time` 只要覆盖范围内即可，超出最后一个完整季度不影响已生成的候选。
 
 ### 每年元旦 09:00 执行
 
@@ -469,13 +524,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "taskCode": "demo-new-year-day",
-  "taskName": "元旦固定日期任务",
+  "task_code": "demo-new-year-day",
+  "task_name": "元旦固定日期任务",
   "type": "holiday",
-  "groupId": "major-holidays",
+  "group_id": "major-holidays",
   "description": "每年 1 月 1 日 09:00 执行",
-  "startTime": "2027-01-01 00:00:00",
-  "endTime": "2126-12-31 23:59:59",
+  "start_time": "2027-01-01 00:00:00",
+  "end_time": "2126-12-31 23:59:59",
   "rule": {
     "freq": 0,
     "month": [1],
@@ -484,13 +539,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 20,
   "payload": "{\"holiday\":\"new-year-day\"}",
-  "lockTimeout": 120000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 120000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
@@ -500,13 +555,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "taskCode": "demo-national-day",
-  "taskName": "国庆固定日期任务",
+  "task_code": "demo-national-day",
+  "task_name": "国庆固定日期任务",
   "type": "holiday",
-  "groupId": "major-holidays",
+  "group_id": "major-holidays",
   "description": "每年 10 月 1 日 09:00 执行",
-  "startTime": "2027-01-01 00:00:00",
-  "endTime": "2126-12-31 23:59:59",
+  "start_time": "2027-01-01 00:00:00",
+  "end_time": "2126-12-31 23:59:59",
   "rule": {
     "freq": 0,
     "month": [10],
@@ -515,13 +570,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 20,
   "payload": "{\"holiday\":\"national-day\"}",
-  "lockTimeout": 120000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 120000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
@@ -533,13 +588,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "taskCode": "demo-major-holidays-2026-2030",
-  "taskName": "2026-2030 主要节假日任务",
+  "task_code": "demo-major-holidays-2026-2030",
+  "task_name": "2026-2030 主要节假日任务",
   "type": "holiday",
-  "groupId": "major-holidays",
+  "group_id": "major-holidays",
   "description": "2026-2030 年元旦、国庆 09:00 及当年中秋、端午 09:00 执行",
-  "startTime": "2026-01-01 00:00:00",
-  "endTime": "2030-12-31 23:59:59",
+  "start_time": "2026-01-01 00:00:00",
+  "end_time": "2030-12-31 23:59:59",
   "rule": {
     "freq": 0,
     "month": [1, 10],
@@ -548,7 +603,7 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [9],
     "minutes": [0]
   },
-  "specifiedTimes": [
+  "specified_times": [
     "2026-06-19 09:00:00",
     "2026-09-25 09:00:00",
     "2027-06-09 09:00:00",
@@ -560,13 +615,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "2030-06-05 09:00:00",
     "2030-09-12 09:00:00"
   ],
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 20,
   "payload": "{\"holidays\":[\"new-year-day\",\"national-day\",\"mid-autumn\",\"dragon-boat\"],\"years\":\"2026-2030\"}",
-  "lockTimeout": 120000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 120000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
@@ -580,13 +635,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "taskCode": "demo-mid-autumn-2027",
-  "taskName": "2027 中秋节任务",
+  "task_code": "demo-mid-autumn-2027",
+  "task_name": "2027 中秋节任务",
   "type": "holiday",
-  "groupId": "major-holidays",
+  "group_id": "major-holidays",
   "description": "按节假日数据在 2027 年中秋节 09:00 执行一次",
-  "startTime": "2027-09-15 09:00:00",
-  "endTime": "2027-09-15 09:00:00",
+  "start_time": "2027-09-15 09:00:00",
+  "end_time": "2027-09-15 09:00:00",
   "rule": {
     "freq": 3,
     "month": [],
@@ -595,13 +650,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 20,
   "payload": "{\"holiday\":\"mid-autumn\",\"year\":2027}",
-  "lockTimeout": 120000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 120000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
@@ -611,13 +666,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "taskCode": "demo-monthly-day-1",
-  "taskName": "每月 1 日执行示例",
+  "task_code": "demo-monthly-day-1",
+  "task_name": "每月 1 日执行示例",
   "type": "demo",
-  "groupId": "cron-guide",
+  "group_id": "cron-guide",
   "description": "每月 1 日 09:00 执行",
-  "startTime": "2027-01-01 00:00:00",
-  "endTime": "2028-12-31 23:59:59",
+  "start_time": "2027-01-01 00:00:00",
+  "end_time": "2028-12-31 23:59:59",
   "rule": {
     "freq": 1,
     "month": [],
@@ -626,13 +681,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 10,
   "payload": "{\"reportType\":\"monthly\"}",
-  "lockTimeout": 120000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 120000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
@@ -642,13 +697,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "taskCode": "demo-month-end",
-  "taskName": "每月最后一日执行示例",
+  "task_code": "demo-month-end",
+  "task_name": "每月最后一日执行示例",
   "type": "demo",
-  "groupId": "cron-guide",
+  "group_id": "cron-guide",
   "description": "每月最后一个日历日 23:30 执行",
-  "startTime": "2027-01-01 00:00:00",
-  "endTime": "2028-12-31 23:59:59",
+  "start_time": "2027-01-01 00:00:00",
+  "end_time": "2028-12-31 23:59:59",
   "rule": {
     "freq": 1,
     "month": [],
@@ -657,13 +712,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [23],
     "minutes": [30]
   },
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 20,
   "payload": "{\"reportType\":\"month-end\"}",
-  "lockTimeout": 120000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 120000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
@@ -671,13 +726,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "taskCode": "demo-weekdays-135",
-  "taskName": "每周一三五执行示例",
+  "task_code": "demo-weekdays-135",
+  "task_name": "每周一三五执行示例",
   "type": "demo",
-  "groupId": "cron-guide",
+  "group_id": "cron-guide",
   "description": "每周一、周三、周五 09:00 执行",
-  "startTime": "2027-01-01 00:00:00",
-  "endTime": "2027-12-31 23:59:59",
+  "start_time": "2027-01-01 00:00:00",
+  "end_time": "2027-12-31 23:59:59",
   "rule": {
     "freq": 2,
     "month": [],
@@ -686,13 +741,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 10,
   "payload": "{\"shift\":\"morning\"}",
-  "lockTimeout": 120000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 120000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
@@ -702,13 +757,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "taskCode": "demo-calendar-weekdays",
-  "taskName": "周一至周五执行示例",
+  "task_code": "demo-calendar-weekdays",
+  "task_name": "周一至周五执行示例",
   "type": "demo",
-  "groupId": "cron-guide",
+  "group_id": "cron-guide",
   "description": "每周一至周五 09:00 执行，不含法定工作日语义",
-  "startTime": "2027-01-01 00:00:00",
-  "endTime": "2027-12-31 23:59:59",
+  "start_time": "2027-01-01 00:00:00",
+  "end_time": "2027-12-31 23:59:59",
   "rule": {
     "freq": 2,
     "month": [],
@@ -717,13 +772,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 10,
   "payload": "{\"shift\":\"calendar-weekday-morning\"}",
-  "lockTimeout": 120000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 120000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
@@ -751,7 +806,8 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 | 场景 | `rule` 片段 | 说明 |
 | --- | --- | --- |
 | 每年 12 月 31 日 18:00 | `{"freq":0,"month":[12],"day":[31],"week":[],"hours":[18],"minutes":[0]}` | 只在请求生效区间内匹配 |
-| 每季度末最后一个日历日 23:00 | `{"freq":0,"month":[3,6,9,12],"day":[-1],"week":[],"hours":[23],"minutes":[0]}` | 固定选择季末月份，不是从任意锚点开始的 `interval=3`；也不是最后一个工作日 |
+| 每季度末最后一个日历日 23:00 | `{"freq":0,"month":[3,6,9,12],"day":[-1],"week":[],"hours":[23],"minutes":[0]}` | 固定选择季末月份；若要从开始时间起滚动每 3 个月，应改用 `{"freq":1,"day":[-1],"interval":3}` 形态；也不是最后一个工作日 |
+| 每 3 个月 5 号 09:00（从开始时间起算） | `{"freq":1,"month":[],"day":[5],"week":[],"hours":[9],"minutes":[0],"interval":3}` | 发生月份序列锚定任务开始时间，与固定 `month` 集合语义不同 |
 | 每月 1 日和 15 日 10:00 | `{"freq":1,"month":[],"day":[1,15],"week":[],"hours":[10],"minutes":[0]}` | 两个日期分别形成候选点 |
 | 每周六、周日 08:00 | `{"freq":2,"month":[],"day":[],"week":[6,7],"hours":[8],"minutes":[0]}` | 表示日历周末，不包含节假日判断 |
 
@@ -763,13 +819,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "taskCode": "demo-bounded-daily",
-  "taskName": "限定区间每日执行示例",
+  "task_code": "demo-bounded-daily",
+  "task_name": "限定区间每日执行示例",
   "type": "demo",
-  "groupId": "cron-guide",
+  "group_id": "cron-guide",
   "description": "2027-05-01 至 2027-05-07 每天 09:00 执行，排除 5 月 3 日",
-  "startTime": "2027-05-01 00:00:00",
-  "endTime": "2027-05-07 23:59:59",
+  "start_time": "2027-05-01 00:00:00",
+  "end_time": "2027-05-07 23:59:59",
   "rule": {
     "freq": 3,
     "month": [],
@@ -778,13 +834,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": ["2027-05-03"],
+  "exclude_dates": ["2027-05-03"],
   "priority": 10,
   "payload": "{\"campaignId\":\"demo-week\"}",
-  "lockTimeout": 120000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 120000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
@@ -794,13 +850,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "taskCode": "demo-one-time",
-  "taskName": "固定时间单次执行示例",
+  "task_code": "demo-one-time",
+  "task_name": "固定时间单次执行示例",
   "type": "demo",
-  "groupId": "cron-guide",
+  "group_id": "cron-guide",
   "description": "仅在 2027-06-18 14:30:00 执行一次",
-  "startTime": "2027-06-18 14:30:00",
-  "endTime": "2027-06-18 14:30:00",
+  "start_time": "2027-06-18 14:30:00",
+  "end_time": "2027-06-18 14:30:00",
   "rule": {
     "freq": 3,
     "month": [],
@@ -809,13 +865,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [14],
     "minutes": [30]
   },
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 10,
   "payload": "{\"action\":\"one-time-demo\"}",
-  "lockTimeout": 120000,
-  "maxDelay": 1800,
-  "skipTimeFilter": false,
-  "deptCode": "DEMO"
+  "lock_timeout": 120000,
+  "max_delay": 1800,
+  "skip_time_filter": false,
+  "dept_code": "DEMO"
 }
 ```
 
@@ -827,7 +883,7 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 | 需求 | 当前限制与处理建议 |
 | --- | --- |
-| 从任意锚点滚动每 N 天、N 小时或 N 分钟等 | 请求没有 `interval`；枚举固定月份、小时或分钟只表示固定日历位置，不等价于通用滚动间隔 |
+| 从任意锚点滚动每 N 天、周、月、年、小时 | 已支持 `interval: N`（锚定开始时间）；每 N 分钟仍用固定 `minutes` 列表（`interval` 与 `minutes` 交互见[规则字段](#规则字段)） |
 | 精确执行 N 次后停止 | 请求没有 `count`；只能用包含边界的 `end_time` 限定区间，不能保证生成数量恰为 N |
 | 直接填写序号星期，或从候选集合取第 N 个 | `week` 只接收普通星期值，没有序号或 `BYSETPOS` 字段。部分固定序号星期可改用 `day` 与 `week` 的交集表达，例如每月第一个周一使用 `day: [1,2,3,4,5,6,7]` 和 `week: [1]`；通用候选排序与选位仍不支持 |
 | 法定工作日、动态节假日、最后一个工作日 | CronJob 规则不接入动态节假日日历；`exclude_dates` 只是调用方提交的静态日期，不会识别调休工作日 |
@@ -846,13 +902,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "taskCode": "demo-create-and-catch-up",
-  "taskName": "创建后补触发示例",
+  "task_code": "demo-create-and-catch-up",
+  "task_name": "创建后补触发示例",
   "type": "demo",
-  "groupId": "cron-guide",
+  "group_id": "cron-guide",
   "description": "创建后最多补一个过去计划点，之后每天 09:00 继续执行",
-  "startTime": "2026-01-01 00:00:00",
-  "endTime": "2026-12-31 23:59:59",
+  "start_time": "2026-01-01 00:00:00",
+  "end_time": "2026-12-31 23:59:59",
   "rule": {
     "freq": 3,
     "month": [],
@@ -861,13 +917,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
     "hours": [9],
     "minutes": [0]
   },
-  "excludeDates": [],
+  "exclude_dates": [],
   "priority": 20,
   "payload": "{\"action\":\"catch-up-demo\"}",
-  "lockTimeout": 120000,
-  "maxDelay": 86400,
-  "skipTimeFilter": true,
-  "deptCode": "DEMO"
+  "lock_timeout": 120000,
+  "max_delay": 86400,
+  "skip_time_filter": true,
+  "dept_code": "DEMO"
 }
 ```
 
@@ -875,9 +931,9 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "jobId": "0198-demo-cron-job-id",
-  "nextRun": "2026-08-11 09:00:00",
-  "groupId": "cron-guide"
+  "job_id": "0198-demo-cron-job-id",
+  "next_run": "2026-08-11 09:00:00",
+  "group_id": "cron-guide"
 }
 ```
 
@@ -887,13 +943,13 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 `PreviewCronJobSchedule` 接收 `job_id` 和可选 `count`。`count` 为 `0` 时默认返回最多 10 条，显式值最大为 100；规则耗尽时 `execution_times` 为空。预览严格从请求处理时刻之后开始，禁用任务也可以查询。
 
-响应中的 `rruleStr` 是当前持久化并用于调度的完整 RRULE Set，`scheduleDescription` 和 `executionTimes` 均基于该字符串生成。预览会自然应用其中的 `DTSTART`、`UNTIL`、BY*、`RDATE` 和 `EXDATE`，不会从管理视图的 `rule`、`startTime`、`endTime`、`specifiedTimes`、`excludedTimes` 或 `excludeDates` 重新编译，也不会修改 `nextRun`、启停状态、运行历史或 lease。
+响应中的 `rrule_str` 是当前持久化并用于调度的完整 RRULE Set，`schedule_description` 和 `execution_times` 均基于该字符串生成。预览会自然应用其中的 `DTSTART`、`UNTIL`、BY*、`RDATE` 和 `EXDATE`，不会从管理视图的 `rule`、`start_time`、`end_time`、`specified_times`、`excluded_times` 或 `exclude_dates` 重新编译，也不会修改 `next_run`、启停状态、运行历史或 lease。
 
 请求示例：
 
 ```json
 {
-  "jobId": "0198-demo-cron-job-id",
+  "job_id": "0198-demo-cron-job-id",
   "count": 5
 }
 ```
@@ -902,11 +958,11 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "jobId": "0198-demo-cron-job-id",
-  "taskCode": "demo-every-minute",
-  "executionTimes": ["2026-08-11 10:01:00", "2026-08-11 10:02:00"],
-  "scheduleDescription": "按分钟生成候选，并在每分钟的 00 秒执行",
-  "rruleStr": "DTSTART;TZID=Asia/Shanghai:20260101T000000\nRRULE:FREQ=MINUTELY;UNTIL=20261231T155959Z;BYSECOND=0"
+  "job_id": "0198-demo-cron-job-id",
+  "task_code": "demo-every-minute",
+  "execution_times": ["2026-08-11 10:01:00", "2026-08-11 10:02:00"],
+  "schedule_description": "按分钟生成候选，并在每分钟的 00 秒执行",
+  "rrule_str": "DTSTART;TZID=Asia/Shanghai:20260101T000000\nRRULE:FREQ=MINUTELY;UNTIL=20261231T155959Z;BYSECOND=0"
 }
 ```
 
@@ -918,7 +974,7 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "jobId": "0198-demo-cron-job-id"
+  "job_id": "0198-demo-cron-job-id"
 }
 ```
 
@@ -926,7 +982,7 @@ Trigger 会把以上字段映射为 RRULE 的 `BYMONTH`、`BYMONTHDAY`、`BYDAY`
 
 ```json
 {
-  "traceId": "4f6f9b724a0e47f2aeb09f44df4f02de"
+  "trace_id": "4f6f9b724a0e47f2aeb09f44df4f02de"
 }
 ```
 

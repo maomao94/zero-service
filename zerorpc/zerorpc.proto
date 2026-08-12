@@ -4,17 +4,17 @@ package zerorpc;
 option go_package = "./zerorpc";
 
 message Req {
-  string ping = 1;
+  string ping = 1 [json_name = "ping"];
 }
 
 message Res {
-  string pong = 1;
+  string pong = 1 [json_name = "pong"];
 }
 
 message SendDelayTaskReq {
   string msg_id = 1 [json_name = "msgId"]; // 唯一消息 id
-  string type = 2;
-  string body = 3;
+  string type = 2 [json_name = "type"];
+  string body = 3 [json_name = "body"];
   int64 process_in = 4 [json_name = "processIn"]; // 分钟
 }
 
@@ -23,21 +23,21 @@ message SendDelayTaskRes {
 
 message ForwardTaskReq {
   string msg_id = 1 [json_name = "msgId"]; // 唯一消息 id
-  string body = 2;
+  string body = 2 [json_name = "body"];
   int64 process_in = 3 [json_name = "processIn"]; // 秒
   string trigger_time = 4 [json_name = "triggerTime"]; // 触发时间 2019-01-01 00:00:00 二选一
-  string url = 5; // 转发地址 POST json提交
+  string url = 5 [json_name = "url"]; // 转发地址 POST json提交
 }
 
 message ForwardTaskRes {
 }
 
 message SendSMSVerifyCodeReq {
-  string mobile = 1;
+  string mobile = 1 [json_name = "mobile"];
 }
 
 message SendSMSVerifyCodeRes {
-  string code = 1;
+  string code = 1 [json_name = "code"];
 }
 
 message GetRegionListReq {
@@ -45,13 +45,13 @@ message GetRegionListReq {
 }
 
 message GetRegionListRes {
-  repeated Region region = 1;
+  repeated Region region = 1 [json_name = "region"];
 }
 
 message Region {
-  string code = 1; // 区划编号
+  string code = 1 [json_name = "code"]; // 区划编号
   string parent_code = 2 [json_name = "parentCode"]; // 父区划编号
-  string name = 3; // 区划名称
+  string name = 3 [json_name = "name"]; // 区划名称
   string province_code = 4 [json_name = "provinceCode"]; // 省级区划编号
   string province_name = 5 [json_name = "provinceName"]; // 省级名称
   string city_code = 6 [json_name = "cityCode"]; // 市级区划编号
@@ -74,7 +74,7 @@ message GenerateTokenRes {
 message LoginReq{
   string auth_type = 1 [json_name = "authType"]; // miniProgram-小程序一键登录,mobile-手机号,unionId-微信unionId
   string auth_key = 2 [json_name = "authKey"]; // miniProgram-Code,mobile-验证码,unionId-sessionKey
-  string password = 3;
+  string password = 3 [json_name = "password"];
 }
 
 message LoginRes{
@@ -84,7 +84,7 @@ message LoginRes{
 }
 
 message MiniProgramLoginReq{
-  string code = 1;
+  string code = 1 [json_name = "code"];
 }
 
 message MiniProgramLoginRes{
@@ -94,30 +94,30 @@ message MiniProgramLoginRes{
 }
 
 message GetUserInfoReq {
-  string id = 1;
+  string id = 1 [json_name = "id"];
 }
 
 message GetUserInfoRes {
-  User user = 1;
+  User user = 1 [json_name = "user"];
 }
 
 message EditUserInfoReq {
-  int64 id = 1;
-  string mobile = 2;
-  string nickname = 3;
-  int64  sex = 4;
-  string avatar = 5;
+  int64 id = 1 [json_name = "id"];
+  string mobile = 2 [json_name = "mobile"];
+  string nickname = 3 [json_name = "nickname"];
+  int64  sex = 4 [json_name = "sex"];
+  string avatar = 5 [json_name = "avatar"];
 }
 
 message EditUserInfoRes {
 }
 
 message User {
-  int64 id = 1;
-  string mobile = 2;
-  string nickname = 3;
-  int64  sex = 4;
-  string avatar = 5;
+  int64 id = 1 [json_name = "id"];
+  string mobile = 2 [json_name = "mobile"];
+  string nickname = 3 [json_name = "nickname"];
+  int64  sex = 4 [json_name = "sex"];
+  string avatar = 5 [json_name = "avatar"];
   string open_id = 6 [json_name = "openId"];
 }
 
@@ -127,7 +127,7 @@ message WxPayJsApiReq {
   string mch_order_no = 3 [json_name = "mchOrderNo"]; // 商户订单号
   int64 txn_amt = 4 [json_name = "txnAmt"]; // 支付金额 分
   int64 real_amt = 5 [json_name = "realAmt"]; // 实付金额 分
-  string body = 6; // 商品描述信息
+  string body = 6 [json_name = "body"]; // 商品描述信息
   int64 user_id = 7 [json_name = "userId"]; // 用户id
 }
 

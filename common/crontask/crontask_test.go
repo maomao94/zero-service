@@ -3,12 +3,15 @@ package crontask
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/dromara/carbon/v2"
+	"github.com/teambition/rrule-go"
 )
 
 func testRRuleSet(rule string) string {
@@ -1209,5 +1212,288 @@ func TestConcurrentLockAndFetch(t *testing.T) {
 	// only one instance should have won the lock
 	if winners.Load() != 1 {
 		t.Fatalf("expected only 1 winner, got %d", winners.Load())
+	}
+}
+
+// refNextAfter 是未做起点平移的原始查询实现，作为平移后结果的差分参照。
+func refNextAfter(t *testing.T, value string, after time.Time) (time.Time, error) {
+	t.Helper()
+	set, err := parseRRuleSet(value)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return set.After(after, false), nil
+}
+
+// refPreviewRuns 是未做起点平移的原始预览实现，作为平移后结果的差分参照。
+func refPreviewRuns(t *testing.T, value string, after time.Time, count int) []time.Time {
+	t.Helper()
+	set, err := parseRRuleSet(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runs := make([]time.Time, 0, count)
+	cursor := after
+	for len(runs) < count {
+		next := set.After(cursor, false)
+		if next.IsZero() {
+			break
+		}
+		runs = append(runs, next)
+		cursor = next
+	}
+	return runs
+}
+
+func TestNextAfterMatchesOriginalAfterShift(t *testing.T) {
+	loc := time.FixedZone("UTC+8", 8*60*60)
+	now := time.Date(2026, 8, 12, 15, 17, 54, 0, loc)
+	rules := []struct {
+		name string
+		rule string
+	}{
+		{name: "daily-fixed-time", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=DAILY;BYHOUR=9;BYMINUTE=30;BYSECOND=0"},
+		{name: "daily-bymonth", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=DAILY;BYMONTH=3;BYHOUR=9;BYMINUTE=30;BYSECOND=0"},
+		{name: "weekly-byday", rule: "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=WEEKLY;BYDAY=MO,WE;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
+		{name: "weekly-default-phase", rule: "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=WEEKLY;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
+		{name: "monthly-day15", rule: "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=MONTHLY;BYMONTHDAY=15;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
+		{name: "monthly-day31", rule: "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=MONTHLY;BYMONTHDAY=31;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
+		{name: "yearly-bymonth", rule: "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=1;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
+		{name: "hourly-fixed-minute", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=HOURLY;BYMINUTE=30;BYSECOND=0"},
+		{name: "minutely-fixed-second", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093005\nRRULE:FREQ=MINUTELY;BYSECOND=0"},
+		{name: "secondly-fixed-minute", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=SECONDLY;BYMINUTE=5;BYSECOND=0"},
+		{name: "monthly-interval2", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=MONTHLY;INTERVAL=2;BYMONTHDAY=1;BYHOUR=9;BYMINUTE=30;BYSECOND=0"},
+		{name: "daily-interval3", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=DAILY;INTERVAL=3;BYHOUR=9;BYMINUTE=30;BYSECOND=0"},
+		{name: "weekly-interval2-byday", rule: "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=TH;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
+		{name: "hourly-interval2", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=HOURLY;INTERVAL=2;BYMINUTE=30;BYSECOND=0"},
+		{name: "minutely-interval5", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093005\nRRULE:FREQ=MINUTELY;INTERVAL=5;BYSECOND=0"},
+		{name: "yearly-interval2", rule: "DTSTART;TZID=Asia/Shanghai:20230101T090000\nRRULE:FREQ=YEARLY;INTERVAL=2;BYMONTH=1;BYMONTHDAY=1;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
+		{name: "rdate-exdate", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=DAILY;BYHOUR=9;BYMINUTE=30;BYSECOND=0\nRDATE;TZID=Asia/Shanghai:20260115T100000\nEXDATE;TZID=Asia/Shanghai:20260201T093000"},
+	}
+	queries := []time.Time{now, now.Add(3 * time.Hour), now.Add(30 * 24 * time.Hour)}
+	for _, tt := range rules {
+		for _, q := range queries {
+			want, err := refNextAfter(t, tt.rule, q)
+			if err != nil {
+				t.Fatalf("%s: reference query failed: %v", tt.name, err)
+			}
+			got, err := NextAfter(tt.rule, q)
+			if err != nil {
+				t.Fatalf("%s: NextAfter failed: %v", tt.name, err)
+			}
+			if !got.Equal(want) {
+				t.Errorf("%s: NextAfter(%v) = %v, want %v", tt.name, q.Format("2006-01-02 15:04:05"), got, want)
+			}
+		}
+	}
+}
+
+func TestPreviewNextRunsMatchesOriginalAfterShift(t *testing.T) {
+	loc := time.FixedZone("UTC+8", 8*60*60)
+	now := time.Date(2026, 8, 12, 15, 17, 54, 0, loc)
+	rule := "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=DAILY;BYHOUR=9;BYMINUTE=30;BYSECOND=0\nRDATE;TZID=Asia/Shanghai:20260115T100000\nEXDATE;TZID=Asia/Shanghai:20260201T093000"
+	want := refPreviewRuns(t, rule, now, 5)
+	got, err := NewScheduler(nil, nil).PreviewNextRuns(&TaskConfig{RRuleStr: rule}, now, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != len(want) {
+		t.Fatalf("runs = %v, want %v", got, want)
+	}
+	for i := range want {
+		if !got[i].Equal(want[i]) {
+			t.Fatalf("runs[%d] = %v, want %v", i, got[i], want[i])
+		}
+	}
+}
+
+func TestPreviewNextRunsUserRuleLongGapIsCorrect(t *testing.T) {
+	hours := make([]string, 24)
+	for i := range hours {
+		hours[i] = fmtInt(i)
+	}
+	minutes := make([]string, 60)
+	for i := range minutes {
+		minutes[i] = fmtInt(i)
+	}
+	rule := "DTSTART;TZID=Asia/Shanghai:20200101T000000\nRRULE:FREQ=MINUTELY;UNTIL=20391231T155959Z;BYHOUR=" +
+		strings.Join(hours, ",") + ";BYMINUTE=" + strings.Join(minutes, ",") + ";BYSECOND=0"
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 8, 12, 15, 17, 54, 0, loc)
+
+	// 全时段显式规则无相位依赖，用 DTSTART 贴近查询点的同构规则作为正确性参照。
+	refRule := strings.Replace(rule, "20200101T000000", "20260701T000000", 1)
+	want := refPreviewRuns(t, refRule, now, 10)
+
+	started := time.Now()
+	got, err := NewScheduler(nil, nil).PreviewNextRuns(&TaskConfig{RRuleStr: rule}, now, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if elapsed := time.Since(started); elapsed > 2*time.Second {
+		t.Errorf("preview of every-minute rule took %v, want < 2s (before fix: ~13s)", elapsed)
+	}
+	if len(got) != len(want) {
+		t.Fatalf("runs = %v, want %v", got, want)
+	}
+	for i := range want {
+		if !got[i].Equal(want[i]) {
+			t.Fatalf("runs[%d] = %v, want %v", i, got[i], want[i])
+		}
+	}
+}
+
+func fmtInt(v int) string {
+	return fmt.Sprintf("%d", v)
+}
+
+func TestShiftSetForQueryFallbackRules(t *testing.T) {
+	after := time.Date(2026, 8, 12, 0, 0, 0, 0, time.UTC)
+	stringRules := []string{
+		"DTSTART:20260101T090000Z\nRRULE:FREQ=DAILY;COUNT=3;BYHOUR=9",
+		"DTSTART:20260101T090000Z\nRRULE:FREQ=YEARLY;BYWEEKNO=1;BYDAY=MO",
+		"DTSTART:20260101T090000Z\nRRULE:FREQ=YEARLY;BYYEARDAY=1",
+	}
+	for _, rule := range stringRules {
+		set, err := parseRRuleSet(rule)
+		if err != nil {
+			t.Fatalf("parse %q: %v", rule, err)
+		}
+		if shifted := ShiftSetForQuery(set, after); shifted != nil {
+			t.Errorf("rule %q must fall back to original set", rule)
+		}
+		want, err := refNextAfter(t, rule, after)
+		if err != nil {
+			t.Fatalf("reference query failed for %q: %v", rule, err)
+		}
+		got, err := NextAfter(rule, after)
+		if err != nil {
+			t.Fatalf("NextAfter failed for %q: %v", rule, err)
+		}
+		if !got.Equal(want) {
+			t.Errorf("rule %q: NextAfter = %v, want %v", rule, got, want)
+		}
+	}
+
+	dtstart := time.Date(2026, 1, 1, 9, 0, 0, 0, time.UTC)
+	optionRules := []rrule.ROption{
+		{Freq: rrule.MONTHLY, Dtstart: dtstart, Bymonthday: []int{1, 15}, Bysetpos: []int{1}},
+		{Freq: rrule.YEARLY, Dtstart: dtstart, Byeaster: []int{1}},
+	}
+	for _, option := range optionRules {
+		rule, err := rrule.NewRRule(option)
+		if err != nil {
+			t.Fatalf("build rule %v: %v", option, err)
+		}
+		set := &rrule.Set{}
+		set.RRule(rule)
+		if shifted := ShiftSetForQuery(set, after); shifted != nil {
+			t.Errorf("option %v must fall back to original set", option)
+		}
+	}
+}
+
+func TestShiftSetForQueryNearDtStartIsCorrect(t *testing.T) {
+	// DTSTART 与查询点同在一个周期内：无需平移，行为与原始一致。
+	after := time.Date(2026, 8, 12, 10, 15, 0, 0, time.UTC)
+	rule := "DTSTART:20260812T093000Z\nRRULE:FREQ=HOURLY;BYMINUTE=0"
+	set, err := parseRRuleSet(rule)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if shifted := ShiftSetForQuery(set, after); shifted != nil {
+		t.Fatalf("DTSTART within one period must not be shifted, got %v", shifted.GetDTStart())
+	}
+	want, err := refNextAfter(t, rule, after)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := NextAfter(rule, after)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.Equal(want) {
+		t.Fatalf("NextAfter = %v, want %v", got, want)
+	}
+
+	// anchor 恰好落在查询点上的平移也必须保持结果一致。
+	after = time.Date(2026, 8, 12, 10, 0, 0, 0, time.UTC)
+	rule = "DTSTART:20260812T090000Z\nRRULE:FREQ=HOURLY;BYMINUTE=0"
+	want, err = refNextAfter(t, rule, after)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err = NextAfter(rule, after)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.Equal(want) {
+		t.Fatalf("NextAfter = %v, want %v", got, want)
+	}
+}
+
+func TestNextAfterAcrossFallBackDSTMatchesReference(t *testing.T) {
+	loc, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		t.Skipf("location unavailable: %v", err)
+	}
+	// 2026-11-01 02:00 EDT 回拨到 01:00 EST：跨回拨边界的 duration 加法平移
+	// 可能让锚点墙钟与查询点重合，结果必须与原始集一致。
+	rules := []struct {
+		name string
+		rule string
+	}{
+		{name: "hourly", rule: "DTSTART;TZID=America/New_York:20261030T090000\nRRULE:FREQ=HOURLY;BYMINUTE=0;BYSECOND=0"},
+		{name: "minutely", rule: "DTSTART;TZID=America/New_York:20261030T090000\nRRULE:FREQ=MINUTELY;BYSECOND=0"},
+	}
+	queries := []time.Time{
+		time.Date(2026, 11, 2, 9, 0, 0, 0, loc),
+		time.Date(2026, 11, 2, 9, 30, 0, 0, loc),
+		time.Date(2026, 11, 1, 5, 30, 0, 0, loc),
+	}
+	for _, tt := range rules {
+		for _, q := range queries {
+			want, err := refNextAfter(t, tt.rule, q)
+			if err != nil {
+				t.Fatalf("%s: reference query failed: %v", tt.name, err)
+			}
+			got, err := NextAfter(tt.rule, q)
+			if err != nil {
+				t.Fatalf("%s: NextAfter failed: %v", tt.name, err)
+			}
+			if !got.Equal(want) {
+				t.Errorf("%s: NextAfter(%v) = %v, want %v", tt.name, q.Format("2006-01-02 15:04:05 MST"), got, want)
+			}
+		}
+	}
+}
+
+func TestNextRunsMatchesReference(t *testing.T) {
+	loc := time.FixedZone("UTC+8", 8*60*60)
+	now := time.Date(2026, 8, 12, 15, 17, 54, 0, loc)
+	rule := "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=DAILY;BYHOUR=9;BYMINUTE=30;BYSECOND=0\nRDATE;TZID=Asia/Shanghai:20260115T100000\nEXDATE;TZID=Asia/Shanghai:20260201T093000"
+
+	want := refPreviewRuns(t, rule, now, 7)
+	got, err := NextRuns(rule, now, 7)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != len(want) {
+		t.Fatalf("runs = %v, want %v", got, want)
+	}
+	for i := range want {
+		if !got[i].Equal(want[i]) {
+			t.Fatalf("runs[%d] = %v, want %v", i, got[i], want[i])
+		}
+	}
+
+	if runs, err := NextRuns(rule, now, 0); err != nil || len(runs) != 0 {
+		t.Fatalf("NextRuns count=0 = %v, %v; want empty, nil", runs, err)
+	}
+	if _, err := NextRuns("", now, 5); err == nil {
+		t.Fatal("NextRuns must reject empty rule")
 	}
 }

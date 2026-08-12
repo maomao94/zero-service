@@ -26,6 +26,9 @@ message PlanPb {
 ```
 
 - **关键属性**：`snake_case` → `CamelCase` 与 `camelCase` → `CamelCase` 生成相同的 Go struct 字段名，因此 `msg_id` 和 `msgId` 都生成 `MsgId`，Go 调用方无需修改。
+- **json_name 全量显式化**：一方 proto 的所有字段必须显式带 `[json_name = "..."]`（2026-08 已覆盖全部 24 个文件，2580 个字段）。新增字段时同步补 tag，缺 tag 即视为契约不完整。
+- **已知历史偏差（保留不动）**：`app/file/file.proto` `thumb_name → "ThumbName"`、`app/lalproxy/lalproxy.proto` `webUiVersion → "WebUiVersion"`、`facade/streamevent/streamevent.proto` `point_id → "PointId"` 三处 json_name 与 lowerCamelCase 约定不一致，但已固化在线上 descriptor/swagger 中属 wire 契约，**不得"顺手修正"**；确需修正须按破坏性变更走单独任务。
+- **protoc ToJsonName 语义**：删除字段名中所有 `_` 并将其后字母大写（含数字前，如 `data_2nd` → `data2nd`）；以"重生成 Go 代码后 diff 为空"作为 json_name 与默认值一致的最终验证手段。
 
 ## Proto JSON 序列化规则
 

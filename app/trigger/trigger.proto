@@ -165,125 +165,125 @@ enum ExecItemStatusPb {
 
 message TaskInfoPb {
   // ID is the identifier of the task.
-  string id = 1;
+  string id = 1 [json_name = "id"];
   // Queue is the name of the queue in which the task belongs.
-  string queue = 2;
+  string queue = 2 [json_name = "queue"];
   // Type is the type name of the task.
-  string type = 3;
+  string type = 3 [json_name = "type"];
   // Payload is the payload data of the task.
-  string payload = 4;
+  string payload = 4 [json_name = "payload"];
   // State indicates the task state.
-  int32 state = 5; // 建议配合 enum TaskState 使用
+  int32 state = 5 [json_name = "state"]; // 建议配合 enum TaskState 使用
   // MaxRetry is the maximum number of times the task can be retried.
-  int32 max_retry = 6;
+  int32 max_retry = 6 [json_name = "maxRetry"];
   // Retried is the number of times the task has retried so far.
-  int32 retried = 7;
+  int32 retried = 7 [json_name = "retried"];
   // LastErr is the error message from the last failure.
-  string last_err = 8;
+  string last_err = 8 [json_name = "lastErr"];
   // LastFailedAt is the time of the last failure.
-  string last_failed_at = 9;
+  string last_failed_at = 9 [json_name = "lastFailedAt"];
   // Timeout is the duration the task can be processed before being retried.
-  int64 timeout = 10; // 使用秒为单位的 duration
+  int64 timeout = 10 [json_name = "timeout"]; // 使用秒为单位的 duration
   // Deadline is the deadline for the task.
-  string deadline = 11;
+  string deadline = 11 [json_name = "deadline"];
   // Group is the name of the group in which the task belongs.
-  string group = 12;
+  string group = 12 [json_name = "group"];
   // NextProcessAt is the time the task is scheduled to be processed.
-  string next_process_at = 13;
+  string next_process_at = 13 [json_name = "nextProcessAt"];
   // IsOrphaned indicates if the task is left in active state with no worker.
-  bool is_orphaned = 14;
+  bool is_orphaned = 14 [json_name = "isOrphaned"];
   // Retention is duration of the retention period.
-  int64 retention = 15; // 使用秒为单位的 duration
+  int64 retention = 15 [json_name = "retention"]; // 使用秒为单位的 duration
   // CompletedAt is the time when the task is processed successfully.
-  string completed_at = 16; // 或 google.protobuf.Timestamp
+  string completed_at = 16 [json_name = "completedAt"]; // 或 google.protobuf.Timestamp
   // Result holds the result data associated with the task.
-  string result = 17;
+  string result = 17 [json_name = "result"];
 }
 
 message DailyStatsPb {
   // Name of the queue.
-  string queue = 1;
+  string queue = 1 [json_name = "queue"];
   // Total number of tasks being processed during the given date.
   // The number includes both succeeded and failed tasks.
-  int64 processed = 2;
+  int64 processed = 2 [json_name = "processed"];
   // Total number of tasks failed to be processed during the given date.
-  int64 failed = 3;
+  int64 failed = 3 [json_name = "failed"];
   // Date this stats was taken.
-  string date = 4;
+  string date = 4 [json_name = "date"];
 }
 
 message QueueInfoPb {
   // Name of the queue.
-  string queue = 1;
+  string queue = 1 [json_name = "queue"];
   // Total number of bytes that the queue and its tasks require to be stored in redis.
   // It is an approximate memory usage value in bytes since the value is computed by sampling.
-  int64 memory_usage = 2;
+  int64 memory_usage = 2 [json_name = "memoryUsage"];
   // Latency of the queue, measured by the oldest pending task in the queue.
-  string latency = 3;
+  string latency = 3 [json_name = "latency"];
   // Size is the total number of tasks in the queue.
   // The value is the sum of Pending, Active, Scheduled, Retry, Aggregating and Archived.
-  int64 size = 4;
+  int64 size = 4 [json_name = "size"];
   // Groups is the total number of groups in the queue.
-  int64 groups = 5;
+  int64 groups = 5 [json_name = "groups"];
   // Number of pending tasks.
-  int64 pending = 6;
+  int64 pending = 6 [json_name = "pending"];
   // Number of active tasks.
-  int64 active = 7;
+  int64 active = 7 [json_name = "active"];
   // Number of scheduled tasks.
-  int64 scheduled = 8;
+  int64 scheduled = 8 [json_name = "scheduled"];
   // Number of retry tasks.
-  int64 retry = 9;
+  int64 retry = 9 [json_name = "retry"];
   // Number of archived tasks.
-  int64 archived = 10;
+  int64 archived = 10 [json_name = "archived"];
   // Number of stored completed tasks.
-  int64 completed = 11;
+  int64 completed = 11 [json_name = "completed"];
   // Number of aggregating tasks.
-  int64 aggregating = 12;
+  int64 aggregating = 12 [json_name = "aggregating"];
   // Total number of tasks being processed within the given date (counter resets daily).
   // The number includes both succeeded and failed tasks.
-  int64 processed = 13;
+  int64 processed = 13 [json_name = "processed"];
   // Total number of tasks failed to be processed within the given date (counter resets daily).
-  int64 failed = 14;
+  int64 failed = 14 [json_name = "failed"];
   // Total number of tasks processed (cumulative).
-  int64 processed_total = 15;
+  int64 processed_total = 15 [json_name = "processedTotal"];
   // Total number of tasks failed (cumulative).
-  int64 failed_total = 16;
+  int64 failed_total = 16 [json_name = "failedTotal"];
   // Paused indicates whether the queue is paused.
   // If true, tasks in the queue will not be processed.
-  bool paused = 17;
+  bool paused = 17 [json_name = "paused"];
   // Time when this queue info snapshot was taken.
-  string timestamp = 18;
+  string timestamp = 18 [json_name = "timestamp"];
 }
 
 message SendTriggerReq {
   // 秒
-  uint64 process_in = 1;
+  uint64 process_in = 1 [json_name = "processIn"];
   // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
-  string trigger_time = 2;
+  string trigger_time = 2 [json_name = "triggerTime"];
   // POST json提交 不可为空
-  string url = 3;
+  string url = 3 [json_name = "url"];
   // 重试次数 可为空 默认: 25
-  int64 max_retry = 4;
+  int64 max_retry = 4 [json_name = "maxRetry"];
   // 唯一消息 id 可为空
-  string msg_id = 5;
+  string msg_id = 5 [json_name = "msgId"];
   // 触发内容，可为空
-  string body = 6;
+  string body = 6 [json_name = "body"];
 }
 
 message SendTriggerRes {
   // 唯一追踪 id
-  string trace_id = 1;
+  string trace_id = 1 [json_name = "traceId"];
   // Queue is the name of the queue in which the task belongs.
-  string queue = 2;
+  string queue = 2 [json_name = "queue"];
   // ID is the identifier of the task.
-  string id = 3;
+  string id = 3 [json_name = "id"];
 }
 
 message SendProtoTriggerReq {
   // 秒
-  uint64 process_in = 1;
+  uint64 process_in = 1 [json_name = "processIn"];
   // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
-  string trigger_time = 2;
+  string trigger_time = 2 [json_name = "triggerTime"];
   // 最大重试次数（可为空，默认 25 次）
   //
   // 任务失败后会重试，重试间隔采用指数退避策略，时间间隔随重试次数成倍增长：
@@ -301,49 +301,49 @@ message SendProtoTriggerReq {
   //   12 次及以上重试：间隔固定为 30 分钟
   //
   // 总之，重试间隔从秒级开始，逐步增长到分钟、十几分钟，最终封顶 30 分钟。
-  int64 max_retry = 3;
+  int64 max_retry = 3 [json_name = "maxRetry"];
   // 唯一消息 id 可为空
-  string msg_id = 4;
+  string msg_id = 4 [json_name = "msgId"];
   // 服务名称 不可为空 示例 127.0.0.1:8080 direct:///127.0.0.1:8080,127.0.0.2:8080,nacos://nacos:nacos@127.0.0.1:8848/service?namespaceid=public&timeout=5000s
-  string grpc_server = 5;
+  string grpc_server = 5 [json_name = "grpcServer"];
   // 方法 不可为空
-  string method = 6;
+  string method = 6 [json_name = "method"];
   // pb 字节数据 不可为空
-  bytes payload = 7;
+  bytes payload = 7 [json_name = "payload"];
   // 请求超时时间 单位: 毫秒 可为空
-  int64 request_timeout = 8;
+  int64 request_timeout = 8 [json_name = "requestTimeout"];
 }
 
 message SendProtoTriggerRes {
   // 唯一追踪 id
-  string trace_id = 1;
+  string trace_id = 1 [json_name = "traceId"];
   // Queue is the name of the queue in which the task belongs.
-  string queue = 2;
+  string queue = 2 [json_name = "queue"];
   // ID is the identifier of the task.
-  string id = 3;
+  string id = 3 [json_name = "id"];
 }
 
 message QueuesReq {
 }
 
 message QueuesRes {
-  repeated string queues = 1;
+  repeated string queues = 1 [json_name = "queues"];
 }
 
 message GetQueueInfoReq {
   // Queue is the name of the queue in which the task belongs.
-  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  string queue = 1 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message GetQueueInfoRes {
-  QueueInfoPb queue_info = 1;
+  QueueInfoPb queue_info = 1 [json_name = "queueInfo"];
 }
 
 message ArchiveTaskReq {
   // Queue is the name of the queue in which the task belongs.
-  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  string queue = 1 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
   // ID is the identifier of the task.
-  string id = 2 [(validate.rules).string = {min_len: 1}];
+  string id = 2 [json_name = "id", (validate.rules).string = {min_len: 1}];
 }
 
 message ArchiveTaskRes {
@@ -351,9 +351,9 @@ message ArchiveTaskRes {
 
 message DeleteTaskReq {
   // Queue is the name of the queue in which the task belongs.
-  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  string queue = 1 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
   // ID is the identifier of the task.
-  string id = 2 [(validate.rules).string = {min_len: 1}];
+  string id = 2 [json_name = "id", (validate.rules).string = {min_len: 1}];
 }
 
 message DeleteTaskRes {
@@ -361,127 +361,127 @@ message DeleteTaskRes {
 
 message GetTaskInfoReq {
   // Queue is the name of the queue in which the task belongs.
-  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  string queue = 1 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
   // ID is the identifier of the task.
-  string id = 2 [(validate.rules).string = {min_len: 1}];
+  string id = 2 [json_name = "id", (validate.rules).string = {min_len: 1}];
 }
 
 message GetTaskInfoRes {
-  TaskInfoPb task_info = 1;
+  TaskInfoPb task_info = 1 [json_name = "taskInfo"];
 }
 
 message DeleteAllCompletedTasksReq {
   // Queue is the name of the queue in which the task belongs.
-  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  string queue = 1 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message DeleteAllCompletedTasksRes {
-  int64 count = 1;
+  int64 count = 1 [json_name = "count"];
 }
 
 message DeleteAllArchivedTasksReq {
   // Queue is the name of the queue in which the task belongs.
-  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  string queue = 1 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message DeleteAllArchivedTasksRes {
-  int64 count = 1;
+  int64 count = 1 [json_name = "count"];
 }
 
 message HistoricalStatsReq {
   // Queue is the name of the queue in which the task belongs.
-  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  string queue = 1 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
   // 天
-  uint32 n = 2 [(validate.rules).uint32 = {gte:1, lte:90}];
+  uint32 n = 2 [json_name = "n", (validate.rules).uint32 = {gte:1, lte:90}];
 }
 
 message HistoricalStatsRes {
-  repeated DailyStatsPb daily_stat = 1;
+  repeated DailyStatsPb daily_stat = 1 [json_name = "dailyStat"];
 }
 
 message ListActiveTasksReq {
-  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
-  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  int64 page_size = 1 [json_name = "pageSize", (validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [json_name = "pageNum", (validate.rules).int64 = {gte: 0, lte: 1000000}];
+  string queue = 3 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message ListActiveTasksRes {
-  QueueInfoPb queue_info = 1;
-  repeated TaskInfoPb tasks_info = 2;
+  QueueInfoPb queue_info = 1 [json_name = "queueInfo"];
+  repeated TaskInfoPb tasks_info = 2 [json_name = "tasksInfo"];
 }
 
 message ListPendingTasksReq {
-  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
-  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  int64 page_size = 1 [json_name = "pageSize", (validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [json_name = "pageNum", (validate.rules).int64 = {gte: 0, lte: 1000000}];
+  string queue = 3 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message ListPendingTasksRes {
-  QueueInfoPb queue_info = 1;
-  repeated TaskInfoPb tasks_info = 2;
+  QueueInfoPb queue_info = 1 [json_name = "queueInfo"];
+  repeated TaskInfoPb tasks_info = 2 [json_name = "tasksInfo"];
 }
 
 message ListAggregatingTasksReq {
-  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
-  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
-  string group = 4 [(validate.rules).string = {min_len: 1}];
+  int64 page_size = 1 [json_name = "pageSize", (validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [json_name = "pageNum", (validate.rules).int64 = {gte: 0, lte: 1000000}];
+  string queue = 3 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
+  string group = 4 [json_name = "group", (validate.rules).string = {min_len: 1}];
 }
 
 message ListAggregatingTasksRes {
-  QueueInfoPb queue_info = 1;
-  repeated TaskInfoPb tasks_info = 2;
+  QueueInfoPb queue_info = 1 [json_name = "queueInfo"];
+  repeated TaskInfoPb tasks_info = 2 [json_name = "tasksInfo"];
 }
 
 message ListScheduledTasksReq {
-  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
-  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  int64 page_size = 1 [json_name = "pageSize", (validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [json_name = "pageNum", (validate.rules).int64 = {gte: 0, lte: 1000000}];
+  string queue = 3 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message ListScheduledTasksRes {
-  QueueInfoPb queue_info = 1;
-  repeated TaskInfoPb tasks_info = 2;
+  QueueInfoPb queue_info = 1 [json_name = "queueInfo"];
+  repeated TaskInfoPb tasks_info = 2 [json_name = "tasksInfo"];
 }
 
 message ListRetryTasksReq {
-  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
-  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  int64 page_size = 1 [json_name = "pageSize", (validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [json_name = "pageNum", (validate.rules).int64 = {gte: 0, lte: 1000000}];
+  string queue = 3 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message ListRetryTasksRes {
-  QueueInfoPb queue_info = 1;
-  repeated TaskInfoPb tasks_info = 2;
+  QueueInfoPb queue_info = 1 [json_name = "queueInfo"];
+  repeated TaskInfoPb tasks_info = 2 [json_name = "tasksInfo"];
 }
 
 message ListArchivedTasksReq {
-  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
-  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  int64 page_size = 1 [json_name = "pageSize", (validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [json_name = "pageNum", (validate.rules).int64 = {gte: 0, lte: 1000000}];
+  string queue = 3 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message ListArchivedTasksRes {
-  QueueInfoPb queue_info = 1;
-  repeated TaskInfoPb tasks_info = 2;
+  QueueInfoPb queue_info = 1 [json_name = "queueInfo"];
+  repeated TaskInfoPb tasks_info = 2 [json_name = "tasksInfo"];
 }
 
 message ListCompletedTasksReq {
-  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
-  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
-  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  int64 page_size = 1 [json_name = "pageSize", (validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_num = 2 [json_name = "pageNum", (validate.rules).int64 = {gte: 0, lte: 1000000}];
+  string queue = 3 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
 }
 
 message ListCompletedTasksRes {
-  QueueInfoPb queue_info = 1;
-  repeated TaskInfoPb tasks_info = 2;
+  QueueInfoPb queue_info = 1 [json_name = "queueInfo"];
+  repeated TaskInfoPb tasks_info = 2 [json_name = "tasksInfo"];
 }
 
 message RunTaskReq {
   // Queue is the name of the queue in which the task belongs.
-  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  string queue = 1 [json_name = "queue", (validate.rules).string = {min_len: 1}]; // 默认 critical
   // ID is the identifier of the task.
-  string id = 2 [(validate.rules).string = {min_len: 1}];
+  string id = 2 [json_name = "id", (validate.rules).string = {min_len: 1}];
 }
 
 message RunTaskRes {
@@ -491,16 +491,16 @@ message CalcPlanTaskDateReq {
   // 规则生效开始时间
   // 不传默认本年
   // 格式：yyyy-MM-dd HH:mm:ss
-  string start_time = 1;
+  string start_time = 1 [json_name = "startTime"];
   // 规则生效结束时间
   // 不传默认本年
   // 格式：yyyy-MM-dd HH:mm:ss
-  string end_time = 2;
+  string end_time = 2 [json_name = "endTime"];
   // 计划规则项 默认 规则项 MINUTELY
-  PlanRulePb rule = 3 [(validate.rules).message = {required: true}];
+  PlanRulePb rule = 3 [json_name = "rule", (validate.rules).message = {required: true}];
   // 排除日期列表
   // 格式：yyyy-MM-dd
-  repeated string exclude_dates = 4 [(validate.rules).repeated = {items: {string: {min_len: 1}}}];
+  repeated string exclude_dates = 4 [json_name = "excludeDates", (validate.rules).repeated = {items: {string: {min_len: 1}}}];
   // 指定执行时间列表，格式：yyyy-MM-dd HH:mm:ss。
   repeated string specified_times = 5 [json_name = "specifiedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
   // 精确排除时间列表，格式：yyyy-MM-dd HH:mm:ss。
@@ -508,11 +508,11 @@ message CalcPlanTaskDateReq {
 }
 
 message CalcPlanTaskDateRes {
-  repeated string plan_dates = 1;
+  repeated string plan_dates = 1 [json_name = "planDates"];
   // 根据实际计划规则生成的简体中文描述，用于业务展示。
-  string schedule_description = 2;
+  string schedule_description = 2 [json_name = "scheduleDescription"];
   // 实际用于日期计算和持久化的 RFC 5545 RRULE Set 原文，用于排障。
-  string rrule_str = 3;
+  string rrule_str = 3 [json_name = "rruleStr"];
 }
 
 enum HolidayDayKindPb {
@@ -530,116 +530,116 @@ enum HolidayDayKindPb {
 
 message HolidayDayPb {
   // 日期，格式 yyyy-MM-dd
-  string date = 1;
+  string date = 1 [json_name = "date"];
   // 节日名称，如 国庆节、中秋国庆；普通周末/普通工作日为空
-  string name = 2;
+  string name = 2 [json_name = "name"];
   // 日期类型：holiday=假日，workday=工作日
-  string type = 3;
+  string type = 3 [json_name = "type"];
   // 日期原因
-  HolidayDayKindPb kind = 4;
+  HolidayDayKindPb kind = 4 [json_name = "kind"];
   // 日期说明
-  string note = 5;
+  string note = 5 [json_name = "note"];
   // 是否假日
-  bool is_holiday = 6;
+  bool is_holiday = 6 [json_name = "isHoliday"];
   // 是否工作日
-  bool is_workday = 7;
+  bool is_workday = 7 [json_name = "isWorkday"];
   // 是否节日当天，如春节正月初一、国庆节 10 月 1 日
-  bool is_festival_day = 8;
+  bool is_festival_day = 8 [json_name = "isFestivalDay"];
 }
 
 message HolidaySourcePb {
   // 日期，格式 yyyy-MM-dd
-  string date = 1;
+  string date = 1 [json_name = "date"];
   // 节日名称，如 国庆节、中秋国庆
-  string name = 2;
+  string name = 2 [json_name = "name"];
   // 日期类型：holiday=假日，workday=工作日
-  string type = 3;
+  string type = 3 [json_name = "type"];
   // 日期说明
-  string note = 4;
+  string note = 4 [json_name = "note"];
   // 是否节日当天，如春节正月初一、国庆节 10 月 1 日
-  bool is_festival_day = 5;
+  bool is_festival_day = 5 [json_name = "isFestivalDay"];
   // 是否启用；禁用后查询会按普通周末/工作日兜底
-  bool enabled = 6;
+  bool enabled = 6 [json_name = "enabled"];
 }
 
 message HolidayFestivalPb {
   // 年份
-  int32 year = 1;
+  int32 year = 1 [json_name = "year"];
   // 节日名称，如 国庆节、中秋国庆
-  string name = 2;
+  string name = 2 [json_name = "name"];
   // 假期开始日期，格式 yyyy-MM-dd；只按 holidayDays 计算
-  string start_date = 3;
+  string start_date = 3 [json_name = "startDate"];
   // 假期结束日期，格式 yyyy-MM-dd；只按 holidayDays 计算
-  string end_date = 4;
+  string end_date = 4 [json_name = "endDate"];
   // 假日日期列表，包含法定节假日和调休放假日
-  repeated string holiday_days = 5;
+  repeated string holiday_days = 5 [json_name = "holidayDays"];
   // 调休补班日期列表
-  repeated string makeup_workdays = 6;
+  repeated string makeup_workdays = 6 [json_name = "makeupWorkdays"];
   // 节日当天日期列表，如国庆节 10-01、春节正月初一
-  repeated string festival_days = 7;
+  repeated string festival_days = 7 [json_name = "festivalDays"];
 }
 
 message HolidayYearSummaryPb {
   // 年份
-  int32 year = 1;
+  int32 year = 1 [json_name = "year"];
   // 全年特殊假日日期列表，包含法定节假日和调休放假日
-  repeated string holiday_days = 2;
+  repeated string holiday_days = 2 [json_name = "holidayDays"];
   // 全年调休补班日期列表
-  repeated string makeup_workdays = 3;
+  repeated string makeup_workdays = 3 [json_name = "makeupWorkdays"];
   // 全年节日当天日期列表
-  repeated string festival_days = 4;
+  repeated string festival_days = 4 [json_name = "festivalDays"];
   // 全年涉及的节日名称列表，按节日首次出现时间排序
-  repeated string names = 5;
+  repeated string names = 5 [json_name = "names"];
 }
 
 message QueryHolidayReq {
   // 查询日期，格式 yyyy-MM-dd；为空时查询当天
-  string date = 1 [(validate.rules).string = {max_len: 10}];
+  string date = 1 [json_name = "date", (validate.rules).string = {max_len: 10}];
 }
 
 message QueryHolidayRes {
   // 日期查询结果
-  HolidayDayPb day = 1;
+  HolidayDayPb day = 1 [json_name = "day"];
 }
 
 message ListHolidayFestivalsReq {
   // 开始年份；不传时默认当前年
-  int32 start_year = 1 [(validate.rules).int32 = {gte: 0, lte: 9999}];
+  int32 start_year = 1 [json_name = "startYear", (validate.rules).int32 = {gte: 0, lte: 9999}];
   // 结束年份；不传时默认 startYear
-  int32 end_year = 2 [(validate.rules).int32 = {gte: 0, lte: 9999}];
+  int32 end_year = 2 [json_name = "endYear", (validate.rules).int32 = {gte: 0, lte: 9999}];
   // 节日名称，如 国庆节、中秋国庆；为空表示不过滤，组合节日支持按部分名称匹配
-  string name = 3 [(validate.rules).string = {max_len: 32}];
+  string name = 3 [json_name = "name", (validate.rules).string = {max_len: 32}];
 }
 
 message ListHolidayFestivalsRes {
   // 节日列表
-  repeated HolidayFestivalPb items = 1;
+  repeated HolidayFestivalPb items = 1 [json_name = "items"];
 }
 
 message GetHolidayFestivalReq {
   // 年份
-  int32 year = 1 [(validate.rules).int32 = {gte: 1900, lte: 9999}];
+  int32 year = 1 [json_name = "year", (validate.rules).int32 = {gte: 1900, lte: 9999}];
   // 节日名称，如 国庆节、中秋国庆；组合节日支持按部分名称匹配
-  string name = 2 [(validate.rules).string = {min_len: 1, max_len: 32}];
+  string name = 2 [json_name = "name", (validate.rules).string = {min_len: 1, max_len: 32}];
 }
 
 message GetHolidayFestivalRes {
   // 是否找到节日详情
-  bool found = 1;
+  bool found = 1 [json_name = "found"];
   // 节日详情
-  HolidayFestivalPb festival = 2;
+  HolidayFestivalPb festival = 2 [json_name = "festival"];
 }
 
 message GetHolidayYearSummaryReq {
   // 年份
-  int32 year = 1 [(validate.rules).int32 = {gte: 1900, lte: 9999}];
+  int32 year = 1 [json_name = "year", (validate.rules).int32 = {gte: 1900, lte: 9999}];
 }
 
 message GetHolidayYearSummaryRes {
   // 是否找到全年汇总
-  bool found = 1;
+  bool found = 1 [json_name = "found"];
   // 全年节假日汇总
-  HolidayYearSummaryPb summary = 2;
+  HolidayYearSummaryPb summary = 2 [json_name = "summary"];
 }
 
 message ListHolidayYearsReq {
@@ -647,34 +647,34 @@ message ListHolidayYearsReq {
 
 message ListHolidayYearsRes {
   // 已配置特殊节假日数据的年份
-  repeated int32 years = 1;
+  repeated int32 years = 1 [json_name = "years"];
 }
 
 message ListHolidaySourceReq {
   // 年份
-  int32 year = 1 [(validate.rules).int32 = {gte: 1900, lte: 9999}];
+  int32 year = 1 [json_name = "year", (validate.rules).int32 = {gte: 1900, lte: 9999}];
   // 是否包含禁用配置
-  bool include_disabled = 2;
+  bool include_disabled = 2 [json_name = "includeDisabled"];
 }
 
 message ListHolidaySourceRes {
   // 节假日源配置列表
-  repeated HolidaySourcePb items = 1;
+  repeated HolidaySourcePb items = 1 [json_name = "items"];
 }
 
 message SaveHolidaySourceReq {
   // 日期，格式 yyyy-MM-dd
-  string date = 1 [(validate.rules).string = {len: 10}];
+  string date = 1 [json_name = "date", (validate.rules).string = {len: 10}];
   // 节日名称，如 国庆节、中秋国庆
-  string name = 2 [(validate.rules).string = {min_len: 1, max_len: 32}];
+  string name = 2 [json_name = "name", (validate.rules).string = {min_len: 1, max_len: 32}];
   // 日期类型：holiday=假日，workday=工作日
-  string type = 3 [(validate.rules).string = {in: ["holiday", "workday"]}];
+  string type = 3 [json_name = "type", (validate.rules).string = {in: ["holiday", "workday"]}];
   // 日期说明
-  string note = 4 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  string note = 4 [json_name = "note", (validate.rules).string = {min_len: 1, max_len: 128}];
   // 是否节日当天，如春节正月初一、国庆节 10 月 1 日
-  bool is_festival_day = 5;
+  bool is_festival_day = 5 [json_name = "isFestivalDay"];
   // 是否启用；禁用后查询会按普通周末/工作日兜底
-  bool enabled = 6;
+  bool enabled = 6 [json_name = "enabled"];
 }
 
 message SaveHolidaySourceRes {
@@ -682,9 +682,9 @@ message SaveHolidaySourceRes {
 
 message SetHolidaySourceEnabledReq {
   // 日期，格式 yyyy-MM-dd
-  string date = 1 [(validate.rules).string = {len: 10}];
+  string date = 1 [json_name = "date", (validate.rules).string = {len: 10}];
   // 是否启用；禁用后查询会按普通周末/工作日兜底
-  bool enabled = 2;
+  bool enabled = 2 [json_name = "enabled"];
 }
 
 message SetHolidaySourceEnabledRes {
@@ -692,204 +692,207 @@ message SetHolidaySourceEnabledRes {
 
 message CreatePlanTaskReq {
   // 机构code
-  string dept_code = 101 [(validate.rules).string = {min_len: 1}];
+  string dept_code = 101 [json_name = "deptCode", (validate.rules).string = {min_len: 1}];
 
   // 计划任务ID,全局唯一
-  string plan_id = 1 [(validate.rules).string = {min_len: 1}];
+  string plan_id = 1 [json_name = "planId", (validate.rules).string = {min_len: 1}];
   // 计划任务名称
-  string plan_name = 2 [(validate.rules).string = {min_len: 1}];
+  string plan_name = 2 [json_name = "planName", (validate.rules).string = {min_len: 1}];
   // 任务类型
-  string type = 3 [(validate.rules).string = {min_len: 1}];
+  string type = 3 [json_name = "type", (validate.rules).string = {min_len: 1}];
   // 计划组ID,用于分组管理计划任务
-  string group_id = 4;
+  string group_id = 4 [json_name = "groupId"];
   // 描述
-  string description = 5 [(validate.rules).string = {max_len: 200}];
+  string description = 5 [json_name = "description", (validate.rules).string = {max_len: 200}];
   // 规则生效开始时间
   // 不传默认本年
   // 格式：yyyy-MM-dd HH:mm:ss
-  string start_time = 6;
+  string start_time = 6 [json_name = "startTime"];
   // 规则生效结束时间
   // 不传默认本年
   // 格式：yyyy-MM-dd HH:mm:ss
-  string end_time = 7;
+  string end_time = 7 [json_name = "endTime"];
   // 计划规则项 默认 规则项 MINUTELY
-  PlanRulePb rule = 8 [(validate.rules).message = {required: true}];
+  PlanRulePb rule = 8 [json_name = "rule", (validate.rules).message = {required: true}];
   // 排除日期列表
   // 格式：yyyy-MM-dd
-  repeated string exclude_dates = 9 [(validate.rules).repeated = {items: {string: {min_len: 1}}}];
+  repeated string exclude_dates = 9 [json_name = "excludeDates", (validate.rules).repeated = {items: {string: {min_len: 1}}}];
   // 间隔时间 单位: 毫秒
-  int64 interval_time = 10 [(validate.rules).int64 = {gte: 0}];
+  int64 interval_time = 10 [json_name = "intervalTime", (validate.rules).int64 = {gte: 0}];
   // 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
-  int32 interval_type = 11 [(validate.rules).int32 = {gte: 0, lte: 2}];
+  int32 interval_type = 11 [json_name = "intervalType", (validate.rules).int32 = {gte: 0, lte: 2}];
   // 计划执行项-根据规则项生成日期批次-batchId 并生成对应批次执行项-execId
-  repeated CreatePlanExecItemPb exec_items = 12 [(validate.rules).repeated = {min_items: 1}];
+  repeated CreatePlanExecItemPb exec_items = 12 [json_name = "execItems", (validate.rules).repeated = {min_items: 1}];
   // batchNum 前缀
-  string batch_num_prefix = 13;
+  string batch_num_prefix = 13 [json_name = "batchNumPrefix"];
   // 是否跳过时间过滤，用于立即执行的计划
-  bool skip_time_filter = 14;
+  bool skip_time_filter = 14 [json_name = "skipTimeFilter"];
   // 指定执行时间列表，格式：yyyy-MM-dd HH:mm:ss。
   repeated string specified_times = 15 [json_name = "specifiedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
   // 精确排除时间列表，格式：yyyy-MM-dd HH:mm:ss。
   repeated string excluded_times = 16 [json_name = "excludedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
 
   // 扩展字段
-  string ext1 = 50;
-  string ext2 = 51;
-  string ext3 = 52;
-  string ext4 = 53;
-  string ext5 = 54;
+  string ext1 = 50 [json_name = "ext1"];
+  string ext2 = 51 [json_name = "ext2"];
+  string ext3 = 52 [json_name = "ext3"];
+  string ext4 = 53 [json_name = "ext4"];
+  string ext5 = 54 [json_name = "ext5"];
 }
 
 message PlanRulePb {
   // 规则项 0-YEARLY 1-MONTHLY 2-WEEKLY 3-DAILY 4-HOURLY 5-MINUTELY
-  int32 freq = 1 [(validate.rules).int32 = {gte: 0, lte: 5}];
+  int32 freq = 1 [json_name = "freq", (validate.rules).int32 = {gte: 0, lte: 5}];
   // 月（1-12）
-  repeated int32 month = 2 [
+  repeated int32 month = 2 [json_name = "month",
     (validate.rules).repeated = {
       items: {int32: {gte: 1, lte: 12}}
     }
   ];
   // 月中的第几天（1-31 / -1 表示倒数第 1 天）
-  repeated int32 day = 3 [
+  repeated int32 day = 3 [json_name = "day",
     (validate.rules).repeated = {
       items: {int32: {gte: -31, lte: 31, not_in: [0]}}
     }
   ];
   // 星期（1-7，1=周一，7=周日）
-  repeated int32 week = 4 [
+  repeated int32 week = 4 [json_name = "week",
     (validate.rules).repeated = {
       items: {int32: {gte: 1, lte: 7}}
     }
   ];
   // 执行小时（0-23）
-  repeated int32 hours = 5 [
+  repeated int32 hours = 5 [json_name = "hours",
     (validate.rules).repeated = {
       min_items: 1,
       items: {int32: {gte: 0, lte: 23}}
     }
   ];
   // 执行分钟（0-59）
-  repeated int32 minutes = 6 [
+  repeated int32 minutes = 6 [json_name = "minutes",
     (validate.rules).repeated = {
       min_items: 1,
       items: {int32: {gte: 0, lte: 59}}
     }
   ];
+  // 周期步进：每隔 N 个 freq 周期执行一次（INTERVAL），0 或 1 表示每个周期都执行；
+  // 例如 freq=1(MONTHLY) 且 interval=3 表示从任务开始时间起每 3 个月执行
+  int32 interval = 7 [json_name = "interval"];
 }
 
 // 计划执行项创建数据模型
 message CreatePlanExecItemPb {
   // 执行项ID,业务字段,例如工单号
-  string item_id = 1 [(validate.rules).string = {min_len: 1}];
+  string item_id = 1 [json_name = "itemId", (validate.rules).string = {min_len: 1}];
   // 执行项类型,业务字段
-  string item_type = 2;
+  string item_type = 2 [json_name = "itemType"];
   // 执行项名称,业务字段
-  string item_name = 3;
+  string item_name = 3 [json_name = "itemName"];
   // 点位id,业务字段
-  string point_id = 4;
+  string point_id = 4 [json_name = "pointId"];
   // 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
-  string payload = 5;
+  string payload = 5 [json_name = "payload"];
   // 请求超时时间 单位: 毫秒 可为空
-  int64 request_timeout = 6;
+  int64 request_timeout = 6 [json_name = "requestTimeout"];
 
   // 扩展字段
-  string ext1 = 50;
-  string ext2 = 51;
-  string ext3 = 52;
-  string ext4 = 53;
-  string ext5 = 54;
+  string ext1 = 50 [json_name = "ext1"];
+  string ext2 = 51 [json_name = "ext2"];
+  string ext3 = 52 [json_name = "ext3"];
+  string ext4 = 53 [json_name = "ext4"];
+  string ext5 = 54 [json_name = "ext5"];
 }
 
 message CreatePlanTaskRes {
   // 计划主键ID
-  string id = 1;
+  string id = 1 [json_name = "id"];
   // 计划ID
-  string plan_id = 2;
+  string plan_id = 2 [json_name = "planId"];
   // 计划批次数
-  int64 batch_cnt = 3;
+  int64 batch_cnt = 3 [json_name = "batchCnt"];
   // 执行计划数
-  int64 exec_cnt = 4;
+  int64 exec_cnt = 4 [json_name = "execCnt"];
 }
 
 message PausePlanReq {
-  string id = 1;
-  string plan_id = 2;
+  string id = 1 [json_name = "id"];
+  string plan_id = 2 [json_name = "planId"];
   // 暂停原因
-  string reason = 3 [(validate.rules).string = {max_len: 200}];
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 200}];
 }
 
 message PausePlanRes {
 }
 
 message TerminatePlanReq {
-  string id = 1;
-  string plan_id = 2;
+  string id = 1 [json_name = "id"];
+  string plan_id = 2 [json_name = "planId"];
   // 终止原因
-  string reason = 3 [(validate.rules).string = {max_len: 200}];
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 200}];
 }
 
 message TerminatePlanRes {
 }
 
 message ResumePlanReq {
-  string id = 1;
-  string plan_id = 2;
+  string id = 1 [json_name = "id"];
+  string plan_id = 2 [json_name = "planId"];
 }
 
 message ResumePlanRes {
 }
 
 message PausePlanBatchReq {
-  string id = 1;
-  string batch_id = 2;
+  string id = 1 [json_name = "id"];
+  string batch_id = 2 [json_name = "batchId"];
   // 暂停原因
-  string reason = 3 [(validate.rules).string = {max_len: 200}];
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 200}];
 }
 
 message PausePlanBatchRes {
 }
 
 message TerminatePlanBatchReq {
-  string id = 1;
-  string batch_id = 2;
+  string id = 1 [json_name = "id"];
+  string batch_id = 2 [json_name = "batchId"];
   // 终止原因
-  string reason = 3 [(validate.rules).string = {max_len: 200}];
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 200}];
 }
 
 message TerminatePlanBatchRes {
 }
 
 message ResumePlanBatchReq {
-  string id = 1;
-  string batch_id = 2;
+  string id = 1 [json_name = "id"];
+  string batch_id = 2 [json_name = "batchId"];
 }
 
 message ResumePlanBatchRes {
 }
 
 message PausePlanExecItemReq {
-  string id = 1;
-  string exec_id = 2;
+  string id = 1 [json_name = "id"];
+  string exec_id = 2 [json_name = "execId"];
   // 暂停原因
-  string reason = 3 [(validate.rules).string = {max_len: 200}];
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 200}];
 }
 
 message PausePlanExecItemRes {
 }
 
 message TerminatePlanExecItemReq {
-  string id = 1;
-  string exec_id = 2;
+  string id = 1 [json_name = "id"];
+  string exec_id = 2 [json_name = "execId"];
   // 终止原因
-  string reason = 3 [(validate.rules).string = {max_len: 200}];
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 200}];
 }
 
 message TerminatePlanExecItemRes {
 }
 
 message ResumePlanExecItemReq {
-  string id = 1;
-  string exec_id = 2;
+  string id = 1 [json_name = "id"];
+  string exec_id = 2 [json_name = "execId"];
 }
 
 message ResumePlanExecItemRes {
@@ -897,8 +900,8 @@ message ResumePlanExecItemRes {
 
 // 立即执行计划项请求
 message RunPlanExecItemReq {
-  string id = 1;
-  string exec_id = 2;
+  string id = 1 [json_name = "id"];
+  string exec_id = 2 [json_name = "execId"];
 }
 
 // 立即执行计划项响应
@@ -906,439 +909,439 @@ message RunPlanExecItemRes {
 }
 
 message GetPlanReq {
-  string id = 1;
-  string plan_id = 2;
+  string id = 1 [json_name = "id"];
+  string plan_id = 2 [json_name = "planId"];
 }
 
 message GetPlanRes {
-  PlanPb plan = 1;
+  PlanPb plan = 1 [json_name = "plan"];
 }
 
 message PlanPb {
   // 创建时间
-  string create_time = 101;
+  string create_time = 101 [json_name = "createTime"];
   // 更新时间
-  string update_time = 102;
+  string update_time = 102 [json_name = "updateTime"];
   // 创建人
-  string create_user = 103;
+  string create_user = 103 [json_name = "createUser"];
   // 更新人
-  string update_user = 104;
+  string update_user = 104 [json_name = "updateUser"];
   // 机构code
-  string dept_code = 105;
+  string dept_code = 105 [json_name = "deptCode"];
 
   // UUID主键ID
-  string id = 50;
+  string id = 50 [json_name = "id"];
   // 计划ID
-  string plan_id = 1;
+  string plan_id = 1 [json_name = "planId"];
   // 计划名称
-  string plan_name = 2;
+  string plan_name = 2 [json_name = "planName"];
   // 任务类型
-  string type = 3;
+  string type = 3 [json_name = "type"];
   // 计划组ID,用于分组管理计划任务
-  string group_id = 4;
+  string group_id = 4 [json_name = "groupId"];
   // 描述
-  string description = 5;
+  string description = 5 [json_name = "description"];
   // 规则生效开始时间
-  string start_time = 6;
+  string start_time = 6 [json_name = "startTime"];
   // 规则生效结束时间
-  string end_time = 7;
+  string end_time = 7 [json_name = "endTime"];
   // 计划规则项
-  PlanRulePb rule = 8;
+  PlanRulePb rule = 8 [json_name = "rule"];
   // 状态：1-启用，2-暂停，3-终止
-  int32 status = 9;
+  int32 status = 9 [json_name = "status"];
   // 扫表标记, 0-未扫表, 1-已扫表
-  int32 scan_flg = 10;
+  int32 scan_flg = 10 [json_name = "scanFlg"];
   // 终止原因
-  string terminated_reason = 11;
+  string terminated_reason = 11 [json_name = "terminatedReason"];
   // 暂停时间
-  string paused_time = 12;
+  string paused_time = 12 [json_name = "pausedTime"];
   // 暂停原因
-  string paused_reason = 13;
+  string paused_reason = 13 [json_name = "pausedReason"];
   // 执行进度 0.00-100.00
-  float progress = 14;
+  float progress = 14 [json_name = "progress"];
   // 扩展字段1
-  string ext1 = 15;
+  string ext1 = 15 [json_name = "ext1"];
   // 扩展字段2
-  string ext2 = 16;
+  string ext2 = 16 [json_name = "ext2"];
   // 扩展字段3
-  string ext3 = 17;
+  string ext3 = 17 [json_name = "ext3"];
   // 扩展字段4
-  string ext4 = 18;
+  string ext4 = 18 [json_name = "ext4"];
   // 扩展字段5
-  string ext5 = 19;
+  string ext5 = 19 [json_name = "ext5"];
   // 创建时用于展开计划日期的 RFC 5545 RRULE Set 快照。
-  string rrule_str = 20;
+  string rrule_str = 20 [json_name = "rruleStr"];
   // 根据 RRULE Set 快照生成的简体中文描述。
-  string schedule_description = 21;
+  string schedule_description = 21 [json_name = "scheduleDescription"];
 }
 
 message ListPlansReq {
   // 分页大小
-  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_size = 1 [json_name = "pageSize", (validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码
-  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_num = 2 [json_name = "pageNum", (validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 计划ID模糊查询
-  string plan_id = 3;
+  string plan_id = 3 [json_name = "planId"];
   // 计划名称模糊查询
-  string plan_name = 4;
+  string plan_name = 4 [json_name = "planName"];
   // 状态：1-启用，2-暂停，3-终止
-  repeated int32 status = 5;
+  repeated int32 status = 5 [json_name = "status"];
   // 任务类型
-  string type = 6;
+  string type = 6 [json_name = "type"];
 }
 
 message ListPlansRes {
   // 计划列表
-  repeated PlanPb plans = 1;
+  repeated PlanPb plans = 1 [json_name = "plans"];
   // 总记录数
-  int64 total = 2;
+  int64 total = 2 [json_name = "total"];
 }
 
 message GetPlanBatchReq {
-  string id = 1;
-  string batch_id = 2;
+  string id = 1 [json_name = "id"];
+  string batch_id = 2 [json_name = "batchId"];
 }
 
 message GetPlanBatchRes {
-  PlanBatchPb plan_batch = 1;
+  PlanBatchPb plan_batch = 1 [json_name = "planBatch"];
 }
 
 message ListPlanBatchesReq {
   // 分页大小
-  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_size = 1 [json_name = "pageSize", (validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码
-  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_num = 2 [json_name = "pageNum", (validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 计划主键ID
-  string plan_pk = 3;
+  string plan_pk = 3 [json_name = "planPk"];
   // 计划ID
-  string plan_id = 4;
+  string plan_id = 4 [json_name = "planId"];
   // 批次ID
-  string batch_id = 5;
+  string batch_id = 5 [json_name = "batchId"];
   // 状态：1-启用，2-暂停，3-终止
-  repeated int32 status = 6;
+  repeated int32 status = 6 [json_name = "status"];
   // 计划类型
-  string plan_type = 7;
+  string plan_type = 7 [json_name = "planType"];
 }
 
 message ListPlanBatchesRes {
   // 批次列表
-  repeated PlanBatchPb plan_batches = 1;
+  repeated PlanBatchPb plan_batches = 1 [json_name = "planBatches"];
   // 总记录数
-  int64 total = 2;
+  int64 total = 2 [json_name = "total"];
 }
 
 message GetPlanExecItemReq {
-  string id = 1;
-  string exec_id = 2;
+  string id = 1 [json_name = "id"];
+  string exec_id = 2 [json_name = "execId"];
 }
 
 message GetPlanExecItemRes {
-  repeated PlanExecItemPb plan_exec_item = 1;
+  repeated PlanExecItemPb plan_exec_item = 1 [json_name = "planExecItem"];
 }
 
 message PlanExecItemPb {
   // 创建时间
-  string create_time = 101;
+  string create_time = 101 [json_name = "createTime"];
   // 更新时间
-  string update_time = 102;
+  string update_time = 102 [json_name = "updateTime"];
   // 创建人
-  string create_user = 103;
+  string create_user = 103 [json_name = "createUser"];
   // 更新人
-  string update_user = 104;
+  string update_user = 104 [json_name = "updateUser"];
   // 机构code
-  string dept_code = 105;
+  string dept_code = 105 [json_name = "deptCode"];
 
   // UUID主键ID
-  string id = 50;
+  string id = 50 [json_name = "id"];
   // 关联的计划主键ID
-  string plan_pk = 1;
+  string plan_pk = 1 [json_name = "planPk"];
   // 计划ID
-  string plan_id = 2;
+  string plan_id = 2 [json_name = "planId"];
   // 批主键ID
-  string batch_pk = 4;
+  string batch_pk = 4 [json_name = "batchPk"];
   // 批ID
-  string batch_id = 5;
+  string batch_id = 5 [json_name = "batchId"];
   // 执行ID 全局唯一
-  string exec_id = 6;
+  string exec_id = 6 [json_name = "execId"];
   // 执行项ID
-  string item_id = 7;
+  string item_id = 7 [json_name = "itemId"];
   // 执行项类型
-  string item_type = 8;
+  string item_type = 8 [json_name = "itemType"];
   // 执行项名称
-  string item_name = 9;
+  string item_name = 9 [json_name = "itemName"];
   // 执行项行ID
-  int64 item_row_id = 10;
+  int64 item_row_id = 10 [json_name = "itemRowId"];
   // 点位id
-  string point_id = 11;
+  string point_id = 11 [json_name = "pointId"];
   // 业务负载
-  string payload = 12;
+  string payload = 12 [json_name = "payload"];
   // 请求超时时间（毫秒）
-  int64 request_timeout = 13;
+  int64 request_timeout = 13 [json_name = "requestTimeout"];
   // 计划触发时间
-  string plan_trigger_time = 14;
+  string plan_trigger_time = 14 [json_name = "planTriggerTime"];
   // 下次触发时间
-  string next_trigger_time = 15;
+  string next_trigger_time = 15 [json_name = "nextTriggerTime"];
   // 上次触发时间
-  string last_trigger_time = 16;
+  string last_trigger_time = 16 [json_name = "lastTriggerTime"];
   // 触发次数
-  int32 trigger_count = 17;
+  int32 trigger_count = 17 [json_name = "triggerCount"];
   // 状态
-  ExecItemStatusPb status = 18;
+  ExecItemStatusPb status = 18 [json_name = "status"];
   // 上次执行结果
-  string last_result = 19;
+  string last_result = 19 [json_name = "lastResult"];
   // 上次结果描述
-  string last_message = 20;
+  string last_message = 20 [json_name = "lastMessage"];
   // 上次结果原因
-  string last_reason = 21;
+  string last_reason = 21 [json_name = "lastReason"];
   // 终止原因
-  string terminated_reason = 22;
+  string terminated_reason = 22 [json_name = "terminatedReason"];
   // 暂停时间
-  string paused_time = 23;
+  string paused_time = 23 [json_name = "pausedTime"];
   // 暂停原因
-  string paused_reason = 24;
+  string paused_reason = 24 [json_name = "pausedReason"];
   // 扩展字段1
-  string ext1 = 51;
+  string ext1 = 51 [json_name = "ext1"];
   // 扩展字段2
-  string ext2 = 52;
+  string ext2 = 52 [json_name = "ext2"];
   // 扩展字段3
-  string ext3 = 53;
+  string ext3 = 53 [json_name = "ext3"];
   // 扩展字段4
-  string ext4 = 54;
+  string ext4 = 54 [json_name = "ext4"];
   // 扩展字段5
-  string ext5 = 55;
+  string ext5 = 55 [json_name = "ext5"];
 }
 
 message ListPlanExecItemsReq {
   // 分页大小
-  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_size = 1 [json_name = "pageSize", (validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码
-  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_num = 2 [json_name = "pageNum", (validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 计划主键 id
-  string id = 3;
+  string id = 3 [json_name = "id"];
   // 执行ID（唯一索引）
-  string exec_id = 4;
+  string exec_id = 4 [json_name = "execId"];
   // 计划ID
-  string plan_id = 5;
+  string plan_id = 5 [json_name = "planId"];
   // 批ID
-  string batch_id = 6;
+  string batch_id = 6 [json_name = "batchId"];
   // 执行项ID模糊查询
-  string item_id = 7;
+  string item_id = 7 [json_name = "itemId"];
   // 执行项名称模糊查询
-  string item_name = 8;
-  repeated ExecItemStatusPb status = 9;
+  string item_name = 8 [json_name = "itemName"];
+  repeated ExecItemStatusPb status = 9 [json_name = "status"];
 }
 
 message ListPlanExecItemsRes {
   // 执行项列表
-  repeated PlanExecItemPb plan_exec_items = 1;
+  repeated PlanExecItemPb plan_exec_items = 1 [json_name = "planExecItems"];
   // 总记录数
-  int64 total = 2;
+  int64 total = 2 [json_name = "total"];
 }
 
 message GetPlanExecLogReq {
-  string id = 1 [(validate.rules).string = {min_len: 1}];
+  string id = 1 [json_name = "id", (validate.rules).string = {min_len: 1}];
 }
 
 message GetPlanExecLogRes {
-  PlanExecLogPb plan_exec_log = 1;
+  PlanExecLogPb plan_exec_log = 1 [json_name = "planExecLog"];
 }
 
 
 // 分页获取计划触发日志列表请求
 message ListPlanExecLogsReq {
   // 分页大小
-  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_size = 1 [json_name = "pageSize", (validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码
-  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_num = 2 [json_name = "pageNum", (validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 计划ID
-  string plan_id = 3;
+  string plan_id = 3 [json_name = "planId"];
   // 批ID
-  string batch_id = 4;
+  string batch_id = 4 [json_name = "batchId"];
   // 执行项ID
-  string item_id = 5;
+  string item_id = 5 [json_name = "itemId"];
   // 执行ID
-  string exec_id = 6;
+  string exec_id = 6 [json_name = "execId"];
   // 开始时间
-  string start_time = 7;
+  string start_time = 7 [json_name = "startTime"];
   // 结束时间
-  string end_time = 8;
+  string end_time = 8 [json_name = "endTime"];
   // 执行结果：1-成功，2-失败，3-延期
-  repeated int32 exec_result = 9;
+  repeated int32 exec_result = 9 [json_name = "execResult"];
 }
 
 // 分页获取计划触发日志列表响应
 message ListPlanExecLogsRes {
   // 日志列表
-  repeated PlanExecLogPb plan_exec_logs = 1;
+  repeated PlanExecLogPb plan_exec_logs = 1 [json_name = "planExecLogs"];
   // 总记录数
-  int64 total = 2;
+  int64 total = 2 [json_name = "total"];
 }
 
 message PlanExecLogPb {
   // 创建时间
-  string create_time = 101;
+  string create_time = 101 [json_name = "createTime"];
   // 更新时间
-  string update_time = 102;
+  string update_time = 102 [json_name = "updateTime"];
   // 创建人
-  string create_user = 103;
+  string create_user = 103 [json_name = "createUser"];
   // 更新人
-  string update_user = 104;
+  string update_user = 104 [json_name = "updateUser"];
   // 机构code
-  string dept_code = 105;
+  string dept_code = 105 [json_name = "deptCode"];
 
   // UUID主键ID
-  string id = 50;
+  string id = 50 [json_name = "id"];
   // 关联的计划主键ID
-  string plan_pk = 1;
+  string plan_pk = 1 [json_name = "planPk"];
   // 计划ID
-  string plan_id = 2;
+  string plan_id = 2 [json_name = "planId"];
   // 计划名称
-  string plan_name = 3;
+  string plan_name = 3 [json_name = "planName"];
   // 批主键ID
-  string batch_pk = 4;
+  string batch_pk = 4 [json_name = "batchPk"];
   // 批ID
-  string batch_id = 5;
+  string batch_id = 5 [json_name = "batchId"];
   // 关联的执行项主键ID
-  string item_pk = 6;
+  string item_pk = 6 [json_name = "itemPk"];
   // 执行ID 全局唯一
-  string exec_id = 7;
+  string exec_id = 7 [json_name = "execId"];
   // 执行项ID
-  string item_id = 8;
+  string item_id = 8 [json_name = "itemId"];
   // 执行项类型
-  string item_type = 9;
+  string item_type = 9 [json_name = "itemType"];
   // 执行项名称
-  string item_name = 10;
+  string item_name = 10 [json_name = "itemName"];
   // 点位id
-  string point_id = 11;
+  string point_id = 11 [json_name = "pointId"];
   // 触发时间
-  string trigger_time = 12;
+  string trigger_time = 12 [json_name = "triggerTime"];
   // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，ongoing-业务正在执行
-  string exec_result = 13;
+  string exec_result = 13 [json_name = "execResult"];
   // 结果描述
-  string message = 14;
+  string message = 14 [json_name = "message"];
 }
 
 // 计划批次数据模型
 message PlanBatchPb {
   // 创建时间
-  string create_time = 101;
+  string create_time = 101 [json_name = "createTime"];
   // 更新时间
-  string update_time = 102;
+  string update_time = 102 [json_name = "updateTime"];
   // 创建人
-  string create_user = 103;
+  string create_user = 103 [json_name = "createUser"];
   // 更新人
-  string update_user = 104;
+  string update_user = 104 [json_name = "updateUser"];
   // 机构code
-  string dept_code = 105;
+  string dept_code = 105 [json_name = "deptCode"];
 
   // UUID主键ID
-  string id = 50;
+  string id = 50 [json_name = "id"];
   // 关联的计划主键ID
-  string plan_pk = 1;
+  string plan_pk = 1 [json_name = "planPk"];
   // 计划ID
-  string plan_id = 2;
+  string plan_id = 2 [json_name = "planId"];
   // 批ID
-  string batch_id = 3;
+  string batch_id = 3 [json_name = "batchId"];
   // 批次名称
-  string batch_name = 4;
+  string batch_name = 4 [json_name = "batchName"];
   // 批次序号
-  string batch_num = 5;
+  string batch_num = 5 [json_name = "batchNum"];
   // 状态：1-启用，2-暂停，3-终止
-  int32 status = 6;
+  int32 status = 6 [json_name = "status"];
   // 扫表标记, 0-未扫表, 1-已扫表
-  int32 scan_flg = 7;
+  int32 scan_flg = 7 [json_name = "scanFlg"];
   // 计划触发时间
-  string plan_trigger_time = 8;
+  string plan_trigger_time = 8 [json_name = "planTriggerTime"];
   // 终止原因
-  string terminated_reason = 9;
+  string terminated_reason = 9 [json_name = "terminatedReason"];
   // 暂停时间
-  string paused_time = 10;
+  string paused_time = 10 [json_name = "pausedTime"];
   // 暂停原因
-  string paused_reason = 11;
+  string paused_reason = 11 [json_name = "pausedReason"];
   // 结束时间
-  string finished_time = 12;
+  string finished_time = 12 [json_name = "finishedTime"];
   // 状态统计map，key为状态值，value为对应数量
-  map<string, int64> status_count_map = 13;
+  map<string, int64> status_count_map = 13 [json_name = "statusCountMap"];
   // 执行计划数
-  int64 exec_cnt = 51;
+  int64 exec_cnt = 51 [json_name = "execCnt"];
   // 扩展字段1
-  string ext1 = 52;
+  string ext1 = 52 [json_name = "ext1"];
   // 扩展字段2
-  string ext2 = 53;
+  string ext2 = 53 [json_name = "ext2"];
   // 扩展字段3
-  string ext3 = 54;
+  string ext3 = 54 [json_name = "ext3"];
   // 扩展字段4
-  string ext4 = 55;
+  string ext4 = 55 [json_name = "ext4"];
   // 扩展字段5
-  string ext5 = 56;
+  string ext5 = 56 [json_name = "ext5"];
 }
 
 
 // 获取执行项仪表板统计信息请求
 message GetExecItemDashboardReq {
   // 部门code，可选
-  string dept_code = 1;
+  string dept_code = 1 [json_name = "deptCode"];
   // 用户ID，可选
-  string user_id = 2;
+  string user_id = 2 [json_name = "userId"];
   // 计划类型，可选，为空时统计所有类型
-  string plan_type = 3;
+  string plan_type = 3 [json_name = "planType"];
 }
 
 // 已结束执行项统计
 message FinishedItemsStatsPb {
   // 已结束执行项总数
-  int64 total = 1;
+  int64 total = 1 [json_name = "total"];
   // 其中终止执行项数
-  int64 terminated = 2;
+  int64 terminated = 2 [json_name = "terminated"];
 }
 
 // 待完成执行项统计
 message PendingItemsStatsPb {
   // 待完成执行项总数
-  int64 total = 1;
+  int64 total = 1 [json_name = "total"];
   // 其中延期执行项数
-  int64 delayed = 2;
+  int64 delayed = 2 [json_name = "delayed"];
 }
 
 // 执行项仪表板统计信息响应
 message GetExecItemDashboardRes {
   // 统计结果列表
-  repeated ExecItemDashboardItemPb stats = 1;
+  repeated ExecItemDashboardItemPb stats = 1 [json_name = "stats"];
 }
 
 // 执行项仪表板统计项
 message ExecItemDashboardItemPb {
   // 计划类型
-  string plan_type = 1;
+  string plan_type = 1 [json_name = "planType"];
   // 当前执行项总数
-  int64 total = 2;
+  int64 total = 2 [json_name = "total"];
   // 已结束执行项统计
-  FinishedItemsStatsPb finished = 3;
+  FinishedItemsStatsPb finished = 3 [json_name = "finished"];
   // 待完成执行项统计
-  PendingItemsStatsPb pending = 4;
+  PendingItemsStatsPb pending = 4 [json_name = "pending"];
 }
 
 message CallbackPlanExecItemReq {
   // UUID主键ID
-  string id = 1;
+  string id = 1 [json_name = "id"];
   // 执行ID 全局唯一
-  string exec_id = 2;
+  string exec_id = 2 [json_name = "execId"];
   // 回调设计 参考 grpc status 用于分布式事务
   // 执行结果：completed-业务执行完成, terminated-业务终止, failed-业务执行失败, delayed-业务执行延期, ongoing-业务正在执行（未回调或部分异步）
-  string exec_result = 3 [(validate.rules).string = {in: ["completed", "terminated", "failed", "delayed", "ongoing"]}];
+  string exec_result = 3 [json_name = "execResult", (validate.rules).string = {in: ["completed", "terminated", "failed", "delayed", "ongoing"]}];
   // 结果描述  可以定义自己状态码，等下次回调判断业务场景
-  string message = 4 [(validate.rules).string = {max_len: 1000}];
+  string message = 4 [json_name = "message", (validate.rules).string = {max_len: 1000}];
   // 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
-  string reason = 5 [(validate.rules).string = {max_len: 1000}];
+  string reason = 5 [json_name = "reason", (validate.rules).string = {max_len: 1000}];
   // 延期配置-默认延期5分钟：delayed,ongoing-自定义延期
-  DelayConfigPb delay_config = 6;
+  DelayConfigPb delay_config = 6 [json_name = "delayConfig"];
 }
 
 message DelayConfigPb {
   // 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
-  string next_trigger_time = 1;
+  string next_trigger_time = 1 [json_name = "nextTriggerTime"];
   // 延期原因
-  string delay_reason = 2 [(validate.rules).string = {max_len: 1000}];
+  string delay_reason = 2 [json_name = "delayReason", (validate.rules).string = {max_len: 1000}];
 }
 
 message CallbackPlanExecItemRes {
@@ -1350,184 +1353,184 @@ message CallbackPlanExecItemRes {
 // Trigger 根据业务规则生成 RRuleStr、JobId 和首次 NextRun，不预拆分批次或执行项。
 message CreateCronJobReq {
   // 全局唯一业务任务编码；与 Trigger 生成的 JobId 是两个不同标识。
-  string task_code = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  string task_code = 1 [json_name = "taskCode", (validate.rules).string = {min_len: 1, max_len: 128}];
   // 任务名称。
-  string task_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  string task_name = 2 [json_name = "taskName", (validate.rules).string = {min_len: 1, max_len: 128}];
   // 任务类型。
-  string type = 3 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  string type = 3 [json_name = "type", (validate.rules).string = {min_len: 1, max_len: 64}];
   // 任务分组 ID，用于业务侧分组管理。
-  string group_id = 4 [(validate.rules).string = {max_len: 64}];
+  string group_id = 4 [json_name = "groupId", (validate.rules).string = {max_len: 64}];
   // 任务描述。
-  string description = 5 [(validate.rules).string = {max_len: 200}];
+  string description = 5 [json_name = "description", (validate.rules).string = {max_len: 200}];
   // 规则生效开始时间；不传时默认当前年份第一天，格式 yyyy-MM-dd HH:mm:ss。
-  string start_time = 6;
+  string start_time = 6 [json_name = "startTime"];
   // 规则生效结束时间；不传时默认开始时间所在年份最后一天，格式 yyyy-MM-dd HH:mm:ss。
-  string end_time = 7;
+  string end_time = 7 [json_name = "endTime"];
   // 业务周期规则，由 Trigger 编译为 RFC 5545 RRULE。
-  PlanRulePb rule = 8 [(validate.rules).message = {required: true}];
+  PlanRulePb rule = 8 [json_name = "rule", (validate.rules).message = {required: true}];
   // 排除日期列表，格式 yyyy-MM-dd；这些日期的计划时间不会触发。
-  repeated string exclude_dates = 9 [(validate.rules).repeated = {items: {string: {len: 10}}}];
+  repeated string exclude_dates = 9 [json_name = "excludeDates", (validate.rules).repeated = {items: {string: {len: 10}}}];
   // 调度优先级，数字越大越优先。
-  int32 priority = 10 [(validate.rules).int32 = {gte: 0}];
+  int32 priority = 10 [json_name = "priority", (validate.rules).int32 = {gte: 0}];
   // 执行业务参数 JSON；为空表示没有业务参数。
-  string payload = 11;
+  string payload = 11 [json_name = "payload"];
   // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-  int64 lock_timeout = 12 [(validate.rules).int64 = {gte: 0}];
+  int64 lock_timeout = 12 [json_name = "lockTimeout", (validate.rules).int64 = {gte: 0}];
   // 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
-  int64 max_delay = 13 [(validate.rules).int64 = {gte: 0}];
+  int64 max_delay = 13 [json_name = "maxDelay", (validate.rules).int64 = {gte: 0}];
   // 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
-  bool skip_time_filter = 14;
+  bool skip_time_filter = 14 [json_name = "skipTimeFilter"];
   // 指定执行时间列表，格式 yyyy-MM-dd HH:mm:ss。
   repeated string specified_times = 15 [json_name = "specifiedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
   // 精确排除时间列表，格式 yyyy-MM-dd HH:mm:ss。
   repeated string excluded_times = 16 [json_name = "excludedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
 
   // 扩展字段 1。
-  string ext1 = 50;
+  string ext1 = 50 [json_name = "ext1"];
   // 扩展字段 2。
-  string ext2 = 51;
+  string ext2 = 51 [json_name = "ext2"];
   // 扩展字段 3。
-  string ext3 = 52;
+  string ext3 = 52 [json_name = "ext3"];
   // 扩展字段 4。
-  string ext4 = 53;
+  string ext4 = 53 [json_name = "ext4"];
   // 扩展字段 5。
-  string ext5 = 54;
+  string ext5 = 54 [json_name = "ext5"];
 
   // 机构编码。
-  string dept_code = 101 [(validate.rules).string = {min_len: 1, max_len: 64}];
+  string dept_code = 101 [json_name = "deptCode", (validate.rules).string = {min_len: 1, max_len: 64}];
 }
 
 // CreateCronJobRes 返回 Trigger 创建的周期任务标识和首次执行时间。
 message CreateCronJobRes {
   // Trigger 生成的 JobId，对应 cron_job.id。
-  string job_id = 1;
+  string job_id = 1 [json_name = "jobId"];
   // 首次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；规则已耗尽时为空字符串。
-  string next_run = 2;
+  string next_run = 2 [json_name = "nextRun"];
   // 最终持久化的任务分组 ID；请求未传时由 Trigger 自动生成 UUID。
-  string group_id = 3;
+  string group_id = 3 [json_name = "groupId"];
 }
 
 // UpdateCronJobReq 使用 JobId 定位任务，只更新可变配置，不修改身份字段。
 message UpdateCronJobReq {
   // Trigger 生成的 JobId。
-  string job_id = 1 [(validate.rules).string = {min_len: 1}];
+  string job_id = 1 [json_name = "jobId", (validate.rules).string = {min_len: 1}];
   // 任务名称。
-  string task_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  string task_name = 2 [json_name = "taskName", (validate.rules).string = {min_len: 1, max_len: 128}];
   // 任务描述。
-  string description = 3 [(validate.rules).string = {max_len: 200}];
+  string description = 3 [json_name = "description", (validate.rules).string = {max_len: 200}];
   // 规则生效开始时间；不传时默认当前年份第一天，格式 yyyy-MM-dd HH:mm:ss。
-  string start_time = 4;
+  string start_time = 4 [json_name = "startTime"];
   // 规则生效结束时间；不传时默认开始时间所在年份最后一天，格式 yyyy-MM-dd HH:mm:ss。
-  string end_time = 5;
+  string end_time = 5 [json_name = "endTime"];
   // 业务周期规则，由 Trigger 编译为 RFC 5545 RRULE。
-  PlanRulePb rule = 6 [(validate.rules).message = {required: true}];
+  PlanRulePb rule = 6 [json_name = "rule", (validate.rules).message = {required: true}];
   // 排除日期列表，格式 yyyy-MM-dd；这些日期的计划时间不会触发。
-  repeated string exclude_dates = 7 [(validate.rules).repeated = {items: {string: {len: 10}}}];
+  repeated string exclude_dates = 7 [json_name = "excludeDates", (validate.rules).repeated = {items: {string: {len: 10}}}];
   // 调度优先级，数字越大越优先。
-  int32 priority = 8 [(validate.rules).int32 = {gte: 0}];
+  int32 priority = 8 [json_name = "priority", (validate.rules).int32 = {gte: 0}];
   // 执行业务参数 JSON；为空表示没有业务参数。
-  string payload = 9;
+  string payload = 9 [json_name = "payload"];
   // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-  int64 lock_timeout = 10 [(validate.rules).int64 = {gte: 0}];
+  int64 lock_timeout = 10 [json_name = "lockTimeout", (validate.rules).int64 = {gte: 0}];
   // 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
-  int64 max_delay = 11 [(validate.rules).int64 = {gte: 0}];
+  int64 max_delay = 11 [json_name = "maxDelay", (validate.rules).int64 = {gte: 0}];
   // 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
-  bool skip_time_filter = 12;
+  bool skip_time_filter = 12 [json_name = "skipTimeFilter"];
   // 指定执行时间列表，格式 yyyy-MM-dd HH:mm:ss。
   repeated string specified_times = 13 [json_name = "specifiedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
   // 精确排除时间列表，格式 yyyy-MM-dd HH:mm:ss。
   repeated string excluded_times = 14 [json_name = "excludedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
 
   // 扩展字段 1。
-  string ext1 = 50;
+  string ext1 = 50 [json_name = "ext1"];
   // 扩展字段 2。
-  string ext2 = 51;
+  string ext2 = 51 [json_name = "ext2"];
   // 扩展字段 3。
-  string ext3 = 52;
+  string ext3 = 52 [json_name = "ext3"];
   // 扩展字段 4。
-  string ext4 = 53;
+  string ext4 = 53 [json_name = "ext4"];
   // 扩展字段 5。
-  string ext5 = 54;
+  string ext5 = 54 [json_name = "ext5"];
 }
 
 // UpdateCronJobRes 返回更新后的任务标识和当前可展示的下次执行时间。
 message UpdateCronJobRes {
   // Trigger 生成的 JobId，对应 cron_job.id。
-  string job_id = 1;
+  string job_id = 1 [json_name = "jobId"];
   // 当前可展示的下次执行时间，格式 yyyy-MM-dd HH:mm:ss；无下次调度时为空字符串。
-  string next_run = 2;
+  string next_run = 2 [json_name = "nextRun"];
   // 上游业务任务编码。
-  string task_code = 3;
+  string task_code = 3 [json_name = "taskCode"];
   // 原任务分组 ID；更新操作不会修改任务分组。
-  string group_id = 4;
+  string group_id = 4 [json_name = "groupId"];
 }
 
 // SubmitCronJobReq 按 TaskCode 提交扁平的完整 Cron Job 配置。
 message SubmitCronJobReq {
   // 全局唯一业务任务编码；与 Trigger 生成的 JobId 是两个不同标识。
-  string task_code = 1 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  string task_code = 1 [json_name = "taskCode", (validate.rules).string = {min_len: 1, max_len: 128}];
   // 任务名称。
-  string task_name = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+  string task_name = 2 [json_name = "taskName", (validate.rules).string = {min_len: 1, max_len: 128}];
   // 任务类型；新建时必填，更新时为空表示不声明变更，非空时必须与已有值一致。
-  string type = 3 [(validate.rules).string = {max_len: 64}];
+  string type = 3 [json_name = "type", (validate.rules).string = {max_len: 64}];
   // 任务分组 ID，用于业务侧分组管理。
-  string group_id = 4 [(validate.rules).string = {max_len: 64}];
+  string group_id = 4 [json_name = "groupId", (validate.rules).string = {max_len: 64}];
   // 任务描述。
-  string description = 5 [(validate.rules).string = {max_len: 200}];
+  string description = 5 [json_name = "description", (validate.rules).string = {max_len: 200}];
   // 规则生效开始时间；不传时默认当前年份第一天，格式 yyyy-MM-dd HH:mm:ss。
-  string start_time = 6;
+  string start_time = 6 [json_name = "startTime"];
   // 规则生效结束时间；不传时默认开始时间所在年份最后一天，格式 yyyy-MM-dd HH:mm:ss。
-  string end_time = 7;
+  string end_time = 7 [json_name = "endTime"];
   // 业务周期规则，由 Trigger 编译为 RFC 5545 RRULE。
-  PlanRulePb rule = 8 [(validate.rules).message = {required: true}];
+  PlanRulePb rule = 8 [json_name = "rule", (validate.rules).message = {required: true}];
   // 排除日期列表，格式 yyyy-MM-dd；这些日期的计划时间不会触发。
-  repeated string exclude_dates = 9 [(validate.rules).repeated = {items: {string: {len: 10}}}];
+  repeated string exclude_dates = 9 [json_name = "excludeDates", (validate.rules).repeated = {items: {string: {len: 10}}}];
   // 调度优先级，数字越大越优先。
-  int32 priority = 10 [(validate.rules).int32 = {gte: 0}];
+  int32 priority = 10 [json_name = "priority", (validate.rules).int32 = {gte: 0}];
   // 执行业务参数 JSON；为空表示没有业务参数。
-  string payload = 11;
+  string payload = 11 [json_name = "payload"];
   // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-  int64 lock_timeout = 12 [(validate.rules).int64 = {gte: 0}];
+  int64 lock_timeout = 12 [json_name = "lockTimeout", (validate.rules).int64 = {gte: 0}];
   // 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
-  int64 max_delay = 13 [(validate.rules).int64 = {gte: 0}];
+  int64 max_delay = 13 [json_name = "maxDelay", (validate.rules).int64 = {gte: 0}];
   // 是否跳过首次未来时间过滤；为 true 时最多立即补触发一次，不追赶全部历史周期。
-  bool skip_time_filter = 14;
+  bool skip_time_filter = 14 [json_name = "skipTimeFilter"];
   // 指定执行时间列表，格式 yyyy-MM-dd HH:mm:ss。
   repeated string specified_times = 15 [json_name = "specifiedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
   // 精确排除时间列表，格式 yyyy-MM-dd HH:mm:ss。
   repeated string excluded_times = 16 [json_name = "excludedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
 
   // 扩展字段 1。
-  string ext1 = 50;
+  string ext1 = 50 [json_name = "ext1"];
   // 扩展字段 2。
-  string ext2 = 51;
+  string ext2 = 51 [json_name = "ext2"];
   // 扩展字段 3。
-  string ext3 = 52;
+  string ext3 = 52 [json_name = "ext3"];
   // 扩展字段 4。
-  string ext4 = 53;
+  string ext4 = 53 [json_name = "ext4"];
   // 扩展字段 5。
-  string ext5 = 54;
+  string ext5 = 54 [json_name = "ext5"];
 
   // 机构编码；新建时必填，更新时为空表示不声明变更，非空时必须与已有值一致。
-  string dept_code = 101 [(validate.rules).string = {max_len: 64}];
+  string dept_code = 101 [json_name = "deptCode", (validate.rules).string = {max_len: 64}];
 }
 
 // SubmitCronJobRes 返回创建或更新后的任务标识和当前下次执行时间。
 message SubmitCronJobRes {
   // Trigger 生成的 JobId，对应 cron_job.id。
-  string job_id = 1;
+  string job_id = 1 [json_name = "jobId"];
   // 当前可展示的下次执行时间，格式 yyyy-MM-dd HH:mm:ss；无下次调度时为空字符串。
-  string next_run = 2;
+  string next_run = 2 [json_name = "nextRun"];
   // 上游业务任务编码。
-  string task_code = 3;
+  string task_code = 3 [json_name = "taskCode"];
   // 最终持久化的任务分组 ID；更新已有任务时保留原值。
-  string group_id = 4;
+  string group_id = 4 [json_name = "groupId"];
 }
 
 // EnableCronJobReq 启用指定 Cron Job。
 message EnableCronJobReq {
   // Trigger 生成的 JobId。
-  string job_id = 1 [(validate.rules).string = {min_len: 1}];
+  string job_id = 1 [json_name = "jobId", (validate.rules).string = {min_len: 1}];
 }
 
 // EnableCronJobRes 表示启用操作已完成。
@@ -1537,7 +1540,7 @@ message EnableCronJobRes {
 // DisableCronJobReq 禁用指定 Cron Job。
 message DisableCronJobReq {
   // Trigger 生成的 JobId。
-  string job_id = 1 [(validate.rules).string = {min_len: 1}];
+  string job_id = 1 [json_name = "jobId", (validate.rules).string = {min_len: 1}];
 }
 
 // DisableCronJobRes 表示禁用操作已完成。
@@ -1547,7 +1550,7 @@ message DisableCronJobRes {
 // DeleteCronJobReq 软删除指定 Cron Job。
 message DeleteCronJobReq {
   // Trigger 生成的 JobId。
-  string job_id = 1 [(validate.rules).string = {min_len: 1}];
+  string job_id = 1 [json_name = "jobId", (validate.rules).string = {min_len: 1}];
 }
 
 // DeleteCronJobRes 表示删除操作已完成；任务原本不存在时也返回成功。
@@ -1557,25 +1560,25 @@ message DeleteCronJobRes {
 // RunCronJobReq 是 Cron Job 立即执行请求。
 message RunCronJobReq {
   // Trigger 生成的 JobId。
-  string job_id = 1 [(validate.rules).string = {min_len: 1}];
+  string job_id = 1 [json_name = "jobId", (validate.rules).string = {min_len: 1}];
 }
 
 // RunCronJobRes 表示立即执行请求已受理，不表示异步业务回调已经成功。
 message RunCronJobRes {
   // traceId 用于追踪异步执行过程，未接入 OTEL 时为空字符串。
-  string trace_id = 1;
+  string trace_id = 1 [json_name = "traceId"];
 }
 
 // GetCronJobReq 是 Cron Job 详情查询请求。
 message GetCronJobReq {
   // Trigger 生成的 JobId。
-  string job_id = 1 [(validate.rules).string = {min_len: 1}];
+  string job_id = 1 [json_name = "jobId", (validate.rules).string = {min_len: 1}];
 }
 
 // GetCronJobRes 返回 Cron Job 详情。
 message GetCronJobRes {
   // Cron Job 详情。
-  CronJobPb cron_job = 1;
+  CronJobPb cron_job = 1 [json_name = "cronJob"];
 }
 
 // PreviewCronJobScheduleReq 是 Cron Job 未来执行时间预览请求。
@@ -1583,7 +1586,7 @@ message PreviewCronJobScheduleReq {
   // Trigger 生成的 JobId。
   string job_id = 1 [json_name = "jobId", (validate.rules).string = {min_len: 1}];
   // 返回的执行时间数量；0 使用默认值 10，最大 100。
-  int32 count = 2 [(validate.rules).int32 = {gte: 0, lte: 100}];
+  int32 count = 2 [json_name = "count", (validate.rules).int32 = {gte: 0, lte: 100}];
 }
 
 // PreviewCronJobScheduleRes 返回基于持久化 RRULE Set 计算的未来执行时间。
@@ -1603,125 +1606,125 @@ message PreviewCronJobScheduleRes {
 // ListCronJobsReq 是 Cron Job 分页查询请求。
 message ListCronJobsReq {
   // 分页大小；0 使用默认值。
-  int64 page_size = 1 [(validate.rules).int64 = {gte: 0, lte: 500}];
+  int64 page_size = 1 [json_name = "pageSize", (validate.rules).int64 = {gte: 0, lte: 500}];
   // 页码；0 使用默认值。
-  int64 page_num = 2 [(validate.rules).int64 = {gte: 0, lte: 1000000}];
+  int64 page_num = 2 [json_name = "pageNum", (validate.rules).int64 = {gte: 0, lte: 1000000}];
   // 业务任务编码模糊查询。
-  string task_code = 3 [(validate.rules).string = {max_len: 128}];
+  string task_code = 3 [json_name = "taskCode", (validate.rules).string = {max_len: 128}];
   // 任务名称模糊查询。
-  string task_name = 4 [(validate.rules).string = {max_len: 128}];
+  string task_name = 4 [json_name = "taskName", (validate.rules).string = {max_len: 128}];
   // 状态多选：0-禁用，1-启用。
-  repeated int32 status = 5 [(validate.rules).repeated = {items: {int32: {gte: 0, lte: 1}}}];
+  repeated int32 status = 5 [json_name = "status", (validate.rules).repeated = {items: {int32: {gte: 0, lte: 1}}}];
   // 机构编码精确查询。
-  string dept_code = 6 [(validate.rules).string = {max_len: 64}];
+  string dept_code = 6 [json_name = "deptCode", (validate.rules).string = {max_len: 64}];
   // 任务类型精确查询。
-  string type = 7 [(validate.rules).string = {max_len: 64}];
+  string type = 7 [json_name = "type", (validate.rules).string = {max_len: 64}];
   // 任务分组 ID 精确查询。
-  string group_id = 8 [(validate.rules).string = {max_len: 64}];
+  string group_id = 8 [json_name = "groupId", (validate.rules).string = {max_len: 64}];
 }
 
 // ListCronJobsRes 返回 Cron Job 分页列表。
 message ListCronJobsRes {
   // Cron Job 列表。
-  repeated CronJobPb cron_jobs = 1;
+  repeated CronJobPb cron_jobs = 1 [json_name = "cronJobs"];
   // 符合筛选条件的总记录数。
-  int64 total = 2;
+  int64 total = 2 [json_name = "total"];
 }
 
 // CronJobPb 是 Cron Job 对外管理视图。
 message CronJobPb {
   // Trigger 生成的 JobId，对应 cron_job.id。
-  string job_id = 1;
+  string job_id = 1 [json_name = "jobId"];
   // 全局唯一业务任务编码。
-  string task_code = 2;
+  string task_code = 2 [json_name = "taskCode"];
   // 任务名称。
-  string task_name = 3;
+  string task_name = 3 [json_name = "taskName"];
   // 调度优先级，数字越大越优先。
-  int32 priority = 4;
+  int32 priority = 4 [json_name = "priority"];
   // 单次调度锁超时，单位毫秒；0 表示使用调度器默认值。
-  int64 lock_timeout = 5;
+  int64 lock_timeout = 5 [json_name = "lockTimeout"];
   // 最大延迟容忍，单位秒；0 表示使用调度器默认值。任务延迟超过此值跳过执行，直接计算下次时间。
-  int64 max_delay = 6;
+  int64 max_delay = 6 [json_name = "maxDelay"];
   // 执行业务参数 JSON；为空表示没有业务参数。
-  string payload = 7;
+  string payload = 7 [json_name = "payload"];
   // 状态：0-禁用，1-启用。
-  int32 status = 9;
+  int32 status = 9 [json_name = "status"];
   // 下次计划执行时间，格式 yyyy-MM-dd HH:mm:ss；无下次调度时为空字符串。
-  string next_run = 10;
+  string next_run = 10 [json_name = "nextRun"];
   // 上次成功执行时间，格式 yyyy-MM-dd HH:mm:ss；从未成功执行时为空字符串。
-  string last_run = 11;
+  string last_run = 11 [json_name = "lastRun"];
   // 任务类型。
-  string type = 12;
+  string type = 12 [json_name = "type"];
   // 任务分组 ID。
-  string group_id = 13;
+  string group_id = 13 [json_name = "groupId"];
   // 任务描述。
-  string description = 14;
+  string description = 14 [json_name = "description"];
   // 规则生效开始时间，格式 yyyy-MM-dd HH:mm:ss；调用方未指定时为空字符串。
-  string start_time = 15;
+  string start_time = 15 [json_name = "startTime"];
   // 规则生效结束时间，格式 yyyy-MM-dd HH:mm:ss；调用方未指定时为空字符串。
-  string end_time = 16;
+  string end_time = 16 [json_name = "endTime"];
   // 业务周期规则。
-  PlanRulePb rule = 17;
+  PlanRulePb rule = 17 [json_name = "rule"];
   // 排除日期列表，格式 yyyy-MM-dd。
-  repeated string exclude_dates = 18;
+  repeated string exclude_dates = 18 [json_name = "excludeDates"];
   // 根据实际持久化 RRULE Set 生成的简体中文描述。
-  string schedule_description = 19;
+  string schedule_description = 19 [json_name = "scheduleDescription"];
   // 实际持久化并用于调度的 RFC 5545 RRULE Set 原文。
-  string rrule_str = 20;
+  string rrule_str = 20 [json_name = "rruleStr"];
   // 指定执行时间列表，格式 yyyy-MM-dd HH:mm:ss。
   repeated string specified_times = 21 [json_name = "specifiedTimes"];
   // 精确排除时间列表，格式 yyyy-MM-dd HH:mm:ss。
   repeated string excluded_times = 22 [json_name = "excludedTimes"];
 
   // 扩展字段 1。
-  string ext1 = 50;
+  string ext1 = 50 [json_name = "ext1"];
   // 扩展字段 2。
-  string ext2 = 51;
+  string ext2 = 51 [json_name = "ext2"];
   // 扩展字段 3。
-  string ext3 = 52;
+  string ext3 = 52 [json_name = "ext3"];
   // 扩展字段 4。
-  string ext4 = 53;
+  string ext4 = 53 [json_name = "ext4"];
   // 扩展字段 5。
-  string ext5 = 54;
+  string ext5 = 54 [json_name = "ext5"];
 
   // 创建时间，格式 yyyy-MM-dd HH:mm:ss。
-  string create_time = 100;
+  string create_time = 100 [json_name = "createTime"];
   // 更新时间，格式 yyyy-MM-dd HH:mm:ss。
-  string update_time = 101;
+  string update_time = 101 [json_name = "updateTime"];
   // 机构编码。
-  string dept_code = 102;
+  string dept_code = 102 [json_name = "deptCode"];
 }
 
 // ==================== ID Generation Messages ====================
 
 message NextIdReq{
   // 输出描述类型 默认-P
-  string out_desc_type = 1 [(validate.rules).string = {max_len: 64}];
+  string out_desc_type = 1 [json_name = "outDescType", (validate.rules).string = {max_len: 64}];
 
   // true: 按维度/分类分开生成 ID
   // false: 全局统一生成 ID
-  bool separate = 2;
+  bool separate = 2 [json_name = "separate"];
 }
 
 message NextIdRes{
-  string next_id = 1;
+  string next_id = 1 [json_name = "nextId"];
 }
 
 message BatchNextIdReq{
   // 输出描述类型 默认-P
-  string out_desc_type = 1 [(validate.rules).string = {max_len: 64}];
+  string out_desc_type = 1 [json_name = "outDescType", (validate.rules).string = {max_len: 64}];
 
   // true: 按维度/分类分开生成 ID
   // false: 全局统一生成 ID
-  bool separate = 2;
+  bool separate = 2 [json_name = "separate"];
 
   // 生成数量，自动扩位；用于业务批量插入前顺序预生成编码
-  uint32 count = 3 [(validate.rules).uint32 = {gte: 1}];
+  uint32 count = 3 [json_name = "count", (validate.rules).uint32 = {gte: 1}];
 }
 
 message BatchNextIdRes{
   // 批量编码，按生成顺序返回
-  repeated string next_ids = 1;
+  repeated string next_ids = 1 [json_name = "nextIds"];
 }
 
 // ==================== Invoke Service ====================
@@ -1729,61 +1732,61 @@ message BatchNextIdRes{
 // 单个调用任务描述
 message InvokeTaskPb {
   // 任务唯一标识
-  string id = 1 [(validate.rules).string = {min_len: 1}];
+  string id = 1 [json_name = "id", (validate.rules).string = {min_len: 1}];
   // 协议类型: http / grpc
-  string protocol = 2 [(validate.rules).string = {in: ["http", "grpc"]}];
+  string protocol = 2 [json_name = "protocol", (validate.rules).string = {in: ["http", "grpc"]}];
   // 单任务超时时间（毫秒），0 表示不设单独超时
-  int64 timeout = 3 [(validate.rules).int64 = {gte: 0}];
+  int64 timeout = 3 [json_name = "timeout", (validate.rules).int64 = {gte: 0}];
 
   // === HTTP 字段 ===
   // 请求地址
-  string url = 10;
+  string url = 10 [json_name = "url"];
   // HTTP 方法: GET / POST / PUT / DELETE 等
-  string http_method = 11;
+  string http_method = 11 [json_name = "httpMethod"];
   // 自定义请求头
-  map<string, string> headers = 12;
+  map<string, string> headers = 12 [json_name = "headers"];
   // 请求体（JSON 格式；当 Content-Type 为 application/x-www-form-urlencoded 或 multipart/form-data 时，会将 JSON 键值对转为对应表单编码）
-  bytes body = 13;
+  bytes body = 13 [json_name = "body"];
 
   // === gRPC 字段 ===
   // gRPC 服务地址
-  string grpc_server = 20;
+  string grpc_server = 20 [json_name = "grpcServer"];
   // gRPC 方法全路径，如 /pb.Service/Method
-  string method = 21;
+  string method = 21 [json_name = "method"];
   // pb 字节数据
-  bytes payload = 22;
+  bytes payload = 22 [json_name = "payload"];
 }
 
 // 并发调用请求
 message InvokeReq {
   // 调用任务列表
-  repeated InvokeTaskPb tasks = 1 [(validate.rules).repeated = {min_items: 1}];
+  repeated InvokeTaskPb tasks = 1 [json_name = "tasks", (validate.rules).repeated = {min_items: 1}];
   // 最大并发数，0 或不设表示不限制
-  int32 max_concurrency = 2 [(validate.rules).int32 = {gte: 0}];
+  int32 max_concurrency = 2 [json_name = "maxConcurrency", (validate.rules).int32 = {gte: 0}];
   // 调试模式，开启后在日志中打印每个任务的响应数据
-  bool debug = 3;
+  bool debug = 3 [json_name = "debug"];
 }
 
 // 单个任务执行结果
 message InvokeTaskResultPb {
   // 任务唯一标识，与请求中的 id 对应
-  string id = 1;
+  string id = 1 [json_name = "id"];
   // 是否执行成功
-  bool success = 2;
+  bool success = 2 [json_name = "success"];
   // HTTP 状态码或 gRPC 状态码
-  int32 status_code = 3;
+  int32 status_code = 3 [json_name = "statusCode"];
   // 错误信息（失败时）
-  string error = 4;
+  string error = 4 [json_name = "error"];
   // 返回数据
-  bytes data = 5;
+  bytes data = 5 [json_name = "data"];
   // 执行耗时（毫秒）
-  int64 cost_ms = 6;
+  int64 cost_ms = 6 [json_name = "costMs"];
   // 格式化耗时，如 "123ms"、"1.5s"
-  string cost_formatted = 7;
+  string cost_formatted = 7 [json_name = "costFormatted"];
 }
 
 // 并发调用响应
 message InvokeRes {
   // 每个任务的独立执行结果
-  repeated InvokeTaskResultPb results = 1;
+  repeated InvokeTaskResultPb results = 1 [json_name = "results"];
 }

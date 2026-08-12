@@ -4,20 +4,20 @@ option go_package = "./bridgedump";
 
 
 message Req {
-  string ping = 1;
+  string ping = 1 [json_name = "ping"];
 }
 
 message Res {
-  string pong = 1;
+  string pong = 1 [json_name = "pong"];
 }
 
 message CableWorkListReq {
-  repeated DeviceRunData data = 1;
+  repeated DeviceRunData data = 1 [json_name = "data"];
 }
 
 message CableWorkListRes {
-  int32 code = 1;
-  string msg = 2;
+  int32 code = 1 [json_name = "code"];
+  string msg = 2 [json_name = "msg"];
 }
 
 // 设备运行数据单条记录
@@ -29,13 +29,13 @@ message DeviceRunData {
   // 电压值
   double load_voltage = 3 [json_name = "loadVoltage"];
   // 相别（1：A相，2：B相，3：C相）
-  int32 sltype = 4;
+  int32 sltype = 4 [json_name = "sltype"];
   // 工况时间，格式：yyyyMMddHHmmss
   string operate_time = 5 [json_name = "operateTime"];
   // 环境温度
   double am_temperature = 6 [json_name = "amTemperature"];
   // GPS有效性(1:有效 0:无效)
-  int32 gps = 7;
+  int32 gps = 7 [json_name = "gps"];
 
   // 工况时间 CableWorkListData -> operateTime
   string work_time = 8 [json_name = "workTime"];
@@ -43,12 +43,12 @@ message DeviceRunData {
 
 message CableFaultReq{
   // 多条故障结果数据
-  repeated FaultData data = 1;
+  repeated FaultData data = 1 [json_name = "data"];
 }
 
 message CableFaultRes{
-  int32 code = 1;
-  string msg = 2;
+  int32 code = 1 [json_name = "code"];
+  string msg = 2 [json_name = "msg"];
 }
 
 // 单条故障结果数据
@@ -62,17 +62,17 @@ message FaultData {
   // 区间标识(0:精确定位 1: 区间定位)
   int32 fixed_type = 4 [json_name = "fixedType"];
   // 故障起始杆塔
-  string diaElepo1 = 5;
+  string diaElepo1 = 5 [json_name = "diaElepo1"];
   // 故障终止杆塔
-  string diaElepo2 = 6;
+  string diaElepo2 = 6 [json_name = "diaElepo2"];
   // 故障杆塔
   string dia_elepo = 7 [json_name = "diaElepo"];
   // 故障距离（米）
   double err_distance = 8 [json_name = "errDistance"];
   // 故障相别（1，2,3代表A,B,C三相)
-  int32 fsltype = 9;
+  int32 fsltype = 9 [json_name = "fsltype"];
   // 故障描述
-  string notice = 10;
+  string notice = 10 [json_name = "notice"];
   // 告警处理状态（0：未处理  1：已处理）
   int32 warn_processed = 11 [json_name = "warnProcessed"];
   // 故障类型(SC短路 GD接地 OT其他)
@@ -86,12 +86,12 @@ message FaultData {
 
 message CableFaultWaveReq{
   // 多条故障波形数据
-  repeated FaultWaveData data = 1;
+  repeated FaultWaveData data = 1 [json_name = "data"];
 }
 
 message CableFaultWaveRes{
-  int32 code = 1;
-  string msg = 2;
+  int32 code = 1 [json_name = "code"];
+  string msg = 2 [json_name = "msg"];
 }
 
 // 单条故障波形数据
@@ -109,7 +109,7 @@ message FaultWaveData {
   // 波形数据(英文逗号分隔)
   string wave_data = 6 [json_name = "waveData"];
   // 采样率
-  int32 samprate = 7;
+  int32 samprate = 7 [json_name = "samprate"];
 }
 
 service BridgeDumpRpc {

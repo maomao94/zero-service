@@ -8224,6 +8224,8 @@ func (m *PlanRulePb) validate(all bool) error {
 
 	}
 
+	// no validation rules for Interval
+
 	if len(errors) > 0 {
 		return PlanRulePbMultiError(errors)
 	}

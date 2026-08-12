@@ -83,13 +83,13 @@ service BridgeModbus {
 }
 
 message PbModbusConfig {
-  string id = 1; // 主键ID
+  string id = 1 [json_name = "id"]; // 主键ID
   string create_time = 2 [json_name = "createTime"]; // 创建时间
   string update_time = 3 [json_name = "updateTime"]; // 更新时间
   string modbus_code = 4 [json_name = "modbusCode"]; // Modbus链路编号
   string slave_address = 5 [json_name = "slaveAddress"]; // 从站通信地址（如TCP地址或串口）
-  uint32 slave = 6; // 从站地址（Slave ID）
-  uint32 timeout = 7; // 通信超时时间（毫秒）
+  uint32 slave = 6 [json_name = "slave"]; // 从站地址（Slave ID）
+  uint32 timeout = 7 [json_name = "timeout"]; // 通信超时时间（毫秒）
   uint32 idle_timeout = 8 [json_name = "idleTimeout"]; // 空闲超时时间（毫秒）
   uint32 link_recovery_timeout = 9 [json_name = "linkRecoveryTimeout"]; // 链路重连超时时间（毫秒）
   uint32 protocol_recovery_timeout = 10 [json_name = "protocolRecoveryTimeout"]; // 协议恢复超时时间（毫秒）
@@ -98,37 +98,37 @@ message PbModbusConfig {
   string tls_cert_file = 13 [json_name = "tlsCertFile"]; // TLS证书文件路径
   string tls_key_file = 14 [json_name = "tlsKeyFile"]; // TLS私钥文件路径
   string tls_ca_file = 15 [json_name = "tlsCaFile"]; // TLS CA证书文件路径
-  uint32 status = 16; // 当前状态（0=禁用，1=启用）
-  string remark = 17; // 备注信息
+  uint32 status = 16 [json_name = "status"]; // 当前状态（0=禁用，1=启用）
+  string remark = 17 [json_name = "remark"]; // 备注信息
 }
 
 message SaveConfigReq {
   string modbus_code = 1 [json_name = "modbusCode"]; // Modbus链路编号
   string slave_address = 2 [json_name = "slaveAddress"]; // 从站通信地址（如TCP地址或串口）
-  uint32 slave = 3; // 从站地址（Slave ID）
+  uint32 slave = 3 [json_name = "slave"]; // 从站地址（Slave ID）
 }
 
 message SaveConfigRes {
-  string id = 1;
+  string id = 1 [json_name = "id"];
 }
 
 message DeleteConfigReq {
-  repeated string ids = 1;
+  repeated string ids = 1 [json_name = "ids"];
 }
 
 message DeleteConfigRes {
 }
 
 message PageListConfigReq {
-  int64 page = 1; // 页码
+  int64 page = 1 [json_name = "page"]; // 页码
   int64 page_size = 2 [json_name = "pageSize"]; // 每页大小
-  string keyword = 3; // 模糊匹配 modbusCode
-  uint32 status = 4;  // 可选过滤状态
+  string keyword = 3 [json_name = "keyword"]; // 模糊匹配 modbusCode
+  uint32 status = 4 [json_name = "status"];  // 可选过滤状态
 }
 
 message PageListConfigRes {
-  uint32 total = 1;
-  repeated PbModbusConfig cfg = 2;
+  uint32 total = 1 [json_name = "total"];
+  repeated PbModbusConfig cfg = 2 [json_name = "cfg"];
 }
 
 message GetConfigByCodeReq {
@@ -136,7 +136,7 @@ message GetConfigByCodeReq {
 }
 
 message GetConfigByCodeRes {
-  PbModbusConfig cfg = 1;
+  PbModbusConfig cfg = 1 [json_name = "cfg"];
 }
 
 message BatchGetConfigByCodeReq {
@@ -144,64 +144,64 @@ message BatchGetConfigByCodeReq {
 }
 
 message BatchGetConfigByCodeRes {
-  repeated PbModbusConfig cfg = 1;
+  repeated PbModbusConfig cfg = 1 [json_name = "cfg"];
 }
 
 // -------------------- Bit Access --------------------
 
 message ReadCoilsReq {
   string modbus_code = 1 [json_name = "modbusCode"]; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2; // 起始线圈地址
-  uint32 quantity = 3; // 读取数量（1–2000）
+  uint32 address = 2 [json_name = "address"]; // 起始线圈地址
+  uint32 quantity = 3 [json_name = "quantity"]; // 读取数量（1–2000）
 }
 
 message ReadCoilsRes {
-  bytes results = 1; // 按位表示的线圈状态（bit0 对应起始地址）
-  repeated bool values = 2; // 每个元素对应一个线圈状态
+  bytes results = 1 [json_name = "results"]; // 按位表示的线圈状态（bit0 对应起始地址）
+  repeated bool values = 2 [json_name = "values"]; // 每个元素对应一个线圈状态
 }
 
 message ReadDiscreteInputsReq {
   string modbus_code = 1 [json_name = "modbusCode"]; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2; // 起始离散输入地址
-  uint32 quantity = 3; // 读取数量（1–2000）
+  uint32 address = 2 [json_name = "address"]; // 起始离散输入地址
+  uint32 quantity = 3 [json_name = "quantity"]; // 读取数量（1–2000）
 }
 
 message ReadDiscreteInputsRes {
-  bytes results = 1; // 按位表示的离散输入状态
-  repeated bool values = 2; // 每个元素对应一个离散输入
+  bytes results = 1 [json_name = "results"]; // 按位表示的离散输入状态
+  repeated bool values = 2 [json_name = "values"]; // 每个元素对应一个离散输入
 }
 
 message WriteSingleCoilReq {
   string modbus_code = 1 [json_name = "modbusCode"]; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2; // 线圈地址
-  bool value = 3; // 写入值：false=OFF, true=ON
+  uint32 address = 2 [json_name = "address"]; // 线圈地址
+  bool value = 3 [json_name = "value"]; // 写入值：false=OFF, true=ON
 }
 
 message WriteSingleCoilRes {
-  bytes results = 1; // 回显写入后的线圈值
+  bytes results = 1 [json_name = "results"]; // 回显写入后的线圈值
 }
 
 message WriteMultipleCoilsReq {
   string modbus_code = 1 [json_name = "modbusCode"]; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2; // 起始线圈地址
-  uint32 quantity = 3; // 写入数量
-  repeated bool values = 4; // 每个元素对应一个线圈状态，false=OFF，true=ON
+  uint32 address = 2 [json_name = "address"]; // 起始线圈地址
+  uint32 quantity = 3 [json_name = "quantity"]; // 写入数量
+  repeated bool values = 4 [json_name = "values"]; // 每个元素对应一个线圈状态，false=OFF，true=ON
 }
 
 message WriteMultipleCoilsRes {
-  bytes results = 1; // 回显写入的数量
+  bytes results = 1 [json_name = "results"]; // 回显写入的数量
 }
 
 // -------------------- 16-bit Register Access --------------------
 
 message ReadInputRegistersReq {
   string modbus_code = 1 [json_name = "modbusCode"]; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2; // 起始寄存器地址
-  uint32 quantity = 3; // 读取数量（1–125）
+  uint32 address = 2 [json_name = "address"]; // 起始寄存器地址
+  uint32 quantity = 3 [json_name = "quantity"]; // 读取数量（1–125）
 }
 
 message ReadInputRegistersRes {
-  bytes results = 1; // 输入寄存器数据，每寄存器 2 字节，高字节在前
+  bytes results = 1 [json_name = "results"]; // 输入寄存器数据，每寄存器 2 字节，高字节在前
   repeated uint32 uint_values = 2 [json_name = "uintValues"]; // 无符号整数，用于业务计算
   repeated int32 int_values = 3 [json_name = "intValues"]; // 有符号整数，用于解释负数
   repeated string hex_values = 4 [json_name = "hexValues"]; // 十六进制字符串表示, 例如 "0xFF01"
@@ -210,12 +210,12 @@ message ReadInputRegistersRes {
 
 message ReadHoldingRegistersReq {
   string modbus_code = 1 [json_name = "modbusCode"]; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2; // 起始寄存器地址
-  uint32 quantity = 3; // 读取数量（1–125）
+  uint32 address = 2 [json_name = "address"]; // 起始寄存器地址
+  uint32 quantity = 3 [json_name = "quantity"]; // 读取数量（1–125）
 }
 
 message ReadHoldingRegistersRes {
-  bytes results = 1; // 保持寄存器数据，每寄存器 2 字节
+  bytes results = 1 [json_name = "results"]; // 保持寄存器数据，每寄存器 2 字节
   repeated uint32 uint_values = 2 [json_name = "uintValues"]; // 无符号整数，用于业务计算
   repeated int32 int_values = 3 [json_name = "intValues"]; // 有符号整数，用于解释负数
   repeated string hex_values = 4 [json_name = "hexValues"]; // 十六进制字符串表示, 例如 "0xFF01"
@@ -224,46 +224,46 @@ message ReadHoldingRegistersRes {
 
 message WriteSingleRegisterReq {
   string modbus_code = 1 [json_name = "modbusCode"]; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2; // 寄存器地址
-  uint32 value = 3; // 写入的值,每个寄存器2字节
+  uint32 address = 2 [json_name = "address"]; // 寄存器地址
+  uint32 value = 3 [json_name = "value"]; // 写入的值,每个寄存器2字节
 }
 message WriteSingleRegisterRes {
-  bytes results = 1; // 回显写入后的寄存器值
+  bytes results = 1 [json_name = "results"]; // 回显写入后的寄存器值
 }
 
 message WriteSingleRegisterWithDecimalReq {
   string modbus_code = 1 [json_name = "modbusCode"]; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2; // 寄存器地址
-  int32 value = 3; // 要写入的十进制数值
-  bool unsigned = 4; // 是否为无符号整数（true: 无符号，false: 有符号）
+  uint32 address = 2 [json_name = "address"]; // 寄存器地址
+  int32 value = 3 [json_name = "value"]; // 要写入的十进制数值
+  bool unsigned = 4 [json_name = "unsigned"]; // 是否为无符号整数（true: 无符号，false: 有符号）
 }
 
 message WriteSingleRegisterWithDecimalRes {
-  bytes results = 1; // 回显写入后的寄存器值
+  bytes results = 1 [json_name = "results"]; // 回显写入后的寄存器值
 }
 
 message WriteMultipleRegistersReq {
   string modbus_code = 1 [json_name = "modbusCode"]; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2; // 起始寄存器地址
-  uint32 quantity = 3; // 写入数量
-  repeated uint32 values = 4; // 按寄存器顺序的 uint32 值，每个值对应一个寄存器,每个寄存器2字节
+  uint32 address = 2 [json_name = "address"]; // 起始寄存器地址
+  uint32 quantity = 3 [json_name = "quantity"]; // 写入数量
+  repeated uint32 values = 4 [json_name = "values"]; // 按寄存器顺序的 uint32 值，每个值对应一个寄存器,每个寄存器2字节
 }
 
 message WriteMultipleRegistersRes {
-  bytes results = 1; // 回显写入的数量
+  bytes results = 1 [json_name = "results"]; // 回显写入的数量
 }
 
 message WriteMultipleRegistersWithDecimalReq {
   string modbus_code = 1 [json_name = "modbusCode"]; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2; // 起始寄存器地址
-  uint32 quantity = 3; // 写入数量
-  repeated int32 values = 4; // 十进制数值列表
-  bool unsigned = 5; // 是否为无符号整数（true: 无符号，false: 有符号）
+  uint32 address = 2 [json_name = "address"]; // 起始寄存器地址
+  uint32 quantity = 3 [json_name = "quantity"]; // 写入数量
+  repeated int32 values = 4 [json_name = "values"]; // 十进制数值列表
+  bool unsigned = 5 [json_name = "unsigned"]; // 是否为无符号整数（true: 无符号，false: 有符号）
 }
 
 // 写多个保持寄存器（使用十进制数值）响应
 message WriteMultipleRegistersWithDecimalRes {
-  bytes results = 1; // 回显写入的数量
+  bytes results = 1 [json_name = "results"]; // 回显写入的数量
 }
 
 message ReadWriteMultipleRegistersReq {
@@ -272,11 +272,11 @@ message ReadWriteMultipleRegistersReq {
   uint32 read_quantity = 3 [json_name = "readQuantity"]; // 读取数量
   uint32 write_address = 4 [json_name = "writeAddress"]; // 写入起始寄存器地址
   uint32 write_quantity = 5 [json_name = "writeQuantity"]; // 写入数量
-  repeated uint32 values = 6; // 写入数据，每个值对应一个寄存器,每个寄存器2字节
+  repeated uint32 values = 6 [json_name = "values"]; // 写入数据，每个值对应一个寄存器,每个寄存器2字节
 }
 
 message ReadWriteMultipleRegistersRes {
-  bytes results = 1; // 读取到的寄存器数据
+  bytes results = 1 [json_name = "results"]; // 读取到的寄存器数据
   repeated uint32 uint_values = 2 [json_name = "uintValues"]; // 无符号整数，用于业务计算
   repeated int32 int_values = 3 [json_name = "intValues"]; // 有符号整数，用于解释负数
   repeated string hex_values = 4 [json_name = "hexValues"]; // 十六进制字符串表示, 例如 "0xFF01"
@@ -285,22 +285,22 @@ message ReadWriteMultipleRegistersRes {
 
 message MaskWriteRegisterReq {
   string modbus_code = 1 [json_name = "modbusCode"]; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2; // 寄存器地址
+  uint32 address = 2 [json_name = "address"]; // 寄存器地址
   uint32 and_mask = 3 [json_name = "andMask"]; // AND 掩码
   uint32 or_mask = 4 [json_name = "orMask"]; // OR 掩码
 }
 
 message MaskWriteRegisterRes {
-  bytes results = 1; // 回显写入后的寄存器值
+  bytes results = 1 [json_name = "results"]; // 回显写入后的寄存器值
 }
 
 message ReadFIFOQueueReq {
   string modbus_code = 1 [json_name = "modbusCode"]; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2; // FIFO 队列寄存器地址
+  uint32 address = 2 [json_name = "address"]; // FIFO 队列寄存器地址
 }
 
 message ReadFIFOQueueRes {
-  bytes results = 1; // FIFO 队列内容
+  bytes results = 1 [json_name = "results"]; // FIFO 队列内容
 }
 
 // -------------------- Device Identification --------------------
@@ -312,11 +312,11 @@ message ReadDeviceIdentificationReq {
 
 message ReadDeviceIdentificationRes {
   // 原始对象 ID 映射 (十进制)，方便协议调试/直接对应 Modbus 规范
-  map<uint32, string> results = 1;
+  map<uint32, string> results = 1 [json_name = "results"];
   // 对象 ID 用十六进制字符串表示，例如 "0x00", "0x01"
-  map<string, string> hexResults = 2;
+  map<string, string> hexResults = 2 [json_name = "hexResults"];
   // 语义化映射 (如果对象 ID 有标准含义，就用名字；否则 fallback 成 Object_0xXX)
-  map<string, string> semanticResults = 3;
+  map<string, string> semanticResults = 3 [json_name = "semanticResults"];
 }
 
 message ReadDeviceIdentificationSpecificObjectReq {
@@ -334,22 +334,22 @@ message ReadDeviceIdentificationSpecificObjectReq {
 
 message ReadDeviceIdentificationSpecificObjectRes {
   // 原始对象 ID 映射 (十进制)，方便协议调试/直接对应 Modbus 规范
-  map<uint32, string> results = 1;
+  map<uint32, string> results = 1 [json_name = "results"];
   // 对象 ID 用十六进制字符串表示，例如 "0x00", "0x01"
-  map<string, string> hexResults = 2;
+  map<string, string> hexResults = 2 [json_name = "hexResults"];
   // 语义化映射 (如果对象 ID 有标准含义，就用名字；否则 fallback 成 Object_0xXX)
-  map<string, string> semanticResults = 3;
+  map<string, string> semanticResults = 3 [json_name = "semanticResults"];
 }
 
 message BatchConvertDecimalToRegisterReq {
-  repeated int32 values = 1; // 整数数值列表，支持正数和负数, 注意浮点数需要放大到整数倍
-  bool unsigned = 2; // 是否为无符号整数（true: 无符号，false: 有符号）
+  repeated int32 values = 1 [json_name = "values"]; // 整数数值列表，支持正数和负数, 注意浮点数需要放大到整数倍
+  bool unsigned = 2 [json_name = "unsigned"]; // 是否为无符号整数（true: 无符号，false: 有符号）
 }
 
 message BatchConvertDecimalToRegisterRes {
-  repeated uint32 uint16Values = 1; // 无符号两字节数值列表（范围：0-65535）
-  repeated int32 int16Values = 2; // 有符号数值列表（范围：-32768-32767）
+  repeated uint32 uint16Values = 1 [json_name = "uint16Values"]; // 无符号两字节数值列表（范围：0-65535）
+  repeated int32 int16Values = 2 [json_name = "int16Values"]; // 有符号数值列表（范围：-32768-32767）
   repeated string hex_values = 3 [json_name = "hexValues"]; // 十六进制表示列表（格式：0xXXXX）
   repeated string binary_values = 4 [json_name = "binaryValues"]; // 二进制表示列表（格式：16位二进制字符串）
-  bytes bytes = 5; // 字节数组表示（大端序，每两个字节对应一个值）
+  bytes bytes = 5 [json_name = "bytes"]; // 字节数组表示（大端序，每两个字节对应一个值）
 }

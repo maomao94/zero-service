@@ -16,16 +16,16 @@ service BridgeMqtt {
 
 // -------------------- 通用请求/响应 --------------------
 message PublishReq {
-  string topic = 1;
-  bytes payload = 2;
+  string topic = 1 [json_name = "topic"];
+  bytes payload = 2 [json_name = "payload"];
 }
 
 message PublishRes {
 }
 
 message PublishWithTraceReq {
-  string topic = 1;
-  bytes payload = 2;
+  string topic = 1 [json_name = "topic"];
+  bytes payload = 2 [json_name = "payload"];
 }
 
 message PublishWithTraceRes {

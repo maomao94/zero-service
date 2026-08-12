@@ -54,21 +54,21 @@ enum PodConditionTypePb {
 
 // PodCondition 描述某一条件的当前状态 todo
 message PodConditionPb {
-  PodConditionTypePb type = 1;
-  bool status = 2;
-  string reason = 3;
-  string message = 4;
+  PodConditionTypePb type = 1 [json_name = "type"];
+  bool status = 2 [json_name = "status"];
+  string reason = 3 [json_name = "reason"];
+  string message = 4 [json_name = "message"];
   string last_transition_time = 5 [json_name = "lastTransitionTime"];
 }
 
 
 // ContainerState 表示单个容器的运行状态
 message ContainerStatePb {
-  bool running = 1;        // 运行中
-  bool terminated = 2;     // 已终止
-  bool waiting = 3;        // 等待中（创建 / 重启等）
-  string reason = 4;       // 状态原因
-  string message = 5;      // 状态描述
+  bool running = 1 [json_name = "running"];        // 运行中
+  bool terminated = 2 [json_name = "terminated"];     // 已终止
+  bool waiting = 3 [json_name = "waiting"];        // 等待中（创建 / 重启等）
+  string reason = 4 [json_name = "reason"];       // 状态原因
+  string message = 5 [json_name = "message"];      // 状态描述
   string started_time = 6 [json_name = "startedTime"];    // 启动时间
   string finished_time = 7 [json_name = "finishedTime"];   // 结束时间
   string exit_code = 8 [json_name = "exitCode"];     // 退出码
@@ -81,20 +81,20 @@ message ContainerStatePb {
 
 // Container 表示实际运行中的容器实例
 message ContainerPb {
-  string name = 1;                 // 容器名称
-  string image = 2;                // 镜像名称
-  ContainerStatePb state = 3;        // 当前状态
+  string name = 1 [json_name = "name"];                 // 容器名称
+  string image = 2 [json_name = "image"];                // 镜像名称
+  ContainerStatePb state = 3 [json_name = "state"];        // 当前状态
 
   // 端口声明
   // Docker: "8080:80", "80/tcp"
   // K8s: 映射为 containerPort / service
-  repeated string ports = 4;
+  repeated string ports = 4 [json_name = "ports"];
 
-  map<string, string> env = 5;     // 环境变量
-  repeated string args = 6;        // 启动参数
+  map<string, string> env = 5 [json_name = "env"];     // 环境变量
+  repeated string args = 6 [json_name = "args"];        // 启动参数
 
   // 资源限制（CPU / Memory 等，由 runtime 解释）
-  map<string, string> resources = 7;
+  map<string, string> resources = 7 [json_name = "resources"];
 
   // 卷挂载信息
   repeated string volume_mounts = 8 [json_name = "volumeMounts"];
@@ -107,14 +107,14 @@ message ContainerPb {
 
 // ContainerSpec 描述期望运行的容器规格
 message ContainerSpecPb {
-  string name = 1 [(validate.rules).string.min_len = 1];
-  string image = 2 [(validate.rules).string.min_len = 1];
+  string name = 1 [json_name = "name", (validate.rules).string.min_len = 1];
+  string image = 2 [json_name = "image", (validate.rules).string.min_len = 1];
 
-  repeated string args = 3;
-  map<string, string> env = 4;
+  repeated string args = 3 [json_name = "args"];
+  map<string, string> env = 4 [json_name = "env"];
 
-  repeated string ports = 5;
-  map<string, string> resources = 6;
+  repeated string ports = 5 [json_name = "ports"];
+  map<string, string> resources = 6 [json_name = "resources"];
 
   // 卷挂载声明（runtime 自行解析）
   repeated string volume_mounts = 7 [json_name = "volumeMounts"];
@@ -123,35 +123,35 @@ message ContainerSpecPb {
 
 // PodSpec 描述 Pod 的期望状态
 message PodSpecPb {
-  string name = 1 [(validate.rules).string.min_len = 1];   // Pod 逻辑名称
+  string name = 1 [json_name = "name", (validate.rules).string.min_len = 1];   // Pod 逻辑名称
 
   // 期望运行的容器列表（支持多容器）
-  repeated ContainerSpecPb containers = 2 [(validate.rules).repeated = {min_items: 1}];
+  repeated ContainerSpecPb containers = 2 [json_name = "containers", (validate.rules).repeated = {min_items: 1}];
 
   // 资源标签（元数据）
   // Docker: container labels
   // K8s: metadata.labels
-  map<string, string> labels = 3;
+  map<string, string> labels = 3 [json_name = "labels"];
 
   // 扩展注解信息
   // Docker: labels（约定前缀）
   // K8s: metadata.annotations
-  map<string, string> annotations = 4;
+  map<string, string> annotations = 4 [json_name = "annotations"];
 
   // 重启策略：no / onFailure / always
-  string restartPolicy = 5 [(validate.rules).string = {in: ["no", "onFailure", "always"]}];
+  string restartPolicy = 5 [json_name = "restartPolicy", (validate.rules).string = {in: ["no", "onFailure", "always"]}];
 
   // 优雅终止时间（秒）
   int32 termination_grace_period_seconds = 6 [json_name = "terminationGracePeriodSeconds"];
 
   // 网络模式：bridge / host / none / 自定义网络名称
-  string networkMode = 7 [(validate.rules).string = {in: ["bridge", "host", "none"]}];
+  string networkMode = 7 [json_name = "networkMode", (validate.rules).string = {in: ["bridge", "host", "none"]}];
 
   // 网络名称：指定要使用的自定义网络名称
   string network_name = 8 [json_name = "networkName"];
 
   // 网络配置：额外的网络配置参数
-  map<string, string> networkConfig = 9;
+  map<string, string> networkConfig = 9 [json_name = "networkConfig"];
 }
 
 
@@ -161,15 +161,15 @@ message PodSpecPb {
 
 // Pod 表示系统中一个已创建或运行中的 Pod 实例
 message PodPb {
-  string id = 1;               // Pod ID（runtime 生成）
-  string name = 2;             // Pod 名称
-  PodPhasePb phase = 3;          // 当前阶段
+  string id = 1 [json_name = "id"];               // Pod ID（runtime 生成）
+  string name = 2 [json_name = "name"];             // Pod 名称
+  PodPhasePb phase = 3 [json_name = "phase"];          // 当前阶段
 
-  repeated PodConditionPb conditions = 4;
-  repeated ContainerPb containers = 5;
+  repeated PodConditionPb conditions = 4 [json_name = "conditions"];
+  repeated ContainerPb containers = 5 [json_name = "containers"];
 
-  map<string, string> labels = 6;
-  map<string, string> annotations = 7;
+  map<string, string> labels = 6 [json_name = "labels"];
+  map<string, string> annotations = 7 [json_name = "annotations"];
   string network_mode = 8 [json_name = "networkMode"]; // 网络模式
 
   string creation_time = 9 [json_name = "creationTime"];  // 创建时间
@@ -183,87 +183,87 @@ message PodPb {
 // =======================
 
 message CreatePodReq {
-  string node = 50; // docker 运行节点 默认-local
-  string name = 1 [(validate.rules).string.min_len = 1];
-  PodSpecPb spec = 2 [(validate.rules).message.required = true];
+  string node = 50 [json_name = "node"]; // docker 运行节点 默认-local
+  string name = 1 [json_name = "name", (validate.rules).string.min_len = 1];
+  PodSpecPb spec = 2 [json_name = "spec", (validate.rules).message.required = true];
 }
 
 message CreatePodRes {
-  PodPb pod = 1;
+  PodPb pod = 1 [json_name = "pod"];
 }
 
 message StartPodReq {
-  string node = 50; // docker 运行节点 默认-local
-  string id = 1 [(validate.rules).string.min_len = 1];
+  string node = 50 [json_name = "node"]; // docker 运行节点 默认-local
+  string id = 1 [json_name = "id", (validate.rules).string.min_len = 1];
 }
 
 message StartPodRes {
-  PodPb pod = 1;
+  PodPb pod = 1 [json_name = "pod"];
 }
 
 message StopPodReq {
-  string node = 50; // docker 运行节点 默认-local
-  string id = 1 [(validate.rules).string.min_len = 1];
-  bool force = 2;
+  string node = 50 [json_name = "node"]; // docker 运行节点 默认-local
+  string id = 1 [json_name = "id", (validate.rules).string.min_len = 1];
+  bool force = 2 [json_name = "force"];
 }
 
 message StopPodRes {
 }
 
 message RestartPodReq {
-  string node = 50; // docker 运行节点 默认-local
-  string id = 1 [(validate.rules).string.min_len = 1];
+  string node = 50 [json_name = "node"]; // docker 运行节点 默认-local
+  string id = 1 [json_name = "id", (validate.rules).string.min_len = 1];
 }
 
 message RestartPodRes {
-  PodPb pod = 1;
+  PodPb pod = 1 [json_name = "pod"];
 }
 
 message GetPodReq {
-  string node = 50; // docker 运行节点 默认-local
-  string id = 1 [(validate.rules).string.min_len = 1];
+  string node = 50 [json_name = "node"]; // docker 运行节点 默认-local
+  string id = 1 [json_name = "id", (validate.rules).string.min_len = 1];
 }
 
 message GetPodRes {
-  PodPb pod = 1;
+  PodPb pod = 1 [json_name = "pod"];
 }
 
 message ListPodsReq {
-  string node = 50; // docker 运行节点 默认-local
-  int32 limit = 1 [(validate.rules).int32.lte = 1000];
-  int32 offset = 2 [(validate.rules).int32.lte = 1000];
-  repeated string names = 3;
-  repeated string ids = 4;
-  map<string, string> labels = 5;
+  string node = 50 [json_name = "node"]; // docker 运行节点 默认-local
+  int32 limit = 1 [json_name = "limit", (validate.rules).int32.lte = 1000];
+  int32 offset = 2 [json_name = "offset", (validate.rules).int32.lte = 1000];
+  repeated string names = 3 [json_name = "names"];
+  repeated string ids = 4 [json_name = "ids"];
+  map<string, string> labels = 5 [json_name = "labels"];
 }
 
 message ListPodsRes {
-  repeated ListPodItemPb items = 1;
-  int32 total = 2;
+  repeated ListPodItemPb items = 1 [json_name = "items"];
+  int32 total = 2 [json_name = "total"];
 }
 
 message ListPodItemPb {
-  string id = 1;
-  string name = 2;
-  PodPhasePb phase = 3;
+  string id = 1 [json_name = "id"];
+  string name = 2 [json_name = "name"];
+  PodPhasePb phase = 3 [json_name = "phase"];
   string create_time = 4 [json_name = "createTime"];
-  string image = 5;
+  string image = 5 [json_name = "image"];
   string image_id = 6 [json_name = "imageId"];
-  string command = 7;
-  repeated string ports = 8;
+  string command = 7 [json_name = "command"];
+  repeated string ports = 8 [json_name = "ports"];
   int64 size_rw = 9 [json_name = "sizeRw"];
   int64 size_root_fs = 10 [json_name = "sizeRootFs"];
-  map<string, string> labels = 11;
-  string state = 12;
-  string status = 13;
+  map<string, string> labels = 11 [json_name = "labels"];
+  string state = 12 [json_name = "state"];
+  string status = 13 [json_name = "status"];
   string network_mode = 14 [json_name = "networkMode"];
-  repeated string mounts = 15;
+  repeated string mounts = 15 [json_name = "mounts"];
 }
 
 message DeletePodReq {
-  string node = 50; // docker 运行节点 默认-local
-  string id = 1 [(validate.rules).string.min_len = 1];
-  bool force = 2;
+  string node = 50 [json_name = "node"]; // docker 运行节点 默认-local
+  string id = 1 [json_name = "id", (validate.rules).string.min_len = 1];
+  bool force = 2 [json_name = "force"];
   bool remove_volumes = 3 [json_name = "removeVolumes"];
 }
 
@@ -271,12 +271,12 @@ message DeletePodRes {
 }
 
 message GetPodStatsReq {
-  string node = 50; // docker 运行节点 默认-local
-  string id = 1 [(validate.rules).string.min_len = 1];
+  string node = 50 [json_name = "node"]; // docker 运行节点 默认-local
+  string id = 1 [json_name = "id", (validate.rules).string.min_len = 1];
 }
 
 message GetPodStatsRes {
-  repeated ContainerStatsPb stats = 1;
+  repeated ContainerStatsPb stats = 1 [json_name = "stats"];
 }
 
 message ContainerStatsPb {
@@ -310,29 +310,29 @@ message ContainerStatsPb {
   string storage_write_bytes_display = 20 [json_name = "storageWriteBytesDisplay"]; // 用于展示
 
   // 统计时间
-  string timestamp = 21;
+  string timestamp = 21 [json_name = "timestamp"];
 }
 
 message ListImagesReq {
-  string node = 50; // docker 运行节点 默认-local
-  int32 limit = 1 [(validate.rules).int32.lte = 1000];
-  int32 offset = 2 [(validate.rules).int32.lte = 1000];
-  repeated string references = 3;
+  string node = 50 [json_name = "node"]; // docker 运行节点 默认-local
+  int32 limit = 1 [json_name = "limit", (validate.rules).int32.lte = 1000];
+  int32 offset = 2 [json_name = "offset", (validate.rules).int32.lte = 1000];
+  repeated string references = 3 [json_name = "references"];
   bool include_digests = 4 [json_name = "includeDigests"];
 }
 
 message ListImagesRes {
-  repeated ImagePb items = 1;
-  int32 total = 2;
+  repeated ImagePb items = 1 [json_name = "items"];
+  int32 total = 2 [json_name = "total"];
 }
 
 // Image 表示系统中的镜像信息
 message ImagePb {
-  string id = 1;               // 镜像 ID
-  repeated string references = 2;    // 镜像标签列表（完整引用，如 ubuntu:latest）
-  repeated string digests = 3; // 镜像摘要列表
-  int64 size = 4;              // 镜像大小（字节）
+  string id = 1 [json_name = "id"];               // 镜像 ID
+  repeated string references = 2 [json_name = "references"];    // 镜像标签列表（完整引用，如 ubuntu:latest）
+  repeated string digests = 3 [json_name = "digests"]; // 镜像摘要列表
+  int64 size = 4 [json_name = "size"];              // 镜像大小（字节）
   string size_display = 5 [json_name = "sizeDisplay"];      // 用于展示的大小
   string created_at = 6 [json_name = "createdAt"];        // 创建时间
-  map<string, string> labels = 7; // 镜像标签
+  map<string, string> labels = 7 [json_name = "labels"]; // 镜像标签
 }

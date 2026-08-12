@@ -7,61 +7,61 @@ option java_package = "com.github.file.grpc";
 option java_outer_classname = "FileProto";
 
 message Req {
-  string ping = 1;
+  string ping = 1 [json_name = "ping"];
 }
 
 message Res {
-  string pong = 1;
+  string pong = 1 [json_name = "pong"];
 }
 
 message Oss{
-  string id = 1;
+  string id = 1 [json_name = "id"];
   string tenant_id = 2 [json_name = "tenantId"]; // 租户ID
-  int64 category = 3; // 所属分类
+  int64 category = 3 [json_name = "category"]; // 所属分类
   string oss_code = 4 [json_name = "ossCode"]; // 资源编号
-  string endpoint = 5; // 资源地址
+  string endpoint = 5 [json_name = "endpoint"]; // 资源地址
   string access_key = 6 [json_name = "accessKey"]; // accessKey
   string secret_key = 7 [json_name = "secretKey"]; // secretKey
   string bucket_name = 8 [json_name = "bucketName"]; // 空间名
   string app_id = 9 [json_name = "appId"]; // 应用ID TencentCOS需要
-  string region = 10; // 地域简称 TencentCOS需要
-  string remark = 11; // 备注
-  int64 status = 12; // 状态
+  string region = 10 [json_name = "region"]; // 地域简称 TencentCOS需要
+  string remark = 11 [json_name = "remark"]; // 备注
+  int64 status = 12 [json_name = "status"]; // 状态
   string create_time = 13 [json_name = "createTime"];
   string update_time = 15 [json_name = "updateTime"];
 }
 
 message File {
-  string link = 1; // 文件地址
-  string domain = 2; // 域名地址
-  string name = 3; // 文件名
-  int64 size = 4; // 文件大小
+  string link = 1 [json_name = "link"]; // 文件地址
+  string domain = 2 [json_name = "domain"]; // 域名地址
+  string name = 3 [json_name = "name"]; // 文件名
+  int64 size = 4 [json_name = "size"]; // 文件大小
   string format_size = 5 [json_name = "formatSize"]; // 格式化文件大小
   string original_name = 6 [json_name = "originalName"]; // 初始文件名
   string attach_id = 7 [json_name = "attachId"]; // 附件表ID
-  string md5 = 8; // 原文件md5
-  ImageMeta meta = 9; // 图片信息
+  string md5 = 8 [json_name = "md5"]; // 原文件md5
+  ImageMeta meta = 9 [json_name = "meta"]; // 图片信息
   string thumb_link = 10 [json_name = "thumbLink"];     // 缩略图地址
   string thumb_name = 11 [json_name = "ThumbName"]; // 缩略图文件名
 }
 
 message ImageMeta {
-  double longitude = 1;   // 经度
-  double latitude = 2;    // 纬度
-  string time = 3;        // 拍摄时间
+  double longitude = 1 [json_name = "longitude"];   // 经度
+  double latitude = 2 [json_name = "latitude"];    // 纬度
+  string time = 3 [json_name = "time"];        // 拍摄时间
   int32 img_height = 4 [json_name = "imgHeight"];    // 高
   int32 img_width = 5 [json_name = "imgWidth"];     // 宽
-  double altitude = 6;    // 高度
+  double altitude = 6 [json_name = "altitude"];    // 高度
   string camera_model = 7 [json_name = "cameraModel"]; // 相机型号
   string body_serial_number = 8 [json_name = "bodySerialNumber"]; // 机身序列号
-  map<string, string> extra = 9; // 扩展元数据
+  map<string, string> extra = 9 [json_name = "extra"]; // 扩展元数据
 }
 
 
 message OssFile {
-  string link = 1; // 文件地址
-  string name = 2; // 文件名
-  int64 size = 3; // 文件大小
+  string link = 1 [json_name = "link"]; // 文件地址
+  string name = 2 [json_name = "name"]; // 文件名
+  int64 size = 3 [json_name = "size"]; // 文件大小
   string format_size = 4 [json_name = "formatSize"]; // 格式化文件大小
   string put_time = 5 [json_name = "putTime"]; // 文件上传时间
   string content_type = 6 [json_name = "contentType"]; // 文件类型
@@ -69,72 +69,72 @@ message OssFile {
 }
 
 message OssDetailReq{
-  string id = 1;
+  string id = 1 [json_name = "id"];
 }
 
 message OssDetailRes{
-  Oss oss = 1;
+  Oss oss = 1 [json_name = "oss"];
 }
 
 message OssListReq{
-  int64 page = 1; // 页码
+  int64 page = 1 [json_name = "page"]; // 页码
   int64 page_size = 2 [json_name = "pageSize"]; // 每页大小
   string order_by = 3 [json_name = "orderBy"]; // 排序
   string tenant_id = 4 [json_name = "tenantId"]; // 租户ID
-  int64 category = 5; // 所属分类
+  int64 category = 5 [json_name = "category"]; // 所属分类
 }
 
 message OssListRes{
-  repeated Oss oss = 1;
-  int64 total = 2;
+  repeated Oss oss = 1 [json_name = "oss"];
+  int64 total = 2 [json_name = "total"];
 }
 
 message CreateOssReq{
   string tenant_id = 1 [json_name = "tenantId"]; // 租户ID
-  int64 category = 2; // 所属分类
+  int64 category = 2 [json_name = "category"]; // 所属分类
   string oss_code = 3 [json_name = "ossCode"]; // 资源编号
-  string endpoint = 4; // 资源地址
+  string endpoint = 4 [json_name = "endpoint"]; // 资源地址
   string access_key = 5 [json_name = "accessKey"]; // accessKey
   string secret_key = 6 [json_name = "secretKey"]; // secretKey
   string bucket_name = 7 [json_name = "bucketName"]; // 空间名
   string app_id = 8 [json_name = "appId"]; // 应用ID TencentCOS需要
-  string region = 9; // 地域简称 TencentCOS需要
-  string remark = 10; // 备注
+  string region = 9 [json_name = "region"]; // 地域简称 TencentCOS需要
+  string remark = 10 [json_name = "remark"]; // 备注
 }
 
 message CreateOssRes{
-  string id = 1;
+  string id = 1 [json_name = "id"];
 }
 
 message UpdateOssReq{
-  string id = 1;
+  string id = 1 [json_name = "id"];
   string tenant_id = 2 [json_name = "tenantId"]; // 租户ID
-  int64 category = 3; // 所属分类
+  int64 category = 3 [json_name = "category"]; // 所属分类
   string oss_code = 4 [json_name = "ossCode"]; // 资源编号
-  string endpoint = 5; // 资源地址
+  string endpoint = 5 [json_name = "endpoint"]; // 资源地址
   string access_key = 6 [json_name = "accessKey"]; // accessKey
   string secret_key = 7 [json_name = "secretKey"]; // secretKey
   string bucket_name = 8 [json_name = "bucketName"]; // 空间名
   string app_id = 9 [json_name = "appId"]; // 应用ID TencentCOS需要
-  string region = 10; // 地域简称 TencentCOS需要
-  string remark = 11; // 备注
-  int64 status = 12; // 状态
+  string region = 10 [json_name = "region"]; // 地域简称 TencentCOS需要
+  string remark = 11 [json_name = "remark"]; // 备注
+  int64 status = 12 [json_name = "status"]; // 状态
 }
 
 message UpdateOssRes{
 }
 
 message DeleteOssReq{
-  string id = 1;
+  string id = 1 [json_name = "id"];
 }
 
 message DeleteOssRes{
-  string id = 1;
+  string id = 1 [json_name = "id"];
 }
 
 message MakeBucketReq {
   string tenant_id = 1 [json_name = "tenantId"]; // 租户ID
-  string code = 2; // 资源编号
+  string code = 2 [json_name = "code"]; // 资源编号
   string bucket_name = 3 [json_name = "bucketName"]; // 存储桶名称
 }
 
@@ -143,7 +143,7 @@ message MakeBucketRes {
 
 message RemoveBucketReq {
   string tenant_id = 1 [json_name = "tenantId"]; // 租户ID
-  string code = 2; // 资源编号
+  string code = 2 [json_name = "code"]; // 资源编号
   string bucket_name = 3 [json_name = "bucketName"]; // 存储桶名称
 }
 
@@ -152,11 +152,11 @@ message RemoveBucketRes {
 
 message StatFileReq {
   string tenant_id = 1 [json_name = "tenantId"]; // 租户ID
-  string code = 2; // 资源编号
+  string code = 2 [json_name = "code"]; // 资源编号
   string bucket_name = 3 [json_name = "bucketName"]; // 存储桶名称
-  string filename = 4; // 上传文件名
+  string filename = 4 [json_name = "filename"]; // 上传文件名
   bool is_sign = 5 [json_name = "isSign"]; // 是否生成签名
-  int32 expires = 6; // 过期时间 默认一小时 单位分钟
+  int32 expires = 6 [json_name = "expires"]; // 过期时间 默认一小时 单位分钟
 }
 
 message StatFileRes{
@@ -165,54 +165,54 @@ message StatFileRes{
 
 message SignUrlReq {
   string tenant_id = 1 [json_name = "tenantId"]; // 租户ID
-  string code = 2; // 资源编号
+  string code = 2 [json_name = "code"]; // 资源编号
   string bucket_name = 3 [json_name = "bucketName"]; // 存储桶名称
-  string filename = 4; // 上传文件名
-  int32 expires = 5; // 过期时间 默认一小时 单位分钟
+  string filename = 4 [json_name = "filename"]; // 上传文件名
+  int32 expires = 5 [json_name = "expires"]; // 过期时间 默认一小时 单位分钟
 }
 
 message SignUrlRes{
-  string url = 1; // 文件url
+  string url = 1 [json_name = "url"]; // 文件url
 }
 
 message PutFileReq {
   string tenant_id = 1 [json_name = "tenantId"]; // 租户ID
-  string code = 2; // 资源编号
+  string code = 2 [json_name = "code"]; // 资源编号
   string bucket_name = 3 [json_name = "bucketName"]; // 存储桶名称
-  string filename = 4; // 上传文件名
+  string filename = 4 [json_name = "filename"]; // 上传文件名
   string content_type = 5 [json_name = "contentType"];
-  string path = 6; // 文件路径
+  string path = 6 [json_name = "path"]; // 文件路径
   bool is_thumb = 7 [json_name = "isThumb"]; // 是否缩略图
   string path_prefix = 8 [json_name = "pathPrefix"]; // 默认值 default 文件路径前缀, 文件格式 pathPrefix/20060102/uuid.ext
 }
 
 message PutFileRes {
-  File file = 1;
+  File file = 1 [json_name = "file"];
 }
 
 message PutStreamFileReq {
   string tenant_id = 1 [json_name = "tenantId"]; // 租户ID 默认值 000000
-  string code = 2; // 资源编号
+  string code = 2 [json_name = "code"]; // 资源编号
   string bucket_name = 3 [json_name = "bucketName"]; // 存储桶名称
-  string filename = 4; // 上传文件名
+  string filename = 4 [json_name = "filename"]; // 上传文件名
   string content_type = 5 [json_name = "contentType"];
-  bytes content = 6;   // 文件内容
-  int64 size = 7; // 文件大小
+  bytes content = 6 [json_name = "content"];   // 文件内容
+  int64 size = 7 [json_name = "size"]; // 文件大小
   bool is_thumb = 8 [json_name = "isThumb"]; // 是否缩略图
   string path_prefix = 9 [json_name = "pathPrefix"]; // 默认值 upload 文件路径前缀, 文件格式 pathPrefix/20060102/uuid.ext
 }
 
 message PutStreamFileRes {
-  File file = 1;
+  File file = 1 [json_name = "file"];
   bool is_end = 2 [json_name = "isEnd"]; // 是否结束
-  int64 size = 3; // 文件大小
+  int64 size = 3 [json_name = "size"]; // 文件大小
 }
 
 message RelayTarget {
   string tenant_id = 1 [json_name = "tenantId"]; // 租户ID
-  string code = 2; // 资源编号
+  string code = 2 [json_name = "code"]; // 资源编号
   string bucket_name = 3 [json_name = "bucketName"]; // 存储桶名称
-  string filename = 4; // 上传文件名
+  string filename = 4 [json_name = "filename"]; // 上传文件名
   string path_prefix = 5 [json_name = "pathPrefix"]; // 默认值 default 文件路径前缀
 }
 
@@ -220,32 +220,32 @@ message RelayFileReq {
   // source - 二选一
   string source_url = 1 [json_name = "sourceUrl"];    // OSS HTTP 地址
   string source_path = 2 [json_name = "sourcePath"];   // 本地磁盘文件路径
-  repeated RelayTarget targets = 3; // 目标 OSS 列表
+  repeated RelayTarget targets = 3 [json_name = "targets"]; // 目标 OSS 列表
   string content_type = 4 [json_name = "contentType"];  // 可选，不传则从源文件自动探测
 }
 
 message RelayFileRes {
-  repeated File files = 1; // 上传成功的文件列表
+  repeated File files = 1 [json_name = "files"]; // 上传成功的文件列表
 }
 
 message GetFileReq {
   string tenant_id = 1 [json_name = "tenantId"]; // 租户ID
-  string code = 2; // 资源编号
+  string code = 2 [json_name = "code"]; // 资源编号
   string bucket_name = 3 [json_name = "bucketName"]; // 存储桶名称
-  string filename = 4; // 上传文件名
+  string filename = 4 [json_name = "filename"]; // 上传文件名
 }
 
 message GetFileRes {
-  string filename = 1; // 上传文件名
+  string filename = 1 [json_name = "filename"]; // 上传文件名
   string content_type = 2 [json_name = "contentType"];
-  string path = 3; // 文件路径
+  string path = 3 [json_name = "path"]; // 文件路径
 }
 
 message RemoveFileReq {
   string tenant_id = 1 [json_name = "tenantId"]; // 租户ID
-  string code = 2; // 资源编号
+  string code = 2 [json_name = "code"]; // 资源编号
   string bucket_name = 3 [json_name = "bucketName"]; // 存储桶名称
-  string filename = 4; // 上传文件名
+  string filename = 4 [json_name = "filename"]; // 上传文件名
 }
 
 message RemoveFileRes {
@@ -253,14 +253,14 @@ message RemoveFileRes {
 
 message RemoveFilesReq {
   string tenant_id = 1 [json_name = "tenantId"]; // 租户ID
-  string code = 2; // 资源编号
+  string code = 2 [json_name = "code"]; // 资源编号
   string bucket_name = 3 [json_name = "bucketName"]; // 存储桶名称
-  repeated string filename = 4; // 上传文件名
+  repeated string filename = 4 [json_name = "filename"]; // 上传文件名
 }
 
 message CaptureVideoStreamReq {
   string tenant_id = 1 [json_name = "tenantId"]; // 租户ID
-  string code = 2; // 资源编号
+  string code = 2 [json_name = "code"]; // 资源编号
   string bucket_name = 3 [json_name = "bucketName"]; // 存储桶名称
   string path_prefix = 5 [json_name = "pathPrefix"]; // 默认值 default 文件路径前缀, 文件格式 pathPrefix/20060102/uuid.ext
 
@@ -268,7 +268,7 @@ message CaptureVideoStreamReq {
 }
 
 message CaptureVideoStreamRes {
-  File file = 1;
+  File file = 1 [json_name = "file"];
 }
 
 service FileRpc {

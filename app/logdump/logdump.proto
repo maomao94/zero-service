@@ -21,23 +21,23 @@ enum LogLevel {
 
 // 单条日志/事件数据
 message LogEntry {
-  string service = 1;              // 业务服务名称
-  LogLevel level = 2;              // 日志等级
-  string seq = 3;                  // 可选：业务日志序列号 / 任务ID
-  string message = 4;              // 日志内容
-  map<string, string> extra = 5;   // 可选附加字段
+  string service = 1 [json_name = "service"];              // 业务服务名称
+  LogLevel level = 2 [json_name = "level"];              // 日志等级
+  string seq = 3 [json_name = "seq"];                  // 可选：业务日志序列号 / 任务ID
+  string message = 4 [json_name = "message"];              // 日志内容
+  map<string, string> extra = 5 [json_name = "extra"];   // 可选附加字段
 }
 
 message PingReq {
-  string ping = 1;
+  string ping = 1 [json_name = "ping"];
 }
 
 message PingRes {
-  string pong = 1;
+  string pong = 1 [json_name = "pong"];
 }
 
 message PushLogReq {
-  repeated LogEntry logs = 1;
+  repeated LogEntry logs = 1 [json_name = "logs"];
 }
 
 message PushLogRes {

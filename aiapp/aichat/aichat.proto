@@ -23,10 +23,10 @@ message ChatMessagePb {
   // - system: 系统提示，用于设定 AI 行为和上下文
   // - user: 用户输入
   // - assistant: AI 模型回复
-  string role = 1;
+  string role = 1 [json_name = "role"];
 
   // 消息正文内容，即实际的对话文本
-  string content = 2;
+  string content = 2 [json_name = "content"];
 
   // 模型的推理思考过程（仅 assistant 角色有值）。
   // 不同厂商返回字段名相同（reasoningContent），但启用方式不同，参见 enableThinking。
@@ -41,17 +41,17 @@ message ChatMessagePb {
 message ChatCompletionReq {
   // 模型标识符，用于指定使用哪个 AI 模型进行对话
   // 例如：glm-4、glm-4-flash、qwen-max 等
-  string model = 1;
+  string model = 1 [json_name = "model"];
 
   // 消息历史列表，按时间顺序排列的消息数组。
   // 建议包含 system 消息作为系统提示，user 消息作为用户输入
-  repeated ChatMessagePb messages = 2;
+  repeated ChatMessagePb messages = 2 [json_name = "messages"];
 
   // 生成文本的随机性参数，取值范围 0.0~2.0。
   // - 较低值：输出更确定、更聚焦
   // - 较高值：输出更多样、更创造性
   // - 0.0 时模型总是选择最高概率的 token（贪婪解码）
-  double temperature = 3;
+  double temperature = 3 [json_name = "temperature"];
 
   // 核采样参数，取值范围 0.0~1.0。
   // 模型只从累计概率质量达到 topP 的最小 token 集合中采样。
@@ -64,10 +64,10 @@ message ChatCompletionReq {
 
   // 停止序列，当模型生成这些字符串时停止输出。
   // 可指定多个停止词，用于精确控制生成结束位置
-  repeated string stop = 6;
+  repeated string stop = 6 [json_name = "stop"];
 
   // 用户标识，用于追踪和统计特定用户的请求
-  string user = 7;
+  string user = 7 [json_name = "user"];
 
   // 是否启用深度思考模式。
   // 启用后模型会先生成推理过程（reasoningContent），再给出最终回答。
@@ -79,10 +79,10 @@ message ChatCompletionReq {
 message ChoicePb {
   // 候选回复的索引，从 0 开始。
   // 当 n > 1 时用于区分不同候选
-  int32 index = 1;
+  int32 index = 1 [json_name = "index"];
 
   // 完整的 assistant 回复消息，包含 role 和 content
-  ChatMessagePb message = 2;
+  ChatMessagePb message = 2 [json_name = "message"];
 
   // 生成结束原因，有效值：
   // - stop: 模型自然停止（遇到 stop 序列或达到 max_tokens）
@@ -106,22 +106,22 @@ message UsagePb {
 // ChatCompletionRes 非流式对话补全响应。
 message ChatCompletionRes {
   // 本次对话的唯一标识符，用于追踪和关联请求
-  string id = 1;
+  string id = 1 [json_name = "id"];
 
   // 响应对象类型，固定为 "chat.completion"
-  string object = 2;
+  string object = 2 [json_name = "object"];
 
   // Unix 时间戳（秒），表示请求创建时间
-  int64 created = 3;
+  int64 created = 3 [json_name = "created"];
 
   // 本次请求使用的模型标识符
-  string model = 4;
+  string model = 4 [json_name = "model"];
 
   // 候选回复列表，通常只有一个（除非请求时指定 n > 1）
-  repeated ChoicePb choices = 5;
+  repeated ChoicePb choices = 5 [json_name = "choices"];
 
   // token 使用量统计
-  UsagePb usage = 6;
+  UsagePb usage = 6 [json_name = "usage"];
 }
 
 // ============================================================
@@ -132,10 +132,10 @@ message ChatCompletionRes {
 // 逐 chunk 输出推理过程，再通过 content 输出最终回答。前端可根据两字段分别渲染。
 message ChatDeltaPb {
   // 角色标识（仅首个 chunk 包含），固定为 "assistant"
-  string role = 1;
+  string role = 1 [json_name = "role"];
 
   // 正文增量内容，即最终回答的文本片段
-  string content = 2;
+  string content = 2 [json_name = "content"];
 
   // 推理思考过程的增量内容。流式场景下先于 content 输出，
   // 当 reasoningContent 结束、content 开始时，表示模型已从思考阶段切换到回答阶段
@@ -147,25 +147,25 @@ message ChatDeltaPb {
 
 // ToolCallDeltaPb 流式场景中工具调用的增量数据
 message ToolCallDeltaPb {
-  int32 index = 1;
-  string id = 2;
-  string type = 3;
-  ToolCallFunctionDeltaPb function = 4;
+  int32 index = 1 [json_name = "index"];
+  string id = 2 [json_name = "id"];
+  string type = 3 [json_name = "type"];
+  ToolCallFunctionDeltaPb function = 4 [json_name = "function"];
 }
 
 // ToolCallFunctionDeltaPb 函数信息增量
 message ToolCallFunctionDeltaPb {
-  string name = 1;
-  string arguments = 2;
+  string name = 1 [json_name = "name"];
+  string arguments = 2 [json_name = "arguments"];
 }
 
 // ChunkChoicePb 流式响应的单个增量片段。
 message ChunkChoicePb {
   // 片段索引，从 0 开始
-  int32 index = 1;
+  int32 index = 1 [json_name = "index"];
 
   // 增量消息内容，包含 role、content、reasoningContent、toolCalls
-  ChatDeltaPb delta = 2;
+  ChatDeltaPb delta = 2 [json_name = "delta"];
 
   // 片段结束原因，有效值：stop、length、content_filter、toolCalls
   string finish_reason = 3 [json_name = "finishReason"];
@@ -175,19 +175,19 @@ message ChunkChoicePb {
 // 对标 OpenAI Server-Sent Events 格式。
 message ChatCompletionStreamChunk {
   // 本次对话的唯一标识符
-  string id = 1;
+  string id = 1 [json_name = "id"];
 
   // chunk 对象类型，固定为 "chat.completion.chunk"
-  string object = 2;
+  string object = 2 [json_name = "object"];
 
   // Unix 时间戳（秒）
-  int64 created = 3;
+  int64 created = 3 [json_name = "created"];
 
   // 使用的模型标识符
-  string model = 4;
+  string model = 4 [json_name = "model"];
 
   // 增量片段列表
-  repeated ChunkChoicePb choices = 5;
+  repeated ChunkChoicePb choices = 5 [json_name = "choices"];
 }
 
 // ============================================================
@@ -200,13 +200,13 @@ message ListModelsReq {}
 // ModelObjectPb 模型对象，包含模型的基本信息和能力描述。
 message ModelObjectPb {
   // 模型唯一标识符，用于 API 调用时指定模型
-  string id = 1;
+  string id = 1 [json_name = "id"];
 
   // 对象类型，固定为 "model"
-  string object = 2;
+  string object = 2 [json_name = "object"];
 
   // 模型创建时间的 Unix 时间戳
-  int64 created = 3;
+  int64 created = 3 [json_name = "created"];
 
   // 模型所属的 provider 名称，如 zhipu、dashscope
   string owned_by = 4 [json_name = "ownedBy"];
@@ -215,7 +215,7 @@ message ModelObjectPb {
   string display_name = 5 [json_name = "displayName"];
 
   // 模型的详细描述，说明模型的能力和适用场景
-  string description = 6;
+  string description = 6 [json_name = "description"];
 
   // 是否支持流式输出（SSE）
   bool supports_streaming = 7 [json_name = "supportsStreaming"];
@@ -227,7 +227,7 @@ message ModelObjectPb {
 // ListModelsRes 模型列表响应
 message ListModelsRes {
   // 可用模型数组
-  repeated ModelObjectPb data = 1;
+  repeated ModelObjectPb data = 1 [json_name = "data"];
 }
 
 // ============================================================
@@ -243,11 +243,11 @@ message ListModelsRes {
 message AsyncToolCallReq {
   // MCP 服务器名称，对应配置中的 server key
   // 例如：filesystem、github、database 等
-  string server = 1;
+  string server = 1 [json_name = "server"];
 
   // MCP 工具名称，在对应服务器中定义的工具唯一标识
   // 例如：read_file、create_pull_request、query 等
-  string tool = 2;
+  string tool = 2 [json_name = "tool"];
 
   // 工具参数的 JSON 格式字符串。
   // 工具参数类型为 map[string]any，JSON 示例：
@@ -255,7 +255,7 @@ message AsyncToolCallReq {
   // - 必填参数由工具定义决定
   // - 可选参数可省略
   // - 参数类型需符合工具 schema 定义
-  string args = 3;
+  string args = 3 [json_name = "args"];
 }
 
 // AsyncToolCallRes 异步调用 MCP 工具的响应。
@@ -264,7 +264,7 @@ message AsyncToolCallRes {
   string task_id = 1 [json_name = "taskId"];
 
   // 任务初始状态，固定为 "pending"
-  string status = 2;
+  string status = 2 [json_name = "status"];
 }
 
 // AsyncToolResultReq 查询异步工具调用结果的请求。
@@ -283,38 +283,38 @@ message AsyncToolResultRes {
   // - running: 任务执行中
   // - completed: 任务已完成，可获取 result
   // - failed: 任务执行失败，可获取 error
-  string status = 2;
+  string status = 2 [json_name = "status"];
 
   // 执行进度百分比，取值范围 0.0~100.0。
   // 部分工具支持实时进度反馈
-  double progress = 3;
+  double progress = 3 [json_name = "progress"];
 
   // 任务成功完成时的执行结果（JSON 格式字符串）。
   // 仅当 status 为 "completed" 时有值
-  string result = 4;
+  string result = 4 [json_name = "result"];
 
   // 任务失败时的错误信息。
   // 仅当 status 为 "failed" 时有值
-  string error = 5;
+  string error = 5 [json_name = "error"];
 
   // 进度消息历史
-  repeated ProgressMessagePb messages = 6;
+  repeated ProgressMessagePb messages = 6 [json_name = "messages"];
 }
 
 // ProgressMessagePb 进度消息
 // 记录 MCP 服务器发送的所有进度通知，用于前端展示消息历史
 message ProgressMessagePb {
   // 当前进度百分比，取值范围 0.0~100.0
-  double progress = 1;
+  double progress = 1 [json_name = "progress"];
 
   // 进度总值（参考值）
-  double total = 2;
+  double total = 2 [json_name = "total"];
 
   // 消息内容，MCP 服务器返回的原始消息
-  string message = 3;
+  string message = 3 [json_name = "message"];
 
   // 时间戳，Unix 毫秒级时间戳
-  int64 time = 4;
+  int64 time = 4 [json_name = "time"];
 }
 
 // ============================================================
@@ -324,7 +324,7 @@ message ProgressMessagePb {
 // ListAsyncResultsReq 分页查询异步结果请求
 message ListAsyncResultsReq {
   // 过滤状态：pending/completed/failed（空字符串表示全部）
-  string status = 1;
+  string status = 1 [json_name = "status"];
 
   // 开始时间戳（毫秒），0 表示不限制
   int64 start_time = 2 [json_name = "startTime"];
@@ -333,7 +333,7 @@ message ListAsyncResultsReq {
   int64 end_time = 3 [json_name = "endTime"];
 
   // 页码，从 1 开始
-  int32 page = 4;
+  int32 page = 4 [json_name = "page"];
 
   // 每页数量
   int32 page_size = 5 [json_name = "pageSize"];
@@ -348,13 +348,13 @@ message ListAsyncResultsReq {
 // ListAsyncResultsResp 分页查询异步结果响应
 message ListAsyncResultsResp {
   // 任务列表
-  repeated AsyncToolResultRes items = 1;
+  repeated AsyncToolResultRes items = 1 [json_name = "items"];
 
   // 总数
-  int64 total = 2;
+  int64 total = 2 [json_name = "total"];
 
   // 当前页
-  int32 page = 3;
+  int32 page = 3 [json_name = "page"];
 
   // 每页数量
   int32 page_size = 4 [json_name = "pageSize"];
@@ -366,16 +366,16 @@ message ListAsyncResultsResp {
 // AsyncResultStat 异步结果统计
 message AsyncResultStat {
   // 任务总数
-  int64 total = 1;
+  int64 total = 1 [json_name = "total"];
 
   // 待处理任务数
-  int64 pending = 2;
+  int64 pending = 2 [json_name = "pending"];
 
   // 已完成任务数
-  int64 completed = 3;
+  int64 completed = 3 [json_name = "completed"];
 
   // 失败任务数
-  int64 failed = 4;
+  int64 failed = 4 [json_name = "failed"];
 
   // 成功率（百分比）
   double success_rate = 5 [json_name = "successRate"];

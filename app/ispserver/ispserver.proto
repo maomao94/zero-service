@@ -10,20 +10,20 @@ service IspServer {
 }
 
 message SessionInfo {
-  string session_id = 1;
-  string device_code = 2;
-  string remote_addr = 3;
-  int64 connected_at = 4;
+  string session_id = 1 [json_name = "sessionId"];
+  string device_code = 2 [json_name = "deviceCode"];
+  string remote_addr = 3 [json_name = "remoteAddr"];
+  int64 connected_at = 4 [json_name = "connectedAt"];
 }
 
 message ListSessionsReq {}
 
 message ListSessionsRes {
-  repeated SessionInfo sessions = 1;
+  repeated SessionInfo sessions = 1 [json_name = "sessions"];
 }
 
 message DisconnectSessionReq {
-  string session_id = 1;
+  string session_id = 1 [json_name = "sessionId"];
 }
 
 message DisconnectSessionRes {}

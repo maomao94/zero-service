@@ -24,7 +24,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 };
 
 message Req {
-  string ping = 1 [
+  string ping = 1 [json_name = "ping",
     (google.api.field_behavior) = REQUIRED,
     (validate.rules).string = {min_len: 1},
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -35,7 +35,7 @@ message Req {
 }
 
 message Res {
-  string pong = 1 [
+  string pong = 1 [json_name = "pong",
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "响应消息内容",
       example: "\"pong\""  // 正确的 JSON 字符串格式
@@ -44,7 +44,7 @@ message Res {
 }
 
 message ReqPushTest {
-  string body = 1;
+  string body = 1 [json_name = "body"];
 }
 
 message ResPushTest {
@@ -54,7 +54,7 @@ message ReqPushPoint {
   // 是否手动推送 默认 false-自动 true-手动
   bool push_mode = 1 [json_name = "pushMode"];
   // 推送数据
-  TerminalData data = 2;
+  TerminalData data = 2 [json_name = "data"];
 }
 
 message ResPushPoint {
@@ -64,7 +64,7 @@ message ReqPushAlarm {
   // 是否手动推送 默认 false-自动 true-手动
   bool push_mode = 1 [json_name = "pushMode"];
   // 推送数据
-  AlarmData data = 2;
+  AlarmData data = 2 [json_name = "data"];
 }
 
 message ResPushAlarm {
@@ -74,7 +74,7 @@ message ReqPushEvent {
   // 是否手动推送 默认 false-自动 true-手动
   bool push_mode = 1 [json_name = "pushMode"];
   // 推送数据
-  EventData data = 2;
+  EventData data = 2 [json_name = "data"];
 }
 
 message ResPushEvent {
@@ -84,7 +84,7 @@ message ReqPushTerminalBind {
   // 是否手动推送 默认 false-自动 true-手动
   bool push_mode = 1 [json_name = "pushMode"];
   // 推送数据
-  TerminalBind data = 2;
+  TerminalBind data = 2 [json_name = "data"];
 }
 
 message ResPushTerminalBind {

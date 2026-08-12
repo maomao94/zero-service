@@ -307,3 +307,96 @@ func TestCompileScheduleExactTimeSetSemantics(t *testing.T) {
 		}
 	}
 }
+
+func TestCompileScheduleIntervalPeriodStep(t *testing.T) {
+	location, err := time.LoadLocation(carbon.Shanghai)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 3, 20, 10, 30, 0, 0, location)
+	rule := &trigger.PlanRulePb{
+		Freq: 1, Day: []int32{5}, Hours: []int32{9}, Minutes: []int32{0}, Interval: 3,
+	}
+
+	schedule, err := CompileSchedule(rule, "2026-01-05 00:00:00", "2026-12-31 23:59:59", nil, nil, nil, false, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(schedule.RRuleStr, "INTERVAL=3") {
+		t.Fatalf("serialized RRULE must contain INTERVAL=3: %q", schedule.RRuleStr)
+	}
+	want := time.Date(2026, 4, 5, 9, 0, 0, 0, location)
+	if !schedule.NextRun.Equal(want) {
+		t.Fatalf("next run = %v, want %v", schedule.NextRun, want)
+	}
+
+	set, err := rrule.StrToRRuleSet(schedule.RRuleStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := set.Between(
+		time.Date(2026, 1, 1, 0, 0, 0, 0, location),
+		time.Date(2026, 12, 31, 23, 59, 59, 0, location),
+		true,
+	)
+	wantDates := []time.Time{
+		time.Date(2026, 1, 5, 9, 0, 0, 0, location),
+		time.Date(2026, 4, 5, 9, 0, 0, 0, location),
+		time.Date(2026, 7, 5, 9, 0, 0, 0, location),
+		time.Date(2026, 10, 5, 9, 0, 0, 0, location),
+	}
+	if len(got) != len(wantDates) {
+		t.Fatalf("occurrences = %v, want %v", got, wantDates)
+	}
+	for i := range wantDates {
+		if !got[i].Equal(wantDates[i]) {
+			t.Fatalf("occurrence[%d] = %v, want %v", i, got[i], wantDates[i])
+		}
+	}
+
+	description, err := crontask.DescribeRRule(schedule.RRuleStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(description, "按 3 个月间隔") {
+		t.Fatalf("description must mention 3-month interval: %q", description)
+	}
+}
+
+func TestCompileScheduleIntervalDefaultsToOne(t *testing.T) {
+	location, err := time.LoadLocation(carbon.Shanghai)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 7, 1, 0, 0, 0, 0, location)
+	// interval=0（老客户端缺省）必须归一化为 1，行为与未传一致。
+	rule := &trigger.PlanRulePb{Freq: 3, Hours: []int32{9}, Minutes: []int32{0}}
+	schedule, err := CompileSchedule(rule, "2026-07-01 00:00:00", "2026-07-31 23:59:59", nil, nil, nil, false, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(schedule.RRuleStr, "INTERVAL=") {
+		t.Fatalf("default interval must not be serialized: %q", schedule.RRuleStr)
+	}
+	want := time.Date(2026, 7, 1, 9, 0, 0, 0, location)
+	if !schedule.NextRun.Equal(want) {
+		t.Fatalf("next run = %v, want %v", schedule.NextRun, want)
+	}
+
+	// rule JSON 往返必须保留 interval。
+	ruleWithInterval := &trigger.PlanRulePb{Freq: 1, Day: []int32{5}, Hours: []int32{9}, Minutes: []int32{0}, Interval: 3}
+	encoded, err := protojson.Marshal(ruleWithInterval)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(encoded), `"interval":3`) {
+		t.Fatalf("rule JSON must carry interval: %s", encoded)
+	}
+	var decoded trigger.PlanRulePb
+	if err := protojson.Unmarshal(encoded, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	if decoded.Interval != 3 {
+		t.Fatalf("round-trip interval = %d, want 3", decoded.Interval)
+	}
+}
