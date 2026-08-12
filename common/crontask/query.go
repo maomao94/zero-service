@@ -98,18 +98,25 @@ func shiftDtStartByPeriod(dtstart, after time.Time, freq rrule.Frequency, interv
 	}
 	switch freq {
 	case rrule.YEARLY:
+		// 年数差向下取整到 INTERVAL 的倍数：锚点必须落在「与 dtstart 同相位」的间隔周期上，
+		// 否则后续整条序列的周期计数错位。
 		years := (after.Year() - dtstart.Year()) / interval * interval
 		if years <= 0 {
+			// 未跨过第一个完整间隔（最近锚点就是 dtstart 本身），平移无意义。
 			return time.Time{}, false
 		}
 		shifted = dtstart.AddDate(years, 0, 0)
 		if shifted.After(after) {
+			// 锚点整体越过 after（同一年内移动到 after 之后），回退一个间隔到最近锚点。
 			shifted = dtstart.AddDate(years-interval, 0, 0)
 		}
+		// 相位校验：rrule-go 缺省 BYMONTH/BYMONTHDAY 继承自 dtstart 的月/日，
+		// AddDate 对 2/29 等日期钳制会改变相位，破坏则放弃平移、沿用原起点慢迭代。
 		if shifted.Month() != dtstart.Month() || shifted.Day() != dtstart.Day() {
 			return time.Time{}, false
 		}
 	case rrule.MONTHLY:
+		// 月数差（含跨年）向下取整到 INTERVAL 的倍数，原理同 YEARLY。
 		months := ((after.Year()-dtstart.Year())*12 + int(after.Month()) - int(dtstart.Month())) / interval * interval
 		if months <= 0 {
 			return time.Time{}, false
@@ -118,40 +125,48 @@ func shiftDtStartByPeriod(dtstart, after time.Time, freq rrule.Frequency, interv
 		if shifted.After(after) {
 			shifted = dtstart.AddDate(0, months-interval, 0)
 		}
+		// 相位校验：缺省 BYMONTHDAY 继承 dtstart 的日号，月末（如 31 日）跨短月被钳制后日号改变即放弃。
 		if shifted.Day() != dtstart.Day() {
 			return time.Time{}, false
 		}
 	case rrule.WEEKLY:
+		// 天数差向下取整到 7*INTERVAL 的倍数：整数周保证星期相位不变。
 		days := int(after.Sub(dtstart).Hours()/24) / (7 * interval) * (7 * interval)
 		if days <= 0 {
 			return time.Time{}, false
 		}
 		shifted = dtstart.AddDate(0, 0, days)
 	case rrule.DAILY:
+		// 天数差向下取整到 INTERVAL 的倍数，避免出现半个周期的错位。
 		days := int(after.Sub(dtstart).Hours()/24) / interval * interval
 		if days <= 0 {
 			return time.Time{}, false
 		}
 		shifted = dtstart.AddDate(0, 0, days)
 	case rrule.HOURLY:
+		// 小时差向下取整到 INTERVAL 的倍数；锚点的分/秒相位随后校验。
 		hours := int(after.Sub(dtstart).Hours()) / interval * interval
 		if hours <= 0 {
 			return time.Time{}, false
 		}
 		shifted = dtstart.Add(time.Duration(hours) * time.Hour)
+		// 相位校验：缺省 BYMINUTE/BYSECOND 继承自 dtstart，非整小时时区偏移（如 30 分钟 DST）会错开分位，放弃平移。
 		if shifted.Minute() != dtstart.Minute() || shifted.Second() != dtstart.Second() {
 			return time.Time{}, false
 		}
 	case rrule.MINUTELY:
+		// 分钟差向下取整到 INTERVAL 的倍数；锚点的秒相位随后校验。
 		minutes := int(after.Sub(dtstart).Minutes()) / interval * interval
 		if minutes <= 0 {
 			return time.Time{}, false
 		}
 		shifted = dtstart.Add(time.Duration(minutes) * time.Minute)
+		// 相位校验：缺省 BYSECOND 继承自 dtstart，非整分钟时区偏移下的秒位保护。
 		if shifted.Second() != dtstart.Second() {
 			return time.Time{}, false
 		}
 	default: // SECONDLY
+		// 秒差向下取整到 INTERVAL 的倍数，SECONDLY 无更低粒度相位可破坏。
 		seconds := int(after.Sub(dtstart).Seconds()) / interval * interval
 		if seconds <= 0 {
 			return time.Time{}, false

@@ -1497,3 +1497,98 @@ func TestNextRunsMatchesReference(t *testing.T) {
 		t.Fatal("NextRuns must reject empty rule")
 	}
 }
+
+func TestShiftDtStartByPeriod(t *testing.T) {
+	loc := time.UTC
+	date := func(y int, m time.Month, d int) time.Time { return time.Date(y, m, d, 0, 0, 0, 0, loc) }
+	datetime := func(y int, m time.Month, d, hh, mm, ss int) time.Time {
+		return time.Date(y, m, d, hh, mm, ss, 0, loc)
+	}
+	tests := []struct {
+		name     string
+		dtstart  time.Time
+		after    time.Time
+		freq     rrule.Frequency
+		interval int
+		want     time.Time
+		wantOK   bool
+	}{
+		// YEARLY：年差整对齐，直接在 after 之前。
+		{name: "yearly-simple", dtstart: date(2020, 6, 15), after: date(2026, 8, 12), freq: rrule.YEARLY, interval: 1, want: date(2026, 6, 15), wantOK: true},
+		// YEARLY：+6 年越过 after（9 月晚于 8 月），回退一个间隔到上一个相位 2025-09-15。
+		{name: "yearly-retreat-previous-phase", dtstart: date(2020, 9, 15), after: date(2026, 8, 12), freq: rrule.YEARLY, interval: 1, want: date(2025, 9, 15), wantOK: true},
+		// YEARLY INTERVAL=2：5 年对齐到 4 年。
+		{name: "yearly-interval2-floor", dtstart: date(2020, 6, 15), after: date(2025, 8, 12), freq: rrule.YEARLY, interval: 2, want: date(2024, 6, 15), wantOK: true},
+		// YEARLY 闰日：AddDate 进位到 2026-03-01，月/日相位被破坏 → 放弃平移。
+		{name: "yearly-feb29-clamp", dtstart: date(2020, 2, 29), after: date(2026, 8, 12), freq: rrule.YEARLY, interval: 1, want: time.Time{}, wantOK: false},
+		// YEARLY：未跨满一个间隔（years=0）→ 不平移。
+		{name: "yearly-not-yet-one-period", dtstart: date(2020, 6, 15), after: date(2020, 8, 12), freq: rrule.YEARLY, interval: 1, want: time.Time{}, wantOK: false},
+		// YEARLY：回退到 dtstart 自身（2026-06-15 越过、2025-06-15 即起点）→ Equal 兜底 false。
+		{name: "yearly-retreat-to-dtstart", dtstart: date(2020, 6, 15), after: date(2021, 3, 1), freq: rrule.YEARLY, interval: 1, want: time.Time{}, wantOK: false},
+
+		// MONTHLY：+31 月=2026-08-15 越过 → 回退到 2026-07-15。
+		{name: "monthly-retreat-previous-phase", dtstart: date(2024, 1, 15), after: date(2026, 8, 12), freq: rrule.MONTHLY, interval: 1, want: date(2026, 7, 15), wantOK: true},
+		// MONTHLY INTERVAL=3：31 月对齐到 30 月（07-15 未越过）。
+		{name: "monthly-interval3-floor", dtstart: date(2024, 1, 15), after: date(2026, 8, 12), freq: rrule.MONTHLY, interval: 3, want: date(2026, 7, 15), wantOK: true},
+		// MONTHLY 月末：1/31 +2 月=3/31 越过，+1 月=3/02 相位破坏 → 放弃。
+		{name: "monthly-day31-clamp", dtstart: date(2024, 1, 31), after: date(2024, 3, 5), freq: rrule.MONTHLY, interval: 1, want: time.Time{}, wantOK: false},
+		// MONTHLY：回退到 dtstart（2024-02-15 越过，2024-01-15 即起点）→ Equal 兜底 false。
+		{name: "monthly-retreat-to-dtstart", dtstart: date(2024, 1, 15), after: date(2024, 2, 1), freq: rrule.MONTHLY, interval: 1, want: time.Time{}, wantOK: false},
+		// MONTHLY：月相位对、日号 15 保持不变 → 平移成功。
+		{name: "monthly-day15-preserved", dtstart: date(2024, 1, 15), after: date(2024, 4, 20), freq: rrule.MONTHLY, interval: 1, want: date(2024, 4, 15), wantOK: true},
+
+		// WEEKLY：2024-01-01(周一) 起 954 天对齐到 952 天=136 周，保持周一相位。
+		{name: "weekly-954d-floor", dtstart: date(2024, 1, 1), after: date(2026, 8, 12), freq: rrule.WEEKLY, interval: 1, want: date(2026, 8, 10), wantOK: true},
+		// WEEKLY INTERVAL=2：954 对齐到 952=偶数周。
+		{name: "weekly-interval2-floor", dtstart: date(2024, 1, 1), after: date(2026, 8, 12), freq: rrule.WEEKLY, interval: 2, want: date(2026, 8, 10), wantOK: true},
+		// WEEKLY：不足一周即不平移。
+		{name: "weekly-too-early", dtstart: date(2024, 1, 1), after: date(2024, 1, 3), freq: rrule.WEEKLY, interval: 1, want: time.Time{}, wantOK: false},
+		// WEEKLY：对齐到最近周一（2024-01-08）。
+		{name: "weekly-floor-monday", dtstart: date(2024, 1, 1), after: date(2024, 1, 10), freq: rrule.WEEKLY, interval: 1, want: date(2024, 1, 8), wantOK: true},
+
+		// DAILY：954 天恰在 after，整对齐不动。
+		{name: "daily-exact", dtstart: date(2024, 1, 1), after: date(2026, 8, 12), freq: rrule.DAILY, interval: 1, want: date(2026, 8, 12), wantOK: true},
+		// DAILY INTERVAL=3：955 天对齐到 954 天（divisible-by-3 相位保留）。
+		{name: "daily-interval3-floor", dtstart: date(2024, 1, 1), after: date(2026, 8, 13), freq: rrule.DAILY, interval: 3, want: date(2026, 8, 12), wantOK: true},
+		// DAILY：不足一个间隔不平移。
+		{name: "daily-too-early", dtstart: date(2024, 1, 1), after: date(2024, 1, 2), freq: rrule.DAILY, interval: 100, want: time.Time{}, wantOK: false},
+
+		// HOURLY：652 小时对齐，锚点 14:00，分/秒相位保持。
+		{name: "hourly-retreat-previous-phase", dtstart: datetime(2024, 1, 1, 10, 0, 0), after: datetime(2024, 1, 28, 14, 30, 0), freq: rrule.HOURLY, interval: 1, want: datetime(2024, 1, 28, 14, 0, 0), wantOK: true},
+		// HOURLY INTERVAL=6：652 对齐到 648。
+		{name: "hourly-interval6-floor", dtstart: datetime(2024, 1, 1, 10, 0, 0), after: datetime(2024, 1, 28, 14, 30, 0), freq: rrule.HOURLY, interval: 6, want: datetime(2024, 1, 28, 10, 0, 0), wantOK: true},
+		// HOURLY：小时差不足则不平移。
+		{name: "hourly-too-early", dtstart: datetime(2024, 1, 1, 10, 0, 0), after: datetime(2024, 1, 1, 10, 59, 0), freq: rrule.HOURLY, interval: 1, want: time.Time{}, wantOK: false},
+
+		// MINUTELY：17.5 分钟截断到 17，对齐到 15。
+		{name: "minutely-interval5-floor", dtstart: datetime(2024, 1, 1, 10, 0, 0), after: datetime(2024, 1, 1, 10, 17, 30), freq: rrule.MINUTELY, interval: 5, want: datetime(2024, 1, 1, 10, 15, 0), wantOK: true},
+		// MINUTELY：秒相位保持（从 :15 起的 15 分钟对齐)。
+		{name: "minutely-second-phase-preserved", dtstart: datetime(2024, 1, 1, 10, 0, 15), after: datetime(2024, 1, 1, 10, 17, 30), freq: rrule.MINUTELY, interval: 5, want: datetime(2024, 1, 1, 10, 15, 15), wantOK: true},
+
+		// SECONDLY：50 秒对齐到 45。
+		{name: "secondly-interval15-floor", dtstart: datetime(2024, 1, 1, 10, 0, 0), after: datetime(2024, 1, 1, 10, 0, 50), freq: rrule.SECONDLY, interval: 15, want: datetime(2024, 1, 1, 10, 0, 45), wantOK: true},
+
+		// 前置守卫：after 不晚于 dtstart 或 dtstart 为零。
+		{name: "after-not-after-dtstart", dtstart: date(2026, 8, 12), after: date(2026, 8, 12), freq: rrule.DAILY, interval: 1, want: time.Time{}, wantOK: false},
+		{name: "zero-dtstart", dtstart: time.Time{}, after: date(2026, 8, 12), freq: rrule.DAILY, interval: 1, want: time.Time{}, wantOK: false},
+		// interval < 1 归一化为 1。
+		{name: "interval-zero-normalized", dtstart: date(2024, 1, 1), after: date(2024, 1, 10), freq: rrule.DAILY, interval: 0, want: date(2024, 1, 10), wantOK: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := shiftDtStartByPeriod(tt.dtstart, tt.after, tt.freq, tt.interval)
+			if ok != tt.wantOK {
+				t.Fatalf("shiftDtStartByPeriod(%v, %v, %d, %d) ok = %v, want %v", tt.dtstart.Format("2006-01-02 15:04:05"), tt.after.Format("2006-01-02 15:04:05"), tt.freq, tt.interval, ok, tt.wantOK)
+			}
+			if !ok {
+				return
+			}
+			if !got.Equal(tt.want) {
+				t.Errorf("shiftDtStartByPeriod(%v, %v, %d, %d) = %v, want %v", tt.dtstart.Format("2006-01-02 15:04:05"), tt.after.Format("2006-01-02 15:04:05"), tt.freq, tt.interval, got.Format("2006-01-02 15:04:05"), tt.want.Format("2006-01-02 15:04:05"))
+			}
+			if got.After(tt.after) {
+				t.Errorf("shiftDtStartByPeriod shifted %v must not be after query point %v", got, tt.after)
+			}
+		})
+	}
+}
