@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	interceptor "zero-service/common/Interceptor/rpcserver"
+	"zero-service/common/grpcx"
 	"zero-service/common/nacosx"
 	"zero-service/common/tool"
 
@@ -62,7 +62,7 @@ func main() {
 		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacosx.WithMetadata(m))
 		_ = nacosx.RegisterService(opts)
 	}
-	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)

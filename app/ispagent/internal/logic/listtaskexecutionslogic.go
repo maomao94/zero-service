@@ -6,6 +6,7 @@ import (
 
 	"zero-service/app/ispagent/internal/svc"
 	"zero-service/app/ispagent/ispagent"
+	"zero-service/common/carbonx"
 	"zero-service/common/crontask"
 
 	"github.com/dromara/carbon/v2"
@@ -68,7 +69,7 @@ func (l *ListTaskExecutionsLogic) computeExecTimes(task *crontask.TaskConfig, co
 		if next.IsZero() {
 			break
 		}
-		times = append(times, carbon.CreateFromStdTime(next).ToDateTimeString())
+		times = append(times, carbonx.FormatDateTime(next))
 		from = next
 	}
 	return times

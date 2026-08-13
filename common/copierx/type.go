@@ -2,11 +2,11 @@ package copierx
 
 import (
 	"errors"
-	"github.com/dromara/carbon/v2"
 	"github.com/jinzhu/copier"
 	"strconv"
 	"time"
 	"zero-service/common"
+	"zero-service/common/carbonx"
 )
 
 var Option = copier.Option{
@@ -23,7 +23,7 @@ var Option = copier.Option{
 					return nil, errors.New("src type not matching")
 				}
 
-				return carbon.CreateFromStdTime(s).Format(carbon.DateTimeMicroFormat), nil
+				return carbonx.FormatDateTimeMicro(s), nil
 			},
 		},
 		{

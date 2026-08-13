@@ -4,7 +4,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -16,8 +15,7 @@ import (
 	"zero-service/aiapp/aigtw/internal/handler"
 	"zero-service/aiapp/aigtw/internal/svc"
 
-	"zero-service/common/ctxdata"
-	"zero-service/common/ctxprop"
+	"zero-service/common/authctx"
 	"zero-service/common/gtwx"
 	_ "zero-service/common/nacosx"
 	"zero-service/common/tool"
@@ -81,22 +79,21 @@ func main() {
 			w.Header().Set("X-Request-Id", requestID)
 
 			if auth := r.Header.Get("Authorization"); auth != "" {
-				ctx = context.WithValue(ctx, ctxdata.CtxAuthTypeKey, "user")
-				ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, auth)
+				ctx = authctx.WithAuthType(ctx, "user")
+				ctx = authctx.WithAuthorization(ctx, auth)
 			}
 			next(w, r.WithContext(ctx))
 		}
 	})
 
-	if len(c.JwtAuth.ClaimMapping) > 0 {
-		claimMapping := c.JwtAuth.ClaimMapping
-		server.Use(func(next http.HandlerFunc) http.HandlerFunc {
-			return func(w http.ResponseWriter, r *http.Request) {
-				ctx := ctxprop.ApplyClaimMappingToCtx(r.Context(), claimMapping)
-				next(w, r.WithContext(ctx))
-			}
-		})
-	}
+	// 桥接中间件：在 JWT 验证之后运行，把 go-zero 写入的 string claim 转成 typed key。
+	// ClaimMapping 为空时仍拷贝短横线 wire 名（user-id/user-name/dept-code）。
+	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			ctx := authctx.BridgeJWTClaims(r.Context(), c.JwtAuth.ClaimMapping)
+			next(w, r.WithContext(ctx))
+		}
+	})
 
 	ctx := svc.NewServiceContext(c)
 	defer func() { _ = ctx.Close() }()

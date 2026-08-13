@@ -6,9 +6,9 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/carbonx"
 	"zero-service/common/gormx"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -85,8 +85,8 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 	// 转换执行项列表
 	for i := range items {
 		pbExecItem := &trigger.PlanExecItemPb{
-			CreateTime:       carbon.CreateFromStdTime(items[i].CreateTime).ToDateTimeString(),
-			UpdateTime:       carbon.CreateFromStdTime(items[i].UpdateTime).ToDateTimeString(),
+			CreateTime:       carbonx.FormatDateTime(items[i].CreateTime),
+			UpdateTime:       carbonx.FormatDateTime(items[i].UpdateTime),
 			CreateUser:       items[i].CreateUser.String,
 			UpdateUser:       items[i].UpdateUser.String,
 			DeptCode:         items[i].DeptCode.String,
@@ -103,8 +103,8 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 			PointId:          items[i].PointId.String,
 			Payload:          items[i].Payload,
 			RequestTimeout:   items[i].RequestTimeout,
-			PlanTriggerTime:  carbon.CreateFromStdTime(items[i].PlanTriggerTime).ToDateTimeString(),
-			NextTriggerTime:  carbon.CreateFromStdTime(items[i].NextTriggerTime).ToDateTimeString(),
+			PlanTriggerTime:  carbonx.FormatDateTime(items[i].PlanTriggerTime),
+			NextTriggerTime:  carbonx.FormatDateTime(items[i].NextTriggerTime),
 			TriggerCount:     int32(items[i].TriggerCount),
 			Status:           trigger.ExecItemStatusPb(items[i].Status),
 			LastResult:       items[i].LastResult.String,
@@ -120,12 +120,12 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 		}
 		// 设置上次触发时间
 		if items[i].LastTriggerTime.Valid {
-			pbExecItem.LastTriggerTime = carbon.CreateFromStdTime(items[i].LastTriggerTime.Time).ToDateTimeString()
+			pbExecItem.LastTriggerTime = carbonx.FormatDateTime(items[i].LastTriggerTime.Time)
 		}
 
 		// 设置暂停时间和原因
 		if items[i].PausedTime.Valid {
-			pbExecItem.PausedTime = carbon.CreateFromStdTime(items[i].PausedTime.Time).ToDateTimeString()
+			pbExecItem.PausedTime = carbonx.FormatDateTime(items[i].PausedTime.Time)
 		}
 
 		resp.PlanExecItems = append(resp.PlanExecItems, pbExecItem)

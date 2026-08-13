@@ -6,10 +6,10 @@ import (
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
+	"zero-service/common/carbonx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
 )
@@ -42,7 +42,7 @@ func (l *GetFlightTaskProgressLastLogic) GetFlightTaskProgressLast(in *djicloud.
 	}
 	return &djicloud.GetFlightTaskProgressLastRes{
 		HasProgress:  true,
-		ReportedAt:   carbon.CreateFromStdTime(progress.ReportedAt).ToDateTimeMicroString(),
+		ReportedAt:   carbonx.FormatDateTimeMicro(progress.ReportedAt),
 		ProgressJson: progress.RawJSON,
 	}, nil
 }

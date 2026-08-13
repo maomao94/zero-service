@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"zero-service/app/trigger/trigger"
-	"zero-service/common/crontask"
+	"zero-service/common/rrulex"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/teambition/rrule-go"
@@ -98,7 +98,7 @@ func compileSchedule(rule *trigger.PlanRulePb, startText, endText string, exclud
 
 	current := carbon.CreateFromStdTime(now, carbon.Shanghai).StartOfSecond()
 	querySet := set
-	if shifted := crontask.ShiftSetForQuery(set, current.StdTime()); shifted != nil {
+	if shifted := rrulex.ShiftSetForQuery(set, current.StdTime()); shifted != nil {
 		querySet = shifted
 	}
 	nextRun := querySet.After(current.StdTime(), true)

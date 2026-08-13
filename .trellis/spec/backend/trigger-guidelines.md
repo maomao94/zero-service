@@ -211,7 +211,7 @@ rpc SubmitCronJob(SubmitCronJobReq) returns (SubmitCronJobRes);
 - 断言 Update 保留 `task_code/group_id/dept_code/type`、状态和执行历史；在途任务更新失败且配置与 lease 均不变。
 - 断言 Submit 创建、更新及软删除编码冲突。
 - 断言 Submit 更新已有任务时保留原 `job_id`；零行更新按 Store `ErrUpdate` 契约处理。
-- 使用合法 `PlanRulePb` 验证生成的完整 Set 可通过 `crontask.ValidateRRule`，并断言时区、`EXDATE` 和 `next_run`。
+- 使用合法 `PlanRulePb` 验证生成的完整 Set 可通过 `rrulex.Validate`，并断言时区、`EXDATE` 和 `next_run`。
 
 ### 7. Wrong vs Correct
 
@@ -226,7 +226,7 @@ updated, err := store.GetByID(ctx, task.ID) // only for response
 
 ```go
 task, err := buildCronJobTask(cronJobTaskData{/* key configuration */})
-nextRun := tool.CarbonFromTimeStartOfSecond(task.NextRun).ToDateTimeString()
+nextRun := carbonx.FormatDateTime(task.NextRun)
 ```
 
 ## Scenario: CronJob 到点回调契约
@@ -264,14 +264,14 @@ message HandleCronJobEventReq {
 - 回调是**扁平关键业务字段**请求：身份、名称、优先级、payload、本次原计划时间、类型、分组、描述、扩展和机构编码。`type/group_id/description/ext1-5/dept_code` 由 handler 通过 `ParseExtra(task.Extra)` 解析后映射，不传递 `extra` 原文。
 - `TaskConfig.Extra` 是 Trigger 内部为通用 Scheduler 重建业务模型列的运行时载体，不属于下游业务契约，管理视图与回调均不暴露。
 - 回调不携带调度器内部运行字段（`next_run`、lease、rule、RDATE/EXDATE、`rrule_str` 等）：claim 后 `next_run` 已被清零，下游无法消费这些值；本次执行的原计划点只读 `scheduled_time`。
-- `scheduled_time` 表示原计划执行点，重试期间保持不变，由 `formatTime` 来源保证 `yyyy-MM-dd HH:mm:ss`；回调 PB 不引入 PGV validation。
+- `scheduled_time` 表示原计划执行点，重试期间保持不变，由 `carbonx.FormatDateTimeOrEmpty` 保证 `yyyy-MM-dd HH:mm:ss` 与零值空字符串；回调 PB 不引入 PGV validation。
 - 字段号从 1 连续对齐，不保留历史字段号兼容（用户已明确允许覆盖）；RPC 方法名与 `CronJobReceiptPb` 回执枚举保持不变。
 - 收到回执后：`CRON_JOB_RECEIPT_SUCCESS` 视为成功；`CRON_JOB_RECEIPT_TASK_NOT_FOUND` 返回 `crontask.ErrDeleteTask`；未知回执与传输错误按普通错误重试。
 
 ### 4. Validation & Error Matrix
 
 - Create/Submit/List 的 `task_code` `max_len: 128`，`cron_job.task_code` GORM `size:128` + `uniqueIndex:uq_cron_job_task_code`；生产发布前必须按现有迁移流程扩列，模型声明不替代 DDL。
-- 回调 PB 无校验规则，校验责任归属 Trigger 请求侧与 `formatTime` 来源。
+- 回调 PB 无校验规则，校验责任归属 Trigger 请求侧与 `carbonx.FormatDateTimeOrEmpty` 的受控时间来源。
 - `ParseExtra` 解析失败 -> handler 返回错误，不发送回调。
 
 ### 5. Good/Base/Bad Cases
@@ -307,7 +307,7 @@ if err != nil {
 response, err := client.HandleCronJobEvent(ctx, &streamevent.HandleCronJobEventReq{
 	JobId: task.ID, TaskCode: task.TaskCode, TaskName: task.TaskName,
 	Priority: int32(task.Priority), Payload: string(task.Payload),
-	ScheduledTime: formatTime(task.ScheduledTime),
+	ScheduledTime: carbonx.FormatDateTimeOrEmpty(task.ScheduledTime),
 	Type: extra.Type, GroupId: extra.GroupId, Description: extra.Description,
 	Ext1: extra.Ext1, Ext2: extra.Ext2, Ext3: extra.Ext3, Ext4: extra.Ext4, Ext5: extra.Ext5,
 	DeptCode: extra.DeptCode,
@@ -348,7 +348,7 @@ message CalcPlanTaskDateRes {
 
 - `scheduleDescription` 必须由展开 `planDates` 的同一个 `rrule.Set` 生成。
 - `rruleStr` 返回该 Set 的 RFC 5545 原文，供排障和与持久化快照比对。
-- Logic 在完成 DTSTART、RRULE 和 EXDATE 组装后调用 `crontask.DescribeRRule(set.String())`。
+- Logic 在完成 DTSTART、RRULE 和 EXDATE 组装后调用 `rrulex.Describe(set.String())`。
 - proto 是契约源，修改后执行 `app/trigger/gen.sh`，不得手改生成文件。
 
 ### 4. Validation & Error Matrix
@@ -380,5 +380,5 @@ description := describePlanRule(in.Rule)
 #### Correct
 
 ```go
-description, err := crontask.DescribeRRule(set.String())
+description, err := rrulex.Describe(set.String())
 ```

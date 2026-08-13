@@ -38,6 +38,8 @@ func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache, pushCli socketpu
 		device := gormmodel.DjiDevice{
 			DeviceSn:     deviceSn,
 			GatewaySn:    gatewaySn,
+			DeviceType:   gormmodel.DjiDeviceUnknown,
+			DeviceName:   gormmodel.DjiDeviceUnknown,
 			IsOnline:     true,
 			LastOnlineAt: sqlNullTime(now),
 		}
@@ -110,6 +112,8 @@ func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache, pushCli socketp
 		device := gormmodel.DjiDevice{
 			DeviceSn:        deviceSn,
 			GatewaySn:       gatewaySn,
+			DeviceType:      gormmodel.DjiDeviceUnknown,
+			DeviceName:      gormmodel.DjiDeviceUnknown,
 			FirmwareVersion: versions.FirmwareVersion,
 			HardwareVersion: versions.HardwareVersion,
 		}

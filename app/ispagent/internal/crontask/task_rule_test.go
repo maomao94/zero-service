@@ -4,14 +4,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"zero-service/common/crontask"
+	"zero-service/common/rrulex"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/teambition/rrule-go"
 )
+
+// mustNextAfter 用官方原生风格（ParseSet + set.After）查询单次 after 候选。
+func mustNextAfter(t *testing.T, value string, after time.Time) time.Time {
+	t.Helper()
+	set, err := rrulex.ParseSet(value)
+	if err != nil {
+		t.Fatalf("parse RRULE Set: %v", err)
+	}
+	return set.After(after, false)
+}
 
 func mustParseSetRule(t *testing.T, value string) *rrule.RRule {
 	t.Helper()
@@ -250,18 +262,12 @@ func TestFixedRRuleFiresOnce(t *testing.T) {
 	rruleStr := f.ToRRuleStr()
 
 	base := carbon.Parse("2025-07-09 00:00:00", carbon.Shanghai).StdTime()
-	first, err := crontask.NextAfter(rruleStr, base.Add(-time.Second))
-	if err != nil {
-		t.Fatal(err)
-	}
+	first := mustNextAfter(t, rruleStr, base.Add(-time.Second))
 	if first.IsZero() {
 		t.Fatal("expected first occurrence")
 	}
 
-	second, err := crontask.NextAfter(rruleStr, first)
-	if err != nil {
-		t.Fatal(err)
-	}
+	second := mustNextAfter(t, rruleStr, first)
 	if !second.IsZero() {
 		t.Fatal("expected no second occurrence after COUNT=1")
 	}
@@ -280,10 +286,7 @@ func TestCycleRRuleNextOccurrence(t *testing.T) {
 	rruleStr := f.ToRRuleStr()
 
 	base := now.StartOfDay().StdTime()
-	next, err := crontask.NextAfter(rruleStr, base)
-	if err != nil {
-		t.Fatal(err)
-	}
+	next := mustNextAfter(t, rruleStr, base)
 	if next.IsZero() {
 		t.Fatal("expected next occurrence")
 	}
@@ -340,10 +343,7 @@ func TestInvalidTimeSkip(t *testing.T) {
 
 	rruleStr := f.ToRRuleStr()
 	base := now.StartOfDay().StdTime()
-	first, err := crontask.NextAfter(rruleStr, base)
-	if err != nil {
-		t.Fatalf("parse RRULE Set: %v", err)
-	}
+	first := mustNextAfter(t, rruleStr, base)
 
 	// should be today 12:00 (within invalid range)
 	expectedToday := carbon.Parse(today+" 12:00:00", carbon.Shanghai).StdTime()
@@ -351,10 +351,16 @@ func TestInvalidTimeSkip(t *testing.T) {
 		t.Fatalf("rrule should give today 12:00, got %v", first)
 	}
 
-	// skipInvalidTime should skip to next week
-	skipped := f.skipInvalidTime(rruleStr, first)
-	if !skipped.After(parseTime(tomorrow + " 23:59:59")) {
-		t.Fatalf("expected skip to next week, got %v", skipped)
+	// 谓词排除无效区间，NextRuns 单趟推进到区间后首个有效点（下周）。
+	runs, err := rrulex.NextRuns(rruleStr, base, false, 1, f.invalidTimePredicate())
+	if err != nil {
+		t.Fatalf("NextRuns: %v", err)
+	}
+	if len(runs) != 1 {
+		t.Fatalf("expected 1 valid run, got %v", runs)
+	}
+	if !runs[0].After(parseTime(tomorrow + " 23:59:59")) {
+		t.Fatalf("expected skip to next week, got %v", runs[0])
 	}
 }
 
@@ -372,14 +378,15 @@ func TestNoInvalidTimeNoSkip(t *testing.T) {
 
 	rruleStr := f.ToRRuleStr()
 	base := now.StartOfDay().StdTime()
-	first, err := crontask.NextAfter(rruleStr, base)
+	first := mustNextAfter(t, rruleStr, base)
+
+	// 无无效窗口：谓词为 nil，返回原候选。
+	runs, err := rrulex.NextRuns(rruleStr, base, false, 1, f.invalidTimePredicate())
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	skipped := f.skipInvalidTime(rruleStr, first)
-	if !skipped.Equal(first) {
-		t.Fatal("expected no skip when no invalid time")
+	if len(runs) != 1 || !runs[0].Equal(first) {
+		t.Fatalf("expected no skip when no invalid time, got %v", runs)
 	}
 }
 
@@ -428,7 +435,7 @@ func TestNewTaskConfigReturnsScheduleError(t *testing.T) {
 	}
 }
 
-func TestInvalidTimeFilterReturnsZeroWhenRuleExhausted(t *testing.T) {
+func TestInvalidTimePredicateReturnsEmptyWhenRuleExhausted(t *testing.T) {
 	runAt := carbon.Now(carbon.Shanghai).AddHour().StartOfSecond()
 	fields := &IspTaskFields{
 		FixedStartTime:   runAt.ToDateTimeString(),
@@ -440,8 +447,122 @@ func TestInvalidTimeFilterReturnsZeroWhenRuleExhausted(t *testing.T) {
 		Extra:    json.RawMessage(SerializeExtra(fields)),
 	}
 
-	next := NewInvalidTimeFilter()(task, runAt.StdTime())
-	if !next.IsZero() {
-		t.Fatalf("expected zero next run, got %v", next)
+	pred := NewInvalidTimePredicate()
+	if !pred(task, runAt.StdTime()) {
+		t.Fatalf("expected candidate inside invalid window to be excluded")
 	}
+
+	// COUNT=1 且唯一候选落在无效区间内：推进耗尽返回空结果。
+	runs, err := rrulex.NextRuns(task.RRuleStr, runAt.StdTime().Add(-time.Hour), false, 1, func(t time.Time) bool {
+		return pred(task, t)
+	})
+	if err != nil {
+		t.Fatalf("NextRuns: %v", err)
+	}
+	if len(runs) != 0 {
+		t.Fatalf("expected empty runs when rule exhausted inside invalid window, got %v", runs)
+	}
+}
+
+func TestNewInvalidTimePredicateNoWindow(t *testing.T) {
+	pred := NewInvalidTimePredicate()
+	now := time.Now()
+	if pred(&crontask.TaskConfig{}, now) {
+		t.Fatal("empty extra must not be filtered")
+	}
+	fields := &IspTaskFields{TaskCode: "no-window"}
+	task := &crontask.TaskConfig{Extra: json.RawMessage(SerializeExtra(fields))}
+	if pred(task, now) {
+		t.Fatal("task without invalid window must not be filtered")
+	}
+}
+
+func TestNewInvalidTimePredicateWindowBoundaries(t *testing.T) {
+	start := parseTime("2026-08-13 10:00:00")
+	end := parseTime("2026-08-13 12:00:00")
+	tests := []struct {
+		name string
+		at   time.Time
+		want bool
+	}{
+		{name: "before", at: start.Add(-time.Second), want: false},
+		{name: "exact-start", at: start, want: true},
+		{name: "interior", at: start.Add(time.Hour), want: true},
+		{name: "exact-end", at: end, want: true},
+		{name: "after", at: end.Add(time.Second), want: false},
+	}
+	task := &crontask.TaskConfig{Extra: json.RawMessage(SerializeExtra(&IspTaskFields{
+		InvalidStartTime: "2026-08-13 10:00:00",
+		InvalidEndTime:   "2026-08-13 12:00:00",
+	}))}
+	pred := NewInvalidTimePredicate()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := pred(task, tt.at); got != tt.want {
+				t.Fatalf("predicate(%v) = %v, want %v", tt.at, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewInvalidTimePredicateIgnoresIncompleteOrMalformedWindow(t *testing.T) {
+	tests := []struct {
+		name  string
+		start string
+		end   string
+		extra json.RawMessage
+	}{
+		{name: "missing-start", end: "2026-08-13 12:00:00"},
+		{name: "missing-end", start: "2026-08-13 10:00:00"},
+		{name: "malformed-start", start: "not-a-time", end: "2026-08-13 12:00:00"},
+		{name: "malformed-end", start: "2026-08-13 10:00:00", end: "not-a-time"},
+		{name: "malformed-extra", extra: json.RawMessage("{")},
+	}
+	pred := NewInvalidTimePredicate()
+	at := parseTime("2026-08-13 11:00:00")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			extra := tt.extra
+			if extra == nil {
+				extra = json.RawMessage(SerializeExtra(&IspTaskFields{
+					InvalidStartTime: tt.start,
+					InvalidEndTime:   tt.end,
+				}))
+			}
+			if pred(&crontask.TaskConfig{Extra: extra}, at) {
+				t.Fatal("incomplete or malformed invalid window must not filter candidates")
+			}
+		})
+	}
+}
+
+func TestNewInvalidTimePredicateConcurrent(t *testing.T) {
+	runAt := carbon.Now(carbon.Shanghai).AddHour().StartOfSecond()
+	fields := &IspTaskFields{
+		FixedStartTime:   runAt.ToDateTimeString(),
+		InvalidStartTime: runAt.SubMinute().ToDateTimeString(),
+		InvalidEndTime:   runAt.AddMinute().ToDateTimeString(),
+	}
+	task := &crontask.TaskConfig{Extra: json.RawMessage(SerializeExtra(fields))}
+	pred := NewInvalidTimePredicate()
+
+	// 谓词无状态，并发调用结果一致（-race 兜底）。
+	var wg sync.WaitGroup
+	for i := 0; i < 32; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 100; j++ {
+				if !pred(task, runAt.StdTime()) {
+					t.Errorf("expected true for candidate inside window")
+					return
+				}
+				if pred(task, runAt.AddDay().StdTime()) {
+					t.Errorf("expected false for candidate outside window")
+					return
+				}
+			}
+		}()
+	}
+	wg.Wait()
 }

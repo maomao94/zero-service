@@ -1,0 +1,31 @@
+{
+  "id": "auth-context-hardening",
+  "name": "auth-context-hardening",
+  "title": "认证上下文与凭证传播加固",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "boss",
+  "assignee": "boss",
+  "createdAt": "2026-08-14",
+  "completedAt": "2026-08-14",
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "08-14-audit-authorization-propagation",
+    "08-14-normalize-auth-claims",
+    "08-14-typed-auth-context-keys",
+    "08-14-enforce-authorization-policy"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

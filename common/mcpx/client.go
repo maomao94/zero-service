@@ -11,7 +11,6 @@ import (
 	"zero-service/common/tool"
 
 	"zero-service/common/antsx"
-	"zero-service/common/ctxprop"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -786,7 +785,7 @@ func (conn *Connection) callTool(ctx context.Context, name string, args map[stri
 	params := &mcp.CallToolParams{Name: realName, Arguments: args}
 
 	// 从 ctx 收集用户上下文，注入 trace 到 _meta
-	meta := ctxprop.CollectFromCtx(ctx)
+	meta := CollectFromCtx(ctx)
 	trace.Inject(ctx, trace.NewAnyCarrier(meta))
 	params.SetMeta(meta)
 	result, err := session.CallTool(ctx, params)
@@ -823,7 +822,7 @@ func (conn *Connection) callToolWithProgress(ctx context.Context, req *CallToolW
 		defer cancel()
 	}
 
-	meta := ctxprop.CollectFromCtx(ctx)
+	meta := CollectFromCtx(ctx)
 	trace.Inject(ctx, trace.NewAnyCarrier(meta))
 	params.SetMeta(meta)
 	if req.OnProgress != nil && progressSR != nil {
@@ -1193,7 +1192,6 @@ type ctxHeaderTransport struct {
 // RoundTrip 实现 http.RoundTripper 接口，在请求中注入服务 Token
 func (t *ctxHeaderTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	// 注入 trace 等上下文到 Header
-	//ctxprop.InjectToHTTPHeader(r.Context(), r.Header)
 
 	// 设置服务 Token（连接和调用都用服务 Token）
 	if t.serviceToken != "" {

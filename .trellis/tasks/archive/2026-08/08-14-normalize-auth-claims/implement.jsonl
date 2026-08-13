@@ -1,0 +1,9 @@
+{"file":".trellis/spec/backend/common-package-design.md","reason":"约束 authctx 转换函数归属与 API 构造。"}
+{"file":".trellis/spec/backend/coding-standards.md","reason":"约束安全基线、精度处理与最小改动。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"约束测试覆盖与验证范围。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"核对 claim 跨 HTTP/MCP/gRPC 的类型流。"}
+{"file":".trellis/tasks/08-14-normalize-auth-claims/research/01-current-conversion-matrix.md","reason":"当前转换语义与契约测试清单。"}
+{"file":".trellis/tasks/08-14-normalize-auth-claims/research/02-real-value-type-inventory.md","reason":"各边界真实值类型（json.Number vs float64）。"}
+{"file":".trellis/tasks/08-14-normalize-auth-claims/research/03-consumer-impact-table.md","reason":"user-id 安全属性与消费影响。"}
+{"file":".trellis/tasks/08-14-normalize-auth-claims/research/04-numeric-precision-analysis.md","reason":"数字精度与 2^53 边界证据。"}
+{"file":".trellis/tasks/08-14-normalize-auth-claims/research/06-must-not-combine-and-wire-contract.md","reason":"范围内外边界与 wire 契约。"}

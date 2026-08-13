@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"zero-service/app/bridgemqtt/internal/config"
+	"zero-service/common/carbonx"
 	"zero-service/common/mqttx"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/socketapp/socketpush/socketpush"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/core/timex"
@@ -80,7 +80,7 @@ func (h *MqttStreamHandler) logMessage(ctx context.Context, topic, topicTemplate
 func (h *MqttStreamHandler) pushToStreamEvent(ctx context.Context, topic, topicTemplate string, payload []byte) {
 	h.taskRunner.Schedule(func() {
 		msgId, _ := tool.SimpleUUID()
-		sendTime := carbon.Now().ToDateTimeMicroString()
+		sendTime := carbonx.NowDateTimeMicro()
 		startTime := timex.Now()
 
 		_, err := h.streamEventCli.ReceiveMQTTMessage(ctx, &streamevent.ReceiveMQTTMessageReq{
@@ -101,7 +101,7 @@ func (h *MqttStreamHandler) pushToStreamEvent(ctx context.Context, topic, topicT
 func (h *MqttStreamHandler) pushToSocket(ctx context.Context, topic, topicTemplate string, payload []byte) {
 	h.taskRunner.Schedule(func() {
 		reqId, _ := tool.SimpleUUID()
-		sendTime := carbon.Now().ToDateTimeMicroString()
+		sendTime := carbonx.NowDateTimeMicro()
 		startTime := timex.Now()
 		event := h.matchEvent(topicTemplate)
 

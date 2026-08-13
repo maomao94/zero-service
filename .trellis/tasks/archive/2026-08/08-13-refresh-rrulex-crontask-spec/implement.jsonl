@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/backend/crontask-guidelines.md", "reason": "现有调度、RRULE 与测试契约基线，实施时需按新 rrulex 边界刷新"}
+{"file": ".trellis/spec/backend/common-package-design.md", "reason": "新增 common/rrulex 规格和公共包边界约束"}
+{"file": ".trellis/spec/backend/coding-standards.md", "reason": "Go 测试与最小正确性修复编码规范"}

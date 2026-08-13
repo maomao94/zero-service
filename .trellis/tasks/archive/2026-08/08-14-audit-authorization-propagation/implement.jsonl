@@ -1,0 +1,9 @@
+{"file":".trellis/spec/backend/common-package-design.md","reason":"约束 authctx/grpcx/mcpx 公共机制边界和可执行契约。"}
+{"file":".trellis/spec/backend/coding-standards.md","reason":"约束安全基线、证据优先和最小范围。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"约束审计证据、验证和 diff 范围。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"指导跨 HTTP、Socket.IO、gRPC、MCP 的完整数据流核对。"}
+{"file":".trellis/tasks/08-14-audit-authorization-propagation/research/propagation-matrix.md","reason":"提供 raw Authorization 传播链路证据。"}
+{"file":".trellis/tasks/08-14-audit-authorization-propagation/research/identity-claims-matrix.md","reason":"提供身份 claim 来源、消费者和数据隔离证据。"}
+{"file":".trellis/tasks/08-14-audit-authorization-propagation/research/grpc-metadata-conflicts.md","reason":"提供 metadata duplicate/conflict 当前契约。"}
+{"file":".trellis/tasks/08-14-audit-authorization-propagation/research/mcp-meta-and-leakage.md","reason":"提供 MCP raw meta 与 token 泄漏证据。"}
+{"file":".trellis/tasks/08-14-audit-authorization-propagation/research/policy-migration-inputs.md","reason":"提供策略选项、迁移、回滚和后续子任务边界。"}

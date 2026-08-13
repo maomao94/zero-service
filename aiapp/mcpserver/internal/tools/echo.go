@@ -2,7 +2,7 @@ package tools
 
 import (
 	"context"
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
 	"zero-service/common/mcpx"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -23,9 +23,9 @@ func RegisterEcho(server *sdkmcp.Server) {
 	}
 
 	echoHandler := func(ctx context.Context, req *sdkmcp.CallToolRequest, args EchoArgs) (*sdkmcp.CallToolResult, any, error) {
-		auth := ctxdata.GetAuthorization(ctx)
-		username := ctxdata.GetUserName(ctx)
-		logx.Debugf("token: %s,username: %s", auth, username)
+		auth := authctx.GetAuthorization(ctx)
+		username := authctx.GetUserName(ctx)
+		logx.Debugf("auth_present=%t, username: %s", auth != "", username)
 		prefix := "Echo: "
 		if len(args.Prefix) > 0 {
 			prefix = args.Prefix

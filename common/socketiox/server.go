@@ -9,7 +9,7 @@ import (
 	"slices"
 	"sync"
 	"time"
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
 
 	"github.com/doquangtan/socketio/v4"
 	"github.com/duke-git/lancet/v2/convertor"
@@ -534,7 +534,7 @@ func (srv *Server) bindEvents() {
 			logx.Field("socketId", socket.Id),
 			logx.Field("event", "connection"),
 		)
-		connectCtx = context.WithValue(connectCtx, ctxdata.CtxAuthorizationKey, token)
+		connectCtx = authctx.WithAuthorization(connectCtx, token)
 		if srv.connectHook != nil {
 			rooms, err := srv.connectHook(connectCtx, session)
 			if err != nil {
@@ -544,7 +544,7 @@ func (srv *Server) bindEvents() {
 				for _, r := range rooms {
 					if err := session.JoinRoom(r); err != nil {
 						session.roomLoadError = err.Error()
-						logx.WithContext(connectCtx).Errorw("[socketio] failed to join initial room: "+ err.Error(), logx.Field("room", r))
+						logx.WithContext(connectCtx).Errorw("[socketio] failed to join initial room: "+err.Error(), logx.Field("room", r))
 					}
 				}
 			}
@@ -555,7 +555,7 @@ func (srv *Server) bindEvents() {
 				logx.Field("socketId", payload.SID),
 				logx.Field("event", EventJoinRoom),
 			)
-			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
+			ctx = authctx.WithAuthorization(ctx, token)
 			upReq, ok := parseRoomPayload(ctx, session, payload, socket.Id)
 			if !ok {
 				return
@@ -576,7 +576,7 @@ func (srv *Server) bindEvents() {
 				logx.Field("socketId", payload.SID),
 				logx.Field("event", EventLeaveRoom),
 			)
-			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
+			ctx = authctx.WithAuthorization(ctx, token)
 			upReq, ok := parseRoomPayload(ctx, session, payload, socket.Id)
 			if !ok {
 				return
@@ -591,7 +591,7 @@ func (srv *Server) bindEvents() {
 				logx.Field("socketId", payload.SID),
 				logx.Field("event", EventRoomsPage),
 			)
-			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
+			ctx = authctx.WithAuthorization(ctx, token)
 			req, ok := parseRoomsPagePayload(ctx, session, payload, socket.Id)
 			if !ok {
 				return
@@ -607,7 +607,7 @@ func (srv *Server) bindEvents() {
 				logx.Field("socketId", payload.SID),
 				logx.Field("event", EventUp),
 			)
-			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
+			ctx = authctx.WithAuthorization(ctx, token)
 			handlerPayload := extractPayload(payload)
 			if handlerPayload == nil {
 				logx.WithContext(ctx).Errorw("[socketio] failed to marshal data", logx.Field("event", EventUp))
@@ -670,7 +670,7 @@ func (srv *Server) bindEvents() {
 				logx.Field("socketId", payload.SID),
 				logx.Field("event", EventRoomBroadcast),
 			)
-			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
+			ctx = authctx.WithAuthorization(ctx, token)
 			upReq, ok := parseUpPayload(ctx, session, payload, socket.Id, true)
 			if !ok {
 				return
@@ -695,7 +695,7 @@ func (srv *Server) bindEvents() {
 				logx.Field("socketId", payload.SID),
 				logx.Field("event", EventGlobalBroadcast),
 			)
-			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
+			ctx = authctx.WithAuthorization(ctx, token)
 			upReq, ok := parseUpPayload(ctx, session, payload, socket.Id, true)
 			if !ok {
 				return
@@ -727,7 +727,7 @@ func (srv *Server) bindEvents() {
 				logx.Field("socketId", socket.Id),
 				logx.Field("event", "disconnect"),
 			)
-			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
+			ctx = authctx.WithAuthorization(ctx, token)
 			srv.lock.RLock()
 			deleteSession, ok := srv.sessions[socket.Id]
 			srv.lock.RUnlock()
@@ -751,7 +751,7 @@ func (srv *Server) bindEvents() {
 					logx.Field("socketId", payload.SID),
 					logx.Field("event", currentEvent),
 				)
-				ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
+				ctx = authctx.WithAuthorization(ctx, token)
 				var handlerPayload []byte
 				if len(payload.Data) > 0 && payload.Data[0] != nil {
 					switch data := payload.Data[0].(type) {
@@ -760,7 +760,7 @@ func (srv *Server) bindEvents() {
 					default:
 						b, err := json.Marshal(data)
 						if err != nil {
-							logx.WithContext(ctx).Errorw("[socketio] failed to marshal data: "+ err.Error(), logx.Field("event", currentEvent))
+							logx.WithContext(ctx).Errorw("[socketio] failed to marshal data: "+err.Error(), logx.Field("event", currentEvent))
 							return
 						}
 						handlerPayload = b
@@ -902,7 +902,7 @@ func (srv *Server) JoinRoom(socketId string, room string) {
 	srv.lock.RUnlock()
 	if ok {
 		if err := session.JoinRoom(room); err != nil {
-			logx.Errorw("[socketio] join room failed: "+ err.Error(), logx.Field("socketId", socketId), logx.Field("room", room))
+			logx.Errorw("[socketio] join room failed: "+err.Error(), logx.Field("socketId", socketId), logx.Field("room", room))
 		}
 	}
 }
@@ -913,7 +913,7 @@ func (srv *Server) LeaveRoom(socketId string, room string) {
 	srv.lock.RUnlock()
 	if ok {
 		if err := session.LeaveRoom(room); err != nil {
-			logx.Errorw("[socketio] leave room failed: "+ err.Error(), logx.Field("socketId", socketId), logx.Field("room", room))
+			logx.Errorw("[socketio] leave room failed: "+err.Error(), logx.Field("socketId", socketId), logx.Field("room", room))
 		}
 	}
 }

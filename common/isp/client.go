@@ -9,9 +9,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"zero-service/common/carbonx"
 	"zero-service/common/gnetx"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -412,7 +412,7 @@ func defaultTime(v string) string {
 	if strings.TrimSpace(v) != "" {
 		return v
 	}
-	return carbon.Now().ToDateTimeString()
+	return carbonx.NowDateTime()
 }
 
 // ParseItemInterval 从 Item 中解析秒级间隔字段。

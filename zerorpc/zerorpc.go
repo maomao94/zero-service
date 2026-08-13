@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/logx"
-	interceptor "zero-service/common/Interceptor/rpcserver"
+	"zero-service/common/grpcx"
 	"zero-service/common/tool"
 	"zero-service/zerorpc/internal/task"
 
@@ -41,7 +41,7 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
-	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
 	serviceGroup.Add(s)

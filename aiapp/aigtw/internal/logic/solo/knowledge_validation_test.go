@@ -6,12 +6,12 @@ import (
 
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
 	einoxkb "zero-service/common/einox/knowledge"
 )
 
 func TestKnowledgeLogicsRequireRequestBeforeSDK(t *testing.T) {
-	ctx := context.WithValue(context.Background(), ctxdata.CtxUserIdKey, "user-1")
+	ctx := authctx.WithUserID(context.Background(), "user-1")
 	svcCtx := &svc.ServiceContext{Knowledge: nil}
 
 	cases := []struct {
@@ -122,7 +122,7 @@ func TestKnowledgeDeleteDocumentRequiresSourceIDBeforeSDK(t *testing.T) {
 }
 
 func knowledgeTestContext() context.Context {
-	return context.WithValue(context.Background(), ctxdata.CtxUserIdKey, "user-1")
+	return authctx.WithUserID(context.Background(), "user-1")
 }
 
 func knowledgeValidationSvc() *svc.ServiceContext {

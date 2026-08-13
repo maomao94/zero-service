@@ -43,6 +43,7 @@
 - `DjiDevice` 以 `device_sn` 唯一，保存设备最近快照；`DeviceType`、`DeviceName` 紧跟 `GatewaySn`。
 - `DjiDeviceTopo` 以 `gateway_sn + sub_device_sn` 唯一，允许同一 `sub_device_sn` 出现在多个网关绑定中。
 - 型号使用 `ParseDeviceType(string)` 规范化，名称使用 `LookupDeviceTypeName(string)` 查询；格式固定为 `{domain}-{type}-{sub_type}`。
+- `DjiDeviceUnknown == "unknown"` 是设备身份尚未补齐的非空哨兵值；两张表的 `device_type/device_name` 保持 `NOT NULL DEFAULT 'unknown'`。
 - 未发布的 `DeviceInfo` 按语义顺序连续编号：`gateway_sn` 后为 `device_type`、`device_name`，不为旧编号增加 `reserved`。
 
 ### 3. Contracts
@@ -51,15 +52,20 @@
 - domain 0/1 的主设备 `gateway_sn` 不由 `update_topo` 覆盖，继续由 OSD/State 表达当前通信网关；domain 2/3 由 `update_topo` 写当前 `gateway_sn`。
 - `DjiDeviceTopo` 始终保存本次上报的 `gateway_sn`，因此蛙跳场景可保留多个绑定；不能用主表 `device_sn` 唯一语义替代 topology pair。
 - 网关自身使用 `update_topo` 顶层 `domain/type/sub_type` 更新主设备 `device_type/device_name`。
-- 合法但产品注册表未收录的三元组保存规范 `device_type` 和空 `device_name`，不得阻止事务。
+- OSD/State 先于 `update_topo` 创建主设备时显式写 `device_type/device_name=unknown`；后续合法拓扑覆盖哨兵，遥测更新不得把真实身份覆盖回 `unknown`。
+- 合法但产品注册表未收录的三元组保存规范 `device_type` 和 `device_name=unknown`，不得阻止事务。
+- 非法拓扑身份不得制造伪三元组或覆盖已有真实身份；新记录使用 `unknown`，已有记录保留原型号和名称。`gateway_sn` 独立按 domain 所有权更新，不与身份解析结果绑定。
+- GaussDB 兼容模式可能把空字符串转换为 SQL `NULL`；设备身份列不得依赖空字符串表达未知状态，也不改用与 `NOT NULL` 冲突的 `sql.NullString`。
 
 ### 4. Validation & Error Matrix
 
 | 条件 | 行为 |
 | --- | --- |
 | 已收录三元组 | 主表与拓扑保存规范型号和产品名称 |
-| 合法但未收录三元组 | 保存规范型号，名称为空 |
-| 非法 domain 或三元组 | 保留上游组合字符串，名称为空，不中断拓扑快照入库 |
+| OSD/State 先于 topology | 主表保存 `unknown/unknown`，继续保存遥测和在线状态 |
+| 合法但未收录三元组 | 保存规范型号，名称为 `unknown` |
+| 非法 domain 或三元组，新记录 | 型号和名称保存 `unknown`，不制造伪三元组 |
+| 非法 domain 或三元组，已有记录 | 保留已有型号和名称；非 domain 0/1 仍更新 `gateway_sn` |
 | domain 0/1 子设备重复上报 | 更新型号和名称，不覆盖主表 `gateway_sn` |
 | domain 2/3 子设备重复上报 | 更新型号、名称和主表 `gateway_sn` |
 | 同一子设备由多个网关上报 | 主表仍只有一个 `device_sn` 记录；拓扑按 pair 保留多条绑定 |
@@ -68,29 +74,32 @@
 ### 5. Good/Base/Bad Cases
 
 - Good: `sub.SN=drone-1, domain=0, type=60, sub_type=0` 更新主表为 `0-60-0/Matrice 300 RTK`，保留其 OSD/State `gateway_sn`，并写入当前网关 topology pair。
-- Base: `0-999-7` 同时写入主表和拓扑，`device_name` 为空。
-- Bad: 因 domain 0/1 不更新 `gateway_sn` 而连带跳过 `device_type/device_name`；或用 `sub_device_sn` 单列唯一覆盖其他网关的 topology pair。
+- Base: OSD 首次发现设备时保存 `unknown/unknown`；后续 `0-999-7` 同时写入主表和拓扑，`device_name=unknown`。
+- Bad: 用空字符串表达未知身份、从 SN 猜型号、把非法输入保存为 `9-60-0`，或因 domain 0/1 不更新 `gateway_sn` 而连带跳过合法 `device_type/device_name`。
 
 ### 6. Tests Required
 
 - Hook 测试断言 domain 0/1 保留主表 `gateway_sn`，但更新型号和名称；domain 2/3 同时更新三者。
-- Hook 测试覆盖已知产品、未知产品、重复上报、软删除恢复和网关顶层型号。
-- Model 测试断言两张表的列类型、非空和空字符串默认值。
-- Logic 测试断言 `DeviceInfo`、`DeviceTopoInfo` 返回持久化值；Proto 变更执行 `app/djicloud/gen.sh` 并检查生成 diff。
+- Hook 测试覆盖 OSD/State 首次创建、合法 topology 覆盖哨兵、已知产品、未知产品、非法身份保留、重复上报、软删除恢复和网关顶层型号。
+- Model 测试断言两张表的身份列类型、非空和 `unknown` 默认值。
+- Logic 测试断言 `DeviceInfo`、`DeviceTopoInfo` 原样返回持久化的 `unknown`；Proto 变更执行 `app/djicloud/gen.sh` 并检查生成 diff。
 
 ### 7. Wrong vs Correct
 
 ```go
-// Wrong: domain 0/1 连型号字段也不更新。
-updateData := map[string]any{}
-if domain != "0" && domain != "1" {
-	updateData["gateway_sn"] = gatewaySn
-}
+// Wrong: 空字符串在 GaussDB 兼容模式下可能成为 NULL，且非法输入会制造伪三元组。
+device := DjiDevice{DeviceType: "", DeviceName: ""}
+deviceType := fmt.Sprintf("%s-%d-%d", domain, typ, subType)
 
-// Correct: 型号始终按设备 SN 更新，仅 GatewaySn 保留 domain 所有权差异。
-updateData := map[string]any{
-	"device_type": deviceType,
-	"device_name": deviceName,
+// Correct: 新记录使用非空哨兵；合法拓扑才覆盖身份，网关独立按 domain 更新。
+device := DjiDevice{
+	DeviceType: DjiDeviceUnknown,
+	DeviceName: DjiDeviceUnknown,
+}
+updateData := map[string]any{}
+if parsed, err := djisdk.ParseDeviceType(rawDeviceType); err == nil {
+	updateData["device_type"] = parsed.String()
+	updateData["device_name"] = resolvedNameOrUnknown
 }
 if domain != "0" && domain != "1" {
 	updateData["gateway_sn"] = gatewaySn

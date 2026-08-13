@@ -7,7 +7,9 @@ import (
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/carbonx"
 	"zero-service/common/crontask"
+	"zero-service/common/rrulex"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -55,13 +57,13 @@ func (l *PreviewCronJobScheduleLogic) PreviewCronJobSchedule(in *trigger.Preview
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "解析 Cron Job 调度规则失败")
 	}
-	description, err := crontask.DescribeRRule(task.RRuleStr)
+	description, err := rrulex.Describe(task.RRuleStr)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "生成 Cron Job 调度规则描述失败")
 	}
 	executionTimes := make([]string, 0, len(runs))
 	for _, run := range runs {
-		executionTimes = append(executionTimes, tool.CarbonFromTimeStartOfSecond(run).ToDateTimeString())
+		executionTimes = append(executionTimes, carbonx.FormatDateTime(run))
 	}
 
 	return &trigger.PreviewCronJobScheduleRes{

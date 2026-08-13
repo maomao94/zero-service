@@ -152,6 +152,8 @@ func TestStateTelemetryUpdatesDeviceDataButNotOnline(t *testing.T) {
 	}
 	var device struct {
 		GatewaySn       string
+		DeviceType      string
+		DeviceName      string
 		FirmwareVersion string
 		HardwareVersion string
 		IsOnline        bool
@@ -162,6 +164,9 @@ func TestStateTelemetryUpdatesDeviceDataButNotOnline(t *testing.T) {
 	}
 	if device.GatewaySn != "dock-1" {
 		t.Fatalf("GatewaySn = %s, want dock-1", device.GatewaySn)
+	}
+	if device.DeviceType != gormmodel.DjiDeviceUnknown || device.DeviceName != gormmodel.DjiDeviceUnknown {
+		t.Fatalf("device type/name = %q/%q, want unknown sentinels", device.DeviceType, device.DeviceName)
 	}
 	if device.FirmwareVersion != "05.01.0214" || device.HardwareVersion != "M4D" {
 		t.Fatalf("device versions = %s/%s, want 05.01.0214/M4D", device.FirmwareVersion, device.HardwareVersion)
@@ -230,6 +235,8 @@ func TestOsdTelemetryDoesNotUpdateDeviceVersions(t *testing.T) {
 	var device struct {
 		FirmwareVersion string
 		HardwareVersion string
+		DeviceType      string
+		DeviceName      string
 		IsOnline        bool
 	}
 	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Where("device_sn = ?", "dock-version").First(&device).Error; err != nil {
@@ -237,6 +244,9 @@ func TestOsdTelemetryDoesNotUpdateDeviceVersions(t *testing.T) {
 	}
 	if device.FirmwareVersion != "" || device.HardwareVersion != "" {
 		t.Fatalf("device versions = %s/%s, want empty because osd must not update state-only versions", device.FirmwareVersion, device.HardwareVersion)
+	}
+	if device.DeviceType != gormmodel.DjiDeviceUnknown || device.DeviceName != gormmodel.DjiDeviceUnknown {
+		t.Fatalf("device type/name = %q/%q, want unknown sentinels", device.DeviceType, device.DeviceName)
 	}
 	if !device.IsOnline {
 		t.Fatal("expected osd telemetry to mark device online")
@@ -394,8 +404,8 @@ func TestStatusUpdateTopoStoresGatewayAndSubDeviceIdentity(t *testing.T) {
 	if !dock.IsOnline {
 		t.Fatalf("dock IsOnline = false, want true because status handler sets online on first create")
 	}
-	if dock.DeviceType != "3-119-0" || dock.DeviceName != "" {
-		t.Fatalf("dock device type/name = %q/%q, want 3-119-0/empty", dock.DeviceType, dock.DeviceName)
+	if dock.DeviceType != "3-119-0" || dock.DeviceName != gormmodel.DjiDeviceUnknown {
+		t.Fatalf("dock device type/name = %q/%q, want 3-119-0/unknown", dock.DeviceType, dock.DeviceName)
 	}
 	var aircraft struct {
 		GatewaySn  string
@@ -488,6 +498,18 @@ func TestStatusUpdateTopoStoresUnknownDeviceTypeAndUpdatesDerivedFields(t *testi
 	db := newHookTestDB(t)
 	ctx := context.Background()
 	handler := NewStatusHandler(db, nil)
+	NewStateTelemetryHandler(db, nil, nil)(ctx, "device-derived", &djisdk.StateMessage{
+		Gateway:   "dock-current",
+		Timestamp: 1710000000000,
+		Data:      map[string]any{"firmware_version": "initial"},
+	})
+	var telemetryDevice gormmodel.DjiDevice
+	if err := db.WithContext(ctx).Where("device_sn = ?", "device-derived").First(&telemetryDevice).Error; err != nil {
+		t.Fatalf("find state-created device error = %v", err)
+	}
+	if telemetryDevice.DeviceType != gormmodel.DjiDeviceUnknown || telemetryDevice.DeviceName != gormmodel.DjiDeviceUnknown {
+		t.Fatalf("state-created device type/name = %q/%q, want unknown sentinels", telemetryDevice.DeviceType, telemetryDevice.DeviceName)
+	}
 
 	message := func(domain string, deviceType, subType int) *djisdk.StatusMessage {
 		return &djisdk.StatusMessage{
@@ -504,12 +526,29 @@ func TestStatusUpdateTopoStoresUnknownDeviceTypeAndUpdatesDerivedFields(t *testi
 	if err := handler(ctx, "dock-derived", message("0", 999, 7)); err != nil {
 		t.Fatalf("store unknown device type error = %v", err)
 	}
+	var gateway gormmodel.DjiDevice
+	if err := db.WithContext(ctx).Where("device_sn = ?", "dock-derived").First(&gateway).Error; err != nil {
+		t.Fatalf("find gateway with missing type error = %v", err)
+	}
+	if gateway.DeviceType != gormmodel.DjiDeviceUnknown || gateway.DeviceName != gormmodel.DjiDeviceUnknown {
+		t.Fatalf("gateway with missing type/name = %q/%q, want unknown sentinels", gateway.DeviceType, gateway.DeviceName)
+	}
 	var topo gormmodel.DjiDeviceTopo
 	if err := db.WithContext(ctx).Where("gateway_sn = ? AND sub_device_sn = ?", "dock-derived", "device-derived").First(&topo).Error; err != nil {
 		t.Fatalf("find unknown device type error = %v", err)
 	}
-	if topo.DeviceType != "0-999-7" || topo.DeviceName != "" {
-		t.Fatalf("unknown device type/name = %q/%q, want 0-999-7/empty", topo.DeviceType, topo.DeviceName)
+	if topo.DeviceType != "0-999-7" || topo.DeviceName != gormmodel.DjiDeviceUnknown {
+		t.Fatalf("unknown device type/name = %q/%q, want 0-999-7/unknown", topo.DeviceType, topo.DeviceName)
+	}
+	var unknownDevice gormmodel.DjiDevice
+	if err := db.WithContext(ctx).Where("device_sn = ?", "device-derived").First(&unknownDevice).Error; err != nil {
+		t.Fatalf("find unknown device error = %v", err)
+	}
+	if unknownDevice.DeviceType != "0-999-7" || unknownDevice.DeviceName != gormmodel.DjiDeviceUnknown {
+		t.Fatalf("unknown main device type/name = %q/%q, want 0-999-7/unknown", unknownDevice.DeviceType, unknownDevice.DeviceName)
+	}
+	if unknownDevice.GatewaySn != "dock-current" {
+		t.Fatalf("unknown main device gateway = %q, want state-owned dock-current", unknownDevice.GatewaySn)
 	}
 
 	if err := handler(ctx, "dock-derived", message("1", 83, 0)); err != nil {
@@ -527,6 +566,54 @@ func TestStatusUpdateTopoStoresUnknownDeviceTypeAndUpdatesDerivedFields(t *testi
 	}
 	if device.DeviceType != "1-83-0" || device.DeviceName != "禅思 H30T" {
 		t.Fatalf("updated device type/name = %q/%q, want 1-83-0/禅思 H30T", device.DeviceType, device.DeviceName)
+	}
+}
+
+func TestStatusUpdateTopoInvalidIdentityDoesNotOverwriteKnownValues(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+	if err := db.WithContext(ctx).Create(&gormmodel.DjiDevice{
+		DeviceSn: "device-invalid", GatewaySn: "dock-current", DeviceType: "0-60-0", DeviceName: "Matrice 300 RTK",
+	}).Error; err != nil {
+		t.Fatalf("create known device error = %v", err)
+	}
+	if err := db.WithContext(ctx).Create(&gormmodel.DjiDeviceTopo{
+		GatewaySn: "dock-invalid", SubDeviceSn: "device-invalid", Domain: "0", DeviceType: "0-60-0", DeviceName: "Matrice 300 RTK",
+	}).Error; err != nil {
+		t.Fatalf("create known topology error = %v", err)
+	}
+
+	msg := &djisdk.StatusMessage{Method: djisdk.MethodUpdateTopo, Data: map[string]any{
+		"sub_devices": []any{
+			map[string]any{"sn": "device-invalid", "domain": "9", "type": 60, "sub_type": 0},
+			map[string]any{"sn": "device-new-invalid", "domain": "9", "type": 60, "sub_type": 0},
+		},
+	}}
+	if err := NewStatusHandler(db, nil)(ctx, "dock-invalid", msg); err != nil {
+		t.Fatalf("status handler error = %v", err)
+	}
+
+	var existing gormmodel.DjiDevice
+	if err := db.WithContext(ctx).Where("device_sn = ?", "device-invalid").First(&existing).Error; err != nil {
+		t.Fatalf("find existing device error = %v", err)
+	}
+	if existing.GatewaySn != "dock-invalid" || existing.DeviceType != "0-60-0" || existing.DeviceName != "Matrice 300 RTK" {
+		t.Fatalf("existing gateway/type/name = %q/%q/%q, want updated gateway and known identity preserved", existing.GatewaySn, existing.DeviceType, existing.DeviceName)
+	}
+	var existingTopo gormmodel.DjiDeviceTopo
+	if err := db.WithContext(ctx).Where("gateway_sn = ? AND sub_device_sn = ?", "dock-invalid", "device-invalid").First(&existingTopo).Error; err != nil {
+		t.Fatalf("find existing topology error = %v", err)
+	}
+	if existingTopo.DeviceType != "0-60-0" || existingTopo.DeviceName != "Matrice 300 RTK" {
+		t.Fatalf("existing topology type/name = %q/%q, want known values preserved", existingTopo.DeviceType, existingTopo.DeviceName)
+	}
+
+	var fresh gormmodel.DjiDevice
+	if err := db.WithContext(ctx).Where("device_sn = ?", "device-new-invalid").First(&fresh).Error; err != nil {
+		t.Fatalf("find fresh invalid device error = %v", err)
+	}
+	if fresh.GatewaySn != "dock-invalid" || fresh.DeviceType != gormmodel.DjiDeviceUnknown || fresh.DeviceName != gormmodel.DjiDeviceUnknown {
+		t.Fatalf("fresh invalid gateway/type/name = %q/%q/%q, want dock-invalid/unknown/unknown", fresh.GatewaySn, fresh.DeviceType, fresh.DeviceName)
 	}
 }
 

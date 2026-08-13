@@ -163,6 +163,7 @@ func NewHmsEventNotifyHandler(db *gormx.DB, resolver *djisdk.HmsResolver) func(c
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] hms: sn=%s items=%d", gatewaySn, len(data.List))
 		traceID := trace.TraceIDFromContext(ctx)
+		ctx = gormx.WithoutSQLTrace(ctx)
 		tid, bid := djisdk.EventCorrelationFromContext(ctx)
 		for _, item := range data.List {
 			resolved := resolver.Resolve(item)

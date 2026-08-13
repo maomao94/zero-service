@@ -1,0 +1,10 @@
+{"file":".trellis/spec/backend/common-package-design.md","reason":"约束 typed context key 设计、getter/setter API 与 wire 分离原则。"}
+{"file":".trellis/spec/backend/coding-standards.md","reason":"约束上下文、安全基线与最小范围修改。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"约束测试范围与验证命令。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"指导跨 HTTP/Socket.IO/gRPC/MCP 数据流核验。"}
+{"file":".trellis/tasks/08-14-typed-auth-context-keys/research/01-authctx-public-api-inventory.md","reason":"authctx 现有 API 与契约测试清单。"}
+{"file":".trellis/tasks/08-14-typed-auth-context-keys/research/02-writers-inventory.md","reason":"所有 string key 写入方证据（含 go-zero 中间件）。"}
+{"file":".trellis/tasks/08-14-typed-auth-context-keys/research/03-readers-inventory.md","reason":"所有读取方与数据隔离消费证据。"}
+{"file":".trellis/tasks/08-14-typed-auth-context-keys/research/04-transport-boundaries.md","reason":"gRPC/MCP 边界读写与 wire 契约证据。"}
+{"file":".trellis/tasks/08-14-typed-auth-context-keys/research/05-tests-locking-contract.md","reason":"锁定 key 名/wire 名/行为的测试清单。"}
+{"file":".trellis/tasks/08-14-typed-auth-context-keys/research/06-risks-and-migration-surface.md","reason":"迁移面、风险与禁止混合边界。"}

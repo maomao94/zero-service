@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"time"
+	"zero-service/common/carbonx"
 
 	"github.com/dromara/carbon/v2"
 )
@@ -30,7 +31,7 @@ type DateTime time.Time
 
 // 序列化为 yyyy-MM-dd HH:mm:ss
 func (t DateTime) MarshalJSON() ([]byte, error) {
-	ts := carbon.CreateFromStdTime(time.Time(t)).ToDateTimeMicroString()
+	ts := carbonx.FormatDateTimeMicro(time.Time(t))
 	return json.Marshal(ts) // 直接返回格式化后的字符串
 }
 

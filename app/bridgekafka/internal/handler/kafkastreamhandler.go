@@ -3,10 +3,10 @@ package handler
 import (
 	"context"
 
+	"zero-service/common/carbonx"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/core/timex"
@@ -40,7 +40,7 @@ func (h *KafkaStreamHandler) Consume(ctx context.Context, key, value string) err
 func (h *KafkaStreamHandler) pushToStreamEvent(ctx context.Context, key, value string) {
 	h.taskRunner.Schedule(func() {
 		msgId, _ := tool.SimpleUUID()
-		sendTime := carbon.Now().ToDateTimeMicroString()
+		sendTime := carbonx.NowDateTimeMicro()
 		startTime := timex.Now()
 
 		_, err := h.streamEventCli.ReceiveKafkaMessage(ctx, &streamevent.ReceiveKafkaMessageReq{

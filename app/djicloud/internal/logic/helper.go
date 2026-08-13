@@ -6,11 +6,10 @@ import (
 
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/model/gormmodel"
+	"zero-service/common/carbonx"
 	"zero-service/common/djisdk"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
-
-	"github.com/dromara/carbon/v2"
 )
 
 func commandRes(tid string, err error) (*djicloud.CommonRes, error) {
@@ -52,13 +51,6 @@ func timeMillis(t time.Time) int64 {
 		return 0
 	}
 	return t.UnixMilli()
-}
-
-func timeString(t time.Time) string {
-	if t.IsZero() {
-		return ""
-	}
-	return carbon.CreateFromStdTime(t).ToDateTimeMicroString()
 }
 
 func nullTimeMillis(t sql.NullTime) int64 {
@@ -109,7 +101,7 @@ func toOsdSnapshot(m *gormmodel.DjiDeviceOsdSnapshot) *djicloud.DeviceOsdSnapsho
 		DeviceSn:   m.DeviceSn,
 		GatewaySn:  m.GatewaySn,
 		RawJson:    m.RawJSON,
-		ReportedAt: carbon.CreateFromStdTime(m.ReportedAt).ToDateTimeMicroString(),
+		ReportedAt: carbonx.FormatDateTimeMicro(m.ReportedAt),
 	}
 }
 
@@ -121,7 +113,7 @@ func toStateSnapshot(m *gormmodel.DjiDeviceStateSnapshot) *djicloud.DeviceStateS
 		DeviceSn:   m.DeviceSn,
 		GatewaySn:  m.GatewaySn,
 		RawJson:    m.RawJSON,
-		ReportedAt: carbon.CreateFromStdTime(m.ReportedAt).ToDateTimeMicroString(),
+		ReportedAt: carbonx.FormatDateTimeMicro(m.ReportedAt),
 	}
 }
 
@@ -132,7 +124,7 @@ func toTelemetrySnapshotBrief(m *gormmodel.DjiDeviceOsdSnapshot) *djicloud.Devic
 	return &djicloud.DeviceTelemetrySnapshotBrief{
 		DeviceSn:   m.DeviceSn,
 		GatewaySn:  m.GatewaySn,
-		ReportedAt: carbon.CreateFromStdTime(m.ReportedAt).ToDateTimeMicroString(),
+		ReportedAt: carbonx.FormatDateTimeMicro(m.ReportedAt),
 	}
 }
 
@@ -143,7 +135,7 @@ func toTelemetrySnapshotBriefFromState(m *gormmodel.DjiDeviceStateSnapshot) *dji
 	return &djicloud.DeviceTelemetrySnapshotBrief{
 		DeviceSn:   m.DeviceSn,
 		GatewaySn:  m.GatewaySn,
-		ReportedAt: carbon.CreateFromStdTime(m.ReportedAt).ToDateTimeMicroString(),
+		ReportedAt: carbonx.FormatDateTimeMicro(m.ReportedAt),
 	}
 }
 
@@ -187,6 +179,6 @@ func toDockFlightTaskStateInfo(m *gormmodel.DjiDockDeviceFlightTaskState) *djicl
 		ProgressPercent:      m.ProgressPercent,
 		TrackId:              trackId,
 		WaylineId:            int32(m.WaylineId),
-		ReportedAt:           carbon.CreateFromStdTime(m.ReportedAt).ToDateTimeMicroString(),
+		ReportedAt:           carbonx.FormatDateTimeMicro(m.ReportedAt),
 	}
 }

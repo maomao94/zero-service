@@ -6,9 +6,9 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/carbonx"
 	"zero-service/common/gormx"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -74,8 +74,8 @@ func (l *ListPlanExecLogsLogic) ListPlanExecLogs(in *trigger.ListPlanExecLogsReq
 	// 转换日志列表
 	for i := range logs {
 		pbLog := &trigger.PlanExecLogPb{
-			CreateTime:  carbon.CreateFromStdTime(logs[i].CreateTime).ToDateTimeString(),
-			UpdateTime:  carbon.CreateFromStdTime(logs[i].UpdateTime).ToDateTimeString(),
+			CreateTime:  carbonx.FormatDateTime(logs[i].CreateTime),
+			UpdateTime:  carbonx.FormatDateTime(logs[i].UpdateTime),
 			CreateUser:  logs[i].CreateUser.String,
 			UpdateUser:  logs[i].UpdateUser.String,
 			DeptCode:    logs[i].DeptCode.String,
@@ -91,7 +91,7 @@ func (l *ListPlanExecLogsLogic) ListPlanExecLogs(in *trigger.ListPlanExecLogsReq
 			ItemType:    logs[i].ItemType.String,
 			ItemName:    logs[i].ItemName.String,
 			PointId:     logs[i].PointId.String,
-			TriggerTime: carbon.CreateFromStdTime(logs[i].TriggerTime).ToDateTimeString(),
+			TriggerTime: carbonx.FormatDateTime(logs[i].TriggerTime),
 			ExecResult:  logs[i].ExecResult.String,
 			Message:     logs[i].Message.String,
 		}

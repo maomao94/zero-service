@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"检查测试覆盖与验证命令完整性。"}
+{"file":".trellis/tasks/08-14-enforce-authorization-policy/research/log-leakage-fixes.md","reason":"核对 L1/L2/L3 脱敏与测试锁定。"}
+{"file":".trellis/tasks/08-14-enforce-authorization-policy/research/index.md","reason":"核对禁止混合边界与 L1-L3 独立性。"}
+{"file":".trellis/tasks/archive/2026-08/08-14-audit-authorization-propagation/audit-report.md","reason":"核对 §8.3 禁止混合与传播保留约束。"}

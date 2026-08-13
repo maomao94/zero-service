@@ -1,0 +1,7 @@
+{"file":".trellis/spec/backend/common-package-design.md","reason":"审查公共 API 是否保持单一职责、稳定语义和正确依赖方向。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"审查公共 API、跨服务调用方及全仓验证是否充分。"}
+{"file":".trellis/spec/backend/crontask-guidelines.md","reason":"审查迁移未改变调度状态、秒精度和 NULL 契约。"}
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"审查 Trigger 精确时间、上海时区与回调格式未回归。"}
+{"file":".trellis/tasks/08-13-unify-datetime-tools/research/datetime-usage-inventory.md","reason":"对照原始调用分类检查迁移覆盖率与残留理由。"}
+{"file":".trellis/tasks/08-13-unify-datetime-tools/research/datetime-ownership-and-replacement-boundaries.md","reason":"审查是否发生不安全的时区、精度、空值、协议或日期运算替换。"}
+{"file":".trellis/tasks/08-13-unify-datetime-tools/research/proto-datetime-format-audit.md","reason":"逐类核对 Proto 字段精度、Unix 单位和协议专用格式未被错误统一。"}

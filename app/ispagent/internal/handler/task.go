@@ -8,14 +8,13 @@ import (
 	"time"
 
 	"zero-service/app/ispagent/model/gormmodel"
+	"zero-service/common/carbonx"
 	"zero-service/common/crontask"
 	"zero-service/common/gormx"
 	"zero-service/common/isp"
-	"zero-service/common/tool"
 
 	ctask "zero-service/app/ispagent/internal/crontask"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/threading"
@@ -170,8 +169,8 @@ func handleTaskControl(ctx context.Context, msg *isp.Message, store crontask.Tas
 		substationCode = patrolTask.Code
 		taskCode = patrolTask.TaskCode
 		taskName = patrolTask.TaskName
-		planStartTime = carbon.CreateFromStdTime(patrolTask.PlanStartTime).ToDateTimeString()
-		startTime = carbon.CreateFromStdTime(patrolTask.StartTime).ToDateTimeString()
+		planStartTime = carbonx.FormatDateTime(patrolTask.PlanStartTime)
+		startTime = carbonx.FormatDateTime(patrolTask.StartTime)
 	}
 
 	if msg.Command == isp.CommandTaskStart {
@@ -192,7 +191,7 @@ func handleTaskControl(ctx context.Context, msg *isp.Message, store crontask.Tas
 		if substationCode == "" {
 			return "", fmt.Errorf("任务 %s 缺少变电站编码", taskCode)
 		}
-		now := tool.NowStartOfSecond()
+		now := carbonx.NowStartOfSecond()
 		taskPatrolledID = fmt.Sprintf("%s_%s_%s", substationCode, taskCode, now.ToShortDateTimeString())
 		if runTask == nil {
 			return "", fmt.Errorf("任务调度器未初始化")

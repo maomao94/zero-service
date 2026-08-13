@@ -61,7 +61,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			crontask.WithInterval(c.CronTask.Interval),
 			crontask.WithLockExpire(c.CronTask.LockExpire),
 			crontask.WithMaxDelay(c.CronTask.MaxDelay),
-			crontask.WithInvalidTimeFilter(ctask.NewInvalidTimeFilter()),
+			crontask.WithInvalidTimePredicate(ctask.NewInvalidTimePredicate()),
 			crontask.WithGuard(m.Connected),
 		)
 		m.SetTaskRun(svcCtx.Scheduler.RunNow)

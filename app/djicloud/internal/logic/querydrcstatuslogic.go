@@ -5,6 +5,7 @@ import (
 
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
+	"zero-service/common/carbonx"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -28,8 +29,8 @@ func (l *QueryDrcStatusLogic) QueryDrcStatus(in *djicloud.QueryDrcStatusReq) (*d
 	enabled, startedAt, lastHb, nextSeq, alive := l.svcCtx.DjiClient.DrcStatus(deviceSn)
 	return &djicloud.QueryDrcStatusRes{
 		Enabled:                   enabled,
-		StartedAtMillis:           timeString(startedAt),
-		LastDeviceHeartbeatMillis: timeString(lastHb),
+		StartedAtMillis:           carbonx.FormatDateTimeMicroOrEmpty(startedAt),
+		LastDeviceHeartbeatMillis: carbonx.FormatDateTimeMicroOrEmpty(lastHb),
 		NextSeq:                   int32(nextSeq),
 		IsAlive:                   alive,
 	}, nil

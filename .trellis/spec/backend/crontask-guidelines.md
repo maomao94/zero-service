@@ -2,7 +2,7 @@
 
 ## 适用范围
 
-修改 `common/crontask` 的 Scheduler、Task/Handler、Store、RRULE、`RunNow`，或实现 Trigger/ISP 存储适配器时读取。
+修改 `common/crontask` 的 Scheduler、Task/Handler、Store、lease、`RunNow`，或实现 Trigger/ISP 存储适配器时读取。RRULE 解析、平移、批量查询和中文描述见 [rrulex RRULE 扩展规范](./rrulex-guidelines.md)。
 
 ## 核心状态与时间
 
@@ -66,19 +66,20 @@
 - Delete 对不存在目标幂等成功，便于停用/清理重试。
 - DB 与 Memory Store 必须实现同一空值、lease、完成和启停语义；不能让测试内存实现掩盖数据库竞争条件。
 - Trigger 与 ispagent 的 `scheduled_time` 在重试间保持稳定，代表首次原计划时间而非每次 claim/lease 时间。
+- Enable 当前用 `rrulex.ParseSet` + 官方 `Set.After(now, false)` 重新计算 `NextRun`。该路径不使用平移优化：高频且 DTSTART 很早的规则可能全历史扫描，MemoryStore 还会在写锁内完成计算；这是已知性能风险，不得描述成与 `rrulex.NextRuns` 相同复杂度。
+- ISP Enable 当前不应用 `InvalidTimePredicate`，可能把无效窗口内的首个候选写入 `next_run`；新建/完成推进与重新启用的过滤语义尚不一致。修改该行为需独立任务和 Store 集成测试。
 
 ## 调度时间预览
 
-- `Scheduler.PreviewNextRuns(task, after, count)` 是只读的有界预览能力：不访问 Store、不 claim、不执行 Handler，也不修改任务状态。
-- 预览直接解析 `TaskConfig.RRuleStr` 的完整 RRULE Set，并使用与 `NextRuns` 相同的平移起点单迭代器语义（过滤器需逐候选介入，内联推进而非调用 `NextRuns`）取得严格晚于游标的候选；`DTSTART`、`UNTIL`、BY*、`RDATE` 与 `EXDATE` 均由 Set 自身处理。
-- 查询前通过 `ShiftSetForQuery` 将迭代起点按整周期平移到查询点前一拍，避免从远古 `DTSTART` 逐点遍历导致的线性退化（查询成本与 `now - DTSTART` 无关）。周期计数必须按 `INTERVAL` 取整对齐：rrule-go 迭代以锚点所在周期为第一个候选周期，`INTERVAL > 1` 时锚点不在间隔相位上会使整条序列偏移一个周期。带 `COUNT`、`BYWEEKNO`、`BYYEARDAY`、`BYEASTER`、`BYSETPOS`，或平移被钳制/无法对齐间隔相位而改变相位的规则返回 nil，调用方回退原始 Set；平移只用于向前查询（`After` / 迭代器），向后查询（`set.Before`）必须使用原始 Set。
-- 业务适配器若把 RDATE/EXDATE 的原始输入平铺为数据库列，读取后仍必须重建同一个 `TaskConfig.RRuleStr` 和运行时 Extra；Scheduler 不解析 Extra，首次 next-run、Enable、完成推进和 Preview 全部只消费持久化完整 Set。
-- `count` 只统计最终接受的有效时间点。循环持续到有效结果达到 `count`，或 RRULE / 过滤器返回零时间表示耗尽；禁止用 `Set.All()` 展开长期规则。
-- `InvalidTimeFilter` 是 RRULE Set 之外的 Scheduler 策略。过滤器收到一个 RRULE 候选后，负责沿同一任务规则持续跳过不可用区间，最终返回有效时间或零值；`app/ispagent/internal/crontask.NewInvalidTimeFilter` 是现有实现。
-- 预览对过滤器返回值只检查是否为零以及是否严格晚于当前游标，防止重复和死循环。不要在过滤后再次调用 `Set.After` 验证或推进，否则会建立一条不同于 `executeTask` 的过滤语义并产生重复计算。
-- 空或非法的周期 RRULE 是配置错误；规则自然耗尽则返回已收集结果和 nil error。调用层负责设置默认数量和最大数量。
+- `Scheduler.PreviewNextRuns(task, after, count)` 只读任务配置，不访问 Store、不 claim、不执行 Handler，也不修改运行状态。
+- Preview、首次 `CalcInitNextRun` 和成功完成后的 `computeNextRun` 都消费持久化的完整 `RRuleStr`；不得从业务平铺字段重建第二份规则用于其中某条路径。
+- Scheduler 通过 `invalidPredicate(task)` 把 `InvalidTimePredicate func(task *TaskConfig, t time.Time) bool` 绑定成 rrulex 谓词，再调用 `rrulex.NextRuns(..., inc=false, ...)`。谓词只排除候选，不返回或重映射时间。
+- ISP 的 `NewInvalidTimePredicate` 从运行时 `TaskConfig.Extra` 解析 `[InvalidStartTime, InvalidEndTime]` 闭区间；start、end 和窗口内候选无效，窗口前后有效，字段缺失/格式错误表示不启用过滤。
+- 谓词必须是无副作用纯判断；rrulex 当前会在 inc 边界检查前调用它。永久规则上的永久拒绝谓词不会自然结束，调用方必须保证规则有界或谓词在有限未来恢复为 false。
+- `count` 只统计过滤后接受的候选；规则自然耗尽返回已收集结果和 nil error，语法/结构错误向上传播，不能写成零值终态。
+- RDATE/EXDATE、DTSTART/INTERVAL、DST 与安全平移的算法契约及测试要求见 `rrulex-guidelines.md`，不能在 Scheduler 层复制第二套实现。
 
-依据：`common/crontask/crontask.go` 的 `PreviewNextRuns`、`common/crontask/query.go` 的 `ShiftSetForQuery` 与 `NextRuns`、`common/crontask/crontask_test.go`、`common/crontask/options.go`、`app/ispagent/internal/crontask/task_rule.go`。
+依据：`common/crontask/crontask.go` 的 `PreviewNextRuns` / `computeNextRun`、`common/crontask/options.go`、`common/crontask/crontask_test.go`、`app/ispagent/internal/crontask/task_rule.go` 及其测试。
 
 ## 反模式
 
@@ -90,7 +91,10 @@
 - 同一 `RRuleStr` 列同时写入裸 RRULE 和完整 Set，迫使执行、描述和排障维护双解析分支。
 - handler 从 `NextRun` 读取本次计划时间；claim 后应只读 `ScheduledTime`。
 - 预览用 `Set.All()` 展开全部 occurrence，或按原始候选次数消耗 `count`，导致长期规则放大内存或连续非法区间返回数量不足。
-- `InvalidTimeFilter` 返回后再次调用 `Set.After` 推进或确认，导致过滤器已跳过的候选被重复计算。
+- 谓词内自行解析规则并调用 `Set.After` 推进或确认，或谓词返回重映射时间：谓词只做排除，推进与单调性由 `rrulex.NextRuns` 保证。
+- 把永久拒绝谓词用于无 COUNT/UNTIL 的永久 RRULE，却假定查询会自然结束。
+- 把 Enable 的原生 `Set.After` 描述成已经使用平移优化，或忽略 ISP Enable 未应用无效窗口的现状。
+- 在 `common/crontask` 里重新实现 rrule 解析/平移/迭代/描述：这些能力归属 `common/rrulex`。
 
 ## 验证
 
@@ -98,10 +102,10 @@
 go test ./common/crontask
 go test ./app/trigger/internal/cronjob
 go test ./app/ispagent/internal/crontask
-go test -race ./common/crontask
+go test -race ./common/crontask ./app/ispagent/internal/crontask
 ```
 
-测试至少覆盖过期 lease、并发完成、执行中 Disable、终止 RRULE、无效 RRULE、panic、`RunNow` 状态保持、成功/失败 `LastRun`、Delete 幂等，以及预览的严格 after、`EXDATE`、连续非法区间、耗尽和不前进 filter。
+测试至少覆盖过期 lease、并发完成、执行中 Disable、终止 RRULE、无效 RRULE、panic、`RunNow` 状态保持、成功/失败 `LastRun`、Delete 幂等，以及预览严格 after、连续非法区间、耗尽和 ISP 闭区间边界。RRULE 算法差分测试见 rrulex 规范。
 
 ## Scenario: 完整 RRULE Set 与执行时间状态
 
@@ -126,7 +130,7 @@ type TaskConfig struct {
 
 ### 3. Contracts
 
-- 写入：`RRuleStr == ""` 表示一次性任务；否则必须可由 `rrule.StrToRRuleSet` 解析，且 `GetDTStart()` 非零、`GetRRule()` 非 nil。
+- 写入：`RRuleStr == ""` 表示一次性任务；否则必须通过 `rrulex.Validate`，即官方解析成功且 `GetDTStart()` 非零、`GetRRule()` 非 nil。
 - 范围：`StartTime` / `EndTime` 必须由拥有规则编译的业务适配器写入并在模型转换时保留；它们不能被塞回 `Extra` 作为第二份权威值。
 - 适配：业务模型已将扩展字段平铺为列时，可以不提供 `extra` 列，但 `ToTaskConfig` 必须从这些列重建 Handler 所需的运行时 `Extra`。
 - claim：数据库 `next_run` 变为 `LockedUntil`，`scheduled_time` 保存首次原计划点；返回 Task 的 `NextRun` 为零、`ScheduledTime` 为原计划点。
@@ -137,7 +141,7 @@ type TaskConfig struct {
 
 - 裸 `FREQ=...` -> 校验错误。
 - Set 缺少 DTSTART 或 RRULE -> 校验错误。
-- Set 耗尽 -> `NextAfter` 返回零时间和 nil error。
+- Set 耗尽 -> 官方 `Set.After` 返回零时间、`rrulex.NextRuns` 返回空结果，均为 nil error。
 - lease token 不匹配 -> `ErrNotFound`，不得写入成功时间。
 
 ### 5. Good/Base/Bad Cases
@@ -167,76 +171,3 @@ scheduled := task.NextRun
 ```go
 scheduled := task.ScheduledTime
 ```
-
-## Scenario: RRULE 中文业务描述
-
-### 1. Scope / Trigger
-
-- 当调用方需要展示调度规则时，复用 `common/crontask` 的描述能力；不要在服务 Logic 中按 proto 或表字段复制第二套规则解释。
-
-### 2. Signatures
-
-```go
-func DescribeRRule(value string) (string, error)
-```
-
-### 3. Contracts
-
-- 非空 `value` 必须是至少包含 `DTSTART` 和 `RRULE` 的完整 RRULE Set，也可包含 `RDATE`、`EXDATE`；不接受裸 RRULE。
-- 描述按简体中文稳定输出；`DTSTART` 存在时，时间边界和日期列表统一转换到它的时区。
-- 同维度值是并集，不同 BY* 维度是交集；小时、分钟、秒按笛卡尔积解释。
-- `INTERVAL` 表示从 `DTSTART` 相位推进的频率步长，`BYHOUR`、`BYMINUTE`、`BYSECOND` 再按 RFC 5545 的频率层级过滤或展开候选；`INTERVAL > 1` 且存在离散 BY* 条件时描述为“按 N 单位间隔”并保留条件，不得简写成均匀的“每 N 单位”。
-- 只有 `INTERVAL = 1`，且低频规则的高位过滤与低位默认值可准确组成完整日内固定时刻集合时，才可等价描述为“每天 HH:mm…”。
-- `WEEKLY` 在 `INTERVAL > 1` 或使用 `BYSETPOS` 时必须展示 `WKST`；前者由周起始决定间隔相位，后者由周起始决定每周期候选分组。
-- 普通 `BYDAY` 与序号 `BYDAY` 混用时，`rrule-go` 会按内部普通/序号星期集合的交集筛选，不是同维度并集；描述器应返回 `ErrUnsupportedDescription`，不能将两组值用顿号连接。
-- 周期条件只说明候选如何形成，不保证一定存在 occurrence；主句必须使用条件式执行表述。`UNTIL < DTSTART` 应保留两个边界并明确边界倒置，不能称为“有效期”，也不应通过遍历规则自行求解一般日历可达性。
-- `RDATE` 是加入 RRULE 候选并集的额外候选，`EXDATE` 从该合并结果中排除；不能把每个 `RDATE` 直接描述为最终执行。
-- `BYSETPOS` 按 `rrule-go` 当前频率的实际候选序列定位。若会扩展该频率 `timeset` 的显式时钟维度包含重复值，描述器必须返回 `ErrUnsupportedDescription`，不能去重显示后继续解释位置；只作为高位过滤的重复时钟值不占额外位置，不应误拒绝。
-- `SECONDLY` 的每个周期仍有当前秒这个单一候选，因此 `BYSETPOS=1/-1` 可描述；不存在的位置只能条件式描述，测试不得迭代无 `UNTIL` 的永久空位置规则。
-- 锁定的 `rrule-go v1.8.2` 对月作用域小于 `-5` 的序号星期可能发生负索引 panic。`DescribeRRule` 对 `MONTHLY` 及带 `BYMONTH` 的 `YEARLY` 规则安全拒绝该组合，但不得把限制扩散到 `parseRRuleSet`、`ValidateRRule` 或 `NextAfter`。
-- 可视化以 `rrule.Options` 的归一化生效配置为准，不区分字段是用户显式声明还是由 `rrule-go` 根据 `DTSTART` 补齐；由于默认时、分、秒不会全部回写到 `Options`，时间描述和 `BYSETPOS` 候选校验必须结合 `DTSTART` 补齐。
-- Set 的语法和组件处理完全采用 `parseRRuleSet` / `rrule-go` 的解析结果；描述器不得再次扫描原始 content lines、维护组件白名单或实现第二套 Set 形状校验。
-- 描述器只消费已生成的 RFC 5545 string，不依赖 Trigger proto 或业务 model。
-
-### 4. Validation & Error Matrix
-
-- 空字符串 -> `"", nil`。
-- RRULE 语法无效，或 Set 缺少 DTSTART/RRULE -> 解析 error。
-- `BYYEARDAY`、`BYWEEKNO`、`BYEASTER` 或无法准确表达的组合 -> 可被 `errors.Is(err, ErrUnsupportedDescription)` 识别。
-- `BYSETPOS` 候选 `timeset` 的扩展维度含重复值，或月作用域使用小于 `-5` 的序号星期 -> `ErrUnsupportedDescription`。
-- 永久无候选或 `UNTIL < DTSTART` -> 仍返回描述且不承诺 occurrence；后者明确显示倒置边界。
-- 合法且可描述的规则 -> 非空中文描述。
-
-### 5. Good/Base/Bad Cases
-
-- Good: `DTSTART;TZID=Asia/Shanghai:20260727T000000\nRRULE:FREQ=DAILY;BYHOUR=9;BYMINUTE=30;BYSECOND=0` -> 包含“每天 09:30 执行”。
-- Base: 空规则用于一次性任务 -> 空描述。
-- Bad: 把 `RDATE` 写成“额外执行”，或把永久空候选写成必然执行 -> 会把候选集合误报为最终 occurrence。
-
-### 6. Tests Required
-
-- 表驱动覆盖 YEARLY/MONTHLY/WEEKLY/DAILY/HOURLY/MINUTELY、INTERVAL、负数月日和序号星期。
-- 断言多小时与多分钟展开为笛卡尔积。
-- 断言 `INTERVAL > 1` 与稀疏 `BYHOUR` 保留 DTSTART 相位和过滤条件，不输出“每 N 小时”或“每天固定时刻”。
-- 断言 `WEEKLY + BYSETPOS` 的 `WKST` 文案与实际 occurrence 分组一致，并拒绝普通/序号 `BYDAY` 混用的误导描述。
-- 断言 YEARLY/MONTHLY/WEEKLY/DAILY 的默认日期或时刻与 `rrule-go` 实际 occurrence 一致，包括仅显式声明 `BYSETPOS` 的规则。
-- 断言 UTC `UNTIL` 按 `DTSTART` 时区展示。
-- RRULE Set 有 `RDATE`/`EXDATE` 时，`COUNT` 文案只能描述周期规则生成次数，不能声称最终总执行次数。
-- 断言永久空日历交集使用有界 `UNTIL` 验证，倒置边界为空，并避免迭代无边界的永久空 `SECONDLY + BYSETPOS`。
-- 用 occurrence 差分断言重复的 `timeset` 扩展值会改变 `BYSETPOS` 位置，并断言仅作高位过滤的重复值不会被误拒绝。
-
-### 7. Wrong vs Correct
-
-#### Wrong
-
-```go
-description := translateEnglish(rule.ToText())
-```
-
-#### Correct
-
-```go
-description, err := crontask.DescribeRRule(ruleSet.String())
-```
-
-对于 `FREQ=HOURLY;INTERVAL=2;BYHOUR=1,5,7`，正确描述为“按 2 小时间隔，小时=01/05/07…”，不能描述为“每 2 小时”或直接展开成每天固定时刻。

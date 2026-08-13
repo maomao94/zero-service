@@ -58,6 +58,94 @@
 - 对 claim/complete 或状态机更新断言 SQL 条件与 `RowsAffected`，必要时并发执行。
 - 运行目标 store/model 包测试；方言敏感逻辑不能只依赖 SQLite 通过。
 
+## Scenario: GaussDB 字符串空值与非空列设计
+
+### 1. Scope / Trigger
+
+- 新增或修改字符串列的 `NOT NULL`、`DEFAULT`、GORM `default` tag、Go `string` / `sql.NullString` 类型，且服务支持 GaussDB/openGauss 时适用。
+- GaussDB A/ORA 兼容模式将空字符串 `''` 视为 SQL `NULL`；B/MYSQL、C、PG 兼容模式不可直接套用该行为，先查询目标库兼容模式。
+
+### 2. Signatures
+
+```go
+// 必填或使用非空领域哨兵：数据库 NOT NULL，Go 使用 string。
+Status string `gorm:"column:status;type:varchar(32);not null;default:'unknown'"`
+
+// 业务允许未知值：数据库列允许 NULL，Go 使用 sql.NullString。
+Description sql.NullString `gorm:"column:description;type:varchar(255)"`
+```
+
+环境核验 SQL：
+
+```sql
+SHOW sql_compatibility;
+SELECT '' IS NULL AS empty_string_is_null;
+```
+
+### 3. Contracts
+
+- `DEFAULT` 只在 INSERT 省略该列或显式使用 `DEFAULT` 时生效；显式传入 SQL `NULL` 不会回退到列默认值，`NOT NULL` 列会报约束错误。
+- 在 GaussDB A/ORA 兼容模式下，显式 `''` 按 `NULL` 处理，因此 `NOT NULL DEFAULT 'unknown'` 不能兜底应用显式写入的空字符串。
+- `NOT NULL` 不等于“必须声明 DEFAULT”。若所有写入路径都显式提供合法非空值，可以没有默认值；若允许调用方省略列，则提供非空默认值作为数据库侧兜底。
+- `sql.NullString{Valid:false}` 表示写入 SQL `NULL`，只能配合允许 NULL 的列；`sql.NullString{String:"", Valid:true}` 在 A/ORA 模式仍可能成为 SQL `NULL`。`sql.NullString` 不能解决 `NOT NULL` 列的空字符串问题。
+- 业务必填字符串使用普通 `string` 并在写入前拒绝空值；业务允许“未知但记录仍需存在”且列必须非空时，使用有文档和测试的非空领域哨兵；业务语义本来就是未知/缺失时，列允许 NULL 并使用 `sql.NullString` 或指针。
+- GORM model tag 中的默认值属于 schema 和 ORM create 行为的一部分，但不得假设所有 `Create`、map insert、`Select`、原生 SQL 或批量路径都会省略零值列；关键列应检查实际生成 SQL，必要时在 model/store 显式赋非空值。
+
+依据：GaussDB FAQ [What Is the Relationship Between an Empty String and NULL?](https://support.huaweicloud.com/intl/en-us/distributed-devg-v8-gaussdb/gaussdb-12-1803.html)；openGauss [CREATE TABLE](https://docs.opengauss.org/en/docs/latest/sql_reference/create_table.html) 的 `DEFAULT` 契约；`app/djicloud/model/gormmodel/dji_device.go` 及 hook 测试。
+
+### 4. Validation & Error Matrix
+
+| 列定义 | INSERT 输入 | GaussDB A/ORA 结果 | 设计结论 |
+| --- | --- | --- | --- |
+| `NOT NULL DEFAULT 'unknown'` | 省略列或 `DEFAULT` | 保存 `unknown` | 默认值生效 |
+| `NOT NULL DEFAULT 'unknown'` | 显式 `NULL` | 非空约束错误 | 默认值不生效 |
+| `NOT NULL DEFAULT 'unknown'` | 显式 `''` | 转为 `NULL` 后报非空约束错误 | 写入前拒绝或改非空哨兵 |
+| nullable，无默认值 | `sql.NullString{Valid:false}` | 保存 SQL `NULL` | 适合业务可空字段 |
+| nullable | `sql.NullString{String:"", Valid:true}` | A/ORA 下保存 SQL `NULL` | 不能区分空串与 NULL |
+| `NOT NULL`，无默认值 | 显式合法非空字符串 | 保存该值 | 合法，不强制要求 DEFAULT |
+
+### 5. Good/Base/Bad Cases
+
+- Good: 设备身份暂时未知但主记录必须存在，model 和 store 显式写入非空 `unknown`，后续真实拓扑覆盖哨兵。
+- Base: 可选描述允许 SQL `NULL`，model 使用 `sql.NullString`，转换层明确映射 RPC 缺省值。
+- Bad: 给 `NOT NULL` 列添加默认值后仍显式写 `""`，误以为数据库会使用默认值；或把字段改成 `sql.NullString` 却保留 `NOT NULL`。
+
+### 6. Tests Required
+
+- Model schema 测试断言列是否 `NOT NULL`、是否有非空默认值，以及 Go 字段类型符合领域空值语义。
+- Store/hook 测试断言首次创建的关键字符串字段为真实非空值或领域哨兵，并断言后续真实值可覆盖哨兵。
+- 方言敏感行为至少在目标 GaussDB 兼容模式执行：省略列、显式 `DEFAULT`、显式 `NULL`、显式 `''` 四组 INSERT；SQLite 测试不能替代该验证。
+- 审查 GORM SQL，确认关键写入路径是省略列、写 `DEFAULT`，还是显式绑定值；不能只根据 struct tag 推断。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```go
+// NOT NULL + DEFAULT 保护不了显式空串；NullString(false) 也会写 NULL。
+type Device struct {
+	Type sql.NullString `gorm:"not null;default:'unknown'"`
+}
+device.Type = sql.NullString{String: "", Valid: true}
+db.Create(&device)
+```
+
+#### Correct
+
+```go
+// 非空列使用普通 string，并在应用写入路径显式提供非空值。
+type Device struct {
+	Type string `gorm:"not null;default:'unknown'"`
+}
+device.Type = UnknownDeviceType
+db.Create(&device)
+
+// 只有业务与数据库都允许 NULL 时才使用 NullString。
+type OptionalMetadata struct {
+	Description sql.NullString `gorm:"column:description"`
+}
+```
+
 ## Scenario: 完整配置更新的字段所有权与零行语义
 
 ### 1. Scope / Trigger

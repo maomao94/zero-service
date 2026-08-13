@@ -3,11 +3,11 @@ package logic
 import (
 	"time"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm/clause"
 
 	"zero-service/app/file/file"
+	"zero-service/common/carbonx"
 	"zero-service/model/gormmodel"
 )
 
@@ -49,7 +49,7 @@ func calcExpires(expiresMinutes int32) time.Duration {
 func toPbOss(oss *gormmodel.Oss) *file.Oss {
 	var pb file.Oss
 	copier.Copy(&pb, oss) // nolint:errcheck
-	pb.CreateTime = carbon.CreateFromStdTime(oss.CreateTime).ToDateTimeString()
-	pb.UpdateTime = carbon.CreateFromStdTime(oss.UpdateTime).ToDateTimeString()
+	pb.CreateTime = carbonx.FormatDateTime(oss.CreateTime)
+	pb.UpdateTime = carbonx.FormatDateTime(oss.UpdateTime)
 	return &pb
 }

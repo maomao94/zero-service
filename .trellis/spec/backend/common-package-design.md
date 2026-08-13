@@ -32,6 +32,71 @@
 
 依据：`common/bytex/` 及其测试、`common/isp/serializer.go`。
 
+## Scenario: Carbon 日期时间格式化
+
+### 1. Scope / Trigger
+
+- 将 `time.Time`、Go 零时间或 `sql.NullTime` 输出为项目现有的秒、毫秒、微秒 Carbon 文本，或迁移直接 Carbon 格式化调用时适用。
+
+### 2. Signatures
+
+```go
+func FormatDateTime(value time.Time, timezone ...string) string
+func FormatDateTimeMilli(value time.Time, timezone ...string) string
+func FormatDateTimeMicro(value time.Time, timezone ...string) string
+func FormatDateTimeOrEmpty(value time.Time, timezone ...string) string
+func FormatDateTimeMicroOrEmpty(value time.Time, timezone ...string) string
+func FormatNullDateTime(value sql.NullTime, timezone ...string) string
+func ToNullTime(value time.Time) sql.NullTime
+```
+
+### 3. Contracts
+
+- 未传 `timezone` 时保留输入 `time.Time.Location()`；不能因 Carbon 全局默认上海时区而隐式换区。传入 timezone 时转换同一 instant。
+- 秒、毫秒、微秒分别委托 Carbon 的 `ToDateTimeString`、`ToDateTimeMilliString`、`ToDateTimeMicroString`，保留毫秒/微秒尾零裁剪行为。
+- 普通 `FormatDateTime*` 格式化 Go 零时间；只有 `OrEmpty` 明确将 Go 零时间输出为空字符串。
+- Carbon 的 `IsZero()` 只提供判断：零 Carbon 调用 `ToDateTimeString` / `ToDateTimeMicroString` 仍输出 `0001-01-01 00:00:00`，不能用 Carbon 原生格式化替代 `OrEmpty` 契约。
+- 零值为空属于缺失值语义，使用命名明确的 `OrEmpty` API；不要给格式函数增加不自解释的 `emptyOnZero bool` 或为此引入 function options。
+- `FormatNullDateTime` 仅以 `sql.NullTime.Valid` 判断为空；`Valid=true` 的 Go 零时间仍格式化。`ToNullTime` 则将 Go 零时间标记为 invalid。
+- 严格解析、RRULE、EXIF、Docker、协议 Unix 单位、日期/时间-only、紧凑路径日期及业务时间运算仍由原领域包负责。
+
+### 4. Validation & Error Matrix
+
+- 非法 timezone -> Carbon 错误语义，格式函数返回空字符串。
+- Go 零时间 + `OrEmpty` -> 空字符串。
+- `sql.NullTime.Valid=false` -> 空字符串。
+- `sql.NullTime.Valid=true` + Go 零时间 -> `0001-01-01 00:00:00`（按指定/输入时区的 Carbon 行为）。
+
+### 5. Good/Base/Bad Cases
+
+- Good: `carbonx.FormatDateTime(value)` 保留 `value.Location()`，用于替换 `carbon.CreateFromStdTime(value).ToDateTimeString()`。
+- Base: `carbonx.FormatDateTimeOrEmpty(value)` 明确表达回调字段的零时间为空契约。
+- Bad: 把微秒字段改用 `FormatDateTime`，或为“统一上海时区”给原先保留 location 的调用新增 timezone。
+
+### 6. Tests Required
+
+- 使用非上海 location 断言默认格式化不换区，显式 timezone 转换 instant 不变。
+- 秒、毫秒、微秒分别与 Carbon 原生输出对比，并覆盖小数尾零。
+- 覆盖 Go 零时间、有效/无效 `sql.NullTime`、有效 SQL 零时间和非法 timezone。
+- 跨服务迁移后搜索旧 helper 和可直接等价的 Carbon 组合，并运行所有直接调用方测试。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```go
+text := carbonx.FormatDateTime(value, carbon.Shanghai) // 原调用保留 value.Location()
+optional := carbonx.FormatDateTime(value)             // 原契约要求 Go 零时间为空
+optional = carbonx.FormatDateTime(value, true)         // 布尔参数无法在调用点表达 true 的含义
+```
+
+#### Correct
+
+```go
+text := carbonx.FormatDateTime(value)
+optional := carbonx.FormatDateTimeOrEmpty(value)
+```
+
 ## 工作流封装
 
 - 拦截器顺序属于行为：按声明顺序进入、逆序退出；新增埋点或重试前先确认是否改变 attempt/step 语义。

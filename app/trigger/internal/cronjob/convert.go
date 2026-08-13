@@ -9,7 +9,9 @@ import (
 
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/carbonx"
 	"zero-service/common/crontask"
+	"zero-service/common/rrulex"
 
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -45,12 +47,12 @@ func fromTaskConfig(cfg *crontask.TaskConfig) (*gormmodel.CronJob, error) {
 		MaxDelay:         cfg.MaxDelay.Milliseconds() / 1000,
 		Payload:          string(cfg.Payload),
 		Status:           int(cfg.Status),
-		StartTime:        toNullTime(cfg.StartTime),
-		EndTime:          toNullTime(cfg.EndTime),
-		NextRun:          toNullTime(cfg.NextRun),
-		ScheduledTime:    toNullTime(cfg.ScheduledTime),
-		LastRun:          toNullTime(cfg.LastRun),
-		LastScheduledRun: toNullTime(cfg.LastScheduledRun),
+		StartTime:        carbonx.ToNullTime(cfg.StartTime),
+		EndTime:          carbonx.ToNullTime(cfg.EndTime),
+		NextRun:          carbonx.ToNullTime(cfg.NextRun),
+		ScheduledTime:    carbonx.ToNullTime(cfg.ScheduledTime),
+		LastRun:          carbonx.ToNullTime(cfg.LastRun),
+		LastScheduledRun: carbonx.ToNullTime(cfg.LastScheduledRun),
 	}
 	extra, err := ParseExtra(cfg.Extra)
 	if err != nil {
@@ -140,7 +142,7 @@ func ToProto(cfg *crontask.TaskConfig) (*trigger.CronJobPb, error) {
 	if err := protojson.Unmarshal(extra.Rule, &rule); err != nil {
 		return nil, fmt.Errorf("解析 Cron Job 规则失败: %w", err)
 	}
-	scheduleDescription, err := crontask.DescribeRRule(cfg.RRuleStr)
+	scheduleDescription, err := rrulex.Describe(cfg.RRuleStr)
 	if err != nil {
 		return nil, fmt.Errorf("生成 Cron Job 规则描述失败: %w", err)
 	}
@@ -156,8 +158,8 @@ func ToProto(cfg *crontask.TaskConfig) (*trigger.CronJobPb, error) {
 		Type:                extra.Type,
 		GroupId:             extra.GroupId,
 		Description:         extra.Description,
-		StartTime:           formatTime(cfg.StartTime),
-		EndTime:             formatTime(cfg.EndTime),
+		StartTime:           carbonx.FormatDateTimeOrEmpty(cfg.StartTime),
+		EndTime:             carbonx.FormatDateTimeOrEmpty(cfg.EndTime),
 		Rule:                &rule,
 		ExcludeDates:        append([]string(nil), extra.ExcludeDates...),
 		SpecifiedTimes:      append([]string(nil), extra.SpecifiedTimes...),
@@ -169,15 +171,15 @@ func ToProto(cfg *crontask.TaskConfig) (*trigger.CronJobPb, error) {
 		Ext3:                extra.Ext3,
 		Ext4:                extra.Ext4,
 		Ext5:                extra.Ext5,
-		CreateTime:          formatTime(cfg.CreateTime),
-		UpdateTime:          formatTime(cfg.UpdateTime),
+		CreateTime:          carbonx.FormatDateTimeOrEmpty(cfg.CreateTime),
+		UpdateTime:          carbonx.FormatDateTimeOrEmpty(cfg.UpdateTime),
 		DeptCode:            extra.DeptCode,
 	}
 	if !cfg.NextRun.IsZero() {
-		result.NextRun = formatTime(cfg.NextRun)
+		result.NextRun = carbonx.FormatDateTimeOrEmpty(cfg.NextRun)
 	}
 	if !cfg.LastRun.IsZero() {
-		result.LastRun = formatTime(cfg.LastRun)
+		result.LastRun = carbonx.FormatDateTimeOrEmpty(cfg.LastRun)
 	}
 	return result, nil
 }
@@ -233,10 +235,6 @@ func MarshalExtra(extra *CronJobExtra) (json.RawMessage, error) {
 	return value, nil
 }
 
-func toNullTime(value time.Time) sql.NullTime {
-	return sql.NullTime{Time: value, Valid: !value.IsZero()}
-}
-
 func parseOptionalTime(value string) (sql.NullTime, error) {
 	if value == "" {
 		return sql.NullTime{}, nil
@@ -246,13 +244,6 @@ func parseOptionalTime(value string) (sql.NullTime, error) {
 		return sql.NullTime{}, err
 	}
 	return sql.NullTime{Time: parsed, Valid: true}, nil
-}
-
-func formatOptionalTime(value sql.NullTime) string {
-	if !value.Valid {
-		return ""
-	}
-	return value.Time.Format(dateTimeLayout)
 }
 
 func marshalOptionalStrings(values []string) (sql.NullString, error) {

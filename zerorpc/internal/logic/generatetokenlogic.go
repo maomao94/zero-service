@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 	"time"
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
 
 	"github.com/golang-jwt/jwt/v4"
 
@@ -46,7 +46,7 @@ func (l *GenerateTokenLogic) getJwtToken(secretKey string, iat, seconds, userId 
 	claims := make(jwt.MapClaims)
 	claims["exp"] = iat + seconds
 	claims["iat"] = iat
-	claims[ctxdata.CtxUserIdKey] = userId
+	claims[authctx.CtxUserIdKey] = userId
 	token := jwt.New(jwt.SigningMethodHS256)
 	token.Claims = claims
 	return token.SignedString([]byte(secretKey))

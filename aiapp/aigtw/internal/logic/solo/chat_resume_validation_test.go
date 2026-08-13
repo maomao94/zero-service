@@ -12,7 +12,7 @@ import (
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
 	"zero-service/aiapp/aisolo/aisolo"
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
 )
 
 func TestValidateChatRequest(t *testing.T) {
@@ -58,13 +58,13 @@ func TestValidateResumeRequest(t *testing.T) {
 }
 
 func TestChatValidatesRequestBeforeOpeningStream(t *testing.T) {
-	ctx := context.WithValue(context.Background(), ctxdata.CtxUserIdKey, "user-1")
+	ctx := authctx.WithUserID(context.Background(), "user-1")
 	err := NewChatLogic(ctx, &svc.ServiceContext{}).Chat(&types.SoloChatRequest{SessionId: "sess-1"}, &strings.Builder{})
 	assertValidationError(t, err, "message is required")
 }
 
 func TestResumeValidatesRequestBeforeOpeningStream(t *testing.T) {
-	ctx := context.WithValue(context.Background(), ctxdata.CtxUserIdKey, "user-1")
+	ctx := authctx.WithUserID(context.Background(), "user-1")
 	err := NewResumeLogic(ctx, &svc.ServiceContext{}).Resume(&types.SoloInterruptRequest{SessionId: "sess-1", InterruptId: "interrupt-1"}, &strings.Builder{})
 	assertValidationError(t, err, "action must be yes or no")
 }
@@ -78,7 +78,7 @@ func TestChatForwardsAiSoloStreamAsSSE(t *testing.T) {
 			{Chunk: &aisolo.AskStreamChunk{Data: "{\"event\":\"after.final\"}\n", IsFinal: false}},
 		}},
 	}
-	ctx := context.WithValue(context.Background(), ctxdata.CtxUserIdKey, "user-1")
+	ctx := authctx.WithUserID(context.Background(), "user-1")
 	var out strings.Builder
 
 	err := NewChatLogic(ctx, &svc.ServiceContext{AiSoloCli: fake}).Chat(&types.SoloChatRequest{
@@ -112,7 +112,7 @@ func TestResumeForwardsAiSoloStreamAsSSE(t *testing.T) {
 			{Chunk: &aisolo.ResumeStreamChunk{Data: "{\"event\":\"resume.end\"}\n", IsFinal: true}},
 		}},
 	}
-	ctx := context.WithValue(context.Background(), ctxdata.CtxUserIdKey, "user-1")
+	ctx := authctx.WithUserID(context.Background(), "user-1")
 	var out strings.Builder
 
 	err := NewResumeLogic(ctx, &svc.ServiceContext{AiSoloCli: fake}).Resume(&types.SoloInterruptRequest{

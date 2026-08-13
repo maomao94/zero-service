@@ -5,8 +5,8 @@ import (
 
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
+	"zero-service/common/carbonx"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -36,7 +36,7 @@ func (l *StatFileLogic) StatFile(in *file.StatFileReq) (*file.StatFileRes, error
 	}
 	var resOssFile file.OssFile
 	copier.Copy(&resOssFile, ossFile) // nolint:errcheck
-	resOssFile.PutTime = carbon.CreateFromStdTime(ossFile.PutTime).Format(carbon.DateTimeMicroFormat)
+	resOssFile.PutTime = carbonx.FormatDateTimeMicro(ossFile.PutTime)
 	if in.IsSign {
 		signUrl, err := ossTemplate.SignUrl(l.ctx, in.TenantId, in.BucketName, in.Filename, calcExpires(in.Expires))
 		if err != nil {

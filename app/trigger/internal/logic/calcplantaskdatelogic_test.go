@@ -8,7 +8,7 @@ import (
 
 	"zero-service/app/trigger/internal/cronjob"
 	"zero-service/app/trigger/trigger"
-	"zero-service/common/crontask"
+	"zero-service/common/rrulex"
 )
 
 func TestCalcPlanTaskDateReturnsScheduleDescription(t *testing.T) {
@@ -59,7 +59,7 @@ func TestCalcPlanTaskDateUsesPersistedScheduleCompiler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantDescription, err := crontask.DescribeRRule(schedule.RRuleStr)
+	wantDescription, err := rrulex.Describe(schedule.RRuleStr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +129,7 @@ func TestCalcPlanTaskDateAppliesExactTimeSetSemantics(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantDescription, err := crontask.DescribeRRule(schedule.RRuleStr)
+	wantDescription, err := rrulex.Describe(schedule.RRuleStr)
 	if err != nil {
 		t.Fatal(err)
 	}

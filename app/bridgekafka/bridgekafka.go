@@ -9,8 +9,8 @@ import (
 	"zero-service/app/bridgekafka/internal/handler"
 	"zero-service/app/bridgekafka/internal/server"
 	"zero-service/app/bridgekafka/internal/svc"
-	interceptor "zero-service/common/Interceptor/rpcserver"
 	_ "zero-service/common/carbonx"
+	"zero-service/common/grpcx"
 	"zero-service/common/nacosx"
 	_ "zero-service/common/nacosx"
 	"zero-service/common/tool"
@@ -79,7 +79,7 @@ func main() {
 	}
 
 	serviceGroup.Add(s)
-	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)

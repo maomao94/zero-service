@@ -4,9 +4,8 @@ import (
 	"strconv"
 
 	"zero-service/app/ieccaller/ieccaller"
+	"zero-service/common/carbonx"
 	"zero-service/model/gormmodel"
-
-	"github.com/dromara/carbon/v2"
 )
 
 func toPbDevicePointMapping(m *gormmodel.GormDevicePointMapping) *ieccaller.PbDevicePointMapping {
@@ -16,8 +15,8 @@ func toPbDevicePointMapping(m *gormmodel.GormDevicePointMapping) *ieccaller.PbDe
 	id, _ := strconv.ParseInt(m.Id, 10, 64)
 	return &ieccaller.PbDevicePointMapping{
 		Id:          id,
-		CreateTime:  carbon.CreateFromStdTime(m.CreateTime).Format(carbon.DateTimeMicroFormat),
-		UpdateTime:  carbon.CreateFromStdTime(m.UpdateTime).Format(carbon.DateTimeMicroFormat),
+		CreateTime:  carbonx.FormatDateTimeMicro(m.CreateTime),
+		UpdateTime:  carbonx.FormatDateTimeMicro(m.UpdateTime),
 		TagStation:  m.TagStation,
 		Coa:         int64(m.Coa),
 		Ioa:         int64(m.Ioa),

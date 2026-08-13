@@ -5,7 +5,7 @@ import (
 
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -24,7 +24,7 @@ func (l *ListKnowledgeBasesLogic) ListKnowledgeBases() (*types.KnowledgeListBase
 	if l.svcCtx.Knowledge == nil {
 		return nil, invalidRequestError("knowledge is disabled")
 	}
-	uid := ctxdata.GetUserId(l.ctx)
+	uid := authctx.GetUserId(l.ctx)
 	if uid == "" {
 		return nil, unauthenticatedError("missing user id")
 	}

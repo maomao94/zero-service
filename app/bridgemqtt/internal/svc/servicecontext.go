@@ -3,7 +3,7 @@ package svc
 import (
 	"zero-service/app/bridgemqtt/internal/config"
 	"zero-service/app/bridgemqtt/internal/handler"
-	interceptor "zero-service/common/Interceptor/rpcclient"
+	"zero-service/common/grpcx"
 	"zero-service/common/mqttx"
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/socketapp/socketpush/socketpush"
@@ -24,7 +24,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	var socketPushCli socketpush.SocketPushClient
 	if len(c.StreamEventConf.Endpoints) > 0 || len(c.StreamEventConf.Target) > 0 {
 		streamEventCli = streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
-			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+			zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor),
 			// 添加最大消息配置
 			zrpc.WithDialOption(grpc.WithDefaultCallOptions(
 				//grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
@@ -35,7 +35,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 	if len(c.SocketPushConf.Endpoints) > 0 || len(c.SocketPushConf.Target) > 0 {
 		socketPushCli = socketpush.NewSocketPushClient(zrpc.MustNewClient(c.SocketPushConf,
-			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+			zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor),
 			// 添加最大消息配置
 			zrpc.WithDialOption(grpc.WithDefaultCallOptions(
 				//grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB

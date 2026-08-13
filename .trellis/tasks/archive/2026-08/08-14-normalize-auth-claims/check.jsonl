@@ -1,0 +1,8 @@
+{"file":".trellis/spec/backend/common-package-design.md","reason":"检查转换函数职责与公共 API 边界。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"检查契约测试与验证命令完整性。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查 claim 类型跨层流是否一致。"}
+{"file":".trellis/tasks/08-14-normalize-auth-claims/research/01-current-conversion-matrix.md","reason":"核对每个转换点的行为变化。"}
+{"file":".trellis/tasks/08-14-normalize-auth-claims/research/03-consumer-impact-table.md","reason":"核对 user-id 安全消费者未被弱化。"}
+{"file":".trellis/tasks/08-14-normalize-auth-claims/research/04-numeric-precision-analysis.md","reason":"核对精度规则与 2^53 边界。"}
+{"file":".trellis/tasks/08-14-normalize-auth-claims/research/05-whitelist-and-reject-ignore-options.md","reason":"核对用户确认的白名单与忽略语义。"}
+{"file":".trellis/tasks/08-14-normalize-auth-claims/research/06-must-not-combine-and-wire-contract.md","reason":"核对禁止混合边界未违反。"}

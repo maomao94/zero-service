@@ -6,7 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/zeromicro/go-zero/zrpc"
 	"zero-service/app/file/file"
-	interceptor "zero-service/common/Interceptor/rpcclient"
+	"zero-service/common/grpcx"
 	"zero-service/common/powerwechatx"
 	"zero-service/gtw/internal/config"
 	"zero-service/zerorpc/zerorpc"
@@ -57,9 +57,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Config:   c,
 		Validate: validator.New(),
 		ZeroRpcCli: zerorpc.NewZerorpcClient(zrpc.MustNewClient(c.ZeroRpcConf,
-			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor)).Conn()),
+			zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor)).Conn()),
 		FileRpcCLi: file.NewFileRpcClient(zrpc.MustNewClient(c.FileRpcConf,
-			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor)).Conn()),
+			zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor)).Conn()),
 		WxPayCli: paymentService,
 	}
 }

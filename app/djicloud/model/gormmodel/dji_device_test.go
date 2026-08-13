@@ -22,8 +22,8 @@ func TestDjiDeviceModelsDeviceTypeAndNameSchema(t *testing.T) {
 		}
 		for fieldName, dataType := range map[string]string{"device_type": "varchar(32)", "device_name": "varchar(128)"} {
 			field := parsed.LookUpField(fieldName)
-			if field == nil || field.DataType != schema.DataType(dataType) || !field.NotNull || !field.HasDefaultValue || field.DefaultValue != "" {
-				t.Fatalf("%s.%s field = %+v, want %s not null default empty", tt.name, fieldName, field, dataType)
+			if field == nil || field.DataType != schema.DataType(dataType) || !field.NotNull || !field.HasDefaultValue || field.DefaultValue != DjiDeviceUnknown {
+				t.Fatalf("%s.%s field = %+v, want %s not null default %q", tt.name, fieldName, field, dataType, DjiDeviceUnknown)
 			}
 		}
 	}

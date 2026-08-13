@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	interceptor "zero-service/common/Interceptor/rpcserver"
+	"zero-service/common/grpcx"
 
 	"zero-service/app/ispagent/internal/config"
 	"zero-service/app/ispagent/internal/server"
@@ -36,7 +36,7 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
-	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()

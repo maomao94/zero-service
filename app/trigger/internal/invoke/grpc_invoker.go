@@ -2,11 +2,10 @@ package invoke
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 	"zero-service/app/trigger/internal/svc"
-	interceptor "zero-service/common/Interceptor/rpcclient"
+	"zero-service/common/grpcx"
 	"zero-service/common/gtwx"
 	"zero-service/common/tool"
 
@@ -33,8 +32,8 @@ func (g *GRPCInvoker) Execute(ctx context.Context, svcCtx *svc.ServiceContext, t
 	v, ok := svcCtx.ConnMap.Get(grpcServer)
 	if !ok {
 		conn, err := zrpc.NewClient(clientConf,
-			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
-			zrpc.WithDialOption(grpc.WithDefaultCallOptions(grpc.ForceCodec(invokeRawCodec{}))))
+			zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor),
+			zrpc.WithDialOption(grpc.WithDefaultCallOptions(grpc.ForceCodec(grpcx.NewRawCodec("invoke_raw")))))
 		if err == nil {
 			svcCtx.ConnMap.Set(grpcServer, conn)
 			v = conn
@@ -74,20 +73,3 @@ func (g *GRPCInvoker) Execute(ctx context.Context, svcCtx *svc.ServiceContext, t
 	result.Data = respBytes
 	return result
 }
-
-type invokeRawCodec struct{}
-
-func (c invokeRawCodec) Marshal(v any) ([]byte, error) {
-	return tool.ToProtoBytes(v)
-}
-
-func (c invokeRawCodec) Unmarshal(data []byte, v any) error {
-	ba, ok := v.(*[]byte)
-	if !ok {
-		return fmt.Errorf("please pass in *[]byte")
-	}
-	*ba = append(*ba, data...)
-	return nil
-}
-
-func (c invokeRawCodec) Name() string { return "invoke_raw" }

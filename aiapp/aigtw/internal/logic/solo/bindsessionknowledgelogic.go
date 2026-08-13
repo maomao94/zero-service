@@ -7,7 +7,7 @@ import (
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
 	"zero-service/aiapp/aisolo/aisolo"
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -23,7 +23,7 @@ func NewBindSessionKnowledgeLogic(ctx context.Context, svcCtx *svc.ServiceContex
 }
 
 func (l *BindSessionKnowledgeLogic) BindSessionKnowledge(req *types.SoloBindKnowledgeRequest) (*types.SoloBindKnowledgeResponse, error) {
-	uid := ctxdata.GetUserId(l.ctx)
+	uid := authctx.GetUserId(l.ctx)
 	if uid == "" {
 		return nil, unauthenticatedError("missing user id")
 	}

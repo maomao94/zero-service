@@ -3,12 +3,12 @@ package tool
 import (
 	"context"
 	"reflect"
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
 )
 
 // GetCurrentUserId resolves the current user id from context data or a user object.
 func GetCurrentUserId(ctx context.Context, currentUser interface{}) string {
-	if userId := ctxdata.GetUserId(ctx); userId != "" {
+	if userId := authctx.GetUserId(ctx); userId != "" {
 		return userId
 	}
 	if currentUser != nil {
@@ -35,7 +35,7 @@ func GetCurrentUserId(ctx context.Context, currentUser interface{}) string {
 
 // GetCurrentUserName resolves the current user name from context data or a user object.
 func GetCurrentUserName(ctx context.Context, currentUser interface{}) string {
-	if userName := ctxdata.GetUserName(ctx); userName != "" {
+	if userName := authctx.GetUserName(ctx); userName != "" {
 		return userName
 	}
 	if currentUser != nil {
@@ -62,7 +62,7 @@ func GetCurrentUserName(ctx context.Context, currentUser interface{}) string {
 
 // GetCurrentDeptCode resolves the first department code from context data or a user object.
 func GetCurrentDeptCode(ctx context.Context, currentUser interface{}) string {
-	if deptCode := ctxdata.GetDeptCode(ctx); deptCode != "" {
+	if deptCode := authctx.GetDeptCode(ctx); deptCode != "" {
 		return deptCode
 	}
 	if currentUser != nil {

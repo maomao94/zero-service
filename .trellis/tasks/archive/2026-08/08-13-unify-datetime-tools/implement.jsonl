@@ -1,0 +1,8 @@
+{"file":".trellis/spec/backend/common-package-design.md","reason":"约束 common/carbonx 公共 API 边界、业务中立性与直接调用方验证。"}
+{"file":".trellis/spec/backend/coding-standards.md","reason":"约束 Go 命名、最小抽象、修改范围与导出 API 注释。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"定义公共 API 和跨服务迁移的测试与检查范围。"}
+{"file":".trellis/spec/backend/crontask-guidelines.md","reason":"保护调度秒精度、零值/SQL NULL 与计划时间状态语义。"}
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"保护 Trigger 上海时区、精确时间和回调文本契约。"}
+{"file":".trellis/tasks/08-13-unify-datetime-tools/research/datetime-usage-inventory.md","reason":"提供全仓日期时间工具、格式、精度和调用分类证据。"}
+{"file":".trellis/tasks/08-13-unify-datetime-tools/research/datetime-ownership-and-replacement-boundaries.md","reason":"提供公共工具归属和禁止机械替换的边界。"}
+{"file":".trellis/tasks/08-13-unify-datetime-tools/research/proto-datetime-format-audit.md","reason":"提供 Proto 文本精度、Unix 单位、专用格式和 duration 排除清单。"}

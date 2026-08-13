@@ -22,7 +22,8 @@
 | [GORM 与数据访问](./gormx-guidelines.md) | 修改 model/store、事务、分页、租户、Upsert 或 CAS |
 | [并发与异步](./concurrency-guidelines.md) | 使用 goroutine、`mr`、`antsx`、Promise、ReplyPool 或共享状态 |
 | [客户端与消息](./messaging-guidelines.md) | 修改 HTTP/WebSocket/MQTT client、关联响应或长连接 |
-| [crontask 调度](./crontask-guidelines.md) | 修改 Scheduler、Store、RRULE、lease、`RunNow` 或适配器 |
+| [rrulex RRULE 扩展](./rrulex-guidelines.md) | 修改 RRULE Set 解析、平移查询、批量 occurrence、谓词或中文描述 |
+| [crontask 调度](./crontask-guidelines.md) | 修改 Scheduler、Store、lease、`RunNow`、任务时间状态或适配器 |
 
 ## 领域契约
 

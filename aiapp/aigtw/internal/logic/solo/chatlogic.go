@@ -12,7 +12,7 @@ import (
 	"zero-service/aiapp/aigtw/internal/types"
 	"zero-service/aiapp/aisolo/aisolo"
 	"zero-service/aiapp/aisolo/modeweb"
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -34,7 +34,7 @@ func NewChatLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ChatLogic {
 // Chat 把 aisolo AskStream 的每一帧 (已经是完整的 JSON Event) 直接作为 SSE data: 帧
 // 写入 HTTP 响应。这里不经过 channel, 也不再 json.Marshal, 保证 NDJSON over SSE 的完整性。
 func (l *ChatLogic) Chat(req *types.SoloChatRequest, w io.Writer) error {
-	userID := ctxdata.GetUserId(l.ctx)
+	userID := authctx.GetUserId(l.ctx)
 	if userID == "" {
 		return unauthenticatedError("missing user id in context")
 	}

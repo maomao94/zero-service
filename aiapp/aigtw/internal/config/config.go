@@ -23,7 +23,7 @@ type Config struct {
 	rest.RestConf
 	JwtAuth struct {
 		AccessSecret string
-		ClaimMapping map[string]string `json:",optional"` // 外部 JWT claim key 映射为内部 key（如 "user-id" -> "user_id"）
+		ClaimMapping map[string]string `json:",optional"` // 内部 key 映射到外部 JWT claim key（internalKey -> externalKey，如 "user-id" -> "user_id"）
 	}
 	AiChatRpcConf zrpc.RpcClientConf
 	AiSoloRpcConf zrpc.RpcClientConf

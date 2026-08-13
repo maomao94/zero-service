@@ -8,9 +8,9 @@ import (
 	ctask "zero-service/app/ispagent/internal/crontask"
 	"zero-service/app/ispagent/internal/handler"
 	"zero-service/app/ispagent/model/gormmodel"
+	"zero-service/common/carbonx"
 	"zero-service/common/crontask"
 	"zero-service/common/isp"
-	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/threading"
@@ -25,7 +25,7 @@ func NewCronHandler(svcCtx *ServiceContext) crontask.Handler {
 		}
 
 		planStartTime, taskPatrolledID := taskExecution(ctx, task, fields)
-		planStartTimeText := tool.CarbonFromTimeStartOfSecond(planStartTime).ToDateTimeString()
+		planStartTimeText := carbonx.FormatDateTime(planStartTime)
 
 		logx.WithContext(ctx).Infof("[ispagent] 任务触发 task_code=%s patrol_id=%s plan=%s",
 			task.TaskCode, taskPatrolledID, planStartTimeText)
@@ -89,6 +89,6 @@ func taskExecution(ctx context.Context, task *crontask.TaskConfig, fields *ctask
 		return runAt, taskPatrolledID
 	}
 	runAt := task.ScheduledTime
-	runTime := tool.CarbonFromTimeStartOfSecond(runAt)
+	runTime := carbonx.FromTimeStartOfSecond(runAt)
 	return runAt, fmt.Sprintf("%s_%s_%s", fields.SubstationCode, task.TaskCode, runTime.ToShortDateTimeString())
 }

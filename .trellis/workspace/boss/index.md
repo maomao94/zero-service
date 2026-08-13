@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 163
-- **Last Active**: 2026-08-12
+- **Total Sessions**: 171
+- **Last Active**: 2026-08-14
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~1646 | Active |
+| `journal-3.md` | ~1868 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,14 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 171 | 2026-08-14 | 规范化认证 Claim 值（类型白名单 + 极简转换） | `98696027` | `master` |
+| 170 | 2026-08-14 | 迁移认证 Typed Context Key（无回退 + 桥接中间件） | `a940f92e` | `master` |
+| 169 | 2026-08-14 | 审计 Authorization 传播链路并完成默认拒绝策略规划 | `11f5e900` | `master` |
+| 168 | 2026-08-14 | 完成日期时间工具统一与归档 | `0cae8549`, `02a7b6e3` | `master` |
+| 167 | 2026-08-13 | 完成 gRPC 与 context 传播层重构 | `eb692d17`, `6c9ddf7a`, `71984189`, `e6c48828` | `master` |
+| 166 | 2026-08-13 | Fix GaussDB DJI device unknown identity | `3cc666c7`, `8416f5c7` | `master` |
+| 165 | 2026-08-13 | 补齐 rrulex RRULE 契约测试并完成 Trellis spec 收尾 | `977c99e2` | `master` |
+| 164 | 2026-08-13 | crontask 无效区间谓词重构 + rrulex 抽取 | `5bbac571`, `00891444`, `79914f35`, `e4ac5e73` | `master` |
 | 163 | 2026-08-12 | rrule Set.After 性能修复 + PlanRulePb interval 字段 + 文档完善 | `1c7eeea6`, `5f0afd91` | `master` |
 | 162 | 2026-08-12 | 对齐 CronJob 回调契约 | `3fef6bd3` | `master` |
 | 161 | 2026-08-12 | Add exact-time RRULE scheduling | `3bc7ad8f`, `22d5a71b`, `7f9a077a`, `44e0a16a` | `master` |

@@ -7,8 +7,6 @@ import (
 	"sync"
 
 	"zero-service/common/antsx"
-	"zero-service/common/ctxdata"
-	"zero-service/common/ctxprop"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -174,7 +172,7 @@ type Option func(*wrapperConfig)
 
 // WithExtractUserCtx 提取用户上下文选项。
 // 启用后，会从 _meta 中提取用户身份（user-id, user-name 等）到 context values，
-// 业务层可调用 ctxprop.InjectToGrpcMD(ctx) 透传到 gRPC metadata。
+// 业务层可调用 grpcx.InjectToGrpcMD(ctx) 透传到 gRPC metadata。
 func WithExtractUserCtx() Option {
 	return func(c *wrapperConfig) {
 		c.extractUserCtx = true
@@ -190,8 +188,8 @@ func WithExtractUserCtx() Option {
 // 上下文传递机制：
 //
 //	客户端通过 params._meta 传递用户上下文（user_id 等）和链路信息（traceparent）
-//	服务端将 _meta 整体存入 ctx，key 为 ctxdata.CtxMetaKey
-//	业务层通过 ctxdata.GetMeta(ctx) 获取并自行解析
+//	服务端将 _meta 整体存入 ctx
+//	业务层通过 mcpx.GetMeta(ctx) 获取并自行解析
 //
 // 信任边界：
 //
@@ -236,20 +234,20 @@ func CallToolWrapper[In, Out any](
 		if req.Params != nil {
 			meta = req.Params.GetMeta()
 			if len(meta) > 0 {
-				ctx = ctxprop.ExtractTraceFromMeta(ctx, meta)
+				ctx = ExtractTraceFromMeta(ctx, meta)
 			}
 		}
 
 		// 将 _meta 整体存入 ctx，供业务层使用
-		// 业务层通过 ctxdata.GetMeta(ctx) 获取，自行解析用户身份
+		// 业务层通过 GetMeta(ctx) 获取，自行解析用户身份
 		if len(meta) > 0 {
-			ctx = context.WithValue(ctx, ctxdata.CtxMetaKey, meta)
+			ctx = WithMeta(ctx, meta)
 		}
 
 		// 可选：从 _meta 中提取用户上下文到 context values，供 gRPC 调用使用
-		// 业务层调用 ctxprop.InjectToGrpcMD(ctx) 将用户身份透传到 gRPC metadata
+		// 业务层调用 grpcx.InjectToGrpcMD(ctx) 将用户身份透传到 gRPC metadata
 		if cfg.extractUserCtx && len(meta) > 0 {
-			ctx = ctxprop.ExtractFromMeta(ctx, meta)
+			ctx = ExtractFromMeta(ctx, meta)
 		}
 
 		// 将进度发送器存入 ctx，供业务层使用

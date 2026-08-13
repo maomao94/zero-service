@@ -3,7 +3,7 @@ package tool
 import (
 	"time"
 
-	"github.com/dromara/carbon/v2"
+	"zero-service/common/carbonx"
 )
 
 func CalculateNextTriggerTime(failureCount int64, expiry time.Duration) (time.Time, bool) {
@@ -36,5 +36,5 @@ func CalculateNextTriggerTime(failureCount int64, expiry time.Duration) (time.Ti
 
 func CalculateNextTriggerTimeString(failureCount int64, defaultTimeout time.Duration) (string, bool) {
 	nextTime, isExceeded := CalculateNextTriggerTime(failureCount, defaultTimeout)
-	return carbon.CreateFromStdTime(nextTime).ToDateTimeString(), isExceeded
+	return carbonx.FormatDateTime(nextTime), isExceeded
 }

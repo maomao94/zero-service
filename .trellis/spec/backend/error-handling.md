@@ -7,11 +7,11 @@
 ## 上下文传播
 
 - 请求链路继续传递原始 `context.Context`；服务内调用不要替换为 `context.Background()`。
-- gRPC client interceptor 通过 `common/ctxprop` 注入允许传播的 metadata，server interceptor 从 metadata 提取并写回 context。
-- metadata key 规范为小写；只传播非空字符串。非 ASCII 值按 `common/ctxprop/grpc.go` 的编码规则处理，不自定义第二套格式。
+- 身份与认证 context key、claims 映射由 `common/authctx` 管理；gRPC client interceptor 通过 `common/grpcx` 注入允许传播的 metadata，server interceptor 从 metadata 提取并写回 context；MCP `_meta` 与 trace 适配由 `common/mcpx` 管理。
+- metadata key 规范为小写；只传播非空字符串。非 ASCII 值按 `common/grpcx/metadata.go` 的编码规则处理，不自定义第二套格式。
 - `trace_id`、用户/租户信息和领域任务标识分别由其现有 key 管理，不能互相借用。
 
-依据：`common/Interceptor/rpcclient/metadataInterceptor.go`、`common/Interceptor/rpcserver/loggerInterceptor.go`、`common/ctxprop/grpc.go`。
+依据：`common/authctx/context.go`、`common/grpcx/metadata.go`、`common/grpcx/client_interceptor.go`、`common/grpcx/server_interceptor.go`、`common/mcpx/context_meta.go`。
 
 ## 错误所有权
 
@@ -31,7 +31,7 @@
 - 记录错误时保留可解包链，避免只留下格式化字符串。
 - 返回给外部的 message 不暴露堆栈、内部地址、SQL 或凭据。
 
-依据：`common/Interceptor/rpcserver/loggerInterceptor.go`、`common/gtwx/errorhandler.go`、`common/gtwx/openai_error.go`、`common/tool/errorutil.go`。
+依据：`common/grpcx/server_interceptor.go`、`common/gtwx/errorhandler.go`、`common/gtwx/openai_error.go`、`common/tool/errorutil.go`。
 
 ## 反模式
 

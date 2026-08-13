@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"zero-service/app/trigger/trigger"
-	"zero-service/common/crontask"
+	"zero-service/common/rrulex"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/teambition/rrule-go"
@@ -73,7 +73,7 @@ func TestCompileScheduleNextRunAndExcludeDate(t *testing.T) {
 	if schedule.RRuleStr == "" {
 		t.Fatal("expected serialized RRULE set")
 	}
-	if err := crontask.ValidateRRule(schedule.RRuleStr); err != nil {
+	if err := rrulex.Validate(schedule.RRuleStr); err != nil {
 		t.Fatalf("serialized RRULE cannot be parsed: %v", err)
 	}
 	if !strings.Contains(schedule.RRuleStr, "DTSTART;TZID=Asia/Shanghai:") ||
@@ -354,7 +354,7 @@ func TestCompileScheduleIntervalPeriodStep(t *testing.T) {
 		}
 	}
 
-	description, err := crontask.DescribeRRule(schedule.RRuleStr)
+	description, err := rrulex.Describe(schedule.RRuleStr)
 	if err != nil {
 		t.Fatal(err)
 	}

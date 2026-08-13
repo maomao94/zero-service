@@ -8,11 +8,11 @@ import (
 
 	"zero-service/app/podengine/internal/svc"
 	"zero-service/app/podengine/podengine"
+	"zero-service/common/carbonx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -125,7 +125,7 @@ func (l *GetPodStatsLogic) GetPodStats(in *podengine.GetPodStatsReq) (*podengine
 		StorageReadBytesDisplay:   tool.DecimalBytes(int64(storageReadBytes), 2),
 		StorageWriteBytes:         int64(storageWriteBytes),
 		StorageWriteBytesDisplay:  tool.DecimalBytes(int64(storageWriteBytes), 2),
-		Timestamp:                 carbon.NewCarbon(time.Now()).ToDateTimeString(),
+		Timestamp:                 carbonx.FormatDateTime(time.Now()),
 	}
 
 	return &podengine.GetPodStatsRes{

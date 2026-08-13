@@ -10,6 +10,7 @@ import (
 	"sync"
 	"text/template"
 	"time"
+	"zero-service/common/carbonx"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -63,7 +64,7 @@ func (mc *MockConfig) funcMap() template.FuncMap {
 			case "email":
 				return gofakeit.Email()
 			case "date":
-				return gofakeit.Date().Format("2006-01-02 15:04:05")
+				return carbonx.FormatDateTime(gofakeit.Date())
 			case "word":
 				return gofakeit.Word()
 			case "appName":

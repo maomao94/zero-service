@@ -73,3 +73,28 @@ func TestToTopoInfoListReturnsPersistedDeviceTypeAndName(t *testing.T) {
 		t.Fatalf("topo device type/name = %q/%q, want persisted %q/%q", got[0].DeviceType, got[0].DeviceName, items[0].DeviceType, items[0].DeviceName)
 	}
 }
+
+func TestDeviceRPCViewsReturnPersistedUnknownSentinels(t *testing.T) {
+	device := &gormmodel.DjiDevice{
+		DeviceSn:   "device-unknown",
+		DeviceType: gormmodel.DjiDeviceUnknown,
+		DeviceName: gormmodel.DjiDeviceUnknown,
+	}
+	deviceInfo := toDeviceInfo(device)
+	if deviceInfo.DeviceType != gormmodel.DjiDeviceUnknown || deviceInfo.DeviceName != gormmodel.DjiDeviceUnknown {
+		t.Fatalf("device RPC type/name = %q/%q, want persisted unknown sentinels", deviceInfo.DeviceType, deviceInfo.DeviceName)
+	}
+
+	topoInfo := toTopoInfoList([]gormmodel.DjiDeviceTopo{{
+		GatewaySn:   "dock-unknown",
+		SubDeviceSn: "device-unknown",
+		DeviceType:  gormmodel.DjiDeviceUnknown,
+		DeviceName:  gormmodel.DjiDeviceUnknown,
+	}})
+	if len(topoInfo) != 1 {
+		t.Fatalf("topology RPC count = %d, want 1", len(topoInfo))
+	}
+	if topoInfo[0].DeviceType != gormmodel.DjiDeviceUnknown || topoInfo[0].DeviceName != gormmodel.DjiDeviceUnknown {
+		t.Fatalf("topology RPC type/name = %q/%q, want persisted unknown sentinels", topoInfo[0].DeviceType, topoInfo[0].DeviceName)
+	}
+}

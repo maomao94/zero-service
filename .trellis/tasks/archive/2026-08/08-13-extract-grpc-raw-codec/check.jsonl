@@ -1,0 +1,6 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"确定公共 API 与直接调用方的验证范围"}
+{"file":".trellis/spec/backend/common-package-design.md","reason":"检查公共包职责、依赖方向和边界测试"}
+{"file":".trellis/spec/backend/service-lifecycle.md","reason":"检查所有直接调用方的拦截器装配和顺序未改变"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"检查 metadata/context 与错误透传行为未改变"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查全部通信 key、生产者与消费者的数据流兼容性"}
+{"file":".trellis/spec/backend/coding-standards.md","reason":"复核公共 schema 收窄和配置注释不改变运行行为"}

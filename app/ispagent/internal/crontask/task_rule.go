@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"zero-service/common/crontask"
+	"zero-service/common/rrulex"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/teambition/rrule-go"
@@ -123,17 +124,21 @@ func (f *IspTaskFields) toROption() *rrule.ROption {
 	return nil
 }
 
-// CalcInitNextRun 根据完整 RRULE Set 计算首次调度时间。
+// CalcInitNextRun 根据完整 RRULE Set 计算首次调度时间，无效区间内的候选由谓词在单趟迭代中跳过。
 func (f *IspTaskFields) CalcInitNextRun() (time.Time, error) {
 	rruleStr := f.ToRRuleStr()
 	if rruleStr == "" {
 		return time.Time{}, fmt.Errorf("invalid task schedule")
 	}
-	next, err := crontask.NextAfter(rruleStr, carbon.Now().StdTime())
+	pred := f.invalidTimePredicate()
+	runs, err := rrulex.NextRuns(rruleStr, carbon.Now().StdTime(), false, 1, pred)
 	if err != nil {
 		return time.Time{}, err
 	}
-	return f.skipInvalidTime(rruleStr, next), nil
+	if len(runs) == 0 {
+		return time.Time{}, nil
+	}
+	return runs[0], nil
 }
 
 // buildFixedRRule 为定期任务生成单次执行的 rrule。
@@ -189,21 +194,20 @@ func buildRRuleSet(opt *rrule.ROption) string {
 	return set.String()
 }
 
-// skipInvalidTime 跳过不可用时间范围内的触发点。
-func (f *IspTaskFields) skipInvalidTime(rruleStr string, next time.Time) time.Time {
-	is := parseTime(f.InvalidStartTime)
-	ie := parseTime(f.InvalidEndTime)
+// invalidWindowPredicate 构建无效区间判定谓词：候选落在 [is, ie]（两端闭区间）内视为无效应跳过。
+// is/ie 任一为零表示无过滤，返回 nil。
+func invalidWindowPredicate(is, ie time.Time) func(time.Time) bool {
 	if is.IsZero() || ie.IsZero() {
-		return next
+		return nil
 	}
-	for !next.IsZero() && !next.Before(is) && !next.After(ie) {
-		var err error
-		next, err = crontask.NextAfter(rruleStr, next)
-		if err != nil {
-			return time.Time{}
-		}
+	return func(t time.Time) bool {
+		return !t.Before(is) && !t.After(ie)
 	}
-	return next
+}
+
+// invalidTimePredicate 返回基于无效区间的判定谓词；窗口字段缺失或解析失败返回 nil，表示无过滤。
+func (f *IspTaskFields) invalidTimePredicate() func(time.Time) bool {
+	return invalidWindowPredicate(parseTime(f.InvalidStartTime), parseTime(f.InvalidEndTime))
 }
 
 // buildCycleROption 构建周期任务的 ROption。
@@ -345,19 +349,15 @@ func NewTaskConfig(existing *crontask.TaskConfig, fields *IspTaskFields) (*cront
 	return cfg, nil
 }
 
-// NewInvalidTimeFilter 创建 crontask 的 InvalidTimeFilter，复用 CalcInitNextRun 的 skipInvalidTime 逻辑。
-func NewInvalidTimeFilter() crontask.InvalidTimeFilter {
-	return func(task *crontask.TaskConfig, next time.Time) time.Time {
+// NewInvalidTimePredicate 创建 crontask 的 InvalidTimePredicate。
+// 每次调用从 task.Extra 反序列化无效区间并判定，谓词无状态、可被并发调用。
+func NewInvalidTimePredicate() crontask.InvalidTimePredicate {
+	return func(task *crontask.TaskConfig, t time.Time) bool {
 		fields := DeserializeExtra(string(task.Extra))
 		if fields == nil {
-			return next
+			return false
 		}
-		is := parseTime(fields.InvalidStartTime)
-		ie := parseTime(fields.InvalidEndTime)
-		if is.IsZero() || ie.IsZero() {
-			return next
-		}
-		next = fields.skipInvalidTime(task.RRuleStr, next)
-		return next
+		pred := fields.invalidTimePredicate()
+		return pred != nil && pred(t)
 	}
 }

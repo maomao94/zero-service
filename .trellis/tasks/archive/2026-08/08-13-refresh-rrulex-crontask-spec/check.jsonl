@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "验证范围、差分测试与交付质量要求"}
+{"file": ".trellis/spec/backend/crontask-guidelines.md", "reason": "检查刷新后调度与 rrulex 契约一致性"}
+{"file": ".trellis/spec/backend/rrulex-guidelines.md", "reason": "检查 RRULE 解析、查询平移、过滤与描述契约"}
+{"file": ".trellis/spec/backend/trigger-guidelines.md", "reason": "检查 Trigger 调用方使用当前 rrulex API"}
+{"file": ".trellis/spec/backend/common-package-design.md", "reason": "检查 common/rrulex 所有权和 API 边界"}

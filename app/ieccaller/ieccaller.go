@@ -9,8 +9,8 @@ import (
 	"zero-service/app/ieccaller/internal/server"
 	"zero-service/app/ieccaller/internal/svc"
 	iecmqtt "zero-service/app/ieccaller/mqtt"
-	interceptor "zero-service/common/Interceptor/rpcserver"
 	_ "zero-service/common/carbonx"
+	"zero-service/common/grpcx"
 	"zero-service/common/iec104/client"
 	"zero-service/common/nacosx"
 	"zero-service/common/tool"
@@ -77,7 +77,7 @@ func main() {
 		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacosx.WithMetadata(m))
 		_ = nacosx.RegisterService(opts)
 	}
-	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
 	logx.AddGlobalFields(logx.Field("app", c.Name))

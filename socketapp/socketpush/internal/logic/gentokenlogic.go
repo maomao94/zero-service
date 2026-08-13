@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 	"time"
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
 	"zero-service/common/tool"
 	"zero-service/socketapp/socketpush/internal/svc"
 	"zero-service/socketapp/socketpush/socketpush"
@@ -58,14 +58,14 @@ func (l *GenTokenLogic) getJwtToken(secretKey string, iat, seconds int64, uid st
 	claims := make(jwt.MapClaims)
 	claims["exp"] = iat + seconds
 	claims["iat"] = iat
-	claims[ctxdata.CtxUserIdKey] = uid
+	claims[authctx.CtxUserIdKey] = uid
 	if payload != nil && len(payload) > 0 {
 		for k, v := range payload {
 			if k == "" {
 				continue
 			}
 			switch k {
-			case jwtAudience, jwtExpire, jwtId, jwtIssueAt, jwtIssuer, jwtNotBefore, jwtSubject, ctxdata.CtxUserIdKey:
+			case jwtAudience, jwtExpire, jwtId, jwtIssueAt, jwtIssuer, jwtNotBefore, jwtSubject, authctx.CtxUserIdKey:
 				// ignore the standard claims
 			default:
 				claims[k] = v

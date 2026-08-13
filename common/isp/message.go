@@ -3,8 +3,7 @@ package isp
 import (
 	"fmt"
 	"strconv"
-
-	"github.com/dromara/carbon/v2"
+	"zero-service/common/carbonx"
 )
 
 // Item 为动态 key-value 属性容器，对应 XML 中 <Item attr="value"/> 的属性映射。
@@ -134,7 +133,7 @@ func NewResponse(req *Message, sessionSource byte, code string, command int32, i
 		Type:          TypeSystem,
 		Code:          code,
 		Command:       command,
-		Time:          carbon.Now().ToDateTimeString(),
+		Time:          carbonx.NowDateTime(),
 		RecvSeq:       req.SendSeq,
 		Items:         items,
 	}

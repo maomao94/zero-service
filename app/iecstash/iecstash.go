@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"zero-service/app/iecstash/kafka"
-	interceptor "zero-service/common/Interceptor/rpcserver"
+	"zero-service/common/grpcx"
 	"zero-service/common/nacosx"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
@@ -70,7 +70,7 @@ func main() {
 		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacosx.WithMetadata(m))
 		_ = nacosx.RegisterService(opts)
 	}
-	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
 	logx.AddGlobalFields(logx.Field("app", c.Name))

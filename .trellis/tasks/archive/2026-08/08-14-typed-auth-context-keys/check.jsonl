@@ -1,0 +1,9 @@
+{"file":".trellis/spec/backend/common-package-design.md","reason":"检查 typed key 与 wire 分离、API 构造是否符合公共包规范。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"检查测试覆盖与验证命令是否与风险匹配。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查身份字段跨层数据流是否全部核验。"}
+{"file":".trellis/tasks/08-14-typed-auth-context-keys/research/02-writers-inventory.md","reason":"逐项核对写入方迁移是否遗漏。"}
+{"file":".trellis/tasks/08-14-typed-auth-context-keys/research/03-readers-inventory.md","reason":"核对读取方与传输边界是否都走 getter。"}
+{"file":".trellis/tasks/08-14-typed-auth-context-keys/research/04-transport-boundaries.md","reason":"核对 wire key 与行为契约未变。"}
+{"file":".trellis/tasks/08-14-typed-auth-context-keys/research/05-tests-locking-contract.md","reason":"核对所有锁定契约的测试已同步更新。"}
+{"file":".trellis/tasks/08-14-typed-auth-context-keys/research/06-risks-and-migration-surface.md","reason":"核对风险缓解与禁止混合边界。"}
+{"check":"typed-context-keys-migration","result":"pass","note":"阶段0-3 全部完成；wire 契约、双读回退、禁止混合边界均保持；全仓测试仅 cli/dtui/internal/docker 因 Docker daemon 不可用失败（与本任务无关）。"}

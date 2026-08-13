@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-	interceptor "zero-service/common/Interceptor/rpcclient"
+	"zero-service/common/grpcx"
 	"zero-service/socketapp/socketgtw/socketgtw"
 
 	"github.com/nacos-group/nacos-sdk-go/v2/clients"
@@ -83,7 +83,7 @@ const (
 func newSocketClient(endpoint string, c zrpc.RpcClientConf) socketgtw.SocketGtwClient {
 	c.Endpoints = []string{endpoint}
 	return socketgtw.NewSocketGtwClient(zrpc.MustNewClient(c,
-		zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+		zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor),
 		zrpc.WithDialOption(grpc.WithDefaultCallOptions(
 			//grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
 			grpc.MaxCallSendMsgSize(50*1024*1024), // 发送最大50MB

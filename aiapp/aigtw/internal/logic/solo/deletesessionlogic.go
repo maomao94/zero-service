@@ -7,7 +7,7 @@ import (
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
 	"zero-service/aiapp/aisolo/aisolo"
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -27,7 +27,7 @@ func NewDeleteSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Del
 }
 
 func (l *DeleteSessionLogic) DeleteSession(req *types.SoloDeleteSessionRequest) (*types.SoloDeleteSessionResponse, error) {
-	userID := ctxdata.GetUserId(l.ctx)
+	userID := authctx.GetUserId(l.ctx)
 	if userID == "" {
 		return nil, unauthenticatedError("missing user id in context")
 	}

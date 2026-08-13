@@ -13,8 +13,10 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/carbonx"
 	"zero-service/common/crontask"
 	"zero-service/common/gormx"
+	"zero-service/common/rrulex"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -112,7 +114,7 @@ func TestBuildCronJobTaskCompilesValidRule(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := crontask.ValidateRRule(task.RRuleStr); err != nil {
+	if err := rrulex.Validate(task.RRuleStr); err != nil {
 		t.Fatalf("compiled rule is invalid: %v", err)
 	}
 	extra, err := cronjob.ParseExtra(task.Extra)
@@ -614,7 +616,7 @@ func TestCronJobRunGetAndList(t *testing.T) {
 		!reflect.DeepEqual(detail.CronJob.ExcludedTimes, []string{"2026-07-30 12:34:56"}) {
 		t.Fatalf("detail exact times did not round trip: %+v", detail.CronJob)
 	}
-	wantAuditTime := baseTime.Format("2006-01-02 15:04:05")
+	wantAuditTime := carbonx.FormatDateTime(baseTime)
 	if detail.CronJob.CreateTime != wantAuditTime || detail.CronJob.UpdateTime == "" {
 		t.Fatalf("unexpected detail audit times: %+v", detail.CronJob)
 	}
@@ -634,7 +636,7 @@ func TestCronJobRunGetAndList(t *testing.T) {
 	if list.Total != 2 || len(list.CronJobs) != 1 || list.CronJobs[0].JobId != laterConfig.ID {
 		t.Fatalf("unexpected Cron Job list: %+v", list)
 	}
-	if list.CronJobs[0].CreateTime != baseTime.Add(time.Hour).Format("2006-01-02 15:04:05") {
+	if list.CronJobs[0].CreateTime != carbonx.FormatDateTime(baseTime.Add(time.Hour)) {
 		t.Fatalf("unexpected list audit time: %+v", list.CronJobs[0])
 	}
 	if !reflect.DeepEqual(list.CronJobs[0].SpecifiedTimes, []string{"2026-07-29 12:34:56"}) ||
@@ -663,8 +665,8 @@ func TestPreviewCronJobSchedule(t *testing.T) {
 	}
 	extra, err := cronjob.MarshalExtra(&cronjob.CronJobExtra{
 		Rule:           ruleJSON,
-		SpecifiedTimes: []string{tool.CarbonFromTimeStartOfSecond(specified).ToDateTimeString()},
-		ExcludedTimes:  []string{tool.CarbonFromTimeStartOfSecond(exactExcluded).ToDateTimeString()},
+		SpecifiedTimes: []string{carbonx.FormatDateTime(specified)},
+		ExcludedTimes:  []string{carbonx.FormatDateTime(exactExcluded)},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -699,14 +701,14 @@ func TestPreviewCronJobSchedule(t *testing.T) {
 	if len(preview.ExecutionTimes) != 10 {
 		t.Fatalf("default execution time count = %d, want 10", len(preview.ExecutionTimes))
 	}
-	if preview.ExecutionTimes[0] != tool.CarbonFromTimeStartOfSecond(specified).ToDateTimeString() {
+	if preview.ExecutionTimes[0] != carbonx.FormatDateTime(specified) {
 		t.Fatalf("first preview time = %q, want persisted RDATE %v", preview.ExecutionTimes[0], specified)
 	}
 	if preview.ScheduleDescription == "" {
 		t.Fatal("schedule description must not be empty")
 	}
-	excludedText := tool.CarbonFromTimeStartOfSecond(excluded).ToDateTimeString()
-	exactExcludedText := tool.CarbonFromTimeStartOfSecond(exactExcluded).ToDateTimeString()
+	excludedText := carbonx.FormatDateTime(excluded)
+	exactExcludedText := carbonx.FormatDateTime(exactExcluded)
 	for _, executionTime := range preview.ExecutionTimes {
 		if executionTime == excludedText || executionTime == exactExcludedText {
 			t.Fatalf("EXDATE time %q was included", executionTime)

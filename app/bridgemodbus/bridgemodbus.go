@@ -7,7 +7,7 @@ import (
 	"zero-service/app/bridgemodbus/internal/config"
 	"zero-service/app/bridgemodbus/internal/server"
 	"zero-service/app/bridgemodbus/internal/svc"
-	interceptor "zero-service/common/Interceptor/rpcserver"
+	"zero-service/common/grpcx"
 	"zero-service/common/nacosx"
 	"zero-service/common/tool"
 
@@ -60,7 +60,7 @@ func main() {
 		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacosx.WithMetadata(m))
 		_ = nacosx.RegisterService(opts)
 	}
-	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	defer s.Stop()
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 

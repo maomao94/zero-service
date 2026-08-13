@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"zero-service/app/trigger/model/gormmodel"
+	"zero-service/common/carbonx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
 )
@@ -49,8 +49,8 @@ func (l *GetPlanExecLogLogic) GetPlanExecLog(in *trigger.GetPlanExecLogReq) (*tr
 
 	// 构建响应
 	pbLog := &trigger.PlanExecLogPb{
-		CreateTime:  carbon.CreateFromStdTime(execLog.CreateTime).ToDateTimeString(),
-		UpdateTime:  carbon.CreateFromStdTime(execLog.UpdateTime).ToDateTimeString(),
+		CreateTime:  carbonx.FormatDateTime(execLog.CreateTime),
+		UpdateTime:  carbonx.FormatDateTime(execLog.UpdateTime),
 		CreateUser:  execLog.CreateUser.String,
 		UpdateUser:  execLog.UpdateUser.String,
 		DeptCode:    execLog.DeptCode.String,
@@ -66,7 +66,7 @@ func (l *GetPlanExecLogLogic) GetPlanExecLog(in *trigger.GetPlanExecLogReq) (*tr
 		ItemType:    execLog.ItemType.String,
 		ItemName:    execLog.ItemName.String,
 		PointId:     execLog.PointId.String,
-		TriggerTime: carbon.CreateFromStdTime(execLog.TriggerTime).ToDateTimeString(),
+		TriggerTime: carbonx.FormatDateTime(execLog.TriggerTime),
 		ExecResult:  execLog.ExecResult.String,
 		Message:     execLog.Message.String,
 	}

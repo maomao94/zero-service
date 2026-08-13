@@ -1,13 +1,12 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"net/http"
 
-	interceptor "zero-service/common/Interceptor/rpcserver"
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
+	"zero-service/common/grpcx"
 	"zero-service/common/nacosx"
 	"zero-service/common/tool"
 	"zero-service/socketapp/socketgtw/internal/config"
@@ -65,7 +64,7 @@ func main() {
 	// 全局中间件：网关入口请求均来自浏览器，标记 auth-type=user。
 	httpServer.Use(func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			rctx := context.WithValue(r.Context(), ctxdata.CtxAuthTypeKey, "user")
+			rctx := authctx.WithAuthType(r.Context(), "user")
 			next(w, r.WithContext(rctx))
 		}
 	})
@@ -90,7 +89,7 @@ func main() {
 		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacosx.WithMetadata(m))
 		_ = nacosx.RegisterService(opts)
 	}
-	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()

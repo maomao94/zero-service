@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"zero-service/app/trigger/model/gormmodel"
+	"zero-service/common/carbonx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
@@ -79,8 +79,8 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 
 	// 构建响应
 	pbPlanBatch := &trigger.PlanBatchPb{
-		CreateTime:       carbon.CreateFromStdTime(planBatch.CreateTime).ToDateTimeString(),
-		UpdateTime:       carbon.CreateFromStdTime(planBatch.UpdateTime).ToDateTimeString(),
+		CreateTime:       carbonx.FormatDateTime(planBatch.CreateTime),
+		UpdateTime:       carbonx.FormatDateTime(planBatch.UpdateTime),
 		CreateUser:       planBatch.CreateUser.String,
 		UpdateUser:       planBatch.UpdateUser.String,
 		DeptCode:         planBatch.DeptCode.String,
@@ -92,7 +92,7 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 		BatchNum:         planBatch.BatchNum.String,
 		Status:           int32(planBatch.Status),
 		ScanFlg:          int32(planBatch.ScanFlg),
-		PlanTriggerTime:  carbon.CreateFromStdTime(planBatch.PlanTriggerTime.Time).ToDateTimeString(),
+		PlanTriggerTime:  carbonx.FormatDateTime(planBatch.PlanTriggerTime.Time),
 		TerminatedReason: planBatch.TerminatedReason.String,
 		PausedReason:     planBatch.PausedReason.String,
 		StatusCountMap:   statusCountMap,
@@ -104,10 +104,10 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 		Ext5:             planBatch.Ext5.String,
 	}
 	if planBatch.PausedTime.Valid {
-		pbPlanBatch.PausedTime = carbon.CreateFromStdTime(planBatch.PausedTime.Time).ToDateTimeString()
+		pbPlanBatch.PausedTime = carbonx.FormatDateTime(planBatch.PausedTime.Time)
 	}
 	if planBatch.FinishedTime.Valid {
-		pbPlanBatch.FinishedTime = carbon.CreateFromStdTime(planBatch.FinishedTime.Time).ToDateTimeString()
+		pbPlanBatch.FinishedTime = carbonx.FormatDateTime(planBatch.FinishedTime.Time)
 	}
 
 	return &trigger.GetPlanBatchRes{

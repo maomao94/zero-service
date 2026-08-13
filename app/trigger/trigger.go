@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"zero-service/app/trigger/cron"
 	"zero-service/app/trigger/internal/task"
-	interceptor "zero-service/common/Interceptor/rpcserver"
 	"zero-service/common/asynqx"
+	"zero-service/common/grpcx"
 	"zero-service/common/tool"
 
 	"github.com/duke-git/lancet/v2/strutil"
@@ -69,7 +69,7 @@ func main() {
 		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacosx.WithMetadata(m))
 		_ = nacosx.RegisterService(opts)
 	}
-	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
 	logx.AddGlobalFields(logx.Field("app", c.Name))

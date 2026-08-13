@@ -7,6 +7,8 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	"zero-service/common/rrulex"
 )
 
 var _ TaskStore = (*MemoryStore)(nil)
@@ -133,7 +135,7 @@ func (m *MemoryStore) GetByCode(ctx context.Context, taskCode string) (*TaskConf
 func (m *MemoryStore) Insert(ctx context.Context, cfg *TaskConfig) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if err := ValidateRRule(cfg.RRuleStr); err != nil {
+	if err := rrulex.Validate(cfg.RRuleStr); err != nil {
 		return err
 	}
 
@@ -161,7 +163,7 @@ func (m *MemoryStore) Insert(ctx context.Context, cfg *TaskConfig) error {
 func (m *MemoryStore) Update(ctx context.Context, cfg *TaskConfig) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if err := ValidateRRule(cfg.RRuleStr); err != nil {
+	if err := rrulex.Validate(cfg.RRuleStr); err != nil {
 		return err
 	}
 
@@ -209,11 +211,11 @@ func (m *MemoryStore) Enable(ctx context.Context, id string) error {
 		nextRun = task.ScheduledTime
 	}
 	if task.RRuleStr != "" {
-		var err error
-		nextRun, err = NextAfter(task.RRuleStr, time.Now())
+		set, err := rrulex.ParseSet(task.RRuleStr)
 		if err != nil {
 			return err
 		}
+		nextRun = set.After(time.Now(), false)
 	}
 	task.Status = StatusEnabled
 	task.NextRun = nextRun

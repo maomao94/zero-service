@@ -6,11 +6,11 @@ import (
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
+	"zero-service/common/carbonx"
 	"zero-service/common/gormx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -54,7 +54,7 @@ func (l *ListFlightTaskProgressLogic) ListFlightTaskProgress(in *djicloud.ListFl
 			MediaCount:           int32(item.MediaCount),
 			ProgressPercent:      item.ProgressPercent,
 			ExtJson:              item.ExtJSON,
-			ReportedAt:           carbon.CreateFromStdTime(item.ReportedAt).ToDateTimeMicroString(),
+			ReportedAt:           carbonx.FormatDateTimeMicro(item.ReportedAt),
 			Status:               item.Status,
 			CurrentStep:          int32(item.CurrentStep),
 			TrackId:              item.TrackId.String,

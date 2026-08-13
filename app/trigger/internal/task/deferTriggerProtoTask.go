@@ -3,12 +3,11 @@ package task
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/internal/taskpayload"
-	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/asynqx"
+	"zero-service/common/grpcx"
 	"zero-service/common/tool"
 
 	"github.com/hibiken/asynq"
@@ -55,8 +54,8 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 		v, ok := l.svcCtx.ConnMap.Get(grpcServer)
 		if !ok {
 			conn, err := zrpc.NewClient(clientConf,
-				zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
-				zrpc.WithDialOption(grpc.WithDefaultCallOptions(grpc.ForceCodec(rawCodec{}))))
+				zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor),
+				zrpc.WithDialOption(grpc.WithDefaultCallOptions(grpc.ForceCodec(grpcx.NewRawCodec("proto_raw")))))
 			if err == nil {
 				l.svcCtx.ConnMap.Set(grpcServer, conn)
 				v = conn
@@ -99,20 +98,3 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 	}
 	return nil
 }
-
-type rawCodec struct{}
-
-func (cb rawCodec) Marshal(v any) ([]byte, error) {
-	return tool.ToProtoBytes(v)
-}
-
-func (cb rawCodec) Unmarshal(data []byte, v any) error {
-	ba, ok := v.(*[]byte)
-	if !ok {
-		return fmt.Errorf("please pass in *[]byte")
-	}
-	*ba = append(*ba, data...)
-	return nil
-}
-
-func (cb rawCodec) Name() string { return "proto_raw" }

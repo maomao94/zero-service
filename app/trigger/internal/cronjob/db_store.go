@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"zero-service/app/trigger/model/gormmodel"
+	"zero-service/common/carbonx"
 	"zero-service/common/crontask"
 	"zero-service/common/gormx"
+	"zero-service/common/rrulex"
 
 	"gorm.io/gorm"
 )
@@ -91,7 +93,7 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, defaultLockTi
 // Complete 使用 LockedUntil token 完成一次周期执行。
 func (s *DBStore) Complete(ctx context.Context, id string, expectedLockedUntil time.Time, completion crontask.Completion) error {
 	updates := map[string]interface{}{
-		"next_run":       toNullTime(completion.NextRun),
+		"next_run":       carbonx.ToNullTime(completion.NextRun),
 		"scheduled_time": nil,
 	}
 	if !completion.LastRun.IsZero() {
@@ -157,7 +159,7 @@ func (s *DBStore) GetByID(ctx context.Context, id string) (*crontask.TaskConfig,
 
 // Insert 新增 Cron Job。task_code 违反唯一约束时返回 ErrDuplicate。
 func (s *DBStore) Insert(ctx context.Context, cfg *crontask.TaskConfig) error {
-	if err := crontask.ValidateRRule(cfg.RRuleStr); err != nil {
+	if err := rrulex.Validate(cfg.RRuleStr); err != nil {
 		return err
 	}
 	record, err := fromTaskConfig(cfg)
@@ -177,7 +179,7 @@ func (s *DBStore) Insert(ctx context.Context, cfg *crontask.TaskConfig) error {
 
 // Update 按 id 全量更新 Cron Job 配置，并保留控制状态与运行态历史时间。
 func (s *DBStore) Update(ctx context.Context, cfg *crontask.TaskConfig) error {
-	if err := crontask.ValidateRRule(cfg.RRuleStr); err != nil {
+	if err := rrulex.Validate(cfg.RRuleStr); err != nil {
 		return err
 	}
 	record, err := fromTaskConfig(cfg)
@@ -204,7 +206,7 @@ func (s *DBStore) Update(ctx context.Context, cfg *crontask.TaskConfig) error {
 		result = tx.Model(&gormmodel.CronJob{}).
 			Where("id = ?", cfg.ID).
 			Where("scheduled_time IS NULL").
-			Update("next_run", toNullTime(cfg.NextRun))
+			Update("next_run", carbonx.ToNullTime(cfg.NextRun))
 		if result.Error != nil {
 			return result.Error
 		}
@@ -239,18 +241,18 @@ func (s *DBStore) Enable(ctx context.Context, id string) error {
 		nextRun = record.ScheduledTime.Time
 	}
 	if record.RRuleStr != "" {
-		var err error
-		nextRun, err = crontask.NextAfter(record.RRuleStr, time.Now())
+		set, err := rrulex.ParseSet(record.RRuleStr)
 		if err != nil {
 			return err
 		}
+		nextRun = set.After(time.Now(), false)
 	}
 	result := s.db.WithContext(ctx).
 		Model(&gormmodel.CronJob{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
 			"status":         int(crontask.StatusEnabled),
-			"next_run":       toNullTime(nextRun),
+			"next_run":       carbonx.ToNullTime(nextRun),
 			"scheduled_time": nil,
 		})
 	if result.Error != nil {

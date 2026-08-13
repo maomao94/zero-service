@@ -6,6 +6,7 @@ import (
 
 	"zero-service/app/trigger/internal/cronjob"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/carbonx"
 	"zero-service/common/crontask"
 	"zero-service/common/holiday"
 	"zero-service/common/tool"
@@ -57,7 +58,7 @@ func buildCronJobTask(data cronJobTaskData) (*crontask.TaskConfig, string, error
 		data.specifiedTimes,
 		data.excludedTimes,
 		data.skipTimeFilter,
-		tool.NowStartOfSecond().StdTime(),
+		carbonx.NowStartOfSecond().StdTime(),
 	)
 	if err != nil {
 		return nil, "", tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "Cron Job 规则无效")

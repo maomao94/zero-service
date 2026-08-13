@@ -6,12 +6,12 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
-	"zero-service/common/crontask"
+	"zero-service/common/carbonx"
 	"zero-service/common/gormx"
+	"zero-service/common/rrulex"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -77,14 +77,14 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 		if err := protojson.Unmarshal([]byte(plans[i].RecurrenceRule), &pbRule); err != nil {
 			continue
 		}
-		scheduleDescription, err := crontask.DescribeRRule(plans[i].RRuleStr)
+		scheduleDescription, err := rrulex.Describe(plans[i].RRuleStr)
 		if err != nil {
 			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "生成计划规则描述失败")
 		}
 
 		pbPlan := &trigger.PlanPb{
-			CreateTime:          carbon.CreateFromStdTime(plans[i].CreateTime).ToDateTimeString(),
-			UpdateTime:          carbon.CreateFromStdTime(plans[i].UpdateTime).ToDateTimeString(),
+			CreateTime:          carbonx.FormatDateTime(plans[i].CreateTime),
+			UpdateTime:          carbonx.FormatDateTime(plans[i].UpdateTime),
 			CreateUser:          plans[i].CreateUser.String,
 			UpdateUser:          plans[i].UpdateUser.String,
 			DeptCode:            plans[i].DeptCode.String,
@@ -94,8 +94,8 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 			Type:                plans[i].Type.String,
 			GroupId:             plans[i].GroupId.String,
 			Description:         plans[i].Description.String,
-			StartTime:           carbon.CreateFromStdTime(plans[i].StartTime).ToDateTimeString(),
-			EndTime:             carbon.CreateFromStdTime(plans[i].EndTime).ToDateTimeString(),
+			StartTime:           carbonx.FormatDateTime(plans[i].StartTime),
+			EndTime:             carbonx.FormatDateTime(plans[i].EndTime),
 			Rule:                &pbRule,
 			Status:              int32(plans[i].Status),
 			ScanFlg:             int32(plans[i].ScanFlg),
@@ -112,7 +112,7 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 
 		// 设置暂停时间和原因
 		if plans[i].PausedTime.Valid {
-			pbPlan.PausedTime = carbon.CreateFromStdTime(plans[i].PausedTime.Time).ToDateTimeString()
+			pbPlan.PausedTime = carbonx.FormatDateTime(plans[i].PausedTime.Time)
 		}
 
 		progress, err := gormmodel.CalculatePlanProgress(l.ctx, rawDB, plans[i].Id)

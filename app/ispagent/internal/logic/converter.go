@@ -4,9 +4,8 @@ import (
 	"strconv"
 
 	"zero-service/app/ispagent/ispagent"
+	"zero-service/common/carbonx"
 	"zero-service/common/isp"
-
-	"github.com/dromara/carbon/v2"
 )
 
 func protoItems(items []*ispagent.Item) []isp.Item {
@@ -25,7 +24,7 @@ func protoItems(items []*ispagent.Item) []isp.Item {
 }
 
 func patrolDeviceCoordinatesToItems(items []*ispagent.PatrolDeviceCoordinate) []isp.Item {
-	now := carbon.Now().ToDateTimeString()
+	now := carbonx.NowDateTime()
 	out := make([]isp.Item, 0, len(items))
 	for _, item := range items {
 		if item == nil {
@@ -44,7 +43,7 @@ func patrolDeviceCoordinatesToItems(items []*ispagent.PatrolDeviceCoordinate) []
 }
 
 func patrolDeviceRunDataToItems(items []*ispagent.PatrolDeviceRunData) []isp.Item {
-	now := carbon.Now().ToDateTimeString()
+	now := carbonx.NowDateTime()
 	out := make([]isp.Item, 0, len(items))
 	for _, item := range items {
 		if item == nil {
@@ -64,7 +63,7 @@ func patrolDeviceRunDataToItems(items []*ispagent.PatrolDeviceRunData) []isp.Ite
 }
 
 func patrolDeviceStatusDataToItems(items []*ispagent.PatrolDeviceStatusData) []isp.Item {
-	now := carbon.Now().ToDateTimeString()
+	now := carbonx.NowDateTime()
 	out := make([]isp.Item, 0, len(items))
 	for _, item := range items {
 		if item == nil {
@@ -84,7 +83,7 @@ func patrolDeviceStatusDataToItems(items []*ispagent.PatrolDeviceStatusData) []i
 }
 
 func droneNestRunDataToItems(items []*ispagent.DroneNestRunData) []isp.Item {
-	now := carbon.Now().ToDateTimeString()
+	now := carbonx.NowDateTime()
 	out := make([]isp.Item, 0, len(items))
 	for _, item := range items {
 		if item == nil {
@@ -105,7 +104,7 @@ func droneNestRunDataToItems(items []*ispagent.DroneNestRunData) []isp.Item {
 }
 
 func envDataToItems(items []*ispagent.EnvData) []isp.Item {
-	now := carbon.Now().ToDateTimeString()
+	now := carbonx.NowDateTime()
 	out := make([]isp.Item, 0, len(items))
 	for _, item := range items {
 		if item == nil {

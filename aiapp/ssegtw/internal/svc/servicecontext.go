@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"zero-service/aiapp/ssegtw/internal/config"
-	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/antsx"
+	"zero-service/common/grpcx"
 	"zero-service/zerorpc/zerorpc"
 
 	"github.com/zeromicro/go-zero/zrpc"
@@ -31,7 +31,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	return &ServiceContext{
 		Config: c,
 		ZeroRpcCli: zerorpc.NewZerorpcClient(zrpc.MustNewClient(c.ZeroRpcConf,
-			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor)).Conn()),
+			zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor)).Conn()),
 		Emitter:    antsx.NewEventEmitter[SSEEvent](),
 		PendingReg: antsx.NewReplyPool[string](antsx.WithDefaultTTL(60 * time.Second)),
 	}

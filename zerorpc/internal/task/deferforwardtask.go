@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"time"
 	"zero-service/app/alarm/alarm"
+	"zero-service/common/carbonx"
 	"zero-service/zerorpc/internal/svc"
 	"zero-service/zerorpc/internal/taskpayload"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/netx"
 	"github.com/zeromicro/go-zero/core/trace"
@@ -55,7 +55,7 @@ func (l *DeferForwardTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 					Description: "服务告警",
 					Title:       "服务告警 - Zero-Service",
 					Project:     "zero.rpc",
-					DateTime:    carbon.Now().Format("Y-m-d H:i:s"),
+					DateTime:    carbonx.NowDateTime(),
 					AlarmId:     msg.MsgId,
 					Content:     fmt.Sprintf("%s,转发任务执行失败", traceID),
 					Error:       fmt.Sprintf("processTask-%s, err:%+v, msgId:%s", t.Type(), err.Error(), msg.MsgId),
@@ -77,7 +77,7 @@ func (l *DeferForwardTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 					Description: "服务告警",
 					Title:       "服务告警 - Zero-Service",
 					Project:     "zero.rpc",
-					DateTime:    carbon.Now().Format("Y-m-d H:i:s"),
+					DateTime:    carbonx.NowDateTime(),
 					AlarmId:     msg.MsgId,
 					Content:     fmt.Sprintf("%s,转发任务执行失败", traceID),
 					Error:       fmt.Sprintf("processTask-%s, code:%d, url:%s", t.Type(), resp.StatusCode, msg.Url),

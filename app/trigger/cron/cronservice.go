@@ -12,8 +12,8 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/internal/triggerutil"
 	"zero-service/app/trigger/model/gormmodel"
+	"zero-service/common/carbonx"
 	"zero-service/common/gormx"
-	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/model"
 
@@ -153,23 +153,6 @@ func (s *CronService) ScanPlanExecItem() bool {
 	return true
 }
 
-type rawCodec struct{}
-
-func (cb rawCodec) Marshal(v any) ([]byte, error) {
-	return tool.ToProtoBytes(v)
-}
-
-func (cb rawCodec) Unmarshal(data []byte, v any) error {
-	ba, ok := v.(*[]byte)
-	if !ok {
-		return fmt.Errorf("please pass in *[]byte")
-	}
-	*ba = append(*ba, data...)
-	return nil
-}
-
-func (cb rawCodec) Name() string { return "proto_raw" }
-
 func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.PlanExecItem, plan *gormmodel.Plan) {
 	traceID := trace.TraceIDFromContext(ctx)
 	if execItem.RequestTimeout == 0 {
@@ -187,8 +170,8 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 		return
 	}
 	callPlan := &streamevent.PlanPb{
-		CreateTime:  carbon.CreateFromStdTime(plan.CreateTime).ToDateTimeString(),
-		UpdateTime:  carbon.CreateFromStdTime(plan.UpdateTime).ToDateTimeString(),
+		CreateTime:  carbonx.FormatDateTime(plan.CreateTime),
+		UpdateTime:  carbonx.FormatDateTime(plan.UpdateTime),
 		CreateUser:  plan.CreateUser.String,
 		UpdateUser:  plan.UpdateUser.String,
 		DeptCode:    plan.DeptCode.String,
@@ -198,8 +181,8 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 		Type:        plan.Type.String,
 		GroupId:     plan.GroupId.String,
 		Description: plan.Description.String,
-		StartTime:   carbon.CreateFromStdTime(plan.StartTime).ToDateTimeString(),
-		EndTime:     carbon.CreateFromStdTime(plan.EndTime).ToDateTimeString(),
+		StartTime:   carbonx.FormatDateTime(plan.StartTime),
+		EndTime:     carbonx.FormatDateTime(plan.EndTime),
 		Ext1:        plan.Ext1.String,
 		Ext2:        plan.Ext2.String,
 		Ext3:        plan.Ext3.String,
@@ -220,13 +203,13 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 		ItemRowId:       execItem.ItemRowId,
 		PointId:         execItem.PointId.String,
 		Payload:         execItem.Payload,
-		PlanTriggerTime: carbon.NewCarbon(execItem.PlanTriggerTime).ToDateTimeString(),
+		PlanTriggerTime: carbonx.FormatDateTime(execItem.PlanTriggerTime),
 		LastResult:      execItem.LastResult.String,
 		LastMessage:     execItem.LastMessage.String,
 		LastReason:      execItem.LastReason.String,
 	}
 	if execItem.LastTriggerTime.Valid {
-		req.LastTriggerTime = carbon.NewCarbon(execItem.LastTriggerTime.Time).ToDateTimeString()
+		req.LastTriggerTime = carbonx.FormatDateTime(execItem.LastTriggerTime.Time)
 	}
 	errCh := make(chan error, 1)
 	var err error

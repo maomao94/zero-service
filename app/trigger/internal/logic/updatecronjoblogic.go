@@ -7,6 +7,7 @@ import (
 	"zero-service/app/trigger/internal/cronjob"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/carbonx"
 	"zero-service/common/crontask"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
@@ -62,7 +63,7 @@ func (l *UpdateCronJobLogic) UpdateCronJob(in *trigger.UpdateCronJobReq) (*trigg
 	}
 	nextRun := ""
 	if !task.NextRun.IsZero() {
-		nextRun = tool.CarbonFromTimeStartOfSecond(task.NextRun).ToDateTimeString()
+		nextRun = carbonx.FormatDateTime(task.NextRun)
 	}
 	return &trigger.UpdateCronJobRes{JobId: task.ID, NextRun: nextRun, TaskCode: task.TaskCode, GroupId: groupID}, nil
 }

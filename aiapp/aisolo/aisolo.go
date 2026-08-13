@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	interceptor "zero-service/common/Interceptor/rpcserver"
+	"zero-service/common/grpcx"
 
 	"zero-service/aiapp/aisolo/aisolo"
 	"zero-service/aiapp/aisolo/internal/config"
@@ -45,8 +45,8 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
-	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
-	s.AddStreamInterceptors(interceptor.StreamLoggerInterceptor)
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
+	s.AddStreamInterceptors(grpcx.StreamLoggerInterceptor)
 	defer func() { _ = ctx.Close() }()
 	defer s.Stop()
 

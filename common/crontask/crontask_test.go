@@ -10,40 +10,13 @@ import (
 	"testing"
 	"time"
 
+	"zero-service/common/rrulex"
+
 	"github.com/dromara/carbon/v2"
-	"github.com/teambition/rrule-go"
 )
 
 func testRRuleSet(rule string) string {
 	return "DTSTART:20260727T000000Z\nRRULE:" + rule
-}
-
-func TestNextAfterRejectsBareRRule(t *testing.T) {
-	after := time.Date(2026, 7, 27, 9, 0, 0, 0, time.UTC)
-	if _, err := NextAfter("FREQ=DAILY;BYHOUR=10;BYMINUTE=30;BYSECOND=0", after); err == nil {
-		t.Fatal("NextAfter must reject bare RRULE")
-	}
-	if err := ValidateRRule("FREQ=DAILY;BYHOUR=10;BYMINUTE=30;BYSECOND=0"); err == nil {
-		t.Fatal("ValidateRRule must reject bare RRULE")
-	}
-}
-
-func TestNextAfterSupportsCRLFRRuleSet(t *testing.T) {
-	value := "DTSTART;TZID=Asia/Shanghai:20260727T090000\r\n" +
-		"RRULE:FREQ=DAILY;COUNT=2\r\n" +
-		"EXDATE;TZID=Asia/Shanghai:20260728T090000"
-	after := time.Date(2026, 7, 27, 0, 0, 0, 0, time.FixedZone("UTC+8", 8*60*60))
-	next, err := NextAfter(value, after)
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := time.Date(2026, 7, 27, 9, 0, 0, 0, next.Location())
-	if !next.Equal(want) {
-		t.Fatalf("next = %v, want %v", next, want)
-	}
-	if err := ValidateRRule(value); err != nil {
-		t.Fatalf("ValidateRRule(CRLF set): %v", err)
-	}
 }
 
 func TestSchedulerPreviewNextRunsHonorsExdateAndCount(t *testing.T) {
@@ -78,20 +51,13 @@ func TestSchedulerPreviewNextRunsHonorsExdateAndCount(t *testing.T) {
 	}
 }
 
-func TestSchedulerPreviewNextRunsAppliesInvalidTimeFilter(t *testing.T) {
+func TestSchedulerPreviewNextRunsSkipsInvalidCandidates(t *testing.T) {
 	after := time.Date(2026, 7, 27, 8, 0, 0, 0, time.UTC)
 	task := &TaskConfig{RRuleStr: "DTSTART:20260727T080000Z\nRRULE:FREQ=HOURLY;COUNT=8"}
-	filterCalls := 0
-	scheduler := NewScheduler(nil, nil, WithInvalidTimeFilter(func(task *TaskConfig, next time.Time) time.Time {
-		filterCalls++
-		for next.Hour() >= 9 && next.Hour() <= 12 {
-			var err error
-			next, err = NextAfter(task.RRuleStr, next)
-			if err != nil {
-				t.Fatalf("advance filtered time: %v", err)
-			}
-		}
-		return next
+	predicateCalls := 0
+	scheduler := NewScheduler(nil, nil, WithInvalidTimePredicate(func(_ *TaskConfig, t time.Time) bool {
+		predicateCalls++
+		return t.Hour() >= 9 && t.Hour() <= 12
 	}))
 
 	runs, err := scheduler.PreviewNextRuns(task, after, 2)
@@ -101,19 +67,24 @@ func TestSchedulerPreviewNextRunsAppliesInvalidTimeFilter(t *testing.T) {
 	if len(runs) != 2 || runs[0].Hour() != 13 || runs[1].Hour() != 14 {
 		t.Fatalf("filtered runs = %v", runs)
 	}
-	if filterCalls != 2 {
-		t.Fatalf("filter calls = %d, want 2 bounded result iterations", filterCalls)
+	// 谓词先于边界判定，对每个候选（含不晚于 after 的 08 点候选）各判定一次：08-14 共 7 个。
+	if predicateCalls != 7 {
+		t.Fatalf("predicate calls = %d, want 7 (one per yielded candidate)", predicateCalls)
 	}
 }
 
-func TestSchedulerPreviewNextRunsRejectsNonAdvancingFilterResult(t *testing.T) {
+func TestSchedulerPreviewNextRunsExhaustedInsideInvalidWindow(t *testing.T) {
 	after := time.Date(2026, 7, 27, 8, 0, 0, 0, time.UTC)
 	task := &TaskConfig{RRuleStr: "DTSTART:20260727T090000Z\nRRULE:FREQ=HOURLY;COUNT=3"}
-	scheduler := NewScheduler(nil, nil, WithInvalidTimeFilter(func(_ *TaskConfig, _ time.Time) time.Time {
-		return after
+	scheduler := NewScheduler(nil, nil, WithInvalidTimePredicate(func(_ *TaskConfig, _ time.Time) bool {
+		return true
 	}))
-	if _, err := scheduler.PreviewNextRuns(task, after, 1); err == nil {
-		t.Fatal("non-advancing filter result must return an error")
+	runs, err := scheduler.PreviewNextRuns(task, after, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 0 {
+		t.Fatalf("exhausted runs = %v, want empty", runs)
 	}
 }
 
@@ -832,7 +803,7 @@ func TestMemoryStoreUpdateMissingReturnsErrUpdate(t *testing.T) {
 }
 
 func TestComputeNextRunInvalidRRule(t *testing.T) {
-	_, err := computeNextRun(&TaskConfig{
+	_, err := NewScheduler(nil, nil).computeNextRun(&TaskConfig{
 		TaskCode: "t",
 		RRuleStr: "INVALID_RRULE",
 		NextRun:  carbon.Now().StdTime(),
@@ -843,7 +814,7 @@ func TestComputeNextRunInvalidRRule(t *testing.T) {
 }
 
 func TestComputeNextRunExpiredTaskReturnsZero(t *testing.T) {
-	next, err := computeNextRun(&TaskConfig{
+	next, err := NewScheduler(nil, nil).computeNextRun(&TaskConfig{
 		TaskCode: "t",
 		RRuleStr: testRRuleSet("FREQ=DAILY;COUNT=1"),
 		NextRun:  carbon.Now().StdTime(),
@@ -857,7 +828,7 @@ func TestComputeNextRunExpiredTaskReturnsZero(t *testing.T) {
 }
 
 func TestComputeNextRunAllowsZeroCurrentSchedule(t *testing.T) {
-	next, err := computeNextRun(&TaskConfig{
+	next, err := NewScheduler(nil, nil).computeNextRun(&TaskConfig{
 		TaskCode: "manual",
 		RRuleStr: testRRuleSet("FREQ=DAILY;COUNT=1"),
 	})
@@ -1215,20 +1186,11 @@ func TestConcurrentLockAndFetch(t *testing.T) {
 	}
 }
 
-// refNextAfter 是未做起点平移的原始查询实现，作为平移后结果的差分参照。
-func refNextAfter(t *testing.T, value string, after time.Time) (time.Time, error) {
-	t.Helper()
-	set, err := parseRRuleSet(value)
-	if err != nil {
-		return time.Time{}, err
-	}
-	return set.After(after, false), nil
-}
-
-// refPreviewRuns 是未做起点平移的原始预览实现，作为平移后结果的差分参照。
+// refPreviewRuns 是未做起点平移的原始预览实现（官方 ParseSet + set.After），
+// 作为平移后调度预览结果的差分参照。
 func refPreviewRuns(t *testing.T, value string, after time.Time, count int) []time.Time {
 	t.Helper()
-	set, err := parseRRuleSet(value)
+	set, err := rrulex.ParseSet(value)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1243,49 +1205,6 @@ func refPreviewRuns(t *testing.T, value string, after time.Time, count int) []ti
 		cursor = next
 	}
 	return runs
-}
-
-func TestNextAfterMatchesOriginalAfterShift(t *testing.T) {
-	loc := time.FixedZone("UTC+8", 8*60*60)
-	now := time.Date(2026, 8, 12, 15, 17, 54, 0, loc)
-	rules := []struct {
-		name string
-		rule string
-	}{
-		{name: "daily-fixed-time", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=DAILY;BYHOUR=9;BYMINUTE=30;BYSECOND=0"},
-		{name: "daily-bymonth", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=DAILY;BYMONTH=3;BYHOUR=9;BYMINUTE=30;BYSECOND=0"},
-		{name: "weekly-byday", rule: "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=WEEKLY;BYDAY=MO,WE;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
-		{name: "weekly-default-phase", rule: "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=WEEKLY;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
-		{name: "monthly-day15", rule: "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=MONTHLY;BYMONTHDAY=15;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
-		{name: "monthly-day31", rule: "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=MONTHLY;BYMONTHDAY=31;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
-		{name: "yearly-bymonth", rule: "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=1;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
-		{name: "hourly-fixed-minute", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=HOURLY;BYMINUTE=30;BYSECOND=0"},
-		{name: "minutely-fixed-second", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093005\nRRULE:FREQ=MINUTELY;BYSECOND=0"},
-		{name: "secondly-fixed-minute", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=SECONDLY;BYMINUTE=5;BYSECOND=0"},
-		{name: "monthly-interval2", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=MONTHLY;INTERVAL=2;BYMONTHDAY=1;BYHOUR=9;BYMINUTE=30;BYSECOND=0"},
-		{name: "daily-interval3", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=DAILY;INTERVAL=3;BYHOUR=9;BYMINUTE=30;BYSECOND=0"},
-		{name: "weekly-interval2-byday", rule: "DTSTART;TZID=Asia/Shanghai:20260101T090000\nRRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=TH;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
-		{name: "hourly-interval2", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=HOURLY;INTERVAL=2;BYMINUTE=30;BYSECOND=0"},
-		{name: "minutely-interval5", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093005\nRRULE:FREQ=MINUTELY;INTERVAL=5;BYSECOND=0"},
-		{name: "yearly-interval2", rule: "DTSTART;TZID=Asia/Shanghai:20230101T090000\nRRULE:FREQ=YEARLY;INTERVAL=2;BYMONTH=1;BYMONTHDAY=1;BYHOUR=9;BYMINUTE=0;BYSECOND=0"},
-		{name: "rdate-exdate", rule: "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=DAILY;BYHOUR=9;BYMINUTE=30;BYSECOND=0\nRDATE;TZID=Asia/Shanghai:20260115T100000\nEXDATE;TZID=Asia/Shanghai:20260201T093000"},
-	}
-	queries := []time.Time{now, now.Add(3 * time.Hour), now.Add(30 * 24 * time.Hour)}
-	for _, tt := range rules {
-		for _, q := range queries {
-			want, err := refNextAfter(t, tt.rule, q)
-			if err != nil {
-				t.Fatalf("%s: reference query failed: %v", tt.name, err)
-			}
-			got, err := NextAfter(tt.rule, q)
-			if err != nil {
-				t.Fatalf("%s: NextAfter failed: %v", tt.name, err)
-			}
-			if !got.Equal(want) {
-				t.Errorf("%s: NextAfter(%v) = %v, want %v", tt.name, q.Format("2006-01-02 15:04:05"), got, want)
-			}
-		}
-	}
 }
 
 func TestPreviewNextRunsMatchesOriginalAfterShift(t *testing.T) {
@@ -1348,247 +1267,4 @@ func TestPreviewNextRunsUserRuleLongGapIsCorrect(t *testing.T) {
 
 func fmtInt(v int) string {
 	return fmt.Sprintf("%d", v)
-}
-
-func TestShiftSetForQueryFallbackRules(t *testing.T) {
-	after := time.Date(2026, 8, 12, 0, 0, 0, 0, time.UTC)
-	stringRules := []string{
-		"DTSTART:20260101T090000Z\nRRULE:FREQ=DAILY;COUNT=3;BYHOUR=9",
-		"DTSTART:20260101T090000Z\nRRULE:FREQ=YEARLY;BYWEEKNO=1;BYDAY=MO",
-		"DTSTART:20260101T090000Z\nRRULE:FREQ=YEARLY;BYYEARDAY=1",
-	}
-	for _, rule := range stringRules {
-		set, err := parseRRuleSet(rule)
-		if err != nil {
-			t.Fatalf("parse %q: %v", rule, err)
-		}
-		if shifted := ShiftSetForQuery(set, after); shifted != nil {
-			t.Errorf("rule %q must fall back to original set", rule)
-		}
-		want, err := refNextAfter(t, rule, after)
-		if err != nil {
-			t.Fatalf("reference query failed for %q: %v", rule, err)
-		}
-		got, err := NextAfter(rule, after)
-		if err != nil {
-			t.Fatalf("NextAfter failed for %q: %v", rule, err)
-		}
-		if !got.Equal(want) {
-			t.Errorf("rule %q: NextAfter = %v, want %v", rule, got, want)
-		}
-	}
-
-	dtstart := time.Date(2026, 1, 1, 9, 0, 0, 0, time.UTC)
-	optionRules := []rrule.ROption{
-		{Freq: rrule.MONTHLY, Dtstart: dtstart, Bymonthday: []int{1, 15}, Bysetpos: []int{1}},
-		{Freq: rrule.YEARLY, Dtstart: dtstart, Byeaster: []int{1}},
-	}
-	for _, option := range optionRules {
-		rule, err := rrule.NewRRule(option)
-		if err != nil {
-			t.Fatalf("build rule %v: %v", option, err)
-		}
-		set := &rrule.Set{}
-		set.RRule(rule)
-		if shifted := ShiftSetForQuery(set, after); shifted != nil {
-			t.Errorf("option %v must fall back to original set", option)
-		}
-	}
-}
-
-func TestShiftSetForQueryNearDtStartIsCorrect(t *testing.T) {
-	// DTSTART 与查询点同在一个周期内：无需平移，行为与原始一致。
-	after := time.Date(2026, 8, 12, 10, 15, 0, 0, time.UTC)
-	rule := "DTSTART:20260812T093000Z\nRRULE:FREQ=HOURLY;BYMINUTE=0"
-	set, err := parseRRuleSet(rule)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if shifted := ShiftSetForQuery(set, after); shifted != nil {
-		t.Fatalf("DTSTART within one period must not be shifted, got %v", shifted.GetDTStart())
-	}
-	want, err := refNextAfter(t, rule, after)
-	if err != nil {
-		t.Fatal(err)
-	}
-	got, err := NextAfter(rule, after)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !got.Equal(want) {
-		t.Fatalf("NextAfter = %v, want %v", got, want)
-	}
-
-	// anchor 恰好落在查询点上的平移也必须保持结果一致。
-	after = time.Date(2026, 8, 12, 10, 0, 0, 0, time.UTC)
-	rule = "DTSTART:20260812T090000Z\nRRULE:FREQ=HOURLY;BYMINUTE=0"
-	want, err = refNextAfter(t, rule, after)
-	if err != nil {
-		t.Fatal(err)
-	}
-	got, err = NextAfter(rule, after)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !got.Equal(want) {
-		t.Fatalf("NextAfter = %v, want %v", got, want)
-	}
-}
-
-func TestNextAfterAcrossFallBackDSTMatchesReference(t *testing.T) {
-	loc, err := time.LoadLocation("America/New_York")
-	if err != nil {
-		t.Skipf("location unavailable: %v", err)
-	}
-	// 2026-11-01 02:00 EDT 回拨到 01:00 EST：跨回拨边界的 duration 加法平移
-	// 可能让锚点墙钟与查询点重合，结果必须与原始集一致。
-	rules := []struct {
-		name string
-		rule string
-	}{
-		{name: "hourly", rule: "DTSTART;TZID=America/New_York:20261030T090000\nRRULE:FREQ=HOURLY;BYMINUTE=0;BYSECOND=0"},
-		{name: "minutely", rule: "DTSTART;TZID=America/New_York:20261030T090000\nRRULE:FREQ=MINUTELY;BYSECOND=0"},
-	}
-	queries := []time.Time{
-		time.Date(2026, 11, 2, 9, 0, 0, 0, loc),
-		time.Date(2026, 11, 2, 9, 30, 0, 0, loc),
-		time.Date(2026, 11, 1, 5, 30, 0, 0, loc),
-	}
-	for _, tt := range rules {
-		for _, q := range queries {
-			want, err := refNextAfter(t, tt.rule, q)
-			if err != nil {
-				t.Fatalf("%s: reference query failed: %v", tt.name, err)
-			}
-			got, err := NextAfter(tt.rule, q)
-			if err != nil {
-				t.Fatalf("%s: NextAfter failed: %v", tt.name, err)
-			}
-			if !got.Equal(want) {
-				t.Errorf("%s: NextAfter(%v) = %v, want %v", tt.name, q.Format("2006-01-02 15:04:05 MST"), got, want)
-			}
-		}
-	}
-}
-
-func TestNextRunsMatchesReference(t *testing.T) {
-	loc := time.FixedZone("UTC+8", 8*60*60)
-	now := time.Date(2026, 8, 12, 15, 17, 54, 0, loc)
-	rule := "DTSTART;TZID=Asia/Shanghai:20260101T093000\nRRULE:FREQ=DAILY;BYHOUR=9;BYMINUTE=30;BYSECOND=0\nRDATE;TZID=Asia/Shanghai:20260115T100000\nEXDATE;TZID=Asia/Shanghai:20260201T093000"
-
-	want := refPreviewRuns(t, rule, now, 7)
-	got, err := NextRuns(rule, now, 7)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(got) != len(want) {
-		t.Fatalf("runs = %v, want %v", got, want)
-	}
-	for i := range want {
-		if !got[i].Equal(want[i]) {
-			t.Fatalf("runs[%d] = %v, want %v", i, got[i], want[i])
-		}
-	}
-
-	if runs, err := NextRuns(rule, now, 0); err != nil || len(runs) != 0 {
-		t.Fatalf("NextRuns count=0 = %v, %v; want empty, nil", runs, err)
-	}
-	if _, err := NextRuns("", now, 5); err == nil {
-		t.Fatal("NextRuns must reject empty rule")
-	}
-}
-
-func TestShiftDtStartByPeriod(t *testing.T) {
-	loc := time.UTC
-	date := func(y int, m time.Month, d int) time.Time { return time.Date(y, m, d, 0, 0, 0, 0, loc) }
-	datetime := func(y int, m time.Month, d, hh, mm, ss int) time.Time {
-		return time.Date(y, m, d, hh, mm, ss, 0, loc)
-	}
-	tests := []struct {
-		name     string
-		dtstart  time.Time
-		after    time.Time
-		freq     rrule.Frequency
-		interval int
-		want     time.Time
-		wantOK   bool
-	}{
-		// YEARLY：年差整对齐，直接在 after 之前。
-		{name: "yearly-simple", dtstart: date(2020, 6, 15), after: date(2026, 8, 12), freq: rrule.YEARLY, interval: 1, want: date(2026, 6, 15), wantOK: true},
-		// YEARLY：+6 年越过 after（9 月晚于 8 月），回退一个间隔到上一个相位 2025-09-15。
-		{name: "yearly-retreat-previous-phase", dtstart: date(2020, 9, 15), after: date(2026, 8, 12), freq: rrule.YEARLY, interval: 1, want: date(2025, 9, 15), wantOK: true},
-		// YEARLY INTERVAL=2：5 年对齐到 4 年。
-		{name: "yearly-interval2-floor", dtstart: date(2020, 6, 15), after: date(2025, 8, 12), freq: rrule.YEARLY, interval: 2, want: date(2024, 6, 15), wantOK: true},
-		// YEARLY 闰日：AddDate 进位到 2026-03-01，月/日相位被破坏 → 放弃平移。
-		{name: "yearly-feb29-clamp", dtstart: date(2020, 2, 29), after: date(2026, 8, 12), freq: rrule.YEARLY, interval: 1, want: time.Time{}, wantOK: false},
-		// YEARLY：未跨满一个间隔（years=0）→ 不平移。
-		{name: "yearly-not-yet-one-period", dtstart: date(2020, 6, 15), after: date(2020, 8, 12), freq: rrule.YEARLY, interval: 1, want: time.Time{}, wantOK: false},
-		// YEARLY：回退到 dtstart 自身（2026-06-15 越过、2025-06-15 即起点）→ Equal 兜底 false。
-		{name: "yearly-retreat-to-dtstart", dtstart: date(2020, 6, 15), after: date(2021, 3, 1), freq: rrule.YEARLY, interval: 1, want: time.Time{}, wantOK: false},
-
-		// MONTHLY：+31 月=2026-08-15 越过 → 回退到 2026-07-15。
-		{name: "monthly-retreat-previous-phase", dtstart: date(2024, 1, 15), after: date(2026, 8, 12), freq: rrule.MONTHLY, interval: 1, want: date(2026, 7, 15), wantOK: true},
-		// MONTHLY INTERVAL=3：31 月对齐到 30 月（07-15 未越过）。
-		{name: "monthly-interval3-floor", dtstart: date(2024, 1, 15), after: date(2026, 8, 12), freq: rrule.MONTHLY, interval: 3, want: date(2026, 7, 15), wantOK: true},
-		// MONTHLY 月末：1/31 +2 月=3/31 越过，+1 月=3/02 相位破坏 → 放弃。
-		{name: "monthly-day31-clamp", dtstart: date(2024, 1, 31), after: date(2024, 3, 5), freq: rrule.MONTHLY, interval: 1, want: time.Time{}, wantOK: false},
-		// MONTHLY：回退到 dtstart（2024-02-15 越过，2024-01-15 即起点）→ Equal 兜底 false。
-		{name: "monthly-retreat-to-dtstart", dtstart: date(2024, 1, 15), after: date(2024, 2, 1), freq: rrule.MONTHLY, interval: 1, want: time.Time{}, wantOK: false},
-		// MONTHLY：月相位对、日号 15 保持不变 → 平移成功。
-		{name: "monthly-day15-preserved", dtstart: date(2024, 1, 15), after: date(2024, 4, 20), freq: rrule.MONTHLY, interval: 1, want: date(2024, 4, 15), wantOK: true},
-
-		// WEEKLY：2024-01-01(周一) 起 954 天对齐到 952 天=136 周，保持周一相位。
-		{name: "weekly-954d-floor", dtstart: date(2024, 1, 1), after: date(2026, 8, 12), freq: rrule.WEEKLY, interval: 1, want: date(2026, 8, 10), wantOK: true},
-		// WEEKLY INTERVAL=2：954 对齐到 952=偶数周。
-		{name: "weekly-interval2-floor", dtstart: date(2024, 1, 1), after: date(2026, 8, 12), freq: rrule.WEEKLY, interval: 2, want: date(2026, 8, 10), wantOK: true},
-		// WEEKLY：不足一周即不平移。
-		{name: "weekly-too-early", dtstart: date(2024, 1, 1), after: date(2024, 1, 3), freq: rrule.WEEKLY, interval: 1, want: time.Time{}, wantOK: false},
-		// WEEKLY：对齐到最近周一（2024-01-08）。
-		{name: "weekly-floor-monday", dtstart: date(2024, 1, 1), after: date(2024, 1, 10), freq: rrule.WEEKLY, interval: 1, want: date(2024, 1, 8), wantOK: true},
-
-		// DAILY：954 天恰在 after，整对齐不动。
-		{name: "daily-exact", dtstart: date(2024, 1, 1), after: date(2026, 8, 12), freq: rrule.DAILY, interval: 1, want: date(2026, 8, 12), wantOK: true},
-		// DAILY INTERVAL=3：955 天对齐到 954 天（divisible-by-3 相位保留）。
-		{name: "daily-interval3-floor", dtstart: date(2024, 1, 1), after: date(2026, 8, 13), freq: rrule.DAILY, interval: 3, want: date(2026, 8, 12), wantOK: true},
-		// DAILY：不足一个间隔不平移。
-		{name: "daily-too-early", dtstart: date(2024, 1, 1), after: date(2024, 1, 2), freq: rrule.DAILY, interval: 100, want: time.Time{}, wantOK: false},
-
-		// HOURLY：652 小时对齐，锚点 14:00，分/秒相位保持。
-		{name: "hourly-retreat-previous-phase", dtstart: datetime(2024, 1, 1, 10, 0, 0), after: datetime(2024, 1, 28, 14, 30, 0), freq: rrule.HOURLY, interval: 1, want: datetime(2024, 1, 28, 14, 0, 0), wantOK: true},
-		// HOURLY INTERVAL=6：652 对齐到 648。
-		{name: "hourly-interval6-floor", dtstart: datetime(2024, 1, 1, 10, 0, 0), after: datetime(2024, 1, 28, 14, 30, 0), freq: rrule.HOURLY, interval: 6, want: datetime(2024, 1, 28, 10, 0, 0), wantOK: true},
-		// HOURLY：小时差不足则不平移。
-		{name: "hourly-too-early", dtstart: datetime(2024, 1, 1, 10, 0, 0), after: datetime(2024, 1, 1, 10, 59, 0), freq: rrule.HOURLY, interval: 1, want: time.Time{}, wantOK: false},
-
-		// MINUTELY：17.5 分钟截断到 17，对齐到 15。
-		{name: "minutely-interval5-floor", dtstart: datetime(2024, 1, 1, 10, 0, 0), after: datetime(2024, 1, 1, 10, 17, 30), freq: rrule.MINUTELY, interval: 5, want: datetime(2024, 1, 1, 10, 15, 0), wantOK: true},
-		// MINUTELY：秒相位保持（从 :15 起的 15 分钟对齐)。
-		{name: "minutely-second-phase-preserved", dtstart: datetime(2024, 1, 1, 10, 0, 15), after: datetime(2024, 1, 1, 10, 17, 30), freq: rrule.MINUTELY, interval: 5, want: datetime(2024, 1, 1, 10, 15, 15), wantOK: true},
-
-		// SECONDLY：50 秒对齐到 45。
-		{name: "secondly-interval15-floor", dtstart: datetime(2024, 1, 1, 10, 0, 0), after: datetime(2024, 1, 1, 10, 0, 50), freq: rrule.SECONDLY, interval: 15, want: datetime(2024, 1, 1, 10, 0, 45), wantOK: true},
-
-		// 前置守卫：after 不晚于 dtstart 或 dtstart 为零。
-		{name: "after-not-after-dtstart", dtstart: date(2026, 8, 12), after: date(2026, 8, 12), freq: rrule.DAILY, interval: 1, want: time.Time{}, wantOK: false},
-		{name: "zero-dtstart", dtstart: time.Time{}, after: date(2026, 8, 12), freq: rrule.DAILY, interval: 1, want: time.Time{}, wantOK: false},
-		// interval < 1 归一化为 1。
-		{name: "interval-zero-normalized", dtstart: date(2024, 1, 1), after: date(2024, 1, 10), freq: rrule.DAILY, interval: 0, want: date(2024, 1, 10), wantOK: true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, ok := shiftDtStartByPeriod(tt.dtstart, tt.after, tt.freq, tt.interval)
-			if ok != tt.wantOK {
-				t.Fatalf("shiftDtStartByPeriod(%v, %v, %d, %d) ok = %v, want %v", tt.dtstart.Format("2006-01-02 15:04:05"), tt.after.Format("2006-01-02 15:04:05"), tt.freq, tt.interval, ok, tt.wantOK)
-			}
-			if !ok {
-				return
-			}
-			if !got.Equal(tt.want) {
-				t.Errorf("shiftDtStartByPeriod(%v, %v, %d, %d) = %v, want %v", tt.dtstart.Format("2006-01-02 15:04:05"), tt.after.Format("2006-01-02 15:04:05"), tt.freq, tt.interval, got.Format("2006-01-02 15:04:05"), tt.want.Format("2006-01-02 15:04:05"))
-			}
-			if got.After(tt.after) {
-				t.Errorf("shiftDtStartByPeriod shifted %v must not be after query point %v", got, tt.after)
-			}
-		})
-	}
 }

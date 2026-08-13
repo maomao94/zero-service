@@ -1644,3 +1644,225 @@ task_code 端到端 64→128（Create/Submit/List 校验 + GORM 列）；HandleC
 ### Status
 
 [OK] **Completed**
+
+
+## Session 164: crontask 无效区间谓词重构 + rrulex 抽取
+
+**Date**: 2026-08-13
+**Task**: crontask 无效区间谓词重构 + rrulex 抽取
+**Branch**: `master`
+
+### Summary
+
+重构 InvalidTimeFilter→InvalidTimePredicate 谓词（业务侧只做排除，推进收编公共层单趟迭代）；抽取 common/rrulex 包（ParseSet/Validate/ShiftSetForQuery/NextRuns/Describe），单次 after 用官方原生风格；同步 ispagent/trigger 调用方与 crontask-guidelines 规格。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5bbac571` | (see git log) |
+| `00891444` | (see git log) |
+| `79914f35` | (see git log) |
+| `e4ac5e73` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 165: 补齐 rrulex RRULE 契约测试并完成 Trellis spec 收尾
+
+**Date**: 2026-08-13
+**Task**: 补齐 rrulex RRULE 契约测试并完成 Trellis spec 收尾
+**Branch**: `master`
+
+### Summary
+
+补充 RRULE 官方差分、DTSTART/INTERVAL 相位、inc、COUNT/UNTIL、RDATE/EXDATE、全频率与 DST 测试；修复 DAILY/WEEKLY 跨 DST 时不安全平移；补 ISP 无效区间边界测试；新增 rrulex-guidelines.md，拆分 crontask/rrulex 规范并同步 Trigger 引用。全仓测试、race、vet 通过；保留无关 .opencode/package.json 修改。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `977c99e2` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 166: Fix GaussDB DJI device unknown identity
+
+**Date**: 2026-08-13
+**Task**: Fix GaussDB DJI device unknown identity
+**Branch**: `master`
+
+### Summary
+
+Fixed DJI device identity persistence under GaussDB empty-string-as-NULL semantics using non-empty unknown sentinels, preserved independent gateway ownership updates, added regression coverage, and documented the reusable GORM string null/default contract.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3cc666c7` | (see git log) |
+| `8416f5c7` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 167: 完成 gRPC 与 context 传播层重构
+
+**Date**: 2026-08-13
+**Task**: 完成 gRPC 与 context 传播层重构
+**Branch**: `master`
+
+### Summary
+
+将 gRPC RawCodec 与拦截器统一到 common/grpcx，新增 authctx 并将 MCP context/meta 归位到 mcpx，删除 ctxdata/ctxprop；保持所有 context、claim、gRPC metadata、MCP _meta、Authorization 与 b64 协议不变。完成 ClaimMapping 注释、metadata schema 收窄和契约测试，定向 race/test/vet/diff 检查通过；既有 iecagent vet 告警按范围保留。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `eb692d17` | (see git log) |
+| `6c9ddf7a` | (see git log) |
+| `71984189` | (see git log) |
+| `e6c48828` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 168: 完成日期时间工具统一与归档
+
+**Date**: 2026-08-14
+**Task**: 完成日期时间工具统一与归档
+**Branch**: `master`
+
+### Summary
+
+确认 common/carbonx 日期时间 API 与全仓迁移已完成，补充时区、非法 timezone、零时间及毫秒/微秒契约测试；审计旧 common/tool 时间工具与局部 helper 已删除、调用方已迁移、领域协议格式保留。全仓 go test 通过，相关 go vet 通过，全仓 vet 仅剩两个无关既有告警；更新任务验收与迁移审计后归档。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0cae8549` | (see git log) |
+| `02a7b6e3` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 169: 审计 Authorization 传播链路并完成默认拒绝策略规划
+
+**Date**: 2026-08-14
+**Task**: 审计 Authorization 传播链路并完成默认拒绝策略规划
+**Branch**: `master`
+
+### Summary
+
+完成只读安全审计：确认三处完整 token 日志、raw token 经 gRPC/MCP 通用转发、无任何用户委托消费者；按用户确认的默认拒绝基线分类 P1-P8（均非 user-token）；产出传播矩阵、claims 矩阵、metadata 冲突契约、MCP 泄漏审计、receiver-first 迁移/回滚方案与后续三个子任务输入；独立 check 修正 5 处证据措辞后归档。
+
+### Main Changes
+
+- audit-report.md: 执行摘要/分类表/冲突契约/泄漏核查/迁移建议/子任务输入/11 项待 owner 确认
+- research/: 6 份证据文档（传播矩阵、claims 矩阵、metadata 冲突、MCP 泄漏、policy 输入、未知项）
+- R1: token 签发 claim 命名 user-id 与映射配置 user_id 不一致 + int64 类型问题
+- R2: aigtw raw-header 写入不受 JWT 路由门控
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `11f5e900` | (see git log) |
+
+### Testing
+
+- [OK] task.py validate 通过；git diff --check 通过；无应用代码变更
+- [OK] 默认拒绝基线一致，无链路被错误标记为 user-token
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 下一子任务 typed-auth-context-keys 规划（开发前需用户确认）
+
+
+## Session 170: 迁移认证 Typed Context Key（无回退 + 桥接中间件）
+
+**Date**: 2026-08-14
+**Task**: 迁移认证 Typed Context Key（无回退 + 桥接中间件）
+**Branch**: `master`
+
+### Summary
+
+将进程内认证身份从公开 string context key 迁移到 authctx 包私有 typed key + 统一 setter/getter；getter 只读 typed（去掉 string 回退）；新增 BridgeJWTClaims 在 aigtw/gtw 网关 server.Use 承接 go-zero JWT 的 string claim 写入（短横线直拷 + 下划线 ClaimMapping）；user-id 兼容 int64/float64/string；合并 ApplyClaimMappingToCtx 入 BridgeJWTClaims，转换统一用 lancet convertor.ToString；socketgtw 确认无需桥接。wire key/b64/metadata 行为不变。
+
+### Main Changes
+
+- common/authctx/context.go: 5 个私有 typed key + With*/Get* setter/getter + WithKey/GetByKey + BridgeJWTClaims + toStringClaim(lancet)
+- common/authctx/claims.go: ExtractFromClaims/ApplyClaimMapping/ClaimString 统一 lancet convertor.ToString；删除 ApplyClaimMappingToCtx
+- aiapp/aigtw/aigtw.go + gtw/gtw.go: 新增 server.Use 桥接中间件（JWT 之后执行）
+- common/grpcx/metadata.go + mcpx/context_meta.go + socketiox/server.go: 传输边界走 typed getter/setter
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a940f92e` | (see git log) |
+
+### Testing
+
+- [OK] authctx/grpcx/mcpx/tool/socketiox + aigtw/gtw/socketgtw 全通过；go vet 干净；git diff --check 干净
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 下一子任务 normalize-auth-claims 规划（开发前需用户确认）
+
+
+## Session 171: 规范化认证 Claim 值（类型白名单 + 极简转换）
+
+**Date**: 2026-08-14
+**Task**: 规范化认证 Claim 值（类型白名单 + 极简转换）
+**Branch**: `master`
+
+### Summary
+
+为 JWT/MCP 身份 claim 定义类型白名单与精确转换：normalizeClaimString 统一走 lancet convertor.ToString，只接受 string+数字+json.Number，bool/数组/对象忽略；json.Number 来自已签名 token 必然合法、字面量精确；MCP ExtractFromMeta/verifier UserID 随 ClaimString 自动精确，Extra 保留原始值；float64 分数/超大走 lancet 宽松输出。wire key/b64/Authorization 传播/metadata 冲突行为不变。
+
+### Main Changes
+
+- common/authctx/claims.go: normalizeClaimString 类型白名单 + convertor.ToString；ClaimString 复用
+- common/authctx/context.go: toStringClaim 委托 normalizeClaimString
+- common/mcpx: ExtractFromMeta/verifier 行为自动随动，Extra 保留原始值
+- 测试：claims_test/context_test/mcpx context_meta_test 按矩阵更新，新增 TestNormalizeClaimString 全矩阵用例
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `98696027` | (see git log) |
+
+### Testing
+
+- [OK] authctx/grpcx/mcpx/tool/socketiox + aigtw/gtw/socketgtw 全通过；vet/build/diffcheck 干净
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 下一子任务 enforce-authorization-policy 规划（开发前需用户确认）

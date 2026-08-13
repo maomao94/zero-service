@@ -9,9 +9,9 @@ import (
 	"zero-service/app/djicloud/internal/config"
 	"zero-service/app/djicloud/internal/hooks"
 	"zero-service/app/djicloud/model/gormmodel"
-	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/djisdk"
 	"zero-service/common/gormx"
+	"zero-service/common/grpcx"
 	"zero-service/common/ossx"
 	"zero-service/socketapp/socketpush/socketpush"
 
@@ -71,7 +71,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	var pushCli socketpush.SocketPushClient
 	if len(c.SocketPushConf.Endpoints) > 0 || len(c.SocketPushConf.Target) > 0 {
 		pushCli = socketpush.NewSocketPushClient(zrpc.MustNewClient(c.SocketPushConf,
-			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+			zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor),
 			zrpc.WithDialOption(grpc.WithDefaultCallOptions(
 				grpc.MaxCallSendMsgSize(50*1024*1024),
 			)),

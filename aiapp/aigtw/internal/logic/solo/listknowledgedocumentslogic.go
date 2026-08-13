@@ -5,7 +5,7 @@ import (
 
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -27,7 +27,7 @@ func (l *ListKnowledgeDocumentsLogic) ListKnowledgeDocuments(req *types.Knowledg
 	if req == nil {
 		return nil, invalidRequestError("list knowledge documents request is required")
 	}
-	uid := ctxdata.GetUserId(l.ctx)
+	uid := authctx.GetUserId(l.ctx)
 	if uid == "" {
 		return nil, unauthenticatedError("missing user id")
 	}

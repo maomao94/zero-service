@@ -12,6 +12,7 @@ const (
 	DjiDeviceDomainPayload  = "1"
 	DjiDeviceDomainRemote   = "2"
 	DjiDeviceDomainDock     = "3"
+	DjiDeviceUnknown        = "unknown"
 )
 
 // DjiDevice 是大疆云平台设备主表。
@@ -33,8 +34,8 @@ type DjiDevice struct {
 	gormx.LegacyStringBaseModel
 	DeviceSn        string       `gorm:"column:device_sn;type:varchar(64);uniqueIndex;not null;comment:设备SN，机巢/无人机/负载设备唯一标识"`
 	GatewaySn       string       `gorm:"column:gateway_sn;type:varchar(64);index;not null;default:'';comment:最近一次上报关联的网关机巢SN，机巢自身等于device_sn；蛙跳多绑定关系以dji_device_topo为准"`
-	DeviceType      string       `gorm:"column:device_type;type:varchar(32);not null;default:'';comment:规范设备三元组，格式为domain-type-sub_type"`
-	DeviceName      string       `gorm:"column:device_name;type:varchar(128);not null;default:'';comment:设备三元组对应的产品名称"`
+	DeviceType      string       `gorm:"column:device_type;type:varchar(32);not null;default:'unknown';comment:规范设备三元组，格式为domain-type-sub_type，未知时为unknown"`
+	DeviceName      string       `gorm:"column:device_name;type:varchar(128);not null;default:'unknown';comment:设备三元组对应的产品名称，未知时为unknown"`
 	Alias           string       `gorm:"column:alias;type:varchar(128);default:'';comment:设备别名"`
 	GroupName       string       `gorm:"column:group_name;type:varchar(128);default:'';comment:业务分组"`
 	FirmwareVersion string       `gorm:"column:firmware_version;type:varchar(64);default:'';comment:固件版本"`
@@ -64,8 +65,8 @@ func (d *DjiDevice) TouchOnline(now time.Time) {
 type DjiDeviceTopo struct {
 	gormx.LegacyStringBaseModel
 	GatewaySn        string `gorm:"column:gateway_sn;uniqueIndex:idx_topo_pair;type:varchar(64);not null;comment:网关机巢SN"`
-	DeviceType       string `gorm:"column:device_type;type:varchar(32);not null;default:'';comment:规范设备三元组，格式为domain-type-sub_type"`
-	DeviceName       string `gorm:"column:device_name;type:varchar(128);not null;default:'';comment:设备三元组对应的产品名称"`
+	DeviceType       string `gorm:"column:device_type;type:varchar(32);not null;default:'unknown';comment:规范设备三元组，格式为domain-type-sub_type，未知时为unknown"`
+	DeviceName       string `gorm:"column:device_name;type:varchar(128);not null;default:'unknown';comment:设备三元组对应的产品名称，未知时为unknown"`
 	SubDeviceSn      string `gorm:"column:sub_device_sn;uniqueIndex:idx_topo_pair;index:idx_topo_sub;type:varchar(64);not null;comment:子设备SN"`
 	Domain           string `gorm:"column:domain;type:varchar(8);not null;default:'';comment:大疆设备领域domain，0飞机类，1负载类，2遥控器类，3机场类"`
 	SubDeviceType    int    `gorm:"column:sub_device_type;not null;default:0;comment:子设备类型"`

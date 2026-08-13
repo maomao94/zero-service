@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
-	"strings"
 	"sync"
 	"time"
 
+	"zero-service/common/rrulex"
+
 	"github.com/dromara/carbon/v2"
-	"github.com/teambition/rrule-go"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/core/trace"
@@ -27,18 +27,18 @@ type Handler func(ctx context.Context, task *TaskConfig) error
 // Scheduler 通用周期性任务调度器，依赖 TaskStore 接口实现存储无关。
 // 主循环使用自适应 sleep：有任务 10ms 快速连扫，无任务 interval 间隔等待。
 type Scheduler struct {
-	store             TaskStore
-	handler           Handler
-	interval          time.Duration
-	lockExpire        time.Duration
-	maxDelay          time.Duration
-	stopCh            chan struct{}
-	startOnce         sync.Once
-	stopOnce          sync.Once
-	workerGroup       sync.WaitGroup
-	tracer            oteltrace.Tracer
-	invalidTimeFilter InvalidTimeFilter
-	guard             Guard
+	store                TaskStore
+	handler              Handler
+	interval             time.Duration
+	lockExpire           time.Duration
+	maxDelay             time.Duration
+	stopCh               chan struct{}
+	startOnce            sync.Once
+	stopOnce             sync.Once
+	workerGroup          sync.WaitGroup
+	tracer               oteltrace.Tracer
+	invalidTimePredicate InvalidTimePredicate
+	guard                Guard
 }
 
 // NewScheduler 创建调度器，默认扫描间隔 2 秒，lease 过期时间 5 分钟。
@@ -51,15 +51,15 @@ func NewScheduler(store TaskStore, handler Handler, opts ...SchedulerOption) *Sc
 		opt(o)
 	}
 	return &Scheduler{
-		store:             store,
-		handler:           handler,
-		interval:          o.Interval,
-		lockExpire:        o.LockExpire,
-		maxDelay:          o.MaxDelay,
-		stopCh:            make(chan struct{}),
-		tracer:            otel.Tracer(trace.TraceName),
-		invalidTimeFilter: o.InvalidTimeFilter,
-		guard:             o.Guard,
+		store:                store,
+		handler:              handler,
+		interval:             o.Interval,
+		lockExpire:           o.LockExpire,
+		maxDelay:             o.MaxDelay,
+		stopCh:               make(chan struct{}),
+		tracer:               otel.Tracer(trace.TraceName),
+		invalidTimePredicate: o.InvalidTimePredicate,
+		guard:                o.Guard,
 	}
 }
 
@@ -185,13 +185,10 @@ func (s *Scheduler) executeTask(claim *TaskClaim) {
 		logx.WithContext(ctx).WithDuration(time.Since(startedAt)).Info("[crontask] handler succeeded")
 	}
 
-	nextRun, err := computeNextRun(task)
+	nextRun, err := s.computeNextRun(task)
 	if err != nil {
 		logx.WithContext(ctx).Errorf("[crontask] compute next run failed: %v", err)
 		return
-	}
-	if s.invalidTimeFilter != nil {
-		nextRun = s.invalidTimeFilter(task, nextRun)
 	}
 	completionCtx := logx.ContextWithFields(ctx, logx.Field("next_run", nextRun))
 	logx.WithContext(completionCtx).Info("[crontask] next run computed")
@@ -250,9 +247,10 @@ func (s *Scheduler) RunNow(ctx context.Context, taskCode string) (string, error)
 	return traceID, nil
 }
 
-// PreviewNextRuns 返回严格晚于 after 的后续有效计划时间，并应用调度器的不可用时间过滤策略。
-// count 只统计过滤后接受的时间点；过滤器可跨过任意数量的 RRULE 候选，直到返回有效时间或零值。
-// 查询前通过 ShiftSetForQuery 将迭代起点平移到 after 附近，避免从远古 DTSTART 逐点遍历。
+// PreviewNextRuns 返回严格晚于 after 的后续有效计划时间。
+// 委托 rrulex.NextRuns：解析与平移只做一次，用单个迭代器顺序收集；
+// 调度器的无效时间谓词逐候选介入，被判无效的候选直接跳过，跳过不推进游标。
+// count 只统计最终接受的有效时间点；规则耗尽则提前返回已收集结果。
 // 该方法只读取任务配置，不访问 Store，也不改变任务运行状态。
 func (s *Scheduler) PreviewNextRuns(task *TaskConfig, after time.Time, count int) ([]time.Time, error) {
 	if s == nil {
@@ -264,33 +262,20 @@ func (s *Scheduler) PreviewNextRuns(task *TaskConfig, after time.Time, count int
 	if count <= 0 {
 		return []time.Time{}, nil
 	}
-	set, err := parseQuerySet(task.RRuleStr, after)
-	if err != nil {
-		return nil, err
+	return s.nextRuns(task, after, count)
+}
+
+// invalidPredicate 将调度器的无效时间谓词绑定到任务，供 rrulex.NextRuns 逐候选过滤。
+func (s *Scheduler) invalidPredicate(task *TaskConfig) func(time.Time) bool {
+	if s.invalidTimePredicate == nil {
+		return nil
 	}
-	runs := make([]time.Time, 0, count)
-	next := set.Iterator()
-	for len(runs) < count {
-		dt, ok := next()
-		if !ok {
-			break
-		}
-		if !dt.After(after) {
-			continue
-		}
-		if s.invalidTimeFilter != nil {
-			dt = s.invalidTimeFilter(task, dt)
-			if dt.IsZero() {
-				break
-			}
-		}
-		if !dt.After(after) {
-			return nil, errors.New("invalid time filter returned a non-advancing time")
-		}
-		runs = append(runs, dt)
-		after = dt
-	}
-	return runs, nil
+	return func(t time.Time) bool { return s.invalidTimePredicate(task, t) }
+}
+
+// nextRuns 将调度器的无效时间谓词绑定到任务，委托 rrulex.NextRuns 做单趟过滤收集。
+func (s *Scheduler) nextRuns(task *TaskConfig, after time.Time, count int) ([]time.Time, error) {
+	return rrulex.NextRuns(task.RRuleStr, after, false, count, s.invalidPredicate(task))
 }
 
 func taskLogContext(ctx context.Context, claim *TaskClaim) context.Context {
@@ -311,10 +296,10 @@ func invokeHandler(handler Handler, ctx context.Context, task *TaskConfig) (err 
 	return handler(ctx, task)
 }
 
-// computeNextRun 基于 rrule 计算下一次调度时间。
-// 以 max(NextRun, now) 为基准避免延迟后算出已过去的时间。
-// 若已无更多触发计划（COUNT 耗尽、超出 Until），返回零值表示无下次调度。
-func computeNextRun(cfg *TaskConfig) (time.Time, error) {
+// computeNextRun 基于 rrule 计算下一次调度时间，无效时间谓词在单趟迭代中推进跳过。
+// 以 max(ScheduledTime, now) 为基准避免延迟后算出已过去的时间。
+// 若已无更多触发计划（COUNT 耗尽、超出 Until、候选全部落在无效区间），返回零值表示无下次调度。
+func (s *Scheduler) computeNextRun(cfg *TaskConfig) (time.Time, error) {
 	if cfg.RRuleStr == "" {
 		return time.Time{}, nil
 	}
@@ -323,49 +308,9 @@ func computeNextRun(cfg *TaskConfig) (time.Time, error) {
 	if cfg.ScheduledTime.After(now) {
 		base = cfg.ScheduledTime
 	}
-	return NextAfter(cfg.RRuleStr, base)
-}
-
-// NextAfter 返回 RRULE Set 在指定时间之后的首次计划时间。
-// 查询前通过 ShiftSetForQuery 将迭代起点平移到 after 附近，避免从远古 DTSTART 逐点遍历。
-// 空规则和已耗尽规则都返回零时间；非法非空规则返回解析错误。
-func NextAfter(value string, after time.Time) (time.Time, error) {
-	if value == "" {
-		return time.Time{}, nil
-	}
-
-	set, err := parseQuerySet(value, after)
-	if err != nil {
+	runs, err := rrulex.NextRuns(cfg.RRuleStr, base, false, 1, s.invalidPredicate(cfg))
+	if err != nil || len(runs) == 0 {
 		return time.Time{}, err
 	}
-	next := set.After(after, false)
-	if next.IsZero() {
-		return time.Time{}, nil
-	}
-	return next, nil
-}
-
-// ValidateRRule 校验非空 RRULE Set 是否包含显式 DTSTART 和 RRULE。
-// 空字符串表示一次性任务，是合法配置。
-func ValidateRRule(value string) error {
-	if value == "" {
-		return nil
-	}
-	_, err := parseRRuleSet(value)
-	return err
-}
-
-func parseRRuleSet(value string) (*rrule.Set, error) {
-	value = strings.ReplaceAll(strings.TrimSpace(value), "\r\n", "\n")
-	set, err := rrule.StrToRRuleSet(value)
-	if err != nil {
-		return nil, err
-	}
-	if set.GetDTStart().IsZero() {
-		return nil, errors.New("RRULE Set requires DTSTART")
-	}
-	if set.GetRRule() == nil {
-		return nil, errors.New("RRULE Set requires RRULE")
-	}
-	return set, nil
+	return runs[0], nil
 }

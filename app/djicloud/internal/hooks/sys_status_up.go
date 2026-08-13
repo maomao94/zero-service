@@ -39,17 +39,22 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 			logx.WithContext(ctx).Errorf("[dji-cloud] status update topo skipped: db is nil")
 			return nil
 		}
-		resolveDevice := func(domain string, deviceType, subType int) (string, string) {
+		resolveDevice := func(domain string, deviceType, subType int) (string, string, bool) {
 			rawDeviceType := fmt.Sprintf("%s-%d-%d", domain, deviceType, subType)
-			if parsedDeviceType, err := djisdk.ParseDeviceType(rawDeviceType); err == nil {
-				rawDeviceType = parsedDeviceType.String()
+			parsedDeviceType, err := djisdk.ParseDeviceType(rawDeviceType)
+			if err != nil {
+				return gormmodel.DjiDeviceUnknown, gormmodel.DjiDeviceUnknown, false
 			}
-			deviceName, _ := djisdk.LookupDeviceTypeName(rawDeviceType)
-			return rawDeviceType, deviceName
+			rawDeviceType = parsedDeviceType.String()
+			deviceName, ok := djisdk.LookupDeviceTypeName(rawDeviceType)
+			if !ok || deviceName == "" {
+				deviceName = gormmodel.DjiDeviceUnknown
+			}
+			return rawDeviceType, deviceName, true
 		}
 
 		if err := db.WithContext(ctx).Transact(func(tx *gormx.DB) error {
-			gatewayDeviceType, gatewayDeviceName := resolveDevice(topo.Domain, topo.Type, topo.SubType)
+			gatewayDeviceType, gatewayDeviceName, gatewayIdentityValid := resolveDevice(topo.Domain, topo.Type, topo.SubType)
 			gatewayDevice := gormmodel.DjiDevice{
 				DeviceSn:     gatewaySn,
 				GatewaySn:    gatewaySn,
@@ -59,11 +64,12 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 				LastOnlineAt: sqlNullTime(now),
 			}
 			c := tx.WithContext(ctx)
-			if err := c.Where(map[string]any{"device_sn": gatewaySn}).Assign(map[string]any{
-				"gateway_sn":  gatewaySn,
-				"device_type": gatewayDeviceType,
-				"device_name": gatewayDeviceName,
-			}).FirstOrCreate(&gatewayDevice).Error; err != nil {
+			gatewayUpdateData := map[string]any{"gateway_sn": gatewaySn}
+			if gatewayIdentityValid {
+				gatewayUpdateData["device_type"] = gatewayDeviceType
+				gatewayUpdateData["device_name"] = gatewayDeviceName
+			}
+			if err := c.Where(map[string]any{"device_sn": gatewaySn}).Assign(gatewayUpdateData).FirstOrCreate(&gatewayDevice).Error; err != nil {
 				return err
 			}
 
@@ -86,7 +92,7 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 					return err
 				}
 				subDomain := sub.Domain
-				deviceType, deviceName := resolveDevice(sub.Domain, sub.Type, sub.SubType)
+				deviceType, deviceName, identityValid := resolveDevice(sub.Domain, sub.Type, sub.SubType)
 				topoRecord := gormmodel.DjiDeviceTopo{
 					GatewaySn:        gatewaySn,
 					SubDeviceSn:      sub.SN,
@@ -102,18 +108,21 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 					"domain":              topoRecord.Domain,
 					"sub_device_type":     topoRecord.SubDeviceType,
 					"sub_device_sub_type": topoRecord.SubDeviceSubType,
-					"device_type":         topoRecord.DeviceType,
-					"device_name":         topoRecord.DeviceName,
 					"sub_device_index":    topoRecord.SubDeviceIndex,
 					"thing_version":       topoRecord.ThingVersion,
+				}
+				if identityValid {
+					topoUpdateData["device_type"] = topoRecord.DeviceType
+					topoUpdateData["device_name"] = topoRecord.DeviceName
 				}
 				if err := c.Where(map[string]any{"gateway_sn": gatewaySn, "sub_device_sn": sub.SN}).Assign(topoUpdateData).FirstOrCreate(&topoRecord).Error; err != nil {
 					return err
 				}
 
-				updateData := map[string]any{
-					"device_type": topoRecord.DeviceType,
-					"device_name": topoRecord.DeviceName,
+				updateData := map[string]any{}
+				if identityValid {
+					updateData["device_type"] = topoRecord.DeviceType
+					updateData["device_name"] = topoRecord.DeviceName
 				}
 				subDevice := gormmodel.DjiDevice{
 					DeviceSn:   sub.SN,

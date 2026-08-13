@@ -1,13 +1,12 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"net/http"
 	"path/filepath"
 
-	"zero-service/common/ctxdata"
+	"zero-service/common/authctx"
 	"zero-service/common/gtwx"
 	_ "zero-service/common/nacosx"
 	"zero-service/common/tool"
@@ -57,7 +56,15 @@ func main() {
 	// 全局中间件：网关入口请求均来自浏览器，标记 auth-type=user。
 	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), ctxdata.CtxAuthTypeKey, "user")
+			ctx := authctx.WithAuthType(r.Context(), "user")
+			next(w, r.WithContext(ctx))
+		}
+	})
+
+	// 桥接中间件：在 JWT 验证之后运行，把 go-zero 写入的 string claim 转成 typed key。
+	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			ctx := authctx.BridgeJWTClaims(r.Context(), nil)
 			next(w, r.WithContext(ctx))
 		}
 	})

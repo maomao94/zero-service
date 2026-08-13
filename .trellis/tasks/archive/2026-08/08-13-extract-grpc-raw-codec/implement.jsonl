@@ -1,0 +1,7 @@
+{"file":".trellis/spec/backend/common-package-design.md","reason":"定义 common 公共能力的进入条件、包边界和测试要求"}
+{"file":".trellis/spec/backend/coding-standards.md","reason":"约束 Go 公共 API、错误处理和最小改动范围"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"指导重复协议适配能力的复用位置选择"}
+{"file":".trellis/spec/backend/service-lifecycle.md","reason":"约束 gRPC client/server 拦截器的装配位置和顺序"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"约束服务端拦截器的错误透传和日志边界"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"梳理 JWT、context、gRPC metadata 与 MCP _meta 的跨层契约"}
+{"file":".trellis/spec/backend/coding-standards.md","reason":"约束本轮 API 收窄、注释修正和最小行为变更"}

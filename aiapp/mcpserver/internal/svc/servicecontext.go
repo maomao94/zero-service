@@ -4,7 +4,7 @@ import (
 	"zero-service/aiapp/mcpserver/internal/config"
 	"zero-service/aiapp/mcpserver/internal/skills"
 	"zero-service/app/bridgemodbus/bridgemodbus"
-	interceptor "zero-service/common/Interceptor/rpcclient"
+	"zero-service/common/grpcx"
 
 	"github.com/zeromicro/go-zero/zrpc"
 )
@@ -30,8 +30,8 @@ func NewServiceContext(c config.Config) (*ServiceContext, error) {
 		Config: c,
 		BridgeModbusCli: bridgemodbus.NewBridgeModbusClient(
 			zrpc.MustNewClient(c.BridgeModbusRpcConf,
-				zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
-				zrpc.WithStreamClientInterceptor(interceptor.StreamTracingInterceptor),
+				zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor),
+				zrpc.WithStreamClientInterceptor(grpcx.StreamTracingInterceptor),
 			).Conn()),
 		SkillsLoader: skillsLoader,
 	}, nil

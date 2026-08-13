@@ -11,7 +11,7 @@ Log:
   KeepDays: 300
 JwtAuth:
   AccessSecret: ""
-  # ClaimMapping: 外部 JWT claim key -> 内部标准 key（按需配置）
+  # ClaimMapping: 内部标准 key -> 外部 JWT claim key（internalKey -> externalKey，如 user-id -> user_id）
   ClaimMapping:
     user-id: "user_id"
     user-name: "user_name"

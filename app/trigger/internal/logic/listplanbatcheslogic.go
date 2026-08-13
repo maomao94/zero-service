@@ -7,9 +7,9 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/carbonx"
 	"zero-service/common/gormx"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -80,8 +80,8 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 		}
 
 		pbPlanBatch := &trigger.PlanBatchPb{
-			CreateTime:       carbon.CreateFromStdTime(planBatch.CreateTime).ToDateTimeString(),
-			UpdateTime:       carbon.CreateFromStdTime(planBatch.UpdateTime).ToDateTimeString(),
+			CreateTime:       carbonx.FormatDateTime(planBatch.CreateTime),
+			UpdateTime:       carbonx.FormatDateTime(planBatch.UpdateTime),
 			CreateUser:       planBatch.CreateUser.String,
 			UpdateUser:       planBatch.UpdateUser.String,
 			DeptCode:         planBatch.DeptCode.String,
@@ -93,7 +93,7 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 			BatchNum:         planBatch.BatchNum.String,
 			Status:           int32(planBatch.Status),
 			ScanFlg:          int32(planBatch.ScanFlg),
-			PlanTriggerTime:  carbon.CreateFromStdTime(planBatch.PlanTriggerTime.Time).ToDateTimeString(),
+			PlanTriggerTime:  carbonx.FormatDateTime(planBatch.PlanTriggerTime.Time),
 			TerminatedReason: planBatch.TerminatedReason.String,
 			PausedReason:     planBatch.PausedReason.String,
 			StatusCountMap:   statusCountMap,
@@ -105,10 +105,10 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 			Ext5:             planBatch.Ext5.String,
 		}
 		if planBatch.PausedTime.Valid {
-			pbPlanBatch.PausedTime = carbon.CreateFromStdTime(planBatch.PausedTime.Time).ToDateTimeString()
+			pbPlanBatch.PausedTime = carbonx.FormatDateTime(planBatch.PausedTime.Time)
 		}
 		if planBatch.FinishedTime.Valid {
-			pbPlanBatch.FinishedTime = carbon.CreateFromStdTime(planBatch.FinishedTime.Time).ToDateTimeString()
+			pbPlanBatch.FinishedTime = carbonx.FormatDateTime(planBatch.FinishedTime.Time)
 		}
 		resp.PlanBatches = append(resp.PlanBatches, pbPlanBatch)
 	}

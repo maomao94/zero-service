@@ -1,0 +1,5 @@
+{"file":".trellis/spec/backend/coding-standards.md","reason":"约束安全基线、日志脱敏与最小改动。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"约束测试覆盖与验证命令。"}
+{"file":".trellis/tasks/08-14-enforce-authorization-policy/research/log-leakage-fixes.md","reason":"L1/L2/L3 精确修复点与测试锁定。"}
+{"file":".trellis/tasks/08-14-enforce-authorization-policy/research/index.md","reason":"禁止混合边界与 L1-L3 独立性。"}
+{"file":".trellis/tasks/archive/2026-08/08-14-audit-authorization-propagation/audit-report.md","reason":"§7.2 content-free 约束与 §8.3 禁止混合。"}

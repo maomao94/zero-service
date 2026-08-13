@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"zero-service/app/trigger/model/gormmodel"
+	"zero-service/common/carbonx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
@@ -55,8 +55,8 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 
 	// 构建响应
 	pbExecItem := &trigger.PlanExecItemPb{
-		CreateTime:       carbon.CreateFromStdTime(execItem.CreateTime).ToDateTimeString(),
-		UpdateTime:       carbon.CreateFromStdTime(execItem.UpdateTime).ToDateTimeString(),
+		CreateTime:       carbonx.FormatDateTime(execItem.CreateTime),
+		UpdateTime:       carbonx.FormatDateTime(execItem.UpdateTime),
 		CreateUser:       execItem.CreateUser.String,
 		UpdateUser:       execItem.UpdateUser.String,
 		DeptCode:         execItem.DeptCode.String,
@@ -73,8 +73,8 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		PointId:          execItem.PointId.String,
 		Payload:          execItem.Payload,
 		RequestTimeout:   execItem.RequestTimeout,
-		PlanTriggerTime:  carbon.CreateFromStdTime(execItem.PlanTriggerTime).ToDateTimeString(),
-		NextTriggerTime:  carbon.CreateFromStdTime(execItem.NextTriggerTime).ToDateTimeString(),
+		PlanTriggerTime:  carbonx.FormatDateTime(execItem.PlanTriggerTime),
+		NextTriggerTime:  carbonx.FormatDateTime(execItem.NextTriggerTime),
 		TriggerCount:     int32(execItem.TriggerCount),
 		Status:           trigger.ExecItemStatusPb(execItem.Status),
 		LastResult:       execItem.LastResult.String,
@@ -91,12 +91,12 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 
 	// 设置上次触发时间
 	if execItem.LastTriggerTime.Valid {
-		pbExecItem.LastTriggerTime = carbon.CreateFromStdTime(execItem.LastTriggerTime.Time).ToDateTimeString()
+		pbExecItem.LastTriggerTime = carbonx.FormatDateTime(execItem.LastTriggerTime.Time)
 	}
 
 	// 设置暂停时间和原因
 	if execItem.PausedTime.Valid {
-		pbExecItem.PausedTime = carbon.CreateFromStdTime(execItem.PausedTime.Time).ToDateTimeString()
+		pbExecItem.PausedTime = carbonx.FormatDateTime(execItem.PausedTime.Time)
 	}
 	return &trigger.GetPlanExecItemRes{
 		PlanExecItem: []*trigger.PlanExecItemPb{pbExecItem},

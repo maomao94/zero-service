@@ -8,7 +8,7 @@ import (
 	"zero-service/app/iecagent/internal/iec"
 	"zero-service/app/iecagent/internal/server"
 	"zero-service/app/iecagent/internal/svc"
-	interceptor "zero-service/common/Interceptor/rpcserver"
+	"zero-service/common/grpcx"
 	server2 "zero-service/common/iec104/server"
 	"zero-service/common/tool"
 
@@ -45,7 +45,7 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
-	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
 	logx.AddGlobalFields(logx.Field("app", c.Name))

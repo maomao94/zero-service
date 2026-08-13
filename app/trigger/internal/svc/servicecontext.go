@@ -7,10 +7,10 @@ import (
 	"zero-service/app/trigger/internal/config"
 	"zero-service/app/trigger/internal/cronjob"
 	"zero-service/app/trigger/model/gormmodel"
-	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/asynqx"
 	commoncrontask "zero-service/common/crontask"
 	"zero-service/common/gormx"
+	"zero-service/common/grpcx"
 	"zero-service/common/holiday"
 	"zero-service/common/netx"
 	"zero-service/common/tool"
@@ -81,7 +81,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 	httpcSvc := netx.NewHTTPCService("trigger-httpc")
 	streamEventCli := streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
-		zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+		zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor),
 		// 添加最大消息配置
 		zrpc.WithDialOption(grpc.WithDefaultCallOptions(
 			grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
