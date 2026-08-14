@@ -1866,3 +1866,40 @@ Fixed DJI device identity persistence under GaussDB empty-string-as-NULL semanti
 ### Next Steps
 
 - 下一子任务 enforce-authorization-policy 规划（开发前需用户确认）
+
+
+## Session 172: 实施 Authorization 日志脱敏（L1-L3）并完成 auth-context-hardening 父任务
+
+**Date**: 2026-08-14
+**Task**: 实施 Authorization 日志脱敏（L1-L3）并完成 auth-context-hardening 父任务
+**Branch**: `master`
+
+### Summary
+
+按用户决策缩小 enforce-authorization-policy 范围为仅日志脱敏（移除接收端 report-only 观测，因其为过度设计）：L1 StreamEvent 完整 token Info 日志改 auth_present/user_id；L2 MCP echo token Debug 日志去 token 留 username；L3 mcpx auth extra=%v 改 extraKeys=%v（仅键名，Extra 原始值契约保留）。发送端传播、MCP _meta 内容、wire key、b64、claim 转换全不变。四个子任务全部完成，父任务 auth-context-hardening 归档。
+
+### Main Changes
+
+- facade/streamevent/upsocketmessagelogic.go: L1 token:%s → auth_present/user_id
+- aiapp/mcpserver/echo.go: L2 去 token 留 username
+- common/mcpx/auth.go: L3 extra=%v → extraKeys=%v + mapKeys helper
+- 移除全部接收端观测代码（过度设计）
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `936df578` | (see git log) |
+| `f5d1d885` | (see git log) |
+
+### Testing
+
+- [OK] mcpx/grpcx/authctx 测试通过；build/vet/gofmt/diffcheck 全绿；无 token:%s/extra=%v 残留
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- auth-context-hardening 父任务完成，全部子任务归档
