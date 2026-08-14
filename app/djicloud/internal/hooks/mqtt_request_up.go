@@ -51,7 +51,6 @@ func buildFlightAreasReply(ctx context.Context, db *gormx.DB, ossTemplate ossx.O
 	files := make([]djisdk.FlightAreasFile, len(regions))
 	fns := make([]func() error, 0, len(regions))
 	for i := range regions {
-		i := i
 		r := regions[i]
 		fns = append(fns, func() error {
 			fileURL := r.FileName

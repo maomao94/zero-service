@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -287,7 +288,7 @@ func TestBidirectionalEcho(t *testing.T) {
 	defer cli.Close()
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		if err := cli.Send(context.Background(), []byte("ping")); err != nil {
 			t.Fatalf("send %d failed: %v", i, err)
 		}
@@ -322,12 +323,10 @@ func TestConcurrentSends(t *testing.T) {
 	waitState(t, cli, StateAuthenticated, 3*time.Second)
 
 	var wg sync.WaitGroup
-	for i := 0; i < 20; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 20 {
+		wg.Go(func() {
 			_ = cli.Send(context.Background(), []byte("x"))
-		}()
+		})
 	}
 	wg.Wait()
 	time.Sleep(100 * time.Millisecond)
@@ -377,13 +376,7 @@ func TestAuthFailure_Reconnects(t *testing.T) {
 	time.Sleep(500 * time.Millisecond)
 
 	mu.Lock()
-	hasConnected := false
-	for _, s := range states {
-		if s == StateConnected {
-			hasConnected = true
-			break
-		}
-	}
+	hasConnected := slices.Contains(states, StateConnected)
 	mu.Unlock()
 
 	if !hasConnected {

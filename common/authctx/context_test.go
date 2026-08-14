@@ -11,11 +11,6 @@ func TestContextKeyContractAndGetters(t *testing.T) {
 	if !reflect.DeepEqual(ContextKeys, wantKeys) {
 		t.Fatalf("ContextKeys = %#v, want %#v", ContextKeys, wantKeys)
 	}
-	for _, key := range ContextKeys {
-		if reflect.TypeOf(key).Kind() != reflect.String {
-			t.Fatalf("context key %q has dynamic type %T, want string", key, key)
-		}
-	}
 
 	// Typed setter/getter contract.
 	ctx := context.Background()

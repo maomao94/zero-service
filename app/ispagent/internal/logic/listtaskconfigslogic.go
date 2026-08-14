@@ -31,10 +31,7 @@ func (l *ListTaskConfigsLogic) ListTaskConfigs(in *ispagent.ListTaskConfigsReq) 
 		return &ispagent.ListTaskConfigsRes{}, nil
 	}
 
-	page := int(in.GetPage())
-	if page < 1 {
-		page = 1
-	}
+	page := max(int(in.GetPage()), 1)
 	pageSize := int(in.GetPageSize())
 	if pageSize <= 0 {
 		pageSize = 20

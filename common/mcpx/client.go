@@ -210,12 +210,6 @@ func (c *Client) buildClientOptions() *mcp.ClientOptions {
 			opts.Logger = c.options.Logger
 		}
 
-		// CreateMessageHandler: 处理采样请求（sampling/createMessage）
-		// 用于客户端作为采样服务器，响应来自服务器的采样请求
-		if c.options.CreateMessageHandler != nil {
-			opts.CreateMessageHandler = c.options.CreateMessageHandler
-		}
-
 		// ElicitationHandler: 处理诱导请求（elicitation/create）
 		// 用于客户端作为诱导服务器，响应来自服务器的诱导请求
 		if c.options.ElicitationHandler != nil {
@@ -256,12 +250,6 @@ func (c *Client) buildClientOptions() *mcp.ClientOptions {
 		// 当特定资源内容发生变化时触发，用于刷新该资源的内容
 		if c.options.ResourceUpdatedHandler != nil {
 			opts.ResourceUpdatedHandler = c.options.ResourceUpdatedHandler
-		}
-
-		// LoggingMessageHandler: 处理日志消息通知（notifications/message）
-		// 用于接收来自服务器的日志消息
-		if c.options.LoggingMessageHandler != nil {
-			opts.LoggingMessageHandler = c.options.LoggingMessageHandler
 		}
 	}
 
@@ -641,7 +629,7 @@ func (conn *Connection) loadAllWithRetry() error {
 	maxRetries := 3
 	retryDelay := 100 * time.Millisecond
 
-	for i := 0; i < maxRetries; i++ {
+	for i := range maxRetries {
 		err := conn.loadAll()
 		if err == nil {
 			return nil
@@ -858,8 +846,8 @@ func (conn *Connection) getPrompt(ctx context.Context, name string, args map[str
 	}
 
 	realName := name
-	if idx := strings.Index(name, ToolNameSeparator); idx >= 0 {
-		realName = name[idx+len(ToolNameSeparator):]
+	if _, after, ok := strings.Cut(name, ToolNameSeparator); ok {
+		realName = after
 	}
 
 	params := &mcp.GetPromptParams{Name: realName, Arguments: args}
@@ -1177,8 +1165,8 @@ func (c *Client) CallToolAsyncAwait(ctx context.Context, req *CallToolAsyncReque
 
 // stripServerPrefix 从名称中移除服务器前缀（serverName__）
 func stripServerPrefix(name string) string {
-	if idx := strings.Index(name, ToolNameSeparator); idx >= 0 {
-		return name[idx+len(ToolNameSeparator):]
+	if _, after, ok := strings.Cut(name, ToolNameSeparator); ok {
+		return after
 	}
 	return name
 }

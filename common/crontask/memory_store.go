@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"slices"
 	"sort"
 	"sync"
 	"time"
@@ -265,10 +266,5 @@ func (m *MemoryStore) List(ctx context.Context, condition ListCondition) ([]*Tas
 }
 
 func containsStatus(statuses []TaskStatus, target TaskStatus) bool {
-	for _, status := range statuses {
-		if status == target {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(statuses, target)
 }

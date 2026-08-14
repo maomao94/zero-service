@@ -548,11 +548,9 @@ func TestNewInvalidTimePredicateConcurrent(t *testing.T) {
 
 	// 谓词无状态，并发调用结果一致（-race 兜底）。
 	var wg sync.WaitGroup
-	for i := 0; i < 32; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < 100; j++ {
+	for range 32 {
+		wg.Go(func() {
+			for range 100 {
 				if !pred(task, runAt.StdTime()) {
 					t.Errorf("expected true for candidate inside window")
 					return
@@ -562,7 +560,7 @@ func TestNewInvalidTimePredicateConcurrent(t *testing.T) {
 					return
 				}
 			}
-		}()
+		})
 	}
 	wg.Wait()
 }

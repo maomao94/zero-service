@@ -28,7 +28,6 @@ type options struct {
 	tools           []tool.BaseTool
 	subAgents       []adk.Agent
 	handlers        []adk.ChatModelAgentMiddleware
-	middlewares     []adk.AgentMiddleware
 	modelOptions    []model.Option
 	skillsDir       string
 	maxIter         int
@@ -80,16 +79,6 @@ func WithHandler(mw adk.ChatModelAgentMiddleware) Option {
 // WithHandlers 添加多个 ChatModelAgentMiddleware
 func WithHandlers(mws ...adk.ChatModelAgentMiddleware) Option {
 	return func(o *options) { o.handlers = append(o.handlers, mws...) }
-}
-
-// WithMiddleware 添加 AgentMiddleware
-func WithMiddleware(mw adk.AgentMiddleware) Option {
-	return func(o *options) { o.middlewares = append(o.middlewares, mw) }
-}
-
-// WithMiddlewares 添加多个 AgentMiddleware
-func WithMiddlewares(mws ...adk.AgentMiddleware) Option {
-	return func(o *options) { o.middlewares = append(o.middlewares, mws...) }
 }
 
 // WithModelOption 添加模型运行时选项。

@@ -415,10 +415,7 @@ func (app *Shell) View() string {
 		middleHeight = app.dropdown.Height()
 	}
 
-	bodyHeight := app.height - footerHeight - promptHeight - middleHeight
-	if bodyHeight < 1 {
-		bodyHeight = 1
-	}
+	bodyHeight := max(app.height-footerHeight-promptHeight-middleHeight, 1)
 	body := app.bodyView(bodyHeight)
 
 	parts := []string{lipgloss.NewStyle().Width(app.SafeWidth()).Height(bodyHeight).MaxHeight(bodyHeight).Render(body)}
@@ -551,10 +548,7 @@ func (app *Shell) recalculate(width, height int) {
 	if app.modal != nil {
 		app.modal.Width = width
 	}
-	app.bodyHeight = height - 4
-	if app.bodyHeight < 1 {
-		app.bodyHeight = 1
-	}
+	app.bodyHeight = max(height-4, 1)
 	app.timeline.SetSize(width, app.bodyHeight)
 	if app.active != nil {
 		app.active.SetSize(width, app.bodyHeight)

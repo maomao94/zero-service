@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/backend/common-package-design.md", "reason": "修改 common/einox/agent 与 common/mcpx 的公共 Option API，需遵守公共包 Option/转换约定"}
+{"file": ".trellis/spec/backend/coding-standards.md", "reason": "编写/审查本次 Go 迁移改动，遵守编码与命名规范"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "制定验证范围（build/vet/staticcheck/相关包测试）"}

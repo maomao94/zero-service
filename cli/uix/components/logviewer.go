@@ -116,12 +116,12 @@ func (lv *LogViewer) SetSize(width, height int) {
 // ScrollUp scrolls up one line (disables follow).
 func (lv *LogViewer) ScrollUp() {
 	lv.follow = false
-	lv.viewport.LineUp(1)
+	lv.viewport.ScrollUp(1)
 }
 
 // ScrollDown scrolls down. Re-enables follow if at bottom.
 func (lv *LogViewer) ScrollDown() {
-	lv.viewport.LineDown(1)
+	lv.viewport.ScrollDown(1)
 	if lv.viewport.AtBottom() {
 		lv.follow = true
 	}

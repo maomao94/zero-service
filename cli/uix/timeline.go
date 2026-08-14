@@ -85,8 +85,8 @@ func (t Timeline) View() string {
 	return t.viewport.View()
 }
 
-func (t *Timeline) LineUp()     { t.viewport.LineUp(1) }
-func (t *Timeline) LineDown()   { t.viewport.LineDown(1) }
+func (t *Timeline) LineUp()     { t.viewport.ScrollUp(1) }
+func (t *Timeline) LineDown()   { t.viewport.ScrollDown(1) }
 func (t *Timeline) PageUp()     { t.viewport.PageUp() }
 func (t *Timeline) PageDown()   { t.viewport.PageDown() }
 func (t *Timeline) GotoTop()    { t.viewport.GotoTop() }
@@ -126,19 +126,13 @@ func (t Timeline) renderMessage(message Message) string {
 	}
 
 	header := lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorDim)).Render(label + "  " + message.Timestamp.Format("15:04:05"))
-	contentWidth := t.width - 4
-	if contentWidth < 20 {
-		contentWidth = 20
-	}
+	contentWidth := max(t.width-4, 20)
 	content := lipgloss.NewStyle().Width(contentWidth).Render(message.Content)
 	return style.Width(contentWidth + 2).Render(header + "\n" + content)
 }
 
 func (t Timeline) emptyView() string {
-	width := t.width - 4
-	if width < 30 {
-		width = 30
-	}
+	width := max(t.width-4, 30)
 	title := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(theme.ColorAccent)).Render("uix shell")
 	lines := []string{
 		title,

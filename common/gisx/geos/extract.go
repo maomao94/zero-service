@@ -74,7 +74,7 @@ func ExtractPolygonCoords(g *gogeos.Geom) (PolygonData, error) {
 		n := g.NumInteriorRings()
 		data := make(PolygonData, 0, 1+n)
 		data = append(data, outer)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			data = append(data, g.InteriorRing(i).CoordSeq().ToCoords())
 		}
 		return data, nil
@@ -156,7 +156,7 @@ func ExtractMulti[T any](g *gogeos.Geom, fn func(*gogeos.Geom) (T, error)) ([]T,
 		return nil, nil
 	}
 	result := make([]T, 0, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		sub := g.Geometry(i)
 		v, err := fn(sub)
 		if err != nil {
@@ -183,7 +183,7 @@ func ExtractMultiSafe[T any](g *gogeos.Geom, fn func(*gogeos.Geom) (T, error)) (
 		return nil, nil
 	}
 	result := make([]T, 0, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		sub := g.Geometry(i)
 		v, err := fn(sub)
 		if err != nil {

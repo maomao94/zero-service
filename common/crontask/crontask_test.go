@@ -357,7 +357,7 @@ func TestMemoryStoreLockAndFetchPriorityRandom(t *testing.T) {
 	ctx := context.Background()
 	now := carbon.Now().StdTime()
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		store.Insert(ctx, &TaskConfig{
 			TaskCode: "t" + string(rune('0'+i)),
 			Status:   StatusEnabled,
@@ -367,7 +367,7 @@ func TestMemoryStoreLockAndFetchPriorityRandom(t *testing.T) {
 	}
 
 	seen := make(map[string]bool)
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		// reset next_run so they are all eligible
 		for _, task := range store.tasks {
 			task.NextRun = now.Add(-time.Hour)
@@ -1168,15 +1168,13 @@ func TestConcurrentLockAndFetch(t *testing.T) {
 	var winners atomic.Int64
 	var wg sync.WaitGroup
 
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			_, err := store.LockAndFetch(ctx, now, 30*time.Second)
 			if err == nil {
 				winners.Add(1)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 

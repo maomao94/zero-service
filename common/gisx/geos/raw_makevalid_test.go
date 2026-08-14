@@ -75,7 +75,7 @@ func TestMakeValid_Raw(t *testing.T) {
 
 		fmt.Printf("%2d. %-16s valid=%-5v reason=%s\n", c.idx, c.label, valid, reason)
 		n := fixed.NumGeometries()
-		for i := 0; i < n; i++ {
+		for i := range n {
 			sub := fixed.Geometry(i)
 			switch sub.TypeID() {
 			case gogeos.TypeIDPolygon:

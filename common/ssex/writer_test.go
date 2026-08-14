@@ -39,13 +39,11 @@ func TestWriter_ConcurrentWrites(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			w.WriteKeepAlive()
 			w.WriteData("chunk")
-		}()
+		})
 	}
 	wg.Wait()
 

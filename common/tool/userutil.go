@@ -7,13 +7,13 @@ import (
 )
 
 // GetCurrentUserId resolves the current user id from context data or a user object.
-func GetCurrentUserId(ctx context.Context, currentUser interface{}) string {
+func GetCurrentUserId(ctx context.Context, currentUser any) string {
 	if userId := authctx.GetUserId(ctx); userId != "" {
 		return userId
 	}
 	if currentUser != nil {
 		v := reflect.ValueOf(currentUser)
-		if v.Kind() == reflect.Ptr {
+		if v.Kind() == reflect.Pointer {
 			v = v.Elem()
 		}
 		if v.Kind() != reflect.Struct {
@@ -34,13 +34,13 @@ func GetCurrentUserId(ctx context.Context, currentUser interface{}) string {
 }
 
 // GetCurrentUserName resolves the current user name from context data or a user object.
-func GetCurrentUserName(ctx context.Context, currentUser interface{}) string {
+func GetCurrentUserName(ctx context.Context, currentUser any) string {
 	if userName := authctx.GetUserName(ctx); userName != "" {
 		return userName
 	}
 	if currentUser != nil {
 		v := reflect.ValueOf(currentUser)
-		if v.Kind() == reflect.Ptr {
+		if v.Kind() == reflect.Pointer {
 			v = v.Elem()
 		}
 		if v.Kind() != reflect.Struct {
@@ -61,13 +61,13 @@ func GetCurrentUserName(ctx context.Context, currentUser interface{}) string {
 }
 
 // GetCurrentDeptCode resolves the first department code from context data or a user object.
-func GetCurrentDeptCode(ctx context.Context, currentUser interface{}) string {
+func GetCurrentDeptCode(ctx context.Context, currentUser any) string {
 	if deptCode := authctx.GetDeptCode(ctx); deptCode != "" {
 		return deptCode
 	}
 	if currentUser != nil {
 		v := reflect.ValueOf(currentUser)
-		if v.Kind() == reflect.Ptr {
+		if v.Kind() == reflect.Pointer {
 			v = v.Elem()
 		}
 		if v.Kind() != reflect.Struct {
@@ -84,7 +84,7 @@ func GetCurrentDeptCode(ctx context.Context, currentUser interface{}) string {
 			return ""
 		}
 		firstDept := deptField.Index(0)
-		if firstDept.Kind() == reflect.Ptr {
+		if firstDept.Kind() == reflect.Pointer {
 			firstDept = firstDept.Elem()
 		}
 		deptCodeField := firstDept.FieldByName("DeptCode")

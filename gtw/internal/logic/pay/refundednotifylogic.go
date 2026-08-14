@@ -32,7 +32,7 @@ func NewRefundedNotifyLogic(ctx context.Context, svcCtx *svc.ServiceContext, r *
 func (l *RefundedNotifyLogic) RefundedNotify() error {
 	res, err := l.svcCtx.WxPayCli.HandleRefundedNotify(
 		l.r,
-		func(message *request.RequestNotify, transaction *models.Refund, fail func(message string)) interface{} {
+		func(message *request.RequestNotify, transaction *models.Refund, fail func(message string)) any {
 			if message.EventType != "REFUND.SUCCESS" {
 				return true
 			}

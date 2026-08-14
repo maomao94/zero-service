@@ -342,8 +342,8 @@ func TestHTTPInvoker_EncodeURLEncoded_Delegate(t *testing.T) {
 
 func parseURLEncoded(s string) map[string][]string {
 	result := make(map[string][]string)
-	parts := strings.Split(s, "&")
-	for _, part := range parts {
+	parts := strings.SplitSeq(s, "&")
+	for part := range parts {
 		kv := strings.SplitN(part, "=", 2)
 		if len(kv) == 2 {
 			result[kv[0]] = append(result[kv[0]], kv[1])

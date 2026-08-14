@@ -70,10 +70,7 @@ func (e *ArkEmbedder) Embed(ctx context.Context, texts []string) ([][]float32, e
 	const batch = 16
 	var out [][]float32
 	for i := 0; i < len(texts); i += batch {
-		j := i + batch
-		if j > len(texts) {
-			j = len(texts)
-		}
+		j := min(i+batch, len(texts))
 		part := texts[i:j]
 		vec, err := e.embedBatch(ctx, part)
 		if err != nil {

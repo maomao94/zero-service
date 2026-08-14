@@ -233,7 +233,7 @@ func TestInvokeWithReactor_PoolStress(t *testing.T) {
 
 	ctx := context.Background()
 	tasks := make([]antsx.Task[int], 10)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		idx := i
 		tasks[i] = antsx.Task[int]{
 			Name: "stress",

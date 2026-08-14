@@ -145,7 +145,7 @@ func (s *GormFenceStore) UpdateFence(ctx context.Context, fenceId, name string, 
 
 	tx := s.db.DB.WithContext(ctx).Begin()
 
-	updates := map[string]interface{}{
+	updates := map[string]any{
 		"points":            string(pointsJSON),
 		"h3_resolution":     h3Resolution,
 		"geohash_precision": geohashPrecision,
@@ -345,10 +345,7 @@ func computeH3RecallCells(polygon orb.Polygon) ([]string, error) {
 }
 
 func kmToH3RecallK(km float64) int {
-	k := int(math.Ceil(km / h3RecallAverageEdgeKm))
-	if k < 1 {
-		k = 1
-	}
+	k := max(int(math.Ceil(km/h3RecallAverageEdgeKm)), 1)
 	return k
 }
 

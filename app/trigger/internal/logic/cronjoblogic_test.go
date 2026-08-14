@@ -61,20 +61,20 @@ func TestCronJobLifecycle(t *testing.T) {
 	}
 
 	disable := NewDisableCronJobLogic(ctx, serviceContext)
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		if _, err := disable.DisableCronJob(&trigger.DisableCronJobReq{JobId: created.JobId}); err != nil {
 			t.Fatalf("disable attempt %d: %v", i+1, err)
 		}
 	}
 	enable := NewEnableCronJobLogic(ctx, serviceContext)
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		if _, err := enable.EnableCronJob(&trigger.EnableCronJobReq{JobId: created.JobId}); err != nil {
 			t.Fatalf("enable attempt %d: %v", i+1, err)
 		}
 	}
 
 	deleteLogic := NewDeleteCronJobLogic(ctx, serviceContext)
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		if _, err := deleteLogic.DeleteCronJob(&trigger.DeleteCronJobReq{JobId: created.JobId}); err != nil {
 			t.Fatalf("delete attempt %d: %v", i+1, err)
 		}
@@ -249,7 +249,7 @@ func TestUpdateCronJobRejectsInFlightTask(t *testing.T) {
 			leaseTime := time.Now().Add(time.Minute).Truncate(time.Second)
 			lastRun := time.Now().Add(-2 * time.Hour).Truncate(time.Second)
 			lastScheduledRun := lastRun.Add(-time.Minute)
-			if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", created.JobId).Updates(map[string]interface{}{
+			if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", created.JobId).Updates(map[string]any{
 				"status":             int(status),
 				"next_run":           leaseTime,
 				"scheduled_time":     scheduledTime,
@@ -433,7 +433,7 @@ func TestSubmitCronJobRejectsInFlightTask(t *testing.T) {
 	}
 	scheduledTime := time.Now().Add(-time.Minute).Truncate(time.Second)
 	leaseTime := time.Now().Add(time.Minute).Truncate(time.Second)
-	if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", created.JobId).Updates(map[string]interface{}{
+	if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", created.JobId).Updates(map[string]any{
 		"next_run":       leaseTime,
 		"scheduled_time": scheduledTime,
 	}).Error; err != nil {
@@ -536,7 +536,7 @@ func TestCronJobRunGetAndList(t *testing.T) {
 	baseTime := time.Date(2026, 7, 27, 10, 0, 0, 0, time.Local)
 	if err := db.Model(&gormmodel.CronJob{}).
 		Where("id = ?", config.ID).
-		Updates(map[string]interface{}{"create_time": baseTime, "update_time": baseTime}).Error; err != nil {
+		Updates(map[string]any{"create_time": baseTime, "update_time": baseTime}).Error; err != nil {
 		t.Fatal(err)
 	}
 	laterConfig := *config
@@ -548,7 +548,7 @@ func TestCronJobRunGetAndList(t *testing.T) {
 	}
 	if err := db.Model(&gormmodel.CronJob{}).
 		Where("id = ?", laterConfig.ID).
-		Updates(map[string]interface{}{"create_time": baseTime.Add(time.Hour), "update_time": baseTime.Add(time.Hour)}).Error; err != nil {
+		Updates(map[string]any{"create_time": baseTime.Add(time.Hour), "update_time": baseTime.Add(time.Hour)}).Error; err != nil {
 		t.Fatal(err)
 	}
 	deletedConfig := laterConfig

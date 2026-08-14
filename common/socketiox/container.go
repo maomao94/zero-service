@@ -3,6 +3,7 @@ package socketiox
 import (
 	"context"
 	"fmt"
+	"maps"
 	"math/rand/v2"
 	"net"
 	"net/url"
@@ -70,9 +71,7 @@ func (p *SocketContainer) GetClients() map[string]socketgtw.SocketGtwClient {
 	p.lock.RLock()
 	defer p.lock.RUnlock()
 	clients := make(map[string]socketgtw.SocketGtwClient, len(p.ClientMap))
-	for k, v := range p.ClientMap {
-		clients[k] = v
-	}
+	maps.Copy(clients, p.ClientMap)
 	return clients
 }
 
@@ -334,7 +333,7 @@ func parseURL(rawURL url.URL) (target, error) {
 	}
 
 	var tgt target
-	params := make(map[string]interface{}, len(rawURL.Query()))
+	params := make(map[string]any, len(rawURL.Query()))
 	for name, value := range rawURL.Query() {
 		params[name] = value[0]
 	}

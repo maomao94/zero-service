@@ -137,7 +137,7 @@ func (d Dropdown) View() string {
 		return b.String()
 	}
 
-	for i := 0; i < visibleCount; i++ {
+	for i := range visibleCount {
 		idx := startIdx + i
 		if idx >= len(d.filtered) {
 			break

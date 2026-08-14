@@ -35,11 +35,9 @@ func TestServerWithServiceGroup(t *testing.T) {
 	sg.Add(srv)
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		sg.Start() // 阻塞
-	}()
+	})
 
 	// 等监听就绪
 	time.Sleep(150 * time.Millisecond)

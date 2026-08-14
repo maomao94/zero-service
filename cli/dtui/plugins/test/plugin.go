@@ -128,19 +128,10 @@ func (m *Module) SetSize(width, height int) {
 	}
 	m.width = width
 	m.height = height
-	logWidth := width - 8
-	if logWidth < 20 {
-		logWidth = 20
-	}
-	logHeight := height - 15
-	if logHeight < 5 {
-		logHeight = 5
-	}
+	logWidth := max(width-8, 20)
+	logHeight := max(height-15, 5)
 	if m.logMode {
-		logHeight = height - 2
-		if logHeight < 5 {
-			logHeight = 5
-		}
+		logHeight = max(height-2, 5)
 	}
 	m.log.SetSize(logWidth, logHeight)
 }

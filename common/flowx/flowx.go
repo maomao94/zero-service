@@ -86,4 +86,5 @@ func New(opts ...FlowOption) *flow.Workflow {
 	return w
 }
 
-func ptr[T any](v T) *T { return &v }
+//go:fix inline
+func ptr[T any](v T) *T { return new(v) }

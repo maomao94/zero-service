@@ -13,7 +13,7 @@ func TestStatusBarViewDoesNotExceedConfiguredWidth(t *testing.T) {
 	bar.SetLeft("very-long-module-name")
 	bar.SetRight("x inspect selected resource | s start | r restart | delete remove with confirmation | / commands")
 
-	for _, line := range strings.Split(bar.View(), "\n") {
+	for line := range strings.SplitSeq(bar.View(), "\n") {
 		if width := lipgloss.Width(line); width > 24 {
 			t.Fatalf("expected line width <= 24, got %d for %q", width, line)
 		}

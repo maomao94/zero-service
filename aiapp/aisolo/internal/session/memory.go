@@ -143,10 +143,7 @@ func (s *MemoryStore) ListSessions(_ context.Context, userID string, page, pageS
 	if start >= len(list) {
 		return nil, total, nil
 	}
-	end := start + pageSize
-	if end > len(list) {
-		end = len(list)
-	}
+	end := min(start+pageSize, len(list))
 	return list[start:end], total, nil
 }
 

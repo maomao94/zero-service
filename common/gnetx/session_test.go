@@ -168,7 +168,7 @@ func TestClientSessionConcurrentBindAndClose(t *testing.T) {
 	cn := newSession("client-session", newMockConn(nil), newTestCodec(), nil, nil)
 
 	var wg sync.WaitGroup
-	for i := 0; i < 32; i++ {
+	for i := range 32 {
 		clientID := "client-" + itoa(i)
 		wg.Add(1)
 		go func(clientID string) {
@@ -177,11 +177,9 @@ func TestClientSessionConcurrentBindAndClose(t *testing.T) {
 			_ = cn.ClientID()
 		}(clientID)
 	}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		_ = cn.Close()
-	}()
+	})
 	wg.Wait()
 
 	if !cn.isClosed() {
@@ -214,17 +212,15 @@ func TestSessionManagerConcurrentClientIDBinding(t *testing.T) {
 	mgr.add(cn)
 
 	var wg sync.WaitGroup
-	for i := 0; i < 32; i++ {
+	for i := range 32 {
 		clientID := "client-" + itoa(i)
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if err := cn.BindClientID(clientID); err != nil {
 				t.Errorf("BindClientID(%q): %v", clientID, err)
 			}
 			_ = cn.ClientID()
 			_ = mgr.GetByClientID(clientID)
-		}()
+		})
 	}
 	wg.Wait()
 
@@ -242,21 +238,17 @@ func TestSessionManagerConcurrentBindAndClose(t *testing.T) {
 
 	start := make(chan struct{})
 	var wg sync.WaitGroup
-	for i := 0; i < 32; i++ {
+	for i := range 32 {
 		clientID := "client-" + itoa(i)
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			<-start
 			_ = cn.BindClientID(clientID)
-		}()
+		})
 	}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		<-start
 		_ = cn.Close()
-	}()
+	})
 	close(start)
 	wg.Wait()
 
@@ -584,10 +576,10 @@ func TestNextSendSeqConcurrent(t *testing.T) {
 	var errOnce sync.Once
 	var firstErr error
 	wg.Add(goroutines)
-	for g := 0; g < goroutines; g++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
-			for i := 0; i < calls; i++ {
+			for range calls {
 				seq := cn.NextSendSeq()
 				mu.Lock()
 				if seen[seq] {

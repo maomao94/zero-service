@@ -113,10 +113,7 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 	if in.Offset > int32(total) {
 		items = []*podengine.ListPodItemPb{}
 	} else {
-		end := in.Offset + in.Limit
-		if end > int32(total) {
-			end = int32(total)
-		}
+		end := min(in.Offset+in.Limit, int32(total))
 		items = items[in.Offset:end]
 	}
 

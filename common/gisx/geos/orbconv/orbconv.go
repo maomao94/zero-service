@@ -140,7 +140,7 @@ func GeomToPolygon(g *gogeos.Geom) (orb.Polygon, error) {
 // 支持的输入类型：
 //   - TypeIDPolygon: 单个多边形，包装为只含一个元素的 MultiPolygon
 //   - TypeIDMultiPolygon: 遍历所有子几何，逐个转为 orb.Polygon
-//     - 每个子几何是独立的 Polygon，可以有自己的外环和洞
+//   - 每个子几何是独立的 Polygon，可以有自己的外环和洞
 //
 // orb.MultiPolygon 是 []orb.Polygon（等价于 [][]orb.Ring）。
 //
@@ -167,7 +167,7 @@ func GeomToMultiPolygon(g *gogeos.Geom) (orb.MultiPolygon, error) {
 			return orb.MultiPolygon{}, nil
 		}
 		result := make(orb.MultiPolygon, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			// Geometry(i) 返回第 i 个子几何，类型为 Polygon
 			poly, err := singlePolyToOrb(g.Geometry(i))
 			if err != nil {
@@ -202,7 +202,7 @@ func GeomToMultiPoint(g *gogeos.Geom) (orb.MultiPoint, error) {
 			return orb.MultiPoint{}, nil
 		}
 		result := make(orb.MultiPoint, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			sub := g.Geometry(i)
 			result = append(result, orb.Point{sub.X(), sub.Y()})
 		}
@@ -237,7 +237,7 @@ func GeomToMultiLineString(g *gogeos.Geom) (orb.MultiLineString, error) {
 			return orb.MultiLineString{}, nil
 		}
 		result := make(orb.MultiLineString, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			ls, err := GeomToLineString(g.Geometry(i))
 			if err != nil {
 				return nil, err
@@ -529,17 +529,18 @@ func ValidOrb(poly orb.Polygon) (bool, error) {
 // MakeValidOrb 调用 GEOS MakeValid 修复无效多边形，返回有效的 orb.Polygon。
 //
 // GEOS MakeValid 对不同无效原因的 Polygon 返回不同类型（11 种场景实测）：
-//   有效-无洞          → Polygon (3)   原样返回
-//   有效-单洞          → Polygon (3)   原样返回
-//   有效-多洞不重叠     → Polygon (3)   原样返回
-//   无效-重叠洞         → MultiPolygon (6)  子0=外环不变+洞合并    取子0
-//   无效-洞包含洞       → MultiPolygon (6)  子0=外环不变(无洞)     取子0
-//   无效-洞超出外环     → MultiPolygon (6)  子0=外环重绘(掏了凹口)  取子0
-//   无效-洞完全在外     → MultiPolygon (6)  子0=外环不变(无洞)     取子0
-//   无效-自相交(蝴蝶结)  → MultiPolygon (6)  子0=三角形            取子0
-//   无效-三洞重叠       → MultiPolygon (6)  子0=外环不变+洞合并    取子0
-//   无效-洞碰外环边     → GeometryCollection (7)  拒绝
-//   退化-三点共线       → MultiLineString (5)     拒绝
+//
+//	有效-无洞          → Polygon (3)   原样返回
+//	有效-单洞          → Polygon (3)   原样返回
+//	有效-多洞不重叠     → Polygon (3)   原样返回
+//	无效-重叠洞         → MultiPolygon (6)  子0=外环不变+洞合并    取子0
+//	无效-洞包含洞       → MultiPolygon (6)  子0=外环不变(无洞)     取子0
+//	无效-洞超出外环     → MultiPolygon (6)  子0=外环重绘(掏了凹口)  取子0
+//	无效-洞完全在外     → MultiPolygon (6)  子0=外环不变(无洞)     取子0
+//	无效-自相交(蝴蝶结)  → MultiPolygon (6)  子0=三角形            取子0
+//	无效-三洞重叠       → MultiPolygon (6)  子0=外环不变+洞合并    取子0
+//	无效-洞碰外环边     → GeometryCollection (7)  拒绝
+//	退化-三点共线       → MultiLineString (5)     拒绝
 //
 // 策略：GEOS 已经合法化了几何体，直接取子多边形 0 作为结果。
 // 不跟原始多边形做外环点数或 bbox 比较——重绘本身就是合法的修复。

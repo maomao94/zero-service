@@ -256,7 +256,7 @@ func TestReactor_SubmitConcurrent(t *testing.T) {
 
 	const n = 50
 	promises := make([]*antsx.Promise[int], n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		idx := i
 		p, err := antsx.Submit(context.Background(), r, func(ctx context.Context) (int, error) {
 			time.Sleep(time.Millisecond)

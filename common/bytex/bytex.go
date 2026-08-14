@@ -40,7 +40,7 @@ func BytesToUint16Slice(data []byte) []uint16 {
 	n := (len(data) + 1) / 2
 	result := make([]uint16, 0, n)
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		idx := i * 2
 		if idx+1 < len(data) {
 			// 常规组合：高8位 + 低8位
@@ -183,7 +183,7 @@ func Uint16SliceToBinaryValues(values []uint16) *BinaryValues {
 // ------------------------------------------------------
 func BytesToBools(data []byte, quantity int) []bool {
 	bools := make([]bool, quantity)
-	for i := 0; i < quantity; i++ {
+	for i := range quantity {
 		byteIndex := i / 8
 		bitIndex := i % 8
 		bools[i] = (data[byteIndex] & (1 << bitIndex)) != 0

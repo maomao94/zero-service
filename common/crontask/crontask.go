@@ -67,11 +67,9 @@ func NewScheduler(store TaskStore, handler Handler, opts ...SchedulerOption) *Sc
 func (s *Scheduler) Start() {
 	s.startOnce.Do(func() {
 		logx.Info("[crontask] scheduler started")
-		s.workerGroup.Add(1)
-		go func() {
-			defer s.workerGroup.Done()
+		s.workerGroup.Go(func() {
 			s.scanLoop()
-		}()
+		})
 	})
 }
 

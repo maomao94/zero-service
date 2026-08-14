@@ -352,7 +352,7 @@ func TestNextSendSeqIncrementsAcrossFrames(t *testing.T) {
 	cn := newSeqSession()
 
 	ctx := context.Background()
-	for i := uint32(0); i < 10; i++ {
+	for i := range uint32(10) {
 		out := encodeFrame(t, codec, ctx, &seqReqMsg{Body: "x"}, cn)
 		seq := binary.BigEndian.Uint32(out[1:5])
 		if seq != i {

@@ -285,7 +285,7 @@ func (ar *arrayReader[T]) close() {}
 // copy 创建 n 个共享底层数组但各自独立游标的 arrayReader 副本。
 func (ar *arrayReader[T]) copy(n int) []*arrayReader[T] {
 	ret := make([]*arrayReader[T], n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		ret[i] = &arrayReader[T]{arr: ar.arr, index: ar.index}
 	}
 	return ret

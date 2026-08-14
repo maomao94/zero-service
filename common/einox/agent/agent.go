@@ -117,9 +117,6 @@ func buildChatModelAgent(ctx context.Context, cfg *options) (*adk.ChatModelAgent
 	if len(cfg.handlers) > 0 {
 		agentCfg.Handlers = cfg.handlers
 	}
-	if len(cfg.middlewares) > 0 {
-		agentCfg.Middlewares = cfg.middlewares
-	}
 
 	return adk.NewChatModelAgent(ctx, agentCfg)
 }

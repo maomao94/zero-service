@@ -64,7 +64,7 @@ func (l *ListTaskExecutionsLogic) computeExecTimes(task *crontask.TaskConfig, co
 
 	from := carbon.Now().StdTime().Add(-time.Second)
 	var times []string
-	for i := 0; i < count; i++ {
+	for range count {
 		next := set.After(from, false)
 		if next.IsZero() {
 			break

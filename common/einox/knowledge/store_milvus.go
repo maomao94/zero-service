@@ -332,7 +332,7 @@ func (s *milvusStore) ListSources(ctx context.Context, userID, baseID string) ([
 		cnt int
 		ts  int64
 	}{}
-	for i := 0; i < n; i++ {
+	for i := range n {
 		sid, _ := srcCol.GetAsString(i)
 		fn, _ := fnCol.GetAsString(i)
 		tsv, _ := tsCol.GetAsInt64(i)

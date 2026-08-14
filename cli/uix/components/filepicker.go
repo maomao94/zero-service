@@ -31,7 +31,7 @@ func NewFilePicker(width int) FilePicker {
 	fp.FileAllowed = true
 	fp.ShowHidden = false
 	fp.AutoHeight = false
-	fp.Height = 8
+	fp.SetHeight(8)
 
 	fp.KeyMap.Back = key.NewBinding(key.WithKeys("h", "backspace", "left"))
 
@@ -50,7 +50,7 @@ func NewFilePicker(width int) FilePicker {
 	}
 	fp.Cursor = "▶"
 
-	return FilePicker{fp: fp, width: width, height: 24}
+	return FilePicker{fp: fp, width: width, height: 12}
 }
 
 func (fp *FilePicker) Init() tea.Cmd {
@@ -68,10 +68,7 @@ func (fp FilePicker) View() string {
 	if width <= 0 {
 		width = 80
 	}
-	panelWidth := width - 4
-	if panelWidth < 20 {
-		panelWidth = 20
-	}
+	panelWidth := max(width-4, 20)
 	header := lipgloss.NewStyle().
 		Foreground(lipgloss.Color(theme.ColorDim)).
 		Render("  " + fp.fp.CurrentDirectory)
@@ -105,10 +102,10 @@ func (fp *FilePicker) SetSize(width, height int) {
 	fp.width = width
 	fp.height = height
 	if height > 5 {
-		fp.fp.Height = height - 4
+		fp.fp.SetHeight(height - 4)
 	}
 }
 
 func (fp FilePicker) Height() int {
-	return fp.fp.Height + 4
+	return fp.height
 }

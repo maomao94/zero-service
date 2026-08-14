@@ -32,7 +32,7 @@ func NewPaidNotifyLogic(ctx context.Context, svcCtx *svc.ServiceContext, r *http
 func (l *PaidNotifyLogic) PaidNotify() error {
 	res, err := l.svcCtx.WxPayCli.HandlePaidNotify(
 		l.r,
-		func(message *request.RequestNotify, transaction *models.Transaction, fail func(message string)) interface{} {
+		func(message *request.RequestNotify, transaction *models.Transaction, fail func(message string)) any {
 			// 看下支付通知事件状态
 			// 这里可能是微信支付失败的通知，所以可能需要在数据库做一些记录，然后告诉微信我处理完成了。
 			if message.EventType != "TRANSACTION.SUCCESS" {

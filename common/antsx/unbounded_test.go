@@ -13,7 +13,7 @@ func TestUnboundedChan_Basic(t *testing.T) {
 	ch := antsx.NewUnboundedChan[int]()
 
 	go func() {
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			ch.Send(i)
 		}
 		ch.Close()
@@ -45,13 +45,13 @@ func TestUnboundedChan_CloseReceive(t *testing.T) {
 func TestUnboundedChan_DrainAfterClose(t *testing.T) {
 	ch := antsx.NewUnboundedChan[int]()
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		ch.Send(i)
 	}
 
 	ch.Close()
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		v, ok := ch.Receive()
 		if !ok {
 			t.Fatalf("expected item %d, got ok=false", i)
@@ -176,10 +176,10 @@ func TestUnboundedChan_Concurrent(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(producers)
-	for p := 0; p < producers; p++ {
+	for range producers {
 		go func() {
 			defer wg.Done()
-			for i := 0; i < perProducer; i++ {
+			for i := range perProducer {
 				ch.Send(i)
 			}
 		}()
@@ -215,12 +215,12 @@ func TestUnboundedChan_CloseIdempotent(t *testing.T) {
 func TestUnboundedChan_MemoryRelease(t *testing.T) {
 	ch := antsx.NewUnboundedChan[*[1024]byte]()
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		data := new([1024]byte)
 		ch.Send(data)
 	}
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		_, ok := ch.Receive()
 		if !ok {
 			t.Fatal("expected data")
@@ -242,18 +242,16 @@ func TestUnboundedChan_ReceiveContext_MultiGoroutine(t *testing.T) {
 	const n = 10
 	var wg sync.WaitGroup
 
-	for i := 0; i < n; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range n {
+		wg.Go(func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 			defer cancel()
 			ch.ReceiveContext(ctx)
-		}()
+		})
 	}
 
 	time.Sleep(50 * time.Millisecond)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		ch.Send(i)
 	}
 	wg.Wait()
@@ -264,7 +262,7 @@ func TestUnboundedChan_TrySend_Concurrent(t *testing.T) {
 	defer ch.Close()
 
 	var wg sync.WaitGroup
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		wg.Add(1)
 		go func(val int) {
 			defer wg.Done()
@@ -293,11 +291,11 @@ func TestUnboundedChan_BufferCompact(t *testing.T) {
 	ch := antsx.NewUnboundedChan[int]()
 	defer ch.Close()
 
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		ch.Send(i)
 	}
 
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		v, ok := ch.Receive()
 		if !ok {
 			t.Fatalf("expected value at %d", i)
@@ -328,7 +326,7 @@ func TestUnboundedChan_ReceiveContext_NoGoroutineLeak(t *testing.T) {
 	ch.Send(2)
 	ch.Send(3)
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		v, ok := ch.ReceiveContext(ctx)
 		cancel()
@@ -353,10 +351,10 @@ func TestUnboundedChan_MPMC(t *testing.T) {
 
 	var sendWg sync.WaitGroup
 	sendWg.Add(producers)
-	for p := 0; p < producers; p++ {
+	for p := range producers {
 		go func(id int) {
 			defer sendWg.Done()
-			for i := 0; i < perProducer; i++ {
+			for i := range perProducer {
 				ch.Send(id*perProducer + i)
 			}
 		}(p)
@@ -371,7 +369,7 @@ func TestUnboundedChan_MPMC(t *testing.T) {
 	total := 0
 	var recvWg sync.WaitGroup
 	recvWg.Add(consumers)
-	for c := 0; c < consumers; c++ {
+	for range consumers {
 		go func() {
 			defer recvWg.Done()
 			localCount := 0

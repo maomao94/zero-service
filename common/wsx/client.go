@@ -358,9 +358,7 @@ func (c *client) startTokenRefresher(connCtx context.Context, connCancel context
 		return
 	}
 
-	c.wg.Add(1)
-	go func() {
-		defer c.wg.Done()
+	c.wg.Go(func() {
 		c.logger.Infof("[wsx] token refresh started (interval: %v)", c.cfg.TokenRefreshInterval)
 
 		ticker := time.NewTicker(c.cfg.TokenRefreshInterval)
@@ -385,7 +383,7 @@ func (c *client) startTokenRefresher(connCtx context.Context, connCancel context
 				c.logger.Info("[wsx] token refreshed")
 			}
 		}
-	}()
+	})
 }
 
 func (c *client) sleepReconnect() bool {

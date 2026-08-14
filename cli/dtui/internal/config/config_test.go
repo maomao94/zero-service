@@ -242,7 +242,7 @@ func TestHistoryMaxEntries(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "history.json")
 
-	for i := 0; i < 210; i++ {
+	for range 210 {
 		RecordHistory(path, HistoryEntry{
 			Time:    time.Now(),
 			Action:  "test",
@@ -267,7 +267,7 @@ func TestLoadHistoryNonexistent(t *testing.T) {
 func TestCleanOldBackups(t *testing.T) {
 	dir := t.TempDir()
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		os.WriteFile(filepath.Join(dir, "backup"+string(rune('a'+i))), []byte("data"), 0644)
 		time.Sleep(10 * time.Millisecond)
 	}

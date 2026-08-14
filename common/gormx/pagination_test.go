@@ -141,7 +141,7 @@ func TestQueryPageDataNormalizesInvalidParams(t *testing.T) {
 
 func TestQueryPageDataMaxPageSize(t *testing.T) {
 	db := openTestDB(t, &pageTestModel{})
-	for i := 0; i < MaxPageSize+10; i++ {
+	for range MaxPageSize + 10 {
 		if err := db.Create(&pageTestModel{Name: "x"}).Error; err != nil {
 			t.Fatalf("create error = %v", err)
 		}

@@ -256,7 +256,7 @@ func TestDBStoreUpdateOwnsOnlyConfigurationFields(t *testing.T) {
 
 	lastRun := now.Add(-time.Hour)
 	lastScheduledRun := now.Add(-2 * time.Hour)
-	if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", config.ID).Updates(map[string]interface{}{
+	if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", config.ID).Updates(map[string]any{
 		"status":             int(crontask.StatusDisabled),
 		"last_run":           lastRun,
 		"last_scheduled_run": lastScheduledRun,
@@ -678,7 +678,7 @@ func TestDBStoreGetByIDAndProto(t *testing.T) {
 		createdAt := baseTime.Add(time.Duration(i) * time.Hour)
 		if err := db.Model(&gormmodel.CronJob{}).
 			Where("id = ?", config.ID).
-			Updates(map[string]interface{}{"create_time": createdAt, "update_time": createdAt}).Error; err != nil {
+			Updates(map[string]any{"create_time": createdAt, "update_time": createdAt}).Error; err != nil {
 			t.Fatal(err)
 		}
 	}

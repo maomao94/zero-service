@@ -26,7 +26,7 @@ func ParseToken(tokenString string, secrets ...string) (jwt.MapClaims, error) {
 	}
 	var lastErr error
 	for _, secret := range secrets {
-		token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(t *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(t *jwt.Token) (any, error) {
 			return []byte(secret), nil
 		})
 		if err != nil {

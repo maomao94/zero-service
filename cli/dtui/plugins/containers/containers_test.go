@@ -423,7 +423,7 @@ func TestHandleStatsEntry(t *testing.T) {
 func TestHandleStatsEntryMaxHistory(t *testing.T) {
 	m := New()
 	m.statsMode = true
-	for i := 0; i < 65; i++ {
+	for i := range 65 {
 		m.statsHistory = append(m.statsHistory, dt.StatsEntry{CPUPercent: float64(i)})
 	}
 	entry := dt.StatsEntry{CPUPercent: 100.0}

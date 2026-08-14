@@ -942,8 +942,8 @@ func TestDrcInitialStateSubscribeUpDataParser(t *testing.T) {
 	if state.Result != 0 {
 		t.Fatalf("Result = %d, want 0", state.Result)
 	}
-	if reflect.TypeOf(*state).NumField() != 1 {
-		t.Fatalf("DrcInitialStateSubscribeUpData has %d fields, want only result", reflect.TypeOf(*state).NumField())
+	if reflect.TypeFor[DrcInitialStateSubscribeUpData]().NumField() != 1 {
+		t.Fatalf("DrcInitialStateSubscribeUpData has %d fields, want only result", reflect.TypeFor[DrcInitialStateSubscribeUpData]().NumField())
 	}
 	encoded, err := json.Marshal(state)
 	if err != nil {

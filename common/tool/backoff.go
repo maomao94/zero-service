@@ -14,7 +14,7 @@ func CalculateNextTriggerTime(failureCount int64, expiry time.Duration) (time.Ti
 	} else if failureCount <= 60 {
 		exponent := failureCount - 30
 		backoff := expiry
-		for i := int64(0); i < exponent; i++ {
+		for range exponent {
 			backoff *= 2
 			if backoff >= 30*time.Minute {
 				backoff = 30 * time.Minute

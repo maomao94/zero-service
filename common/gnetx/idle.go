@@ -13,10 +13,7 @@ type idleSweeper struct {
 
 // newIdleSweeper 创建空闲扫描器。period 自动取 IdleTimeout/2（下限 1s）。
 func newIdleSweeper(mgr *SessionManager, idle time.Duration) *idleSweeper {
-	period := idle / 2
-	if period < time.Second {
-		period = time.Second
-	}
+	period := max(idle/2, time.Second)
 	return &idleSweeper{
 		mgr:    mgr,
 		period: period,

@@ -32,7 +32,7 @@ func NewPushChunkAsduLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Pus
 }
 
 // extractIoaValue 根据bodyMap中的value类型提取合适的值
-func extractIoaValue(bodyMap map[string]interface{}) string {
+func extractIoaValue(bodyMap map[string]any) string {
 	value, ok := bodyMap["value"]
 	if !ok {
 		// 如果没有value字段，返回空字符串
@@ -76,7 +76,7 @@ func extractIoaValue(bodyMap map[string]interface{}) string {
 		return v
 
 	// 复杂类型：对象类型
-	case map[string]interface{}:
+	case map[string]any:
 		// 尝试提取对象中的关键值
 		if counterReading, ok := v["counterReading"].(float64); ok {
 			// 累计量类型：返回计数器读数
@@ -102,7 +102,7 @@ func extractIoaValue(bodyMap map[string]interface{}) string {
 		}
 
 	// 切片类型：返回JSON字符串
-	case []interface{}:
+	case []any:
 		if jsonStr, err := json.Marshal(v); err == nil {
 			return string(jsonStr)
 		}
@@ -127,7 +127,7 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 		// generate
 		func(source chan<- string) {
 			for _, msgBody := range in.MsgBody {
-				var bodyMap map[string]interface{}
+				var bodyMap map[string]any
 				if err := json.Unmarshal([]byte(msgBody.BodyRaw), &bodyMap); err != nil {
 					l.WithContext(ctx).Errorf("Failed to parse bodyRaw: %v, msgId: %s", err, msgBody.MsgId)
 					ignoreCount++
@@ -145,7 +145,7 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 				stationId := util.GenerateStationId(msgBody.Host, msgBody.Port)
 				deviceTableName := fmt.Sprintf("raw_%s_%d_%d", stationId, msgBody.Coa, ioa)
 				if len(msgBody.MetaDataRaw) > 0 {
-					var metaDataMap map[string]interface{}
+					var metaDataMap map[string]any
 					err = json.Unmarshal([]byte(msgBody.MetaDataRaw), &metaDataMap)
 					if err != nil {
 						l.WithContext(ctx).Errorf("Failed to parse metaDataRaw: %v, msgId: %s", err, msgBody.MsgId)

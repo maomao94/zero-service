@@ -3,6 +3,7 @@ package antsx
 import (
 	"context"
 	"fmt"
+	"maps"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -69,13 +70,7 @@ type ReplyPool[T any] struct {
 
 func autoTimingWheel(ttl time.Duration) (interval time.Duration, numSlots int) {
 	const slots = 300
-	interval = ttl / slots
-	if interval < 10*time.Millisecond {
-		interval = 10 * time.Millisecond
-	}
-	if interval > time.Second {
-		interval = time.Second
-	}
+	interval = min(max(ttl/slots, 10*time.Millisecond), time.Second)
 	return interval, slots
 }
 
@@ -274,9 +269,7 @@ func (r *ReplyPool[T]) Close() {
 	r.closed = true
 
 	snapshot := make(map[string]*pendingEntry[T], len(r.pending))
-	for k, v := range r.pending {
-		snapshot[k] = v
-	}
+	maps.Copy(snapshot, r.pending)
 	r.pending = make(map[string]*pendingEntry[T])
 	r.mu.Unlock()
 

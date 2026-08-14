@@ -158,7 +158,7 @@ func TestBeforeUpdateHookIncrementsVersion(t *testing.T) {
 	}
 
 	// Update multiple times — re-read between updates to refresh version
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if err := db.First(&record, record.ID).Error; err != nil {
 			t.Fatalf("re-find error on iteration %d: %v", i, err)
 		}

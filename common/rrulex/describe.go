@@ -41,7 +41,8 @@ func Describe(value string) (string, error) {
 	if text := renderTime(parsed.option, parsed.dtstart, parsed.option.Freq <= rrule.DAILY || fixedDailyTimes); text != "" {
 		parts = append(parts, text)
 	}
-	description := parts[0]
+	var description strings.Builder
+	description.WriteString(parts[0])
 	for i, part := range parts[1:] {
 		separator := " "
 		if i == 0 && strings.Contains(parts[0], "生成候选") {
@@ -57,26 +58,26 @@ func Describe(value string) (string, error) {
 				}
 			}
 		}
-		description += separator + part
+		description.WriteString(separator + part)
 	}
 	if text := renderSetPositions(parsed.option.Bysetpos); text != "" {
-		description += "；每个周期先按上述条件形成候选，再选择" + text + "执行（仅在该位置存在候选时）"
+		description.WriteString("；每个周期先按上述条件形成候选，再选择" + text + "执行（仅在该位置存在候选时）")
 	} else {
 		separator := " "
 		if len(parts) == 1 && parsed.option.Freq == rrule.SECONDLY {
 			separator = ""
 		}
-		description += separator + "执行（仅在上述条件形成匹配候选时）"
+		description.WriteString(separator + "执行（仅在上述条件形成匹配候选时）")
 	}
 
 	if parsed.option.Count > 0 {
-		description += fmt.Sprintf("，周期规则最多生成 %d 次", parsed.option.Count)
+		description.WriteString(fmt.Sprintf("，周期规则最多生成 %d 次", parsed.option.Count))
 	}
-	description += renderBoundary(parsed.dtstart, parsed.option.Until, parsed.location)
-	description += renderDates("，额外纳入候选：", parsed.rdates, parsed.location)
-	description += renderDates("，从周期规则与额外候选的合并结果中排除：", parsed.exdates, parsed.location)
-	description += renderTimezoneNotice(parsed.location)
-	return description, nil
+	description.WriteString(renderBoundary(parsed.dtstart, parsed.option.Until, parsed.location))
+	description.WriteString(renderDates("，额外纳入候选：", parsed.rdates, parsed.location))
+	description.WriteString(renderDates("，从周期规则与额外候选的合并结果中排除：", parsed.exdates, parsed.location))
+	description.WriteString(renderTimezoneNotice(parsed.location))
+	return description.String(), nil
 }
 
 // hasDailyFixedTimeSet 判断低频规则是否可等价展示为每日固定时刻集合。

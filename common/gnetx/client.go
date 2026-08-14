@@ -211,7 +211,7 @@ func (c *Client) OnTraffic(gc gnet.Conn) gnet.Action {
 
 	batchLimit := c.opts.BatchReadLimit
 	consumed := 0
-	for i := 0; i < batchLimit; i++ {
+	for range batchLimit {
 		msg, err := c.opts.Codec.Decode(gc, cn)
 		if err != nil {
 			if errors.Is(err, ErrIncompletePacket) {

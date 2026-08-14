@@ -333,13 +333,7 @@ func (m *drcManager) expireSession(gatewaySn, sessionID string) {
 
 // cleanLoop 定期扫描 session map，清理超时未心跳的过期状态。
 func (m *drcManager) cleanLoop() {
-	interval := m.config.HeartbeatTimeout / 2
-	if interval < 5*time.Second {
-		interval = 5 * time.Second
-	}
-	if interval > 15*time.Second {
-		interval = 15 * time.Second
-	}
+	interval := min(max(m.config.HeartbeatTimeout/2, 5*time.Second), 15*time.Second)
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {

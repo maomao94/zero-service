@@ -16,7 +16,7 @@ var Option = copier.Option{
 		{
 			SrcType: time.Time{},
 			DstType: copier.String,
-			Fn: func(src interface{}) (interface{}, error) {
+			Fn: func(src any) (any, error) {
 				s, ok := src.(time.Time)
 
 				if !ok {
@@ -29,7 +29,7 @@ var Option = copier.Option{
 		{
 			SrcType: copier.String,
 			DstType: copier.Int,
-			Fn: func(src interface{}) (interface{}, error) {
+			Fn: func(src any) (any, error) {
 				s, ok := src.(string)
 
 				if !ok {
@@ -42,7 +42,7 @@ var Option = copier.Option{
 		{
 			SrcType: time.Time{},
 			DstType: common.DateTime{},
-			Fn: func(src interface{}) (interface{}, error) {
+			Fn: func(src any) (any, error) {
 				s, ok := src.(time.Time)
 
 				if !ok {

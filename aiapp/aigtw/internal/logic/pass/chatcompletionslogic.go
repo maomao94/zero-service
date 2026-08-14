@@ -125,7 +125,7 @@ func (l *ChatCompletionsLogic) writeStreamError(sw *ssex.Writer, code, message s
 
 // inferToolEventType 根据 JSON 内容推断工具事件类型
 func inferToolEventType(content string) string {
-	var event map[string]interface{}
+	var event map[string]any
 	if err := json.Unmarshal([]byte(content), &event); err != nil {
 		return ""
 	}

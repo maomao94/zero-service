@@ -197,7 +197,7 @@ func TestReplyPool_ConcurrentResolve(t *testing.T) {
 	const n = 100
 	promises := make([]*antsx.Promise[int], n)
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		id := fmt.Sprintf("concurrent-%d", i)
 		p, err := reg.Register(id, 5*time.Second)
 		if err != nil {
@@ -209,7 +209,7 @@ func TestReplyPool_ConcurrentResolve(t *testing.T) {
 	// 并发 Resolve
 	var wg sync.WaitGroup
 	wg.Add(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		go func(idx int) {
 			defer wg.Done()
 			id := fmt.Sprintf("concurrent-%d", idx)
@@ -220,7 +220,7 @@ func TestReplyPool_ConcurrentResolve(t *testing.T) {
 
 	// 验证结果
 	ctx := context.Background()
-	for i := 0; i < n; i++ {
+	for i := range n {
 		val, err := promises[i].Await(ctx)
 		if err != nil {
 			t.Fatalf("promise %d error: %v", i, err)
@@ -345,7 +345,7 @@ func TestReplyPool_ConcurrentRegisterClose(t *testing.T) {
 	reg := antsx.NewReplyPool[int]()
 
 	var wg sync.WaitGroup
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
@@ -396,7 +396,7 @@ func TestReplyPool_MassiveRegisterResolve(t *testing.T) {
 	promises := make([]*antsx.Promise[int], n)
 
 	var wg sync.WaitGroup
-	for i := 0; i < n; i++ {
+	for i := range n {
 		id := fmt.Sprintf("mass-%d", i)
 		p, err := reg.Register(id, 5*time.Second)
 		if err != nil {
@@ -415,7 +415,7 @@ func TestReplyPool_MassiveRegisterResolve(t *testing.T) {
 	wg.Wait()
 
 	ctx := context.Background()
-	for i := 0; i < n; i++ {
+	for i := range n {
 		val, err := promises[i].Await(ctx)
 		if err != nil {
 			t.Fatalf("promise %d: %v", i, err)
@@ -558,14 +558,14 @@ func TestReplyPool_HandleTimeoutVsRejectRace(t *testing.T) {
 	defer reg.Close()
 
 	const n = 100
-	for i := 0; i < n; i++ {
+	for i := range n {
 		id := fmt.Sprintf("race-%d", i)
 		reg.Register(id)
 	}
 
 	var wg sync.WaitGroup
 	wg.Add(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		go func(idx int) {
 			defer wg.Done()
 			id := fmt.Sprintf("race-%d", idx)
@@ -589,7 +589,7 @@ func TestReplyPool_CloseStatsAccuracy(t *testing.T) {
 	defer reg.Close()
 
 	promises := make([]*antsx.Promise[string], 10)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		p, _ := reg.Register(fmt.Sprintf("close-%d", i))
 		promises[i] = p
 	}
@@ -640,7 +640,7 @@ func TestReplyPool_ConcurrentRegisterResolveStats(t *testing.T) {
 	var registerDone sync.WaitGroup
 	registerDone.Add(n)
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		go func(idx int) {
 			defer registerDone.Done()
 			id := fmt.Sprintf("concurrent-%d", idx)
@@ -652,7 +652,7 @@ func TestReplyPool_ConcurrentRegisterResolveStats(t *testing.T) {
 
 	var resolveDone sync.WaitGroup
 	resolveDone.Add(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		go func(idx int) {
 			defer resolveDone.Done()
 			id := fmt.Sprintf("concurrent-%d", idx)

@@ -55,7 +55,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			}
 			return true
 		}),
-		socketiox.WithTokenValidatorWithClaims(func(token string) (map[string]interface{}, bool) {
+		socketiox.WithTokenValidatorWithClaims(func(token string) (map[string]any, bool) {
 			if c.JwtAuth.AccessSecret == "" {
 				return nil, true
 			}
@@ -77,7 +77,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 				return nil, nil
 			}
 			reqId, _ := tool.SimpleUUID()
-			payloadData := map[string]interface{}{
+			payloadData := map[string]any{
 				"metadata": session.AllMetadata(),
 			}
 			downJson, _ := jsonx.Marshal(payloadData)
@@ -102,7 +102,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 				return nil
 			}
 			reqId, _ := tool.SimpleUUID()
-			payloadData := map[string]interface{}{
+			payloadData := map[string]any{
 				"metadata": session.AllMetadata(),
 			}
 			downJson, _ := jsonx.Marshal(payloadData)
@@ -121,7 +121,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			if !c.EnableStreamEventNotify {
 				return nil
 			}
-			payloadData := map[string]interface{}{
+			payloadData := map[string]any{
 				"metadata": session.AllMetadata(),
 				"room":     room,
 			}

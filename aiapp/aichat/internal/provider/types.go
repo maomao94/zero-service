@@ -83,7 +83,7 @@ type ToolCallDelta struct {
 	Index    int                   `json:"index,omitempty"`
 	Id       string                `json:"id,omitempty"`
 	Type     string                `json:"type,omitempty"`
-	Function ToolCallFunctionDelta `json:"function,omitempty"`
+	Function ToolCallFunctionDelta `json:"function"`
 }
 
 type ToolCallFunctionDelta struct {

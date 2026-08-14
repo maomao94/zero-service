@@ -76,8 +76,8 @@ const (
 
 // StreamEvent 流事件
 type StreamEvent struct {
-	Type EventType   `json:"type"`
-	Data interface{} `json:"data"`
+	Type EventType `json:"type"`
+	Data any       `json:"data"`
 }
 
 // NewTextEvent 创建文本事件
@@ -113,7 +113,7 @@ func NewThinkingEvent(content string) *StreamEvent {
 }
 
 // NewInterruptEvent 创建中断事件
-func NewInterruptEvent(info interface{}) *StreamEvent {
+func NewInterruptEvent(info any) *StreamEvent {
 	return &StreamEvent{Type: EventInterrupt, Data: info}
 }
 

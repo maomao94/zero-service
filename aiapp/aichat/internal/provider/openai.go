@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"strings"
 
@@ -128,9 +129,7 @@ func marshalWithExtraBody(req *ChatRequest) ([]byte, error) {
 	if err := json.Unmarshal(data, &m); err != nil {
 		return nil, err
 	}
-	for k, v := range req.ExtraBody {
-		m[k] = v
-	}
+	maps.Copy(m, req.ExtraBody)
 	return json.Marshal(m)
 }
 

@@ -32,7 +32,7 @@ func TestStream_BasicPipe(t *testing.T) {
 
 	go func() {
 		defer sw.Close()
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			sw.Send(i, nil)
 		}
 	}()
@@ -121,12 +121,10 @@ func TestStream_ConcurrentClose(t *testing.T) {
 	defer sw.Close()
 
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			sr.Close()
-		}()
+		})
 	}
 	wg.Wait()
 }
@@ -136,7 +134,7 @@ func TestStream_Copy(t *testing.T) {
 
 	go func() {
 		defer sw.Close()
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			sw.Send(i, nil)
 		}
 	}()
@@ -152,7 +150,7 @@ func TestStream_Copy(t *testing.T) {
 	if len(r1) != 3 || len(r2) != 3 {
 		t.Fatalf("expected 3 items each, got %d and %d", len(r1), len(r2))
 	}
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if r1[i] != i || r2[i] != i {
 			t.Fatalf("mismatch at %d: r1=%d, r2=%d", i, r1[i], r2[i])
 		}
@@ -164,7 +162,7 @@ func TestStream_CopyConcurrent(t *testing.T) {
 
 	go func() {
 		defer sw.Close()
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			sw.Send(i, nil)
 		}
 	}()
@@ -345,7 +343,7 @@ func TestMergeStreamReaders_SingleAndEmpty(t *testing.T) {
 func TestMergeStreamReaders_ManyReflectPath(t *testing.T) {
 	const n = 7
 	srs := make([]*antsx.StreamReader[int], n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		sr, sw := antsx.Pipe[int](1)
 		go func(idx int) {
 			defer sw.Close()
@@ -367,14 +365,14 @@ func TestMergeStreamReaders_ReflectToStaticTransition(t *testing.T) {
 	const n = 8
 	srs := make([]*antsx.StreamReader[int], n)
 	sws := make([]*antsx.StreamWriter[int], n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		sr, sw := antsx.Pipe[int](10)
 		srs[i] = sr
 		sws[i] = sw
 	}
 
 	go func() {
-		for i := 0; i < n; i++ {
+		for i := range n {
 			sws[i].Send(i*10, nil)
 			sws[i].Send(i*10+1, nil)
 			sws[i].Close()
@@ -592,12 +590,10 @@ func TestStream_ConcurrentCloseSend(t *testing.T) {
 	defer sr.Close()
 
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			sw.Close()
-		}()
+		})
 	}
 	wg.Wait()
 }
@@ -608,7 +604,7 @@ func TestStream_MergeMidClose(t *testing.T) {
 
 	go func() {
 		defer sw1.Close()
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			sw1.Send(i, nil)
 		}
 	}()
@@ -668,7 +664,7 @@ func TestStream_CopyClosePartial(t *testing.T) {
 
 	go func() {
 		defer sw.Close()
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			sw.Send(i, nil)
 		}
 	}()
@@ -737,7 +733,7 @@ func TestStream_SetAutomaticClose_GC(t *testing.T) {
 	sendDone := make(chan struct{})
 	go func() {
 		defer close(sendDone)
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			if sw.Send(i, nil) {
 				return
 			}
@@ -877,7 +873,7 @@ func TestStream_MergeChildReader(t *testing.T) {
 	sr, sw := antsx.Pipe[int](10)
 	go func() {
 		defer sw.Close()
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			sw.Send(i, nil)
 		}
 	}()
@@ -936,7 +932,7 @@ func TestStream_CopyConvertReader(t *testing.T) {
 	if len(r1) != 3 || len(r2) != 3 {
 		t.Fatalf("expected 3 items each, got %d and %d", len(r1), len(r2))
 	}
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		expected := fmt.Sprintf("v%d", i+1)
 		if r1[i] != expected || r2[i] != expected {
 			t.Fatalf("mismatch at %d: r1=%s, r2=%s, want %s", i, r1[i], r2[i], expected)

@@ -16,7 +16,7 @@ func NewLogProvider(context context.Context) *LogProvider {
 	}
 }
 
-func (l *LogProvider) Critical(format string, v ...interface{}) {
+func (l *LogProvider) Critical(format string, v ...any) {
 	if len(v) == 0 {
 		l.Logger.Error(format)
 	} else {
@@ -24,7 +24,7 @@ func (l *LogProvider) Critical(format string, v ...interface{}) {
 	}
 }
 
-func (l *LogProvider) Error(format string, v ...interface{}) {
+func (l *LogProvider) Error(format string, v ...any) {
 	if len(v) == 0 {
 		l.Logger.Error(format)
 	} else {
@@ -32,7 +32,7 @@ func (l *LogProvider) Error(format string, v ...interface{}) {
 	}
 }
 
-func (l *LogProvider) Warn(format string, v ...interface{}) {
+func (l *LogProvider) Warn(format string, v ...any) {
 	if len(v) == 0 {
 		l.Logger.Slow(format)
 	} else {
@@ -40,7 +40,7 @@ func (l *LogProvider) Warn(format string, v ...interface{}) {
 	}
 }
 
-func (l *LogProvider) Debug(format string, v ...interface{}) {
+func (l *LogProvider) Debug(format string, v ...any) {
 	if len(v) == 0 {
 		l.Logger.Debug(format)
 	} else {

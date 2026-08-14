@@ -366,8 +366,8 @@ func newTestImageFile(t *testing.T, tempDir string) string {
 		t.Fatalf("CreateTemp() error = %v", err)
 	}
 	img := image.NewRGBA(image.Rect(0, 0, 32, 32))
-	for y := 0; y < 32; y++ {
-		for x := 0; x < 32; x++ {
+	for y := range 32 {
+		for x := range 32 {
 			img.Set(x, y, color.RGBA{R: 255, A: 255})
 		}
 	}

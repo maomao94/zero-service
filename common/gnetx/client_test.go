@@ -560,7 +560,7 @@ func TestClientHeartbeat(t *testing.T) {
 	defer cli.Close()
 
 	// 等至少收到 2 个心跳
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		select {
 		case <-hbCh:
 		case <-time.After(2 * time.Second):

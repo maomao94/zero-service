@@ -237,10 +237,7 @@ func (m *Module) renderHistoryView() string {
 	if len(entries) == 0 {
 		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorDim)).Render("No deploy history yet."))
 	} else {
-		showCount := len(entries)
-		if showCount > 20 {
-			showCount = 20
-		}
+		showCount := min(len(entries), 20)
 		for i := len(entries) - 1; i >= len(entries)-showCount; i-- {
 			e := entries[i]
 			statusIcon := lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorGreen)).Render("✓")

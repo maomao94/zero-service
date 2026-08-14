@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func NewErrorByPbCode(code extproto.Code, args ...interface{}) error {
+func NewErrorByPbCode(code extproto.Code, args ...any) error {
 	errorName, httpCode := getErrorInfoByPbCode(code)
 	message := errorName
 	if len(args) > 0 {
@@ -69,7 +69,7 @@ func hasFormatPlaceholder(message string) bool {
 // Implements Go 1.20 multi-error Unwrap, so both the structured code error and
 // the original cause are traversable via errors.Is/As and gkiterrors.Reason.
 // GRPCStatus returns the structured error so status.FromError resolves correctly.
-func NewErrorByPbCodeWrap(code extproto.Code, cause error, args ...interface{}) error {
+func NewErrorByPbCodeWrap(code extproto.Code, cause error, args ...any) error {
 	if cause == nil {
 		return NewErrorByPbCode(code, args...)
 	}

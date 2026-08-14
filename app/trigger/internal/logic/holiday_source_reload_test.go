@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"maps"
 	"sort"
 	"sync"
 	"testing"
@@ -63,9 +64,7 @@ type memoryHolidayStore struct {
 
 func newMemoryHolidayStore(items map[string]holiday.StoredEntry) *memoryHolidayStore {
 	store := &memoryHolidayStore{items: make(map[string]holiday.StoredEntry, len(items))}
-	for date, item := range items {
-		store.items[date] = item
-	}
+	maps.Copy(store.items, items)
 	return store
 }
 

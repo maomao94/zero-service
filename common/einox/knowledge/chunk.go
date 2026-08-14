@@ -36,7 +36,7 @@ func SplitIntoDocumentsWithOverlap(text string, chunkSize, overlapRunes int) []*
 		bufRunes = 0
 	}
 
-	for _, para := range strings.Split(text, "\n\n") {
+	for para := range strings.SplitSeq(text, "\n\n") {
 		para = strings.TrimSpace(para)
 		if para == "" {
 			continue
@@ -49,7 +49,7 @@ func SplitIntoDocumentsWithOverlap(text string, chunkSize, overlapRunes int) []*
 			if bufRunes > 0 {
 				flush()
 			}
-			for _, line := range strings.Split(para, "\n") {
+			for line := range strings.SplitSeq(para, "\n") {
 				line = strings.TrimSpace(line)
 				if line == "" {
 					continue
@@ -99,10 +99,7 @@ func splitRunesWithOverlap(text string, chunkSize, overlapRunes int) []string {
 	}
 	parts := make([]string, 0, (len(runes)+step-1)/step)
 	for start := 0; start < len(runes); start += step {
-		end := start + chunkSize
-		if end > len(runes) {
-			end = len(runes)
-		}
+		end := min(start+chunkSize, len(runes))
 		parts = append(parts, string(runes[start:end]))
 		if end == len(runes) {
 			break

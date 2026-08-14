@@ -64,9 +64,6 @@ func NewDeepAgent(ctx context.Context, chatModel model.BaseChatModel, opts ...Op
 	if len(cfg.tools) > 0 {
 		deepCfg.ToolsConfig = adk.ToolsConfig{ToolsNodeConfig: toolsNodeConfig(cfg)}
 	}
-	if len(cfg.middlewares) > 0 {
-		deepCfg.Middlewares = cfg.middlewares
-	}
 
 	deepAgent, err := deep.New(ctx, deepCfg)
 	if err != nil {
@@ -182,9 +179,9 @@ func NewSupervisorAgent(ctx context.Context, chatModel model.BaseChatModel, subA
 	}, nil
 }
 
-// needsWorkflowCoordinator 为 true 时，Workflow 需挂 ChatModel 才能挂载 tools / skills / handlers / middlewares。
+// needsWorkflowCoordinator 为 true 时，Workflow 需挂 ChatModel 才能挂载 tools / skills / handlers。
 func needsWorkflowCoordinator(cfg *options) bool {
-	if len(cfg.tools) > 0 || len(cfg.handlers) > 0 || len(cfg.middlewares) > 0 {
+	if len(cfg.tools) > 0 || len(cfg.handlers) > 0 {
 		return true
 	}
 	d := strings.TrimSpace(cfg.skillsDir)
@@ -200,7 +197,6 @@ func coordinatorOptionsClone(cfg *options) *options {
 	cc.subAgents = nil
 	cc.tools = append([]tool.BaseTool(nil), cfg.tools...)
 	cc.handlers = append([]adk.ChatModelAgentMiddleware(nil), cfg.handlers...)
-	cc.middlewares = append([]adk.AgentMiddleware(nil), cfg.middlewares...)
 	if strings.TrimSpace(cc.name) != "" {
 		cc.name = cc.name + "/coordinator"
 	} else {
@@ -219,7 +215,7 @@ func workflowSubAgents(ctx context.Context, cfg *options) ([]adk.Agent, error) {
 		return base, nil
 	}
 	if cfg.model == nil {
-		return nil, fmt.Errorf("agent: workflow with tools/skills/handlers/middlewares requires WithModel (coordinator ChatModel)")
+		return nil, fmt.Errorf("agent: workflow with tools/skills/handlers requires WithModel (coordinator ChatModel)")
 	}
 	cc := coordinatorOptionsClone(cfg)
 	coord, err := buildChatModelAgent(ctx, cc)
@@ -231,7 +227,7 @@ func workflowSubAgents(ctx context.Context, cfg *options) ([]adk.Agent, error) {
 
 // NewSequentialAgent 创建 adk Sequential Workflow Agent。
 //
-// 子 Agent 通过 WithSubAgents 传入，至少一个（若配置了 tools/skills/handlers/middlewares 且提供 WithModel，
+// 子 Agent 通过 WithSubAgents 传入，至少一个（若配置了 tools/skills/handlers 且提供 WithModel，
 // 会自动前置一个带工具与 skill 的 ChatModel 协调子 Agent）。
 func NewSequentialAgent(ctx context.Context, opts ...Option) (*Agent, error) {
 	cfg := newOptions(opts...)
@@ -268,7 +264,7 @@ func NewSequentialAgent(ctx context.Context, opts ...Option) (*Agent, error) {
 
 // NewParallelAgent 创建 adk Parallel Workflow Agent。
 //
-// 若配置了 tools/skills/handlers/middlewares 且提供 WithModel，会前置一个协调子 Agent（与其它子 Agent 并行）。
+// 若配置了 tools/skills/handlers 且提供 WithModel，会前置一个协调子 Agent（与其它子 Agent 并行）。
 func NewParallelAgent(ctx context.Context, opts ...Option) (*Agent, error) {
 	cfg := newOptions(opts...)
 	subs, err := workflowSubAgents(ctx, cfg)
@@ -305,7 +301,7 @@ func NewParallelAgent(ctx context.Context, opts ...Option) (*Agent, error) {
 // NewLoopAgent 创建 adk Loop Workflow Agent。
 //
 // 最大迭代次数通过 WithMaxIterations 设置, 不设置则由 adk 默认值决定。
-// 若配置了 tools/skills/handlers/middlewares 且提供 WithModel，会前置协调子 Agent（参与每轮循环中的子 Agent 序列）。
+// 若配置了 tools/skills/handlers 且提供 WithModel，会前置协调子 Agent（参与每轮循环中的子 Agent 序列）。
 func NewLoopAgent(ctx context.Context, opts ...Option) (*Agent, error) {
 	cfg := newOptions(opts...)
 	subs, err := workflowSubAgents(ctx, cfg)

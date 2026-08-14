@@ -63,7 +63,7 @@ func TestMemoryStorageGetMessagesLimit(t *testing.T) {
 	s := NewMemoryStorage()
 	ctx := context.Background()
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		if err := s.SaveMessage(ctx, &ConversationMessage{UserID: "u1", SessionID: "s1", Content: "msg"}); err != nil {
 			t.Fatal(err)
 		}
@@ -195,13 +195,13 @@ func TestMemoryStorageConcurrentSafe(t *testing.T) {
 	ctx := context.Background()
 	done := make(chan struct{})
 	go func() {
-		for i := 0; i < 50; i++ {
+		for range 50 {
 			_ = s.SaveMessage(ctx, &ConversationMessage{UserID: "u1", SessionID: "s1"})
 			_, _ = s.GetMessages(ctx, "u1", "s1", 0)
 		}
 		close(done)
 	}()
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		_ = s.SaveMessage(ctx, &ConversationMessage{UserID: "u1", SessionID: "s1"})
 		_, _ = s.GetMessages(ctx, "u1", "s1", 0)
 	}

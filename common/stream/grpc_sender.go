@@ -14,20 +14,20 @@ import (
 
 // ChunkSender gRPC 流 Chunk 发送接口
 type ChunkSender interface {
-	Send(chunk interface{}) error
+	Send(chunk any) error
 }
 
 // GRPCSender gRPC 流发送器实现
 // 用于将流式数据发送到 gRPC 客户端
 type GRPCSender struct {
 	sender    ChunkSender
-	sendFunc  func(interface{}) error
+	sendFunc  func(any) error
 	sessionID string
 }
 
 // NewGRPCSender 创建 gRPC 发送器
 // sendFunc: gRPC Stream.Send 方法
-func NewGRPCSender(sendFunc func(interface{}) error, sessionID string) *GRPCSender {
+func NewGRPCSender(sendFunc func(any) error, sessionID string) *GRPCSender {
 	return &GRPCSender{
 		sendFunc:  sendFunc,
 		sessionID: sessionID,
@@ -37,7 +37,7 @@ func NewGRPCSender(sendFunc func(interface{}) error, sessionID string) *GRPCSend
 // Write 实现 io.Writer 接口
 // 将数据封装为 StreamChunk 消息发送
 func (s *GRPCSender) Write(p []byte) (n int, err error) {
-	chunk := map[string]interface{}{
+	chunk := map[string]any{
 		"session_id": s.sessionID,
 		"data":       string(p),
 		"is_final":   false,
@@ -54,7 +54,7 @@ func (s *GRPCSender) SendJSON(v any) error {
 	if err != nil {
 		return err
 	}
-	chunk := map[string]interface{}{
+	chunk := map[string]any{
 		"session_id": s.sessionID,
 		"data":       string(data),
 		"is_final":   false,
@@ -64,7 +64,7 @@ func (s *GRPCSender) SendJSON(v any) error {
 
 // SendDone 发送流结束信号
 func (s *GRPCSender) SendDone() {
-	chunk := map[string]interface{}{
+	chunk := map[string]any{
 		"session_id": s.sessionID,
 		"is_final":   true,
 	}
@@ -73,7 +73,7 @@ func (s *GRPCSender) SendDone() {
 
 // SendError 发送错误信号
 func (s *GRPCSender) SendError(err error) {
-	chunk := map[string]interface{}{
+	chunk := map[string]any{
 		"session_id": s.sessionID,
 		"error":      err.Error(),
 		"is_final":   true,
@@ -129,7 +129,7 @@ func (c *GRPCStreamChunk) ToJSON() ([]byte, error) {
 }
 
 // Send 发送消息到 gRPC 流
-func (c *GRPCStreamChunk) Send(sendFunc func(interface{}) error) error {
+func (c *GRPCStreamChunk) Send(sendFunc func(any) error) error {
 	return sendFunc(c)
 }
 
@@ -220,7 +220,7 @@ func SendDoneSignal(s Sender) {
 }
 
 // SendInterruptInfo 发送中断信息
-func SendInterruptInfo(s Sender, info interface{}) error {
+func SendInterruptInfo(s Sender, info any) error {
 	event := NewInterruptEvent(info)
 	return event.SendTo(s)
 }

@@ -27,7 +27,7 @@ func openCronJobTestDB(t *testing.T) *gorm.DB {
 }
 
 func TestCronJobTaskCodeColumnSize128(t *testing.T) {
-	field, ok := reflect.TypeOf(CronJob{}).FieldByName("TaskCode")
+	field, ok := reflect.TypeFor[CronJob]().FieldByName("TaskCode")
 	if !ok {
 		t.Fatal("CronJob.TaskCode not found")
 	}

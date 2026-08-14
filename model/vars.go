@@ -230,7 +230,7 @@ func adaptSQLPlaceholders(sqlTemplate string, dbType DatabaseType) string {
 // ============================
 func generateColumnsAndValues(in any, excludeFields []string) ([]string, []any) {
 	v := reflect.ValueOf(in)
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	if v.Kind() != reflect.Struct {
@@ -257,7 +257,7 @@ func generateColumnsAndValues(in any, excludeFields []string) ([]string, []any) 
 		}
 
 		fv := v.Field(m.index)
-		if fv.Kind() == reflect.Ptr {
+		if fv.Kind() == reflect.Pointer {
 			if fv.IsNil() {
 				values = append(values, nil)
 			} else {
@@ -278,7 +278,7 @@ func generateColumnsAndValues(in any, excludeFields []string) ([]string, []any) 
 // ============================
 func insertColumnsAndPlaceholders(in any, excludeFields []string, pg ...bool) ([]string, []string) {
 	v := reflect.ValueOf(in)
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	if v.Kind() != reflect.Struct {

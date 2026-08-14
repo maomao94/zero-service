@@ -167,13 +167,13 @@ func TestMemoryStoreConcurrentSafe(t *testing.T) {
 	ctx := context.Background()
 	done := make(chan struct{})
 	go func() {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			_ = s.Set(ctx, "k", []byte("v"))
 			_, _, _ = s.Get(ctx, "k")
 		}
 		close(done)
 	}()
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		_ = s.Set(ctx, "k", []byte("v"))
 		_, _, _ = s.Get(ctx, "k")
 	}

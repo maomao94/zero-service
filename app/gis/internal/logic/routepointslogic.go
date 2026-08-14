@@ -55,7 +55,7 @@ func (l *RoutePointsLogic) RoutePoints(in *gis.RoutePointsReq) (*gis.RoutePoints
 	order := make([]int32, 0, n)
 	current := start
 
-	for i := 0; i < n; i++ {
+	for range n {
 		minDist := math.MaxFloat64
 		nextIdx := -1
 		for j, p := range points {

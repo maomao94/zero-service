@@ -51,7 +51,6 @@ func (l *ListFlyRegionsLogic) ListFlyRegions(in *djicloud.ListFlyRegionsReq) (*d
 	list := make([]*djicloud.FlyRegionInfo, len(regions))
 	fns := make([]func() error, len(regions))
 	for i := range regions {
-		i := i
 		r := regions[i]
 		fns[i] = func() error {
 			info := &djicloud.FlyRegionInfo{

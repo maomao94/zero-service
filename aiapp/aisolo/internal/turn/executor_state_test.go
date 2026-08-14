@@ -561,10 +561,8 @@ func TestConcurrentResumeRunAcquireAllowsOneWinner(t *testing.T) {
 	start := make(chan struct{})
 	results := make(chan error, 2)
 	var wg sync.WaitGroup
-	for i := 0; i < 2; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 2 {
+		wg.Go(func() {
 			loaded, err := store.GetSession(ctx, "user-1", "sess-1")
 			if err != nil {
 				results <- err
@@ -572,7 +570,7 @@ func TestConcurrentResumeRunAcquireAllowsOneWinner(t *testing.T) {
 			}
 			<-start
 			results <- executor.markSessionRunning(ctx, loaded, false)
-		}()
+		})
 	}
 	close(start)
 	wg.Wait()

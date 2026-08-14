@@ -9,7 +9,7 @@ import (
 )
 
 // ToProtoBytes marshals protobuf messages and falls back to generic byte conversion.
-func ToProtoBytes(v interface{}) ([]byte, error) {
+func ToProtoBytes(v any) ([]byte, error) {
 	if v == nil {
 		return nil, fmt.Errorf("input is nil")
 	}
@@ -18,7 +18,7 @@ func ToProtoBytes(v interface{}) ([]byte, error) {
 	var msg proto.Message
 	var ok bool
 	switch rv.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		if rv.IsNil() {
 			return nil, fmt.Errorf("nil pointer")
 		}
@@ -31,7 +31,7 @@ func ToProtoBytes(v interface{}) ([]byte, error) {
 	if ok {
 		return proto.Marshal(msg)
 	}
-	if rv.Kind() == reflect.Ptr {
+	if rv.Kind() == reflect.Pointer {
 		return convertor.ToBytes(rv.Elem().Interface())
 	}
 	return convertor.ToBytes(v)

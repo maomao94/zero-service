@@ -144,12 +144,10 @@ func TestEventEmitter_MultiTopicConcurrent(t *testing.T) {
 	const msgs = 20
 
 	var wg sync.WaitGroup
-	for i := 0; i < topics; i++ {
+	for i := range topics {
 		topic := string(rune('A' + i))
 		sr, cancel := emitter.Subscribe(context.Background(), topic)
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			defer cancel()
 			count := 0
 			for {
@@ -166,12 +164,12 @@ func TestEventEmitter_MultiTopicConcurrent(t *testing.T) {
 					return
 				}
 			}
-		}()
+		})
 	}
 
-	for i := 0; i < topics; i++ {
+	for i := range topics {
 		topic := string(rune('A' + i))
-		for j := 0; j < msgs; j++ {
+		for j := range msgs {
 			emitter.Emit(topic, j)
 		}
 	}
@@ -184,10 +182,8 @@ func TestEventEmitter_ConcurrentEmitSubscribeCancel(t *testing.T) {
 	defer emitter.Close()
 
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			sr, cancel := emitter.Subscribe(context.Background(), "race")
 			go func() {
 				for {
@@ -199,15 +195,13 @@ func TestEventEmitter_ConcurrentEmitSubscribeCancel(t *testing.T) {
 			}()
 			time.Sleep(5 * time.Millisecond)
 			cancel()
-		}()
+		})
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < 10; j++ {
+		wg.Go(func() {
+			for j := range 10 {
 				emitter.Emit("race", j)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 }
@@ -239,13 +233,13 @@ func TestEmitter_ConcurrentSubscribeEmitClose(t *testing.T) {
 	ctx := context.Background()
 
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
 			sr, cancel := emitter.Subscribe(ctx, fmt.Sprintf("t%d", id%3))
 			defer cancel()
-			for j := 0; j < 5; j++ {
+			for range 5 {
 				_, err := sr.Recv()
 				if err != nil {
 					return
@@ -254,11 +248,11 @@ func TestEmitter_ConcurrentSubscribeEmitClose(t *testing.T) {
 		}(i)
 	}
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			for j := 0; j < 20; j++ {
+			for j := range 20 {
 				emitter.Emit(fmt.Sprintf("t%d", id), j)
 				time.Sleep(time.Millisecond)
 			}
@@ -277,10 +271,8 @@ func TestEmitter_GoroutineLeak(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 5 {
+		wg.Go(func() {
 			sr, unsub := emitter.Subscribe(ctx, "test")
 			defer unsub()
 			for {
@@ -289,7 +281,7 @@ func TestEmitter_GoroutineLeak(t *testing.T) {
 					return
 				}
 			}
-		}()
+		})
 	}
 
 	time.Sleep(10 * time.Millisecond)

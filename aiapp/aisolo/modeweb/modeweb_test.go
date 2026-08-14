@@ -23,8 +23,6 @@ func TestParseToSoloStringRoundTrip(t *testing.T) {
 		"deep-agent":          aisolo.AgentMode_AGENT_MODE_DEEP,
 	}
 	for in, want := range aliases {
-		in := in
-		want := want
 		t.Run(in, func(t *testing.T) {
 			got := Parse(in)
 			if got != want {

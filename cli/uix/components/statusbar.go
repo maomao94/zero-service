@@ -64,16 +64,10 @@ func (s StatusBar) View() string {
 	leftText := statusbarLeftStyle.Render(" " + theme.Truncate(s.left, leftInnerWidth) + " ")
 	leftWidth := lipgloss.Width(leftText)
 
-	rightInnerWidth := width - leftWidth - 1 - 2
-	if rightInnerWidth < 0 {
-		rightInnerWidth = 0
-	}
+	rightInnerWidth := max(width-leftWidth-1-2, 0)
 	rightText := statusbarRightStyle.Render(theme.Truncate(s.right, rightInnerWidth) + " ")
 
-	spacer := width - lipgloss.Width(leftText) - lipgloss.Width(rightText)
-	if spacer < 0 {
-		spacer = 0
-	}
+	spacer := max(width-lipgloss.Width(leftText)-lipgloss.Width(rightText), 0)
 
 	content := lipgloss.JoinHorizontal(lipgloss.Top,
 		leftText,

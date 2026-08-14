@@ -87,7 +87,7 @@ func (a *SqlConnAdapter) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql
 	return a.db.BeginTx(ctx, opts)
 }
 
-func (a *SqlConnAdapter) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+func (a *SqlConnAdapter) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	return a.db.ExecContext(ctx, query, args...)
 }
 
@@ -95,11 +95,11 @@ func (a *SqlConnAdapter) PrepareContext(ctx context.Context, query string) (*sql
 	return a.db.PrepareContext(ctx, query)
 }
 
-func (a *SqlConnAdapter) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+func (a *SqlConnAdapter) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
 	return a.db.QueryContext(ctx, query, args...)
 }
 
-func (a *SqlConnAdapter) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+func (a *SqlConnAdapter) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
 	return a.db.QueryRowContext(ctx, query, args...)
 }
 

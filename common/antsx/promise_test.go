@@ -465,7 +465,7 @@ func TestPromise_ConcurrentResolveReject(t *testing.T) {
 	p := antsx.NewPromise[int]()
 
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		wg.Add(1)
 		go func(v int) {
 			defer wg.Done()
@@ -488,15 +488,13 @@ func TestPromise_ConcurrentAwait(t *testing.T) {
 	p := antsx.NewPromise[int]()
 
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			val, err := p.Await(context.Background())
 			if err != nil || val != 42 {
 				t.Errorf("expected (42, nil), got (%d, %v)", val, err)
 			}
-		}()
+		})
 	}
 
 	time.Sleep(10 * time.Millisecond)

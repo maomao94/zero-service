@@ -29,7 +29,7 @@ func (w *ChunkMessagesPusher) Write(val string) error {
 	return w.inserter.Add(val, len(val))
 }
 
-func (w *ChunkMessagesPusher) execute(vals []interface{}) {
+func (w *ChunkMessagesPusher) execute(vals []any) {
 	msgs := make([]string, 0, len(vals))
 	for _, val := range vals {
 		if s, ok := val.(string); ok {

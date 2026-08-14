@@ -161,7 +161,6 @@ func (c *IspClient) reportTick() {
 	}
 	now := time.Now()
 	for _, report := range c.reports.dueReports(now) {
-		report := report
 		c.reportRunner.Schedule(func() {
 			c.sendReport(now, report)
 		})

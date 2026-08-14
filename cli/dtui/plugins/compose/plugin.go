@@ -133,19 +133,10 @@ func (m *Module) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 	m.table.SetSize(max(20, width-6), max(5, height-6))
-	logWidth := width - 8
-	if logWidth < 20 {
-		logWidth = 20
-	}
-	logHeight := height - 4
-	if logHeight < 5 {
-		logHeight = 5
-	}
+	logWidth := max(width-8, 20)
+	logHeight := max(height-4, 5)
 	if m.logMode {
-		logHeight = height - 2
-		if logHeight < 5 {
-			logHeight = 5
-		}
+		logHeight = max(height-2, 5)
 	}
 	m.log.SetSize(logWidth, logHeight)
 }

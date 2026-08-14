@@ -32,7 +32,7 @@ func TestRun_AllSuccess(t *testing.T) {
 
 	sc := newTestSvcCtx()
 	tasks := make([]*Task, 3)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		tasks[i] = &Task{
 			ID:         fmt.Sprintf("task-%d", i),
 			Protocol:   "http",
@@ -158,7 +158,7 @@ func TestRun_ConcurrencyControl(t *testing.T) {
 
 	sc := newTestSvcCtx()
 	tasks := make([]*Task, 5)
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		tasks[i] = &Task{
 			ID:         fmt.Sprintf("conc-%d", i),
 			Protocol:   "http",

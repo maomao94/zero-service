@@ -3,6 +3,7 @@ package ispclient
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 	"sync"
@@ -364,9 +365,7 @@ func freshnessTimeout(interval time.Duration) time.Duration {
 
 func cloneItem(item isp.Item) isp.Item {
 	cloned := make(isp.Item, len(item))
-	for k, v := range item {
-		cloned[k] = v
-	}
+	maps.Copy(cloned, item)
 	return cloned
 }
 
@@ -447,9 +446,7 @@ func (c *IspClient) ReportIntervals() map[ReportCategory]time.Duration {
 	c.reports.mu.RLock()
 	defer c.reports.mu.RUnlock()
 	out := make(map[ReportCategory]time.Duration, len(c.reports.intervals))
-	for k, v := range c.reports.intervals {
-		out[k] = v
-	}
+	maps.Copy(out, c.reports.intervals)
 	return out
 }
 

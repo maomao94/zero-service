@@ -159,7 +159,7 @@ func (d *Dialer) OnTraffic(c gnet.Conn) gnet.Action {
 		return gnet.None
 	}
 
-	for i := 0; i < 64; i++ {
+	for range 64 {
 		msg, err := d.opts.Codec.Decode(c, cn)
 		if err != nil {
 			if errors.Is(err, ErrIncompletePacket) {

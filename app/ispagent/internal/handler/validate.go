@@ -149,7 +149,7 @@ func isTimeFormat(s string) bool {
 }
 
 func validateCSVIntRange(s string, min, max int) error {
-	for _, part := range strings.Split(s, ",") {
+	for part := range strings.SplitSeq(s, ",") {
 		p := strings.TrimSpace(part)
 		n, err := strconv.Atoi(p)
 		if err != nil || n < min || n > max {

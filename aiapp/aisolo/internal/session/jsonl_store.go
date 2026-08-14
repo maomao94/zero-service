@@ -172,10 +172,7 @@ func (s *JSONLStore) ListSessions(ctx context.Context, userID string, page, page
 	if start >= len(list) {
 		return nil, total, nil
 	}
-	end := start + pageSize
-	if end > len(list) {
-		end = len(list)
-	}
+	end := min(start+pageSize, len(list))
 	return list[start:end], total, nil
 }
 

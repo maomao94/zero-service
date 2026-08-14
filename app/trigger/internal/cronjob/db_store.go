@@ -70,7 +70,7 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, defaultLockTi
 		Where("id = ?", record.Id).
 		Where("status = ?", int(crontask.StatusEnabled)).
 		Where("next_run = ?", record.NextRun.Time).
-		Updates(map[string]interface{}{
+		Updates(map[string]any{
 			"next_run":       lockedTime,
 			"scheduled_time": scheduledTime,
 		})
@@ -92,7 +92,7 @@ func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, defaultLockTi
 
 // Complete 使用 LockedUntil token 完成一次周期执行。
 func (s *DBStore) Complete(ctx context.Context, id string, expectedLockedUntil time.Time, completion crontask.Completion) error {
-	updates := map[string]interface{}{
+	updates := map[string]any{
 		"next_run":       carbonx.ToNullTime(completion.NextRun),
 		"scheduled_time": nil,
 	}
@@ -250,7 +250,7 @@ func (s *DBStore) Enable(ctx context.Context, id string) error {
 	result := s.db.WithContext(ctx).
 		Model(&gormmodel.CronJob{}).
 		Where("id = ?", id).
-		Updates(map[string]interface{}{
+		Updates(map[string]any{
 			"status":         int(crontask.StatusEnabled),
 			"next_run":       carbonx.ToNullTime(nextRun),
 			"scheduled_time": nil,

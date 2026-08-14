@@ -321,11 +321,9 @@ func TestClientTrackRecvSeqConcurrent(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for seq := uint64(1); seq <= 100; seq++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			client.trackRecvSeq(seq, "current-session")
-		}()
+		})
 	}
 	wg.Wait()
 

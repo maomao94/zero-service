@@ -251,21 +251,21 @@ func parseFrontmatter(content string) (*Frontmatter, string, error) {
 	// 解析 YAML（简化实现，手动解析关键字段）
 	fm := &Frontmatter{}
 
-	lines := strings.Split(fmContent, "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(fmContent, "\n")
+	for line := range lines {
 		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "name:") {
-			fm.Name = strings.TrimSpace(strings.TrimPrefix(line, "name:"))
-		} else if strings.HasPrefix(line, "description:") {
-			fm.Description = strings.TrimSpace(strings.TrimPrefix(line, "description:"))
+		if after, ok := strings.CutPrefix(line, "name:"); ok {
+			fm.Name = strings.TrimSpace(after)
+		} else if after, ok := strings.CutPrefix(line, "description:"); ok {
+			fm.Description = strings.TrimSpace(after)
 			// 处理多行 description
 			fm.Description = strings.Trim(fm.Description, "\"|'")
-		} else if strings.HasPrefix(line, "allowed-tools:") {
-			toolsStr := strings.TrimSpace(strings.TrimPrefix(line, "allowed-tools:"))
+		} else if after, ok := strings.CutPrefix(line, "allowed-tools:"); ok {
+			toolsStr := strings.TrimSpace(after)
 			if strings.HasPrefix(toolsStr, "[") {
 				// 解析数组格式: [tool1, tool2, tool3]
 				toolsStr = strings.Trim(toolsStr, "[]")
-				for _, t := range strings.Split(toolsStr, ",") {
+				for t := range strings.SplitSeq(toolsStr, ",") {
 					t = strings.TrimSpace(t)
 					if t != "" {
 						fm.AllowedTools = append(fm.AllowedTools, t)

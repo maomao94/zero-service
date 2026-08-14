@@ -33,8 +33,8 @@ func (s TaskStatus) String() string {
 // RRuleStr 为空表示一次性任务，成功执行后 NextRun 进入零值终态。
 type TaskConfig struct {
 	ID         string    `json:"id"`
-	CreateTime time.Time `json:"create_time,omitempty"`
-	UpdateTime time.Time `json:"update_time,omitempty"`
+	CreateTime time.Time `json:"create_time"`
+	UpdateTime time.Time `json:"update_time"`
 	TaskCode   string    `json:"task_code"` // 全局唯一任务编码
 	TaskName   string    `json:"task_name"`
 	RRuleStr   string    `json:"rrule_str"` // RFC 5545 规则，空串为一次性任务
@@ -44,13 +44,13 @@ type TaskConfig struct {
 	MaxDelay         time.Duration   `json:"max_delay,omitempty"` // 最大延迟容忍，0 使用调度器默认值
 	Payload          json.RawMessage `json:"payload"`             // 执行业务参数
 	Extra            json.RawMessage `json:"extra"`               // 业务扩展字段 JSON
-	StartTime        time.Time       `json:"start_time,omitempty"`
-	EndTime          time.Time       `json:"end_time,omitempty"`
+	StartTime        time.Time       `json:"start_time"`
+	EndTime          time.Time       `json:"end_time"`
 	Status           TaskStatus      `json:"status"`
-	NextRun          time.Time       `json:"next_run"`                     // 下次计划调度时间；claim 后 Store 内暂存 lease 截止时间
-	ScheduledTime    time.Time       `json:"scheduled_time,omitempty"`     // 当前在途执行的原计划时间，未 claim 时为零值
-	LastRun          time.Time       `json:"last_run,omitempty"`           // 最近一次 handler 成功完成的实际时间
-	LastScheduledRun time.Time       `json:"last_scheduled_run,omitempty"` // 最近一次成功周期执行的原计划时间，手动执行不更新
+	NextRun          time.Time       `json:"next_run"`           // 下次计划调度时间；claim 后 Store 内暂存 lease 截止时间
+	ScheduledTime    time.Time       `json:"scheduled_time"`     // 当前在途执行的原计划时间，未 claim 时为零值
+	LastRun          time.Time       `json:"last_run"`           // 最近一次 handler 成功完成的实际时间
+	LastScheduledRun time.Time       `json:"last_scheduled_run"` // 最近一次成功周期执行的原计划时间，手动执行不更新
 }
 
 // ResolveLockTimeout 返回任务本次抢占实际使用的锁超时。

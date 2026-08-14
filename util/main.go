@@ -182,9 +182,9 @@ func runServices(serverConfig ServerConfig) {
 	} else if mode == "2" { // Multiple selection
 		fmt.Print("Select service(s) to run (separated by space): ")
 		scanner.Scan()
-		serviceIndexes := strings.Fields(scanner.Text())
+		serviceIndexes := strings.FieldsSeq(scanner.Text())
 
-		for _, index := range serviceIndexes {
+		for index := range serviceIndexes {
 			if i := parseIndex(index, len(serverConfig.Services)); i != -1 {
 				selectedServices = append(selectedServices, serverConfig.Services[i].Name)
 			} else {
@@ -538,9 +538,9 @@ func getTerminalWidth() int {
 // 打印铺满终端宽度的分割线
 func printFullWidthLine() {
 	width := getTerminalWidth()
-	line := ""
-	for i := 0; i < width; i++ {
-		line += "="
+	var line strings.Builder
+	for range width {
+		line.WriteString("=")
 	}
-	fmt.Println(line)
+	fmt.Println(line.String())
 }

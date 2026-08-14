@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"maps"
 	"strconv"
 
 	"zero-service/app/ispagent/ispagent"
@@ -15,9 +16,7 @@ func protoItems(items []*ispagent.Item) []isp.Item {
 			continue
 		}
 		attrs := make(isp.Item, len(item.GetAttributes()))
-		for k, v := range item.GetAttributes() {
-			attrs[k] = v
-		}
+		maps.Copy(attrs, item.GetAttributes())
 		out = append(out, attrs)
 	}
 	return out
@@ -132,9 +131,7 @@ func commandResponse(msg *isp.Message) *ispagent.CommandRes {
 	items := make([]*ispagent.Item, 0, len(msg.Items))
 	for _, item := range msg.Items {
 		attrs := make(map[string]string, len(item))
-		for k, v := range item {
-			attrs[k] = v
-		}
+		maps.Copy(attrs, item)
 		items = append(items, &ispagent.Item{Attributes: attrs})
 	}
 	success := true

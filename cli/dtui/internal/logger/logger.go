@@ -60,25 +60,25 @@ func Sync() {
 	}
 }
 
-func Debugw(msg string, keysAndValues ...interface{}) {
+func Debugw(msg string, keysAndValues ...any) {
 	if log != nil {
 		log.Debugw(msg, keysAndValues...)
 	}
 }
 
-func Infow(msg string, keysAndValues ...interface{}) {
+func Infow(msg string, keysAndValues ...any) {
 	if log != nil {
 		log.Infow(msg, keysAndValues...)
 	}
 }
 
-func Warnw(msg string, keysAndValues ...interface{}) {
+func Warnw(msg string, keysAndValues ...any) {
 	if log != nil {
 		log.Warnw(msg, keysAndValues...)
 	}
 }
 
-func Errorw(msg string, keysAndValues ...interface{}) {
+func Errorw(msg string, keysAndValues ...any) {
 	if log != nil {
 		log.Errorw(msg, keysAndValues...)
 	}

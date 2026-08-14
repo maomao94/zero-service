@@ -3,6 +3,7 @@ package iec
 import (
 	"context"
 	"fmt"
+	"maps"
 	"zero-service/app/ieccaller/internal/config"
 	"zero-service/app/ieccaller/internal/svc"
 	"zero-service/common/copierx"
@@ -169,9 +170,7 @@ func (c *ClientCall) newMsgBody(ctx context.Context, packet *asdu.ASDU, msgId st
 
 func copyMetaData(meta map[string]any) map[string]any {
 	copyMap := make(map[string]any, len(meta)+1)
-	for k, v := range meta {
-		copyMap[k] = v
-	}
+	maps.Copy(copyMap, meta)
 	return copyMap
 }
 
@@ -427,7 +426,7 @@ func (c *ClientCall) onPackedSinglePointWithSCD(ctx context.Context, packet *asd
 		var activePoints []int
 		var changedPoints []int
 		logx.WithContext(ctx).Debugf("stn: %d, %s, cdn: %d, %s", currentStatus, stn, statusChange, cdn)
-		for i := 0; i < 16; i++ {
+		for i := range 16 {
 			if currentStatus&(1<<i) != 0 {
 				activePoints = append(activePoints, i)
 			}
