@@ -1903,3 +1903,24 @@ Fixed DJI device identity persistence under GaussDB empty-string-as-NULL semanti
 ### Next Steps
 
 - auth-context-hardening 父任务完成，全部子任务归档
+
+
+## Session 173: 迁移废弃 API (SA1019) 与 go1.26 go fix 审查
+
+**Date**: 2026-08-14
+**Task**: 迁移废弃 API (SA1019) 与 go1.26 go fix 审查
+**Branch**: `master`
+
+### Summary
+
+go1.26 下运行 go fix 自动迁移语言/标准库新特性（reflect.Pointer、FieldsSeq、strings.Builder、new(x) 值构造器等 122 文件）；审阅全部未 push 改动，修正 authctx 的 reflect.TypeFor 误改，确认 flowx new(n) 值语义正确，清除 x/net/context 别名。随后规划并执行 deprec-api-migration 任务：迁移剩余 18 处 SA1019——charmbracelet viewport/filepicker 7处、eino 删除废弃 AgentMiddleware 5处、mcpx 删除 sampling/logging 协议废弃字段透传 6处。验证 staticcheck SA1019=0、build/vet/相关包测试全部通过。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8f37236f` | (see git log) |
+
+### Status
+
+[OK] **Completed**

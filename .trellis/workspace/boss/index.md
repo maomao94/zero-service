@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-3.md`
-- **Total Sessions**: 172
+- **Total Sessions**: 173
 - **Last Active**: 2026-08-14
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~1905 | Active |
+| `journal-3.md` | ~1926 | Active |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +31,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 173 | 2026-08-14 | 迁移废弃 API (SA1019) 与 go1.26 go fix 审查 | `8f37236f` | `master` |
 | 172 | 2026-08-14 | 实施 Authorization 日志脱敏（L1-L3）并完成 auth-context-hardening 父任务 | `936df578`, `f5d1d885` | `master` |
 | 171 | 2026-08-14 | 规范化认证 Claim 值（类型白名单 + 极简转换） | `98696027` | `master` |
 | 170 | 2026-08-14 | 迁移认证 Typed Context Key（无回退 + 桥接中间件） | `a940f92e` | `master` |
