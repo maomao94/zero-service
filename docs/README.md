@@ -40,6 +40,7 @@
 | [开发指南](./development.md) | 环境搭建、代码生成、模块扩展和调试技巧 |
 | [部署指南](./deployment.md) | Docker、单服务和集群部署、配置管理 |
 | [antsx 与响应式模式](./antsx-vs-reactive.md) | antsx Promise/Invoke 与响应式编排模式对比 |
+| [Superpowers 技能全量介绍](./superpowers.md) | AI 编程技能集：14 个技能的设计哲学、铁律与使用流程 |
 
 ## 架构决策
 
