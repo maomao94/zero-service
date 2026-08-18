@@ -12,7 +12,7 @@
 | --- | --- |
 | 协议 | gRPC，支持 Endpoints 直连或 Nacos 服务发现。 |
 | 服务名 | `ieccaller.IecCaller` |
-| Proto | [`app/ieccaller/ieccaller.proto`](../app/ieccaller/ieccaller.proto) |
+| Proto | [`app/ieccaller/ieccaller.proto`](../../app/ieccaller/ieccaller.proto) |
 | 响应 | 7 个带类型命令返回各自类型的响应，包含从站回显的命令值。 |
 
 ## 2. 推荐接口总览
@@ -369,4 +369,4 @@ IEC命令被设备拒绝: command rejected: cot=UnknownTypeID isNegative=true ty
 
 - [IEC 104 数采平台架构](./iec104.md)，服务组件、数据流、配置管理。
 - [IEC 104 消息对接文档](./iec104-message.md)，消息格式、信息体结构、数据消费指南。
-- [`ieccaller.proto`](../app/ieccaller/ieccaller.proto)，控制指令 RPC 接口定义。
+- [`ieccaller.proto`](../../app/ieccaller/ieccaller.proto)，控制指令 RPC 接口定义。

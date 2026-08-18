@@ -1,6 +1,6 @@
 # Trigger Plan/CronJob RRULE API 场景指南
 
-本文面向 Trigger Plan 和 CronJob 对接方，说明周期规则、指定时间与排除条件如何组成同一个 RRULE Set，并给出可直接用于构造 gRPC JSON 请求的示例。RPC 字段与校验以 [`trigger.proto`](../app/trigger/trigger.proto) 为准，服务能力总览见 [Trigger 服务](./trigger.md)。
+本文面向 Trigger Plan 和 CronJob 对接方，说明周期规则、指定时间与排除条件如何组成同一个 RRULE Set，并给出可直接用于构造 gRPC JSON 请求的示例。RPC 字段与校验以 [`trigger.proto`](../../app/trigger/trigger.proto) 为准，服务能力总览见 [Trigger 服务](./trigger.md)。
 
 > 约定：示例 JSON 一律使用 snake_case 字段名，与 proto 字段名一致（如 `task_code`、`specified_times`、`exclude_dates`）。
 

@@ -20,17 +20,14 @@
 
 ## 核心服务
 
-| 文档 | 内容 |
-| --- | --- |
-| [IEC 104 数采平台](./iec104.md) | 数采平台架构、服务组件、数据流和配置管理 |
-| [IEC 104 消息对接](./iec104-message.md) | 消息格式、ASDU 类型、信息体结构和消费指南 |
-| [IEC 104 控制命令](./iec104-command.md) | 控制命令接口、响应机制、错误码和 TypeId 对照表 |
-| [Trigger 服务](./trigger.md) | 异步任务、计划任务、RRULE CronJob、API 和状态流转 |
-| [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md) | Plan/CronJob 周期规则、指定时间、精确与整日排除、预览和运行边界 |
-| [SocketIO 实时通信](./socketio.md) | 网关对接、事件体系、房间广播和鉴权 |
-| [DJI 云平台](./djicloud.md) | DJI Dock 3 Cloud API、RPC 接口和配置说明 |
-| [ISP 巡检协议](./isp.md) | ISP 服务端/代理、帧格式、任务和模型同步 |
-| [LAL 流媒体回调](../app/lalhook/README.md) | LAL HTTP 回调事件、鉴权、配置和接口说明 |
+| 服务 | 文档 | 内容 |
+| --- | --- | --- |
+| IEC 104 | [数采平台](./iec104/README.md) | 采集、消息分发、数据合并与控制命令 |
+| Trigger | [Trigger 服务](./trigger/README.md) | 异步任务、计划任务、RRULE CronJob |
+| SocketIO | [实时通信](./socketio/README.md) | 网关对接、事件体系、房间广播和鉴权 |
+| DJI | [云平台](./djicloud/README.md) | Dock 3 Cloud API 与航点任务文件 |
+| ISP | [巡检协议](./isp/README.md) | ISP 服务端/代理、帧格式、任务和模型同步 |
+| LAL | [流媒体回调](../app/lalhook/README.md) | LAL HTTP 回调事件、鉴权、配置和接口说明 |
 
 ## 开发者
 
@@ -38,6 +35,4 @@
 | --- | --- |
 | [开发指南](./development.md) | 环境搭建、代码生成、模块扩展和调试技巧 |
 | [部署指南](./deployment.md) | Docker、单服务和集群部署、配置管理 |
-| [Trigger Plan openGauss 迁移](./trigger-plan-opengauss-migration.md) | Plan 四表停服备份、字符串主键迁移、校验和回滚 |
-| [KML/KMZ 指南](./kml-kmz-guide.md) | 无人机航点任务 KML/KMZ 文件结构 |
 | [antsx 与响应式模式](./antsx-vs-reactive.md) | antsx Promise/Invoke 与响应式编排模式对比 |

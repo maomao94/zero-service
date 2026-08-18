@@ -12,7 +12,7 @@
 
 调用方必须先确定需要的是队列任务、可管理计划，还是周期 handler；不要只因都叫“定时任务”就复用状态或表。
 
-依据：`app/trigger/trigger.proto`、`docs/trigger.md`、`app/trigger/internal/logic`、`app/trigger/internal/cronjob`。
+依据：`app/trigger/trigger.proto`、`docs/trigger/trigger.md`、`app/trigger/internal/logic`、`app/trigger/internal/cronjob`。
 
 ## 契约源与边界
 

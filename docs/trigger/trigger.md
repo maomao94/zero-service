@@ -1,6 +1,6 @@
 # Trigger 服务
 
-Trigger 是基于 go-zero 的统一任务调度服务，对外契约见 [`trigger.proto`](../app/trigger/trigger.proto)。服务同时提供 asynq 异步任务、Plan 计划任务和 RRULE CronJob；三者分别解决队列投递、可管理计划生命周期和稳定周期 Handler 调度问题，存储、状态与回调语义互不混用。
+Trigger 是基于 go-zero 的统一任务调度服务，对外契约见 [`trigger.proto`](../../app/trigger/trigger.proto)。服务同时提供 asynq 异步任务、Plan 计划任务和 RRULE CronJob；三者分别解决队列投递、可管理计划生命周期和稳定周期 Handler 调度问题，存储、状态与回调语义互不混用。
 
 ## 能力选择
 
@@ -45,7 +45,7 @@ Trigger 是基于 go-zero 的统一任务调度服务，对外契约见 [`trigge
 | `DeleteAllCompletedTasks` / `DeleteAllArchivedTasks` | 批量删除已完成或已归档任务 |
 
 <div align="center">
-  <img src="images/trigger-flow.png" alt="Trigger 异步任务回调流程" style="max-width: 80%; height: auto;" />
+  <img src="../images/trigger-flow.png" alt="Trigger 异步任务回调流程" style="max-width: 80%; height: auto;" />
 </div>
 
 ## 计划任务
@@ -248,7 +248,7 @@ StreamEvent.HandleCronJobEvent
 
 ## 辅助能力
 
-除三类调度能力外，Trigger 还提供以下公共 RPC。字段和校验规则以 [`trigger.proto`](../app/trigger/trigger.proto) 为准。
+除三类调度能力外，Trigger 还提供以下公共 RPC。字段和校验规则以 [`trigger.proto`](../../app/trigger/trigger.proto) 为准。
 
 | 能力 | 方法 | 说明 |
 | --- | --- | --- |
@@ -306,9 +306,9 @@ go run . -f etc/trigger.yaml
 
 ## 参考
 
-- [`trigger.proto`](../app/trigger/trigger.proto) - Trigger RPC 契约
-- [`streamevent.proto`](../facade/streamevent/streamevent.proto) - Plan 与 CronJob 业务回调契约
-- [`app/trigger/internal/cronjob`](../app/trigger/internal/cronjob) - CronJob 规则编译、Store 和 Handler 适配
-- [`common/crontask`](../common/crontask) - 通用 RRULE 调度器与 lease 契约
+- [`trigger.proto`](../../app/trigger/trigger.proto) - Trigger RPC 契约
+- [`streamevent.proto`](../../facade/streamevent/streamevent.proto) - Plan 与 CronJob 业务回调契约
+- [`app/trigger/internal/cronjob`](../../app/trigger/internal/cronjob) - CronJob 规则编译、Store 和 Handler 适配
+- [`common/crontask`](../../common/crontask) - 通用 RRULE 调度器与 lease 契约
 - [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md) - 周期规则、指定时间、精确与整日排除及 Plan/CronJob 示例
 - [Trigger Plan openGauss 迁移指南](./trigger-plan-opengauss-migration.md) - Plan 四表迁移、校验和回滚

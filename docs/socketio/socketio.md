@@ -253,7 +253,7 @@ socket.on('telemetry:osd', (data) => {
 | `KickSession` / `KickMetaSession` | 剔除会话 |
 | `SocketGtwStat` | 网关统计 |
 
-协议定义：[`socketpush.proto`](../socketapp/socketpush/socketpush.proto) · [`socketgtw.proto`](../socketapp/socketgtw/socketgtw.proto)
+协议定义：[`socketpush.proto`](../../socketapp/socketpush/socketpush.proto) · [`socketgtw.proto`](../../socketapp/socketgtw/socketgtw.proto)
 
 ## 最佳实践
 

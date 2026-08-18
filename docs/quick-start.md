@@ -102,7 +102,7 @@ curl http://localhost:11001/health
 
 ### 如何对接 IEC 104 数据？
 
-先阅读[IEC 104 数采平台](./iec104.md)，再根据消费通道查看[IEC 104 消息对接](./iec104-message.md)。需要下发控制命令时，继续阅读[IEC 104 控制命令](./iec104-command.md)。
+先阅读[IEC 104 数采平台](./iec104/iec104.md)，再根据消费通道查看[IEC 104 消息对接](./iec104/iec104-message.md)。需要下发控制命令时，继续阅读[IEC 104 控制命令](./iec104/iec104-command.md)。
 
 ### 如何配置数据库和敏感信息？
 

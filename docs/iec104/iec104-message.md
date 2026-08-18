@@ -835,4 +835,4 @@ print(point_key, body["value"])
 
 - [IEC 104 数采平台架构](./iec104.md)，服务组件、数据流、配置管理。
 - [IEC 104 控制命令文档](./iec104-command.md)，控制指令 RPC 接口。
-- [`streamevent.proto`](../facade/streamevent/streamevent.proto)，统一流事件 gRPC 协议。
+- [`streamevent.proto`](../../facade/streamevent/streamevent.proto)，统一流事件 gRPC 协议。
