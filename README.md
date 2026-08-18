@@ -10,6 +10,8 @@ Zero-Service 不是一个必须整体部署的单体应用。各服务可以按�
 
 [快速开始](#快速开始) · [架构概览](./docs/architecture.md) · [完整文档](./docs/README.md) · [参与贡献](./CONTRIBUTING.md)
 
+> **PR 流程演示**：本行由 `demo/pr-workflow` 分支添加，用于演示通过 PR 集成的完整流程。
+
 ## 核心能力
 
 - **IEC 104 数采**：多从站通信，通过 Kafka、MQTT 和 gRPC 并行分发采集数据，并支持 ASDU 合并与时序存储。
