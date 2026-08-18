@@ -17,3 +17,6 @@ gtw/env/
 /.sisyphus
 /.omo
 /cli/*/bin/
+
+# Git worktrees
+/.worktrees/
