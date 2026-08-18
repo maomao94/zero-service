@@ -1,0 +1,4 @@
+{"file":".trellis/spec/guides/documentation-guide.md","reason":"单一权威来源与内容归属"}
+{"file":".trellis/spec/backend/concurrency-guidelines.md","reason":"antsx 决策证据"}
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"Trigger 主键与迁移证据"}
+{"file":".trellis/spec/backend/iec104-guidelines.md","reason":"IEC 104 分发边界证据"}
