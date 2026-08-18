@@ -1,0 +1,31 @@
+{
+  "id": "organize-docs",
+  "name": "organize-docs",
+  "title": "Organize project documentation",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "opencode",
+  "assignee": "opencode",
+  "createdAt": "2026-08-18",
+  "completedAt": "2026-08-18",
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "08-18-docs-restructure",
+    "08-18-docs-missing-services",
+    "08-18-docs-context",
+    "08-18-docs-adr"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}
