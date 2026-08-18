@@ -66,7 +66,7 @@ func NewScheduler(store TaskStore, handler Handler, opts ...SchedulerOption) *Sc
 // Start 启动调度器主循环。
 func (s *Scheduler) Start() {
 	s.startOnce.Do(func() {
-		logx.Info("[crontask] scheduler started")
+		logx.Info("[cron-task] scheduler started")
 		s.workerGroup.Go(func() {
 			s.scanLoop()
 		})
@@ -78,7 +78,7 @@ func (s *Scheduler) Stop() {
 	s.stopOnce.Do(func() {
 		close(s.stopCh)
 		s.workerGroup.Wait()
-		logx.Info("[crontask] scheduler stopped")
+		logx.Info("[cron-task] scheduler stopped")
 	})
 }
 
@@ -101,7 +101,7 @@ func (s *Scheduler) scanLoop() {
 
 		claim, err := s.store.LockAndFetch(context.Background(), carbon.Now().StdTime(), s.lockExpire)
 		if err == nil && claim != nil {
-			logx.WithContext(taskLogContext(context.Background(), claim)).Info("[crontask] task claimed")
+			logx.WithContext(taskLogContext(context.Background(), claim)).Info("[cron-task] task claimed")
 			s.workerGroup.Add(1)
 			threading.GoSafe(func() {
 				defer s.workerGroup.Done()
@@ -109,7 +109,7 @@ func (s *Scheduler) scanLoop() {
 			})
 		}
 		if err != nil && !errors.Is(err, ErrNotFound) {
-			logx.Errorf("[crontask] scan loop error: %v", err)
+			logx.Errorf("[cron-task] scan loop error: %v", err)
 		}
 
 		var sleepDuration time.Duration
@@ -158,47 +158,47 @@ func (s *Scheduler) executeTask(claim *TaskClaim) {
 		maxDelay = task.MaxDelay
 	}
 	if maxDelay > 0 && !task.ScheduledTime.IsZero() && time.Since(task.ScheduledTime) > maxDelay {
-		logx.WithContext(ctx).Infof("[crontask] task skipped: delayed %v > max %v", time.Since(task.ScheduledTime), maxDelay)
+		logx.WithContext(ctx).Infof("[cron-task] task skipped: delayed %v > max %v", time.Since(task.ScheduledTime), maxDelay)
 		stale = true
 	}
 
 	lastRun := time.Time{}
 	if !stale {
 		startedAt := time.Now()
-		logx.WithContext(ctx).Info("[crontask] handler started")
+		logx.WithContext(ctx).Info("[cron-task] handler started")
 		if err := invokeHandler(s.handler, ctx, task); err != nil {
-			logx.WithContext(ctx).WithDuration(time.Since(startedAt)).Errorf("[crontask] handler failed: %v", err)
+			logx.WithContext(ctx).WithDuration(time.Since(startedAt)).Errorf("[cron-task] handler failed: %v", err)
 			if errors.Is(err, ErrDeleteTask) {
 				deleteErr := s.store.Delete(ctx, task.ID)
 				if deleteErr != nil && !errors.Is(deleteErr, ErrNotFound) {
-					logx.WithContext(ctx).Errorf("[crontask] task delete failed: %v", deleteErr)
+					logx.WithContext(ctx).Errorf("[cron-task] task delete failed: %v", deleteErr)
 				} else {
-					logx.WithContext(ctx).Info("[crontask] task deleted")
+					logx.WithContext(ctx).Info("[cron-task] task deleted")
 				}
 				return
 			}
 			return
 		}
 		lastRun = carbon.Now().StdTime()
-		logx.WithContext(ctx).WithDuration(time.Since(startedAt)).Info("[crontask] handler succeeded")
+		logx.WithContext(ctx).WithDuration(time.Since(startedAt)).Info("[cron-task] handler succeeded")
 	}
 
 	nextRun, err := s.computeNextRun(task)
 	if err != nil {
-		logx.WithContext(ctx).Errorf("[crontask] compute next run failed: %v", err)
+		logx.WithContext(ctx).Errorf("[cron-task] compute next run failed: %v", err)
 		return
 	}
 	completionCtx := logx.ContextWithFields(ctx, logx.Field("next_run", nextRun))
-	logx.WithContext(completionCtx).Info("[crontask] next run computed")
+	logx.WithContext(completionCtx).Info("[cron-task] next run computed")
 	completion := Completion{NextRun: nextRun}
 	if !stale {
 		completion.LastRun = lastRun
 		completion.LastScheduledRun = task.ScheduledTime
 	}
 	if err := s.store.Complete(completionCtx, task.ID, claim.LockedUntil, completion); err != nil {
-		logx.WithContext(completionCtx).Errorf("[crontask] completion failed: %v", err)
+		logx.WithContext(completionCtx).Errorf("[cron-task] completion failed: %v", err)
 	} else {
-		logx.WithContext(completionCtx).Info("[crontask] completion committed")
+		logx.WithContext(completionCtx).Info("[cron-task] completion committed")
 	}
 }
 
@@ -216,30 +216,30 @@ func (s *Scheduler) RunNow(ctx context.Context, taskCode string) (string, error)
 		logx.Field("task_id", task.ID),
 		logx.Field("scheduled_run", task.ScheduledTime),
 	)
-	logx.WithContext(runCtx).Info("[crontask] run now queued")
+	logx.WithContext(runCtx).Info("[cron-task] run now queued")
 	traceID := trace.TraceIDFromContext(ctx)
 	threading.GoSafe(func() {
 		startedAt := time.Now()
-		logx.WithContext(runCtx).Info("[crontask] run now handler started")
+		logx.WithContext(runCtx).Info("[cron-task] run now handler started")
 		if err := invokeHandler(s.handler, runCtx, task); err != nil {
-			logx.WithContext(runCtx).WithDuration(time.Since(startedAt)).Errorf("[crontask] run now handler failed: %v", err)
+			logx.WithContext(runCtx).WithDuration(time.Since(startedAt)).Errorf("[cron-task] run now handler failed: %v", err)
 			if errors.Is(err, ErrDeleteTask) {
 				deleteErr := s.store.Delete(runCtx, task.ID)
 				if deleteErr != nil && !errors.Is(deleteErr, ErrNotFound) {
-					logx.WithContext(runCtx).Errorf("[crontask] run now delete failed: %v", deleteErr)
+					logx.WithContext(runCtx).Errorf("[cron-task] run now delete failed: %v", deleteErr)
 				} else {
-					logx.WithContext(runCtx).Info("[crontask] run now task deleted")
+					logx.WithContext(runCtx).Info("[cron-task] run now task deleted")
 				}
 				return
 			}
 			return
 		}
 		lastRun := carbon.Now().StdTime()
-		logx.WithContext(runCtx).WithDuration(time.Since(startedAt)).Info("[crontask] run now handler succeeded")
+		logx.WithContext(runCtx).WithDuration(time.Since(startedAt)).Info("[cron-task] run now handler succeeded")
 		if err := s.store.UpdateLastRun(runCtx, task.ID, lastRun); err != nil {
-			logx.WithContext(runCtx).Errorf("[crontask] run now completion failed: %v", err)
+			logx.WithContext(runCtx).Errorf("[cron-task] run now completion failed: %v", err)
 		} else {
-			logx.WithContext(runCtx).Info("[crontask] run now completion committed")
+			logx.WithContext(runCtx).Info("[cron-task] run now completion committed")
 		}
 	})
 	return traceID, nil
