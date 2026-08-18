@@ -311,4 +311,3 @@ go run . -f etc/trigger.yaml
 - [`app/trigger/internal/cronjob`](../../app/trigger/internal/cronjob) - CronJob 规则编译、Store 和 Handler 适配
 - [`common/crontask`](../../common/crontask) - 通用 RRULE 调度器与 lease 契约
 - [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md) - 周期规则、指定时间、精确与整日排除及 Plan/CronJob 示例
-- [Trigger Plan openGauss 迁移指南](./trigger-plan-opengauss-migration.md) - Plan 四表迁移、校验和回滚

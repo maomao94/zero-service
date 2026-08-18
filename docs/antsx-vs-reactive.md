@@ -1,5 +1,7 @@
 # antsx vs 响应式框架对比
 
+> 决策记录：[ADR-0001 使用 antsx 表达并发与异步编排](./adr/0001-use-antsx-for-concurrency.md)
+
 ## 为什么不用 Java WebFlux / RxJava
 
 ### 一句话总结
