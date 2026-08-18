@@ -75,11 +75,11 @@ go run . -f etc/trigger.yaml
 | `trigger` | 异步回调、计划任务与 RRULE CronJob 调度 | [Trigger 服务](./docs/trigger/trigger.md) |
 | `djicloud` | DJI Dock 3 云平台接入 | [DJI 云平台](./docs/djicloud/djicloud.md) |
 | `socketgtw` / `socketpush` | SocketIO 连接管理与服务端推送 | [SocketIO 实时通信](./docs/socketio/socketio.md) |
-| `bridge*` | Modbus、MQTT、Kafka 和网关协议桥接 | [服务端口清单](./docs/service-ports.md) |
+| `bridge*` | Modbus、MQTT、Kafka 和网关协议桥接 | [Bridge 协议桥接](./docs/bridge/README.md) |
 | `ispagent` / `ispserver` | 变电站 ISP 巡检协议代理与服务端 | [ISP 巡检协议](./docs/isp/isp.md) |
-| `file` | 分片文件传输与对象存储集成 | [服务端口清单](./docs/service-ports.md) |
-| `gis` | H3、GeoHash、电子围栏和坐标转换 | [服务端口清单](./docs/service-ports.md) |
-| `podengine` | Docker 容器生命周期管理 | [服务端口清单](./docs/service-ports.md) |
+| `file` | 分片文件传输与对象存储集成 | [文件与对象存储](./docs/file/README.md) |
+| `gis` | H3、GeoHash、电子围栏和坐标转换 | [地理信息服务](./docs/gis/README.md) |
+| `podengine` | Docker 容器生命周期管理 | [容器编排](./docs/podengine/README.md) |
 
 ## 仓库结构
 
