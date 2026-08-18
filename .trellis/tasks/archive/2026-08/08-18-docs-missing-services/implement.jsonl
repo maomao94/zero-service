@@ -1,0 +1,5 @@
+{"file":".trellis/spec/guides/documentation-guide.md","reason":"文档权威来源和内容归属"}
+{"file":".trellis/spec/backend/file-guidelines.md","reason":"File 服务稳定契约"}
+{"file":".trellis/spec/backend/gis-guidelines.md","reason":"GIS 服务稳定契约"}
+{"file":".trellis/spec/backend/podengine-guidelines.md","reason":"Pod Engine 稳定契约"}
+{"file":".trellis/spec/backend/bridge-guidelines.md","reason":"Bridge 系列边界和协议"}
