@@ -28,6 +28,10 @@
 | DJI | [云平台](./djicloud/README.md) | Dock 3 Cloud API 与航点任务文件 |
 | ISP | [巡检协议](./isp/README.md) | ISP 服务端/代理、帧格式、任务和模型同步 |
 | LAL | [流媒体回调](../app/lalhook/README.md) | LAL HTTP 回调事件、鉴权、配置和接口说明 |
+| File | [文件与对象存储](./file/README.md) | OSS 配置管理、文件上传/中继、签名 URL 与视频截帧 |
+| GIS | [地理信息服务](./gis/README.md) | H3、GeoHash、电子围栏与坐标转换 |
+| PodEngine | [容器编排](./podengine/README.md) | Docker 容器生命周期管理 |
+| Bridge | [协议桥接](./bridge/README.md) | HTTP/Kafka/Modbus/MQTT 桥接与报文落地 |
 
 ## 开发者
 
