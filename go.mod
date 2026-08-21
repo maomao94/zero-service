@@ -10,7 +10,7 @@ require (
 	github.com/NimbleMarkets/ntcharts v0.5.1
 	github.com/alicebob/miniredis/v2 v2.38.0
 	github.com/benbjohnson/clock v1.3.5
-	github.com/brianvoe/gofakeit/v7 v7.15.0
+	github.com/brianvoe/gofakeit/v7 v7.16.0
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
@@ -43,7 +43,7 @@ require (
 	github.com/hibiken/asynq v0.26.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/jlaffaye/ftp v0.2.2
-	github.com/larksuite/oapi-sdk-go/v3 v3.9.10
+	github.com/larksuite/oapi-sdk-go/v3 v3.10.0
 	github.com/lib/pq v1.12.3
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2
 	github.com/minio/minio-go/v7 v7.3.0
