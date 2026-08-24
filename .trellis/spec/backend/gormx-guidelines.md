@@ -23,6 +23,15 @@
 
 依据：`common/gormx/model.go`、`common/gormx/callbacks.go`、现有服务模型。
 
+## 索引命名与迁移
+
+- 索引（`gorm:"...;index:xxx"`）与唯一索引（`uniqueIndex:xxx`）的命名必须与 `TableName()` 的实际表名一致：普通 `idx_{table}_{suffix}`，唯一 `uq_{table}_{suffix}`；表名加前缀（如 `oryx_record`、`gis_fence_cell`）时索引名必须同步。裸 `index` / `uniqueIndex`（不带名称）由 GORM 自动生成 `idx_{table}_{column}`，天然合规。
+- 复合唯一索引的两个字段声明必须使用**同一个**索引名（如 `uniqueIndex:uq_dji_device_topo_gateway_sn_sub_device_sn`），GORM 据此合并为单索引。
+- **AutoMigrate 不会删除旧索引**：改索引名后需在目标库手动 `DROP INDEX` 清理旧名，否则新旧并存（查询可能误走旧索引，未来重命名还会冲突）。
+- 业务时间字段（begin/end 等）使用 `time.Time` + `type:timestamp`，由逻辑层显式赋值；**不要**在同一字段同时使用 `autoCreateTime:milli/秒` 和显式赋值——`autoCreateTime` 只在 Create 时填充，与 `Updates(map[string]any)` 更新路径共存时行为不一致，且会覆盖显式值或写零值。带 `autoCreateTime` 的字段应由 GORM hook 全权维护，更新路径同时存在时优先放行字段到 hook 或移除 autoCreateTime。
+
+依据：`app/oryxserver/model/gormmodel/record.go`（表 `oryx_record`、`idx_oryx_record_*`）、`common/gormx/model_legacy.go`、全项目索引审计（2026-08）。
+
 ## 查询与写入
 
 - Store/Model 拥有 SQL/GORM 表达式、事务和字段更新范围；Logic 传递领域参数，不拼接列名或 SQL。

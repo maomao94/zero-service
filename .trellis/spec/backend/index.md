@@ -40,6 +40,7 @@
 | [Alarm 飞书告警](./alarm-guidelines.md) | 修改 alarm 告警发送或 alarmx Lark SDK 封装 |
 | [File OSS 文件](./file-guidelines.md) | 修改 file OSS 管理/上传/中继或 ossx/filex 公共库 |
 | [LAL 流媒体](./lal-guidelines.md) | 修改 lalhook/lalproxy 服务或 lalx/mediax 公共库 |
+| [Oryx 网关与 SRS API 代理](./oryx-guidelines.md) | 修改 oryxgtw/oryxserver 服务或 oryxx 公共库 |
 | [Pod Engine 编排](./podengine-guidelines.md) | 修改 podengine 容器编排或 dockerx/executorx 公共库 |
 | [网络通信](./networking-guidelines.md) | 修改 netx/wsx/socketiox/ssex HTTP/WebSocket/SSE 通信层 |
 | [Log Dump 日志汇聚](./logdump-guidelines.md) | 修改 logdump gRPC-to-logx 桥接或日志字段白名单 |

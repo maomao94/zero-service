@@ -1945,3 +1945,45 @@ go1.26 下运行 go fix 自动迁移语言/标准库新特性（reflect.Pointer�
 ### Status
 
 [OK] **Completed**
+
+
+## Session 175: Oryx hook 网关与 SRS API 代理服务
+
+**Date**: 2026-08-25
+**Task**: Oryx hook 网关与 SRS API 代理服务
+**Branch**: `master`
+
+### Summary
+
+构建 oryxgtw(11004 REST 回调网关) + oryxserver(21016 gRPC) 代理层：1) Oryx 回调 on_publish/on_record_begin/on_record_end 接收与 record 生命周期落库(RecordList/RecordDelete grpc, gormx Dev/Test 自动迁移)；2) 13 个 /terraform/v1/* Oryx 平台接口强类型代理(SDK common/oryxx)；3) 调研确认 Oryx 接口字段齐全、record/files 无分页；4) 新增 6 个 SRS HTTP API 代理 RPC(/api/v1/ versions streams clients vhosts summaries tests-requests, 分页 count 下限 10 无 total)；5) 错误统一 gRPC extproto.Code__1_06_THIRD_PARTY；6) 新建 oryx-guidelines.md 规范
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8bd4dd8b` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 176: Stream Relay API - FFmpeg转推接口
+
+**Date**: 2026-08-25
+**Task**: Stream Relay API - FFmpeg转推接口
+**Branch**: `master`
+
+### Summary
+
+实现 oryxserver StreamRelay/StreamRelayStop gRPC：业务侧传入外部流地址，内部启动 FFmpeg（-c copy -f flv）转推到 SRS，动态启停，进程退出打 error 日志；分布式停止可选（DeployMode cluster 时 MQTT 广播，仅 owner 节点 ack）；单节点零 MQTT 依赖。调研结论：SRS/Oryx 全家族无动态中继拉流/按流转码接口（Oryx transcode 为全局单任务），中转推方案选定自管 FFmpeg；research 见 08-25-stream-relay/research/oryx-relay-transcode.md，spec 已更新 oryx-guidelines.md。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4e955204` | (see git log) |
+
+### Status
+
+[OK] **Completed**

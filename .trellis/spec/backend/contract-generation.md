@@ -109,6 +109,8 @@ _1_00_UNKNOWN = 100999 [(name) = "未知错误", (http_code) = 500];
 - 生成后不检查 diff，提交无关版本噪声。
 - **用 `encoding/json` 序列化 proto 类型**——必须用 `protojson`。
 - **Proto 字段使用 camelCase**——必须用 `snake_case` + `json_name`。
+- **一个 `.proto` 声明多个 service**——goctl `rpc protoc` 报 `only one service expected`；
+  需要区分内部/外部调用方时，在单 service 内用注释分组（如 oryxserver「⚠️ 内部 Hook」块），拆独立 service 需拆 proto 目录。
 
 ## 验证
 

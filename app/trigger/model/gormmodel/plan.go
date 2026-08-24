@@ -27,16 +27,16 @@ type Plan struct {
 	DeptCode         sql.NullString `gorm:"column:dept_code;size:64;comment:机构code"`
 	PlanId           string         `gorm:"column:plan_id;size:64;comment:计划唯一标识;uniqueIndex:uq_plan_plan_id"`
 	PlanName         sql.NullString `gorm:"column:plan_name;size:128;comment:计划任务名称"`
-	Type             sql.NullString `gorm:"column:type;size:64;comment:任务类型;index:idx_plan_table_type"`
-	GroupId          sql.NullString `gorm:"column:group_id;size:64;comment:计划组ID,用于分组管理计划任务;index:idx_plan_table_group_id"`
+	Type             sql.NullString `gorm:"column:type;size:64;comment:任务类型;index:idx_plan_type"`
+	GroupId          sql.NullString `gorm:"column:group_id;size:64;comment:计划组ID,用于分组管理计划任务;index:idx_plan_group_id"`
 	RecurrenceRule   string         `gorm:"column:recurrence_rule;type:text;comment:重复规则，JSON格式存储"`
 	RRuleStr         string         `gorm:"column:rrule_str;type:text;comment:创建时用于展开日期的 RFC 5545 RRULE Set 快照"`
-	StartTime        time.Time      `gorm:"column:start_time;comment:规则生效开始时间;index:idx_plan_table_start_time"`
-	EndTime          time.Time      `gorm:"column:end_time;comment:规则生效结束时间;index:idx_plan_table_end_time"`
-	Status           int            `gorm:"column:status;comment:状态：0-禁用，1-启用，2-暂停，3-终止;index:idx_plan_table_status"`
+	StartTime        time.Time      `gorm:"column:start_time;comment:规则生效开始时间;index:idx_plan_start_time"`
+	EndTime          time.Time      `gorm:"column:end_time;comment:规则生效结束时间;index:idx_plan_end_time"`
+	Status           int            `gorm:"column:status;comment:状态：0-禁用，1-启用，2-暂停，3-终止;index:idx_plan_status"`
 	ScanFlg          int            `gorm:"column:scan_flg;comment:扫表标记, 0-未扫表, 1-已扫表"`
 	TerminatedReason sql.NullString `gorm:"column:terminated_reason;size:2000;comment:终止原因"`
-	PausedTime       sql.NullTime   `gorm:"column:paused_time;comment:暂停时间;index:idx_plan_table_paused_time"`
+	PausedTime       sql.NullTime   `gorm:"column:paused_time;comment:暂停时间;index:idx_plan_paused_time"`
 	PausedReason     sql.NullString `gorm:"column:paused_reason;size:256;comment:暂停原因"`
 	FinishedTime     sql.NullTime   `gorm:"column:finished_time;comment:结束时间"`
 	Description      sql.NullString `gorm:"column:description;size:256;comment:备注信息"`

@@ -1,0 +1,27 @@
+Name: oryxgtw
+Host: 0.0.0.0
+Port: 11004
+Mode: dev
+Log:
+  Encoding: plain
+Timeout: 15000
+# Oryx 回调 target 地址（复制到 Oryx「系统配置 > 回调」或 mgmt/hooks/apply 的 target）：
+#   http://<本机IP>:11004/v1/hook
+# 例：curl -X POST http://<oryx-host>/terraform/v1/mgmt/hooks/apply \
+#   -H 'Authorization: Bearer srs-v2-xxx' -H 'Content-Type: application/json' \
+#   --data '{"target":"http://<本机IP>:11004/v1/hook","opaque":"<HookOpaque>","all":true}'
+# HookOpaque 为回调凭证，需与 Oryx hooks/apply 里配置的 opaque 一致（为空则跳过校验）
+HookOpaque: ""
+OryxServerConf:
+  # Target: nacos://nacos:nacos@127.0.0.1:8848/oryxserver.rpc?namespaceid=public&timeout=5000s
+  Endpoints:
+    - 127.0.0.1:21016
+  Timeout: 120000
+NacosConfig:
+  IsRegister: false
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: oryxgtw

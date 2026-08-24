@@ -13,6 +13,7 @@
 | gtw | `gtw/` | 11001 | BFF API 网关 |
 | lalhook | `app/lalhook/` | 11002 | LAL 流媒体回调 |
 | socketgtw | `socketapp/socketgtw/` | 11003 | Socket.IO 网关（混合型，同时有 gRPC） |
+| oryxgtw | `app/oryxgtw/` | 11004 | Oryx 流媒体回调网关 |
 
 ### 13xxx — AI HTTP 服务
 
@@ -49,6 +50,7 @@
 | bridgekafka.rpc | `app/bridgekafka/` | 21013 | Kafka 桥接 |
 | ispagent.rpc | `app/ispagent/` | 21014 | ISP 巡检协议代理 |
 | ispserver.rpc | `app/ispserver/` | 21015 | ISP 巡检协议服务端 |
+| oryxserver.rpc | `app/oryxserver/` | 21016 | Oryx 流媒体代理 |
 
 ### 25xxx — Socket / 桥接 / 扩展
 
@@ -73,10 +75,10 @@
 
 | 端口段 | 用途 |
 |--------|------|
-| 11001 – 11003 | 通用 HTTP 网关 |
+| 11001 – 11004 | 通用 HTTP 网关 |
 | 13001 – 13003 | AI HTTP 服务 |
 | 15001 | 桥接 HTTP 网关 |
-| 21001 – 21015 | 核心业务 gRPC 服务 |
+| 21001 – 21016 | 核心业务 gRPC 服务 |
 | 23001 – 23002 | AI gRPC 服务 |
 | 25001 – 25007 | Socket / 桥接 / 扩展 gRPC 服务 |
 

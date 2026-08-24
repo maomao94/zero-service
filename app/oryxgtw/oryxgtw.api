@@ -1,0 +1,44 @@
+syntax = "v1"
+
+info (
+	title:   "oryxgtw"
+	desc:    "Oryx HTTP 回调网关服务"
+	author:  "hehanpeng"
+	email:   "hehanpengyy@163.com"
+	version: "v1"
+)
+
+type (
+	HookReply {
+		Code int `json:"code"` // 0 表示成功，非 0 表示失败；on_publish 需返回 0 才放行推流
+	}
+	// HookRequest 对应 Oryx 五类回调的请求体，字段与 Oryx 官方 JSON 完全一致（snake_case）
+	HookRequest {
+		RequestId    string `json:"request_id,optional"` // 请求唯一 ID
+		Action       string `json:"action,optional"` // 事件类型：on_publish/on_unpublish/on_record_begin/on_record_end/on_ocr
+		Opaque       string `json:"opaque,optional"` // 不透明标识
+		Vhost        string `json:"vhost,optional"` // 虚拟主机
+		App          string `json:"app,optional"` // 应用名
+		Stream       string `json:"stream,optional"` // 流名称
+		Param        string `json:"param,optional"` // 推流 URL 参数
+		Uuid         string `json:"uuid,optional"` // 录制/OCR 任务 UUID
+		ArtifactCode int    `json:"artifact_code,optional"` // 录制结果错误码（0 无错误）
+		ArtifactPath string `json:"artifact_path,optional"` // 录制文件在容器内的路径
+		ArtifactUrl  string `json:"artifact_url,optional"` // 录制文件可访问 URL
+		Prompt       string `json:"prompt,optional"` // OCR 使用的 prompt
+		Result       string `json:"result,optional"` // OCR 结果
+	}
+)
+
+@server (
+	prefix:     /v1
+	group:      hook
+	timeout:    7200s
+	middleware: OryxHookAuth
+)
+service oryxgtw {
+	@doc "Oryx HTTP 回调统一入口（按 action 字段分发）"
+	@handler HookHandler
+	post /hook (HookRequest) returns (HookReply)
+}
+

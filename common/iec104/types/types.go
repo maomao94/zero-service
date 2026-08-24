@@ -8,23 +8,6 @@ import (
 	"github.com/zeromicro/go-zero/core/mapping"
 )
 
-type BroadcastBody struct {
-	Tid      string `json:"tId,omitempty"`
-	AckTopic string `json:"ackTopic"`
-	Method   string `json:"method"`
-	Body     string `json:"body"`
-}
-
-// BroadcastAckBody 广播ACK响应体，用于集群模式下回传指令执行结果
-type BroadcastAckBody struct {
-	Tid          string `json:"tId"`
-	Method       string `json:"method"`
-	Success      bool   `json:"success"`
-	ResponseBody string `json:"responseBody"`
-	Error        string `json:"error,omitempty"`
-	ErrorKind    string `json:"errorKind,omitempty"`
-}
-
 type MsgBody struct {
 	MsgId    string            `json:"msgId"`
 	Host     string            `json:"host"`

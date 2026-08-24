@@ -30,6 +30,92 @@
 
 依据：`common/mqttx/reply_router.go`、`common/mqttx/request_replyer.go` 及测试。
 
+## 场景: MQTT 广播集群（`common/mqttx/broadcast`）
+
+### 1. Scope / Trigger
+
+- 集群实例间「命令广播 + 按实例 ack」的跨节点调用（当前用例：ieccaller IEC104 命令集群广播、oryxserver StreamRelayStop 分布式停止）适用；单一请求-应答优先用 `mqttx.RequestReply` 直连。
+- 修改 `app/oryxserver`、`app/ieccaller`、新广播场景时读取；SDK 通用层改造读本场景第 1-7 节。
+
+### 2. Signatures
+
+```go
+// 主题（djisdk 风格，Prefix 由 app 提供：oryxserver "oryx/server"、ieccaller "iec"）
+func BroadcastTopic(prefix string) string          // {prefix}/broadcast
+func BroadcastTopicPattern(prefix string) string   // 同值（具体订阅）
+func BroadcastAckTopic(prefix, instanceID string) string // {prefix}/broadcast_reply/{id}
+func BroadcastAckTopicPattern(prefix string) string // {prefix}/broadcast_reply/+（全景订阅/监控）
+
+type Executor func(ctx context.Context, method string, payload []byte) ([]byte, error)
+
+type Broadcaster interface {
+    Broadcast(ctx context.Context, method string, payload []byte) error      // fire-and-forget
+    BroadcastReply(ctx context.Context, method string, payload []byte, timeout time.Duration) ([]byte, error) // 等待 ack
+    AddBroadcastHandler() error
+    AddExecutor(method string, fn Executor)
+}
+
+func NewBroadcaster(c mqttx.Client, instanceID string, opts ...BroadcasterOption) Broadcaster
+func WithPrefix(prefix string) BroadcasterOption
+func WithReplyTTL(ttl time.Duration) BroadcasterOption
+func NewAckReplyRouter(ttl time.Duration, name string) *mqttx.ReplyRouter[*BroadcastAckBody]
+func RegisterErrorKind(src error, kind string, dst func(msg string) error)
+func NormalizeErrorKind(err error) string
+func ErrorFromKind(kind, msg string) error
+var ErrSkipAck = errors.New(...) // executor 返回：处理成功但不回 ack
+```
+
+### 3. Contracts
+
+- **协议中立**：`BroadcastBody{Tid,AckTopic,Method,Body}` 与 `BroadcastAckBody{Tid,Method,Success,ResponseBody,Error,ErrorKind}` 只承载关联/路由字段；业务数据一律经 opaque `Body`/`ResponseBody`（string）由业务 executor 约定格式（ieccaller protojson、oryxserver taskId 原文/JSON）。**SDK 内禁止出现业务字段/业务常量**（如 taskId、iec_rejected）。
+- **发送隔离**：调用方只传 `method + payload []byte`，不得构造 `BroadcastBody`、拼接主题（Tid/AckTopic/Method 由 SDK 填充；`BroadcastReply` 成功只返回业务结果字节，失败按 errorKind 还原领域错误）。
+- 防回环：消费侧忽略 `Body.AckTopic == BroadcastAckTopic(prefix, 本实例ID)` 的消息。
+- ack 绑定：`mqttx.Client` 创建时必须经 `mqttx.WithReplyRouter(BroadcastAckTopic(prefix, instanceID), NewAckReplyRouter(ttl,".."))` 注册（Runtime 无事后入口）；默认 TTL 10s。
+- errorKind：内置 `timeout`(=ErrReplyExpired)、`duplicate`(=ErrDuplicateID)、`unknown` 兜底；业务类别（如 ieccaller `iec_rejected`）由 app 声明常量并 `RegisterErrorKind` 注册双向映射——SDK 不定义业务 kind。
+- 骨架行为：未注册 method → 回 ack `Success=false, Error="unknown method", ErrorKind=unknown`；executor 失败 → `NormalizeErrorKind` 归一后回 ack；`ErrSkipAck` → 不回 ack（oryxserver 非 owner 节点语义、ieccaller ClearPointMappingCache）。
+- **装配约定（闭环在 NewServiceContext）**：cluster 分支创建 `Broadcaster` 后依次「业务执行器包 `RegisterExecutors(broadcaster)` → `AddBroadcastHandler()`（失败 `logx.Must`）」；业务执行器包（`app/*/mqtt`）构造**只收窄依赖**（`*relay.Manager`、`*client.ClientManager`、`*Store` 等最小集），**不得注入 `*svc.ServiceContext`**——否则形成 `svc→mqtt→svc` 导入环。`main()` 不保留广播接线样板。
+- **nacos 元数据约定**：广播相关 app（ieccaller / oryxserver）nacos 注册时写入 `deployMode`、`broadcastTopic`、`broadcastAckTopic`、`broadcastInstanceId`（svc 提供同名公开访问器），消费方据此定位集群广播实例。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 行为 |
+| --- | --- |
+| 无 broker / non-cluster | app 侧不创建 Broadcaster（zero MQTT 依赖） |
+| BroadcastReply 超时 | `antsx.ErrReplyExpired`（TTL 默认 10s） |
+| ack.Success=false | `(nil, ErrorFromKind(ack.ErrorKind, ack.Error))`；未识别 kind → `errors.New(msg)` |
+| 无 reply router | `mqttx.ErrNoReplyRouter`（BroadcastReply 前不发布） |
+| 未注册 method（消费侧） | 回失败 ack（unknown kind）让调用方快速失败，不等超时 |
+| executor 返回 ErrSkipAck | 不回 ack，调用方侧保持超时语义 |
+
+### 5. Good/Base/Bad Cases
+
+- Good：ieccaller `BroadcastReply(ctx, method, protojsonPayload, 10s)` 等待设备执行结果；oryxserver `Broadcast(ctx, method, taskIDBytes)` fire-and-forget。
+- Base：注册 `errKindIECRejected` 后，`CommandRejectedError` 经 `NormalizeErrorKind` 归为 `iec_rejected`，远端 `ErrorFromKind` 还原同类型错误。
+- Bad：把 taskId 加进 `BroadcastBody.TaskId` 字段（业务字段污染通用层）；把 `iec_rejected` 写成 SDK 常量；调用方手工拼 `ackTopic`。
+
+### 6. Tests Required
+
+- topic_test（`oryx/server/broadcast`、`iec/broadcast_reply/xyz` 具体值 + Pattern 匹配）；dispatcher_test（回环、未注册、成功/失败、ErrSkipAck）；errors_test（kind 双向）；client_test（内部 Tid/AckTopic 生成、成功只回字节、失败按 kind 还原）；并发骨架 `go test -race`。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+```go
+// 通用层感知业务字段 + 调用方拼协议字段
+type BroadcastBody struct { ..., TaskId string `json:"taskId"` }
+err := svc.Broadcast(ctx, method, &BroadcastBody{TaskId: id, AckTopic: "iec/broadcast-ack/" + svc.id})
+```
+
+#### Correct
+```go
+// 协议字段 SDK 内部填充；业务数据走 Body；业务 kind 由 app 注册
+err := svc.Broadcast(ctx, relay.MethodStreamRelayStop, []byte(taskId))
+
+// 装配：NewServiceContext 内闭环；业务包收窄依赖（svc→mqtt 单向，mqtt 不导入 svc）
+mqtt.NewBroadcast(svcCtx.RelayManager).RegisterExecutors(svcCtx.Broadcaster)
+svcCtx.Broadcaster.AddBroadcastHandler()
+```
+
 ## WebSocket `wsx`
 
 - 状态只能通过包内状态机变更；外部使用 `WithOnStateChange` 等回调观察，不能直接修改运行态字段。

@@ -64,10 +64,10 @@ func (d *DjiDevice) TouchOnline(now time.Time) {
 // 约束：同一个 gateway_sn + sub_device_sn 唯一，不对 sub_device_sn 单独做唯一约束。
 type DjiDeviceTopo struct {
 	gormx.LegacyStringBaseModel
-	GatewaySn        string `gorm:"column:gateway_sn;uniqueIndex:idx_topo_pair;type:varchar(64);not null;comment:网关机巢SN"`
+	GatewaySn        string `gorm:"column:gateway_sn;uniqueIndex:uq_dji_device_topo_gateway_sn_sub_device_sn;type:varchar(64);not null;comment:网关机巢SN"`
 	DeviceType       string `gorm:"column:device_type;type:varchar(32);not null;default:'unknown';comment:规范设备三元组，格式为domain-type-sub_type，未知时为unknown"`
 	DeviceName       string `gorm:"column:device_name;type:varchar(128);not null;default:'unknown';comment:设备三元组对应的产品名称，未知时为unknown"`
-	SubDeviceSn      string `gorm:"column:sub_device_sn;uniqueIndex:idx_topo_pair;index:idx_topo_sub;type:varchar(64);not null;comment:子设备SN"`
+	SubDeviceSn      string `gorm:"column:sub_device_sn;uniqueIndex:uq_dji_device_topo_gateway_sn_sub_device_sn;index:idx_dji_device_topo_sub_device_sn;type:varchar(64);not null;comment:子设备SN"`
 	Domain           string `gorm:"column:domain;type:varchar(8);not null;default:'';comment:大疆设备领域domain，0飞机类，1负载类，2遥控器类，3机场类"`
 	SubDeviceType    int    `gorm:"column:sub_device_type;not null;default:0;comment:子设备类型"`
 	SubDeviceSubType int    `gorm:"column:sub_device_sub_type;not null;default:0;comment:子设备子类型"`

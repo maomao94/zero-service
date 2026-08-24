@@ -18,8 +18,8 @@ func (GisFence) TableName() string { return "gis_fence" }
 // GisFenceCell 围栏-Cell 映射表（用于反查）
 type GisFenceCell struct {
 	gormx.LegacyIDMixin
-	FenceId  string `gorm:"column:fence_id;type:varchar(36);not null;index:idx_fence_cell_fence_id"`
-	CellId   string `gorm:"column:cell_id;type:varchar(64);not null;index:idx_fence_cell_cell_id"`
+	FenceId  string `gorm:"column:fence_id;type:varchar(36);not null;index:idx_gis_fence_cell_fence_id"`
+	CellId   string `gorm:"column:cell_id;type:varchar(64);not null;index:idx_gis_fence_cell_cell_id"`
 	CellType string `gorm:"column:cell_type;type:varchar(10);not null;comment:h3 或 geohash"`
 }
 

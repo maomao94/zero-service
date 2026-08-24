@@ -25,7 +25,7 @@
 ## 本地与集群路由
 
 - ieccaller 本地存在目标 client 时走本地 typed 调用；仅本地缺失时通过 MQTT 广播请求，避免同一命令本地和集群重复下发。
-- MQTT 请求/响应使用 typed payload 和 TID，先注册 ReplyRouter 再 publish；topic 与 payload 由 IEC 领域层拥有。
+- 集群广播经 `common/mqttx/broadcast`（prefix `iec`，topic `iec/broadcast`，reply `iec/broadcast_reply/{id}`）：调用方传 method + protojson payload，TID/topic 由 SDK 填充；业务 payload 格式与结果解析留在 ieccaller executor（`broadcast.Executor`）。
 - publish/收到响应/设备确认是三个阶段，RPC 成功语义以当前控制流程的最终确认点为准，不能从 client API 推断 Exactly Once。
 - 集群请求可能重复、迟到或来自非目标节点，handler 必须按 TID 和设备连接状态处理。
 

@@ -7,9 +7,9 @@
 ## Current Status
 
 <!-- @@@auto:current-status -->
-- **Active File**: `journal-3.md`
-- **Total Sessions**: 174
-- **Last Active**: 2026-08-24
+- **Active File**: `journal-4.md`
+- **Total Sessions**: 179
+- **Last Active**: 2026-08-25
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,8 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-3.md` | ~1947 | Active |
+| `journal-4.md` | ~74 | Active |
+| `journal-3.md` | ~1989 | Archived |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
@@ -31,6 +32,11 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 179 | 2026-08-25 | 流媒体 relay 协议调研：RTMP vs SRT vs HTTP-FLV | `a6474941`, `0a430656`, `fb6b91fa` | `master` |
+| 178 | 2026-08-25 | 广播装配闭环重构与 nacos 元数据对齐 | `a6474941`, `0a430656`, `fb6b91fa` | `master` |
+| 177 | 2026-08-25 | 重构 mqttx reply 逻辑，抽取通用广播 ack SDK | `694e6e6b` | `master` |
+| 176 | 2026-08-25 | Stream Relay API - FFmpeg转推接口 | `4e955204` | `master` |
+| 175 | 2026-08-25 | Oryx hook 网关与 SRS API 代理服务 | `8bd4dd8b` | `master` |
 | 174 | 2026-08-24 | fix(nacosx): resolver 关闭逻辑/地址更新修复审查与补丁 | `72788882` | `master` |
 | 173 | 2026-08-14 | 迁移废弃 API (SA1019) 与 go1.26 go fix 审查 | `8f37236f` | `master` |
 | 172 | 2026-08-14 | 实施 Authorization 日志脱敏（L1-L3）并完成 auth-context-hardening 父任务 | `936df578`, `f5d1d885` | `master` |

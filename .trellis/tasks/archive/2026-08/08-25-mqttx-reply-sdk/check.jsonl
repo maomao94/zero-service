@@ -1,0 +1,6 @@
+{"file": ".trellis/tasks/08-25-mqttx-reply-sdk/prd.md", "reason": "验收标准清单（AC1-AC7）：主题契约、双 app 迁移行为等价、测试覆盖、符号残留检查"}
+{"file": ".trellis/tasks/08-25-mqttx-reply-sdk/implement.md", "reason": "检查点顺序与验证命令：每 checkpoint 的 build/vet/test 目标"}
+{"file": ".trellis/tasks/08-25-mqttx-reply-sdk/research/research-sizing.md", "reason": "两 app 原实现行为基线（found==false 不回 ack、ClearPointMappingCache 无 ack、errorKind 映射表）——检查迁移后行为等价的锚点"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "风险加权验证范围、race test、diff 检查要求"}
+{"file": ".trellis/spec/backend/coding-standards.md", "reason": "Go 编码规范、测试与文档一致性要求"}
+{"file": ".trellis/spec/backend/common-package-design.md", "reason": "common 包公共 API/文档/测试规范，broadcast 子包落地验收依据"}

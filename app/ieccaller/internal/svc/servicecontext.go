@@ -2,12 +2,11 @@ package svc
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math"
 	"time"
 	"zero-service/app/ieccaller/internal/config"
-	"zero-service/common/antsx"
+	iecmqtt "zero-service/app/ieccaller/mqtt"
 	"zero-service/common/carbonx"
 	"zero-service/common/executorx"
 	"zero-service/common/gormx"
@@ -17,6 +16,7 @@ import (
 	"zero-service/common/iec104/types"
 	"zero-service/common/iec104/util"
 	"zero-service/common/mqttx"
+	"zero-service/common/mqttx/broadcast"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/model/gormmodel"
@@ -34,6 +34,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// errKindIECRejected IEC104 从站命令拒绝的错误类别（wire 值）。
+// 业务错误类别由 app 注册（不在 mqttx/broadcast SDK 内置），此处保持迁移前 wire 语义不变。
+const errKindIECRejected = "iec_rejected"
+
 type ServiceContext struct {
 	Config              config.Config
 	ClientManager       *client.ClientManager
@@ -41,9 +45,9 @@ type ServiceContext struct {
 	MqttClient          mqttx.Client
 	StreamEventCli      streamevent.StreamEventClient
 	ChunkAsduPusher     *executorx.ChunkMessagesPusher
+	Broadcaster         broadcast.Broadcaster
+	broadcastPrefix     string
 	broadcastInstanceId string
-	broadcastTopic      string
-	broadcastAckTopic   string
 
 	DB                      *gormx.DB
 	DevicePointMappingStore *gormmodel.DevicePointMappingStore
@@ -67,17 +71,29 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		svcCtx.KafkaASDUPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.Topic)
 	}
 	if svcCtx.IsBroadcast() {
-		svcCtx.broadcastTopic = "iec/broadcast"
-		svcCtx.broadcastAckTopic = fmt.Sprintf("iec/broadcast-ack/%s", svcCtx.broadcastInstanceId)
-		broadcastReplyRouter := mqttx.NewReplyRouter[*types.BroadcastAckBody](
-			mqttx.ReplyDecoderFunc[*types.BroadcastAckBody](decodeBroadcastAck),
-			mqttx.WithReplyRouterName("mqtt-ack-reply-"+uid),
-			mqttx.WithReplyRouterTTL(10*time.Second),
-		)
+		svcCtx.broadcastPrefix = broadcast.Prefix("iec")
+		ackReplyRouter := broadcast.NewAckReplyRouter(10*time.Second, "mqtt-ack-reply-"+uid)
 		cfg := c.MqttConfig.MqttConfig
 		cfg.ClientID = svcCtx.broadcastInstanceId
 		cfg.Qos = 1
-		svcCtx.MqttClient = mqttx.MustNewClient(cfg, mqttx.WithReplyRouter(svcCtx.broadcastAckTopic, broadcastReplyRouter))
+		svcCtx.MqttClient = mqttx.MustNewClient(cfg, mqttx.WithReplyRouter(
+			broadcast.BroadcastAckTopic(svcCtx.broadcastPrefix, svcCtx.broadcastInstanceId), ackReplyRouter))
+		svcCtx.Broadcaster = broadcast.NewBroadcaster(svcCtx.MqttClient, svcCtx.broadcastInstanceId,
+			broadcast.WithPrefix(svcCtx.broadcastPrefix))
+		// 注册 ieccaller 业务错误类别：IEC104 从站命令拒绝（输出/输入双向映射）
+		broadcast.RegisterErrorKind(&client.CommandRejectedError{}, errKindIECRejected, func(msg string) error {
+			return &client.CommandRejectedError{
+				Cot:        extractCotFromError(msg),
+				IsNegative: true,
+				Status:     client.AckRejected,
+			}
+		})
+		// 闭环：注册业务 executor（minimal 依赖不注入 ServiceContext）并挂载广播消费
+		// （防回环 + method→executor 路由 + ack 回发由 broadcast SDK 骨架负责）
+		iecmqtt.NewBroadcast(svcCtx.ClientManager, svcCtx.DevicePointMappingStore).RegisterExecutors(svcCtx.Broadcaster)
+		if err := svcCtx.Broadcaster.AddBroadcastHandler(); err != nil {
+			logx.Must(err)
+		}
 	} else if len(c.MqttConfig.Broker) > 0 {
 		cfg := c.MqttConfig.MqttConfig
 		cfg.ClientID = svcCtx.broadcastInstanceId
@@ -273,87 +289,42 @@ func gjsonHeadersMap(r gjson.Result) map[string]string {
 	return m
 }
 
+// PushPbBroadcast 以 fire-and-forget 方式向集群广播 protobuf 命令（不等待 ack）。
 func (svc ServiceContext) PushPbBroadcast(ctx context.Context, method string, in any) error {
 	if !svc.IsBroadcast() {
 		return nil
 	}
-	return svc.pushBroadcast(ctx, method, in)
-}
-
-func (svc ServiceContext) PushPbBroadcastWithAck(ctx context.Context, method string, in any, res any) error {
-	if !svc.IsBroadcast() {
-		return fmt.Errorf("not in cluster mode")
-	}
-	if svc.MqttClient == nil {
+	if svc.Broadcaster == nil {
 		return fmt.Errorf("mqtt client is nil")
 	}
-
-	tId, err := tool.SimpleUUID()
-	if err != nil {
-		return fmt.Errorf("generate broadcast tid failed: %w", err)
-	}
-	ack, err := mqttx.RequestReply[*types.BroadcastAckBody](ctx, svc.MqttClient, svc.broadcastAckTopic, tId, func() error {
-		return svc.pushBroadcast(ctx, method, in, tId)
-	})
-	if err != nil {
-		return err
-	}
-
-	if !ack.Success {
-		return broadcastAckError(ack)
-	}
-
-	if err := protojson.Unmarshal([]byte(ack.ResponseBody), res.(proto.Message)); err != nil {
-		return fmt.Errorf("unmarshal response error: %w", err)
-	}
-	return nil
-}
-
-func (svc ServiceContext) pushBroadcast(ctx context.Context, method string, in any, optCorrelationId ...string) error {
-	if svc.MqttClient == nil {
-		return fmt.Errorf("mqtt client is nil")
-	}
-
 	pbData, err := protojson.Marshal(in.(proto.Message))
 	if err != nil {
 		return err
 	}
-	data := &types.BroadcastBody{
-		AckTopic: svc.broadcastAckTopic,
-		Method:   method,
-		Body:     string(pbData),
-	}
-	if len(optCorrelationId) > 0 {
-		data.Tid = optCorrelationId[0]
-	}
-	byteData, err := json.Marshal(data)
-	if err != nil {
-		return fmt.Errorf("json marshal error: %w", err)
-	}
-
-	pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	if _, err := svc.MqttClient.PublishWithTrace(pushCtx, svc.broadcastTopic, byteData); err != nil {
-		return fmt.Errorf("publish broadcast to mqtt: %w", err)
-	}
-	return nil
+	return svc.Broadcaster.Broadcast(ctx, method, pbData)
 }
 
-func broadcastAckError(ack *types.BroadcastAckBody) error {
-	switch ack.ErrorKind {
-	case "timeout":
-		return antsx.ErrReplyExpired
-	case "duplicate":
-		return antsx.ErrDuplicateID
-	case "iec_rejected":
-		return &client.CommandRejectedError{
-			Cot:        extractCotFromError(ack.Error),
-			IsNegative: true,
-			Status:     client.AckRejected,
-		}
-	default:
-		return fmt.Errorf("broadcast command error: %s", ack.Error)
+// PushPbBroadcastWithAck 向集群广播 protobuf 命令并等待执行节点 ack，
+// 成功时将 ack.ResponseBody 反序列化到 res，失败时按 errorKind 还原为领域错误。
+func (svc ServiceContext) PushPbBroadcastWithAck(ctx context.Context, method string, in any, res any) error {
+	if !svc.IsBroadcast() {
+		return fmt.Errorf("not in cluster mode")
 	}
+	if svc.Broadcaster == nil {
+		return fmt.Errorf("mqtt client is nil")
+	}
+	pbData, err := protojson.Marshal(in.(proto.Message))
+	if err != nil {
+		return err
+	}
+	respBody, err := svc.Broadcaster.BroadcastReply(ctx, method, pbData, 0)
+	if err != nil {
+		return err
+	}
+	if err := protojson.Unmarshal(respBody, res.(proto.Message)); err != nil {
+		return fmt.Errorf("unmarshal response error: %w", err)
+	}
+	return nil
 }
 
 func (svc ServiceContext) IsBroadcast() bool {
@@ -365,11 +336,11 @@ func (svc ServiceContext) BroadcastInstanceId() string {
 }
 
 func (svc ServiceContext) BroadcastTopic() string {
-	return svc.broadcastTopic
+	return broadcast.BroadcastTopic(svc.broadcastPrefix)
 }
 
 func (svc ServiceContext) BroadcastAckTopic() string {
-	return svc.broadcastAckTopic
+	return broadcast.BroadcastAckTopic(svc.broadcastPrefix, svc.broadcastInstanceId)
 }
 
 // Close 关闭所有资源
@@ -385,28 +356,6 @@ func (svc ServiceContext) Close() {
 		svc.MqttClient.Close()
 	}
 	logx.Infof("service context closed")
-}
-
-func decodeBroadcastAck(ctx context.Context, payload []byte, topic string, topicTemplate string) (mqttx.ReplyMessage[*types.BroadcastAckBody], error) {
-	ackBody := &types.BroadcastAckBody{}
-	if err := jsonx.Unmarshal(payload, ackBody); err != nil {
-		return mqttx.ReplyMessage[*types.BroadcastAckBody]{}, err
-	}
-	if ackBody.Tid == "" {
-		return mqttx.ReplyMessage[*types.BroadcastAckBody]{}, mqttx.ErrEmptyReplyTid
-	}
-	logx.WithContext(ctx).Debugw("mqtt broadcast ack received",
-		logx.Field("tid", ackBody.Tid),
-		logx.Field("method", ackBody.Method),
-		logx.Field("topic", topic),
-		logx.Field("topic_template", topicTemplate),
-		logx.Field("success", ackBody.Success),
-		logx.Field("error_kind", ackBody.ErrorKind),
-	)
-	return mqttx.ReplyMessage[*types.BroadcastAckBody]{
-		Tid:   ackBody.Tid,
-		Value: ackBody,
-	}, nil
 }
 
 func extractCotFromError(errMsg string) string {

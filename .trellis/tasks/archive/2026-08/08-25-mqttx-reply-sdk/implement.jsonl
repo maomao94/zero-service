@@ -1,0 +1,8 @@
+{"file": ".trellis/tasks/08-25-mqttx-reply-sdk/design.md", "reason": "本任务技术设计：broadcast 子包架构、主题/body/errorKind 契约、兼容性与迁移顺序"}
+{"file": ".trellis/tasks/08-25-mqttx-reply-sdk/research/research-sizing.md", "reason": "调研报告：两 app 现状代码位置 file:line、异同对比、djisdk 主题风格样例、mqttx 现有底座能力"}
+{"file": ".trellis/spec/backend/common-package-design.md", "reason": "新增 common/ 子包的包设计规范：option、公共 API 形制、文档要求"}
+{"file": ".trellis/spec/backend/messaging-guidelines.md", "reason": "MQTT client、关联响应（RequestReply/ReplyRouter）约定——广播层直接实现对象"}
+{"file": ".trellis/spec/backend/iec104-guidelines.md", "reason": "ieccaller 集群路由/命令应答关联规范，迁移时需要对齐其兼容性要求"}
+{"file": ".trellis/spec/backend/oryx-guidelines.md", "reason": "oryxserver 服务规范，relay 广播迁移对齐"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "errorKind 领域错误归一与 gRPC 映射边界设计的规范依据"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "抽取复用边界判断指南：哪些进 SDK、哪些留业务"}

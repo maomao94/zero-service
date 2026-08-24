@@ -1,0 +1,711 @@
+syntax = "proto3";
+
+package oryxserver;
+
+option go_package = "./oryxserver";
+option java_multiple_files = true;
+option java_package = "com.github.oryxserver.grpc";
+option java_outer_classname = "OryxServerProto";
+
+// 查询版本信息（对应 HTTP API：GET /terraform/v1/mgmt/versions，无需鉴权）
+message VersionsReq {}
+
+message VersionsRes {
+  // 版本号（去 v 前缀），如 "6.0"
+  string version = 1 [json_name = "version"];
+}
+
+// 查询录制配置（对应 HTTP API：POST /terraform/v1/hooks/record/query）
+message RecordQueryReq {}
+
+message RecordQueryRes {
+  // 是否开启录制
+  bool all = 1 [json_name = "all"];
+  // 录制文件根目录
+  string home = 2 [json_name = "home"];
+  // 录制 glob 过滤器
+  repeated string globs = 3 [json_name = "globs"];
+  // 后处理：拷贝文件到目录
+  string process_cp_dir = 4 [json_name = "processCpDir"];
+}
+
+// 应用录制配置（对应 HTTP API：POST /terraform/v1/hooks/record/apply）
+message RecordApplyReq {
+  // 是否开启录制
+  bool all = 1 [json_name = "all"];
+}
+
+message RecordApplyRes {
+}
+
+// 结束录制任务（对应 HTTP API：POST /terraform/v1/hooks/record/end；流停推后快速生成录制文件）
+message RecordEndReq {
+  // 录制任务 UUID
+  string uuid = 1 [json_name = "uuid"];
+}
+
+message RecordEndRes {
+}
+
+// 录制文件信息
+message RecordFile {
+  // 录制任务 UUID
+  string uuid = 1 [json_name = "uuid"];
+  // 虚拟主机
+  string vhost = 2 [json_name = "vhost"];
+  // 应用名
+  string app = 3 [json_name = "app"];
+  // 流名称
+  string stream = 4 [json_name = "stream"];
+  // 录制是否进行中
+  bool progress = 5 [json_name = "progress"];
+  // 最近更新时间
+  string update = 6 [json_name = "update"];
+  // ts 分片数量
+  int32 nn = 7 [json_name = "nn"];
+  // 累计时长（秒）
+  double duration = 8 [json_name = "duration"];
+  // 累计大小（字节）
+  uint64 size = 9 [json_name = "size"];
+}
+
+// 列出录制文件（对应 HTTP API：POST /terraform/v1/hooks/record/files）
+message RecordFilesReq {}
+
+message RecordFilesRes {
+  // 录制文件列表
+  repeated RecordFile files = 1 [json_name = "files"];
+}
+
+// 删除录制文件（对应 HTTP API：POST /terraform/v1/hooks/record/remove）
+message RecordRemoveReq {
+  // 录制任务 UUID
+  string uuid = 1 [json_name = "uuid"];
+}
+
+message RecordRemoveRes {
+}
+
+// 更新录制 glob 过滤器（对应 HTTP API：POST /terraform/v1/hooks/record/globs）
+message RecordGlobsReq {
+  // 录制 glob 过滤器列表
+  repeated string globs = 1 [json_name = "globs"];
+}
+
+message RecordGlobsRes {
+}
+
+// 更新录制后处理配置（对应 HTTP API：POST /terraform/v1/hooks/record/post-processing）
+message RecordPostProcessingReq {
+  // 后处理类型
+  string post_process = 1 [json_name = "postProcess"];
+  // 后处理拷贝目录
+  string post_cp_dir = 2 [json_name = "postCpDir"];
+}
+
+message RecordPostProcessingRes {
+}
+
+// 应用回调配置（对应 HTTP API：POST /terraform/v1/mgmt/hooks/apply）
+message HooksApplyReq {
+  // 回调目标 URL
+  string target = 1 [json_name = "target"];
+  // 不透明标识
+  string opaque = 2 [json_name = "opaque"];
+  // 是否回调所有流
+  bool all = 3 [json_name = "all"];
+  // 用于生成完整回调 URL 的 host
+  string host = 4 [json_name = "host"];
+}
+
+message HooksApplyRes {
+}
+
+// 查询回调配置（对应 HTTP API：POST /terraform/v1/mgmt/hooks/query）
+message HooksQueryReq {}
+
+message HooksQueryRes {
+  // 最近一次回调请求样例
+  string req = 1 [json_name = "req"];
+  // 最近一次回调响应样例
+  string res = 2 [json_name = "res"];
+  // 回调目标 URL
+  string target = 3 [json_name = "target"];
+  // 不透明标识
+  string opaque = 4 [json_name = "opaque"];
+  // 是否回调所有流
+  bool all = 5 [json_name = "all"];
+  // 用于生成完整回调 URL 的 host
+  string host = 6 [json_name = "host"];
+}
+
+// 查询 DVR 云录制配置（对应 HTTP API：POST /terraform/v1/hooks/dvr/query）
+message DvrQueryReq {}
+
+message DvrQueryRes {
+  // 是否录制所有流
+  bool all = 1 [json_name = "all"];
+  // 是否已配置云存储密钥
+  bool secret = 2 [json_name = "secret"];
+}
+
+// 应用 DVR 云录制配置（对应 HTTP API：POST /terraform/v1/hooks/dvr/apply）
+message DvrApplyReq {
+  // 是否开启 DVR 云录制
+  bool all = 1 [json_name = "all"];
+}
+
+message DvrApplyRes {
+}
+
+// DVR 云录制文件信息
+message DvrFile {
+  // 录制任务 UUID
+  string uuid = 1 [json_name = "uuid"];
+  // 虚拟主机
+  string vhost = 2 [json_name = "vhost"];
+  // 应用名
+  string app = 3 [json_name = "app"];
+  // 流名称
+  string stream = 4 [json_name = "stream"];
+  // 录制是否进行中
+  bool progress = 5 [json_name = "progress"];
+  // 最近更新时间
+  string update = 6 [json_name = "update"];
+  // ts 分片数量
+  int32 nn = 7 [json_name = "nn"];
+  // 累计时长（秒）
+  double duration = 8 [json_name = "duration"];
+  // 累计大小（字节）
+  uint64 size = 9 [json_name = "size"];
+  // 云存储 bucket
+  string bucket = 10 [json_name = "bucket"];
+  // 云存储 region
+  string region = 11 [json_name = "region"];
+}
+
+// 列出 DVR 云录制文件（对应 HTTP API：POST /terraform/v1/hooks/dvr/files）
+message DvrFilesReq {}
+
+message DvrFilesRes {
+  // DVR 录制文件列表
+  repeated DvrFile files = 1 [json_name = "files"];
+}
+
+// ==================== SRS HTTP API 代理（Oryx 已代理 /api/v1/*，除 versions 外均需 Bearer 鉴权）====================
+
+// 查询 SRS 版本信息（对应 SRS HTTP API：GET /api/v1/versions，免鉴权）
+message SrsVersionsReq {}
+
+message SrsVersionsRes {
+  // 主版本
+  int32 major = 1 [json_name = "major"];
+  // 次版本
+  int32 minor = 2 [json_name = "minor"];
+  // 修订号
+  int32 revision = 3 [json_name = "revision"];
+  // 版本字符串，如 "6.0.184"
+  string version = 4 [json_name = "version"];
+}
+
+// 查询 SRS 流列表（对应 SRS HTTP API：GET /api/v1/streams）
+message SrsStreamsReq {
+  // 起始下标（0 基），默认 0
+  int32 start = 1 [json_name = "start"];
+  // 数量，默认 10；SRS v6 下限 10（count=0/1 都返回 10），无全量语义
+  int32 count = 2 [json_name = "count"];
+}
+
+message SrsStreamsRes {
+  // SRS 实例标识（重启后变化，可用作缓存失效判断）
+  string server = 1 [json_name = "server"];
+  // 服务标识
+  string service = 2 [json_name = "service"];
+  // 进程标识
+  string pid = 3 [json_name = "pid"];
+  // 流列表
+  repeated SrsStreamItem streams = 4 [json_name = "streams"];
+}
+
+// SRS 码率（kb/s，近 30s）
+message SrsKbps {
+  // 接收码率（kb/s，近 30s）
+  double recv_30s = 1 [json_name = "recv30s"];
+  // 发送码率（kb/s，近 30s）
+  double send_30s = 2 [json_name = "send30s"];
+}
+
+// SRS 推流状态
+message SrsPublishInfo {
+  // 是否有活跃推流
+  bool active = 1 [json_name = "active"];
+  // 推流客户端 id（未推流时为空）
+  string cid = 2 [json_name = "cid"];
+}
+
+// SRS 视频编码信息
+message SrsVideoInfo {
+  // 编解码器，如 HEVC
+  string codec = 1 [json_name = "codec"];
+  // 视频编码 profile
+  string profile = 2 [json_name = "profile"];
+  // 视频编码 level
+  string level = 3 [json_name = "level"];
+  // 视频宽
+  int32 width = 4 [json_name = "width"];
+  // 视频高
+  int32 height = 5 [json_name = "height"];
+}
+
+// SRS 音频编码信息
+message SrsAudioInfo {
+  // 编解码器，如 AAC
+  string codec = 1 [json_name = "codec"];
+  // 采样率（Hz）
+  int32 sample_rate = 2 [json_name = "sampleRate"];
+  // 声道数
+  int32 channel = 3 [json_name = "channel"];
+  // 音频编码 profile
+  string profile = 4 [json_name = "profile"];
+}
+
+// SRS 流信息
+message SrsStreamItem {
+  // 流 id
+  int64 id = 1 [json_name = "id"];
+  // 流名（不含前缀，如 obs）
+  string name = 2 [json_name = "name"];
+  // 虚拟主机
+  string vhost = 3 [json_name = "vhost"];
+  // 应用名
+  string app = 4 [json_name = "app"];
+  // 推流地址（不含 query）
+  string tc_url = 5 [json_name = "tcUrl"];
+  // 完整 url（含 query 参数）
+  string url = 6 [json_name = "url"];
+  // 存活时长（ms）
+  int64 live_ms = 7 [json_name = "liveMs"];
+  // 客户端数量
+  int32 clients = 8 [json_name = "clients"];
+  // 总帧数
+  int64 frames = 9 [json_name = "frames"];
+  // 发送字节数
+  uint64 send_bytes = 10 [json_name = "sendBytes"];
+  // 接收字节数
+  uint64 recv_bytes = 11 [json_name = "recvBytes"];
+  // 码率（近 30s）
+  SrsKbps kbps = 12 [json_name = "kbps"];
+  // 推流状态
+  SrsPublishInfo publish = 13 [json_name = "publish"];
+  // 视频编码信息（无视频流时为 null）
+  SrsVideoInfo video = 14 [json_name = "video"];
+  // 音频编码信息（无音频流时为 null）
+  SrsAudioInfo audio = 15 [json_name = "audio"];
+}
+
+// 查询 SRS 客户端列表（对应 SRS HTTP API：GET /api/v1/clients）
+message SrsClientsReq {
+  // 起始下标（0 基），默认 0
+  int32 start = 1 [json_name = "start"];
+  // 数量，默认 10；SRS v6 下限 10
+  int32 count = 2 [json_name = "count"];
+}
+
+message SrsClientsRes {
+  // SRS 实例标识（重启后变化，可用作缓存失效判断）
+  string server = 1 [json_name = "server"];
+  // 服务标识
+  string service = 2 [json_name = "service"];
+  // 进程标识
+  string pid = 3 [json_name = "pid"];
+  // 客户端列表
+  repeated SrsClientItem clients = 4 [json_name = "clients"];
+}
+
+// SRS 客户端信息
+message SrsClientItem {
+  // 客户端 id
+  int64 id = 1 [json_name = "id"];
+  // 虚拟主机
+  string vhost = 2 [json_name = "vhost"];
+  // 流名
+  string stream = 3 [json_name = "stream"];
+  // 客户端 IP
+  string ip = 4 [json_name = "ip"];
+  // 页面 URL（HTTP 拉流等场景）
+  string page_url = 5 [json_name = "pageUrl"];
+  // swf 播放器 URL
+  string swf_url = 6 [json_name = "swfUrl"];
+  // 推流地址（含 query）
+  string tc_url = 7 [json_name = "tcUrl"];
+  // 完整 url
+  string url = 8 [json_name = "url"];
+  // 客户端名
+  string name = 9 [json_name = "name"];
+  // 客户端类型：publish / play 等
+  string type = 10 [json_name = "type"];
+  // 是否推流
+  bool publish = 11 [json_name = "publish"];
+  // 存活时长（秒）
+  double alive = 12 [json_name = "alive"];
+  // 发送字节数
+  uint64 send_bytes = 13 [json_name = "sendBytes"];
+  // 接收字节数
+  uint64 recv_bytes = 14 [json_name = "recvBytes"];
+  // 码率（近 30s）
+  SrsKbps kbps = 15 [json_name = "kbps"];
+}
+
+// 查询 SRS 虚拟主机列表（对应 SRS HTTP API：GET /api/v1/vhosts；无分页，全量返回）
+message SrsVhostsReq {}
+
+message SrsVhostsRes {
+  // SRS 实例标识（重启后变化，可用作缓存失效判断）
+  string server = 1 [json_name = "server"];
+  // 服务标识
+  string service = 2 [json_name = "service"];
+  // 进程标识
+  string pid = 3 [json_name = "pid"];
+  // 虚拟主机列表
+  repeated SrsVhostItem vhosts = 4 [json_name = "vhosts"];
+}
+
+// SRS 虚拟主机信息
+message SrsVhostItem {
+  // 虚拟主机 id
+  int64 id = 1 [json_name = "id"];
+  // 虚拟主机名
+  string name = 2 [json_name = "name"];
+  // 是否启用
+  bool enabled = 3 [json_name = "enabled"];
+  // 客户端数量
+  int32 clients = 4 [json_name = "clients"];
+  // 流数量
+  int32 streams = 5 [json_name = "streams"];
+  // 发送字节数
+  uint64 send_bytes = 6 [json_name = "sendBytes"];
+  // 接收字节数
+  uint64 recv_bytes = 7 [json_name = "recvBytes"];
+  // 码率（近 30s）
+  SrsKbps kbps = 8 [json_name = "kbps"];
+  // 是否启用 HLS
+  bool hls_enabled = 9 [json_name = "hlsEnabled"];
+  // HLS 分片时长（秒）
+  int32 hls_fragment = 10 [json_name = "hlsFragment"];
+}
+
+// 查询 SRS 系统状态（对应 SRS HTTP API：GET /api/v1/summaries）
+message SrsSummariesReq {}
+
+message SrsSummariesRes {
+  // 采样是否成功
+  bool ok = 1 [json_name = "ok"];
+  // 采样时间（Unix 毫秒）
+  double now_ms = 2 [json_name = "nowMs"];
+  // 进程自身状态
+  SrsSelfInfo self = 3 [json_name = "self"];
+  // 系统整体状态
+  SrsSystemInfo system = 4 [json_name = "system"];
+}
+
+// SRS 进程自身状态
+message SrsSelfInfo {
+  // SRS 版本号
+  string version = 1 [json_name = "version"];
+  // 进程 pid
+  string pid = 2 [json_name = "pid"];
+  // 父进程 pid
+  string ppid = 3 [json_name = "ppid"];
+  // 启动参数
+  string argv = 4 [json_name = "argv"];
+  // 工作目录
+  string cwd = 5 [json_name = "cwd"];
+  // 内存占用（KB）
+  int64 mem_kbyte = 6 [json_name = "memKbyte"];
+  // 内存占比（%）
+  double mem_percent = 7 [json_name = "memPercent"];
+  // CPU 占比（%）
+  double cpu_percent = 8 [json_name = "cpuPercent"];
+  // 运行时长（秒）
+  double srs_uptime = 9 [json_name = "srsUptime"];
+}
+
+// SRS 系统整体状态
+message SrsSystemInfo {
+  // CPU 占比（%）
+  double cpu_percent = 1 [json_name = "cpuPercent"];
+  // 磁盘读速率（KB/s）
+  double disk_read_kbps = 2 [json_name = "diskReadKBps"];
+  // 磁盘写速率（KB/s）
+  double disk_write_kbps = 3 [json_name = "diskWriteKBps"];
+  // 磁盘忙碌率（%）
+  double disk_busy_percent = 4 [json_name = "diskBusyPercent"];
+  // 内存总量（KB）
+  int64 mem_ram_kbyte = 5 [json_name = "memRamKbyte"];
+  // 内存占比（%）
+  double mem_ram_percent = 6 [json_name = "memRamPercent"];
+  // 交换内存总量（KB）
+  int64 mem_swap_kbyte = 7 [json_name = "memSwapKbyte"];
+  // 交换内存占比（%）
+  double mem_swap_percent = 8 [json_name = "memSwapPercent"];
+  // CPU 逻辑核数
+  int32 cpus = 9 [json_name = "cpus"];
+  // 在线 CPU 核数
+  int32 cpus_online = 10 [json_name = "cpusOnline"];
+  // 系统运行时长（秒）
+  double uptime = 11 [json_name = "uptime"];
+  // 空闲时长（秒，源码拼写为 ilde_time，原样透传）
+  double idle_time = 12 [json_name = "ildeTime"];
+  // 1 分钟负载
+  double load_1m = 13 [json_name = "load1m"];
+  // 5 分钟负载
+  double load_5m = 14 [json_name = "load5m"];
+  // 15 分钟负载
+  double load_15m = 15 [json_name = "load15m"];
+  // 网络采样时间（系统）
+  double net_sample_time = 16 [json_name = "netSampleTime"];
+  // 网络接收字节数（系统）
+  uint64 net_recv_bytes = 17 [json_name = "netRecvBytes"];
+  // 网络发送字节数（系统）
+  uint64 net_send_bytes = 18 [json_name = "netSendBytes"];
+  // 网络接收字节数（自上次统计）
+  uint64 net_recvi_bytes = 19 [json_name = "netRecviBytes"];
+  // 网络发送字节数（自上次统计）
+  uint64 net_sendi_bytes = 20 [json_name = "netSendiBytes"];
+  // 网络采样时间（SRS）
+  double srs_sample_time = 21 [json_name = "srsSampleTime"];
+  // SRS 接收字节数（系统）
+  uint64 srs_recv_bytes = 22 [json_name = "srsRecvBytes"];
+  // SRS 发送字节数（系统）
+  uint64 srs_send_bytes = 23 [json_name = "srsSendBytes"];
+  // 系统 socket 连接数
+  int64 conn_sys = 24 [json_name = "connSys"];
+  // 系统 ESTABLISHED 连接数
+  int64 conn_sys_et = 25 [json_name = "connSysEt"];
+  // 系统 TIME_WAIT 连接数
+  int64 conn_sys_tw = 26 [json_name = "connSysTw"];
+  // 系统 UDP 连接数
+  int64 conn_sys_udp = 27 [json_name = "connSysUdp"];
+  // SRS 自身连接数
+  int64 conn_srs = 28 [json_name = "connSrs"];
+}
+
+// 查询 SRS 最近的请求（对应 SRS HTTP API：GET /api/v1/tests/requests，调试用）
+message SrsRequestsReq {}
+
+message SrsRequestsRes {
+  // 请求 uri
+  string uri = 1 [json_name = "uri"];
+  // 请求路径
+  string path = 2 [json_name = "path"];
+  // 请求方法
+  string method = 3 [json_name = "method"];
+}
+
+// ==================== record 生命周期（⚠️ 仅 oryxgtw → oryxserver 内部链路）====================
+
+// on_record_begin 回调落库请求（⚠️ 内部 Hook，仅 gtw 调用）
+message RecordBeginHookReq {
+  // 回调请求 ID
+  string request_id = 1 [json_name = "requestId"];
+  // 回调透传凭证
+  string opaque = 2 [json_name = "opaque"];
+  // 虚拟主机
+  string vhost = 3 [json_name = "vhost"];
+  // 应用名
+  string app = 4 [json_name = "app"];
+  // 流名称
+  string stream = 5 [json_name = "stream"];
+  // 录制任务 UUID
+  string uuid = 6 [json_name = "uuid"];
+}
+
+message RecordBeginHookRes {}
+
+// on_record_end 回调落库请求（⚠️ 内部 Hook，仅 gtw 调用）
+message RecordEndHookReq {
+  // 回调请求 ID
+  string request_id = 1 [json_name = "requestId"];
+  // 回调透传凭证
+  string opaque = 2 [json_name = "opaque"];
+  // 虚拟主机
+  string vhost = 3 [json_name = "vhost"];
+  // 应用名
+  string app = 4 [json_name = "app"];
+  // 流名称
+  string stream = 5 [json_name = "stream"];
+  // 录制任务 UUID
+  string uuid = 6 [json_name = "uuid"];
+  // 产物错误码，0 表示成功
+  int32 artifact_code = 7 [json_name = "artifactCode"];
+  // 产物容器内路径
+  string artifact_path = 8 [json_name = "artifactPath"];
+  // 产物播放地址
+  string artifact_url = 9 [json_name = "artifactUrl"];
+}
+
+message RecordEndHookRes {}
+
+// 分页查询录制记录
+message RecordListReq {
+  // 录制任务 UUID（精确匹配）
+  string uuid = 1 [json_name = "uuid"];
+  // 虚拟主机（精确匹配）
+  string vhost = 2 [json_name = "vhost"];
+  // 应用名（精确匹配）
+  string app = 3 [json_name = "app"];
+  // 流名称（支持模糊）
+  string stream = 4 [json_name = "stream"];
+  // 状态过滤（空=全部；1-录制中，2-已完成，3-失败）
+  repeated int32 status = 5 [json_name = "status"];
+  // 页码，从 1 开始
+  int64 page = 6 [json_name = "page"];
+  // 每页数量
+  int64 page_size = 7 [json_name = "page_size"];
+  // 开始时间-起始（格式：2006-01-02 15:04:05，inclusive）
+  string begin_time_start = 8 [json_name = "begin_time_start"];
+  // 开始时间-截止（格式：2006-01-02 15:04:05，inclusive）
+  string begin_time_end = 9 [json_name = "begin_time_end"];
+  // 结束时间-起始（格式：2006-01-02 15:04:05，inclusive）
+  string end_time_start = 10 [json_name = "end_time_start"];
+  // 结束时间-截止（格式：2006-01-02 15:04:05，inclusive）
+  string end_time_end = 11 [json_name = "end_time_end"];
+}
+
+// 录制记录
+message RecordItem {
+  // 录制任务 UUID
+  string uuid = 1 [json_name = "uuid"];
+  // 虚拟主机
+  string vhost = 2 [json_name = "vhost"];
+  // 应用名
+  string app = 3 [json_name = "app"];
+  // 流名称
+  string stream = 4 [json_name = "stream"];
+  // 回调透传凭证
+  string opaque = 5 [json_name = "opaque"];
+  // 录制状态（1-录制中，2-已完成，3-失败）
+  int32 status = 6 [json_name = "status"];
+  // 开始时间（Unix 毫秒）
+  int64 begin_time = 7 [json_name = "begin_time"];
+  // 结束时间（Unix 毫秒）
+  int64 end_time = 8 [json_name = "end_time"];
+  // 产物错误码，0 表示成功
+  int32 artifact_code = 9 [json_name = "artifactCode"];
+  // 产物容器内路径
+  string artifact_path = 10 [json_name = "artifactPath"];
+  // 产物播放地址
+  string artifact_url = 11 [json_name = "artifactUrl"];
+}
+
+message RecordListRes {
+  // 录制记录列表
+  repeated RecordItem records = 1 [json_name = "records"];
+  // 总条数
+  int64 total = 2 [json_name = "total"];
+  // 当前页码
+  int64 page = 3 [json_name = "page"];
+  // 每页数量
+  int64 page_size = 4 [json_name = "page_size"];
+}
+
+// 删除录制记录
+message RecordDeleteReq {
+  // 录制任务 UUID
+  string uuid = 1 [json_name = "uuid"];
+}
+
+message RecordDeleteRes {}
+
+// ==================== Stream Relay（FFmpeg 转推，平台级接口）====================
+
+// 转推流请求（启动 FFmpeg 从源地址拉流，copy 转推到 SRS，本阶段不转码）
+message StreamRelayReq {
+  // 源流地址（RTMP/RTSP/HTTP-FLV/HLS 等 FFmpeg 支持的协议）
+  string source_url = 1 [json_name = "sourceUrl"];
+  // 目标应用名，默认为服务端配置的默认应用名（live）
+  string app = 2 [json_name = "app"];
+  // 目标流名，不填则自动生成 UUID
+  string stream = 3 [json_name = "stream"];
+}
+
+message StreamRelayRes {
+  // 转推任务 ID（停止转推时使用）
+  string task_id = 1 [json_name = "taskId"];
+  // 目标应用名（实际使用值）
+  string app = 2 [json_name = "app"];
+  // 目标流名（自动生成时返回生成值）
+  string stream = 3 [json_name = "stream"];
+}
+
+// 播放地址约定（业务侧按协议自行拼接，地址均指向 SRS/Oryx）：
+//   RTMP:     rtmp://<host>:<rtmp_port>/{app}/{stream}
+//   HTTP-FLV: http://<host>:<http_port>/{app}/{stream}.flv
+//   HLS:      http://<host>:<http_port>/{app}/{stream}.m3u8
+//   WebRTC:   webrtc://<host>:<rtc_port>/{app}/{stream}
+// 注：Oryx 无「获取播放地址」接口，/terraform/v1/mgmt/streams/query 仅返回
+//     vhost/app/stream 等元数据；以上均为 SRS 标准约定格式。
+
+// 停止转推请求
+message StreamRelayStopReq {
+  // 转推任务 ID
+  string task_id = 1 [json_name = "taskId"];
+}
+
+message StreamRelayStopRes {}
+
+// oryxserver：封装 Oryx HTTP OpenAPI 为 gRPC，供业务服务调用（Java 通过 Nacos 调用）
+service OryxServer {
+  // 查询版本信息（GET /terraform/v1/mgmt/versions）
+  rpc Versions (VersionsReq) returns (VersionsRes);
+  // 查询录制配置（POST /terraform/v1/hooks/record/query）
+  rpc RecordQuery (RecordQueryReq) returns (RecordQueryRes);
+  // 应用录制配置（POST /terraform/v1/hooks/record/apply）
+  rpc RecordApply (RecordApplyReq) returns (RecordApplyRes);
+  // 结束录制任务（POST /terraform/v1/hooks/record/end）
+  rpc RecordEnd (RecordEndReq) returns (RecordEndRes);
+  // 列出录制文件（POST /terraform/v1/hooks/record/files）
+  rpc RecordFiles (RecordFilesReq) returns (RecordFilesRes);
+  // 删除录制文件（POST /terraform/v1/hooks/record/remove）
+  rpc RecordRemove (RecordRemoveReq) returns (RecordRemoveRes);
+  // 更新录制 glob 过滤器（POST /terraform/v1/hooks/record/globs）
+  rpc RecordGlobs (RecordGlobsReq) returns (RecordGlobsRes);
+  // 更新录制后处理配置（POST /terraform/v1/hooks/record/post-processing）
+  rpc RecordPostProcessing (RecordPostProcessingReq) returns (RecordPostProcessingRes);
+  // 查询 DVR 云录制配置（POST /terraform/v1/hooks/dvr/query）
+  rpc DvrQuery (DvrQueryReq) returns (DvrQueryRes);
+  // 应用 DVR 云录制配置（POST /terraform/v1/hooks/dvr/apply）
+  rpc DvrApply (DvrApplyReq) returns (DvrApplyRes);
+  // 列出 DVR 云录制文件（POST /terraform/v1/hooks/dvr/files）
+  rpc DvrFiles (DvrFilesReq) returns (DvrFilesRes);
+  // 应用回调配置（POST /terraform/v1/mgmt/hooks/apply）
+  rpc HooksApply (HooksApplyReq) returns (HooksApplyRes);
+  // 查询回调配置（POST /terraform/v1/mgmt/hooks/query）
+  rpc HooksQuery (HooksQueryReq) returns (HooksQueryRes);
+  // 查询 SRS 版本信息（GET /api/v1/versions）
+  rpc SrsVersions (SrsVersionsReq) returns (SrsVersionsRes);
+  // 查询 SRS 流列表（GET /api/v1/streams）
+  rpc SrsStreams (SrsStreamsReq) returns (SrsStreamsRes);
+  // 查询 SRS 客户端列表（GET /api/v1/clients）
+  rpc SrsClients (SrsClientsReq) returns (SrsClientsRes);
+  // 查询 SRS 虚拟主机列表（GET /api/v1/vhosts）
+  rpc SrsVhosts (SrsVhostsReq) returns (SrsVhostsRes);
+  // 查询 SRS 系统状态（GET /api/v1/summaries）
+  rpc SrsSummaries (SrsSummariesReq) returns (SrsSummariesRes);
+  // 查询 SRS 最近的请求（GET /api/v1/tests/requests）
+  rpc SrsRequests (SrsRequestsReq) returns (SrsRequestsRes);
+  // 分页查询录制记录
+  rpc RecordList (RecordListReq) returns (RecordListRes);
+  // 删除录制记录
+  rpc RecordDelete (RecordDeleteReq) returns (RecordDeleteRes);
+  // 启动 FFmpeg 转推（拉取源流 → copy 转推 SRS；任务按节点本地内存管理）
+  rpc StreamRelay (StreamRelayReq) returns (StreamRelayRes);
+  // 停止转推（本地任务直接停止；未命中且 cluster 模式时 MQTT 广播停止）
+  rpc StreamRelayStop (StreamRelayStopReq) returns (StreamRelayStopRes);
+
+  // ===== ⚠️ 内部 Hook（以下 RPC 仅 oryxgtw 调用：gtw 收到 Oryx 回调后落库通道，业务服务请勿调用）=====
+  // on_record_begin 回调落库
+  rpc RecordBeginHook (RecordBeginHookReq) returns (RecordBeginHookRes);
+  // on_record_end 回调落库
+  rpc RecordEndHook (RecordEndHookReq) returns (RecordEndHookRes);
+}

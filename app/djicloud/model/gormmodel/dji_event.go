@@ -48,8 +48,8 @@ func (DjiHmsAlert) TableName() string { return "dji_hms_alert" }
 // DjiDockFlightTask 是机巢航线任务最新快照表。
 type DjiDockFlightTask struct {
 	gormx.LegacyStringBaseModel
-	FlightId   string    `gorm:"column:flight_id;type:varchar(64);uniqueIndex:idx_dji_dock_flight_task_gateway_flight;not null;comment:大疆航线任务ID"`
-	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);uniqueIndex:idx_dji_dock_flight_task_gateway_flight;not null;comment:网关机巢SN"`
+	FlightId   string    `gorm:"column:flight_id;type:varchar(64);uniqueIndex:uq_dji_dock_flight_task_gateway_flight;not null;comment:大疆航线任务ID"`
+	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);uniqueIndex:uq_dji_dock_flight_task_gateway_flight;not null;comment:网关机巢SN"`
 	ReportedAt time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
 	RawJSON    string    `gorm:"column:raw_json;type:text;comment:完整flighttask_progress事件data原始JSON"`
 	ExtJSON    string    `gorm:"column:ext_json;type:text;comment:flighttask_progress.ext原始JSON"`

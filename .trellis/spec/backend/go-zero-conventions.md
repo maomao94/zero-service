@@ -43,6 +43,7 @@
 - 把输入校验、事务、重试和外部调用全部塞进 Server 方法。
 - 为单个 Logic 创建全局单例或把请求状态放进 `ServiceContext`。
 - 从另一个服务复制配置和生成脚本而不核对本服务插件与输出目录。
+- 使用 `logx.Logger.Warnf`——`logx.Logger` 没有 `Warnf`（只有 `Errorf`/`Infof`/`Debugf`），编译期直接失败；警告级信息用 `Errorf` 或普通 `Infof`。
 
 ## 验证
 

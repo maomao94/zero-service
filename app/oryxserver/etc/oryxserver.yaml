@@ -1,0 +1,60 @@
+Name: oryxserver.rpc
+ListenOn: 0.0.0.0:21016
+Mode: dev
+Log:
+  Encoding: plain
+  Path: /opt/logs/oryxserver
+  Level: info
+# 部署模式：standalone / cluster（cluster 模式跨节点停止转推需配置 MqttConfig）
+DeployMode: standalone
+NacosConfig:
+  IsRegister: false
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: oryxserver.rpc
+OryxConfig:
+  Ip: 127.0.0.1
+  Port: 80
+  Timeout: 5000
+  Secret: "srs-v2-9dfa890ae73c46398b93fa6acab3635a"
+DB:
+#  DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+  DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
+  # 最大空闲连接数，默认 100。
+  MaxIdleConns: 100
+  # 最大打开连接数，默认 100。
+  MaxOpenConns: 100
+  # 慢 SQL 阈值，默认 200ms。
+  SlowThreshold: 200ms
+  # GORM 日志级别，默认 error，可选 silent/error/warn/info。
+  LogLevel: error
+  # 是否参数化 SQL 日志，默认 false。生产环境建议开启以避免日志暴露敏感参数。
+  ParameterizedQueries: false
+  # 是否忽略 record not found 日志，默认 false。
+  IgnoreRecordNotFoundError: false
+  # 是否按字段名显式查询，默认 false。
+  QueryFields: false
+# 转推配置（FFmpeg 拉流转推到 SRS；可选）
+RelayConfig:
+  # SRS RTMP 地址（FFmpeg 推流目标）
+  SrsRtmpAddr: rtmp://127.0.0.1:1935
+  # 默认目标应用名（StreamRelay 未指定 app 时使用）
+  DefaultApp: live
+  # 推流鉴权模式：secret（SRS/Oryx，URL 追加 ?secret=xxx）/ sign（WVP/ZLM，URL 追加 ?sign=md5(pushkey)）/ none（不鉴权）
+  AuthStyle: secret
+  # secret 模式密钥（AuthStyle=secret 时用于 ?secret=xxx）
+  Secret: "e09da89541ec47ba8a263a83f6411de2"
+  # sign 模式推送密钥（AuthStyle=sign 时必填，对应 WVP pushKey，服务端计算 sign=md5(pushkey)）
+  # PushKey: ""
+# MQTT 配置（可选；DeployMode=cluster 时必需，单节点默认不启用）
+# MqttConfig:
+#   Broker:
+#     - tcp://127.0.0.1:1883
+#   Username: ""
+#   Password: ""
+#   Qos: 1
+#   Timeout: 30000
+#   KeepAlive: 60000
