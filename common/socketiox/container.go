@@ -219,7 +219,11 @@ func (p *SocketContainer) getConn4Nacos(c zrpc.RpcClientConf) error {
 				}
 
 				addrs := extractHealthyGRPCInstances(instances)
-				pipe <- addrs
+				select {
+				case pipe <- addrs:
+				case <-ctx.Done():
+					return
+				}
 			}
 		}
 	}()
@@ -245,8 +249,11 @@ func (nw *watcher) CallBackHandle(services []model.Instance, err error) {
 		logger.Error("[Nacos resolver] watcher call back handle error:%v", err)
 		return
 	}
-	addrs := extractHealthyGRPCInstances(services)
-	nw.out <- addrs
+	ee := extractHealthyGRPCInstances(services)
+	select {
+	case nw.out <- ee:
+	case <-nw.ctx.Done():
+	}
 }
 
 func (p *SocketContainer) populateClientMap(ctx context.Context, c zrpc.RpcClientConf, input <-chan []string) {

@@ -2,7 +2,7 @@
 
 ## 适用范围
 
-修改 `common/netx`、`common/wsx`、`common/socketiox`、`common/ssex` 或任何服务的 HTTP/WebSocket/Socket.IO/SSE 通信层时读取。
+修改 `common/netx`、`common/wsx`、`common/socketiox`、`common/ssex`、`common/nacosx` 或任何服务的 HTTP/WebSocket/Socket.IO/SSE 通信层时读取。
 
 ## netx — HTTP 客户端
 
@@ -173,6 +173,46 @@ cli := wsx.MustNewClient(cfg,
 - Nacos gRPC 端口从 `metadata["gRPC_port"]` 提取。
 
 依据：`common/socketiox/container.go`。
+
+### Nacos 服务发现 (nacosx / socketiox 共用)
+
+`common/nacosx` 实现 grpc `resolver`，`common/socketiox` 的 `SocketContainer` 复用同样的订阅模式。
+
+**架构与数据流**（两处一致，依据 `common/nacosx/builder.go`、`common/socketiox/container.go`）：
+
+```
+Subscribe 回调（服务端推送） ─┐
+                             ├→ pipe chan []string → populateEndpoints / populateClientMap → UpdateState / syncClientMap
+ticker 每 60s SelectAllInstances ─┘
+```
+
+**核心约定**：
+
+- 订阅回调与 60s 轮询读的是 **同一份 SDK 缓存**（`serviceInfoHolder`，`SelectAllInstances` 内部也读它），因此两条通路必须使用**同一个过滤函数**，禁止内联 copy。
+- 唯一合法的地址过滤函数是包内 `extractHealthyGRPCInstances(services []model.Instance) []string`：
+  - 格式: `ip:metadata["gRPC_port"]`；无 `gRPC_port`、不健康、未启用的实例一律丢弃（日志说明原因）。
+  - `healthy`/`enabled` 由 nacos-server JSON 透传（`model.Instance`），不是恒真：节点心跳停止到被删（ephemeral 15s 窗口）、健康检查失败期间会为 false；SDK 自己的 `SelectInstances(HealthyOnly)` 也依赖该字段（`host.Healthy == healthy && host.Enable && host.Weight > 0`，SDK naming_client.go 内）。
+- 所有发往 `pipe` 的发送必须用 `select` + `ctx.Done()` 保护，关闭后无消费者时不会永久阻塞 goroutine：
+
+```go
+addrs := extractHealthyGRPCInstances(instances)
+select {
+case pipe <- addrs:
+case <-ctx.Done():
+    return
+}
+```
+
+- resolver 关闭：`resolvr.Close()` 用 `sync.Once` 包住 `cancelFunc()` + `client.CloseClient()`，幂等、资源释放更彻底。
+
+依据：`common/nacosx/builder.go`、`common/nacosx/resolver.go`、`common/socketiox/container.go`。
+
+### 反模式 (nacosx / SocketContainer Nacos)
+
+- 订阅回调里内联复制实例过滤逻辑（不复用 `extractHealthyGRPCInstances`）——回调推全量（含不健康、无 gRPC_port 实例 fallback 普通端口），轮询推健康子集，两通路交替 `UpdateState` 导致地址抖动；fallback 的普通端口根本不是 gRPC 端口。
+- 删除 `healthy`/`enable` 过滤——节点老化窗口期会把死节点推给 grpc client。
+- `pipe <- addrs` 裸阻塞发送——resolver/容器关闭后（若 select 已选中 ticker 分支）goroutine 永久阻塞泄露，必须用 `select` + `ctx.Done()`。
+- 对 nacos 实例字段做"反正都传 healthy"的假设——SDK 不转换、不默认填充，字段值完全来自服务端。
 
 ### 反模式 (socketiox)
 

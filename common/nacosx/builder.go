@@ -3,6 +3,10 @@ package nacosx
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
+	"time"
+
 	"github.com/nacos-group/nacos-sdk-go/v2/clients"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
@@ -10,9 +14,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/resolver"
-	"net"
-	"strconv"
-	"time"
 )
 
 func init() {
@@ -103,12 +104,19 @@ func (b *builder) Build(url resolver.Target, conn resolver.ClientConn, opts reso
 				}
 
 				addrs := extractHealthyGRPCInstances(instances)
-				pipe <- addrs
+				select {
+				case pipe <- addrs:
+				case <-ctx.Done():
+					return
+				}
 			}
 		}
 	}()
 
-	return &resolvr{cancelFunc: cancel}, nil
+	return &resolvr{
+		cancelFunc: cancel,
+		client:     cli,
+	}, nil
 }
 
 // Scheme returns the scheme supported by this resolver.

@@ -3,6 +3,7 @@ package nacosx
 import (
 	"context"
 	"sort"
+	"sync"
 
 	"github.com/nacos-group/nacos-sdk-go/v2/common/logger"
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
@@ -12,13 +13,20 @@ import (
 
 type resolvr struct {
 	cancelFunc context.CancelFunc
+	client     interface {
+		CloseClient()
+	}
+	closeOnce sync.Once
 }
 
 func (r *resolvr) ResolveNow(resolver.ResolveNowOptions) {}
 
 // Close closes the resolver.
 func (r *resolvr) Close() {
-	r.cancelFunc()
+	r.closeOnce.Do(func() {
+		r.cancelFunc()
+		r.client.CloseClient()
+	})
 }
 
 type watcher struct {
@@ -40,8 +48,11 @@ func (nw *watcher) CallBackHandle(services []model.Instance, err error) {
 		logger.Error("[Nacos resolver] watcher call back handle error:%v", err)
 		return
 	}
-	addrs := extractHealthyGRPCInstances(services)
-	nw.out <- addrs
+	ee := extractHealthyGRPCInstances(services)
+	select {
+	case nw.out <- ee:
+	case <-nw.ctx.Done():
+	}
 }
 
 func populateEndpoints(ctx context.Context, clientConn resolver.ClientConn, input <-chan []string) {
