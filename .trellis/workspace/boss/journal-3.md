@@ -1924,3 +1924,24 @@ go1.26 下运行 go fix 自动迁移语言/标准库新特性（reflect.Pointer�
 ### Status
 
 [OK] **Completed**
+
+
+## Session 174: fix(nacosx): resolver 关闭逻辑/地址更新修复审查与补丁
+
+**Date**: 2026-08-24
+**Task**: fix(nacosx): resolver 关闭逻辑/地址更新修复审查与补丁
+**Branch**: `master`
+
+### Summary
+
+审查 nacosx 提交 1b94f021（后 amend 为 72788882）：发现订阅回调内联过滤逻辑与包内 extractHealthyGRPCInstances 不一致（无 gRPC_port fallback 普通端口、不健康实例被推送）、ticker pipe 裸发送在关闭时可能阻塞泄露。修复：回调复用包内过滤函数、两处 pipe 发送加 select+ctx.Done() 保护、Close() sync.Once 幂等。分析 nacos SDK 缓存链路：回调与 SelectAllInstances 同源（ServiceInfoHolder.ServiceInfoMap），health/health enable 字段由服务端 JSON 透传并非恒真。更新 .trellis/spec/backend/networking-guidelines.md 记录 Nacos 发现契约与反模式。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `72788882` | (see git log) |
+
+### Status
+
+[OK] **Completed**
