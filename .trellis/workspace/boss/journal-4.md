@@ -72,3 +72,24 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 180: StreamRelay: FFmpeg 生命周期清理与优雅关闭加固
+
+**Date**: 2026-08-25
+**Task**: StreamRelay: FFmpeg 生命周期清理与优雅关闭加固
+**Branch**: `master`
+
+### Summary
+
+排查 StreamRelay 转推问题：确认 ffmpeg-go 无拦截逻辑，二级同 key 推流被 SRS 保旧拒新（1028→Input/output error，exit 251）；新增 Manager.StopAll()+sync.WaitGroup 等待 FFmpeg 全部退出，接入 go-zero proc.AddShutdownListener（defer waitForCalled 保证等待），配置 GracePeriod(proc.SetTimeToForceQuit)，用 .Silent(true) 关闭 ffmpeg-go 包级 std log 改走 logx（LogCompiledCommand/Silent 为包级全局影响 common/mediax），并更新 oryx-guidelines.md 落库生命周期契约与反模式。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8d7c94df` | (see git log) |
+
+### Status
+
+[OK] **Completed**

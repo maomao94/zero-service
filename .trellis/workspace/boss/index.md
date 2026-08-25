@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-4.md`
-- **Total Sessions**: 179
+- **Total Sessions**: 180
 - **Last Active**: 2026-08-25
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-4.md` | ~74 | Active |
+| `journal-4.md` | ~95 | Active |
 | `journal-3.md` | ~1989 | Archived |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
@@ -32,6 +32,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 180 | 2026-08-25 | StreamRelay: FFmpeg 生命周期清理与优雅关闭加固 | `8d7c94df` | `master` |
 | 179 | 2026-08-25 | 流媒体 relay 协议调研：RTMP vs SRT vs HTTP-FLV | `a6474941`, `0a430656`, `fb6b91fa` | `master` |
 | 178 | 2026-08-25 | 广播装配闭环重构与 nacos 元数据对齐 | `a6474941`, `0a430656`, `fb6b91fa` | `master` |
 | 177 | 2026-08-25 | 重构 mqttx reply 逻辑，抽取通用广播 ack SDK | `694e6e6b` | `master` |
