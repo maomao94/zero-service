@@ -229,7 +229,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 			return
 		}
 		defer func() {
-			ok, releaseErr := lock.ReleaseCtx(ctx)
+			ok, releaseErr := lock.Release()
 			if releaseErr != nil {
 				logx.WithContext(ctx).Errorf(scope.LogMessage("执行回调 Redis 锁释放失败: %v"), releaseErr)
 			} else if !ok {

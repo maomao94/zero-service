@@ -1,0 +1,5 @@
+{"file":".trellis/spec/backend/concurrency-guidelines.md","reason":"约束 ffmpegx 进程退出、同步 callback、锁与 stdout reader 生命周期"}
+{"file":".trellis/spec/backend/common-package-design.md","reason":"约束公共 API、错误和业务策略边界"}
+{"file":".trellis/spec/backend/contract-generation.md","reason":"约束 proto 新字段与生成文件更新"}
+{"file":".trellis/spec/backend/oryx-guidelines.md","reason":"约束 relay state、lease、补拉和最大运行时长业务语义"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"规定公共并发 API 和跨层变更验证范围"}

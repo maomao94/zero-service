@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-4.md`
-- **Total Sessions**: 180
-- **Last Active**: 2026-08-25
+- **Total Sessions**: 183
+- **Last Active**: 2026-08-27
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-4.md` | ~95 | Active |
+| `journal-4.md` | ~162 | Active |
 | `journal-3.md` | ~1989 | Archived |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
@@ -32,6 +32,9 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 183 | 2026-08-27 | FFmpeg exit/watch contract simplification | `d0c6a268` | `master` |
+| 182 | 2026-08-27 | Simplify FFmpeg manager lifecycle | `a5d02e40`, `e13be258`, `fb9d0743`, `f0522043`, `0bbb3837` | `master` |
+| 181 | 2026-08-27 | Centralize FFmpeg process management | `0b3ad277` | `master` |
 | 180 | 2026-08-25 | StreamRelay: FFmpeg 生命周期清理与优雅关闭加固 | `8d7c94df` | `master` |
 | 179 | 2026-08-25 | 流媒体 relay 协议调研：RTMP vs SRT vs HTTP-FLV | `a6474941`, `0a430656`, `fb6b91fa` | `master` |
 | 178 | 2026-08-25 | 广播装配闭环重构与 nacos 元数据对齐 | `a6474941`, `0a430656`, `fb6b91fa` | `master` |

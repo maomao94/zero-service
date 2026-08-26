@@ -63,6 +63,36 @@ func NewAsynqServer(addr, pass string, db int) *asynq.Server {
 	)
 }
 
+// NewAsynqServerWithQueue 创建只消费指定隔离队列的 asynq server
+// （用于按服务拆分队列的场景，如 oryxserver 的 oryx-relay 与 trigger 队列隔离）
+func NewAsynqServerWithQueue(addr, pass string, db int, queue string, concurrency int) *asynq.Server {
+	return asynq.NewServer(
+		asynq.RedisClientOpt{
+			Addr:         addr,
+			Password:     pass,
+			DB:           db,
+			DialTimeout:  5 * time.Second,
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 5 * time.Second,
+			PoolSize:     50,
+		},
+		asynq.Config{
+			IsFailure:   func(err error) bool { return true },
+			Concurrency: concurrency,
+			Queues:      map[string]int{queue: 10},
+			Logger:      &BaseLogger{},
+		},
+	)
+}
+
+// NewMux 创建预挂载 LoggingMiddleware 的 asynq ServeMux
+func NewMux() *asynq.ServeMux {
+	mux := asynq.NewServeMux()
+	mux.Use(LoggingMiddleware)
+	return mux
+}
+
+// StartAsynqConsumerSpan 创建 Consumer span（需要先 Extract carrier 的场景使用，如 trigger）
 func StartAsynqConsumerSpan(ctx context.Context, typename string) (context.Context, trace.Span) {
 	trace := otel.Tracer(trace2.TraceName)
 	ctx, span := trace.Start(ctx, "asynq-cosumer", oteltrace.WithSpanKind(oteltrace.SpanKindConsumer))

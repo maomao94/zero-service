@@ -1,6 +1,7 @@
 Name: oryxserver.rpc
 ListenOn: 0.0.0.0:21016
 Mode: dev
+Timeout: 300000
 Log:
   Encoding: plain
   Path: /opt/logs/oryxserver
@@ -37,18 +38,23 @@ DB:
   IgnoreRecordNotFoundError: false
   # 是否按字段名显式查询，默认 false。
   QueryFields: false
+Redis:
+  Host: 127.0.0.1:36379
+  Type: node
+  Key: oryxserver.rpc
+  Pass: G62m50oigInC30sf
+RedisDB: 0
+Concurrency: 20
 # 转推配置（FFmpeg 拉流转推到 SRS；可选）
 RelayConfig:
   # SRS RTMP 地址（FFmpeg 推流目标）
   SrsRtmpAddr: rtmp://127.0.0.1:1935
-  # 默认目标应用名（StreamRelay 未指定 app 时使用）
+  # 默认目标应用名（StartRelayPull 未指定 app 时使用）
   DefaultApp: live
-  # 推流鉴权模式：secret（SRS/Oryx，URL 追加 ?secret=xxx）/ sign（WVP/ZLM，URL 追加 ?sign=md5(pushkey)）/ none（不鉴权）
-  AuthStyle: secret
-  # secret 模式密钥（AuthStyle=secret 时用于 ?secret=xxx）
-  Secret: "e09da89541ec47ba8a263a83f6411de2"
-  # sign 模式推送密钥（AuthStyle=sign 时必填，对应 WVP pushKey，服务端计算 sign=md5(pushkey)）
-  # PushKey: ""
+  # 默认推流鉴权 key（StartRelayPull 未指定 secret_key 时使用）
+  SecretKey: "secret"
+  # 默认推流鉴权 value（StartRelayPull 未指定 secret_value 时使用）
+  SecretValue: "e09da89541ec47ba8a263a83f6411de2"
 # MQTT 配置（可选；DeployMode=cluster 时必需，单节点默认不启用）
 # MqttConfig:
 #   Broker:

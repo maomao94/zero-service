@@ -6633,22 +6633,22 @@ var _ interface {
 	ErrorName() string
 } = RecordDeleteResValidationError{}
 
-// Validate checks the field values on StreamRelayReq with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *StreamRelayReq) Validate() error {
+// Validate checks the field values on StartRelayPullReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *StartRelayPullReq) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on StreamRelayReq with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in StreamRelayReqMultiError,
-// or nil if none found.
-func (m *StreamRelayReq) ValidateAll() error {
+// ValidateAll checks the field values on StartRelayPullReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StartRelayPullReqMultiError, or nil if none found.
+func (m *StartRelayPullReq) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *StreamRelayReq) validate(all bool) error {
+func (m *StartRelayPullReq) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -6661,20 +6661,26 @@ func (m *StreamRelayReq) validate(all bool) error {
 
 	// no validation rules for Stream
 
+	// no validation rules for SecretKey
+
+	// no validation rules for SecretValue
+
+	// no validation rules for MaxDurationSeconds
+
 	if len(errors) > 0 {
-		return StreamRelayReqMultiError(errors)
+		return StartRelayPullReqMultiError(errors)
 	}
 
 	return nil
 }
 
-// StreamRelayReqMultiError is an error wrapping multiple validation errors
-// returned by StreamRelayReq.ValidateAll() if the designated constraints
+// StartRelayPullReqMultiError is an error wrapping multiple validation errors
+// returned by StartRelayPullReq.ValidateAll() if the designated constraints
 // aren't met.
-type StreamRelayReqMultiError []error
+type StartRelayPullReqMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m StreamRelayReqMultiError) Error() string {
+func (m StartRelayPullReqMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -6683,11 +6689,11 @@ func (m StreamRelayReqMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m StreamRelayReqMultiError) AllErrors() []error { return m }
+func (m StartRelayPullReqMultiError) AllErrors() []error { return m }
 
-// StreamRelayReqValidationError is the validation error returned by
-// StreamRelayReq.Validate if the designated constraints aren't met.
-type StreamRelayReqValidationError struct {
+// StartRelayPullReqValidationError is the validation error returned by
+// StartRelayPullReq.Validate if the designated constraints aren't met.
+type StartRelayPullReqValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -6695,22 +6701,24 @@ type StreamRelayReqValidationError struct {
 }
 
 // Field function returns field value.
-func (e StreamRelayReqValidationError) Field() string { return e.field }
+func (e StartRelayPullReqValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e StreamRelayReqValidationError) Reason() string { return e.reason }
+func (e StartRelayPullReqValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e StreamRelayReqValidationError) Cause() error { return e.cause }
+func (e StartRelayPullReqValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e StreamRelayReqValidationError) Key() bool { return e.key }
+func (e StartRelayPullReqValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e StreamRelayReqValidationError) ErrorName() string { return "StreamRelayReqValidationError" }
+func (e StartRelayPullReqValidationError) ErrorName() string {
+	return "StartRelayPullReqValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e StreamRelayReqValidationError) Error() string {
+func (e StartRelayPullReqValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -6722,14 +6730,14 @@ func (e StreamRelayReqValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sStreamRelayReq.%s: %s%s",
+		"invalid %sStartRelayPullReq.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = StreamRelayReqValidationError{}
+var _ error = StartRelayPullReqValidationError{}
 
 var _ interface {
 	Field() string
@@ -6737,50 +6745,158 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = StreamRelayReqValidationError{}
+} = StartRelayPullReqValidationError{}
 
-// Validate checks the field values on StreamRelayRes with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *StreamRelayRes) Validate() error {
+// Validate checks the field values on StartRelayPullRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *StartRelayPullRes) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on StreamRelayRes with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in StreamRelayResMultiError,
-// or nil if none found.
-func (m *StreamRelayRes) ValidateAll() error {
+// ValidateAll checks the field values on StartRelayPullRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StartRelayPullResMultiError, or nil if none found.
+func (m *StartRelayPullRes) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *StreamRelayRes) validate(all bool) error {
+func (m *StartRelayPullRes) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	// no validation rules for TaskId
+	// no validation rules for RelayId
+
+	// no validation rules for App
+
+	// no validation rules for Stream
+
+	// no validation rules for AlreadyRunning
+
+	if len(errors) > 0 {
+		return StartRelayPullResMultiError(errors)
+	}
+
+	return nil
+}
+
+// StartRelayPullResMultiError is an error wrapping multiple validation errors
+// returned by StartRelayPullRes.ValidateAll() if the designated constraints
+// aren't met.
+type StartRelayPullResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m StartRelayPullResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m StartRelayPullResMultiError) AllErrors() []error { return m }
+
+// StartRelayPullResValidationError is the validation error returned by
+// StartRelayPullRes.Validate if the designated constraints aren't met.
+type StartRelayPullResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e StartRelayPullResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e StartRelayPullResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e StartRelayPullResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e StartRelayPullResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e StartRelayPullResValidationError) ErrorName() string {
+	return "StartRelayPullResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e StartRelayPullResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sStartRelayPullRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = StartRelayPullResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = StartRelayPullResValidationError{}
+
+// Validate checks the field values on StopRelayPullReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *StopRelayPullReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on StopRelayPullReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// StopRelayPullReqMultiError, or nil if none found.
+func (m *StopRelayPullReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *StopRelayPullReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
 
 	// no validation rules for App
 
 	// no validation rules for Stream
 
 	if len(errors) > 0 {
-		return StreamRelayResMultiError(errors)
+		return StopRelayPullReqMultiError(errors)
 	}
 
 	return nil
 }
 
-// StreamRelayResMultiError is an error wrapping multiple validation errors
-// returned by StreamRelayRes.ValidateAll() if the designated constraints
+// StopRelayPullReqMultiError is an error wrapping multiple validation errors
+// returned by StopRelayPullReq.ValidateAll() if the designated constraints
 // aren't met.
-type StreamRelayResMultiError []error
+type StopRelayPullReqMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m StreamRelayResMultiError) Error() string {
+func (m StopRelayPullReqMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -6789,11 +6905,11 @@ func (m StreamRelayResMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m StreamRelayResMultiError) AllErrors() []error { return m }
+func (m StopRelayPullReqMultiError) AllErrors() []error { return m }
 
-// StreamRelayResValidationError is the validation error returned by
-// StreamRelayRes.Validate if the designated constraints aren't met.
-type StreamRelayResValidationError struct {
+// StopRelayPullReqValidationError is the validation error returned by
+// StopRelayPullReq.Validate if the designated constraints aren't met.
+type StopRelayPullReqValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -6801,22 +6917,22 @@ type StreamRelayResValidationError struct {
 }
 
 // Field function returns field value.
-func (e StreamRelayResValidationError) Field() string { return e.field }
+func (e StopRelayPullReqValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e StreamRelayResValidationError) Reason() string { return e.reason }
+func (e StopRelayPullReqValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e StreamRelayResValidationError) Cause() error { return e.cause }
+func (e StopRelayPullReqValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e StreamRelayResValidationError) Key() bool { return e.key }
+func (e StopRelayPullReqValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e StreamRelayResValidationError) ErrorName() string { return "StreamRelayResValidationError" }
+func (e StopRelayPullReqValidationError) ErrorName() string { return "StopRelayPullReqValidationError" }
 
 // Error satisfies the builtin error interface
-func (e StreamRelayResValidationError) Error() string {
+func (e StopRelayPullReqValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -6828,14 +6944,14 @@ func (e StreamRelayResValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sStreamRelayRes.%s: %s%s",
+		"invalid %sStopRelayPullReq.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = StreamRelayResValidationError{}
+var _ error = StopRelayPullReqValidationError{}
 
 var _ interface {
 	Field() string
@@ -6843,128 +6959,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = StreamRelayResValidationError{}
+} = StopRelayPullReqValidationError{}
 
-// Validate checks the field values on StreamRelayStopReq with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *StreamRelayStopReq) Validate() error {
+// Validate checks the field values on StopRelayPullRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *StopRelayPullRes) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on StreamRelayStopReq with the rules
+// ValidateAll checks the field values on StopRelayPullRes with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// StreamRelayStopReqMultiError, or nil if none found.
-func (m *StreamRelayStopReq) ValidateAll() error {
+// StopRelayPullResMultiError, or nil if none found.
+func (m *StopRelayPullRes) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *StreamRelayStopReq) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for TaskId
-
-	if len(errors) > 0 {
-		return StreamRelayStopReqMultiError(errors)
-	}
-
-	return nil
-}
-
-// StreamRelayStopReqMultiError is an error wrapping multiple validation errors
-// returned by StreamRelayStopReq.ValidateAll() if the designated constraints
-// aren't met.
-type StreamRelayStopReqMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m StreamRelayStopReqMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m StreamRelayStopReqMultiError) AllErrors() []error { return m }
-
-// StreamRelayStopReqValidationError is the validation error returned by
-// StreamRelayStopReq.Validate if the designated constraints aren't met.
-type StreamRelayStopReqValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e StreamRelayStopReqValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e StreamRelayStopReqValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e StreamRelayStopReqValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e StreamRelayStopReqValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e StreamRelayStopReqValidationError) ErrorName() string {
-	return "StreamRelayStopReqValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e StreamRelayStopReqValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sStreamRelayStopReq.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = StreamRelayStopReqValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = StreamRelayStopReqValidationError{}
-
-// Validate checks the field values on StreamRelayStopRes with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *StreamRelayStopRes) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on StreamRelayStopRes with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// StreamRelayStopResMultiError, or nil if none found.
-func (m *StreamRelayStopRes) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *StreamRelayStopRes) validate(all bool) error {
+func (m *StopRelayPullRes) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -6972,19 +6984,19 @@ func (m *StreamRelayStopRes) validate(all bool) error {
 	var errors []error
 
 	if len(errors) > 0 {
-		return StreamRelayStopResMultiError(errors)
+		return StopRelayPullResMultiError(errors)
 	}
 
 	return nil
 }
 
-// StreamRelayStopResMultiError is an error wrapping multiple validation errors
-// returned by StreamRelayStopRes.ValidateAll() if the designated constraints
+// StopRelayPullResMultiError is an error wrapping multiple validation errors
+// returned by StopRelayPullRes.ValidateAll() if the designated constraints
 // aren't met.
-type StreamRelayStopResMultiError []error
+type StopRelayPullResMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m StreamRelayStopResMultiError) Error() string {
+func (m StopRelayPullResMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -6993,11 +7005,11 @@ func (m StreamRelayStopResMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m StreamRelayStopResMultiError) AllErrors() []error { return m }
+func (m StopRelayPullResMultiError) AllErrors() []error { return m }
 
-// StreamRelayStopResValidationError is the validation error returned by
-// StreamRelayStopRes.Validate if the designated constraints aren't met.
-type StreamRelayStopResValidationError struct {
+// StopRelayPullResValidationError is the validation error returned by
+// StopRelayPullRes.Validate if the designated constraints aren't met.
+type StopRelayPullResValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -7005,24 +7017,22 @@ type StreamRelayStopResValidationError struct {
 }
 
 // Field function returns field value.
-func (e StreamRelayStopResValidationError) Field() string { return e.field }
+func (e StopRelayPullResValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e StreamRelayStopResValidationError) Reason() string { return e.reason }
+func (e StopRelayPullResValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e StreamRelayStopResValidationError) Cause() error { return e.cause }
+func (e StopRelayPullResValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e StreamRelayStopResValidationError) Key() bool { return e.key }
+func (e StopRelayPullResValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e StreamRelayStopResValidationError) ErrorName() string {
-	return "StreamRelayStopResValidationError"
-}
+func (e StopRelayPullResValidationError) ErrorName() string { return "StopRelayPullResValidationError" }
 
 // Error satisfies the builtin error interface
-func (e StreamRelayStopResValidationError) Error() string {
+func (e StopRelayPullResValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -7034,14 +7044,14 @@ func (e StreamRelayStopResValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sStreamRelayStopRes.%s: %s%s",
+		"invalid %sStopRelayPullRes.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = StreamRelayStopResValidationError{}
+var _ error = StopRelayPullResValidationError{}
 
 var _ interface {
 	Field() string
@@ -7049,4 +7059,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = StreamRelayStopResValidationError{}
+} = StopRelayPullResValidationError{}

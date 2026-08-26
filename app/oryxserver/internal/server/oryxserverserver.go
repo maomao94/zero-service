@@ -149,16 +149,16 @@ func (s *OryxServerServer) RecordDelete(ctx context.Context, in *oryxserver.Reco
 	return l.RecordDelete(in)
 }
 
-// 启动 FFmpeg 转推（拉取源流 → copy 转推 SRS；任务按节点本地内存管理）
-func (s *OryxServerServer) StreamRelay(ctx context.Context, in *oryxserver.StreamRelayReq) (*oryxserver.StreamRelayRes, error) {
-	l := logic.NewStreamRelayLogic(ctx, s.svcCtx)
-	return l.StreamRelay(in)
+// 启动 FFmpeg 中继拉流（拉取源流 → copy 推送到固定目标 Oryx/SRS；任务按节点本地内存管理）
+func (s *OryxServerServer) StartRelayPull(ctx context.Context, in *oryxserver.StartRelayPullReq) (*oryxserver.StartRelayPullRes, error) {
+	l := logic.NewStartRelayPullLogic(ctx, s.svcCtx)
+	return l.StartRelayPull(in)
 }
 
-// 停止转推（本地任务直接停止；未命中且 cluster 模式时 MQTT 广播停止）
-func (s *OryxServerServer) StreamRelayStop(ctx context.Context, in *oryxserver.StreamRelayStopReq) (*oryxserver.StreamRelayStopRes, error) {
-	l := logic.NewStreamRelayStopLogic(ctx, s.svcCtx)
-	return l.StreamRelayStop(in)
+// 停止中继拉流（按 app+stream 定位；本地未命中且 cluster 模式时 MQTT 广播停止）
+func (s *OryxServerServer) StopRelayPull(ctx context.Context, in *oryxserver.StopRelayPullReq) (*oryxserver.StopRelayPullRes, error) {
+	l := logic.NewStopRelayPullLogic(ctx, s.svcCtx)
+	return l.StopRelayPull(in)
 }
 
 // ===== ⚠️ 内部 Hook（以下 RPC 仅 oryxgtw 调用：gtw 收到 Oryx 回调后落库通道，业务服务请勿调用）=====

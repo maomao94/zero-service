@@ -40,8 +40,8 @@ const (
 	OryxServer_SrsRequests_FullMethodName          = "/oryxserver.OryxServer/SrsRequests"
 	OryxServer_RecordList_FullMethodName           = "/oryxserver.OryxServer/RecordList"
 	OryxServer_RecordDelete_FullMethodName         = "/oryxserver.OryxServer/RecordDelete"
-	OryxServer_StreamRelay_FullMethodName          = "/oryxserver.OryxServer/StreamRelay"
-	OryxServer_StreamRelayStop_FullMethodName      = "/oryxserver.OryxServer/StreamRelayStop"
+	OryxServer_StartRelayPull_FullMethodName       = "/oryxserver.OryxServer/StartRelayPull"
+	OryxServer_StopRelayPull_FullMethodName        = "/oryxserver.OryxServer/StopRelayPull"
 	OryxServer_RecordBeginHook_FullMethodName      = "/oryxserver.OryxServer/RecordBeginHook"
 	OryxServer_RecordEndHook_FullMethodName        = "/oryxserver.OryxServer/RecordEndHook"
 )
@@ -94,10 +94,10 @@ type OryxServerClient interface {
 	RecordList(ctx context.Context, in *RecordListReq, opts ...grpc.CallOption) (*RecordListRes, error)
 	// 删除录制记录
 	RecordDelete(ctx context.Context, in *RecordDeleteReq, opts ...grpc.CallOption) (*RecordDeleteRes, error)
-	// 启动 FFmpeg 转推（拉取源流 → copy 转推 SRS；任务按节点本地内存管理）
-	StreamRelay(ctx context.Context, in *StreamRelayReq, opts ...grpc.CallOption) (*StreamRelayRes, error)
-	// 停止转推（本地任务直接停止；未命中且 cluster 模式时 MQTT 广播停止）
-	StreamRelayStop(ctx context.Context, in *StreamRelayStopReq, opts ...grpc.CallOption) (*StreamRelayStopRes, error)
+	// 启动 FFmpeg 中继拉流（拉取源流 → copy 推送到固定目标 Oryx/SRS；任务按节点本地内存管理）
+	StartRelayPull(ctx context.Context, in *StartRelayPullReq, opts ...grpc.CallOption) (*StartRelayPullRes, error)
+	// 停止中继拉流（按 app+stream 定位；本地未命中且 cluster 模式时 MQTT 广播停止）
+	StopRelayPull(ctx context.Context, in *StopRelayPullReq, opts ...grpc.CallOption) (*StopRelayPullRes, error)
 	// ===== ⚠️ 内部 Hook（以下 RPC 仅 oryxgtw 调用：gtw 收到 Oryx 回调后落库通道，业务服务请勿调用）=====
 	// on_record_begin 回调落库
 	RecordBeginHook(ctx context.Context, in *RecordBeginHookReq, opts ...grpc.CallOption) (*RecordBeginHookRes, error)
@@ -323,20 +323,20 @@ func (c *oryxServerClient) RecordDelete(ctx context.Context, in *RecordDeleteReq
 	return out, nil
 }
 
-func (c *oryxServerClient) StreamRelay(ctx context.Context, in *StreamRelayReq, opts ...grpc.CallOption) (*StreamRelayRes, error) {
+func (c *oryxServerClient) StartRelayPull(ctx context.Context, in *StartRelayPullReq, opts ...grpc.CallOption) (*StartRelayPullRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StreamRelayRes)
-	err := c.cc.Invoke(ctx, OryxServer_StreamRelay_FullMethodName, in, out, cOpts...)
+	out := new(StartRelayPullRes)
+	err := c.cc.Invoke(ctx, OryxServer_StartRelayPull_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *oryxServerClient) StreamRelayStop(ctx context.Context, in *StreamRelayStopReq, opts ...grpc.CallOption) (*StreamRelayStopRes, error) {
+func (c *oryxServerClient) StopRelayPull(ctx context.Context, in *StopRelayPullReq, opts ...grpc.CallOption) (*StopRelayPullRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StreamRelayStopRes)
-	err := c.cc.Invoke(ctx, OryxServer_StreamRelayStop_FullMethodName, in, out, cOpts...)
+	out := new(StopRelayPullRes)
+	err := c.cc.Invoke(ctx, OryxServer_StopRelayPull_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -411,10 +411,10 @@ type OryxServerServer interface {
 	RecordList(context.Context, *RecordListReq) (*RecordListRes, error)
 	// 删除录制记录
 	RecordDelete(context.Context, *RecordDeleteReq) (*RecordDeleteRes, error)
-	// 启动 FFmpeg 转推（拉取源流 → copy 转推 SRS；任务按节点本地内存管理）
-	StreamRelay(context.Context, *StreamRelayReq) (*StreamRelayRes, error)
-	// 停止转推（本地任务直接停止；未命中且 cluster 模式时 MQTT 广播停止）
-	StreamRelayStop(context.Context, *StreamRelayStopReq) (*StreamRelayStopRes, error)
+	// 启动 FFmpeg 中继拉流（拉取源流 → copy 推送到固定目标 Oryx/SRS；任务按节点本地内存管理）
+	StartRelayPull(context.Context, *StartRelayPullReq) (*StartRelayPullRes, error)
+	// 停止中继拉流（按 app+stream 定位；本地未命中且 cluster 模式时 MQTT 广播停止）
+	StopRelayPull(context.Context, *StopRelayPullReq) (*StopRelayPullRes, error)
 	// ===== ⚠️ 内部 Hook（以下 RPC 仅 oryxgtw 调用：gtw 收到 Oryx 回调后落库通道，业务服务请勿调用）=====
 	// on_record_begin 回调落库
 	RecordBeginHook(context.Context, *RecordBeginHookReq) (*RecordBeginHookRes, error)
@@ -493,11 +493,11 @@ func (UnimplementedOryxServerServer) RecordList(context.Context, *RecordListReq)
 func (UnimplementedOryxServerServer) RecordDelete(context.Context, *RecordDeleteReq) (*RecordDeleteRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method RecordDelete not implemented")
 }
-func (UnimplementedOryxServerServer) StreamRelay(context.Context, *StreamRelayReq) (*StreamRelayRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method StreamRelay not implemented")
+func (UnimplementedOryxServerServer) StartRelayPull(context.Context, *StartRelayPullReq) (*StartRelayPullRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method StartRelayPull not implemented")
 }
-func (UnimplementedOryxServerServer) StreamRelayStop(context.Context, *StreamRelayStopReq) (*StreamRelayStopRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method StreamRelayStop not implemented")
+func (UnimplementedOryxServerServer) StopRelayPull(context.Context, *StopRelayPullReq) (*StopRelayPullRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method StopRelayPull not implemented")
 }
 func (UnimplementedOryxServerServer) RecordBeginHook(context.Context, *RecordBeginHookReq) (*RecordBeginHookRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method RecordBeginHook not implemented")
@@ -904,38 +904,38 @@ func _OryxServer_RecordDelete_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OryxServer_StreamRelay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StreamRelayReq)
+func _OryxServer_StartRelayPull_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartRelayPullReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OryxServerServer).StreamRelay(ctx, in)
+		return srv.(OryxServerServer).StartRelayPull(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OryxServer_StreamRelay_FullMethodName,
+		FullMethod: OryxServer_StartRelayPull_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OryxServerServer).StreamRelay(ctx, req.(*StreamRelayReq))
+		return srv.(OryxServerServer).StartRelayPull(ctx, req.(*StartRelayPullReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OryxServer_StreamRelayStop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StreamRelayStopReq)
+func _OryxServer_StopRelayPull_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopRelayPullReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OryxServerServer).StreamRelayStop(ctx, in)
+		return srv.(OryxServerServer).StopRelayPull(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OryxServer_StreamRelayStop_FullMethodName,
+		FullMethod: OryxServer_StopRelayPull_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OryxServerServer).StreamRelayStop(ctx, req.(*StreamRelayStopReq))
+		return srv.(OryxServerServer).StopRelayPull(ctx, req.(*StopRelayPullReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1068,12 +1068,12 @@ var OryxServer_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OryxServer_RecordDelete_Handler,
 		},
 		{
-			MethodName: "StreamRelay",
-			Handler:    _OryxServer_StreamRelay_Handler,
+			MethodName: "StartRelayPull",
+			Handler:    _OryxServer_StartRelayPull_Handler,
 		},
 		{
-			MethodName: "StreamRelayStop",
-			Handler:    _OryxServer_StreamRelayStop_Handler,
+			MethodName: "StopRelayPull",
+			Handler:    _OryxServer_StopRelayPull_Handler,
 		},
 		{
 			MethodName: "RecordBeginHook",

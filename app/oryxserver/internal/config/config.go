@@ -37,18 +37,20 @@ type Config struct {
 	}
 	// 数据库配置（record 生命周期落库）
 	DB gormx.Config `json:",optional"`
+	// Asynq Redis DB（与 trigger 同 Redis 实例时设不同值隔离队列）
+	RedisDB int `json:",default=5"`
+	// Asynq worker 并发度
+	Concurrency int `json:",default=20"`
 	// 转推配置（FFmpeg 拉流转推到 SRS）
 	RelayConfig struct {
 		// SRS RTMP 地址，如 rtmp://127.0.0.1:1935（默认本机 1935）
 		SrsRtmpAddr string `json:",default=rtmp://127.0.0.1:1935"`
 		// 默认目标应用名（request.app 为空时使用）
 		DefaultApp string `json:",default=live"`
-		// 推流鉴权模式：secret（SRS/Oryx，追加 ?secret=xxx）/ sign（WVP/ZLM，追加 ?sign=md5(pushkey)）/ none（不鉴权）
-		AuthStyle string `json:",default=secret,options=secret|sign|none"`
-		// secret 模式密钥（AuthStyle=secret 时使用）
-		Secret string `json:",optional"`
-		// sign 模式推送密钥（AuthStyle=sign 时必填，对应 WVP pushKey）
-		PushKey string `json:",optional"`
+		// 默认推流鉴权 key（request.secret_key 为空时使用）
+		SecretKey string `json:",default=secret"`
+		// 默认推流鉴权 value（request.secret_value 为空时使用）
+		SecretValue string `json:",optional"`
 	} `json:",optional"`
 	// MQTT 配置（可选；cluster 模式跨节点停止转推必需，standalone 无需配置）
 	MqttConfig struct {

@@ -1,10 +1,12 @@
-package media
+package ffmpegx
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -146,16 +148,28 @@ func (s *Screenshotter) CaptureFrameByIndexToFile(ctx context.Context, frameInde
 // baseDir: 基础目录（如 ./temp_snapshots）
 // ext: 文件扩展名（如 .jpg）
 func (s *Screenshotter) GenerateTempFilePath(baseDir, ext string) string {
-	// 格式: baseDir/20060102/uuid.ext
 	dateDir := time.Now().Format("20060102")
 	fullDir := filepath.Join(baseDir, dateDir)
-	_ = os.MkdirAll(fullDir, 0755) // 提前创建目录
+	_ = os.MkdirAll(fullDir, 0755)
 	return filepath.Join(fullDir, fmt.Sprintf("%s%s", uuid.NewString(), ext))
+}
+
+// WatchOutput consumes io until EOF and calls cb synchronously for every line.
+// Used for both stdout and stderr scanning.
+func WatchOutput(rc io.ReadCloser, cb func(line string)) error {
+	defer rc.Close()
+	scanner := bufio.NewScanner(rc)
+	scanner.Buffer(make([]byte, 64*1024), 1024*1024)
+	for scanner.Scan() {
+		if cb != nil {
+			cb(scanner.Text())
+		}
+	}
+	return scanner.Err()
 }
 
 // ---------------- 内部辅助函数 ----------------
 
-// ensureDir 确保文件所在目录存在
 func ensureDir(filePath string) error {
 	dir := filepath.Dir(filePath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -164,7 +178,6 @@ func ensureDir(filePath string) error {
 	return nil
 }
 
-// validateFile 验证文件是否有效（存在且大小不为0）
 func validateFile(filePath string) error {
 	info, err := os.Stat(filePath)
 	if err != nil {
@@ -176,14 +189,12 @@ func validateFile(filePath string) error {
 	return nil
 }
 
-// cleanupFile 清理无效文件
 func cleanupFile(filePath string) {
 	if err := os.Remove(filePath); err != nil {
 		logx.Errorw("清理无效文件失败: "+err.Error(), logx.Field("path", filePath))
 	}
 }
 
-// getFileSize 获取文件大小（字节）
 func getFileSize(filePath string) int64 {
 	info, err := os.Stat(filePath)
 	if err != nil {

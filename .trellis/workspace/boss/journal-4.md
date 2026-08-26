@@ -93,3 +93,70 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 181: Centralize FFmpeg process management
+
+**Date**: 2026-08-27
+**Task**: Centralize FFmpeg process management
+**Branch**: `master`
+
+### Summary
+
+将 FFmpeg 通用进程生命周期集中到 common/ffmpegx.Manager，采用 context-first CommandBuilder 与 per-process hooks；progress 仅在命令明确输出到 stdout 时消费。relay 改为 PullRegistry 管理元数据和业务钩子，服务关闭同时清理 relay 并停止全局 FFmpeg。补充 progress、生命周期、竞态测试并更新规范。目标测试、race、build、target vet 和全量测试通过；全仓 vet 仅剩两个任务外既有问题。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0b3ad277` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 182: Simplify FFmpeg manager lifecycle
+
+**Date**: 2026-08-27
+**Task**: Simplify FFmpeg manager lifecycle
+**Branch**: `master`
+
+### Summary
+
+简化 common/ffmpegx.Manager：process 收敛为 id/cmd/cancel/handlers/done，删除 atomic 状态机、AfterFunc、启动 channel 和 FFmpeg 参数扫描；使用 RWMutex 仅保护进程表，业务边界负责 WithoutCancel。exit/progress callback 同步执行，明确 done 与 callback 完成语义，并修复快速退出注册窗口。目标测试、10 轮 race、全仓 build/test、目标 vet 和 diff 检查通过。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a5d02e40` | (see git log) |
+| `e13be258` | (see git log) |
+| `fb9d0743` | (see git log) |
+| `f0522043` | (see git log) |
+| `0bbb3837` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 183: FFmpeg exit/watch contract simplification
+
+**Date**: 2026-08-27
+**Task**: FFmpeg exit/watch contract simplification
+**Branch**: `master`
+
+### Summary
+
+Simplified ffmpegx.Manager: removed starting map, added WithStderrHandler for streaming stderr via pipe (no unbounded buffer), removed error return from BuildRelayCmd, added [ffmpegx] log prefix, concurrent stdout/stderr scanning with WaitGroup.Go. Updated concurrency and oryx specs.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d0c6a268` | (see git log) |
+
+### Status
+
+[OK] **Completed**

@@ -1,5 +1,5 @@
 
-ïD
+ÃE
 oryxserver.proto
 oryxserver"
 VersionsReq"'
@@ -291,19 +291,25 @@ begin_time
 	page_size (R	page_size"%
 RecordDeleteReq
 uuid (	Ruuid"
-RecordDeleteRes"Y
-StreamRelayReq
+RecordDeleteRes"–
+StartRelayPullReq
 
 source_url (	R	sourceUrl
 app (	Rapp
-stream (	Rstream"S
-StreamRelayRes
-task_id (	RtaskId
+stream (	Rstream
+
+secret_key (	R	secretKey!
+secret_value (	RsecretValue0
+max_duration_seconds (RmaxDurationSeconds"Å
+StartRelayPullRes
+relay_id (	RrelayId
 app (	Rapp
-stream (	Rstream"-
-StreamRelayStopReq
-task_id (	RtaskId"
-StreamRelayStopRes2˛
+stream (	Rstream'
+already_running (RalreadyRunning"<
+StopRelayPullReq
+app (	Rapp
+stream (	Rstream"
+StopRelayPullRes2Å
 
 OryxServer<
 Versions.oryxserver.VersionsReq.oryxserver.VersionsResE
@@ -331,9 +337,9 @@ SrsClients.oryxserver.SrsClientsReq.oryxserver.SrsClientsRes?
 SrsRequests.oryxserver.SrsRequestsReq.oryxserver.SrsRequestsResB
 
 RecordList.oryxserver.RecordListReq.oryxserver.RecordListResH
-RecordDelete.oryxserver.RecordDeleteReq.oryxserver.RecordDeleteResE
-StreamRelay.oryxserver.StreamRelayReq.oryxserver.StreamRelayResQ
-StreamRelayStop.oryxserver.StreamRelayStopReq.oryxserver.StreamRelayStopResQ
+RecordDelete.oryxserver.RecordDeleteReq.oryxserver.RecordDeleteResN
+StartRelayPull.oryxserver.StartRelayPullReq.oryxserver.StartRelayPullResK
+StopRelayPull.oryxserver.StopRelayPullReq.oryxserver.StopRelayPullResQ
 RecordBeginHook.oryxserver.RecordBeginHookReq.oryxserver.RecordBeginHookResK
 RecordEndHook.oryxserver.RecordEndHookReq.oryxserver.RecordEndHookResB=
 com.github.oryxserver.grpcBOryxServerProtoPZ./oryxserverbproto3

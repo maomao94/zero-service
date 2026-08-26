@@ -3989,33 +3989,42 @@ func (*RecordDeleteRes) Descriptor() ([]byte, []int) {
 	return file_oryxserver_proto_rawDescGZIP(), []int{57}
 }
 
-// 转推流请求（启动 FFmpeg 从源地址拉流，copy 转推到 SRS，本阶段不转码）
-type StreamRelayReq struct {
+// 启动中继拉流请求（对应 HTTP API：/api/ctrl/start_relay_pull，POST+JSON Body）
+// 从源地址拉流，copy 推送到固定目标 Oryx/SRS 的 app/stream，本阶段不转码。
+type StartRelayPullReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 源流地址（RTMP/RTSP/HTTP-FLV/HLS 等 FFmpeg 支持的协议）
 	SourceUrl string `protobuf:"bytes,1,opt,name=source_url,json=sourceUrl,proto3" json:"source_url,omitempty"`
 	// 目标应用名，默认为服务端配置的默认应用名（live）
 	App string `protobuf:"bytes,2,opt,name=app,proto3" json:"app,omitempty"`
-	// 目标流名，不填则自动生成 UUID
-	Stream        string `protobuf:"bytes,3,opt,name=stream,proto3" json:"stream,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// 目标流名；不填则自动生成 UUID。
+	// 若需要单次任务录制（每次启动独立录制），必须确保 stream 唯一（如使用 UUID），
+	// 否则同 (app, stream) 的二次推流会被 SRS 拒绝（保留旧连接、拒绝新连接）。
+	Stream string `protobuf:"bytes,3,opt,name=stream,proto3" json:"stream,omitempty"`
+	// 鉴权参数名（如 secret、sign）；为空则使用服务端配置的默认值
+	SecretKey string `protobuf:"bytes,4,opt,name=secret_key,json=secretKey,proto3" json:"secret_key,omitempty"`
+	// 鉴权参数值（业务系统自行计算，服务不参与计算）；为空则使用服务端配置的默认值
+	SecretValue string `protobuf:"bytes,5,opt,name=secret_value,json=secretValue,proto3" json:"secret_value,omitempty"`
+	// 最大运行时长（秒），0 表示不限制；正数从首次启动起计时，到期后进程自动退出且不补拉
+	MaxDurationSeconds uint64 `protobuf:"varint,6,opt,name=max_duration_seconds,json=maxDurationSeconds,proto3" json:"max_duration_seconds,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
-func (x *StreamRelayReq) Reset() {
-	*x = StreamRelayReq{}
+func (x *StartRelayPullReq) Reset() {
+	*x = StartRelayPullReq{}
 	mi := &file_oryxserver_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *StreamRelayReq) String() string {
+func (x *StartRelayPullReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*StreamRelayReq) ProtoMessage() {}
+func (*StartRelayPullReq) ProtoMessage() {}
 
-func (x *StreamRelayReq) ProtoReflect() protoreflect.Message {
+func (x *StartRelayPullReq) ProtoReflect() protoreflect.Message {
 	mi := &file_oryxserver_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -4027,58 +4036,81 @@ func (x *StreamRelayReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use StreamRelayReq.ProtoReflect.Descriptor instead.
-func (*StreamRelayReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use StartRelayPullReq.ProtoReflect.Descriptor instead.
+func (*StartRelayPullReq) Descriptor() ([]byte, []int) {
 	return file_oryxserver_proto_rawDescGZIP(), []int{58}
 }
 
-func (x *StreamRelayReq) GetSourceUrl() string {
+func (x *StartRelayPullReq) GetSourceUrl() string {
 	if x != nil {
 		return x.SourceUrl
 	}
 	return ""
 }
 
-func (x *StreamRelayReq) GetApp() string {
+func (x *StartRelayPullReq) GetApp() string {
 	if x != nil {
 		return x.App
 	}
 	return ""
 }
 
-func (x *StreamRelayReq) GetStream() string {
+func (x *StartRelayPullReq) GetStream() string {
 	if x != nil {
 		return x.Stream
 	}
 	return ""
 }
 
-type StreamRelayRes struct {
+func (x *StartRelayPullReq) GetSecretKey() string {
+	if x != nil {
+		return x.SecretKey
+	}
+	return ""
+}
+
+func (x *StartRelayPullReq) GetSecretValue() string {
+	if x != nil {
+		return x.SecretValue
+	}
+	return ""
+}
+
+func (x *StartRelayPullReq) GetMaxDurationSeconds() uint64 {
+	if x != nil {
+		return x.MaxDurationSeconds
+	}
+	return 0
+}
+
+type StartRelayPullRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 转推任务 ID（停止转推时使用）
-	TaskId string `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	// 中继拉流ID（MD5(target)，给调用方的短标识；内部使用明文 target 作为 Redis key）
+	RelayId string `protobuf:"bytes,1,opt,name=relay_id,json=relayId,proto3" json:"relay_id,omitempty"`
 	// 目标应用名（实际使用值）
 	App string `protobuf:"bytes,2,opt,name=app,proto3" json:"app,omitempty"`
 	// 目标流名（自动生成时返回生成值）
-	Stream        string `protobuf:"bytes,3,opt,name=stream,proto3" json:"stream,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Stream string `protobuf:"bytes,3,opt,name=stream,proto3" json:"stream,omitempty"`
+	// 是否已有中继在跑（true = 已存在，未新启动）
+	AlreadyRunning bool `protobuf:"varint,4,opt,name=already_running,json=alreadyRunning,proto3" json:"already_running,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
-func (x *StreamRelayRes) Reset() {
-	*x = StreamRelayRes{}
+func (x *StartRelayPullRes) Reset() {
+	*x = StartRelayPullRes{}
 	mi := &file_oryxserver_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *StreamRelayRes) String() string {
+func (x *StartRelayPullRes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*StreamRelayRes) ProtoMessage() {}
+func (*StartRelayPullRes) ProtoMessage() {}
 
-func (x *StreamRelayRes) ProtoReflect() protoreflect.Message {
+func (x *StartRelayPullRes) ProtoReflect() protoreflect.Message {
 	mi := &file_oryxserver_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -4090,55 +4122,65 @@ func (x *StreamRelayRes) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use StreamRelayRes.ProtoReflect.Descriptor instead.
-func (*StreamRelayRes) Descriptor() ([]byte, []int) {
+// Deprecated: Use StartRelayPullRes.ProtoReflect.Descriptor instead.
+func (*StartRelayPullRes) Descriptor() ([]byte, []int) {
 	return file_oryxserver_proto_rawDescGZIP(), []int{59}
 }
 
-func (x *StreamRelayRes) GetTaskId() string {
+func (x *StartRelayPullRes) GetRelayId() string {
 	if x != nil {
-		return x.TaskId
+		return x.RelayId
 	}
 	return ""
 }
 
-func (x *StreamRelayRes) GetApp() string {
+func (x *StartRelayPullRes) GetApp() string {
 	if x != nil {
 		return x.App
 	}
 	return ""
 }
 
-func (x *StreamRelayRes) GetStream() string {
+func (x *StartRelayPullRes) GetStream() string {
 	if x != nil {
 		return x.Stream
 	}
 	return ""
 }
 
-// 停止转推请求
-type StreamRelayStopReq struct {
+func (x *StartRelayPullRes) GetAlreadyRunning() bool {
+	if x != nil {
+		return x.AlreadyRunning
+	}
+	return false
+}
+
+// 停止中继拉流请求（对应 HTTP API：/api/ctrl/stop_relay_pull，GET+URL参数）
+// 单固定目标服务下 (app, stream) 唯一确定一个中继。
+type StopRelayPullReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 转推任务 ID
-	TaskId        string `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	// 目标应用名
+	App string `protobuf:"bytes,1,opt,name=app,proto3" json:"app,omitempty"`
+	// 目标流名
+	Stream        string `protobuf:"bytes,2,opt,name=stream,proto3" json:"stream,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *StreamRelayStopReq) Reset() {
-	*x = StreamRelayStopReq{}
+func (x *StopRelayPullReq) Reset() {
+	*x = StopRelayPullReq{}
 	mi := &file_oryxserver_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *StreamRelayStopReq) String() string {
+func (x *StopRelayPullReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*StreamRelayStopReq) ProtoMessage() {}
+func (*StopRelayPullReq) ProtoMessage() {}
 
-func (x *StreamRelayStopReq) ProtoReflect() protoreflect.Message {
+func (x *StopRelayPullReq) ProtoReflect() protoreflect.Message {
 	mi := &file_oryxserver_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -4150,38 +4192,45 @@ func (x *StreamRelayStopReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use StreamRelayStopReq.ProtoReflect.Descriptor instead.
-func (*StreamRelayStopReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use StopRelayPullReq.ProtoReflect.Descriptor instead.
+func (*StopRelayPullReq) Descriptor() ([]byte, []int) {
 	return file_oryxserver_proto_rawDescGZIP(), []int{60}
 }
 
-func (x *StreamRelayStopReq) GetTaskId() string {
+func (x *StopRelayPullReq) GetApp() string {
 	if x != nil {
-		return x.TaskId
+		return x.App
 	}
 	return ""
 }
 
-type StreamRelayStopRes struct {
+func (x *StopRelayPullReq) GetStream() string {
+	if x != nil {
+		return x.Stream
+	}
+	return ""
+}
+
+type StopRelayPullRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *StreamRelayStopRes) Reset() {
-	*x = StreamRelayStopRes{}
+func (x *StopRelayPullRes) Reset() {
+	*x = StopRelayPullRes{}
 	mi := &file_oryxserver_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *StreamRelayStopRes) String() string {
+func (x *StopRelayPullRes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*StreamRelayStopRes) ProtoMessage() {}
+func (*StopRelayPullRes) ProtoMessage() {}
 
-func (x *StreamRelayStopRes) ProtoReflect() protoreflect.Message {
+func (x *StopRelayPullRes) ProtoReflect() protoreflect.Message {
 	mi := &file_oryxserver_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -4193,8 +4242,8 @@ func (x *StreamRelayStopRes) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use StreamRelayStopRes.ProtoReflect.Descriptor instead.
-func (*StreamRelayStopRes) Descriptor() ([]byte, []int) {
+// Deprecated: Use StopRelayPullRes.ProtoReflect.Descriptor instead.
+func (*StopRelayPullRes) Descriptor() ([]byte, []int) {
 	return file_oryxserver_proto_rawDescGZIP(), []int{61}
 }
 
@@ -4493,19 +4542,25 @@ const file_oryxserver_proto_rawDesc = "" +
 	"\tpage_size\x18\x04 \x01(\x03R\tpage_size\"%\n" +
 	"\x0fRecordDeleteReq\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"\x11\n" +
-	"\x0fRecordDeleteRes\"Y\n" +
-	"\x0eStreamRelayReq\x12\x1d\n" +
+	"\x0fRecordDeleteRes\"\xd0\x01\n" +
+	"\x11StartRelayPullReq\x12\x1d\n" +
 	"\n" +
 	"source_url\x18\x01 \x01(\tR\tsourceUrl\x12\x10\n" +
 	"\x03app\x18\x02 \x01(\tR\x03app\x12\x16\n" +
-	"\x06stream\x18\x03 \x01(\tR\x06stream\"S\n" +
-	"\x0eStreamRelayRes\x12\x17\n" +
-	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x10\n" +
+	"\x06stream\x18\x03 \x01(\tR\x06stream\x12\x1d\n" +
+	"\n" +
+	"secret_key\x18\x04 \x01(\tR\tsecretKey\x12!\n" +
+	"\fsecret_value\x18\x05 \x01(\tR\vsecretValue\x120\n" +
+	"\x14max_duration_seconds\x18\x06 \x01(\x04R\x12maxDurationSeconds\"\x81\x01\n" +
+	"\x11StartRelayPullRes\x12\x19\n" +
+	"\brelay_id\x18\x01 \x01(\tR\arelayId\x12\x10\n" +
 	"\x03app\x18\x02 \x01(\tR\x03app\x12\x16\n" +
-	"\x06stream\x18\x03 \x01(\tR\x06stream\"-\n" +
-	"\x12StreamRelayStopReq\x12\x17\n" +
-	"\atask_id\x18\x01 \x01(\tR\x06taskId\"\x14\n" +
-	"\x12StreamRelayStopRes2\xfe\r\n" +
+	"\x06stream\x18\x03 \x01(\tR\x06stream\x12'\n" +
+	"\x0falready_running\x18\x04 \x01(\bR\x0ealreadyRunning\"<\n" +
+	"\x10StopRelayPullReq\x12\x10\n" +
+	"\x03app\x18\x01 \x01(\tR\x03app\x12\x16\n" +
+	"\x06stream\x18\x02 \x01(\tR\x06stream\"\x12\n" +
+	"\x10StopRelayPullRes2\x81\x0e\n" +
 	"\n" +
 	"OryxServer\x12<\n" +
 	"\bVersions\x12\x17.oryxserver.VersionsReq\x1a\x17.oryxserver.VersionsRes\x12E\n" +
@@ -4533,9 +4588,9 @@ const file_oryxserver_proto_rawDesc = "" +
 	"\vSrsRequests\x12\x1a.oryxserver.SrsRequestsReq\x1a\x1a.oryxserver.SrsRequestsRes\x12B\n" +
 	"\n" +
 	"RecordList\x12\x19.oryxserver.RecordListReq\x1a\x19.oryxserver.RecordListRes\x12H\n" +
-	"\fRecordDelete\x12\x1b.oryxserver.RecordDeleteReq\x1a\x1b.oryxserver.RecordDeleteRes\x12E\n" +
-	"\vStreamRelay\x12\x1a.oryxserver.StreamRelayReq\x1a\x1a.oryxserver.StreamRelayRes\x12Q\n" +
-	"\x0fStreamRelayStop\x12\x1e.oryxserver.StreamRelayStopReq\x1a\x1e.oryxserver.StreamRelayStopRes\x12Q\n" +
+	"\fRecordDelete\x12\x1b.oryxserver.RecordDeleteReq\x1a\x1b.oryxserver.RecordDeleteRes\x12N\n" +
+	"\x0eStartRelayPull\x12\x1d.oryxserver.StartRelayPullReq\x1a\x1d.oryxserver.StartRelayPullRes\x12K\n" +
+	"\rStopRelayPull\x12\x1c.oryxserver.StopRelayPullReq\x1a\x1c.oryxserver.StopRelayPullRes\x12Q\n" +
 	"\x0fRecordBeginHook\x12\x1e.oryxserver.RecordBeginHookReq\x1a\x1e.oryxserver.RecordBeginHookRes\x12K\n" +
 	"\rRecordEndHook\x12\x1c.oryxserver.RecordEndHookReq\x1a\x1c.oryxserver.RecordEndHookResB=\n" +
 	"\x1acom.github.oryxserver.grpcB\x0fOryxServerProtoP\x01Z\f./oryxserverb\x06proto3"
@@ -4612,10 +4667,10 @@ var file_oryxserver_proto_goTypes = []any{
 	(*RecordListRes)(nil),           // 55: oryxserver.RecordListRes
 	(*RecordDeleteReq)(nil),         // 56: oryxserver.RecordDeleteReq
 	(*RecordDeleteRes)(nil),         // 57: oryxserver.RecordDeleteRes
-	(*StreamRelayReq)(nil),          // 58: oryxserver.StreamRelayReq
-	(*StreamRelayRes)(nil),          // 59: oryxserver.StreamRelayRes
-	(*StreamRelayStopReq)(nil),      // 60: oryxserver.StreamRelayStopReq
-	(*StreamRelayStopRes)(nil),      // 61: oryxserver.StreamRelayStopRes
+	(*StartRelayPullReq)(nil),       // 58: oryxserver.StartRelayPullReq
+	(*StartRelayPullRes)(nil),       // 59: oryxserver.StartRelayPullRes
+	(*StopRelayPullReq)(nil),        // 60: oryxserver.StopRelayPullReq
+	(*StopRelayPullRes)(nil),        // 61: oryxserver.StopRelayPullRes
 }
 var file_oryxserver_proto_depIdxs = []int32{
 	8,  // 0: oryxserver.RecordFilesRes.files:type_name -> oryxserver.RecordFile
@@ -4653,8 +4708,8 @@ var file_oryxserver_proto_depIdxs = []int32{
 	47, // 32: oryxserver.OryxServer.SrsRequests:input_type -> oryxserver.SrsRequestsReq
 	53, // 33: oryxserver.OryxServer.RecordList:input_type -> oryxserver.RecordListReq
 	56, // 34: oryxserver.OryxServer.RecordDelete:input_type -> oryxserver.RecordDeleteReq
-	58, // 35: oryxserver.OryxServer.StreamRelay:input_type -> oryxserver.StreamRelayReq
-	60, // 36: oryxserver.OryxServer.StreamRelayStop:input_type -> oryxserver.StreamRelayStopReq
+	58, // 35: oryxserver.OryxServer.StartRelayPull:input_type -> oryxserver.StartRelayPullReq
+	60, // 36: oryxserver.OryxServer.StopRelayPull:input_type -> oryxserver.StopRelayPullReq
 	49, // 37: oryxserver.OryxServer.RecordBeginHook:input_type -> oryxserver.RecordBeginHookReq
 	51, // 38: oryxserver.OryxServer.RecordEndHook:input_type -> oryxserver.RecordEndHookReq
 	1,  // 39: oryxserver.OryxServer.Versions:output_type -> oryxserver.VersionsRes
@@ -4678,8 +4733,8 @@ var file_oryxserver_proto_depIdxs = []int32{
 	48, // 57: oryxserver.OryxServer.SrsRequests:output_type -> oryxserver.SrsRequestsRes
 	55, // 58: oryxserver.OryxServer.RecordList:output_type -> oryxserver.RecordListRes
 	57, // 59: oryxserver.OryxServer.RecordDelete:output_type -> oryxserver.RecordDeleteRes
-	59, // 60: oryxserver.OryxServer.StreamRelay:output_type -> oryxserver.StreamRelayRes
-	61, // 61: oryxserver.OryxServer.StreamRelayStop:output_type -> oryxserver.StreamRelayStopRes
+	59, // 60: oryxserver.OryxServer.StartRelayPull:output_type -> oryxserver.StartRelayPullRes
+	61, // 61: oryxserver.OryxServer.StopRelayPull:output_type -> oryxserver.StopRelayPullRes
 	50, // 62: oryxserver.OryxServer.RecordBeginHook:output_type -> oryxserver.RecordBeginHookRes
 	52, // 63: oryxserver.OryxServer.RecordEndHook:output_type -> oryxserver.RecordEndHookRes
 	39, // [39:64] is the sub-list for method output_type

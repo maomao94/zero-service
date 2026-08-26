@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/oryx-guidelines.md","reason":"Oryx relay 契约、ffmpeg 进程生命周期、WrapUp 关闭语义。"}
+{"file":".trellis/spec/backend/concurrency-guidelines.md","reason":"进程退出 vs cancel 信号、回调钩子、共享状态与锁。"}
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"asynq 队列隔离与 task 注册约定（oryx-relay 不得与 trigger 队列混淆）。"}
+{"file":".trellis/spec/backend/service-lifecycle.md","reason":"ServiceContext 装配、Asynq worker 生命周期、优雅关闭顺序。"}

@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Final verification scope for Redis/Asynq lifecycle, race tests, build, vet, and diff hygiene."}
+{"file":".trellis/spec/backend/concurrency-guidelines.md","reason":"Review distributed state ownership, fencing, cancellation versus process exit, and goroutine cleanup."}
+{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"Verify relay queue/task namespace does not collide with trigger workers."}
+{"file":".trellis/spec/backend/service-lifecycle.md","reason":"Verify optional Redis startup and graceful Asynq/FFmpeg shutdown ordering."}

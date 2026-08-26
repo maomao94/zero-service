@@ -112,7 +112,7 @@ err := svc.Broadcast(ctx, method, &BroadcastBody{TaskId: id, AckTopic: "iec/broa
 err := svc.Broadcast(ctx, relay.MethodStreamRelayStop, []byte(taskId))
 
 // 装配：NewServiceContext 内闭环；业务包收窄依赖（svc→mqtt 单向，mqtt 不导入 svc）
-mqtt.NewBroadcast(svcCtx.RelayManager).RegisterExecutors(svcCtx.Broadcaster)
+mqtt.NewBroadcast(svcCtx.RelayRegistry).RegisterExecutors(svcCtx.Broadcaster)
 svcCtx.Broadcaster.AddBroadcastHandler()
 ```
 

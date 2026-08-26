@@ -7,7 +7,7 @@ import (
 
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
-	"zero-service/common/mediax"
+	"zero-service/common/ffmpegx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -34,7 +34,7 @@ func (l *CaptureVideoStreamLogic) CaptureVideoStream(in *file.CaptureVideoStream
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "获取OSS模板失败")
 	}
-	shot, err := media.NewScreenshotter(in.StreamUrl)
+	shot, err := ffmpegx.NewScreenshotter(in.StreamUrl)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "创建截图器失败")
 	}

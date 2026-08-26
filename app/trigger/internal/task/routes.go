@@ -30,6 +30,6 @@ func (l *CronJob) Register() *asynq.ServeMux {
 
 	//scheduler job
 	mux.Handle(asynqx.SchedulerDeferTask, scheduler.NewSchedulerDeferTask(l.svcCtx))
-	logx.Infof("asynq cronJob-scheduler registered: %s", asynqx.SchedulerDeferTask)
+	logx.Infof("asynq cronJob-task registered: %s", asynqx.SchedulerDeferTask)
 	return mux
 }

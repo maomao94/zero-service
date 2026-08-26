@@ -81,6 +81,100 @@
 - 只因 `go test` 通过就声称并发安全，未检查字段所有权和 CAS。
 - 持 manager 锁获取 session 锁后，在另一条路径反向加锁。
 
+## Scenario: `ffmpegx.Manager` 子进程生命周期
+
+### 1. Scope / Trigger
+
+- 使用 `common/ffmpegx.Manager` 启动、替换、停止 FFmpeg 或其他 `os/exec` 子进程时适用。
+- 目标是保证 Start 成功后 `Wait()` 恰好一次、同 ID 不会隐式替换、主动取消有结构化退出结果，且锁内不执行 builder、等待或回调。
+
+### 2. Signatures
+
+```go
+type CommandBuilder func(ctx context.Context) (*exec.Cmd, error)
+func (m *Manager) Start(ctx context.Context, id string, build CommandBuilder, opts ...StartOption) error
+func WithExitHandler(func(ExitResult)) StartOption
+func WithStdoutHandler(func(id, line string)) StartOption
+func WithStderrHandler(func(id, line string)) StartOption
+func (m *Manager) Stop(id string) bool
+func (m *Manager) StopAll()
+```
+
+### 3. Contracts
+
+- Manager 使用 `context.WithCancel` 从首参 context 派生进程 context/cancel，不自动调用 `context.WithoutCancel`；长期任务由业务边界显式选择是否脱离请求取消。
+- exit/stdout/stderr hook 仅通过单次 Start option 配置，不使用 Manager 全局 hook，也不把 hook 放入 context。
+- 配置 `WithStdoutHandler` 或 `WithStderrHandler` 才分别创建并消费 `StdoutPipe` 或 `StderrPipe`；未配置的流保持调用方设置，Manager 不解析命令参数。relay 调用方负责配置 `-progress pipe:1`。
+- stdout 和 stderr 必须并发持续消费；一个 pipe 等待数据或缓慢 callback 不得阻塞另一 pipe 的读取。Go 1.26 使用 `sync.WaitGroup.Go` 启动 reader，两个 reader 都结束后 watcher 唯一调用 `Wait()`。
+- Start 成功后 watcher 唯一调用 `Wait()`；清理只删除与自身指针匹配的条目。自然退出、Stop、StopAll、父 context cancel 和 deadline 都会调用该进程的 exit hook，并以 `ExitResult` 交给业务层判断。
+- builder 在登记前同步执行，只构造绑定 Manager 所传 context 的未启动命令；同一 ID 的 Start/Stop/StopAll 由调用方串行化。Manager 不维护 `starting` 状态或全局生命周期锁；不同 ID 独立。
+- stdout/stderr 和 exit hook 同步执行。退出顺序为：两个 pipe reader 结束、`Wait`、身份清理、exit hook、关闭 `done`；锁不覆盖 builder、Start、cancel、Wait、日志或 hook。
+- exit hook 执行时自身条目已清理，可以重入 Manager；stdout/stderr callback 仍处于该进程 pipe reader，不能同步 Stop 或替换自身 ID，否则会等待自身 reader 完成。
+- 业务层 registry 只停止自己登记的 ID；服务全局关闭由共享 `Manager.StopAll` 负责。
+
+### 4. Validation & Error Matrix
+
+- nil context、空 ID、nil builder -> Start 返回参数错误，不登记进程。
+- builder、StdoutPipe、StderrPipe 或 cmd.Start 失败 -> 取消 context、关闭已建 pipe且不保留 Manager 条目，并返回包装错误。
+- 同 ID 已存在 -> 返回包装 `ErrProcessExists`，现有进程不受影响，且不得调用新 builder；替换由调用方先 `Stop` 再 `Start`。
+- 主动停止与 Wait 同时发生 -> process context 的取消状态决定退出原因，不重复 Wait；exit hook 仍以 `ExitResult` 报告。
+- 子进程自行成功或失败退出 -> 先删除自身登记，再调用该进程的 exit hook。
+
+### Scenario: `ffmpegx.Manager` exit and stdout contract
+
+#### Signatures
+
+```go
+var ErrProcessExists error
+type ExitResult struct { ID string; WaitErr error; ContextErr error }
+func WithExitHandler(func(ExitResult)) StartOption
+func WithStdoutHandler(func(id, line string)) StartOption
+func WithStderrHandler(func(id, line string)) StartOption
+func WatchOutput(io.ReadCloser, func(line string)) error
+```
+
+- `Start` returns an error wrapping `ErrProcessExists` for a duplicate ID and leaves the existing process untouched.
+- Every started process invokes its exit callback synchronously, including natural exit, cancellation, Stop, and deadline. `WaitErr` is the raw `Cmd.Wait` result; `ContextErr` is the process context error. `done` closes only after the callback returns.
+- stdout/stderr is consumed only when its matching handler is configured. `WatchOutput` forwards each scanner line without parsing or aggregation; it is valid for either pipe.
+- Long-running commands must stream stderr through `WithStderrHandler`, never retain it in an unbounded `bytes.Buffer`.
+- Process lifecycle logs use `logx.WithContext(processCtx)` and the `[ffmpegx]` prefix.
+
+### 5. Good/Base/Bad Cases
+
+- Good：需要进度的命令显式把 `-progress` 指向 stdout，业务层按行聚合并在完整报告边界续租；stderr 逐行交给业务日志或告警处理。
+- Base：无 stdout/stderr handler 的普通命令保留调用方配置，Manager 不创建对应 pipe。
+- Bad：串行读取 stdout 后才读取 stderr；stdout 沉默时 stderr pipe 无人消费，最终可能阻塞子进程。
+
+### 6. Tests Required
+
+- 覆盖 Start/Has/Count、快速退出、builder/pipe/Start 失败、Stop/StopAll/context cancel/timeout、重复 ID 不调用 builder、同步 callback 和不同 ID 非阻塞。
+- 覆盖显式 stdout/stderr 消费、两路并发读取，以及无 handler 时保留调用方对应流配置。
+- registry 覆盖 metadata 先登记、exit 先清 metadata 后 hook、旧 exit 不删 replacement、StopAll 只停自身 target。
+- 对 `common/ffmpegx` 和直接 registry 调用方运行 `go test -race`。
+
+### 7. Wrong vs Correct
+
+```go
+// Wrong: stdout reader 阻塞时，stderr 永远不会被消费。
+WatchOutput(stdout, onStdout)
+WatchOutput(stderr, onStderr)
+
+// Correct: both pipes are continuously consumed before Wait observes exit.
+var readers sync.WaitGroup
+readers.Go(func() { _ = WatchOutput(stdout, onStdout) })
+readers.Go(func() { _ = WatchOutput(stderr, onStderr) })
+readers.Wait()
+
+// Duplicate IDs are explicit and exit reason is structured.
+m.Start(ctx, id, build,
+	ffmpegx.WithExitHandler(onExit),
+	ffmpegx.WithStdoutHandler(onLine),
+	ffmpegx.WithStderrHandler(onLine),
+)
+```
+
+依据：`common/ffmpegx/process.go`、`app/oryxserver/internal/relay/registry.go`。
+
 ## 验证
 
 - 覆盖取消、超时、panic、重复完成、关闭、快速响应、过期和提交失败。

@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -8,60 +9,75 @@ import (
 	"zero-service/app/oryxserver/internal/relay"
 	"zero-service/app/oryxserver/model/gormmodel"
 	"zero-service/app/oryxserver/mqtt"
+	"zero-service/common/asynqx"
+	"zero-service/common/ffmpegx"
 	"zero-service/common/gormx"
 	"zero-service/common/mqttx"
 	"zero-service/common/mqttx/broadcast"
 	"zero-service/common/oryxx"
 	"zero-service/common/tool"
 
+	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/service"
+	"github.com/zeromicro/go-zero/core/stores/redis"
 )
 
 type ServiceContext struct {
 	Config     config.Config
 	OryxClient *oryxx.Client
 	// DB record 生命周期落库
-	DB *gormx.DB
-	// RelayManager 转推任务管理（sync.Map + FFmpeg 进程）
-	RelayManager *relay.Manager
+	DB            *gormx.DB
+	FFmpegManager *ffmpegx.Manager
+	RelayRegistry *relay.RelayRegistry
 	// MqttClient 可选：cluster 模式跨节点停止转推；standalone 为 nil
 	MqttClient mqttx.Client
 	// Broadcaster 集群广播客户端（cluster 模式）
 	Broadcaster broadcast.Broadcaster
 
 	// broadcast 相关（cluster 模式）
-	relayPrefix     string
-	relayInstanceId string
+	relayPrefix string
+
+	// 分布式 relay 基础设施（配置 Redis 即启用）
+	NodeID         string
+	RelayRedis     *redis.Redis
+	AsynqServer    *asynq.Server
+	AsynqClient    *asynq.Client
+	AsynqInspector *asynq.Inspector
+	StateStore     *relay.Store
+	DistRelay      *relay.DistributedRelay
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	logx.Must(logx.SetUp(c.Log))
 	svcCtx := &ServiceContext{
-		Config:       c,
-		RelayManager: relay.NewManager(),
+		Config:        c,
+		FFmpegManager: ffmpegx.NewManager(),
 	}
+	svcCtx.RelayRegistry = relay.NewRelayRegistry(svcCtx.FFmpegManager)
+	// 节点标识：自动生成（broadcast / relay / nacos 共用）
+	uid, err := tool.SimpleUUID()
+	if err != nil {
+		logx.Must(fmt.Errorf("generate node id failed: %w", err))
+	}
+	nodeID := "oryx-node-" + uid
+	svcCtx.NodeID = nodeID
+
 	// MQTT 初始化条件：cluster 模式必需，standalone 不依赖
 	if svcCtx.IsBroadcast() && len(c.MqttConfig.Broker) == 0 {
 		logx.Must(fmt.Errorf("relay broadcast is enabled (deployMode=cluster), but mqtt config is empty"))
 	}
-	uid, err := tool.SimpleUUID()
-	if err != nil {
-		logx.Must(fmt.Errorf("generate instance id failed: %w", err))
-	}
-	svcCtx.relayInstanceId = "oryx-relay-" + uid
 	if svcCtx.IsBroadcast() {
 		svcCtx.relayPrefix = broadcast.Prefix("oryx", "server")
-		ackReplyRouter := broadcast.NewAckReplyRouter(10*time.Second, "mqtt-ack-reply-"+uid)
+		ackReplyRouter := broadcast.NewAckReplyRouter(10*time.Second, "mqtt-ack-reply-"+nodeID)
 		cfg := c.MqttConfig.MqttConfig
-		cfg.ClientID = svcCtx.relayInstanceId
+		cfg.ClientID = nodeID
 		cfg.Qos = 1
 		svcCtx.MqttClient = mqttx.MustNewClient(cfg, mqttx.WithReplyRouter(
-			broadcast.BroadcastAckTopic(svcCtx.relayPrefix, svcCtx.relayInstanceId), ackReplyRouter))
-		svcCtx.Broadcaster = broadcast.NewBroadcaster(svcCtx.MqttClient, svcCtx.relayInstanceId,
+			broadcast.BroadcastAckTopic(svcCtx.relayPrefix, nodeID), ackReplyRouter))
+		svcCtx.Broadcaster = broadcast.NewBroadcaster(svcCtx.MqttClient, nodeID,
 			broadcast.WithPrefix(svcCtx.relayPrefix))
-		// 闭环：注册业务 executor（relay 停止，minimal 依赖不注入 ServiceContext）并挂载广播消费
-		// （防回环 + method→executor 路由 + ack 回发由 broadcast SDK 骨架负责）
-		mqtt.NewBroadcast(svcCtx.RelayManager).RegisterExecutors(svcCtx.Broadcaster)
+		mqtt.NewBroadcast(svcCtx.RelayRegistry).RegisterExecutors(svcCtx.Broadcaster)
 		if err := svcCtx.Broadcaster.AddBroadcastHandler(); err != nil {
 			logx.Must(err)
 		}
@@ -80,17 +96,30 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Secret:  c.OryxConfig.Secret,
 	})
 
+	// Redis（复用 zrpc.RpcServerConf.Redis，与 trigger 同一配置格式）
+	svcCtx.RelayRedis = redis.MustNewRedis(c.Redis.RedisConf)
+	// Asynq server / client / inspector（server 只消费 relay 隔离队列）
+	svcCtx.AsynqServer = asynqx.NewAsynqServerWithQueue(c.Redis.Host, c.Redis.Pass, c.RedisDB, relay.RelayQueue, c.Concurrency)
+	svcCtx.AsynqClient = asynqx.NewAsynqClient(c.Redis.Host, c.Redis.Pass, c.RedisDB)
+	svcCtx.AsynqInspector = asynqx.NewAsynqInspector(c.Redis.Host, c.Redis.Pass, c.RedisDB)
+	// 状态存储 + 分布式协调器
+	svcCtx.StateStore = relay.NewStore(svcCtx.RelayRedis)
+	svcCtx.DistRelay = relay.NewDistributedRelay(svcCtx.StateStore, svcCtx.RelayRegistry, nodeID, svcCtx.AsynqClient)
+	// 进程级回调：progress 帧 → 续租；异常退出 → 入队补拉
+	svcCtx.RelayRegistry.SetProgressHandler(func(ctx context.Context, target string) {
+		svcCtx.DistRelay.OnProgress(ctx, target)
+	})
+	svcCtx.RelayRegistry.SetExitHandler(func(ctx context.Context, target string, result ffmpegx.ExitResult) {
+		svcCtx.DistRelay.OnProcessExit(ctx, target, result)
+	})
+	logx.Infof("relay deps initialized: node_id=%s redis_db=%d queue=%s", nodeID, c.RedisDB, relay.RelayQueue)
+
 	return svcCtx
 }
 
 // IsBroadcast 是否为集群部署模式（对齐 ieccaller）
 func (svc ServiceContext) IsBroadcast() bool {
 	return svc.Config.DeployMode == "cluster"
-}
-
-// BroadcastInstanceId 本实例广播 ID（nacos 元数据注册用）。
-func (svc ServiceContext) BroadcastInstanceId() string {
-	return svc.relayInstanceId
 }
 
 // BroadcastTopic 集群广播主题（nacos 元数据注册用）。
@@ -100,5 +129,5 @@ func (svc ServiceContext) BroadcastTopic() string {
 
 // BroadcastAckTopic 本实例 ack 主题（nacos 元数据注册用）。
 func (svc ServiceContext) BroadcastAckTopic() string {
-	return broadcast.BroadcastAckTopic(svc.relayPrefix, svc.relayInstanceId)
+	return broadcast.BroadcastAckTopic(svc.relayPrefix, svc.NodeID)
 }

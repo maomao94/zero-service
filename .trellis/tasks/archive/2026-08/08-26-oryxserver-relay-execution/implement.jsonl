@@ -1,0 +1,3 @@
+{"file":".trellis/spec/backend/concurrency-guidelines.md","reason":"Redis fencing, process lifecycle synchronization, and compensation concurrency."}
+{"file":".trellis/spec/backend/oryx-guidelines.md","reason":"FFmpeg relay process, target identity, and shutdown contracts."}
+{"file":".trellis/spec/backend/service-lifecycle.md","reason":"Startup recovery, worker lifecycle, and graceful shutdown behavior."}

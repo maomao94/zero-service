@@ -617,25 +617,36 @@ message RecordDeleteReq {
 
 message RecordDeleteRes {}
 
-// ==================== Stream Relay（FFmpeg 转推，平台级接口）====================
+// ==================== Stream Relay Pull（FFmpeg 中继拉流，平台级接口）====================
 
-// 转推流请求（启动 FFmpeg 从源地址拉流，copy 转推到 SRS，本阶段不转码）
-message StreamRelayReq {
+// 启动中继拉流请求（对应 HTTP API：/api/ctrl/start_relay_pull，POST+JSON Body）
+// 从源地址拉流，copy 推送到固定目标 Oryx/SRS 的 app/stream，本阶段不转码。
+message StartRelayPullReq {
   // 源流地址（RTMP/RTSP/HTTP-FLV/HLS 等 FFmpeg 支持的协议）
   string source_url = 1 [json_name = "sourceUrl"];
   // 目标应用名，默认为服务端配置的默认应用名（live）
   string app = 2 [json_name = "app"];
-  // 目标流名，不填则自动生成 UUID
+  // 目标流名；不填则自动生成 UUID。
+  // 若需要单次任务录制（每次启动独立录制），必须确保 stream 唯一（如使用 UUID），
+  // 否则同 (app, stream) 的二次推流会被 SRS 拒绝（保留旧连接、拒绝新连接）。
   string stream = 3 [json_name = "stream"];
+  // 鉴权参数名（如 secret、sign）；为空则使用服务端配置的默认值
+  string secret_key = 4 [json_name = "secretKey"];
+  // 鉴权参数值（业务系统自行计算，服务不参与计算）；为空则使用服务端配置的默认值
+  string secret_value = 5 [json_name = "secretValue"];
+  // 最大运行时长（秒），0 表示不限制；正数从首次启动起计时，到期后进程自动退出且不补拉
+  uint64 max_duration_seconds = 6 [json_name = "maxDurationSeconds"];
 }
 
-message StreamRelayRes {
-  // 转推任务 ID（停止转推时使用）
-  string task_id = 1 [json_name = "taskId"];
+message StartRelayPullRes {
+  // 中继拉流ID（MD5(target)，给调用方的短标识；内部使用明文 target 作为 Redis key）
+  string relay_id = 1 [json_name = "relayId"];
   // 目标应用名（实际使用值）
   string app = 2 [json_name = "app"];
   // 目标流名（自动生成时返回生成值）
   string stream = 3 [json_name = "stream"];
+  // 是否已有中继在跑（true = 已存在，未新启动）
+  bool already_running = 4 [json_name = "alreadyRunning"];
 }
 
 // 播放地址约定（业务侧按协议自行拼接，地址均指向 SRS/Oryx）：
@@ -646,13 +657,16 @@ message StreamRelayRes {
 // 注：Oryx 无「获取播放地址」接口，/terraform/v1/mgmt/streams/query 仅返回
 //     vhost/app/stream 等元数据；以上均为 SRS 标准约定格式。
 
-// 停止转推请求
-message StreamRelayStopReq {
-  // 转推任务 ID
-  string task_id = 1 [json_name = "taskId"];
+// 停止中继拉流请求（对应 HTTP API：/api/ctrl/stop_relay_pull，GET+URL参数）
+// 单固定目标服务下 (app, stream) 唯一确定一个中继。
+message StopRelayPullReq {
+  // 目标应用名
+  string app = 1 [json_name = "app"];
+  // 目标流名
+  string stream = 2 [json_name = "stream"];
 }
 
-message StreamRelayStopRes {}
+message StopRelayPullRes {}
 
 // oryxserver：封装 Oryx HTTP OpenAPI 为 gRPC，供业务服务调用（Java 通过 Nacos 调用）
 service OryxServer {
@@ -698,10 +712,10 @@ service OryxServer {
   rpc RecordList (RecordListReq) returns (RecordListRes);
   // 删除录制记录
   rpc RecordDelete (RecordDeleteReq) returns (RecordDeleteRes);
-  // 启动 FFmpeg 转推（拉取源流 → copy 转推 SRS；任务按节点本地内存管理）
-  rpc StreamRelay (StreamRelayReq) returns (StreamRelayRes);
-  // 停止转推（本地任务直接停止；未命中且 cluster 模式时 MQTT 广播停止）
-  rpc StreamRelayStop (StreamRelayStopReq) returns (StreamRelayStopRes);
+  // 启动 FFmpeg 中继拉流（拉取源流 → copy 推送到固定目标 Oryx/SRS；任务按节点本地内存管理）
+  rpc StartRelayPull (StartRelayPullReq) returns (StartRelayPullRes);
+  // 停止中继拉流（按 app+stream 定位；本地未命中且 cluster 模式时 MQTT 广播停止）
+  rpc StopRelayPull (StopRelayPullReq) returns (StopRelayPullRes);
 
   // ===== ⚠️ 内部 Hook（以下 RPC 仅 oryxgtw 调用：gtw 收到 Oryx 回调后落库通道，业务服务请勿调用）=====
   // on_record_begin 回调落库
