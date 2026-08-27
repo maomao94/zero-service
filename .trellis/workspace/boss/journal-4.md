@@ -160,3 +160,24 @@ Simplified ffmpegx.Manager: removed starting map, added WithStderrHandler for st
 ### Status
 
 [OK] **Completed**
+
+
+## Session 184: Simplify StartRelay return + logic-layer HasLease check
+
+**Date**: 2026-08-27
+**Task**: Simplify StartRelay return + logic-layer HasLease check
+**Branch**: `master`
+
+### Summary
+
+StartRelay 返回 (string, error)，alreadyRunning 检查移到 Logic 层（HasLease）。lock 失败时检查租约而非直接返回 alreadyRunning=true。proto 注释完善 stream 唯一性说明。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `cba4cf1e` | (see git log) |
+
+### Status
+
+[OK] **Completed**
