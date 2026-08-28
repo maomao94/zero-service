@@ -229,3 +229,25 @@ Implemented StopRelayAndRecording RPC in oryxserver (proto + logic + spec). Comp
 ### Status
 
 [OK] **Completed**
+
+
+## Session 187: asynqx 日志优化
+
+**Date**: 2026-08-28
+**Task**: asynqx 日志优化
+**Branch**: `master`
+
+### Summary
+
+统一 common/asynqx 包日志格式：添加 [asynq] 模块前缀，改用 logx.Infow/Errorw 结构化字段，补充 addr/db/queue 等关键上下文
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `64fa6484` | (see git log) |
+| `f9d23c2b` | (see git log) |
+
+### Status
+
+[OK] **Completed**
