@@ -1,5 +1,5 @@
 
-ÃE
+ìG
 oryxserver.proto
 oryxserver"
 VersionsReq"'
@@ -309,7 +309,11 @@ secret_key (	R	secretKey!
 StopRelayPullReq
 app (	Rapp
 stream (	Rstream"
-StopRelayPullRes2Å
+StopRelayPullRes"D
+StopRelayAndRecordingReq
+app (	Rapp
+stream (	Rstream"
+StopRelayAndRecordingRes2Ê
 
 OryxServer<
 Versions.oryxserver.VersionsReq.oryxserver.VersionsResE
@@ -339,7 +343,8 @@ SrsClients.oryxserver.SrsClientsReq.oryxserver.SrsClientsRes?
 RecordList.oryxserver.RecordListReq.oryxserver.RecordListResH
 RecordDelete.oryxserver.RecordDeleteReq.oryxserver.RecordDeleteResN
 StartRelayPull.oryxserver.StartRelayPullReq.oryxserver.StartRelayPullResK
-StopRelayPull.oryxserver.StopRelayPullReq.oryxserver.StopRelayPullResQ
+StopRelayPull.oryxserver.StopRelayPullReq.oryxserver.StopRelayPullResc
+StopRelayAndRecording$.oryxserver.StopRelayAndRecordingReq$.oryxserver.StopRelayAndRecordingResQ
 RecordBeginHook.oryxserver.RecordBeginHookReq.oryxserver.RecordBeginHookResK
 RecordEndHook.oryxserver.RecordEndHookReq.oryxserver.RecordEndHookResB=
 com.github.oryxserver.grpcBOryxServerProtoPZ./oryxserverbproto3

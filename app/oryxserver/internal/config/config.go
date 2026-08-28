@@ -12,7 +12,7 @@ import (
 type Config struct {
 	zrpc.RpcServerConf
 	// GracePeriod 优雅关闭时的强制退出等待时间（超时后强制 kill）
-	GracePeriod time.Duration `json:",default=10s"`
+	GracePeriod time.Duration `json:",default=500s"`
 	// 部署模式：standalone / cluster（对齐 ieccaller；cluster 模式下跨节点停止转推走 MQTT 广播）
 	DeployMode  string `json:",default=standalone,options=standalone|cluster"`
 	NacosConfig struct {

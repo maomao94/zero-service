@@ -27,7 +27,7 @@ func NewTaskServer(server *asynq.Server, mux *asynq.ServeMux) *TaskServer {
 
 func (q *TaskServer) Start() {
 	if err := q.asynqServer.Run(q.mux); err != nil {
-		logx.Errorf("asynq taskServer run error: %+v", err)
+		logx.Errorw("[asynq] taskServer run error", logx.Field("err", err))
 		panic(err)
 	}
 }
@@ -103,14 +103,19 @@ func StartAsynqConsumerSpan(ctx context.Context, typename string) (context.Conte
 func LoggingMiddleware(h asynq.Handler) asynq.Handler {
 	return asynq.HandlerFunc(func(ctx context.Context, t *asynq.Task) error {
 		startTime := timex.Now()
-		ctx = logx.ContextWithFields(ctx, logx.Field("type", t.Type()), logx.Field("taskId", t.ResultWriter().TaskID()))
+		payloadSize := FormatPayloadSize(t.Payload())
+		ctx = logx.ContextWithFields(ctx,
+			logx.Field("type", t.Type()),
+			logx.Field("taskId", t.ResultWriter().TaskID()),
+			logx.Field("payloadSize", payloadSize),
+		)
 		err := h.ProcessTask(ctx, t)
 		duration := timex.Since(startTime)
 		if err != nil {
-			logx.WithContext(ctx).WithDuration(duration).Errorf("asynq processing error: %+v", err)
+			logx.WithContext(ctx).WithDuration(duration).Errorf("[asynq] processing error: %+v", err)
 			return err
 		}
-		logx.WithContext(ctx).WithDuration(duration).Debug("asynq processing success")
+		logx.WithContext(ctx).WithDuration(duration).Info("[asynq] processing success")
 		return nil
 	})
 }

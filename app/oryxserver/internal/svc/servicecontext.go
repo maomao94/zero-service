@@ -1,7 +1,6 @@
 package svc
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -45,7 +44,7 @@ type ServiceContext struct {
 	AsynqClient    *asynq.Client
 	AsynqInspector *asynq.Inspector
 	StateStore     *relay.Store
-	DistRelay      *relay.DistributedRelay
+
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -54,7 +53,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Config:        c,
 		FFmpegManager: ffmpegx.NewManager(),
 	}
-	svcCtx.RelayRegistry = relay.NewRelayRegistry(svcCtx.FFmpegManager)
 	// 节点标识：自动生成（broadcast / relay / nacos 共用）
 	uid, err := tool.SimpleUUID()
 	if err != nil {
@@ -62,26 +60,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 	nodeID := "oryx-node-" + uid
 	svcCtx.NodeID = nodeID
-
-	// MQTT 初始化条件：cluster 模式必需，standalone 不依赖
-	if svcCtx.IsBroadcast() && len(c.MqttConfig.Broker) == 0 {
-		logx.Must(fmt.Errorf("relay broadcast is enabled (deployMode=cluster), but mqtt config is empty"))
-	}
-	if svcCtx.IsBroadcast() {
-		svcCtx.relayPrefix = broadcast.Prefix("oryx", "server")
-		ackReplyRouter := broadcast.NewAckReplyRouter(10*time.Second, "mqtt-ack-reply-"+nodeID)
-		cfg := c.MqttConfig.MqttConfig
-		cfg.ClientID = nodeID
-		cfg.Qos = 1
-		svcCtx.MqttClient = mqttx.MustNewClient(cfg, mqttx.WithReplyRouter(
-			broadcast.BroadcastAckTopic(svcCtx.relayPrefix, nodeID), ackReplyRouter))
-		svcCtx.Broadcaster = broadcast.NewBroadcaster(svcCtx.MqttClient, nodeID,
-			broadcast.WithPrefix(svcCtx.relayPrefix))
-		mqtt.NewBroadcast(svcCtx.RelayRegistry).RegisterExecutors(svcCtx.Broadcaster)
-		if err := svcCtx.Broadcaster.AddBroadcastHandler(); err != nil {
-			logx.Must(err)
-		}
-	}
 
 	// 数据库连接（record 生命周期落库）
 	db := gormx.MustOpenWithConf(c.DB)
@@ -102,17 +80,30 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	svcCtx.AsynqServer = asynqx.NewAsynqServerWithQueue(c.Redis.Host, c.Redis.Pass, c.RedisDB, relay.RelayQueue, c.Concurrency)
 	svcCtx.AsynqClient = asynqx.NewAsynqClient(c.Redis.Host, c.Redis.Pass, c.RedisDB)
 	svcCtx.AsynqInspector = asynqx.NewAsynqInspector(c.Redis.Host, c.Redis.Pass, c.RedisDB)
-	// 状态存储 + 分布式协调器
+	// 状态存储 + 分布式协调器（已合并到 RelayRegistry）
 	svcCtx.StateStore = relay.NewStore(svcCtx.RelayRedis)
-	svcCtx.DistRelay = relay.NewDistributedRelay(svcCtx.StateStore, svcCtx.RelayRegistry, nodeID, svcCtx.AsynqClient)
-	// 进程级回调：progress 帧 → 续租；异常退出 → 入队补拉
-	svcCtx.RelayRegistry.SetProgressHandler(func(ctx context.Context, target string) {
-		svcCtx.DistRelay.OnProgress(ctx, target)
-	})
-	svcCtx.RelayRegistry.SetExitHandler(func(ctx context.Context, target string, result ffmpegx.ExitResult) {
-		svcCtx.DistRelay.OnProcessExit(ctx, target, result)
-	})
+	svcCtx.RelayRegistry = relay.NewRelayRegistry(svcCtx.FFmpegManager, svcCtx.StateStore, nodeID, svcCtx.AsynqClient)
 	logx.Infof("relay deps initialized: node_id=%s redis_db=%d queue=%s", nodeID, c.RedisDB, relay.RelayQueue)
+
+	// MQTT 初始化条件：cluster 模式必需，standalone 不依赖
+	if svcCtx.IsBroadcast() && len(c.MqttConfig.Broker) == 0 {
+		logx.Must(fmt.Errorf("relay broadcast is enabled (deployMode=cluster), but mqtt config is empty"))
+	}
+	if svcCtx.IsBroadcast() {
+		svcCtx.relayPrefix = broadcast.Prefix("oryx", "server")
+		ackReplyRouter := broadcast.NewAckReplyRouter(10*time.Second, "mqtt-ack-reply-"+nodeID)
+		cfg := c.MqttConfig.MqttConfig
+		cfg.ClientID = nodeID
+		cfg.Qos = 1
+		svcCtx.MqttClient = mqttx.MustNewClient(cfg, mqttx.WithReplyRouter(
+			broadcast.BroadcastAckTopic(svcCtx.relayPrefix, nodeID), ackReplyRouter))
+		svcCtx.Broadcaster = broadcast.NewBroadcaster(svcCtx.MqttClient, nodeID,
+			broadcast.WithPrefix(svcCtx.relayPrefix))
+		mqtt.NewBroadcast(svcCtx.RelayRegistry).RegisterExecutors(svcCtx.Broadcaster)
+		if err := svcCtx.Broadcaster.AddBroadcastHandler(); err != nil {
+			logx.Must(err)
+		}
+	}
 
 	return svcCtx
 }

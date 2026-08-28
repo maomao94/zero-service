@@ -10,6 +10,7 @@ import (
 	"zero-service/common/tool"
 
 	"zero-service/app/oryxserver/internal/config"
+	"zero-service/app/oryxserver/internal/cron"
 	"zero-service/app/oryxserver/internal/server"
 	"zero-service/app/oryxserver/internal/svc"
 	"zero-service/app/oryxserver/internal/task"
@@ -88,7 +89,13 @@ func main() {
 	relayTaskServer := asynqx.NewTaskServer(ctx.AsynqServer, relayMux)
 	serviceGroup.Add(relayTaskServer)
 
-	// 3. WrapUp：停止全部 FFmpeg 进程，让其拥有完整 GracePeriod 预算
+	// 3. 节点上报：每秒写 Redis（SADD + HSET + EXPIRE）
+	serviceGroup.Add(cron.NewNodeReporter(ctx))
+
+	// 4. 孤儿 relay 扫描：每 30s 扫描 Sorted Set 索引，发现无 lease 的 relay → 补偿
+	serviceGroup.Add(cron.NewRegistryScanner(ctx))
+
+	// 5. WrapUp：停止全部 FFmpeg 进程，让其拥有完整 GracePeriod 预算
 	waitRelayStop := proc.AddWrapUpListener(func() {
 		ctx.RelayRegistry.StopAll()
 		ctx.FFmpegManager.StopAll()

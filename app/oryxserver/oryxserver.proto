@@ -668,6 +668,16 @@ message StopRelayPullReq {
 
 message StopRelayPullRes {}
 
+// 停止中继拉流并结束关联录制请求
+message StopRelayAndRecordingReq {
+  // 目标应用名
+  string app = 1 [json_name = "app"];
+  // 目标流名
+  string stream = 2 [json_name = "stream"];
+}
+
+message StopRelayAndRecordingRes {}
+
 // oryxserver：封装 Oryx HTTP OpenAPI 为 gRPC，供业务服务调用（Java 通过 Nacos 调用）
 service OryxServer {
   // 查询版本信息（GET /terraform/v1/mgmt/versions）
@@ -716,6 +726,8 @@ service OryxServer {
   rpc StartRelayPull (StartRelayPullReq) returns (StartRelayPullRes);
   // 停止中继拉流（按 app+stream 定位；本地未命中且 cluster 模式时 MQTT 广播停止）
   rpc StopRelayPull (StopRelayPullReq) returns (StopRelayPullRes);
+  // 停止中继拉流并结束关联录制（先停止中继流，再查询录制中的记录并逐个结束）
+  rpc StopRelayAndRecording (StopRelayAndRecordingReq) returns (StopRelayAndRecordingRes);
 
   // ===== ⚠️ 内部 Hook（以下 RPC 仅 oryxgtw 调用：gtw 收到 Oryx 回调后落库通道，业务服务请勿调用）=====
   // on_record_begin 回调落库

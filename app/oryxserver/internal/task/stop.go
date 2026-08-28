@@ -24,28 +24,28 @@ func NewStopHandler(svcCtx *svc.ServiceContext) *StopHandler {
 func (h *StopHandler) ProcessTask(ctx context.Context, t *asynq.Task) error {
 	var payload relay.StopPayload
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
-		logx.WithContext(ctx).Errorf("[asynq] unmarshal stop payload: %v", err)
+		logx.WithContext(ctx).Errorf("[asynq-task] 反序列化补停 payload 失败: %v", err)
 		return asynq.SkipRetry
 	}
 	logger := logx.WithContext(ctx).WithFields(
 		logx.Field("taskType", t.Type()),
 		logx.Field("taskId", t.ResultWriter().TaskID()),
-		logx.Field("target", payload.Target),
+		logx.Field("uid", payload.UID),
 		logx.Field("app", payload.App),
 		logx.Field("stream", payload.Stream),
 	)
 	if payload.App == "" || payload.Stream == "" {
-		logger.Error("[asynq] missing app or stream in payload")
+		logger.Error("[asynq-task] payload 缺少 app 或 stream")
 		return asynq.SkipRetry
 	}
 
-	logger.Info("[asynq] stop start")
+	logger.Info("[asynq-task] 补停开始")
 	l := logic.NewStopRelayPullLogic(ctx, h.svcCtx)
 	err := l.StopRelayPullFromAsynq(payload.App, payload.Stream)
 	if err != nil {
-		logger.Errorf("[asynq] stop failed: %v", err)
+		logger.Errorf("[asynq-task] 补停失败: %v", err)
 		return err
 	}
-	logger.Info("[asynq] stop success")
+	logger.Info("[asynq-task] 补停成功")
 	return nil
 }

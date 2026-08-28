@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-4.md`
-- **Total Sessions**: 184
-- **Last Active**: 2026-08-27
+- **Total Sessions**: 186
+- **Last Active**: 2026-08-28
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-4.md` | ~183 | Active |
+| `journal-4.md` | ~231 | Active |
 | `journal-3.md` | ~1989 | Archived |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
@@ -32,6 +32,8 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 186 | 2026-08-28 | Relay UID 统一重构 + 扫描器补偿 + 日志优化 | `739518d0`, `cab3623d`, `532e151f`, `ba66579b`, `27c4be3a` | `master` |
+| 185 | 2026-08-28 | StopRelayAndRecording + relay-merge-distributed | `8d1d1e04`, `815f4c58`, `27258e44` | `master` |
 | 184 | 2026-08-27 | Simplify StartRelay return + logic-layer HasLease check | `cba4cf1e` | `master` |
 | 183 | 2026-08-27 | FFmpeg exit/watch contract simplification | `d0c6a268` | `master` |
 | 182 | 2026-08-27 | Simplify FFmpeg manager lifecycle | `a5d02e40`, `e13be258`, `fb9d0743`, `f0522043`, `0bbb3837` | `master` |

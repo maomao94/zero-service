@@ -25,21 +25,20 @@ type CommandBuilder func(ctx context.Context) (*exec.Cmd, error)
 type StartOption func(*startOptions)
 
 type startOptions struct {
-	onExit   func(ExitResult)
+	onExit   func(id string, result ExitResult)
 	onStdout func(id, line string)
 	onStderr func(id, line string)
 }
 
 // ExitResult reports both the command's wait result and process context state.
 type ExitResult struct {
-	ID         string
 	WaitErr    error
 	ContextErr error
 }
 
 // WithExitHandler returns an option that synchronously invokes fn after
 // process cleanup. The process is no longer registered when fn runs.
-func WithExitHandler(fn func(ExitResult)) StartOption {
+func WithExitHandler(fn func(id string, result ExitResult)) StartOption {
 	return func(options *startOptions) { options.onExit = fn }
 }
 
@@ -276,7 +275,7 @@ func (m *Manager) watchProcess(processCtx context.Context, proc *process, stdout
 		}
 	}
 	if proc.handlers.onExit != nil {
-		proc.handlers.onExit(ExitResult{ID: proc.id, WaitErr: waitErr, ContextErr: contextErr})
+		proc.handlers.onExit(proc.id, ExitResult{WaitErr: waitErr, ContextErr: contextErr})
 	}
 	proc.cancel()
 	close(proc.done)

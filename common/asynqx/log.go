@@ -1,36 +1,33 @@
 package asynqx
 
 import (
-	"github.com/zeromicro/go-zero/core/logx"
+	"fmt"
 	"os"
+
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
+// BaseLogger 实现 asynq.Logger 接口，桥接 asynq 内部日志到 logx
 type BaseLogger struct {
 }
 
-// Debug logs a message at Debug level.
 func (l *BaseLogger) Debug(args ...any) {
-	logx.Debug(args...)
+	logx.Debug("[asynq] " + fmt.Sprint(args...))
 }
 
-// Info logs a message at Info level.
 func (l *BaseLogger) Info(args ...any) {
-	logx.Info(args...)
+	logx.Info("[asynq] " + fmt.Sprint(args...))
 }
 
-// Warn logs a message at Warning level.
 func (l *BaseLogger) Warn(args ...any) {
-	logx.Info(args...)
+	logx.Error("[asynq] " + fmt.Sprint(args...))
 }
 
-// Error logs a message at Error level.
 func (l *BaseLogger) Error(args ...any) {
-	logx.Error(args...)
+	logx.Error("[asynq] " + fmt.Sprint(args...))
 }
 
-// Fatal logs a message at Fatal level
-// and process will exit with status set to 1.
 func (l *BaseLogger) Fatal(args ...any) {
-	l.Error(args...)
+	logx.Error("[asynq] " + fmt.Sprint(args...))
 	os.Exit(1)
 }

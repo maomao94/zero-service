@@ -181,3 +181,51 @@ StartRelay 返回 (string, error)，alreadyRunning 检查移到 Logic 层（HasL
 ### Status
 
 [OK] **Completed**
+
+
+## Session 185: StopRelayAndRecording + relay-merge-distributed
+
+**Date**: 2026-08-28
+**Task**: StopRelayAndRecording + relay-merge-distributed
+**Branch**: `master`
+
+### Summary
+
+Implemented StopRelayAndRecording RPC in oryxserver (proto + logic + spec). Completed relay-merge-distributed task: merged RelayRegistry and DistributedRelay into single struct, removed hook callbacks, updated all callers. All acceptance criteria met.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8d1d1e04` | (see git log) |
+| `815f4c58` | (see git log) |
+| `27258e44` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 186: Relay UID 统一重构 + 扫描器补偿 + 日志优化
+
+**Date**: 2026-08-28
+**Task**: Relay UID 统一重构 + 扫描器补偿 + 日志优化
+**Branch**: `master`
+
+### Summary
+
+1) CanonicalUID 实现 + Redis key 统一为 uid；2) Sorted Set registry 索引；3) scanner pending 最终补偿（PendingStaleThreshold=5min）；4) NodeReporter key 去重；5) 日志前缀规范化（[asynq-task]）+ 全中文；6) spec 更新
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `739518d0` | (see git log) |
+| `cab3623d` | (see git log) |
+| `532e151f` | (see git log) |
+| `ba66579b` | (see git log) |
+| `27c4be3a` | (see git log) |
+
+### Status
+
+[OK] **Completed**

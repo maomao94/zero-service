@@ -111,7 +111,7 @@ func TestManagerOrdinaryCommandDoesNotRequireStdoutPipe(t *testing.T) {
 		cmd.Stdout = errWriter{}
 		return cmd, nil
 	}
-	if err := m.Start(context.Background(), "ordinary", build, WithExitHandler(func(result ExitResult) {
+	if err := m.Start(context.Background(), "ordinary", build, WithExitHandler(func(_ string, result ExitResult) {
 		exit <- result
 	})); err != nil {
 		t.Fatalf("Start: %v", err)
@@ -138,7 +138,7 @@ func TestManagerStdoutHandlerExplicitlyConsumesStdout(t *testing.T) {
 	exit := make(chan struct{}, 1)
 	if err := m.Start(context.Background(), "progress", helperCommand(t, "progress"),
 		WithStdoutHandler(func(_ string, line string) { output <- line }),
-		WithExitHandler(func(ExitResult) { exit <- struct{}{} }),
+		WithExitHandler(func(string, ExitResult) { exit <- struct{}{} }),
 	); err != nil {
 		t.Fatalf("Start: %v", err)
 	}
@@ -161,7 +161,7 @@ func TestManagerImmediateUnexpectedExitCallsPerProcessHandler(t *testing.T) {
 	m := NewManager()
 	exit := make(chan ExitResult, 1)
 	if err := m.Start(context.Background(), "quick", helperCommand(t, "exit-error"),
-		WithExitHandler(func(result ExitResult) { exit <- result })); err != nil {
+		WithExitHandler(func(_ string, result ExitResult) { exit <- result })); err != nil {
 		t.Fatalf("Start: %v", err)
 	}
 	select {
@@ -189,7 +189,7 @@ func TestManagerActiveStopPathsReportContextCancellation(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			exit := make(chan ExitResult, 1)
 			if err := m.Start(ctx, "active", helperCommand(t, "wait"),
-				WithExitHandler(func(result ExitResult) { exit <- result })); err != nil {
+				WithExitHandler(func(_ string, result ExitResult) { exit <- result })); err != nil {
 				t.Fatalf("Start: %v", err)
 			}
 			tt.stop(m, cancel)
@@ -212,7 +212,7 @@ func TestManagerContextTimeoutReportsDeadline(t *testing.T) {
 	defer cancel()
 	exit := make(chan ExitResult, 1)
 	if err := m.Start(ctx, "timeout", helperCommand(t, "wait"),
-		WithExitHandler(func(result ExitResult) { exit <- result })); err != nil {
+		WithExitHandler(func(_ string, result ExitResult) { exit <- result })); err != nil {
 		t.Fatalf("Start: %v", err)
 	}
 	waitUntil(t, StopWaitTimeout, func() bool { return !m.Has("timeout") })
@@ -339,7 +339,7 @@ func TestManagerExitHandlerCanReenterStopAll(t *testing.T) {
 	m := NewManager()
 	done := make(chan struct{})
 	if err := m.Start(context.Background(), "reentrant", helperCommand(t, "stdout"),
-		WithExitHandler(func(ExitResult) {
+		WithExitHandler(func(_ string, _ ExitResult) {
 			if m.Has("reentrant") {
 				t.Error("process remains registered during exit handler")
 			}
@@ -360,7 +360,7 @@ func TestManagerExitHandlerCompletesBeforeDoneCloses(t *testing.T) {
 	entered := make(chan struct{})
 	release := make(chan struct{})
 	if err := m.Start(context.Background(), "sync-exit", helperCommand(t, "delayed-exit"),
-		WithExitHandler(func(ExitResult) {
+		WithExitHandler(func(_ string, _ ExitResult) {
 			close(entered)
 			<-release
 		})); err != nil {
@@ -401,7 +401,7 @@ func TestManagerStdoutHandlerCompletesBeforeProcessCleanup(t *testing.T) {
 			entered.Do(func() { close(enteredCh) })
 			<-release
 		}),
-		WithExitHandler(func(ExitResult) { close(exit) })); err != nil {
+		WithExitHandler(func(string, ExitResult) { close(exit) })); err != nil {
 		t.Fatalf("Start: %v", err)
 	}
 	select {
@@ -430,7 +430,7 @@ func TestManagerBlockedExitHandlerDoesNotBlockDifferentID(t *testing.T) {
 	entered := make(chan struct{})
 	release := make(chan struct{})
 	if err := m.Start(context.Background(), "slow-callback", helperCommand(t, "delayed-exit"),
-		WithExitHandler(func(ExitResult) {
+		WithExitHandler(func(_ string, _ ExitResult) {
 			close(entered)
 			<-release
 		})); err != nil {

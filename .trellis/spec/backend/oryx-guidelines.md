@@ -25,7 +25,7 @@ func (c *Client) SrsSummaries(ctx) (SrsSummariesData, error)   // GET /api/v1/su
 func (c *Client) SrsRequests(ctx) (SrsRequestsData, error)     // GET /api/v1/tests/requests
 ```
 
-- gRPC：`OryxServer` 服务，平台级 17 个 RPC + `RecordList`/`RecordDelete`（本地落库）+ `RecordBeginHook`/`RecordEndHook`（⚠️ 内部钩子，仅 `oryxgtw` 调用）+ `StartRelayPull`/`StopRelayPull`（中继拉流）。
+- gRPC：`OryxServer` 服务，平台级 17 个 RPC + `RecordList`/`RecordDelete`（本地落库）+ `RecordBeginHook`/`RecordEndHook`（⚠️ 内部钩子，仅 `oryxgtw` 调用）+ `StartRelayPull`/`StopRelayPull`（中继拉流）+ `StopRelayAndRecording`（停止中继并结束录制）。
 
 ### Relay Pull（FFmpeg 中继拉流）— 接口与进程契约
 
@@ -37,9 +37,10 @@ message StartRelayPullReq {
   uint64 max_duration_seconds = 6; // 0 不限制；正数为首次启动起的总秒数
 }
 message StartRelayPullRes {
-  string relay_id = 1;     // 对外短标识：MD5(target)；内部进程和 Redis key 均使用明文 target
+  string relay_id = 1;     // 内部 UID：host_port/app/stream（如 127.0.0.1_1935/live/drone_xxx）
   string app = 2;          // 目标应用名（实际使用值）
   string stream = 3;       // 目标流名（自动生成时返回生成值）
+  bool already_running = 4; // 启动前是否已有活跃租约
 }
 message StopRelayPullReq {
   string app = 1;          // 目标应用名
@@ -48,14 +49,15 @@ message StopRelayPullReq {
 message StopRelayPullRes {}
 ```
 
-- **relay_id 与内部身份**：响应 `relay_id = MD5(target)`，只作为调用方短标识；Redis state/lease、Asynq payload、本地 metadata 和 FFmpeg process ID 均直接使用不含鉴权参数的明文 `target`。`relayURL` 仅用于 FFmpeg 输出地址，不能作为状态或租约 key。
+- **relay_id 与内部身份（UID）**：响应 `relay_id = UID`，即 `host_port/app/stream`（如 `127.0.0.1_1935/live/drone_xxx`）。UID 是 relay 系统的唯一身份，用于：内存 `meta` map key、ffmpeg process ID、Redis state/lease/lock key 后缀、Sorted Set member、Asynq reconcile/stop payload。`:` 在 UID 中替换为 `_`。`relayURL` 仅用于 FFmpeg 输出地址，不是身份。`CanonicalUID(target)` 从任意 URL/normalized endpoint 生成 UID；`ParseTarget(uid)` 从 UID 提取 `app`/`stream`。
 
 - **播放地址约定**（业务侧按协议自行拼接，Oryx 无获取播放地址接口）：
   `RTMP: rtmp://<host>:<rtmp_port>/{app}/{stream}`；`HTTP-FLV: http://<host>:<http_port>/{app}/{stream}.flv`；`HLS: http://<host>:<http_port>/{app}/{stream}.m3u8`；`WebRTC: webrtc://<host>:<rtc_port>/{app}/{stream}`。
-- **任务管理**：`RelayRegistry` 只拥有 relay metadata、按 target/app/stream 选择和 relay hooks；`common/ffmpegx.Manager` 是唯一通用进程生命周期 owner。`RelayRegistry.StartRelay(ctx, source, target, relayURL)` 在启动前登记 metadata，通过 `Manager.Start` 的单进程 option 注册 progress/stderr/exit hook；退出时先按 metadata 指针身份清理，再执行业务 hook。
+- **任务管理**：`RelayRegistry` 是唯一的 relay 生命周期管理器（合并了原 `DistributedRelay`），拥有 relay metadata、UID 选择和 relay hooks；`common/ffmpegx.Manager` 是唯一通用进程生命周期 owner。`RelayRegistry.StartRelay(ctx, source, target, relayURL)` 内部从 `target` 生成 UID，登记 metadata，通过 `Manager.Start(uid, ...)` 注册 progress/stderr/exit hook；退出时先按 UID 指针身份清理，再执行业务 hook。`startLocalRelay(ctx, source, uid, relayURL)` 不再接受 target 参数，直接用 UID 作为进程 ID 和 metadata key。
 - **退出与输出**：`Manager.Start` 重复 target 返回可 `errors.Is` 为 `ffmpegx.ErrProcessExists` 的错误，不替换旧进程；exit hook 接收 `ExitResult{ID, WaitErr, ContextErr}`，自然退出、cancel、Stop、deadline 均回调。relay 通过 `WithStdoutHandler` 逐行解析 FFmpeg `key=value`，仅完整报告的 `progress=continue` 续租；通过 `WithStderrHandler` 逐行处理 FFmpeg 日志。两个 pipe 必须并发消费，`ffmpegx` 不保存 progress 或 stderr 状态。
-- **最大运行时长**：`max_duration_seconds=0` 表示无限；正数转换为从首次 Start 起的绝对 `deadline_at_unix` 并保存到 `RelayState`。Reconcile 使用剩余时间创建 deadline context，不重置完整时长；deadline 退出删除 state/lease 且不补拉，流异常且未到 deadline 才释放租约并入队补拉。
-- **FFmpeg 命令**：`BuildRelayCmd(ctx, source, target) *exec.Cmd` 只构造 `ffmpeg -progress pipe:1 -stats_period 5 -i <source> -c copy -f flv <relayURL>`，不返回 error，也不使用 `bytes.Buffer` 保留 stderr。Start 配置 stdout/stderr handler 才由 Manager 创建和并发消费相应 pipe；无 handler 时 Manager 不碰对应流，也不解析命令参数。`progress=continue/end` 表示收到完整状态报告，不等同于业务流一定健康。
+- **最大运行时长**：`max_duration_seconds=0` 时默认 1 天（`defaultRelayDuration = 24 * time.Hour`），不设无限；正数转换为从首次 Start 起的绝对 `deadline_at_unix` 并保存到 `RelayState`。Reconcile 使用剩余时间创建 deadline context，不重置完整时长；deadline 退出删除 state/lease 且不补拉，流异常且未到 deadline 才释放租约并入队补拉。
+- **State TTL**：`SaveState` 动态计算 TTL = deadline 剩余时长 + 1 天兜底（`stateTTLOverhead`）；deadline=0 时 TTL = 默认时长 + 1 天。防止进程崩溃后 key 永久残留，同时不提前过期（2 天中继 → TTL ≈ 3 天）。
+- **FFmpeg 命令**：`BuildRelayCmd(ctx, source, target) *exec.Cmd` 构造 `ffmpeg -progress pipe:1 -stats_period 5 -rw_timeout 10000000 -i <source> -c copy -f flv <relayURL>`，不返回 error，也不使用 `bytes.Buffer` 保留 stderr。`-rw_timeout 10000000`（10 秒 socket 读写超时）对所有网络协议（RTMP/RTSP/HTTP/HLS）生效，源流不存在时 ffmpeg 在 10 秒后自动退出。Start 配置 stdout/stderr handler 才由 Manager 创建和并发消费相应 pipe；无 handler 时 Manager 不碰对应流，也不解析命令参数。`progress=continue/end` 表示收到完整状态报告，不等同于业务流一定健康。
 - **鉴权查询参数在 target 尾部**：`authQuery`（`?secret=xxx` / `?sign=md5(pushkey)`）由 `buildAuthQuery` 拼在**整个 target URL 后**（`target += "?" + authQuery`），最终命令为 `-f flv rtmp://<srs>/<app>/<stream>?secret=...`。SRS/Oryx 用 `?secret=`、WVP/ZLM 用 `?sign=`，authStyle 配置切换。
 - **进程生命周期契约**（服务退场必须停掉 ffmpeg，否则孤儿进程继续推流）：
   - `Manager.Start(ctx, id, builder, options...)` 使用 `context.WithCancel` 派生 process context/cancel，不自动脱离父 context；Start 成功后 watcher 唯一调用一次 `Wait()`。父 context 取消、Stop、StopAll 和 deadline 都同步调用 exit hook；业务层通过 `ExitResult.ContextErr` 与自身 metadata 身份判断后续动作。重复 ID 返回 `ErrProcessExists`，不支持隐式 replacement。
@@ -67,7 +69,7 @@ message StopRelayPullRes {}
 - **鉴权配置**：`RelayConfig.SecretKey`（默认 `secret`）和 `RelayConfig.SecretValue`（无默认值）；请求未指定时 fallback 到配置值。`buildAuthQuery(key, value)` 拼 `?key=value`，任一为空则不拼。最终 ffmpeg 推流地址 = `rtmp://<srs>/<app>/<stream>?<SecretKey>=<SecretValue>`。
 - **Asynq 任务保留**：`EnqueueReconcile`/`EnqueueStop` 均设置 `asynq.Retention(7*24*time.Hour)`，完成后保留 7 天供排查。
 - **分布式停止（cluster 可选）**：本地未命中 → 经 `common/mqttx/broadcast` 广播（prefix `oryx/server`，topic `oryx/server/broadcast`，reply `oryx/server/broadcast_reply/{instanceId}`，`BroadcastReply` 默认 TTL 10s）；仅**持有任务的节点**回 ack（成功/失败都回），其余节点返回 `broadcast.ErrSkipAck` 保持沉默（避免假成功）；忽略自环（`AckTopic == 本机 reply topic`）。payload 对齐 **ieccaller 模式**：发送端 `protojson.Marshal(StopRelayPullReq)`，executor 侧 `protojson.Unmarshal` 后本地 `StopPull`，返回 `protojson.Marshal(StopRelayPullRes)`。method 键**直接用 gRPC 生成常量** `oryxserver.OryxServer_StopRelayPull_FullMethodName`（不自建字符串常量，避免与生成物漂移）。**注意**：executor 内切勿调用带「未命中再广播」分支的 `StopRelayPullLogic`，否则集群消息风暴；只在 executor 内做本地动作（对齐 ieccaller 注入最小依赖而非 ServiceContext）。
-- **重复 ID + 并发安全**：明文 `target` 是本地 process 和 metadata 唯一键。`RelayRegistry.lifecycleMu` 串行化同 target 生命周期；启动已有 target 是幂等 no-op，直接使用 `Manager.Start` 的业务调用遇到重复 ID 必须处理 `ErrProcessExists`，并由业务显式 Stop 后再 Start。Manager 和 RelayRegistry 清理时都校验对象指针身份，旧 watcher 不得删除后继。Manager 的 `RWMutex` 只保护 process map，builder、Start、cancel、Wait、日志和同步 callback 在锁外执行；不同 ID 不由全局生命周期锁串行化。
+- **UID + 并发安全**：UID（`host_port/app/stream`）是本地 process 和 metadata 唯一键。`RelayRegistry.lifecycleMu` 串行化同 UID 生命周期；启动已有 UID 是幂等 no-op，直接使用 `Manager.Start` 的业务调用遇到重复 ID 必须处理 `ErrProcessExists`，并由业务显式 Stop 后再 Start。Manager 和 RelayRegistry 清理时都校验对象指针身份，旧 watcher 不得删除后继。Manager 的 `RWMutex` 只保护 process map，builder、Start、cancel、Wait、日志和同步 callback 在锁外执行；不同 UID 不由全局生命周期锁串行化。
 - **服务退场用 `AddWrapUpListener` 而非 `AddShutdownListener`**：oryxserver 自管 ffmpeg，停拉流属「停止产出」，应在收到信号第一时间（wrap-up）执行，拥有完整 `GracePeriod` 预算，且先于 grpc 排水（grpc 的 `GracefulStop` 在 shutdown 阶段）停掉流量产出；`main` 必须 `defer` 返回的 `waitForCalled`。
 - **单节点（standalone）行为**：零 MQTT 依赖；`StopRelayPull` 未命中本地任务 → 明确错误「任务不在当前节点」，不 panic。
 
@@ -90,18 +92,25 @@ message StopRelayPullRes {}
 
 ### Relay 分布式协调契约
 
-#### NormalizeTarget / ParseTarget
+#### CanonicalUID / NormalizeTarget / ParseTarget
 
 ```go
+// CanonicalUID: "rtmp://127.0.0.1:1935/live/stream?secret=abc" → "127.0.0.1_1935/live/stream", nil
+// CanonicalUID: "127.0.0.1_1935/live/stream" → "127.0.0.1_1935/live/stream", nil
+// CanonicalUID: "rtmp://host/live" → "", error (path 必须两段)
+func CanonicalUID(target string) (string, error)
+
 // NormalizeTarget: "rtmp://host:1935/live/stream?secret=abc" → "host:1935/live/stream"
-// ParseTarget: 从 normalized key 解析 app 和 stream，严格两段校验
 func NormalizeTarget(target string) string
+
+// ParseTarget: 从 UID 或 normalized key 解析 app 和 stream，严格两段校验
 func ParseTarget(target string) (app, stream string, err error)
 ```
 
+- `CanonicalUID` 是 relay 系统的唯一身份生成函数，所有入口必须调用。
 - `ParseTarget` 校验：path 必须恰好 `/{app}/{stream}` 两段，多段（`a/b/c`）、空 app/stream、app 或 stream 含 `/` 均报错。
-- `StartRelay`/`StopRelay`/`HasTarget` 入口统一调 `NormalizeTarget`，调用方可传完整 URL。
-- target key = `host:port/app/stream`（scheme 无关），防止 `http://` 和 `rtmp://` 被当作两个不同 relay。
+- UID = `host_port/app/stream`（`:` → `_`），用于 Redis key、内存 map、ffmpeg ID、Asynq payload。
+- `NormalizeTarget` 保留为中间步骤（`CanonicalUID` 内部调用），不直接用于身份。
 
 #### 分布式锁 + 广播顺序
 
@@ -131,7 +140,9 @@ lock.Release()           // 必须用 Release()，不用 ReleaseCtx(ctx)
 ```
 gRPC StopRelayPull
   → stopRelayPullOnce（核心逻辑）
-      → 检查存在 → 拿锁 → 删状态 → 停本地 → 释放锁 → 广播
+      → 检查存在（本地 HasTarget + Redis GetState）
+      → 委托 StopRelay（锁 → 删状态 → 停本地）
+      → 本地未命中 + cluster → 广播
   → 失败 → EnqueueStop（Asynq 补停）
 
 Asynq StopHandler
@@ -140,57 +151,155 @@ Asynq StopHandler
 ```
 
 - `StopRelayPullLogic.stopRelayPullOnce` 是核心逻辑（不入队），`StopRelayPull`（gRPC）和 `StopRelayPullFromAsynq`（Asynq）分别包装。
+- `stopRelayPullOnce` 内部委托 `RelayRegistry.StopRelay` 完成锁+清理+停止，不再自己获取分布式锁（避免双重锁死锁）。
 - MQTT executor 只做本地 `StopRelayByAppStream`，不调用 `StopRelayPullLogic`（避免集群消息风暴）。
+
+#### StopRelayAndRecording 流程
+
+```protobuf
+message StopRelayAndRecordingReq {
+  string app = 1 [json_name = "app"];
+  string stream = 2 [json_name = "stream"];
+}
+message StopRelayAndRecordingRes {}
+```
+
+```go
+func (l *StopRelayAndRecordingLogic) StopRelayAndRecording(in *oryxserver.StopRelayAndRecordingReq) (*oryxserver.StopRelayAndRecordingRes, error) {
+    // 1. 复用 StopRelayPullLogic 停止中继流
+    stopLogic := NewStopRelayPullLogic(l.ctx, l.svcCtx)
+    stopLogic.StopRelayPull(&oryxserver.StopRelayPullReq{App: app, Stream: stream})
+
+    // 2. 查询录制中的记录（status=1）
+    var records []gormmodel.Record
+    db.Where("app = ? AND stream = ? AND status = ?", app, stream, gormmodel.RecordStatusRecording).Find(&records)
+
+    // 3. 逐个结束录制（容错，单个失败不影响其他）
+    for _, record := range records {
+        if err := l.svcCtx.OryxClient.RecordEnd(l.ctx, record.UUID); err != nil {
+            // "no record task" 错误视为幂等成功
+            if oe, ok := oryxx.IsOryxError(err); ok && oe.Code == 500 &&
+                strings.Contains(oe.Message, "no record task") {
+                continue
+            }
+            l.Errorf("RecordEnd failed: uuid=%s, err=%v", record.UUID, err)
+        }
+    }
+}
+```
+
+- **业务场景**：停止中继流时，同时结束关联的录制任务
+- **幂等性**：
+  - `StopRelayPull` 已支持幂等（重复调用安全）
+  - `RecordEnd` 对 "no record task" 错误视为幂等成功（Oryx 返回 500 + "no record task for uuid=..."）
+- **容错**：单个录制停止失败不影响其他录制的停止
+- **复用**：内部复用 `StopRelayPullLogic`，不重复实现分布式停止逻辑
 
 #### 命名规范
 
 ```go
-// 组件
-type RelayRegistry struct { ... }      // 本地进程 + metadata 管理（旧名 PullRegistry）
-type DistributedRelay struct { ... }   // 分布式协调器
-
-// DistributedRelay 方法
-func (d *DistributedRelay) StartRelay(ctx, source, target, relayURL, maxDuration) (string, error)
-func (d *DistributedRelay) StopRelay(ctx, target) bool
-func (d *DistributedRelay) Reconcile(ctx, target) error
+// 组件（已合并：RelayRegistry + DistributedRelay → 单一 RelayRegistry）
+type RelayRegistry struct { ... }      // 本地进程 + metadata + 分布式协调（Redis state/lease + Asynq）
 
 // RelayRegistry 方法
-func (r *RelayRegistry) StartRelay(ctx, source, target, relayURL, maxDuration) error
-func (r *RelayRegistry) StopRelay(target) bool
+func (r *RelayRegistry) StartRelay(ctx, source, target, relayURL, maxDuration) (string, error)
+func (r *RelayRegistry) StopRelay(ctx, target) bool
 func (r *RelayRegistry) StopRelayByAppStream(app, stream) bool
+func (r *RelayRegistry) StopAll()
+func (r *RelayRegistry) HasTarget(target) bool
+func (r *RelayRegistry) Reconcile(ctx, target, source, retryCount) error
+func (r *RelayRegistry) EnqueueReconcile(ctx, target, source, retryCount) error
+func (r *RelayRegistry) EnqueueStop(ctx, target, app, stream) error
 
 // ServiceContext
-svcCtx.RelayRegistry   // *relay.RelayRegistry（旧名 RelayPulls）
-svcCtx.DistRelay       // *relay.DistributedRelay
+svcCtx.RelayRegistry   // *relay.RelayRegistry（合并后唯一字段，无 DistRelay）
+```
+
+#### 内部回调（可测试覆盖）
+
+```go
+// onProgressFunc: ffmpeg stdout progress=continue 时触发续租
+// onProcessExitFunc: ffmpeg 进程退出时触发清理/补拉
+// 测试中可覆盖为 mock 函数
+r.onProgressFunc = r.defaultOnProgress
+r.onProcessExitFunc = r.defaultOnProcessExit
+```
+
+#### ffmpegx.WithExitHandler 签名
+
+```go
+// 回调签名：func(id string, result ExitResult)
+// id = process ID（即 target），result 只含 WaitErr + ContextErr（无 ID 字段）
+ffmpegx.WithExitHandler(func(id string, result ffmpegx.ExitResult) { ... })
 ```
 
 #### StartRelay 状态写入顺序
 
 ```go
 // 正确：先检查租约，再写状态
-lock → HasLease → SaveState → TryClaim → StartRelay
+lock → HasLease → [租约存在则报错] → 检查 source 冲突 → SaveState → TryClaim → StartRelay
 
 // 错误：先写状态，再检查租约（会覆盖运行中 relay 的状态）
 lock → SaveState → HasLease → TryClaim → StartRelay
 ```
 
-- **HasLease 必须在 SaveState 之前**——有租约说明已有节点在跑，直接返回，不覆盖已有状态。
+- **HasLease 必须在 SaveState 之前**——有租约说明已有节点在跑，直接返回错误，业务侧自行决定停止。
+- **source 冲突检查**——state 已存在且 source 不同时返回错误，防止覆盖运行中 relay 的源地址。
 - 覆盖运行中 relay 的状态会导致 Reconcile 读到错误的 source/relayURL，重启后参数不对。
 
 #### RelayState 结构
 
 ```go
 type RelayState struct {
-    Source         string `json:"source"`
-    Target         string `json:"target"`
-    RelayURL       string `json:"relay_url"`
-    DeadlineAtUnix int64  `json:"deadline_at_unix,omitempty"`
-    DeadlineAtStr  string `json:"deadline_at_str,omitempty"` // yyyy-MM-dd HH:mm:ss
+    UID              string `json:"uid"`                          // 唯一标识：host_port/app/stream
+    Host             string `json:"host,omitempty"`               // SRS 主机地址
+    Port             int    `json:"port,omitempty"`               // SRS RTMP 端口
+    App              string `json:"app,omitempty"`                // 目标应用名
+    Stream           string `json:"stream,omitempty"`             // 目标流名
+    Source           string `json:"source"`                       // 源流地址
+    RelayURL         string `json:"relay_url"`                    // 完整推流地址（含鉴权参数，ffmpeg 用）
+    DeadlineAtUnix   int64  `json:"deadline_at_unix,omitempty"`
+    DeadlineAtStr    string `json:"deadline_at_str,omitempty"`    // yyyy-MM-dd HH:mm:ss
+    CreatedAtStr     string `json:"created_at_str,omitempty"`     // yyyy-MM-dd HH:mm:ss
+    RetryCount       int    `json:"retry_count,omitempty"`        // 当前补拉重试次数（仅供运维观察）
+    PendingReconcile bool   `json:"pending_reconcile,omitempty"`  // 防扫描器重复入队
+}
+
+type ReconcilePayload struct {
+    UID        string `json:"uid"`
+    Source     string `json:"source,omitempty"`
+    RetryCount int    `json:"retry_count,omitempty"`
+}
+
+type StopPayload struct {
+    UID    string `json:"uid"`
+    App    string `json:"app"`
+    Stream string `json:"stream"`
 }
 ```
 
 - `DeadlineAtStr` 为可视化字段，用 `carbonx.FormatDateTime(time.Unix(deadline, 0))` 填充。
 - `deadline_at_unix=0` 表示不限时长，此时 `deadline_at_str` 为空。
+- `RetryCount` 由 `releaseAndRetry` 递增，超过 `maxReconcileRetries`(10) 则清理 state/lease。
+- `ReconcilePayload.SourceURL` 用于 source 校验：task 的 source 与 state 不一致时跳过（说明已被新请求覆盖）。
+- `PendingReconcile` 防扫描器重复入队：`releaseAndRetry` 和扫描器入队前置 true，`Reconcile` 成功后清 false，`cleanupTarget` 删 state 自然清除。
+
+#### Relay 索引（Sorted Set）
+
+```
+relay:registry (Sorted Set)  // score = 最后更新时间（Unix 秒），member = hashKey(target)
+```
+
+- **启动 relay**：`ZADD relay:registry <now> hashKey(target)`（AddToRegistry，幂等）
+- **进度回调（每 5s）**：`ZADD relay:registry <now> hashKey(target)`（RenewRegistry，与续租同步）
+- **停止 relay**：`ZREM relay:registry hashKey(target)`（RemoveFromRegistry）
+- **扫描器（每 30s）**：`ZRANGEBYSCORE relay:registry 0 <now-60>` 取过期条目（O(log N + M)）
+  - 有 lease → 跳过（刷新 score）
+  - 无 lease + pending=true → 通常跳过；**但如果 score 超过 `PendingStaleThreshold`（5min）说明 Asynq 任务可能丢失** → 重置 `pending=false` + SaveState → 下面的入队逻辑重新 EnqueueReconcile
+  - 无 lease + !pending → 置 pending=true → EnqueueReconcile
+  - `ScanStale` 返回 `[]*StaleEntry`（`State` + `Score`），Score = Sorted Set score（Unix 秒，最后 RenewRegistry 时间）
+- **state 删除时**：`cleanupTarget` 同时 `ZREM` 清理索引
+- **过期条目清理**：`ScanStale` 读 state 时发现已删除（redis.Nil）→ 自动 `ZREM`
 
 ## 4. Validation & Error Matrix
 
@@ -203,15 +312,20 @@ type RelayState struct {
 | `postProcess != "post-cp-file"` | Oryx 返回 "invalid post process"（默认 500） |
 | `record/end` 指向非 live 任务 / `record/remove` uuid 不存在 | Oryx 500 错误（正常业务错误，不可重试语义按调用方处理） |
 | `StartRelayPull` 缺 source_url | gRPC error `extproto.Code__1_01_PARAM_MISSING` |
+| `StartRelayPull` app/stream 含 `/` | gRPC error `extproto.Code__1_01_PARAM_MISSING` |
+| `StartRelayPull` target 已有租约 | 返回 error `target already has active lease`，业务侧自行决定停止 |
+| `StartRelayPull` target 已存在但 source 不同 | 返回 error `target already exists with different source` |
+| `Reconcile` task source 与 state source 不一致 | 释放租约 + skip（return nil），**不改 state**（避免覆盖新请求的状态） |
 | `StopRelayPull` 缺 app/stream | gRPC error `extproto.Code__1_01_PARAM_MISSING` |
 | `StopRelayPull` 本地未命中且非 cluster | 返回成功（幂等）；cluster 模式广播停止 |
-| `ParseTarget` 无效 target（多段/空 app/stream） | `StartRelay` 返回 error，拒绝启动 |
+| `StopRelayAndRecording` `RecordEnd` 返回 "no record task" | 视为幂等成功，继续处理下一个 UUID |
+| `CanonicalUID` 无效 target（无 path / 多段 / 空 app/stream） | `StartRelay`/`StopRelayPull` 返回 error |
 | 分布式锁获取失败 | `Start`/`Stop` 返回 error |
 | 分布式锁被其他节点持有 | `Start`/`Stop` 跳过（返回成功/nil） |
 | FFmpeg 拉流失败/流断开 | watcher 清理 process 与 relay metadata，调用 exit hook 释放租约并入队补拉；RPC 启动成功后不再同步返回运行期错误 |
 | 同一 `(app,stream)` 二次推流（并发） | 新任务 ffmpeg 立即退出：`Error opening output ... Input/output error` + `exit status 251`（SRS 拒绝新连接，见"SRS 重复推流行为"）；旧任务存活 |
 | 服务退场（SIGTERM/SIGINT） | `AddWrapUpListener` 依次执行 `RelayRegistry.StopAll()` 与 `FFmpegManager.StopAll()`，有界等待子进程 Wait 完成后退场 |
-| 服务被 `kill -9`/崩溃 | 无 cleanup 可跑，ffmpeg 成孤儿继续推流；容器部署由 cgroup 兜底（进程随容器死）；裸进程需 PDEATHSIG/编排兜底 |
+| 服务被 `kill -9`/崩溃 | 无 cleanup 可跑，ffmpeg 成孤儿继续推流；容器部署由 cgroup 兜底（进程随容器死）；裸进程需 PDEATHSIG/编排兜底。**RegistryScanner 兜底**：Sorted Set 索引 score 停更 → 60s 后被 `ZRANGEBYSCORE` 扫到 → 无 lease + !pending → 入队 Reconcile 补偿 |
 
 ## 5. Good/Base/Bad Cases
 
@@ -278,15 +392,31 @@ logx.WithContext(ctx).Infof("compiled command: ffmpeg %s", strings.Join(cmd.Args
 - cluster 广播停止时非 owner 节点回 ack 表示"未找到"当作失败——应只让 owner 节点回 ack，其余保持沉默，否则首个错误 ack 会造成假失败。
 - **分布式锁释放用 `lock.Release()` 而非 `lock.ReleaseCtx(ctx)`**——请求 ctx 超时后 `ReleaseCtx(ctx)` 会失败，锁只能等 TTL 过期。`Release()` 内部用 `context.Background()`，永远安全。trigger 和 oryxserver 均适用。
 - **广播前必须释放分布式锁**——广播接收方需要拿锁才能执行本地操作（如 StopPull），发送方持有锁会导致接收方拿不到锁而跳过。正确顺序：拿锁 → 删状态 → 停本地 → **释放锁** → 广播。
+- **扫描器 pending 最终补偿**——`PendingReconcile=true` 的条目通常跳过，但 `ScanStale` 返回的 `StaleEntry.Score`（Sorted Set score，Unix 秒）如果超过 `PendingStaleThreshold`（5min），说明 Asynq 任务可能丢失（worker 崩溃、任务过期）。此时重置 `pending=false` + SaveState → 入队逻辑重新 EnqueueReconcile。防止 relay 永久卡死在 `pending=true` 状态。
+- **Sorted Set 索引必须与 state 同步维护**——启动时 `AddToRegistry`、停止时 `RemoveFromRegistry`、progress 时 `RenewRegistry`、cleanupTarget 时 `RemoveFromRegistry`。漏掉任何一个都会导致扫描器误判或索引残留。
+- **Reconcile source mismatch 不改 state**——source 不一致说明已被新 StartRelay 覆盖，只释放租约 + skip。不清 pending、不 SaveState，避免覆盖新请求的状态。新请求的 state 由新请求自己的 reconcile 任务或 scanner 处理。
+- **`-rw_timeout` 而非 `-timeout`**——ffmpeg 的 `-timeout` 对 RTMP 不生效，`-rw_timeout`（socket 读写超时）对所有网络协议有效。源流不存在时 ffmpeg 会无限等待，必须加此参数。
 - **Asynq TaskID 策略**：幂等去重任务（如 Reconcile）用固定 TaskID 防重复入队；需要重试的任务（如 Stop 广播）用 Asynq 自动生成 TaskID，允许重复入队。误用固定 TaskID 会导致重试入队被 `ErrDuplicateTask` 拒绝。
 - **补偿任务类型与业务场景必须匹配**——补停用 `RelayStopTask`（广播停止），补拉用 `RelayReconcileTask`（读状态+启动）。混用会导致语义错误（如广播超时后入队 reconcile，但 state 已删，reconcile 变空操作）。
 - **MQTT 广播超时不能假设目标已停止**——超时可能是 MQTT 本身的问题（网络、broker），应重试而非放弃。
+- **StopRelayAndRecording 中 RecordEnd 失败应继续处理**——单个录制停止失败不应阻塞其他录制的停止，"no record task" 错误（Oryx 500）视为幂等成功。
 - **Config 字段名必须与 YAML key 一致**——struct 的 `json` tag 决定 YAML 解析的 key。`DefaultSecretKey`/`DefaultSecretValue` 配 YAML 的 `DefaultSecret` 会导致值为空（go-zero 静默忽略不匹配的 key）。正确做法：struct 字段名 = YAML key，如 `SecretKey`/`SecretValue`。
 - **Asynq 任务必须设 Retention**——不设 Retention 的任务完成后立即删除，无法排查。统一用 `asynq.Retention(7*24*time.Hour)` 保留 7 天。
+- **handleExit 必须校验 metadata 指针身份**——用 `deleteMeta(uid)` 只检查 key 存在，旧进程退出会误删新进程的 metadata。必须 `r.meta[uid] != md` 校验指针一致后才删除。
+- **用 UID 不用 target**——relay 系统中不存在 "target" 概念。所有身份操作（meta map key、ffmpeg ID、Redis key、Asynq payload）统一使用 `CanonicalUID` 生成的 `host_port/app/stream`。`StartRelay` 接受外部输入 target URL，内部转 UID；`startLocalRelay` 直接接受 UID。
+- **StartRelay 租约存在应报错而非强制重启**——强制停旧进程再重启会导致进程错乱（旧进程的 exit 回调清理新进程的 metadata）。应返回 error，业务侧自行决定停止。
+- **Reconcile 必须校验 source 一致性**——task 的 source 与 state 的 source 不一致说明已被新请求覆盖，应 skip 避免重复启动。
+- **handleStderr 应白名单过滤**——ffmpeg 所有非媒体数据写 stderr（banner、metadata、stream info、错误）。应只保留含 error/warning/cannot/failed/fatal/denied/timeout 的行。
+- **ffmpegx.ExitResult 无 ID 字段**——`WithExitHandler` 签名为 `func(id string, result ExitResult)`，id 作为独立参数传入，ExitResult 只含 WaitErr + ContextErr。
+- **日志前缀规范**——`[relay]`（relay 生命周期）、`[asynq-task]`（Asynq 任务消费/入队）、`[ffmpegx]`（进程管理）、`[registry-scanner]`（孤儿扫描）、`[node-reporter]`（节点上报）。不能用 `[asynq]`，与基础包 `asynqx` 前缀冲突。日志消息统一用中文，便于中文用户排查。
 
 ## 依据
 
 - Oryx 源码：`ossrs/oryx`（`platform/service.go`、`platform/dvr-local-disk.go`、`platform/callback.go`、`platform/utils.go`、`platform/trancode.go`）
 - SRS 源码：`ossrs/srs 6.0release`（`srs_app_http_api.cpp`、`srs_app_statistic.cpp`、`srs_app_server.cpp`）
-- 项目内：`common/oryxx/oryx.go`、`common/oryxx/srs.go`、`common/oryxx/oryxtype.go`、`common/ffmpegx/process.go`、`app/oryxserver/oryxserver.proto`、`app/oryxserver/internal/relay/registry.go`、`app/oryxserver/internal/relay/distributed.go`
+- 项目内：`common/oryxx/oryx.go`、`common/oryxx/srs.go`、`common/oryxx/oryxtype.go`、`common/ffmpegx/process.go`、`app/oryxserver/oryxserver.proto`、`app/oryxserver/internal/relay/registry.go`、`app/oryxserver/internal/relay/state.go`
+- 节点上报：`app/oryxserver/internal/cron/node_reporter.go`（每秒 SADD `oryx:nodes` + HSET `oryx:node:{短ID}` + EXPIRE 5s；短ID = nodeID 去掉 `oryx-node-` 前缀，避免 `oryx:node:oryx-node-xxx` 重复前缀）
+- 孤儿扫描：`app/oryxserver/internal/cron/registry_scanner.go`（每 30s ZRANGEBYSCORE 扫描 Sorted Set，per-UID 分布式锁内重新读取 state，先入队再更新 pending）
+- UID 工具：`common/tool/jitter.go`（`JitterDelay(base, max)`，补拉随机延迟）
+- 孤儿扫描：`app/oryxserver/internal/cron/registry_scanner.go`（每 30s ZRANGEBYSCORE 扫描 Sorted Set 索引，发现无 lease 的 relay → EnqueueReconcile 补偿）
 - 研究归档：`.trellis/tasks/08-24-oryx-hook-proxy/research/`、`.trellis/tasks/08-25-stream-relay/research/oryx-relay-transcode.md`
