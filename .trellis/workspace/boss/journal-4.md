@@ -251,3 +251,25 @@ Implemented StopRelayAndRecording RPC in oryxserver (proto + logic + spec). Comp
 ### Status
 
 [OK] **Completed**
+
+
+## Session 188: Relay UUID + app:stream key 重构
+
+**Date**: 2026-08-31
+**Task**: Relay UUID + app:stream key 重构
+**Branch**: `master`
+
+### Summary
+
+完成中继系统重构：Redis key 从 host_port/app/stream 改为 app:stream 格式，引入 UUID 作为中继会话标识防止 Asynq 回调误操作。更新 state.go、registry.go、logic 层、task 层、cron 扫描器，同步更新 oryx-guidelines.md 和 concurrency-guidelines.md 规格文档。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f938522f` | (see git log) |
+| `7f958da3` | (see git log) |
+
+### Status
+
+[OK] **Completed**
