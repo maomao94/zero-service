@@ -55,6 +55,51 @@
 - 在 TaskServer handler 中 panic 而不返回 error（asynq 依赖 error 决定重试）。
 - SchedulerServer 注册的 cron 任务没有 `Retention` 配置（任务过期被清理）。
 - 绕过 `LoggingMiddleware` 直接注册 handler（丢失统一日志）。
+- **Asynq handler 创建局部 logger 但不注入 context**——下游函数用 `logx.WithContext(ctx)` 时丢失业务字段（taskId、app、stream 等），导致日志无法关联同一任务。
+
+### Asynq Handler Context 字段传播
+
+**问题**：asynqx 自动注入 `type/taskId/payloadSize` 到 context，但业务 handler 解析 payload 后的字段（app、stream、uuid 等）只在局部 logger 中，传给下游的原始 ctx 丢失这些字段。
+
+**模式**：在 Asynq handler 入口处，解析 payload 后立即用 `logx.ContextWithFields` 将业务字段注入 context，下游所有 `logx.WithContext(ctx)` 自动携带。
+
+```go
+// Correct: 解析 payload 后注入 context
+func (h *Handler) ProcessTask(ctx context.Context, t *asynq.Task) error {
+    var payload SomePayload
+    if err := json.Unmarshal(t.Payload(), &payload); err != nil {
+        return err
+    }
+
+    // 将业务字段注入 context，下游日志自动携带
+    ctx = logx.ContextWithFields(ctx,
+        logx.Field("app", payload.App),
+        logx.Field("stream", payload.Stream),
+        logx.Field("uuid", payload.UUID),
+    )
+
+    // 下游函数用 logx.WithContext(ctx) 即可，无需手动传递字段
+    return h.svcCtx.SomeService.DoSomething(ctx, payload)
+}
+
+// Wrong: 创建局部 logger 但不注入 context
+func (h *Handler) ProcessTask(ctx context.Context, t *asynq.Task) error {
+    var payload SomePayload
+    json.Unmarshal(t.Payload(), &payload)
+
+    logger := logx.WithContext(ctx).WithFields(
+        logx.Field("app", payload.App),
+    )
+    logger.Info("开始处理")  // 有 app
+
+    // 下游丢失 app 字段
+    return h.svcCtx.SomeService.DoSomething(ctx, payload)
+}
+```
+
+**Why**：asynqx 的 `StartAsynqConsumerSpan` 通过 `logx.ContextWithFields` 注入 `type/taskId/payloadSize`，这些字段贯穿整个 context 生命周期。业务字段应采用相同模式，确保同一任务的所有日志可通过 taskId 或业务 ID 关联检索。
+
+依据：`common/asynqx/asynqTaskServer.go:107`（context 字段注入）、`app/oryxserver/internal/task/reconcile.go`（业务字段注入示例）。
 
 ## 生命周期与错误
 

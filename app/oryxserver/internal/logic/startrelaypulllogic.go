@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"strings"
 
-	"zero-service/app/oryxserver/internal/relay"
 	"zero-service/app/oryxserver/internal/svc"
 	"zero-service/app/oryxserver/oryxserver"
 	"zero-service/common/tool"
@@ -43,12 +42,18 @@ func (l *StartRelayPullLogic) StartRelayPull(in *oryxserver.StartRelayPullReq) (
 		}
 		stream = genStream
 	}
-	// 校验 app/stream 合法性（不能含 /，确保后续 UID 和 state key 正确）
+	// 校验 app/stream 合法性（不能含 /，确保后续 key 正确）
 	if strings.Contains(app, "/") {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "app 不能包含 /")
 	}
 	if strings.Contains(stream, "/") {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "stream 不能包含 /")
+	}
+	if strings.Contains(app, ":") {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "app 不能包含 :")
+	}
+	if strings.Contains(stream, ":") {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "stream 不能包含 :")
 	}
 	rc := l.svcCtx.Config.RelayConfig
 	// source_url 必须提供
@@ -56,7 +61,7 @@ func (l *StartRelayPullLogic) StartRelayPull(in *oryxserver.StartRelayPullReq) (
 	if source == "" {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "source_url 不能为空")
 	}
-	// 目标地址（作为状态/租约的唯一标识）
+	// 目标地址
 	target := strings.TrimRight(rc.SrsRtmpAddr, "/") + "/" + app + "/" + stream
 	// 鉴权：业务系统自行计算，服务只拼 URL；有值就用，没有用配置默认值
 	secretKey := strings.TrimSpace(in.SecretKey)
@@ -75,19 +80,16 @@ func (l *StartRelayPullLogic) StartRelayPull(in *oryxserver.StartRelayPullReq) (
 	}
 
 	// Redis 状态 + 租约 + 本地进程
-	uid, _ := relay.CanonicalUID(target)
-	alreadyRunning, _ := l.svcCtx.StateStore.HasLease(l.ctx, uid)
-	startedUID, err := l.svcCtx.RelayRegistry.StartRelay(l.ctx, source, target, relayURL, in.MaxDurationSeconds)
+	uuid, err := l.svcCtx.RelayRegistry.StartRelay(l.ctx, source, target, relayURL, in.MaxDurationSeconds)
 	if err != nil {
 		l.Logger.Errorf("启动中继拉流失败: source=%s target=%s err=%v", source, target, err)
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "启动中继拉流失败")
 	}
-	l.Logger.Infof("启动中继拉流成功: uid=%s source=%s alreadyRunning=%v", startedUID, source, alreadyRunning)
+	l.Logger.Infof("启动中继拉流成功: uuid=%s app=%s stream=%s source=%s", uuid, app, stream, source)
 	return &oryxserver.StartRelayPullRes{
-		RelayId:        startedUID,
-		App:            app,
-		Stream:         stream,
-		AlreadyRunning: alreadyRunning,
+		RelayId: uuid,
+		App:     app,
+		Stream:  stream,
 	}, nil
 }
 

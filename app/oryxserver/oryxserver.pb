@@ -1,5 +1,5 @@
 
-ìG
+ÈF
 oryxserver.proto
 oryxserver"
 VersionsReq"'
@@ -300,12 +300,11 @@ source_url (	R	sourceUrl
 
 secret_key (	R	secretKey!
 secret_value (	RsecretValue0
-max_duration_seconds (RmaxDurationSeconds"Å
+max_duration_seconds (RmaxDurationSeconds"X
 StartRelayPullRes
 relay_id (	RrelayId
 app (	Rapp
-stream (	Rstream'
-already_running (RalreadyRunning"<
+stream (	Rstream"<
 StopRelayPullReq
 app (	Rapp
 stream (	Rstream"

@@ -27,25 +27,37 @@ func (h *StopHandler) ProcessTask(ctx context.Context, t *asynq.Task) error {
 		logx.WithContext(ctx).Errorf("[asynq-task] 反序列化补停 payload 失败: %v", err)
 		return asynq.SkipRetry
 	}
-	logger := logx.WithContext(ctx).WithFields(
-		logx.Field("taskType", t.Type()),
-		logx.Field("taskId", t.ResultWriter().TaskID()),
-		logx.Field("uid", payload.UID),
+
+	// 将业务字段注入 context，下游日志自动携带
+	ctx = logx.ContextWithFields(ctx,
 		logx.Field("app", payload.App),
 		logx.Field("stream", payload.Stream),
+		logx.Field("uuid", payload.UUID),
 	)
+
 	if payload.App == "" || payload.Stream == "" {
-		logger.Error("[asynq-task] payload 缺少 app 或 stream")
+		logx.WithContext(ctx).Error("[asynq-task] payload 缺少 app 或 stream")
 		return asynq.SkipRetry
 	}
 
-	logger.Info("[asynq-task] 补停开始")
-	l := logic.NewStopRelayPullLogic(ctx, h.svcCtx)
-	err := l.StopRelayPullFromAsynq(payload.App, payload.Stream)
+	// UUID 校验：读取当前 state，比较 UUID
+	st, err := h.svcCtx.StateStore.GetState(ctx, payload.App, payload.Stream)
 	if err != nil {
-		logger.Errorf("[asynq-task] 补停失败: %v", err)
+		logx.WithContext(ctx).Errorf("[asynq-task] 获取 Redis 状态失败: %v", err)
 		return err
 	}
-	logger.Info("[asynq-task] 补停成功")
+	if st != nil && payload.UUID != "" && st.UUID != payload.UUID {
+		logx.WithContext(ctx).Infof("[asynq-task] UUID 不匹配，跳过补停: stateUUID=%s", st.UUID)
+		return nil
+	}
+
+	logx.WithContext(ctx).Info("[asynq-task] 补停开始")
+	l := logic.NewStopRelayPullLogic(ctx, h.svcCtx)
+	err = l.StopRelayPullFromAsynq(payload.App, payload.Stream)
+	if err != nil {
+		logx.WithContext(ctx).Errorf("[asynq-task] 补停失败: %v", err)
+		return err
+	}
+	logx.WithContext(ctx).Info("[asynq-task] 补停成功")
 	return nil
 }

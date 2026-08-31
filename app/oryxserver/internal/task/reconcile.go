@@ -26,21 +26,25 @@ func (h *ReconcileHandler) ProcessTask(ctx context.Context, t *asynq.Task) error
 		logx.WithContext(ctx).Errorf("[asynq-task] 反序列化补拉 payload 失败: %v", err)
 		return asynq.SkipRetry
 	}
-	logger := logx.WithContext(ctx).WithFields(
-		logx.Field("taskType", t.Type()),
-		logx.Field("taskId", t.ResultWriter().TaskID()),
-		logx.Field("uid", payload.UID),
+
+	// 将业务字段注入 context，下游日志自动携带
+	ctx = logx.ContextWithFields(ctx,
+		logx.Field("app", payload.App),
+		logx.Field("stream", payload.Stream),
+		logx.Field("uuid", payload.UUID),
 		logx.Field("retryCount", payload.RetryCount),
 	)
-	if payload.UID == "" {
-		logger.Error("[asynq-task] payload 缺少 uid")
+
+	if payload.App == "" || payload.Stream == "" || payload.UUID == "" {
+		logx.WithContext(ctx).Error("[asynq-task] payload 缺少 app/stream/uuid")
 		return asynq.SkipRetry
 	}
-	logger.Info("[asynq-task] 补拉开始")
-	if err := h.svcCtx.RelayRegistry.Reconcile(ctx, payload.UID, payload.Source, payload.RetryCount); err != nil {
-		logger.Errorf("[asynq-task] 补拉失败: %v", err)
+
+	logx.WithContext(ctx).Info("[asynq-task] 补拉开始")
+	if err := h.svcCtx.RelayRegistry.Reconcile(ctx, payload.App, payload.Stream, payload.UUID, payload.RetryCount); err != nil {
+		logx.WithContext(ctx).Errorf("[asynq-task] 补拉失败: %v", err)
 		return err
 	}
-	logger.Info("[asynq-task] 补拉成功")
+	logx.WithContext(ctx).Info("[asynq-task] 补拉成功")
 	return nil
 }

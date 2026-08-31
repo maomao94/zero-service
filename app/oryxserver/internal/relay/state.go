@@ -34,7 +34,7 @@ const (
 	defaultRelayDuration = 24 * time.Hour
 	// stateTTLOverhead deadline 之外额外保留时间（1天兜底，防止进程崩溃后 key 永久残留）
 	stateTTLOverhead = 24 * time.Hour
-	// registryKey relay 索引 Sorted Set：score = 最后更新时间（Unix 秒），member = uid
+	// registryKey relay 索引 Sorted Set：score = 最后更新时间（Unix 秒），member = app:stream
 	registryKey = RelayTaskPrefix + "registry"
 	// staleThreshold 扫描阈值：超过此时间未更新的条目视为孤儿候选
 	staleThreshold = 60 * time.Second
@@ -50,11 +50,11 @@ type StaleEntry struct {
 
 // RelayState 中继期望状态（Redis string，存在 ⟺ 应该运行）
 type RelayState struct {
-	UID              string `json:"uid"`                          // 唯一标识：host_port/app/stream
-	Host             string `json:"host,omitempty"`               // SRS 主机地址
-	Port             int    `json:"port,omitempty"`               // SRS RTMP 端口
+	UUID             string `json:"uuid"`                        // 中继会话 UUID（每次开启中继生成）
 	App              string `json:"app,omitempty"`                // 目标应用名
 	Stream           string `json:"stream,omitempty"`             // 目标流名
+	Host             string `json:"host,omitempty"`               // SRS 主机地址（日志用）
+	Port             int    `json:"port,omitempty"`               // SRS RTMP 端口（日志用）
 	Source           string `json:"source"`                       // 源流地址
 	RelayURL         string `json:"relay_url"`                    // 完整推流地址（含鉴权参数，ffmpeg 用）
 	DeadlineAtUnix   int64  `json:"deadline_at_unix,omitempty"`
@@ -66,16 +66,17 @@ type RelayState struct {
 
 // ReconcilePayload 补拉任务 payload
 type ReconcilePayload struct {
-	UID        string `json:"uid"`
-	Source     string `json:"source,omitempty"`
+	App        string `json:"app"`
+	Stream     string `json:"stream"`
+	UUID       string `json:"uuid"` // 校验用，不匹配则跳过
 	RetryCount int    `json:"retry_count,omitempty"`
 }
 
 // StopPayload 补停任务 payload
 type StopPayload struct {
-	UID    string `json:"uid"`
 	App    string `json:"app"`
 	Stream string `json:"stream"`
+	UUID   string `json:"uuid"`            // 校验用，不匹配则跳过
 }
 
 // leaseValue 租约值：存 nodeID
@@ -84,7 +85,7 @@ type leaseValue struct {
 }
 
 // Store 中继状态/租约存储：全部 Redis 原生命令，无 Lua。
-// state key = uid；lease key = uid。
+// state key = app:stream；lease key = app:stream。
 type Store struct {
 	r *redis.Redis
 }
@@ -95,8 +96,7 @@ func NewStore(r *redis.Redis) *Store {
 }
 
 // CanonicalUID 将任意 target URL 转为唯一标识：host_port/app/stream。
-// 这是 relay 系统的唯一 key，用于：r.meta map、ffmpeg process ID、Redis state/lease/lock、Sorted Set member。
-// 输入可以是完整 URL、normalized endpoint 或已有 UID；输出固定 host_port/app/stream。
+// Deprecated: 新逻辑使用 app:stream 作为 key，此函数保留仅用于向后兼容和测试。
 func CanonicalUID(target string) (string, error) {
 	normalized := NormalizeTarget(target)
 	i := strings.Index(normalized, "/")
@@ -112,17 +112,26 @@ func CanonicalUID(target string) (string, error) {
 	return host + "/" + path, nil
 }
 
-func stateKey(uid string) string {
-	return stateKeyPrefix + uid
+func stateKey(app, stream string) string {
+	return stateKeyPrefix + app + ":" + stream
 }
 
-func leaseKey(uid string) string {
-	return leaseKeyPrefix + uid
+func leaseKey(app, stream string) string {
+	return leaseKeyPrefix + app + ":" + stream
 }
 
-// GetState 读取期望状态；不存在返回 nil。uid 由 CanonicalUID 生成。
-func (s *Store) GetState(ctx context.Context, uid string) (*RelayState, error) {
-	val, err := s.r.GetCtx(ctx, stateKey(uid))
+func lockKey(app, stream string) string {
+	return lockKeyPrefix + app + ":" + stream
+}
+
+// registryMember 构造 Sorted Set member: app:stream
+func registryMember(app, stream string) string {
+	return app + ":" + stream
+}
+
+// GetState 读取期望状态；不存在返回 nil。
+func (s *Store) GetState(ctx context.Context, app, stream string) (*RelayState, error) {
+	val, err := s.r.GetCtx(ctx, stateKey(app, stream))
 	if err == redis.Nil {
 		return nil, nil
 	}
@@ -145,7 +154,7 @@ func (s *Store) SaveState(ctx context.Context, st *RelayState) error {
 	if err != nil {
 		return fmt.Errorf("marshal relay state: %w", err)
 	}
-	key := stateKey(st.UID)
+	key := stateKey(st.App, st.Stream)
 	if err := s.r.SetCtx(ctx, key, string(data)); err != nil {
 		return err
 	}
@@ -163,14 +172,14 @@ func (s *Store) SaveState(ctx context.Context, st *RelayState) error {
 }
 
 // DeleteState 删除期望状态
-func (s *Store) DeleteState(ctx context.Context, uid string) error {
-	_, err := s.r.DelCtx(ctx, stateKey(uid))
+func (s *Store) DeleteState(ctx context.Context, app, stream string) error {
+	_, err := s.r.DelCtx(ctx, stateKey(app, stream))
 	return err
 }
 
 // HasLease 目标地址是否被任意节点持有有效租约
-func (s *Store) HasLease(ctx context.Context, uid string) (bool, error) {
-	val, err := s.r.GetCtx(ctx, leaseKey(uid))
+func (s *Store) HasLease(ctx context.Context, app, stream string) (bool, error) {
+	val, err := s.r.GetCtx(ctx, leaseKey(app, stream))
 	if err == redis.Nil {
 		return false, nil
 	}
@@ -181,16 +190,16 @@ func (s *Store) HasLease(ctx context.Context, uid string) (bool, error) {
 }
 
 // TryClaim 抢占租约：SET NX EX（原子），成功即成为该目标的唯一运行节点
-func (s *Store) TryClaim(ctx context.Context, uid, nodeID string) (bool, error) {
+func (s *Store) TryClaim(ctx context.Context, app, stream, nodeID string) (bool, error) {
 	data, _ := json.Marshal(leaseValue{NodeID: nodeID})
-	return s.r.SetnxExCtx(ctx, leaseKey(uid), string(data), int(leaseTTL/time.Second))
+	return s.r.SetnxExCtx(ctx, leaseKey(app, stream), string(data), int(leaseTTL/time.Second))
 }
 
 // Renew 续租：GET 校验自己仍是持有者 → EXPIRE。两步非原子：
 // 中间被抢占只相当于给活着的持有者续了几秒（无害）；
 // 中间被删除则 EXPIRE 失败返回 false，持有方据此停止本地进程。
-func (s *Store) Renew(ctx context.Context, uid, nodeID string) (bool, error) {
-	val, err := s.r.GetCtx(ctx, leaseKey(uid))
+func (s *Store) Renew(ctx context.Context, app, stream, nodeID string) (bool, error) {
+	val, err := s.r.GetCtx(ctx, leaseKey(app, stream))
 	if err == redis.Nil {
 		return false, nil
 	}
@@ -201,15 +210,15 @@ func (s *Store) Renew(ctx context.Context, uid, nodeID string) (bool, error) {
 	if err := json.Unmarshal([]byte(val), &lv); err != nil || lv.NodeID != nodeID {
 		return false, nil
 	}
-	if err := s.r.ExpireCtx(ctx, leaseKey(uid), int(leaseTTL/time.Second)); err != nil {
+	if err := s.r.ExpireCtx(ctx, leaseKey(app, stream), int(leaseTTL/time.Second)); err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
 // Release 释放租约：GET 校验持有者是自己 → DEL。仅释放自己的租约，避免误删新持有者。
-func (s *Store) Release(ctx context.Context, uid, nodeID string) (bool, error) {
-	val, err := s.r.GetCtx(ctx, leaseKey(uid))
+func (s *Store) Release(ctx context.Context, app, stream, nodeID string) (bool, error) {
+	val, err := s.r.GetCtx(ctx, leaseKey(app, stream))
 	if err == redis.Nil {
 		return false, nil
 	}
@@ -220,34 +229,34 @@ func (s *Store) Release(ctx context.Context, uid, nodeID string) (bool, error) {
 	if err := json.Unmarshal([]byte(val), &lv); err != nil || lv.NodeID != nodeID {
 		return false, nil
 	}
-	_, err = s.r.DelCtx(ctx, leaseKey(uid))
+	_, err = s.r.DelCtx(ctx, leaseKey(app, stream))
 	return err == nil, err
 }
 
 // DeleteLease 无条件删除租约（StopRelayPull 语义：无论谁持有都清掉）
-func (s *Store) DeleteLease(ctx context.Context, uid string) error {
-	_, err := s.r.DelCtx(ctx, leaseKey(uid))
+func (s *Store) DeleteLease(ctx context.Context, app, stream string) error {
+	_, err := s.r.DelCtx(ctx, leaseKey(app, stream))
 	return err
 }
 
-// AddToRegistry 将 uid 加入 relay 索引 Sorted Set（score = 当前 Unix 秒）。
+// AddToRegistry 将 app:stream 加入 relay 索引 Sorted Set（score = 当前 Unix 秒）。
 // 启动 relay 时调用，幂等（ZADD 同 member 会刷新 score）。
-func (s *Store) AddToRegistry(ctx context.Context, uid string) error {
-	_, err := s.r.ZaddCtx(ctx, registryKey, time.Now().Unix(), uid)
+func (s *Store) AddToRegistry(ctx context.Context, app, stream string) error {
+	_, err := s.r.ZaddCtx(ctx, registryKey, time.Now().Unix(), registryMember(app, stream))
 	return err
 }
 
-// RemoveFromRegistry 将 uid 从 relay 索引 Sorted Set 移除。
+// RemoveFromRegistry 将 app:stream 从 relay 索引 Sorted Set 移除。
 // 主动停止 relay 时调用。
-func (s *Store) RemoveFromRegistry(ctx context.Context, uid string) error {
-	_, err := s.r.ZremCtx(ctx, registryKey, uid)
+func (s *Store) RemoveFromRegistry(ctx context.Context, app, stream string) error {
+	_, err := s.r.ZremCtx(ctx, registryKey, registryMember(app, stream))
 	return err
 }
 
-// RenewRegistry 刷新 uid 在 Sorted Set 中的 score（续期语义）。
+// RenewRegistry 刷新 app:stream 在 Sorted Set 中的 score（续期语义）。
 // progress 回调时调用，与续租同步。
-func (s *Store) RenewRegistry(ctx context.Context, uid string) error {
-	_, err := s.r.ZaddCtx(ctx, registryKey, time.Now().Unix(), uid)
+func (s *Store) RenewRegistry(ctx context.Context, app, stream string) error {
+	_, err := s.r.ZaddCtx(ctx, registryKey, time.Now().Unix(), registryMember(app, stream))
 	return err
 }
 
@@ -262,17 +271,23 @@ func (s *Store) ScanStale(ctx context.Context) ([]*StaleEntry, error) {
 	}
 	var result []*StaleEntry
 	for _, m := range members {
-		uid := m.Key
-		val, err := s.r.GetCtx(ctx, stateKey(uid))
+		member := m.Key // 格式: app:stream
+		app, stream, err := parseRegistryMember(member)
+		if err != nil {
+			// 无效格式，清理
+			_, _ = s.r.ZremCtx(ctx, registryKey, member)
+			continue
+		}
+		val, err := s.r.GetCtx(ctx, stateKey(app, stream))
 		if err != nil {
 			if err == redis.Nil {
-				_, _ = s.r.ZremCtx(ctx, registryKey, uid)
+				_, _ = s.r.ZremCtx(ctx, registryKey, member)
 				continue
 			}
 			return nil, err
 		}
 		if val == "" {
-			_, _ = s.r.ZremCtx(ctx, registryKey, uid)
+			_, _ = s.r.ZremCtx(ctx, registryKey, member)
 			continue
 		}
 		var st RelayState
@@ -284,9 +299,18 @@ func (s *Store) ScanStale(ctx context.Context) ([]*StaleEntry, error) {
 	return result, nil
 }
 
-// Lock 获取 per-uid 分布式锁，保护 Start/Stop/Reconcile 的 read-check-act 关键段互斥。
-func (s *Store) Lock(ctx context.Context, uid string) (*redis.RedisLock, bool, error) {
-	lock := redis.NewRedisLock(s.r, lockKeyPrefix+uid)
+// parseRegistryMember 从 app:stream 格式解析 app 和 stream
+func parseRegistryMember(member string) (app, stream string, err error) {
+	parts := strings.SplitN(member, ":", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return "", "", fmt.Errorf("invalid registry member format: %s", member)
+	}
+	return parts[0], parts[1], nil
+}
+
+// Lock 获取 per-app:stream 分布式锁，保护 Start/Stop/Reconcile 的 read-check-act 关键段互斥。
+func (s *Store) Lock(ctx context.Context, app, stream string) (*redis.RedisLock, bool, error) {
+	lock := redis.NewRedisLock(s.r, lockKey(app, stream))
 	lock.SetExpire(lockTTL)
 	ok, err := lock.AcquireCtx(ctx)
 	if err != nil {

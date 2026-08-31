@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"zero-service/app/oryxserver/internal/relay"
 	"zero-service/app/oryxserver/internal/svc"
 	"zero-service/app/oryxserver/oryxserver"
 	"zero-service/common/tool"
@@ -36,12 +35,14 @@ func (l *StopRelayPullLogic) StopRelayPull(in *oryxserver.StopRelayPullReq) (*or
 	if err != nil {
 		// 停止失败 → 入队补停（Asynq 重试调用 StopRelayPullFromAsynq）
 		l.Logger.Infof("停止失败，入队补停: app=%s stream=%s err=%v", in.App, in.Stream, err)
-		rc := l.svcCtx.Config.RelayConfig
-		endpointTarget := relay.NormalizeTarget(rc.SrsRtmpAddr) + "/" + in.App + "/" + in.Stream
-		if uid, uidErr := relay.CanonicalUID(endpointTarget); uidErr == nil {
-			if enqueueErr := l.svcCtx.RelayRegistry.EnqueueStop(l.ctx, uid, in.App, in.Stream); enqueueErr != nil {
-				l.Logger.Errorf("入队补停失败: uid=%s err=%v", uid, enqueueErr)
-			}
+		// 读取当前 UUID 用于补停校验
+		st, _ := l.svcCtx.StateStore.GetState(l.ctx, in.App, in.Stream)
+		uuid := ""
+		if st != nil {
+			uuid = st.UUID
+		}
+		if enqueueErr := l.svcCtx.RelayRegistry.EnqueueStop(l.ctx, in.App, in.Stream, uuid); enqueueErr != nil {
+			l.Logger.Errorf("入队补停失败: app=%s stream=%s err=%v", in.App, in.Stream, enqueueErr)
 		}
 		return &oryxserver.StopRelayPullRes{}, nil
 	}
@@ -67,31 +68,27 @@ func (l *StopRelayPullLogic) stopRelayPullOnce(in *oryxserver.StopRelayPullReq) 
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "stream 不能为空")
 	}
 
-	rc := l.svcCtx.Config.RelayConfig
-	endpointTarget := relay.NormalizeTarget(rc.SrsRtmpAddr) + "/" + in.App + "/" + in.Stream
-	uid, err := relay.CanonicalUID(endpointTarget)
-	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "无法构造 relay UID: "+err.Error())
-	}
+	app := strings.TrimSpace(in.App)
+	stream := strings.TrimSpace(in.Stream)
 
 	// 1. 确认是否存在（本地进程 + Redis 状态）
-	localExists := l.svcCtx.RelayRegistry.HasTarget(uid)
-	st, stateErr := l.svcCtx.StateStore.GetState(l.ctx, uid)
+	localExists := l.svcCtx.RelayRegistry.HasTarget(app, stream)
+	st, stateErr := l.svcCtx.StateStore.GetState(l.ctx, app, stream)
 	if stateErr != nil {
-		l.Logger.Errorf("获取 Redis 状态失败（按不存在处理）: uid=%s err=%v", uid, stateErr)
+		l.Logger.Errorf("获取 Redis 状态失败（按不存在处理）: app=%s stream=%s err=%v", app, stream, stateErr)
 	}
 	redisExists := st != nil
 
 	if !localExists && !redisExists {
-		l.Logger.Infof("中继不存在，跳过停止: app=%s stream=%s", in.App, in.Stream)
+		l.Logger.Infof("中继不存在，跳过停止: app=%s stream=%s", app, stream)
 		return &oryxserver.StopRelayPullRes{}, nil
 	}
 
-	l.Logger.Infof("确认中继存在: uid=%s local=%v redis=%v", uid, localExists, redisExists)
+	l.Logger.Infof("确认中继存在: app=%s stream=%s local=%v redis=%v", app, stream, localExists, redisExists)
 
 	// 2. 分布式停止（锁 → 清理 Redis state+lease → 停本地进程）
-	if l.svcCtx.RelayRegistry.StopRelay(l.ctx, uid) {
-		l.Logger.Infof("本地进程已停止: uid=%s", uid)
+	if l.svcCtx.RelayRegistry.StopRelay(l.ctx, app, stream) {
+		l.Logger.Infof("本地进程已停止: app=%s stream=%s", app, stream)
 		return &oryxserver.StopRelayPullRes{}, nil
 	}
 
@@ -112,6 +109,6 @@ func (l *StopRelayPullLogic) stopRelayPullOnce(in *oryxserver.StopRelayPullReq) 
 		return nil, broadcastErr
 	}
 
-	l.Logger.Infof("集群广播停止成功: uid=%s", uid)
+	l.Logger.Infof("集群广播停止成功: app=%s stream=%s", app, stream)
 	return &oryxserver.StopRelayPullRes{}, nil
 }

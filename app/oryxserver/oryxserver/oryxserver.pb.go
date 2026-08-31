@@ -4085,16 +4085,14 @@ func (x *StartRelayPullReq) GetMaxDurationSeconds() uint64 {
 
 type StartRelayPullRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 中继拉流ID（MD5(target)，给调用方的短标识；内部使用明文 target 作为 Redis key）
+	// 中继拉流ID（UUID，给调用方的标识）
 	RelayId string `protobuf:"bytes,1,opt,name=relay_id,json=relayId,proto3" json:"relay_id,omitempty"`
 	// 目标应用名（实际使用值）
 	App string `protobuf:"bytes,2,opt,name=app,proto3" json:"app,omitempty"`
 	// 目标流名（自动生成时返回生成值）
-	Stream string `protobuf:"bytes,3,opt,name=stream,proto3" json:"stream,omitempty"`
-	// 是否已有中继在跑（true = 已存在，未新启动）
-	AlreadyRunning bool `protobuf:"varint,4,opt,name=already_running,json=alreadyRunning,proto3" json:"already_running,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	Stream        string `protobuf:"bytes,3,opt,name=stream,proto3" json:"stream,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StartRelayPullRes) Reset() {
@@ -4146,13 +4144,6 @@ func (x *StartRelayPullRes) GetStream() string {
 		return x.Stream
 	}
 	return ""
-}
-
-func (x *StartRelayPullRes) GetAlreadyRunning() bool {
-	if x != nil {
-		return x.AlreadyRunning
-	}
-	return false
 }
 
 // 停止中继拉流请求（对应 HTTP API：/api/ctrl/stop_relay_pull，GET+URL参数）
@@ -4642,12 +4633,11 @@ const file_oryxserver_proto_rawDesc = "" +
 	"\n" +
 	"secret_key\x18\x04 \x01(\tR\tsecretKey\x12!\n" +
 	"\fsecret_value\x18\x05 \x01(\tR\vsecretValue\x120\n" +
-	"\x14max_duration_seconds\x18\x06 \x01(\x04R\x12maxDurationSeconds\"\x81\x01\n" +
+	"\x14max_duration_seconds\x18\x06 \x01(\x04R\x12maxDurationSeconds\"X\n" +
 	"\x11StartRelayPullRes\x12\x19\n" +
 	"\brelay_id\x18\x01 \x01(\tR\arelayId\x12\x10\n" +
 	"\x03app\x18\x02 \x01(\tR\x03app\x12\x16\n" +
-	"\x06stream\x18\x03 \x01(\tR\x06stream\x12'\n" +
-	"\x0falready_running\x18\x04 \x01(\bR\x0ealreadyRunning\"<\n" +
+	"\x06stream\x18\x03 \x01(\tR\x06stream\"<\n" +
 	"\x10StopRelayPullReq\x12\x10\n" +
 	"\x03app\x18\x01 \x01(\tR\x03app\x12\x16\n" +
 	"\x06stream\x18\x02 \x01(\tR\x06stream\"\x12\n" +

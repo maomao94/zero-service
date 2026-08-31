@@ -58,23 +58,24 @@ func TestRelayRegistryFastExitCleansMetadata(t *testing.T) {
 	registry := newTestRegistry(processes, relayTestCommand(t, "exit-error"))
 	exit := make(chan string, 1)
 	origOnExit := registry.onProcessExitFunc
-	registry.onProcessExitFunc = func(ctx context.Context, uid string, result ffmpegx.ExitResult) {
-		if registry.HasTarget(uid) {
-			t.Errorf("metadata still exists when exit hook runs for %q", uid)
+	registry.onProcessExitFunc = func(ctx context.Context, md *pullMeta, result ffmpegx.ExitResult) {
+		pid := md.processID()
+		if registry.HasTarget(md.App, md.Stream) {
+			t.Errorf("metadata still exists when exit hook runs for %q", pid)
 		}
-		exit <- uid
-		origOnExit(ctx, uid, result)
+		exit <- pid
+		origOnExit(ctx, md, result)
 	}
 
-	const target = "rtmp://localhost/live/fast"
-	uid, _ := CanonicalUID(target)
-	if err := registry.startLocalRelay(context.Background(), "rtmp://source/live/test", uid, target); err != nil {
+	app, stream := "live", "fast"
+	if err := registry.startLocalRelay(context.Background(), "rtmp://source/live/test", app, stream, "test-uuid", "rtmp://localhost/live/fast"); err != nil {
 		t.Fatalf("startLocalRelay: %v", err)
 	}
+	pid := app + ":" + stream
 	select {
 	case got := <-exit:
-		if got != uid {
-			t.Fatalf("exit uid = %q, want %q", got, uid)
+		if got != pid {
+			t.Fatalf("exit pid = %q, want %q", got, pid)
 		}
 	case <-time.After(time.Second):
 		t.Fatal("exit hook did not run")
@@ -86,15 +87,14 @@ func TestRelayRegistryExitHookUsesDetachedContext(t *testing.T) {
 	registry := newTestRegistry(processes, relayTestCommand(t, "exit-error"))
 	exitCtx := make(chan context.Context, 1)
 	origOnExit := registry.onProcessExitFunc
-	registry.onProcessExitFunc = func(ctx context.Context, uid string, result ffmpegx.ExitResult) {
+	registry.onProcessExitFunc = func(ctx context.Context, md *pullMeta, result ffmpegx.ExitResult) {
 		exitCtx <- ctx
-		origOnExit(ctx, uid, result)
+		origOnExit(ctx, md, result)
 	}
 
 	requestCtx, cancelRequest := context.WithCancel(context.WithValue(context.Background(), testContextKey{}, "trace"))
-	const target = "rtmp://localhost/live/context"
-	uid, _ := CanonicalUID(target)
-	if err := registry.startLocalRelay(requestCtx, "rtmp://source/live/test", uid, target); err != nil {
+	app, stream := "live", "context"
+	if err := registry.startLocalRelay(requestCtx, "rtmp://source/live/test", app, stream, "test-uuid", "rtmp://localhost/live/context"); err != nil {
 		t.Fatalf("startLocalRelay: %v", err)
 	}
 	cancelRequest()
@@ -118,25 +118,24 @@ func TestRelayRegistryStopLocalDoesNotCallExitHook(t *testing.T) {
 	registry := newTestRegistry(processes, relayTestCommand(t, "wait"))
 	exit := make(chan string, 1)
 	origOnExit := registry.onProcessExitFunc
-	registry.onProcessExitFunc = func(ctx context.Context, uid string, result ffmpegx.ExitResult) {
-		exit <- uid
-		origOnExit(ctx, uid, result)
+	registry.onProcessExitFunc = func(ctx context.Context, md *pullMeta, result ffmpegx.ExitResult) {
+		exit <- md.processID()
+		origOnExit(ctx, md, result)
 	}
 
-	const target = "rtmp://localhost/live/stopped"
-	uid, _ := CanonicalUID(target)
-	if err := registry.startLocalRelay(context.Background(), "rtmp://source/live/test", uid, target); err != nil {
+	app, stream := "live", "stopped"
+	if err := registry.startLocalRelay(context.Background(), "rtmp://source/live/test", app, stream, "test-uuid", "rtmp://localhost/live/stopped"); err != nil {
 		t.Fatalf("startLocalRelay: %v", err)
 	}
-	if !registry.stopLocalRelay(uid) {
+	if !registry.stopLocalRelay(app, stream) {
 		t.Fatal("stopLocalRelay returned false")
 	}
-	if registry.HasTarget(uid) {
+	if registry.HasTarget(app, stream) {
 		t.Fatal("metadata remains after stopLocalRelay")
 	}
 	select {
 	case got := <-exit:
-		t.Fatalf("exit hook called for actively stopped uid %q", got)
+		t.Fatalf("exit hook called for actively stopped pid %q", got)
 	case <-time.After(50 * time.Millisecond):
 	}
 }
@@ -146,51 +145,51 @@ func TestRelayRegistryStopPullSelectsAppAndStream(t *testing.T) {
 	registry := newTestRegistry(processes, relayTestCommand(t, "wait"))
 	t.Cleanup(registry.StopAll)
 
-	targets := []string{
-		"rtmp://localhost/live/one",
-		"rtmp://localhost/live/two",
+	type target struct {
+		app, stream string
 	}
-	uids := make([]string, len(targets))
-	for i, target := range targets {
-		uid, _ := CanonicalUID(target)
-		uids[i] = uid
-		if err := registry.startLocalRelay(context.Background(), "rtmp://source/live/test", uid, target); err != nil {
-			t.Fatalf("startLocalRelay(%q): %v", target, err)
+	targets := []target{
+		{"live", "one"},
+		{"live", "two"},
+	}
+	for _, tt := range targets {
+		if err := registry.startLocalRelay(context.Background(), "rtmp://source/live/test", tt.app, tt.stream, "test-uuid", "rtmp://localhost/"+tt.app+"/"+tt.stream); err != nil {
+			t.Fatalf("startLocalRelay(%s/%s): %v", tt.app, tt.stream, err)
 		}
 	}
 	if !registry.StopRelayByAppStream("live", "one") {
 		t.Fatal("StopPull returned false")
 	}
-	if registry.HasTarget(uids[0]) {
-		t.Fatal("matching uid remains after StopPull")
+	if registry.HasTarget("live", "one") {
+		t.Fatal("matching target remains after StopPull")
 	}
-	if !registry.HasTarget(uids[1]) {
-		t.Fatal("non-matching uid was stopped")
+	if !registry.HasTarget("live", "two") {
+		t.Fatal("non-matching target was stopped")
 	}
 }
 
 func TestRelayRegistryOldExitDoesNotDeleteReplacement(t *testing.T) {
 	registry := newTestRegistry(ffmpegx.NewManager(), nil)
-	const target = "rtmp://localhost/live/replaced"
-	uid, _ := CanonicalUID(target)
-	oldMeta := &pullMeta{UID: uid}
-	newMeta := &pullMeta{UID: uid}
-	registry.meta[uid] = newMeta
+	app, stream := "live", "replaced"
+	pid := app + ":" + stream
+	oldMeta := &pullMeta{App: app, Stream: stream}
+	newMeta := &pullMeta{App: app, Stream: stream}
+	registry.meta[pid] = newMeta
 	exit := make(chan string, 1)
 	origOnExit := registry.onProcessExitFunc
-	registry.onProcessExitFunc = func(ctx context.Context, uid string, result ffmpegx.ExitResult) {
-		exit <- uid
-		origOnExit(ctx, uid, result)
+	registry.onProcessExitFunc = func(ctx context.Context, md *pullMeta, result ffmpegx.ExitResult) {
+		exit <- md.processID()
+		origOnExit(ctx, md, result)
 	}
 
 	registry.handleExit(context.Background(), oldMeta, ffmpegx.ExitResult{})
 
-	if !registry.HasTarget(uid) {
+	if !registry.HasTarget(app, stream) {
 		t.Fatal("old exit deleted replacement metadata")
 	}
 	select {
 	case got := <-exit:
-		t.Fatalf("old exit invoked business hook for replacement uid %q", got)
+		t.Fatalf("old exit invoked business hook for replacement pid %q", got)
 	default:
 	}
 }
@@ -205,14 +204,14 @@ func TestRelayRegistryStopAllStopsOnlyRelayTargets(t *testing.T) {
 	}
 	t.Cleanup(processes.StopAll)
 
-	const target = "rtmp://localhost/live/owned"
-	uid, _ := CanonicalUID(target)
-	if err := registry.startLocalRelay(context.Background(), "rtmp://source/live/test", uid, target); err != nil {
+	app, stream := "live", "owned"
+	if err := registry.startLocalRelay(context.Background(), "rtmp://source/live/test", app, stream, "test-uuid", "rtmp://localhost/live/owned"); err != nil {
 		t.Fatalf("startLocalRelay: %v", err)
 	}
 	registry.StopAll()
 
-	if registry.HasTarget(uid) || processes.Has(uid) {
+	pid := app + ":" + stream
+	if registry.HasTarget(app, stream) || processes.Has(pid) {
 		t.Fatal("relay target remains after registry StopAll")
 	}
 	if !processes.Has("unrelated") {
@@ -225,20 +224,20 @@ func TestRelayRegistryProgressInvokesOnProgress(t *testing.T) {
 	registry := newTestRegistry(processes, relayTestCommand(t, "progress", "-progress", "pipe:1", "-stats_period", "5"))
 	progress := make(chan string, 1)
 	origOnProgress := registry.onProgressFunc
-	registry.onProgressFunc = func(ctx context.Context, uid string) {
-		progress <- uid
-		origOnProgress(ctx, uid)
+	registry.onProgressFunc = func(ctx context.Context, md *pullMeta) {
+		progress <- md.processID()
+		origOnProgress(ctx, md)
 	}
 
-	const target = "rtmp://localhost/live/progress"
-	uid, _ := CanonicalUID(target)
-	if err := registry.startLocalRelay(context.Background(), "rtmp://source/live/test", uid, target); err != nil {
+	app, stream := "live", "progress"
+	if err := registry.startLocalRelay(context.Background(), "rtmp://source/live/test", app, stream, "test-uuid", "rtmp://localhost/live/progress"); err != nil {
 		t.Fatalf("startLocalRelay: %v", err)
 	}
+	pid := app + ":" + stream
 	select {
 	case got := <-progress:
-		if got != uid {
-			t.Fatalf("progress uid = %q, want %q", got, uid)
+		if got != pid {
+			t.Fatalf("progress pid = %q, want %q", got, pid)
 		}
 	case <-time.After(time.Second):
 		t.Fatal("relay progress hook did not run")
@@ -276,31 +275,6 @@ func TestNormalizeTarget(t *testing.T) {
 		if got := NormalizeTarget(tt.input); got != tt.want {
 			t.Errorf("NormalizeTarget(%q) = %q, want %q", tt.input, got, tt.want)
 		}
-	}
-}
-
-func TestCanonicalUID(t *testing.T) {
-	tests := []struct {
-		name   string
-		input  string
-		want   string
-		wantErr bool
-	}{
-		{"full url", "rtmp://127.0.0.1:1935/live/stream?secret=abc", "127.0.0.1_1935/live/stream", false},
-		{"normalized endpoint", "127.0.0.1:1935/live/stream", "127.0.0.1_1935/live/stream", false},
-		{"uid", "127.0.0.1_1935/live/stream", "127.0.0.1_1935/live/stream", false},
-		{"invalid path", "rtmp://127.0.0.1:1935/live", "", true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := CanonicalUID(tt.input)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("CanonicalUID(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
-			}
-			if got != tt.want {
-				t.Fatalf("CanonicalUID(%q) = %q, want %q", tt.input, got, tt.want)
-			}
-		})
 	}
 }
 
@@ -359,9 +333,8 @@ func TestStopPullRejectsEmptyAppOrStream(t *testing.T) {
 	registry := newTestRegistry(processes, relayTestCommand(t, "wait"))
 	t.Cleanup(registry.StopAll)
 
-	const target = "rtmp://localhost/live/test"
-	uid, _ := CanonicalUID(target)
-	if err := registry.startLocalRelay(context.Background(), "rtmp://source/live/test", uid, target); err != nil {
+	app, stream := "live", "test"
+	if err := registry.startLocalRelay(context.Background(), "rtmp://source/live/test", app, stream, "test-uuid", "rtmp://localhost/live/test"); err != nil {
 		t.Fatalf("startLocalRelay: %v", err)
 	}
 	if registry.StopRelayByAppStream("", "test") {
@@ -373,29 +346,32 @@ func TestStopPullRejectsEmptyAppOrStream(t *testing.T) {
 	if registry.StopRelayByAppStream("", "") {
 		t.Fatal("StopPull with both empty should return false")
 	}
-	if !registry.HasTarget(uid) {
-		t.Fatal("uid should still exist after invalid StopPull calls")
+	if !registry.HasTarget(app, stream) {
+		t.Fatal("target should still exist after invalid StopPull calls")
 	}
 }
 
-func TestStartLocalRelayRejectsInvalidTarget(t *testing.T) {
+func TestStartLocalRelayRejectsEmptyParams(t *testing.T) {
 	processes := ffmpegx.NewManager()
 	registry := newTestRegistry(processes, relayTestCommand(t, "wait"))
-	invalidTargets := []string{
-		"rtmp://localhost",
-		"rtmp://localhost/live",
-		"rtmp://localhost/live/",
-		"rtmp://localhost/a/b/c",
-		"rtmp://localhost/live/a/b/c",
+	// Test with empty source
+	err := registry.startLocalRelay(context.Background(), "", "live", "test", "uuid", "rtmp://localhost/live/test")
+	if err == nil {
+		t.Fatal("startLocalRelay with empty source should return error")
 	}
-	for _, target := range invalidTargets {
-		uid, err := CanonicalUID(target)
-		if err != nil {
-			continue // invalid target, CanonicalUID rejects
-		}
-		err = registry.startLocalRelay(context.Background(), "rtmp://source/live/test", uid, target)
-		if err == nil {
-			t.Fatalf("startLocalRelay(%q) expected error, got nil", target)
-		}
+	// Test with empty app
+	err = registry.startLocalRelay(context.Background(), "rtmp://source/live/test", "", "test", "uuid", "rtmp://localhost/live/test")
+	if err == nil {
+		t.Fatal("startLocalRelay with empty app should return error")
+	}
+	// Test with empty stream
+	err = registry.startLocalRelay(context.Background(), "rtmp://source/live/test", "live", "", "uuid", "rtmp://localhost/live/test")
+	if err == nil {
+		t.Fatal("startLocalRelay with empty stream should return error")
+	}
+	// Test with empty relayURL
+	err = registry.startLocalRelay(context.Background(), "rtmp://source/live/test", "live", "test", "uuid", "")
+	if err == nil {
+		t.Fatal("startLocalRelay with empty relayURL should return error")
 	}
 }

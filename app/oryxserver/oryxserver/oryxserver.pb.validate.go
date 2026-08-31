@@ -6775,8 +6775,6 @@ func (m *StartRelayPullRes) validate(all bool) error {
 
 	// no validation rules for Stream
 
-	// no validation rules for AlreadyRunning
-
 	if len(errors) > 0 {
 		return StartRelayPullResMultiError(errors)
 	}

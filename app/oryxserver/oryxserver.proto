@@ -639,14 +639,12 @@ message StartRelayPullReq {
 }
 
 message StartRelayPullRes {
-  // 中继拉流ID（MD5(target)，给调用方的短标识；内部使用明文 target 作为 Redis key）
+  // 中继拉流ID（UUID，给调用方的标识）
   string relay_id = 1 [json_name = "relayId"];
   // 目标应用名（实际使用值）
   string app = 2 [json_name = "app"];
   // 目标流名（自动生成时返回生成值）
   string stream = 3 [json_name = "stream"];
-  // 是否已有中继在跑（true = 已存在，未新启动）
-  bool already_running = 4 [json_name = "alreadyRunning"];
 }
 
 // 播放地址约定（业务侧按协议自行拼接，地址均指向 SRS/Oryx）：
