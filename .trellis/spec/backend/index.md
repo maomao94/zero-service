@@ -45,6 +45,7 @@
 | [网络通信](./networking-guidelines.md) | 修改 netx/wsx/socketiox/ssex HTTP/WebSocket/SSE 通信层 |
 | [Log Dump 日志汇聚](./logdump-guidelines.md) | 修改 logdump gRPC-to-logx 桥接或日志字段白名单 |
 | [Flow 工作流](./flow-guidelines.md) | 修改 flowx Azure go-workflow 编排或日志拦截器 |
+| [LiveKit 视频会议](./livekit-guidelines.md) | 修改 `common/livekitx`、`app/meeting`、JWT/Webhook/Twirp、房间/录制/SIP/Agent；基线见指南 |
 
 ## Pre-Development Checklist
 

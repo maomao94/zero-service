@@ -292,3 +292,45 @@ No active task. Reviewed enqueue code briefly, no changes made.
 ### Status
 
 [OK] **Completed**
+
+
+## Session 190: 完善 LiveKit 中文学习与对接指南
+
+**Date**: 2026-08-31
+**Task**: 完善 LiveKit 中文学习与对接指南
+**Branch**: `master`
+
+### Summary
+
+审阅本地 LiveKit Server 与 server-sdk-go 源码，修正 Server SDK、Protocol、Webhook、Egress、SIP、Agent、Cloud/自托管边界和示例错误；新增中文学习指南、LiveKit backend spec、docs 导航与任务研究记录。核心 Server SDK 示例通过临时 Go module 编译，文档检查和 git diff --check 通过；完整 SDK 测试仍受本机 soxr/opusfile 依赖和未运行 LiveKit Server 限制。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `096c2efc` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 191: 全面复核 LiveKit 学习指导并升级到最新版本
+
+**Date**: 2026-08-31
+**Task**: 全面复核 LiveKit 学习指导并升级到最新版本
+**Branch**: `master`
+
+### Summary
+
+全面核对 LiveKit 指南全文、backend spec、导航和审计工件；基线统一为 LiveKit Server v1.13.6、server-sdk-go/v2 v2.18.1、Protocol v1.49.0，分离记录本地开发 commit。恢复并核验房间/参与者、Egress、Ingress、SIP、Agent Dispatch、Token、实时参与者、Webhook、Twirp、媒体和部署排障内容，所有 Go 功能示例补充中文注释。稳定 SDK 全 API fixture 通过 go mod tidy/go test ./...，zero-service 全仓 go test ./...、git diff --check、任务 JSONL 校验通过。GitHub curl 链接检查受网络超时限制，未宣称真实 Server、媒体、TURN、Redis、Egress/Ingress/SIP/Agent 端到端通过。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2be0ada1` | (see git log) |
+
+### Status
+
+[OK] **Completed**
