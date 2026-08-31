@@ -355,23 +355,23 @@ func (r *RelayRegistry) enqueueTask(ctx context.Context, taskType string, payloa
 }
 
 // EnqueueReconcile 入队补拉任务（随机 jitter 延迟执行）
-func (r *RelayRegistry) EnqueueReconcile(ctx context.Context, app, stream, uuid string, retryCount int) error {
-	delay := reconcileDelay(retryCount)
-	if err := r.enqueueTask(ctx, RelayReconcileTask, ReconcilePayload{App: app, Stream: stream, UUID: uuid, RetryCount: retryCount}, delay, 1*time.Hour); err != nil {
-		logx.WithContext(ctx).Errorf("[asynq-task] 入队补拉失败: app=%s stream=%s err=%v", app, stream, err)
+func (r *RelayRegistry) EnqueueReconcile(ctx context.Context, payload ReconcilePayload) error {
+	delay := reconcileDelay(payload.RetryCount)
+	if err := r.enqueueTask(ctx, RelayReconcileTask, payload, delay, 1*time.Hour); err != nil {
+		logx.WithContext(ctx).Errorf("[asynq-task] 入队补拉失败: app=%s stream=%s err=%v", payload.App, payload.Stream, err)
 		return err
 	}
-	logx.WithContext(ctx).Infof("[asynq-task] 入队补拉: app=%s stream=%s retryCount=%d delay=%s", app, stream, retryCount, delay)
+	logx.WithContext(ctx).Infof("[asynq-task] 入队补拉: app=%s stream=%s retryCount=%d delay=%s", payload.App, payload.Stream, payload.RetryCount, delay)
 	return nil
 }
 
 // EnqueueStop 入队补停任务（延迟 5s 执行，给广播恢复窗口）
-func (r *RelayRegistry) EnqueueStop(ctx context.Context, app, stream, uuid string) error {
-	if err := r.enqueueTask(ctx, RelayStopTask, StopPayload{App: app, Stream: stream, UUID: uuid}, 5*time.Second, 7*24*time.Hour); err != nil {
-		logx.WithContext(ctx).Errorf("[asynq-task] 入队补停失败: app=%s stream=%s err=%v", app, stream, err)
+func (r *RelayRegistry) EnqueueStop(ctx context.Context, payload StopPayload) error {
+	if err := r.enqueueTask(ctx, RelayStopTask, payload, 5*time.Second, 7*24*time.Hour); err != nil {
+		logx.WithContext(ctx).Errorf("[asynq-task] 入队补停失败: app=%s stream=%s err=%v", payload.App, payload.Stream, err)
 		return err
 	}
-	logx.WithContext(ctx).Infof("[asynq-task] 入队补停: app=%s stream=%s delay=5s", app, stream)
+	logx.WithContext(ctx).Infof("[asynq-task] 入队补停: app=%s stream=%s delay=5s", payload.App, payload.Stream)
 	return nil
 }
 
@@ -422,7 +422,7 @@ func (r *RelayRegistry) releaseAndRetry(ctx context.Context, app, stream string)
 		st.PendingReconcile = true
 		_ = r.store.SaveState(ctx, st)
 	}
-	if err := r.EnqueueReconcile(ctx, app, stream, uuid, retryCount); err != nil {
+	if err := r.EnqueueReconcile(ctx, ReconcilePayload{App: app, Stream: stream, UUID: uuid, RetryCount: retryCount}); err != nil {
 		logx.WithContext(ctx).Errorf("[relay] 入队补拉失败: app=%s stream=%s err=%v", app, stream, err)
 	}
 }

@@ -74,9 +74,10 @@ type ReconcilePayload struct {
 
 // StopPayload 补停任务 payload
 type StopPayload struct {
-	App    string `json:"app"`
-	Stream string `json:"stream"`
-	UUID   string `json:"uuid"`            // 校验用，不匹配则跳过
+	App           string `json:"app"`
+	Stream        string `json:"stream"`
+	UUID          string `json:"uuid"` // 校验用，不匹配则跳过
+	StopRecording bool   `json:"stop_recording,omitempty"`
 }
 
 // leaseValue 租约值：存 nodeID

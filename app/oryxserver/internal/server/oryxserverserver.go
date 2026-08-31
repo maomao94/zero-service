@@ -155,16 +155,10 @@ func (s *OryxServerServer) StartRelayPull(ctx context.Context, in *oryxserver.St
 	return l.StartRelayPull(in)
 }
 
-// 停止中继拉流（按 app+stream 定位；本地未命中且 cluster 模式时 MQTT 广播停止）
+// 停止中继拉流（按 app+stream 定位；本地未命中且 cluster 模式时 MQTT 广播停止；stop_recording=true 时同时结束关联录制）
 func (s *OryxServerServer) StopRelayPull(ctx context.Context, in *oryxserver.StopRelayPullReq) (*oryxserver.StopRelayPullRes, error) {
 	l := logic.NewStopRelayPullLogic(ctx, s.svcCtx)
 	return l.StopRelayPull(in)
-}
-
-// 停止中继拉流并结束关联录制（先停止中继流，再查询录制中的记录并逐个结束）
-func (s *OryxServerServer) StopRelayAndRecording(ctx context.Context, in *oryxserver.StopRelayAndRecordingReq) (*oryxserver.StopRelayAndRecordingRes, error) {
-	l := logic.NewStopRelayAndRecordingLogic(ctx, s.svcCtx)
-	return l.StopRelayAndRecording(in)
 }
 
 // ===== ⚠️ 内部 Hook（以下 RPC 仅 oryxgtw 调用：gtw 收到 Oryx 回调后落库通道，业务服务请勿调用）=====

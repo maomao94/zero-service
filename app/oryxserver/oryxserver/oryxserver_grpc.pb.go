@@ -19,32 +19,31 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	OryxServer_Versions_FullMethodName              = "/oryxserver.OryxServer/Versions"
-	OryxServer_RecordQuery_FullMethodName           = "/oryxserver.OryxServer/RecordQuery"
-	OryxServer_RecordApply_FullMethodName           = "/oryxserver.OryxServer/RecordApply"
-	OryxServer_RecordEnd_FullMethodName             = "/oryxserver.OryxServer/RecordEnd"
-	OryxServer_RecordFiles_FullMethodName           = "/oryxserver.OryxServer/RecordFiles"
-	OryxServer_RecordRemove_FullMethodName          = "/oryxserver.OryxServer/RecordRemove"
-	OryxServer_RecordGlobs_FullMethodName           = "/oryxserver.OryxServer/RecordGlobs"
-	OryxServer_RecordPostProcessing_FullMethodName  = "/oryxserver.OryxServer/RecordPostProcessing"
-	OryxServer_DvrQuery_FullMethodName              = "/oryxserver.OryxServer/DvrQuery"
-	OryxServer_DvrApply_FullMethodName              = "/oryxserver.OryxServer/DvrApply"
-	OryxServer_DvrFiles_FullMethodName              = "/oryxserver.OryxServer/DvrFiles"
-	OryxServer_HooksApply_FullMethodName            = "/oryxserver.OryxServer/HooksApply"
-	OryxServer_HooksQuery_FullMethodName            = "/oryxserver.OryxServer/HooksQuery"
-	OryxServer_SrsVersions_FullMethodName           = "/oryxserver.OryxServer/SrsVersions"
-	OryxServer_SrsStreams_FullMethodName            = "/oryxserver.OryxServer/SrsStreams"
-	OryxServer_SrsClients_FullMethodName            = "/oryxserver.OryxServer/SrsClients"
-	OryxServer_SrsVhosts_FullMethodName             = "/oryxserver.OryxServer/SrsVhosts"
-	OryxServer_SrsSummaries_FullMethodName          = "/oryxserver.OryxServer/SrsSummaries"
-	OryxServer_SrsRequests_FullMethodName           = "/oryxserver.OryxServer/SrsRequests"
-	OryxServer_RecordList_FullMethodName            = "/oryxserver.OryxServer/RecordList"
-	OryxServer_RecordDelete_FullMethodName          = "/oryxserver.OryxServer/RecordDelete"
-	OryxServer_StartRelayPull_FullMethodName        = "/oryxserver.OryxServer/StartRelayPull"
-	OryxServer_StopRelayPull_FullMethodName         = "/oryxserver.OryxServer/StopRelayPull"
-	OryxServer_StopRelayAndRecording_FullMethodName = "/oryxserver.OryxServer/StopRelayAndRecording"
-	OryxServer_RecordBeginHook_FullMethodName       = "/oryxserver.OryxServer/RecordBeginHook"
-	OryxServer_RecordEndHook_FullMethodName         = "/oryxserver.OryxServer/RecordEndHook"
+	OryxServer_Versions_FullMethodName             = "/oryxserver.OryxServer/Versions"
+	OryxServer_RecordQuery_FullMethodName          = "/oryxserver.OryxServer/RecordQuery"
+	OryxServer_RecordApply_FullMethodName          = "/oryxserver.OryxServer/RecordApply"
+	OryxServer_RecordEnd_FullMethodName            = "/oryxserver.OryxServer/RecordEnd"
+	OryxServer_RecordFiles_FullMethodName          = "/oryxserver.OryxServer/RecordFiles"
+	OryxServer_RecordRemove_FullMethodName         = "/oryxserver.OryxServer/RecordRemove"
+	OryxServer_RecordGlobs_FullMethodName          = "/oryxserver.OryxServer/RecordGlobs"
+	OryxServer_RecordPostProcessing_FullMethodName = "/oryxserver.OryxServer/RecordPostProcessing"
+	OryxServer_DvrQuery_FullMethodName             = "/oryxserver.OryxServer/DvrQuery"
+	OryxServer_DvrApply_FullMethodName             = "/oryxserver.OryxServer/DvrApply"
+	OryxServer_DvrFiles_FullMethodName             = "/oryxserver.OryxServer/DvrFiles"
+	OryxServer_HooksApply_FullMethodName           = "/oryxserver.OryxServer/HooksApply"
+	OryxServer_HooksQuery_FullMethodName           = "/oryxserver.OryxServer/HooksQuery"
+	OryxServer_SrsVersions_FullMethodName          = "/oryxserver.OryxServer/SrsVersions"
+	OryxServer_SrsStreams_FullMethodName           = "/oryxserver.OryxServer/SrsStreams"
+	OryxServer_SrsClients_FullMethodName           = "/oryxserver.OryxServer/SrsClients"
+	OryxServer_SrsVhosts_FullMethodName            = "/oryxserver.OryxServer/SrsVhosts"
+	OryxServer_SrsSummaries_FullMethodName         = "/oryxserver.OryxServer/SrsSummaries"
+	OryxServer_SrsRequests_FullMethodName          = "/oryxserver.OryxServer/SrsRequests"
+	OryxServer_RecordList_FullMethodName           = "/oryxserver.OryxServer/RecordList"
+	OryxServer_RecordDelete_FullMethodName         = "/oryxserver.OryxServer/RecordDelete"
+	OryxServer_StartRelayPull_FullMethodName       = "/oryxserver.OryxServer/StartRelayPull"
+	OryxServer_StopRelayPull_FullMethodName        = "/oryxserver.OryxServer/StopRelayPull"
+	OryxServer_RecordBeginHook_FullMethodName      = "/oryxserver.OryxServer/RecordBeginHook"
+	OryxServer_RecordEndHook_FullMethodName        = "/oryxserver.OryxServer/RecordEndHook"
 )
 
 // OryxServerClient is the client API for OryxServer service.
@@ -97,10 +96,8 @@ type OryxServerClient interface {
 	RecordDelete(ctx context.Context, in *RecordDeleteReq, opts ...grpc.CallOption) (*RecordDeleteRes, error)
 	// 启动 FFmpeg 中继拉流（拉取源流 → copy 推送到固定目标 Oryx/SRS；任务按节点本地内存管理）
 	StartRelayPull(ctx context.Context, in *StartRelayPullReq, opts ...grpc.CallOption) (*StartRelayPullRes, error)
-	// 停止中继拉流（按 app+stream 定位；本地未命中且 cluster 模式时 MQTT 广播停止）
+	// 停止中继拉流（按 app+stream 定位；本地未命中且 cluster 模式时 MQTT 广播停止；stop_recording=true 时同时结束关联录制）
 	StopRelayPull(ctx context.Context, in *StopRelayPullReq, opts ...grpc.CallOption) (*StopRelayPullRes, error)
-	// 停止中继拉流并结束关联录制（先停止中继流，再查询录制中的记录并逐个结束）
-	StopRelayAndRecording(ctx context.Context, in *StopRelayAndRecordingReq, opts ...grpc.CallOption) (*StopRelayAndRecordingRes, error)
 	// ===== ⚠️ 内部 Hook（以下 RPC 仅 oryxgtw 调用：gtw 收到 Oryx 回调后落库通道，业务服务请勿调用）=====
 	// on_record_begin 回调落库
 	RecordBeginHook(ctx context.Context, in *RecordBeginHookReq, opts ...grpc.CallOption) (*RecordBeginHookRes, error)
@@ -346,16 +343,6 @@ func (c *oryxServerClient) StopRelayPull(ctx context.Context, in *StopRelayPullR
 	return out, nil
 }
 
-func (c *oryxServerClient) StopRelayAndRecording(ctx context.Context, in *StopRelayAndRecordingReq, opts ...grpc.CallOption) (*StopRelayAndRecordingRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StopRelayAndRecordingRes)
-	err := c.cc.Invoke(ctx, OryxServer_StopRelayAndRecording_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *oryxServerClient) RecordBeginHook(ctx context.Context, in *RecordBeginHookReq, opts ...grpc.CallOption) (*RecordBeginHookRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RecordBeginHookRes)
@@ -426,10 +413,8 @@ type OryxServerServer interface {
 	RecordDelete(context.Context, *RecordDeleteReq) (*RecordDeleteRes, error)
 	// 启动 FFmpeg 中继拉流（拉取源流 → copy 推送到固定目标 Oryx/SRS；任务按节点本地内存管理）
 	StartRelayPull(context.Context, *StartRelayPullReq) (*StartRelayPullRes, error)
-	// 停止中继拉流（按 app+stream 定位；本地未命中且 cluster 模式时 MQTT 广播停止）
+	// 停止中继拉流（按 app+stream 定位；本地未命中且 cluster 模式时 MQTT 广播停止；stop_recording=true 时同时结束关联录制）
 	StopRelayPull(context.Context, *StopRelayPullReq) (*StopRelayPullRes, error)
-	// 停止中继拉流并结束关联录制（先停止中继流，再查询录制中的记录并逐个结束）
-	StopRelayAndRecording(context.Context, *StopRelayAndRecordingReq) (*StopRelayAndRecordingRes, error)
 	// ===== ⚠️ 内部 Hook（以下 RPC 仅 oryxgtw 调用：gtw 收到 Oryx 回调后落库通道，业务服务请勿调用）=====
 	// on_record_begin 回调落库
 	RecordBeginHook(context.Context, *RecordBeginHookReq) (*RecordBeginHookRes, error)
@@ -513,9 +498,6 @@ func (UnimplementedOryxServerServer) StartRelayPull(context.Context, *StartRelay
 }
 func (UnimplementedOryxServerServer) StopRelayPull(context.Context, *StopRelayPullReq) (*StopRelayPullRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method StopRelayPull not implemented")
-}
-func (UnimplementedOryxServerServer) StopRelayAndRecording(context.Context, *StopRelayAndRecordingReq) (*StopRelayAndRecordingRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method StopRelayAndRecording not implemented")
 }
 func (UnimplementedOryxServerServer) RecordBeginHook(context.Context, *RecordBeginHookReq) (*RecordBeginHookRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method RecordBeginHook not implemented")
@@ -958,24 +940,6 @@ func _OryxServer_StopRelayPull_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OryxServer_StopRelayAndRecording_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StopRelayAndRecordingReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OryxServerServer).StopRelayAndRecording(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: OryxServer_StopRelayAndRecording_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OryxServerServer).StopRelayAndRecording(ctx, req.(*StopRelayAndRecordingReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _OryxServer_RecordBeginHook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RecordBeginHookReq)
 	if err := dec(in); err != nil {
@@ -1110,10 +1074,6 @@ var OryxServer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StopRelayPull",
 			Handler:    _OryxServer_StopRelayPull_Handler,
-		},
-		{
-			MethodName: "StopRelayAndRecording",
-			Handler:    _OryxServer_StopRelayAndRecording_Handler,
 		},
 		{
 			MethodName: "RecordBeginHook",

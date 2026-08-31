@@ -134,7 +134,7 @@ func (s *RegistryScanner) processStale(ctx context.Context, store *relay.Store, 
 		}
 	}
 	// 无 lease + !pending → 入队 → 置 pending=true（先入队再更新，入队失败不改 state）
-	if err := registry.EnqueueReconcile(ctx, app, stream, uuid, latest.RetryCount); err != nil {
+	if err := registry.EnqueueReconcile(ctx, relay.ReconcilePayload{App: app, Stream: stream, UUID: uuid, RetryCount: latest.RetryCount}); err != nil {
 		logx.Errorf("[registry-scanner] enqueue reconcile failed: app=%s stream=%s err=%v", app, stream, err)
 		return
 	}

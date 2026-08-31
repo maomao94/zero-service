@@ -4153,7 +4153,9 @@ type StopRelayPullReq struct {
 	// 目标应用名
 	App string `protobuf:"bytes,1,opt,name=app,proto3" json:"app,omitempty"`
 	// 目标流名
-	Stream        string `protobuf:"bytes,2,opt,name=stream,proto3" json:"stream,omitempty"`
+	Stream string `protobuf:"bytes,2,opt,name=stream,proto3" json:"stream,omitempty"`
+	// 是否同时停止及结束关联录制（true 时：停止中继流后，查询录制中的记录（status=1）并逐个结束）
+	StopRecording bool `protobuf:"varint,3,opt,name=stop_recording,json=stopRecording,proto3" json:"stop_recording,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4202,6 +4204,13 @@ func (x *StopRelayPullReq) GetStream() string {
 	return ""
 }
 
+func (x *StopRelayPullReq) GetStopRecording() bool {
+	if x != nil {
+		return x.StopRecording
+	}
+	return false
+}
+
 type StopRelayPullRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -4236,97 +4245,6 @@ func (x *StopRelayPullRes) ProtoReflect() protoreflect.Message {
 // Deprecated: Use StopRelayPullRes.ProtoReflect.Descriptor instead.
 func (*StopRelayPullRes) Descriptor() ([]byte, []int) {
 	return file_oryxserver_proto_rawDescGZIP(), []int{61}
-}
-
-// 停止中继拉流并结束关联录制请求
-type StopRelayAndRecordingReq struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 目标应用名
-	App string `protobuf:"bytes,1,opt,name=app,proto3" json:"app,omitempty"`
-	// 目标流名
-	Stream        string `protobuf:"bytes,2,opt,name=stream,proto3" json:"stream,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *StopRelayAndRecordingReq) Reset() {
-	*x = StopRelayAndRecordingReq{}
-	mi := &file_oryxserver_proto_msgTypes[62]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *StopRelayAndRecordingReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*StopRelayAndRecordingReq) ProtoMessage() {}
-
-func (x *StopRelayAndRecordingReq) ProtoReflect() protoreflect.Message {
-	mi := &file_oryxserver_proto_msgTypes[62]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use StopRelayAndRecordingReq.ProtoReflect.Descriptor instead.
-func (*StopRelayAndRecordingReq) Descriptor() ([]byte, []int) {
-	return file_oryxserver_proto_rawDescGZIP(), []int{62}
-}
-
-func (x *StopRelayAndRecordingReq) GetApp() string {
-	if x != nil {
-		return x.App
-	}
-	return ""
-}
-
-func (x *StopRelayAndRecordingReq) GetStream() string {
-	if x != nil {
-		return x.Stream
-	}
-	return ""
-}
-
-type StopRelayAndRecordingRes struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *StopRelayAndRecordingRes) Reset() {
-	*x = StopRelayAndRecordingRes{}
-	mi := &file_oryxserver_proto_msgTypes[63]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *StopRelayAndRecordingRes) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*StopRelayAndRecordingRes) ProtoMessage() {}
-
-func (x *StopRelayAndRecordingRes) ProtoReflect() protoreflect.Message {
-	mi := &file_oryxserver_proto_msgTypes[63]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use StopRelayAndRecordingRes.ProtoReflect.Descriptor instead.
-func (*StopRelayAndRecordingRes) Descriptor() ([]byte, []int) {
-	return file_oryxserver_proto_rawDescGZIP(), []int{63}
 }
 
 var File_oryxserver_proto protoreflect.FileDescriptor
@@ -4637,15 +4555,12 @@ const file_oryxserver_proto_rawDesc = "" +
 	"\x11StartRelayPullRes\x12\x19\n" +
 	"\brelay_id\x18\x01 \x01(\tR\arelayId\x12\x10\n" +
 	"\x03app\x18\x02 \x01(\tR\x03app\x12\x16\n" +
-	"\x06stream\x18\x03 \x01(\tR\x06stream\"<\n" +
+	"\x06stream\x18\x03 \x01(\tR\x06stream\"c\n" +
 	"\x10StopRelayPullReq\x12\x10\n" +
 	"\x03app\x18\x01 \x01(\tR\x03app\x12\x16\n" +
-	"\x06stream\x18\x02 \x01(\tR\x06stream\"\x12\n" +
-	"\x10StopRelayPullRes\"D\n" +
-	"\x18StopRelayAndRecordingReq\x12\x10\n" +
-	"\x03app\x18\x01 \x01(\tR\x03app\x12\x16\n" +
-	"\x06stream\x18\x02 \x01(\tR\x06stream\"\x1a\n" +
-	"\x18StopRelayAndRecordingRes2\xe6\x0e\n" +
+	"\x06stream\x18\x02 \x01(\tR\x06stream\x12%\n" +
+	"\x0estop_recording\x18\x03 \x01(\bR\rstopRecording\"\x12\n" +
+	"\x10StopRelayPullRes2\x81\x0e\n" +
 	"\n" +
 	"OryxServer\x12<\n" +
 	"\bVersions\x12\x17.oryxserver.VersionsReq\x1a\x17.oryxserver.VersionsRes\x12E\n" +
@@ -4675,8 +4590,7 @@ const file_oryxserver_proto_rawDesc = "" +
 	"RecordList\x12\x19.oryxserver.RecordListReq\x1a\x19.oryxserver.RecordListRes\x12H\n" +
 	"\fRecordDelete\x12\x1b.oryxserver.RecordDeleteReq\x1a\x1b.oryxserver.RecordDeleteRes\x12N\n" +
 	"\x0eStartRelayPull\x12\x1d.oryxserver.StartRelayPullReq\x1a\x1d.oryxserver.StartRelayPullRes\x12K\n" +
-	"\rStopRelayPull\x12\x1c.oryxserver.StopRelayPullReq\x1a\x1c.oryxserver.StopRelayPullRes\x12c\n" +
-	"\x15StopRelayAndRecording\x12$.oryxserver.StopRelayAndRecordingReq\x1a$.oryxserver.StopRelayAndRecordingRes\x12Q\n" +
+	"\rStopRelayPull\x12\x1c.oryxserver.StopRelayPullReq\x1a\x1c.oryxserver.StopRelayPullRes\x12Q\n" +
 	"\x0fRecordBeginHook\x12\x1e.oryxserver.RecordBeginHookReq\x1a\x1e.oryxserver.RecordBeginHookRes\x12K\n" +
 	"\rRecordEndHook\x12\x1c.oryxserver.RecordEndHookReq\x1a\x1c.oryxserver.RecordEndHookResB=\n" +
 	"\x1acom.github.oryxserver.grpcB\x0fOryxServerProtoP\x01Z\f./oryxserverb\x06proto3"
@@ -4693,72 +4607,70 @@ func file_oryxserver_proto_rawDescGZIP() []byte {
 	return file_oryxserver_proto_rawDescData
 }
 
-var file_oryxserver_proto_msgTypes = make([]protoimpl.MessageInfo, 64)
+var file_oryxserver_proto_msgTypes = make([]protoimpl.MessageInfo, 62)
 var file_oryxserver_proto_goTypes = []any{
-	(*VersionsReq)(nil),              // 0: oryxserver.VersionsReq
-	(*VersionsRes)(nil),              // 1: oryxserver.VersionsRes
-	(*RecordQueryReq)(nil),           // 2: oryxserver.RecordQueryReq
-	(*RecordQueryRes)(nil),           // 3: oryxserver.RecordQueryRes
-	(*RecordApplyReq)(nil),           // 4: oryxserver.RecordApplyReq
-	(*RecordApplyRes)(nil),           // 5: oryxserver.RecordApplyRes
-	(*RecordEndReq)(nil),             // 6: oryxserver.RecordEndReq
-	(*RecordEndRes)(nil),             // 7: oryxserver.RecordEndRes
-	(*RecordFile)(nil),               // 8: oryxserver.RecordFile
-	(*RecordFilesReq)(nil),           // 9: oryxserver.RecordFilesReq
-	(*RecordFilesRes)(nil),           // 10: oryxserver.RecordFilesRes
-	(*RecordRemoveReq)(nil),          // 11: oryxserver.RecordRemoveReq
-	(*RecordRemoveRes)(nil),          // 12: oryxserver.RecordRemoveRes
-	(*RecordGlobsReq)(nil),           // 13: oryxserver.RecordGlobsReq
-	(*RecordGlobsRes)(nil),           // 14: oryxserver.RecordGlobsRes
-	(*RecordPostProcessingReq)(nil),  // 15: oryxserver.RecordPostProcessingReq
-	(*RecordPostProcessingRes)(nil),  // 16: oryxserver.RecordPostProcessingRes
-	(*HooksApplyReq)(nil),            // 17: oryxserver.HooksApplyReq
-	(*HooksApplyRes)(nil),            // 18: oryxserver.HooksApplyRes
-	(*HooksQueryReq)(nil),            // 19: oryxserver.HooksQueryReq
-	(*HooksQueryRes)(nil),            // 20: oryxserver.HooksQueryRes
-	(*DvrQueryReq)(nil),              // 21: oryxserver.DvrQueryReq
-	(*DvrQueryRes)(nil),              // 22: oryxserver.DvrQueryRes
-	(*DvrApplyReq)(nil),              // 23: oryxserver.DvrApplyReq
-	(*DvrApplyRes)(nil),              // 24: oryxserver.DvrApplyRes
-	(*DvrFile)(nil),                  // 25: oryxserver.DvrFile
-	(*DvrFilesReq)(nil),              // 26: oryxserver.DvrFilesReq
-	(*DvrFilesRes)(nil),              // 27: oryxserver.DvrFilesRes
-	(*SrsVersionsReq)(nil),           // 28: oryxserver.SrsVersionsReq
-	(*SrsVersionsRes)(nil),           // 29: oryxserver.SrsVersionsRes
-	(*SrsStreamsReq)(nil),            // 30: oryxserver.SrsStreamsReq
-	(*SrsStreamsRes)(nil),            // 31: oryxserver.SrsStreamsRes
-	(*SrsKbps)(nil),                  // 32: oryxserver.SrsKbps
-	(*SrsPublishInfo)(nil),           // 33: oryxserver.SrsPublishInfo
-	(*SrsVideoInfo)(nil),             // 34: oryxserver.SrsVideoInfo
-	(*SrsAudioInfo)(nil),             // 35: oryxserver.SrsAudioInfo
-	(*SrsStreamItem)(nil),            // 36: oryxserver.SrsStreamItem
-	(*SrsClientsReq)(nil),            // 37: oryxserver.SrsClientsReq
-	(*SrsClientsRes)(nil),            // 38: oryxserver.SrsClientsRes
-	(*SrsClientItem)(nil),            // 39: oryxserver.SrsClientItem
-	(*SrsVhostsReq)(nil),             // 40: oryxserver.SrsVhostsReq
-	(*SrsVhostsRes)(nil),             // 41: oryxserver.SrsVhostsRes
-	(*SrsVhostItem)(nil),             // 42: oryxserver.SrsVhostItem
-	(*SrsSummariesReq)(nil),          // 43: oryxserver.SrsSummariesReq
-	(*SrsSummariesRes)(nil),          // 44: oryxserver.SrsSummariesRes
-	(*SrsSelfInfo)(nil),              // 45: oryxserver.SrsSelfInfo
-	(*SrsSystemInfo)(nil),            // 46: oryxserver.SrsSystemInfo
-	(*SrsRequestsReq)(nil),           // 47: oryxserver.SrsRequestsReq
-	(*SrsRequestsRes)(nil),           // 48: oryxserver.SrsRequestsRes
-	(*RecordBeginHookReq)(nil),       // 49: oryxserver.RecordBeginHookReq
-	(*RecordBeginHookRes)(nil),       // 50: oryxserver.RecordBeginHookRes
-	(*RecordEndHookReq)(nil),         // 51: oryxserver.RecordEndHookReq
-	(*RecordEndHookRes)(nil),         // 52: oryxserver.RecordEndHookRes
-	(*RecordListReq)(nil),            // 53: oryxserver.RecordListReq
-	(*RecordItem)(nil),               // 54: oryxserver.RecordItem
-	(*RecordListRes)(nil),            // 55: oryxserver.RecordListRes
-	(*RecordDeleteReq)(nil),          // 56: oryxserver.RecordDeleteReq
-	(*RecordDeleteRes)(nil),          // 57: oryxserver.RecordDeleteRes
-	(*StartRelayPullReq)(nil),        // 58: oryxserver.StartRelayPullReq
-	(*StartRelayPullRes)(nil),        // 59: oryxserver.StartRelayPullRes
-	(*StopRelayPullReq)(nil),         // 60: oryxserver.StopRelayPullReq
-	(*StopRelayPullRes)(nil),         // 61: oryxserver.StopRelayPullRes
-	(*StopRelayAndRecordingReq)(nil), // 62: oryxserver.StopRelayAndRecordingReq
-	(*StopRelayAndRecordingRes)(nil), // 63: oryxserver.StopRelayAndRecordingRes
+	(*VersionsReq)(nil),             // 0: oryxserver.VersionsReq
+	(*VersionsRes)(nil),             // 1: oryxserver.VersionsRes
+	(*RecordQueryReq)(nil),          // 2: oryxserver.RecordQueryReq
+	(*RecordQueryRes)(nil),          // 3: oryxserver.RecordQueryRes
+	(*RecordApplyReq)(nil),          // 4: oryxserver.RecordApplyReq
+	(*RecordApplyRes)(nil),          // 5: oryxserver.RecordApplyRes
+	(*RecordEndReq)(nil),            // 6: oryxserver.RecordEndReq
+	(*RecordEndRes)(nil),            // 7: oryxserver.RecordEndRes
+	(*RecordFile)(nil),              // 8: oryxserver.RecordFile
+	(*RecordFilesReq)(nil),          // 9: oryxserver.RecordFilesReq
+	(*RecordFilesRes)(nil),          // 10: oryxserver.RecordFilesRes
+	(*RecordRemoveReq)(nil),         // 11: oryxserver.RecordRemoveReq
+	(*RecordRemoveRes)(nil),         // 12: oryxserver.RecordRemoveRes
+	(*RecordGlobsReq)(nil),          // 13: oryxserver.RecordGlobsReq
+	(*RecordGlobsRes)(nil),          // 14: oryxserver.RecordGlobsRes
+	(*RecordPostProcessingReq)(nil), // 15: oryxserver.RecordPostProcessingReq
+	(*RecordPostProcessingRes)(nil), // 16: oryxserver.RecordPostProcessingRes
+	(*HooksApplyReq)(nil),           // 17: oryxserver.HooksApplyReq
+	(*HooksApplyRes)(nil),           // 18: oryxserver.HooksApplyRes
+	(*HooksQueryReq)(nil),           // 19: oryxserver.HooksQueryReq
+	(*HooksQueryRes)(nil),           // 20: oryxserver.HooksQueryRes
+	(*DvrQueryReq)(nil),             // 21: oryxserver.DvrQueryReq
+	(*DvrQueryRes)(nil),             // 22: oryxserver.DvrQueryRes
+	(*DvrApplyReq)(nil),             // 23: oryxserver.DvrApplyReq
+	(*DvrApplyRes)(nil),             // 24: oryxserver.DvrApplyRes
+	(*DvrFile)(nil),                 // 25: oryxserver.DvrFile
+	(*DvrFilesReq)(nil),             // 26: oryxserver.DvrFilesReq
+	(*DvrFilesRes)(nil),             // 27: oryxserver.DvrFilesRes
+	(*SrsVersionsReq)(nil),          // 28: oryxserver.SrsVersionsReq
+	(*SrsVersionsRes)(nil),          // 29: oryxserver.SrsVersionsRes
+	(*SrsStreamsReq)(nil),           // 30: oryxserver.SrsStreamsReq
+	(*SrsStreamsRes)(nil),           // 31: oryxserver.SrsStreamsRes
+	(*SrsKbps)(nil),                 // 32: oryxserver.SrsKbps
+	(*SrsPublishInfo)(nil),          // 33: oryxserver.SrsPublishInfo
+	(*SrsVideoInfo)(nil),            // 34: oryxserver.SrsVideoInfo
+	(*SrsAudioInfo)(nil),            // 35: oryxserver.SrsAudioInfo
+	(*SrsStreamItem)(nil),           // 36: oryxserver.SrsStreamItem
+	(*SrsClientsReq)(nil),           // 37: oryxserver.SrsClientsReq
+	(*SrsClientsRes)(nil),           // 38: oryxserver.SrsClientsRes
+	(*SrsClientItem)(nil),           // 39: oryxserver.SrsClientItem
+	(*SrsVhostsReq)(nil),            // 40: oryxserver.SrsVhostsReq
+	(*SrsVhostsRes)(nil),            // 41: oryxserver.SrsVhostsRes
+	(*SrsVhostItem)(nil),            // 42: oryxserver.SrsVhostItem
+	(*SrsSummariesReq)(nil),         // 43: oryxserver.SrsSummariesReq
+	(*SrsSummariesRes)(nil),         // 44: oryxserver.SrsSummariesRes
+	(*SrsSelfInfo)(nil),             // 45: oryxserver.SrsSelfInfo
+	(*SrsSystemInfo)(nil),           // 46: oryxserver.SrsSystemInfo
+	(*SrsRequestsReq)(nil),          // 47: oryxserver.SrsRequestsReq
+	(*SrsRequestsRes)(nil),          // 48: oryxserver.SrsRequestsRes
+	(*RecordBeginHookReq)(nil),      // 49: oryxserver.RecordBeginHookReq
+	(*RecordBeginHookRes)(nil),      // 50: oryxserver.RecordBeginHookRes
+	(*RecordEndHookReq)(nil),        // 51: oryxserver.RecordEndHookReq
+	(*RecordEndHookRes)(nil),        // 52: oryxserver.RecordEndHookRes
+	(*RecordListReq)(nil),           // 53: oryxserver.RecordListReq
+	(*RecordItem)(nil),              // 54: oryxserver.RecordItem
+	(*RecordListRes)(nil),           // 55: oryxserver.RecordListRes
+	(*RecordDeleteReq)(nil),         // 56: oryxserver.RecordDeleteReq
+	(*RecordDeleteRes)(nil),         // 57: oryxserver.RecordDeleteRes
+	(*StartRelayPullReq)(nil),       // 58: oryxserver.StartRelayPullReq
+	(*StartRelayPullRes)(nil),       // 59: oryxserver.StartRelayPullRes
+	(*StopRelayPullReq)(nil),        // 60: oryxserver.StopRelayPullReq
+	(*StopRelayPullRes)(nil),        // 61: oryxserver.StopRelayPullRes
 }
 var file_oryxserver_proto_depIdxs = []int32{
 	8,  // 0: oryxserver.RecordFilesRes.files:type_name -> oryxserver.RecordFile
@@ -4798,37 +4710,35 @@ var file_oryxserver_proto_depIdxs = []int32{
 	56, // 34: oryxserver.OryxServer.RecordDelete:input_type -> oryxserver.RecordDeleteReq
 	58, // 35: oryxserver.OryxServer.StartRelayPull:input_type -> oryxserver.StartRelayPullReq
 	60, // 36: oryxserver.OryxServer.StopRelayPull:input_type -> oryxserver.StopRelayPullReq
-	62, // 37: oryxserver.OryxServer.StopRelayAndRecording:input_type -> oryxserver.StopRelayAndRecordingReq
-	49, // 38: oryxserver.OryxServer.RecordBeginHook:input_type -> oryxserver.RecordBeginHookReq
-	51, // 39: oryxserver.OryxServer.RecordEndHook:input_type -> oryxserver.RecordEndHookReq
-	1,  // 40: oryxserver.OryxServer.Versions:output_type -> oryxserver.VersionsRes
-	3,  // 41: oryxserver.OryxServer.RecordQuery:output_type -> oryxserver.RecordQueryRes
-	5,  // 42: oryxserver.OryxServer.RecordApply:output_type -> oryxserver.RecordApplyRes
-	7,  // 43: oryxserver.OryxServer.RecordEnd:output_type -> oryxserver.RecordEndRes
-	10, // 44: oryxserver.OryxServer.RecordFiles:output_type -> oryxserver.RecordFilesRes
-	12, // 45: oryxserver.OryxServer.RecordRemove:output_type -> oryxserver.RecordRemoveRes
-	14, // 46: oryxserver.OryxServer.RecordGlobs:output_type -> oryxserver.RecordGlobsRes
-	16, // 47: oryxserver.OryxServer.RecordPostProcessing:output_type -> oryxserver.RecordPostProcessingRes
-	22, // 48: oryxserver.OryxServer.DvrQuery:output_type -> oryxserver.DvrQueryRes
-	24, // 49: oryxserver.OryxServer.DvrApply:output_type -> oryxserver.DvrApplyRes
-	27, // 50: oryxserver.OryxServer.DvrFiles:output_type -> oryxserver.DvrFilesRes
-	18, // 51: oryxserver.OryxServer.HooksApply:output_type -> oryxserver.HooksApplyRes
-	20, // 52: oryxserver.OryxServer.HooksQuery:output_type -> oryxserver.HooksQueryRes
-	29, // 53: oryxserver.OryxServer.SrsVersions:output_type -> oryxserver.SrsVersionsRes
-	31, // 54: oryxserver.OryxServer.SrsStreams:output_type -> oryxserver.SrsStreamsRes
-	38, // 55: oryxserver.OryxServer.SrsClients:output_type -> oryxserver.SrsClientsRes
-	41, // 56: oryxserver.OryxServer.SrsVhosts:output_type -> oryxserver.SrsVhostsRes
-	44, // 57: oryxserver.OryxServer.SrsSummaries:output_type -> oryxserver.SrsSummariesRes
-	48, // 58: oryxserver.OryxServer.SrsRequests:output_type -> oryxserver.SrsRequestsRes
-	55, // 59: oryxserver.OryxServer.RecordList:output_type -> oryxserver.RecordListRes
-	57, // 60: oryxserver.OryxServer.RecordDelete:output_type -> oryxserver.RecordDeleteRes
-	59, // 61: oryxserver.OryxServer.StartRelayPull:output_type -> oryxserver.StartRelayPullRes
-	61, // 62: oryxserver.OryxServer.StopRelayPull:output_type -> oryxserver.StopRelayPullRes
-	63, // 63: oryxserver.OryxServer.StopRelayAndRecording:output_type -> oryxserver.StopRelayAndRecordingRes
-	50, // 64: oryxserver.OryxServer.RecordBeginHook:output_type -> oryxserver.RecordBeginHookRes
-	52, // 65: oryxserver.OryxServer.RecordEndHook:output_type -> oryxserver.RecordEndHookRes
-	40, // [40:66] is the sub-list for method output_type
-	14, // [14:40] is the sub-list for method input_type
+	49, // 37: oryxserver.OryxServer.RecordBeginHook:input_type -> oryxserver.RecordBeginHookReq
+	51, // 38: oryxserver.OryxServer.RecordEndHook:input_type -> oryxserver.RecordEndHookReq
+	1,  // 39: oryxserver.OryxServer.Versions:output_type -> oryxserver.VersionsRes
+	3,  // 40: oryxserver.OryxServer.RecordQuery:output_type -> oryxserver.RecordQueryRes
+	5,  // 41: oryxserver.OryxServer.RecordApply:output_type -> oryxserver.RecordApplyRes
+	7,  // 42: oryxserver.OryxServer.RecordEnd:output_type -> oryxserver.RecordEndRes
+	10, // 43: oryxserver.OryxServer.RecordFiles:output_type -> oryxserver.RecordFilesRes
+	12, // 44: oryxserver.OryxServer.RecordRemove:output_type -> oryxserver.RecordRemoveRes
+	14, // 45: oryxserver.OryxServer.RecordGlobs:output_type -> oryxserver.RecordGlobsRes
+	16, // 46: oryxserver.OryxServer.RecordPostProcessing:output_type -> oryxserver.RecordPostProcessingRes
+	22, // 47: oryxserver.OryxServer.DvrQuery:output_type -> oryxserver.DvrQueryRes
+	24, // 48: oryxserver.OryxServer.DvrApply:output_type -> oryxserver.DvrApplyRes
+	27, // 49: oryxserver.OryxServer.DvrFiles:output_type -> oryxserver.DvrFilesRes
+	18, // 50: oryxserver.OryxServer.HooksApply:output_type -> oryxserver.HooksApplyRes
+	20, // 51: oryxserver.OryxServer.HooksQuery:output_type -> oryxserver.HooksQueryRes
+	29, // 52: oryxserver.OryxServer.SrsVersions:output_type -> oryxserver.SrsVersionsRes
+	31, // 53: oryxserver.OryxServer.SrsStreams:output_type -> oryxserver.SrsStreamsRes
+	38, // 54: oryxserver.OryxServer.SrsClients:output_type -> oryxserver.SrsClientsRes
+	41, // 55: oryxserver.OryxServer.SrsVhosts:output_type -> oryxserver.SrsVhostsRes
+	44, // 56: oryxserver.OryxServer.SrsSummaries:output_type -> oryxserver.SrsSummariesRes
+	48, // 57: oryxserver.OryxServer.SrsRequests:output_type -> oryxserver.SrsRequestsRes
+	55, // 58: oryxserver.OryxServer.RecordList:output_type -> oryxserver.RecordListRes
+	57, // 59: oryxserver.OryxServer.RecordDelete:output_type -> oryxserver.RecordDeleteRes
+	59, // 60: oryxserver.OryxServer.StartRelayPull:output_type -> oryxserver.StartRelayPullRes
+	61, // 61: oryxserver.OryxServer.StopRelayPull:output_type -> oryxserver.StopRelayPullRes
+	50, // 62: oryxserver.OryxServer.RecordBeginHook:output_type -> oryxserver.RecordBeginHookRes
+	52, // 63: oryxserver.OryxServer.RecordEndHook:output_type -> oryxserver.RecordEndHookRes
+	39, // [39:64] is the sub-list for method output_type
+	14, // [14:39] is the sub-list for method input_type
 	14, // [14:14] is the sub-list for extension type_name
 	14, // [14:14] is the sub-list for extension extendee
 	0,  // [0:14] is the sub-list for field type_name
@@ -4845,7 +4755,7 @@ func file_oryxserver_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_oryxserver_proto_rawDesc), len(file_oryxserver_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   64,
+			NumMessages:   62,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

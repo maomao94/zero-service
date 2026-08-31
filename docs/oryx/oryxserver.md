@@ -26,7 +26,7 @@
 | `RecordGlobs` | `POST /terraform/v1/hooks/record/globs` | 更新录制 glob 过滤器 |
 | `RecordPostProcessing` | `POST /terraform/v1/hooks/record/post-processing` | 更新录制后处理配置 |
 | `RecordList` | — | 分页查询录制记录（数据库） |
-| `RecordDelete` | — | 删除录制记录（数据库） |
+| `RecordDelete` | `POST /terraform/v1/hooks/record/remove` | 删除录制记录（先删 Oryx 录制文件，再删数据库记录；Oryx 返回 "no record for" 视为幂等安全） |
 
 ### DVR 云录制
 
@@ -59,8 +59,7 @@
 | RPC | 说明 |
 | --- | --- |
 | `StartRelayPull` | 启动 FFmpeg 中继拉流（源流 → copy 推送到 SRS） |
-| `StopRelayPull` | 停止中继拉流 |
-| `StopRelayAndRecording` | 停止中继拉流并结束关联录制 |
+| `StopRelayPull` | 停止中继拉流；请求体 `stop_recording=true` 时同时结束关联录制（查询录制中的记录并逐个结束） |
 
 ### 内部 Hook（仅 oryxgtw 调用）
 
