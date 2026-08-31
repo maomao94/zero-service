@@ -334,3 +334,25 @@ No active task. Reviewed enqueue code briefly, no changes made.
 ### Status
 
 [OK] **Completed**
+
+
+## Session 192: 开发 common/livekitx 快速开箱包
+
+**Date**: 2026-08-31
+**Task**: 开发 common/livekitx 快速开箱包
+**Branch**: `master`
+
+### Summary
+
+基于 server-sdk-go/v2 v2.18.1 实现 common/livekitx 快速开箱包：统一配置与幂等 Close、协议生成管理 client（Room/Egress/Ingress/SIP/AgentDispatch）、Join/SIP Token、实时连接回调桥接、Data/chat/RPC、16 个 typed Hook（Webhook/Room/Participant/Track/Connection/Data/Chat/RPC）、Webhook 验签与分发、Store 可序列化 ConnectionState（默认内存，业务可注入 Redis/DB）、go-zero httpc.Service 与标准 http.Client 注入（互斥）。请求超时由业务 context 控制，不派生默认超时；Connector/AgentSimulation/Cloud Agents 排除。TDD 全程：单测+race+vet 通过，全仓 go test 通过；本地 livekit-server --dev 真实集成 3/3（房间生命周期、Hook 桥接、聊天 Data、RPC 往返）；管理 API Twirp mock 4 项；修复 Webhook 验签 KeyProvider 与 API 房间级 grant 问题；README 全功能中文文档；沉淀 backend livekit-guidelines 规范。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9bc8de2f` | (see git log) |
+| `104133dc` | (see git log) |
+
+### Status
+
+[OK] **Completed**
