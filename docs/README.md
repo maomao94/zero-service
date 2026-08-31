@@ -27,6 +27,7 @@
 | SocketIO | [实时通信](./socketio/README.md) | 网关对接、事件体系、房间广播和鉴权 |
 | DJI | [云平台](./djicloud/README.md) | Dock 3 Cloud API 与航点任务文件 |
 | ISP | [巡检协议](./isp/README.md) | ISP 服务端/代理、帧格式、任务和模型同步 |
+| Oryx | [流媒体](./oryx/README.md) | HTTP 回调网关、gRPC API 代理、录制管理与中继拉流 |
 | LAL | [流媒体回调](../app/lalhook/README.md) | LAL HTTP 回调事件、鉴权、配置和接口说明 |
 | File | [文件与对象存储](./file/README.md) | OSS 配置管理、文件上传/中继、签名 URL 与视频截帧 |
 | GIS | [地理信息服务](./gis/README.md) | H3、GeoHash、电子围栏与坐标转换 |
