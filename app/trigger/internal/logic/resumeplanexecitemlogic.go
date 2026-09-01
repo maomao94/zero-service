@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 	"zero-service/app/trigger/model/gormmodel"
+	"zero-service/common/authctx"
 	"zero-service/common/tool"
 	"zero-service/model"
 	"zero-service/third_party/extproto"
@@ -74,7 +75,7 @@ func (l *ResumePlanExecItemLogic) ResumePlanExecItem(in *trigger.ResumePlanExecI
 		execItem.Status = model.StatusWaiting
 		execItem.PausedTime = sql.NullTime{}
 		execItem.PausedReason = sql.NullString{}
-		execItem.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
+		execItem.UpdateUser = sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""}
 		execItem.UpdateTime = time.Now()
 
 		// 更新执行项

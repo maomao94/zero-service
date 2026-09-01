@@ -10,6 +10,23 @@ import (
 	lksdk "github.com/livekit/server-sdk-go/v2"
 )
 
+const chatUserDataTopic = "test-chat"
+
+// joinRoomHelper 用 SDK 原生方式加入房间，替代已删除的 client.JoinRoom。
+func joinRoomHelper(t *testing.T, client *Client, roomName, identity string, cb *lksdk.RoomCallback, connectOpts ...lksdk.ConnectOption) *lksdk.Room {
+	t.Helper()
+	room := lksdk.NewRoom(cb)
+	if err := room.JoinWithContext(t.Context(), client.config.URL, lksdk.ConnectInfo{
+		APIKey:              client.config.APIKey,
+		APISecret:           client.config.APISecret,
+		RoomName:            roomName,
+		ParticipantIdentity: identity,
+	}, connectOpts...); err != nil {
+		t.Fatal(err)
+	}
+	return room
+}
+
 func TestLiveKitDevServerRoomLifecycle(t *testing.T) {
 	if os.Getenv("LIVEKITX_INTEGRATION") != "1" {
 		t.Skip("set LIVEKITX_INTEGRATION=1 to run against livekit-server --dev")
@@ -22,109 +39,110 @@ func TestLiveKitDevServerRoomLifecycle(t *testing.T) {
 	}
 	defer client.Close()
 	name := uniqueRoomName("lifecycle")
-	if _, err = client.API().Room().CreateRoom(ctx, &livekit.CreateRoomRequest{Name: name}); err != nil {
+	if _, err = client.Room().CreateRoom(ctx, &livekit.CreateRoomRequest{Name: name}); err != nil {
 		t.Fatal(err)
 	}
-	token, err := NewJoinToken(JoinTokenOptions{APIKey: envOr("LIVEKIT_API_KEY", "devkey"), APISecret: envOr("LIVEKIT_API_SECRET", "secret"), Room: name, Identity: "integration-user", CanPublish: true, CanSubscribe: true})
-	if err != nil {
-		t.Fatal(err)
-	}
-	realtime, err := client.Connect(ctx, token, &lksdk.RoomCallback{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer realtime.Close()
-	participants, err := client.API().Room().ListParticipants(ctx, &livekit.ListParticipantsRequest{Room: name})
+	room := joinRoomHelper(t, client, name, "integration-user", nil)
+	defer room.Disconnect()
+	participants, err := client.Room().ListParticipants(ctx, &livekit.ListParticipantsRequest{Room: name})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(participants.Participants) != 1 || participants.Participants[0].Identity != "integration-user" {
 		t.Fatalf("participants = %#v", participants.Participants)
 	}
-	if _, err = client.API().Room().ListRooms(ctx, &livekit.ListRoomsRequest{Names: []string{name}}); err != nil {
+	if _, err = client.Room().ListRooms(ctx, &livekit.ListRoomsRequest{Names: []string{name}}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = client.API().Room().DeleteRoom(ctx, &livekit.DeleteRoomRequest{Room: name}); err != nil {
+	if _, err = client.Room().DeleteRoom(ctx, &livekit.DeleteRoomRequest{Room: name}); err != nil {
 		t.Fatal(err)
 	}
 }
 
-// TestLiveKitDevServerRealtimeBridgeAndChat 验证真实服务端上的桥接链路：
-// 参与者入会 Hook、Data 回调触发 ChatMessageEvent、断开事件带真实原因、
-// 以及 RPC 请求 Hook 与真实调用往返。
-func TestLiveKitDevServerRealtimeBridgeAndChat(t *testing.T) {
+func TestLiveKitDevServerNativeCallbacksAndChat(t *testing.T) {
 	if os.Getenv("LIVEKITX_INTEGRATION") != "1" {
 		t.Skip("set LIVEKITX_INTEGRATION=1 to run against livekit-server --dev")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
-	client, err := New(WithURL(envOr("LIVEKIT_URL", "http://127.0.0.1:7880")), WithAPIKey(envOr("LIVEKIT_API_KEY", "devkey"), envOr("LIVEKIT_API_SECRET", "secret")))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer client.Close()
-	name := uniqueRoomName("hooks")
-	if _, err = client.API().Room().CreateRoom(ctx, &livekit.CreateRoomRequest{Name: name}); err != nil {
-		t.Fatal(err)
-	}
-
-	// 注册桥接 Hook：alice 侧观察 bob 入会；bob 侧接收聊天与 RPC 请求。
-	bobJoined := make(chan ParticipantConnectedEvent, 1)
-	client.OnParticipantConnected(func(_ context.Context, event ParticipantConnectedEvent) error {
-		if event.Participant != nil && event.Participant.Identity() == "bob" {
-			bobJoined <- event
-		}
-		return nil
-	})
-	chat := make(chan ChatMessageEvent, 1)
-	client.OnChatMessage(func(_ context.Context, event ChatMessageEvent) error {
-		chat <- event
-		return nil
-	})
-	rpcReq := make(chan RPCRequestEvent, 1)
-	client.OnRPCRequest(func(_ context.Context, event RPCRequestEvent) error {
-		rpcReq <- event
-		return nil
-	})
-	disconnected := make(chan RoomConnectionEvent, 1)
-	client.OnRoomConnection(func(_ context.Context, event RoomConnectionEvent) error {
-		if event.Status == RoomConnectionDisconnected {
-			disconnected <- event
-		}
-		return nil
-	})
-
+	url := envOr("LIVEKIT_URL", "http://127.0.0.1:7880")
 	key := envOr("LIVEKIT_API_KEY", "devkey")
 	secret := envOr("LIVEKIT_API_SECRET", "secret")
-	roomA, err := client.Connect(ctx, joinToken(t, key, secret, name, "alice"), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	roomB, err := client.Connect(ctx, joinToken(t, key, secret, name, "bob"), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer roomA.Close()
-	defer roomB.Close()
 
-	// alice 的内置桥接应真实收到 bob 入会事件。
+	bobJoined := make(chan string, 1)
+	bobLeft := make(chan string, 1)
+	chat := make(chan *livekit.ChatMessage, 1)
+	invite := make(chan *lksdk.UserDataPacket, 1)
+	media := make(chan *lksdk.UserDataPacket, 1)
+	disconnected := make(chan livekit.DisconnectReason, 1)
+	var bobRoom *lksdk.Room
+
+	clientA, err := New(WithURL(url), WithAPIKey(key, secret))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clientA.Close()
+	clientB, err := New(WithURL(url), WithAPIKey(key, secret))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clientB.Close()
+	name := uniqueRoomName("native")
+	if _, err = clientA.Room().CreateRoom(ctx, &livekit.CreateRoomRequest{Name: name}); err != nil {
+		t.Fatal(err)
+	}
+
+	roomA := joinRoomHelper(t, clientA, name, "alice", &lksdk.RoomCallback{
+		OnParticipantConnected: func(rp *lksdk.RemoteParticipant) {
+			if rp.Identity() == "bob" {
+				bobJoined <- rp.Identity()
+			}
+		},
+		OnParticipantDisconnected: func(rp *lksdk.RemoteParticipant) {
+			if rp.Identity() == "bob" {
+				bobLeft <- rp.Identity()
+			}
+		},
+	})
+	defer roomA.Disconnect()
+
+	roomB := joinRoomHelper(t, clientB, name, "bob", &lksdk.RoomCallback{
+		ParticipantCallback: lksdk.ParticipantCallback{
+			OnDataPacket: func(data lksdk.DataPacket, params lksdk.DataReceiveParams) {
+				if msg, ok := data.(*livekit.ChatMessage); ok && msg.GetMessage() == "hello from alice" {
+					chat <- msg
+				}
+				if msg, ok := data.(*lksdk.UserDataPacket); ok && msg.Topic == "invite" {
+					invite <- msg
+				}
+				if msg, ok := data.(*lksdk.UserDataPacket); ok && msg.Topic == "media" {
+					media <- msg
+				}
+			},
+		},
+		OnDisconnected: func() {
+			disconnected <- bobRoom.DisconnectReason()
+		},
+	})
+	defer roomB.Disconnect()
+	bobRoom = roomB
+
 	select {
-	case event := <-bobJoined:
-		if event.Participant.Identity() != "bob" {
-			t.Fatalf("unexpected participant: %s", event.Participant.Identity())
+	case identity := <-bobJoined:
+		if identity != "bob" {
+			t.Fatalf("unexpected participant: %s", identity)
 		}
 	case <-ctx.Done():
-		t.Fatal("timeout waiting for participant joined hook")
+		t.Fatal("timeout waiting for OnParticipantConnected")
 	}
 
-	// bob 注册 RPC，alice 真实调用；OnRPCRequest Hook 应带 SDK 元数据。
-	if err := roomB.RegisterRPC("echo", func(ctx context.Context, data []byte) ([]byte, error) {
+	if err := bobRoom.RegisterRpcCtxMethod("echo", func(ctx context.Context, data []byte) ([]byte, error) {
 		return data, nil
 	}); err != nil {
 		t.Fatal(err)
 	}
 	timeout := 10 * time.Second
-	response, err := roomA.PerformRPC(lksdk.PerformRpcParams{
+	response, err := roomA.LocalParticipant.PerformRpc(lksdk.PerformRpcParams{
 		DestinationIdentity: "bob", Method: "echo", Payload: "ping", ResponseTimeout: &timeout,
 	})
 	if err != nil {
@@ -133,98 +151,187 @@ func TestLiveKitDevServerRealtimeBridgeAndChat(t *testing.T) {
 	if response == nil || *response != "ping" {
 		t.Fatalf("rpc response = %v", response)
 	}
-	select {
-	case event := <-rpcReq:
-		if event.Method != "echo" || event.Payload != "ping" || event.CallerIdentity != "alice" {
-			t.Fatalf("unexpected rpc hook event: %+v", event)
-		}
-	case <-ctx.Done():
-		t.Fatal("timeout waiting for rpc request hook")
-	}
 
-	// alice 发送 SDK 原生聊天消息，bob 的内置桥接应真实触发 ChatMessageEvent。
-	if err := roomA.PublishChatMessage("hello from alice"); err != nil {
+	if err := roomA.LocalParticipant.PublishDataPacket(lksdk.ChatMessage(time.Now(), "hello from alice")); err != nil {
 		t.Fatal(err)
 	}
 	select {
-	case event := <-chat:
-		if event.Text != "hello from alice" || event.SenderID != "alice" {
-			t.Fatalf("unexpected chat event: %+v", event)
+	case msg := <-chat:
+		if msg.GetId() == "" || msg.GetTimestamp() == 0 {
+			t.Fatalf("chat message identity fields missing: %+v", msg)
 		}
 	case <-ctx.Done():
-		t.Fatal("timeout waiting for chat message hook")
+		t.Fatal("timeout waiting for native chat message")
 	}
 
-	// 主动断开后应收到带真实原因的 Disconnected 事件。
-	roomB.Close()
+	topic := "invite"
+	if _, err := clientA.Room().SendData(ctx, &livekit.SendDataRequest{
+		Room:                  name,
+		Topic:                 &topic,
+		Data:                  []byte("join now"),
+		Kind:                  livekit.DataPacket_RELIABLE,
+		DestinationIdentities: []string{"bob"},
+	}); err != nil {
+		t.Fatal(err)
+	}
 	select {
-	case event := <-disconnected:
-		if event.ProtocolReason != livekit.DisconnectReason_CLIENT_INITIATED {
-			t.Fatalf("unexpected disconnect reason: %+v", event)
-		}
-		if event.Reason != lksdk.LeaveRequested {
-			t.Fatalf("unexpected collapsed reason: %q", event.Reason)
+	case msg := <-invite:
+		if string(msg.Payload) != "join now" || msg.Topic != "invite" {
+			t.Fatalf("unexpected invite data: %+v", msg)
 		}
 	case <-ctx.Done():
-		t.Fatal("timeout waiting for disconnected hook")
+		t.Fatal("timeout waiting for invite data")
 	}
 
-	if _, err = client.API().Room().DeleteRoom(ctx, &livekit.DeleteRoomRequest{Room: name}); err != nil {
+	mediaTopic := "media"
+	if _, err := clientA.Room().SendData(ctx, &livekit.SendDataRequest{
+		Room:  name,
+		Topic: &mediaTopic,
+		Data:  []byte("voice bytes"),
+		Kind:  livekit.DataPacket_RELIABLE,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case msg := <-media:
+		if string(msg.Payload) != "voice bytes" || msg.Topic != "media" {
+			t.Fatalf("unexpected media data: %+v", msg)
+		}
+	case <-ctx.Done():
+		t.Fatal("timeout waiting for media data")
+	}
+
+	if _, err := clientA.Room().RemoveParticipant(ctx, &livekit.RoomParticipantIdentity{Room: name, Identity: "bob"}); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case reason := <-disconnected:
+		if reason != livekit.DisconnectReason_PARTICIPANT_REMOVED {
+			t.Fatalf("unexpected disconnect reason: %v", reason)
+		}
+		if collapsed := lksdk.GetDisconnectionReason(reason); collapsed != lksdk.ParticipantRemoved {
+			t.Fatalf("unexpected collapsed reason: %q", collapsed)
+		}
+	case <-ctx.Done():
+		t.Fatal("timeout waiting for OnDisconnected")
+	}
+	select {
+	case identity := <-bobLeft:
+		if identity != "bob" {
+			t.Fatalf("unexpected left participant: %s", identity)
+		}
+	case <-ctx.Done():
+		t.Fatal("timeout waiting for OnParticipantDisconnected")
+	}
+
+	if _, err = clientA.Room().DeleteRoom(ctx, &livekit.DeleteRoomRequest{Room: name}); err != nil {
 		t.Fatal(err)
 	}
 }
 
-// TestLiveKitDevServerRealtimeChatTopicData 验证 UserData + ChatTopic 约定在
-// 真实服务端同样触发 ChatMessageEvent。
-func TestLiveKitDevServerRealtimeChatTopicData(t *testing.T) {
+func TestLiveKitDevServerRealtimeUserDataChat(t *testing.T) {
 	if os.Getenv("LIVEKITX_INTEGRATION") != "1" {
 		t.Skip("set LIVEKITX_INTEGRATION=1 to run against livekit-server --dev")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
-	client, err := New(WithURL(envOr("LIVEKIT_URL", "http://127.0.0.1:7880")), WithAPIKey(envOr("LIVEKIT_API_KEY", "devkey"), envOr("LIVEKIT_API_SECRET", "secret")))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer client.Close()
-	name := uniqueRoomName("chattopic")
-	if _, err = client.API().Room().CreateRoom(ctx, &livekit.CreateRoomRequest{Name: name}); err != nil {
-		t.Fatal(err)
-	}
-	chat := make(chan ChatMessageEvent, 1)
-	client.OnChatMessage(func(_ context.Context, event ChatMessageEvent) error {
-		chat <- event
-		return nil
-	})
+	url := envOr("LIVEKIT_URL", "http://127.0.0.1:7880")
 	key := envOr("LIVEKIT_API_KEY", "devkey")
 	secret := envOr("LIVEKIT_API_SECRET", "secret")
-	roomA, err := client.Connect(ctx, joinToken(t, key, secret, name, "alice"), nil)
+	chat := make(chan *lksdk.UserDataPacket, 1)
+
+	clientA, err := New(WithURL(url), WithAPIKey(key, secret))
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer roomA.Close()
-	roomB, err := client.Connect(ctx, joinToken(t, key, secret, name, "bob"), nil)
+	defer clientA.Close()
+	clientB, err := New(WithURL(url), WithAPIKey(key, secret))
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer roomB.Close()
-	if err := roomA.PublishDataPacket(&lksdk.UserDataPacket{Payload: []byte("legacy chat"), Topic: ChatTopic}); err != nil {
+	defer clientB.Close()
+	name := uniqueRoomName("chatdata")
+	if _, err = clientA.Room().CreateRoom(ctx, &livekit.CreateRoomRequest{Name: name}); err != nil {
+		t.Fatal(err)
+	}
+	roomA := joinRoomHelper(t, clientA, name, "alice", nil)
+	defer roomA.Disconnect()
+	roomB := joinRoomHelper(t, clientB, name, "bob", &lksdk.RoomCallback{
+		ParticipantCallback: lksdk.ParticipantCallback{
+			OnDataPacket: func(data lksdk.DataPacket, params lksdk.DataReceiveParams) {
+				if msg, ok := data.(*lksdk.UserDataPacket); ok && msg.Topic == chatUserDataTopic {
+					chat <- msg
+				}
+			},
+		},
+	})
+	defer roomB.Disconnect()
+
+	if err := roomA.LocalParticipant.PublishDataPacket(&lksdk.UserDataPacket{Payload: []byte("legacy chat"), Topic: chatUserDataTopic}); err != nil {
 		t.Fatal(err)
 	}
 	select {
-	case event := <-chat:
-		if event.Text != "legacy chat" || event.SenderID != "alice" || event.Topic != ChatTopic {
-			t.Fatalf("unexpected chat event: %+v", event)
+	case msg := <-chat:
+		if string(msg.Payload) != "legacy chat" || msg.Topic != chatUserDataTopic {
+			t.Fatalf("unexpected chat topic data: %+v", msg)
 		}
 	case <-ctx.Done():
-		t.Fatal("timeout waiting for chat topic data hook")
+		t.Fatal("timeout waiting for chat topic data")
 	}
-	if _, err = client.API().Room().DeleteRoom(ctx, &livekit.DeleteRoomRequest{Room: name}); err != nil {
+	if _, err = clientA.Room().DeleteRoom(ctx, &livekit.DeleteRoomRequest{Room: name}); err != nil {
 		t.Fatal(err)
 	}
 }
 
-// envOr 返回环境变量值，未设置时使用本地 dev server 默认值。
+func TestLiveKitDevServerPerJoinCallback(t *testing.T) {
+	if os.Getenv("LIVEKITX_INTEGRATION") != "1" {
+		t.Skip("set LIVEKITX_INTEGRATION=1 to run against livekit-server --dev")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
+	defer cancel()
+	url := envOr("LIVEKIT_URL", "http://127.0.0.1:7880")
+	key := envOr("LIVEKIT_API_KEY", "devkey")
+	secret := envOr("LIVEKIT_API_SECRET", "secret")
+
+	joined := make(chan string, 1)
+	clientA, err := New(WithURL(url), WithAPIKey(key, secret))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clientA.Close()
+	clientB, err := New(WithURL(url), WithAPIKey(key, secret))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clientB.Close()
+	name := uniqueRoomName("perjoincb")
+	if _, err = clientA.Room().CreateRoom(ctx, &livekit.CreateRoomRequest{Name: name}); err != nil {
+		t.Fatal(err)
+	}
+	roomA := joinRoomHelper(t, clientA, name, "alice", &lksdk.RoomCallback{
+		OnParticipantConnected: func(rp *lksdk.RemoteParticipant) {
+			if rp.Identity() == "bob" {
+				joined <- rp.Identity()
+			}
+		},
+	})
+	defer roomA.Disconnect()
+	roomB := joinRoomHelper(t, clientB, name, "bob", nil)
+	defer roomB.Disconnect()
+
+	select {
+	case identity := <-joined:
+		if identity != "bob" {
+			t.Fatalf("unexpected participant: %s", identity)
+		}
+	case <-ctx.Done():
+		t.Fatal("timeout waiting for per-join OnParticipantConnected")
+	}
+	if _, err = clientA.Room().DeleteRoom(ctx, &livekit.DeleteRoomRequest{Room: name}); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func envOr(key, fallback string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
@@ -232,20 +339,6 @@ func envOr(key, fallback string) string {
 	return fallback
 }
 
-// uniqueRoomName 生成带前缀和纳秒时间戳的唯一房间名，避免集成测试间冲突。
 func uniqueRoomName(prefix string) string {
 	return "livekitx-" + prefix + "-" + time.Now().Format("150405.000000000")
-}
-
-// joinToken 生成指定房间和身份、可发布/订阅/发数据的参与者 token。
-func joinToken(t *testing.T, key, secret, room, identity string) string {
-	t.Helper()
-	token, err := NewJoinToken(JoinTokenOptions{
-		APIKey: key, APISecret: secret, Room: room, Identity: identity,
-		CanPublish: true, CanSubscribe: true, CanPublishData: true,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return token
 }

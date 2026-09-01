@@ -1,0 +1,119 @@
+package svc
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"time"
+
+	"zero-service/app/live/model/gormmodel"
+	"zero-service/common/gormx"
+
+	"gorm.io/gorm"
+)
+
+// ErrMeetingNotFound 会议不存在。
+var ErrMeetingNotFound = errors.New("meeting not found")
+
+// MeetingRepo 会议与参会记录的持久化存取。
+type MeetingRepo struct {
+	db *gormx.DB
+}
+
+func NewMeetingRepo(db *gormx.DB) *MeetingRepo {
+	return &MeetingRepo{db: db}
+}
+
+// CreateMeeting 创建会议单据。
+func (r *MeetingRepo) CreateMeeting(ctx context.Context, m *gormmodel.LiveMeeting) error {
+	return r.db.WithContext(ctx).Create(m).Error
+}
+
+// GetMeeting 按会议号查询会议单据。
+func (r *MeetingRepo) GetMeeting(ctx context.Context, meetingNo string) (*gormmodel.LiveMeeting, error) {
+	var m gormmodel.LiveMeeting
+	err := r.db.WithContext(ctx).Where("meeting_no = ?", meetingNo).First(&m).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrMeetingNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &m, nil
+}
+
+// UpdateMeetingEnded 标记会议已结束（仅 active → ended，返回是否更新成功）。
+// operator/deptCode 非空时一并记录更新人/机构（webhook 场景为空字符串）。
+func (r *MeetingRepo) UpdateMeetingEnded(ctx context.Context, meetingNo string, endedAt time.Time, operator, deptCode string) (bool, error) {
+	updates := map[string]any{
+		"status":   gormmodel.MeetingStatusEnded,
+		"end_time": sql.NullTime{Time: endedAt, Valid: true},
+	}
+	if operator != "" {
+		updates["update_user"] = sql.NullString{String: operator, Valid: true}
+	}
+	if deptCode != "" {
+		updates["dept_code"] = sql.NullString{String: deptCode, Valid: true}
+	}
+	res := r.db.WithContext(ctx).Model(&gormmodel.LiveMeeting{}).
+		Where("meeting_no = ? AND status = ?", meetingNo, gormmodel.MeetingStatusActive).
+		Updates(updates)
+	if res.Error != nil {
+		return false, res.Error
+	}
+	return res.RowsAffected > 0, nil
+}
+
+// ListMeetings 分页查询会议列表；status 为 0 时不过滤。
+func (r *MeetingRepo) ListMeetings(ctx context.Context, status int32, page, pageSize int64) ([]gormmodel.LiveMeeting, int64, error) {
+	var meetings []gormmodel.LiveMeeting
+	q := r.db.WithContext(ctx).Model(&gormmodel.LiveMeeting{})
+	if status > 0 {
+		q = q.Where("status = ?", status)
+	}
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	if err := q.Order("create_time DESC").Offset(int((page - 1) * pageSize)).Limit(int(pageSize)).Find(&meetings).Error; err != nil {
+		return nil, 0, err
+	}
+	return meetings, total, nil
+}
+
+// UpsertParticipant 插入或更新参会记录（同一会议同一身份；冲突时保留首次 join_time）。
+// 使用 Where + Assign + FirstOrCreate（有则更新 Assign 字段，无则插入），
+// 不依赖 ON CONFLICT（高斯数据库兼容），与 djicloud 写入模式一致。
+func (r *MeetingRepo) UpsertParticipant(ctx context.Context, p *gormmodel.LiveMeetingParticipant) error {
+	updateData := map[string]any{
+		"name":      p.Name,
+		"status":    p.Status,
+		"left_time": p.LeftTime,
+	}
+	return r.db.Transact(func(tx *gormx.DB) error {
+		return tx.WithContext(ctx).
+			Where(map[string]any{"meeting_no": p.MeetingNo, "identity": p.Identity}).
+			Assign(updateData).
+			FirstOrCreate(p).Error
+	})
+}
+
+// MarkParticipantLeft 标记参与者已离开。
+func (r *MeetingRepo) MarkParticipantLeft(ctx context.Context, meetingNo, identity string, leftAt time.Time) error {
+	return r.db.WithContext(ctx).Model(&gormmodel.LiveMeetingParticipant{}).
+		Where("meeting_no = ? AND identity = ?", meetingNo, identity).
+		Updates(map[string]any{
+			"status":    gormmodel.ParticipantStatusLeft,
+			"left_time": sql.NullTime{Time: leftAt, Valid: true},
+		}).Error
+}
+
+// ListParticipants 查询会议全部参会记录。
+func (r *MeetingRepo) ListParticipants(ctx context.Context, meetingNo string) ([]gormmodel.LiveMeetingParticipant, error) {
+	var participants []gormmodel.LiveMeetingParticipant
+	err := r.db.WithContext(ctx).
+		Where("meeting_no = ?", meetingNo).
+		Order("join_time ASC").
+		Find(&participants).Error
+	return participants, err
+}

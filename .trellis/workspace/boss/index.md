@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-4.md`
-- **Total Sessions**: 192
-- **Last Active**: 2026-08-31
+- **Total Sessions**: 198
+- **Last Active**: 2026-09-01
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-4.md` | ~358 | Active |
+| `journal-4.md` | ~492 | Active |
 | `journal-3.md` | ~1989 | Archived |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
@@ -32,6 +32,12 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 198 | 2026-09-01 | Spec 分层加载优化与 AI 指导改进 | `38b19207`, `b64b4f9d`, `dd9b5872` | `master` |
+| 197 | 2026-09-01 | LiveKit SDK 去封装 + CreateMeeting 参数扩展 | `b55a90f4`, `85ca200e`, `8d8521c8`, `6c337d47` | `master` |
+| 196 | 2026-09-01 | live-gtw: trigger 废弃方法替换 + livegtw 网关实现 | `8611e895` | `master` |
+| 195 | 2026-09-01 | livekitx 补齐 RoomService 透传方法与 LiveKit 概念梳理 | `e39435dc`, `47af16f9` | `master` |
+| 194 | 2026-09-01 | livekitx 开放 UpdateSubscriptions/ListParticipants 透传 | `e59317fa` | `master` |
+| 193 | 2026-09-01 | 简化 livekitx Hook 设计：Room API+原生回调 | `d0b87ca3`, `c4d64cd1`, `053bdb22` | `master` |
 | 192 | 2026-08-31 | 开发 common/livekitx 快速开箱包 | `9bc8de2f`, `104133dc` | `master` |
 | 191 | 2026-08-31 | 全面复核 LiveKit 学习指导并升级到最新版本 | `2be0ada1` | `master` |
 | 190 | 2026-08-31 | 完善 LiveKit 中文学习与对接指南 | `096c2efc` | `master` |

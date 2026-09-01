@@ -11,6 +11,7 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/authctx"
 	"zero-service/common/tool"
 	"zero-service/model"
 	"zero-service/third_party/extproto"
@@ -77,7 +78,7 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		now := time.Now()
 		// 只更新父级状态；cron claim 后会重新加载父级并在非 enabled/finished 时停止下发。
 		updated, transErr := gormmodel.UpdatePlanTerminated(
-			l.ctx, tx, plan.Id, in.Reason, tool.GetCurrentUserId(l.ctx, nil), now,
+			l.ctx, tx, plan.Id, in.Reason, authctx.GetUserId(l.ctx), now,
 		)
 		if transErr != nil {
 			return transErr
@@ -98,7 +99,7 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 				"status":            model.PlanStatusTerminated,
 				"terminated_reason": sql.NullString{String: in.Reason, Valid: in.Reason != ""},
 				"finished_time":     now,
-				"update_user":       sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""},
+				"update_user":       sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
 			}).Error
 		return transErr
 	})

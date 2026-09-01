@@ -1,16 +1,15 @@
 package livekitx
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/base64"
-	"errors"
 	"net/http"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/livekit/protocol/auth"
+	"github.com/livekit/protocol/livekit"
+	"github.com/livekit/protocol/webhook"
 )
 
 // signedWebhookRequest 构造携带合法 Authorization 签名的 Webhook 请求；
@@ -32,165 +31,86 @@ func signedWebhookRequest(t *testing.T, body, key string) *http.Request {
 	return request
 }
 
-// newWebhookTestClient 构造 Webhook 测试 client。
-func newWebhookTestClient(t *testing.T) *Client {
+// receiveWebhook 按业务侧约定调用 SDK webhook.ReceiveWebhookEvent，
+// 与文档示例保持一致。
+func receiveWebhook(t *testing.T, request *http.Request, signingKey string) (*livekit.WebhookEvent, error) {
 	t.Helper()
-	client, err := New(WithURL("http://127.0.0.1:7880"), WithAPIKey("devkey", "secret"))
+	return webhook.ReceiveWebhookEvent(request, NewWebhookKeyProvider(signingKey))
+}
+
+// TestWebhookKeyProviderAcceptsCorrectSigningKey 验证正确 signing key
+// 验签通过，事件字段完整保留。
+func TestWebhookKeyProviderAcceptsCorrectSigningKey(t *testing.T) {
+	body := `{"event":"room_started","id":"evt-1"}`
+	event, err := receiveWebhook(t, signedWebhookRequest(t, body, "signing-key"), "signing-key")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = client.Close() })
-	return client
-}
-
-func TestReceiveWebhookDispatchesToRegisteredHooksInOrder(t *testing.T) {
-	client := newWebhookTestClient(t)
-	var calls []string
-	client.OnWebhook(func(_ context.Context, event *WebhookEvent) error {
-		calls = append(calls, "one")
-		if event.GetEvent() != "room_started" || event.GetId() != "evt-1" {
-			t.Fatalf("unexpected event: %+v", event)
-		}
-		return nil
-	})
-	client.OnWebhook(func(_ context.Context, event *WebhookEvent) error {
-		calls = append(calls, "two")
-		return nil
-	})
-	body := `{"event":"room_started","id":"evt-1"}`
-	if err := client.ReceiveWebhook(context.Background(), signedWebhookRequest(t, body, "signing-key"), "signing-key", nil); err != nil {
-		t.Fatal(err)
-	}
-	if len(calls) != 2 || calls[0] != "one" || calls[1] != "two" {
-		t.Fatalf("unexpected call order: %#v", calls)
+	if event.GetEvent() != "room_started" || event.GetId() != "evt-1" {
+		t.Fatalf("unexpected event: %+v", event)
 	}
 }
 
-func TestReceiveWebhookRejectsBadSignatureWithoutCallingHandlers(t *testing.T) {
-	client := newWebhookTestClient(t)
-	var calls int
-	client.OnWebhook(func(context.Context, *WebhookEvent) error { calls++; return nil })
+// TestWebhookKeyProviderRejectsWrongSigningKey 验证错误 signing key 验签
+// 失败并返回签名错误，不产出任何事件。
+func TestWebhookKeyProviderRejectsWrongSigningKey(t *testing.T) {
 	body := `{"event":"room_started","id":"evt-2"}`
-	// 用错误 key 签名。
-	if err := client.ReceiveWebhook(context.Background(), signedWebhookRequest(t, body, "wrong-key"), "signing-key", nil); err == nil {
-		t.Fatal("expected signature error")
+	// 请求用 wrong-key 签名，业务用 signing-key 校验。
+	request := signedWebhookRequest(t, body, "wrong-key")
+	if event, err := receiveWebhook(t, request, "signing-key"); err == nil {
+		t.Fatalf("expected signature error, got event %+v", event)
 	}
-	// 篡改 body 后签名不匹配。
+	// 请求用 signing-key 签名，业务用 wrong-key 校验。
+	request = signedWebhookRequest(t, body, "signing-key")
+	if event, err := receiveWebhook(t, request, "wrong-key"); err == nil {
+		t.Fatalf("expected signature error, got event %+v", event)
+	}
+}
+
+// TestWebhookKeyProviderRejectsTamperedBody 验证篡改 body 后摘要不匹配，
+// 验签失败。
+func TestWebhookKeyProviderRejectsTamperedBody(t *testing.T) {
+	body := `{"event":"room_started","id":"evt-3"}`
 	request := signedWebhookRequest(t, body, "signing-key")
 	request.Body = http.NoBody
-	if err := client.ReceiveWebhook(context.Background(), request, "signing-key", nil); err == nil {
-		t.Fatal("expected checksum error")
-	}
-	if calls != 0 {
-		t.Fatalf("handlers must not run on verification failure, calls = %d", calls)
+	if event, err := receiveWebhook(t, request, "signing-key"); err == nil {
+		t.Fatalf("expected checksum error, got event %+v", event)
 	}
 }
 
-func TestReceiveWebhookDeliversUnknownEvent(t *testing.T) {
-	client := newWebhookTestClient(t)
-	got := make(chan *WebhookEvent, 1)
-	client.OnWebhook(func(_ context.Context, event *WebhookEvent) error {
-		got <- event
-		return nil
-	})
-	body := `{"event":"unknown_event_xyz","id":"evt-3"}`
-	if err := client.ReceiveWebhook(context.Background(), signedWebhookRequest(t, body, "signing-key"), "signing-key", nil); err != nil {
-		t.Fatal(err)
-	}
-	select {
-	case event := <-got:
-		if event.GetEvent() != "unknown_event_xyz" || event.GetId() != "evt-3" {
-			t.Fatalf("unexpected unknown event: %+v", event)
-		}
-	case <-time.After(time.Second):
-		t.Fatal("expected unknown event delivery")
-	}
-}
-
-func TestReceiveWebhookOneShotHandlerRunsAfterRegisteredHooks(t *testing.T) {
-	client := newWebhookTestClient(t)
-	var calls []string
-	client.OnWebhook(func(context.Context, *WebhookEvent) error { calls = append(calls, "hook"); return nil })
-	body := `{"event":"room_finished","id":"evt-4"}`
-	err := client.ReceiveWebhook(context.Background(), signedWebhookRequest(t, body, "signing-key"), "signing-key",
-		func(context.Context, *WebhookEvent) error { calls = append(calls, "one-shot"); return nil })
+// TestWebhookKeyProviderDeliversUnknownEvent 验证未知事件类型验签通过后
+// 安全交付，保留事件 ID/type 由业务决定处理策略。
+func TestWebhookKeyProviderDeliversUnknownEvent(t *testing.T) {
+	body := `{"event":"unknown_event_xyz","id":"evt-4"}`
+	event, err := receiveWebhook(t, signedWebhookRequest(t, body, "signing-key"), "signing-key")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(calls) != 2 || calls[0] != "hook" || calls[1] != "one-shot" {
-		t.Fatalf("unexpected call order: %#v", calls)
+	if event.GetEvent() != "unknown_event_xyz" || event.GetId() != "evt-4" {
+		t.Fatalf("unexpected unknown event: %+v", event)
 	}
 }
 
-func TestReceiveWebhookAggregatesHandlerErrors(t *testing.T) {
-	client := newWebhookTestClient(t)
-	hookErr := errors.New("hook failed")
-	client.OnWebhook(func(context.Context, *WebhookEvent) error { return hookErr })
+// TestWebhookKeyProviderRejectsEmptySigningKey 验证空 signing key 验签
+// 失败（KeyProvider 不持有任何可匹配的 secret）。
+func TestWebhookKeyProviderRejectsEmptySigningKey(t *testing.T) {
 	body := `{"event":"room_started","id":"evt-5"}`
-	err := client.ReceiveWebhook(context.Background(), signedWebhookRequest(t, body, "signing-key"), "signing-key", nil)
-	if !errors.Is(err, hookErr) {
-		t.Fatalf("expected hook error to propagate, got %v", err)
+	request := signedWebhookRequest(t, body, "signing-key")
+	if event, err := receiveWebhook(t, request, ""); err == nil {
+		t.Fatalf("expected signature error for empty key, got event %+v", event)
 	}
 }
 
-func TestReceiveWebhookRecoversHandlerPanic(t *testing.T) {
-	client := newWebhookTestClient(t)
-	client.OnWebhook(func(context.Context, *WebhookEvent) error { panic("webhook boom") })
-	body := `{"event":"room_started","id":"evt-6"}`
-	err := client.ReceiveWebhook(context.Background(), signedWebhookRequest(t, body, "signing-key"), "signing-key", nil)
-	var panicErr *HookPanicError
-	if !errors.As(err, &panicErr) {
-		t.Fatalf("expected *HookPanicError, got %T: %v", err, err)
+// TestNewWebhookKeyProviderSatisfiesKeyProvider 验证返回值实现
+// auth.KeyProvider 接口且对任意 key claim 返回同一个 signing key。
+func TestNewWebhookKeyProviderSatisfiesKeyProvider(t *testing.T) {
+	provider := NewWebhookKeyProvider("signing-key")
+	if provider.NumKeys() != 1 {
+		t.Fatalf("NumKeys() = %d, want 1", provider.NumKeys())
 	}
-	if panicErr.Value != "webhook boom" {
-		t.Fatalf("unexpected panic value: %+v", panicErr)
+	for _, claim := range []string{"devkey", "", "any-key-claim"} {
+		if got := provider.GetSecret(claim); got != "signing-key" {
+			t.Fatalf("GetSecret(%q) = %q, want signing-key", claim, got)
+		}
 	}
-}
-
-func TestOnWebhookUnsubscribeStopsDelivery(t *testing.T) {
-	client := newWebhookTestClient(t)
-	var calls int
-	sub := client.OnWebhook(func(context.Context, *WebhookEvent) error { calls++; return nil })
-	body := `{"event":"room_started","id":"evt-7"}`
-	if err := client.ReceiveWebhook(context.Background(), signedWebhookRequest(t, body, "signing-key"), "signing-key", nil); err != nil {
-		t.Fatal(err)
-	}
-	sub.Unsubscribe()
-	if err := client.ReceiveWebhook(context.Background(), signedWebhookRequest(t, body, "signing-key"), "signing-key", nil); err != nil {
-		t.Fatal(err)
-	}
-	if calls != 1 {
-		t.Fatalf("unsubscribed hook must not run, calls = %d", calls)
-	}
-}
-
-func TestReceiveWebhookRejectsNilContext(t *testing.T) {
-	client, err := New(WithURL("http://127.0.0.1:7880"), WithAPIKey("devkey", "secret"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer client.Close()
-	request, err := http.NewRequest(http.MethodPost, "http://localhost/webhook", strings.NewReader("{}"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = client.ReceiveWebhook(nil, request, "signing-key", func(context.Context, *WebhookEvent) error { return nil })
-	if !errors.Is(err, ErrInvalidConfig) {
-		t.Fatalf("expected invalid configuration, got %v", err)
-	}
-}
-
-func TestReceiveWebhookAfterCloseReturnsErrClosed(t *testing.T) {
-	client := newWebhookTestClient(t)
-	if err := client.Close(); err != nil {
-		t.Fatal(err)
-	}
-	body := `{"event":"room_started","id":"evt-8"}`
-	err := client.ReceiveWebhook(context.Background(), signedWebhookRequest(t, body, "signing-key"), "signing-key", nil)
-	if !errors.Is(err, ErrClosed) {
-		t.Fatalf("expected ErrClosed after Close, got %v", err)
-	}
-	// 关闭后注册返回空订阅，不 panic。
-	sub := client.OnWebhook(func(context.Context, *WebhookEvent) error { return nil })
-	sub.Unsubscribe()
 }

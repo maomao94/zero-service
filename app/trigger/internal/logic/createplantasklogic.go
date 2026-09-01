@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 	"zero-service/app/trigger/model/gormmodel"
+	"zero-service/common/authctx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -100,7 +101,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "序列化计划规则失败")
 	}
-	currentUserId := tool.GetCurrentUserId(l.ctx, nil)
+	currentUserId := authctx.GetUserId(l.ctx)
 
 	var insertPlan = gormmodel.Plan{
 		CreateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},

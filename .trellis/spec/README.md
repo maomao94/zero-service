@@ -19,10 +19,11 @@
 
 ## 如何使用
 
-1. 开发前先读 [backend/index.md](./backend/index.md)，按改动范围选择具体 Code-Spec。
-2. 改动跨目录、跨进程或准备抽公共能力时，再读 [guides/index.md](./guides/index.md) 选择思考指南。
-3. 以当前源码、测试、契约源和配置验证规则；Spec 与实现冲突时先调查原因，不机械服从过时文本。
-4. 开发完成后执行所选 Code-Spec 的验证项，并按 [质量规范](./backend/quality-guidelines.md) 扩大检查范围。
+1. 开发前先读 [backend/core-rules.md](./backend/core-rules.md)（~90行，所有任务必读）。
+2. 再读 [backend/index.md](./backend/index.md)，按"任务类型快速路由"选择1-2个相关 Code-Spec。
+3. 改动跨目录、跨进程或准备抽公共能力时，再读 [guides/index.md](./guides/index.md) 选择思考指南。
+4. 以当前源码、测试、契约源和配置验证规则；Spec 与实现冲突时先调查原因，不机械服从过时文本。
+5. 开发完成后执行所选 Code-Spec 的验证项，并按 [质量规范](./backend/quality-guidelines.md) 扩大检查范围。
 
 ## 内容边界
 

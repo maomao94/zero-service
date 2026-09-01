@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 	"zero-service/app/trigger/model/gormmodel"
+	"zero-service/common/authctx"
 	"zero-service/common/tool"
 	"zero-service/model"
 	"zero-service/third_party/extproto"
@@ -72,7 +73,7 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 		plan.Status = model.PlanStatusEnabled
 		plan.PausedTime = sql.NullTime{}
 		plan.PausedReason = sql.NullString{}
-		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
+		plan.UpdateUser = sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""}
 		plan.UpdateTime = time.Now()
 
 		// 更新计划
@@ -89,7 +90,7 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 				"status":        model.PlanStatusEnabled,
 				"paused_time":   sql.NullTime{},
 				"paused_reason": sql.NullString{},
-				"update_user":   sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""},
+				"update_user":   sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
 			}).Error
 		return transErr
 	})

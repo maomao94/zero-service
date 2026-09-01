@@ -1,0 +1,210 @@
+syntax = "proto3";
+
+package live;
+option go_package = "./live";
+option java_multiple_files = true;
+option java_package = "com.github.live.grpc";
+option java_outer_classname = "LiveProto";
+
+// LiveRpc 会议业务服务：管理会议单据、发放入会 token、LiveKit 管理操作与 webhook 状态同步。
+service LiveRpc {
+  // 创建会议（落库 + 创建 LiveKit 房间）
+  rpc CreateMeeting(CreateMeetingReq) returns (CreateMeetingRes);
+  // 加入会议（校验会议后发放 join token，浏览器直连 LiveKit）
+  rpc JoinMeeting(JoinMeetingReq) returns (JoinMeetingRes);
+  // 查询会议详情
+  rpc GetMeeting(GetMeetingReq) returns (GetMeetingRes);
+  // 分页查询会议列表
+  rpc ListMeetings(ListMeetingsReq) returns (ListMeetingsRes);
+  // 结束会议（删除 LiveKit 房间 + 状态流转，Redis lock 防重入）
+  rpc EndMeeting(EndMeetingReq) returns (EndMeetingRes);
+  // 踢人（移除指定参与者）
+  rpc KickParticipant(KickParticipantReq) returns (KickParticipantRes);
+  // 静音/取消静音参与者音频或视频
+  rpc MuteParticipant(MuteParticipantReq) returns (MuteParticipantRes);
+  // 查询会议参与者
+  rpc ListParticipants(ListParticipantsReq) returns (ListParticipantsRes);
+  // 向会议发送 Data（destinations 为空则广播）
+  rpc SendMeetingData(SendMeetingDataReq) returns (SendMeetingDataRes);
+  // 服务端对参与者执行 RPC
+  rpc PerformMeetingRpc(PerformMeetingRpcReq) returns (PerformMeetingRpcRes);
+  // 接收 LiveKit webhook 事件（由 livegtw 验签后转发）
+  rpc WebhookNotify(WebhookNotifyReq) returns (WebhookNotifyRes);
+}
+
+// MeetingInfo 会议单据信息。
+message MeetingInfo {
+  // 业务会议号（= LiveKit 房间名）
+  string meeting_no = 1 [json_name = "meetingNo"];
+  // 会议标题
+  string title = 2 [json_name = "title"];
+  // 会议状态：1-已创建，2-进行中，3-已结束
+  int32 status = 3 [json_name = "status"];
+  // 创建人（gRPC metadata user-id）
+  string create_user = 4 [json_name = "createUser"];
+  // 更新人（gRPC metadata user-id）
+  string update_user = 5 [json_name = "updateUser"];
+  // 机构 code
+  string dept_code = 6 [json_name = "deptCode"];
+  // 开始时间，格式：yyyy-MM-dd HH:mm:ss
+  string start_time = 7 [json_name = "startTime"];
+  // 结束时间，格式：yyyy-MM-dd HH:mm:ss（未结束为空字符串）
+  string end_time = 8 [json_name = "endTime"];
+  // 创建时间，格式：yyyy-MM-dd HH:mm:ss
+  string create_time = 9 [json_name = "createTime"];
+}
+
+message CreateMeetingReq {
+  // 会议标题
+  string title = 1 [json_name = "title"];
+  // 无人时房间保留秒数（默认 600）
+  uint32 empty_timeout = 2 [json_name = "emptyTimeout"];
+  // 所有人离开后保留秒数（默认 120，防刷新断连）
+  uint32 departure_timeout = 3 [json_name = "departureTimeout"];
+  // 最大参会人数（默认 50）
+  uint32 max_participants = 4 [json_name = "maxParticipants"];
+  // 会议元数据 JSON（可选）
+  string metadata = 5 [json_name = "metadata"];
+}
+
+message CreateMeetingRes {
+  // 会议信息
+  MeetingInfo meeting = 1 [json_name = "meeting"];
+}
+
+message JoinMeetingReq {
+  // 会议号
+  string meeting_no = 1 [json_name = "meetingNo"];
+  // 参会人身份（房间内唯一）
+  string identity = 2 [json_name = "identity"];
+  // 展示名（可空）
+  string name = 3 [json_name = "name"];
+}
+
+message JoinMeetingRes {
+  // join token（浏览器直连 LiveKit 使用）
+  string token = 1 [json_name = "token"];
+  // LiveKit WebSocket 地址
+  string ws_url = 2 [json_name = "wsUrl"];
+  // 会议信息
+  MeetingInfo meeting = 3 [json_name = "meeting"];
+}
+
+message GetMeetingReq {
+  // 会议号
+  string meeting_no = 1 [json_name = "meetingNo"];
+}
+
+message GetMeetingRes {
+  // 会议信息
+  MeetingInfo meeting = 1 [json_name = "meeting"];
+}
+
+message ListMeetingsReq {
+  // 过滤状态，0 表示全部
+  int32 status = 1 [json_name = "status"];
+  // 页码，从 1 开始
+  int64 page = 2 [json_name = "page"];
+  // 每页数量
+  int64 page_size = 3 [json_name = "pageSize"];
+}
+
+message ListMeetingsRes {
+  // 会议列表
+  repeated MeetingInfo meetings = 1 [json_name = "meetings"];
+  // 总数量
+  int64 total = 2 [json_name = "total"];
+}
+
+message EndMeetingReq {
+  // 会议号
+  string meeting_no = 1 [json_name = "meetingNo"];
+}
+
+message EndMeetingRes {}
+
+message KickParticipantReq {
+  // 会议号
+  string meeting_no = 1 [json_name = "meetingNo"];
+  // 被踢参与者身份
+  string identity = 2 [json_name = "identity"];
+}
+
+message KickParticipantRes {}
+
+message MuteParticipantReq {
+  // 会议号
+  string meeting_no = 1 [json_name = "meetingNo"];
+  // 目标参与者身份
+  string identity = 2 [json_name = "identity"];
+  // 是否静音（true-静音，false-取消静音）
+  bool muted = 3 [json_name = "muted"];
+  // 轨道类型：audio | video
+  string kind = 4 [json_name = "kind"];
+}
+
+message MuteParticipantRes {}
+
+message ParticipantInfo {
+  // 参与者身份
+  string identity = 1 [json_name = "identity"];
+  // 展示名
+  string name = 2 [json_name = "name"];
+  // 参会状态：1-已加入，2-已离开
+  int32 status = 3 [json_name = "status"];
+  // 加入时间，格式：yyyy-MM-dd HH:mm:ss
+  string join_time = 4 [json_name = "joinTime"];
+  // 离开时间，格式：yyyy-MM-dd HH:mm:ss（未离开为空字符串）
+  string left_time = 5 [json_name = "leftTime"];
+}
+
+message ListParticipantsReq {
+  // 会议号
+  string meeting_no = 1 [json_name = "meetingNo"];
+}
+
+message ListParticipantsRes {
+  // 参会记录列表
+  repeated ParticipantInfo participants = 1 [json_name = "participants"];
+}
+
+message SendMeetingDataReq {
+  // 会议号
+  string meeting_no = 1 [json_name = "meetingNo"];
+  // 业务约定 topic
+  string topic = 2 [json_name = "topic"];
+  // 任意二进制内容
+  bytes payload = 3 [json_name = "payload"];
+  // 目标身份，空表示广播
+  repeated string destinations = 4 [json_name = "destinations"];
+}
+
+message SendMeetingDataRes {}
+
+message PerformMeetingRpcReq {
+  // 会议号
+  string meeting_no = 1 [json_name = "meetingNo"];
+  // 目标参与者身份
+  string identity = 2 [json_name = "identity"];
+  // RPC 方法名
+  string method = 3 [json_name = "method"];
+  // 请求负载
+  string payload = 4 [json_name = "payload"];
+  // 响应超时时间（毫秒），0 使用服务端默认
+  uint32 response_timeout_ms = 5 [json_name = "responseTimeoutMs"];
+}
+
+message PerformMeetingRpcRes {
+  // RPC 响应内容
+  string response = 1 [json_name = "response"];
+}
+
+// WebhookNotifyReq LiveKit webhook 事件请求：携带 LiveKit 推送的原始
+// proto 字节（livekit.WebhookEvent 序列化），由 live 服务解析后基于
+// SDK 对象处理业务。
+message WebhookNotifyReq {
+  // LiveKit webhook 原始 proto 字节（livekit.WebhookEvent）
+  bytes data = 1 [json_name = "data"];
+}
+
+message WebhookNotifyRes {}

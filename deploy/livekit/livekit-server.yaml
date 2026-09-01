@@ -1,0 +1,10 @@
+port: 7880
+rtc:
+  port_range_start: 50000
+  port_range_end: 60000
+keys:
+  devkey: secret
+webhook:
+  urls:
+    - http://127.0.0.1:11002/webhook/livekit
+  api_key: devkey

@@ -29,6 +29,8 @@ message PlanPb {
 - **json_name 全量显式化**：一方 proto 的所有字段必须显式带 `[json_name = "..."]`（2026-08 已覆盖全部 24 个文件，2580 个字段）。新增字段时同步补 tag，缺 tag 即视为契约不完整。
 - **已知历史偏差（保留不动）**：`app/file/file.proto` `thumb_name → "ThumbName"`、`app/lalproxy/lalproxy.proto` `webUiVersion → "WebUiVersion"`、`facade/streamevent/streamevent.proto` `point_id → "PointId"` 三处 json_name 与 lowerCamelCase 约定不一致，但已固化在线上 descriptor/swagger 中属 wire 契约，**不得"顺手修正"**；确需修正须按破坏性变更走单独任务。
 - **protoc ToJsonName 语义**：删除字段名中所有 `_` 并将其后字母大写（含数字前，如 `data_2nd` → `data2nd`）；以"重生成 Go 代码后 diff 为空"作为 json_name 与默认值一致的最终验证手段。
+- **RPC 返回统一 `XxxRes` 包一层**：每个 RPC 有独立成对的 `XxxReq`/`XxxRes`，返回类型不允许裸模型消息（如 `returns (MeetingInfo)`），业务数据放 `Res` 字段（如 `MeetingInfo meeting = 1`）；即使无返回数据也定义空 `XxxRes{}`，禁止 `Empty` 裸类型。
+- **时间字段**：出参时间用字符串（carbon 格式化 `yyyy-MM-dd HH:mm:ss`），字段命名 `start_time`/`end_time`/`create_time` 风格（不用 `*At`），注释标注"格式：yyyy-MM-dd HH:mm:ss"。禁止出参时间戳 int64。
 
 ## Proto JSON 序列化规则
 

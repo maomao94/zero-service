@@ -45,3 +45,26 @@ func TestNewJoinTokenCreatesMinimalJoinGrant(t *testing.T) {
 		t.Fatal("expected publish and subscribe permissions")
 	}
 }
+
+func TestNewJoinTokenDefaults(t *testing.T) {
+	token, err := NewJoinToken(JoinTokenOptions{
+		APIKey:    "devkey",
+		APISecret: "secret",
+		Room:      "room-a",
+		Identity:  "user-a",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	verifier, err := auth.ParseAPIToken(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	claims, _, err := verifier.Verify("secret")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if claims.Subject != "user-a" {
+		t.Fatalf("unexpected subject: %s", claims.Subject)
+	}
+}

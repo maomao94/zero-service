@@ -1,0 +1,204 @@
+syntax = "v1"
+
+info (
+	title:   "Live 会议网关"
+	desc:    "会议业务 HTTP 网关：业务 API 转发到 app/live gRPC 服务，接收 LiveKit webhook"
+	author:  "hehanpeng"
+	version: "v1"
+)
+
+// ===== 类型定义（与 app/live live.proto 的 JSON 形态一致）=====
+type MeetingInfo {
+	// 业务会议号（= LiveKit 房间名）
+	MeetingNo string `json:"meetingNo"`
+	// 会议标题
+	Title string `json:"title"`
+	// 会议状态：1-已创建，2-进行中，3-已结束
+	Status int32 `json:"status"`
+	// 创建人
+	CreateUser string `json:"createUser"`
+	// 更新人
+	UpdateUser string `json:"updateUser"`
+	// 机构 code
+	DeptCode string `json:"deptCode"`
+	// 开始时间，格式：yyyy-MM-dd HH:mm:ss
+	StartTime string `json:"startTime"`
+	// 结束时间，格式：yyyy-MM-dd HH:mm:ss（未结束为空字符串）
+	EndTime string `json:"endTime"`
+	// 创建时间，格式：yyyy-MM-dd HH:mm:ss
+	CreateTime string `json:"createTime"`
+}
+
+type ParticipantInfo {
+	// 参与者身份
+	Identity string `json:"identity"`
+	// 展示名
+	Name string `json:"name"`
+	// 参会状态：1-已加入，2-已离开
+	Status int32 `json:"status"`
+	// 加入时间，格式：yyyy-MM-dd HH:mm:ss
+	JoinTime string `json:"joinTime"`
+	// 离开时间，格式：yyyy-MM-dd HH:mm:ss（未离开为空字符串）
+	LeftTime string `json:"leftTime"`
+}
+
+type CreateMeetingReq {
+	// 会议标题
+	Title string `json:"title"`
+}
+
+type CreateMeetingRes {
+	Meeting MeetingInfo `json:"meeting"`
+}
+
+type JoinMeetingReq {
+	// 会议号
+	MeetingNo string `json:"meetingNo"`
+	// 参会人身份（房间内唯一）
+	Identity string `json:"identity"`
+	// 展示名（可空）
+	Name string `json:"name"`
+}
+
+type JoinMeetingRes {
+	// join token（浏览器直连 LiveKit 使用）
+	Token string `json:"token"`
+	// LiveKit WebSocket 地址
+	WsUrl string `json:"wsUrl"`
+	// 会议信息
+	Meeting MeetingInfo `json:"meeting"`
+}
+
+type GetMeetingReq {
+	// 会议号
+	MeetingNo string `form:"meetingNo"`
+}
+
+type GetMeetingRes {
+	Meeting MeetingInfo `json:"meeting"`
+}
+
+type ListMeetingsReq {
+	// 过滤状态，0 表示全部
+	Status int32 `form:"status,optional"`
+	// 页码，从 1 开始
+	Page int64 `form:"page,optional"`
+	// 每页数量
+	PageSize int64 `form:"pageSize,optional"`
+}
+
+type ListMeetingsRes {
+	Meetings []MeetingInfo `json:"meetings"`
+	// 总数量
+	Total int64 `json:"total"`
+}
+
+type EndMeetingReq {
+	// 会议号
+	MeetingNo string `json:"meetingNo"`
+}
+
+type KickParticipantReq {
+	// 会议号
+	MeetingNo string `json:"meetingNo"`
+	// 被踢参与者身份
+	Identity string `json:"identity"`
+}
+
+type MuteParticipantReq {
+	// 会议号
+	MeetingNo string `json:"meetingNo"`
+	// 目标参与者身份
+	Identity string `json:"identity"`
+	// 是否静音（true-静音，false-取消静音）
+	Muted bool `json:"muted"`
+	// 轨道类型：audio | video
+	Kind string `json:"kind"`
+}
+
+type ListParticipantsReq {
+	// 会议号
+	MeetingNo string `form:"meetingNo"`
+}
+
+type ListParticipantsRes {
+	Participants []ParticipantInfo `json:"participants"`
+}
+
+type SendMeetingDataReq {
+	// 会议号
+	MeetingNo string `json:"meetingNo"`
+	// 业务约定 topic
+	Topic string `json:"topic"`
+	// 任意二进制内容（base64）
+	Payload string `json:"payload"`
+	// 目标身份，空表示广播
+	Destinations []string `json:"destinations"`
+}
+
+type PerformMeetingRpcReq {
+	// 会议号
+	MeetingNo string `json:"meetingNo"`
+	// 目标参与者身份
+	Identity string `json:"identity"`
+	// RPC 方法名
+	Method string `json:"method"`
+	// 请求负载
+	Payload string `json:"payload"`
+	// 响应超时时间（毫秒），0 使用服务端默认
+	ResponseTimeoutMs uint32 `json:"responseTimeoutMs"`
+}
+
+type PerformMeetingRpcRes {
+	// RPC 响应内容
+	Response string `json:"response"`
+}
+
+@server (
+	prefix: live/v1/meeting
+	group:  meeting
+	jwt:    JwtAuth
+	middleware: MeetingAuth
+)
+service livegtw {
+	@doc "创建会议"
+	@handler createMeeting
+	post /create (CreateMeetingReq) returns (CreateMeetingRes)
+
+	@doc "加入会议"
+	@handler joinMeeting
+	post /join (JoinMeetingReq) returns (JoinMeetingRes)
+
+	@doc "查询会议详情"
+	@handler getMeeting
+	get /detail (GetMeetingReq) returns (GetMeetingRes)
+
+	@doc "分页查询会议列表"
+	@handler listMeetings
+	get /list (ListMeetingsReq) returns (ListMeetingsRes)
+
+	@doc "结束会议"
+	@handler endMeeting
+	post /end (EndMeetingReq)
+
+	@doc "踢人"
+	@handler kickParticipant
+	post /kick (KickParticipantReq)
+
+	@doc "静音/取消静音"
+	@handler muteParticipant
+	post /mute (MuteParticipantReq)
+
+	@doc "查询会议参与者"
+	@handler listParticipants
+	get /participants (ListParticipantsReq) returns (ListParticipantsRes)
+
+	@doc "向会议发送 Data（广播/定向）"
+	@handler sendMeetingData
+	post /sendData (SendMeetingDataReq)
+
+	@doc "服务端对参与者执行 RPC"
+	@handler performMeetingRpc
+	post /rpc (PerformMeetingRpcReq) returns (PerformMeetingRpcRes)
+}
+

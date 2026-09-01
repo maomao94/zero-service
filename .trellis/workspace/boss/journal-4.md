@@ -356,3 +356,137 @@ No active task. Reviewed enqueue code briefly, no changes made.
 ### Status
 
 [OK] **Completed**
+
+
+## Session 193: 简化 livekitx Hook 设计：Room API+原生回调
+
+**Date**: 2026-09-01
+**Task**: 简化 livekitx Hook 设计：Room API+原生回调
+**Branch**: `master`
+
+### Summary
+
+按用户 9 轮反馈把 common/livekitx 从 typed Hook 分发层重构为极简 Room API + SDK 原生回调：删除 eventDispatcher/16 个 typed Hook/Store/ConnectionState/RealtimeRoom/Connect/默认 callback/EndRoom/ChatTopic；Option 重构为 func(*Client) 直接注入（Config 仅配置项）；JoinRoomOption 接口（WithCallback 场景定制 + WithConnectOption 透传）；JoinRoom 用 ConnectInfo 自动签 token；Room API 增至 9 个（JoinRoom/CreateRoom/CreateAndJoinRoom/DeleteRoom/RemoveParticipant 踢人/InviteParticipant 邀请/MuteParticipant 静音/MuteParticipantVideo 关视频/SendData 语音图片富媒体）；Client.JoinToken 签发入会 token；NewWebhookKeyProvider 验签；SDK 日志默认接 go-zero logx；API 字段加 Service 后缀；错误聚合到 errors.go；文档 docs/livekit-callbacks-guide.md（全部回调场景+字段，SDK v2.18.1 源码核对）+ README 重写；livekit-guidelines 规范更新。验证：单测/race/vet/全仓通过，集成测试 4/4（入会/聊天双路径/RPC/断开原因/SendData/PerJoinCallback）。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d0b87ca3` | (see git log) |
+| `c4d64cd1` | (see git log) |
+| `053bdb22` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 194: livekitx 开放 UpdateSubscriptions/ListParticipants 透传
+
+**Date**: 2026-09-01
+**Task**: livekitx 开放 UpdateSubscriptions/ListParticipants 透传
+**Branch**: `master`
+
+### Summary
+
+新增 UpdateSubscriptions（强制订阅/取消订阅轨道）与 ListParticipants（参与者列表）透传方法，业务自判调用时机；muteParticipantTracks 复用 ListParticipants；补 mock 测试断言请求字段与参数校验；更新 livekit-guidelines spec。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e59317fa` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 195: livekitx 补齐 RoomService 透传方法与 LiveKit 概念梳理
+
+**Date**: 2026-09-01
+**Task**: livekitx 补齐 RoomService 透传方法与 LiveKit 概念梳理
+**Branch**: `master`
+
+### Summary
+
+补齐 5 个透传方法（ListRooms/GetParticipant/UpdateParticipant/UpdateRoomMetadata/PerformRpc），api.go requestRoom 增加 PerformRpcRequest 房间限定，补 mock 测试；梳理 SIP/PhoneNumberService/11 个 Twirp service 能力边界；spec 沉淀 PerformRpc 服务端语义、SendData 选型规则、PhoneNumberService/SIP 边界。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e39435dc` | (see git log) |
+| `47af16f9` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 196: live-gtw: trigger 废弃方法替换 + livegtw 网关实现
+
+**Date**: 2026-09-01
+**Task**: live-gtw: trigger 废弃方法替换 + livegtw 网关实现
+**Branch**: `master`
+
+### Summary
+
+1. trigger 目录 14 处 tool.GetCurrentUserId(l.ctx, nil) 全部替换为 authctx.GetUserId(l.ctx)（10 个 logic 文件）；2. livegtw 网关骨架实现：10 个会议 API 转发、webhook 验签、测试页路由、配置，编译/vet/单测全绿。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8611e895` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 197: LiveKit SDK 去封装 + CreateMeeting 参数扩展
+
+**Date**: 2026-09-01
+**Task**: LiveKit SDK 去封装 + CreateMeeting 参数扩展
+**Branch**: `master`
+
+### Summary
+
+1) CreateMeetingReq 增加 empty_timeout/departure_timeout/max_participants/metadata 四个字段，LiveKit CreateRoom 传递新参数并设默认值；2) 删除 LiveKitAPI 接口封装层，ServiceContext.LiveKit 改为 *livekitx.Client，业务直接调用 SDK；3) 删除 Client.JoinToken 方法，业务直接调用 livekitx.NewJoinToken；4) 删除 room.go 所有 wrapper 方法（CreateRoom/DeleteRoom/RemoveParticipant/SendData/PerformRpc/MuteParticipant 等），保留 Room() 暴露底层 SDK；5) 测试改为 httptest mock server 方式；6) 更新 livekit-guidelines.md spec。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b55a90f4` | (see git log) |
+| `85ca200e` | (see git log) |
+| `8d8521c8` | (see git log) |
+| `6c337d47` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 198: Spec 分层加载优化与 AI 指导改进
+
+**Date**: 2026-09-01
+**Task**: Spec 分层加载优化与 AI 指导改进
+**Branch**: `master`
+
+### Summary
+
+优化 .trellis/spec/ 分层加载：新建 core-rules.md（~100行核心规则），删除 coding-standards.md 去重，精简 error-handling 和 service-lifecycle，index.md 增加关键词路由表，go-zero-conventions/gormx/concurrency 等 spec 表格化、Good/Bad 对比优化。总行数 4901→4785，小任务上下文从~500-1000行降到~200-300行。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `38b19207` | (see git log) |
+| `b64b4f9d` | (see git log) |
+| `dd9b5872` | (see git log) |
+
+### Status
+
+[OK] **Completed**

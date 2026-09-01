@@ -22,27 +22,27 @@ type HTTPService = httpc.Service
 // AgentDispatch；Connector、AgentSimulation 和 Cloud Agents 不属于本包能力，
 // 未来基于相同认证/HTTP 基础设施作为独立扩展包提供。
 type API struct {
-	room          livekit.RoomService
-	egress        livekit.Egress
-	ingress       livekit.Ingress
-	sip           livekit.SIP
-	agentDispatch livekit.AgentDispatchService
+	roomService          livekit.RoomService
+	egressService        livekit.Egress
+	ingressService       livekit.Ingress
+	sipService           livekit.SIP
+	agentDispatchService livekit.AgentDispatchService
 }
 
 // Room 返回房间和参与者管理 service。
-func (a *API) Room() livekit.RoomService { return a.room }
+func (a *API) Room() livekit.RoomService { return a.roomService }
 
 // Egress 返回录制和导出管理 service。
-func (a *API) Egress() livekit.Egress { return a.egress }
+func (a *API) Egress() livekit.Egress { return a.egressService }
 
 // Ingress 返回输入流管理 service。
-func (a *API) Ingress() livekit.Ingress { return a.ingress }
+func (a *API) Ingress() livekit.Ingress { return a.ingressService }
 
 // SIP 返回 SIP 管理 service。
-func (a *API) SIP() livekit.SIP { return a.sip }
+func (a *API) SIP() livekit.SIP { return a.sipService }
 
 // AgentDispatch 返回 Agent dispatch service。
-func (a *API) AgentDispatch() livekit.AgentDispatchService { return a.agentDispatch }
+func (a *API) AgentDispatch() livekit.AgentDispatchService { return a.agentDispatchService }
 
 func newAPI(cfg Config) (*API, error) {
 	client := HTTPClient(cfg.HTTPClient)
@@ -52,11 +52,11 @@ func newAPI(cfg Config) (*API, error) {
 	baseURL := signalling.ToHttpURL(cfg.URL)
 	opts := []twirp.ClientOption{twirp.WithClientInterceptors(authInterceptor(cfg.APIKey, cfg.APISecret))}
 	return &API{
-		room:          livekit.NewRoomServiceProtobufClient(baseURL, client, opts...),
-		egress:        livekit.NewEgressProtobufClient(baseURL, client, opts...),
-		ingress:       livekit.NewIngressProtobufClient(baseURL, client, opts...),
-		sip:           livekit.NewSIPProtobufClient(baseURL, client, opts...),
-		agentDispatch: livekit.NewAgentDispatchServiceProtobufClient(baseURL, client, opts...),
+		roomService:          livekit.NewRoomServiceProtobufClient(baseURL, client, opts...),
+		egressService:        livekit.NewEgressProtobufClient(baseURL, client, opts...),
+		ingressService:       livekit.NewIngressProtobufClient(baseURL, client, opts...),
+		sipService:           livekit.NewSIPProtobufClient(baseURL, client, opts...),
+		agentDispatchService: livekit.NewAgentDispatchServiceProtobufClient(baseURL, client, opts...),
 	}, nil
 }
 
@@ -116,6 +116,8 @@ func requestRoom(req interface{}) string {
 	case *livekit.SendDataRequest:
 		return request.Room
 	case *livekit.UpdateRoomMetadataRequest:
+		return request.Room
+	case *livekit.PerformRpcRequest:
 		return request.Room
 	}
 	return ""

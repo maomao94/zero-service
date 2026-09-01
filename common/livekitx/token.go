@@ -1,15 +1,11 @@
 package livekitx
 
 import (
-	"errors"
 	"strings"
 	"time"
 
 	"github.com/livekit/protocol/auth"
 )
-
-// ErrInvalidTokenOptions 表示 Token 构造参数缺失或互斥。
-var ErrInvalidTokenOptions = errors.New("livekitx: invalid token options")
 
 // JoinTokenOptions 定义指定房间和身份的视频入会授权。
 type JoinTokenOptions struct {

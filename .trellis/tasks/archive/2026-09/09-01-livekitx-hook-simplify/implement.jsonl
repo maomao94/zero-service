@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/backend/livekit-guidelines.md", "reason": "livekitx 公共 API 契约现状（16 Hook/dispatcher 将改为原生回调契约）"}
+{"file": ".trellis/tasks/09-01-livekitx-hook-simplify/design.md", "reason": "保留/删除/重写面清单与测试改造设计"}
+{"file": ".trellis/tasks/09-01-livekitx-hook-simplify/prd.md", "reason": "需求与验收标准（R1-R9/AC1-AC6）"}

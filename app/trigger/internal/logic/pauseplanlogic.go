@@ -9,6 +9,7 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/authctx"
 	"zero-service/common/tool"
 	"zero-service/model"
 	"zero-service/third_party/extproto"
@@ -69,7 +70,7 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 		plan.Status = model.PlanStatusPaused // 暂停
 		plan.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
 		plan.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
-		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
+		plan.UpdateUser = sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""}
 
 		// 更新计划
 		transErr := tx.Save(&plan).Error
@@ -86,7 +87,7 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 				"status":        model.PlanStatusPaused,
 				"paused_time":   sql.NullTime{Time: time.Now(), Valid: true},
 				"paused_reason": sql.NullString{String: in.Reason, Valid: in.Reason != ""},
-				"update_user":   sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""},
+				"update_user":   sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
 			}).Error
 		return transErr
 	})

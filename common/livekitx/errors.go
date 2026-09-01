@@ -1,20 +1,16 @@
 package livekitx
 
-import (
-	"errors"
-	"fmt"
-)
+import "errors"
 
-// ErrNilRoom 表示实时连接句柄或其底层 Room 为空。
-var ErrNilRoom = errors.New("livekitx: nil realtime room")
+// 包级可判定的本地错误。SDK/管理请求错误用 %w 保留原始语义，
+// 不在此包装。
 
-// HookPanicError 表示用户 Hook panic；panic 不会穿透 SDK 读循环或 HTTP 边界。
-type HookPanicError struct {
-	Event string
-	Value any
-}
+// ErrInvalidConfig 表示配置缺失、非法或互斥选项同时设置（New 构造期返回）。
+var ErrInvalidConfig = errors.New("livekitx: invalid configuration")
 
-// Error 返回包含事件类型和 panic 值的错误描述。
-func (e *HookPanicError) Error() string {
-	return fmt.Sprintf("livekitx: %s hook panic: %v", e.Event, e.Value)
-}
+// ErrClosed 表示 Client 已关闭，不能再加入/创建房间或发起管理请求。
+var ErrClosed = errors.New("livekitx: client is closed")
+
+// ErrInvalidTokenOptions 表示 Token 构造参数缺失或互斥；
+// 同时用于房间名/身份等参数校验，避免为每种参数新增错误。
+var ErrInvalidTokenOptions = errors.New("livekitx: invalid token options")

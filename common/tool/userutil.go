@@ -6,6 +6,7 @@ import (
 	"zero-service/common/authctx"
 )
 
+// deprecated
 // GetCurrentUserId resolves the current user id from context data or a user object.
 func GetCurrentUserId(ctx context.Context, currentUser any) string {
 	if userId := authctx.GetUserId(ctx); userId != "" {
@@ -33,6 +34,7 @@ func GetCurrentUserId(ctx context.Context, currentUser any) string {
 	return ""
 }
 
+// deprecated
 // GetCurrentUserName resolves the current user name from context data or a user object.
 func GetCurrentUserName(ctx context.Context, currentUser any) string {
 	if userName := authctx.GetUserName(ctx); userName != "" {
@@ -60,6 +62,7 @@ func GetCurrentUserName(ctx context.Context, currentUser any) string {
 	return ""
 }
 
+// deprecated
 // GetCurrentDeptCode resolves the first department code from context data or a user object.
 func GetCurrentDeptCode(ctx context.Context, currentUser any) string {
 	if deptCode := authctx.GetDeptCode(ctx); deptCode != "" {

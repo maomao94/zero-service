@@ -1,0 +1,48 @@
+Name: live.rpc
+ListenOn: 0.0.0.0:21017
+Mode: dev
+Timeout: 10000
+Log:
+  Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/live
+  Level: info
+  KeepDays: 300
+# 部署模式：standalone / cluster
+DeployMode: standalone
+NacosConfig:
+  IsRegister: false
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: live.rpc
+LiveKit:
+  Url: http://127.0.0.1:7880
+  ApiKey: devkey
+  ApiSecret: secret
+  WebhookKey: secret
+  TokenValidFor: 2h
+DB:
+#  DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+  DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
+  # 最大空闲连接数，默认 100。
+  MaxIdleConns: 100
+  # 最大打开连接数，默认 100。
+  MaxOpenConns: 100
+  # 慢 SQL 阈值，默认 200ms。
+  SlowThreshold: 200ms
+  # GORM 日志级别，默认 error，可选 silent/error/warn/info。
+  LogLevel: error
+  # 是否参数化 SQL 日志，默认 false。生产环境建议开启以避免日志暴露敏感参数。
+  ParameterizedQueries: false
+  # 是否忽略 record not found 日志，默认 false。
+  IgnoreRecordNotFoundError: false
+  # 是否按字段名显式查询，默认 false。
+  QueryFields: false
+Redis:
+  Host: 127.0.0.1:36379
+  Type: node
+  Key: live.rpc
+  Pass: G62m50oigInC30sf

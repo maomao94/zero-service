@@ -8,6 +8,7 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/authctx"
 	"zero-service/common/tool"
 	"zero-service/model"
 	"zero-service/third_party/extproto"
@@ -79,7 +80,7 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 	err = db.Transaction(func(tx *gorm.DB) error {
 		// 更新计划批次状态为启用
 		planBatch.Status = model.PlanStatusEnabled // 启用
-		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""}
+		planBatch.UpdateUser = sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""}
 
 		// 更新计划批次
 		transErr := tx.Save(&planBatch).Error
@@ -95,7 +96,7 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 				"status":        model.PlanStatusEnabled,
 				"paused_time":   sql.NullTime{},
 				"paused_reason": sql.NullString{},
-				"update_user":   sql.NullString{String: tool.GetCurrentUserId(l.ctx, nil), Valid: tool.GetCurrentUserId(l.ctx, nil) != ""},
+				"update_user":   sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
 			}).Error
 		return transErr
 	})

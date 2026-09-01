@@ -10,6 +10,7 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/authctx"
 	"zero-service/common/tool"
 	"zero-service/model"
 	"zero-service/third_party/extproto"
@@ -87,7 +88,7 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		now := time.Now()
 		// 只更新父级状态；cron claim 后会重新加载父级并在非 enabled/finished 时停止下发。
 		updated, transErr := gormmodel.UpdatePlanBatchTerminated(
-			l.ctx, tx, planBatch.Id, in.Reason, tool.GetCurrentUserId(l.ctx, nil), now,
+			l.ctx, tx, planBatch.Id, in.Reason, authctx.GetUserId(l.ctx), now,
 		)
 		if transErr != nil {
 			return transErr
