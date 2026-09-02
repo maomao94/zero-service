@@ -64,21 +64,67 @@ func (r *MeetingRepo) UpdateMeetingEnded(ctx context.Context, meetingNo string, 
 	return res.RowsAffected > 0, nil
 }
 
+// MeetingListQuery 会议列表查询条件。
+type MeetingListQuery struct {
+	Status          int32
+	Page            int64
+	PageSize        int64
+	CreateTimeStart string
+	CreateTimeEnd   string
+	DeptCode        string
+	CreateUser      string
+	Title           string
+	// Identity 参会人身份（非空时只查该用户作为参会人的会议）
+	Identity string
+}
+
 // ListMeetings 分页查询会议列表；status 为 0 时不过滤。
-func (r *MeetingRepo) ListMeetings(ctx context.Context, status int32, page, pageSize int64) ([]gormmodel.LiveMeeting, int64, error) {
+func (r *MeetingRepo) ListMeetings(ctx context.Context, q *MeetingListQuery) ([]gormmodel.LiveMeeting, int64, error) {
 	var meetings []gormmodel.LiveMeeting
-	q := r.db.WithContext(ctx).Model(&gormmodel.LiveMeeting{})
-	if status > 0 {
-		q = q.Where("status = ?", status)
+	db := r.db.WithContext(ctx).Model(&gormmodel.LiveMeeting{})
+	if q.Identity != "" {
+		// 只查询该用户作为参会人的会议
+		subq := r.db.WithContext(ctx).Model(&gormmodel.LiveMeetingParticipant{}).
+			Where("identity = ?", q.Identity).
+			Select("meeting_no")
+		db = db.Where("meeting_no IN (?)", subq)
+	}
+	if q.Status > 0 {
+		db = db.Where("status = ?", q.Status)
+	}
+	if q.DeptCode != "" {
+		db = db.Where("dept_code = ?", q.DeptCode)
+	}
+	if q.CreateUser != "" {
+		db = db.Where("create_user = ?", q.CreateUser)
+	}
+	if q.Title != "" {
+		db = db.Where("title LIKE ?", "%"+q.Title+"%")
+	}
+	if q.CreateTimeStart != "" {
+		db = db.Where("create_time >= ?", q.CreateTimeStart)
+	}
+	if q.CreateTimeEnd != "" {
+		db = db.Where("create_time < ?", q.CreateTimeEnd+" 23:59:59")
 	}
 	var total int64
-	if err := q.Count(&total).Error; err != nil {
+	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	if err := q.Order("create_time DESC").Offset(int((page - 1) * pageSize)).Limit(int(pageSize)).Find(&meetings).Error; err != nil {
+	if err := db.Order("create_time DESC").Offset(int((q.Page - 1) * q.PageSize)).Limit(int(q.PageSize)).Find(&meetings).Error; err != nil {
 		return nil, 0, err
 	}
 	return meetings, total, nil
+}
+
+// IsParticipantInMeeting 校验指定参会者是否仍在会议中（status=joined）。
+func (r *MeetingRepo) IsParticipantInMeeting(ctx context.Context, meetingNo, identity string) bool {
+	var count int64
+	r.db.WithContext(ctx).
+		Model(&gormmodel.LiveMeetingParticipant{}).
+		Where("meeting_no = ? AND identity = ? AND status = ?", meetingNo, identity, gormmodel.ParticipantStatusJoined).
+		Count(&count)
+	return count > 0
 }
 
 // UpsertParticipant 插入或更新参会记录（同一会议同一身份；冲突时保留首次 join_time）。
@@ -116,4 +162,24 @@ func (r *MeetingRepo) ListParticipants(ctx context.Context, meetingNo string) ([
 		Order("join_time ASC").
 		Find(&participants).Error
 	return participants, err
+}
+
+// CreateMessage 创建聊天消息。
+func (r *MeetingRepo) CreateMessage(ctx context.Context, m *gormmodel.LiveMeetingMessage) error {
+	return r.db.WithContext(ctx).Create(m).Error
+}
+
+// ListMessages 分页查询会议聊天记录。
+func (r *MeetingRepo) ListMessages(ctx context.Context, meetingNo string, page, pageSize int) ([]gormmodel.LiveMeetingMessage, int64, error) {
+	var messages []gormmodel.LiveMeetingMessage
+	q := r.db.WithContext(ctx).Model(&gormmodel.LiveMeetingMessage{}).
+		Where("meeting_no = ?", meetingNo)
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	if err := q.Order("create_time DESC").Offset((page - 1) * pageSize).Limit(pageSize).Find(&messages).Error; err != nil {
+		return nil, 0, err
+	}
+	return messages, total, nil
 }

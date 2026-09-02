@@ -511,3 +511,91 @@ No active task. Reviewed enqueue code briefly, no changes made.
 ### Status
 
 [OK] **Completed**
+
+
+## Session 200: LiveKit 票据机制与访客功能
+
+**Date**: 2026-09-02
+**Task**: LiveKit 票据机制与访客功能
+**Branch**: `master`
+
+### Summary
+
+完成 LiveKit 票据权限控制、访客页面、网关路由重构、用户信息接口
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `991a9fb0` | (see git log) |
+| `bebb2181` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 201: LiveKit 会议锁并发控制
+
+**Date**: 2026-09-02
+**Task**: LiveKit 会议锁并发控制
+**Branch**: `master`
+
+### Summary
+
+为会议操作添加分布式锁防止并发：统一使用 live:lock:meeting:{meetingNo} 作为锁 key，TTL 10秒。涉及 EndMeeting、JoinMeeting、JoinMeetingByTicket 三个函数。更新 livekit-guidelines.md 添加会议锁规范。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `991a9fb0` | (see git log) |
+| `bebb2181` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 202: 实现 livegtw 网关 Logic 层
+
+**Date**: 2026-09-02
+**Task**: 实现 livegtw 网关 Logic 层
+**Branch**: `master`
+
+### Summary
+
+实现 livegtw 网关所有 Logic 文件（15个），将空 scaffold 改为调用 gRPC 服务的适配层。包括：getCurrentUser、createMeeting、getMeeting、joinMeeting、endMeeting、listMeetings、listMyMeetings、listParticipants、kickParticipant、muteParticipant、sendMeetingData、performMeetingRpc、generateMeetingTicket、reportMeetingMessage、listMeetingMessages。修复了 proto 与 HTTP 类型不匹配问题（uint32/int32、[]byte/string），移除了未使用的 JoinUrl 字段。更新了 livekit-guidelines.md 和 go-zero-conventions.md 的网关 Logic 实现规范。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9cc17846` | (see git log) |
+| `80f280fc` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 203: JoinMeeting/JoinMeetingByTicket 响应及请求增加权限字段
+
+**Date**: 2026-09-02
+**Task**: JoinMeeting/JoinMeetingByTicket 响应及请求增加权限字段
+**Branch**: `master`
+
+### Summary
+
+Proto: JoinMeetingReq 增加 canPublish/canSubscribe/canPublishData/canPublishSources 字段；JoinMeetingRes 和 JoinMeetingByTicketRes 增加同上权限回显字段。Live service logic: 用请求字段生成 token 并回显。Gateway: .api/types/logic 全链路透传权限字段。前端: JoinReply 加权限字段，joinMeeting 显式上送权限，App.tsx 改用响应权限替代 JWT 解析。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `97a8fa27` | (see git log) |
+| `d838d4d4` | (see git log) |
+
+### Status
+
+[OK] **Completed**

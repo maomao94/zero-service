@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-4.md`
-- **Total Sessions**: 199
-- **Last Active**: 2026-09-01
+- **Total Sessions**: 203
+- **Last Active**: 2026-09-02
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-4.md` | ~513 | Active |
+| `journal-4.md` | ~601 | Active |
 | `journal-3.md` | ~1989 | Archived |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
@@ -32,6 +32,10 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 203 | 2026-09-02 | JoinMeeting/JoinMeetingByTicket 响应及请求增加权限字段 | `97a8fa27`, `d838d4d4` | `master` |
+| 202 | 2026-09-02 | 实现 livegtw 网关 Logic 层 | `9cc17846`, `80f280fc` | `master` |
+| 201 | 2026-09-02 | LiveKit 会议锁并发控制 | `991a9fb0`, `bebb2181` | `master` |
+| 200 | 2026-09-02 | LiveKit 票据机制与访客功能 | `991a9fb0`, `bebb2181` | `master` |
 | 199 | 2026-09-01 | Live 会议系统 MVP 全栈交付 | `7557c395` | `master` |
 | 198 | 2026-09-01 | Spec 分层加载优化与 AI 指导改进 | `38b19207`, `b64b4f9d`, `dd9b5872` | `master` |
 | 197 | 2026-09-01 | LiveKit SDK 去封装 + CreateMeeting 参数扩展 | `b55a90f4`, `85ca200e`, `8d8521c8`, `6c337d47` | `master` |

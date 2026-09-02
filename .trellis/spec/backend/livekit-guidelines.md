@@ -2,7 +2,7 @@
 
 ## 适用范围
 
-修改 `common/livekitx`、`app/meeting`、LiveKit JWT/Webhook/Twirp、房间/参与者、Egress、Ingress、SIP 或 Agent 调度时读取。API 版本基线见 [对接指南](../../../docs/livekit-integration-guide.md)，本规范不把本地开发工作树当作稳定版本。
+修改 `common/livekitx`、`app/live`、LiveKit JWT/Webhook/Twirp、房间/参与者、Egress、Ingress、SIP 或 Agent 调度时读取。API 版本基线见 [对接指南](../../../docs/livekit-integration-guide.md)，本规范不把本地开发工作树当作稳定版本。
 
 ## Scenario: common/livekitx 公共 API 契约
 
@@ -134,6 +134,24 @@ room.JoinWithContext(ctx, url, lksdk.ConnectInfo{...})
 - 时间输出：RPC 出参时间统一 `carbonx.FormatDateTimeOrEmpty`/`FormatNullDateTime`（`yyyy-MM-dd HH:mm:ss` 字符串），不使用时间戳。
 - 创建人/更新人/机构：从 gRPC metadata 取（`grpcx.LoggerInterceptor` 注入 `x-user-id` 等 → `authctx.GetUserId`），proto 入参不传；模型保留 `create_user`/`update_user`/`dept_code`。
 - 并发控制：`redis.NewRedisLock(r, key)` 直接构造（go-zero RedisLock，Lua 原子 + `SetExpire` TTL 自动释放），`AcquireCtx` 返回 `(bool, error)` 区分"未获得锁"与"Redis 错误"。
+- **会议锁规范**：同一会议的所有操作（结束、加入、票据加入）必须使用同一把分布式锁，锁 key 统一为 `live:lock:meeting:{meetingNo}`，TTL 10 秒。禁止为不同操作使用不同锁 key（如 `:end`、`:join` 后缀），否则无法防止会议结束与加入的并发冲突。锁前缀定义在 `helper.go` 的 `redisMeetingLockPrefix` 常量中。
+
+  ```go
+  // ✓ 正确：使用统一的会议锁 key
+  lock := redis.NewRedisLock(l.svcCtx.Redis, redisMeetingLockPrefix+meetingNo)
+  lock.SetExpire(meetingLockTTL)
+  ok, err := lock.AcquireCtx(l.ctx)
+  if err != nil {
+      return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "获取会议锁失败")
+  }
+  if !ok {
+      return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_REPEAT, "会议正在被操作，请稍后重试")
+  }
+  defer lock.Release()
+
+  // ✗ 错误：使用带后缀的锁 key（无法防止并发）
+  lock := redis.NewRedisLock(l.svcCtx.Redis, redisMeetingLockPrefix+meetingNo+":end")
+  ```
 
 ### 3. 模型风格
 
@@ -184,3 +202,490 @@ LiveKit 拥有房间、参与者、轨道和录制运行态；zero-service 拥�
 验证至少包括：临时 module 锁定稳定 SDK 后 `go mod tidy` 与 `go test ./...`；Token/Webhook/API 的成功、权限失败、超时、重复和边界测试；`git diff --check` 以及文档链接、版本、secret 和个人路径扫描。没有 Server、凭据、浏览器媒体、TURN、Redis 集群或外部运营商时，必须报告未完成，不得声称端到端通过。
 
 `common/livekitx` 本地集成测试以 `LIVEKITX_INTEGRATION=1` 显式开启（默认跳过，不影响普通单测），连接 `http://127.0.0.1:7880`、`devkey`/`secret`；覆盖房间生命周期、SDK 原生入会、原生回调（入会/聊天双路径/RPC 往返/断开原因）、`SendData` 富媒体投递。Egress/Ingress/SIP/Agent 与 Webhook 服务端推送不做真实端到端断言，只能标注环境前置条件。
+
+## 网关（livegtw）标准开发规范
+
+适用：HTTP 网关 `app/livegtw`，转发请求到 `app/live` gRPC 服务。
+
+### 1. 开发流程
+
+```
+1. 编写 livegtw.api 定义接口（类型定义 + 路由 + 鉴权组）
+2. 执行 gen.sh 生成 handler / logic / types / routes
+3. 在 logic 文件中实现业务逻辑（调用 gRPC client）
+4. 特性钩子类（webhook、测试页）不走 api 定义，直接在 livegtw.go 配置路由
+```
+
+### 2. 命名规范（api 层 vs gRPC 层）
+
+| 层 | 请求 | 响应 | 说明 |
+|----|------|------|------|
+| `livegtw.api` | `XxxRequest` | `XxxReply` | HTTP 网关类型，goctl 生成到 `types` 包 |
+| `live.proto` | `XxxReq` | `XxxRes` | gRPC 类型，protoc 生成到 `live` 包 |
+
+- 两层类型名**不同**（`Request/Reply` vs `Req/Res`），避免同包同名冲突
+- logic 中做映射：`types.XxxRequest` → `live.XxxReq`，`live.XxxRes` → `types.XxxReply`
+
+### 3. 文件结构与职责
+
+```
+app/livegtw/
+├── livegtw.api              # API 定义文件
+├── gen.sh                   # 代码生成脚本
+├── livegtw.go               # 主入口
+├── internal/
+│   ├── config/config.go     # 配置结构
+│   ├── svc/servicecontext.go # ServiceContext（持有 gRPC client、中间件）
+│   ├── handler/
+│   │   ├── routes.go        # [生成] 路由注册
+│   │   ├── meeting/         # [生成] meeting 组 handler（httpx 默认格式）
+│   │   ├── ticket/          # [生成] 免鉴权组 handler
+│   │   ├── webhook/         # [手写] webhook handler（不走 api 定义）
+│   │   └── testpage/        # [手写] 测试页 handler
+│   ├── logic/
+│   │   ├── meeting/         # [生成+手写] meeting 组 logic（含 meeting_helper.go）
+│   │   ├── ticket/          # [生成+手写] 免鉴权组 logic
+│   │   └── webhook/         # [手写] webhook logic
+│   ├── middleware/           # [生成+手写] 中间件
+│   │   └── meetingauthmiddleware.go
+│   └── types/               # [生成] 请求/响应类型（XxxRequest/XxxReply）
+```
+
+### 4. API 定义规范（livegtw.api）
+
+```go
+// 类型定义：请求用 XxxRequest，响应用 XxxReply
+type CreateMeetingRequest {
+    Title string `json:"title"`
+}
+
+type CreateMeetingReply {
+    Meeting MeetingInfo `json:"meeting"`
+}
+
+// 业务接口组：需要 JWT + 中间件
+@server (
+    prefix:     live/v1
+    group:      live
+    jwt:        JwtAuth
+    middleware: MeetingAuth
+)
+service livegtw {
+    @doc "创建会议"
+    @handler createMeeting
+    post /createMeeting (CreateMeetingRequest) returns (CreateMeetingReply)
+}
+
+// 免鉴权组：不声明 jwt/middleware（如票据加入会议）
+@server (
+    prefix: live/v1
+    group:  ticket
+)
+service livegtw {
+    @doc "根据票据加入会议（无需JWT）"
+    @handler joinMeetingByTicket
+    get /joinMeetingByTicket (JoinMeetingByTicketRequest) returns (JoinMeetingByTicketReply)
+}
+```
+
+- 业务接口必须声明 `jwt: JwtAuth` 和 `middleware: MeetingAuth`
+- 免鉴权接口单列一个 `@server` 块，不写 `jwt`/`middleware`
+- 查询类用 `get`，写入类用 `post`；get 的请求参数 tag 用 `form`, post 用 `json`
+- webhook、测试页等特性钩子不走 api 定义，直接在 `livegtw.go` 配置路由
+- **路由命名与 gRPC 接口保持一致**：handler 名和路径都使用小驼峰，与 gRPC 方法名对应（如 `CreateMeeting` → `createMeeting` → `/createMeeting`）
+- **例外：组合业务路由**：如果网关接口是多个 gRPC 调用组合的业务逻辑（非直接转发），则按前端业务语义命名，不必与 gRPC 一致
+- **例外：同一 gRPC 多个前端路由**：如"全部会议列表"和"我的会议列表"都调用 `ListMeetings`，但前端路由应分别命名为 `/listMeetings` 和 `/myMeetings`（后者在 logic 中自动注入 identity 参数）
+- **网关自有接口**：如 `/getCurrentUser`（从 authctx 获取当前用户信息），不调用 gRPC，直接在网关 logic 实现
+
+### 5. 中间件规范
+
+```go
+// internal/middleware/meetingauthmiddleware.go
+type MeetingAuthMiddleware struct {
+    claimMapping map[string]string
+}
+
+func NewMeetingAuthMiddleware(claimMapping map[string]string) *MeetingAuthMiddleware {
+    return &MeetingAuthMiddleware{claimMapping: claimMapping}
+}
+
+func (m *MeetingAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        ctx := r.Context()
+        if auth := r.Header.Get("Authorization"); auth != "" {
+            ctx = authctx.WithAuthType(ctx, "user")
+            ctx = authctx.WithAuthorization(ctx, auth)
+        }
+        ctx = authctx.BridgeJWTClaims(ctx, m.claimMapping)
+        next(w, r.WithContext(ctx))
+    }
+}
+```
+
+- 中间件在 `ServiceContext` 中初始化：`m := middleware.NewMeetingAuthMiddleware(c.JwtAuth.ClaimMapping)`
+- `routes.go` 通过 `serverCtx.MeetingAuth` 引用
+- **用户身份**通过 `authctx.GetUserId(ctx)` / `authctx.GetUserName(ctx)` 获取，写入 gRPC metadata 透传
+
+### 6. Logic 实现规范
+
+```go
+// internal/logic/meeting/createmeetinglogic.go
+type CreateMeetingLogic struct {
+    logx.Logger
+    ctx    context.Context
+    svcCtx *svc.ServiceContext
+}
+
+func NewCreateMeetingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CreateMeetingLogic {
+    return &CreateMeetingLogic{
+        Logger: logx.WithContext(ctx),
+        ctx:    ctx,
+        svcCtx: svcCtx,
+    }
+}
+
+func (l *CreateMeetingLogic) CreateMeeting(req *types.CreateMeetingRequest) (resp *types.CreateMeetingReply, err error) {
+    r, err := l.svcCtx.LiveRpcCli.CreateMeeting(l.ctx, &live.CreateMeetingReq{Title: req.Title})
+    if err != nil {
+        return nil, err
+    }
+    return &types.CreateMeetingReply{Meeting: toMeetingInfo(r.GetMeeting())}, nil
+}
+```
+
+- 每个接口一个单独的 logic 文件（goctl 标准拆分模式）
+- 公共转换函数（`toMeetingInfo`/`toParticipantInfo`）放在 `meeting_helper.go`，可以被同组 logic 复用
+- **logic 只做请求转发和类型转换**，不写业务编排/单测
+- 依赖登录用户的接口（join、listMyMeetings）用 `authctx.GetUserId(l.ctx)` 取身份，不使用请求体传
+
+#### Logic 函数签名分类
+
+根据 `.api` 定义是否有返回类型，Logic 函数签名分为两类：
+
+| 类型 | `.api` 定义 | Logic 签名 | Handler 使用 |
+|------|------------|-----------|-------------|
+| 有返回 | `post /xxx (Req) returns (Reply)` | `func (l *XxxLogic) Xxx(req *types.XxxRequest) (resp *types.XxxReply, err error)` | `resp, err := l.Xxx(&req)` |
+| 无返回 | `post /xxx (Req)` | `func (l *XxxLogic) Xxx(req *types.XxxRequest) error` | `err := l.Xxx(&req)` |
+
+```go
+// 有返回的 Logic
+func (l *EndMeetingLogic) EndMeeting(req *types.EndMeetingRequest) (resp *types.EndMeetingReply, err error) {
+    r, err := l.svcCtx.LiveRpcCli.EndMeeting(l.ctx, &live.EndMeetingReq{MeetingNo: req.MeetingNo})
+    if err != nil {
+        return nil, err
+    }
+    return &types.EndMeetingReply{}, nil
+}
+
+// 无返回的 Logic（void 操作）
+func (l *EndMeetingLogic) EndMeeting(req *types.EndMeetingRequest) error {
+    _, err := l.svcCtx.LiveRpcCli.EndMeeting(l.ctx, &live.EndMeetingReq{MeetingNo: req.MeetingNo})
+    return err
+}
+```
+
+#### Proto 与 HTTP 类型转换
+
+proto 和 HTTP 类型可能不一致，需要手动转换：
+
+| Proto 类型 | HTTP 类型 | 转换方式 |
+|-----------|----------|---------|
+| `uint32` | `int32` | `uint32(req.ExpireSeconds)` |
+| `[]byte` | `string` | `[]byte(req.Payload)` |
+| `int64` | `int64` | 直接赋值 |
+| `string` | `string` | 直接赋值 |
+
+```go
+// 示例：uint32 vs int32
+r, err := l.svcCtx.LiveRpcCli.GenerateMeetingTicket(l.ctx, &live.GenerateMeetingTicketReq{
+    ExpireSeconds: uint32(req.ExpireSeconds), // proto 用 uint32，HTTP 用 int32
+})
+
+// 示例：[]byte vs string
+r, err := l.svcCtx.LiveRpcCli.SendMeetingData(l.ctx, &live.SendMeetingDataReq{
+    Payload: []byte(req.Payload), // proto 用 []byte，HTTP 用 string
+})
+```
+
+#### 列表响应转换
+
+proto 返回 `[]*live.XxxInfo`，HTTP 返回 `[]types.XxxInfo`，需要逐个转换：
+
+```go
+items := make([]types.XxxInfo, 0, len(r.GetItems()))
+for _, item := range r.GetItems() {
+    items = append(items, toXxxInfo(item)) // 使用 helper 函数
+}
+return &types.XxxReply{Items: items, Total: r.GetTotal()}, nil
+```
+
+### 7. Handler 规范
+
+handler 使用 `xhttp.JsonBaseResponseCtx`（统一响应格式 `{code, msg, data}`，gRPC 错误自动转换）：
+
+```go
+import xhttp "github.com/zeromicro/x/http"
+
+var req types.CreateMeetingRequest
+if err := httpx.Parse(r, &req); err != nil {
+    xhttp.JsonBaseResponseCtx(r.Context(), w, err)
+    return
+}
+l := meeting.NewCreateMeetingLogic(r.Context(), svcCtx)
+resp, err := l.CreateMeeting(&req)
+if err != nil {
+    xhttp.JsonBaseResponseCtx(r.Context(), w, err)
+} else {
+    xhttp.JsonBaseResponseCtx(r.Context(), w, resp)
+}
+```
+
+- `xhttp.JsonBaseResponseCtx` 内部调用 `wrapBaseResponse`，自动处理 gRPC status error（提取 code + message）和普通 error（code=-1）
+- 成功响应：`code=0, msg="ok", data=<resp>`
+- 错误响应：HTTP 200 + `{code: <grpc-code或-1>, msg: "<错误信息>"}`
+- **标准网关写法**：统一使用 `xhttp.JsonBaseResponseCtx`，除非用户特殊要求返回其他格式
+
+### 8. ServiceContext 规范
+
+```go
+type ServiceContext struct {
+    Config     config.Config
+    LiveRpcCli live.LiveRpcClient    // gRPC 客户端
+    MeetingAuth rest.Middleware       // 中间件
+}
+
+func NewServiceContext(c config.Config) *ServiceContext {
+    logx.Must(logx.SetUp(c.Log))
+    m := middleware.NewMeetingAuthMiddleware(c.JwtAuth.ClaimMapping)
+    return &ServiceContext{
+        Config: c,
+        LiveRpcCli: live.NewLiveRpcClient(zrpc.MustNewClient(c.LiveRpcConf,
+            zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor)).Conn()),
+        MeetingAuth: m.Handle,
+    }
+}
+```
+
+### 9. 主入口（livegtw.go）规范
+
+```go
+func main() {
+    // ... 配置加载 ...
+    server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
+
+    // 请求日志中间件（method/path/start time 写入 context）
+    server.Use(gtwx.RequestLogMiddleware)
+
+    // 响应日志（仅记录业务错误，成功由 go-zero 标准日志覆盖）
+    gtwx.SetLogOkHandler()
+
+    ctx := svc.NewServiceContext(c)
+
+    // 业务 API 路由（通过 routes.go 注册）
+    handler.RegisterHandlers(server, ctx)
+
+    // 特性钩子路由（直接配置，不走 api 定义）
+    server.AddRoute(rest.Route{
+        Method:  http.MethodPost,
+        Path:    "/webhook/livekit",
+        Handler: webhook.LiveKitWebhookHandler(ctx),
+    })
+
+    // 测试页（可选）
+    if c.EnableTestPage {
+        server.AddRoute(rest.Route{
+            Method:  http.MethodGet,
+            Path:    "/test/meeting",
+            Handler: testpage.MeetingTestPageHandler(),
+        })
+    }
+}
+```
+
+#### 网关日志模式
+
+- **不要调用 `gtwx.SetGrpcErrorHandler()`**（deprecated）：handlers 统一走 `xhttp.JsonBaseResponseCtx`，gRPC 错误已由 `wrapBaseResponse` 内置转换为 `{code, msg}` 响应体。
+- **`RequestLogMiddleware`**：把 `method`、`path`、`start time` 写入 context，供 ok handler 读取。
+- **`SetLogOkHandler`**：只在业务错误（`code != 0`）时打印 error 日志（含 method、path、duration、code、msg），成功请求由 go-zero 标准 `LogHandler` 覆盖，不重复打 info。
+- 日志效果：
+  ```
+  [HTTP] POST /live/v1/live/createMeeting  duration=12ms  code=102102  msg="meeting not found"
+  ```
+
+### 10. gRPC 层约定（app/live）
+
+- **按表字段简单检索**，RPC 层不做复杂业务编排。例如会议列表查询就是按 `status`/`create_user`/`title`/`identity` 等字段条件过滤，逻辑放在 repo 的 where 子句。
+- 新增的检索条件（如"查某用户相关的会议"）通过给 `ListMeetingsReq` 加一个 `identity` 字段实现，**不要单开一个 `ListMyMeetings` RPC**。
+- 网关 /myList 就是调用同一个 `ListMeetings`，传当前用户 identity。**避免为同一查询开多个 RPC。**
+
+### 11. 代码生成注意事项
+
+- `gen.sh` 会用 goctl 生成 scaffold（skeleton），需要手动填 logic 业务逻辑
+- **从 `.api` 生成时只保留最新结构**：如果之前手工架过 logic，重新生成前先 `rm -rf internal/handler internal/logic internal/types`，避免新旧命名文件（驼峰 vs 下划线）共存导致重复定义
+- **不要**把多个 logic 合并进一个 `meetinglogic.go`（合并文件模式和 goctl 的拆分模式冲突，会让后续 `gen.sh` 生成重复定义）。旧合并文件应删掉，改成拆分文件。
+- 生成文件不要手工改结构（struct 定义/函数签名），只填 logic 方法体
+
+### 12. 网关增加字段标准流程
+
+当需要给网关接口增加新字段时，必须遵循以下顺序：
+
+```
+1. 修改 live.proto（gRPC 定义）
+2. 执行 goctl rpc protoc 重新生成 gRPC 代码
+3. 修改 livegtw.api（网关 API 定义）
+4. 执行 gen.sh 重新生成网关代码
+5. 修改 logic 文件，补充字段映射
+6. 编译验证 go build ./app/livegtw/... ./app/live/...
+```
+
+**禁止顺序**：
+- ❌ 先写 logic 再改 api（会导致编译失败，types 包缺少字段）
+- ❌ 只改 proto 不改 api（网关 types 与 gRPC 不一致）
+- ❌ 只改 api 不改 proto（gRPC 层不识别新字段）
+
+**字段映射示例**：
+
+```go
+// livegtw.api 类型定义
+type GenerateMeetingTicketRequest {
+    MeetingNo         string   `json:"meetingNo"`
+    CanPublishSources []string `json:"canPublishSources,optional"`
+}
+
+// logic 中映射到 gRPC
+r, err := l.svcCtx.LiveRpcCli.GenerateMeetingTicket(l.ctx, &live.GenerateMeetingTicketReq{
+    MeetingNo:         req.MeetingNo,
+    CanPublishSources: req.CanPublishSources,
+})
+```
+
+### 13. 测试注意
+
+- `fakeLiveRpcCli`（webhook 测试用）必须实现 `live.LiveRpcClient` 的**全部**方法。gRPC 接口一旦新增/删除方法，`helpers_test.go` 里的 fake 需同步补齐/删除对应方法，否则 `go test ./...` 构建失败。
+- 未鉴权路由（ticket 组）的 handler 在 `internal/handler/ticket/`，logic 在 `internal/logic/ticket/`，与 meeting 组分开。
+
+### Common Mistakes
+
+#### Common Mistake: Proto 与 HTTP 类型不匹配
+
+**Symptom**: 编译错误 `cannot use int32 as uint32 value` 或 `cannot use string as []byte value`
+
+**Cause**: proto 定义使用 `uint32`/`[]byte`，但 HTTP API 定义使用 `int32`/`string`，直接赋值导致类型不匹配
+
+**Fix**: 在 logic 中手动转换类型
+
+```go
+// Wrong
+r, err := l.svcCtx.LiveRpcCli.GenerateMeetingTicket(l.ctx, &live.GenerateMeetingTicketReq{
+    ExpireSeconds: req.ExpireSeconds, // int32 → uint32 编译错误
+})
+
+// Correct
+r, err := l.svcCtx.LiveRpcCli.GenerateMeetingTicket(l.ctx, &live.GenerateMeetingTicketReq{
+    ExpireSeconds: uint32(req.ExpireSeconds), // 手动转换
+})
+```
+
+**Prevention**: 实现 logic 前先检查 proto 定义中的字段类型，注意 `uint32`/`int32`、`[]byte`/`string` 的差异
+
+#### Common Mistake: 有返回 vs 无返回签名搞混
+
+**Symptom**: 编译错误或 handler 调用失败
+
+**Cause**: `.api` 定义有 `returns (Reply)` 时 Logic 应返回 `(resp, error)`，无 `returns` 时应只返回 `error`
+
+**Fix**: 检查 `.api` 定义确认返回类型
+
+```go
+// Wrong - api 定义无 returns，但 logic 返回 (resp, error)
+func (l *EndMeetingLogic) EndMeeting(req *types.EndMeetingRequest) (resp *types.EndMeetingReply, error) {
+    // ...
+}
+
+// Correct - api 定义无 returns，logic 只返回 error
+func (l *EndMeetingLogic) EndMeeting(req *types.EndMeetingRequest) error {
+    // ...
+}
+```
+
+**Prevention**: 实现 logic 前检查 `.api` 定义是否有 `returns` 关键字
+
+### 14. Wrong vs Correct
+
+#### Wrong
+
+```go
+// 1. 在 api 文件中定义 webhook 接口
+@server (prefix: /webhook)
+service livegtw {
+    @handler livekitWebhook
+    post /livekit (WebhookReq)
+}
+
+// 2. 在 logic 中写复杂业务逻辑（应该在 app/live 实现）
+func (l *CreateMeetingLogic) CreateMeeting(req *types.CreateMeetingReq) (*types.CreateMeetingRes, error) {
+    // 复杂的数据库操作、LiveKit API 调用...
+}
+
+// 3. 使用合并的 meetinglogic.go 文件（导致 gen.sh 重复定义）
+// 4. api 与 gRPC 用同名类型（Req/Res 混用，导致包冲突）
+// 5. 为"查我的会议"单独开 ListMyMeetings RPC
+// 6. 使用 httpx.OkJsonCtx、httpx.ErrorCtx、httpx.Ok（非标准网关写法）
+// 7. 类型转换错误：proto 用 uint32，HTTP 用 int32，直接赋值导致编译失败
+// 8. 类型转换错误：proto 用 []byte，HTTP 用 string，直接赋值导致编译失败
+```
+
+#### Correct
+
+```go
+// 1. webhook 直接配置路由
+server.AddRoute(rest.Route{
+    Method:  http.MethodPost,
+    Path:    "/webhook/livekit",
+    Handler: webhook.LiveKitWebhookHandler(ctx),
+})
+
+// 2. logic 只做请求转发
+func (l *CreateMeetingLogic) CreateMeeting(req *types.CreateMeetingRequest) (*types.CreateMeetingReply, error) {
+    r, err := l.svcCtx.LiveRpcCli.CreateMeeting(l.ctx, &live.CreateMeetingReq{Title: req.Title})
+    if err != nil {
+        return nil, err
+    }
+    return &types.CreateMeetingReply{Meeting: toMeetingInfo(r.GetMeeting())}, nil
+}
+
+// 3. 使用拆分的 logic 文件，公共函数放 meeting_helper.go
+// 4. api 用 Request/Reply，gRPC 用 Req/Res
+// 5. 复用 ListMeetings + identity 字段，不单独开 RPC
+// 6. 使用 xhttp.JsonBaseResponseCtx 统一响应格式（标准网关写法）
+// 7. 正确的类型转换：uint32 vs int32
+ExpireSeconds: uint32(req.ExpireSeconds)
+// 8. 正确的类型转换：[]byte vs string
+Payload: []byte(req.Payload)
+```
+
+## 测试页（livegtw/internal/handler/testpage）约定
+
+### 1. Scope / Trigger
+
+适用：维护 `/test/meeting` 的浏览器端 LiveKit 验证页面。该页面必须同时验证 HTTP 网关契约和 LiveKit client 2.x 的实时媒体、Data、RPC 能力。
+
+### 2. Contracts
+
+- 已登录入会调用 `POST /live/v1/live/joinMeeting`，请求体只传 `meetingNo`；身份和名称由服务端鉴权上下文决定。
+- 票据入会调用免鉴权 `GET /live/v1/ticket/joinMeetingByTicket?ticket=...`，票据已绑定身份，不再从页面提交 identity/name。
+- 聊天使用 LiveKit Data topic `lk.chat` 实时传输，payload 至少包含 `messageId`、`content`、`messageType`；同时调用已鉴权的 `POST /live/v1/live/reportMeetingMessage` 持久化，并从 `GET /live/v1/live/listMeetingMessages` 加载历史。
+- 网关响应按 `{code, msg, data}` 解析；票据请求不发送 JWT，业务请求发送当前 JWT。
+
+### 3. Good / Bad Cases
+
+- Good：连接后遍历本地和远端 `trackPublications`，使用 `publication.track` 或 `TrackSubscribed` 的 track 渲染；媒体发布/取消发布事件同步 tile 和按钮状态。
+- Good：聊天历史、本地回显和 Data 重复消息按 `messageId` 去重；无效 Data payload 按普通文本处理。
+- Bad：只监听未来的 `TrackSubscribed`，或读取不存在的 `publication.videoTrack`，会漏掉已发布轨道和本地预览。
+- Bad：复用带 JWT 的 API helper 请求 ticket join，或只依赖 Data 而不调用 report/history 接口，会分别导致票据入会失败和聊天记录缺失。
+
+### 4. Tests Required
+
+- JavaScript syntax check：提取内联 script 后运行 `node --check`。
+- 网关验证：运行 `go test ./...`、`go vet ./...` 和 `git diff --check`。
+- 浏览器集成验证：在真实 LiveKit、HTTPS/localhost 媒体权限和 Redis 环境中检查摄像头、麦克风、屏幕共享、重连、Data 聊天、HTTP 历史及票据入会；缺少环境时不得声称端到端通过。

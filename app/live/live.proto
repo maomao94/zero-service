@@ -30,6 +30,14 @@ service LiveRpc {
   rpc PerformMeetingRpc(PerformMeetingRpcReq) returns (PerformMeetingRpcRes);
   // 接收 LiveKit webhook 事件（由 livegtw 验签后转发）
   rpc WebhookNotify(WebhookNotifyReq) returns (WebhookNotifyRes);
+  // 生成会议邀请票据（需要鉴权）
+  rpc GenerateMeetingTicket(GenerateMeetingTicketReq) returns (GenerateMeetingTicketRes);
+  // 根据票据加入会议（不需要鉴权）
+  rpc JoinMeetingByTicket(JoinMeetingByTicketReq) returns (JoinMeetingByTicketRes);
+  // 上报聊天消息
+  rpc ReportMeetingMessage(ReportMeetingMessageReq) returns (ReportMeetingMessageRes);
+  // 查询聊天记录
+  rpc ListMeetingMessages(ListMeetingMessagesReq) returns (ListMeetingMessagesRes);
 }
 
 // MeetingInfo 会议单据信息。
@@ -79,6 +87,14 @@ message JoinMeetingReq {
   string identity = 2 [json_name = "identity"];
   // 展示名（可空）
   string name = 3 [json_name = "name"];
+  // 是否可以发布音视频（默认 true，总开关）
+  bool can_publish = 4 [json_name = "canPublish"];
+  // 是否可以订阅音视频（默认 true）
+  bool can_subscribe = 5 [json_name = "canSubscribe"];
+  // 是否可以发布数据（默认 true）
+  bool can_publish_data = 6 [json_name = "canPublishData"];
+  // 可以发布的轨道源类型（默认为空，表示允许所有）
+  repeated string can_publish_sources = 7 [json_name = "canPublishSources"];
 }
 
 message JoinMeetingRes {
@@ -88,6 +104,14 @@ message JoinMeetingRes {
   string ws_url = 2 [json_name = "wsUrl"];
   // 会议信息
   MeetingInfo meeting = 3 [json_name = "meeting"];
+  // 是否可以发布音视频
+  bool can_publish = 4 [json_name = "canPublish"];
+  // 是否可以订阅音视频
+  bool can_subscribe = 5 [json_name = "canSubscribe"];
+  // 是否可以发布数据
+  bool can_publish_data = 6 [json_name = "canPublishData"];
+  // 可以发布的轨道源类型（空表示允许所有）
+  repeated string can_publish_sources = 7 [json_name = "canPublishSources"];
 }
 
 message GetMeetingReq {
@@ -107,6 +131,18 @@ message ListMeetingsReq {
   int64 page = 2 [json_name = "page"];
   // 每页数量
   int64 page_size = 3 [json_name = "pageSize"];
+  // 创建开始时间，格式：yyyy-MM-dd
+  string create_time_start = 4 [json_name = "createTimeStart"];
+  // 创建结束时间，格式：yyyy-MM-dd
+  string create_time_end = 5 [json_name = "createTimeEnd"];
+  // 机构号
+  string dept_code = 6 [json_name = "deptCode"];
+  // 创建人
+  string create_user = 7 [json_name = "createUser"];
+  // 标题模糊查询
+  string title = 8 [json_name = "title"];
+  // 参会人身份（按参会人检索，查询与某用户相关的会议）
+  string identity = 9 [json_name = "identity"];
 }
 
 message ListMeetingsRes {
@@ -208,3 +244,122 @@ message WebhookNotifyReq {
 }
 
 message WebhookNotifyRes {}
+
+// ===== 票据相关消息 =====
+
+// GenerateMeetingTicketReq 生成会议邀请票据请求。
+// 票据用于生成临时访客参加会议的凭证，支持权限控制，可以限制访客的操作范围。
+// 当前主要给网关（livegtw）调用，用于生成临时访客票据。
+// 业务侧也可以不使用网关，直接调用此接口组合生成票据，实现自定义的访客加入流程。
+message GenerateMeetingTicketReq {
+  // 会议号（必填，指定要加入的会议）
+  string meeting_no = 1 [json_name = "meetingNo"];
+  // 绑定的参会人身份（必填，用于标识访客身份，同一会议内唯一）
+  string identity = 2 [json_name = "identity"];
+  // 绑定的参会人名称（可选，用于显示在会议中）
+  string name = 3 [json_name = "name"];
+  // 票据有效期秒数（默认 3600，即 1小时）
+  uint32 expire_seconds = 4 [json_name = "expireSeconds"];
+  // 是否可以发布音视频（默认 true，总开关）
+  bool can_publish = 5 [json_name = "canPublish"];
+  // 是否可以订阅音视频（默认 true，控制访客是否能观看/收听其他人的音视频）
+  bool can_subscribe = 6 [json_name = "canSubscribe"];
+  // 是否可以发布数据（默认 true，控制访客是否能发送聊天消息/数据）
+  bool can_publish_data = 7 [json_name = "canPublishData"];
+  // 可以发布的轨道源类型（默认为空，表示允许所有）
+  // 枚举值说明：
+  // - camera: 摄像头
+  // - microphone: 麦克风
+  // - screen_share: 屏幕共享（视频）
+  // - screen_share_audio: 屏幕共享音频
+  repeated string can_publish_sources = 8 [json_name = "canPublishSources"];
+}
+
+// GenerateMeetingTicketRes 生成会议邀请票据响应。
+message GenerateMeetingTicketRes {
+  // 票据字符串（用于前端传递给访客，访客用此票据加入会议）
+  string ticket = 1 [json_name = "ticket"];
+  // 过期时间，格式：yyyy-MM-dd HH:mm:ss（票据在此时间后失效）
+  string expire_time = 2 [json_name = "expireTime"];
+  // 是否可以发布音视频（回显请求中的权限设置）
+  bool can_publish = 3 [json_name = "canPublish"];
+  // 是否可以订阅音视频（回显请求中的权限设置）
+  bool can_subscribe = 4 [json_name = "canSubscribe"];
+  // 是否可以发布数据（回显请求中的权限设置）
+  bool can_publish_data = 5 [json_name = "canPublishData"];
+  // 可以发布的轨道源类型（回显请求中的权限设置）
+  // 枚举值说明：
+  // - camera: 摄像头
+  // - microphone: 麦克风
+  // - screen_share: 屏幕共享（视频）
+  // - screen_share_audio: 屏幕共享音频
+  repeated string can_publish_sources = 6 [json_name = "canPublishSources"];
+}
+
+message JoinMeetingByTicketReq {
+  // 票据字符串（已绑定会议号和参会人）
+  string ticket = 1 [json_name = "ticket"];
+}
+
+message JoinMeetingByTicketRes {
+  // join token（浏览器直连 LiveKit 使用）
+  string token = 1 [json_name = "token"];
+  // LiveKit WebSocket 地址
+  string ws_url = 2 [json_name = "wsUrl"];
+  // 会议信息
+  MeetingInfo meeting = 3 [json_name = "meeting"];
+  // 是否可以发布音视频
+  bool can_publish = 4 [json_name = "canPublish"];
+  // 是否可以订阅音视频
+  bool can_subscribe = 5 [json_name = "canSubscribe"];
+  // 是否可以发布数据
+  bool can_publish_data = 6 [json_name = "canPublishData"];
+  // 可以发布的轨道源类型（空表示允许所有）
+  repeated string can_publish_sources = 7 [json_name = "canPublishSources"];
+}
+
+// ===== 聊天消息相关 =====
+
+message ReportMeetingMessageReq {
+  // 会议号
+  string meeting_no = 1 [json_name = "meetingNo"];
+  // 消息 ID（客户端生成）
+  string message_id = 2 [json_name = "messageId"];
+  // 消息内容
+  string content = 3 [json_name = "content"];
+  // 消息类型（text, image, file）
+  string message_type = 4 [json_name = "messageType"];
+}
+
+message ReportMeetingMessageRes {}
+
+message ListMeetingMessagesReq {
+  // 会议号
+  string meeting_no = 1 [json_name = "meetingNo"];
+  // 页码，从 1 开始
+  int64 page = 2 [json_name = "page"];
+  // 每页数量
+  int64 page_size = 3 [json_name = "pageSize"];
+}
+
+message ListMeetingMessagesRes {
+  // 消息列表
+  repeated MeetingMessageInfo messages = 1 [json_name = "messages"];
+  // 总数量
+  int64 total = 2 [json_name = "total"];
+}
+
+message MeetingMessageInfo {
+  // 消息 ID
+  string message_id = 1 [json_name = "messageId"];
+  // 发送者 ID
+  string sender_id = 2 [json_name = "senderId"];
+  // 发送者名称
+  string sender_name = 3 [json_name = "senderName"];
+  // 消息内容
+  string content = 4 [json_name = "content"];
+  // 消息类型
+  string message_type = 5 [json_name = "messageType"];
+  // 创建时间，格式：yyyy-MM-dd HH:mm:ss
+  string create_time = 6 [json_name = "createTime"];
+}

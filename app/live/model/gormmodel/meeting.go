@@ -78,3 +78,19 @@ type LiveMeetingParticipant struct {
 func (LiveMeetingParticipant) TableName() string {
 	return "live_meeting_participants"
 }
+
+// LiveMeetingMessage 会议聊天消息。
+type LiveMeetingMessage struct {
+	ID          int64     `gorm:"primaryKey;autoIncrement"`
+	MeetingNo   string    `gorm:"column:meeting_no;size:32;not null;index:idx_live_meeting_messages_meeting"`
+	MessageID   string    `gorm:"column:message_id;size:64;not null;uniqueIndex"`
+	SenderID    string    `gorm:"column:sender_id;size:64;not null"`
+	SenderName  string    `gorm:"column:sender_name;size:64"`
+	Content     string    `gorm:"column:content;type:text;not null"`
+	MessageType string    `gorm:"column:message_type;size:32;default:text"`
+	CreateTime  time.Time `gorm:"column:create_time;autoCreateTime"`
+}
+
+func (LiveMeetingMessage) TableName() string {
+	return "live_meeting_messages"
+}

@@ -42,43 +42,76 @@ type ParticipantInfo {
 	LeftTime string `json:"leftTime"`
 }
 
-type CreateMeetingReq {
+type CreateMeetingRequest {
 	// 会议标题
 	Title string `json:"title"`
 }
 
-type CreateMeetingRes {
+type CreateMeetingReply {
 	Meeting MeetingInfo `json:"meeting"`
 }
 
-type JoinMeetingReq {
+type JoinMeetingRequest {
 	// 会议号
 	MeetingNo string `json:"meetingNo"`
-	// 参会人身份（房间内唯一）
-	Identity string `json:"identity"`
-	// 展示名（可空）
-	Name string `json:"name"`
+	// 是否可以发布音视频
+	CanPublish bool `json:"canPublish"`
+	// 是否可以订阅音视频
+	CanSubscribe bool `json:"canSubscribe"`
+	// 是否可以发布数据
+	CanPublishData bool `json:"canPublishData"`
+	// 可以发布的轨道源类型（空表示允许所有）
+	CanPublishSources []string `json:"canPublishSources"`
 }
 
-type JoinMeetingRes {
+type JoinMeetingReply {
 	// join token（浏览器直连 LiveKit 使用）
 	Token string `json:"token"`
 	// LiveKit WebSocket 地址
 	WsUrl string `json:"wsUrl"`
 	// 会议信息
 	Meeting MeetingInfo `json:"meeting"`
+	// 是否可以发布音视频
+	CanPublish bool `json:"canPublish"`
+	// 是否可以订阅音视频
+	CanSubscribe bool `json:"canSubscribe"`
+	// 是否可以发布数据
+	CanPublishData bool `json:"canPublishData"`
+	// 可以发布的轨道源类型（空表示允许所有）
+	CanPublishSources []string `json:"canPublishSources"`
 }
 
-type GetMeetingReq {
+type GetMeetingRequest {
 	// 会议号
 	MeetingNo string `form:"meetingNo"`
 }
 
-type GetMeetingRes {
+type GetMeetingReply {
 	Meeting MeetingInfo `json:"meeting"`
 }
 
-type ListMeetingsReq {
+type ListMeetingsRequest {
+	// 过滤状态，0 表示全部
+	Status int32 `form:"status,optional"`
+	// 页码，从 1 开始
+	Page int64 `form:"page,optional"`
+	// 每页数量
+	PageSize int64 `form:"pageSize,optional"`
+	// 创建开始时间，格式：yyyy-MM-dd
+	CreateTimeStart string `form:"createTimeStart,optional"`
+	// 创建结束时间，格式：yyyy-MM-dd
+	CreateTimeEnd string `form:"createTimeEnd,optional"`
+	// 机构号
+	DeptCode string `form:"deptCode,optional"`
+	// 创建人
+	CreateUser string `form:"createUser,optional"`
+	// 标题模糊查询
+	Title string `form:"title,optional"`
+	// 参会人身份（按参会人检索，查询与某用户相关的会议）
+	Identity string `form:"identity,optional"`
+}
+
+type ListMyMeetingsRequest {
 	// 过滤状态，0 表示全部
 	Status int32 `form:"status,optional"`
 	// 页码，从 1 开始
@@ -87,25 +120,25 @@ type ListMeetingsReq {
 	PageSize int64 `form:"pageSize,optional"`
 }
 
-type ListMeetingsRes {
+type ListMeetingsReply {
 	Meetings []MeetingInfo `json:"meetings"`
 	// 总数量
 	Total int64 `json:"total"`
 }
 
-type EndMeetingReq {
+type EndMeetingRequest {
 	// 会议号
 	MeetingNo string `json:"meetingNo"`
 }
 
-type KickParticipantReq {
+type KickParticipantRequest {
 	// 会议号
 	MeetingNo string `json:"meetingNo"`
 	// 被踢参与者身份
 	Identity string `json:"identity"`
 }
 
-type MuteParticipantReq {
+type MuteParticipantRequest {
 	// 会议号
 	MeetingNo string `json:"meetingNo"`
 	// 目标参与者身份
@@ -116,16 +149,16 @@ type MuteParticipantReq {
 	Kind string `json:"kind"`
 }
 
-type ListParticipantsReq {
+type ListParticipantsRequest {
 	// 会议号
 	MeetingNo string `form:"meetingNo"`
 }
 
-type ListParticipantsRes {
+type ListParticipantsReply {
 	Participants []ParticipantInfo `json:"participants"`
 }
 
-type SendMeetingDataReq {
+type SendMeetingDataRequest {
 	// 会议号
 	MeetingNo string `json:"meetingNo"`
 	// 业务约定 topic
@@ -136,7 +169,7 @@ type SendMeetingDataReq {
 	Destinations []string `json:"destinations"`
 }
 
-type PerformMeetingRpcReq {
+type PerformMeetingRpcRequest {
 	// 会议号
 	MeetingNo string `json:"meetingNo"`
 	// 目标参与者身份
@@ -149,56 +182,209 @@ type PerformMeetingRpcReq {
 	ResponseTimeoutMs uint32 `json:"responseTimeoutMs"`
 }
 
-type PerformMeetingRpcRes {
+type PerformMeetingRpcReply {
 	// RPC 响应内容
 	Response string `json:"response"`
 }
 
+// ===== 票据相关类型 =====
+type GenerateMeetingTicketRequest {
+	// 会议号
+	MeetingNo string `json:"meetingNo"`
+	// 绑定的参会人身份
+	Identity string `json:"identity"`
+	// 绑定的参会人名称
+	Name string `json:"name,optional"`
+	// 票据有效期秒数（默认 3600）
+	ExpireSeconds int32 `json:"expireSeconds,optional"`
+	// 是否可以发布音视频（默认 true，总开关）
+	CanPublish bool `json:"canPublish,optional"`
+	// 是否可以订阅音视频（默认 true，控制访客是否能观看/收听其他人的音视频）
+	CanSubscribe bool `json:"canSubscribe,optional"`
+	// 是否可以发布数据（默认 true，控制访客是否能发送聊天消息/数据）
+	CanPublishData bool `json:"canPublishData,optional"`
+	// 可以发布的轨道源类型（默认为空，表示允许所有）
+	// 枚举值说明：
+	// - camera: 摄像头
+	// - microphone: 麦克风
+	// - screen_share: 屏幕共享（视频）
+	// - screen_share_audio: 屏幕共享音频
+	CanPublishSources []string `json:"canPublishSources,optional"`
+}
+
+type GenerateMeetingTicketReply {
+	// 票据字符串
+	Ticket string `json:"ticket"`
+	// 过期时间，格式：yyyy-MM-dd HH:mm:ss
+	ExpireTime string `json:"expireTime"`
+	// 是否可以发布音视频（回显请求中的权限设置）
+	CanPublish bool `json:"canPublish"`
+	// 是否可以订阅音视频（回显请求中的权限设置）
+	CanSubscribe bool `json:"canSubscribe"`
+	// 是否可以发布数据（回显请求中的权限设置）
+	CanPublishData bool `json:"canPublishData"`
+	// 可以发布的轨道源类型（回显请求中的权限设置）
+	// 枚举值说明：
+	// - camera: 摄像头
+	// - microphone: 麦克风
+	// - screen_share: 屏幕共享（视频）
+	// - screen_share_audio: 屏幕共享音频
+	CanPublishSources []string `json:"canPublishSources"`
+}
+
+type JoinMeetingByTicketRequest {
+	// 票据字符串（已绑定会议号和参会人）
+	Ticket string `form:"ticket"`
+}
+
+type JoinMeetingByTicketReply {
+	// join token（浏览器直连 LiveKit 使用）
+	Token string `json:"token"`
+	// LiveKit WebSocket 地址
+	WsUrl string `json:"wsUrl"`
+	// 会议信息
+	Meeting MeetingInfo `json:"meeting"`
+	// 是否可以发布音视频
+	CanPublish bool `json:"canPublish"`
+	// 是否可以订阅音视频
+	CanSubscribe bool `json:"canSubscribe"`
+	// 是否可以发布数据
+	CanPublishData bool `json:"canPublishData"`
+	// 可以发布的轨道源类型（空表示允许所有）
+	CanPublishSources []string `json:"canPublishSources"`
+}
+
+// ===== 聊天消息相关类型 =====
+type GetCurrentUserRequest {}
+
+type GetCurrentUserReply {
+	// 用户 ID
+	UserId string `json:"userId"`
+	// 用户名称
+	UserName string `json:"userName"`
+	// 部门编码
+	DeptCode string `json:"deptCode"`
+}
+
+type ReportMeetingMessageRequest {
+	// 会议号
+	MeetingNo string `json:"meetingNo"`
+	// 消息 ID（客户端生成）
+	MessageId string `json:"messageId"`
+	// 消息内容
+	Content string `json:"content"`
+	// 消息类型（text, image, file）
+	MessageType string `json:"messageType,optional"`
+}
+
+type MeetingMessageInfo {
+	// 消息 ID
+	MessageId string `json:"messageId"`
+	// 发送者 ID
+	SenderId string `json:"senderId"`
+	// 发送者名称
+	SenderName string `json:"senderName"`
+	// 消息内容
+	Content string `json:"content"`
+	// 消息类型
+	MessageType string `json:"messageType"`
+	// 创建时间，格式：yyyy-MM-dd HH:mm:ss
+	CreateTime string `json:"createTime"`
+}
+
+type ListMeetingMessagesRequest {
+	// 会议号
+	MeetingNo string `form:"meetingNo"`
+	// 页码，从 1 开始
+	Page int64 `form:"page,optional"`
+	// 每页数量
+	PageSize int64 `form:"pageSize,optional"`
+}
+
+type ListMeetingMessagesReply {
+	// 消息列表
+	Messages []MeetingMessageInfo `json:"messages"`
+	// 总数量
+	Total int64 `json:"total"`
+}
+
+// ===== 票据路由组（不需要鉴权）=====
 @server (
-	prefix: live/v1/meeting
-	group:  meeting
-	jwt:    JwtAuth
+	prefix: live/v1
+	group:  ticket
+)
+service livegtw {
+	@doc "根据票据加入会议（无需JWT）"
+	@handler joinMeetingByTicket
+	get /joinMeetingByTicket (JoinMeetingByTicketRequest) returns (JoinMeetingByTicketReply)
+}
+
+// ===== 业务路由组（需要鉴权）=====
+@server (
+	prefix:     live/v1
+	group:      live
+	jwt:        JwtAuth
 	middleware: MeetingAuth
 )
 service livegtw {
 	@doc "创建会议"
 	@handler createMeeting
-	post /create (CreateMeetingReq) returns (CreateMeetingRes)
+	post /createMeeting (CreateMeetingRequest) returns (CreateMeetingReply)
 
 	@doc "加入会议"
 	@handler joinMeeting
-	post /join (JoinMeetingReq) returns (JoinMeetingRes)
+	post /joinMeeting (JoinMeetingRequest) returns (JoinMeetingReply)
 
 	@doc "查询会议详情"
 	@handler getMeeting
-	get /detail (GetMeetingReq) returns (GetMeetingRes)
+	get /getMeeting (GetMeetingRequest) returns (GetMeetingReply)
 
 	@doc "分页查询会议列表"
 	@handler listMeetings
-	get /list (ListMeetingsReq) returns (ListMeetingsRes)
+	get /listMeetings (ListMeetingsRequest) returns (ListMeetingsReply)
+
+	@doc "获取当前用户信息"
+	@handler getCurrentUser
+	get /getCurrentUser (GetCurrentUserRequest) returns (GetCurrentUserReply)
+
+	@doc "查询当前用户的会议列表"
+	@handler listMyMeetings
+	get /myMeetings (ListMyMeetingsRequest) returns (ListMeetingsReply)
 
 	@doc "结束会议"
 	@handler endMeeting
-	post /end (EndMeetingReq)
+	post /endMeeting (EndMeetingRequest)
 
 	@doc "踢人"
 	@handler kickParticipant
-	post /kick (KickParticipantReq)
+	post /kickParticipant (KickParticipantRequest)
 
 	@doc "静音/取消静音"
 	@handler muteParticipant
-	post /mute (MuteParticipantReq)
+	post /muteParticipant (MuteParticipantRequest)
 
 	@doc "查询会议参与者"
 	@handler listParticipants
-	get /participants (ListParticipantsReq) returns (ListParticipantsRes)
+	get /listParticipants (ListParticipantsRequest) returns (ListParticipantsReply)
 
 	@doc "向会议发送 Data（广播/定向）"
 	@handler sendMeetingData
-	post /sendData (SendMeetingDataReq)
+	post /sendMeetingData (SendMeetingDataRequest)
 
 	@doc "服务端对参与者执行 RPC"
 	@handler performMeetingRpc
-	post /rpc (PerformMeetingRpcReq) returns (PerformMeetingRpcRes)
+	post /performMeetingRpc (PerformMeetingRpcRequest) returns (PerformMeetingRpcReply)
+
+	@doc "生成会议邀请票据"
+	@handler generateMeetingTicket
+	post /generateMeetingTicket (GenerateMeetingTicketRequest) returns (GenerateMeetingTicketReply)
+
+	@doc "上报聊天消息"
+	@handler reportMeetingMessage
+	post /reportMeetingMessage (ReportMeetingMessageRequest)
+
+	@doc "查询聊天记录"
+	@handler listMeetingMessages
+	get /listMeetingMessages (ListMeetingMessagesRequest) returns (ListMeetingMessagesReply)
 }
 

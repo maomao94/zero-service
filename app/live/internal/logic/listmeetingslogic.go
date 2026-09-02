@@ -38,7 +38,18 @@ func (l *ListMeetingsLogic) ListMeetings(in *live.ListMeetingsReq) (*live.ListMe
 	if pageSize > 100 {
 		pageSize = 100
 	}
-	meetings, total, err := l.svcCtx.MeetingRepo.ListMeetings(l.ctx, in.Status, page, pageSize)
+
+	meetings, total, err := l.svcCtx.MeetingRepo.ListMeetings(l.ctx, &svc.MeetingListQuery{
+		Status:          in.Status,
+		Page:            page,
+		PageSize:        pageSize,
+		CreateTimeStart: in.CreateTimeStart,
+		CreateTimeEnd:   in.CreateTimeEnd,
+		DeptCode:        in.DeptCode,
+		CreateUser:      in.CreateUser,
+		Title:           in.Title,
+		Identity:        in.Identity,
+	})
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询会议列表失败")
 	}

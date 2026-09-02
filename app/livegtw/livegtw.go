@@ -8,7 +8,6 @@ import (
 
 	"zero-service/app/livegtw/internal/config"
 	"zero-service/app/livegtw/internal/handler"
-	"zero-service/app/livegtw/internal/handler/testpage"
 	"zero-service/app/livegtw/internal/handler/webhook"
 	"zero-service/app/livegtw/internal/svc"
 	_ "zero-service/common/carbonx"
@@ -36,16 +35,18 @@ func main() {
 		c.JwtAuth.AccessSecret = secret
 	}
 
-	// gRPC 错误码 → HTTP 状态码统一转换（extproto reason 保留）
-	gtwx.SetGrpcErrorHandler()
-
 	server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
+
+	// 请求日志（method, path, duration 写入 context，供 ok/error handler 读取）
+	server.Use(gtwx.RequestLogMiddleware)
+
+	// 响应日志
+	gtwx.SetLogOkHandler()
 
 	ctx := svc.NewServiceContext(c)
 
 	// 业务 API 路由组中间件：JWT 验证后运行，设置 auth-type + claims 桥接
-	meetingAuth := handler.NewMeetingAuthMiddleware(c.JwtAuth.ClaimMapping)
-	handler.RegisterHandlers(server, ctx, meetingAuth)
+	handler.RegisterHandlers(server, ctx)
 
 	// LiveKit webhook 接收（验签后转发 app/live，不走业务鉴权中间件）
 	server.AddRoute(rest.Route{
@@ -53,15 +54,6 @@ func main() {
 		Path:    "/webhook/livekit",
 		Handler: webhook.LiveKitWebhookHandler(ctx),
 	})
-
-	// HTML 测试页（免认证，不走业务鉴权中间件）
-	if c.EnableTestPage {
-		server.AddRoute(rest.Route{
-			Method:  http.MethodGet,
-			Path:    "/test/meeting",
-			Handler: testpage.MeetingTestPageHandler(),
-		})
-	}
 
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 

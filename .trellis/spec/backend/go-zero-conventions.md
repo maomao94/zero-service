@@ -136,6 +136,166 @@ JwtAuth:
 | 把 JWT 验证放在自定义中间件内手动调用 `handler.Authorize` | 用 `rest.WithJwt()` 路由选项 | go-zero chain 统一管理 |
 | `ClaimMapping` 配置缺失 | 配置完整的 claim 映射 | Java 侧 token 无法桥接 |
 
+## 网关响应格式（go-zero-x BaseResponse）
+
+> 修改 HTTP 网关 Handler 或新增 API 接口时读取。
+
+### 标准响应格式
+
+所有网关接口统一使用 `xhttp.JsonBaseResponseCtx` 返回，响应格式为 go-zero-x 的 `BaseResponse`：
+
+```json
+// 成功
+{"code": 0, "msg": "ok", "data": {...}}
+
+// 成功（无数据）
+{"code": 0, "msg": "ok"}
+
+// 错误
+{"code": 5, "msg": "会议不存在"}
+```
+
+### Handler 模板
+
+```go
+import (
+    "net/http"
+
+    "github.com/zeromicro/go-zero/rest/httpx"
+    xhttp "github.com/zeromicro/x/http"
+)
+
+func XxxHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        var req types.XxxRequest
+        // 解析用 httpx.Parse
+        if err := httpx.Parse(r, &req); err != nil {
+            xhttp.JsonBaseResponseCtx(r.Context(), w, err)
+            return
+        }
+
+        l := xxx.NewXxxLogic(r.Context(), svcCtx)
+        resp, err := l.Xxx(&req)
+        if err != nil {
+            xhttp.JsonBaseResponseCtx(r.Context(), w, err)
+        } else {
+            xhttp.JsonBaseResponseCtx(r.Context(), w, resp)
+        }
+    }
+}
+```
+
+### 关键规则
+
+| 规则 | 说明 |
+|------|------|
+| 解析请求 | 用 `httpx.Parse(r, &req)` |
+| 返回成功 | 用 `xhttp.JsonBaseResponseCtx(r.Context(), w, resp)` |
+| 返回成功（无数据） | 用 `xhttp.JsonBaseResponseCtx(r.Context(), w, nil)` |
+| 返回错误 | 用 `xhttp.JsonBaseResponseCtx(r.Context(), w, err)` |
+| 不使用 | `httpx.OkJsonCtx`、`httpx.ErrorCtx`、`httpx.Ok` |
+
+### 为什么不直接用 httpx
+
+- `httpx.OkJsonCtx` 返回原始数据，不包装 `BaseResponse`
+- `httpx.ErrorCtx` 依赖 `SetErrorHandlerCtx`，格式不统一
+- `xhttp.JsonBaseResponseCtx` 自动处理成功和错误，统一格式
+
+### 错误码来源
+
+`xhttp.JsonBaseResponseCtx` 内部 `wrapBaseResponse` 处理逻辑：
+
+| 输入类型 | Code | Msg |
+|---------|------|-----|
+| `*errors.CodeMsg` | 自定义 Code | 自定义 Msg |
+| `*status.Status` | gRPC 状态码 | gRPC 消息 |
+| `error` | -1 | err.Error() |
+| 其他 | 0 | "ok" |
+
+依据：`app/livegtw/internal/handler/meeting/`、`common/gtwx/errorhandler.go`。
+
+## 网关 Logic 实现模式（livegtw）
+
+> 新增 HTTP 网关 API 或实现 goctl 生成的空 Logic 时读取。
+
+### 核心职责
+
+网关 Logic 是传输适配层：接收 HTTP 请求参数，调用后端 gRPC 服务，转换 proto 响应为 HTTP 响应。
+
+### 分类与签名
+
+根据 `.api` 定义是否有返回类型，Logic 函数签名分为两类：
+
+| 类型 | `.api` 定义 | Logic 签名 | Handler 使用 |
+|------|------------|-----------|-------------|
+| 有返回 | `post /xxx (Req) returns (Reply)` | `func (l *XxxLogic) Xxx(req *types.XxxRequest) (resp *types.XxxReply, err error)` | `resp, err := l.Xxx(&req)` |
+| 无返回 | `post /xxx (Req)` | `func (l *XxxLogic) Xxx(req *types.XxxRequest) error` | `err := l.Xxx(&req)` |
+
+### 实现模板
+
+```go
+// 有返回的 Logic
+func (l *XxxLogic) Xxx(req *types.XxxRequest) (resp *types.XxxReply, err error) {
+    r, err := l.svcCtx.LiveRpcCli.Xxx(l.ctx, &live.XxxReq{
+        Field: req.Field, // 直接映射
+    })
+    if err != nil {
+        return nil, err
+    }
+    return &types.XxxReply{
+        Field: r.GetField(), // proto getter 安全取值
+    }, nil
+}
+
+// 无返回的 Logic（void 操作）
+func (l *XxxLogic) Xxx(req *types.XxxRequest) error {
+    _, err := l.svcCtx.LiveRpcCli.Xxx(l.ctx, &live.XxxReq{
+        Field: req.Field,
+    })
+    return err
+}
+```
+
+### Proto 与 HTTP 类型转换
+
+proto 和 HTTP 类型可能不一致，需要手动转换：
+
+| Proto 类型 | HTTP 类型 | 转换方式 |
+|-----------|----------|---------|
+| `uint32` | `int32` | `uint32(req.ExpireSeconds)` |
+| `[]byte` | `string` | `[]byte(req.Payload)` |
+| `int64` | `int64` | 直接赋值 |
+| `string` | `string` | 直接赋值 |
+
+### 列表响应转换
+
+proto 返回 `[]*live.XxxInfo`，HTTP 返回 `[]types.XxxInfo`，需要逐个转换：
+
+```go
+items := make([]types.XxxInfo, 0, len(r.GetItems()))
+for _, item := range r.GetItems() {
+    items = append(items, toXxxInfo(item)) // 使用 helper 函数
+}
+return &types.XxxReply{Items: items, Total: r.GetTotal()}, nil
+```
+
+### 常见错误
+
+| 错误 | 原因 | 修复 |
+|------|------|------|
+| `cannot use int32 as uint32` | proto 和 HTTP 类型不匹配 | 手动类型转换 |
+| `cannot use string as []byte` | proto 用 `[]byte`，HTTP 用 `string` | `[]byte(req.Payload)` |
+| 未使用的 import | 从 authctx 获取身份但未使用 | 删除 import |
+| 返回类型不匹配 | 有返回 vs 无返回签名搞混 | 检查 `.api` 定义 |
+
+### 开发流程
+
+1. 检查 `.api` 定义确认请求/响应类型
+2. 检查 `.proto` 确认 gRPC 方法签名和字段类型
+3. 实现 Logic：接收 HTTP 参数 → 调用 gRPC → 转换响应
+4. 注意类型转换（uint32/int32, []byte/string）
+5. 构建验证：`go build ./app/<service>/...`
+
 ## 验证
 
 ```bash

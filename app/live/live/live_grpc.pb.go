@@ -19,17 +19,21 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LiveRpc_CreateMeeting_FullMethodName     = "/live.LiveRpc/CreateMeeting"
-	LiveRpc_JoinMeeting_FullMethodName       = "/live.LiveRpc/JoinMeeting"
-	LiveRpc_GetMeeting_FullMethodName        = "/live.LiveRpc/GetMeeting"
-	LiveRpc_ListMeetings_FullMethodName      = "/live.LiveRpc/ListMeetings"
-	LiveRpc_EndMeeting_FullMethodName        = "/live.LiveRpc/EndMeeting"
-	LiveRpc_KickParticipant_FullMethodName   = "/live.LiveRpc/KickParticipant"
-	LiveRpc_MuteParticipant_FullMethodName   = "/live.LiveRpc/MuteParticipant"
-	LiveRpc_ListParticipants_FullMethodName  = "/live.LiveRpc/ListParticipants"
-	LiveRpc_SendMeetingData_FullMethodName   = "/live.LiveRpc/SendMeetingData"
-	LiveRpc_PerformMeetingRpc_FullMethodName = "/live.LiveRpc/PerformMeetingRpc"
-	LiveRpc_WebhookNotify_FullMethodName     = "/live.LiveRpc/WebhookNotify"
+	LiveRpc_CreateMeeting_FullMethodName         = "/live.LiveRpc/CreateMeeting"
+	LiveRpc_JoinMeeting_FullMethodName           = "/live.LiveRpc/JoinMeeting"
+	LiveRpc_GetMeeting_FullMethodName            = "/live.LiveRpc/GetMeeting"
+	LiveRpc_ListMeetings_FullMethodName          = "/live.LiveRpc/ListMeetings"
+	LiveRpc_EndMeeting_FullMethodName            = "/live.LiveRpc/EndMeeting"
+	LiveRpc_KickParticipant_FullMethodName       = "/live.LiveRpc/KickParticipant"
+	LiveRpc_MuteParticipant_FullMethodName       = "/live.LiveRpc/MuteParticipant"
+	LiveRpc_ListParticipants_FullMethodName      = "/live.LiveRpc/ListParticipants"
+	LiveRpc_SendMeetingData_FullMethodName       = "/live.LiveRpc/SendMeetingData"
+	LiveRpc_PerformMeetingRpc_FullMethodName     = "/live.LiveRpc/PerformMeetingRpc"
+	LiveRpc_WebhookNotify_FullMethodName         = "/live.LiveRpc/WebhookNotify"
+	LiveRpc_GenerateMeetingTicket_FullMethodName = "/live.LiveRpc/GenerateMeetingTicket"
+	LiveRpc_JoinMeetingByTicket_FullMethodName   = "/live.LiveRpc/JoinMeetingByTicket"
+	LiveRpc_ReportMeetingMessage_FullMethodName  = "/live.LiveRpc/ReportMeetingMessage"
+	LiveRpc_ListMeetingMessages_FullMethodName   = "/live.LiveRpc/ListMeetingMessages"
 )
 
 // LiveRpcClient is the client API for LiveRpc service.
@@ -60,6 +64,14 @@ type LiveRpcClient interface {
 	PerformMeetingRpc(ctx context.Context, in *PerformMeetingRpcReq, opts ...grpc.CallOption) (*PerformMeetingRpcRes, error)
 	// 接收 LiveKit webhook 事件（由 livegtw 验签后转发）
 	WebhookNotify(ctx context.Context, in *WebhookNotifyReq, opts ...grpc.CallOption) (*WebhookNotifyRes, error)
+	// 生成会议邀请票据（需要鉴权）
+	GenerateMeetingTicket(ctx context.Context, in *GenerateMeetingTicketReq, opts ...grpc.CallOption) (*GenerateMeetingTicketRes, error)
+	// 根据票据加入会议（不需要鉴权）
+	JoinMeetingByTicket(ctx context.Context, in *JoinMeetingByTicketReq, opts ...grpc.CallOption) (*JoinMeetingByTicketRes, error)
+	// 上报聊天消息
+	ReportMeetingMessage(ctx context.Context, in *ReportMeetingMessageReq, opts ...grpc.CallOption) (*ReportMeetingMessageRes, error)
+	// 查询聊天记录
+	ListMeetingMessages(ctx context.Context, in *ListMeetingMessagesReq, opts ...grpc.CallOption) (*ListMeetingMessagesRes, error)
 }
 
 type liveRpcClient struct {
@@ -180,6 +192,46 @@ func (c *liveRpcClient) WebhookNotify(ctx context.Context, in *WebhookNotifyReq,
 	return out, nil
 }
 
+func (c *liveRpcClient) GenerateMeetingTicket(ctx context.Context, in *GenerateMeetingTicketReq, opts ...grpc.CallOption) (*GenerateMeetingTicketRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenerateMeetingTicketRes)
+	err := c.cc.Invoke(ctx, LiveRpc_GenerateMeetingTicket_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *liveRpcClient) JoinMeetingByTicket(ctx context.Context, in *JoinMeetingByTicketReq, opts ...grpc.CallOption) (*JoinMeetingByTicketRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(JoinMeetingByTicketRes)
+	err := c.cc.Invoke(ctx, LiveRpc_JoinMeetingByTicket_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *liveRpcClient) ReportMeetingMessage(ctx context.Context, in *ReportMeetingMessageReq, opts ...grpc.CallOption) (*ReportMeetingMessageRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReportMeetingMessageRes)
+	err := c.cc.Invoke(ctx, LiveRpc_ReportMeetingMessage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *liveRpcClient) ListMeetingMessages(ctx context.Context, in *ListMeetingMessagesReq, opts ...grpc.CallOption) (*ListMeetingMessagesRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListMeetingMessagesRes)
+	err := c.cc.Invoke(ctx, LiveRpc_ListMeetingMessages_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LiveRpcServer is the server API for LiveRpc service.
 // All implementations must embed UnimplementedLiveRpcServer
 // for forward compatibility.
@@ -208,6 +260,14 @@ type LiveRpcServer interface {
 	PerformMeetingRpc(context.Context, *PerformMeetingRpcReq) (*PerformMeetingRpcRes, error)
 	// 接收 LiveKit webhook 事件（由 livegtw 验签后转发）
 	WebhookNotify(context.Context, *WebhookNotifyReq) (*WebhookNotifyRes, error)
+	// 生成会议邀请票据（需要鉴权）
+	GenerateMeetingTicket(context.Context, *GenerateMeetingTicketReq) (*GenerateMeetingTicketRes, error)
+	// 根据票据加入会议（不需要鉴权）
+	JoinMeetingByTicket(context.Context, *JoinMeetingByTicketReq) (*JoinMeetingByTicketRes, error)
+	// 上报聊天消息
+	ReportMeetingMessage(context.Context, *ReportMeetingMessageReq) (*ReportMeetingMessageRes, error)
+	// 查询聊天记录
+	ListMeetingMessages(context.Context, *ListMeetingMessagesReq) (*ListMeetingMessagesRes, error)
 	mustEmbedUnimplementedLiveRpcServer()
 }
 
@@ -250,6 +310,18 @@ func (UnimplementedLiveRpcServer) PerformMeetingRpc(context.Context, *PerformMee
 }
 func (UnimplementedLiveRpcServer) WebhookNotify(context.Context, *WebhookNotifyReq) (*WebhookNotifyRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method WebhookNotify not implemented")
+}
+func (UnimplementedLiveRpcServer) GenerateMeetingTicket(context.Context, *GenerateMeetingTicketReq) (*GenerateMeetingTicketRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateMeetingTicket not implemented")
+}
+func (UnimplementedLiveRpcServer) JoinMeetingByTicket(context.Context, *JoinMeetingByTicketReq) (*JoinMeetingByTicketRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method JoinMeetingByTicket not implemented")
+}
+func (UnimplementedLiveRpcServer) ReportMeetingMessage(context.Context, *ReportMeetingMessageReq) (*ReportMeetingMessageRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReportMeetingMessage not implemented")
+}
+func (UnimplementedLiveRpcServer) ListMeetingMessages(context.Context, *ListMeetingMessagesReq) (*ListMeetingMessagesRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListMeetingMessages not implemented")
 }
 func (UnimplementedLiveRpcServer) mustEmbedUnimplementedLiveRpcServer() {}
 func (UnimplementedLiveRpcServer) testEmbeddedByValue()                 {}
@@ -470,6 +542,78 @@ func _LiveRpc_WebhookNotify_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LiveRpc_GenerateMeetingTicket_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateMeetingTicketReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).GenerateMeetingTicket(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_GenerateMeetingTicket_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).GenerateMeetingTicket(ctx, req.(*GenerateMeetingTicketReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LiveRpc_JoinMeetingByTicket_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoinMeetingByTicketReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).JoinMeetingByTicket(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_JoinMeetingByTicket_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).JoinMeetingByTicket(ctx, req.(*JoinMeetingByTicketReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LiveRpc_ReportMeetingMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReportMeetingMessageReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).ReportMeetingMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_ReportMeetingMessage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).ReportMeetingMessage(ctx, req.(*ReportMeetingMessageReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LiveRpc_ListMeetingMessages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMeetingMessagesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).ListMeetingMessages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_ListMeetingMessages_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).ListMeetingMessages(ctx, req.(*ListMeetingMessagesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LiveRpc_ServiceDesc is the grpc.ServiceDesc for LiveRpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -520,6 +664,22 @@ var LiveRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WebhookNotify",
 			Handler:    _LiveRpc_WebhookNotify_Handler,
+		},
+		{
+			MethodName: "GenerateMeetingTicket",
+			Handler:    _LiveRpc_GenerateMeetingTicket_Handler,
+		},
+		{
+			MethodName: "JoinMeetingByTicket",
+			Handler:    _LiveRpc_JoinMeetingByTicket_Handler,
+		},
+		{
+			MethodName: "ReportMeetingMessage",
+			Handler:    _LiveRpc_ReportMeetingMessage_Handler,
+		},
+		{
+			MethodName: "ListMeetingMessages",
+			Handler:    _LiveRpc_ListMeetingMessages_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

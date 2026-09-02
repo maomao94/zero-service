@@ -88,3 +88,27 @@ func (s *LiveRpcServer) WebhookNotify(ctx context.Context, in *live.WebhookNotif
 	l := logic.NewWebhookNotifyLogic(ctx, s.svcCtx)
 	return l.WebhookNotify(in)
 }
+
+// 生成会议邀请票据（需要鉴权）
+func (s *LiveRpcServer) GenerateMeetingTicket(ctx context.Context, in *live.GenerateMeetingTicketReq) (*live.GenerateMeetingTicketRes, error) {
+	l := logic.NewGenerateMeetingTicketLogic(ctx, s.svcCtx)
+	return l.GenerateMeetingTicket(in)
+}
+
+// 根据票据加入会议（不需要鉴权）
+func (s *LiveRpcServer) JoinMeetingByTicket(ctx context.Context, in *live.JoinMeetingByTicketReq) (*live.JoinMeetingByTicketRes, error) {
+	l := logic.NewJoinMeetingByTicketLogic(ctx, s.svcCtx)
+	return l.JoinMeetingByTicket(in)
+}
+
+// 上报聊天消息
+func (s *LiveRpcServer) ReportMeetingMessage(ctx context.Context, in *live.ReportMeetingMessageReq) (*live.ReportMeetingMessageRes, error) {
+	l := logic.NewReportMeetingMessageLogic(ctx, s.svcCtx)
+	return l.ReportMeetingMessage(in)
+}
+
+// 查询聊天记录
+func (s *LiveRpcServer) ListMeetingMessages(ctx context.Context, in *live.ListMeetingMessagesReq) (*live.ListMeetingMessagesRes, error) {
+	l := logic.NewListMeetingMessagesLogic(ctx, s.svcCtx)
+	return l.ListMeetingMessages(in)
+}

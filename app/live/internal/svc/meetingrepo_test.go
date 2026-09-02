@@ -159,7 +159,7 @@ func TestMeetingRepoListMeetingsPaged(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	meetings, total, err := repo.ListMeetings(ctx, 0, 1, 2)
+	meetings, total, err := repo.ListMeetings(ctx, &MeetingListQuery{Page: 1, PageSize: 2})
 	if err != nil {
 		t.Fatal(err)
 	}

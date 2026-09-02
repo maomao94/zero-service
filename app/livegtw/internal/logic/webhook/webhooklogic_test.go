@@ -56,6 +56,18 @@ func (f *fakeLiveRpcCli) WebhookNotify(ctx context.Context, in *live.WebhookNoti
 	f.notifiedData = in.GetData()
 	return &live.WebhookNotifyRes{}, f.err
 }
+func (f *fakeLiveRpcCli) GenerateMeetingTicket(ctx context.Context, in *live.GenerateMeetingTicketReq, opts ...grpc.CallOption) (*live.GenerateMeetingTicketRes, error) {
+	return &live.GenerateMeetingTicketRes{}, nil
+}
+func (f *fakeLiveRpcCli) JoinMeetingByTicket(ctx context.Context, in *live.JoinMeetingByTicketReq, opts ...grpc.CallOption) (*live.JoinMeetingByTicketRes, error) {
+	return &live.JoinMeetingByTicketRes{}, nil
+}
+func (f *fakeLiveRpcCli) ReportMeetingMessage(ctx context.Context, in *live.ReportMeetingMessageReq, opts ...grpc.CallOption) (*live.ReportMeetingMessageRes, error) {
+	return &live.ReportMeetingMessageRes{}, nil
+}
+func (f *fakeLiveRpcCli) ListMeetingMessages(ctx context.Context, in *live.ListMeetingMessagesReq, opts ...grpc.CallOption) (*live.ListMeetingMessagesRes, error) {
+	return &live.ListMeetingMessagesRes{}, nil
+}
 
 func TestWebhookNotifyMarshalsAndForwards(t *testing.T) {
 	fake := &fakeLiveRpcCli{}

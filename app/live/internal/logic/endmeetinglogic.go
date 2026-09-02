@@ -44,9 +44,9 @@ func (l *EndMeetingLogic) EndMeeting(in *live.EndMeetingReq) (*live.EndMeetingRe
 		return &live.EndMeetingRes{}, nil
 	}
 	// 分布式锁防并发结束（go-zero RedisLock，Lua 原子 + TTL 自动释放；
-// 写法与 oryxserver relay Store.Lock 一致）
-	lock := redis.NewRedisLock(l.svcCtx.Redis, redisEndLockPrefix+in.MeetingNo+":end")
-	lock.SetExpire(endLockTTL)
+	// 写法与 oryxserver relay Store.Lock 一致）
+	lock := redis.NewRedisLock(l.svcCtx.Redis, redisMeetingLockPrefix+in.MeetingNo)
+	lock.SetExpire(meetingLockTTL)
 	ok, err := lock.AcquireCtx(l.ctx)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "获取会议锁失败")

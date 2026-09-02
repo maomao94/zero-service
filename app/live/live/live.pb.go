@@ -272,9 +272,17 @@ type JoinMeetingReq struct {
 	// 参会人身份（房间内唯一）
 	Identity string `protobuf:"bytes,2,opt,name=identity,proto3" json:"identity,omitempty"`
 	// 展示名（可空）
-	Name          string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	// 是否可以发布音视频（默认 true，总开关）
+	CanPublish bool `protobuf:"varint,4,opt,name=can_publish,json=canPublish,proto3" json:"can_publish,omitempty"`
+	// 是否可以订阅音视频（默认 true）
+	CanSubscribe bool `protobuf:"varint,5,opt,name=can_subscribe,json=canSubscribe,proto3" json:"can_subscribe,omitempty"`
+	// 是否可以发布数据（默认 true）
+	CanPublishData bool `protobuf:"varint,6,opt,name=can_publish_data,json=canPublishData,proto3" json:"can_publish_data,omitempty"`
+	// 可以发布的轨道源类型（默认为空，表示允许所有）
+	CanPublishSources []string `protobuf:"bytes,7,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *JoinMeetingReq) Reset() {
@@ -328,6 +336,34 @@ func (x *JoinMeetingReq) GetName() string {
 	return ""
 }
 
+func (x *JoinMeetingReq) GetCanPublish() bool {
+	if x != nil {
+		return x.CanPublish
+	}
+	return false
+}
+
+func (x *JoinMeetingReq) GetCanSubscribe() bool {
+	if x != nil {
+		return x.CanSubscribe
+	}
+	return false
+}
+
+func (x *JoinMeetingReq) GetCanPublishData() bool {
+	if x != nil {
+		return x.CanPublishData
+	}
+	return false
+}
+
+func (x *JoinMeetingReq) GetCanPublishSources() []string {
+	if x != nil {
+		return x.CanPublishSources
+	}
+	return nil
+}
+
 type JoinMeetingRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// join token（浏览器直连 LiveKit 使用）
@@ -335,9 +371,17 @@ type JoinMeetingRes struct {
 	// LiveKit WebSocket 地址
 	WsUrl string `protobuf:"bytes,2,opt,name=ws_url,json=wsUrl,proto3" json:"ws_url,omitempty"`
 	// 会议信息
-	Meeting       *MeetingInfo `protobuf:"bytes,3,opt,name=meeting,proto3" json:"meeting,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Meeting *MeetingInfo `protobuf:"bytes,3,opt,name=meeting,proto3" json:"meeting,omitempty"`
+	// 是否可以发布音视频
+	CanPublish bool `protobuf:"varint,4,opt,name=can_publish,json=canPublish,proto3" json:"can_publish,omitempty"`
+	// 是否可以订阅音视频
+	CanSubscribe bool `protobuf:"varint,5,opt,name=can_subscribe,json=canSubscribe,proto3" json:"can_subscribe,omitempty"`
+	// 是否可以发布数据
+	CanPublishData bool `protobuf:"varint,6,opt,name=can_publish_data,json=canPublishData,proto3" json:"can_publish_data,omitempty"`
+	// 可以发布的轨道源类型（空表示允许所有）
+	CanPublishSources []string `protobuf:"bytes,7,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *JoinMeetingRes) Reset() {
@@ -387,6 +431,34 @@ func (x *JoinMeetingRes) GetWsUrl() string {
 func (x *JoinMeetingRes) GetMeeting() *MeetingInfo {
 	if x != nil {
 		return x.Meeting
+	}
+	return nil
+}
+
+func (x *JoinMeetingRes) GetCanPublish() bool {
+	if x != nil {
+		return x.CanPublish
+	}
+	return false
+}
+
+func (x *JoinMeetingRes) GetCanSubscribe() bool {
+	if x != nil {
+		return x.CanSubscribe
+	}
+	return false
+}
+
+func (x *JoinMeetingRes) GetCanPublishData() bool {
+	if x != nil {
+		return x.CanPublishData
+	}
+	return false
+}
+
+func (x *JoinMeetingRes) GetCanPublishSources() []string {
+	if x != nil {
+		return x.CanPublishSources
 	}
 	return nil
 }
@@ -488,7 +560,19 @@ type ListMeetingsReq struct {
 	// 页码，从 1 开始
 	Page int64 `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
 	// 每页数量
-	PageSize      int64 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageSize int64 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// 创建开始时间，格式：yyyy-MM-dd
+	CreateTimeStart string `protobuf:"bytes,4,opt,name=create_time_start,json=createTimeStart,proto3" json:"create_time_start,omitempty"`
+	// 创建结束时间，格式：yyyy-MM-dd
+	CreateTimeEnd string `protobuf:"bytes,5,opt,name=create_time_end,json=createTimeEnd,proto3" json:"create_time_end,omitempty"`
+	// 机构号
+	DeptCode string `protobuf:"bytes,6,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
+	// 创建人
+	CreateUser string `protobuf:"bytes,7,opt,name=create_user,json=createUser,proto3" json:"create_user,omitempty"`
+	// 标题模糊查询
+	Title string `protobuf:"bytes,8,opt,name=title,proto3" json:"title,omitempty"`
+	// 参会人身份（按参会人检索，查询与某用户相关的会议）
+	Identity      string `protobuf:"bytes,9,opt,name=identity,proto3" json:"identity,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -542,6 +626,48 @@ func (x *ListMeetingsReq) GetPageSize() int64 {
 		return x.PageSize
 	}
 	return 0
+}
+
+func (x *ListMeetingsReq) GetCreateTimeStart() string {
+	if x != nil {
+		return x.CreateTimeStart
+	}
+	return ""
+}
+
+func (x *ListMeetingsReq) GetCreateTimeEnd() string {
+	if x != nil {
+		return x.CreateTimeEnd
+	}
+	return ""
+}
+
+func (x *ListMeetingsReq) GetDeptCode() string {
+	if x != nil {
+		return x.DeptCode
+	}
+	return ""
+}
+
+func (x *ListMeetingsReq) GetCreateUser() string {
+	if x != nil {
+		return x.CreateUser
+	}
+	return ""
+}
+
+func (x *ListMeetingsReq) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *ListMeetingsReq) GetIdentity() string {
+	if x != nil {
+		return x.Identity
+	}
+	return ""
 }
 
 type ListMeetingsRes struct {
@@ -1366,6 +1492,678 @@ func (*WebhookNotifyRes) Descriptor() ([]byte, []int) {
 	return file_live_proto_rawDescGZIP(), []int{23}
 }
 
+// GenerateMeetingTicketReq 生成会议邀请票据请求。
+// 票据用于生成临时访客参加会议的凭证，支持权限控制，可以限制访客的操作范围。
+// 当前主要给网关（livegtw）调用，用于生成临时访客票据。
+// 业务侧也可以不使用网关，直接调用此接口组合生成票据，实现自定义的访客加入流程。
+type GenerateMeetingTicketReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 会议号（必填，指定要加入的会议）
+	MeetingNo string `protobuf:"bytes,1,opt,name=meeting_no,json=meetingNo,proto3" json:"meeting_no,omitempty"`
+	// 绑定的参会人身份（必填，用于标识访客身份，同一会议内唯一）
+	Identity string `protobuf:"bytes,2,opt,name=identity,proto3" json:"identity,omitempty"`
+	// 绑定的参会人名称（可选，用于显示在会议中）
+	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	// 票据有效期秒数（默认 3600，即 1小时）
+	ExpireSeconds uint32 `protobuf:"varint,4,opt,name=expire_seconds,json=expireSeconds,proto3" json:"expire_seconds,omitempty"`
+	// 是否可以发布音视频（默认 true，总开关）
+	CanPublish bool `protobuf:"varint,5,opt,name=can_publish,json=canPublish,proto3" json:"can_publish,omitempty"`
+	// 是否可以订阅音视频（默认 true，控制访客是否能观看/收听其他人的音视频）
+	CanSubscribe bool `protobuf:"varint,6,opt,name=can_subscribe,json=canSubscribe,proto3" json:"can_subscribe,omitempty"`
+	// 是否可以发布数据（默认 true，控制访客是否能发送聊天消息/数据）
+	CanPublishData bool `protobuf:"varint,7,opt,name=can_publish_data,json=canPublishData,proto3" json:"can_publish_data,omitempty"`
+	// 可以发布的轨道源类型（默认为空，表示允许所有）
+	// 枚举值说明：
+	// - camera: 摄像头
+	// - microphone: 麦克风
+	// - screen_share: 屏幕共享（视频）
+	// - screen_share_audio: 屏幕共享音频
+	CanPublishSources []string `protobuf:"bytes,8,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *GenerateMeetingTicketReq) Reset() {
+	*x = GenerateMeetingTicketReq{}
+	mi := &file_live_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateMeetingTicketReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateMeetingTicketReq) ProtoMessage() {}
+
+func (x *GenerateMeetingTicketReq) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateMeetingTicketReq.ProtoReflect.Descriptor instead.
+func (*GenerateMeetingTicketReq) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *GenerateMeetingTicketReq) GetMeetingNo() string {
+	if x != nil {
+		return x.MeetingNo
+	}
+	return ""
+}
+
+func (x *GenerateMeetingTicketReq) GetIdentity() string {
+	if x != nil {
+		return x.Identity
+	}
+	return ""
+}
+
+func (x *GenerateMeetingTicketReq) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *GenerateMeetingTicketReq) GetExpireSeconds() uint32 {
+	if x != nil {
+		return x.ExpireSeconds
+	}
+	return 0
+}
+
+func (x *GenerateMeetingTicketReq) GetCanPublish() bool {
+	if x != nil {
+		return x.CanPublish
+	}
+	return false
+}
+
+func (x *GenerateMeetingTicketReq) GetCanSubscribe() bool {
+	if x != nil {
+		return x.CanSubscribe
+	}
+	return false
+}
+
+func (x *GenerateMeetingTicketReq) GetCanPublishData() bool {
+	if x != nil {
+		return x.CanPublishData
+	}
+	return false
+}
+
+func (x *GenerateMeetingTicketReq) GetCanPublishSources() []string {
+	if x != nil {
+		return x.CanPublishSources
+	}
+	return nil
+}
+
+// GenerateMeetingTicketRes 生成会议邀请票据响应。
+type GenerateMeetingTicketRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 票据字符串（用于前端传递给访客，访客用此票据加入会议）
+	Ticket string `protobuf:"bytes,1,opt,name=ticket,proto3" json:"ticket,omitempty"`
+	// 过期时间，格式：yyyy-MM-dd HH:mm:ss（票据在此时间后失效）
+	ExpireTime string `protobuf:"bytes,2,opt,name=expire_time,json=expireTime,proto3" json:"expire_time,omitempty"`
+	// 是否可以发布音视频（回显请求中的权限设置）
+	CanPublish bool `protobuf:"varint,3,opt,name=can_publish,json=canPublish,proto3" json:"can_publish,omitempty"`
+	// 是否可以订阅音视频（回显请求中的权限设置）
+	CanSubscribe bool `protobuf:"varint,4,opt,name=can_subscribe,json=canSubscribe,proto3" json:"can_subscribe,omitempty"`
+	// 是否可以发布数据（回显请求中的权限设置）
+	CanPublishData bool `protobuf:"varint,5,opt,name=can_publish_data,json=canPublishData,proto3" json:"can_publish_data,omitempty"`
+	// 可以发布的轨道源类型（回显请求中的权限设置）
+	// 枚举值说明：
+	// - camera: 摄像头
+	// - microphone: 麦克风
+	// - screen_share: 屏幕共享（视频）
+	// - screen_share_audio: 屏幕共享音频
+	CanPublishSources []string `protobuf:"bytes,6,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *GenerateMeetingTicketRes) Reset() {
+	*x = GenerateMeetingTicketRes{}
+	mi := &file_live_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateMeetingTicketRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateMeetingTicketRes) ProtoMessage() {}
+
+func (x *GenerateMeetingTicketRes) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateMeetingTicketRes.ProtoReflect.Descriptor instead.
+func (*GenerateMeetingTicketRes) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *GenerateMeetingTicketRes) GetTicket() string {
+	if x != nil {
+		return x.Ticket
+	}
+	return ""
+}
+
+func (x *GenerateMeetingTicketRes) GetExpireTime() string {
+	if x != nil {
+		return x.ExpireTime
+	}
+	return ""
+}
+
+func (x *GenerateMeetingTicketRes) GetCanPublish() bool {
+	if x != nil {
+		return x.CanPublish
+	}
+	return false
+}
+
+func (x *GenerateMeetingTicketRes) GetCanSubscribe() bool {
+	if x != nil {
+		return x.CanSubscribe
+	}
+	return false
+}
+
+func (x *GenerateMeetingTicketRes) GetCanPublishData() bool {
+	if x != nil {
+		return x.CanPublishData
+	}
+	return false
+}
+
+func (x *GenerateMeetingTicketRes) GetCanPublishSources() []string {
+	if x != nil {
+		return x.CanPublishSources
+	}
+	return nil
+}
+
+type JoinMeetingByTicketReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 票据字符串（已绑定会议号和参会人）
+	Ticket        string `protobuf:"bytes,1,opt,name=ticket,proto3" json:"ticket,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JoinMeetingByTicketReq) Reset() {
+	*x = JoinMeetingByTicketReq{}
+	mi := &file_live_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JoinMeetingByTicketReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JoinMeetingByTicketReq) ProtoMessage() {}
+
+func (x *JoinMeetingByTicketReq) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JoinMeetingByTicketReq.ProtoReflect.Descriptor instead.
+func (*JoinMeetingByTicketReq) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *JoinMeetingByTicketReq) GetTicket() string {
+	if x != nil {
+		return x.Ticket
+	}
+	return ""
+}
+
+type JoinMeetingByTicketRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// join token（浏览器直连 LiveKit 使用）
+	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	// LiveKit WebSocket 地址
+	WsUrl string `protobuf:"bytes,2,opt,name=ws_url,json=wsUrl,proto3" json:"ws_url,omitempty"`
+	// 会议信息
+	Meeting *MeetingInfo `protobuf:"bytes,3,opt,name=meeting,proto3" json:"meeting,omitempty"`
+	// 是否可以发布音视频
+	CanPublish bool `protobuf:"varint,4,opt,name=can_publish,json=canPublish,proto3" json:"can_publish,omitempty"`
+	// 是否可以订阅音视频
+	CanSubscribe bool `protobuf:"varint,5,opt,name=can_subscribe,json=canSubscribe,proto3" json:"can_subscribe,omitempty"`
+	// 是否可以发布数据
+	CanPublishData bool `protobuf:"varint,6,opt,name=can_publish_data,json=canPublishData,proto3" json:"can_publish_data,omitempty"`
+	// 可以发布的轨道源类型（空表示允许所有）
+	CanPublishSources []string `protobuf:"bytes,7,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *JoinMeetingByTicketRes) Reset() {
+	*x = JoinMeetingByTicketRes{}
+	mi := &file_live_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JoinMeetingByTicketRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JoinMeetingByTicketRes) ProtoMessage() {}
+
+func (x *JoinMeetingByTicketRes) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JoinMeetingByTicketRes.ProtoReflect.Descriptor instead.
+func (*JoinMeetingByTicketRes) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *JoinMeetingByTicketRes) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *JoinMeetingByTicketRes) GetWsUrl() string {
+	if x != nil {
+		return x.WsUrl
+	}
+	return ""
+}
+
+func (x *JoinMeetingByTicketRes) GetMeeting() *MeetingInfo {
+	if x != nil {
+		return x.Meeting
+	}
+	return nil
+}
+
+func (x *JoinMeetingByTicketRes) GetCanPublish() bool {
+	if x != nil {
+		return x.CanPublish
+	}
+	return false
+}
+
+func (x *JoinMeetingByTicketRes) GetCanSubscribe() bool {
+	if x != nil {
+		return x.CanSubscribe
+	}
+	return false
+}
+
+func (x *JoinMeetingByTicketRes) GetCanPublishData() bool {
+	if x != nil {
+		return x.CanPublishData
+	}
+	return false
+}
+
+func (x *JoinMeetingByTicketRes) GetCanPublishSources() []string {
+	if x != nil {
+		return x.CanPublishSources
+	}
+	return nil
+}
+
+type ReportMeetingMessageReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 会议号
+	MeetingNo string `protobuf:"bytes,1,opt,name=meeting_no,json=meetingNo,proto3" json:"meeting_no,omitempty"`
+	// 消息 ID（客户端生成）
+	MessageId string `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// 消息内容
+	Content string `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	// 消息类型（text, image, file）
+	MessageType   string `protobuf:"bytes,4,opt,name=message_type,json=messageType,proto3" json:"message_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReportMeetingMessageReq) Reset() {
+	*x = ReportMeetingMessageReq{}
+	mi := &file_live_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReportMeetingMessageReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReportMeetingMessageReq) ProtoMessage() {}
+
+func (x *ReportMeetingMessageReq) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReportMeetingMessageReq.ProtoReflect.Descriptor instead.
+func (*ReportMeetingMessageReq) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *ReportMeetingMessageReq) GetMeetingNo() string {
+	if x != nil {
+		return x.MeetingNo
+	}
+	return ""
+}
+
+func (x *ReportMeetingMessageReq) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *ReportMeetingMessageReq) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+func (x *ReportMeetingMessageReq) GetMessageType() string {
+	if x != nil {
+		return x.MessageType
+	}
+	return ""
+}
+
+type ReportMeetingMessageRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReportMeetingMessageRes) Reset() {
+	*x = ReportMeetingMessageRes{}
+	mi := &file_live_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReportMeetingMessageRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReportMeetingMessageRes) ProtoMessage() {}
+
+func (x *ReportMeetingMessageRes) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReportMeetingMessageRes.ProtoReflect.Descriptor instead.
+func (*ReportMeetingMessageRes) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{29}
+}
+
+type ListMeetingMessagesReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 会议号
+	MeetingNo string `protobuf:"bytes,1,opt,name=meeting_no,json=meetingNo,proto3" json:"meeting_no,omitempty"`
+	// 页码，从 1 开始
+	Page int64 `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
+	// 每页数量
+	PageSize      int64 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMeetingMessagesReq) Reset() {
+	*x = ListMeetingMessagesReq{}
+	mi := &file_live_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMeetingMessagesReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMeetingMessagesReq) ProtoMessage() {}
+
+func (x *ListMeetingMessagesReq) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMeetingMessagesReq.ProtoReflect.Descriptor instead.
+func (*ListMeetingMessagesReq) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *ListMeetingMessagesReq) GetMeetingNo() string {
+	if x != nil {
+		return x.MeetingNo
+	}
+	return ""
+}
+
+func (x *ListMeetingMessagesReq) GetPage() int64 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListMeetingMessagesReq) GetPageSize() int64 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+type ListMeetingMessagesRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 消息列表
+	Messages []*MeetingMessageInfo `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	// 总数量
+	Total         int64 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMeetingMessagesRes) Reset() {
+	*x = ListMeetingMessagesRes{}
+	mi := &file_live_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMeetingMessagesRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMeetingMessagesRes) ProtoMessage() {}
+
+func (x *ListMeetingMessagesRes) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMeetingMessagesRes.ProtoReflect.Descriptor instead.
+func (*ListMeetingMessagesRes) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *ListMeetingMessagesRes) GetMessages() []*MeetingMessageInfo {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
+func (x *ListMeetingMessagesRes) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+type MeetingMessageInfo struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 消息 ID
+	MessageId string `protobuf:"bytes,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// 发送者 ID
+	SenderId string `protobuf:"bytes,2,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
+	// 发送者名称
+	SenderName string `protobuf:"bytes,3,opt,name=sender_name,json=senderName,proto3" json:"sender_name,omitempty"`
+	// 消息内容
+	Content string `protobuf:"bytes,4,opt,name=content,proto3" json:"content,omitempty"`
+	// 消息类型
+	MessageType string `protobuf:"bytes,5,opt,name=message_type,json=messageType,proto3" json:"message_type,omitempty"`
+	// 创建时间，格式：yyyy-MM-dd HH:mm:ss
+	CreateTime    string `protobuf:"bytes,6,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MeetingMessageInfo) Reset() {
+	*x = MeetingMessageInfo{}
+	mi := &file_live_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MeetingMessageInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MeetingMessageInfo) ProtoMessage() {}
+
+func (x *MeetingMessageInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MeetingMessageInfo.ProtoReflect.Descriptor instead.
+func (*MeetingMessageInfo) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *MeetingMessageInfo) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *MeetingMessageInfo) GetSenderId() string {
+	if x != nil {
+		return x.SenderId
+	}
+	return ""
+}
+
+func (x *MeetingMessageInfo) GetSenderName() string {
+	if x != nil {
+		return x.SenderName
+	}
+	return ""
+}
+
+func (x *MeetingMessageInfo) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+func (x *MeetingMessageInfo) GetMessageType() string {
+	if x != nil {
+		return x.MessageType
+	}
+	return ""
+}
+
+func (x *MeetingMessageInfo) GetCreateTime() string {
+	if x != nil {
+		return x.CreateTime
+	}
+	return ""
+}
+
 var File_live_proto protoreflect.FileDescriptor
 
 const file_live_proto_rawDesc = "" +
@@ -1394,25 +2192,42 @@ const file_live_proto_rawDesc = "" +
 	"\x10max_participants\x18\x04 \x01(\rR\x0fmaxParticipants\x12\x1a\n" +
 	"\bmetadata\x18\x05 \x01(\tR\bmetadata\"?\n" +
 	"\x10CreateMeetingRes\x12+\n" +
-	"\ameeting\x18\x01 \x01(\v2\x11.live.MeetingInfoR\ameeting\"_\n" +
+	"\ameeting\x18\x01 \x01(\v2\x11.live.MeetingInfoR\ameeting\"\xff\x01\n" +
 	"\x0eJoinMeetingReq\x12\x1d\n" +
 	"\n" +
 	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12\x1a\n" +
 	"\bidentity\x18\x02 \x01(\tR\bidentity\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\"j\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1f\n" +
+	"\vcan_publish\x18\x04 \x01(\bR\n" +
+	"canPublish\x12#\n" +
+	"\rcan_subscribe\x18\x05 \x01(\bR\fcanSubscribe\x12(\n" +
+	"\x10can_publish_data\x18\x06 \x01(\bR\x0ecanPublishData\x12.\n" +
+	"\x13can_publish_sources\x18\a \x03(\tR\x11canPublishSources\"\x8a\x02\n" +
 	"\x0eJoinMeetingRes\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\x15\n" +
 	"\x06ws_url\x18\x02 \x01(\tR\x05wsUrl\x12+\n" +
-	"\ameeting\x18\x03 \x01(\v2\x11.live.MeetingInfoR\ameeting\".\n" +
+	"\ameeting\x18\x03 \x01(\v2\x11.live.MeetingInfoR\ameeting\x12\x1f\n" +
+	"\vcan_publish\x18\x04 \x01(\bR\n" +
+	"canPublish\x12#\n" +
+	"\rcan_subscribe\x18\x05 \x01(\bR\fcanSubscribe\x12(\n" +
+	"\x10can_publish_data\x18\x06 \x01(\bR\x0ecanPublishData\x12.\n" +
+	"\x13can_publish_sources\x18\a \x03(\tR\x11canPublishSources\".\n" +
 	"\rGetMeetingReq\x12\x1d\n" +
 	"\n" +
 	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\"<\n" +
 	"\rGetMeetingRes\x12+\n" +
-	"\ameeting\x18\x01 \x01(\v2\x11.live.MeetingInfoR\ameeting\"Z\n" +
+	"\ameeting\x18\x01 \x01(\v2\x11.live.MeetingInfoR\ameeting\"\x9e\x02\n" +
 	"\x0fListMeetingsReq\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\x05R\x06status\x12\x12\n" +
 	"\x04page\x18\x02 \x01(\x03R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\x03R\bpageSize\"V\n" +
+	"\tpage_size\x18\x03 \x01(\x03R\bpageSize\x12*\n" +
+	"\x11create_time_start\x18\x04 \x01(\tR\x0fcreateTimeStart\x12&\n" +
+	"\x0fcreate_time_end\x18\x05 \x01(\tR\rcreateTimeEnd\x12\x1b\n" +
+	"\tdept_code\x18\x06 \x01(\tR\bdeptCode\x12\x1f\n" +
+	"\vcreate_user\x18\a \x01(\tR\n" +
+	"createUser\x12\x14\n" +
+	"\x05title\x18\b \x01(\tR\x05title\x12\x1a\n" +
+	"\bidentity\x18\t \x01(\tR\bidentity\"V\n" +
 	"\x0fListMeetingsRes\x12-\n" +
 	"\bmeetings\x18\x01 \x03(\v2\x11.live.MeetingInfoR\bmeetings\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\".\n" +
@@ -1461,7 +2276,64 @@ const file_live_proto_rawDesc = "" +
 	"\bresponse\x18\x01 \x01(\tR\bresponse\"&\n" +
 	"\x10WebhookNotifyReq\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\"\x12\n" +
-	"\x10WebhookNotifyRes2\xe0\x05\n" +
+	"\x10WebhookNotifyRes\"\xb0\x02\n" +
+	"\x18GenerateMeetingTicketReq\x12\x1d\n" +
+	"\n" +
+	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12\x1a\n" +
+	"\bidentity\x18\x02 \x01(\tR\bidentity\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12%\n" +
+	"\x0eexpire_seconds\x18\x04 \x01(\rR\rexpireSeconds\x12\x1f\n" +
+	"\vcan_publish\x18\x05 \x01(\bR\n" +
+	"canPublish\x12#\n" +
+	"\rcan_subscribe\x18\x06 \x01(\bR\fcanSubscribe\x12(\n" +
+	"\x10can_publish_data\x18\a \x01(\bR\x0ecanPublishData\x12.\n" +
+	"\x13can_publish_sources\x18\b \x03(\tR\x11canPublishSources\"\xf3\x01\n" +
+	"\x18GenerateMeetingTicketRes\x12\x16\n" +
+	"\x06ticket\x18\x01 \x01(\tR\x06ticket\x12\x1f\n" +
+	"\vexpire_time\x18\x02 \x01(\tR\n" +
+	"expireTime\x12\x1f\n" +
+	"\vcan_publish\x18\x03 \x01(\bR\n" +
+	"canPublish\x12#\n" +
+	"\rcan_subscribe\x18\x04 \x01(\bR\fcanSubscribe\x12(\n" +
+	"\x10can_publish_data\x18\x05 \x01(\bR\x0ecanPublishData\x12.\n" +
+	"\x13can_publish_sources\x18\x06 \x03(\tR\x11canPublishSources\"0\n" +
+	"\x16JoinMeetingByTicketReq\x12\x16\n" +
+	"\x06ticket\x18\x01 \x01(\tR\x06ticket\"\x92\x02\n" +
+	"\x16JoinMeetingByTicketRes\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12\x15\n" +
+	"\x06ws_url\x18\x02 \x01(\tR\x05wsUrl\x12+\n" +
+	"\ameeting\x18\x03 \x01(\v2\x11.live.MeetingInfoR\ameeting\x12\x1f\n" +
+	"\vcan_publish\x18\x04 \x01(\bR\n" +
+	"canPublish\x12#\n" +
+	"\rcan_subscribe\x18\x05 \x01(\bR\fcanSubscribe\x12(\n" +
+	"\x10can_publish_data\x18\x06 \x01(\bR\x0ecanPublishData\x12.\n" +
+	"\x13can_publish_sources\x18\a \x03(\tR\x11canPublishSources\"\x94\x01\n" +
+	"\x17ReportMeetingMessageReq\x12\x1d\n" +
+	"\n" +
+	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x02 \x01(\tR\tmessageId\x12\x18\n" +
+	"\acontent\x18\x03 \x01(\tR\acontent\x12!\n" +
+	"\fmessage_type\x18\x04 \x01(\tR\vmessageType\"\x19\n" +
+	"\x17ReportMeetingMessageRes\"h\n" +
+	"\x16ListMeetingMessagesReq\x12\x1d\n" +
+	"\n" +
+	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12\x12\n" +
+	"\x04page\x18\x02 \x01(\x03R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x03R\bpageSize\"d\n" +
+	"\x16ListMeetingMessagesRes\x124\n" +
+	"\bmessages\x18\x01 \x03(\v2\x18.live.MeetingMessageInfoR\bmessages\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"\xcf\x01\n" +
+	"\x12MeetingMessageInfo\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x01 \x01(\tR\tmessageId\x12\x1b\n" +
+	"\tsender_id\x18\x02 \x01(\tR\bsenderId\x12\x1f\n" +
+	"\vsender_name\x18\x03 \x01(\tR\n" +
+	"senderName\x12\x18\n" +
+	"\acontent\x18\x04 \x01(\tR\acontent\x12!\n" +
+	"\fmessage_type\x18\x05 \x01(\tR\vmessageType\x12\x1f\n" +
+	"\vcreate_time\x18\x06 \x01(\tR\n" +
+	"createTime2\xb5\b\n" +
 	"\aLiveRpc\x12?\n" +
 	"\rCreateMeeting\x12\x16.live.CreateMeetingReq\x1a\x16.live.CreateMeetingRes\x129\n" +
 	"\vJoinMeeting\x12\x14.live.JoinMeetingReq\x1a\x14.live.JoinMeetingRes\x126\n" +
@@ -1475,7 +2347,11 @@ const file_live_proto_rawDesc = "" +
 	"\x10ListParticipants\x12\x19.live.ListParticipantsReq\x1a\x19.live.ListParticipantsRes\x12E\n" +
 	"\x0fSendMeetingData\x12\x18.live.SendMeetingDataReq\x1a\x18.live.SendMeetingDataRes\x12K\n" +
 	"\x11PerformMeetingRpc\x12\x1a.live.PerformMeetingRpcReq\x1a\x1a.live.PerformMeetingRpcRes\x12?\n" +
-	"\rWebhookNotify\x12\x16.live.WebhookNotifyReq\x1a\x16.live.WebhookNotifyResB+\n" +
+	"\rWebhookNotify\x12\x16.live.WebhookNotifyReq\x1a\x16.live.WebhookNotifyRes\x12W\n" +
+	"\x15GenerateMeetingTicket\x12\x1e.live.GenerateMeetingTicketReq\x1a\x1e.live.GenerateMeetingTicketRes\x12Q\n" +
+	"\x13JoinMeetingByTicket\x12\x1c.live.JoinMeetingByTicketReq\x1a\x1c.live.JoinMeetingByTicketRes\x12T\n" +
+	"\x14ReportMeetingMessage\x12\x1d.live.ReportMeetingMessageReq\x1a\x1d.live.ReportMeetingMessageRes\x12Q\n" +
+	"\x13ListMeetingMessages\x12\x1c.live.ListMeetingMessagesReq\x1a\x1c.live.ListMeetingMessagesResB+\n" +
 	"\x14com.github.live.grpcB\tLiveProtoP\x01Z\x06./liveb\x06proto3"
 
 var (
@@ -1490,32 +2366,41 @@ func file_live_proto_rawDescGZIP() []byte {
 	return file_live_proto_rawDescData
 }
 
-var file_live_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_live_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_live_proto_goTypes = []any{
-	(*MeetingInfo)(nil),          // 0: live.MeetingInfo
-	(*CreateMeetingReq)(nil),     // 1: live.CreateMeetingReq
-	(*CreateMeetingRes)(nil),     // 2: live.CreateMeetingRes
-	(*JoinMeetingReq)(nil),       // 3: live.JoinMeetingReq
-	(*JoinMeetingRes)(nil),       // 4: live.JoinMeetingRes
-	(*GetMeetingReq)(nil),        // 5: live.GetMeetingReq
-	(*GetMeetingRes)(nil),        // 6: live.GetMeetingRes
-	(*ListMeetingsReq)(nil),      // 7: live.ListMeetingsReq
-	(*ListMeetingsRes)(nil),      // 8: live.ListMeetingsRes
-	(*EndMeetingReq)(nil),        // 9: live.EndMeetingReq
-	(*EndMeetingRes)(nil),        // 10: live.EndMeetingRes
-	(*KickParticipantReq)(nil),   // 11: live.KickParticipantReq
-	(*KickParticipantRes)(nil),   // 12: live.KickParticipantRes
-	(*MuteParticipantReq)(nil),   // 13: live.MuteParticipantReq
-	(*MuteParticipantRes)(nil),   // 14: live.MuteParticipantRes
-	(*ParticipantInfo)(nil),      // 15: live.ParticipantInfo
-	(*ListParticipantsReq)(nil),  // 16: live.ListParticipantsReq
-	(*ListParticipantsRes)(nil),  // 17: live.ListParticipantsRes
-	(*SendMeetingDataReq)(nil),   // 18: live.SendMeetingDataReq
-	(*SendMeetingDataRes)(nil),   // 19: live.SendMeetingDataRes
-	(*PerformMeetingRpcReq)(nil), // 20: live.PerformMeetingRpcReq
-	(*PerformMeetingRpcRes)(nil), // 21: live.PerformMeetingRpcRes
-	(*WebhookNotifyReq)(nil),     // 22: live.WebhookNotifyReq
-	(*WebhookNotifyRes)(nil),     // 23: live.WebhookNotifyRes
+	(*MeetingInfo)(nil),              // 0: live.MeetingInfo
+	(*CreateMeetingReq)(nil),         // 1: live.CreateMeetingReq
+	(*CreateMeetingRes)(nil),         // 2: live.CreateMeetingRes
+	(*JoinMeetingReq)(nil),           // 3: live.JoinMeetingReq
+	(*JoinMeetingRes)(nil),           // 4: live.JoinMeetingRes
+	(*GetMeetingReq)(nil),            // 5: live.GetMeetingReq
+	(*GetMeetingRes)(nil),            // 6: live.GetMeetingRes
+	(*ListMeetingsReq)(nil),          // 7: live.ListMeetingsReq
+	(*ListMeetingsRes)(nil),          // 8: live.ListMeetingsRes
+	(*EndMeetingReq)(nil),            // 9: live.EndMeetingReq
+	(*EndMeetingRes)(nil),            // 10: live.EndMeetingRes
+	(*KickParticipantReq)(nil),       // 11: live.KickParticipantReq
+	(*KickParticipantRes)(nil),       // 12: live.KickParticipantRes
+	(*MuteParticipantReq)(nil),       // 13: live.MuteParticipantReq
+	(*MuteParticipantRes)(nil),       // 14: live.MuteParticipantRes
+	(*ParticipantInfo)(nil),          // 15: live.ParticipantInfo
+	(*ListParticipantsReq)(nil),      // 16: live.ListParticipantsReq
+	(*ListParticipantsRes)(nil),      // 17: live.ListParticipantsRes
+	(*SendMeetingDataReq)(nil),       // 18: live.SendMeetingDataReq
+	(*SendMeetingDataRes)(nil),       // 19: live.SendMeetingDataRes
+	(*PerformMeetingRpcReq)(nil),     // 20: live.PerformMeetingRpcReq
+	(*PerformMeetingRpcRes)(nil),     // 21: live.PerformMeetingRpcRes
+	(*WebhookNotifyReq)(nil),         // 22: live.WebhookNotifyReq
+	(*WebhookNotifyRes)(nil),         // 23: live.WebhookNotifyRes
+	(*GenerateMeetingTicketReq)(nil), // 24: live.GenerateMeetingTicketReq
+	(*GenerateMeetingTicketRes)(nil), // 25: live.GenerateMeetingTicketRes
+	(*JoinMeetingByTicketReq)(nil),   // 26: live.JoinMeetingByTicketReq
+	(*JoinMeetingByTicketRes)(nil),   // 27: live.JoinMeetingByTicketRes
+	(*ReportMeetingMessageReq)(nil),  // 28: live.ReportMeetingMessageReq
+	(*ReportMeetingMessageRes)(nil),  // 29: live.ReportMeetingMessageRes
+	(*ListMeetingMessagesReq)(nil),   // 30: live.ListMeetingMessagesReq
+	(*ListMeetingMessagesRes)(nil),   // 31: live.ListMeetingMessagesRes
+	(*MeetingMessageInfo)(nil),       // 32: live.MeetingMessageInfo
 }
 var file_live_proto_depIdxs = []int32{
 	0,  // 0: live.CreateMeetingRes.meeting:type_name -> live.MeetingInfo
@@ -1523,33 +2408,43 @@ var file_live_proto_depIdxs = []int32{
 	0,  // 2: live.GetMeetingRes.meeting:type_name -> live.MeetingInfo
 	0,  // 3: live.ListMeetingsRes.meetings:type_name -> live.MeetingInfo
 	15, // 4: live.ListParticipantsRes.participants:type_name -> live.ParticipantInfo
-	1,  // 5: live.LiveRpc.CreateMeeting:input_type -> live.CreateMeetingReq
-	3,  // 6: live.LiveRpc.JoinMeeting:input_type -> live.JoinMeetingReq
-	5,  // 7: live.LiveRpc.GetMeeting:input_type -> live.GetMeetingReq
-	7,  // 8: live.LiveRpc.ListMeetings:input_type -> live.ListMeetingsReq
-	9,  // 9: live.LiveRpc.EndMeeting:input_type -> live.EndMeetingReq
-	11, // 10: live.LiveRpc.KickParticipant:input_type -> live.KickParticipantReq
-	13, // 11: live.LiveRpc.MuteParticipant:input_type -> live.MuteParticipantReq
-	16, // 12: live.LiveRpc.ListParticipants:input_type -> live.ListParticipantsReq
-	18, // 13: live.LiveRpc.SendMeetingData:input_type -> live.SendMeetingDataReq
-	20, // 14: live.LiveRpc.PerformMeetingRpc:input_type -> live.PerformMeetingRpcReq
-	22, // 15: live.LiveRpc.WebhookNotify:input_type -> live.WebhookNotifyReq
-	2,  // 16: live.LiveRpc.CreateMeeting:output_type -> live.CreateMeetingRes
-	4,  // 17: live.LiveRpc.JoinMeeting:output_type -> live.JoinMeetingRes
-	6,  // 18: live.LiveRpc.GetMeeting:output_type -> live.GetMeetingRes
-	8,  // 19: live.LiveRpc.ListMeetings:output_type -> live.ListMeetingsRes
-	10, // 20: live.LiveRpc.EndMeeting:output_type -> live.EndMeetingRes
-	12, // 21: live.LiveRpc.KickParticipant:output_type -> live.KickParticipantRes
-	14, // 22: live.LiveRpc.MuteParticipant:output_type -> live.MuteParticipantRes
-	17, // 23: live.LiveRpc.ListParticipants:output_type -> live.ListParticipantsRes
-	19, // 24: live.LiveRpc.SendMeetingData:output_type -> live.SendMeetingDataRes
-	21, // 25: live.LiveRpc.PerformMeetingRpc:output_type -> live.PerformMeetingRpcRes
-	23, // 26: live.LiveRpc.WebhookNotify:output_type -> live.WebhookNotifyRes
-	16, // [16:27] is the sub-list for method output_type
-	5,  // [5:16] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	0,  // 5: live.JoinMeetingByTicketRes.meeting:type_name -> live.MeetingInfo
+	32, // 6: live.ListMeetingMessagesRes.messages:type_name -> live.MeetingMessageInfo
+	1,  // 7: live.LiveRpc.CreateMeeting:input_type -> live.CreateMeetingReq
+	3,  // 8: live.LiveRpc.JoinMeeting:input_type -> live.JoinMeetingReq
+	5,  // 9: live.LiveRpc.GetMeeting:input_type -> live.GetMeetingReq
+	7,  // 10: live.LiveRpc.ListMeetings:input_type -> live.ListMeetingsReq
+	9,  // 11: live.LiveRpc.EndMeeting:input_type -> live.EndMeetingReq
+	11, // 12: live.LiveRpc.KickParticipant:input_type -> live.KickParticipantReq
+	13, // 13: live.LiveRpc.MuteParticipant:input_type -> live.MuteParticipantReq
+	16, // 14: live.LiveRpc.ListParticipants:input_type -> live.ListParticipantsReq
+	18, // 15: live.LiveRpc.SendMeetingData:input_type -> live.SendMeetingDataReq
+	20, // 16: live.LiveRpc.PerformMeetingRpc:input_type -> live.PerformMeetingRpcReq
+	22, // 17: live.LiveRpc.WebhookNotify:input_type -> live.WebhookNotifyReq
+	24, // 18: live.LiveRpc.GenerateMeetingTicket:input_type -> live.GenerateMeetingTicketReq
+	26, // 19: live.LiveRpc.JoinMeetingByTicket:input_type -> live.JoinMeetingByTicketReq
+	28, // 20: live.LiveRpc.ReportMeetingMessage:input_type -> live.ReportMeetingMessageReq
+	30, // 21: live.LiveRpc.ListMeetingMessages:input_type -> live.ListMeetingMessagesReq
+	2,  // 22: live.LiveRpc.CreateMeeting:output_type -> live.CreateMeetingRes
+	4,  // 23: live.LiveRpc.JoinMeeting:output_type -> live.JoinMeetingRes
+	6,  // 24: live.LiveRpc.GetMeeting:output_type -> live.GetMeetingRes
+	8,  // 25: live.LiveRpc.ListMeetings:output_type -> live.ListMeetingsRes
+	10, // 26: live.LiveRpc.EndMeeting:output_type -> live.EndMeetingRes
+	12, // 27: live.LiveRpc.KickParticipant:output_type -> live.KickParticipantRes
+	14, // 28: live.LiveRpc.MuteParticipant:output_type -> live.MuteParticipantRes
+	17, // 29: live.LiveRpc.ListParticipants:output_type -> live.ListParticipantsRes
+	19, // 30: live.LiveRpc.SendMeetingData:output_type -> live.SendMeetingDataRes
+	21, // 31: live.LiveRpc.PerformMeetingRpc:output_type -> live.PerformMeetingRpcRes
+	23, // 32: live.LiveRpc.WebhookNotify:output_type -> live.WebhookNotifyRes
+	25, // 33: live.LiveRpc.GenerateMeetingTicket:output_type -> live.GenerateMeetingTicketRes
+	27, // 34: live.LiveRpc.JoinMeetingByTicket:output_type -> live.JoinMeetingByTicketRes
+	29, // 35: live.LiveRpc.ReportMeetingMessage:output_type -> live.ReportMeetingMessageRes
+	31, // 36: live.LiveRpc.ListMeetingMessages:output_type -> live.ListMeetingMessagesRes
+	22, // [22:37] is the sub-list for method output_type
+	7,  // [7:22] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_live_proto_init() }
@@ -1563,7 +2458,7 @@ func file_live_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_live_proto_rawDesc), len(file_live_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   24,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

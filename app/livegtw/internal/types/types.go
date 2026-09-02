@@ -3,60 +3,132 @@
 
 package types
 
-type CreateMeetingReq struct {
+type CreateMeetingReply struct {
+	Meeting MeetingInfo `json:"meeting"`
+}
+
+type CreateMeetingRequest struct {
 	Title string `json:"title"`
 }
 
-type CreateMeetingRes struct {
-	Meeting MeetingInfo `json:"meeting"`
-}
-
-type EndMeetingReq struct {
+type EndMeetingRequest struct {
 	MeetingNo string `json:"meetingNo"`
 }
 
-type GetMeetingReq struct {
+type GenerateMeetingTicketReply struct {
+	Ticket            string   `json:"ticket"`
+	ExpireTime        string   `json:"expireTime"`
+	CanPublish        bool     `json:"canPublish"`
+	CanSubscribe      bool     `json:"canSubscribe"`
+	CanPublishData    bool     `json:"canPublishData"`
+	CanPublishSources []string `json:"canPublishSources"`
+}
+
+type GenerateMeetingTicketRequest struct {
+	MeetingNo         string   `json:"meetingNo"`
+	Identity          string   `json:"identity"`
+	Name              string   `json:"name,optional"`
+	ExpireSeconds     int32    `json:"expireSeconds,optional"`
+	CanPublish        bool     `json:"canPublish,optional"`
+	CanSubscribe      bool     `json:"canSubscribe,optional"`
+	CanPublishData    bool     `json:"canPublishData,optional"`
+	CanPublishSources []string `json:"canPublishSources,optional"`
+}
+
+type GetCurrentUserReply struct {
+	UserId   string `json:"userId"`
+	UserName string `json:"userName"`
+	DeptCode string `json:"deptCode"`
+}
+
+type GetCurrentUserRequest struct {
+}
+
+type GetMeetingReply struct {
+	Meeting MeetingInfo `json:"meeting"`
+}
+
+type GetMeetingRequest struct {
 	MeetingNo string `form:"meetingNo"`
 }
 
-type GetMeetingRes struct {
-	Meeting MeetingInfo `json:"meeting"`
+type JoinMeetingByTicketReply struct {
+	Token             string      `json:"token"`
+	WsUrl             string      `json:"wsUrl"`
+	Meeting           MeetingInfo `json:"meeting"`
+	CanPublish        bool        `json:"canPublish"`
+	CanSubscribe      bool        `json:"canSubscribe"`
+	CanPublishData    bool        `json:"canPublishData"`
+	CanPublishSources []string    `json:"canPublishSources"`
 }
 
-type JoinMeetingReq struct {
+type JoinMeetingByTicketRequest struct {
+	Ticket string `form:"ticket"`
+}
+
+type JoinMeetingReply struct {
+	Token             string      `json:"token"`
+	WsUrl             string      `json:"wsUrl"`
+	Meeting           MeetingInfo `json:"meeting"`
+	CanPublish        bool        `json:"canPublish"`
+	CanSubscribe      bool        `json:"canSubscribe"`
+	CanPublishData    bool        `json:"canPublishData"`
+	CanPublishSources []string    `json:"canPublishSources"`
+}
+
+type JoinMeetingRequest struct {
+	MeetingNo         string   `json:"meetingNo"`
+	CanPublish        bool     `json:"canPublish"`
+	CanSubscribe      bool     `json:"canSubscribe"`
+	CanPublishData    bool     `json:"canPublishData"`
+	CanPublishSources []string `json:"canPublishSources"`
+}
+
+type KickParticipantRequest struct {
 	MeetingNo string `json:"meetingNo"`
 	Identity  string `json:"identity"`
-	Name      string `json:"name"`
 }
 
-type JoinMeetingRes struct {
-	Token   string      `json:"token"`
-	WsUrl   string      `json:"wsUrl"`
-	Meeting MeetingInfo `json:"meeting"`
+type ListMeetingMessagesReply struct {
+	Messages []MeetingMessageInfo `json:"messages"`
+	Total    int64                `json:"total"`
 }
 
-type KickParticipantReq struct {
-	MeetingNo string `json:"meetingNo"`
-	Identity  string `json:"identity"`
+type ListMeetingMessagesRequest struct {
+	MeetingNo string `form:"meetingNo"`
+	Page      int64  `form:"page,optional"`
+	PageSize  int64  `form:"pageSize,optional"`
 }
 
-type ListMeetingsReq struct {
+type ListMeetingsReply struct {
+	Meetings []MeetingInfo `json:"meetings"`
+	Total    int64         `json:"total"`
+}
+
+type ListMeetingsRequest struct {
+	Status          int32  `form:"status,optional"`
+	Page            int64  `form:"page,optional"`
+	PageSize        int64  `form:"pageSize,optional"`
+	CreateTimeStart string `form:"createTimeStart,optional"`
+	CreateTimeEnd   string `form:"createTimeEnd,optional"`
+	DeptCode        string `form:"deptCode,optional"`
+	CreateUser      string `form:"createUser,optional"`
+	Title           string `form:"title,optional"`
+	Identity        string `form:"identity,optional"`
+}
+
+type ListMyMeetingsRequest struct {
 	Status   int32 `form:"status,optional"`
 	Page     int64 `form:"page,optional"`
 	PageSize int64 `form:"pageSize,optional"`
 }
 
-type ListMeetingsRes struct {
-	Meetings []MeetingInfo `json:"meetings"`
-	Total    int64         `json:"total"`
-}
-
-type ListParticipantsReq struct {
-	MeetingNo string `form:"meetingNo"`
-}
-
-type ListParticipantsRes struct {
+type ListParticipantsReply struct {
 	Participants []ParticipantInfo `json:"participants"`
+}
+
+type ListParticipantsRequest struct {
+	MeetingNo string `form:"meetingNo"`
 }
 
 type MeetingInfo struct {
@@ -71,7 +143,16 @@ type MeetingInfo struct {
 	CreateTime string `json:"createTime"`
 }
 
-type MuteParticipantReq struct {
+type MeetingMessageInfo struct {
+	MessageId   string `json:"messageId"`
+	SenderId    string `json:"senderId"`
+	SenderName  string `json:"senderName"`
+	Content     string `json:"content"`
+	MessageType string `json:"messageType"`
+	CreateTime  string `json:"createTime"`
+}
+
+type MuteParticipantRequest struct {
 	MeetingNo string `json:"meetingNo"`
 	Identity  string `json:"identity"`
 	Muted     bool   `json:"muted"`
@@ -86,7 +167,11 @@ type ParticipantInfo struct {
 	LeftTime string `json:"leftTime"`
 }
 
-type PerformMeetingRpcReq struct {
+type PerformMeetingRpcReply struct {
+	Response string `json:"response"`
+}
+
+type PerformMeetingRpcRequest struct {
 	MeetingNo         string `json:"meetingNo"`
 	Identity          string `json:"identity"`
 	Method            string `json:"method"`
@@ -94,11 +179,14 @@ type PerformMeetingRpcReq struct {
 	ResponseTimeoutMs uint32 `json:"responseTimeoutMs"`
 }
 
-type PerformMeetingRpcRes struct {
-	Response string `json:"response"`
+type ReportMeetingMessageRequest struct {
+	MeetingNo   string `json:"meetingNo"`
+	MessageId   string `json:"messageId"`
+	Content     string `json:"content"`
+	MessageType string `json:"messageType,optional"`
 }
 
-type SendMeetingDataReq struct {
+type SendMeetingDataRequest struct {
 	MeetingNo    string   `json:"meetingNo"`
 	Topic        string   `json:"topic"`
 	Payload      string   `json:"payload"`

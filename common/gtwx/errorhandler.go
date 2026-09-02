@@ -3,11 +3,40 @@ package gtwx
 import (
 	"context"
 	"net/http"
+	"time"
 
+	"github.com/zeromicro/go-zero/core/logc"
 	"github.com/zeromicro/go-zero/rest/httpx"
+	xhttp "github.com/zeromicro/x/http"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+type ctxKey struct{}
+
+type reqMeta struct {
+	Method  string
+	Path    string
+	StartAt time.Time
+}
+
+// RequestLogMiddleware stores request method, path, and start time in context
+// for use by the ok/error response handlers.
+func RequestLogMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		meta := &reqMeta{
+			Method:  r.Method,
+			Path:    r.URL.Path,
+			StartAt: time.Now(),
+		}
+		next(w, r.WithContext(context.WithValue(r.Context(), ctxKey{}, meta)))
+	}
+}
+
+func getReqMeta(ctx context.Context) *reqMeta {
+	m, _ := ctx.Value(ctxKey{}).(*reqMeta)
+	return m
+}
 
 // ErrorResponse is a generic JSON error response body.
 type ErrorResponse struct {
@@ -15,6 +44,7 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
+// Deprecated: handlers 统一走 xhttp.JsonBaseResponseCtx，gRPC 错误已由 wrapBaseResponse 内置转换。
 // SetGrpcErrorHandler sets a common httpx error handler that maps gRPC errors
 // to appropriate HTTP status codes with a JSON response body.
 func SetGrpcErrorHandler() {
@@ -31,6 +61,22 @@ func SetGrpcErrorHandler() {
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 		}
+	})
+}
+
+// SetLogOkHandler sets a global ok handler that logs error responses.
+func SetLogOkHandler() {
+	httpx.SetOkHandler(func(ctx context.Context, v any) any {
+		if m := getReqMeta(ctx); m != nil {
+			if resp, ok := v.(xhttp.BaseResponse[any]); ok && resp.Code != xhttp.BusinessCodeOK {
+				logc.Error(ctx, "[HTTP] "+m.Method+" "+m.Path,
+					logc.Field("duration", time.Since(m.StartAt).String()),
+					logc.Field("code", resp.Code),
+					logc.Field("msg", resp.Msg),
+				)
+			}
+		}
+		return v
 	})
 }
 

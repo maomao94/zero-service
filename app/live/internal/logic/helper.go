@@ -12,12 +12,13 @@ import (
 
 // Redis key 前缀（统一 live: 区分业务域）。
 const (
-	// redisEndLockPrefix 结束会议分布式锁 key 前缀（配合 go-zero RedisLock）
-	redisEndLockPrefix = "live:lock:meeting:" // + meetingNo + ":end"
+	// redisMeetingLockPrefix 会议相关分布式锁 key 前缀（配合 go-zero RedisLock）
+	// 使用方式：redisMeetingLockPrefix + meetingNo
+	redisMeetingLockPrefix = "live:lock:meeting:"
 )
 
-// endLockTTL 结束会议分布式锁持有时间（超过视为持锁方崩溃，自动释放）。
-const endLockTTL = 10
+// meetingLockTTL 会议相关分布式锁持有时间（超过视为持锁方崩溃，自动释放）。
+const meetingLockTTL = 10
 
 // requireMeetingNo 校验会议号非空。
 func requireMeetingNo(meetingNo string) error {

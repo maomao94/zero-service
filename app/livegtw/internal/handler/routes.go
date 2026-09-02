@@ -6,81 +6,123 @@ package handler
 import (
 	"net/http"
 
-	meeting "zero-service/app/livegtw/internal/handler/meeting"
+	live "zero-service/app/livegtw/internal/handler/live"
+	ticket "zero-service/app/livegtw/internal/handler/ticket"
 	"zero-service/app/livegtw/internal/svc"
 
 	"github.com/zeromicro/go-zero/rest"
 )
 
-func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext,
-	middlewares *MeetingAuthMiddleware) {
+func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
 		rest.WithMiddlewares(
-			[]rest.Middleware{middlewares.MeetingAuth},
+			[]rest.Middleware{serverCtx.MeetingAuth},
 			[]rest.Route{
 				{
 					// 创建会议
 					Method:  http.MethodPost,
-					Path:    "/create",
-					Handler: meeting.CreateMeetingHandler(serverCtx),
-				},
-				{
-					// 查询会议详情
-					Method:  http.MethodGet,
-					Path:    "/detail",
-					Handler: meeting.GetMeetingHandler(serverCtx),
+					Path:    "/createMeeting",
+					Handler: live.CreateMeetingHandler(serverCtx),
 				},
 				{
 					// 结束会议
 					Method:  http.MethodPost,
-					Path:    "/end",
-					Handler: meeting.EndMeetingHandler(serverCtx),
+					Path:    "/endMeeting",
+					Handler: live.EndMeetingHandler(serverCtx),
+				},
+				{
+					// 生成会议邀请票据
+					Method:  http.MethodPost,
+					Path:    "/generateMeetingTicket",
+					Handler: live.GenerateMeetingTicketHandler(serverCtx),
+				},
+				{
+					// 获取当前用户信息
+					Method:  http.MethodGet,
+					Path:    "/getCurrentUser",
+					Handler: live.GetCurrentUserHandler(serverCtx),
+				},
+				{
+					// 查询会议详情
+					Method:  http.MethodGet,
+					Path:    "/getMeeting",
+					Handler: live.GetMeetingHandler(serverCtx),
 				},
 				{
 					// 加入会议
 					Method:  http.MethodPost,
-					Path:    "/join",
-					Handler: meeting.JoinMeetingHandler(serverCtx),
+					Path:    "/joinMeeting",
+					Handler: live.JoinMeetingHandler(serverCtx),
 				},
 				{
 					// 踢人
 					Method:  http.MethodPost,
-					Path:    "/kick",
-					Handler: meeting.KickParticipantHandler(serverCtx),
+					Path:    "/kickParticipant",
+					Handler: live.KickParticipantHandler(serverCtx),
+				},
+				{
+					// 查询聊天记录
+					Method:  http.MethodGet,
+					Path:    "/listMeetingMessages",
+					Handler: live.ListMeetingMessagesHandler(serverCtx),
 				},
 				{
 					// 分页查询会议列表
 					Method:  http.MethodGet,
-					Path:    "/list",
-					Handler: meeting.ListMeetingsHandler(serverCtx),
-				},
-				{
-					// 静音/取消静音
-					Method:  http.MethodPost,
-					Path:    "/mute",
-					Handler: meeting.MuteParticipantHandler(serverCtx),
+					Path:    "/listMeetings",
+					Handler: live.ListMeetingsHandler(serverCtx),
 				},
 				{
 					// 查询会议参与者
 					Method:  http.MethodGet,
-					Path:    "/participants",
-					Handler: meeting.ListParticipantsHandler(serverCtx),
+					Path:    "/listParticipants",
+					Handler: live.ListParticipantsHandler(serverCtx),
+				},
+				{
+					// 静音/取消静音
+					Method:  http.MethodPost,
+					Path:    "/muteParticipant",
+					Handler: live.MuteParticipantHandler(serverCtx),
+				},
+				{
+					// 查询当前用户的会议列表
+					Method:  http.MethodGet,
+					Path:    "/myMeetings",
+					Handler: live.ListMyMeetingsHandler(serverCtx),
 				},
 				{
 					// 服务端对参与者执行 RPC
 					Method:  http.MethodPost,
-					Path:    "/rpc",
-					Handler: meeting.PerformMeetingRpcHandler(serverCtx),
+					Path:    "/performMeetingRpc",
+					Handler: live.PerformMeetingRpcHandler(serverCtx),
+				},
+				{
+					// 上报聊天消息
+					Method:  http.MethodPost,
+					Path:    "/reportMeetingMessage",
+					Handler: live.ReportMeetingMessageHandler(serverCtx),
 				},
 				{
 					// 向会议发送 Data（广播/定向）
 					Method:  http.MethodPost,
-					Path:    "/sendData",
-					Handler: meeting.SendMeetingDataHandler(serverCtx),
+					Path:    "/sendMeetingData",
+					Handler: live.SendMeetingDataHandler(serverCtx),
 				},
 			}...,
 		),
 		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
-		rest.WithPrefix("/live/v1/meeting"),
+		rest.WithPrefix("/live/v1"),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// 根据票据加入会议（无需JWT）
+				Method:  http.MethodGet,
+				Path:    "/joinMeetingByTicket",
+				Handler: ticket.JoinMeetingByTicketHandler(serverCtx),
+			},
+		},
+		rest.WithPrefix("/live/v1"),
 	)
 }
