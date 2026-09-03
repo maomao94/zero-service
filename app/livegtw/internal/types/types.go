@@ -22,10 +22,12 @@ type GenerateMeetingTicketReply struct {
 	CanSubscribe      bool     `json:"canSubscribe"`
 	CanPublishData    bool     `json:"canPublishData"`
 	CanPublishSources []string `json:"canPublishSources"`
+	TicketType        int32    `json:"ticketType"`
 }
 
 type GenerateMeetingTicketRequest struct {
-	MeetingNo         string   `json:"meetingNo"`
+	MeetingNo         string   `json:"meetingNo,optional"`
+	MeetingCode       string   `json:"meetingCode,optional"`
 	Identity          string   `json:"identity"`
 	Name              string   `json:"name,optional"`
 	ExpireSeconds     int32    `json:"expireSeconds,optional"`
@@ -33,6 +35,7 @@ type GenerateMeetingTicketRequest struct {
 	CanSubscribe      bool     `json:"canSubscribe,optional"`
 	CanPublishData    bool     `json:"canPublishData,optional"`
 	CanPublishSources []string `json:"canPublishSources,optional"`
+	TicketType        int32    `json:"ticketType,optional"`
 }
 
 type GetCurrentUserReply struct {
@@ -77,7 +80,8 @@ type JoinMeetingReply struct {
 }
 
 type JoinMeetingRequest struct {
-	MeetingNo         string   `json:"meetingNo"`
+	MeetingNo         string   `json:"meetingNo,optional"`
+	MeetingCode       string   `json:"meetingCode,optional"`
 	CanPublish        bool     `json:"canPublish"`
 	CanSubscribe      bool     `json:"canSubscribe"`
 	CanPublishData    bool     `json:"canPublishData"`
@@ -132,15 +136,20 @@ type ListParticipantsRequest struct {
 }
 
 type MeetingInfo struct {
-	MeetingNo  string `json:"meetingNo"`
-	Title      string `json:"title"`
-	Status     int32  `json:"status"`
-	CreateUser string `json:"createUser"`
-	UpdateUser string `json:"updateUser"`
-	DeptCode   string `json:"deptCode"`
-	StartTime  string `json:"startTime"`
-	EndTime    string `json:"endTime"`
-	CreateTime string `json:"createTime"`
+	MeetingNo        string `json:"meetingNo"`
+	MeetingCode      string `json:"meetingCode"`
+	Title            string `json:"title"`
+	Status           int32  `json:"status"`
+	CreateUser       string `json:"createUser"`
+	UpdateUser       string `json:"updateUser"`
+	DeptCode         string `json:"deptCode"`
+	StartTime        string `json:"startTime"`
+	EndTime          string `json:"endTime"`
+	CreateTime       string `json:"createTime"`
+	EmptyTimeout     uint32 `json:"emptyTimeout"`
+	DepartureTimeout uint32 `json:"departureTimeout"`
+	MaxParticipants  uint32 `json:"maxParticipants"`
+	RoomSid          string `json:"roomSid"`
 }
 
 type MeetingMessageInfo struct {
@@ -179,9 +188,12 @@ type PerformMeetingRpcRequest struct {
 	ResponseTimeoutMs uint32 `json:"responseTimeoutMs"`
 }
 
+type ReportMeetingMessageReply struct {
+	MessageId string `json:"messageId"`
+}
+
 type ReportMeetingMessageRequest struct {
 	MeetingNo   string `json:"meetingNo"`
-	MessageId   string `json:"messageId"`
 	Content     string `json:"content"`
 	MessageType string `json:"messageType,optional"`
 }

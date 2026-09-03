@@ -2,12 +2,12 @@ package logic
 
 import (
 	"context"
-	"time"
 
 	"zero-service/app/live/internal/svc"
 	"zero-service/app/live/live"
 	"zero-service/app/live/model/gormmodel"
 	"zero-service/common/authctx"
+	"zero-service/common/carbonx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -71,7 +71,7 @@ func (l *EndMeetingLogic) EndMeeting(in *live.EndMeetingReq) (*live.EndMeetingRe
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "删除房间失败")
 	}
 
-	now := time.Now()
+	now := carbonx.NowStartOfSecond().StdTime()
 	// 结束操作人/机构取自 gRPC metadata（webhook room_finished 场景不传）
 	operator := authctx.GetUserId(l.ctx)
 	deptCode := authctx.GetDeptCode(l.ctx)

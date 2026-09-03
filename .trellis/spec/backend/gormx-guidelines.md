@@ -58,6 +58,8 @@
 
 依据：`common/gormx/pagination.go`、`common/gormx/upsert.go`
 
+- Logic 层不手写 page/pageSize 钳制：page 归一化（page≤0→1）、pageSize 默认/上限（MaxPageSize=500）由 `gormx.QueryPage`/`NewPageParams` 负责，Logic 只保留业务默认 pageSize（如 20/50）；Repo 分页参数签名用 `int64`（对齐 proto 分页字段）。
+
 ## 租户与并发所有权
 
 | 概念 | 说明 |
@@ -84,6 +86,7 @@
 | 普通查询重复手写 `is_deleted = 0` | 依赖 mixin scope | scope 所有权不清 |
 | 字符串拼接动态列名/排序 | 用白名单或 identifier 校验 | SQL 注入风险 |
 | 绕过 `gormx.Upsert` 封装 | 使用统一封装 | 方言 SQL 不一致 |
+| Store/Logic 手写 `Count` + `Offset`/`Limit` 分页 | 用 `gormx.QueryPage` | 重复实现且缺页码越界与上限归一化 |
 
 ## 验证
 

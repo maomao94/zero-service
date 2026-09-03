@@ -32,18 +32,8 @@ func (l *ListMeetingMessagesLogic) ListMeetingMessages(in *live.ListMeetingMessa
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "会议号不能为空")
 	}
 
-	// 分页参数
-	page := in.Page
-	if page <= 0 {
-		page = 1
-	}
-	pageSize := in.PageSize
-	if pageSize <= 0 {
-		pageSize = 50
-	}
-
 	// 查询消息
-	messages, total, err := l.svcCtx.MeetingRepo.ListMessages(l.ctx, in.MeetingNo, int(page), int(pageSize))
+	messages, total, err := l.svcCtx.MeetingRepo.ListMessages(l.ctx, in.MeetingNo, in.Page, in.PageSize)
 	if err != nil {
 		l.Logger.Errorf("list messages failed: %v", err)
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询消息失败")

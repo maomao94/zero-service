@@ -11,6 +11,8 @@ info (
 type MeetingInfo {
 	// 业务会议号（= LiveKit 房间名）
 	MeetingNo string `json:"meetingNo"`
+	// 用户会议号（9位数字）
+	MeetingCode string `json:"meetingCode"`
 	// 会议标题
 	Title string `json:"title"`
 	// 会议状态：1-已创建，2-进行中，3-已结束
@@ -27,6 +29,14 @@ type MeetingInfo {
 	EndTime string `json:"endTime"`
 	// 创建时间，格式：yyyy-MM-dd HH:mm:ss
 	CreateTime string `json:"createTime"`
+	// 无人时房间保留秒数（默认 600）
+	EmptyTimeout uint32 `json:"emptyTimeout"`
+	// 所有人离开后保留秒数（默认 120）
+	DepartureTimeout uint32 `json:"departureTimeout"`
+	// 最大参会人数（默认 50）
+	MaxParticipants uint32 `json:"maxParticipants"`
+	// LiveKit 房间 Sid（用于 Egress/Webhook 等场景）
+	RoomSid string `json:"roomSid"`
 }
 
 type ParticipantInfo {
@@ -52,8 +62,10 @@ type CreateMeetingReply {
 }
 
 type JoinMeetingRequest {
-	// 会议号
-	MeetingNo string `json:"meetingNo"`
+	// 会议号（与 meetingCode 二选一）
+	MeetingNo string `json:"meetingNo,optional"`
+	// 用户会议号（9位数字，与 meetingNo 二选一）
+	MeetingCode string `json:"meetingCode,optional"`
 	// 是否可以发布音视频
 	CanPublish bool `json:"canPublish"`
 	// 是否可以订阅音视频
@@ -189,13 +201,15 @@ type PerformMeetingRpcReply {
 
 // ===== 票据相关类型 =====
 type GenerateMeetingTicketRequest {
-	// 会议号
-	MeetingNo string `json:"meetingNo"`
+	// 会议号（与 meetingCode 二选一）
+	MeetingNo string `json:"meetingNo,optional"`
+	// 用户会议号（9位数字，与 meetingNo 二选一）
+	MeetingCode string `json:"meetingCode,optional"`
 	// 绑定的参会人身份
 	Identity string `json:"identity"`
 	// 绑定的参会人名称
 	Name string `json:"name,optional"`
-	// 票据有效期秒数（默认 3600）
+	// 票据有效期（默认 1）
 	ExpireSeconds int32 `json:"expireSeconds,optional"`
 	// 是否可以发布音视频（默认 true，总开关）
 	CanPublish bool `json:"canPublish,optional"`
@@ -210,6 +224,8 @@ type GenerateMeetingTicketRequest {
 	// - screen_share: 屏幕共享（视频）
 	// - screen_share_audio: 屏幕共享音频
 	CanPublishSources []string `json:"canPublishSources,optional"`
+	// 票据类型：1-一次性（默认，消费后删除），2-有效期（消费后保留至过期，可多次使用）
+	TicketType int32 `json:"ticketType,optional"`
 }
 
 type GenerateMeetingTicketReply {
@@ -230,6 +246,8 @@ type GenerateMeetingTicketReply {
 	// - screen_share: 屏幕共享（视频）
 	// - screen_share_audio: 屏幕共享音频
 	CanPublishSources []string `json:"canPublishSources"`
+	// 票据类型：1-一次性（默认），2-有效期
+	TicketType int32 `json:"ticketType"`
 }
 
 type JoinMeetingByTicketRequest {
@@ -269,12 +287,15 @@ type GetCurrentUserReply {
 type ReportMeetingMessageRequest {
 	// 会议号
 	MeetingNo string `json:"meetingNo"`
-	// 消息 ID（客户端生成）
-	MessageId string `json:"messageId"`
 	// 消息内容
 	Content string `json:"content"`
 	// 消息类型（text, image, file）
 	MessageType string `json:"messageType,optional"`
+}
+
+type ReportMeetingMessageReply {
+	// 消息 ID（后台生成，用于后续 SDK 推送）
+	MessageId string `json:"messageId"`
 }
 
 type MeetingMessageInfo {
@@ -381,7 +402,7 @@ service livegtw {
 
 	@doc "上报聊天消息"
 	@handler reportMeetingMessage
-	post /reportMeetingMessage (ReportMeetingMessageRequest)
+	post /reportMeetingMessage (ReportMeetingMessageRequest) returns (ReportMeetingMessageReply)
 
 	@doc "查询聊天记录"
 	@handler listMeetingMessages

@@ -23,11 +23,11 @@ func ReportMeetingMessageHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		}
 
 		l := live.NewReportMeetingMessageLogic(r.Context(), svcCtx)
-		err := l.ReportMeetingMessage(&req)
+		resp, err := l.ReportMeetingMessage(&req)
 		if err != nil {
 			xhttp.JsonBaseResponseCtx(r.Context(), w, err)
 		} else {
-			xhttp.JsonBaseResponseCtx(r.Context(), w, nil)
+			xhttp.JsonBaseResponseCtx(r.Context(), w, resp)
 		}
 	}
 }

@@ -2,6 +2,7 @@ export type MeetingStatus = 1 | 2 | 3
 
 export interface MeetingInfo {
   meetingNo: string
+  meetingCode: string
   title: string
   status: MeetingStatus
   createUser: string
@@ -10,6 +11,10 @@ export interface MeetingInfo {
   startTime: string
   endTime: string
   createTime: string
+  emptyTimeout: number
+  departureTimeout: number
+  maxParticipants: number
+  roomSid: string
 }
 
 export interface ParticipantInfo {
@@ -46,6 +51,7 @@ export interface TicketReply {
   canSubscribe: boolean
   canPublishData: boolean
   canPublishSources: string[]
+  ticketType: number
 }
 
 export interface ApiPage<T> {

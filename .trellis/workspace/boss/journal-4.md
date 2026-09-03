@@ -599,3 +599,67 @@ Proto: JoinMeetingReq 增加 canPublish/canSubscribe/canPublishData/canPublishSo
 ### Status
 
 [OK] **Completed**
+
+
+## Session 204: 视频会议 meeting_code + RoomSid + 规范更新
+
+**Date**: 2026-09-03
+**Task**: 视频会议 meeting_code + RoomSid + 规范更新
+**Branch**: `master`
+
+### Summary
+
+1) meeting_code 生成：9位随机数字，分布式锁+重试保证唯一性；2) RoomSid 保存：CreateRoom 返回的 Sid 存入 DB；3) GenerateMeetingTicket 支持 meeting_code/meeting_no 二选一；4) 更新 livekit-guidelines.md 规范：meeting_code 生成、会议号二选一模式、RoomSid 保存、MeetingInfo proto 字段编号
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a432f2d7` | (see git log) |
+| `87b5e771` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 205: 优化视频会议 Demo 大厅与会议工作区
+
+**Date**: 2026-09-03
+**Task**: 优化视频会议 Demo 大厅与会议工作区
+**Branch**: `master`
+
+### Summary
+
+完成会议大厅和会议工作区 UI 优化：会议列表固定高度并支持滚动，增加列表数量层级与筛选区域视觉整理；保留参会人和右侧功能区的可恢复折叠交互。npm run build 通过，git diff --check 通过。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `52793e1a` | (see git log) |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 206: 优化项目文档：新增 LiveKit 会议服务、Oryx 流媒体、规整端口表
+
+**Date**: 2026-09-03
+**Task**: 优化项目文档：新增 LiveKit 会议服务、Oryx 流媒体、规整端口表
+**Branch**: `master`
+
+### Summary
+
+1. README.md 新增视频会议核心能力、live/livegtw/lalproxy 服务条目、LiveKit/Oryx GitHub 链接、技术栈更新\n2. docs/README.md 核心服务表新增 live 会议文档链接\n3. docs/architecture.md 新增 HTTP 网关层、LiveKit/Oryx 数据流章节、技术选型\n4. docs/service-ports.md 完全重写，按功能分组，新增 live.rpc/livegtw，标记 LAL 不推荐\n5. 创建 docs/live/README.md 会议服务文档（含截图、livekitx 封装层、HTTP/gRPC 接口一览）\n6. 迁移 livekit-integration-guide.md 和 livekit-callbacks-guide.md 到 docs/live/\n7. 更新所有活跃引用链接（docs/README.md, common/livekitx/README.md, spec 等）\n8. 复制会议截图到 docs/images/live/ 并重命名为英文
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a4a9c68e` | (see git log) |
+
+### Status
+
+[OK] **Completed**

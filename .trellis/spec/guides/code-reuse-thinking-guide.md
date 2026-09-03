@@ -13,7 +13,7 @@
 
 复用第三方转换工具时，不能只比较函数签名或是否返回 error。对动态 `map[string]any` 至少验证字段缺失、`nil`、空字符串、小数、布尔值和溢出行为，并区分两件事：map lookup 判断字段是否存在，转换函数只负责解释已经存在的值。`To*E` 等带 error 的 API 不天然表示严格转换；是否允许截断、零值或跨类型转换由具体领域契约决定。
 
-仓库中的正例包括：HTTP 使用 `common/netx`，MQTT 关联响应使用 `common/mqttx`/`common/antsx`，数据库共性使用 `common/gormx`，空间计算机制在 `common/gisx`，具体围栏存储留在 `app/gis`。
+仓库中的正例包括：HTTP 使用 `common/netx`，MQTT 关联响应使用 `common/mqttx`/`common/antsx`，数据库共性使用 `common/gormx`，空间计算机制在 `common/gisx`，具体围栏存储留在 `app/gis`，**ID 生成使用 `common/tool.IdUtil`**（`SimpleUUID()` 生成无杠 UUID v7，`NextId()` 生成业务编号）。
 
 依据：上述公共包、`app/gis/model/fencestore.go` 及其直接调用点。
 

@@ -134,7 +134,7 @@ func join(ctx context.Context, client *livekitx.Client, room, identity string) (
 }
 ```
 
-**每个回调场景的签名、字段含义、触发来源与代码示例见 [docs/livekit-callbacks-guide.md](../docs/livekit-callbacks-guide.md)**。
+**每个回调场景的签名、字段含义、触发来源与代码示例见 [docs/live/callbacks-guide.md](../docs/live/callbacks-guide.md)**。
 
 ## Webhook
 
@@ -162,7 +162,7 @@ if err != nil {
 - 发送聊天：`LocalParticipant.PublishDataPacket(lksdk.ChatMessage(time.Now(), text))`；接收方在 `OnDataPacket` 回调中识别 `*livekit.ChatMessage` 数据包。
 - 发送富媒体（语音/图片等）：`ChatMessage` 只支持文本，二进制内容用服务端管理 API `client.SendData(ctx, room, topic, payload, destinations...)` 广播/定向投递，接收方在 `OnDataPacket` 识别 `UserDataPacket`（topic 由业务约定）；也可用 SDK 原生 `PublishData`/`PublishDataPacket` 从参与者侧发送。
 - RPC：`room.RegisterRpcCtxMethod(method, handler)` 注册、`room.UnregisterRpcMethod(method)` 注销、`room.LocalParticipant.PerformRpc(params)` 调用。SDK v2.18.1 的 `PerformRpc` 不接收 context，通过 `params.ResponseTimeout` 控制时限（<8000ms 会被钳制到 8000ms，默认 15000ms）；未注册方法由 SDK 自动返回 UnsupportedMethod。
-- 聊天接收双路径：SDK 原生 `*livekit.ChatMessage`，或 topic 为业务自定义约定的 `UserDataPacket`；业务在 `OnDataPacket` 内自行识别（字段差异见 [docs/livekit-callbacks-guide.md](../docs/livekit-callbacks-guide.md) 的"聊天消息识别"一节）。
+- 聊天接收双路径：SDK 原生 `*livekit.ChatMessage`，或 topic 为业务自定义约定的 `UserDataPacket`；业务在 `OnDataPacket` 内自行识别（字段差异见 [docs/live/callbacks-guide.md](../docs/live/callbacks-guide.md) 的"聊天消息识别"一节）。
 
 发送聊天需要 Token 带 `CanPublishData: true`。可靠消息由 SDK/底层 DataChannel 提供传输语义，不等于业务持久化或业务确认。RPC response 是请求级回执，不代表业务落库成功。
 

@@ -10,15 +10,20 @@ func toMeetingInfo(m *live.MeetingInfo) types.MeetingInfo {
 		return types.MeetingInfo{}
 	}
 	return types.MeetingInfo{
-		MeetingNo:  m.GetMeetingNo(),
-		Title:      m.GetTitle(),
-		Status:     m.GetStatus(),
-		CreateUser: m.GetCreateUser(),
-		UpdateUser: m.GetUpdateUser(),
-		DeptCode:   m.GetDeptCode(),
-		StartTime:  m.GetStartTime(),
-		EndTime:    m.GetEndTime(),
-		CreateTime: m.GetCreateTime(),
+		MeetingNo:        m.GetMeetingNo(),
+		MeetingCode:      m.GetMeetingCode(),
+		Title:            m.GetTitle(),
+		Status:           m.GetStatus(),
+		CreateUser:       m.GetCreateUser(),
+		UpdateUser:       m.GetUpdateUser(),
+		DeptCode:         m.GetDeptCode(),
+		StartTime:        m.GetStartTime(),
+		EndTime:          m.GetEndTime(),
+		CreateTime:       m.GetCreateTime(),
+		EmptyTimeout:     m.GetEmptyTimeout(),
+		DepartureTimeout: m.GetDepartureTimeout(),
+		MaxParticipants:  m.GetMaxParticipants(),
+		RoomSid:          m.GetRoomSid(),
 	}
 }
 

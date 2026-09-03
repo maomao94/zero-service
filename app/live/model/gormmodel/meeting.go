@@ -31,6 +31,8 @@ type LiveMeeting struct {
 	DeptCode   sql.NullString `gorm:"column:dept_code;size:64;comment:机构code"`
 	// 业务会议号（= LiveKit 房间名，全局唯一）
 	MeetingNo string `gorm:"column:meeting_no;size:32;comment:业务会议号;uniqueIndex:uq_live_meetings_meeting_no"`
+	// 用户会议号（9位数字）
+	MeetingCode string `gorm:"column:meeting_code;size:16;comment:用户会议号（9位数字）;index:idx_live_meetings_meeting_code"`
 	// 会议标题
 	Title string `gorm:"column:title;size:128;comment:会议标题"`
 	// 状态：1-已创建，2-进行中，3-已结束
@@ -39,6 +41,16 @@ type LiveMeeting struct {
 	StartTime time.Time `gorm:"column:start_time;comment:开始时间"`
 	// 结束时间
 	EndTime sql.NullTime `gorm:"column:end_time;comment:结束时间;index:idx_live_meetings_end_time"`
+	// 无人时房间保留秒数
+	EmptyTimeout int `gorm:"column:empty_timeout;comment:无人房间保留秒数;default:600"`
+	// 所有人离开后保留秒数
+	DepartureTimeout int `gorm:"column:departure_timeout;comment:所有人离开后保留秒数;default:120"`
+	// 最大参会人数
+	MaxParticipants int `gorm:"column:max_participants;comment:最大参会人数;default:50"`
+	// LiveKit 房间 Sid
+	RoomSid string `gorm:"column:room_sid;size:64;comment:LiveKit房间Sid;index:idx_live_meetings_room_sid"`
+	// 会议元数据 JSON
+	Metadata string `gorm:"column:metadata;type:text;comment:会议元数据"`
 }
 
 func (LiveMeeting) TableName() string {

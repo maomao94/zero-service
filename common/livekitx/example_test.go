@@ -1,6 +1,6 @@
 package livekitx_test
 
-// 本文件编译验证 README 与 docs/livekit-callbacks-guide.md 中的使用方式；
+// 本文件编译验证 README 与 docs/live/callbacks-guide.md 中的使用方式；
 // Example 函数没有 Output 注释，只参与编译不执行，避免示例代码在测试中
 // 产生真实网络请求。
 

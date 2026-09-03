@@ -296,6 +296,60 @@ return &types.XxxReply{Items: items, Total: r.GetTotal()}, nil
 4. 注意类型转换（uint32/int32, []byte/string）
 5. 构建验证：`go build ./app/<service>/...`
 
+### 网关增加字段标准流程
+
+当需要给网关接口增加新字段时，必须遵循以下顺序：
+
+```
+1. 修改 .proto（gRPC 定义）
+2. 执行服务自己的 gen.sh 重新生成 gRPC 代码
+3. 检查生成的导入路径是否正确（goctl 可能生成错误路径）
+4. 修改 .api（网关 API 定义）
+5. 执行服务自己的 gen.sh 重新生成网关代码
+6. 修改 logic 文件，补充字段映射
+7. 编译验证 go build ./app/<service>/...
+```
+
+**禁止顺序**：
+- ❌ 先写 logic 再改 api（会导致编译失败，types 包缺少字段）
+- ❌ 只改 proto 不改 api（网关 types 与 gRPC 不一致）
+- ❌ 只改 api 不改 proto（gRPC 层不识别新字段）
+- ❌ 手动修改 pb.go 文件（应通过 gen.sh 重新生成）
+
+**字段映射示例**：
+
+```go
+// .api 类型定义
+type GenerateMeetingTicketRequest {
+    MeetingNo         string   `json:"meetingNo"`
+    CanPublishSources []string `json:"canPublishSources,optional"`
+}
+
+// logic 中映射到 gRPC
+r, err := l.svcCtx.LiveRpcCli.GenerateMeetingTicket(l.ctx, &live.GenerateMeetingTicketReq{
+    MeetingNo:         req.MeetingNo,
+    CanPublishSources: req.CanPublishSources,
+})
+```
+
+#### goctl 代码生成导入路径问题
+
+**问题**：goctl 生成的代码可能包含错误的导入路径（如 `zero-service/app/live/app/live`），而正确路径应为 `zero-service/app/live/live`。
+
+**原因**：goctl 的路径解析逻辑与项目的目录结构不匹配。
+
+**解决方案**：在 gen.sh 运行后，检查并修复生成的导入路径：
+
+```bash
+# 检查是否有错误的导入路径
+grep -rn "zero-service/app/<service>/app/<service>" app/<service>/
+
+# 修复错误的导入路径
+sed -i '' 's|zero-service/app/<service>/app/<service>|zero-service/app/<service>/<service>|g' app/<service>/<service>rpc/<service>rpc.go
+```
+
+**预防**：在 gen.sh 中添加后处理步骤，或使用 goctl 的 `--module` 参数。
+
 ## 验证
 
 ```bash

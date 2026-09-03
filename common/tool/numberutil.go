@@ -1,6 +1,21 @@
 package tool
 
-import "strings"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/duke-git/lancet/v2/random"
+)
+
+// RandomDigits 生成指定位数的随机数字字符串（首位不为0）。
+// n 必须在 1-9 之间（int 最大 10 位，9 位安全）。
+func RandomDigits(n int) (string, error) {
+	if n <= 0 || n > 9 {
+		return "", fmt.Errorf("位数必须在1-9之间")
+	}
+	return strconv.Itoa(random.RandNumberOfLength(n)), nil
+}
 
 // CountSignificantDigits 统计数值字符串的有效数字位数。
 // 规则：去掉符号、前导零、小数点后统计剩余数字个数。

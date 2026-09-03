@@ -26,22 +26,34 @@ type MeetingInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 业务会议号（= LiveKit 房间名）
 	MeetingNo string `protobuf:"bytes,1,opt,name=meeting_no,json=meetingNo,proto3" json:"meeting_no,omitempty"`
+	// 用户会议号（9位数字）
+	MeetingCode string `protobuf:"bytes,2,opt,name=meeting_code,json=meetingCode,proto3" json:"meeting_code,omitempty"`
 	// 会议标题
-	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Title string `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
 	// 会议状态：1-已创建，2-进行中，3-已结束
-	Status int32 `protobuf:"varint,3,opt,name=status,proto3" json:"status,omitempty"`
+	Status int32 `protobuf:"varint,4,opt,name=status,proto3" json:"status,omitempty"`
 	// 创建人（gRPC metadata user-id）
-	CreateUser string `protobuf:"bytes,4,opt,name=create_user,json=createUser,proto3" json:"create_user,omitempty"`
+	CreateUser string `protobuf:"bytes,5,opt,name=create_user,json=createUser,proto3" json:"create_user,omitempty"`
 	// 更新人（gRPC metadata user-id）
-	UpdateUser string `protobuf:"bytes,5,opt,name=update_user,json=updateUser,proto3" json:"update_user,omitempty"`
+	UpdateUser string `protobuf:"bytes,6,opt,name=update_user,json=updateUser,proto3" json:"update_user,omitempty"`
 	// 机构 code
-	DeptCode string `protobuf:"bytes,6,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
+	DeptCode string `protobuf:"bytes,7,opt,name=dept_code,json=deptCode,proto3" json:"dept_code,omitempty"`
 	// 开始时间，格式：yyyy-MM-dd HH:mm:ss
-	StartTime string `protobuf:"bytes,7,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	StartTime string `protobuf:"bytes,8,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// 结束时间，格式：yyyy-MM-dd HH:mm:ss（未结束为空字符串）
-	EndTime string `protobuf:"bytes,8,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
+	EndTime string `protobuf:"bytes,9,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	// 创建时间，格式：yyyy-MM-dd HH:mm:ss
-	CreateTime    string `protobuf:"bytes,9,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	CreateTime string `protobuf:"bytes,10,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	// 无人时房间保留秒数（默认 600）
+	EmptyTimeout uint32 `protobuf:"varint,11,opt,name=empty_timeout,json=emptyTimeout,proto3" json:"empty_timeout,omitempty"`
+	// 所有人离开后保留秒数（默认 120）
+	DepartureTimeout uint32 `protobuf:"varint,12,opt,name=departure_timeout,json=departureTimeout,proto3" json:"departure_timeout,omitempty"`
+	// 最大参会人数（默认 50）
+	MaxParticipants uint32 `protobuf:"varint,13,opt,name=max_participants,json=maxParticipants,proto3" json:"max_participants,omitempty"`
+	// LiveKit 房间 Sid（用于 Egress/Webhook 等场景）
+	RoomSid string `protobuf:"bytes,14,opt,name=room_sid,json=roomSid,proto3" json:"room_sid,omitempty"`
+	// 会议元数据 JSON
+	Metadata      string `protobuf:"bytes,15,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -79,6 +91,13 @@ func (*MeetingInfo) Descriptor() ([]byte, []int) {
 func (x *MeetingInfo) GetMeetingNo() string {
 	if x != nil {
 		return x.MeetingNo
+	}
+	return ""
+}
+
+func (x *MeetingInfo) GetMeetingCode() string {
+	if x != nil {
+		return x.MeetingCode
 	}
 	return ""
 }
@@ -135,6 +154,41 @@ func (x *MeetingInfo) GetEndTime() string {
 func (x *MeetingInfo) GetCreateTime() string {
 	if x != nil {
 		return x.CreateTime
+	}
+	return ""
+}
+
+func (x *MeetingInfo) GetEmptyTimeout() uint32 {
+	if x != nil {
+		return x.EmptyTimeout
+	}
+	return 0
+}
+
+func (x *MeetingInfo) GetDepartureTimeout() uint32 {
+	if x != nil {
+		return x.DepartureTimeout
+	}
+	return 0
+}
+
+func (x *MeetingInfo) GetMaxParticipants() uint32 {
+	if x != nil {
+		return x.MaxParticipants
+	}
+	return 0
+}
+
+func (x *MeetingInfo) GetRoomSid() string {
+	if x != nil {
+		return x.RoomSid
+	}
+	return ""
+}
+
+func (x *MeetingInfo) GetMetadata() string {
+	if x != nil {
+		return x.Metadata
 	}
 	return ""
 }
@@ -267,20 +321,22 @@ func (x *CreateMeetingRes) GetMeeting() *MeetingInfo {
 
 type JoinMeetingReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 会议号
+	// 会议号（与 meeting_code 二选一）
 	MeetingNo string `protobuf:"bytes,1,opt,name=meeting_no,json=meetingNo,proto3" json:"meeting_no,omitempty"`
+	// 用户会议号（9位数字，与 meeting_no 二选一）
+	MeetingCode string `protobuf:"bytes,2,opt,name=meeting_code,json=meetingCode,proto3" json:"meeting_code,omitempty"`
 	// 参会人身份（房间内唯一）
-	Identity string `protobuf:"bytes,2,opt,name=identity,proto3" json:"identity,omitempty"`
+	Identity string `protobuf:"bytes,3,opt,name=identity,proto3" json:"identity,omitempty"`
 	// 展示名（可空）
-	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
 	// 是否可以发布音视频（默认 true，总开关）
-	CanPublish bool `protobuf:"varint,4,opt,name=can_publish,json=canPublish,proto3" json:"can_publish,omitempty"`
+	CanPublish bool `protobuf:"varint,5,opt,name=can_publish,json=canPublish,proto3" json:"can_publish,omitempty"`
 	// 是否可以订阅音视频（默认 true）
-	CanSubscribe bool `protobuf:"varint,5,opt,name=can_subscribe,json=canSubscribe,proto3" json:"can_subscribe,omitempty"`
+	CanSubscribe bool `protobuf:"varint,6,opt,name=can_subscribe,json=canSubscribe,proto3" json:"can_subscribe,omitempty"`
 	// 是否可以发布数据（默认 true）
-	CanPublishData bool `protobuf:"varint,6,opt,name=can_publish_data,json=canPublishData,proto3" json:"can_publish_data,omitempty"`
+	CanPublishData bool `protobuf:"varint,7,opt,name=can_publish_data,json=canPublishData,proto3" json:"can_publish_data,omitempty"`
 	// 可以发布的轨道源类型（默认为空，表示允许所有）
-	CanPublishSources []string `protobuf:"bytes,7,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
+	CanPublishSources []string `protobuf:"bytes,8,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -318,6 +374,13 @@ func (*JoinMeetingReq) Descriptor() ([]byte, []int) {
 func (x *JoinMeetingReq) GetMeetingNo() string {
 	if x != nil {
 		return x.MeetingNo
+	}
+	return ""
+}
+
+func (x *JoinMeetingReq) GetMeetingCode() string {
+	if x != nil {
+		return x.MeetingCode
 	}
 	return ""
 }
@@ -1498,29 +1561,33 @@ func (*WebhookNotifyRes) Descriptor() ([]byte, []int) {
 // 业务侧也可以不使用网关，直接调用此接口组合生成票据，实现自定义的访客加入流程。
 type GenerateMeetingTicketReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 会议号（必填，指定要加入的会议）
+	// 会议号（与 meeting_code 二选一）
 	MeetingNo string `protobuf:"bytes,1,opt,name=meeting_no,json=meetingNo,proto3" json:"meeting_no,omitempty"`
+	// 用户会议号（9位数字，与 meeting_no 二选一）
+	MeetingCode string `protobuf:"bytes,2,opt,name=meeting_code,json=meetingCode,proto3" json:"meeting_code,omitempty"`
 	// 绑定的参会人身份（必填，用于标识访客身份，同一会议内唯一）
-	Identity string `protobuf:"bytes,2,opt,name=identity,proto3" json:"identity,omitempty"`
+	Identity string `protobuf:"bytes,3,opt,name=identity,proto3" json:"identity,omitempty"`
 	// 绑定的参会人名称（可选，用于显示在会议中）
-	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
 	// 票据有效期秒数（默认 3600，即 1小时）
-	ExpireSeconds uint32 `protobuf:"varint,4,opt,name=expire_seconds,json=expireSeconds,proto3" json:"expire_seconds,omitempty"`
+	ExpireSeconds uint32 `protobuf:"varint,5,opt,name=expire_seconds,json=expireSeconds,proto3" json:"expire_seconds,omitempty"`
 	// 是否可以发布音视频（默认 true，总开关）
-	CanPublish bool `protobuf:"varint,5,opt,name=can_publish,json=canPublish,proto3" json:"can_publish,omitempty"`
+	CanPublish bool `protobuf:"varint,6,opt,name=can_publish,json=canPublish,proto3" json:"can_publish,omitempty"`
 	// 是否可以订阅音视频（默认 true，控制访客是否能观看/收听其他人的音视频）
-	CanSubscribe bool `protobuf:"varint,6,opt,name=can_subscribe,json=canSubscribe,proto3" json:"can_subscribe,omitempty"`
+	CanSubscribe bool `protobuf:"varint,7,opt,name=can_subscribe,json=canSubscribe,proto3" json:"can_subscribe,omitempty"`
 	// 是否可以发布数据（默认 true，控制访客是否能发送聊天消息/数据）
-	CanPublishData bool `protobuf:"varint,7,opt,name=can_publish_data,json=canPublishData,proto3" json:"can_publish_data,omitempty"`
+	CanPublishData bool `protobuf:"varint,8,opt,name=can_publish_data,json=canPublishData,proto3" json:"can_publish_data,omitempty"`
 	// 可以发布的轨道源类型（默认为空，表示允许所有）
 	// 枚举值说明：
 	// - camera: 摄像头
 	// - microphone: 麦克风
 	// - screen_share: 屏幕共享（视频）
 	// - screen_share_audio: 屏幕共享音频
-	CanPublishSources []string `protobuf:"bytes,8,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	CanPublishSources []string `protobuf:"bytes,9,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
+	// 票据类型：1-一次性（默认，消费后删除），2-有效期（消费后保留至过期，可多次使用）
+	TicketType    int32 `protobuf:"varint,10,opt,name=ticket_type,json=ticketType,proto3" json:"ticket_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GenerateMeetingTicketReq) Reset() {
@@ -1556,6 +1623,13 @@ func (*GenerateMeetingTicketReq) Descriptor() ([]byte, []int) {
 func (x *GenerateMeetingTicketReq) GetMeetingNo() string {
 	if x != nil {
 		return x.MeetingNo
+	}
+	return ""
+}
+
+func (x *GenerateMeetingTicketReq) GetMeetingCode() string {
+	if x != nil {
+		return x.MeetingCode
 	}
 	return ""
 }
@@ -1609,6 +1683,13 @@ func (x *GenerateMeetingTicketReq) GetCanPublishSources() []string {
 	return nil
 }
 
+func (x *GenerateMeetingTicketReq) GetTicketType() int32 {
+	if x != nil {
+		return x.TicketType
+	}
+	return 0
+}
+
 // GenerateMeetingTicketRes 生成会议邀请票据响应。
 type GenerateMeetingTicketRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1629,8 +1710,10 @@ type GenerateMeetingTicketRes struct {
 	// - screen_share: 屏幕共享（视频）
 	// - screen_share_audio: 屏幕共享音频
 	CanPublishSources []string `protobuf:"bytes,6,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// 票据类型：1-一次性（默认），2-有效期
+	TicketType    int32 `protobuf:"varint,7,opt,name=ticket_type,json=ticketType,proto3" json:"ticket_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GenerateMeetingTicketRes) Reset() {
@@ -1703,6 +1786,13 @@ func (x *GenerateMeetingTicketRes) GetCanPublishSources() []string {
 		return x.CanPublishSources
 	}
 	return nil
+}
+
+func (x *GenerateMeetingTicketRes) GetTicketType() int32 {
+	if x != nil {
+		return x.TicketType
+	}
+	return 0
 }
 
 type JoinMeetingByTicketReq struct {
@@ -1853,12 +1943,10 @@ type ReportMeetingMessageReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 会议号
 	MeetingNo string `protobuf:"bytes,1,opt,name=meeting_no,json=meetingNo,proto3" json:"meeting_no,omitempty"`
-	// 消息 ID（客户端生成）
-	MessageId string `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
 	// 消息内容
-	Content string `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	Content string `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
 	// 消息类型（text, image, file）
-	MessageType   string `protobuf:"bytes,4,opt,name=message_type,json=messageType,proto3" json:"message_type,omitempty"`
+	MessageType   string `protobuf:"bytes,3,opt,name=message_type,json=messageType,proto3" json:"message_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1900,13 +1988,6 @@ func (x *ReportMeetingMessageReq) GetMeetingNo() string {
 	return ""
 }
 
-func (x *ReportMeetingMessageReq) GetMessageId() string {
-	if x != nil {
-		return x.MessageId
-	}
-	return ""
-}
-
 func (x *ReportMeetingMessageReq) GetContent() string {
 	if x != nil {
 		return x.Content
@@ -1922,7 +2003,9 @@ func (x *ReportMeetingMessageReq) GetMessageType() string {
 }
 
 type ReportMeetingMessageRes struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 消息 ID（后台生成，用于后续 SDK 推送）
+	MessageId     string `protobuf:"bytes,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1955,6 +2038,13 @@ func (x *ReportMeetingMessageRes) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ReportMeetingMessageRes.ProtoReflect.Descriptor instead.
 func (*ReportMeetingMessageRes) Descriptor() ([]byte, []int) {
 	return file_live_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *ReportMeetingMessageRes) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
 }
 
 type ListMeetingMessagesReq struct {
@@ -2169,22 +2259,29 @@ var File_live_proto protoreflect.FileDescriptor
 const file_live_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"live.proto\x12\x04live\"\x94\x02\n" +
+	"live.proto\x12\x04live\"\xeb\x03\n" +
 	"\vMeetingInfo\x12\x1d\n" +
 	"\n" +
-	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12\x16\n" +
-	"\x06status\x18\x03 \x01(\x05R\x06status\x12\x1f\n" +
-	"\vcreate_user\x18\x04 \x01(\tR\n" +
+	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12!\n" +
+	"\fmeeting_code\x18\x02 \x01(\tR\vmeetingCode\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x16\n" +
+	"\x06status\x18\x04 \x01(\x05R\x06status\x12\x1f\n" +
+	"\vcreate_user\x18\x05 \x01(\tR\n" +
 	"createUser\x12\x1f\n" +
-	"\vupdate_user\x18\x05 \x01(\tR\n" +
+	"\vupdate_user\x18\x06 \x01(\tR\n" +
 	"updateUser\x12\x1b\n" +
-	"\tdept_code\x18\x06 \x01(\tR\bdeptCode\x12\x1d\n" +
+	"\tdept_code\x18\a \x01(\tR\bdeptCode\x12\x1d\n" +
 	"\n" +
-	"start_time\x18\a \x01(\tR\tstartTime\x12\x19\n" +
-	"\bend_time\x18\b \x01(\tR\aendTime\x12\x1f\n" +
-	"\vcreate_time\x18\t \x01(\tR\n" +
-	"createTime\"\xc1\x01\n" +
+	"start_time\x18\b \x01(\tR\tstartTime\x12\x19\n" +
+	"\bend_time\x18\t \x01(\tR\aendTime\x12\x1f\n" +
+	"\vcreate_time\x18\n" +
+	" \x01(\tR\n" +
+	"createTime\x12#\n" +
+	"\rempty_timeout\x18\v \x01(\rR\femptyTimeout\x12+\n" +
+	"\x11departure_timeout\x18\f \x01(\rR\x10departureTimeout\x12)\n" +
+	"\x10max_participants\x18\r \x01(\rR\x0fmaxParticipants\x12\x19\n" +
+	"\broom_sid\x18\x0e \x01(\tR\aroomSid\x12\x1a\n" +
+	"\bmetadata\x18\x0f \x01(\tR\bmetadata\"\xc1\x01\n" +
 	"\x10CreateMeetingReq\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12#\n" +
 	"\rempty_timeout\x18\x02 \x01(\rR\femptyTimeout\x12+\n" +
@@ -2192,17 +2289,18 @@ const file_live_proto_rawDesc = "" +
 	"\x10max_participants\x18\x04 \x01(\rR\x0fmaxParticipants\x12\x1a\n" +
 	"\bmetadata\x18\x05 \x01(\tR\bmetadata\"?\n" +
 	"\x10CreateMeetingRes\x12+\n" +
-	"\ameeting\x18\x01 \x01(\v2\x11.live.MeetingInfoR\ameeting\"\xff\x01\n" +
+	"\ameeting\x18\x01 \x01(\v2\x11.live.MeetingInfoR\ameeting\"\xa2\x02\n" +
 	"\x0eJoinMeetingReq\x12\x1d\n" +
 	"\n" +
-	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12\x1a\n" +
-	"\bidentity\x18\x02 \x01(\tR\bidentity\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1f\n" +
-	"\vcan_publish\x18\x04 \x01(\bR\n" +
+	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12!\n" +
+	"\fmeeting_code\x18\x02 \x01(\tR\vmeetingCode\x12\x1a\n" +
+	"\bidentity\x18\x03 \x01(\tR\bidentity\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12\x1f\n" +
+	"\vcan_publish\x18\x05 \x01(\bR\n" +
 	"canPublish\x12#\n" +
-	"\rcan_subscribe\x18\x05 \x01(\bR\fcanSubscribe\x12(\n" +
-	"\x10can_publish_data\x18\x06 \x01(\bR\x0ecanPublishData\x12.\n" +
-	"\x13can_publish_sources\x18\a \x03(\tR\x11canPublishSources\"\x8a\x02\n" +
+	"\rcan_subscribe\x18\x06 \x01(\bR\fcanSubscribe\x12(\n" +
+	"\x10can_publish_data\x18\a \x01(\bR\x0ecanPublishData\x12.\n" +
+	"\x13can_publish_sources\x18\b \x03(\tR\x11canPublishSources\"\x8a\x02\n" +
 	"\x0eJoinMeetingRes\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\x15\n" +
 	"\x06ws_url\x18\x02 \x01(\tR\x05wsUrl\x12+\n" +
@@ -2276,18 +2374,22 @@ const file_live_proto_rawDesc = "" +
 	"\bresponse\x18\x01 \x01(\tR\bresponse\"&\n" +
 	"\x10WebhookNotifyReq\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\"\x12\n" +
-	"\x10WebhookNotifyRes\"\xb0\x02\n" +
+	"\x10WebhookNotifyRes\"\xf4\x02\n" +
 	"\x18GenerateMeetingTicketReq\x12\x1d\n" +
 	"\n" +
-	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12\x1a\n" +
-	"\bidentity\x18\x02 \x01(\tR\bidentity\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12%\n" +
-	"\x0eexpire_seconds\x18\x04 \x01(\rR\rexpireSeconds\x12\x1f\n" +
-	"\vcan_publish\x18\x05 \x01(\bR\n" +
+	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12!\n" +
+	"\fmeeting_code\x18\x02 \x01(\tR\vmeetingCode\x12\x1a\n" +
+	"\bidentity\x18\x03 \x01(\tR\bidentity\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12%\n" +
+	"\x0eexpire_seconds\x18\x05 \x01(\rR\rexpireSeconds\x12\x1f\n" +
+	"\vcan_publish\x18\x06 \x01(\bR\n" +
 	"canPublish\x12#\n" +
-	"\rcan_subscribe\x18\x06 \x01(\bR\fcanSubscribe\x12(\n" +
-	"\x10can_publish_data\x18\a \x01(\bR\x0ecanPublishData\x12.\n" +
-	"\x13can_publish_sources\x18\b \x03(\tR\x11canPublishSources\"\xf3\x01\n" +
+	"\rcan_subscribe\x18\a \x01(\bR\fcanSubscribe\x12(\n" +
+	"\x10can_publish_data\x18\b \x01(\bR\x0ecanPublishData\x12.\n" +
+	"\x13can_publish_sources\x18\t \x03(\tR\x11canPublishSources\x12\x1f\n" +
+	"\vticket_type\x18\n" +
+	" \x01(\x05R\n" +
+	"ticketType\"\x94\x02\n" +
 	"\x18GenerateMeetingTicketRes\x12\x16\n" +
 	"\x06ticket\x18\x01 \x01(\tR\x06ticket\x12\x1f\n" +
 	"\vexpire_time\x18\x02 \x01(\tR\n" +
@@ -2296,7 +2398,9 @@ const file_live_proto_rawDesc = "" +
 	"canPublish\x12#\n" +
 	"\rcan_subscribe\x18\x04 \x01(\bR\fcanSubscribe\x12(\n" +
 	"\x10can_publish_data\x18\x05 \x01(\bR\x0ecanPublishData\x12.\n" +
-	"\x13can_publish_sources\x18\x06 \x03(\tR\x11canPublishSources\"0\n" +
+	"\x13can_publish_sources\x18\x06 \x03(\tR\x11canPublishSources\x12\x1f\n" +
+	"\vticket_type\x18\a \x01(\x05R\n" +
+	"ticketType\"0\n" +
 	"\x16JoinMeetingByTicketReq\x12\x16\n" +
 	"\x06ticket\x18\x01 \x01(\tR\x06ticket\"\x92\x02\n" +
 	"\x16JoinMeetingByTicketRes\x12\x14\n" +
@@ -2307,15 +2411,15 @@ const file_live_proto_rawDesc = "" +
 	"canPublish\x12#\n" +
 	"\rcan_subscribe\x18\x05 \x01(\bR\fcanSubscribe\x12(\n" +
 	"\x10can_publish_data\x18\x06 \x01(\bR\x0ecanPublishData\x12.\n" +
-	"\x13can_publish_sources\x18\a \x03(\tR\x11canPublishSources\"\x94\x01\n" +
+	"\x13can_publish_sources\x18\a \x03(\tR\x11canPublishSources\"u\n" +
 	"\x17ReportMeetingMessageReq\x12\x1d\n" +
 	"\n" +
-	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12\x1d\n" +
+	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12\x18\n" +
+	"\acontent\x18\x02 \x01(\tR\acontent\x12!\n" +
+	"\fmessage_type\x18\x03 \x01(\tR\vmessageType\"8\n" +
+	"\x17ReportMeetingMessageRes\x12\x1d\n" +
 	"\n" +
-	"message_id\x18\x02 \x01(\tR\tmessageId\x12\x18\n" +
-	"\acontent\x18\x03 \x01(\tR\acontent\x12!\n" +
-	"\fmessage_type\x18\x04 \x01(\tR\vmessageType\"\x19\n" +
-	"\x17ReportMeetingMessageRes\"h\n" +
+	"message_id\x18\x01 \x01(\tR\tmessageId\"h\n" +
 	"\x16ListMeetingMessagesReq\x12\x1d\n" +
 	"\n" +
 	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12\x12\n" +

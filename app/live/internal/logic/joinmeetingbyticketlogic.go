@@ -4,15 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"zero-service/app/live/internal/svc"
 	"zero-service/app/live/live"
 	"zero-service/app/live/model/gormmodel"
+	"zero-service/common/carbonx"
 	"zero-service/common/livekitx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
+	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 )
@@ -40,6 +41,7 @@ type ticketData struct {
 	CanSubscribe      bool     `json:"canSubscribe"`
 	CanPublishData    bool     `json:"canPublishData"`
 	CanPublishSources []string `json:"canPublishSources"`
+	TicketType        int32    `json:"ticketType"`
 }
 
 // 根据票据加入会议
@@ -64,6 +66,13 @@ func (l *JoinMeetingByTicketLogic) JoinMeetingByTicket(in *live.JoinMeetingByTic
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "票据数据格式错误")
 	}
 
+	// 校验票据是否过期（expireTime 格式：yyyy-MM-dd HH:mm:ss）
+	if data.ExpireTime != "" {
+		if expireAt := carbon.Parse(data.ExpireTime); expireAt.IsValid() && expireAt.Lt(carbon.Now()) {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "票据已过期")
+		}
+	}
+
 	// 分布式锁防并发使用票据加入同一会议
 	lockKey := redisMeetingLockPrefix + data.MeetingNo
 	lock := redis.NewRedisLock(l.svcCtx.Redis, lockKey)
@@ -86,8 +95,11 @@ func (l *JoinMeetingByTicketLogic) JoinMeetingByTicket(in *live.JoinMeetingByTic
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "票据不存在或已过期")
 	}
 
-	// 删除已使用的票据（一次性）
-	l.svcCtx.Redis.DelCtx(l.ctx, ticketKey)
+	// 根据票据类型处理：一次性票据删除，有效期票据保留
+	if data.TicketType == 1 {
+		// 一次性票据：删除 individual key
+		l.svcCtx.Redis.DelCtx(l.ctx, ticketKey)
+	}
 
 	// 验证会议是否存在
 	meeting, err := l.svcCtx.MeetingRepo.GetMeeting(l.ctx, data.MeetingNo)
@@ -121,7 +133,7 @@ func (l *JoinMeetingByTicketLogic) JoinMeetingByTicket(in *live.JoinMeetingByTic
 	}
 
 	// Upsert 参会人记录（使用票据中绑定的 identity 和 name）
-	now := time.Now()
+	now := carbonx.NowStartOfSecond().StdTime()
 	participant := &gormmodel.LiveMeetingParticipant{
 		MeetingNo: data.MeetingNo,
 		Identity:  data.Identity,

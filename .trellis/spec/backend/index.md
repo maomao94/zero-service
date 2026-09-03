@@ -12,6 +12,7 @@
 | model, store, GORM, 事务, 分页, 租户, Upsert, CAS, RowsAffected | [gormx-guidelines](./gormx-guidelines.md) |
 | Scheduler, CronJob, lease, RunNow, asynq, 定时任务 | [crontask-guidelines](./crontask-guidelines.md) + [trigger-guidelines](./trigger-guidelines.md) |
 | 错误, error, gRPC status, 日志, log, trace, metadata | [error-handling](./error-handling.md) |
+| 日期, 时间, 格式化, 解析, carbonx, carbon, time.Now, time.Format | [carbonx-guidelines](./carbonx-guidelines.md) + [common-package-design](./common-package-design.md) |
 | common/, option, 公共包, client, SDK | [common-package-design](./common-package-design.md) |
 | goroutine, mr, antsx, Promise, ReplyPool, 并发, 锁 | [concurrency-guidelines](./concurrency-guidelines.md) |
 | ServiceContext, 启动, 关闭, 配置, client, scheduler | [service-lifecycle](./service-lifecycle.md) |
@@ -40,6 +41,7 @@
 | Log Dump | logdump, gRPC-to-logx, 日志汇聚 | [logdump-guidelines](./logdump-guidelines.md) |
 | Flow | flowx, Azure, go-workflow, 编排 | [flow-guidelines](./flow-guidelines.md) |
 | LiveKit | livekitx, meeting, JWT, Webhook, Twirp, 房间, 录制, SIP | [livekit-guidelines](./livekit-guidelines.md) |
+| Live 前端 | web/live, 聊天, Echo, sendMeetingData, performMeetingRpc, 票据入会, 访客 | [livekit-guidelines → Web 前端（web/live）约定](./livekit-guidelines.md) |
 
 ## Pre-Development Checklist
 

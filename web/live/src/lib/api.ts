@@ -1,4 +1,4 @@
-import type { ApiMessages, ApiPage, JoinReply, MeetingInfo, MeetingMessage, ParticipantInfo, TicketReply } from '../types'
+import type { ApiMessages, ApiPage, JoinReply, MeetingInfo, ParticipantInfo, TicketReply } from '../types'
 
 const API_ROOT = import.meta.env.VITE_API_ROOT || '/live/v1'
 
@@ -39,7 +39,20 @@ const json = (body: unknown): RequestInit => ({ method: 'POST', body: JSON.strin
 export const api = {
   getCurrentUser: () => request<{ userId: string; userName: string; deptCode: string }>('/getCurrentUser'),
   createMeeting: (title: string) => request<{ meeting: MeetingInfo }>('/createMeeting', json({ title })),
-  joinMeeting: (meetingNo: string) => request<JoinReply>('/joinMeeting', json({ meetingNo, canPublish: true, canSubscribe: true, canPublishData: true, canPublishSources: ['camera', 'microphone', 'screen_share'] })),
+  joinMeeting: (meetingNo: string, options?: { meetingCode?: string; canPublish?: boolean; canSubscribe?: boolean; canPublishData?: boolean; canPublishSources?: string[] }) => {
+    const body: Record<string, unknown> = {
+      canPublish: options?.canPublish ?? true,
+      canSubscribe: options?.canSubscribe ?? true,
+      canPublishData: options?.canPublishData ?? true,
+      canPublishSources: options?.canPublishSources ?? ['camera', 'microphone', 'screen_share']
+    }
+    if (options?.meetingCode) {
+      body.meetingCode = options.meetingCode
+    } else {
+      body.meetingNo = meetingNo
+    }
+    return request<JoinReply>('/joinMeeting', json(body))
+  },
   joinByTicket: (ticket: string) => request<JoinReply>(`/joinMeetingByTicket?ticket=${encodeURIComponent(ticket)}`, {}, false),
   getMeeting: (meetingNo: string) => request<{ meeting: MeetingInfo }>(`/getMeeting?meetingNo=${encodeURIComponent(meetingNo)}`),
   listMeetings: (params: Record<string, string | number> = {}) => request<ApiPage<MeetingInfo>>(`/listMeetings?${new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]))}`),
@@ -50,7 +63,7 @@ export const api = {
   listParticipants: (meetingNo: string) => request<{ participants: ParticipantInfo[] }>(`/listParticipants?meetingNo=${encodeURIComponent(meetingNo)}`),
   sendMeetingData: (meetingNo: string, topic: string, payload: string, destinations: string[] = []) => request<void>('/sendMeetingData', json({ meetingNo, topic, payload, destinations })),
   performRpc: (meetingNo: string, identity: string, payload: string) => request<{ response: string }>('/performMeetingRpc', json({ meetingNo, identity, method: 'echo', payload, responseTimeoutMs: 5000 })),
-  generateTicket: (meetingNo: string, identity: string, name: string, expireSeconds: number, canPublish = true, canSubscribe = true, canPublishData = true, canPublishSources: string[] = []) => request<TicketReply>('/generateMeetingTicket', json({ meetingNo, identity, name, expireSeconds, canPublish, canSubscribe, canPublishData, canPublishSources })),
-  reportMessage: (message: Pick<MeetingMessage, 'content' | 'messageType'> & { meetingNo: string; messageId?: string }) => request<void>('/reportMeetingMessage', json(message)),
+  generateTicket: (meetingNo: string, identity: string, name: string, expireSeconds: number, canPublish = true, canSubscribe = true, canPublishData = true, canPublishSources: string[] = [], ticketType = 1) => request<TicketReply>('/generateMeetingTicket', json({ meetingNo, identity, name, expireSeconds, canPublish, canSubscribe, canPublishData, canPublishSources, ticketType })),
+  reportMessage: (message: { meetingNo: string; content: string; messageType: string }) => request<{ messageId: string }>('/reportMeetingMessage', json(message)),
   listMessages: (meetingNo: string) => request<ApiMessages>(`/listMeetingMessages?meetingNo=${encodeURIComponent(meetingNo)}&page=1&pageSize=100`),
 }

@@ -2,6 +2,7 @@ package logic
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -27,6 +28,9 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+// errRoom 模拟 LiveKit 房间创建失败。
+var errRoom = fmt.Errorf("room creation failed")
 
 // liveKitMock 记录 Twirp 调用并可配置失败行为。
 type liveKitMock struct {

@@ -44,22 +44,34 @@ service LiveRpc {
 message MeetingInfo {
   // 业务会议号（= LiveKit 房间名）
   string meeting_no = 1 [json_name = "meetingNo"];
+  // 用户会议号（9位数字）
+  string meeting_code = 2 [json_name = "meetingCode"];
   // 会议标题
-  string title = 2 [json_name = "title"];
+  string title = 3 [json_name = "title"];
   // 会议状态：1-已创建，2-进行中，3-已结束
-  int32 status = 3 [json_name = "status"];
+  int32 status = 4 [json_name = "status"];
   // 创建人（gRPC metadata user-id）
-  string create_user = 4 [json_name = "createUser"];
+  string create_user = 5 [json_name = "createUser"];
   // 更新人（gRPC metadata user-id）
-  string update_user = 5 [json_name = "updateUser"];
+  string update_user = 6 [json_name = "updateUser"];
   // 机构 code
-  string dept_code = 6 [json_name = "deptCode"];
+  string dept_code = 7 [json_name = "deptCode"];
   // 开始时间，格式：yyyy-MM-dd HH:mm:ss
-  string start_time = 7 [json_name = "startTime"];
+  string start_time = 8 [json_name = "startTime"];
   // 结束时间，格式：yyyy-MM-dd HH:mm:ss（未结束为空字符串）
-  string end_time = 8 [json_name = "endTime"];
+  string end_time = 9 [json_name = "endTime"];
   // 创建时间，格式：yyyy-MM-dd HH:mm:ss
-  string create_time = 9 [json_name = "createTime"];
+  string create_time = 10 [json_name = "createTime"];
+  // 无人时房间保留秒数（默认 600）
+  uint32 empty_timeout = 11 [json_name = "emptyTimeout"];
+  // 所有人离开后保留秒数（默认 120）
+  uint32 departure_timeout = 12 [json_name = "departureTimeout"];
+  // 最大参会人数（默认 50）
+  uint32 max_participants = 13 [json_name = "maxParticipants"];
+  // LiveKit 房间 Sid（用于 Egress/Webhook 等场景）
+  string room_sid = 14 [json_name = "roomSid"];
+  // 会议元数据 JSON
+  string metadata = 15 [json_name = "metadata"];
 }
 
 message CreateMeetingReq {
@@ -81,20 +93,22 @@ message CreateMeetingRes {
 }
 
 message JoinMeetingReq {
-  // 会议号
+  // 会议号（与 meeting_code 二选一）
   string meeting_no = 1 [json_name = "meetingNo"];
+  // 用户会议号（9位数字，与 meeting_no 二选一）
+  string meeting_code = 2 [json_name = "meetingCode"];
   // 参会人身份（房间内唯一）
-  string identity = 2 [json_name = "identity"];
+  string identity = 3 [json_name = "identity"];
   // 展示名（可空）
-  string name = 3 [json_name = "name"];
+  string name = 4 [json_name = "name"];
   // 是否可以发布音视频（默认 true，总开关）
-  bool can_publish = 4 [json_name = "canPublish"];
+  bool can_publish = 5 [json_name = "canPublish"];
   // 是否可以订阅音视频（默认 true）
-  bool can_subscribe = 5 [json_name = "canSubscribe"];
+  bool can_subscribe = 6 [json_name = "canSubscribe"];
   // 是否可以发布数据（默认 true）
-  bool can_publish_data = 6 [json_name = "canPublishData"];
+  bool can_publish_data = 7 [json_name = "canPublishData"];
   // 可以发布的轨道源类型（默认为空，表示允许所有）
-  repeated string can_publish_sources = 7 [json_name = "canPublishSources"];
+  repeated string can_publish_sources = 8 [json_name = "canPublishSources"];
 }
 
 message JoinMeetingRes {
@@ -252,27 +266,31 @@ message WebhookNotifyRes {}
 // 当前主要给网关（livegtw）调用，用于生成临时访客票据。
 // 业务侧也可以不使用网关，直接调用此接口组合生成票据，实现自定义的访客加入流程。
 message GenerateMeetingTicketReq {
-  // 会议号（必填，指定要加入的会议）
+  // 会议号（与 meeting_code 二选一）
   string meeting_no = 1 [json_name = "meetingNo"];
+  // 用户会议号（9位数字，与 meeting_no 二选一）
+  string meeting_code = 2 [json_name = "meetingCode"];
   // 绑定的参会人身份（必填，用于标识访客身份，同一会议内唯一）
-  string identity = 2 [json_name = "identity"];
+  string identity = 3 [json_name = "identity"];
   // 绑定的参会人名称（可选，用于显示在会议中）
-  string name = 3 [json_name = "name"];
+  string name = 4 [json_name = "name"];
   // 票据有效期秒数（默认 3600，即 1小时）
-  uint32 expire_seconds = 4 [json_name = "expireSeconds"];
+  uint32 expire_seconds = 5 [json_name = "expireSeconds"];
   // 是否可以发布音视频（默认 true，总开关）
-  bool can_publish = 5 [json_name = "canPublish"];
+  bool can_publish = 6 [json_name = "canPublish"];
   // 是否可以订阅音视频（默认 true，控制访客是否能观看/收听其他人的音视频）
-  bool can_subscribe = 6 [json_name = "canSubscribe"];
+  bool can_subscribe = 7 [json_name = "canSubscribe"];
   // 是否可以发布数据（默认 true，控制访客是否能发送聊天消息/数据）
-  bool can_publish_data = 7 [json_name = "canPublishData"];
+  bool can_publish_data = 8 [json_name = "canPublishData"];
   // 可以发布的轨道源类型（默认为空，表示允许所有）
   // 枚举值说明：
   // - camera: 摄像头
   // - microphone: 麦克风
   // - screen_share: 屏幕共享（视频）
   // - screen_share_audio: 屏幕共享音频
-  repeated string can_publish_sources = 8 [json_name = "canPublishSources"];
+  repeated string can_publish_sources = 9 [json_name = "canPublishSources"];
+  // 票据类型：1-一次性（默认，消费后删除），2-有效期（消费后保留至过期，可多次使用）
+  int32 ticket_type = 10 [json_name = "ticketType"];
 }
 
 // GenerateMeetingTicketRes 生成会议邀请票据响应。
@@ -294,6 +312,8 @@ message GenerateMeetingTicketRes {
   // - screen_share: 屏幕共享（视频）
   // - screen_share_audio: 屏幕共享音频
   repeated string can_publish_sources = 6 [json_name = "canPublishSources"];
+  // 票据类型：1-一次性（默认），2-有效期
+  int32 ticket_type = 7 [json_name = "ticketType"];
 }
 
 message JoinMeetingByTicketReq {
@@ -323,15 +343,16 @@ message JoinMeetingByTicketRes {
 message ReportMeetingMessageReq {
   // 会议号
   string meeting_no = 1 [json_name = "meetingNo"];
-  // 消息 ID（客户端生成）
-  string message_id = 2 [json_name = "messageId"];
   // 消息内容
-  string content = 3 [json_name = "content"];
+  string content = 2 [json_name = "content"];
   // 消息类型（text, image, file）
-  string message_type = 4 [json_name = "messageType"];
+  string message_type = 3 [json_name = "messageType"];
 }
 
-message ReportMeetingMessageRes {}
+message ReportMeetingMessageRes {
+  // 消息 ID（后台生成，用于后续 SDK 推送）
+  string message_id = 1 [json_name = "messageId"];
+}
 
 message ListMeetingMessagesReq {
   // 会议号

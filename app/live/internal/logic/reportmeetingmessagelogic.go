@@ -2,16 +2,15 @@ package logic
 
 import (
 	"context"
-	"time"
 
 	"zero-service/app/live/internal/svc"
 	"zero-service/app/live/live"
 	"zero-service/app/live/model/gormmodel"
 	"zero-service/common/authctx"
+	"zero-service/common/carbonx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
-	"github.com/google/uuid"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -38,10 +37,10 @@ func (l *ReportMeetingMessageLogic) ReportMeetingMessage(in *live.ReportMeetingM
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "消息内容不能为空")
 	}
 
-	// 生成 messageId（如果前端未提供）
-	messageID := in.MessageId
-	if messageID == "" {
-		messageID = uuid.New().String()
+	// 生成 messageId
+	messageID, err := l.svcCtx.IdUtil.SimpleUUID()
+	if err != nil {
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "生成消息ID失败")
 	}
 
 	// 获取发送者信息
@@ -62,7 +61,7 @@ func (l *ReportMeetingMessageLogic) ReportMeetingMessage(in *live.ReportMeetingM
 		SenderName:  senderName,
 		Content:     in.Content,
 		MessageType: messageType,
-		CreateTime:  time.Now(),
+		CreateTime:  carbonx.NowStartOfSecond().StdTime(),
 	}
 	if err := l.svcCtx.MeetingRepo.CreateMessage(l.ctx, message); err != nil {
 		l.Logger.Errorf("create message failed: %v", err)
@@ -70,5 +69,5 @@ func (l *ReportMeetingMessageLogic) ReportMeetingMessage(in *live.ReportMeetingM
 	}
 
 	l.Logger.Infof("message reported: meeting=%s messageId=%s sender=%s", in.MeetingNo, messageID, senderID)
-	return &live.ReportMeetingMessageRes{}, nil
+	return &live.ReportMeetingMessageRes{MessageId: messageID}, nil
 }

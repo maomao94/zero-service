@@ -2,7 +2,7 @@
 
 ## 适用范围
 
-修改 `common/livekitx`、`app/live`、LiveKit JWT/Webhook/Twirp、房间/参与者、Egress、Ingress、SIP 或 Agent 调度时读取。API 版本基线见 [对接指南](../../../docs/livekit-integration-guide.md)，本规范不把本地开发工作树当作稳定版本。
+修改 `common/livekitx`、`app/live`、LiveKit JWT/Webhook/Twirp、房间/参与者、Egress、Ingress、SIP 或 Agent 调度时读取。API 版本基线见 [对接指南](../../../docs/live/integration-guide.md)，本规范不把本地开发工作树当作稳定版本。
 
 ## Scenario: common/livekitx 公共 API 契约
 
@@ -153,6 +153,52 @@ room.JoinWithContext(ctx, url, lksdk.ConnectInfo{...})
   lock := redis.NewRedisLock(l.svcCtx.Redis, redisMeetingLockPrefix+meetingNo+":end")
   ```
 
+- **meeting_code 生成**：9位数字（100000000-999999999），用户输入的会议号。生成方式：`tool.RandomDigits(9)`（内部用 lancet `random.RandNumberOfLength`，math/rand 非 crypto/rand）。唯一性保证：分布式锁 `live:lock:meeting_code_gen`（TTL 5s）+ DB 唯一索引 + 代码层3次重试。锁前缀定义在 `helper.go` 的 `redisMeetingCodeLockPrefix` 常量中。存储：`live_meetings.meeting_code` 字段，普通索引（非唯一索引，唯一性由代码层保证）。创建会议时生成，插入失败则重试，3次都失败则报错。
+
+- **会议号二选一查询模式**：业务接口（JoinMeeting、GenerateMeetingTicket 等）支持 `meeting_no` / `meeting_code` 二选一。前端传 `meeting_no` → 直接查询（`meeting_no` = LiveKit 房间名）；传 `meeting_code` → 先查 `meeting_no`，再查房间；两者都传 → 优先使用 `meeting_no`；两者都不传 → 返回错误。repo 层提供 `GetMeetingByCode(ctx, code)` 方法，返回完整 meeting 对象。
+
+  ```protobuf
+  // proto 定义示例
+  message JoinMeetingReq {
+      // 会议号（与 meeting_code 二选一）
+      string meeting_no = 1;
+      // 用户会议号（9位数字，与 meeting_no 二选一）
+      string meeting_code = 2;
+  }
+  ```
+
+- **LiveKit 房间 Sid 保存**：`CreateRoom` 返回的 `room.Sid` 保存到数据库，便于 Egress/Webhook 等场景使用。
+
+  ```go
+  room, err := l.svcCtx.LiveKit.Room().CreateRoom(l.ctx, &livekit.CreateRoomRequest{...})
+  // room.Sid 保存到 live_meetings.room_sid 字段
+  meeting := &gormmodel.LiveMeeting{
+      RoomSid: room.Sid,
+      // ...
+  }
+  ```
+
+- **MeetingInfo proto 字段编号**：
+
+  | 字段 | 编号 | 说明 |
+  |------|------|------|
+  | meeting_no | 1 | 业务会议号 |
+  | meeting_code | 2 | 用户会议号 |
+  | title | 3 | 标题 |
+  | status | 4 | 状态 |
+  | create_user | 5 | 创建人 |
+  | update_user | 6 | 更新人 |
+  | dept_code | 7 | 机构 |
+  | start_time | 8 | 开始时间 |
+  | end_time | 9 | 结束时间 |
+  | create_time | 10 | 创建时间 |
+  | empty_timeout | 11 | 无人房间保留秒数 |
+  | departure_timeout | 12 | 所有人离开后保留秒数 |
+  | max_participants | 13 | 最大参会人数 |
+  | room_sid | 14 | LiveKit 房间 Sid |
+
+  新增字段从 15 开始编号。
+
 ### 3. 模型风格
 
 新业务表（会议等）按 `app/trigger/model/gormmodel` 的 plan 系列风格：`gormx.LegacyStringBaseModel`（string 主键 + create_time/update_time + is_deleted 软删）+ `gormx.VersionMixin` + `CreateUser`/`UpdateUser`/`DeptCode`（sql.NullString）+ 可空字段用 `sql.NullString`/`sql.NullTime` + `int` 状态 + 索引名 `idx_<表名>_<字段>`。
@@ -187,6 +233,15 @@ LiveKit 拥有房间、参与者、轨道和录制运行态；zero-service 拥�
 - 聊天识别是业务职责：`*livekit.ChatMessage`（文本）与 `UserDataPacket`（业务自定义 topic）都在 `OnDataPacket` 到达。
 - 服务端 RPC（`client.Room().PerformRpc()`）是服务端→单个客户端的定向请求-响应。
 - SendData 与 PerformRpc 选型：只通知不关心结果→ `SendData`；要客户端执行并返回结果→ `PerformRpc`。
+- 服务端 RPC 错误诊断矩阵（`rpc_self_test.go` 实测验证）：
+
+| 错误 | 原因 | 排查方向 |
+|------|------|---------|
+| `RpcError 1400: Method not supported at destination` | 目标客户端**在线但未注册**该 method | 检查目标端 `registerRpcMethod` 是否执行（刷新页面后注册会丢失） |
+| `no response from servers` | 目标参与者**不存在或已离线** | 用 ListParticipants 确认目标在线 |
+| `ResponseTimeout` 类错误 | 目标在线、已注册，但 handler 未在时限内返回 | handler 阻塞（如等用户输入）或网络问题 |
+
+- 目标参与者可以是调用方自身（自发自收），LiveKit 服务端按 identity 路由，不做 caller≠destination 校验；排查 RPC 失败时不要怀疑"自己发给自己"。
 - 管理 API 方法名以锁定 protocol 源码核对：静音是 `MutePublishedTrack`；结束会议统一用 `DeleteRoom`。
 
 ## 错误、生命周期与反模式
@@ -525,38 +580,43 @@ func main() {
 - **不要**把多个 logic 合并进一个 `meetinglogic.go`（合并文件模式和 goctl 的拆分模式冲突，会让后续 `gen.sh` 生成重复定义）。旧合并文件应删掉，改成拆分文件。
 - 生成文件不要手工改结构（struct 定义/函数签名），只填 logic 方法体
 
-### 12. 网关增加字段标准流程
+### 12. 票据系统设计
 
-当需要给网关接口增加新字段时，必须遵循以下顺序：
+#### 票据类型
 
-```
-1. 修改 live.proto（gRPC 定义）
-2. 执行 goctl rpc protoc 重新生成 gRPC 代码
-3. 修改 livegtw.api（网关 API 定义）
-4. 执行 gen.sh 重新生成网关代码
-5. 修改 logic 文件，补充字段映射
-6. 编译验证 go build ./app/livegtw/... ./app/live/...
-```
+| 类型 | 值 | 说明 |
+|------|---|------|
+| 一次性票据 | 1（默认） | 消费后删除，只能使用一次 |
+| 有效期票据 | 2 | 消费后保留至过期，可多次使用（挤掉旧设备） |
 
-**禁止顺序**：
-- ❌ 先写 logic 再改 api（会导致编译失败，types 包缺少字段）
-- ❌ 只改 proto 不改 api（网关 types 与 gRPC 不一致）
-- ❌ 只改 api 不改 proto（gRPC 层不识别新字段）
+#### Redis 存储
 
-**字段映射示例**：
+- Key：`live:ticket:{ticket}`（单个票据 key）
+- Value：JSON 字符串，包含会议号、身份、名称、过期时间、权限、票据类型
+- TTL：由 `expire_seconds` 参数决定（秒）
+
+#### 票据消费逻辑
 
 ```go
-// livegtw.api 类型定义
-type GenerateMeetingTicketRequest {
-    MeetingNo         string   `json:"meetingNo"`
-    CanPublishSources []string `json:"canPublishSources,optional"`
+// 根据票据类型处理：一次性票据删除，有效期票据保留
+if data.TicketType == 1 {
+    // 一次性票据：删除 individual key
+    l.svcCtx.Redis.DelCtx(l.ctx, ticketKey)
 }
+```
 
-// logic 中映射到 gRPC
-r, err := l.svcCtx.LiveRpcCli.GenerateMeetingTicket(l.ctx, &live.GenerateMeetingTicketReq{
-    MeetingNo:         req.MeetingNo,
-    CanPublishSources: req.CanPublishSources,
-})
+#### 过期时间校验
+
+即使 Redis 有 TTL，也需要在代码中校验 `expireTime` 字段：
+
+```go
+// 校验票据是否过期（expireTime 格式：2006-01-02 15:04:05）
+if data.ExpireTime != "" {
+    expireT, err := time.ParseInLocation("2006-01-02 15:04:05", data.ExpireTime, time.Local)
+    if err == nil && time.Now().After(expireT) {
+        return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "票据已过期")
+    }
+}
 ```
 
 ### 13. 测试注意
@@ -689,3 +749,43 @@ Payload: []byte(req.Payload)
 - JavaScript syntax check：提取内联 script 后运行 `node --check`。
 - 网关验证：运行 `go test ./...`、`go vet ./...` 和 `git diff --check`。
 - 浏览器集成验证：在真实 LiveKit、HTTPS/localhost 媒体权限和 Redis 环境中检查摄像头、麦克风、屏幕共享、重连、Data 聊天、HTTP 历史及票据入会；缺少环境时不得声称端到端通过。
+
+## Web 前端（web/live）约定
+
+### 1. Scope / Trigger
+
+适用：React 应用 `web/live`（`@livekit/components-react` + `livekit-client` v2.x）。修改聊天、Data/RPC 调试工具或参会人身份逻辑时适用。
+
+### 2. 三条数据链路严格解耦（核心契约）
+
+| 链路 | 路径 | 访客行为 |
+|------|------|---------|
+| 群聊（业务） | `POST /reportMeetingMessage` 持久化 → `room.localParticipant.publishData(topic='lk.chat')` SDK 广播 | 跳过持久化，仅 SDK 广播 |
+| Data 调试 | 仅 `POST /sendMeetingData`（服务端广播/定向），**不发** `publishData` | 管理面板不渲染，不可达 |
+| RPC 调试 | 仅 `POST /performMeetingRpc`（服务端→目标参会人） | 同上 |
+
+禁止在群聊里调用 `sendMeetingData`（它是服务端 Data 调试接口，与聊天持久化是两回事）；禁止在调试工具里混用 `publishData`。
+
+### 3. 群聊消息 ID 契约
+
+- 服务端 `ReportMeetingMessage` 生成并返回 `messageId`（`ReportMeetingMessageRes{MessageId}`）；持久化消息与 SDK 广播消息**必须使用同一个服务端 messageId**，历史消息加载与实时去重才有效。
+- 访客无鉴权不上报，用本地 `crypto.randomUUID()` 作为 messageId。
+- Wrong（ID 断裂，去重失效）：本地生成 UUID 同时用于持久化请求与 SDK 广播 → 数据库里的 ID 与广播的 ID 不同。
+- Correct：`const reply = await api.reportMessage(...); messageId = reply.messageId`，再用该 messageId 组装 payload 广播。
+
+### 4. 客户端 Echo 注册（RPC 测试前提）
+
+- **所有参会人（含访客）入会时自动注册 `echo`**：在 `MeetingRoom` 的 `useEffect` 注册、卸载时 `unregisterRpcMethod`。注册按钮在管理面板仅房主可见，若只靠手动注册，访客目标必然报 1400。
+- 注册状态（`echoRegistered`）放在 `MeetingRoom` 层级管理，不能放在 tab 挂载的子组件（如 `RealtimeTools`）——切 tab 重挂载会重置 state，UI 与实际注册状态脱节。
+- Handler **必须立即返回**，返回 JSON 字符串含 `identity`/`name`/`payload`/`callerIdentity`；绝不能用未 resolve 的 Promise 等待用户输入——后端 `responseTimeoutMs` 到时直接报错，前端"卡死"观感。
+- SDK 重复注册同名方法会 throw（`RPC handler already registered`），注册函数用 try/catch 包裹。
+
+### 5. 前端健壮性检查清单（每次改动过一遍）
+
+- [ ] 所有异步点击 handler 有 catch + notify（未处理的 rejection 静默失败）
+- [ ] 提交类按钮有 loading 状态防双击（双击创建两个会议是最常见事故）
+- [ ] `navigator.clipboard` 调用补 `.catch`（非 HTTPS 上下文会 reject）
+- [ ] 危险操作（结束会议、移出成员、离开会议）用 `window.confirm` 确认
+- [ ] 权限不足时按钮 disabled + title 提示，而不是点击后 toast 警告
+- [ ] 收到的 Data payload 做字段类型校验（畸形数据不能以 undefined 作 React key）
+- [ ] 启用 `noUnusedLocals`/`noUnusedParameters`，死代码在编译期报错

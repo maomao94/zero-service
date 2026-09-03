@@ -7,35 +7,35 @@
                     |   Frontend/App  |
                     +--------+--------+
                              |
-              +--------------+--------------+
-              |                             |
-     +--------v--------+         +---------v---------+
-     |   gtw (BFF)     |         | socketgtw/push    |
-     | HTTP + gRPC-GW  |         | SocketIO 实时通信  |
-     +--------+--------+         +---------+---------+
-              |                             |
-    +---------+---------+         +---------+---------+
-    |  gRPC Service Mesh |
-    +----+----+----+----+
-         |    |    |
-   +-----+ +--+--+ +------+ +----------+
-   |       |      |        | |
-+--v--+ +--v--+ +-v-------+ +-v-----+
-|trig | |file | |bridgeXxx| |djicloud|
-|ger  | |     | |modbus/mq| |DJI平台|
-+-----+ +-----+ +----+----+ +---+----+
-                         |         |
-        +--------+-------+         v
-        |        |           DJI Cloud API
-   +----v---+ +--v----+        MQTT
-   |ieccaller| |iecstash|
-   |IEC 104 | |Kafka消费|
-   +----+---+ +--+----+
-        |        |
-   +----v--------v------------+
-   |       Kafka / Redis / DB  |
-   |  TDengine / OSS / SQLite  |
-   +----------------------------+
+              +--------------+--------------+----------------------+
+              |                             |                      |
+     +--------v--------+         +---------v---------+   +--------v--------+
+     |   gtw (BFF)     |         | socketgtw/push    |   | livegtw/oryxgtw |
+     | HTTP + gRPC-GW  |         | SocketIO 实时通信  |   | 流媒体/会议网关  |
+     +--------+--------+         +---------+---------+   +--------+--------+
+              |                             |                      |
+    +---------+---------+         +---------+---------+   +--------+--------+
+    |  gRPC Service Mesh                                    |
+    +----+----+----+----+----+----+----+----+
+         |    |    |         |         |    |
+   +-----+ +--+--+ +------+ +------+ +--+--+ +------+
+   |       |      |        |        |        | |
++--v--+ +--v--+ +-v-----+ +-v---+ +-v---+ +-v--+ +-v---+
+|trig | |file | |bridgeX| |djicl| |live | |oryx| |iec  |
+|ger  | |     | |modbus | |oud  | |会议  | |srv | |104  |
++-----+ +-----+ +---+---+ +--+--+ +-----+ +----+ +-----+
+                    |         |                        |
+       +--------+---+         v            +----+----+ |
+       |        |        DJI Cloud API      |        | |
+  +----v---+ +--v----+        MQTT    +----v---+ +--v----+
+  |ieccaller| |iecstash|               |oryxgtw| |iecstash|
+  |IEC 104  | |Kafka消费|              |回调网关| |Kafka消费|
+  +----+---+ +--+----+               +---+----+ +--+----+
+       |        |                        |        |
+  +----v--------v------------------------+--------v------+
+  |     Kafka / Redis / DB / LiveKit / Oryx(SRS)         |
+  |  TDengine / OSS / SQLite / PostgreSQL / Nacos        |
+  +------------------------------------------------------+
 ```
 
 ## 分层结构
@@ -46,27 +46,30 @@
 └─────────────────┬───────────────────┘
                   │
 ┌─────────────────v───────────────────┐
-│         gtw (BFF 网关)              │
-│    HTTP + gRPC-Gateway 入口         │
+│  HTTP 网关层                         │
+│  gtw (BFF) / livegtw / oryxgtw /    │
+│  socketgtw / lalhook (已不推荐)      │
 └─────────────────┬───────────────────┘
                   │
 ┌─────────────────v───────────────────┐
 │         gRPC Service Mesh           │
 │  ieccaller / iecstash / trigger /   │
-│  djicloud / file / gis / podengine / │
-│  bridgemodbus / bridgemqtt / ...     │
+│  djicloud / live / oryxserver /     │
+│  lalproxy / file / gis / podengine /│
+│  bridgemodbus / bridgemqtt / ...    │
 └─────────────────┬───────────────────┘
                   │
 ┌─────────────────v───────────────────┐
 │         common/ 公共组件库           │
 │  iec104 / djisdk / socketiox /      │
-│  asynqx / mqttx / ossx / ...       │
+│  livekitx / asynqx / mqttx / ossx   │
 └─────────────────┬───────────────────┘
                   │
 ┌─────────────────v───────────────────┐
 │           基础设施                   │
 │  Kafka / Redis / PostgreSQL /       │
-│  TDengine / MQTT Broker / Nacos     │
+│  TDengine / MQTT Broker / Nacos /   │
+│  LiveKit / Oryx(SRS) / LAL          │
 └─────────────────────────────────────┘
 ```
 
@@ -103,6 +106,31 @@ IEC 104 从站 --> ieccaller --> Kafka --> iecstash --> streamevent --> TDengine
 
 `socketgtw` 管理 SocketIO 长连接和房间，`socketpush` 提供后端推送接口。两者通过 gRPC 协作完成双向消息路由。
 
+### 视频会议
+
+```
+前端客户端 ──HTTP──> livegtw ──gRPC──> live ──管理API──> LiveKit Server
+                    │                     │
+                    v                     v
+            LiveKit Webhook ──────────> live (WebhookNotify)
+                                           │
+                                           v
+                                      PostgreSQL / Redis
+```
+
+`live` 管理会议单据、签发 join token、处理 Webhook 状态同步；`livegtw` 作为 HTTP 网关提供业务 API 并接收 LiveKit Webhook 验签后转发。浏览器获取 token 后直连 LiveKit Server 进行音视频通话。详见[视频会议](./live/README.md)。
+
+### 流媒体
+
+```
+Oryx/SRS ──HTTP 回调──> oryxgtw ──gRPC──> oryxserver ──HTTP API──> SRS / FFmpeg
+                                   │
+                                   v
+                              录制 / 流状态落库
+```
+
+`oryxgtw` 接收 Oryx 五类回调并分发，`oryxserver` 封装 Oryx/SRS HTTP API 为 gRPC 接口供业务调用，覆盖录制管理、流状态查询和中继拉流。LAL（`lalhook`/`lalproxy`）已不推荐使用，服务保留但不再维护，流媒体能力已迁移至 Oryx。
+
 ## 技术选型
 
 | 类别 | 技术 | 选型理由 |
@@ -112,6 +140,8 @@ IEC 104 从站 --> ieccaller --> Kafka --> iecstash --> streamevent --> TDengine
 | 消息队列 | Kafka | 高吞吐、持久化、多消费组 |
 | 任务队列 | asynq + Redis | 分布式、可靠、延时/定时任务 |
 | 实时通信 | SocketIO | 浏览器原生支持、双向通信 |
+| 视频会议 | LiveKit | SFU 架构、WebRTC、房间管理与录制 |
+| 流媒体 | Oryx / SRS | 高性能 RTMP/WebRTC 流媒体、录制与回调 |
 | 工业协议 | IEC 104 / Modbus / MQTT | 覆盖电力、工业自动化、物联网 |
 | 时序数据库 | TDengine | 高性能时序数据存储写入 |
 | 对象存储 | MinIO / 阿里 OSS / 腾讯 COS | 多云兼容 |

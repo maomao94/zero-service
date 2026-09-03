@@ -6,9 +6,10 @@ import (
 	"zero-service/app/live/internal/svc"
 	"zero-service/app/live/live"
 
-	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
+
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type ListMeetingsLogic struct {
@@ -28,16 +29,7 @@ func NewListMeetingsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *List
 // 分页查询会议列表
 func (l *ListMeetingsLogic) ListMeetings(in *live.ListMeetingsReq) (*live.ListMeetingsRes, error) {
 	page := in.Page
-	if page <= 0 {
-		page = 1
-	}
 	pageSize := in.PageSize
-	if pageSize <= 0 {
-		pageSize = 20
-	}
-	if pageSize > 100 {
-		pageSize = 100
-	}
 
 	meetings, total, err := l.svcCtx.MeetingRepo.ListMeetings(l.ctx, &svc.MeetingListQuery{
 		Status:          in.Status,

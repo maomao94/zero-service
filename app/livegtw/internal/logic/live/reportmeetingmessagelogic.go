@@ -24,12 +24,16 @@ func NewReportMeetingMessageLogic(ctx context.Context, svcCtx *svc.ServiceContex
 	}
 }
 
-func (l *ReportMeetingMessageLogic) ReportMeetingMessage(req *types.ReportMeetingMessageRequest) error {
-	_, err := l.svcCtx.LiveRpcCli.ReportMeetingMessage(l.ctx, &live.ReportMeetingMessageReq{
+func (l *ReportMeetingMessageLogic) ReportMeetingMessage(req *types.ReportMeetingMessageRequest) (*types.ReportMeetingMessageReply, error) {
+	resp, err := l.svcCtx.LiveRpcCli.ReportMeetingMessage(l.ctx, &live.ReportMeetingMessageReq{
 		MeetingNo:   req.MeetingNo,
-		MessageId:   req.MessageId,
 		Content:     req.Content,
 		MessageType: req.MessageType,
 	})
-	return err
+	if err != nil {
+		return nil, err
+	}
+	return &types.ReportMeetingMessageReply{
+		MessageId: resp.MessageId,
+	}, nil
 }

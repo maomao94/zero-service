@@ -27,6 +27,7 @@ func NewGenerateMeetingTicketLogic(ctx context.Context, svcCtx *svc.ServiceConte
 func (l *GenerateMeetingTicketLogic) GenerateMeetingTicket(req *types.GenerateMeetingTicketRequest) (resp *types.GenerateMeetingTicketReply, err error) {
 	r, err := l.svcCtx.LiveRpcCli.GenerateMeetingTicket(l.ctx, &live.GenerateMeetingTicketReq{
 		MeetingNo:         req.MeetingNo,
+		MeetingCode:       req.MeetingCode,
 		Identity:          req.Identity,
 		Name:              req.Name,
 		ExpireSeconds:     uint32(req.ExpireSeconds),
@@ -34,6 +35,7 @@ func (l *GenerateMeetingTicketLogic) GenerateMeetingTicket(req *types.GenerateMe
 		CanSubscribe:      req.CanSubscribe,
 		CanPublishData:    req.CanPublishData,
 		CanPublishSources: req.CanPublishSources,
+		TicketType:        req.TicketType,
 	})
 	if err != nil {
 		return nil, err

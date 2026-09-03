@@ -30,6 +30,7 @@ func (l *JoinMeetingLogic) JoinMeeting(req *types.JoinMeetingRequest) (resp *typ
 	name := authctx.GetUserName(l.ctx)
 	r, err := l.svcCtx.LiveRpcCli.JoinMeeting(l.ctx, &live.JoinMeetingReq{
 		MeetingNo:         req.MeetingNo,
+		MeetingCode:       req.MeetingCode,
 		Identity:          identity,
 		Name:              name,
 		CanPublish:        req.CanPublish,

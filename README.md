@@ -12,6 +12,7 @@ Zero-Service 不是一个必须整体部署的单体应用。各服务可以按�
 
 ## 核心能力
 
+- **视频会议**：基于 LiveKit Server 实现实时音视频会议，提供会议管理、票据邀请、Webhook 状态同步和聊天消息能力。
 - **IEC 104 数采**：多从站通信，通过 Kafka、MQTT 和 gRPC 并行分发采集数据，并支持 ASDU 合并与时序存储。
 - **DJI 云平台接入**：封装 Dock 3 Cloud API，支持航线任务、直播推流和 DRC 指令飞行。
 - **任务调度**：提供 asynq 异步回调、Plan/Batch/ExecItem 计划任务和基于 RRULE 的 CronJob 周期调度。
@@ -77,7 +78,9 @@ go run . -f etc/trigger.yaml
 | `socketgtw` / `socketpush` | SocketIO 连接管理与服务端推送 | [SocketIO 实时通信](./docs/socketio/socketio.md) |
 | `bridge*` | Modbus、MQTT、Kafka 和网关协议桥接 | [Bridge 协议桥接](./docs/bridge/README.md) |
 | `ispagent` / `ispserver` | 变电站 ISP 巡检协议代理与服务端 | [ISP 巡检协议](./docs/isp/isp.md) |
-| `oryxgtw` / `oryxserver` | Oryx/SRS 流媒体回调网关与 gRPC API 代理 | [Oryx 流媒体](./docs/oryx/README.md) |
+| `live` / `livegtw` | LiveKit 视频会议管理与 HTTP 网关 | [视频会议](./docs/live/README.md) · [LiveKit](https://github.com/livekit/livekit) · [Server SDK](https://github.com/livekit/server-sdk-go) |
+| `oryxgtw` / `oryxserver` | Oryx/SRS 流媒体回调网关与 gRPC API 代理 | [Oryx 流媒体](./docs/oryx/README.md) · [Oryx](https://github.com/ossrs/oryx) · [SRS](https://github.com/ossrs/srs) |
+| `lalhook` / `lalproxy` | LAL 流媒体 HTTP 回调与 gRPC 代理（已不推荐，迁移至 Oryx） | [LAL 流媒体回调](../app/lalhook/README.md) |
 | `file` | 分片文件传输与对象存储集成 | [文件与对象存储](./docs/file/README.md) |
 | `gis` | H3、GeoHash、电子围栏和坐标转换 | [地理信息服务](./docs/gis/README.md) |
 | `podengine` | Docker 容器生命周期管理 | [容器编排](./docs/podengine/README.md) |
@@ -85,7 +88,7 @@ go run . -f etc/trigger.yaml
 ## 仓库结构
 
 ```text
-app/         核心业务与协议服务
+app/         核心业务、视频会议、流媒体与协议服务
 aiapp/       AI 应用与模型接入服务
 socketapp/   SocketIO 网关与推送服务
 common/      跨服务复用的公共组件
@@ -101,6 +104,7 @@ docs/        架构、对接和开发文档
 | --- | --- |
 | 服务框架 | Go、go-zero、gRPC、gRPC-Gateway |
 | 消息与任务 | Kafka、MQTT、asynq、Redis、SocketIO |
+| 实时通信与会议 | SocketIO、LiveKit |
 | 工业与设备协议 | IEC 60870-5-104、Modbus、ISP、DJI Cloud API |
 | 数据与存储 | MySQL、PostgreSQL、SQLite、TDengine、MinIO、OSS |
 | 服务治理 | Nacos、OpenTelemetry、Prometheus、Docker |

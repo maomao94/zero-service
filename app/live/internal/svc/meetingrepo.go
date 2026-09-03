@@ -42,6 +42,31 @@ func (r *MeetingRepo) GetMeeting(ctx context.Context, meetingNo string) (*gormmo
 	return &m, nil
 }
 
+// GetMeetingByCode 按用户会议号（9位）查询会议单据。
+func (r *MeetingRepo) GetMeetingByCode(ctx context.Context, meetingCode string) (*gormmodel.LiveMeeting, error) {
+	var m gormmodel.LiveMeeting
+	err := r.db.WithContext(ctx).Where("meeting_code = ?", meetingCode).First(&m).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrMeetingNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &m, nil
+}
+
+// IsMeetingCodeExists 检查用户会议号是否已存在。
+func (r *MeetingRepo) IsMeetingCodeExists(ctx context.Context, meetingCode string) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&gormmodel.LiveMeeting{}).
+		Where("meeting_code = ?", meetingCode).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 // UpdateMeetingEnded 标记会议已结束（仅 active → ended，返回是否更新成功）。
 // operator/deptCode 非空时一并记录更新人/机构（webhook 场景为空字符串）。
 func (r *MeetingRepo) UpdateMeetingEnded(ctx context.Context, meetingNo string, endedAt time.Time, operator, deptCode string) (bool, error) {
@@ -80,7 +105,6 @@ type MeetingListQuery struct {
 
 // ListMeetings 分页查询会议列表；status 为 0 时不过滤。
 func (r *MeetingRepo) ListMeetings(ctx context.Context, q *MeetingListQuery) ([]gormmodel.LiveMeeting, int64, error) {
-	var meetings []gormmodel.LiveMeeting
 	db := r.db.WithContext(ctx).Model(&gormmodel.LiveMeeting{})
 	if q.Identity != "" {
 		// 只查询该用户作为参会人的会议
@@ -107,14 +131,12 @@ func (r *MeetingRepo) ListMeetings(ctx context.Context, q *MeetingListQuery) ([]
 	if q.CreateTimeEnd != "" {
 		db = db.Where("create_time < ?", q.CreateTimeEnd+" 23:59:59")
 	}
-	var total int64
-	if err := db.Count(&total).Error; err != nil {
+	var meetings []gormmodel.LiveMeeting
+	page, err := gormx.QueryPage(db.Order("create_time DESC"), q.Page, q.PageSize, &meetings)
+	if err != nil {
 		return nil, 0, err
 	}
-	if err := db.Order("create_time DESC").Offset(int((q.Page - 1) * q.PageSize)).Limit(int(q.PageSize)).Find(&meetings).Error; err != nil {
-		return nil, 0, err
-	}
-	return meetings, total, nil
+	return meetings, page.Total, nil
 }
 
 // IsParticipantInMeeting 校验指定参会者是否仍在会议中（status=joined）。
@@ -170,16 +192,13 @@ func (r *MeetingRepo) CreateMessage(ctx context.Context, m *gormmodel.LiveMeetin
 }
 
 // ListMessages 分页查询会议聊天记录。
-func (r *MeetingRepo) ListMessages(ctx context.Context, meetingNo string, page, pageSize int) ([]gormmodel.LiveMeetingMessage, int64, error) {
-	var messages []gormmodel.LiveMeetingMessage
+func (r *MeetingRepo) ListMessages(ctx context.Context, meetingNo string, page, pageSize int64) ([]gormmodel.LiveMeetingMessage, int64, error) {
 	q := r.db.WithContext(ctx).Model(&gormmodel.LiveMeetingMessage{}).
 		Where("meeting_no = ?", meetingNo)
-	var total int64
-	if err := q.Count(&total).Error; err != nil {
+	var messages []gormmodel.LiveMeetingMessage
+	pageRes, err := gormx.QueryPage(q.Order("create_time DESC"), page, pageSize, &messages)
+	if err != nil {
 		return nil, 0, err
 	}
-	if err := q.Order("create_time DESC").Offset((page - 1) * pageSize).Limit(pageSize).Find(&messages).Error; err != nil {
-		return nil, 0, err
-	}
-	return messages, total, nil
+	return messages, pageRes.Total, nil
 }

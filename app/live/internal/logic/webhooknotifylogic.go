@@ -3,11 +3,11 @@ package logic
 import (
 	"context"
 	"strings"
-	"time"
 
 	"zero-service/app/live/internal/svc"
 	"zero-service/app/live/live"
 	"zero-service/app/live/model/gormmodel"
+	"zero-service/common/carbonx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -96,7 +96,7 @@ func (l *WebhookNotifyLogic) handleRoomFinished(event *livekit.WebhookEvent) {
 	if meeting.Status == gormmodel.MeetingStatusEnded {
 		return
 	}
-	if _, err := l.svcCtx.MeetingRepo.UpdateMeetingEnded(l.ctx, room.GetName(), time.Now(), "", ""); err != nil {
+	if _, err := l.svcCtx.MeetingRepo.UpdateMeetingEnded(l.ctx, room.GetName(), carbonx.NowStartOfSecond().StdTime(), "", ""); err != nil {
 		l.Logger.Errorf("update meeting ended failed: room=%s err=%v", room.GetName(), err)
 		return
 	}
@@ -116,7 +116,7 @@ func (l *WebhookNotifyLogic) handleParticipantJoined(event *livekit.WebhookEvent
 		Identity:  participant.GetIdentity(),
 		Name:      participant.GetName(),
 		Status:    gormmodel.ParticipantStatusJoined,
-		JoinTime:  time.Now(),
+		JoinTime:  carbonx.NowStartOfSecond().StdTime(),
 	}
 	if err := l.svcCtx.MeetingRepo.UpsertParticipant(l.ctx, p); err != nil {
 		l.Logger.Errorf("upsert participant failed: room=%s identity=%s err=%v", room.GetName(), participant.GetIdentity(), err)
@@ -133,7 +133,7 @@ func (l *WebhookNotifyLogic) handleParticipantLeft(event *livekit.WebhookEvent) 
 		l.Logger.Errorf("participant_left without room/participant: id=%s", event.GetId())
 		return
 	}
-	if err := l.svcCtx.MeetingRepo.MarkParticipantLeft(l.ctx, room.GetName(), participant.GetIdentity(), time.Now()); err != nil {
+	if err := l.svcCtx.MeetingRepo.MarkParticipantLeft(l.ctx, room.GetName(), participant.GetIdentity(), carbonx.NowStartOfSecond().StdTime()); err != nil {
 		l.Logger.Errorf("mark participant left failed: room=%s identity=%s err=%v", room.GetName(), participant.GetIdentity(), err)
 		return
 	}

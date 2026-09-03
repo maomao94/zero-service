@@ -2,6 +2,7 @@ package gtwx
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -69,11 +70,8 @@ func SetLogOkHandler() {
 	httpx.SetOkHandler(func(ctx context.Context, v any) any {
 		if m := getReqMeta(ctx); m != nil {
 			if resp, ok := v.(xhttp.BaseResponse[any]); ok && resp.Code != xhttp.BusinessCodeOK {
-				logc.Error(ctx, "[HTTP] "+m.Method+" "+m.Path,
-					logc.Field("duration", time.Since(m.StartAt).String()),
-					logc.Field("code", resp.Code),
-					logc.Field("msg", resp.Msg),
-				)
+				logc.Error(ctx, fmt.Sprintf("[HTTP] [%d] - %s %s - %s - %s",
+					resp.Code, m.Method, m.Path, time.Since(m.StartAt).String(), resp.Msg))
 			}
 		}
 		return v
