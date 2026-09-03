@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-4.md`
-- **Total Sessions**: 206
+- **Total Sessions**: 207
 - **Last Active**: 2026-09-03
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-4.md` | ~665 | Active |
+| `journal-4.md` | ~688 | Active |
 | `journal-3.md` | ~1989 | Archived |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
@@ -32,6 +32,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 207 | 2026-09-03 | Web RPC 注册演示与 live 前端全量审查 | `b128d5d0`, `2c087884`, `954fdd26` | `master` |
 | 206 | 2026-09-03 | 优化项目文档：新增 LiveKit 会议服务、Oryx 流媒体、规整端口表 | `a4a9c68e` | `master` |
 | 205 | 2026-09-03 | 优化视频会议 Demo 大厅与会议工作区 | `52793e1a` | `master` |
 | 204 | 2026-09-03 | 视频会议 meeting_code + RoomSid + 规范更新 | `a432f2d7`, `87b5e771` | `master` |

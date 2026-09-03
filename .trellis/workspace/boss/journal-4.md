@@ -663,3 +663,26 @@ Proto: JoinMeetingReq 增加 canPublish/canSubscribe/canPublishData/canPublishSo
 ### Status
 
 [OK] **Completed**
+
+
+## Session 207: Web RPC 注册演示与 live 前端全量审查
+
+**Date**: 2026-09-03
+**Task**: Web RPC 注册演示与 live 前端全量审查
+**Branch**: `master`
+
+### Summary
+
+诊断 PerformMeetingRpc 404 报错（RpcError 1400 = 目标未注册 echo，非自发自收问题，rpc_self_test.go 集成测试实证三场景）；web/live 实现三链路解耦：群聊（reportMessage 拿服务端 messageId→publishData，访客仅 SDK）、Send Data/Perform RPC 调试工具（仅 API）；MeetingRoom 为全员（含访客）自动注册 echo，handler 立即返回参会人 JSON 防后端超时；trellis-check 全量审查修复 22 处（消息 ID 契约断裂、echo 状态失同步、防双击、clipboard catch、死代码清理、noUnusedLocals 启用）；spec 新增 RPC 错误诊断矩阵与 Web 前端约定章节
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b128d5d0` | (see git log) |
+| `2c087884` | (see git log) |
+| `954fdd26` | (see git log) |
+
+### Status
+
+[OK] **Completed**
