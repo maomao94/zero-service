@@ -17,7 +17,7 @@ func TestServerRpcToSelf(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	client, err := New(WithURL(envOr("LIVEKIT_URL", "http://127.0.0.1:7880")), WithAPIKey(envOr("LIVEKIT_API_KEY", "devkey"), envOr("LIVEKIT_API_SECRET", "secret")))
+	client, err := New(WithURL(envOr("LIVEKIT_URL", "https://127.0.0.1:7880")), WithAPIKey(envOr("LIVEKIT_API_KEY", "devkey"), envOr("LIVEKIT_API_SECRET", "secret")))
 	if err != nil {
 		t.Fatal(err)
 	}

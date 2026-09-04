@@ -108,6 +108,22 @@ GET  /live/v1/listMeetingMessages      # 查询历史
 
 处理逻辑：基于 `event.Id` 幂等去重，更新会议状态和参与者记录。
 
+### 8. SIP 电话集成
+
+支持 SIP 电话与 WebRTC 用户在同一 Room 中通话。详见 [SIP 电话集成指南](./sip-integration.md)。
+
+**架构**：
+
+```
+浏览器(WebRTC) ◄──► LiveKit Server ◄──► LiveKit SIP Server ◄──► FreeSWITCH ◄──► 软电话/手机
+```
+
+**能力**：
+- 外呼：浏览器用户拨打电话号码
+- 来电：电话用户呼入，自动加入 Room
+- 点对点：1v1 通话
+- 群内呼号：会议中邀请电话参会者
+
 ## gRPC 接口一览
 
 | 方法 | 说明 |
@@ -127,6 +143,15 @@ GET  /live/v1/listMeetingMessages      # 查询历史
 | `ReportMeetingMessage` | 上报聊天消息 |
 | `ListMeetingMessages` | 查询聊天记录 |
 | `WebhookNotify` | 接收 LiveKit Webhook 事件 |
+| `CreateSipTrunk` | 创建 SIP 中继线 |
+| `ListSipTrunks` | 列出 SIP 中继线 |
+| `DeleteSipTrunk` | 删除 SIP 中继线 |
+| `CreateSipDispatchRule` | 创建来电路由规则 |
+| `ListSipDispatchRules` | 列出路由规则 |
+| `DeleteSipDispatchRule` | 删除路由规则 |
+| `DialSip` | 发起 SIP 外呼 |
+| `HangupSip` | 挂断 SIP 通话 |
+| `ListSipCalls` | 查询通话记录 |
 
 ## HTTP 接口一览
 
@@ -151,6 +176,15 @@ GET  /live/v1/listMeetingMessages      # 查询历史
 | POST | `/live/v1/generateMeetingTicket` | 生成票据 |
 | POST | `/live/v1/reportMeetingMessage` | 上报消息 |
 | GET | `/live/v1/listMeetingMessages` | 查询历史消息 |
+| POST | `/live/v1/sip-trunks` | 创建 SIP trunk |
+| GET | `/live/v1/sip-trunks` | 列出 SIP trunk |
+| DELETE | `/live/v1/sip-trunks/:id` | 删除 SIP trunk |
+| POST | `/live/v1/sip-dispatch-rules` | 创建路由规则 |
+| GET | `/live/v1/sip-dispatch-rules` | 列出路由规则 |
+| DELETE | `/live/v1/sip-dispatch-rules/:id` | 删除路由规则 |
+| POST | `/live/v1/sip-calls/dial` | 外呼拨号 |
+| POST | `/live/v1/sip-calls/hangup` | 挂断通话 |
+| GET | `/live/v1/sip-calls` | 查询通话记录 |
 
 ### 无需鉴权
 
@@ -162,6 +196,8 @@ GET  /live/v1/listMeetingMessages      # 查询历史
 ## 依赖
 
 - **LiveKit Server**：SFU 媒体服务器，负责音视频转发
+- **LiveKit SIP Server**：SIP↔WebRTC 协议转换桥接
+- **FreeSWITCH**：SIP 电话交换机，管理分机注册和路由
 - **PostgreSQL**：会议单据、参与者记录、聊天消息存储
 - **Redis**：分布式锁（防重入）、票据存储
 - **common/livekitx**：LiveKit Go Server SDK 封装
@@ -255,3 +291,4 @@ room, err := client.JoinRoom(ctx, "room-name", "user-1",
 
 - [LiveKit 对接指南](./integration-guide.md)：Server SDK、Token、Webhook、房间管理
 - [LiveKit 回调说明](./callbacks-guide.md)：RoomCallback 场景与字段
+- [SIP 电话集成指南](./sip-integration.md)：SIP 架构、部署、API、常见问题

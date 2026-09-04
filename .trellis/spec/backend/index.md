@@ -40,7 +40,7 @@
 | 网络 | netx, wsx, socketiox, ssex, SSE | [networking-guidelines](./networking-guidelines.md) |
 | Log Dump | logdump, gRPC-to-logx, 日志汇聚 | [logdump-guidelines](./logdump-guidelines.md) |
 | Flow | flowx, Azure, go-workflow, 编排 | [flow-guidelines](./flow-guidelines.md) |
-| LiveKit | livekitx, meeting, JWT, Webhook, Twirp, 房间, 录制, SIP | [livekit-guidelines](./livekit-guidelines.md) |
+| LiveKit | livekitx, meeting, JWT, Webhook, Twirp, 房间, 录制, SIP, trunk, dispatch, 外呼, 来电 | [livekit-guidelines](./livekit-guidelines.md) |
 | Live 前端 | web/live, 聊天, Echo, sendMeetingData, performMeetingRpc, 票据入会, 访客 | [livekit-guidelines → Web 前端（web/live）约定](./livekit-guidelines.md) |
 
 ## Pre-Development Checklist

@@ -1,0 +1,28 @@
+# LiveKit SIP Server 配置
+# 容器内通过 host.docker.internal 访问宿主机 Redis
+# 通过 Docker 内部网络连接 LiveKit Server (ws://livekit-server:7880)
+
+# LiveKit API 密钥（必须和 livekit-server.yaml 一致）
+api_key: devkeydevkeydevkeydevkeydevkeydevkey
+api_secret: secretsecretsecretsecretsecretsecret
+
+# LiveKit Server WebSocket 地址（Docker 内部网络，HTTP/WS）
+ws_url: ws://livekit-server:7880
+
+# Redis 连接（宿主机已有 Redis，端口 36379）
+redis:
+  address: host.docker.internal:36379
+  password: G62m50oigInC30sf
+
+# SIP 信令端口
+sip_port: 5060
+
+# RTP 媒体流端口范围
+rtp_port: 11000-11100
+
+# 不使用外部 IP（局域网测试）
+use_external_ip: false
+
+# 日志级别
+logging:
+  level: debug

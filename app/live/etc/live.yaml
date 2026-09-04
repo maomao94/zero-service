@@ -20,9 +20,9 @@ NacosConfig:
   ServiceName: live.rpc
 LiveKit:
   Url: http://127.0.0.1:7880
-  ApiKey: devkey
-  ApiSecret: secret
-  WebhookKey: secret
+  ApiKey: devkeydevkeydevkeydevkeydevkeydevkey
+  ApiSecret: secretsecretsecretsecretsecretsecret
+  WebhookKey: secretsecretsecretsecretsecretsecret
   TokenValidFor: 2h
 DB:
 #  DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai

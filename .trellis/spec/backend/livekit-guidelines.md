@@ -124,7 +124,7 @@ room.JoinWithContext(ctx, url, lksdk.ConnectInfo{...})
 
 - 链路：LiveKit 推送 → livegtw 用 `webhook.ReceiveWebhookEvent` 验签（失败 401，不调用业务）→ 把 `*livekit.WebhookEvent` **proto 序列化后的原始字节**经 `WebhookNotify(WebhookNotifyReq{Data: bytes})` 透传给 live 服务 → live 服务 `proto.Unmarshal` 解析为 SDK 对象后处理业务。禁止在 proto 中做字段扁平化（eventId/eventType/roomName/...），会丢失 SDK 结构。
 - **不做 TTL 幂等**：LiveKit 事件可能重复、迟到、补发（对账闭环需要重放），而处理操作本身幂等（参会记录 `Where+Assign+FirstOrCreate` upsert、会议状态仅 active→ended 流转、未知会议安全忽略），重复/补发重放结果一致。禁止再加 event ID 去重键阻碍补发。
-- **事件全 case**：`room_finished`/`participant_joined`/`participant_left` 处理；`room_started` 无需处理（创建即 active）；`participant_connection_aborted`/`track_published`/`track_unpublished`/`egress_started`/`egress_updated`/`egress_ended`/`ingress_started`/`ingress_ended` 建 case 标注 TODO 并记日志；未知事件安全忽略。禁止 default 静默吞掉已知事件。
+- **事件全 case**：`room_finished`/`participant_joined`/`participant_left` 处理；`room_started` 处理 SIP 外呼/API 自动创建的房间补插会议记录（见下文 SIP 补插逻辑）；`participant_connection_aborted`/`track_published`/`track_unpublished`/`egress_started`/`egress_updated`/`egress_ended`/`ingress_started`/`ingress_ended` 建 case 标注 TODO 并记日志；未知事件安全忽略。禁止 default 静默吞掉已知事件。
 
 ### 2. 会议业务约定
 
@@ -206,6 +206,207 @@ room.JoinWithContext(ctx, url, lksdk.ConnectInfo{...})
 ### 4. 业务错误码
 
 业务错误统一 extproto + `tool.NewErrorByPbCode`/`NewErrorByPbCodeWrap`（reason=六位错误码，HTTP 自动映射），禁止裸 `status.Error`/`status.Errorf`。常用映射：参数 `101101`、记录不存在 `102102`、记录已存在 `102103`、缓存/Redis `103101`、未认证 `104101`、业务状态不允许 `105102`、重复操作 `105103`、DB `102101`、第三方（LiveKit）`106102`。
+
+## SIP 电话集成规范
+
+适用：SIP 电话与 LiveKit 会议混合场景，包括 trunk 管理、路由规则、外呼拨号、来电接入。
+
+### 1. SIP 架构总览
+
+```
+浏览器(WebRTC) ◄──► LiveKit Server ◄──► LiveKit SIP Server ◄──► FreeSWITCH ◄──► 软电话/手机
+     :7880                :7880                :5070                :5060
+```
+
+| 组件 | 职责 |
+|------|------|
+| LiveKit Server | WebRTC 媒体服务器，房间和参与者管理 |
+| LiveKit SIP Server | SIP↔WebRTC 协议转换桥接 |
+| FreeSWITCH | SIP 电话交换机，分机注册、振铃、路由 |
+
+FreeSWITCH 是"电话簿+接线员"（管理分机注册），LiveKit SIP Server 是"翻译官"（SIP↔WebRTC 转换）。
+
+### 2. SIP API 字段命名（与 LiveKit SDK 对齐）
+
+Proto 字段必须与 LiveKit SDK (`livekit.CreateSIPParticipantRequest` 等) 保持一致，使用 snake_case：
+
+| 场景 | LiveKit SDK 字段 | 说明 |
+|------|-----------------|------|
+| 创建 Outbound Trunk | `address`, `numbers`, `auth_username`, `auth_password`, `destination_country` | SIP 服务器地址、号码、认证 |
+| 创建 Inbound Trunk | `numbers`, `allowed_addresses`, `allowed_numbers`, `auth_username`, `auth_password` | 来电号码、IP 白名单 |
+| 创建 Dispatch Rule | `rule` (含 `dispatch_rule_direct`), `trunk_ids`, `name`, `metadata` | 路由规则 |
+| 外呼拨号 | `sip_trunk_id`, `sip_call_to`, `room_name`, `participant_identity`, `participant_name`, `dtmf`, `wait_until_answered`, `hide_phone_number` | SIP 通话参数 |
+
+### 3. SIP API 调用方式
+
+```go
+// 创建 Outbound Trunk
+outRes, err := sip.CreateSIPOutboundTrunk(ctx, &livekit.CreateSIPOutboundTrunkRequest{
+    Trunk: &livekit.SIPOutboundTrunkInfo{
+        Name:         "trunk-name",
+        Address:      "freeswitch:5080",  // SIP 服务器地址
+        Numbers:      []string{"1000"},   // 关联号码
+        AuthUsername: "username",
+        AuthPassword: "password",
+    },
+})
+
+// 创建 Inbound Trunk
+inRes, err := sip.CreateSIPInboundTrunk(ctx, &livekit.CreateSIPInboundTrunkRequest{
+    Trunk: &livekit.SIPInboundTrunkInfo{
+        Name:    "trunk-name",
+        Numbers: []string{"1000"},  // 接受来电的号码
+    },
+})
+
+// 创建 Dispatch Rule（fixed 模式，来电进入固定 Room）
+ruleRes, err := sip.CreateSIPDispatchRule(ctx, &livekit.CreateSIPDispatchRuleRequest{
+    Rule: &livekit.SIPDispatchRule{
+        Rule: &livekit.SIPDispatchRule_DispatchRuleDirect{
+            DispatchRuleDirect: &livekit.SIPDispatchRuleDirect{
+                RoomName: "room-name",
+            },
+        },
+    },
+    TrunkIds: []string{trunkID},
+    Name:     "rule-name",
+})
+
+// 外呼拨号
+participant, err := sip.CreateSIPParticipant(ctx, &livekit.CreateSIPParticipantRequest{
+    SipTrunkId:          trunkID,
+    SipCallTo:           "1001",           // 被叫号码
+    RoomName:            "room-name",       // 目标 Room
+    ParticipantIdentity: "sip-1001",       // 参会者身份
+    ParticipantName:     "Test Call",       // 参会者显示名
+    WaitUntilAnswered:   false,             // 是否等待接听
+})
+```
+
+### 4. SIP 补插会议记录（Webhook 处理）
+
+SIP 外呼/API 创建的房间没有 meeting 记录，需要在 `room_started` webhook 事件中补插：
+
+```go
+// handleRoomStarted 补插逻辑
+// 1. 检查数据库是否有对应会议记录（GetMeeting）
+// 2. 如果没有，生成 S 开头的会议号（IdUtil.NextId("S", "live")）
+// 3. 生成 9 位用户会议号（RandomDigits(9)），加锁防重复
+// 4. 从 webhook 事件获取房间参数（EmptyTimeout, DepartureTimeout, MaxParticipants, Sid, Metadata）
+// 5. 创建会议记录，创建人标记为 "SIP"
+```
+
+**关键约束**：
+- 会议号用 `S` 前缀（区别于正常创建的 `M` 前缀）
+- 房间参数完全来自 webhook 事件，不自己塞默认值
+- 创建人/更新人标记为 `SIP`（无用户身份）
+- 幂等：已有记录则跳过
+
+### 5. SIP Trunk 管理约定
+
+- Trunk 配置持久化到数据库（`live_sip_trunk`），LiveKit 侧通过 `sip_trunk_id` 关联
+- 创建 trunk 时同时在 LiveKit 侧创建，删除时同时删除
+- Dispatch Rule 同理（`live_sip_dispatch_rule`）
+
+### 6. SIP 通话记录
+
+- 通话记录表 `live_sip_call_log`，记录 call_id、方向、主被叫、关联会议号、状态、时长
+- Webhook 事件更新通话状态：`participant_joined` → active，`participant_left` → completed
+
+### 7. 部署配置
+
+Docker Compose 部署 SIP 环境：
+- LiveKit Server：WebRTC 媒体服务器（**不原生支持 TLS**，Config 结构体无 `tls` 字段，生产需反向代理终止 TLS）
+- LiveKit SIP Server：SIP↔WebRTC 桥接
+- FreeSWITCH：SIP 电话交换机（提供分机注册）
+
+#### Docker 网络与端口
+
+Docker 网络 `lk-net`，容器 IP 在重建后可能变动。端口映射：
+
+| 容器 | 端口映射 | 说明 |
+|------|---------|------|
+| livekit-server | 7880:7880, 60000-60100:60000-60100/udp | HTTP API + WebRTC 媒体 |
+| freeswitch | 5060:5060, 5080:5080, 8021:8021, 16384-16484:16384-16484/udp | SIP + RTP |
+| livekit-sip | 5070:5060, 11000-11100:11000-11100/udp | SIP 桥接 |
+
+#### FreeSWITCH 配置挂载（`:ro` 单文件方案）
+
+FreeSWITCH 镜像（safarov/freeswitch）启动时会检查 `/etc/freeswitch/freeswitch.xml` 是否存在，不存在则复制 vanilla 配置。利用 `:ro` 只读挂载覆盖关键文件，其余 vanilla 配置正常复制：
+
+```yaml
+# docker-compose.yaml
+freeswitch:
+  volumes:
+    - ../freeswitch-vars.xml:/etc/freeswitch/vars.xml:ro          # 覆盖 domain/ext-rtp_ip
+    - ../freeswitch-switch.conf.xml:/etc/freeswitch/autoload_configs/switch.conf.xml:ro  # 覆盖 RTP 端口范围
+```
+
+镜像启动的 vanilla 复制因只读挂载而跳过这两个文件，无需 entrypoint hack。
+
+#### FreeSWITCH 关键配置
+
+```xml
+<!-- vars.xml -->
+<X-PRE-PROCESS cmd="set" data="domain=10.10.11.25"/>        <!-- 必须与软电话注册 IP 一致 -->
+<X-PRE-PROCESS cmd="set" data="default_password=1234"/>      <!-- 固定密码，不用随机 -->
+<X-PRE-PROCESS cmd="set" data="external_rtp_ip=10.10.11.25"/> <!-- 宿主机局域网 IP，不能用 host.docker.internal -->
+<X-PRE-PROCESS cmd="set" data="external_sip_ip=10.10.11.25"/> <!-- 同上 -->
+
+<!-- switch.conf.xml -->
+<param name="rtp-start-port" value="16384"/>
+<param name="rtp-end-port" value="16484"/>  <!-- 范围 ≤100，Docker Desktop 端口映射上限 16k -->
+```
+
+> **Warning**: `external_rtp_ip` / `external_sip_ip` 必须设为宿主机局域网 IP（如 `10.10.11.25`），不能用 `host.docker.internal`。Docker Desktop 解析 `host.docker.internal` 为内部网关 IP（192.168.65.254），宿主机软电话无法到达该地址，导致 RTP 媒体流不通（`packets: 0`，30s media-timeout 挂断）。
+
+> **Warning**: Docker Desktop 端口映射上限约 16k 个 UDP 端口。FreeSWITCH 默认 RTP 范围 16384-32768（16k 端口）刚好达到上限，会导致 Docker Desktop 卡死。必须将 RTP 范围缩小到 ≤100（如 16384-16484）。
+
+> **Warning**: `domain` 必须与软电话注册地址一致。如果软电话注册到 `10.10.11.25:5060`，domain 必须是 `10.10.11.25`（不是 `127.0.0.1`）。
+
+#### 软电话注册
+
+软电话注册到宿主机局域网 IP（非 127.0.0.1），使 SDP 中 RTP IP 为宿主机 LAN IP，FreeSWITCH 容器可通过 Docker 网关到达：
+
+```
+sip:1001@10.10.11.25:5060  密码: 1234
+```
+
+#### Outbound Trunk 配置
+
+Outbound Trunk 必须使用 FreeSWITCH 的 external profile（端口 5080，免认证）：
+
+```go
+outRes, err := sip.CreateSIPOutboundTrunk(ctx, &livekit.CreateSIPOutboundTrunkRequest{
+    Trunk: &livekit.SIPOutboundTrunkInfo{
+        Name:    "local-freeswitch",
+        Address: "freeswitch:5080",  // Docker 内部网络 + external profile 端口
+        Numbers: []string{"1000"},
+    },
+})
+```
+
+#### TLS 证书生成
+
+`deploy/tls/gen-tls.sh` 已参数化，支持环境变量注入：
+
+```bash
+DOMAIN=myhost.local EXTRA_DNS="livekit-server,*.local" EXTRA_IPS="10.10.11.25" ./gen-tls.sh
+```
+
+- bash3 空数组兼容（macOS 自带 bash3 不支持 `declare -a arr=()`）
+- 证书默认含 SAN：localhost, *.local, livekit-server, 127.0.0.1, ::1
+
+#### 浏览器自动播放策略
+
+现代 Chrome 浏览器要求用户交互后才能播放音频。LiveKit 的 `RoomAudioRenderer` 组件渲染远端音频，但首次播放需要用户点击页面。这是预期行为，不是 bug。
+
+#### SIP 静音同步
+
+| 方向 | 机制 | 说明 |
+|------|------|------|
+| 主持人静音电话参与者 | LiveKit `MuteRoomTrack` API | ManagePane「静音语音」按钮调用，SIP 参与者音频轨道被服务端静音 |
+| 电话侧静音 → 会议 UI | LiveKit SIP Server 检测 re-INVITE | 依赖 SIP Server 实现，可能不自动同步 |
 
 ## 版本与依赖
 

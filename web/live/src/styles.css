@@ -184,3 +184,9 @@
 .thumbnail-size-2 .thumbnail-row .thumbnail-item{flex-basis:184px;height:108px}
 @media(max-width:620px){.thumbnail-row .thumbnail-item{flex-basis:120px;height:72px}.thumbnail-strip{max-height:108px;padding:7px 9px}}
 @media(max-width:620px){.thumbnail-size-0{max-height:100px}.thumbnail-size-0 .thumbnail-row .thumbnail-item{flex-basis:96px;height:56px}.thumbnail-size-1{max-height:120px}.thumbnail-size-1 .thumbnail-row .thumbnail-item{flex-basis:120px;height:72px}.thumbnail-size-2{max-height:136px}.thumbnail-size-2 .thumbnail-row .thumbnail-item{flex-basis:144px;height:86px}}
+
+/* 音频参与者样式 */
+.audio-avatar{background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center}
+.audio-tag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:4px;background:#e0f2fe;color:#0284c7;font-size:10px;font-weight:600;vertical-align:middle}
+.track-audio-only{background:#1e293b;color:#94a3b8}
+.track-audio-only .avatar{background:#334155;color:#94a3b8}

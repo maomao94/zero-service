@@ -2,6 +2,7 @@ package livekitx
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 
 	"github.com/livekit/protocol/auth"
@@ -16,7 +17,8 @@ type HTTPService = httpc.Service
 
 // API 聚合 LiveKit 原生 Protocol service 接口。它不复制请求和响应类型。
 // v2.18.1 的 LiveKitAPI 无 HTTP client option，因此本包在同一认证基础上
-// 直接构造 SDK 使用的生成 service client，确保注入的 HTTP service 真正生效。
+// 直接构造 SDK 使用的生成 service client；HTTP 传输由 Config.HTTPClient
+// 决定，未注入时使用 TLS 容错的内部传输（internalTransport）。
 //
 // MVP 只覆盖快速会议需要的 Room/Participant、Egress、Ingress、SIP 和
 // AgentDispatch；Connector、AgentSimulation 和 Cloud Agents 不属于本包能力，
@@ -45,9 +47,9 @@ func (a *API) SIP() livekit.SIP { return a.sipService }
 func (a *API) AgentDispatch() livekit.AgentDispatchService { return a.agentDispatchService }
 
 func newAPI(cfg Config) (*API, error) {
-	client := HTTPClient(cfg.HTTPClient)
-	if cfg.HTTPService != nil {
-		client = serviceHTTPClient{service: cfg.HTTPService}
+	client := cfg.HTTPClient
+	if client == nil {
+		client = internalTransport()
 	}
 	baseURL := signalling.ToHttpURL(cfg.URL)
 	opts := []twirp.ClientOption{twirp.WithClientInterceptors(authInterceptor(cfg.APIKey, cfg.APISecret))}
@@ -60,13 +62,19 @@ func newAPI(cfg Config) (*API, error) {
 	}, nil
 }
 
-// HTTPClient 是 Twirp 生成客户端所需的最小 HTTP 接口。
-type HTTPClient interface {
-	Do(*http.Request) (*http.Response, error)
+// internalTransport 返回 SDK 内部默认传输：TLS 对自签证书容错，
+// http/https 均可直连，调用方无需安装证书（开发/内网环境的主要路径）。
+// 返回 *http.Client 时生成的 twirp client 会自动包一层禁重定向处理。
+func internalTransport() livekit.HTTPClient {
+	return &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // SDK 内部传输对内网自签证书容错
+		},
+	}
 }
 
-// serviceHTTPClient 把 go-zero httpc.Service 适配为 Twirp 生成 client 需要的
-// HTTP Do 接口，使注入的 httpc.Service 真正执行管理请求。
+// serviceHTTPClient 把 go-zero httpc.Service 适配为生成的 twirp client
+// 所需的 livekit.HTTPClient，使注入的 httpc.Service 真正执行管理请求。
 type serviceHTTPClient struct{ service HTTPService }
 
 func (c serviceHTTPClient) Do(req *http.Request) (*http.Response, error) {

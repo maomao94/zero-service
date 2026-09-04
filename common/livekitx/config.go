@@ -6,7 +6,6 @@
 package livekitx
 
 import (
-	"net/http"
 	"net/url"
 	"strings"
 	"sync"
@@ -18,13 +17,15 @@ import (
 // Config 描述 LiveKit 管理 API 和共享 HTTP 传输配置。
 // 它只保存"给 New 做初始化"的配置项。
 type Config struct {
-	URL        string
-	APIKey     string
-	APISecret  string
-	HTTPClient *http.Client
-	// HTTPService 与 HTTPClient 只能二选一；都未设置时使用标准默认客户端。
-	HTTPService   HTTPService
-	httpClientSet bool
+	URL       string
+	APIKey    string
+	APISecret string
+	// HTTPClient 可选注入管理 API 的 HTTP 传输（即生成的 twirp client
+	// 所需的 livekit.HTTPClient，*http.Client 天然满足；go-zero
+	// httpc.Service 用 WithHTTPService 注入）：TLS/观测由注入方配置。
+	// nil 时使用 SDK 内部传输——TLS 对自签证书容错，http/https 均可
+	// 直连，调用方无需安装证书。
+	HTTPClient livekit.HTTPClient
 }
 
 // Option 直接作用于 Client：配置类选项写入 c.config。nil option 会被
@@ -39,17 +40,16 @@ func WithAPIKey(key, secret string) Option {
 	return func(c *Client) { c.config.APIKey, c.config.APISecret = key, secret }
 }
 
-// WithHTTPClient 注入标准库 HTTP 客户端。
-func WithHTTPClient(client *http.Client) Option {
-	return func(c *Client) {
-		c.config.HTTPClient = client
-		c.config.httpClientSet = true
-	}
+// WithHTTPClient 注入管理 API 的 HTTP 传输（livekit.HTTPClient，
+// *http.Client 天然满足），TLS 由注入方自行配置。
+func WithHTTPClient(client livekit.HTTPClient) Option {
+	return func(c *Client) { c.config.HTTPClient = client }
 }
 
-// WithHTTPService 注入 go-zero httpc.Service，复用业务侧的传输和观测配置。
+// WithHTTPService 注入 go-zero httpc.Service（便捷入口）：复用业务侧的
+// 传输和观测配置，TLS 由注入的 service 决定。
 func WithHTTPService(service HTTPService) Option {
-	return func(c *Client) { c.config.HTTPService = service }
+	return func(c *Client) { c.config.HTTPClient = serviceHTTPClient{service: service} }
 }
 
 // Client 是 livekitx 的统一入口：持有复用的管理 API 与配置；
@@ -76,12 +76,6 @@ func New(opts ...Option) (*Client, error) {
 	u, err := url.Parse(cfg.URL)
 	if cfg.URL == "" || err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") ||
 		strings.TrimSpace(cfg.APIKey) == "" || strings.TrimSpace(cfg.APISecret) == "" {
-		return nil, ErrInvalidConfig
-	}
-	if cfg.HTTPClient == nil {
-		cfg.HTTPClient = &http.Client{}
-	}
-	if cfg.HTTPService != nil && cfg.httpClientSet {
 		return nil, ErrInvalidConfig
 	}
 	api, err := newAPI(*cfg)

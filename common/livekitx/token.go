@@ -9,16 +9,16 @@ import (
 
 // JoinTokenOptions 定义指定房间和身份的视频入会授权。
 type JoinTokenOptions struct {
-	APIKey             string
-	APISecret          string
-	Room               string
-	Identity           string
-	Name               string
-	ValidFor           time.Duration
-	CanPublish         bool
-	CanSubscribe       bool
-	CanPublishData     bool
-	CanPublishSources  []string
+	APIKey            string
+	APISecret         string
+	Room              string
+	Identity          string
+	Name              string
+	ValidFor          time.Duration
+	CanPublish        bool
+	CanSubscribe      bool
+	CanPublishData    bool
+	CanPublishSources []string
 }
 
 // NewSIPToken 生成只包含 SIP 权限的管理/呼叫 token，不混用 VideoGrant。

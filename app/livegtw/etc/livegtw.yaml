@@ -23,5 +23,5 @@ LiveRpcConf:
   NonBlock: true
   Timeout: 5000
 LiveKit:
-  WebhookKey: secret
+  WebhookKey: secretsecretsecretsecretsecretsecret
 EnableTestPage: true

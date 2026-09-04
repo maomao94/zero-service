@@ -41,12 +41,8 @@
 | --- | --- |
 | [开发指南](./development.md) | 环境搭建、代码生成、模块扩展和调试技巧 |
 | [部署指南](./deployment.md) | Docker、单服务和集群部署、配置管理 |
-| [antsx 与响应式模式](./antsx-vs-reactive.md) | antsx Promise/Invoke 与响应式编排模式对比 |
+| [antsx 并发原语指南](./antsx-vs-reactive.md) | antsx 核心 API、使用场景与最佳实践 |
 | [Superpowers 技能全量介绍](./superpowers.md) | AI 编程技能集：14 个技能的设计哲学、铁律与使用流程 |
+| [Matt Pocock 技能全量介绍](./matt-pocock-skills.md) | AI 编程技能集：37 个技能的工程实践、调试诊断与需求拆分 |
 
-## 架构决策
 
-| 决策 | 内容 |
-| --- | --- |
-| [ADR-0001 使用 antsx 表达并发与异步编排](./adr/0001-use-antsx-for-concurrency.md) | 用 Go goroutine/channel/泛型实现并发原语，不引入响应式框架 |
-| [ADR-0002 IEC 104 采集数据采用三通道并行分发](./adr/0002-iec104-three-channel-distribution.md) | Kafka/MQTT/gRPC 三通道并行推送 |

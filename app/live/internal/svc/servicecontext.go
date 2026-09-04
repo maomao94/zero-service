@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"crypto/tls"
 	"net/http"
 	"time"
 
@@ -33,13 +34,19 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
 	svcCtx := &ServiceContext{Config: c}
 
-	// LiveKit client（复用 go-zero httpc.Service 的传输与观测配置）
-	httpClient := &http.Client{Timeout: 10 * time.Second}
-	httpService := httpc.NewServiceWithClient("httpc-livekit", httpClient)
+	// LiveKit client：注入 go-zero httpc.Service（底层 transport 忽略 TLS
+	// 校验，兼容自签证书的 https，观测复用 httpc）；不注入时 SDK 走内部
+	// 容错传输
+	httpClient := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // 开发/内网自签证书环境
+		},
+	}
 	lk, err := livekitx.New(
 		livekitx.WithURL(c.LiveKit.Url),
 		livekitx.WithAPIKey(c.LiveKit.ApiKey, c.LiveKit.ApiSecret),
-		livekitx.WithHTTPService(httpService),
+		livekitx.WithHTTPService(httpc.NewServiceWithClient("httpc-livekit", httpClient)),
 	)
 	if err != nil {
 		logx.Must(err)

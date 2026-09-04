@@ -1,8 +1,8 @@
 package svc
 
 import (
-	"database/sql"
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 	"time"
@@ -21,11 +21,11 @@ func TestMeetingRepoCreateAndGet(t *testing.T) {
 	now := time.Now()
 
 	m := &gormmodel.LiveMeeting{
-		MeetingNo:       "M001",
-		Title:           "测试会议",
-		Status:          gormmodel.MeetingStatusActive,
+		MeetingNo:  "M001",
+		Title:      "测试会议",
+		Status:     gormmodel.MeetingStatusActive,
 		CreateUser: sql.NullString{String: "alice", Valid: true},
-		StartTime:       now,
+		StartTime:  now,
 	}
 	if err := repo.CreateMeeting(ctx, m); err != nil {
 		t.Fatalf("create error = %v", err)
@@ -48,11 +48,11 @@ func TestMeetingRepoUpdateMeetingEnded(t *testing.T) {
 	ctx := context.Background()
 
 	m := &gormmodel.LiveMeeting{
-		MeetingNo:       "M002",
-		Title:           "t",
-		Status:          gormmodel.MeetingStatusActive,
+		MeetingNo:  "M002",
+		Title:      "t",
+		Status:     gormmodel.MeetingStatusActive,
 		CreateUser: sql.NullString{String: "alice", Valid: true},
-		StartTime:       time.Now(),
+		StartTime:  time.Now(),
 	}
 	if err := repo.CreateMeeting(ctx, m); err != nil {
 		t.Fatal(err)
@@ -149,11 +149,11 @@ func TestMeetingRepoListMeetingsPaged(t *testing.T) {
 	ctx := context.Background()
 	for i := 0; i < 3; i++ {
 		m := &gormmodel.LiveMeeting{
-			MeetingNo:       "M" + string(rune('A'+i)),
-			Title:           "t",
-			Status:          gormmodel.MeetingStatusActive,
+			MeetingNo:  "M" + string(rune('A'+i)),
+			Title:      "t",
+			Status:     gormmodel.MeetingStatusActive,
 			CreateUser: sql.NullString{String: "alice", Valid: true},
-			StartTime:       time.Now(),
+			StartTime:  time.Now(),
 		}
 		if err := repo.CreateMeeting(ctx, m); err != nil {
 			t.Fatal(err)

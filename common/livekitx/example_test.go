@@ -18,7 +18,7 @@ import (
 func Example_initialize() {
 	httpClient := &http.Client{}
 	client, err := livekitx.New(
-		livekitx.WithURL("http://127.0.0.1:7880"),
+		livekitx.WithURL("https://127.0.0.1:7880"),
 		livekitx.WithAPIKey("devkey", "secret"),
 		livekitx.WithHTTPClient(httpClient),
 	)
@@ -36,7 +36,7 @@ func Example_initialize() {
 // 业务直接用 lksdk.NewRoom + JoinWithContext，livekitx 只提供 Client 管理配置。
 func Example_join() {
 	client, err := livekitx.New(
-		livekitx.WithURL("http://127.0.0.1:7880"),
+		livekitx.WithURL("https://127.0.0.1:7880"),
 		livekitx.WithAPIKey("devkey", "secret"),
 	)
 	if err != nil {
@@ -55,7 +55,7 @@ func Example_join() {
 		},
 		OnDisconnected: func() { /* 本次连接的清理逻辑 */ },
 	})
-	if err := room.JoinWithContext(ctx, "http://127.0.0.1:7880", lksdk.ConnectInfo{
+	if err := room.JoinWithContext(ctx, "https://127.0.0.1:7880", lksdk.ConnectInfo{
 		APIKey:              "devkey",
 		APISecret:           "secret",
 		RoomName:            "demo",
@@ -69,7 +69,7 @@ func Example_join() {
 // Example_roomAPI 演示 Room API：通过 client.Room() 直接使用 SDK 原生方法。
 func Example_roomAPI() {
 	client, err := livekitx.New(
-		livekitx.WithURL("http://127.0.0.1:7880"),
+		livekitx.WithURL("https://127.0.0.1:7880"),
 		livekitx.WithAPIKey("devkey", "secret"),
 	)
 	if err != nil {
@@ -130,7 +130,7 @@ func Example_joinToken() {
 // Example_mute 演示经管理 API 静音/取消静音参与者全部音频轨道。
 func Example_mute() {
 	client, err := livekitx.New(
-		livekitx.WithURL("http://127.0.0.1:7880"),
+		livekitx.WithURL("https://127.0.0.1:7880"),
 		livekitx.WithAPIKey("devkey", "secret"),
 	)
 	if err != nil {

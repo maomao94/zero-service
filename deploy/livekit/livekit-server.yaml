@@ -1,10 +1,30 @@
+# LiveKit Server 配置 - Docker 环境
+# 容器内通过 host.docker.internal 访问宿主机服务
+
+# HTTP API 和 WebSocket 端口
 port: 7880
+
+# WebRTC RTP 媒体流端口范围
 rtc:
-  port_range_start: 50000
-  port_range_end: 60000
+  port_range_start: 60000
+  port_range_end: 60100
+  use_external_ip: false
+
+# API 密钥对（至少 32 字符）
+# livegtw 和 live 服务的配置文件必须使用相同的 key/secret
 keys:
-  devkey: secret
+  devkeydevkeydevkeydevkeydevkeydevkey: secretsecretsecretsecretsecretsecret
+
+# Redis 连接（宿主机已有 Redis，端口 36379）
+redis:
+  address: host.docker.internal:36379
+  password: G62m50oigInC30sf
+
+# Webhook 回调（livegtw 服务运行在宿主机 11002 端口）
 webhook:
   urls:
-    - http://127.0.0.1:11002/webhook/livekit
-  api_key: devkey
+    - http://host.docker.internal:11002/webhook/livekit
+  api_key: devkeydevkeydevkeydevkeydevkeydevkey
+
+# [PROD] 信号端口 TLS：livekit-server 不原生支持，需反向代理（nginx/caddy）终止 TLS
+# 开发环境使用 HTTP/WS 即可
