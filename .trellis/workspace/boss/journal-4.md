@@ -772,3 +772,24 @@ livegtw.api 新增 SIP HTTP 路由（DialSip + Provider CRUD），handler 改用
 ### Status
 
 [OK] **Completed**
+
+
+## Session 212: SIPMediaGW 规范补充与 code-spec 更新
+
+**Date**: 2026-09-07
+**Task**: SIPMediaGW 规范补充与 code-spec 更新
+**Branch**: `master`
+
+### Summary
+
+在 livekit-guidelines.md 补充 SIPMediaGW 视频 SIP 部署规范（目录结构、网络模式、compose vs systemd 启动边界、同步方式、两个 Warning）
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9e926534` | (see git log) |
+
+### Status
+
+[OK] **Completed**
