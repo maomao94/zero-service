@@ -709,3 +709,24 @@ livegtw.api 新增 SIP HTTP 路由（DialSip + Provider CRUD），handler 改用
 ### Status
 
 [OK] **Completed**
+
+
+## Session 209: Spec 更新：VersionMixin + 代码生成注意事项
+
+**Date**: 2026-09-07
+**Task**: Spec 更新：VersionMixin + 代码生成注意事项
+**Branch**: `master`
+
+### Summary
+
+更新 gormx-guidelines.md（VersionMixin 非默认，根据业务并发决定）和 livekit-guidelines.md（liverpc 废弃、gen.sh 流程、--client=false 说明）
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5a13e9d4` | (see git log) |
+
+### Status
+
+[OK] **Completed**
