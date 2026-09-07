@@ -38,6 +38,16 @@ service LiveRpc {
   rpc ReportMeetingMessage(ReportMeetingMessageReq) returns (ReportMeetingMessageRes);
   // 查询聊天记录
   rpc ListMeetingMessages(ListMeetingMessagesReq) returns (ListMeetingMessagesRes);
+  // 发起 SIP 外呼（拨打电话或在会议中邀请电话参会者）
+  rpc DialSip(DialSipReq) returns (DialSipRes);
+  // 创建 SIP 供应商
+  rpc CreateSipProvider(CreateSipProviderReq) returns (CreateSipProviderRes);
+  // 更新 SIP 供应商（含启用/禁用）
+  rpc UpdateSipProvider(UpdateSipProviderReq) returns (UpdateSipProviderRes);
+  // 列出 SIP 供应商
+  rpc ListSipProviders(ListSipProvidersReq) returns (ListSipProvidersRes);
+  // 删除 SIP 供应商
+  rpc DeleteSipProvider(DeleteSipProviderReq) returns (DeleteSipProviderRes);
 }
 
 // MeetingInfo 会议单据信息。
@@ -384,3 +394,114 @@ message MeetingMessageInfo {
   // 创建时间，格式：yyyy-MM-dd HH:mm:ss
   string create_time = 6 [json_name = "createTime"];
 }
+
+// ===== SIP 电话相关 =====
+
+// DialSipReq 发起 SIP 外呼请求。
+// 支持两种场景：
+//   1. 拨打电话：不传 meeting_no，自动创建 S 前缀会议
+//   2. 电话会议：传 meeting_no（M 前缀），将电话参会者加入已有会议
+message DialSipReq {
+  // 被叫号码（必填），如 "1001"（局域网分机）或 "+8613800138000"（手机号）
+  string callee_number = 1 [json_name = "calleeNumber"];
+  // 会议号（可选），为空则自动创建 S 前缀会议（标题 "电话通话-{callee}"）
+  // 传当前会议号（M 前缀）= 电话会议场景，将电话参会者加入已有会议
+  string meeting_no = 2 [json_name = "meetingNo"];
+  // 电话参会者在 Room 中的显示名（可选），不填则使用号码
+  string participant_name = 3 [json_name = "participantName"];
+  // SIP 供应商编码（必填），查询不到则报错
+  string provider_code = 4 [json_name = "providerCode"];
+}
+
+// DialSipRes 发起 SIP 外呼响应。
+message DialSipRes {
+  // 会议信息（新建或已有）
+  MeetingInfo meeting = 1 [json_name = "meeting"];
+  // SIP 通话 ID（LiveKit 侧的 call ID）
+  string sip_call_id = 2 [json_name = "sipCallId"];
+}
+
+// ===== SIP 供应商管理 =====
+
+// SipProviderInfo SIP 供应商配置信息。
+message SipProviderInfo {
+  // 数据库主键 ID
+  string id = 1 [json_name = "id"];
+  // 供应商编码（唯一，如 "freeswitch" / "telnyx" / "aliyun"）
+  string code = 2 [json_name = "code"];
+  // 供应商名称
+  string name = 3 [json_name = "name"];
+  // SIP 服务器地址（如 "freeswitch:5080" / "sip.telnyx.com"）
+  string address = 4 [json_name = "address"];
+  // 主叫号码池（外呼时随机选一个作为来电显示）
+  repeated string numbers = 5 [json_name = "numbers"];
+  // 状态：1-启用 2-禁用
+  int32 status = 6 [json_name = "status"];
+  // 创建时间，格式：yyyy-MM-dd HH:mm:ss
+  string create_time = 7 [json_name = "createTime"];
+}
+
+// CreateSipProviderReq 创建 SIP 供应商请求。
+message CreateSipProviderReq {
+  // 供应商编码（唯一，如 "freeswitch" / "telnyx"）
+  string code = 1 [json_name = "code"];
+  // 供应商名称
+  string name = 2 [json_name = "name"];
+  // SIP 服务器地址
+  string address = 3 [json_name = "address"];
+  // 主叫号码池
+  repeated string numbers = 4 [json_name = "numbers"];
+  // SIP 认证用户名（可选）
+  string auth_username = 5 [json_name = "authUsername"];
+  // SIP 认证密码（可选）
+  string auth_password = 6 [json_name = "authPassword"];
+}
+
+// CreateSipProviderRes 创建 SIP 供应商响应。
+message CreateSipProviderRes {
+  // 创建的供应商信息
+  SipProviderInfo provider = 1 [json_name = "provider"];
+}
+
+// UpdateSipProviderReq 更新 SIP 供应商请求。
+// 所有字段均为可选，不传则不更新对应字段。
+message UpdateSipProviderReq {
+  // 供应商 ID（必填）
+  string id = 1 [json_name = "id"];
+  // 供应商名称（可选）
+  string name = 2 [json_name = "name"];
+  // SIP 服务器地址（可选）
+  string address = 3 [json_name = "address"];
+  // 主叫号码池（可选）
+  repeated string numbers = 4 [json_name = "numbers"];
+  // SIP 认证用户名（可选）
+  string auth_username = 5 [json_name = "authUsername"];
+  // SIP 认证密码（可选）
+  string auth_password = 6 [json_name = "authPassword"];
+  // 状态：1-启用 2-禁用（可选，0 表示不更新）
+  int32 status = 7 [json_name = "status"];
+}
+
+// UpdateSipProviderRes 更新 SIP 供应商响应。
+message UpdateSipProviderRes {
+  // 更新后的供应商信息
+  SipProviderInfo provider = 1 [json_name = "provider"];
+}
+
+// ListSipProvidersReq 列出 SIP 供应商请求。
+message ListSipProvidersReq {}
+
+// ListSipProvidersRes 列出 SIP 供应商响应。
+message ListSipProvidersRes {
+  // 供应商列表
+  repeated SipProviderInfo providers = 1 [json_name = "providers"];
+}
+
+// DeleteSipProviderReq 删除 SIP 供应商请求。
+message DeleteSipProviderReq {
+  // 供应商 ID
+  string id = 1 [json_name = "id"];
+}
+
+// DeleteSipProviderRes 删除 SIP 供应商响应。
+message DeleteSipProviderRes {}

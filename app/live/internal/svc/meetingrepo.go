@@ -202,3 +202,54 @@ func (r *MeetingRepo) ListMessages(ctx context.Context, meetingNo string, page, 
 	}
 	return messages, pageRes.Total, nil
 }
+
+// ===== SIP Provider =====
+
+// CreateSipProvider 创建 SIP 供应商。
+func (r *MeetingRepo) CreateSipProvider(ctx context.Context, p *gormmodel.LiveSipProvider) error {
+	return r.db.WithContext(ctx).Create(p).Error
+}
+
+// GetSipProviderByCode 按编码查询 SIP 供应商。
+func (r *MeetingRepo) GetSipProviderByCode(ctx context.Context, code string) (*gormmodel.LiveSipProvider, error) {
+	var p gormmodel.LiveSipProvider
+	err := r.db.WithContext(ctx).Where("code = ? AND status = ?", code, gormmodel.SipProviderStatusEnabled).First(&p).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
+// ListSipProviders 列出所有 SIP 供应商。
+func (r *MeetingRepo) ListSipProviders(ctx context.Context) ([]gormmodel.LiveSipProvider, error) {
+	var providers []gormmodel.LiveSipProvider
+	err := r.db.WithContext(ctx).Order("create_time DESC").Find(&providers).Error
+	return providers, err
+}
+
+// DeleteSipProvider 删除 SIP 供应商。
+func (r *MeetingRepo) DeleteSipProvider(ctx context.Context, id string) error {
+	return r.db.WithContext(ctx).Delete(&gormmodel.LiveSipProvider{}, "id = ?", id).Error
+}
+
+// UpdateSipProvider 更新 SIP 供应商。
+func (r *MeetingRepo) UpdateSipProvider(ctx context.Context, id string, updates map[string]any) error {
+	return r.db.WithContext(ctx).Model(&gormmodel.LiveSipProvider{}).
+		Where("id = ?", id).Updates(updates).Error
+}
+
+// GetSipProviderByID 按 ID 查询 SIP 供应商。
+func (r *MeetingRepo) GetSipProviderByID(ctx context.Context, id string) (*gormmodel.LiveSipProvider, error) {
+	var p gormmodel.LiveSipProvider
+	err := r.db.WithContext(ctx).Where("id = ?", id).First(&p).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}

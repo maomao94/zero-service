@@ -13,7 +13,6 @@ import (
 
 	"github.com/livekit/protocol/livekit"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/redis"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -83,8 +82,8 @@ func (l *WebhookNotifyLogic) logUnhandled(event *livekit.WebhookEvent) {
 	l.Logger.Infof("webhook event unhandled: id=%s type=%s room=%s", event.GetId(), event.GetEvent(), event.GetRoom().GetName())
 }
 
-// handleRoomStarted 房间创建：若数据库无对应会议记录（SIP 外呼/API 自动创建），
-// 则补插一条会议记录，会议号 = 房间名，生成 9 位数字码，保存 SID。
+// handleRoomStarted 房间创建：已有记录则跳过（CreateMeeting/DialSipLogic 已创建）。
+// 不再补插——SIP 外呼由 DialSipLogic 在拨号前创建会议，无需 webhook 补插。
 func (l *WebhookNotifyLogic) handleRoomStarted(event *livekit.WebhookEvent) {
 	room := event.GetRoom()
 	if room == nil || strings.TrimSpace(room.GetName()) == "" {
@@ -92,70 +91,11 @@ func (l *WebhookNotifyLogic) handleRoomStarted(event *livekit.WebhookEvent) {
 		return
 	}
 	roomName := room.GetName()
-	// 已有记录则跳过（CreateMeeting 正常流程创建的）
 	_, err := l.svcCtx.MeetingRepo.GetMeeting(l.ctx, roomName)
 	if err == nil {
 		return // 已存在
 	}
-
-	// 会议号 = 房间名（LiveKit 房间名即会议号）
-	meetingNo := roomName
-
-	// 生成 9 位用户会议号，加锁防重复
-	codeLock := redis.NewRedisLock(l.svcCtx.Redis, "live:sip_meeting_code_lock")
-	codeLock.SetExpire(5)
-	codeLockOk, err := codeLock.AcquireCtx(l.ctx)
-	if err != nil {
-		l.Logger.Errorf("acquire meeting_code lock failed: room=%s err=%v", roomName, err)
-		return
-	}
-	if !codeLockOk {
-		l.Logger.Errorf("meeting_code lock busy: room=%s", roomName)
-		return
-	}
-	defer codeLock.Release()
-
-	meetingCode, err := tool.RandomDigits(9)
-	if err != nil {
-		l.Logger.Errorf("generate meeting_code failed: room=%s err=%v", roomName, err)
-		return
-	}
-	// 检查唯一性（最多重试 3 次）
-	for i := 0; i < 3; i++ {
-		exists, err := l.svcCtx.MeetingRepo.IsMeetingCodeExists(l.ctx, meetingCode)
-		if err != nil {
-			l.Logger.Errorf("check meeting_code exists failed: room=%s err=%v", roomName, err)
-			return
-		}
-		if !exists {
-			break
-		}
-		if i == 2 {
-			l.Logger.Errorf("meeting_code conflict after 3 retries: room=%s", roomName)
-			return
-		}
-		meetingCode, _ = tool.RandomDigits(9)
-	}
-
-	now := carbonx.NowStartOfSecond().StdTime()
-	m := &gormmodel.LiveMeeting{
-		MeetingNo:        meetingNo,
-		MeetingCode:      meetingCode,
-		Title:            roomName,
-		Status:           gormmodel.MeetingStatusActive,
-		StartTime:        now,
-		EmptyTimeout:     int(room.GetEmptyTimeout()),
-		DepartureTimeout: int(room.GetDepartureTimeout()),
-		MaxParticipants:  int(room.GetMaxParticipants()),
-		RoomSid:          room.GetSid(),
-		Metadata:         room.GetMetadata(),
-	}
-	if err := l.svcCtx.MeetingRepo.CreateMeeting(l.ctx, m); err != nil {
-		l.Logger.Errorf("backfill meeting failed: room=%s err=%v", roomName, err)
-		return
-	}
-	l.Logger.Infof("meeting backfilled by webhook: room=%s meeting_no=%s code=%s sid=%s",
-		roomName, meetingNo, meetingCode, room.GetSid())
+	l.Logger.Infof("room_started without meeting record (expected for non-managed rooms): room=%s", roomName)
 }
 
 // handleRoomFinished 房间删除/会议结束：标记会议 ended（已结束则跳过）。

@@ -11,6 +11,38 @@ type CreateMeetingRequest struct {
 	Title string `json:"title"`
 }
 
+type CreateSipProviderReply struct {
+	Provider SipProviderInfo `json:"provider"`
+}
+
+type CreateSipProviderRequest struct {
+	Code         string   `json:"code"`
+	Name         string   `json:"name"`
+	Address      string   `json:"address"`
+	Numbers      []string `json:"numbers"`
+	AuthUsername string   `json:"authUsername,optional"`
+	AuthPassword string   `json:"authPassword,optional"`
+}
+
+type DeleteSipProviderReply struct {
+}
+
+type DeleteSipProviderRequest struct {
+	Id string `json:"id"`
+}
+
+type DialSipReply struct {
+	Meeting   MeetingInfo `json:"meeting"`
+	SipCallId string      `json:"sipCallId"`
+}
+
+type DialSipRequest struct {
+	CalleeNumber    string `json:"calleeNumber"`
+	MeetingNo       string `json:"meetingNo,optional"`
+	ParticipantName string `json:"participantName,optional"`
+	ProviderCode    string `json:"providerCode"`
+}
+
 type EndMeetingRequest struct {
 	MeetingNo string `json:"meetingNo"`
 }
@@ -135,6 +167,13 @@ type ListParticipantsRequest struct {
 	MeetingNo string `form:"meetingNo"`
 }
 
+type ListSipProvidersReply struct {
+	Providers []SipProviderInfo `json:"providers"`
+}
+
+type ListSipProvidersRequest struct {
+}
+
 type MeetingInfo struct {
 	MeetingNo        string `json:"meetingNo"`
 	MeetingCode      string `json:"meetingCode"`
@@ -203,4 +242,28 @@ type SendMeetingDataRequest struct {
 	Topic        string   `json:"topic"`
 	Payload      string   `json:"payload"`
 	Destinations []string `json:"destinations"`
+}
+
+type SipProviderInfo struct {
+	Id         string   `json:"id"`
+	Code       string   `json:"code"`
+	Name       string   `json:"name"`
+	Address    string   `json:"address"`
+	Numbers    []string `json:"numbers"`
+	Status     int32    `json:"status"`
+	CreateTime string   `json:"createTime"`
+}
+
+type UpdateSipProviderReply struct {
+	Provider SipProviderInfo `json:"provider"`
+}
+
+type UpdateSipProviderRequest struct {
+	Id           string   `json:"id"`
+	Name         string   `json:"name,optional"`
+	Address      string   `json:"address,optional"`
+	Numbers      []string `json:"numbers,optional"`
+	AuthUsername string   `json:"authUsername,optional"`
+	AuthPassword string   `json:"authPassword,optional"`
+	Status       int32    `json:"status,optional"`
 }

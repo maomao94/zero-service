@@ -409,3 +409,102 @@ service livegtw {
 	get /listMeetingMessages (ListMeetingMessagesRequest) returns (ListMeetingMessagesReply)
 }
 
+// ===== SIP 电话相关类型 =====
+type SipProviderInfo {
+	Id         string   `json:"id"`
+	Code       string   `json:"code"`
+	Name       string   `json:"name"`
+	Address    string   `json:"address"`
+	Numbers    []string `json:"numbers"`
+	Status     int32    `json:"status"`
+	CreateTime string   `json:"createTime"`
+}
+
+type DialSipRequest {
+	CalleeNumber    string `json:"calleeNumber"`
+	MeetingNo       string `json:"meetingNo,optional"`
+	ParticipantName string `json:"participantName,optional"`
+	ProviderCode    string `json:"providerCode"`
+}
+
+type DialSipReply {
+	Meeting   MeetingInfo `json:"meeting"`
+	SipCallId string      `json:"sipCallId"`
+}
+
+type CreateSipProviderRequest {
+	Code         string   `json:"code"`
+	Name         string   `json:"name"`
+	Address      string   `json:"address"`
+	Numbers      []string `json:"numbers"`
+	AuthUsername string   `json:"authUsername,optional"`
+	AuthPassword string   `json:"authPassword,optional"`
+}
+
+type CreateSipProviderReply {
+	Provider SipProviderInfo `json:"provider"`
+}
+
+type UpdateSipProviderRequest {
+	Id           string   `json:"id"`
+	Name         string   `json:"name,optional"`
+	Address      string   `json:"address,optional"`
+	Numbers      []string `json:"numbers,optional"`
+	AuthUsername string   `json:"authUsername,optional"`
+	AuthPassword string   `json:"authPassword,optional"`
+	Status       int32    `json:"status,optional"`
+}
+
+type UpdateSipProviderReply {
+	Provider SipProviderInfo `json:"provider"`
+}
+
+type ListSipProvidersRequest {}
+
+type ListSipProvidersReply {
+	Providers []SipProviderInfo `json:"providers"`
+}
+
+type DeleteSipProviderRequest {
+	Id string `json:"id"`
+}
+
+type DeleteSipProviderReply {}
+
+// ===== SIP 路由组（需要鉴权）=====
+@server (
+	prefix:     live/v1
+	group:      live
+	jwt:        JwtAuth
+	middleware: MeetingAuth
+)
+service livegtw {
+	@doc "发起 SIP 外呼"
+	@handler dialSip
+	post /sip-calls/dial (DialSipRequest) returns (DialSipReply)
+}
+
+@server (
+	prefix:     live/v1
+	group:      live
+	jwt:        JwtAuth
+	middleware: MeetingAuth
+)
+service livegtw {
+	@doc "创建 SIP 供应商"
+	@handler createSipProvider
+	post /sip-providers (CreateSipProviderRequest) returns (CreateSipProviderReply)
+
+	@doc "更新 SIP 供应商"
+	@handler updateSipProvider
+	post /sip-providers/update (UpdateSipProviderRequest) returns (UpdateSipProviderReply)
+
+	@doc "查询 SIP 供应商列表"
+	@handler listSipProviders
+	get /sip-providers (ListSipProvidersRequest) returns (ListSipProvidersReply)
+
+	@doc "删除 SIP 供应商"
+	@handler deleteSipProvider
+	post /sip-providers/delete (DeleteSipProviderRequest) returns (DeleteSipProviderReply)
+}
+

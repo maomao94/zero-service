@@ -3,294 +3,238 @@
 ## 概述
 
 LiveKit SIP 集成允许浏览器用户（WebRTC）和电话用户（SIP）在同一个 Room 中通话。
+支持两种场景：拨打电话（创建新会议）和电话会议（加入已有会议）。
 
 ## 架构总览
 
 ```
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   浏览器     │     │  LiveKit     │     │  LiveKit     │     │  FreeSWITCH  │
-│   (WebRTC)   │◄───►│  Server      │◄───►│  SIP Server  │◄───►│  (电话交换机) │
-│              │     │              │     │              │     │              │
-│  音视频通话   │     │  房间管理    │     │  协议转换    │     │  分机管理    │
-│  Data/RPC    │     │  参与者管理  │     │  SIP↔WebRTC  │     │  电话振铃    │
+│   浏览器     │     │  LiveKit     │     │  LiveKit     │     │  SIP 供应商  │
+│   (WebRTC)   │◄───►│  Server      │◄───►│  SIP Server  │◄───►│  (FreeSWITCH │
+│              │     │              │     │              │     │   /Telnyx)   │
+│  音视频通话   │     │  房间管理    │     │  协议转换    │     │  SIP 路由    │
+│  Data/RPC    │     │  参与者管理  │     │  SIP↔WebRTC  │     │  电话网络    │
 └──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
-     :7880                :7880                :5070                :5060
+     :7880                :7880                :5070                :5060/5080
    (WebRTC)           (HTTP API)           (SIP 信令)           (SIP 信令)
 ```
 
 ## 各组件职责
 
-| 组件 | 端口 | 职责 |
-|------|------|------|
-| **LiveKit Server** | 7880 | WebRTC 媒体服务器，管理房间和参与者，提供 HTTP API |
-| **LiveKit SIP Server** | 5070 | SIP↔WebRTC 协议转换桥接，把电话转成 LiveKit 参与者 |
-| **FreeSWITCH** | 5060 | SIP 电话交换机，管理分机注册、振铃、路由 |
-| **Redis** | 36379 | LiveKit 内部通信总线 |
+| 组件 | 职责 | 生产环境 |
+|------|------|---------|
+| **LiveKit Server** | WebRTC 媒体服务器，管理房间和参与者 | 必须 |
+| **LiveKit SIP Server** | SIP↔WebRTC 协议转换桥接 | 必须 |
+| **SIP 供应商** | SIP 路由，连接电话网络 | 必须（Telnyx/Twilio/Plivo） |
+| **FreeSWITCH** | 本地测试用 SIP 服务器 | 不需要 |
 
-## 为什么需要三个组件
+### LiveKit SIP Server 的角色
 
-```
-LiveKit SIP Server = 翻译官
-  ✓ 发起/接收 SIP 呼叫
-  ✓ SIP ↔ WebRTC 协议转换
-  ✗ 管理 SIP 分机注册
+LiveKit SIP Server 是**协议转换层**，不管连什么供应商都必须存在：
+- 浏览器使用 WebRTC 协议
+- 电话使用 SIP 协议
+- LiveKit SIP Server 负责两者之间的转换
 
-FreeSWITCH = 电话簿 + 接线员
-  ✓ 管理分机号（1000-1019）
-  ✓ 接收 SIP 注册
-  ✓ 路由电话（1001 打给 1002）
-  ✓ 振铃、接听、挂断
+### FreeSWITCH 的角色
 
-LiveKit Server = 会议室管理员
-  ✓ WebRTC 房间管理
-  ✓ 参与者管理
-  ✓ API 接口
-```
+FreeSWITCH **仅用于本地测试**，模拟 SIP 供应商：
+- 提供分机注册（软电话可以注册到它）
+- 接收 SIP INVITE 并路由到分机
+- 生产环境不需要，直接连真实供应商
 
-没有 FreeSWITCH，SIP 电话没有地方注册，无法接收来电。
-没有 LiveKit SIP Server，浏览器（WebRTC）和电话（SIP）协议不同，无法直接通信。
+### SIP 供应商的角色
 
-## FreeSWITCH vs SIP 供应商
+生产环境的真实 SIP 服务提供商（Telnyx、Twilio、Plivo 等）：
+- 提供外部电话号码
+- 连接公共电话网络（PSTN）
+- 处理 SIP 认证和路由
 
-```
-FreeSWITCH = 公司内部电话总机（自建）
-  • 你自己部署和维护
-  • 管理内部分机（1000, 1001, 1002...）
-  • 内部通话免费（分机之间互打）
-  • 不能直接拨打外部电话（手机、固话）
+## 供应商管理
 
-SIP 供应商 = 电信运营商（外包）
-  • 阿里云通信、腾讯云、天润融通等
-  • 提供外部电话号码
-  • 连接公共电话网络（PSTN）
-  • 可以拨打/接听手机、固话
-  • 按分钟收费
-```
+供应商配置持久化到数据库（`live_sip_providers`），通过 `provider_code` 关联。
 
-**生产环境架构**：
+### 数据模型
 
-```
-浏览器 ◄──► LiveKit ◄──► SIP Server ◄──► FreeSWITCH ◄──► SIP 供应商 ◄──► 手机/固话
-                                    │              │              │
-                                 翻译官        内部总机        电信运营商
+```go
+type LiveSipProvider struct {
+    gormx.LegacyStringBaseModel  // 无 VersionMixin（低并发配置表）
+    Code         string          // 供应商编码（唯一索引）
+    Name         string          // 供应商名称
+    Address      string          // SIP 服务器地址
+    Numbers      string          // 主叫号码池 JSON 数组
+    AuthUsername  string          // SIP 认证用户名
+    AuthPassword  string          // SIP 认证密码
+    Status       int32           // 1-启用 2-禁用
+}
 ```
 
-FreeSWITCH 管理内部分机，SIP 供应商提供外部电话能力，两者配合使用。
+### API
 
-## 通话流程
-
-### 外呼流程（浏览器 → 电话）
-
-```
-浏览器用户 A                LiveKit Server            LiveKit SIP Server          FreeSWITCH            软电话
-    │                          │                          │                          │                    │
-    │ 1. 调用 API 拨号 1001    │                          │                          │                    │
-    │ ────────────────────────►│                          │                          │                    │
-    │                          │ 2. CreateSIPParticipant  │                          │                    │
-    │                          │ ────────────────────────►│                          │                    │
-    │                          │                          │ 3. SIP INVITE            │                    │
-    │                          │                          │ ────────────────────────►│                    │
-    │                          │                          │                          │ 4. 振铃             │
-    │                          │                          │                          │ ──────────────────►│
-    │                          │                          │                          │                    │
-    │                          │                          │                          │ 5. 用户接听         │
-    │                          │                          │                          │ ◄──────────────────│
-    │                          │                          │                          │                    │
-    │                          │ 6. SIP ↔ WebRTC 转换     │                          │                    │
-    │                          │ ◄────────────────────────│                          │                    │
-    │                          │                          │                          │                    │
-    │ 7. 音频流双向传输         │                          │                          │                    │
-    │ ◄───────────────────────►│◄────────────────────────►│◄────────────────────────►│◄──────────────────►│
+```protobuf
+rpc CreateSipProvider(CreateSipProviderReq) returns (CreateSipProviderRes);
+rpc UpdateSipProvider(UpdateSipProviderReq) returns (UpdateSipProviderRes);
+rpc ListSipProviders(ListSipProvidersReq) returns (ListSipProvidersRes);
+rpc DeleteSipProvider(DeleteSipProviderReq) returns (DeleteSipProviderRes);
 ```
 
-### 来电流程（电话 → 浏览器）
+## 外呼拨号
+
+### API
+
+```protobuf
+rpc DialSip(DialSipReq) returns (DialSipRes);
+
+message DialSipReq {
+    string callee_number = 1;      // 被叫号码（必填）
+    string meeting_no = 2;         // 会议号（可选，空=S前缀自动创建）
+    string participant_name = 3;   // 显示名（可选）
+    string provider_code = 4;      // 供应商编码（必填）
+}
+```
+
+### 两种场景
+
+| 场景 | meeting_no | 行为 |
+|------|-----------|------|
+| 拨打电话 | 不传 | 自动创建 S 前缀会议，拨号后跳转进入房间 |
+| 电话会议 | 传当前会议号 | 将电话参会者加入已有会议 |
+
+### DialSipLogic 流程
+
+1. **确定会议**：`meeting_no` 为空 → 自动创建 S 前缀会议（含锁 + meeting_code 生成）；不为空 → 校验会议存在且进行中
+2. **查询供应商**：按 `provider_code` 查询 `live_sip_providers`，查不到报错
+3. **选择/创建 trunk**：`ListSIPOutboundTrunk` 复用已有 outbound trunk；没有则用供应商配置 `CreateSIPOutboundTrunk`
+4. **发起外呼**：`CreateSIPParticipant`（`WaitUntilAnswered=false`）
+5. **返回**：meeting info + sip_call_id
+
+### 会议号前缀
+
+| 前缀 | 场景 | 生成方式 |
+|------|------|---------|
+| M | 正常创建的会议 | `IdUtil.NextId("M", "live")` |
+| S | 电话通话（自动创建） | `IdUtil.NextId("S", "live")` |
+
+## Trunk 管理
+
+Trunk 是 LiveKit 侧的 SIP 出站配置，**不持久化到数据库**：
+- 一个 SIP 供应商对应一个 trunk，所有外呼复用
+- `ListSIPOutboundTrunk` 查询已有 trunk，复用第一个；没有才创建
+- 创建 trunk 时使用供应商配置（address、numbers、auth）
+
+### Trunk 与供应商的关系
 
 ```
-软电话                    FreeSWITCH            LiveKit SIP Server          LiveKit Server            浏览器
-  │                          │                          │                          │                    │
-  │ 1. 拨打号码              │                          │                          │                    │
-  │ ────────────────────────►│                          │                          │                    │
-  │                          │ 2. SIP INVITE            │                          │                    │
-  │                          │ ────────────────────────►│                          │                    │
-  │                          │                          │ 3. 匹配 Dispatch Rule    │                    │
-  │                          │                          │ ────────────────────────►│                    │
-  │                          │                          │                          │                    │
-  │                          │                          │ 4. 创建 SIP Participant  │                    │
-  │                          │                          │ ────────────────────────►│                    │
-  │                          │                          │                          │                    │
-  │                          │ 5. SIP ↔ WebRTC 转换     │                          │                    │
-  │                          │ ◄────────────────────────│                          │                    │
-  │                          │                          │                          │                    │
-  │ 6. 音频流双向传输         │                          │                          │                    │
-  │ ◄───────────────────────►│◄────────────────────────►│◄────────────────────────►│◄──────────────────►│
+SipProvider（DB）          Trunk（LiveKit 侧）
+┌─────────────────┐       ┌─────────────────┐
+│ code: freeswitch│       │ address:        │
+│ address:        │──────►│ freeswitch:5080 │
+│   freeswitch:5080│      │ numbers: ["1000"]│
+│ numbers: ["1000"]│      │ auth: ...       │
+└─────────────────┘       └─────────────────┘
 ```
+
+供应商配置存在 DB，trunk 配置存在 LiveKit。DialSipLogic 从 DB 读供应商配置，然后创建/复用 trunk。
+
+## SIP 协议交互
+
+LiveKit SIP Server 和供应商之间使用标准 SIP 协议：
+
+```
+LiveKit SIP Server                    供应商(Telnyx/FreeSWITCH)
+      |                                      |
+      |--- SIP INVITE (被叫号码) ------------>|  发起呼叫
+      |<-- 100 Trying ------------------------|  处理中
+      |<-- 180 Ringing -----------------------|  振铃
+      |<-- 200 OK (SDP) ----------------------|  接听
+      |--- ACK ------------------------------>|  确认
+      |                                      |
+      |<========= RTP 音频流 ================>|  双向通话
+      |                                      |
+      |--- BYE ------------------------------>|  挂断
+      |<-- 200 OK ----------------------------|  确认
+```
+
+Trunk 配置告诉 LiveKit SIP Server：
+- `address`：INVITE 发到哪里
+- `numbers`：用哪个号码作为主叫显示
+- `auth_username/password`：认证信息
 
 ## 部署配置
 
-### Docker Compose 部署
+### Docker Compose（本地测试）
 
 ```yaml
 services:
-  # LiveKit Server - WebRTC 媒体服务器
   livekit-server:
     image: livekit/livekit-server:latest
     ports:
       - "7880:7880"
-      - "60000-60100:60000-60100/udp"  # WebRTC RTP 媒体流
+      - "60000-60100:60000-60100/udp"
 
-  # FreeSWITCH - SIP 电话交换机
-  freeswitch:
+  freeswitch:  # 仅本地测试用，生产环境不需要
     image: safarov/freeswitch:latest
     ports:
-      - "5060:5060/udp"           # SIP 信令
-      - "16384-16484:16384-16484/udp"  # RTP 媒体流
+      - "5060:5060/udp"
+      - "5080:5080/udp"
+      - "16384-16484:16384-16484/udp"
+    volumes:
+      - ../freeswitch-vars.xml:/etc/freeswitch/vars.xml:ro
+      - ../freeswitch-switch.conf.xml:/etc/freeswitch/autoload_configs/switch.conf.xml:ro
 
-  # LiveKit SIP Server - SIP↔WebRTC 桥接
   livekit-sip:
     image: livekit/sip:latest
     ports:
-      - "5070:5060/udp"           # SIP 信令（避免和 FreeSWITCH 冲突）
-      - "11000-11100:11000-11100/udp"  # RTP 媒体流
+      - "5070:5060/udp"
+      - "11000-11100:11000-11100/udp"
 ```
 
 ### 关键配置项
 
 | 配置 | 说明 |
 |------|------|
-| FreeSWITCH `domain` | 必须设为 `127.0.0.1`（容器内部 IP 会导致 SIP 注册失败） |
-| FreeSWITCH `default_password` | 固定为已知值（不要用随机密码） |
-| LiveKit SIP Server `ws_url` | 使用 Docker 内部网络地址（`ws://livekit-server:7880`） |
-| Outbound Trunk `address` | 使用 FreeSWITCH 的 external profile（端口 5080，不需要认证） |
+| FreeSWITCH `domain` | 必须与软电话注册 IP 一致（如 `10.10.11.25`） |
+| FreeSWITCH `external_rtp_ip` | 宿主机局域网 IP，不能用 `host.docker.internal` |
+| FreeSWITCH RTP 端口范围 | ≤100（如 16384-16484），Docker Desktop 上限 16k |
+| LiveKit SIP Server `ws_url` | `ws://livekit-server:7880`（Docker 内部网络） |
+| Outbound Trunk `address` | FreeSWITCH 用 `freeswitch:5080`（external profile） |
 
-## API 调用示例
+### 生产环境部署
 
-### 创建 Outbound Trunk
+去掉 FreeSWITCH，LiveKit SIP Server 直连供应商：
 
-```go
-outRes, err := sip.CreateSIPOutboundTrunk(ctx, &livekit.CreateSIPOutboundTrunkRequest{
-    Trunk: &livekit.SIPOutboundTrunkInfo{
-        Name:         "freeswitch-outbound",
-        Address:      "freeswitch:5080",
-        Numbers:      []string{"1000"},
-        AuthUsername: "username",
-        AuthPassword: "password",
-    },
-})
+```yaml
+services:
+  livekit-server:
+    image: livekit/livekit-server:latest
+    ports:
+      - "7880:7880"
+      - "60000-60100:60000-60100/udp"
+
+  livekit-sip:
+    image: livekit/sip:latest
+    ports:
+      - "5070:5060/udp"
+      - "11000-11100:11000-11100/udp"
 ```
 
-### 创建 Dispatch Rule
-
-```go
-ruleRes, err := sip.CreateSIPDispatchRule(ctx, &livekit.CreateSIPDispatchRuleRequest{
-    Rule: &livekit.SIPDispatchRule{
-        Rule: &livekit.SIPDispatchRule_DispatchRuleDirect{
-            DispatchRuleDirect: &livekit.SIPDispatchRuleDirect{
-                RoomName: "sip-room",
-            },
-        },
-    },
-    TrunkIds: []string{trunkID},
-    Name:     "default-rule",
-})
-```
-
-### 外呼拨号
-
-```go
-participant, err := sip.CreateSIPParticipant(ctx, &livekit.CreateSIPParticipantRequest{
-    SipTrunkId:          trunkID,
-    SipCallTo:           "1001",
-    RoomName:            "call-room",
-    ParticipantIdentity: "sip-1001",
-    ParticipantName:     "Phone User",
-    WaitUntilAnswered:   false,
-})
-```
-
-## Webhook 事件处理
-
-SIP 外呼/API 创建的房间没有 meeting 记录，需要在 `room_started` webhook 事件中补插：
-
-```go
-case "room_started":
-    // 1. 检查数据库是否有对应会议记录
-    // 2. 如果没有，生成 S 开头的会议号（IdUtil.NextId("S", "live")）
-    // 3. 生成 9 位用户会议号（RandomDigits(9)）
-    // 4. 从 webhook 事件获取房间参数（不自己塞默认值）
-    // 5. 创建会议记录，创建人标记为 "SIP"
-```
-
-## 数据模型
-
-### live_sip_trunk - SIP 中继线
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | string | 主键 |
-| name | string | trunk 名称 |
-| direction | string | 方向：inbound/outbound/both |
-| address | string | SIP 服务器地址 |
-| numbers | text | 关联号码列表 JSON |
-| auth_username | string | 认证用户名 |
-| auth_password | string | 认证密码 |
-| provider | string | 供应商标识 |
-| destination_country | string | 目标国家代码 |
-| sip_trunk_id | string | LiveKit SIP trunk ID |
-| status | int | 状态：1-启用 2-禁用 |
-
-### live_sip_dispatch_rule - 路由规则
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | string | 主键 |
-| name | string | 规则名称 |
-| trunk_id | string | 关联 trunk ID |
-| rule_type | string | 规则类型：fixed/meeting |
-| room_pattern | string | Room 名模板 |
-| pin_code | string | pin 码 |
-| sip_dispatch_rule_id | string | LiveKit dispatch rule ID |
-| status | int | 状态：1-启用 2-禁用 |
-
-### live_sip_call_log - 通话记录
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | string | 主键 |
-| call_id | string | SIP call ID |
-| trunk_id | string | 关联 trunk ID |
-| direction | string | 方向：inbound/outbound |
-| caller_number | string | 主叫号码 |
-| callee_number | string | 被叫号码 |
-| meeting_no | string | 关联会议号 |
-| room_name | string | LiveKit Room 名 |
-| status | string | 通话状态：ringing/active/completed/failed |
-| start_time | time | 开始时间 |
-| end_time | time | 结束时间 |
-| duration | int | 通话时长（秒） |
-| hangup_cause | string | SIP 挂断原因码 |
+供应商配置通过 `CreateSipProvider` API 写入 DB，trunk 自动创建。
 
 ## 常见问题
 
-### SIP 注册失败
+### RTP 不通（packets: 0）
 
-**症状**：软电话无法注册到 FreeSWITCH
+**原因**：`external_rtp_ip` 设为 `host.docker.internal`（Docker Desktop 解析为内部网关 192.168.65.254）
 
-**原因**：FreeSWITCH 的 `domain` 设置为容器内部 IP（如 `172.19.0.2`），但软电话连接的是 `127.0.0.1`
+**解决**：改为宿主机局域网 IP（如 `10.10.11.25`）
 
-**解决**：修改 FreeSWITCH 的 `vars.xml`，将 `domain` 设为 `127.0.0.1`
+### Docker Desktop 卡死
 
-### 拨号 403 Forbidden
+**原因**：FreeSWITCH RTP 端口范围 16384-32768（16k 端口）达到 Docker Desktop 上限
 
-**症状**：LiveKit SIP Server 拨号返回 `403 Forbidden`
+**解决**：缩小到 ≤100（如 16384-16484）
 
-**原因**：使用了 FreeSWITCH 的 internal profile（端口 5060），需要认证但账号密码不对
+### 浏览器听不到声音
 
-**解决**：使用 external profile（端口 5080），不需要认证
+**原因**：Chrome 自动播放策略要求用户交互后才能播放音频
 
-### 拨号成功但没有振铃
-
-**症状**：API 调用成功，但软电话没有振铃
-
-**原因**：FreeSWITCH 的 `default_password` 是随机生成的，与 trunk 配置的密码不一致
-
-**解决**：修改 FreeSWITCH 的 `vars.xml`，将 `default_password` 设为固定值（如 `1234`）
+**解决**：用户点击页面后音频自动播放，这是预期行为

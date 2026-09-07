@@ -201,7 +201,9 @@ room.JoinWithContext(ctx, url, lksdk.ConnectInfo{...})
 
 ### 3. 模型风格
 
-新业务表（会议等）按 `app/trigger/model/gormmodel` 的 plan 系列风格：`gormx.LegacyStringBaseModel`（string 主键 + create_time/update_time + is_deleted 软删）+ `gormx.VersionMixin` + `CreateUser`/`UpdateUser`/`DeptCode`（sql.NullString）+ 可空字段用 `sql.NullString`/`sql.NullTime` + `int` 状态 + 索引名 `idx_<表名>_<字段>`。
+新业务表（会议等）按 `app/trigger/model/gormmodel` 的 plan 系列风格：`gormx.LegacyStringBaseModel`（string 主键 + create_time/update_time + is_deleted 软删）+ `CreateUser`/`UpdateUser`/`DeptCode`（sql.NullString）+ 可空字段用 `sql.NullString`/`sql.NullTime` + `int` 状态 + 索引名 `idx_<表名>_<字段>`。
+
+VersionMixin 使用规则见 `gormx-guidelines.md`。
 
 ### 4. 业务错误码
 
@@ -209,79 +211,98 @@ room.JoinWithContext(ctx, url, lksdk.ConnectInfo{...})
 
 ## SIP 电话集成规范
 
-适用：SIP 电话与 LiveKit 会议混合场景，包括 trunk 管理、路由规则、外呼拨号、来电接入。
+适用：SIP 电话与 LiveKit 会议混合场景，包括供应商管理、外呼拨号。
 
 ### 1. SIP 架构总览
 
 ```
-浏览器(WebRTC) ◄──► LiveKit Server ◄──► LiveKit SIP Server ◄──► FreeSWITCH ◄──► 软电话/手机
-     :7880                :7880                :5070                :5060
+浏览器(WebRTC) ◄──► LiveKit Server ◄──► LiveKit SIP Server ◄──► SIP 供应商 ◄──► 电话网络
+     :7880                :7880                :5070
 ```
 
 | 组件 | 职责 |
 |------|------|
 | LiveKit Server | WebRTC 媒体服务器，房间和参与者管理 |
 | LiveKit SIP Server | SIP↔WebRTC 协议转换桥接 |
-| FreeSWITCH | SIP 电话交换机，分机注册、振铃、路由 |
+| SIP 供应商 | 外部 SIP 服务器（FreeSWITCH 本地测试 / Telnyx/Twilio/Plivo 生产） |
 
-FreeSWITCH 是"电话簿+接线员"（管理分机注册），LiveKit SIP Server 是"翻译官"（SIP↔WebRTC 转换）。
+生产环境 LiveKit SIP Server 直连供应商，不需要 FreeSWITCH。FreeSWITCH 仅用于本地测试。
 
-### 2. SIP API 字段命名（与 LiveKit SDK 对齐）
+### 2. SIP 供应商管理（SipProvider CRUD）
 
-Proto 字段必须与 LiveKit SDK (`livekit.CreateSIPParticipantRequest` 等) 保持一致，使用 snake_case：
+供应商配置持久化到数据库（`live_sip_providers`），通过 `provider_code` 关联。
 
-| 场景 | LiveKit SDK 字段 | 说明 |
-|------|-----------------|------|
-| 创建 Outbound Trunk | `address`, `numbers`, `auth_username`, `auth_password`, `destination_country` | SIP 服务器地址、号码、认证 |
-| 创建 Inbound Trunk | `numbers`, `allowed_addresses`, `allowed_numbers`, `auth_username`, `auth_password` | 来电号码、IP 白名单 |
-| 创建 Dispatch Rule | `rule` (含 `dispatch_rule_direct`), `trunk_ids`, `name`, `metadata` | 路由规则 |
-| 外呼拨号 | `sip_trunk_id`, `sip_call_to`, `room_name`, `participant_identity`, `participant_name`, `dtmf`, `wait_until_answered`, `hide_phone_number` | SIP 通话参数 |
+#### Proto 接口
 
-### 3. SIP API 调用方式
+```protobuf
+rpc CreateSipProvider(CreateSipProviderReq) returns (CreateSipProviderRes);
+rpc UpdateSipProvider(UpdateSipProviderReq) returns (UpdateSipProviderRes);
+rpc ListSipProviders(ListSipProvidersReq) returns (ListSipProvidersRes);
+rpc DeleteSipProvider(DeleteSipProviderReq) returns (DeleteSipProviderRes);
+```
+
+#### 数据模型
 
 ```go
-// 创建 Outbound Trunk
-outRes, err := sip.CreateSIPOutboundTrunk(ctx, &livekit.CreateSIPOutboundTrunkRequest{
-    Trunk: &livekit.SIPOutboundTrunkInfo{
-        Name:         "trunk-name",
-        Address:      "freeswitch:5080",  // SIP 服务器地址
-        Numbers:      []string{"1000"},   // 关联号码
-        AuthUsername: "username",
-        AuthPassword: "password",
-    },
-})
-
-// 创建 Inbound Trunk
-inRes, err := sip.CreateSIPInboundTrunk(ctx, &livekit.CreateSIPInboundTrunkRequest{
-    Trunk: &livekit.SIPInboundTrunkInfo{
-        Name:    "trunk-name",
-        Numbers: []string{"1000"},  // 接受来电的号码
-    },
-})
-
-// 创建 Dispatch Rule（fixed 模式，来电进入固定 Room）
-ruleRes, err := sip.CreateSIPDispatchRule(ctx, &livekit.CreateSIPDispatchRuleRequest{
-    Rule: &livekit.SIPDispatchRule{
-        Rule: &livekit.SIPDispatchRule_DispatchRuleDirect{
-            DispatchRuleDirect: &livekit.SIPDispatchRuleDirect{
-                RoomName: "room-name",
-            },
-        },
-    },
-    TrunkIds: []string{trunkID},
-    Name:     "rule-name",
-})
-
-// 外呼拨号
-participant, err := sip.CreateSIPParticipant(ctx, &livekit.CreateSIPParticipantRequest{
-    SipTrunkId:          trunkID,
-    SipCallTo:           "1001",           // 被叫号码
-    RoomName:            "room-name",       // 目标 Room
-    ParticipantIdentity: "sip-1001",       // 参会者身份
-    ParticipantName:     "Test Call",       // 参会者显示名
-    WaitUntilAnswered:   false,             // 是否等待接听
-})
+type LiveSipProvider struct {
+    gormx.LegacyStringBaseModel  // 无 VersionMixin（低并发配置表，不需要乐观锁）
+    Code         string          // 供应商编码（唯一索引）
+    Name         string          // 供应商名称
+    Address      string          // SIP 服务器地址
+    Numbers      string          // 主叫号码池 JSON 数组
+    AuthUsername  string          // SIP 认证用户名
+    AuthPassword  string          // SIP 认证密码
+    Status       int32           // 1-启用 2-禁用
+}
 ```
+
+#### 关键约束
+
+- `provider_code` 唯一索引，创建时检查唯一性
+- `UpdateSipProvider` 只更新非空字段（partial update）
+- `DeleteSipProvider` 硬删除
+- 不使用 `VersionMixin`（配置表，低并发）
+
+### 3. SIP 外呼拨号（DialSip）
+
+```protobuf
+rpc DialSip(DialSipReq) returns (DialSipRes);
+
+message DialSipReq {
+    string callee_number = 1;      // 被叫号码（必填）
+    string meeting_no = 2;         // 会议号（可选，空=S前缀自动创建）
+    string participant_name = 3;   // 显示名（可选）
+    string provider_code = 4;      // 供应商编码（必填）
+}
+
+message DialSipRes {
+    MeetingInfo meeting = 1;       // 会议信息
+    string sip_call_id = 2;       // SIP 通话 ID
+}
+```
+
+#### DialSipLogic 流程
+
+1. **确定会议**：`meeting_no` 为空 → 自动创建 S 前缀会议；不为空 → 校验会议存在且进行中
+2. **查询供应商**：按 `provider_code` 查询 `live_sip_providers`，查不到报错
+3. **选择/创建 trunk**：`ListSIPOutboundTrunk` 复用已有 outbound trunk；没有则用供应商配置 `CreateSIPOutboundTrunk`
+4. **发起外呼**：`CreateSIPParticipant`（`WaitUntilAnswered=false`）
+5. **返回**：meeting info + sip_call_id
+
+#### Trunk 管理约定
+
+- Trunk 不持久化到数据库，由 LiveKit 侧管理
+- 一个 SIP 供应商对应一个 trunk，所有外呼复用
+- `ListSIPOutboundTrunk` 查询已有 trunk，复用第一个；没有才创建
+- 创建 trunk 时使用供应商配置（address、numbers、auth）
+- 使用 `ListSIPOutboundTrunk`（非废弃的 `ListSIPTrunk`）
+
+#### 会议号前缀
+
+| 前缀 | 场景 | 生成方式 |
+|------|------|---------|
+| M | 正常创建的会议 | `IdUtil.NextId("M", "live")` |
+| S | 电话通话（自动创建） | `IdUtil.NextId("S", "live")` |
 
 ### 4. SIP 补插会议记录（Webhook 处理）
 
@@ -302,23 +323,24 @@ SIP 外呼/API 创建的房间没有 meeting 记录，需要在 `room_started` w
 - 创建人/更新人标记为 `SIP`（无用户身份）
 - 幂等：已有记录则跳过
 
-### 5. SIP Trunk 管理约定
+### 5. livekitx SDK 约定
 
-- Trunk 配置持久化到数据库（`live_sip_trunk`），LiveKit 侧通过 `sip_trunk_id` 关联
-- 创建 trunk 时同时在 LiveKit 侧创建，删除时同时删除
-- Dispatch Rule 同理（`live_sip_dispatch_rule`）
+- `Client.SIP()` 暴露 `livekit.SIP` 接口，业务直接调用 SDK 原生方法
+- 不封装 SIP 辅助函数（与 `Room()` 风格一致）
+- `ListSIPOutboundTrunk` 替代已废弃的 `ListSIPTrunk`
 
-### 6. SIP 通话记录
+### 6. 模型风格
 
-- 通话记录表 `live_sip_call_log`，记录 call_id、方向、主被叫、关联会议号、状态、时长
-- Webhook 事件更新通话状态：`participant_joined` → active，`participant_left` → completed
+- `LiveSipProvider`：`LegacyStringBaseModel`，无 `VersionMixin`（低并发配置表）
+- `LiveMeeting` / `LiveMeetingParticipant`：`LegacyStringBaseModel`，无 `VersionMixin`（已有 Redis 悲观锁）
+- 只有真正高并发且无悲观锁保护的表才加 `VersionMixin`
 
 ### 7. 部署配置
 
 Docker Compose 部署 SIP 环境：
 - LiveKit Server：WebRTC 媒体服务器（**不原生支持 TLS**，Config 结构体无 `tls` 字段，生产需反向代理终止 TLS）
 - LiveKit SIP Server：SIP↔WebRTC 桥接
-- FreeSWITCH：SIP 电话交换机（提供分机注册）
+- FreeSWITCH：本地测试用 SIP 服务器（生产环境不需要）
 
 #### Docker 网络与端口
 
@@ -371,31 +393,6 @@ freeswitch:
 ```
 sip:1001@10.10.11.25:5060  密码: 1234
 ```
-
-#### Outbound Trunk 配置
-
-Outbound Trunk 必须使用 FreeSWITCH 的 external profile（端口 5080，免认证）：
-
-```go
-outRes, err := sip.CreateSIPOutboundTrunk(ctx, &livekit.CreateSIPOutboundTrunkRequest{
-    Trunk: &livekit.SIPOutboundTrunkInfo{
-        Name:    "local-freeswitch",
-        Address: "freeswitch:5080",  // Docker 内部网络 + external profile 端口
-        Numbers: []string{"1000"},
-    },
-})
-```
-
-#### TLS 证书生成
-
-`deploy/tls/gen-tls.sh` 已参数化，支持环境变量注入：
-
-```bash
-DOMAIN=myhost.local EXTRA_DNS="livekit-server,*.local" EXTRA_IPS="10.10.11.25" ./gen-tls.sh
-```
-
-- bash3 空数组兼容（macOS 自带 bash3 不支持 `declare -a arr=()`）
-- 证书默认含 SAN：localhost, *.local, livekit-server, 127.0.0.1, ::1
 
 #### 浏览器自动播放策略
 
@@ -780,6 +777,10 @@ func main() {
 - **从 `.api` 生成时只保留最新结构**：如果之前手工架过 logic，重新生成前先 `rm -rf internal/handler internal/logic internal/types`，避免新旧命名文件（驼峰 vs 下划线）共存导致重复定义
 - **不要**把多个 logic 合并进一个 `meetinglogic.go`（合并文件模式和 goctl 的拆分模式冲突，会让后续 `gen.sh` 生成重复定义）。旧合并文件应删掉，改成拆分文件。
 - 生成文件不要手工改结构（struct 定义/函数签名），只填 logic 方法体
+- **必须用 `gen.sh` 生成**：`gen.sh` 内部调用 `goctl api format` + `goctl api go`。不能直接 `goctl api go`（会跳过 format 导致 api 文件格式异常）。proto 用 `goctl rpc protoc` + `gen.sh`
+- **`liverpc` 包已废弃**：直接用 proto 生成的 `live.LiveRpcClient`（在 `app/live/live/live_grpc.pb.go`）。ServiceContext 字段名是 `LiveRpcCli live.LiveRpcClient`
+- **`--client=false`**：`app/live/gen.sh` 使用此参数，`liverpc.go` 的 client 接口不会自动更新。新增 RPC 后需要手动更新 `liverpc.go`（如果还用的话）或直接用 `live.LiveRpcClient`
+- **webhook 测试**：`fakeLiveRpcCli`（webhook 测试用）必须实现 `live.LiveRpcClient` 的**全部**方法。gRPC 接口一旦新增/删除方法，`helpers_test.go` 里的 fake 需同步补齐/删除对应方法，否则 `go test ./...` 构建失败。
 
 ### 12. 票据系统设计
 

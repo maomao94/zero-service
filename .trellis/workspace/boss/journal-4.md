@@ -686,3 +686,26 @@ Proto: JoinMeetingReq 增加 canPublish/canSubscribe/canPublishData/canPublishSo
 ### Status
 
 [OK] **Completed**
+
+
+## Session 208: SIP 网关层 + 前端 DialPad
+
+**Date**: 2026-09-07
+**Task**: SIP 网关层 + 前端 DialPad
+**Branch**: `master`
+
+### Summary
+
+livegtw.api 新增 SIP HTTP 路由（DialSip + Provider CRUD），handler 改用 xhttp.JsonBaseResponseCtx 标准网关 JSON，删除 liverpc 包改用 live.LiveRpcClient，前端 DialPad 组件，更新 sip-integration.md 和 livekit-guidelines.md（VersionMixin 规则、代码生成注意事项）
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4b0f1fb3` | (see git log) |
+| `7dd15108` | (see git log) |
+| `468ad6c8` | (see git log) |
+
+### Status
+
+[OK] **Completed**

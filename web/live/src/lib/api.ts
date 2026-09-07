@@ -1,4 +1,4 @@
-import type { ApiMessages, ApiPage, JoinReply, MeetingInfo, ParticipantInfo, TicketReply } from '../types'
+import type { ApiMessages, ApiPage, DialSipReply, JoinReply, MeetingInfo, ParticipantInfo, SipProviderInfo, TicketReply } from '../types'
 
 const API_ROOT = import.meta.env.VITE_API_ROOT || '/live/v1'
 
@@ -66,4 +66,9 @@ export const api = {
   generateTicket: (meetingNo: string, identity: string, name: string, expireSeconds: number, canPublish = true, canSubscribe = true, canPublishData = true, canPublishSources: string[] = [], ticketType = 1) => request<TicketReply>('/generateMeetingTicket', json({ meetingNo, identity, name, expireSeconds, canPublish, canSubscribe, canPublishData, canPublishSources, ticketType })),
   reportMessage: (message: { meetingNo: string; content: string; messageType: string }) => request<{ messageId: string }>('/reportMeetingMessage', json(message)),
   listMessages: (meetingNo: string) => request<ApiMessages>(`/listMeetingMessages?meetingNo=${encodeURIComponent(meetingNo)}&page=1&pageSize=100`),
+  dialSip: (params: { calleeNumber: string; meetingNo?: string; participantName?: string; providerCode: string }) => request<DialSipReply>('/sip-calls/dial', json(params)),
+  listSipProviders: () => request<{ providers: SipProviderInfo[] }>('/sip-providers'),
+  createSipProvider: (params: { code: string; name: string; address: string; numbers: string[]; authUsername?: string; authPassword?: string }) => request<{ provider: SipProviderInfo }>('/sip-providers', json(params)),
+  updateSipProvider: (params: { id: string; name?: string; address?: string; numbers?: string[]; authUsername?: string; authPassword?: string; status?: number }) => request<{ provider: SipProviderInfo }>('/sip-providers/update', json(params)),
+  deleteSipProvider: (id: string) => request<void>('/sip-providers/delete', json({ id })),
 }

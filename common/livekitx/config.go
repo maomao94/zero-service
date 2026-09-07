@@ -95,6 +95,9 @@ func (c *Client) API() *API { return c.api }
 // Room 返回底层 RoomService，供业务直接使用 SDK API。
 func (c *Client) Room() livekit.RoomService { return c.api.Room() }
 
+// SIP 返回底层 SIP Service，供业务直接使用 SDK SIP API。
+func (c *Client) SIP() livekit.SIP { return c.api.SIP() }
+
 // Config 返回构造时的配置副本；HTTPClient 指针由调用方拥有并负责关闭。
 func (c *Client) Config() Config { return c.config }
 

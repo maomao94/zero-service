@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-4.md`
-- **Total Sessions**: 207
-- **Last Active**: 2026-09-03
+- **Total Sessions**: 208
+- **Last Active**: 2026-09-07
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-4.md` | ~688 | Active |
+| `journal-4.md` | ~711 | Active |
 | `journal-3.md` | ~1989 | Archived |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
@@ -32,6 +32,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 208 | 2026-09-07 | SIP 网关层 + 前端 DialPad | `4b0f1fb3`, `7dd15108`, `468ad6c8` | `master` |
 | 207 | 2026-09-03 | Web RPC 注册演示与 live 前端全量审查 | `b128d5d0`, `2c087884`, `954fdd26` | `master` |
 | 206 | 2026-09-03 | 优化项目文档：新增 LiveKit 会议服务、Oryx 流媒体、规整端口表 | `a4a9c68e` | `master` |
 | 205 | 2026-09-03 | 优化视频会议 Demo 大厅与会议工作区 | `52793e1a` | `master` |

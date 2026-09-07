@@ -112,3 +112,33 @@ func (s *LiveRpcServer) ListMeetingMessages(ctx context.Context, in *live.ListMe
 	l := logic.NewListMeetingMessagesLogic(ctx, s.svcCtx)
 	return l.ListMeetingMessages(in)
 }
+
+// 发起 SIP 外呼（拨打电话或在会议中邀请电话参会者）
+func (s *LiveRpcServer) DialSip(ctx context.Context, in *live.DialSipReq) (*live.DialSipRes, error) {
+	l := logic.NewDialSipLogic(ctx, s.svcCtx)
+	return l.DialSip(in)
+}
+
+// 创建 SIP 供应商
+func (s *LiveRpcServer) CreateSipProvider(ctx context.Context, in *live.CreateSipProviderReq) (*live.CreateSipProviderRes, error) {
+	l := logic.NewCreateSipProviderLogic(ctx, s.svcCtx)
+	return l.CreateSipProvider(in)
+}
+
+// 更新 SIP 供应商（含启用/禁用）
+func (s *LiveRpcServer) UpdateSipProvider(ctx context.Context, in *live.UpdateSipProviderReq) (*live.UpdateSipProviderRes, error) {
+	l := logic.NewUpdateSipProviderLogic(ctx, s.svcCtx)
+	return l.UpdateSipProvider(in)
+}
+
+// 列出 SIP 供应商
+func (s *LiveRpcServer) ListSipProviders(ctx context.Context, in *live.ListSipProvidersReq) (*live.ListSipProvidersRes, error) {
+	l := logic.NewListSipProvidersLogic(ctx, s.svcCtx)
+	return l.ListSipProviders(in)
+}
+
+// 删除 SIP 供应商
+func (s *LiveRpcServer) DeleteSipProvider(ctx context.Context, in *live.DeleteSipProviderReq) (*live.DeleteSipProviderRes, error) {
+	l := logic.NewDeleteSipProviderLogic(ctx, s.svcCtx)
+	return l.DeleteSipProvider(in)
+}

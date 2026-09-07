@@ -63,3 +63,18 @@ export interface ApiMessages {
   total: number
   messages: MeetingMessage[]
 }
+
+export interface SipProviderInfo {
+  id: string
+  code: string
+  name: string
+  address: string
+  numbers: string[]
+  status: number
+  createTime: string
+}
+
+export interface DialSipReply {
+  meeting: MeetingInfo
+  sipCallId: string
+}

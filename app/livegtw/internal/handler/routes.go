@@ -115,6 +115,56 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	)
 
 	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.MeetingAuth},
+			[]rest.Route{
+				{
+					// 发起 SIP 外呼
+					Method:  http.MethodPost,
+					Path:    "/sip-calls/dial",
+					Handler: live.DialSipHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
+		rest.WithPrefix("/live/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.MeetingAuth},
+			[]rest.Route{
+				{
+					// 创建 SIP 供应商
+					Method:  http.MethodPost,
+					Path:    "/sip-providers",
+					Handler: live.CreateSipProviderHandler(serverCtx),
+				},
+				{
+					// 查询 SIP 供应商列表
+					Method:  http.MethodGet,
+					Path:    "/sip-providers",
+					Handler: live.ListSipProvidersHandler(serverCtx),
+				},
+				{
+					// 删除 SIP 供应商
+					Method:  http.MethodPost,
+					Path:    "/sip-providers/delete",
+					Handler: live.DeleteSipProviderHandler(serverCtx),
+				},
+				{
+					// 更新 SIP 供应商
+					Method:  http.MethodPost,
+					Path:    "/sip-providers/update",
+					Handler: live.UpdateSipProviderHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
+		rest.WithPrefix("/live/v1"),
+	)
+
+	server.AddRoutes(
 		[]rest.Route{
 			{
 				// 根据票据加入会议（无需JWT）

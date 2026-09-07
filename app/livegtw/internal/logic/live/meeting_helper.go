@@ -39,3 +39,18 @@ func toParticipantInfo(p *live.ParticipantInfo) types.ParticipantInfo {
 		LeftTime: p.GetLeftTime(),
 	}
 }
+
+func toSipProviderInfo(p *live.SipProviderInfo) types.SipProviderInfo {
+	if p == nil {
+		return types.SipProviderInfo{}
+	}
+	return types.SipProviderInfo{
+		Id:         p.GetId(),
+		Code:       p.GetCode(),
+		Name:       p.GetName(),
+		Address:    p.GetAddress(),
+		Numbers:    p.GetNumbers(),
+		Status:     p.GetStatus(),
+		CreateTime: p.GetCreateTime(),
+	}
+}

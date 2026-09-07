@@ -2254,6 +2254,688 @@ func (x *MeetingMessageInfo) GetCreateTime() string {
 	return ""
 }
 
+// DialSipReq 发起 SIP 外呼请求。
+// 支持两种场景：
+//  1. 拨打电话：不传 meeting_no，自动创建 S 前缀会议
+//  2. 电话会议：传 meeting_no（M 前缀），将电话参会者加入已有会议
+type DialSipReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 被叫号码（必填），如 "1001"（局域网分机）或 "+8613800138000"（手机号）
+	CalleeNumber string `protobuf:"bytes,1,opt,name=callee_number,json=calleeNumber,proto3" json:"callee_number,omitempty"`
+	// 会议号（可选），为空则自动创建 S 前缀会议（标题 "电话通话-{callee}"）
+	// 传当前会议号（M 前缀）= 电话会议场景，将电话参会者加入已有会议
+	MeetingNo string `protobuf:"bytes,2,opt,name=meeting_no,json=meetingNo,proto3" json:"meeting_no,omitempty"`
+	// 电话参会者在 Room 中的显示名（可选），不填则使用号码
+	ParticipantName string `protobuf:"bytes,3,opt,name=participant_name,json=participantName,proto3" json:"participant_name,omitempty"`
+	// SIP 供应商编码（必填），查询不到则报错
+	ProviderCode  string `protobuf:"bytes,4,opt,name=provider_code,json=providerCode,proto3" json:"provider_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DialSipReq) Reset() {
+	*x = DialSipReq{}
+	mi := &file_live_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DialSipReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DialSipReq) ProtoMessage() {}
+
+func (x *DialSipReq) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DialSipReq.ProtoReflect.Descriptor instead.
+func (*DialSipReq) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *DialSipReq) GetCalleeNumber() string {
+	if x != nil {
+		return x.CalleeNumber
+	}
+	return ""
+}
+
+func (x *DialSipReq) GetMeetingNo() string {
+	if x != nil {
+		return x.MeetingNo
+	}
+	return ""
+}
+
+func (x *DialSipReq) GetParticipantName() string {
+	if x != nil {
+		return x.ParticipantName
+	}
+	return ""
+}
+
+func (x *DialSipReq) GetProviderCode() string {
+	if x != nil {
+		return x.ProviderCode
+	}
+	return ""
+}
+
+// DialSipRes 发起 SIP 外呼响应。
+type DialSipRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 会议信息（新建或已有）
+	Meeting *MeetingInfo `protobuf:"bytes,1,opt,name=meeting,proto3" json:"meeting,omitempty"`
+	// SIP 通话 ID（LiveKit 侧的 call ID）
+	SipCallId     string `protobuf:"bytes,2,opt,name=sip_call_id,json=sipCallId,proto3" json:"sip_call_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DialSipRes) Reset() {
+	*x = DialSipRes{}
+	mi := &file_live_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DialSipRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DialSipRes) ProtoMessage() {}
+
+func (x *DialSipRes) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DialSipRes.ProtoReflect.Descriptor instead.
+func (*DialSipRes) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *DialSipRes) GetMeeting() *MeetingInfo {
+	if x != nil {
+		return x.Meeting
+	}
+	return nil
+}
+
+func (x *DialSipRes) GetSipCallId() string {
+	if x != nil {
+		return x.SipCallId
+	}
+	return ""
+}
+
+// SipProviderInfo SIP 供应商配置信息。
+type SipProviderInfo struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 数据库主键 ID
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 供应商编码（唯一，如 "freeswitch" / "telnyx" / "aliyun"）
+	Code string `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
+	// 供应商名称
+	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	// SIP 服务器地址（如 "freeswitch:5080" / "sip.telnyx.com"）
+	Address string `protobuf:"bytes,4,opt,name=address,proto3" json:"address,omitempty"`
+	// 主叫号码池（外呼时随机选一个作为来电显示）
+	Numbers []string `protobuf:"bytes,5,rep,name=numbers,proto3" json:"numbers,omitempty"`
+	// 状态：1-启用 2-禁用
+	Status int32 `protobuf:"varint,6,opt,name=status,proto3" json:"status,omitempty"`
+	// 创建时间，格式：yyyy-MM-dd HH:mm:ss
+	CreateTime    string `protobuf:"bytes,7,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SipProviderInfo) Reset() {
+	*x = SipProviderInfo{}
+	mi := &file_live_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SipProviderInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SipProviderInfo) ProtoMessage() {}
+
+func (x *SipProviderInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SipProviderInfo.ProtoReflect.Descriptor instead.
+func (*SipProviderInfo) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *SipProviderInfo) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *SipProviderInfo) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *SipProviderInfo) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SipProviderInfo) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *SipProviderInfo) GetNumbers() []string {
+	if x != nil {
+		return x.Numbers
+	}
+	return nil
+}
+
+func (x *SipProviderInfo) GetStatus() int32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
+func (x *SipProviderInfo) GetCreateTime() string {
+	if x != nil {
+		return x.CreateTime
+	}
+	return ""
+}
+
+// CreateSipProviderReq 创建 SIP 供应商请求。
+type CreateSipProviderReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 供应商编码（唯一，如 "freeswitch" / "telnyx"）
+	Code string `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	// 供应商名称
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// SIP 服务器地址
+	Address string `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
+	// 主叫号码池
+	Numbers []string `protobuf:"bytes,4,rep,name=numbers,proto3" json:"numbers,omitempty"`
+	// SIP 认证用户名（可选）
+	AuthUsername string `protobuf:"bytes,5,opt,name=auth_username,json=authUsername,proto3" json:"auth_username,omitempty"`
+	// SIP 认证密码（可选）
+	AuthPassword  string `protobuf:"bytes,6,opt,name=auth_password,json=authPassword,proto3" json:"auth_password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateSipProviderReq) Reset() {
+	*x = CreateSipProviderReq{}
+	mi := &file_live_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateSipProviderReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateSipProviderReq) ProtoMessage() {}
+
+func (x *CreateSipProviderReq) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateSipProviderReq.ProtoReflect.Descriptor instead.
+func (*CreateSipProviderReq) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *CreateSipProviderReq) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *CreateSipProviderReq) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateSipProviderReq) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *CreateSipProviderReq) GetNumbers() []string {
+	if x != nil {
+		return x.Numbers
+	}
+	return nil
+}
+
+func (x *CreateSipProviderReq) GetAuthUsername() string {
+	if x != nil {
+		return x.AuthUsername
+	}
+	return ""
+}
+
+func (x *CreateSipProviderReq) GetAuthPassword() string {
+	if x != nil {
+		return x.AuthPassword
+	}
+	return ""
+}
+
+// CreateSipProviderRes 创建 SIP 供应商响应。
+type CreateSipProviderRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 创建的供应商信息
+	Provider      *SipProviderInfo `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateSipProviderRes) Reset() {
+	*x = CreateSipProviderRes{}
+	mi := &file_live_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateSipProviderRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateSipProviderRes) ProtoMessage() {}
+
+func (x *CreateSipProviderRes) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateSipProviderRes.ProtoReflect.Descriptor instead.
+func (*CreateSipProviderRes) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *CreateSipProviderRes) GetProvider() *SipProviderInfo {
+	if x != nil {
+		return x.Provider
+	}
+	return nil
+}
+
+// UpdateSipProviderReq 更新 SIP 供应商请求。
+// 所有字段均为可选，不传则不更新对应字段。
+type UpdateSipProviderReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 供应商 ID（必填）
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 供应商名称（可选）
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// SIP 服务器地址（可选）
+	Address string `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
+	// 主叫号码池（可选）
+	Numbers []string `protobuf:"bytes,4,rep,name=numbers,proto3" json:"numbers,omitempty"`
+	// SIP 认证用户名（可选）
+	AuthUsername string `protobuf:"bytes,5,opt,name=auth_username,json=authUsername,proto3" json:"auth_username,omitempty"`
+	// SIP 认证密码（可选）
+	AuthPassword string `protobuf:"bytes,6,opt,name=auth_password,json=authPassword,proto3" json:"auth_password,omitempty"`
+	// 状态：1-启用 2-禁用（可选，0 表示不更新）
+	Status        int32 `protobuf:"varint,7,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateSipProviderReq) Reset() {
+	*x = UpdateSipProviderReq{}
+	mi := &file_live_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateSipProviderReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateSipProviderReq) ProtoMessage() {}
+
+func (x *UpdateSipProviderReq) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateSipProviderReq.ProtoReflect.Descriptor instead.
+func (*UpdateSipProviderReq) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *UpdateSipProviderReq) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *UpdateSipProviderReq) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *UpdateSipProviderReq) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *UpdateSipProviderReq) GetNumbers() []string {
+	if x != nil {
+		return x.Numbers
+	}
+	return nil
+}
+
+func (x *UpdateSipProviderReq) GetAuthUsername() string {
+	if x != nil {
+		return x.AuthUsername
+	}
+	return ""
+}
+
+func (x *UpdateSipProviderReq) GetAuthPassword() string {
+	if x != nil {
+		return x.AuthPassword
+	}
+	return ""
+}
+
+func (x *UpdateSipProviderReq) GetStatus() int32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
+// UpdateSipProviderRes 更新 SIP 供应商响应。
+type UpdateSipProviderRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 更新后的供应商信息
+	Provider      *SipProviderInfo `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateSipProviderRes) Reset() {
+	*x = UpdateSipProviderRes{}
+	mi := &file_live_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateSipProviderRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateSipProviderRes) ProtoMessage() {}
+
+func (x *UpdateSipProviderRes) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateSipProviderRes.ProtoReflect.Descriptor instead.
+func (*UpdateSipProviderRes) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *UpdateSipProviderRes) GetProvider() *SipProviderInfo {
+	if x != nil {
+		return x.Provider
+	}
+	return nil
+}
+
+// ListSipProvidersReq 列出 SIP 供应商请求。
+type ListSipProvidersReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSipProvidersReq) Reset() {
+	*x = ListSipProvidersReq{}
+	mi := &file_live_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSipProvidersReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSipProvidersReq) ProtoMessage() {}
+
+func (x *ListSipProvidersReq) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSipProvidersReq.ProtoReflect.Descriptor instead.
+func (*ListSipProvidersReq) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{40}
+}
+
+// ListSipProvidersRes 列出 SIP 供应商响应。
+type ListSipProvidersRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 供应商列表
+	Providers     []*SipProviderInfo `protobuf:"bytes,1,rep,name=providers,proto3" json:"providers,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSipProvidersRes) Reset() {
+	*x = ListSipProvidersRes{}
+	mi := &file_live_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSipProvidersRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSipProvidersRes) ProtoMessage() {}
+
+func (x *ListSipProvidersRes) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSipProvidersRes.ProtoReflect.Descriptor instead.
+func (*ListSipProvidersRes) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *ListSipProvidersRes) GetProviders() []*SipProviderInfo {
+	if x != nil {
+		return x.Providers
+	}
+	return nil
+}
+
+// DeleteSipProviderReq 删除 SIP 供应商请求。
+type DeleteSipProviderReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 供应商 ID
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteSipProviderReq) Reset() {
+	*x = DeleteSipProviderReq{}
+	mi := &file_live_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteSipProviderReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteSipProviderReq) ProtoMessage() {}
+
+func (x *DeleteSipProviderReq) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteSipProviderReq.ProtoReflect.Descriptor instead.
+func (*DeleteSipProviderReq) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *DeleteSipProviderReq) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+// DeleteSipProviderRes 删除 SIP 供应商响应。
+type DeleteSipProviderRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteSipProviderRes) Reset() {
+	*x = DeleteSipProviderRes{}
+	mi := &file_live_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteSipProviderRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteSipProviderRes) ProtoMessage() {}
+
+func (x *DeleteSipProviderRes) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteSipProviderRes.ProtoReflect.Descriptor instead.
+func (*DeleteSipProviderRes) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{43}
+}
+
 var File_live_proto protoreflect.FileDescriptor
 
 const file_live_proto_rawDesc = "" +
@@ -2437,7 +3119,52 @@ const file_live_proto_rawDesc = "" +
 	"\acontent\x18\x04 \x01(\tR\acontent\x12!\n" +
 	"\fmessage_type\x18\x05 \x01(\tR\vmessageType\x12\x1f\n" +
 	"\vcreate_time\x18\x06 \x01(\tR\n" +
-	"createTime2\xb5\b\n" +
+	"createTime\"\xa0\x01\n" +
+	"\n" +
+	"DialSipReq\x12#\n" +
+	"\rcallee_number\x18\x01 \x01(\tR\fcalleeNumber\x12\x1d\n" +
+	"\n" +
+	"meeting_no\x18\x02 \x01(\tR\tmeetingNo\x12)\n" +
+	"\x10participant_name\x18\x03 \x01(\tR\x0fparticipantName\x12#\n" +
+	"\rprovider_code\x18\x04 \x01(\tR\fproviderCode\"Y\n" +
+	"\n" +
+	"DialSipRes\x12+\n" +
+	"\ameeting\x18\x01 \x01(\v2\x11.live.MeetingInfoR\ameeting\x12\x1e\n" +
+	"\vsip_call_id\x18\x02 \x01(\tR\tsipCallId\"\xb6\x01\n" +
+	"\x0fSipProviderInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x18\n" +
+	"\aaddress\x18\x04 \x01(\tR\aaddress\x12\x18\n" +
+	"\anumbers\x18\x05 \x03(\tR\anumbers\x12\x16\n" +
+	"\x06status\x18\x06 \x01(\x05R\x06status\x12\x1f\n" +
+	"\vcreate_time\x18\a \x01(\tR\n" +
+	"createTime\"\xbc\x01\n" +
+	"\x14CreateSipProviderReq\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
+	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x18\n" +
+	"\anumbers\x18\x04 \x03(\tR\anumbers\x12#\n" +
+	"\rauth_username\x18\x05 \x01(\tR\fauthUsername\x12#\n" +
+	"\rauth_password\x18\x06 \x01(\tR\fauthPassword\"I\n" +
+	"\x14CreateSipProviderRes\x121\n" +
+	"\bprovider\x18\x01 \x01(\v2\x15.live.SipProviderInfoR\bprovider\"\xd0\x01\n" +
+	"\x14UpdateSipProviderReq\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
+	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x18\n" +
+	"\anumbers\x18\x04 \x03(\tR\anumbers\x12#\n" +
+	"\rauth_username\x18\x05 \x01(\tR\fauthUsername\x12#\n" +
+	"\rauth_password\x18\x06 \x01(\tR\fauthPassword\x12\x16\n" +
+	"\x06status\x18\a \x01(\x05R\x06status\"I\n" +
+	"\x14UpdateSipProviderRes\x121\n" +
+	"\bprovider\x18\x01 \x01(\v2\x15.live.SipProviderInfoR\bprovider\"\x15\n" +
+	"\x13ListSipProvidersReq\"J\n" +
+	"\x13ListSipProvidersRes\x123\n" +
+	"\tproviders\x18\x01 \x03(\v2\x15.live.SipProviderInfoR\tproviders\"&\n" +
+	"\x14DeleteSipProviderReq\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
+	"\x14DeleteSipProviderRes2\x95\v\n" +
 	"\aLiveRpc\x12?\n" +
 	"\rCreateMeeting\x12\x16.live.CreateMeetingReq\x1a\x16.live.CreateMeetingRes\x129\n" +
 	"\vJoinMeeting\x12\x14.live.JoinMeetingReq\x1a\x14.live.JoinMeetingRes\x126\n" +
@@ -2455,7 +3182,12 @@ const file_live_proto_rawDesc = "" +
 	"\x15GenerateMeetingTicket\x12\x1e.live.GenerateMeetingTicketReq\x1a\x1e.live.GenerateMeetingTicketRes\x12Q\n" +
 	"\x13JoinMeetingByTicket\x12\x1c.live.JoinMeetingByTicketReq\x1a\x1c.live.JoinMeetingByTicketRes\x12T\n" +
 	"\x14ReportMeetingMessage\x12\x1d.live.ReportMeetingMessageReq\x1a\x1d.live.ReportMeetingMessageRes\x12Q\n" +
-	"\x13ListMeetingMessages\x12\x1c.live.ListMeetingMessagesReq\x1a\x1c.live.ListMeetingMessagesResB+\n" +
+	"\x13ListMeetingMessages\x12\x1c.live.ListMeetingMessagesReq\x1a\x1c.live.ListMeetingMessagesRes\x12-\n" +
+	"\aDialSip\x12\x10.live.DialSipReq\x1a\x10.live.DialSipRes\x12K\n" +
+	"\x11CreateSipProvider\x12\x1a.live.CreateSipProviderReq\x1a\x1a.live.CreateSipProviderRes\x12K\n" +
+	"\x11UpdateSipProvider\x12\x1a.live.UpdateSipProviderReq\x1a\x1a.live.UpdateSipProviderRes\x12H\n" +
+	"\x10ListSipProviders\x12\x19.live.ListSipProvidersReq\x1a\x19.live.ListSipProvidersRes\x12K\n" +
+	"\x11DeleteSipProvider\x12\x1a.live.DeleteSipProviderReq\x1a\x1a.live.DeleteSipProviderResB+\n" +
 	"\x14com.github.live.grpcB\tLiveProtoP\x01Z\x06./liveb\x06proto3"
 
 var (
@@ -2470,7 +3202,7 @@ func file_live_proto_rawDescGZIP() []byte {
 	return file_live_proto_rawDescData
 }
 
-var file_live_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_live_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
 var file_live_proto_goTypes = []any{
 	(*MeetingInfo)(nil),              // 0: live.MeetingInfo
 	(*CreateMeetingReq)(nil),         // 1: live.CreateMeetingReq
@@ -2505,6 +3237,17 @@ var file_live_proto_goTypes = []any{
 	(*ListMeetingMessagesReq)(nil),   // 30: live.ListMeetingMessagesReq
 	(*ListMeetingMessagesRes)(nil),   // 31: live.ListMeetingMessagesRes
 	(*MeetingMessageInfo)(nil),       // 32: live.MeetingMessageInfo
+	(*DialSipReq)(nil),               // 33: live.DialSipReq
+	(*DialSipRes)(nil),               // 34: live.DialSipRes
+	(*SipProviderInfo)(nil),          // 35: live.SipProviderInfo
+	(*CreateSipProviderReq)(nil),     // 36: live.CreateSipProviderReq
+	(*CreateSipProviderRes)(nil),     // 37: live.CreateSipProviderRes
+	(*UpdateSipProviderReq)(nil),     // 38: live.UpdateSipProviderReq
+	(*UpdateSipProviderRes)(nil),     // 39: live.UpdateSipProviderRes
+	(*ListSipProvidersReq)(nil),      // 40: live.ListSipProvidersReq
+	(*ListSipProvidersRes)(nil),      // 41: live.ListSipProvidersRes
+	(*DeleteSipProviderReq)(nil),     // 42: live.DeleteSipProviderReq
+	(*DeleteSipProviderRes)(nil),     // 43: live.DeleteSipProviderRes
 }
 var file_live_proto_depIdxs = []int32{
 	0,  // 0: live.CreateMeetingRes.meeting:type_name -> live.MeetingInfo
@@ -2514,41 +3257,55 @@ var file_live_proto_depIdxs = []int32{
 	15, // 4: live.ListParticipantsRes.participants:type_name -> live.ParticipantInfo
 	0,  // 5: live.JoinMeetingByTicketRes.meeting:type_name -> live.MeetingInfo
 	32, // 6: live.ListMeetingMessagesRes.messages:type_name -> live.MeetingMessageInfo
-	1,  // 7: live.LiveRpc.CreateMeeting:input_type -> live.CreateMeetingReq
-	3,  // 8: live.LiveRpc.JoinMeeting:input_type -> live.JoinMeetingReq
-	5,  // 9: live.LiveRpc.GetMeeting:input_type -> live.GetMeetingReq
-	7,  // 10: live.LiveRpc.ListMeetings:input_type -> live.ListMeetingsReq
-	9,  // 11: live.LiveRpc.EndMeeting:input_type -> live.EndMeetingReq
-	11, // 12: live.LiveRpc.KickParticipant:input_type -> live.KickParticipantReq
-	13, // 13: live.LiveRpc.MuteParticipant:input_type -> live.MuteParticipantReq
-	16, // 14: live.LiveRpc.ListParticipants:input_type -> live.ListParticipantsReq
-	18, // 15: live.LiveRpc.SendMeetingData:input_type -> live.SendMeetingDataReq
-	20, // 16: live.LiveRpc.PerformMeetingRpc:input_type -> live.PerformMeetingRpcReq
-	22, // 17: live.LiveRpc.WebhookNotify:input_type -> live.WebhookNotifyReq
-	24, // 18: live.LiveRpc.GenerateMeetingTicket:input_type -> live.GenerateMeetingTicketReq
-	26, // 19: live.LiveRpc.JoinMeetingByTicket:input_type -> live.JoinMeetingByTicketReq
-	28, // 20: live.LiveRpc.ReportMeetingMessage:input_type -> live.ReportMeetingMessageReq
-	30, // 21: live.LiveRpc.ListMeetingMessages:input_type -> live.ListMeetingMessagesReq
-	2,  // 22: live.LiveRpc.CreateMeeting:output_type -> live.CreateMeetingRes
-	4,  // 23: live.LiveRpc.JoinMeeting:output_type -> live.JoinMeetingRes
-	6,  // 24: live.LiveRpc.GetMeeting:output_type -> live.GetMeetingRes
-	8,  // 25: live.LiveRpc.ListMeetings:output_type -> live.ListMeetingsRes
-	10, // 26: live.LiveRpc.EndMeeting:output_type -> live.EndMeetingRes
-	12, // 27: live.LiveRpc.KickParticipant:output_type -> live.KickParticipantRes
-	14, // 28: live.LiveRpc.MuteParticipant:output_type -> live.MuteParticipantRes
-	17, // 29: live.LiveRpc.ListParticipants:output_type -> live.ListParticipantsRes
-	19, // 30: live.LiveRpc.SendMeetingData:output_type -> live.SendMeetingDataRes
-	21, // 31: live.LiveRpc.PerformMeetingRpc:output_type -> live.PerformMeetingRpcRes
-	23, // 32: live.LiveRpc.WebhookNotify:output_type -> live.WebhookNotifyRes
-	25, // 33: live.LiveRpc.GenerateMeetingTicket:output_type -> live.GenerateMeetingTicketRes
-	27, // 34: live.LiveRpc.JoinMeetingByTicket:output_type -> live.JoinMeetingByTicketRes
-	29, // 35: live.LiveRpc.ReportMeetingMessage:output_type -> live.ReportMeetingMessageRes
-	31, // 36: live.LiveRpc.ListMeetingMessages:output_type -> live.ListMeetingMessagesRes
-	22, // [22:37] is the sub-list for method output_type
-	7,  // [7:22] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	0,  // 7: live.DialSipRes.meeting:type_name -> live.MeetingInfo
+	35, // 8: live.CreateSipProviderRes.provider:type_name -> live.SipProviderInfo
+	35, // 9: live.UpdateSipProviderRes.provider:type_name -> live.SipProviderInfo
+	35, // 10: live.ListSipProvidersRes.providers:type_name -> live.SipProviderInfo
+	1,  // 11: live.LiveRpc.CreateMeeting:input_type -> live.CreateMeetingReq
+	3,  // 12: live.LiveRpc.JoinMeeting:input_type -> live.JoinMeetingReq
+	5,  // 13: live.LiveRpc.GetMeeting:input_type -> live.GetMeetingReq
+	7,  // 14: live.LiveRpc.ListMeetings:input_type -> live.ListMeetingsReq
+	9,  // 15: live.LiveRpc.EndMeeting:input_type -> live.EndMeetingReq
+	11, // 16: live.LiveRpc.KickParticipant:input_type -> live.KickParticipantReq
+	13, // 17: live.LiveRpc.MuteParticipant:input_type -> live.MuteParticipantReq
+	16, // 18: live.LiveRpc.ListParticipants:input_type -> live.ListParticipantsReq
+	18, // 19: live.LiveRpc.SendMeetingData:input_type -> live.SendMeetingDataReq
+	20, // 20: live.LiveRpc.PerformMeetingRpc:input_type -> live.PerformMeetingRpcReq
+	22, // 21: live.LiveRpc.WebhookNotify:input_type -> live.WebhookNotifyReq
+	24, // 22: live.LiveRpc.GenerateMeetingTicket:input_type -> live.GenerateMeetingTicketReq
+	26, // 23: live.LiveRpc.JoinMeetingByTicket:input_type -> live.JoinMeetingByTicketReq
+	28, // 24: live.LiveRpc.ReportMeetingMessage:input_type -> live.ReportMeetingMessageReq
+	30, // 25: live.LiveRpc.ListMeetingMessages:input_type -> live.ListMeetingMessagesReq
+	33, // 26: live.LiveRpc.DialSip:input_type -> live.DialSipReq
+	36, // 27: live.LiveRpc.CreateSipProvider:input_type -> live.CreateSipProviderReq
+	38, // 28: live.LiveRpc.UpdateSipProvider:input_type -> live.UpdateSipProviderReq
+	40, // 29: live.LiveRpc.ListSipProviders:input_type -> live.ListSipProvidersReq
+	42, // 30: live.LiveRpc.DeleteSipProvider:input_type -> live.DeleteSipProviderReq
+	2,  // 31: live.LiveRpc.CreateMeeting:output_type -> live.CreateMeetingRes
+	4,  // 32: live.LiveRpc.JoinMeeting:output_type -> live.JoinMeetingRes
+	6,  // 33: live.LiveRpc.GetMeeting:output_type -> live.GetMeetingRes
+	8,  // 34: live.LiveRpc.ListMeetings:output_type -> live.ListMeetingsRes
+	10, // 35: live.LiveRpc.EndMeeting:output_type -> live.EndMeetingRes
+	12, // 36: live.LiveRpc.KickParticipant:output_type -> live.KickParticipantRes
+	14, // 37: live.LiveRpc.MuteParticipant:output_type -> live.MuteParticipantRes
+	17, // 38: live.LiveRpc.ListParticipants:output_type -> live.ListParticipantsRes
+	19, // 39: live.LiveRpc.SendMeetingData:output_type -> live.SendMeetingDataRes
+	21, // 40: live.LiveRpc.PerformMeetingRpc:output_type -> live.PerformMeetingRpcRes
+	23, // 41: live.LiveRpc.WebhookNotify:output_type -> live.WebhookNotifyRes
+	25, // 42: live.LiveRpc.GenerateMeetingTicket:output_type -> live.GenerateMeetingTicketRes
+	27, // 43: live.LiveRpc.JoinMeetingByTicket:output_type -> live.JoinMeetingByTicketRes
+	29, // 44: live.LiveRpc.ReportMeetingMessage:output_type -> live.ReportMeetingMessageRes
+	31, // 45: live.LiveRpc.ListMeetingMessages:output_type -> live.ListMeetingMessagesRes
+	34, // 46: live.LiveRpc.DialSip:output_type -> live.DialSipRes
+	37, // 47: live.LiveRpc.CreateSipProvider:output_type -> live.CreateSipProviderRes
+	39, // 48: live.LiveRpc.UpdateSipProvider:output_type -> live.UpdateSipProviderRes
+	41, // 49: live.LiveRpc.ListSipProviders:output_type -> live.ListSipProvidersRes
+	43, // 50: live.LiveRpc.DeleteSipProvider:output_type -> live.DeleteSipProviderRes
+	31, // [31:51] is the sub-list for method output_type
+	11, // [11:31] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_live_proto_init() }
@@ -2562,7 +3319,7 @@ func file_live_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_live_proto_rawDesc), len(file_live_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   33,
+			NumMessages:   44,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

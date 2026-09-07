@@ -24,7 +24,6 @@ const (
 // metadata 的 user-id，不通过 proto 传输）。
 type LiveMeeting struct {
 	gormx.LegacyStringBaseModel
-	gormx.VersionMixin
 
 	CreateUser sql.NullString `gorm:"column:create_user;size:64;comment:创建人"`
 	UpdateUser sql.NullString `gorm:"column:update_user;size:64;comment:更新人"`
@@ -68,7 +67,6 @@ const (
 // LiveMeetingParticipant 参会记录（同一会议同一身份唯一）。
 type LiveMeetingParticipant struct {
 	gormx.LegacyStringBaseModel
-	gormx.VersionMixin
 
 	CreateUser sql.NullString `gorm:"column:create_user;size:64;comment:创建人"`
 	UpdateUser sql.NullString `gorm:"column:update_user;size:64;comment:更新人"`

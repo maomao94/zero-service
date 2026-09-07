@@ -30,6 +30,42 @@
 - 已组合 `SoftDeleteMixin` 的 model，普通查询不重复手写 `is_deleted = 0`
 - 使用 `Unscoped()`、原生 SQL、`Table(...)` 时才显式处理软删除
 
+### VersionMixin 使用规则
+
+`gormx.VersionMixin`（乐观锁）**不是默认选项**。根据业务并发决定是否需要：
+- 表有并发写入冲突风险 → 考虑使用
+- 表是低并发配置表、或已有悲观锁保护 → 不需要
+- 不确定 → 先不加，后续有并发问题再补
+
+| 表 | VersionMixin | 原因 |
+|---|---|---|
+| `LiveMeeting` | 不需要 | 会议操作有 Redis 分布式锁保护 |
+| `LiveMeetingParticipant` | 不需要 | 参会记录操作有分布式锁保护 |
+| `LiveSipProvider` | 不需要 | 低并发配置表 |
+| plan 系列表 | 需要 | 高并发写入，无悲观锁 |
+
+```go
+// ✓ 正确：根据业务并发决定，不盲目加 VersionMixin
+type LiveMeeting struct {
+    gormx.LegacyStringBaseModel  // 无 VersionMixin
+    // ...
+}
+
+// ✓ 正确：高并发表，需要 VersionMixin
+type SomeHighConcurrencyTable struct {
+    gormx.LegacyStringBaseModel
+    gormx.VersionMixin
+    // ...
+}
+
+// ✗ 错误：默认就加 VersionMixin（不根据业务并发判断）
+type LiveSipProvider struct {
+    gormx.LegacyStringBaseModel
+    gormx.VersionMixin  // 低并发配置表，不需要
+    // ...
+}
+```
+
 依据：`common/gormx/model.go`、`common/gormx/callbacks.go`
 
 ## 索引命名

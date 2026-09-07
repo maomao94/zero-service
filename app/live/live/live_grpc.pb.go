@@ -34,6 +34,11 @@ const (
 	LiveRpc_JoinMeetingByTicket_FullMethodName   = "/live.LiveRpc/JoinMeetingByTicket"
 	LiveRpc_ReportMeetingMessage_FullMethodName  = "/live.LiveRpc/ReportMeetingMessage"
 	LiveRpc_ListMeetingMessages_FullMethodName   = "/live.LiveRpc/ListMeetingMessages"
+	LiveRpc_DialSip_FullMethodName               = "/live.LiveRpc/DialSip"
+	LiveRpc_CreateSipProvider_FullMethodName     = "/live.LiveRpc/CreateSipProvider"
+	LiveRpc_UpdateSipProvider_FullMethodName     = "/live.LiveRpc/UpdateSipProvider"
+	LiveRpc_ListSipProviders_FullMethodName      = "/live.LiveRpc/ListSipProviders"
+	LiveRpc_DeleteSipProvider_FullMethodName     = "/live.LiveRpc/DeleteSipProvider"
 )
 
 // LiveRpcClient is the client API for LiveRpc service.
@@ -72,6 +77,16 @@ type LiveRpcClient interface {
 	ReportMeetingMessage(ctx context.Context, in *ReportMeetingMessageReq, opts ...grpc.CallOption) (*ReportMeetingMessageRes, error)
 	// 查询聊天记录
 	ListMeetingMessages(ctx context.Context, in *ListMeetingMessagesReq, opts ...grpc.CallOption) (*ListMeetingMessagesRes, error)
+	// 发起 SIP 外呼（拨打电话或在会议中邀请电话参会者）
+	DialSip(ctx context.Context, in *DialSipReq, opts ...grpc.CallOption) (*DialSipRes, error)
+	// 创建 SIP 供应商
+	CreateSipProvider(ctx context.Context, in *CreateSipProviderReq, opts ...grpc.CallOption) (*CreateSipProviderRes, error)
+	// 更新 SIP 供应商（含启用/禁用）
+	UpdateSipProvider(ctx context.Context, in *UpdateSipProviderReq, opts ...grpc.CallOption) (*UpdateSipProviderRes, error)
+	// 列出 SIP 供应商
+	ListSipProviders(ctx context.Context, in *ListSipProvidersReq, opts ...grpc.CallOption) (*ListSipProvidersRes, error)
+	// 删除 SIP 供应商
+	DeleteSipProvider(ctx context.Context, in *DeleteSipProviderReq, opts ...grpc.CallOption) (*DeleteSipProviderRes, error)
 }
 
 type liveRpcClient struct {
@@ -232,6 +247,56 @@ func (c *liveRpcClient) ListMeetingMessages(ctx context.Context, in *ListMeeting
 	return out, nil
 }
 
+func (c *liveRpcClient) DialSip(ctx context.Context, in *DialSipReq, opts ...grpc.CallOption) (*DialSipRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DialSipRes)
+	err := c.cc.Invoke(ctx, LiveRpc_DialSip_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *liveRpcClient) CreateSipProvider(ctx context.Context, in *CreateSipProviderReq, opts ...grpc.CallOption) (*CreateSipProviderRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateSipProviderRes)
+	err := c.cc.Invoke(ctx, LiveRpc_CreateSipProvider_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *liveRpcClient) UpdateSipProvider(ctx context.Context, in *UpdateSipProviderReq, opts ...grpc.CallOption) (*UpdateSipProviderRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateSipProviderRes)
+	err := c.cc.Invoke(ctx, LiveRpc_UpdateSipProvider_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *liveRpcClient) ListSipProviders(ctx context.Context, in *ListSipProvidersReq, opts ...grpc.CallOption) (*ListSipProvidersRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSipProvidersRes)
+	err := c.cc.Invoke(ctx, LiveRpc_ListSipProviders_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *liveRpcClient) DeleteSipProvider(ctx context.Context, in *DeleteSipProviderReq, opts ...grpc.CallOption) (*DeleteSipProviderRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteSipProviderRes)
+	err := c.cc.Invoke(ctx, LiveRpc_DeleteSipProvider_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LiveRpcServer is the server API for LiveRpc service.
 // All implementations must embed UnimplementedLiveRpcServer
 // for forward compatibility.
@@ -268,6 +333,16 @@ type LiveRpcServer interface {
 	ReportMeetingMessage(context.Context, *ReportMeetingMessageReq) (*ReportMeetingMessageRes, error)
 	// 查询聊天记录
 	ListMeetingMessages(context.Context, *ListMeetingMessagesReq) (*ListMeetingMessagesRes, error)
+	// 发起 SIP 外呼（拨打电话或在会议中邀请电话参会者）
+	DialSip(context.Context, *DialSipReq) (*DialSipRes, error)
+	// 创建 SIP 供应商
+	CreateSipProvider(context.Context, *CreateSipProviderReq) (*CreateSipProviderRes, error)
+	// 更新 SIP 供应商（含启用/禁用）
+	UpdateSipProvider(context.Context, *UpdateSipProviderReq) (*UpdateSipProviderRes, error)
+	// 列出 SIP 供应商
+	ListSipProviders(context.Context, *ListSipProvidersReq) (*ListSipProvidersRes, error)
+	// 删除 SIP 供应商
+	DeleteSipProvider(context.Context, *DeleteSipProviderReq) (*DeleteSipProviderRes, error)
 	mustEmbedUnimplementedLiveRpcServer()
 }
 
@@ -322,6 +397,21 @@ func (UnimplementedLiveRpcServer) ReportMeetingMessage(context.Context, *ReportM
 }
 func (UnimplementedLiveRpcServer) ListMeetingMessages(context.Context, *ListMeetingMessagesReq) (*ListMeetingMessagesRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListMeetingMessages not implemented")
+}
+func (UnimplementedLiveRpcServer) DialSip(context.Context, *DialSipReq) (*DialSipRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method DialSip not implemented")
+}
+func (UnimplementedLiveRpcServer) CreateSipProvider(context.Context, *CreateSipProviderReq) (*CreateSipProviderRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateSipProvider not implemented")
+}
+func (UnimplementedLiveRpcServer) UpdateSipProvider(context.Context, *UpdateSipProviderReq) (*UpdateSipProviderRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateSipProvider not implemented")
+}
+func (UnimplementedLiveRpcServer) ListSipProviders(context.Context, *ListSipProvidersReq) (*ListSipProvidersRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSipProviders not implemented")
+}
+func (UnimplementedLiveRpcServer) DeleteSipProvider(context.Context, *DeleteSipProviderReq) (*DeleteSipProviderRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteSipProvider not implemented")
 }
 func (UnimplementedLiveRpcServer) mustEmbedUnimplementedLiveRpcServer() {}
 func (UnimplementedLiveRpcServer) testEmbeddedByValue()                 {}
@@ -614,6 +704,96 @@ func _LiveRpc_ListMeetingMessages_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LiveRpc_DialSip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DialSipReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).DialSip(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_DialSip_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).DialSip(ctx, req.(*DialSipReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LiveRpc_CreateSipProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateSipProviderReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).CreateSipProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_CreateSipProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).CreateSipProvider(ctx, req.(*CreateSipProviderReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LiveRpc_UpdateSipProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateSipProviderReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).UpdateSipProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_UpdateSipProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).UpdateSipProvider(ctx, req.(*UpdateSipProviderReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LiveRpc_ListSipProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSipProvidersReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).ListSipProviders(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_ListSipProviders_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).ListSipProviders(ctx, req.(*ListSipProvidersReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LiveRpc_DeleteSipProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteSipProviderReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).DeleteSipProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_DeleteSipProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).DeleteSipProvider(ctx, req.(*DeleteSipProviderReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LiveRpc_ServiceDesc is the grpc.ServiceDesc for LiveRpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -680,6 +860,26 @@ var LiveRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListMeetingMessages",
 			Handler:    _LiveRpc_ListMeetingMessages_Handler,
+		},
+		{
+			MethodName: "DialSip",
+			Handler:    _LiveRpc_DialSip_Handler,
+		},
+		{
+			MethodName: "CreateSipProvider",
+			Handler:    _LiveRpc_CreateSipProvider_Handler,
+		},
+		{
+			MethodName: "UpdateSipProvider",
+			Handler:    _LiveRpc_UpdateSipProvider_Handler,
+		},
+		{
+			MethodName: "ListSipProviders",
+			Handler:    _LiveRpc_ListSipProviders_Handler,
+		},
+		{
+			MethodName: "DeleteSipProvider",
+			Handler:    _LiveRpc_DeleteSipProvider_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
