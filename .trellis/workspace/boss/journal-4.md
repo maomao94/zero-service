@@ -751,3 +751,24 @@ livegtw.api 新增 SIP HTTP 路由（DialSip + Provider CRUD），handler 改用
 ### Status
 
 [OK] **Completed**
+
+
+## Session 211: SIPMediaGW deploy 官方仓库对齐与部署文档
+
+**Date**: 2026-09-07
+**Task**: SIPMediaGW deploy 官方仓库对齐与部署文档
+**Branch**: `master`
+
+### Summary
+
+将 deploy/sipmediagw 从自定义 compose 改为官方仓库 deploy/ 目录的完整副本（含 kamailio/coturn/mysql/homer/heplify/scaler/systemd）。删除错误的 .env，新增 .env.example 模板和 README.md（测试/生产/limian1 部署指南）。删除多余的 .gitkeep。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b2b890c6` | (see git log) |
+
+### Status
+
+[OK] **Completed**

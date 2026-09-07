@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-4.md`
-- **Total Sessions**: 210
+- **Total Sessions**: 211
 - **Last Active**: 2026-09-07
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-4.md` | ~753 | Active |
+| `journal-4.md` | ~774 | Active |
 | `journal-3.md` | ~1989 | Archived |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
@@ -32,6 +32,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 211 | 2026-09-07 | SIPMediaGW deploy 官方仓库对齐与部署文档 | `b2b890c6` | `master` |
 | 210 | 2026-09-07 | 优化 SIP 电话测试工作台 | `62e9a6b8` | `master` |
 | 209 | 2026-09-07 | Spec 更新：VersionMixin + 代码生成注意事项 | `5a13e9d4` | `master` |
 | 208 | 2026-09-07 | SIP 网关层 + 前端 DialPad | `4b0f1fb3`, `7dd15108`, `468ad6c8` | `master` |
