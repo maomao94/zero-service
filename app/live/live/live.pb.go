@@ -2402,7 +2402,9 @@ type SipProviderInfo struct {
 	// 状态：1-启用 2-禁用
 	Status int32 `protobuf:"varint,6,opt,name=status,proto3" json:"status,omitempty"`
 	// 创建时间，格式：yyyy-MM-dd HH:mm:ss
-	CreateTime    string `protobuf:"bytes,7,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	CreateTime string `protobuf:"bytes,7,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	// LiveKit SIP Outbound Trunk ID（供应商创建时同步创建，配置变更时重建）
+	SipTrunkId    string `protobuf:"bytes,8,opt,name=sip_trunk_id,json=sipTrunkId,proto3" json:"sip_trunk_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2482,6 +2484,13 @@ func (x *SipProviderInfo) GetStatus() int32 {
 func (x *SipProviderInfo) GetCreateTime() string {
 	if x != nil {
 		return x.CreateTime
+	}
+	return ""
+}
+
+func (x *SipProviderInfo) GetSipTrunkId() string {
+	if x != nil {
+		return x.SipTrunkId
 	}
 	return ""
 }
@@ -3130,7 +3139,7 @@ const file_live_proto_rawDesc = "" +
 	"\n" +
 	"DialSipRes\x12+\n" +
 	"\ameeting\x18\x01 \x01(\v2\x11.live.MeetingInfoR\ameeting\x12\x1e\n" +
-	"\vsip_call_id\x18\x02 \x01(\tR\tsipCallId\"\xb6\x01\n" +
+	"\vsip_call_id\x18\x02 \x01(\tR\tsipCallId\"\xd8\x01\n" +
 	"\x0fSipProviderInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12\x12\n" +
@@ -3139,7 +3148,9 @@ const file_live_proto_rawDesc = "" +
 	"\anumbers\x18\x05 \x03(\tR\anumbers\x12\x16\n" +
 	"\x06status\x18\x06 \x01(\x05R\x06status\x12\x1f\n" +
 	"\vcreate_time\x18\a \x01(\tR\n" +
-	"createTime\"\xbc\x01\n" +
+	"createTime\x12 \n" +
+	"\fsip_trunk_id\x18\b \x01(\tR\n" +
+	"sipTrunkId\"\xbc\x01\n" +
 	"\x14CreateSipProviderReq\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +

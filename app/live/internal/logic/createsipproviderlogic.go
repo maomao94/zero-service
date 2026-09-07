@@ -12,6 +12,7 @@ import (
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
+	"github.com/livekit/protocol/livekit"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -53,6 +54,20 @@ func (l *CreateSipProviderLogic) CreateSipProvider(in *live.CreateSipProviderReq
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_ALREADY_EXIST, "供应商编码已存在")
 	}
 
+	// 创建 LiveKit SIP Outbound Trunk
+	trunkRes, err := l.svcCtx.LiveKit.SIP().CreateSIPOutboundTrunk(l.ctx, &livekit.CreateSIPOutboundTrunkRequest{
+		Trunk: &livekit.SIPOutboundTrunkInfo{
+			Name:         strings.TrimSpace(in.GetName()),
+			Address:      strings.TrimSpace(in.GetAddress()),
+			Numbers:      in.GetNumbers(),
+			AuthUsername: in.GetAuthUsername(),
+			AuthPassword: in.GetAuthPassword(),
+		},
+	})
+	if err != nil {
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "创建 SIP trunk 失败")
+	}
+
 	numbersJSON, _ := json.Marshal(in.GetNumbers())
 	now := carbonx.NowStartOfSecond().StdTime()
 	p := &gormmodel.LiveSipProvider{
@@ -63,14 +78,17 @@ func (l *CreateSipProviderLogic) CreateSipProvider(in *live.CreateSipProviderReq
 		AuthUsername: in.GetAuthUsername(),
 		AuthPassword: in.GetAuthPassword(),
 		Status:       gormmodel.SipProviderStatusEnabled,
+		SipTrunkId:   trunkRes.SipTrunkId,
 	}
 	p.CreateTime = now
 	p.UpdateTime = now
 
 	if err := l.svcCtx.MeetingRepo.CreateSipProvider(l.ctx, p); err != nil {
+		// 创建供应商失败，清理已创建的 trunk
+		_, _ = l.svcCtx.LiveKit.SIP().DeleteSIPTrunk(l.ctx, &livekit.DeleteSIPTrunkRequest{SipTrunkId: trunkRes.SipTrunkId})
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "创建供应商失败")
 	}
 
-	l.Logger.Infof("SIP provider created: %s (%s)", code, p.Name)
+	l.Logger.Infof("SIP provider created: %s (%s) trunk=%s", code, p.Name, trunkRes.SipTrunkId)
 	return &live.CreateSipProviderRes{Provider: toSipProviderInfo(p)}, nil
 }

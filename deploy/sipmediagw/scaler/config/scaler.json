@@ -1,0 +1,37 @@
+{
+    "gw_name_prefix" : "mediagw",
+    "auto_scale_threshold" : {
+        "default": {
+            "00:00:00": {"maxGw": 4, "unlockedMin":1, "loadMax":0.9},
+            "07:00:00": {"maxGw": 4, "unlockedMin":2, "loadMax":0.75},
+            "09:00:00": {"maxGw": 4, "unlockedMin":2, "loadMax":0.75},
+            "10:30:00": {"maxGw": 4, "unlockedMin":2, "loadMax":0.75},
+            "12:30:00": {"maxGw": 4, "unlockedMin":2, "loadMax":0.8},
+            "13:00:00": {"maxGw": 4, "unlockedMin":2, "loadMax":0.75},
+            "14:30:00": {"maxGw": 4, "unlockedMin":2, "loadMax":0.75},
+            "17:00:00": {"maxGw": 4, "unlockedMin":1, "loadMax":0.8}
+        },
+        "saturday": {
+            "00:00:00": {"maxGw": 1, "unlockedMin":1, "loadMax":1.0}
+        },
+        "sunday": {
+            "00:00:00": {"maxGw": 1, "unlockedMin":1, "loadMax":1.0}
+        }
+    },
+    "cpu_per_gw": 4,
+    "ram_per_gw": 4,
+    "sip_db": {
+        "host": "127.0.0.1",
+        "root_password": "dbrootpw"
+    },
+    "redis": {
+        "host": "127.0.0.1",
+        "port": 6379
+    },
+    "main_app": "",
+    "assets_url": "",
+    "cleaner_blacklist": [],
+    "api_token": "1234",
+    "cleanup_threshold_seconds": 600
+}
+

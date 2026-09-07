@@ -17,13 +17,14 @@ func toSipProviderInfo(p *gormmodel.LiveSipProvider) *live.SipProviderInfo {
 	var numbers []string
 	_ = json.Unmarshal([]byte(p.Numbers), &numbers)
 	return &live.SipProviderInfo{
-		Id:         p.Id,
-		Code:       p.Code,
-		Name:       p.Name,
-		Address:    p.Address,
-		Numbers:    numbers,
-		Status:     p.Status,
-		CreateTime: carbonx.FormatDateTimeOrEmpty(p.CreateTime),
+		Id:          p.Id,
+		Code:        p.Code,
+		Name:        p.Name,
+		Address:     p.Address,
+		Numbers:     numbers,
+		Status:      p.Status,
+		CreateTime:  carbonx.FormatDateTimeOrEmpty(p.CreateTime),
+		SipTrunkId:  p.SipTrunkId,
 	}
 }
 

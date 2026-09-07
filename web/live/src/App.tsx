@@ -88,7 +88,8 @@ function Topbar({ name, identity, deptCode, guest, onLogout }: { name: string; i
 
 function LobbyView({ name, identity, onJoin, notify }: { name: string; identity: string; onJoin: (meetingNo: string, options?: { canPublish?: boolean; canSubscribe?: boolean; canPublishData?: boolean }) => Promise<void>; notify: (message: string, tone?: Toast['tone']) => void }) {
   const [title, setTitle] = useState(''); const [meetingNo, setMeetingNo] = useState(''); const [rows, setRows] = useState<MeetingInfo[]>([]); const [total, setTotal] = useState(0); const [mode, setMode] = useState<'mine' | 'all'>('mine'); const [status, setStatus] = useState('0'); const [search, setSearch] = useState(''); const [loading, setLoading] = useState(true);
-  const [showAdvanced, setShowAdvanced] = useState(false); const [canPublish, setCanPublish] = useState(true); const [canSubscribe, setCanSubscribe] = useState(true); const [canPublishData, setCanPublishData] = useState(true); const [creating, setCreating] = useState(false); const [joining, setJoining] = useState(false);
+  const [workspaceTab, setWorkspaceTab] = useState<'meetings' | 'providers'>('meetings')
+  const [showAdvanced, setShowAdvanced] = useState(false); const [showTestPhone, setShowTestPhone] = useState(false); const [canPublish, setCanPublish] = useState(true); const [canSubscribe, setCanSubscribe] = useState(true); const [canPublishData, setCanPublishData] = useState(true); const [creating, setCreating] = useState(false); const [joining, setJoining] = useState(false);
   const greeting = (() => { const h = new Date().getHours(); if (h < 6) return '夜深了'; if (h < 12) return '早上好'; if (h < 14) return '中午好'; if (h < 18) return '下午好'; return '晚上好' })();
   const displayName = name || identity || '用户';
   const load = useCallback(async () => { setLoading(true); try { const params: Record<string, string | number> = { page: 1, pageSize: 20 }; if (status !== '0') params.status = status; if (search) params.title = search; const data = mode === 'mine' ? await api.listMyMeetings(1, 20) : await api.listMeetings(params); const filtered = mode === 'mine' ? (data.meetings || []).filter((meeting) => (!search || meeting.title.toLowerCase().includes(search.toLowerCase())) && (status === '0' || String(meeting.status) === status)) : (data.meetings || []); setRows(filtered); setTotal(mode === 'mine' ? filtered.length : data.total || 0) } catch (e) { notify((e as Error).message, 'error') } finally { setLoading(false) } }, [mode, notify, search, status]);
@@ -97,10 +98,10 @@ function LobbyView({ name, identity, onJoin, notify }: { name: string; identity:
   const join = async () => { if (!meetingNo.trim()) return notify('请输入会议号或9位会议码', 'warning'); if (joining) return; setJoining(true); try { await onJoin(meetingNo.trim(), { canPublish, canSubscribe, canPublishData }) } catch (e) { notify((e as Error).message, 'error') } finally { setJoining(false) } }
   const endMeeting = async (meetingNo: string) => { try { await api.endMeeting(meetingNo); notify('会议已结束', 'success'); load() } catch (e) { notify((e as Error).message, 'error') } }
   const handleMeetingNoChange = (e: React.ChangeEvent<HTMLInputElement>) => { const raw = e.target.value; if (/^\d{9}$/.test(stripMeetingCode(raw))) { setMeetingNo(formatMeetingCode(raw)) } else { setMeetingNo(raw) } }
-  return <main className="lobby-page"><div className="page-heading"><div><span className="eyebrow">会议大厅</span><h1>{greeting}，{displayName}</h1><p>准备好开始会议了吗？</p></div><div className="heading-metric"><span className="metric-icon"><History size={17} /></span><div><b>{total}</b><small>{mode === 'mine' ? '我的会议' : '全部会议'}</small></div></div></div><div className="lobby-layout"><section className="create-column"><div className="surface create-card"><div className="card-kicker"><span className="icon-badge teal"><Plus size={18} /></span><span>创建会议</span></div><h2>创建一场新会议</h2><p>创建后立即进入会议，也可以在会议中生成访客邀请。</p><label className="field-label" htmlFor="meeting-title">会议名称</label><input id="meeting-title" className="text-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例如：产品评审 / 周会" onKeyDown={(e) => e.key === 'Enter' && create()} /><button className="button primary wide" onClick={create} disabled={creating}>{creating ? '创建中…' : '创建并进入'} <ArrowRight size={16} /></button><div className="split-line"><span>或</span></div><div className="card-kicker"><span className="icon-badge amber"><DoorOpen size={17} /></span><span>加入会议</span></div><label className="field-label" htmlFor="meeting-no">会议号</label><input id="meeting-no" className="text-input" value={meetingNo} onChange={handleMeetingNoChange} placeholder="会议号或9位会议码 (000-000-000)" onKeyDown={(e) => e.key === 'Enter' && join()} />
+  return <main className="lobby-page"><div className="page-heading"><div><span className="eyebrow">工作台</span><h1>{greeting}，{displayName}</h1><p>管理会议与 SIP 电话联调。</p></div><div className="heading-metric"><span className="metric-icon"><History size={17} /></span><div><b>{total}</b><small>{mode === 'mine' ? '我的会议' : '全部会议'}</small></div></div></div><nav className="workspace-tabs"><button className={workspaceTab === 'meetings' ? 'active' : ''} onClick={() => setWorkspaceTab('meetings')}><Video size={15} />会议与电话</button><button className={workspaceTab === 'providers' ? 'active' : ''} onClick={() => setWorkspaceTab('providers')}><Settings2 size={15} />SIP 供应商</button></nav>{workspaceTab === 'providers' ? <SipProviderPanel notify={notify} /> : <><section className={`test-phone-tool surface ${showTestPhone ? 'open' : ''}`}><button className="test-phone-launcher" onClick={() => setShowTestPhone((visible) => !visible)} aria-expanded={showTestPhone}><span className="tool-icon"><Phone size={16} /></span><span><b>测试电话</b><small>独立 SIP 外呼工具</small></span><span className="tool-status">{showTestPhone ? '收起' : '展开'}<ChevronDown size={15} className={showTestPhone ? 'rotated' : ''} /></span></button>{showTestPhone && <div className="test-phone-content"><div className="test-phone-copy"><span className="eyebrow">SIP TEST</span><p>选择供应商并直接发起外呼，不加入当前会议。</p></div><DialPad notify={notify} /></div>}</section><div className="lobby-layout"><section className="create-column"><div className="surface create-card"><div className="card-kicker"><span className="icon-badge teal"><Plus size={18} /></span><span>创建会议</span></div><h2>创建一场新会议</h2><p>创建后立即进入会议，也可以在会议中生成访客邀请。</p><label className="field-label" htmlFor="meeting-title">会议名称</label><input id="meeting-title" className="text-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例如：产品评审 / 周会" onKeyDown={(e) => e.key === 'Enter' && create()} /><button className="button primary wide" onClick={create} disabled={creating}>{creating ? '创建中…' : '创建并进入'} <ArrowRight size={16} /></button><div className="split-line"><span>或</span></div><div className="card-kicker"><span className="icon-badge amber"><DoorOpen size={17} /></span><span>加入会议</span></div><label className="field-label" htmlFor="meeting-no">会议号</label><input id="meeting-no" className="text-input" value={meetingNo} onChange={handleMeetingNoChange} placeholder="会议号或9位会议码 (000-000-000)" onKeyDown={(e) => e.key === 'Enter' && join()} />
             <button className="text-button small" onClick={() => setShowAdvanced(!showAdvanced)}>{showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />} 高级选项</button>
             {showAdvanced && <div className="advanced-options"><label className="checkbox-label"><input type="checkbox" checked={canPublish} onChange={(e) => setCanPublish(e.target.checked)} />允许发布音视频</label><label className="checkbox-label"><input type="checkbox" checked={canSubscribe} onChange={(e) => setCanSubscribe(e.target.checked)} />允许订阅音视频</label><label className="checkbox-label"><input type="checkbox" checked={canPublishData} onChange={(e) => setCanPublishData(e.target.checked)} />允许发送消息/数据</label></div>}
-            <button className="button secondary wide" onClick={join} disabled={joining}>{joining ? '加入中…' : '加入会议'} <ArrowRight size={16} /></button></div><div className="tip-card"><Shield size={17} /><div><b>会议数据受保护</b><span>只有授权成员可以执行会议管理操作。</span></div></div></section><section className="surface history-card"><div className="section-heading"><div><span className="eyebrow">会议记录</span><div className="section-title-line"><h2>最近的会议</h2><span className="section-count">{total} 场</span></div></div><button className="icon-button" title="刷新会议记录" onClick={load}><RefreshCw size={17} className={loading ? 'spin' : ''} /></button></div><div className="history-tabs"><button className={mode === 'mine' ? 'active' : ''} onClick={() => setMode('mine')}>我的会议</button><button className={mode === 'all' ? 'active' : ''} onClick={() => setMode('all')}>全部会议</button></div><div className="history-filters"><div className="search-input"><Search size={16} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索会议名称" /></div><select value={status} onChange={(e) => setStatus(e.target.value)}><option value="0">全部状态</option><option value="1">已创建</option><option value="2">进行中</option><option value="3">已结束</option></select></div><div className="meeting-list">{loading ? <div className="empty-state"><RefreshCw size={18} className="spin" />加载记录中…</div> : rows.length === 0 ? <div className="empty-state"><Archive size={20} />还没有符合条件的会议</div> : rows.map((meeting) => <MeetingRow key={meeting.meetingNo} meeting={meeting} onJoin={onJoin} onEnd={endMeeting} notify={notify} />)}</div><div className="list-footer"><span>共 {total} 场会议</span><span>当前身份：{identity}</span></div></section></div></main>
+            <button className="button secondary wide" onClick={join} disabled={joining}>{joining ? '加入中…' : '加入会议'} <ArrowRight size={16} /></button></div><div className="tip-card"><Shield size={17} /><div><b>会议数据受保护</b><span>只有授权成员可以执行会议管理操作。</span></div></div></section><section className="surface history-card"><div className="section-heading"><div><span className="eyebrow">会议记录</span><div className="section-title-line"><h2>最近的会议</h2><span className="section-count">{total} 场</span></div></div><button className="icon-button" title="刷新会议记录" onClick={load}><RefreshCw size={17} className={loading ? 'spin' : ''} /></button></div><div className="history-tabs"><button className={mode === 'mine' ? 'active' : ''} onClick={() => setMode('mine')}>我的会议</button><button className={mode === 'all' ? 'active' : ''} onClick={() => setMode('all')}>全部会议</button></div><div className="history-filters"><div className="search-input"><Search size={16} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索会议名称" /></div><select value={status} onChange={(e) => setStatus(e.target.value)}><option value="0">全部状态</option><option value="1">已创建</option><option value="2">进行中</option><option value="3">已结束</option></select></div><div className="meeting-list">{loading ? <div className="empty-state"><RefreshCw size={18} className="spin" />加载记录中…</div> : rows.length === 0 ? <div className="empty-state"><Archive size={20} />还没有符合条件的会议</div> : rows.map((meeting) => <MeetingRow key={meeting.meetingNo} meeting={meeting} onJoin={onJoin} onEnd={endMeeting} notify={notify} />)}</div><div className="list-footer"><span>共 {total} 场会议</span><span>当前身份：{identity}</span></div></section></div></>}</main>
 }
 
 function MeetingRow({ meeting, onJoin, onEnd, notify }: { meeting: MeetingInfo; onJoin: (no: string) => Promise<void>; onEnd: (no: string) => Promise<void>; notify: (message: string, tone?: Toast['tone']) => void }) {
@@ -450,44 +451,157 @@ function GuestView({ ticket, join, name, identity, onJoin, onLeave, notify }: { 
 
 function bytesToBase64(bytes: Uint8Array) { let binary = ''; for (let index = 0; index < bytes.length; index += 0x8000) binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000)); return btoa(binary) }
 
-function DialPad({ meetingNo, notify }: { meetingNo: string; notify: (message: string, tone?: Toast['tone']) => void }) {
+type SipProviderForm = { code: string; name: string; address: string; numbers: string; authUsername: string; authPassword: string; status: number }
+
+const emptySipProviderForm: SipProviderForm = { code: '', name: '', address: '', numbers: '', authUsername: '', authPassword: '', status: 1 }
+
+function SipProviderPanel({ notify }: { notify: (message: string, tone?: Toast['tone']) => void }) {
+  const [providers, setProviders] = useState<SipProviderInfo[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [mutatingProviderId, setMutatingProviderId] = useState<string | null>(null)
+  const [editing, setEditing] = useState<SipProviderInfo | null>(null)
+  const [form, setForm] = useState<SipProviderForm>(emptySipProviderForm)
+  const [showForm, setShowForm] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setLoadError('')
+    try {
+      const data = await api.listSipProviders()
+      setProviders(data.providers || [])
+    } catch (e) {
+      const message = (e as Error).message || '加载供应商失败'
+      setLoadError(message)
+      notify(message, 'error')
+    } finally {
+      setLoading(false)
+    }
+  }, [notify])
+  useEffect(() => { load() }, [load])
+
+  const openCreate = () => { setEditing(null); setForm(emptySipProviderForm); setShowForm(true) }
+  const openEdit = (provider: SipProviderInfo) => {
+    setEditing(provider)
+    setForm({ code: provider.code, name: provider.name, address: provider.address, numbers: (provider.numbers || []).join('\n'), authUsername: '', authPassword: '', status: provider.status })
+    setShowForm(true)
+  }
+  const closeForm = () => { if (!saving) { setShowForm(false); setEditing(null) } }
+  const save = async () => {
+    if (saving) return
+    const numbers = form.numbers.split(/[\n,，]+/).map((value) => value.trim()).filter(Boolean)
+    if (!form.code.trim() || !form.name.trim() || !form.address.trim() || numbers.length === 0) return notify('请填写编码、名称、服务器地址和至少一个主叫号码', 'warning')
+    setSaving(true)
+    try {
+      if (editing) {
+        await api.updateSipProvider({ id: editing.id, name: form.name.trim(), address: form.address.trim(), numbers, authUsername: form.authUsername.trim() || undefined, authPassword: form.authPassword || undefined, status: form.status })
+        notify('供应商已更新', 'success')
+      } else {
+        await api.createSipProvider({ code: form.code.trim(), name: form.name.trim(), address: form.address.trim(), numbers, authUsername: form.authUsername.trim() || undefined, authPassword: form.authPassword || undefined })
+        notify('供应商已创建', 'success')
+      }
+      setShowForm(false)
+      setEditing(null)
+      await load()
+    } catch (e) {
+      notify((e as Error).message, 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+  const toggleStatus = async (provider: SipProviderInfo) => {
+    if (mutatingProviderId) return
+    setMutatingProviderId(provider.id)
+    try {
+      await api.updateSipProvider({ id: provider.id, status: provider.status === 1 ? 2 : 1 })
+      notify(provider.status === 1 ? '供应商已禁用' : '供应商已启用', 'success')
+      await load()
+    } catch (e) {
+      notify((e as Error).message, 'error')
+    } finally {
+      setMutatingProviderId(null)
+    }
+  }
+  const remove = async (provider: SipProviderInfo) => {
+    if (mutatingProviderId) return
+    if (!window.confirm(`确定删除供应商“${provider.name}”？`)) return
+    setMutatingProviderId(provider.id)
+    try {
+      await api.deleteSipProvider(provider.id)
+      notify('供应商已删除', 'success')
+      await load()
+    } catch (e) {
+      notify((e as Error).message, 'error')
+    } finally {
+      setMutatingProviderId(null)
+    }
+  }
+
+  return <section className="surface provider-panel"><div className="section-heading"><div><span className="eyebrow">SIP PROVIDERS</span><div className="section-title-line"><h2>供应商管理</h2><span className="section-count">{providers.length} 个</span></div><p>配置外呼线路。认证密码只在提交时发送，不会在列表中展示。</p></div><div className="provider-heading-actions"><button className="icon-button" title="刷新供应商" onClick={load} disabled={loading}><RefreshCw size={17} className={loading ? 'spin' : ''} /></button><button className="button primary compact" onClick={openCreate} disabled={Boolean(mutatingProviderId)}><Plus size={15} />新增供应商</button></div></div><div className="provider-list">{loading ? <div className="empty-state"><RefreshCw size={18} className="spin" />加载供应商中…</div> : loadError ? <div className="inline-state error" role="alert"><span>供应商加载失败：{loadError}</span><button className="text-button" onClick={load}>重试</button></div> : providers.length === 0 ? <div className="empty-state"><Settings2 size={20} />暂无 SIP 供应商，请先新增线路配置</div> : providers.map((provider) => { const mutating = mutatingProviderId === provider.id; const numbers = provider.numbers || []; return <article className="provider-row" key={provider.id}><div className="provider-main"><div className="provider-name"><b>{provider.name}</b><code>{provider.code}</code><span className={`status-pill ${provider.status === 1 ? 'live' : 'ended'}`}>{provider.status === 1 ? '已启用' : '已禁用'}</span></div><span>{provider.address}</span><small>主叫号码：{numbers.length ? numbers.join('、') : '未配置'} · 创建于 {timeLabel(provider.createTime)}</small>{provider.sipTrunkId && <small>Trunk ID: <code>{provider.sipTrunkId}</code></small>}</div><div className="provider-actions"><button className="text-button" disabled={Boolean(mutatingProviderId)} onClick={() => openEdit(provider)}>编辑</button><button className="text-button" disabled={Boolean(mutatingProviderId)} onClick={() => toggleStatus(provider)}>{mutating ? '处理中…' : provider.status === 1 ? '禁用' : '启用'}</button><button className="text-button danger" disabled={Boolean(mutatingProviderId)} onClick={() => remove(provider)}>删除</button></div></article> })}</div>{showForm && <div className="modal-overlay" onClick={closeForm}><div className="modal-content" onClick={(e) => e.stopPropagation()}><div className="modal-header"><h3>{editing ? '编辑 SIP 供应商' : '新增 SIP 供应商'}</h3><button className="icon-button" onClick={closeForm} disabled={saving}><X size={18} /></button></div><div className="modal-body provider-form"><label className="field-label">供应商编码</label><input className="text-input" value={form.code} disabled={Boolean(editing) || saving} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="例如：telnyx" /><label className="field-label">供应商名称</label><input className="text-input" value={form.name} disabled={saving} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="例如：Telnyx 生产线路" /><label className="field-label">SIP 服务器地址</label><input className="text-input" value={form.address} disabled={saving} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="例如：sip.telnyx.com" /><label className="field-label">主叫号码</label><textarea className="text-input" value={form.numbers} disabled={saving} onChange={(e) => setForm({ ...form, numbers: e.target.value })} placeholder="每行一个号码，也可使用逗号分隔" /><div className="provider-form-grid"><div><label className="field-label">认证用户名</label><input className="text-input" value={form.authUsername} disabled={saving} onChange={(e) => setForm({ ...form, authUsername: e.target.value })} placeholder={editing ? '留空保持不变' : '可选'} /></div><div><label className="field-label">认证密码</label><input className="text-input" type="password" value={form.authPassword} disabled={saving} autoComplete="new-password" onChange={(e) => setForm({ ...form, authPassword: e.target.value })} placeholder={editing ? '留空保持不变' : '可选'} /></div></div>{editing && <><label className="field-label">状态</label><select className="text-input" value={form.status} disabled={saving} onChange={(e) => setForm({ ...form, status: Number(e.target.value) })}><option value={1}>启用</option><option value={2}>禁用</option></select></>}</div><div className="modal-footer"><button className="button secondary" onClick={closeForm} disabled={saving}>取消</button><button className="button primary" onClick={save} disabled={saving}>{saving ? '保存中…' : '保存'}</button></div></div></div>}</section>
+}
+
+function DialPad({ meetingNo, notify }: { meetingNo?: string; notify: (message: string, tone?: Toast['tone']) => void }) {
   const [callee, setCallee] = useState('')
   const [providers, setProviders] = useState<SipProviderInfo[]>([])
   const [providerCode, setProviderCode] = useState('')
   const [dialing, setDialing] = useState(false)
+  const [loadingProviders, setLoadingProviders] = useState(true)
+  const [providerError, setProviderError] = useState('')
+  const [dialError, setDialError] = useState('')
+  const [lastCall, setLastCall] = useState<{ number: string; callId: string; meetingNo?: string } | null>(null)
 
-  useEffect(() => {
-    api.listSipProviders().then((data) => {
-      setProviders(data.providers || [])
-      if (data.providers?.length === 1) setProviderCode(data.providers[0].code)
-    }).catch(() => undefined)
-  }, [])
+  const loadProviders = useCallback(async () => {
+    setLoadingProviders(true)
+    setProviderError('')
+    try {
+      const data = await api.listSipProviders()
+      const enabled = (data.providers || []).filter((provider) => provider.status === 1)
+      setProviders(enabled)
+      setProviderCode((current) => enabled.some((provider) => provider.code === current) ? current : enabled.length === 1 ? enabled[0].code : '')
+    } catch (e) {
+      const message = (e as Error).message || '加载供应商失败'
+      setProviders([])
+      setProviderCode('')
+      setProviderError(message)
+      notify(message, 'error')
+    } finally {
+      setLoadingProviders(false)
+    }
+  }, [notify])
+  useEffect(() => { loadProviders() }, [loadProviders])
 
   const dial = async () => {
+    if (dialing) return
     const number = callee.trim()
     if (!number) return notify('请输入被叫号码', 'warning')
     if (!providerCode) return notify('请选择供应商', 'warning')
+    setDialError('')
     setDialing(true)
     try {
       const result = await api.dialSip({ calleeNumber: number, meetingNo, providerCode })
       notify(`已呼叫 ${number}，通话ID: ${result.sipCallId}`, 'success')
+      setLastCall({ number, callId: result.sipCallId, meetingNo: result.meeting?.meetingNo })
       setCallee('')
     } catch (e) {
-      notify((e as Error).message, 'error')
+      const message = (e as Error).message || '拨号失败，请稍后重试'
+      setDialError(message)
+      notify(message, 'error')
     } finally {
       setDialing(false)
     }
   }
 
   return <div className="dial-pad">
-    <input className="text-input" value={callee} onChange={(e) => setCallee(e.target.value)} placeholder="输入电话号码" onKeyDown={(e) => e.key === 'Enter' && dial()} />
-    {providers.length > 1 && <select className="text-input" value={providerCode} onChange={(e) => setProviderCode(e.target.value)}>
-      <option value="">选择供应商</option>
+    <div className="dial-fields"><select className="text-input" value={providerCode} onChange={(e) => setProviderCode(e.target.value)} disabled={loadingProviders || providers.length === 0}>
+      <option value="">{loadingProviders ? '加载供应商中…' : providers.length === 0 ? '没有可用供应商' : '选择供应商'}</option>
       {providers.map((p) => <option key={p.code} value={p.code}>{p.name} ({p.code})</option>)}
-    </select>}
-    <button className="button primary wide" onClick={dial} disabled={dialing || !callee.trim()}>
+    </select><input className="text-input" value={callee} onChange={(e) => setCallee(e.target.value)} placeholder="输入被叫电话号码" onKeyDown={(e) => e.key === 'Enter' && dial()} /></div>
+    <button className="button primary wide" onClick={dial} disabled={dialing || !callee.trim() || !providerCode}>
       <Phone size={15} />{dialing ? '呼叫中…' : '拨号'}
     </button>
+    {providerError && <div className="inline-state error" role="alert"><span>供应商加载失败：{providerError}</span><button className="text-button" onClick={loadProviders} disabled={loadingProviders}>重试</button></div>}
+    {dialError && <div className="inline-state error" role="alert"><span>拨号失败：{dialError}</span></div>}
+    {lastCall && <div className="dial-result"><Check size={15} /><span>已呼叫 {lastCall.number}</span><small>{lastCall.meetingNo ? `会议 ${lastCall.meetingNo} · ` : '独立外呼 · '}Call ID {lastCall.callId}</small></div>}
   </div>
 }
-

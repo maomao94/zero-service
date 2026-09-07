@@ -1,0 +1,57 @@
+{
+    "profile":{
+        "visio-dev":
+            {"access_key": null,
+             "secret_key": null,
+             "region": null
+            }
+    },
+    "security_group":{
+        "admin": null,
+        "app": null
+    },
+    "instance_image" : null,
+    "instance_type_by_cpu_num" : {
+        "4":{"4": "tinav6.c4r4p1",
+             "8": "tinav6.c8r8p1"},
+        "8":{"8": "tinav6.c8r8p1",
+             "16": "tinav6.c16r16p1"}
+    },
+    "name": null,
+    "subnet": null,
+    "user_data": {
+        "script": {
+            "common": ["#!/bin/bash",
+                       "sudo sysctl net.ipv6.conf.all.disable_ipv6=1",
+                       "sudo sysctl net.ipv6.conf.default.disable_ipv6=1",
+                       "sudo systemctl stop nslcd",
+                       "sudo systemctl disable nslcd",
+                       "sudo service cloud-init-hotplugd stop",
+                       "sudo rm /usr/lib/systemd/system/cloud-init-hotplugd.socket",
+                       "sudo rm /etc/udev/rules.d/10-cloud-init-hook-hotplug.rules",
+                       "sudo sed -i s/^WITH_ALSA=.*/WITH_ALSA='true'/ /usr/local/sipmediagw/.env"],
+            "sip": ["sudo sed -i s/^SIP_REGISTRAR=.*/SIP_REGISTRAR={registrar}/ /usr/local/sipmediagw/.env",
+                    "sudo sed -i s/^SIP_PROXY=.*/SIP_PROXY=''/ /usr/local/sipmediagw/.env",
+                    "sudo sed -i s/^TURN_SRV=.*/TURN_SRV={turn}/ /usr/local/sipmediagw/.env",
+                    "sudo systemctl enable sipmediagw",
+                    "sudo service sipmediagw restart"],
+            "media": ["sudo sed -i s/^MAIN_APP=.*/MAIN_APP={main_app}/ /usr/local/sipmediagw/.env",
+                      "sudo sed -i s%^ASSETS_URL=.*%ASSETS_URL={assets_url}% /usr/local/sipmediagw/.env",
+                      "sudo systemctl enable sipmediagw",
+                      "sudo service sipmediagw restart"]
+        },
+        "sip_registrar": {
+            "priv": null,
+            "pub": null
+        },
+        "outbound_proxy": {
+            "priv": null,
+            "pub": null
+        },
+        "turn_server":{
+            "priv":null,
+            "pub": null
+        },
+        "docker_image" : null
+    }
+}

@@ -72,9 +72,10 @@ export interface SipProviderInfo {
   numbers: string[]
   status: number
   createTime: string
+  sipTrunkId: string
 }
 
 export interface DialSipReply {
-  meeting: MeetingInfo
+  meeting?: MeetingInfo
   sipCallId: string
 }

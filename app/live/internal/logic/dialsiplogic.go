@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -134,35 +133,13 @@ func (l *DialSipLogic) DialSip(in *live.DialSipReq) (*live.DialSipRes, error) {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "未找到可用的 SIP 供应商")
 	}
 
-	// 3. 从供应商配置解析号码池
-	var numbers []string
-	_ = json.Unmarshal([]byte(provider.Numbers), &numbers)
-
-	// 4. 选择/创建 trunk（按供应商地址复用）
-	trunkID := ""
-	listRes, err := l.svcCtx.LiveKit.SIP().ListSIPOutboundTrunk(l.ctx, &livekit.ListSIPOutboundTrunkRequest{})
-	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "查询 trunk 失败")
-	}
-	if len(listRes.Items) > 0 {
-		trunkID = listRes.Items[0].SipTrunkId
-	} else {
-		res, err := l.svcCtx.LiveKit.SIP().CreateSIPOutboundTrunk(l.ctx, &livekit.CreateSIPOutboundTrunkRequest{
-			Trunk: &livekit.SIPOutboundTrunkInfo{
-				Name:         provider.Name,
-				Address:      provider.Address,
-				Numbers:      numbers,
-				AuthUsername: provider.AuthUsername,
-				AuthPassword: provider.AuthPassword,
-			},
-		})
-		if err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "创建 trunk 失败")
-		}
-		trunkID = res.SipTrunkId
+	// 3. 使用供应商已关联的 trunk
+	trunkID := provider.SipTrunkId
+	if trunkID == "" {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "供应商未配置 SIP trunk，请重新创建供应商")
 	}
 
-	// 5. 发起 SIP 外呼
+	// 4. 发起 SIP 外呼
 	participantName := strings.TrimSpace(in.GetParticipantName())
 	if participantName == "" {
 		participantName = calleeNumber

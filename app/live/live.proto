@@ -439,6 +439,8 @@ message SipProviderInfo {
   int32 status = 6 [json_name = "status"];
   // 创建时间，格式：yyyy-MM-dd HH:mm:ss
   string create_time = 7 [json_name = "createTime"];
+  // LiveKit SIP Outbound Trunk ID（供应商创建时同步创建，配置变更时重建）
+  string sip_trunk_id = 8 [json_name = "sipTrunkId"];
 }
 
 // CreateSipProviderReq 创建 SIP 供应商请求。

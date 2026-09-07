@@ -45,12 +45,13 @@ func toSipProviderInfo(p *live.SipProviderInfo) types.SipProviderInfo {
 		return types.SipProviderInfo{}
 	}
 	return types.SipProviderInfo{
-		Id:         p.GetId(),
-		Code:       p.GetCode(),
-		Name:       p.GetName(),
-		Address:    p.GetAddress(),
-		Numbers:    p.GetNumbers(),
-		Status:     p.GetStatus(),
-		CreateTime: p.GetCreateTime(),
+		Id:          p.GetId(),
+		Code:        p.GetCode(),
+		Name:        p.GetName(),
+		Address:     p.GetAddress(),
+		Numbers:     p.GetNumbers(),
+		Status:      p.GetStatus(),
+		CreateTime:  p.GetCreateTime(),
+		SipTrunkId:  p.GetSipTrunkId(),
 	}
 }

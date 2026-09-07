@@ -730,3 +730,24 @@ livegtw.api 新增 SIP HTTP 路由（DialSip + Provider CRUD），handler 改用
 ### Status
 
 [OK] **Completed**
+
+
+## Session 210: 优化 SIP 电话测试工作台
+
+**Date**: 2026-09-07
+**Task**: 优化 SIP 电话测试工作台
+**Branch**: `master`
+
+### Summary
+
+完成 web/live 工作台重规划：测试电话改为默认收起的独立工具入口，保留供应商选择、独立外呼、失败与 sipCallId 状态；修复独立外呼响应缺少 meeting 时的兼容处理，并完成供应商管理与响应式布局检查。npm run build 与 git diff --check 通过。deploy/sipmediagw 下的未提交改动属于其他工作，未修改。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `62e9a6b8` | (see git log) |
+
+### Status
+
+[OK] **Completed**

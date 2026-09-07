@@ -30,6 +30,8 @@ type LiveSipProvider struct {
 	AuthPassword string `gorm:"column:auth_password;size:256;comment:认证密码"`
 	// 状态：1-启用 2-禁用
 	Status int32 `gorm:"column:status;default:1;not null;comment:状态"`
+	// LiveKit SIP Outbound Trunk ID（供应商创建时同步创建，配置变更时重建）
+	SipTrunkId string `gorm:"column:sip_trunk_id;size:64;comment:LiveKit Outbound Trunk ID"`
 	// 扩展配置 JSON
 	Metadata string `gorm:"column:metadata;type:text;comment:扩展配置JSON"`
 

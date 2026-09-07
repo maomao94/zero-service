@@ -252,6 +252,7 @@ type SipProviderInfo struct {
 	Numbers    []string `json:"numbers"`
 	Status     int32    `json:"status"`
 	CreateTime string   `json:"createTime"`
+	SipTrunkId string   `json:"sipTrunkId"`
 }
 
 type UpdateSipProviderReply struct {

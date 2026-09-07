@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-4.md`
-- **Total Sessions**: 209
+- **Total Sessions**: 210
 - **Last Active**: 2026-09-07
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-4.md` | ~732 | Active |
+| `journal-4.md` | ~753 | Active |
 | `journal-3.md` | ~1989 | Archived |
 | `journal-2.md` | ~1966 | Archived |
 | `journal-1.md` | ~1996 | Archived |
@@ -32,6 +32,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 210 | 2026-09-07 | 优化 SIP 电话测试工作台 | `62e9a6b8` | `master` |
 | 209 | 2026-09-07 | Spec 更新：VersionMixin + 代码生成注意事项 | `5a13e9d4` | `master` |
 | 208 | 2026-09-07 | SIP 网关层 + 前端 DialPad | `4b0f1fb3`, `7dd15108`, `468ad6c8` | `master` |
 | 207 | 2026-09-03 | Web RPC 注册演示与 live 前端全量审查 | `b128d5d0`, `2c087884`, `954fdd26` | `master` |

@@ -194,3 +194,25 @@
 /* DialPad */
 .dial-pad{display:flex;flex-direction:column;gap:8px}
 .dial-pad .text-input{width:100%}
+.workspace-tabs{display:flex;gap:4px;margin:0 0 16px;padding:4px;border:1px solid #dce5e8;border-radius:8px;background:#fff;align-self:flex-start}.workspace-tabs button{display:flex;align-items:center;gap:6px;padding:8px 12px;border:0;border-radius:5px;background:transparent;color:#61767b;font-size:12px;font-weight:700}.workspace-tabs button:hover{background:#f1f8f7;color:#087f80}.workspace-tabs button.active{background:#e7f4f2;color:#087f80}.workspace-dial{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,.9fr);gap:24px;align-items:center;margin-bottom:16px;padding:18px 22px}.workspace-dial h2{margin:4px 0 5px;font-size:18px}.workspace-dial p{margin:0;color:#687982;font-size:12px;line-height:1.5}.dial-fields{display:grid;grid-template-columns:minmax(150px,.9fr) minmax(170px,1.1fr);gap:8px}.dial-result{display:grid;grid-template-columns:auto 1fr;gap:4px 7px;padding:9px 10px;border:1px solid #b9ded9;border-radius:7px;background:#f1faf8;color:#087f80;font-size:12px}.dial-result svg{grid-row:1/3;align-self:center}.dial-result small{color:#5a7779;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.inline-state{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:7px;font-size:12px}.inline-state.error{border:1px solid #f2c7c3;background:#fff4f3;color:#b5473f}.provider-panel{min-height:0;display:flex;flex:1;flex-direction:column;overflow:hidden;padding:24px}.provider-panel .section-heading{align-items:flex-start;flex:none}.provider-panel .section-heading p{max-width:540px;margin:6px 0 0;color:#687982;font-size:12px;line-height:1.5}.provider-heading-actions,.provider-actions{display:flex;align-items:center;gap:8px}.provider-list{min-height:0;overflow-y:auto;margin-top:18px;border-top:1px solid #e6eeee}.provider-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 4px;border-bottom:1px solid #e6eeee}.provider-main{display:flex;min-width:0;flex:1;flex-direction:column;gap:5px;color:#3d545a;font-size:13px}.provider-main small{color:#819398;font-size:11px;overflow-wrap:anywhere}.provider-name{display:flex;align-items:center;gap:8px;min-width:0}.provider-name b{font-size:14px;color:#14232d}.provider-name code{padding:2px 6px;border-radius:4px;background:#edf5f4;color:#087f80;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px}.provider-form{display:flex;flex-direction:column;gap:7px}.provider-form textarea{min-height:72px;resize:vertical}.provider-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.provider-form-grid>div{display:flex;flex-direction:column;gap:7px}
+@media(max-width:920px){.workspace-dial{grid-template-columns:1fr}.provider-panel{overflow:visible;padding:19px}.provider-list{overflow:visible}.provider-row{align-items:flex-start;flex-direction:column;gap:10px}.provider-actions{width:100%}}
+@media(max-width:620px){.workspace-tabs{width:100%}.workspace-tabs button{flex:1;justify-content:center}.workspace-dial{padding:16px}.dial-fields,.provider-form-grid{grid-template-columns:1fr}.provider-panel .section-heading{gap:14px;flex-direction:column}.provider-heading-actions{width:100%;justify-content:space-between}.provider-actions{justify-content:flex-end}.provider-name{flex-wrap:wrap}}
+
+/* The lobby keeps SIP testing available without competing with meeting entry. */
+.test-phone-tool{flex:none;margin-bottom:16px;overflow:hidden;padding:0;background:#fff}
+.test-phone-launcher{display:flex;align-items:center;width:100%;gap:10px;padding:12px 15px;border:0;background:transparent;color:#14232d;text-align:left}
+.test-phone-launcher:hover{background:#f5faf9}
+.tool-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:7px;background:#e7f4f2;color:#087f80}
+.test-phone-launcher>b,.test-phone-launcher span:nth-child(2){min-width:0}
+.test-phone-launcher span:nth-child(2){display:flex;flex-direction:column;gap:2px}
+.test-phone-launcher b{font-size:13px}
+.test-phone-launcher small{color:#74878b;font-size:11px}
+.tool-status{display:flex;align-items:center;gap:5px;margin-left:auto;color:#087f80;font-size:11px;font-weight:700}
+.tool-status svg{transition:transform .18s ease}
+.tool-status svg.rotated{transform:rotate(180deg)}
+.test-phone-content{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,.95fr);gap:20px;align-items:center;padding:13px 15px 15px;border-top:1px solid #e6eeee;background:#fbfdfd}
+.test-phone-copy p{margin:5px 0 0;color:#687982;font-size:12px;line-height:1.5}
+.test-phone-content .dial-pad{gap:7px}
+.test-phone-content .button{min-height:35px}
+@media(max-width:920px){.test-phone-content{grid-template-columns:1fr;gap:10px}}
+@media(max-width:620px){.test-phone-tool{margin-bottom:13px}.test-phone-launcher{padding:11px 12px}.test-phone-content{padding:12px}.test-phone-copy{padding-bottom:2px}}

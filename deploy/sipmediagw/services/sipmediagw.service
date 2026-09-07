@@ -1,0 +1,17 @@
+[Unit]
+Description=sipmediagw
+After=docker.service
+Requires=docker.service
+After=network-online.target
+Requires=network-online.target
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/environment
+
+ExecStart=/bin/bash /sipmediagw/deploy/services/start_all_gateways.bash
+
+ExecStop=/bin/bash /sipmediagw/deploy/services/stop_all_gateways.bash
+
+[Install]
+WantedBy=multi-user.target

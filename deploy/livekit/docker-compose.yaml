@@ -1,7 +1,7 @@
 # SIP 混合通话环境 — 全 Docker 部署
 #
 # 架构：
-#   浏览器(WS) ←→ LiveKit Server(HTTP) ←→ LiveKit SIP Server ←→ FreeSWITCH ←→ 软电话(SIP)
+#   浏览器(WS) ←→ LiveKit Server(HTTP) ←→ SIPMediaGW ←→ Kamailio ←→ 软电话(SIP视频)
 #
 # 依赖的外部服务：
 #   - Redis: Docker 容器 redis（端口 36379，密码 G62m50oigInC30sf）
@@ -9,17 +9,12 @@
 # 端口映射：
 #   7880  - LiveKit Server HTTP API + WS
 #   60000-60100/udp - LiveKit WebRTC RTP 媒体流
-#   5060/udp+tcp - FreeSWITCH SIP 信令
-#   5080/udp - FreeSWITCH 外部 SIP profile（LiveKit SIP Server 用此端口拨出）
-#   8021/tcp - FreeSWITCH ESL 管理端口
-#   16384-32768/udp - FreeSWITCH RTP 媒体流（默认范围，不配 switch.conf）
-#   5070/udp - LiveKit SIP Server SIP 信令（避免和 FreeSWITCH 冲突）
-#   11000-11100/udp - LiveKit SIP Server RTP 媒体流
+#
+# SIPMediaGW 配置见 deploy/sipmediagw/docker-compose.yaml
 #
 # 生产部署说明（搜索 [PROD] 标记）：
 #   - 替换 API 密钥对（livekit-server.yaml / sip.yaml）
 #   - 替换 Redis 密码和地址
-#   - FreeSWITCH vars.xml: external_rtp_ip/sip_ip 改公网 IP，domain 改实际域名
 #   - 信号端口 TLS：在 livekit-server 前加反向代理（nginx/caddy）终止 TLS
 #   - 替换自签证书为 CA 签发证书（deploy/tls/gen-tls.sh 支持 DOMAIN/EXTRA_DNS/EXTRA_IPS）
 
@@ -42,51 +37,49 @@ services:
     networks:
       - lk-net
 
-  # FreeSWITCH - SIP 电话交换机
-  # 默认分机: 1000-1019，密码: 1234
-  # 管理端口: 8021，密码: ClueCon
-  # SIP 注册: sip:1001@127.0.0.1:5060，密码: 1234
-  freeswitch:
-    image: safarov/freeswitch:latest
-    container_name: freeswitch
-    ports:
-      - "5060:5060/udp"
-      - "5060:5060/tcp"
-      - "5080:5080/udp"
-      - "8021:8021/tcp"
-      - "16384-16484:16384-16484/udp"
-    volumes:
-      # :ro 只读挂载——镜像启动的 vanilla 复制写不进只读文件会自动跳过，
-      # 其余 vanilla 配置正常复制，这两个文件保持我们的版本
-      - ./freeswitch-vars.xml:/etc/freeswitch/vars.xml:ro
-      - ./freeswitch-switch.conf.xml:/etc/freeswitch/autoload_configs/switch.conf.xml:ro
-    environment:
-      - ESL_PASSWORD=ClueCon
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    restart: unless-stopped
-    networks:
-      - lk-net
+  # # FreeSWITCH - SIP 电话交换机 (已迁移到 SIPMediaGW)
+  # # 默认分机: 1000-1019，密码: 1234
+  # # 管理端口: 8021，密码: ClueCon
+  # # SIP 注册: sip:1001@127.0.0.1:5060，密码: 1234
+  # freeswitch:
+  #   image: safarov/freeswitch:latest
+  #   container_name: freeswitch
+  #   ports:
+  #     - "5060:5060/udp"
+  #     - "5060:5060/tcp"
+  #     - "5080:5080/udp"
+  #     - "8021:8021/tcp"
+  #     - "16384-16484:16384-16484/udp"
+  #   volumes:
+  #     - ./freeswitch-vars.xml:/etc/freeswitch/vars.xml:ro
+  #     - ./freeswitch-switch.conf.xml:/etc/freeswitch/autoload_configs/switch.conf.xml:ro
+  #   environment:
+  #     - ESL_PASSWORD=ClueCon
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   restart: unless-stopped
+  #   networks:
+  #     - lk-net
 
-  # LiveKit SIP Server - SIP ↔ WebRTC 桥接
-  # 连接 LiveKit Server (ws://livekit-server:7880)
-  # SIP 信令端口: 5070 (宿主机) -> 5060 (容器)
-  livekit-sip:
-    image: livekit/sip:latest
-    container_name: livekit-sip
-    ports:
-      - "5070:5060/udp"
-      - "11000-11100:11000-11100/udp"
-    volumes:
-      - ./sip.yaml:/sip/config.yaml
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      - livekit-server
-      - freeswitch
-    restart: unless-stopped
-    networks:
-      - lk-net
+  # # LiveKit SIP Server - SIP ↔ WebRTC 桥接 (已迁移到 SIPMediaGW)
+  # # 连接 LiveKit Server (ws://livekit-server:7880)
+  # # SIP 信令端口: 5070 (宿主机) -> 5060 (容器)
+  # livekit-sip:
+  #   image: livekit/sip:latest
+  #   container_name: livekit-sip
+  #   ports:
+  #     - "5070:5060/udp"
+  #     - "11000-11100:11000-11100/udp"
+  #   volumes:
+  #     - ./sip.yaml:/sip/config.yaml
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   depends_on:
+  #     - livekit-server
+  #     - freeswitch
+  #   restart: unless-stopped
+  #   networks:
+  #     - lk-net
 
 networks:
   lk-net:
