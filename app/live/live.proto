@@ -334,18 +334,16 @@ message JoinMeetingByTicketReq {
 message JoinMeetingByTicketRes {
   // join token（浏览器直连 LiveKit 使用）
   string token = 1 [json_name = "token"];
-  // LiveKit WebSocket 地址
-  string ws_url = 2 [json_name = "wsUrl"];
   // 会议信息
-  MeetingInfo meeting = 3 [json_name = "meeting"];
+  MeetingInfo meeting = 2 [json_name = "meeting"];
   // 是否可以发布音视频
-  bool can_publish = 4 [json_name = "canPublish"];
+  bool can_publish = 3 [json_name = "canPublish"];
   // 是否可以订阅音视频
-  bool can_subscribe = 5 [json_name = "canSubscribe"];
+  bool can_subscribe = 4 [json_name = "canSubscribe"];
   // 是否可以发布数据
-  bool can_publish_data = 6 [json_name = "canPublishData"];
+  bool can_publish_data = 5 [json_name = "canPublishData"];
   // 可以发布的轨道源类型（空表示允许所有）
-  repeated string can_publish_sources = 7 [json_name = "canPublishSources"];
+  repeated string can_publish_sources = 6 [json_name = "canPublishSources"];
 }
 
 // ===== 聊天消息相关 =====

@@ -148,7 +148,6 @@ func (l *JoinMeetingByTicketLogic) JoinMeetingByTicket(in *live.JoinMeetingByTic
 	l.Logger.Infof("join by ticket: meeting=%s identity=%s", data.MeetingNo, data.Identity)
 	return &live.JoinMeetingByTicketRes{
 		Token:             token,
-		WsUrl:             wsURL(l.svcCtx.Config.LiveKit.Url),
 		Meeting:           toMeetingInfo(meeting),
 		CanPublish:        data.CanPublish,
 		CanSubscribe:      data.CanSubscribe,

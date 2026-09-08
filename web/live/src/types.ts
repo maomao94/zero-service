@@ -36,7 +36,6 @@ export interface MeetingMessage {
 
 export interface JoinReply {
   token: string
-  wsUrl: string
   meeting: MeetingInfo
   canPublish: boolean
   canSubscribe: boolean

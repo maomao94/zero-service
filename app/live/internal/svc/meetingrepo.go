@@ -55,11 +55,11 @@ func (r *MeetingRepo) GetMeetingByCode(ctx context.Context, meetingCode string) 
 	return &m, nil
 }
 
-// IsMeetingCodeExists 检查用户会议号是否已存在。
+// IsMeetingCodeExists 检查用户会议号是否已存在（排除已结束的会议）。
 func (r *MeetingRepo) IsMeetingCodeExists(ctx context.Context, meetingCode string) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).Model(&gormmodel.LiveMeeting{}).
-		Where("meeting_code = ?", meetingCode).
+		Where("meeting_code = ? AND status != ?", meetingCode, gormmodel.MeetingStatusEnded).
 		Count(&count).Error
 	if err != nil {
 		return false, err

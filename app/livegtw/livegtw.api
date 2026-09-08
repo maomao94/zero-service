@@ -258,8 +258,6 @@ type JoinMeetingByTicketRequest {
 type JoinMeetingByTicketReply {
 	// join token（浏览器直连 LiveKit 使用）
 	Token string `json:"token"`
-	// LiveKit WebSocket 地址
-	WsUrl string `json:"wsUrl"`
 	// 会议信息
 	Meeting MeetingInfo `json:"meeting"`
 	// 是否可以发布音视频

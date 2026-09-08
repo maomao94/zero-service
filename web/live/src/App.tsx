@@ -8,7 +8,7 @@ import type { MeetingInfo, MeetingMessage, ParticipantInfo, SipProviderInfo, Tic
 type Toast = { message: string; tone?: 'error' | 'success' | 'warning' }
 type Screen = 'auth' | 'lobby' | 'room' | 'guest'
 type JoinPerms = { canPublish: boolean; canSubscribe: boolean; canPublishData: boolean; canPublishSources: string[] | null }
-type JoinState = { token: string; wsUrl: string; meeting: MeetingInfo; perms: JoinPerms }
+type JoinState = { token: string; meeting: MeetingInfo; perms: JoinPerms }
 
 function initials(name: string) { return name.trim().split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase() || 'L' }
 function decodeToken(token: string) { try { const payload = token.split('.')[1]; return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) } catch { return {} } }
@@ -18,6 +18,7 @@ function formatDuration(startTime: string, endTime?: string) { const start = new
 function formatMeetingCode(value: string): string { const digits = value.replace(/\D/g, '').slice(0, 9); if (digits.length <= 3) return digits; if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`; return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}` }
 function stripMeetingCode(value: string): string { return value.replace(/\D/g, '') }
 function isMeetingCode(value: string): boolean { return /^\d{9}$/.test(stripMeetingCode(value)) }
+function wsUrl(): string { return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}${(import.meta.env.VITE_API_ROOT || '/live/v1').replace(/\/$/, '')}` }
 
 export default function App() {
   const isGuestPath = location.pathname.replace(/\/+$/, '') === '/guest'
@@ -72,7 +73,7 @@ export default function App() {
   return <>
     {screen === 'auth' && <AuthView initialToken={token} onLogin={login} notify={notify} />}
     {screen === 'lobby' && <><Topbar name={name} identity={identity} deptCode={deptCode} onLogout={logout} /><LobbyView name={name} identity={identity} onJoin={enterMeeting} notify={notify} /></>}
-    {screen === 'room' && join && <><Topbar name={name} identity={identity} deptCode={deptCode} guest={guest} onLogout={logout} /><LiveKitRoom serverUrl={join.wsUrl} token={join.token} connect audio={true} video={true} onDisconnected={() => { setJoin(null); setScreen(guest ? 'auth' : 'lobby') }}><MeetingRoom meeting={join.meeting} perms={join.perms} name={name} identity={identity} guest={guest} onLeave={() => { setJoin(null); setScreen(guest ? 'auth' : 'lobby') }} notify={notify} /></LiveKitRoom></>}
+    {screen === 'room' && join && <><Topbar name={name} identity={identity} deptCode={deptCode} guest={guest} onLogout={logout} /><LiveKitRoom serverUrl={wsUrl()} token={join.token} connect audio={true} video={true} onDisconnected={() => { setJoin(null); setScreen(guest ? 'auth' : 'lobby') }}><MeetingRoom meeting={join.meeting} perms={join.perms} name={name} identity={identity} guest={guest} onLeave={() => { setJoin(null); setScreen(guest ? 'auth' : 'lobby') }} notify={notify} /></LiveKitRoom></>}
     {screen === 'guest' && <GuestView ticket={queryTicket} join={join} name={name} identity={identity} onJoin={joinByTicket} onLeave={() => { setJoin(null); setScreen('auth') }} notify={notify} />}
     {toast && <div className={`toast ${toast.tone || ''}`}><span>{toast.tone === 'success' ? <Check size={16} /> : toast.tone === 'error' ? <X size={16} /> : <Sparkles size={16} />}</span>{toast.message}</div>}
   </>
@@ -432,7 +433,7 @@ function RealtimeTools({ meetingNo, target, notify, echoRegistered, onToggleEcho
 
 const consumedTickets = new Set<string>()
 
-function GuestView({ ticket, join, name, identity, onJoin, onLeave, notify }: { ticket: string | null; join: { token: string; wsUrl: string; meeting: MeetingInfo; perms: JoinPerms } | null; name: string; identity: string; onJoin: (ticket: string) => Promise<boolean>; onLeave: () => void; notify: (message: string, tone?: Toast['tone']) => void }) {
+function GuestView({ ticket, join, name, identity, onJoin, onLeave, notify }: { ticket: string | null; join: { token: string; meeting: MeetingInfo; perms: JoinPerms } | null; name: string; identity: string; onJoin: (ticket: string) => Promise<boolean>; onLeave: () => void; notify: (message: string, tone?: Toast['tone']) => void }) {
   const [loading, setLoading] = useState(false)
   const [failed, setFailed] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
@@ -444,7 +445,7 @@ function GuestView({ ticket, join, name, identity, onJoin, onLeave, notify }: { 
     onJoin(ticket).then((ok) => { if (!ok) { consumedTickets.delete(ticket); setFailed(true) } }).finally(() => setLoading(false))
   }, [ticket, join, loading, retryCount, onJoin])
   if (join) {
-    return <><Topbar name={name} identity={identity} guest onLogout={onLeave} /><LiveKitRoom serverUrl={join.wsUrl} token={join.token} connect audio={true} video={true} onDisconnected={onLeave}><MeetingRoom meeting={join.meeting} perms={join.perms} name={name} identity={identity} guest onLeave={onLeave} notify={notify} /></LiveKitRoom></>
+    return <><Topbar name={name} identity={identity} guest onLogout={onLeave} /><LiveKitRoom serverUrl={wsUrl()} token={join.token} connect audio={true} video={true} onDisconnected={onLeave}><MeetingRoom meeting={join.meeting} perms={join.perms} name={name} identity={identity} guest onLeave={onLeave} notify={notify} /></LiveKitRoom></>
   }
   return <main className="guest-gate"><div className="surface guest-gate-card"><div className="brand-lockup"><span className="brand-mark">L</span><span>Live 视频会议</span></div><div className="guest-gate-copy"><span className="eyebrow">邀请访客</span><h2>加入会议</h2><p>{loading ? '正在验证票据，请稍候…' : failed ? '票据无效、已使用或已过期，请联系会议主持人重新生成。' : '正在准备会议…'}</p></div>{loading ? <div className="guest-gate-loading"><RefreshCw size={18} className="spin" /><span>正在连接会议</span></div> : failed ? <button className="button primary wide" onClick={() => { consumedTickets.delete(ticket || ''); setRetryCount((n) => n + 1) }}>重新尝试 <ArrowRight size={15} /></button> : null}</div></main>
 }
