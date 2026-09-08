@@ -99,6 +99,10 @@ message DialSipReq {
 | 拨打电话 | 不传 | 自动创建 S 前缀会议，拨号后跳转进入房间 |
 | 电话会议 | 传当前会议号 | 将电话参会者加入已有会议 |
 
+会议中可从右侧管理面板选择 SIP 供应商并输入被叫号码发起外呼；电话接听后作为语音参与者加入当前会议。
+
+![会议中电话外呼](../images/live/sip-phone-conference.png)
+
 ### DialSipLogic 流程
 
 1. **确定会议**：`meeting_no` 为空 → 自动创建 S 前缀会议（含锁 + meeting_code 生成）；不为空 → 校验会议存在且进行中

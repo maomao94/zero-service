@@ -1,6 +1,0 @@
-{"file":".trellis/spec/backend/core-rules.md","reason":"遵循 Go context、错误、日志和改动范围规则。"}
-{"file":".trellis/spec/backend/go-zero-conventions.md","reason":"遵循 gRPC Logic、ServiceContext、生成代码和跨服务 client 约定。"}
-{"file":".trellis/spec/backend/contract-generation.md","reason":"指导 live.proto 字段、生成脚本、兼容性和消费者检查。"}
-{"file":".trellis/spec/backend/error-handling.md","reason":"指导 gRPC metadata 身份传播和 socketpush 错误边界。"}
-{"file":".trellis/spec/backend/livekit-guidelines.md","reason":"确认会议状态、token 不下发及 Live 业务错误码约束。"}
-{"file":"docs/socketio/socketio.md","reason":"确认 BroadcastRoom、个人房间和提交成功语义。"}

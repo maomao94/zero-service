@@ -8,6 +8,7 @@ import (
 	"zero-service/app/live/internal/svc"
 	"zero-service/app/live/live"
 	"zero-service/app/live/model/gormmodel"
+	"zero-service/common/authctx"
 	"zero-service/common/carbonx"
 	"zero-service/common/tool"
 	"zero-service/socketapp/socketpush/socketpush"
@@ -18,11 +19,17 @@ import (
 
 const meetingInviteEvent = "live:meeting-invite"
 
+func meetingInviteRoom(identity string) string {
+	return meetingInviteEvent + ":" + identity
+}
+
 type meetingInvitePayload struct {
 	MeetingNo    string `json:"meetingNo"`
 	MeetingCode  string `json:"meetingCode"`
 	MeetingTitle string `json:"meetingTitle"`
 	Identity     string `json:"identity"`
+	UserID       string `json:"userId,omitempty"`
+	UserName     string `json:"userName,omitempty"`
 	InvitedAt    string `json:"invitedAt"`
 }
 
@@ -71,13 +78,16 @@ func (l *NotifyMeetingParticipantLogic) NotifyMeetingParticipant(in *live.Notify
 	payload, err := json.Marshal(meetingInvitePayload{
 		MeetingNo: meeting.MeetingNo, MeetingCode: meeting.MeetingCode, MeetingTitle: meeting.Title,
 		Identity:  identity,
+		UserID:    strings.TrimSpace(authctx.GetUserId(l.ctx)),
+		UserName:  strings.TrimSpace(authctx.GetUserName(l.ctx)),
 		InvitedAt: carbonx.NowDateTime(),
 	})
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_INTERNAL, err, "编码通知内容失败")
 	}
 	if _, err = l.svcCtx.SocketPushCli.BroadcastRoom(l.ctx, &socketpush.BroadcastRoomReq{
-		ReqId: requestID, Room: identity, Event: meetingInviteEvent, Payload: string(payload),
+		ReqId: requestID, Room: meetingInviteRoom(identity),
+		Event: meetingInviteEvent, Payload: string(payload),
 	}); err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_RPC, err, "提交入会通知失败")
 	}

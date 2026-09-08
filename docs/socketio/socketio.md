@@ -238,6 +238,28 @@ socket.on('telemetry:osd', (data) => {
 
 > 进入监控页面时加入房间，退出时离开。Payload 为 DJI 协议原始 JSON。
 
+### Live 会议邀请
+
+会议邀请沿用 DRC 定向事件的命名方式：事件名保持稳定，房间名在事件名后追加接收方身份。
+
+| 事件 | 房间 | 说明 |
+|------|------|------|
+| `live:meeting-invite` | `live:meeting-invite:{identity}` | 通知指定登录身份加入会议 |
+
+```javascript
+const event = 'live:meeting-invite';
+const room = `${event}:${identity}`;
+
+socket.emit('__join_room_up__', { reqId: uuid(), room });
+socket.on(event, (data) => {
+    const msg = normalizeSocketPayload(data);
+    // msg.payload 包含 meetingNo、meetingCode、meetingTitle、identity、invitedAt，
+    // userId 和 userName 为可选的邀请人信息。
+});
+```
+
+后端使用 `BroadcastRoom` 向上述房间发送自定义事件。`room` 只负责选择接收连接，`event` 负责客户端事件分发，两者不能互换。
+
 ## 后端推送 API
 
 后端通过 gRPC 调用 socketpush 推送消息（集群扇出模型）：

@@ -53,6 +53,7 @@ export const api = {
     }
     return request<JoinReply>('/joinMeeting', json(body))
   },
+  notifyMeetingParticipant: (meetingNo: string, identity: string) => request<{ requestId: string }>('/notifyMeetingParticipant', json({ meetingNo, identity })),
   joinByTicket: (ticket: string) => request<JoinReply>(`/joinMeetingByTicket?ticket=${encodeURIComponent(ticket)}`, {}, false),
   getMeeting: (meetingNo: string) => request<{ meeting: MeetingInfo }>(`/getMeeting?meetingNo=${encodeURIComponent(meetingNo)}`),
   listMeetings: (params: Record<string, string | number> = {}) => request<ApiPage<MeetingInfo>>(`/listMeetings?${new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]))}`),

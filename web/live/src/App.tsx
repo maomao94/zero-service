@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { LiveKitRoom, RoomAudioRenderer, TrackReference, TrackReferenceOrPlaceholder, VideoTrack, useLocalParticipant, useParticipants, useRoomContext, useTracks } from '@livekit/components-react'
-import { Room, RoomEvent, Track } from 'livekit-client'
-import { Archive, ArrowRight, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clipboard, Copy, Database, DoorOpen, History, LogOut, Maximize2, MessageSquare, Mic, Minimize2, MonitorUp, MoreHorizontal, Phone, Plus, RefreshCw, Search, Send, Settings2, Shield, ShieldCheck, Sparkles, UserRound, Users, Video, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { LiveKitRoom, RoomAudioRenderer, TrackReference, TrackReferenceOrPlaceholder, VideoTrack, useConnectionState, useLocalParticipant, useParticipants, useRoomContext, useTracks } from '@livekit/components-react'
+import { ConnectionState, Room, RoomEvent, Track } from 'livekit-client'
+import { Archive, ArrowRight, Bell, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clipboard, Copy, Database, DoorOpen, History, LogOut, Maximize2, MessageSquare, Mic, Minimize2, MonitorUp, MoreHorizontal, Phone, PhoneIncoming, Plus, RefreshCw, Search, Send, Settings2, Shield, ShieldCheck, Sparkles, UserRound, Users, Video, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { api, ApiError } from './lib/api'
+import { connectMeetingNotifications, type MeetingInvitation } from './lib/meetingNotifications'
+import { countLiveParticipants, mergeMeetingParticipants, normalizePublishSources, resolveLiveKitUrl } from './lib/meetingUi'
 import type { MeetingInfo, MeetingMessage, ParticipantInfo, SipProviderInfo, TicketReply } from './types'
 
 type Toast = { message: string; tone?: 'error' | 'success' | 'warning' }
@@ -19,7 +21,8 @@ function formatDuration(startTime: string, endTime?: string) { const start = new
 function formatMeetingCode(value: string): string { const digits = value.replace(/\D/g, '').slice(0, 9); if (digits.length <= 3) return digits; if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`; return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}` }
 function stripMeetingCode(value: string): string { return value.replace(/\D/g, '') }
 function isMeetingCode(value: string): boolean { return /^\d{9}$/.test(stripMeetingCode(value)) }
-function wsUrl(): string { return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}${(import.meta.env.VITE_API_ROOT || '/live/v1').replace(/\/$/, '')}` }
+function wsUrl(): string { return resolveLiveKitUrl(location.protocol, location.host, import.meta.env.VITE_LIVEKIT_URL) }
+function canAutoPublish(perms: JoinPerms, source: string): boolean { return perms.canPublish && (!perms.canPublishSources || perms.canPublishSources.includes(source)) }
 
 export default function App() {
   const isGuestPath = location.pathname.replace(/\/+$/, '') === '/guest'
@@ -32,6 +35,9 @@ export default function App() {
   const [deptCode, setDeptCode] = useState('')
   const [join, setJoin] = useState<JoinState | null>(null)
   const [toast, setToast] = useState<Toast | null>(null)
+  const [invitations, setInvitations] = useState<MeetingInvitation[]>([])
+  const [activeInvitationId, setActiveInvitationId] = useState<string | null>(null)
+  const [joiningInvitationId, setJoiningInvitationId] = useState<string | null>(null)
 
   const notify = useCallback((message: string, tone?: Toast['tone']) => setToast({ message, tone }), [])
   useEffect(() => { if (!toast) return; const timer = window.setTimeout(() => setToast(null), 4500); return () => window.clearTimeout(timer) }, [toast])
@@ -44,8 +50,18 @@ export default function App() {
     })
   }, [token, guest])
 
+  useEffect(() => {
+    if (!token || guest || !identity) return
+    const socket = connectMeetingNotifications(token, identity, (invitation) => {
+      setInvitations((current) => current.some((item) => item.id === invitation.id) ? current : [invitation, ...current].slice(0, 30))
+      setActiveInvitationId((current) => current || invitation.id)
+    })
+    socket.on('connect_error', (error) => console.warn('socketgtw connection failed:', error.message))
+    return () => { socket.disconnect() }
+  }, [guest, identity, token])
+
   const login = (nextToken: string) => { if (nextToken.split('.').length !== 3) throw new ApiError('Token 格式不正确，应为标准 JWT', 400); const claim = decodeToken(nextToken) as Record<string, unknown>; if (claim.exp && Number(claim.exp) * 1000 < Date.now()) throw new ApiError('Token 已过期', 401); if (!claim.sub && !claim.user_id && !claim.userId) throw new ApiError('Token 无效：缺少用户身份信息', 400); localStorage.setItem('live_jwt', nextToken); setToken(nextToken); setGuest(false); setScreen('lobby') }
-  const logout = () => { localStorage.removeItem('live_jwt'); setToken(''); setJoin(null); setGuest(false); setScreen('auth') }
+  const logout = () => { localStorage.removeItem('live_jwt'); setToken(''); setJoin(null); setInvitations([]); setActiveInvitationId(null); setGuest(false); setScreen('auth') }
   const enterMeeting = async (meetingNo: string, options?: JoinOptions) => {
     const isCode = isMeetingCode(meetingNo)
     const reply = await api.joinMeeting(meetingNo, {
@@ -54,7 +70,7 @@ export default function App() {
       canSubscribe: options?.canSubscribe ?? true,
       canPublishData: options?.canPublishData ?? true,
     })
-    setJoin({ ...reply, perms: { canPublish: reply.canPublish, canSubscribe: reply.canSubscribe, canPublishData: reply.canPublishData, canPublishSources: reply.canPublishSources || null }, sipWaitingFor: options?.sipWaitingFor }); setScreen('room')
+    setJoin({ ...reply, perms: { canPublish: reply.canPublish, canSubscribe: reply.canSubscribe, canPublishData: reply.canPublishData, canPublishSources: normalizePublishSources(reply.canPublishSources) }, sipWaitingFor: options?.sipWaitingFor }); setScreen('room')
   }
   const joinByTicket = useCallback(async (ticket: string) => {
     try {
@@ -62,7 +78,7 @@ export default function App() {
       setName(guestId)
       setIdentity(guestId)
       const reply = await api.joinByTicket(ticket)
-      setJoin({ ...reply, perms: { canPublish: reply.canPublish, canSubscribe: reply.canSubscribe, canPublishData: reply.canPublishData, canPublishSources: reply.canPublishSources || null } })
+      setJoin({ ...reply, perms: { canPublish: reply.canPublish, canSubscribe: reply.canSubscribe, canPublishData: reply.canPublishData, canPublishSources: normalizePublishSources(reply.canPublishSources) } })
       notify('票据验证成功，正在进入会议', 'success')
       return true
     } catch (error) {
@@ -70,12 +86,32 @@ export default function App() {
       return false
     }
   }, [notify])
+  const markInvitationsRead = () => setInvitations((current) => current.map((invitation) => ({ ...invitation, read: true })))
+  const dismissInvitation = (id: string) => {
+    setInvitations((current) => current.map((invitation) => invitation.id === id ? { ...invitation, read: true } : invitation))
+    setActiveInvitationId(null)
+  }
+  const acceptInvitation = async (invitation: MeetingInvitation) => {
+    if (joiningInvitationId) return
+    setJoiningInvitationId(invitation.id)
+    try {
+      await enterMeeting(invitation.meetingNo)
+      dismissInvitation(invitation.id)
+    } catch (error) {
+      notify(`加入会议失败：${(error as Error).message}`, 'error')
+    } finally {
+      setJoiningInvitationId(null)
+    }
+  }
+  const activeInvitation = invitations.find((invitation) => invitation.id === activeInvitationId) || null
+  const topbarProps = { name, identity, deptCode, invitations, onReadInvitations: markInvitationsRead, onJoinInvitation: acceptInvitation, joiningInvitationId }
 
   return <>
     {screen === 'auth' && <AuthView initialToken={token} onLogin={login} notify={notify} />}
-    {screen === 'lobby' && <><Topbar name={name} identity={identity} deptCode={deptCode} onLogout={logout} /><LobbyView name={name} identity={identity} onJoin={enterMeeting} notify={notify} /></>}
-    {screen === 'room' && join && <><Topbar name={name} identity={identity} deptCode={deptCode} guest={guest} onLogout={logout} /><LiveKitRoom serverUrl={wsUrl()} token={join.token} connect audio={true} video={true} onDisconnected={() => { setJoin(null); setScreen(guest ? 'auth' : 'lobby') }}><MeetingRoom meeting={join.meeting} perms={join.perms} name={name} identity={identity} guest={guest} sipWaitingFor={join.sipWaitingFor} onLeave={() => { setJoin(null); setScreen(guest ? 'auth' : 'lobby') }} notify={notify} /></LiveKitRoom></>}
+    {screen === 'lobby' && <><Topbar {...topbarProps} onLogout={logout} /><LobbyView name={name} identity={identity} onJoin={enterMeeting} notify={notify} /></>}
+    {screen === 'room' && join && <><Topbar {...topbarProps} guest={guest} onLogout={logout} /><LiveKitRoom key={join.token} serverUrl={wsUrl()} token={join.token} connect audio={canAutoPublish(join.perms, 'microphone')} video={canAutoPublish(join.perms, 'camera')} onError={(error) => notify(`会议连接失败：${error.message}`, 'error')} onMediaDeviceFailure={(_failure, kind) => notify(`媒体设备不可用${kind ? `（${kind}）` : ''}`, 'error')} onDisconnected={() => { setJoin(null); setScreen(guest ? 'auth' : 'lobby') }}><MeetingRoom meeting={join.meeting} perms={join.perms} name={name} identity={identity} guest={guest} sipWaitingFor={join.sipWaitingFor} onLeave={() => { setJoin(null); setScreen(guest ? 'auth' : 'lobby') }} notify={notify} /></LiveKitRoom></>}
     {screen === 'guest' && <GuestView ticket={queryTicket} join={join} name={name} identity={identity} onJoin={joinByTicket} onLeave={() => { setJoin(null); setScreen('auth') }} notify={notify} />}
+    {activeInvitation && <IncomingMeetingCall invitation={activeInvitation} joining={joiningInvitationId === activeInvitation.id} onDismiss={() => dismissInvitation(activeInvitation.id)} onJoin={() => acceptInvitation(activeInvitation)} />}
     {toast && <div className={`toast ${toast.tone || ''}`}><span>{toast.tone === 'success' ? <Check size={16} /> : toast.tone === 'error' ? <X size={16} /> : <Sparkles size={16} />}</span>{toast.message}</div>}
   </>
 }
@@ -86,7 +122,21 @@ function AuthView({ initialToken, onLogin, notify }: { initialToken: string; onL
   return <main className="auth-page"><div className="auth-art"><div className="auth-orbit orbit-one" /><div className="auth-orbit orbit-two" /><div className="auth-art-copy"><span className="kicker">LIVE / VIDEO</span><h1>清晰通话<br /><em>随时开会。</em></h1><p>稳定、低延迟的视频会议，支持多人通话、屏幕共享与会议管理。</p><div className="auth-art-foot"><span><ShieldCheck size={16} />安全入会</span><span><Video size={16} />低延迟通话</span></div></div></div><section className="auth-card"><div className="brand-lockup"><span className="brand-mark">L</span><span>Live 视频会议</span></div><div className="auth-heading"><span className="eyebrow">欢迎回来</span><h2>登录视频会议</h2><p>使用业务 JWT 登录，管理你的会议。</p></div><label className="field-label" htmlFor="jwt">JWT Token</label><div className="secret-input"><input id="jwt" value={value} onChange={(e) => setValue(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} type={visible ? 'text' : 'password'} placeholder="粘贴 JWT Token" autoComplete="off" /><button type="button" aria-label={visible ? '隐藏 token' : '显示 token'} onClick={() => setVisible(!visible)}>{visible ? '隐藏' : '显示'}</button></div>{error && <div className="form-error">{error}</div>}<button className="button primary wide" onClick={submit}>登录并继续 <ArrowRight size={17} /></button><p className="auth-note">Token 仅保存在当前浏览器，不会上传到第三方。</p></section></main>
 }
 
-function Topbar({ name, identity, deptCode, guest, onLogout }: { name: string; identity: string; deptCode?: string; guest?: boolean; onLogout: () => void }) { const displayName = name || identity || '用户'; return <header className="topbar"><div className="topbar-left"><span className="brand-mark">L</span><span className="topbar-title">Live 视频会议</span><span className="topbar-divider" /><span className="topbar-context">视频会议</span></div><div className="topbar-right"><div className="presence"><span className="presence-dot" />在线</div><div className="profile" title={`用户ID: ${identity}\n姓名: ${name}\n部门: ${deptCode || '未设置'}`}><span className="avatar small">{initials(displayName)}</span><span className="profile-copy"><b>{displayName}</b><small>{guest ? '邀请访客' : identity}</small></span></div><button className="icon-button" title={guest ? '退出会议' : '退出登录'} onClick={onLogout}><LogOut size={17} /></button></div></header> }
+function Topbar({ name, identity, deptCode, guest, invitations = [], joiningInvitationId, onReadInvitations, onJoinInvitation, onLogout }: { name: string; identity: string; deptCode?: string; guest?: boolean; invitations?: MeetingInvitation[]; joiningInvitationId?: string | null; onReadInvitations?: () => void; onJoinInvitation?: (invitation: MeetingInvitation) => Promise<void>; onLogout: () => void }) {
+  const displayName = name || identity || '用户'
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const unread = invitations.filter((invitation) => !invitation.read).length
+  const toggleNotifications = () => { const open = !notificationsOpen; setNotificationsOpen(open); if (open) onReadInvitations?.() }
+  return <header className="topbar"><div className="topbar-left"><span className="brand-mark">L</span><span className="topbar-title">Live 视频会议</span><span className="topbar-divider" /><span className="topbar-context">视频会议</span></div><div className="topbar-right"><div className="presence"><span className="presence-dot" />在线</div>{!guest && <div className="notification-anchor"><button className="icon-button notification-button" title="通知中心" aria-label="通知中心" aria-expanded={notificationsOpen} onClick={toggleNotifications}><Bell size={18} />{unread > 0 && <span className="notification-count">{unread > 9 ? '9+' : unread}</span>}</button>{notificationsOpen && <NotificationCenter invitations={invitations} joiningInvitationId={joiningInvitationId} onJoin={onJoinInvitation} onClose={() => setNotificationsOpen(false)} />}</div>}<div className="profile" title={`用户ID: ${identity}\n姓名: ${name}\n部门: ${deptCode || '未设置'}`}><span className="avatar small">{initials(displayName)}</span><span className="profile-copy"><b>{displayName}</b><small>{guest ? '邀请访客' : identity}</small></span></div><button className="icon-button" title={guest ? '退出会议' : '退出登录'} onClick={onLogout}><LogOut size={17} /></button></div></header>
+}
+
+function NotificationCenter({ invitations, joiningInvitationId, onJoin, onClose }: { invitations: MeetingInvitation[]; joiningInvitationId?: string | null; onJoin?: (invitation: MeetingInvitation) => Promise<void>; onClose: () => void }) {
+  return <div className="notification-panel"><div className="notification-header"><div><span>通知中心</span><small>{invitations.length ? `${invitations.length} 条会议邀请` : '暂无新通知'}</small></div><button className="icon-button" aria-label="关闭通知中心" onClick={onClose}><X size={16} /></button></div><div className="notification-list">{invitations.length === 0 ? <div className="notification-empty"><Bell size={22} /><span>会议邀请会显示在这里</span></div> : invitations.map((invitation) => <article className="notification-item" key={invitation.id}><span className="notification-icon"><Video size={16} /></span><div className="notification-copy"><b>{invitation.meetingTitle || '视频会议邀请'}</b><span>邀请人：{invitation.userName || '-'}</span><span>会议码 {formatMeetingCode(invitation.meetingCode) || invitation.meetingNo}</span><small>{invitation.invitedAt || '刚刚收到'}</small></div><button className="button primary compact" disabled={Boolean(joiningInvitationId)} onClick={() => onJoin?.(invitation)}>{joiningInvitationId === invitation.id ? '加入中…' : '加入'}</button></article>)}</div></div>
+}
+
+function IncomingMeetingCall({ invitation, joining, onDismiss, onJoin }: { invitation: MeetingInvitation; joining: boolean; onDismiss: () => void; onJoin: () => void }) {
+  return <div className="incoming-call-overlay" role="dialog" aria-modal="true" aria-labelledby="incoming-call-title"><div className="incoming-call"><span className="incoming-call-icon"><PhoneIncoming size={29} /></span><span className="incoming-call-kicker">视频会议邀请</span><h2 id="incoming-call-title">{invitation.meetingTitle || '邀请你加入会议'}</h2><div className="incoming-call-details"><p>邀请人：{invitation.userName || '-'}</p><p>会议码 {formatMeetingCode(invitation.meetingCode) || invitation.meetingNo}</p></div><div className="incoming-call-actions"><button className="call-action decline" onClick={onDismiss} disabled={joining}><X size={21} /><span>暂不加入</span></button><button className="call-action accept" onClick={onJoin} disabled={joining}><Video size={21} /><span>{joining ? '加入中…' : '加入会议'}</span></button></div></div></div>
+}
 
 function LobbyView({ name, identity, onJoin, notify }: { name: string; identity: string; onJoin: (meetingNo: string, options?: JoinOptions) => Promise<void>; notify: (message: string, tone?: Toast['tone']) => void }) {
   const [title, setTitle] = useState(''); const [meetingNo, setMeetingNo] = useState(''); const [rows, setRows] = useState<MeetingInfo[]>([]); const [total, setTotal] = useState(0); const [mode, setMode] = useState<'mine' | 'all'>('mine'); const [status, setStatus] = useState('0'); const [search, setSearch] = useState(''); const [loading, setLoading] = useState(true);
@@ -111,6 +161,10 @@ function MeetingRow({ meeting, onJoin, onEnd, notify }: { meeting: MeetingInfo; 
   const [ticketLoading, setTicketLoading] = useState(false)
   const [ticketInfo, setTicketInfo] = useState<{ ticket: string; joinUrl: string; ticketType?: number; canPublish?: boolean; canSubscribe?: boolean; canPublishData?: boolean; canPublishSources?: string[] } | null>(null)
   const [showTicketModal, setShowTicketModal] = useState(false)
+  const [showNotifyModal, setShowNotifyModal] = useState(false)
+  const [notifyIdentity, setNotifyIdentity] = useState('')
+  const [notifyLoading, setNotifyLoading] = useState(false)
+  const [notifyError, setNotifyError] = useState('')
   const [ticketError, setTicketError] = useState('')
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [ticketIdentity, setTicketIdentity] = useState('')
@@ -164,6 +218,24 @@ function MeetingRow({ meeting, onJoin, onEnd, notify }: { meeting: MeetingInfo; 
       setTicketLoading(false)
     }
   }
+  const sendMeetingNotification = async () => {
+    const targetIdentity = notifyIdentity.trim()
+    if (!targetIdentity || notifyLoading) return
+    setNotifyLoading(true)
+    setNotifyError('')
+    try {
+      await api.notifyMeetingParticipant(meeting.meetingNo, targetIdentity)
+      setShowNotifyModal(false)
+      setNotifyIdentity('')
+      notify('入会通知已发送', 'success')
+    } catch (e) {
+      const message = (e as Error).message || '发送入会通知失败'
+      setNotifyError(message)
+      notify(message, 'error')
+    } finally {
+      setNotifyLoading(false)
+    }
+  }
   const copyUrl = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
@@ -195,6 +267,9 @@ function MeetingRow({ meeting, onJoin, onEnd, notify }: { meeting: MeetingInfo; 
     {expanded && (
       <div className="meeting-expanded">
         <div className="meeting-expanded-actions">
+          {isActive && <button className="soft-button" onClick={() => { setShowNotifyModal(true); setNotifyIdentity(''); setNotifyError('') }}>
+            <Bell size={15} /> 发送入会通知
+          </button>}
           <button className="soft-button" onClick={() => { setShowTicketModal(true); setTicketInfo(null); setTicketError(''); setTicketIdentity(''); setTicketName(''); setTicketExpire('3600'); setTicketType(1); setCanPublish(true); setCanSubscribe(true); setCanPublishData(true); setCanPublishSources(['camera', 'microphone', 'screen_share']) }}>
             <Clipboard size={15} /> 生成邀请票据
           </button>
@@ -257,6 +332,26 @@ function MeetingRow({ meeting, onJoin, onEnd, notify }: { meeting: MeetingInfo; 
           <div className="modal-footer">
             <button className="button secondary" onClick={() => setShowDetailModal(false)}>关闭</button>
             {isActive && <button className="button primary" onClick={() => { setShowDetailModal(false); joinNow() }}>加入会议</button>}
+          </div>
+        </div>
+      </div>
+    )}
+    {showNotifyModal && (
+      <div className="modal-overlay" onClick={() => !notifyLoading && setShowNotifyModal(false)}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h3>发送入会通知</h3>
+            <button className="icon-button" onClick={() => setShowNotifyModal(false)} disabled={notifyLoading}><X size={18} /></button>
+          </div>
+          <div className="modal-body">
+            <p className="modal-desc">通知在线用户加入“{meeting.title || '未命名会议'}”。用户 identity 必须与其登录 Token 中的身份一致。</p>
+            {notifyError && <div className="modal-error" role="alert"><X size={16} /><span>{notifyError}</span></div>}
+            <label className="field-label" htmlFor={`notify-identity-${meeting.meetingNo}`}>用户 identity</label>
+            <input id={`notify-identity-${meeting.meetingNo}`} className="text-input" value={notifyIdentity} onChange={(e) => setNotifyIdentity(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMeetingNotification()} placeholder="例如：user-10001" autoFocus />
+          </div>
+          <div className="modal-footer">
+            <button className="button secondary" onClick={() => setShowNotifyModal(false)} disabled={notifyLoading}>取消</button>
+            <button className="button primary" onClick={sendMeetingNotification} disabled={notifyLoading || !notifyIdentity.trim()}>{notifyLoading ? '发送中…' : '发送通知'}</button>
           </div>
         </div>
       </div>
@@ -379,14 +474,23 @@ function MeetingRoom({ meeting, perms, name, identity, guest, sipWaitingFor, onL
   const [echoRegistered, setEchoRegistered] = useState(true)
   const togglePanel = () => setShowPanel((v) => !v)
   const room = useRoomContext()
+  const connectionState = useConnectionState()
+  const connectionStatus = connectionState === ConnectionState.Connected
+    ? { className: 'connected', label: '已连接' }
+    : connectionState === ConnectionState.Reconnecting || connectionState === ConnectionState.SignalReconnecting
+      ? { className: 'reconnecting', label: '正在重连' }
+      : connectionState === ConnectionState.Connecting
+        ? { className: 'connecting', label: '连接中' }
+        : { className: 'disconnected', label: '未连接' }
   useEffect(() => { registerEchoRpc(room, notify); return () => { room.localParticipant.unregisterRpcMethod('echo') } }, [room, notify])
   const toggleEcho = () => { if (echoRegistered) { room.localParticipant.unregisterRpcMethod('echo'); setEchoRegistered(false); notify('已注销 Echo，本端 RPC 调用将返回 Method not supported', 'warning') } else { registerEchoRpc(room, notify); setEchoRegistered(true); notify('已注册 Echo', 'success') } }
-  return <main className={`room-page ${showPanel ? '' : 'panel-collapsed'}`}><section className="room-stage"><div className="room-heading"><div><button className="back-button" onClick={() => window.confirm('确定离开会议？') && onLeave()}><ChevronLeft size={16} />{guest ? '离开会议' : '返回大厅'}</button><h1>{meeting.title || 'Live 会议'}</h1><div className="room-id">会议号 <button onClick={() => navigator.clipboard.writeText(meeting.meetingNo).then(() => notify('会议号已复制', 'success')).catch(() => notify('复制失败', 'error'))}><Copy size={13} />{meeting.meetingNo}</button></div></div><div className="room-heading-actions"><span className="live-indicator"><i />已连接</span></div></div><RoomAudioRenderer /><RoomContent perms={perms} sipWaitingFor={sipWaitingFor} onLeave={onLeave} notify={notify} /></section><aside className={`room-sidebar ${showPanel ? '' : 'collapsed'}`}><button className="sidebar-collapse-handle" title={showPanel ? '收起侧栏' : '展开侧栏'} onClick={togglePanel} aria-label={showPanel ? '收起侧栏' : '展开侧栏'} aria-expanded={showPanel}>{showPanel ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}</button>{showPanel && <><nav className="room-tabs"><button className={pane === 'chat' ? 'active' : ''} onClick={() => setPane('chat')}><MessageSquare size={16} />群聊</button><button className={pane === 'members' ? 'active' : ''} onClick={() => setPane('members')}><Users size={16} />成员</button>{!guest && <button className={pane === 'manage' ? 'active' : ''} onClick={() => setPane('manage')}><Settings2 size={16} />管理</button>}</nav>{pane === 'chat' && <ChatPane meetingNo={meeting.meetingNo} identity={identity} name={name} guest={guest} perms={perms} notify={notify} />}{pane === 'members' && <MembersPane meetingNo={meeting.meetingNo} guest={guest} notify={notify} />}{pane === 'manage' && !guest && <ManagePane meetingNo={meeting.meetingNo} notify={notify} onEnd={onLeave} echoRegistered={echoRegistered} onToggleEcho={toggleEcho} />}</>}</aside></main>
+  return <main className={`room-page ${showPanel ? '' : 'panel-collapsed'}`}><section className="room-stage"><div className="room-heading"><div><button className="back-button" onClick={() => window.confirm('确定离开会议？') && onLeave()}><ChevronLeft size={16} />{guest ? '离开会议' : '返回大厅'}</button><h1>{meeting.title || 'Live 会议'}</h1><div className="room-id">会议号 <button onClick={() => navigator.clipboard.writeText(meeting.meetingNo).then(() => notify('会议号已复制', 'success')).catch(() => notify('复制失败', 'error'))}><Copy size={13} />{meeting.meetingNo}</button></div></div><div className="room-heading-actions"><span className={`live-indicator ${connectionStatus.className}`} role="status" aria-live="polite"><i />{connectionStatus.label}</span></div></div><RoomAudioRenderer /><RoomContent perms={perms} sipWaitingFor={sipWaitingFor} onLeave={onLeave} notify={notify} /></section><aside className={`room-sidebar ${showPanel ? '' : 'collapsed'}`}><button className="sidebar-collapse-handle" title={showPanel ? '收起侧栏' : '展开侧栏'} onClick={togglePanel} aria-label={showPanel ? '收起侧栏' : '展开侧栏'} aria-expanded={showPanel}>{showPanel ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}</button>{showPanel && <><nav className="room-tabs"><button className={pane === 'chat' ? 'active' : ''} onClick={() => setPane('chat')}><MessageSquare size={16} />群聊</button><button className={pane === 'members' ? 'active' : ''} onClick={() => setPane('members')}><Users size={16} />成员</button>{!guest && <button className={pane === 'manage' ? 'active' : ''} onClick={() => setPane('manage')}><Settings2 size={16} />管理</button>}</nav>{pane === 'chat' && <ChatPane meetingNo={meeting.meetingNo} identity={identity} name={name} guest={guest} perms={perms} notify={notify} />}{pane === 'members' && <MembersPane meetingNo={meeting.meetingNo} guest={guest} notify={notify} />}{pane === 'manage' && !guest && <ManagePane meetingNo={meeting.meetingNo} notify={notify} onEnd={onLeave} echoRegistered={echoRegistered} onToggleEcho={toggleEcho} />}</>}</aside></main>
 }
 
 function RoomContent({ perms, sipWaitingFor, onLeave, notify }: { perms: JoinPerms; sipWaitingFor?: string; onLeave: () => void; notify: (message: string, tone?: Toast['tone']) => void }) {
   const videoTracks = useTracks([Track.Source.Camera, Track.Source.ScreenShare], { onlySubscribed: false })
   const participants = useParticipants()
+  const participantCount = countLiveParticipants(participants)
   const audioOnly = participants.filter(p => {
     const hasVideo = p.getTrackPublication(Track.Source.Camera)?.isSubscribed || p.getTrackPublication(Track.Source.ScreenShare)?.isSubscribed
     const hasAudio = p.getTrackPublication(Track.Source.Microphone)?.isSubscribed
@@ -403,7 +507,7 @@ function RoomContent({ perms, sipWaitingFor, onLeave, notify }: { perms: JoinPer
   const waitingForSip = Boolean(sipWaitingFor) && participants.every((participant) => participant.isLocal)
   useEffect(() => { if (!selectedTrack && allTracks.length > 0) { const screenShare = allTracks.find(t => t.source === Track.Source.ScreenShare); setSelectedTrack(screenShare || allTracks[0]) } }, [allTracks, selectedTrack])
   useEffect(() => { if (selectedTrack) { const stillExists = allTracks.some(t => t.participant.identity === selectedTrack.participant.identity && t.source === selectedTrack.source); if (!stillExists) setSelectedTrack(allTracks[0] || null) } }, [allTracks, selectedTrack]); const toggleFullscreen = async () => { if (!mainVideoRef.current) return; if (!document.fullscreenElement) { try { await mainVideoRef.current.requestFullscreen(); setIsFullscreen(true) } catch { notify('无法进入全屏模式', 'error') } } else { try { await document.exitFullscreen(); setIsFullscreen(false) } catch { notify('无法退出全屏模式', 'error') } } }; useEffect(() => { const handler = () => setIsFullscreen(!!document.fullscreenElement); document.addEventListener('fullscreenchange', handler); return () => document.removeEventListener('fullscreenchange', handler) }, []); const zoomBy = (delta: number) => setZoom((z) => Math.min(3, Math.max(1, Math.round((z + delta) * 100) / 100))); const cycleFit = () => setFit((f) => f === 'cover' ? 'contain' : f === 'contain' ? 'fill' : 'cover'); const fitLabel = fit === 'cover' ? '铺满' : fit === 'contain' ? '适应' : '拉伸';   const selectTrack = (track: TrackReferenceOrPlaceholder) => { setSelectedTrack(track); setZoom(1); setFit('cover') }
-  return <div className="room-content-layout">{showThumbnails ? <div className={`thumbnail-strip thumbnail-size-${thumbnailSize}`}><div className="thumbnail-header"><div><span className="thumbnail-title">参会人</span><small>{allTracks.length} 人</small></div><div className="thumbnail-actions"><button className="icon-button small" onClick={() => setThumbnailSize((size) => Math.max(0, size - 1))} title="缩小参会人画面" aria-label="缩小参会人画面" disabled={thumbnailSize === 0}><ZoomOut size={14} /></button><button className="icon-button small" onClick={() => setThumbnailSize((size) => Math.min(2, size + 1))} title="放大参会人画面" aria-label="放大参会人画面" disabled={thumbnailSize === 2}><ZoomIn size={14} /></button><button className="icon-button small" onClick={() => setShowThumbnails(false)} title="收起参会人" aria-label="收起参会人"><ChevronUp size={15} /></button></div></div><div className="thumbnail-row">{allTracks.map((track) => <button key={`${track.participant.identity}-${track.source}`} className={`thumbnail-item ${selectedTrack?.participant.identity === track.participant.identity && selectedTrack?.source === track.source ? 'active' : ''}`} onClick={() => selectTrack(track)} title={`查看 ${track.participant.name || track.participant.identity}`}><TrackTile track={track} /><span className="thumbnail-name">{track.participant.name || track.participant.identity}{track.participant.isLocal ? ' · 我' : ''}</span></button>)}</div></div> : <button className="participants-restore" onClick={() => setShowThumbnails(true)}><Users size={15} /><span>参会人</span><b>{allTracks.length}</b><ChevronDown size={15} /></button>}{waitingForSip && <div className="sip-waiting-banner" role="status"><Phone size={16} /><span><b>等待电话加入</b><small>已向 {sipWaitingFor} 发起外呼</small></span></div>}<div className="main-video-area" ref={mainVideoRef}>{selectedTrack ? <TrackTile key={`${selectedTrack.participant.identity}-${selectedTrack.source}`} track={selectedTrack} fit={fit} zoom={zoom} /> : waitingForSip ? <div className="room-empty sip-waiting"><span className="empty-camera"><Phone size={27} /></span><b>等待电话加入</b><small>已向 {sipWaitingFor} 发起外呼</small></div> : <div className="room-empty"><span className="empty-camera"><Video size={27} /></span><b>暂时没有可用视频</b><small>成员开启摄像头后会显示在这里</small></div>}<div className="video-toolbar"><button className="toolbar-button" onClick={() => zoomBy(-0.25)} title="缩小" disabled={zoom <= 1}><ZoomOut size={15} /></button><span className="toolbar-zoom">{Math.round(zoom * 100)}%</span><button className="toolbar-button" onClick={() => zoomBy(0.25)} title="放大" disabled={zoom >= 3}><ZoomIn size={15} /></button><button className="toolbar-button text" onClick={() => setZoom(1)} title="重置缩放">重置</button><button className="toolbar-button text" onClick={cycleFit} title="切换显示模式">{fitLabel}</button><button className="toolbar-button" onClick={toggleFullscreen} title={isFullscreen ? '退出全屏' : '全屏'}>{isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}</button></div></div><RoomControls perms={perms} onLeave={onLeave} notify={notify} /></div> }
+  return <div className="room-content-layout">{showThumbnails ? <div className={`thumbnail-strip thumbnail-size-${thumbnailSize}`}><div className="thumbnail-header"><div><span className="thumbnail-title">参会人</span><small>{participantCount} 人</small></div><div className="thumbnail-actions"><button className="icon-button small" onClick={() => setThumbnailSize((size) => Math.max(0, size - 1))} title="缩小参会人画面" aria-label="缩小参会人画面" disabled={thumbnailSize === 0}><ZoomOut size={14} /></button><button className="icon-button small" onClick={() => setThumbnailSize((size) => Math.min(2, size + 1))} title="放大参会人画面" aria-label="放大参会人画面" disabled={thumbnailSize === 2}><ZoomIn size={14} /></button><button className="icon-button small" onClick={() => setShowThumbnails(false)} title="收起参会人" aria-label="收起参会人"><ChevronUp size={15} /></button></div></div><div className="thumbnail-row">{allTracks.map((track) => <button key={`${track.participant.identity}-${track.source}`} className={`thumbnail-item ${selectedTrack?.participant.identity === track.participant.identity && selectedTrack?.source === track.source ? 'active' : ''}`} onClick={() => selectTrack(track)} title={`查看 ${track.participant.name || track.participant.identity}`}><TrackTile track={track} /><span className="thumbnail-name">{track.participant.name || track.participant.identity}{track.participant.isLocal ? ' · 我' : ''}</span></button>)}</div></div> : <button className="participants-restore" onClick={() => setShowThumbnails(true)}><Users size={15} /><span>参会人</span><b>{participantCount}</b><ChevronDown size={15} /></button>}{waitingForSip && <div className="sip-waiting-banner" role="status"><Phone size={16} /><span><b>等待电话加入</b><small>已向 {sipWaitingFor} 发起外呼</small></span></div>}<div className="main-video-area" ref={mainVideoRef}>{selectedTrack ? <TrackTile key={`${selectedTrack.participant.identity}-${selectedTrack.source}`} track={selectedTrack} fit={fit} zoom={zoom} /> : waitingForSip ? <div className="room-empty sip-waiting"><span className="empty-camera"><Phone size={27} /></span><b>等待电话加入</b><small>已向 {sipWaitingFor} 发起外呼</small></div> : <div className="room-empty"><span className="empty-camera"><Video size={27} /></span><b>暂时没有可用视频</b><small>成员开启摄像头后会显示在这里</small></div>}<div className="video-toolbar"><button className="toolbar-button" onClick={() => zoomBy(-0.25)} title="缩小" disabled={zoom <= 1}><ZoomOut size={15} /></button><span className="toolbar-zoom">{Math.round(zoom * 100)}%</span><button className="toolbar-button" onClick={() => zoomBy(0.25)} title="放大" disabled={zoom >= 3}><ZoomIn size={15} /></button><button className="toolbar-button text" onClick={() => setZoom(1)} title="重置缩放">重置</button><button className="toolbar-button text" onClick={cycleFit} title="切换显示模式">{fitLabel}</button><button className="toolbar-button" onClick={toggleFullscreen} title={isFullscreen ? '退出全屏' : '全屏'}>{isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}</button></div></div><RoomControls perms={perms} onLeave={onLeave} notify={notify} /></div> }
 function TrackTile({ track, fit = 'cover', zoom = 1 }: { track: TrackReferenceOrPlaceholder; fit?: 'contain' | 'cover' | 'fill'; zoom?: number }) {
   const title = track.participant.name || track.participant.identity
   const isVideoSubscribed = track.publication?.isSubscribed && track.publication.track && track.source !== Track.Source.Microphone
@@ -422,14 +526,164 @@ function MembersPane({ meetingNo, guest, notify }: { meetingNo: string; guest: b
   const [history, setHistory] = useState<ParticipantInfo[]>([])
   const load = () => api.listParticipants(meetingNo).then((data) => setHistory(data.participants || [])).catch((e) => notify((e as Error).message, 'error'))
   useEffect(() => { if (!guest) load() }, [guest, meetingNo])
-  const liveMembers = participants.map((participant) => ({ identity: participant.identity, name: participant.name || participant.identity, online: true }))
-  const onlineIds = new Set(participants.map(p => p.identity))
-  const list = guest ? liveMembers : [...history.map(m => ({ ...m, online: onlineIds.has(m.identity) })), ...liveMembers.filter((member) => !history.some((item) => item.identity === member.identity))]
+  const list = mergeMeetingParticipants(guest ? [] : history, participants)
   const onlineCount = list.filter(m => m.online).length
   return <div className="side-content"><div className="side-intro"><div><span className="eyebrow">实时状态</span><h3>成员 <em>{onlineCount}/{list.length}</em></h3></div>{!guest && <button className="icon-button" title="刷新成员" onClick={load}><RefreshCw size={16} /></button>}</div><div className="member-list">{list.length ? list.map((member) => <div className={`member-item ${member.online ? '' : 'offline'}`} key={member.identity}><span className="avatar tiny">{initials(member.name)}</span><div className="member-copy"><b>{member.name}</b><small>{member.identity}</small></div><span className={`member-status ${member.online ? 'online' : 'offline'}`}>{member.online ? '在线' : '离线'}</span></div>) : <div className="side-empty"><Users size={20} />等待成员加入</div>}</div></div>
 }
 
-function ManagePane({ meetingNo, notify, onEnd, echoRegistered, onToggleEcho }: { meetingNo: string; notify: (message: string, tone?: Toast['tone']) => void; onEnd: () => void; echoRegistered: boolean; onToggleEcho: () => void }) { const participants = useParticipants(); const [target, setTarget] = useState(''); const [identity, setIdentity] = useState(''); const [inviteName, setInviteName] = useState(''); const [expire, setExpire] = useState('3600'); const [ticket, setTicket] = useState<TicketReply | null>(null); const [members, setMembers] = useState<ParticipantInfo[]>([]); const [generating, setGenerating] = useState(false); const [canPublish, setCanPublish] = useState(true); const [canSubscribe, setCanSubscribe] = useState(true); const [canPublishData, setCanPublishData] = useState(true); const [canPublishSources, setCanPublishSources] = useState<string[]>(['camera', 'microphone', 'screen_share']); const load = () => api.listParticipants(meetingNo).then((data) => setMembers(data.participants || [])).catch(() => undefined); useEffect(() => { load() }, [meetingNo]); const onlineIds = new Set(participants.map(p => p.identity)); const onlineMembers = [...new Map<string, ParticipantInfo>([...participants.map((p) => [p.identity, { identity: p.identity, name: p.name || p.identity, status: 1, joinTime: '', leftTime: '' }] as [string, ParticipantInfo]), ...members.filter((m) => onlineIds.has(m.identity)).map((m) => [m.identity, m] as [string, ParticipantInfo])]).values()]; const mute = async (kind: 'audio' | 'video') => { if (!target) return notify('请先选择成员', 'warning'); try { await api.muteParticipant(meetingNo, target, true, kind); notify('管理指令已发送', 'success') } catch (e) { notify((e as Error).message, 'error') } }; const kick = async () => { if (!target) return notify('请先选择成员', 'warning'); if (!window.confirm(`确定将 ${target} 移出会议？`)) return; try { await api.kickParticipant(meetingNo, target); notify('成员已移出会议', 'success'); load() } catch (e) { notify((e as Error).message, 'error') } }; const toggleSource = (source: string) => { setCanPublishSources(current => current.includes(source) ? current.filter(s => s !== source) : [...current, source]) }; const generate = async () => { if (generating) return; const guestIdentity = identity.trim() || ('访客_' + Math.random().toString(36).slice(2, 8)); setGenerating(true); try { const reply = await api.generateTicket(meetingNo, guestIdentity, inviteName.trim(), Number(expire) || 3600, canPublish, canSubscribe, canPublishData, canPublishSources); setTicket(reply) } catch (e) { notify((e as Error).message, 'error') } finally { setGenerating(false) } }; const share = () => { if (!ticket) return; const url = `${location.origin}/guest?ticket=${encodeURIComponent(ticket.ticket)}`; navigator.clipboard.writeText(url).then(() => notify('邀请链接已复制', 'success')).catch(() => notify('复制失败', 'error')) }; return <div className="side-content manage-content"><div className="side-intro"><div><span className="eyebrow">会议管理</span><h3>会议管理</h3></div><span className="admin-badge"><ShieldCheck size={14} />已授权</span></div><section className="manage-section"><h4>电话拨号</h4><DialPad meetingNo={meetingNo} notify={notify} /></section><section className="manage-section"><h4>成员控制</h4><select className="text-input" value={target} onChange={(e) => setTarget(e.target.value)}><option value="">选择在线成员</option>{onlineMembers.map((member) => <option key={member.identity} value={member.identity}>{member.name || member.identity} ({member.identity})</option>)}</select><div className="manage-actions"><button className="soft-button" onClick={() => mute('audio')}><Mic size={15} />静音语音</button><button className="soft-button" onClick={() => mute('video')}><Video size={15} />关闭视频</button><button className="soft-button danger" onClick={kick}><UserRound size={15} />移出会议</button></div></section><section className="manage-section"><h4>临时会议邀请</h4><input className="text-input" value={identity} onChange={(e) => setIdentity(e.target.value)} placeholder="参会身份（可选，留空自动生成）" /><input className="text-input" value={inviteName} onChange={(e) => setInviteName(e.target.value)} placeholder="显示名称（可选）" /><div className="invite-inline"><input className="text-input" type="number" min="60" max="86400" value={expire} onChange={(e) => setExpire(e.target.value)} /><button className="button secondary" onClick={generate} disabled={generating}>{generating ? '生成中…' : '生成邀请'}</button></div><div className="permission-section"><h5>访客权限</h5><label className="checkbox-label"><input type="checkbox" checked={canPublish} onChange={(e) => setCanPublish(e.target.checked)} />可发布音视频</label><label className="checkbox-label"><input type="checkbox" checked={canSubscribe} onChange={(e) => setCanSubscribe(e.target.checked)} />可订阅音视频</label><label className="checkbox-label"><input type="checkbox" checked={canPublishData} onChange={(e) => setCanPublishData(e.target.checked)} />可发送消息</label><div className="source-permissions"><span className="source-label">可发布轨道：</span><label className="checkbox-label small"><input type="checkbox" checked={canPublishSources.includes('camera')} onChange={() => toggleSource('camera')} />摄像头</label><label className="checkbox-label small"><input type="checkbox" checked={canPublishSources.includes('microphone')} onChange={() => toggleSource('microphone')} />麦克风</label><label className="checkbox-label small"><input type="checkbox" checked={canPublishSources.includes('screen_share')} onChange={() => toggleSource('screen_share')} />屏幕共享</label></div></div>{ticket && <div className="ticket-result"><span>有效期至 {ticket.expireTime}</span><code>{`${location.origin}/guest?ticket=${encodeURIComponent(ticket.ticket)}`}</code><button onClick={share}><Copy size={14} />复制邀请链接</button></div>}</section><RealtimeTools meetingNo={meetingNo} target={target} notify={notify} echoRegistered={echoRegistered} onToggleEcho={onToggleEcho} /><section className="manage-section"><h4>会议状态</h4><button className="end-meeting" onClick={() => window.confirm('结束后所有成员都会离开会议，是否继续？') && api.endMeeting(meetingNo).then(() => { notify('会议已结束', 'success'); onEnd() }).catch((e) => notify((e as Error).message, 'error'))}><X size={15} />结束整个会议</button></section></div> }
+function ManagePane({ meetingNo, notify, onEnd, echoRegistered, onToggleEcho }: { meetingNo: string; notify: (message: string, tone?: Toast['tone']) => void; onEnd: () => void; echoRegistered: boolean; onToggleEcho: () => void }) {
+  const participants = useParticipants()
+  const [target, setTarget] = useState('')
+  const [systemUserId, setSystemUserId] = useState('')
+  const [notifying, setNotifying] = useState(false)
+  const [identity, setIdentity] = useState('')
+  const [inviteName, setInviteName] = useState('')
+  const [expire, setExpire] = useState('3600')
+  const [ticket, setTicket] = useState<TicketReply | null>(null)
+  const [generating, setGenerating] = useState(false)
+  const [canPublish, setCanPublish] = useState(true)
+  const [canSubscribe, setCanSubscribe] = useState(true)
+  const [canPublishData, setCanPublishData] = useState(true)
+  const [canPublishSources, setCanPublishSources] = useState<string[]>(['camera', 'microphone', 'screen_share'])
+  const onlineMembers = mergeMeetingParticipants([], participants)
+
+  const inviteSystemUser = async () => {
+    const userId = systemUserId.trim()
+    if (!userId || notifying) return
+    setNotifying(true)
+    try {
+      await api.notifyMeetingParticipant(meetingNo, userId)
+      setSystemUserId('')
+      notify(`已向 ${userId} 发送入会提醒`, 'success')
+    } catch (e) {
+      notify((e as Error).message || '发送入会提醒失败', 'error')
+    } finally {
+      setNotifying(false)
+    }
+  }
+
+  const mute = async (kind: 'audio' | 'video') => {
+    if (!target) return
+    try {
+      await api.muteParticipant(meetingNo, target, true, kind)
+      notify('管理指令已发送', 'success')
+    } catch (e) {
+      notify((e as Error).message, 'error')
+    }
+  }
+
+  const kick = async () => {
+    if (!target || !window.confirm(`确定将 ${target} 移出会议？`)) return
+    try {
+      await api.kickParticipant(meetingNo, target)
+      setTarget('')
+      notify('成员已移出会议', 'success')
+    } catch (e) {
+      notify((e as Error).message, 'error')
+    }
+  }
+
+  const toggleSource = (source: string) => {
+    setCanPublishSources((current) => current.includes(source) ? current.filter((item) => item !== source) : [...current, source])
+  }
+
+  const generate = async () => {
+    if (generating) return
+    const guestIdentity = identity.trim() || ('访客_' + Math.random().toString(36).slice(2, 8))
+    setGenerating(true)
+    try {
+      const reply = await api.generateTicket(meetingNo, guestIdentity, inviteName.trim(), Number(expire) || 3600, canPublish, canSubscribe, canPublishData, canPublishSources)
+      setTicket(reply)
+    } catch (e) {
+      notify((e as Error).message, 'error')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const share = () => {
+    if (!ticket) return
+    const url = `${location.origin}/guest?ticket=${encodeURIComponent(ticket.ticket)}`
+    navigator.clipboard.writeText(url)
+      .then(() => notify('邀请链接已复制', 'success'))
+      .catch(() => notify('复制失败', 'error'))
+  }
+
+  return <div className="side-content manage-content">
+    <div className="side-intro manage-heading">
+      <div><span className="eyebrow">会议管理</span><h3>会议管理</h3></div>
+      <span className="admin-badge"><ShieldCheck size={14} />已授权</span>
+    </div>
+    <div className="manage-scroll">
+      <section className="manage-primary">
+        <div className="manage-section-title"><span className="manage-section-icon"><UserRound size={16} /></span><h4>邀请已登录用户</h4></div>
+        <form className="system-invite-form" onSubmit={(event) => { event.preventDefault(); inviteSystemUser() }}>
+          <label className="field-label" htmlFor="meeting-invite-user-id">用户 ID</label>
+          <div className="system-invite-row">
+            <input id="meeting-invite-user-id" className="text-input" value={systemUserId} onChange={(event) => setSystemUserId(event.target.value)} placeholder="输入对方的登录用户 ID" autoComplete="off" />
+            <button className="button primary compact" type="submit" disabled={notifying || !systemUserId.trim()}><Send size={15} />{notifying ? '发送中…' : '发送提醒'}</button>
+          </div>
+        </form>
+      </section>
+
+      <section className="manage-section">
+        <div className="manage-section-title"><span className="manage-section-icon neutral"><Users size={16} /></span><h4>成员控制</h4></div>
+        <select className="text-input" value={target} onChange={(event) => setTarget(event.target.value)} disabled={onlineMembers.length === 0}>
+          <option value="">{onlineMembers.length ? '选择在线成员' : '暂无在线成员'}</option>
+          {onlineMembers.map((member) => <option key={member.identity} value={member.identity}>{member.name} ({member.identity})</option>)}
+        </select>
+        <div className="manage-action-grid">
+          <button className="soft-button" disabled={!target} onClick={() => mute('audio')}><Mic size={15} />静音</button>
+          <button className="soft-button" disabled={!target} onClick={() => mute('video')}><Video size={15} />关闭视频</button>
+          <button className="soft-button danger" disabled={!target} onClick={kick}><UserRound size={15} />移出</button>
+        </div>
+      </section>
+
+      <details className="manage-disclosure">
+        <summary><span className="manage-section-icon neutral"><Phone size={16} /></span><span>电话外呼</span><ChevronDown size={15} /></summary>
+        <div className="manage-disclosure-body"><DialPad meetingNo={meetingNo} notify={notify} /></div>
+      </details>
+
+      <details className="manage-disclosure">
+        <summary><span className="manage-section-icon neutral"><Clipboard size={16} /></span><span>访客邀请链接</span><ChevronDown size={15} /></summary>
+        <div className="manage-disclosure-body manage-form-stack">
+          <input className="text-input" value={identity} onChange={(event) => setIdentity(event.target.value)} placeholder="参会身份（可选）" />
+          <input className="text-input" value={inviteName} onChange={(event) => setInviteName(event.target.value)} placeholder="显示名称（可选）" />
+          <div className="invite-inline">
+            <input className="text-input" type="number" min="60" max="86400" value={expire} onChange={(event) => setExpire(event.target.value)} aria-label="有效期（秒）" />
+            <button className="button secondary" onClick={generate} disabled={generating}>{generating ? '生成中…' : '生成链接'}</button>
+          </div>
+          <div className="permission-section">
+            <h5>访客权限</h5>
+            <div className="permission-grid">
+              <label className="checkbox-label"><input type="checkbox" checked={canPublish} onChange={(event) => setCanPublish(event.target.checked)} />发布音视频</label>
+              <label className="checkbox-label"><input type="checkbox" checked={canSubscribe} onChange={(event) => setCanSubscribe(event.target.checked)} />订阅音视频</label>
+              <label className="checkbox-label"><input type="checkbox" checked={canPublishData} onChange={(event) => setCanPublishData(event.target.checked)} />发送消息</label>
+            </div>
+            <div className="source-permissions">
+              <span className="source-label">发布轨道</span>
+              <div className="permission-grid">
+                <label className="checkbox-label small"><input type="checkbox" checked={canPublishSources.includes('camera')} onChange={() => toggleSource('camera')} />摄像头</label>
+                <label className="checkbox-label small"><input type="checkbox" checked={canPublishSources.includes('microphone')} onChange={() => toggleSource('microphone')} />麦克风</label>
+                <label className="checkbox-label small"><input type="checkbox" checked={canPublishSources.includes('screen_share')} onChange={() => toggleSource('screen_share')} />屏幕共享</label>
+              </div>
+            </div>
+          </div>
+          {ticket && <div className="ticket-result"><span>有效期至 {ticket.expireTime}</span><code>{`${location.origin}/guest?ticket=${encodeURIComponent(ticket.ticket)}`}</code><button onClick={share}><Copy size={14} />复制邀请链接</button></div>}
+        </div>
+      </details>
+
+      <details className="manage-disclosure">
+        <summary><span className="manage-section-icon neutral"><Database size={16} /></span><span>Data / RPC 调试</span><ChevronDown size={15} /></summary>
+        <div className="manage-disclosure-body debug-tools"><RealtimeTools meetingNo={meetingNo} target={target} notify={notify} echoRegistered={echoRegistered} onToggleEcho={onToggleEcho} /></div>
+      </details>
+
+      <section className="manage-danger-zone">
+        <button className="end-meeting" onClick={() => window.confirm('结束后所有成员都会离开会议，是否继续？') && api.endMeeting(meetingNo).then(() => { notify('会议已结束', 'success'); onEnd() }).catch((e) => notify((e as Error).message, 'error'))}><X size={15} />结束整个会议</button>
+      </section>
+    </div>
+  </div>
+}
 
 function RealtimeTools({ meetingNo, target, notify, echoRegistered, onToggleEcho }: { meetingNo: string; target: string; notify: (message: string, tone?: Toast['tone']) => void; echoRegistered: boolean; onToggleEcho: () => void }) { const [payload, setPayload] = useState('hello data'); const [sending, setSending] = useState(false); const [rpcing, setRpcing] = useState(false); const sendDataViaApi = async () => { if (!payload.trim() || sending) return; setSending(true); try { const localId = crypto.randomUUID?.() || `data-${Date.now()}`; const message = { messageId: localId, content: payload, messageType: 'data' }; const bytes = new TextEncoder().encode(JSON.stringify(message)); await api.sendMeetingData(meetingNo, 'lk.chat', bytesToBase64(bytes)); notify('Data 已发送 (API)', 'success') } catch (e) { notify(`Data 发送失败：${(e as Error).message}`, 'error') } finally { setSending(false) } }; const performRpcViaApi = async () => { if (!target) return notify('请先选择成员', 'warning'); if (rpcing) return; setRpcing(true); try { const reply = await api.performRpc(meetingNo, target, payload); notify(`响应：${reply.response || '无内容'}`, 'success') } catch (e) { notify(`响应失败：${(e as Error).message}`, 'error') } finally { setRpcing(false) } }; return <section className="manage-section"><h4>Data / RPC</h4><input className="text-input" value={payload} onChange={(e) => setPayload(e.target.value)} placeholder="消息内容" /><div className="manage-actions"><button className="soft-button" disabled={sending} onClick={sendDataViaApi}><Database size={15} />{sending ? '发送中...' : 'Send Data (API)'}</button><button className="soft-button" disabled={rpcing} onClick={performRpcViaApi}><MoreHorizontal size={15} />{rpcing ? '调用中...' : 'Perform RPC (API)'}</button></div><div className="manage-actions" style={{marginTop: 10}}><button className={`soft-button ${echoRegistered ? 'danger' : ''}`} onClick={onToggleEcho} title="所有参会人入会时已自动注册 echo（含访客），此处可手动注销以演示失败路径"><MoreHorizontal size={15} />{echoRegistered ? '注销 Echo (SDK)' : '注册 Echo (SDK)'}</button></div></section> }
 
@@ -447,7 +701,7 @@ function GuestView({ ticket, join, name, identity, onJoin, onLeave, notify }: { 
     onJoin(ticket).then((ok) => { if (!ok) { consumedTickets.delete(ticket); setFailed(true) } }).finally(() => setLoading(false))
   }, [ticket, join, loading, retryCount, onJoin])
   if (join) {
-    return <><Topbar name={name} identity={identity} guest onLogout={onLeave} /><LiveKitRoom serverUrl={wsUrl()} token={join.token} connect audio={true} video={true} onDisconnected={onLeave}><MeetingRoom meeting={join.meeting} perms={join.perms} name={name} identity={identity} guest onLeave={onLeave} notify={notify} /></LiveKitRoom></>
+    return <><Topbar name={name} identity={identity} guest onLogout={onLeave} /><LiveKitRoom serverUrl={wsUrl()} token={join.token} connect audio={canAutoPublish(join.perms, 'microphone')} video={canAutoPublish(join.perms, 'camera')} onError={(error) => notify(`会议连接失败：${error.message}`, 'error')} onMediaDeviceFailure={(_failure, kind) => notify(`媒体设备不可用${kind ? `（${kind}）` : ''}`, 'error')} onDisconnected={onLeave}><MeetingRoom meeting={join.meeting} perms={join.perms} name={name} identity={identity} guest onLeave={onLeave} notify={notify} /></LiveKitRoom></>
   }
   return <main className="guest-gate"><div className="surface guest-gate-card"><div className="brand-lockup"><span className="brand-mark">L</span><span>Live 视频会议</span></div><div className="guest-gate-copy"><span className="eyebrow">邀请访客</span><h2>加入会议</h2><p>{loading ? '正在验证票据，请稍候…' : failed ? '票据无效、已使用或已过期，请联系会议主持人重新生成。' : '正在准备会议…'}</p></div>{loading ? <div className="guest-gate-loading"><RefreshCw size={18} className="spin" /><span>正在连接会议</span></div> : failed ? <button className="button primary wide" onClick={() => { consumedTickets.delete(ticket || ''); setRetryCount((n) => n + 1) }}>重新尝试 <ArrowRight size={15} /></button> : null}</div></main>
 }

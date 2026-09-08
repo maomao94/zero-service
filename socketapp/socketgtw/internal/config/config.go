@@ -24,5 +24,5 @@ type Config struct {
 	SocketGtwConf           zrpc.RpcClientConf `json:",optional"`
 	SocketMetaData          []string           `json:",optional"`
 	StreamEventConf         zrpc.RpcClientConf
-	EnableStreamEventNotify bool `json:",default=true"`
+	EnableStreamEventNotify bool `json:",default=false"`
 }

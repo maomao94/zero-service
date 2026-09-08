@@ -62,6 +62,10 @@ GET /live/v1/myMeetings?status=2&page=1&pageSize=20
 
 ![会议房间](../images/live/meeting-room.png)
 
+右侧会议管理面板集中提供已登录用户邀请、成员控制、电话外呼和访客邀请链接。
+
+![会议内管理](../images/live/meeting-management.png)
+
 **会控操作**：
 
 ```http
@@ -90,7 +94,28 @@ GET  /live/v1/joinMeetingByTicket      # 票据加入（无需鉴权）
 - **一次性票据**（默认）：消费后自动删除，适合单次邀请
 - **有效期票据**：消费后保留至过期，可多次使用，适合固定链接
 
-### 6. 聊天消息
+### 6. 已登录用户邀请
+
+会议管理员可输入目标用户的登录身份，向在线用户发送实时入会提醒。受邀用户收到弹窗后可直接进入对应会议；邀请人姓名缺失时界面显示 `邀请人：-`。
+
+![入会邀请弹窗](../images/live/meeting-invite-dialog.png)
+
+**API 端点**：
+
+```http
+POST /live/v1/notifyMeetingParticipant
+Content-Type: application/json
+Authorization: Bearer <jwt>
+
+{
+  "meetingNo": "M202609091316270001",
+  "identity": "0002"
+}
+```
+
+该提醒通过 Socket.IO 自定义事件投递；事件和房间命名见 [SocketIO 实时通信](../socketio/socketio.md)。
+
+### 7. 聊天消息
 
 支持会议内实时聊天，消息通过 LiveKit DataChannel 传输，同时落库存储支持历史查询。
 
@@ -99,16 +124,16 @@ POST /live/v1/reportMeetingMessage     # 上报消息
 GET  /live/v1/listMeetingMessages      # 查询历史
 ```
 
-### 7. Webhook 同步
+### 8. Webhook 同步
 
 `livegtw` 接收 LiveKit Webhook 事件（`/webhook/livekit`），验签后转发给 `live` 服务处理。事件包括：
 - `room_started` / `room_finished`：房间开始/结束
 - `participant_joined` / `participant_left`：参与者入会/离会
 - `track_published` / `track_unpublished`：轨道发布/取消
 
-处理逻辑：基于 `event.Id` 幂等去重，更新会议状态和参与者记录。
+处理逻辑：处理操作本身幂等，参会记录可安全 upsert，会议状态仅从进行中流转为已结束；重复、迟到或补发事件均可安全重放。
 
-### 8. SIP 电话集成
+### 9. SIP 电话集成
 
 支持 SIP 电话与 WebRTC 用户在同一 Room 中通话。详见 [SIP 电话集成指南](./sip-integration.md)。
 
@@ -174,6 +199,7 @@ GET  /live/v1/listMeetingMessages      # 查询历史
 | POST | `/live/v1/sendMeetingData` | 发送数据 |
 | POST | `/live/v1/performMeetingRpc` | 服务端 RPC |
 | POST | `/live/v1/generateMeetingTicket` | 生成票据 |
+| POST | `/live/v1/notifyMeetingParticipant` | 向已登录用户发送入会提醒 |
 | POST | `/live/v1/reportMeetingMessage` | 上报消息 |
 | GET | `/live/v1/listMeetingMessages` | 查询历史消息 |
 | POST | `/live/v1/sip-trunks` | 创建 SIP trunk |

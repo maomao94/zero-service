@@ -1,5 +1,0 @@
-{"file":".trellis/spec/guides/index.md","reason":"跨层 UI/API 状态流和契约消费者检查入口。"}
-{"file":".trellis/spec/backend/livekit-guidelines.md","reason":"SIP 外呼、会议号前缀和接通状态语义。"}
-{"file":"web/live/package.json","reason":"前端构建命令和依赖基线。"}
-{"file":"web/live/src/lib/api.ts","reason":"DialSip HTTP 调用契约。"}
-{"file":"web/live/src/types.ts","reason":"DialSipReply 与 MeetingInfo 类型。"}

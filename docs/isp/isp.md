@@ -290,5 +290,5 @@ ModelSync:
 ## 参考资料
 
 - 项目实现：`common/isp`、`app/ispagent`
-- 项目规范：`.trellis/spec/backend/isp-guidelines.md`
+- Agent 领域契约：`docs/agent/domains/isp.md`
 - 公开资料关键词：`区域型变电站远程智能巡视系统技术规范`、`远程智能巡视集中监控系统技术规范`、`变电站远程智能巡视系统技术规范`

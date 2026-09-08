@@ -519,65 +519,34 @@
 
 ---
 
-## 与 Trellis 的协同
+## 本仓库的轻量工作流
 
-本项目同时运行 Trellis（任务生命周期）与 Matt 技能集（工程方法）。分工原则：**Trellis 管生命周期，Matt 管方法**。
+本项目直接使用 Matt 技能，不再依赖额外的任务生命周期框架。根目录 `AGENTS.md` 只保存默认行为和知识入口，稳定工程契约与领域不变量按需放在 `docs/agent/`。
 
-双模式使用：**Matt 技能始终可用，不依赖 Trellis**——
+### Idea → Ship
 
-- **模式 A · 独立模式**（无 Trellis 任务）：直接调用技能，按技能自身约定工作（调研落 `docs/research/`、评审结论进聊天）。工作量增大时建议转 Trellis。
-- **模式 B · 集成模式**（Trellis 任务内）：Trellis 管阶段门禁与工件落点，Matt 技能作为阶段方法层（见下表）。
+1. 在仓库中讨论新需求时用 `grill-with-docs`，把稳定术语与重要决策留在项目文档中。
+2. 一次会话可以完成的需求直接用 `implement`。
+3. 多会话需求依次用 `to-spec`、`to-tickets`，再为每张无阻塞 ticket 单独调用 `implement`。
+4. `implement` 内部按需使用 `tdd`，结束时用 `code-review` 检查标准与需求符合度。
 
-完整路由见 `AGENTS.md` 的 "Workflow 分工" 章节。配置落点：
+遇到难复现故障用 `diagnosing-bugs`；需要运行代码回答设计问题时用 `prototype`；只有路线本身无法在一次会话中看清的大型工作才用 `wayfinder`。
 
-- `AGENTS.md` → "Workflow 分工：Trellis × Matt Pocock Skills"（路由优先级、阶段映射、冲突裁决、`ask-matt` 兜底）
-- `.trellis/workflows/matt.md` → **matt 变体**（深度集成，见下节；全局 `workflow.md` 保持默认）
+### 知识归属
 
-### matt workflow 变体（深度集成）
-
-基于 Trellis 0.7 动态 workflow 切换（`trellis workflow create matt` 从 native 脚手架生成，用户管理文件，`trellis update` 不覆盖）。Matt 方法直接织入变体的 phase 步骤与每轮 breadcrumb：
-
-| 织入点 | Matt 技能 |
+| 信息 | 位置或技能 |
 | --- | --- |
-| Phase 1.1 需求探索 | `grill-me` / `to-questionnaire` / `wayfinder` |
-| Phase 1.2 研究 | `research`（产物强制落 `{TASK_DIR}/research/`） |
-| Phase 2.1 实现 | `tdd` / `diagnosing-bugs` / `prototype` |
-| Phase 2.2 质量检查 | `code-review`（标准 + 规格两轴） |
-| Phase 3.2 调试回顾 | `retro` |
+| 每次任务都需要的少量默认行为 | `AGENTS.md` |
+| 稳定工程契约、领域不变量和任务路由 | `docs/agent/` |
+| 领域术语表与重要决策 | `domain-modeling` 管理的 `CONTEXT.md` 与 ADR |
+| 功能需求与实施切片 | `to-spec`、`to-tickets` 产生的文档或 issue |
+| 一手资料调研 | `research` 产生的带引用 Markdown |
 
-选择方式：
+功能 spec 是一次交付的需求来源，Agent 知识库是跨任务复用的项目记忆。只有稳定、非直观且会影响未来正确性的结论进入知识库；完整 API、当前依赖版本和目录清单继续由源码、契约、`go.mod` 与文件系统负责。
 
-```bash
-python3 ./.trellis/scripts/task.py create "<标题>" --workflow matt   # 新任务选用
-python3 ./.trellis/scripts/task.py workflow matt                     # 切换 active task
-python3 ./.trellis/scripts/task.py workflow --clear                  # 恢复默认解析链
-```
+### 上下文卫生
 
-当前已设为个人默认（`.trellis/.developer` 的 `workflow=matt`，不入库）。解析优先级：任务 pin > 个人 > 团队（`config.yaml` 的 `default_workflow`）> 全局 `workflow.md`。验证：`python3 ./.trellis/scripts/get_context.py --mode phase --step 2.1`。
-
-### 阶段 × 技能映射
-
-| Trellis 阶段 | Trellis 负责（owner） | Matt 技能（方法层） | 产物落点 |
-| --- | --- | --- | --- |
-| 1.1 需求探索 | `trellis-brainstorm`、`prd.md` | `grill-me`、`to-questionnaire` | `{TASK_DIR}/prd.md` |
-| 1.1 大需求拆分 | parent/child 任务树 | `to-tickets` 垂直切片；超大规划用 `wayfinder` | 子任务目录 |
-| 1.2 研究 | `research/` 持久化 | `research` | `{TASK_DIR}/research/` |
-| 1.4 前设计验证 | — | `prototype` | `{TASK_DIR}/research/` |
-| 2.1 实现 | `trellis-implement` 子代理 | `tdd`、`diagnosing-bugs` | 代码 + 回归测试 |
-| 2.2 质量检查 | `trellis-check` 子代理 | `code-review`（两轴） | 修复进代码 |
-| 3.2 调试回顾 | `trellis-break-loop` | `retro` | spec / journal |
-| 3.3 知识沉淀 | `trellis-update-spec` | — | `.trellis/spec/` |
-| 3.4 提交 | 批量提交协议（唯一 owner） | 不接管 | git commits |
-
-### 冲突裁决
-
-1. **一个阶段只有一个 workflow owner**：Trellis 阶段门禁（consent → planning → start → commit）永远优先，Matt 技能只在阶段内部作为方法。
-2. **产物必须落盘**：Matt 技能的调研、设计、评审结论写入当前任务目录或 `.trellis/spec/`，不得只留在聊天里。
-3. **提交纪律**：Matt 技能指示 commit 时，以 Trellis Phase 3.4 批量提交协议为准，未经用户确认不提交、不推送。
-
-### 未纳入协同的技能
-
-以下技能与 Trellis 流程重叠或场景不同，保持独立可用、不进映射表：`implement` / `implement-spec`（Trellis 用 `trellis-implement` 子代理）、`to-spec`（规格落 `prd.md`）、`triage`（仅外部 GitHub issue）、`domain-modeling`（本项目无术语表/ADR，不启用）、`wizard`（人工步骤向导）、写作系列（`writing-*`）与教学系列（`teach`）。
+需求澄清到 ticket 拆分尽量保持同一上下文。每张 ticket 的实现使用独立上下文，只读取 `docs/agent/README.md` 命中的一份工程规范和一份领域契约；文档明确指出依赖时再展开。
 
 ---
 

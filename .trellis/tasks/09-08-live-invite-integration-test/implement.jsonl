@@ -1,5 +1,0 @@
-{"file":".trellis/spec/backend/core-rules.md","reason":"所有 Go 变更与验证的核心规则，包括错误、context 和改动范围。"}
-{"file":".trellis/spec/backend/contract-generation.md","reason":"邀请 RPC 与生成代码、前端消费者一致性的契约验证规则。"}
-{"file":".trellis/spec/backend/go-zero-conventions.md","reason":"livegtw 网关中间件、HTTP/gRPC 边界和测试验证约定。"}
-{"file":".trellis/spec/backend/livekit-guidelines.md","reason":"会议、SIP、网关和 token 安全的领域验收约定。"}
-{"file":"docs/socketio/socketio.md","reason":"socketgtw/socketpush 的连接、房间和主动推送事件协议。"}

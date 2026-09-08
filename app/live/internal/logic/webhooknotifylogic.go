@@ -79,7 +79,7 @@ func (l *WebhookNotifyLogic) WebhookNotify(in *live.WebhookNotifyReq) (*live.Web
 
 // logUnhandled 记录暂不处理的事件（含 TODO 项与未知事件）。
 func (l *WebhookNotifyLogic) logUnhandled(event *livekit.WebhookEvent) {
-	l.Logger.Infof("webhook event unhandled: id=%s type=%s room=%s", event.GetId(), event.GetEvent(), event.GetRoom().GetName())
+	l.Logger.Infof("[webhook] webhook event unhandled: id=%s type=%s room=%s", event.GetId(), event.GetEvent(), event.GetRoom().GetName())
 }
 
 // handleRoomStarted 房间创建：已有记录则跳过（CreateMeeting/DialSipLogic 已创建）。
@@ -87,7 +87,7 @@ func (l *WebhookNotifyLogic) logUnhandled(event *livekit.WebhookEvent) {
 func (l *WebhookNotifyLogic) handleRoomStarted(event *livekit.WebhookEvent) {
 	room := event.GetRoom()
 	if room == nil || strings.TrimSpace(room.GetName()) == "" {
-		l.Logger.Errorf("room_started without room: id=%s", event.GetId())
+		l.Logger.Errorf("[webhook] room_started without room: id=%s", event.GetId())
 		return
 	}
 	roomName := room.GetName()
@@ -95,29 +95,29 @@ func (l *WebhookNotifyLogic) handleRoomStarted(event *livekit.WebhookEvent) {
 	if err == nil {
 		return // 已存在
 	}
-	l.Logger.Infof("room_started without meeting record (expected for non-managed rooms): room=%s", roomName)
+	l.Logger.Infof("[webhook] room_started without meeting record (expected for non-managed rooms): room=%s", roomName)
 }
 
 // handleRoomFinished 房间删除/会议结束：标记会议 ended（已结束则跳过）。
 func (l *WebhookNotifyLogic) handleRoomFinished(event *livekit.WebhookEvent) {
 	room := event.GetRoom()
 	if room == nil || strings.TrimSpace(room.GetName()) == "" {
-		l.Logger.Errorf("room_finished without room: id=%s", event.GetId())
+		l.Logger.Errorf("[webhook] room_finished without room: id=%s", event.GetId())
 		return
 	}
 	meeting, err := l.svcCtx.MeetingRepo.GetMeeting(l.ctx, room.GetName())
 	if err != nil {
-		l.Logger.Infof("room_finished for unknown meeting, skip: room=%s", room.GetName())
+		l.Logger.Infof("[webhook] room_finished for unknown meeting, skip: room=%s", room.GetName())
 		return
 	}
 	if meeting.Status == gormmodel.MeetingStatusEnded {
 		return
 	}
 	if _, err := l.svcCtx.MeetingRepo.UpdateMeetingEnded(l.ctx, room.GetName(), carbonx.NowStartOfSecond().StdTime(), "", ""); err != nil {
-		l.Logger.Errorf("update meeting ended failed: room=%s err=%v", room.GetName(), err)
+		l.Logger.Errorf("[webhook] update meeting ended failed: room=%s err=%v", room.GetName(), err)
 		return
 	}
-	l.Logger.Infof("meeting ended by webhook: %s", room.GetName())
+	l.Logger.Infof("[webhook] meeting ended by webhook: %s", room.GetName())
 }
 
 // handleParticipantJoined 参与者入会：upsert 参会记录（保留首次 join_time）。
@@ -125,7 +125,7 @@ func (l *WebhookNotifyLogic) handleParticipantJoined(event *livekit.WebhookEvent
 	room := event.GetRoom()
 	participant := event.GetParticipant()
 	if room == nil || participant == nil || strings.TrimSpace(room.GetName()) == "" || strings.TrimSpace(participant.GetIdentity()) == "" {
-		l.Logger.Errorf("participant_joined without room/participant: id=%s", event.GetId())
+		l.Logger.Errorf("[webhook] participant_joined without room/participant: id=%s", event.GetId())
 		return
 	}
 	p := &gormmodel.LiveMeetingParticipant{
@@ -136,10 +136,10 @@ func (l *WebhookNotifyLogic) handleParticipantJoined(event *livekit.WebhookEvent
 		JoinTime:  carbonx.NowStartOfSecond().StdTime(),
 	}
 	if err := l.svcCtx.MeetingRepo.UpsertParticipant(l.ctx, p); err != nil {
-		l.Logger.Errorf("upsert participant failed: room=%s identity=%s err=%v", room.GetName(), participant.GetIdentity(), err)
+		l.Logger.Errorf("[webhook] upsert participant failed: room=%s identity=%s err=%v", room.GetName(), participant.GetIdentity(), err)
 		return
 	}
-	l.Logger.Infof("participant joined: room=%s identity=%s", room.GetName(), participant.GetIdentity())
+	l.Logger.Infof("[webhook] participant joined: room=%s identity=%s", room.GetName(), participant.GetIdentity())
 }
 
 // handleParticipantLeft 参与者离会：标记 left。
@@ -147,12 +147,12 @@ func (l *WebhookNotifyLogic) handleParticipantLeft(event *livekit.WebhookEvent) 
 	room := event.GetRoom()
 	participant := event.GetParticipant()
 	if room == nil || participant == nil || strings.TrimSpace(room.GetName()) == "" || strings.TrimSpace(participant.GetIdentity()) == "" {
-		l.Logger.Errorf("participant_left without room/participant: id=%s", event.GetId())
+		l.Logger.Errorf("[webhook] participant_left without room/participant: id=%s", event.GetId())
 		return
 	}
 	if err := l.svcCtx.MeetingRepo.MarkParticipantLeft(l.ctx, room.GetName(), participant.GetIdentity(), carbonx.NowStartOfSecond().StdTime()); err != nil {
-		l.Logger.Errorf("mark participant left failed: room=%s identity=%s err=%v", room.GetName(), participant.GetIdentity(), err)
+		l.Logger.Errorf("[webhook] mark participant left failed: room=%s identity=%s err=%v", room.GetName(), participant.GetIdentity(), err)
 		return
 	}
-	l.Logger.Infof("participant left: room=%s identity=%s", room.GetName(), participant.GetIdentity())
+	l.Logger.Infof("[webhook] participant left: room=%s identity=%s", room.GetName(), participant.GetIdentity())
 }

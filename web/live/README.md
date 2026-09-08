@@ -9,7 +9,9 @@ npm install
 npm run dev
 ```
 
-Vite 开发服务器默认运行在 `http://localhost:5178`，`/live` 请求代理到本地 `livegtw`（`127.0.0.1:11002`）。生产环境可通过 `VITE_API_ROOT` 指定网关前缀，例如 `https://gateway.example.com/live/v1/meeting`。
+Vite 开发服务器默认运行在 `http://localhost:5178`，`/live` 请求代理到本地 `livegtw`（`127.0.0.1:11002`），`/socket.io` 代理到本地 `socketgtw`（`127.0.0.1:11003`），`/livekit` 代理到本地 LiveKit 容器映射端口（`127.0.0.1:7880`）。生产和测试环境应通过 `VITE_API_ROOT`、`VITE_SOCKET_URL`、`VITE_LIVEKIT_URL` 分别配置 HTTP、Socket.IO 和 LiveKit 的 Nginx 对外地址；未指定时使用当前站点的同源反向代理。
+
+使用同源 `/livekit` 时，Nginx 必须把此前缀去掉后转发到 `http://livekit-server:7880`，并透传 WebSocket `Upgrade`/`Connection` 请求头。例如浏览器请求 `/livekit/rtc/v1` 时，LiveKit 应收到 `/rtc/v1`。
 
 ## 生产构建
 

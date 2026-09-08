@@ -1,4 +1,0 @@
-{"file":".trellis/spec/backend/core-rules.md","reason":"最终检查错误路径、敏感信息和改动范围。"}
-{"file":".trellis/spec/backend/error-handling.md","reason":"验证网关/gRPC 错误映射、metadata 和 user_id 缺失路径。"}
-{"file":".trellis/spec/backend/messaging-guidelines.md","reason":"验证 socket 推送只是提交成功，不宣称远端已处理。"}
-{"file":".trellis/spec/backend/livekit-guidelines.md","reason":"验证 LiveKit token、SIP 和外部环境结论边界。"}
