@@ -1930,6 +1930,116 @@ func (x *JoinMeetingByTicketRes) GetCanPublishSources() []string {
 	return nil
 }
 
+// NotifyMeetingParticipantReq 向指定参会身份提交会议入会通知。
+type NotifyMeetingParticipantReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 会议号（与 meeting_code 二选一）
+	MeetingNo string `protobuf:"bytes,1,opt,name=meeting_no,json=meetingNo,proto3" json:"meeting_no,omitempty"`
+	// 用户会议号（与 meeting_no 二选一）
+	MeetingCode string `protobuf:"bytes,2,opt,name=meeting_code,json=meetingCode,proto3" json:"meeting_code,omitempty"`
+	// 目标用户 ID，同时作为 socket 通知房间名
+	// 参会人身份（房间内唯一），同时作为 socket 通知房间名
+	Identity      string `protobuf:"bytes,3,opt,name=identity,proto3" json:"identity,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NotifyMeetingParticipantReq) Reset() {
+	*x = NotifyMeetingParticipantReq{}
+	mi := &file_live_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NotifyMeetingParticipantReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NotifyMeetingParticipantReq) ProtoMessage() {}
+
+func (x *NotifyMeetingParticipantReq) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NotifyMeetingParticipantReq.ProtoReflect.Descriptor instead.
+func (*NotifyMeetingParticipantReq) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *NotifyMeetingParticipantReq) GetMeetingNo() string {
+	if x != nil {
+		return x.MeetingNo
+	}
+	return ""
+}
+
+func (x *NotifyMeetingParticipantReq) GetMeetingCode() string {
+	if x != nil {
+		return x.MeetingCode
+	}
+	return ""
+}
+
+func (x *NotifyMeetingParticipantReq) GetIdentity() string {
+	if x != nil {
+		return x.Identity
+	}
+	return ""
+}
+
+type NotifyMeetingParticipantRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 推送请求关联 ID
+	RequestId     string `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NotifyMeetingParticipantRes) Reset() {
+	*x = NotifyMeetingParticipantRes{}
+	mi := &file_live_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NotifyMeetingParticipantRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NotifyMeetingParticipantRes) ProtoMessage() {}
+
+func (x *NotifyMeetingParticipantRes) ProtoReflect() protoreflect.Message {
+	mi := &file_live_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NotifyMeetingParticipantRes.ProtoReflect.Descriptor instead.
+func (*NotifyMeetingParticipantRes) Descriptor() ([]byte, []int) {
+	return file_live_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *NotifyMeetingParticipantRes) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
 type ReportMeetingMessageReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 会议号
@@ -1944,7 +2054,7 @@ type ReportMeetingMessageReq struct {
 
 func (x *ReportMeetingMessageReq) Reset() {
 	*x = ReportMeetingMessageReq{}
-	mi := &file_live_proto_msgTypes[28]
+	mi := &file_live_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1956,7 +2066,7 @@ func (x *ReportMeetingMessageReq) String() string {
 func (*ReportMeetingMessageReq) ProtoMessage() {}
 
 func (x *ReportMeetingMessageReq) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[28]
+	mi := &file_live_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1969,7 +2079,7 @@ func (x *ReportMeetingMessageReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportMeetingMessageReq.ProtoReflect.Descriptor instead.
 func (*ReportMeetingMessageReq) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{28}
+	return file_live_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ReportMeetingMessageReq) GetMeetingNo() string {
@@ -2003,7 +2113,7 @@ type ReportMeetingMessageRes struct {
 
 func (x *ReportMeetingMessageRes) Reset() {
 	*x = ReportMeetingMessageRes{}
-	mi := &file_live_proto_msgTypes[29]
+	mi := &file_live_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2015,7 +2125,7 @@ func (x *ReportMeetingMessageRes) String() string {
 func (*ReportMeetingMessageRes) ProtoMessage() {}
 
 func (x *ReportMeetingMessageRes) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[29]
+	mi := &file_live_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2028,7 +2138,7 @@ func (x *ReportMeetingMessageRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportMeetingMessageRes.ProtoReflect.Descriptor instead.
 func (*ReportMeetingMessageRes) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{29}
+	return file_live_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ReportMeetingMessageRes) GetMessageId() string {
@@ -2052,7 +2162,7 @@ type ListMeetingMessagesReq struct {
 
 func (x *ListMeetingMessagesReq) Reset() {
 	*x = ListMeetingMessagesReq{}
-	mi := &file_live_proto_msgTypes[30]
+	mi := &file_live_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2064,7 +2174,7 @@ func (x *ListMeetingMessagesReq) String() string {
 func (*ListMeetingMessagesReq) ProtoMessage() {}
 
 func (x *ListMeetingMessagesReq) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[30]
+	mi := &file_live_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2077,7 +2187,7 @@ func (x *ListMeetingMessagesReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMeetingMessagesReq.ProtoReflect.Descriptor instead.
 func (*ListMeetingMessagesReq) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{30}
+	return file_live_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *ListMeetingMessagesReq) GetMeetingNo() string {
@@ -2113,7 +2223,7 @@ type ListMeetingMessagesRes struct {
 
 func (x *ListMeetingMessagesRes) Reset() {
 	*x = ListMeetingMessagesRes{}
-	mi := &file_live_proto_msgTypes[31]
+	mi := &file_live_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2125,7 +2235,7 @@ func (x *ListMeetingMessagesRes) String() string {
 func (*ListMeetingMessagesRes) ProtoMessage() {}
 
 func (x *ListMeetingMessagesRes) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[31]
+	mi := &file_live_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2138,7 +2248,7 @@ func (x *ListMeetingMessagesRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMeetingMessagesRes.ProtoReflect.Descriptor instead.
 func (*ListMeetingMessagesRes) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{31}
+	return file_live_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ListMeetingMessagesRes) GetMessages() []*MeetingMessageInfo {
@@ -2175,7 +2285,7 @@ type MeetingMessageInfo struct {
 
 func (x *MeetingMessageInfo) Reset() {
 	*x = MeetingMessageInfo{}
-	mi := &file_live_proto_msgTypes[32]
+	mi := &file_live_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2187,7 +2297,7 @@ func (x *MeetingMessageInfo) String() string {
 func (*MeetingMessageInfo) ProtoMessage() {}
 
 func (x *MeetingMessageInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[32]
+	mi := &file_live_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2200,7 +2310,7 @@ func (x *MeetingMessageInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MeetingMessageInfo.ProtoReflect.Descriptor instead.
 func (*MeetingMessageInfo) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{32}
+	return file_live_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *MeetingMessageInfo) GetMessageId() string {
@@ -2266,7 +2376,7 @@ type DialSipReq struct {
 
 func (x *DialSipReq) Reset() {
 	*x = DialSipReq{}
-	mi := &file_live_proto_msgTypes[33]
+	mi := &file_live_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2278,7 +2388,7 @@ func (x *DialSipReq) String() string {
 func (*DialSipReq) ProtoMessage() {}
 
 func (x *DialSipReq) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[33]
+	mi := &file_live_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2291,7 +2401,7 @@ func (x *DialSipReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DialSipReq.ProtoReflect.Descriptor instead.
 func (*DialSipReq) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{33}
+	return file_live_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *DialSipReq) GetCalleeNumber() string {
@@ -2335,7 +2445,7 @@ type DialSipRes struct {
 
 func (x *DialSipRes) Reset() {
 	*x = DialSipRes{}
-	mi := &file_live_proto_msgTypes[34]
+	mi := &file_live_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2347,7 +2457,7 @@ func (x *DialSipRes) String() string {
 func (*DialSipRes) ProtoMessage() {}
 
 func (x *DialSipRes) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[34]
+	mi := &file_live_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2360,7 +2470,7 @@ func (x *DialSipRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DialSipRes.ProtoReflect.Descriptor instead.
 func (*DialSipRes) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{34}
+	return file_live_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *DialSipRes) GetMeeting() *MeetingInfo {
@@ -2402,7 +2512,7 @@ type SipProviderInfo struct {
 
 func (x *SipProviderInfo) Reset() {
 	*x = SipProviderInfo{}
-	mi := &file_live_proto_msgTypes[35]
+	mi := &file_live_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2414,7 +2524,7 @@ func (x *SipProviderInfo) String() string {
 func (*SipProviderInfo) ProtoMessage() {}
 
 func (x *SipProviderInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[35]
+	mi := &file_live_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2427,7 +2537,7 @@ func (x *SipProviderInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SipProviderInfo.ProtoReflect.Descriptor instead.
 func (*SipProviderInfo) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{35}
+	return file_live_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *SipProviderInfo) GetId() string {
@@ -2507,7 +2617,7 @@ type CreateSipProviderReq struct {
 
 func (x *CreateSipProviderReq) Reset() {
 	*x = CreateSipProviderReq{}
-	mi := &file_live_proto_msgTypes[36]
+	mi := &file_live_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2519,7 +2629,7 @@ func (x *CreateSipProviderReq) String() string {
 func (*CreateSipProviderReq) ProtoMessage() {}
 
 func (x *CreateSipProviderReq) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[36]
+	mi := &file_live_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2532,7 +2642,7 @@ func (x *CreateSipProviderReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSipProviderReq.ProtoReflect.Descriptor instead.
 func (*CreateSipProviderReq) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{36}
+	return file_live_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *CreateSipProviderReq) GetCode() string {
@@ -2588,7 +2698,7 @@ type CreateSipProviderRes struct {
 
 func (x *CreateSipProviderRes) Reset() {
 	*x = CreateSipProviderRes{}
-	mi := &file_live_proto_msgTypes[37]
+	mi := &file_live_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2600,7 +2710,7 @@ func (x *CreateSipProviderRes) String() string {
 func (*CreateSipProviderRes) ProtoMessage() {}
 
 func (x *CreateSipProviderRes) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[37]
+	mi := &file_live_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2613,7 +2723,7 @@ func (x *CreateSipProviderRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSipProviderRes.ProtoReflect.Descriptor instead.
 func (*CreateSipProviderRes) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{37}
+	return file_live_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *CreateSipProviderRes) GetProvider() *SipProviderInfo {
@@ -2647,7 +2757,7 @@ type UpdateSipProviderReq struct {
 
 func (x *UpdateSipProviderReq) Reset() {
 	*x = UpdateSipProviderReq{}
-	mi := &file_live_proto_msgTypes[38]
+	mi := &file_live_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2659,7 +2769,7 @@ func (x *UpdateSipProviderReq) String() string {
 func (*UpdateSipProviderReq) ProtoMessage() {}
 
 func (x *UpdateSipProviderReq) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[38]
+	mi := &file_live_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2672,7 +2782,7 @@ func (x *UpdateSipProviderReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSipProviderReq.ProtoReflect.Descriptor instead.
 func (*UpdateSipProviderReq) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{38}
+	return file_live_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *UpdateSipProviderReq) GetId() string {
@@ -2735,7 +2845,7 @@ type UpdateSipProviderRes struct {
 
 func (x *UpdateSipProviderRes) Reset() {
 	*x = UpdateSipProviderRes{}
-	mi := &file_live_proto_msgTypes[39]
+	mi := &file_live_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2747,7 +2857,7 @@ func (x *UpdateSipProviderRes) String() string {
 func (*UpdateSipProviderRes) ProtoMessage() {}
 
 func (x *UpdateSipProviderRes) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[39]
+	mi := &file_live_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2760,7 +2870,7 @@ func (x *UpdateSipProviderRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSipProviderRes.ProtoReflect.Descriptor instead.
 func (*UpdateSipProviderRes) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{39}
+	return file_live_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *UpdateSipProviderRes) GetProvider() *SipProviderInfo {
@@ -2779,7 +2889,7 @@ type ListSipProvidersReq struct {
 
 func (x *ListSipProvidersReq) Reset() {
 	*x = ListSipProvidersReq{}
-	mi := &file_live_proto_msgTypes[40]
+	mi := &file_live_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2791,7 +2901,7 @@ func (x *ListSipProvidersReq) String() string {
 func (*ListSipProvidersReq) ProtoMessage() {}
 
 func (x *ListSipProvidersReq) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[40]
+	mi := &file_live_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2804,7 +2914,7 @@ func (x *ListSipProvidersReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSipProvidersReq.ProtoReflect.Descriptor instead.
 func (*ListSipProvidersReq) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{40}
+	return file_live_proto_rawDescGZIP(), []int{42}
 }
 
 // ListSipProvidersRes 列出 SIP 供应商响应。
@@ -2818,7 +2928,7 @@ type ListSipProvidersRes struct {
 
 func (x *ListSipProvidersRes) Reset() {
 	*x = ListSipProvidersRes{}
-	mi := &file_live_proto_msgTypes[41]
+	mi := &file_live_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2830,7 +2940,7 @@ func (x *ListSipProvidersRes) String() string {
 func (*ListSipProvidersRes) ProtoMessage() {}
 
 func (x *ListSipProvidersRes) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[41]
+	mi := &file_live_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2843,7 +2953,7 @@ func (x *ListSipProvidersRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSipProvidersRes.ProtoReflect.Descriptor instead.
 func (*ListSipProvidersRes) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{41}
+	return file_live_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *ListSipProvidersRes) GetProviders() []*SipProviderInfo {
@@ -2864,7 +2974,7 @@ type DeleteSipProviderReq struct {
 
 func (x *DeleteSipProviderReq) Reset() {
 	*x = DeleteSipProviderReq{}
-	mi := &file_live_proto_msgTypes[42]
+	mi := &file_live_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2876,7 +2986,7 @@ func (x *DeleteSipProviderReq) String() string {
 func (*DeleteSipProviderReq) ProtoMessage() {}
 
 func (x *DeleteSipProviderReq) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[42]
+	mi := &file_live_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2889,7 +2999,7 @@ func (x *DeleteSipProviderReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSipProviderReq.ProtoReflect.Descriptor instead.
 func (*DeleteSipProviderReq) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{42}
+	return file_live_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *DeleteSipProviderReq) GetId() string {
@@ -2908,7 +3018,7 @@ type DeleteSipProviderRes struct {
 
 func (x *DeleteSipProviderRes) Reset() {
 	*x = DeleteSipProviderRes{}
-	mi := &file_live_proto_msgTypes[43]
+	mi := &file_live_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2920,7 +3030,7 @@ func (x *DeleteSipProviderRes) String() string {
 func (*DeleteSipProviderRes) ProtoMessage() {}
 
 func (x *DeleteSipProviderRes) ProtoReflect() protoreflect.Message {
-	mi := &file_live_proto_msgTypes[43]
+	mi := &file_live_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2933,7 +3043,7 @@ func (x *DeleteSipProviderRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSipProviderRes.ProtoReflect.Descriptor instead.
 func (*DeleteSipProviderRes) Descriptor() ([]byte, []int) {
-	return file_live_proto_rawDescGZIP(), []int{43}
+	return file_live_proto_rawDescGZIP(), []int{45}
 }
 
 var File_live_proto protoreflect.FileDescriptor
@@ -3092,7 +3202,15 @@ const file_live_proto_rawDesc = "" +
 	"canPublish\x12#\n" +
 	"\rcan_subscribe\x18\x04 \x01(\bR\fcanSubscribe\x12(\n" +
 	"\x10can_publish_data\x18\x05 \x01(\bR\x0ecanPublishData\x12.\n" +
-	"\x13can_publish_sources\x18\x06 \x03(\tR\x11canPublishSources\"u\n" +
+	"\x13can_publish_sources\x18\x06 \x03(\tR\x11canPublishSources\"{\n" +
+	"\x1bNotifyMeetingParticipantReq\x12\x1d\n" +
+	"\n" +
+	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12!\n" +
+	"\fmeeting_code\x18\x02 \x01(\tR\vmeetingCode\x12\x1a\n" +
+	"\bidentity\x18\x03 \x01(\tR\bidentity\"<\n" +
+	"\x1bNotifyMeetingParticipantRes\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x01 \x01(\tR\trequestId\"u\n" +
 	"\x17ReportMeetingMessageReq\x12\x1d\n" +
 	"\n" +
 	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12\x18\n" +
@@ -3165,7 +3283,7 @@ const file_live_proto_rawDesc = "" +
 	"\tproviders\x18\x01 \x03(\v2\x15.live.SipProviderInfoR\tproviders\"&\n" +
 	"\x14DeleteSipProviderReq\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
-	"\x14DeleteSipProviderRes2\x95\v\n" +
+	"\x14DeleteSipProviderRes2\xf7\v\n" +
 	"\aLiveRpc\x12?\n" +
 	"\rCreateMeeting\x12\x16.live.CreateMeetingReq\x1a\x16.live.CreateMeetingRes\x129\n" +
 	"\vJoinMeeting\x12\x14.live.JoinMeetingReq\x1a\x14.live.JoinMeetingRes\x126\n" +
@@ -3181,7 +3299,8 @@ const file_live_proto_rawDesc = "" +
 	"\x11PerformMeetingRpc\x12\x1a.live.PerformMeetingRpcReq\x1a\x1a.live.PerformMeetingRpcRes\x12?\n" +
 	"\rWebhookNotify\x12\x16.live.WebhookNotifyReq\x1a\x16.live.WebhookNotifyRes\x12W\n" +
 	"\x15GenerateMeetingTicket\x12\x1e.live.GenerateMeetingTicketReq\x1a\x1e.live.GenerateMeetingTicketRes\x12Q\n" +
-	"\x13JoinMeetingByTicket\x12\x1c.live.JoinMeetingByTicketReq\x1a\x1c.live.JoinMeetingByTicketRes\x12T\n" +
+	"\x13JoinMeetingByTicket\x12\x1c.live.JoinMeetingByTicketReq\x1a\x1c.live.JoinMeetingByTicketRes\x12`\n" +
+	"\x18NotifyMeetingParticipant\x12!.live.NotifyMeetingParticipantReq\x1a!.live.NotifyMeetingParticipantRes\x12T\n" +
 	"\x14ReportMeetingMessage\x12\x1d.live.ReportMeetingMessageReq\x1a\x1d.live.ReportMeetingMessageRes\x12Q\n" +
 	"\x13ListMeetingMessages\x12\x1c.live.ListMeetingMessagesReq\x1a\x1c.live.ListMeetingMessagesRes\x12-\n" +
 	"\aDialSip\x12\x10.live.DialSipReq\x1a\x10.live.DialSipRes\x12K\n" +
@@ -3203,52 +3322,54 @@ func file_live_proto_rawDescGZIP() []byte {
 	return file_live_proto_rawDescData
 }
 
-var file_live_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
+var file_live_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
 var file_live_proto_goTypes = []any{
-	(*MeetingInfo)(nil),              // 0: live.MeetingInfo
-	(*CreateMeetingReq)(nil),         // 1: live.CreateMeetingReq
-	(*CreateMeetingRes)(nil),         // 2: live.CreateMeetingRes
-	(*JoinMeetingReq)(nil),           // 3: live.JoinMeetingReq
-	(*JoinMeetingRes)(nil),           // 4: live.JoinMeetingRes
-	(*GetMeetingReq)(nil),            // 5: live.GetMeetingReq
-	(*GetMeetingRes)(nil),            // 6: live.GetMeetingRes
-	(*ListMeetingsReq)(nil),          // 7: live.ListMeetingsReq
-	(*ListMeetingsRes)(nil),          // 8: live.ListMeetingsRes
-	(*EndMeetingReq)(nil),            // 9: live.EndMeetingReq
-	(*EndMeetingRes)(nil),            // 10: live.EndMeetingRes
-	(*KickParticipantReq)(nil),       // 11: live.KickParticipantReq
-	(*KickParticipantRes)(nil),       // 12: live.KickParticipantRes
-	(*MuteParticipantReq)(nil),       // 13: live.MuteParticipantReq
-	(*MuteParticipantRes)(nil),       // 14: live.MuteParticipantRes
-	(*ParticipantInfo)(nil),          // 15: live.ParticipantInfo
-	(*ListParticipantsReq)(nil),      // 16: live.ListParticipantsReq
-	(*ListParticipantsRes)(nil),      // 17: live.ListParticipantsRes
-	(*SendMeetingDataReq)(nil),       // 18: live.SendMeetingDataReq
-	(*SendMeetingDataRes)(nil),       // 19: live.SendMeetingDataRes
-	(*PerformMeetingRpcReq)(nil),     // 20: live.PerformMeetingRpcReq
-	(*PerformMeetingRpcRes)(nil),     // 21: live.PerformMeetingRpcRes
-	(*WebhookNotifyReq)(nil),         // 22: live.WebhookNotifyReq
-	(*WebhookNotifyRes)(nil),         // 23: live.WebhookNotifyRes
-	(*GenerateMeetingTicketReq)(nil), // 24: live.GenerateMeetingTicketReq
-	(*GenerateMeetingTicketRes)(nil), // 25: live.GenerateMeetingTicketRes
-	(*JoinMeetingByTicketReq)(nil),   // 26: live.JoinMeetingByTicketReq
-	(*JoinMeetingByTicketRes)(nil),   // 27: live.JoinMeetingByTicketRes
-	(*ReportMeetingMessageReq)(nil),  // 28: live.ReportMeetingMessageReq
-	(*ReportMeetingMessageRes)(nil),  // 29: live.ReportMeetingMessageRes
-	(*ListMeetingMessagesReq)(nil),   // 30: live.ListMeetingMessagesReq
-	(*ListMeetingMessagesRes)(nil),   // 31: live.ListMeetingMessagesRes
-	(*MeetingMessageInfo)(nil),       // 32: live.MeetingMessageInfo
-	(*DialSipReq)(nil),               // 33: live.DialSipReq
-	(*DialSipRes)(nil),               // 34: live.DialSipRes
-	(*SipProviderInfo)(nil),          // 35: live.SipProviderInfo
-	(*CreateSipProviderReq)(nil),     // 36: live.CreateSipProviderReq
-	(*CreateSipProviderRes)(nil),     // 37: live.CreateSipProviderRes
-	(*UpdateSipProviderReq)(nil),     // 38: live.UpdateSipProviderReq
-	(*UpdateSipProviderRes)(nil),     // 39: live.UpdateSipProviderRes
-	(*ListSipProvidersReq)(nil),      // 40: live.ListSipProvidersReq
-	(*ListSipProvidersRes)(nil),      // 41: live.ListSipProvidersRes
-	(*DeleteSipProviderReq)(nil),     // 42: live.DeleteSipProviderReq
-	(*DeleteSipProviderRes)(nil),     // 43: live.DeleteSipProviderRes
+	(*MeetingInfo)(nil),                 // 0: live.MeetingInfo
+	(*CreateMeetingReq)(nil),            // 1: live.CreateMeetingReq
+	(*CreateMeetingRes)(nil),            // 2: live.CreateMeetingRes
+	(*JoinMeetingReq)(nil),              // 3: live.JoinMeetingReq
+	(*JoinMeetingRes)(nil),              // 4: live.JoinMeetingRes
+	(*GetMeetingReq)(nil),               // 5: live.GetMeetingReq
+	(*GetMeetingRes)(nil),               // 6: live.GetMeetingRes
+	(*ListMeetingsReq)(nil),             // 7: live.ListMeetingsReq
+	(*ListMeetingsRes)(nil),             // 8: live.ListMeetingsRes
+	(*EndMeetingReq)(nil),               // 9: live.EndMeetingReq
+	(*EndMeetingRes)(nil),               // 10: live.EndMeetingRes
+	(*KickParticipantReq)(nil),          // 11: live.KickParticipantReq
+	(*KickParticipantRes)(nil),          // 12: live.KickParticipantRes
+	(*MuteParticipantReq)(nil),          // 13: live.MuteParticipantReq
+	(*MuteParticipantRes)(nil),          // 14: live.MuteParticipantRes
+	(*ParticipantInfo)(nil),             // 15: live.ParticipantInfo
+	(*ListParticipantsReq)(nil),         // 16: live.ListParticipantsReq
+	(*ListParticipantsRes)(nil),         // 17: live.ListParticipantsRes
+	(*SendMeetingDataReq)(nil),          // 18: live.SendMeetingDataReq
+	(*SendMeetingDataRes)(nil),          // 19: live.SendMeetingDataRes
+	(*PerformMeetingRpcReq)(nil),        // 20: live.PerformMeetingRpcReq
+	(*PerformMeetingRpcRes)(nil),        // 21: live.PerformMeetingRpcRes
+	(*WebhookNotifyReq)(nil),            // 22: live.WebhookNotifyReq
+	(*WebhookNotifyRes)(nil),            // 23: live.WebhookNotifyRes
+	(*GenerateMeetingTicketReq)(nil),    // 24: live.GenerateMeetingTicketReq
+	(*GenerateMeetingTicketRes)(nil),    // 25: live.GenerateMeetingTicketRes
+	(*JoinMeetingByTicketReq)(nil),      // 26: live.JoinMeetingByTicketReq
+	(*JoinMeetingByTicketRes)(nil),      // 27: live.JoinMeetingByTicketRes
+	(*NotifyMeetingParticipantReq)(nil), // 28: live.NotifyMeetingParticipantReq
+	(*NotifyMeetingParticipantRes)(nil), // 29: live.NotifyMeetingParticipantRes
+	(*ReportMeetingMessageReq)(nil),     // 30: live.ReportMeetingMessageReq
+	(*ReportMeetingMessageRes)(nil),     // 31: live.ReportMeetingMessageRes
+	(*ListMeetingMessagesReq)(nil),      // 32: live.ListMeetingMessagesReq
+	(*ListMeetingMessagesRes)(nil),      // 33: live.ListMeetingMessagesRes
+	(*MeetingMessageInfo)(nil),          // 34: live.MeetingMessageInfo
+	(*DialSipReq)(nil),                  // 35: live.DialSipReq
+	(*DialSipRes)(nil),                  // 36: live.DialSipRes
+	(*SipProviderInfo)(nil),             // 37: live.SipProviderInfo
+	(*CreateSipProviderReq)(nil),        // 38: live.CreateSipProviderReq
+	(*CreateSipProviderRes)(nil),        // 39: live.CreateSipProviderRes
+	(*UpdateSipProviderReq)(nil),        // 40: live.UpdateSipProviderReq
+	(*UpdateSipProviderRes)(nil),        // 41: live.UpdateSipProviderRes
+	(*ListSipProvidersReq)(nil),         // 42: live.ListSipProvidersReq
+	(*ListSipProvidersRes)(nil),         // 43: live.ListSipProvidersRes
+	(*DeleteSipProviderReq)(nil),        // 44: live.DeleteSipProviderReq
+	(*DeleteSipProviderRes)(nil),        // 45: live.DeleteSipProviderRes
 }
 var file_live_proto_depIdxs = []int32{
 	0,  // 0: live.CreateMeetingRes.meeting:type_name -> live.MeetingInfo
@@ -3257,11 +3378,11 @@ var file_live_proto_depIdxs = []int32{
 	0,  // 3: live.ListMeetingsRes.meetings:type_name -> live.MeetingInfo
 	15, // 4: live.ListParticipantsRes.participants:type_name -> live.ParticipantInfo
 	0,  // 5: live.JoinMeetingByTicketRes.meeting:type_name -> live.MeetingInfo
-	32, // 6: live.ListMeetingMessagesRes.messages:type_name -> live.MeetingMessageInfo
+	34, // 6: live.ListMeetingMessagesRes.messages:type_name -> live.MeetingMessageInfo
 	0,  // 7: live.DialSipRes.meeting:type_name -> live.MeetingInfo
-	35, // 8: live.CreateSipProviderRes.provider:type_name -> live.SipProviderInfo
-	35, // 9: live.UpdateSipProviderRes.provider:type_name -> live.SipProviderInfo
-	35, // 10: live.ListSipProvidersRes.providers:type_name -> live.SipProviderInfo
+	37, // 8: live.CreateSipProviderRes.provider:type_name -> live.SipProviderInfo
+	37, // 9: live.UpdateSipProviderRes.provider:type_name -> live.SipProviderInfo
+	37, // 10: live.ListSipProvidersRes.providers:type_name -> live.SipProviderInfo
 	1,  // 11: live.LiveRpc.CreateMeeting:input_type -> live.CreateMeetingReq
 	3,  // 12: live.LiveRpc.JoinMeeting:input_type -> live.JoinMeetingReq
 	5,  // 13: live.LiveRpc.GetMeeting:input_type -> live.GetMeetingReq
@@ -3275,35 +3396,37 @@ var file_live_proto_depIdxs = []int32{
 	22, // 21: live.LiveRpc.WebhookNotify:input_type -> live.WebhookNotifyReq
 	24, // 22: live.LiveRpc.GenerateMeetingTicket:input_type -> live.GenerateMeetingTicketReq
 	26, // 23: live.LiveRpc.JoinMeetingByTicket:input_type -> live.JoinMeetingByTicketReq
-	28, // 24: live.LiveRpc.ReportMeetingMessage:input_type -> live.ReportMeetingMessageReq
-	30, // 25: live.LiveRpc.ListMeetingMessages:input_type -> live.ListMeetingMessagesReq
-	33, // 26: live.LiveRpc.DialSip:input_type -> live.DialSipReq
-	36, // 27: live.LiveRpc.CreateSipProvider:input_type -> live.CreateSipProviderReq
-	38, // 28: live.LiveRpc.UpdateSipProvider:input_type -> live.UpdateSipProviderReq
-	40, // 29: live.LiveRpc.ListSipProviders:input_type -> live.ListSipProvidersReq
-	42, // 30: live.LiveRpc.DeleteSipProvider:input_type -> live.DeleteSipProviderReq
-	2,  // 31: live.LiveRpc.CreateMeeting:output_type -> live.CreateMeetingRes
-	4,  // 32: live.LiveRpc.JoinMeeting:output_type -> live.JoinMeetingRes
-	6,  // 33: live.LiveRpc.GetMeeting:output_type -> live.GetMeetingRes
-	8,  // 34: live.LiveRpc.ListMeetings:output_type -> live.ListMeetingsRes
-	10, // 35: live.LiveRpc.EndMeeting:output_type -> live.EndMeetingRes
-	12, // 36: live.LiveRpc.KickParticipant:output_type -> live.KickParticipantRes
-	14, // 37: live.LiveRpc.MuteParticipant:output_type -> live.MuteParticipantRes
-	17, // 38: live.LiveRpc.ListParticipants:output_type -> live.ListParticipantsRes
-	19, // 39: live.LiveRpc.SendMeetingData:output_type -> live.SendMeetingDataRes
-	21, // 40: live.LiveRpc.PerformMeetingRpc:output_type -> live.PerformMeetingRpcRes
-	23, // 41: live.LiveRpc.WebhookNotify:output_type -> live.WebhookNotifyRes
-	25, // 42: live.LiveRpc.GenerateMeetingTicket:output_type -> live.GenerateMeetingTicketRes
-	27, // 43: live.LiveRpc.JoinMeetingByTicket:output_type -> live.JoinMeetingByTicketRes
-	29, // 44: live.LiveRpc.ReportMeetingMessage:output_type -> live.ReportMeetingMessageRes
-	31, // 45: live.LiveRpc.ListMeetingMessages:output_type -> live.ListMeetingMessagesRes
-	34, // 46: live.LiveRpc.DialSip:output_type -> live.DialSipRes
-	37, // 47: live.LiveRpc.CreateSipProvider:output_type -> live.CreateSipProviderRes
-	39, // 48: live.LiveRpc.UpdateSipProvider:output_type -> live.UpdateSipProviderRes
-	41, // 49: live.LiveRpc.ListSipProviders:output_type -> live.ListSipProvidersRes
-	43, // 50: live.LiveRpc.DeleteSipProvider:output_type -> live.DeleteSipProviderRes
-	31, // [31:51] is the sub-list for method output_type
-	11, // [11:31] is the sub-list for method input_type
+	28, // 24: live.LiveRpc.NotifyMeetingParticipant:input_type -> live.NotifyMeetingParticipantReq
+	30, // 25: live.LiveRpc.ReportMeetingMessage:input_type -> live.ReportMeetingMessageReq
+	32, // 26: live.LiveRpc.ListMeetingMessages:input_type -> live.ListMeetingMessagesReq
+	35, // 27: live.LiveRpc.DialSip:input_type -> live.DialSipReq
+	38, // 28: live.LiveRpc.CreateSipProvider:input_type -> live.CreateSipProviderReq
+	40, // 29: live.LiveRpc.UpdateSipProvider:input_type -> live.UpdateSipProviderReq
+	42, // 30: live.LiveRpc.ListSipProviders:input_type -> live.ListSipProvidersReq
+	44, // 31: live.LiveRpc.DeleteSipProvider:input_type -> live.DeleteSipProviderReq
+	2,  // 32: live.LiveRpc.CreateMeeting:output_type -> live.CreateMeetingRes
+	4,  // 33: live.LiveRpc.JoinMeeting:output_type -> live.JoinMeetingRes
+	6,  // 34: live.LiveRpc.GetMeeting:output_type -> live.GetMeetingRes
+	8,  // 35: live.LiveRpc.ListMeetings:output_type -> live.ListMeetingsRes
+	10, // 36: live.LiveRpc.EndMeeting:output_type -> live.EndMeetingRes
+	12, // 37: live.LiveRpc.KickParticipant:output_type -> live.KickParticipantRes
+	14, // 38: live.LiveRpc.MuteParticipant:output_type -> live.MuteParticipantRes
+	17, // 39: live.LiveRpc.ListParticipants:output_type -> live.ListParticipantsRes
+	19, // 40: live.LiveRpc.SendMeetingData:output_type -> live.SendMeetingDataRes
+	21, // 41: live.LiveRpc.PerformMeetingRpc:output_type -> live.PerformMeetingRpcRes
+	23, // 42: live.LiveRpc.WebhookNotify:output_type -> live.WebhookNotifyRes
+	25, // 43: live.LiveRpc.GenerateMeetingTicket:output_type -> live.GenerateMeetingTicketRes
+	27, // 44: live.LiveRpc.JoinMeetingByTicket:output_type -> live.JoinMeetingByTicketRes
+	29, // 45: live.LiveRpc.NotifyMeetingParticipant:output_type -> live.NotifyMeetingParticipantRes
+	31, // 46: live.LiveRpc.ReportMeetingMessage:output_type -> live.ReportMeetingMessageRes
+	33, // 47: live.LiveRpc.ListMeetingMessages:output_type -> live.ListMeetingMessagesRes
+	36, // 48: live.LiveRpc.DialSip:output_type -> live.DialSipRes
+	39, // 49: live.LiveRpc.CreateSipProvider:output_type -> live.CreateSipProviderRes
+	41, // 50: live.LiveRpc.UpdateSipProvider:output_type -> live.UpdateSipProviderRes
+	43, // 51: live.LiveRpc.ListSipProviders:output_type -> live.ListSipProvidersRes
+	45, // 52: live.LiveRpc.DeleteSipProvider:output_type -> live.DeleteSipProviderRes
+	32, // [32:53] is the sub-list for method output_type
+	11, // [11:32] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
 	11, // [11:11] is the sub-list for extension extendee
 	0,  // [0:11] is the sub-list for field type_name
@@ -3320,7 +3443,7 @@ func file_live_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_live_proto_rawDesc), len(file_live_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   44,
+			NumMessages:   46,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

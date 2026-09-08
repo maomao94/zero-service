@@ -1,3 +1,0 @@
-{"file": ".trellis/spec/backend/livekit-guidelines.md", "reason": "验收需核对规范 Scenario/Hook 契约已改为原生回调版本（AC6）"}
-{"file": ".trellis/tasks/09-01-livekitx-hook-simplify/prd.md", "reason": "验收标准 AC1-AC6 逐条核对依据"}
-{"file": "/Users/hehanpeng/GolandProjects/server-sdk-go/room.go", "reason": "原生 RoomCallback 字段与回调签名核对依据（锁定 SDK v2.18.1）"}

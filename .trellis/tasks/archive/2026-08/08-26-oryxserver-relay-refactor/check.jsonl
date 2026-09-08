@@ -1,3 +1,0 @@
-{"file": ".trellis/spec/backend/oryx-guidelines.md", "reason": "验收契约：StartRelayPull/StopRelayPull 契约一致性、进程退场 StopAll 被 wait、SRS 同目标去重兜底"}
-{"file": ".trellis/spec/backend/contract-generation.md", "reason": "验收：重生成产物 git diff 无手改；json_name 约定一致性（生成后 diff 为空）"}
-{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "验收：go build/go test/git diff --check 通过，错误矩阵覆盖"}

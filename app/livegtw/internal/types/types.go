@@ -89,7 +89,6 @@ type GetMeetingRequest struct {
 
 type JoinMeetingByTicketReply struct {
 	Token             string      `json:"token"`
-	WsUrl             string      `json:"wsUrl"`
 	Meeting           MeetingInfo `json:"meeting"`
 	CanPublish        bool        `json:"canPublish"`
 	CanSubscribe      bool        `json:"canSubscribe"`
@@ -205,6 +204,16 @@ type MuteParticipantRequest struct {
 	Identity  string `json:"identity"`
 	Muted     bool   `json:"muted"`
 	Kind      string `json:"kind"`
+}
+
+type NotifyMeetingParticipantReply struct {
+	RequestId string `json:"requestId"`
+}
+
+type NotifyMeetingParticipantRequest struct {
+	MeetingNo   string `json:"meetingNo,optional"`
+	MeetingCode string `json:"meetingCode,optional"`
+	Identity    string `json:"identity"`
 }
 
 type ParticipantInfo struct {

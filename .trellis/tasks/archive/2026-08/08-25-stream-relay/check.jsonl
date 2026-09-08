@@ -1,3 +1,0 @@
-{"file": ".trellis/tasks/08-25-stream-relay/prd.md", "reason": "验收标准：StreamRelay 返回 task_id/app/stream、Stop 停止本地任务、进程退出打日志、FFmpeg 命令形式、单节点 Stop 非本地任务报错"}
-{"file": ".trellis/tasks/08-25-stream-relay/design.md", "reason": "对照设计核对：proto 字段（无 opaque、Res=task_id/app/stream）、ffmpeg-go OutputContext 可取消、RelayManager 结构、MQTT topic 约定"}
-{"file": ".trellis/tasks/08-25-stream-relay/research/oryx-relay-transcode.md", "reason": "核对方案选型的依据：SRS 无动态能力，FFmpeg 自管为最佳方案"}

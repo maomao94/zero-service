@@ -91,7 +91,7 @@ func (l *DialSipLogic) DialSip(in *live.DialSipReq) (*live.DialSipRes, error) {
 			meetingCode, _ = tool.RandomDigits(9)
 		}
 
-		title := fmt.Sprintf("电话通话-%s", calleeNumber)
+		title := fmt.Sprintf("快速电话会议-%s", carbonx.NowDateTimeCompact())
 		now := carbonx.NowStartOfSecond().StdTime()
 		room, err := l.svcCtx.LiveKit.Room().CreateRoom(l.ctx, &livekit.CreateRoomRequest{
 			Name:             meetingNo,

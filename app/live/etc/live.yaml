@@ -46,3 +46,8 @@ Redis:
   Type: node
   Key: live.rpc
   Pass: G62m50oigInC30sf
+SocketPushConf:
+  Endpoints:
+    - 127.0.0.1:25002
+  NonBlock: true
+  Timeout: 5000

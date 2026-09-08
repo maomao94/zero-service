@@ -5,6 +5,7 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
 	"zero-service/common/authctx"
 )
@@ -25,6 +26,10 @@ func (m *MeetingAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 			ctx = authctx.WithAuthorization(ctx, auth)
 		}
 		ctx = authctx.BridgeJWTClaims(ctx, m.claimMapping)
+		if strings.TrimSpace(authctx.GetUserId(ctx)) == "" {
+			http.Error(w, "缺少用户身份", http.StatusUnauthorized)
+			return
+		}
 		next(w, r.WithContext(ctx))
 	}
 }

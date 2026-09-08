@@ -18,6 +18,7 @@ import (
 var errForward = errors.New("rpc unavailable")
 
 type fakeLiveRpcCli struct {
+	live.LiveRpcClient
 	notifiedData []byte
 	err          error
 }

@@ -14,9 +14,10 @@ import (
 
 // fakeLiveRpcCli 实现 live.LiveRpcClient，用于 webhook handler 测试。
 type fakeLiveRpcCli struct {
-	webhookData  []byte
+	live.LiveRpcClient
+	webhookData   []byte
 	webhookCalled bool
-	webhookErr   error
+	webhookErr    error
 }
 
 func (f *fakeLiveRpcCli) CreateMeeting(ctx context.Context, in *live.CreateMeetingReq, opts ...grpc.CallOption) (*live.CreateMeetingRes, error) {
@@ -59,6 +60,9 @@ func (f *fakeLiveRpcCli) GenerateMeetingTicket(ctx context.Context, in *live.Gen
 }
 func (f *fakeLiveRpcCli) JoinMeetingByTicket(ctx context.Context, in *live.JoinMeetingByTicketReq, opts ...grpc.CallOption) (*live.JoinMeetingByTicketRes, error) {
 	return &live.JoinMeetingByTicketRes{}, nil
+}
+func (f *fakeLiveRpcCli) NotifyMeetingParticipant(ctx context.Context, in *live.NotifyMeetingParticipantReq, opts ...grpc.CallOption) (*live.NotifyMeetingParticipantRes, error) {
+	return &live.NotifyMeetingParticipantRes{}, nil
 }
 func (f *fakeLiveRpcCli) ReportMeetingMessage(ctx context.Context, in *live.ReportMeetingMessageReq, opts ...grpc.CallOption) (*live.ReportMeetingMessageRes, error) {
 	return &live.ReportMeetingMessageRes{}, nil

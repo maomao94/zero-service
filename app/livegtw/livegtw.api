@@ -93,6 +93,19 @@ type JoinMeetingReply {
 	CanPublishSources []string `json:"canPublishSources"`
 }
 
+type NotifyMeetingParticipantRequest {
+	// 会议号（与 meetingCode 二选一）
+	MeetingNo string `json:"meetingNo,optional"`
+	// 用户会议号（9位数字，与 meetingNo 二选一）
+	MeetingCode string `json:"meetingCode,optional"`
+	// 参会人身份，同时作为 socket 通知房间名
+	Identity string `json:"identity"`
+}
+
+type NotifyMeetingParticipantReply {
+	RequestId string `json:"requestId"`
+}
+
 type GetMeetingRequest {
 	// 会议号
 	MeetingNo string `form:"meetingNo"`
@@ -353,6 +366,10 @@ service livegtw {
 	@doc "加入会议"
 	@handler joinMeeting
 	post /joinMeeting (JoinMeetingRequest) returns (JoinMeetingReply)
+
+	@doc "通知用户加入会议"
+	@handler notifyMeetingParticipant
+	post /notifyMeetingParticipant (NotifyMeetingParticipantRequest) returns (NotifyMeetingParticipantReply)
 
 	@doc "查询会议详情"
 	@handler getMeeting

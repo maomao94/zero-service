@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,17 +18,33 @@ import (
 	"zero-service/common/gormx"
 	"zero-service/common/livekitx"
 	"zero-service/common/tool"
+	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/livekit/protocol/auth"
 	"github.com/livekit/protocol/livekit"
 	"github.com/twitchtv/twirp"
-	"google.golang.org/protobuf/proto"
 	"github.com/zeromicro/go-zero/core/stores/redis"
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+type fakeSocketPushClient struct {
+	socketpush.SocketPushClient
+	broadcastReq *socketpush.BroadcastRoomReq
+	err          error
+}
+
+func (f *fakeSocketPushClient) BroadcastRoom(_ context.Context, in *socketpush.BroadcastRoomReq, _ ...grpc.CallOption) (*socketpush.BroadcastRoomRes, error) {
+	f.broadcastReq = in
+	if f.err != nil {
+		return nil, f.err
+	}
+	return &socketpush.BroadcastRoomRes{ReqId: in.ReqId}, nil
+}
 
 // errRoom 模拟 LiveKit 房间创建失败。
 var errRoom = fmt.Errorf("room creation failed")

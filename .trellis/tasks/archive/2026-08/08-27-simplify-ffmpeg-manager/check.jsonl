@@ -1,2 +1,0 @@
-{"file":".trellis/spec/backend/concurrency-guidelines.md","reason":"复核锁粒度、进程退出分类、同步 callback 与 replacement 语义"}
-{"file":".trellis/spec/backend/quality-guidelines.md","reason":"执行目标测试、race、build、vet 和 diff 质量门"}

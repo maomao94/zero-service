@@ -101,6 +101,12 @@ func (s *LiveRpcServer) JoinMeetingByTicket(ctx context.Context, in *live.JoinMe
 	return l.JoinMeetingByTicket(in)
 }
 
+// 通知指定用户入会（需要调用者鉴权，不返回 LiveKit token）
+func (s *LiveRpcServer) NotifyMeetingParticipant(ctx context.Context, in *live.NotifyMeetingParticipantReq) (*live.NotifyMeetingParticipantRes, error) {
+	l := logic.NewNotifyMeetingParticipantLogic(ctx, s.svcCtx)
+	return l.NotifyMeetingParticipant(in)
+}
+
 // 上报聊天消息
 func (s *LiveRpcServer) ReportMeetingMessage(ctx context.Context, in *live.ReportMeetingMessageReq) (*live.ReportMeetingMessageRes, error) {
 	l := logic.NewReportMeetingMessageLogic(ctx, s.svcCtx)

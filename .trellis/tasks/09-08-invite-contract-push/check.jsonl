@@ -1,0 +1,5 @@
+{"file":".trellis/spec/backend/core-rules.md","reason":"检查错误处理、日志脱敏、context 和范围。"}
+{"file":".trellis/spec/backend/contract-generation.md","reason":"检查 proto 源、生成物、字段号和调用方同步。"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"检查 user_id metadata、未认证和 socketpush 错误映射。"}
+{"file":".trellis/spec/backend/messaging-guidelines.md","reason":"检查异步广播不虚报远端处理结果。"}
+{"file":".trellis/spec/backend/livekit-guidelines.md","reason":"检查会议状态、LiveKit token 安全和业务边界。"}

@@ -8,12 +8,15 @@ import (
 	"zero-service/app/live/internal/config"
 	"zero-service/app/live/model/gormmodel"
 	"zero-service/common/gormx"
+	"zero-service/common/grpcx"
 	"zero-service/common/livekitx"
 	"zero-service/common/tool"
+	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/rest/httpc"
+	"github.com/zeromicro/go-zero/zrpc"
 )
 
 type ServiceContext struct {
@@ -28,6 +31,8 @@ type ServiceContext struct {
 	IdUtil *tool.IdUtil
 	// MeetingRepo 会议与参会记录存取
 	MeetingRepo *MeetingRepo
+	// SocketPushCli 向在线用户发送会议邀请通知。
+	SocketPushCli socketpush.SocketPushClient
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -64,5 +69,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	svcCtx.IdUtil = tool.NewIdUtil(redisClient)
 
 	svcCtx.MeetingRepo = NewMeetingRepo(db)
+	if len(c.SocketPushConf.Endpoints) > 0 || c.SocketPushConf.Target != "" {
+		svcCtx.SocketPushCli = socketpush.NewSocketPushClient(zrpc.MustNewClient(c.SocketPushConf,
+			zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor)).Conn())
+	}
 	return svcCtx
 }

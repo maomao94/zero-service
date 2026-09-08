@@ -1,4 +1,0 @@
-{"file": ".trellis/spec/backend/oryx-guidelines.md", "reason": "Oryxserver/oryxx relay 契约：进程生命周期、SRS 同(app,stream)拒绝新连接、StopAll+ShutdownListener、.Silent(true)、生成规范、错误矩阵"}
-{"file": ".trellis/spec/backend/contract-generation.md", "reason": "proto 字段 snake_case+json_name 全量显式、gen.sh 重新生成、生成文件不可手改、Go 字段名推断规则"}
-{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "验证范围由风险决定：成功/失败/重复/边界输入，以及测试要求"}
-{"file": ".trellis/tasks/archive/2026-08/08-25-stream-relay/research/oryx-relay-transcode.md", "reason": "为何自管 FFmpeg 拉流：SRS/Oryx 无动态中继拉流接口、transcode 为全局单任务的背景研究"}

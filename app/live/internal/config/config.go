@@ -38,4 +38,6 @@ type Config struct {
 	}
 	// 数据库配置（会议单据与参会记录）
 	DB gormx.Config `json:",optional"`
+	// SocketPushConf socketpush 推送服务（可选，未配置时通知接口不可用）
+	SocketPushConf zrpc.RpcClientConf `json:",optional"`
 }

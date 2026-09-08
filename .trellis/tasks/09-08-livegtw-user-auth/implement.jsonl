@@ -1,0 +1,5 @@
+{"file":".trellis/spec/backend/core-rules.md","reason":"身份校验、错误边界、日志脱敏和 context 传播规则。"}
+{"file":".trellis/spec/backend/go-zero-conventions.md","reason":"JWT、路由级 middleware、claim mapping 和网关响应约定。"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"未认证错误、metadata 和边界响应映射规则。"}
+{"file":"app/livegtw/internal/middleware/meetingauthmiddleware.go","reason":"当前 middleware 实现与修改入口。"}
+{"file":"app/livegtw/internal/handler/routes.go","reason":"确认业务路由与票据免鉴权路由的 middleware 边界。"}

@@ -38,6 +38,21 @@ func NowDateTimeMicro() string {
 	return carbon.Now().ToDateTimeMicroString()
 }
 
+// NowDate 返回 Carbon 默认时区下的当前日期文本（yyyy-mm-dd）。
+func NowDate() string {
+	return carbon.Now().Format("Y-m-d")
+}
+
+// NowDateCompact 返回 Carbon 默认时区下的当前紧凑日期文本（yyyymmdd）。
+func NowDateCompact() string {
+	return carbon.Now().Format("Ymd")
+}
+
+// NowDateTimeCompact 返回 Carbon 默认时区下的当前紧凑日期时间文本（yyyymmddHHmmss）。
+func NowDateTimeCompact() string {
+	return carbon.Now().Format("YmdHis")
+}
+
 // FromTime 创建 Carbon 值；未指定 timezone 时保留 value 的时区，指定时转换同一时刻。
 // timezone 无效时，错误记录在返回值的 Error 字段中。
 func FromTime(value time.Time, timezone ...string) *carbon.Carbon {
@@ -65,6 +80,24 @@ func FormatDateTimeMilli(value time.Time, timezone ...string) string {
 // 默认保留原时区；timezone 或 Carbon 输入无效时返回 Carbon 定义的空字符串。
 func FormatDateTimeMicro(value time.Time, timezone ...string) string {
 	return FromTime(value, timezone...).ToDateTimeMicroString()
+}
+
+// FormatDate 以日期格式（yyyy-mm-dd）格式化 value。
+// 默认保留原时区；timezone 或 Carbon 输入无效时返回 Carbon 定义的空字符串。
+func FormatDate(value time.Time, timezone ...string) string {
+	return FromTime(value, timezone...).Format("Y-m-d")
+}
+
+// FormatDateCompact 以紧凑日期格式（yyyymmdd）格式化 value。
+// 默认保留原时区；timezone 或 Carbon 输入无效时返回 Carbon 定义的空字符串。
+func FormatDateCompact(value time.Time, timezone ...string) string {
+	return FromTime(value, timezone...).Format("Ymd")
+}
+
+// FormatDateTimeCompact 以紧凑日期时间格式（yyyymmddHHmmss）格式化 value。
+// 默认保留原时区；timezone 或 Carbon 输入无效时返回 Carbon 定义的空字符串。
+func FormatDateTimeCompact(value time.Time, timezone ...string) string {
+	return FromTime(value, timezone...).Format("YmdHis")
 }
 
 // FormatDateTimeMicroOrEmpty 以微秒精度格式化 value，Go 零时间返回空字符串。

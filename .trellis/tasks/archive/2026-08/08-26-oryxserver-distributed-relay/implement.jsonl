@@ -1,4 +1,0 @@
-{"file":".trellis/spec/backend/service-lifecycle.md","reason":"ServiceContext and Asynq worker startup/shutdown lifecycle for relay infrastructure."}
-{"file":".trellis/spec/backend/concurrency-guidelines.md","reason":"Redis fencing, process lifecycle synchronization, goroutine exit, and compensation concurrency rules."}
-{"file":".trellis/spec/backend/trigger-guidelines.md","reason":"Existing trigger Redis/Asynq conventions and task/queue isolation constraints."}
-{"file":".trellis/spec/backend/oryx-guidelines.md","reason":"Oryx relay API, FFmpeg process lifecycle, WrapUp shutdown, and target identity contracts."}

@@ -1,5 +1,0 @@
-{"file": ".trellis/tasks/08-25-stream-relay/prd.md", "reason": "需求与验收标准：StreamRelay/StreamRelayStop 接口、FFmpeg 转推、错误日志、MQTT 可选"}
-{"file": ".trellis/tasks/08-25-stream-relay/design.md", "reason": "技术设计：proto 契约（最终版）、ffmpeg-go 构建/停止、MQTT 广播模式（ieccaller 范式）、Config/ServiceContext"}
-{"file": ".trellis/tasks/08-25-stream-relay/research/oryx-relay-transcode.md", "reason": "调研结论：SRS/Oryx 无动态中继拉流/按流转码；选定自管 FFmpeg；oricme 版本与录制合并职责"}
-{"file": "app/ieccaller/internal/svc/servicecontext.go", "reason": "MQTT 初始化 + PushPbBroadcastWithAck / IsBroadcast 参考范式（cluster 可选停止）"}
-{"file": "app/ieccaller/mqtt/broadcast.go", "reason": "广播消费 + publishAckReply 参考范式"}

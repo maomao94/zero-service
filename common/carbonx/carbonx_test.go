@@ -126,6 +126,33 @@ func TestNowDateTimeFormatting(t *testing.T) {
 	}
 }
 
+func TestDateFormatting(t *testing.T) {
+	t.Parallel()
+
+	value := time.Date(2026, time.August, 13, 9, 8, 7, 123456000, time.UTC)
+	tests := []struct {
+		name   string
+		format func(time.Time, ...string) string
+		want   string
+		wantTZ string
+	}{
+		{name: "date", format: FormatDate, want: "2026-08-13", wantTZ: "2026-08-13"},
+		{name: "compact date", format: FormatDateCompact, want: "20260813", wantTZ: "20260813"},
+		{name: "compact date time", format: FormatDateTimeCompact, want: "20260813090807", wantTZ: "20260813170807"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.format(value); got != tt.want {
+				t.Fatalf("format() = %q, want %q", got, tt.want)
+			}
+			if got := tt.format(value, carbon.Shanghai); got != tt.wantTZ {
+				t.Fatalf("format(Shanghai) = %q, want %q", got, tt.wantTZ)
+			}
+		})
+	}
+}
+
 func TestFormatDateTimePrecision(t *testing.T) {
 	t.Parallel()
 

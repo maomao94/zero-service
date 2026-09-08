@@ -1,4 +1,0 @@
-{"file":".trellis/spec/backend/concurrency-guidelines.md","reason":"复核 Wait/context error、同步回调和 stdout 生命周期"}
-{"file":".trellis/spec/backend/contract-generation.md","reason":"复核 proto 源与生成物一致"}
-{"file":".trellis/spec/backend/oryx-guidelines.md","reason":"复核最大时长、Reconcile 和补拉业务边界"}
-{"file":".trellis/spec/backend/quality-guidelines.md","reason":"执行目标、race、build、vet、全仓测试与 diff 质量门"}

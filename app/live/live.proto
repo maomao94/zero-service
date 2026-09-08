@@ -34,6 +34,8 @@ service LiveRpc {
   rpc GenerateMeetingTicket(GenerateMeetingTicketReq) returns (GenerateMeetingTicketRes);
   // 根据票据加入会议（不需要鉴权）
   rpc JoinMeetingByTicket(JoinMeetingByTicketReq) returns (JoinMeetingByTicketRes);
+  // 通知指定用户入会（需要调用者鉴权，不返回 LiveKit token）
+  rpc NotifyMeetingParticipant(NotifyMeetingParticipantReq) returns (NotifyMeetingParticipantRes);
   // 上报聊天消息
   rpc ReportMeetingMessage(ReportMeetingMessageReq) returns (ReportMeetingMessageRes);
   // 查询聊天记录
@@ -344,6 +346,22 @@ message JoinMeetingByTicketRes {
   bool can_publish_data = 5 [json_name = "canPublishData"];
   // 可以发布的轨道源类型（空表示允许所有）
   repeated string can_publish_sources = 6 [json_name = "canPublishSources"];
+}
+
+// NotifyMeetingParticipantReq 向指定参会身份提交会议入会通知。
+message NotifyMeetingParticipantReq {
+  // 会议号（与 meeting_code 二选一）
+  string meeting_no = 1 [json_name = "meetingNo"];
+  // 用户会议号（与 meeting_no 二选一）
+  string meeting_code = 2 [json_name = "meetingCode"];
+  // 目标用户 ID，同时作为 socket 通知房间名
+  // 参会人身份（房间内唯一），同时作为 socket 通知房间名
+  string identity = 3 [json_name = "identity"];
+}
+
+message NotifyMeetingParticipantRes {
+  // 推送请求关联 ID
+  string request_id = 1 [json_name = "requestId"];
 }
 
 // ===== 聊天消息相关 =====

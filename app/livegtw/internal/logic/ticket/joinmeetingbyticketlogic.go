@@ -38,7 +38,6 @@ func (l *JoinMeetingByTicketLogic) JoinMeetingByTicket(req *types.JoinMeetingByT
 
 	resp = &types.JoinMeetingByTicketReply{
 		Token:             r.GetToken(),
-		WsUrl:             r.GetWsUrl(),
 		CanPublish:        r.GetCanPublish(),
 		CanSubscribe:      r.GetCanSubscribe(),
 		CanPublishData:    r.GetCanPublishData(),

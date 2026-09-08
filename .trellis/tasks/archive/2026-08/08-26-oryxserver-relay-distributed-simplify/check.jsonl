@@ -1,3 +1,0 @@
-{"file":".trellis/spec/backend/quality-guidelines.md","reason":"构建/vet/test/diff 检查与验证范围。"}
-{"file":".trellis/spec/backend/concurrency-guidelines.md","reason":"复查租约续租竞态、done 信号语义、回调 goroutine 退出。"}
-{"file":".trellis/spec/backend/oryx-guidelines.md","reason":"复查 relay 状态流转与 ffmpeg 参数是否符合 Oryx 约定。"}

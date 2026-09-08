@@ -1,5 +1,0 @@
-{"file": ".trellis/spec/backend/index.md", "reason": "后端 Spec 索引与通用检查清单"}
-{"file": ".trellis/spec/backend/coding-standards.md", "reason": "文档、Go 示例和安全规则"}
-{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "文档变更验证要求"}
-{"file": ".trellis/spec/guides/documentation-guide.md", "reason": "文档与 Spec 内容归属"}
-{"file": ".trellis/spec/backend/livekit-guidelines.md", "reason": "现有 LiveKit 规范待收敛"}

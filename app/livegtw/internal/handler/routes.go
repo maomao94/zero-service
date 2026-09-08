@@ -91,6 +91,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: live.ListMyMeetingsHandler(serverCtx),
 				},
 				{
+					// 通知用户加入会议
+					Method:  http.MethodPost,
+					Path:    "/notifyMeetingParticipant",
+					Handler: live.NotifyMeetingParticipantHandler(serverCtx),
+				},
+				{
 					// 服务端对参与者执行 RPC
 					Method:  http.MethodPost,
 					Path:    "/performMeetingRpc",
