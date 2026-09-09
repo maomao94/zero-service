@@ -74,10 +74,30 @@ export function connectMeetingNotifications(token: string, identity: string, onI
     auth: { token },
     transports: ['websocket', 'polling'],
     reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: Infinity,
   })
 
   socket.on('connect', () => {
+    console.log('[socket] 已连接:', socket.id, new Date().toISOString())
     socket.emit('__join_room_up__', { reqId: requestId(), room: meetingInviteRoom(identity) })
+  })
+  socket.on('disconnect', (reason) => {
+    console.log('[socket] 断开:', reason, new Date().toISOString())
+    // 服务端主动断开时，手动重连（socket.io 不会自动重连这种情况）
+    if (reason === 'io server disconnect') {
+      setTimeout(() => socket.connect(), 5000)
+    }
+  })
+  socket.on('reconnect', (attempt) => {
+    console.log('[socket] 重连成功，尝试次数:', attempt, new Date().toISOString())
+  })
+  socket.on('reconnect_attempt', (attempt) => {
+    console.log('[socket] 尝试重连:', attempt, new Date().toISOString())
+  })
+  socket.on('reconnect_error', (error) => {
+    console.warn('[socket] 重连失败:', error.message)
   })
   socket.on(MEETING_INVITE_EVENT, (raw: unknown) => {
     const invitation = parseMeetingInvitation(raw)

@@ -3,6 +3,7 @@ package svc
 import (
 	"context"
 	"math"
+	"zero-service/common/authctx"
 	"zero-service/common/grpcx"
 	"zero-service/common/socketiox"
 	"zero-service/common/tool"
@@ -11,6 +12,7 @@ import (
 	"zero-service/socketapp/socketgtw/internal/sockethandler"
 
 	"github.com/zeromicro/go-zero/core/jsonx"
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 )
@@ -73,6 +75,14 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			return claims, true
 		}),
 		socketiox.WithConnectHook(func(ctx context.Context, session *socketiox.Session) ([]string, error) {
+			// 根据 token claims 自动判断认证类型：设备 or 用户
+			authType := "user"
+			if session.GetMetadata("deviceId") != nil || session.GetMetadata("device-id") != nil {
+				authType = "device"
+			}
+			session.SetMetadata("auth-type", authType)
+			ctx = authctx.WithAuthType(ctx, authType)
+
 			if !c.EnableStreamEventNotify {
 				return nil, nil
 			}
@@ -88,7 +98,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 				Payload: string(downJson),
 			})
 			if err != nil {
-				return nil, err
+				session.Close()
+				logx.WithContext(ctx).Errorf("[socketio] failed to load rooms: %v", err)
+				return nil, nil
 			}
 			var rooms []string
 			jsonx.Unmarshal([]byte(res.Payload), &rooms)

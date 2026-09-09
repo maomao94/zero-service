@@ -22,7 +22,10 @@
 ```javascript
 const socket = io('http://your-server:11003', {
     transports: ['websocket', 'polling'],
-    reconnection: true
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: Infinity,
 });
 
 socket.on('connect', () => console.log('已连接, sid:', socket.id));
@@ -36,8 +39,78 @@ socket.on('disconnect', (reason) => console.log('断开:', reason));
 ```javascript
 const socket = io('http://your-server:11003', {
     transports: ['websocket', 'polling'],
-    auth: { token: 'your-token-value' }
+    auth: { token: 'your-token-value' },
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: Infinity,
 });
+```
+
+### 用户与设备鉴权
+
+socketgtw 支持单实例同时服务用户和设备连接，通过 token claims自动识别身份类型：
+
+| Token 类型 | claims特征 | auth-type |
+|-----------|-----------|-----------|
+| 用户 Token | 包含 `user-id` 或 `user_id` | `user` |
+| 设备 Token | 包含 `device-id` 或 `deviceId` | `device` |
+
+**自动识别逻辑**：
+```go
+// 根据 token claims 自动判断认证类型
+authType := "user"
+if session.GetMetadata("deviceId") != nil || session.GetMetadata("device-id") != nil {
+    authType = "device"
+}
+session.SetMetadata("auth-type", authType)
+```
+
+**业务层判断**：
+```go
+authType := authctx.GetAuthType(ctx)
+if authType == "device" {
+    deviceId := authctx.GetDeviceId(ctx)
+    // 设备逻辑
+} else {
+    userId := authctx.GetUserId(ctx)
+    // 用户逻辑
+}
+```
+
+### 断线重连
+
+客户端配置重连参数后，断开连接会自动重连：
+
+| 参数 | 说明 | 推荐值 |
+|------|------|--------|
+| `reconnection` | 启用自动重连 | `true` |
+| `reconnectionDelay` | 初始延迟（毫秒） | `1000` |
+| `reconnectionDelayMax` | 最大延迟（毫秒） | `5000` |
+| `reconnectionAttempts` | 最大重试次数 | `Infinity` |
+
+**服务端 ping/pong 配置**：
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `pingInterval` | 25s | 服务端发送 ping 的间隔 |
+| `pingTimeout` | 25s | 等待 pong 的超时时间 |
+
+网络断开检测时间：25s + 25s = 50秒
+
+**重连行为**：
+- 客户端断开（网络问题等）：最多 50秒后 socket.io 自动重连，指数退避 1s → 2s → 4s → 5s
+- 服务端主动断开（房间加载失败等）：5秒后手动重连
+- 连接成功后自动重新加入房间
+
+**服务端主动断开重连**：
+```javascript
+socket.on('disconnect', (reason) => {
+  // 服务端主动断开时，手动重连（socket.io 不会自动重连这种情况）
+  if (reason === 'io server disconnect') {
+    setTimeout(() => socket.connect(), 5000)
+  }
+})
 ```
 
 ### 服务端配置
@@ -50,8 +123,7 @@ http:
   Port: 11003                     # WebSocket (前端连接)
 JwtAuth:
   AccessSecret: your-secret
-  AccessExpire: 31536000
-SocketMetaData: [userId, deviceId]  # Token 声明中提取的元数据字段
+SocketMetaData: [userId, deviceId, user_id, device_id]  # Token 声明中提取的元数据字段
 
 # socketpush
 Name: socketpush.rpc
@@ -283,3 +355,5 @@ socket.on(event, (data) => {
 - 前端进入页面时 `join_room`，离开时 `leave_room`
 - 服务端消息体为 JSON 字符串，前端统一封装解析函数
 - OSD 数据 0.5Hz，避免每次收到时重渲染
+- 生产环境务必配置 `reconnection` 相关参数，确保断线自动恢复
+- 用户和设备使用不同的 Token，服务端通过 claims自动识别身份类型

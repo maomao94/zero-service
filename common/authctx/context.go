@@ -10,6 +10,7 @@ const (
 	CtxDeptCodeKey      = "dept-code"
 	CtxAuthorizationKey = "authorization"
 	CtxAuthTypeKey      = "auth-type"
+	CtxDeviceIdKey      = "device-id"
 )
 
 // ContextKeys lists authentication context keys in propagation order.
@@ -21,6 +22,16 @@ var ContextKeys = []string{
 	CtxUserNameKey,
 	CtxDeptCodeKey,
 	CtxAuthTypeKey,
+	CtxDeviceIdKey,
+}
+
+// DefaultClaimMapping maps standard internal keys to common external JWT claim names.
+// This allows automatic parsing of underscore-style claims (user_id, user_name, dept_code)
+// without requiring explicit configuration.
+var DefaultClaimMapping = map[string]string{
+	CtxUserIdKey:   "user_id",
+	CtxUserNameKey: "user_name",
+	CtxDeptCodeKey: "dept_code",
 }
 
 // Package-private typed keys hold process-context identity values.
@@ -29,6 +40,7 @@ type userNameKey struct{}
 type deptCodeKey struct{}
 type authorizationKey struct{}
 type authTypeKey struct{}
+type deviceIDKey struct{}
 
 // WithUserID stores v under the typed user-id context key.
 func WithUserID(ctx context.Context, v string) context.Context {
@@ -55,6 +67,11 @@ func WithAuthType(ctx context.Context, v string) context.Context {
 	return context.WithValue(ctx, authTypeKey{}, v)
 }
 
+// WithDeviceID stores v under the typed device-id context key.
+func WithDeviceID(ctx context.Context, v string) context.Context {
+	return context.WithValue(ctx, deviceIDKey{}, v)
+}
+
 // WithKey stores v under the typed key matching the wire/claim key.
 // Unknown keys are ignored.
 func WithKey(ctx context.Context, key, v string) context.Context {
@@ -69,6 +86,8 @@ func WithKey(ctx context.Context, key, v string) context.Context {
 		return WithAuthorization(ctx, v)
 	case CtxAuthTypeKey:
 		return WithAuthType(ctx, v)
+	case CtxDeviceIdKey:
+		return WithDeviceID(ctx, v)
 	default:
 		return ctx
 	}
@@ -115,6 +134,14 @@ func GetAuthType(ctx context.Context) string {
 	return ""
 }
 
+// GetDeviceId reads the typed device-id context key.
+func GetDeviceId(ctx context.Context) string {
+	if v, ok := ctx.Value(deviceIDKey{}).(string); ok {
+		return v
+	}
+	return ""
+}
+
 // GetByKey reads the value stored under the typed key matching the wire/claim key.
 // It returns "" for unknown keys or non-string values.
 func GetByKey(ctx context.Context, key string) string {
@@ -129,6 +156,8 @@ func GetByKey(ctx context.Context, key string) string {
 		return GetAuthorization(ctx)
 	case CtxAuthTypeKey:
 		return GetAuthType(ctx)
+	case CtxDeviceIdKey:
+		return GetDeviceId(ctx)
 	default:
 		return ""
 	}
@@ -143,7 +172,13 @@ func GetByKey(ctx context.Context, key string) string {
 // standard typed keys. user-id may arrive as int64, float64, or string and is
 // normalized to its string form; other values (bool/array/map/…) are skipped,
 // and an existing typed value is never overwritten.
+//
+// When mapping is nil, DefaultClaimMapping is used to automatically parse
+// common underscore-style claims (user_id, user_name, dept_code).
 func BridgeJWTClaims(ctx context.Context, mapping map[string]string) context.Context {
+	if mapping == nil {
+		mapping = DefaultClaimMapping
+	}
 	for _, key := range ContextKeys {
 		if v := toStringClaim(ctx.Value(key)); v != "" && GetByKey(ctx, key) == "" {
 			ctx = WithKey(ctx, key, v)
