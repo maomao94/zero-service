@@ -21,8 +21,10 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	SocketGtwConf           zrpc.RpcClientConf `json:",optional"`
-	SocketMetaData          []string           `json:",optional"`
+	SocketGtwConf zrpc.RpcClientConf `json:",optional"`
+	// SocketMetaData 为空时使用内置默认身份键提取（authctx.DefaultClaimAliases）；
+	// 非空时在默认基础上增补额外 claim 名（按原名存入 session metadata）。
+	SocketMetaData          []string `json:",optional"`
 	StreamEventConf         zrpc.RpcClientConf
 	EnableStreamEventNotify bool `json:",default=false"`
 }

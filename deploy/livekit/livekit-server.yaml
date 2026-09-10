@@ -8,6 +8,17 @@ port: 7880
 rtc:
   port_range_start: 60000
   port_range_end: 60100
+
+  # ========== 网络配置 ==========
+  # 测试环境（浏览器与 LiveKit在同一内网 172.x.x.x）
+  # use_external_ip: false
+  #
+  # 生产环境（浏览器通过公司局域网 10.x.x.x 访问）
+  # use_external_ip: true
+  # node_ip: "10.10.11.25"  # 服务器在公司局域网的 IP
+  # =============================
+
+  # 默认配置（开发环境）
   use_external_ip: false
 
 # API 密钥对（至少 32 字符）
@@ -26,5 +37,48 @@ webhook:
     - http://host.docker.internal:11002/webhook/livekit
   api_key: devkeydevkeydevkeydevkeydevkeydevkey
 
-# [PROD] 信号端口 TLS：livekit-server 不原生支持，需反向代理（nginx/caddy）终止 TLS
-# 开发环境使用 HTTP/WS 即可
+# ========== Nginx 反向代理配置 ==========
+# 信号端口 TLS：livekit-server 不原生支持，需反向代理（nginx/caddy）终止 TLS
+#
+# 测试环境 Nginx 配置示例：
+#   server {
+#       listen 7880 ssl;
+#       server_name livekit.test.local;
+#
+#       ssl_certificate /path/to/cert.pem;
+#       ssl_certificate_key /path/to/key.pem;
+#
+#       location / {
+#           proxy_pass http://172.17.0.2:7880;  # Docker 内网 IP
+#           proxy_http_version 1.1;
+#           proxy_set_header Upgrade $http_upgrade;
+#           proxy_set_header Connection "upgrade";
+#           proxy_set_header Host $host;
+#           proxy_set_header X-Real-IP $remote_addr;
+#       }
+#   }
+#
+# 生产环境 Nginx 配置示例：
+#   upstream livekit_backend {
+#       server 172.17.0.2:7880;  # LiveKit Docker 内网 IP
+#   }
+#
+#   server {
+#       listen 7880 ssl;
+#       server_name livekit.company.com;
+#
+#       ssl_certificate /path/to/cert.pem;
+#       ssl_certificate_key /path/to/key.pem;
+#
+#       location / {
+#           proxy_pass http://livekit_backend;
+#           proxy_http_version 1.1;
+#           proxy_set_header Upgrade $http_upgrade;
+#           proxy_set_header Connection "upgrade";
+#           proxy_set_header Host $host;
+#           proxy_set_header X-Real-IP $remote_addr;
+#       }
+#   }
+#
+# WebRTC 端口范围（60000-60100）需要直接暴露或通过 TURN 服务器
+# ===========================================

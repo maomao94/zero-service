@@ -43,7 +43,6 @@ func (l *JoinMeetingLogic) JoinMeeting(req *types.JoinMeetingRequest) (resp *typ
 	}
 	return &types.JoinMeetingReply{
 		Token:             r.GetToken(),
-		WsUrl:             r.GetWsUrl(),
 		Meeting:           toMeetingInfo(r.GetMeeting()),
 		CanPublish:        r.GetCanPublish(),
 		CanSubscribe:      r.GetCanSubscribe(),

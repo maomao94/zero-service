@@ -15,9 +15,9 @@ http:
   Host: 0.0.0.0
   Port: 11003
   Timeout: 10000
-#JwtAuth:
-#  AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
-#  PrevAccessSecret: 629c6233-1a76-471b-bd25-b87208762219
+JwtAuth:
+  AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
+  PrevAccessSecret: 629c6233-1a76-471b-bd25-b87208762219
 NacosConfig:
   IsRegister: false
   Host: 127.0.0.1
@@ -26,9 +26,8 @@ NacosConfig:
   PassWord: nacos
   NamespaceId: public
   ServiceName: socket-gtw
-SocketMetaData: [ "uid", "deviceId", "userId", "user_id","dept_id", "dept_code", "user_name" ]
 # 关闭后 socketgtw 不再通知下游 StreamEvent 服务（__connection__/__disconnect__/__join_room_up__）
-EnableStreamEventNotify: true
+EnableStreamEventNotify: false
 StreamEventConf:
   # nacos://[user:passwd]@host/service?param=value'
   #  Target: nacos://nacos:nacos@127.0.0.1:8848/stream-event?namespaceid=public&timeout=5000s

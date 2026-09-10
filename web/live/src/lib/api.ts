@@ -37,7 +37,7 @@ async function request<T>(path: string, init: RequestInit = {}, requiresAuth = t
 const json = (body: unknown): RequestInit => ({ method: 'POST', body: JSON.stringify(body) })
 
 export const api = {
-  getCurrentUser: () => request<{ userId: string; userName: string; deptCode: string }>('/getCurrentUser'),
+  getCurrentUser: () => request<{ authType: string; userId: string; userName: string; deptCode: string }>('/getCurrentUser'),
   createMeeting: (title: string) => request<{ meeting: MeetingInfo }>('/createMeeting', json({ title })),
   joinMeeting: (meetingNo: string, options?: { meetingCode?: string; canPublish?: boolean; canSubscribe?: boolean; canPublishData?: boolean; canPublishSources?: string[] }) => {
     const body: Record<string, unknown> = {
@@ -72,4 +72,5 @@ export const api = {
   createSipProvider: (params: { code: string; name: string; address: string; numbers: string[]; authUsername?: string; authPassword?: string }) => request<{ provider: SipProviderInfo }>('/sip-providers', json(params)),
   updateSipProvider: (params: { id: string; name?: string; address?: string; numbers?: string[]; authUsername?: string; authPassword?: string; status?: number }) => request<{ provider: SipProviderInfo }>('/sip-providers/update', json(params)),
   deleteSipProvider: (id: string) => request<void>('/sip-providers/delete', json({ id })),
+  generateToken: (params: { authType: 'user' | 'device'; userId: string; userName?: string; deptCode?: string; expireSeconds?: number; signKey: string }) => request<{ token: string; expireTime: string }>('/generateToken', json(params), false),
 }

@@ -22,7 +22,6 @@ func (m *MeetingAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		if auth := r.Header.Get("Authorization"); auth != "" {
-			ctx = authctx.WithAuthType(ctx, "user")
 			ctx = authctx.WithAuthorization(ctx, auth)
 		}
 		ctx = authctx.BridgeJWTClaims(ctx, m.claimMapping)

@@ -44,6 +44,58 @@ func TestClaimMappingDoesNotDeleteOrSynthesizeClaims(t *testing.T) {
 	}
 }
 
+func TestResolveClaimKey(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{"user-id", CtxUserIdKey},
+		{"user_id", CtxUserIdKey},
+		{"userId", CtxUserIdKey},
+		{"uid", CtxUserIdKey},
+		{"user-name", CtxUserNameKey},
+		{"user_name", CtxUserNameKey},
+		{"dept-code", CtxDeptCodeKey},
+		{"dept_code", CtxDeptCodeKey},
+		{"auth-type", CtxAuthTypeKey},
+		{"unknown", ""},
+		{"dept_id", ""},
+		{"", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ResolveClaimKey(tt.name); got != tt.want {
+				t.Fatalf("ResolveClaimKey(%q) = %q, want %q", tt.name, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestClaimStringByAliases(t *testing.T) {
+	tests := []struct {
+		name   string
+		claims map[string]any
+		key    string
+		want   string
+	}{
+		{"canonical wins", map[string]any{CtxUserIdKey: "canonical", "user_id": "snake"}, CtxUserIdKey, "canonical"},
+		{"snake fallback", map[string]any{"user_id": "u1"}, CtxUserIdKey, "u1"},
+		{"camel fallback", map[string]any{"userId": "u2"}, CtxUserIdKey, "u2"},
+		{"uid fallback", map[string]any{"uid": "u3"}, CtxUserIdKey, "u3"},
+		{"numeric claim", map[string]any{"user_id": float64(42)}, CtxUserIdKey, "42"},
+		{"first alias wins", map[string]any{"user_id": "a", "userId": "b"}, CtxUserIdKey, "a"},
+		{"missing", map[string]any{"other": "x"}, CtxUserIdKey, ""},
+		{"bool skipped", map[string]any{"user_id": true}, CtxUserIdKey, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ClaimStringByAliases(tt.claims, tt.key); got != tt.want {
+				t.Fatalf("ClaimStringByAliases(%#v, %q) = %q, want %q", tt.claims, tt.key, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestNormalizeClaimString(t *testing.T) {
 	tests := []struct {
 		name  string

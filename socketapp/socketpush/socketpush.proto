@@ -45,9 +45,9 @@ message PbSocketGtwStat {
   int64 sessions = 2 [json_name = "sessions"];
 }
 
+// 业务方自定义 claims：用户域传 user-id/user-name/dept-code，设备域传 device-id/device-name
 message GenTokenReq {
-  string uid = 1 [json_name = "uid"];
-  map<string, string> payload = 2 [json_name = "payload"];
+  map<string, string> payload = 1 [json_name = "payload"];
 }
 
 message GenTokenRes {

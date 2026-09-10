@@ -7,7 +7,7 @@ import (
 )
 
 func TestContextKeyContractAndGetters(t *testing.T) {
-	wantKeys := []string{"authorization", "user-id", "user-name", "dept-code", "auth-type", "device-id"}
+	wantKeys := []string{"authorization", "user-id", "user-name", "dept-code", "auth-type"}
 	if !reflect.DeepEqual(ContextKeys, wantKeys) {
 		t.Fatalf("ContextKeys = %#v, want %#v", ContextKeys, wantKeys)
 	}
@@ -19,7 +19,6 @@ func TestContextKeyContractAndGetters(t *testing.T) {
 	ctx = WithDeptCode(ctx, "dept-1")
 	ctx = WithAuthorization(ctx, "Bearer token")
 	ctx = WithAuthType(ctx, "user")
-	ctx = WithDeviceID(ctx, "device-1")
 	if got := GetUserId(ctx); got != "user-1" {
 		t.Fatalf("GetUserId() = %q", got)
 	}
@@ -35,9 +34,6 @@ func TestContextKeyContractAndGetters(t *testing.T) {
 	if got := GetAuthType(ctx); got != "user" {
 		t.Fatalf("GetAuthType() = %q", got)
 	}
-	if got := GetDeviceId(ctx); got != "device-1" {
-		t.Fatalf("GetDeviceId() = %q", got)
-	}
 
 	// String-key writes (go-zero JWT namespace) are NOT readable by getters:
 	// typed keys only, no compatibility fallback.
@@ -47,7 +43,6 @@ func TestContextKeyContractAndGetters(t *testing.T) {
 	strCtx = context.WithValue(strCtx, CtxDeptCodeKey, "string-dept")
 	strCtx = context.WithValue(strCtx, CtxAuthorizationKey, "String token")
 	strCtx = context.WithValue(strCtx, CtxAuthTypeKey, "string-user")
-	strCtx = context.WithValue(strCtx, CtxDeviceIdKey, "string-device-1")
 	if got := GetUserId(strCtx); got != "" {
 		t.Fatalf("string-key GetUserId() = %q, want empty (no fallback)", got)
 	}
@@ -63,9 +58,6 @@ func TestContextKeyContractAndGetters(t *testing.T) {
 	if got := GetAuthType(strCtx); got != "" {
 		t.Fatalf("string-key GetAuthType() = %q, want empty (no fallback)", got)
 	}
-	if got := GetDeviceId(strCtx); got != "" {
-		t.Fatalf("string-key GetDeviceId() = %q, want empty (no fallback)", got)
-	}
 
 	// Non-string values yield "".
 	if got := GetUserId(context.WithValue(context.Background(), CtxUserIdKey, 1)); got != "" {
@@ -73,9 +65,6 @@ func TestContextKeyContractAndGetters(t *testing.T) {
 	}
 	if got := GetAuthType(context.WithValue(context.Background(), CtxAuthTypeKey, 1)); got != "" {
 		t.Fatalf("non-string GetAuthType() = %q", got)
-	}
-	if got := GetDeviceId(context.WithValue(context.Background(), CtxDeviceIdKey, 1)); got != "" {
-		t.Fatalf("non-string GetDeviceId() = %q", got)
 	}
 
 	// Wire-name dispatch helpers.

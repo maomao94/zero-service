@@ -95,7 +95,6 @@ func (l *JoinMeetingLogic) JoinMeeting(in *live.JoinMeetingReq) (*live.JoinMeeti
 		}
 		return &live.JoinMeetingRes{
 			Token:             token,
-			WsUrl:             wsURL(l.svcCtx.Config.LiveKit.Url),
 			Meeting:           toMeetingInfo(meeting),
 			CanPublish:        in.CanPublish,
 			CanSubscribe:      in.CanSubscribe,
@@ -140,7 +139,6 @@ func (l *JoinMeetingLogic) JoinMeeting(in *live.JoinMeetingReq) (*live.JoinMeeti
 	l.Logger.Infof("join token issued: meeting=%s identity=%s", meeting.MeetingNo, in.Identity)
 	return &live.JoinMeetingRes{
 		Token:             token,
-		WsUrl:             wsURL(l.svcCtx.Config.LiveKit.Url),
 		Meeting:           toMeetingInfo(meeting),
 		CanPublish:        in.CanPublish,
 		CanSubscribe:      in.CanSubscribe,

@@ -3,7 +3,6 @@ package svc
 import (
 	"context"
 	"math"
-	"zero-service/common/authctx"
 	"zero-service/common/grpcx"
 	"zero-service/common/socketiox"
 	"zero-service/common/tool"
@@ -40,24 +39,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	svcCtx.SocketServer = socketiox.MustServer(
 		socketiox.WithContextKeys(c.SocketMetaData),
 		socketiox.WithHandler(socketiox.EventUp, sockethandler.NewSocketUpHandler(svcCtx.StreamEventCli)),
-		socketiox.WithTokenValidator(func(token string) bool {
-			if c.JwtAuth.AccessSecret == "" {
-				return true
-			}
-			if token == "" {
-				return false
-			}
-			secrets := []string{c.JwtAuth.AccessSecret}
-			if len(c.JwtAuth.PrevAccessSecret) > 0 {
-				secrets = append(secrets, c.JwtAuth.PrevAccessSecret)
-			}
-			_, err := tool.ParseToken(token, secrets...)
-			if err != nil {
-				return false
-			}
-			return true
-		}),
-		socketiox.WithTokenValidatorWithClaims(func(token string) (map[string]any, bool) {
+		socketiox.WithTokenValidator(func(token string) (map[string]any, bool) {
 			if c.JwtAuth.AccessSecret == "" {
 				return nil, true
 			}
@@ -75,14 +57,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			return claims, true
 		}),
 		socketiox.WithConnectHook(func(ctx context.Context, session *socketiox.Session) ([]string, error) {
-			// 根据 token claims 自动判断认证类型：设备 or 用户
-			authType := "user"
-			if session.GetMetadata("deviceId") != nil || session.GetMetadata("device-id") != nil {
-				authType = "device"
-			}
-			session.SetMetadata("auth-type", authType)
-			ctx = authctx.WithAuthType(ctx, authType)
-
 			if !c.EnableStreamEventNotify {
 				return nil, nil
 			}

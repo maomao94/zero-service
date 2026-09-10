@@ -12,11 +12,6 @@ Log:
   KeepDays: 300
 JwtAuth:
   AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
-  # ClaimMapping: 内部标准 key -> 外部 JWT claim key（internalKey -> externalKey，如 user-id -> user_id）
-  ClaimMapping:
-    user-id: "user_id"
-    user-name: "user_name"
-    dept-code: "dept_code"
 LiveRpcConf:
   Endpoints:
     - 127.0.0.1:21017
@@ -25,3 +20,9 @@ LiveRpcConf:
 LiveKit:
   WebhookKey: secretsecretsecretsecretsecretsecret
 EnableTestPage: true
+# Token 签发配置
+TokenSign:
+  # 签发密钥（验证调用方身份，调用时需传入相同值）
+  SignKey: "token-sign-key-2024"
+  # 默认过期时间（秒）
+  DefaultExpireSeconds: 3600

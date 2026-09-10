@@ -34,6 +34,9 @@ func main() {
 	if secret := os.Getenv("LIVEGTW_JWT_ACCESS_SECRET"); secret != "" {
 		c.JwtAuth.AccessSecret = secret
 	}
+	if signKey := os.Getenv("LIVEGTW_TOKEN_SIGN_KEY"); signKey != "" {
+		c.TokenSign.SignKey = signKey
+	}
 
 	server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
 

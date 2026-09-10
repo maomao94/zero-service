@@ -6,10 +6,11 @@
 
 - 基于 `github.com/doquangtan/socketio/v4`，封装房间管理、广播、统计上报。
 - `Server` 持有 `eventHandlers map[string]EventHandler` 和 `sessions map[string]*Session`（`sync.RWMutex` 保护）。
-- 钩子: `tokenValidator`、`tokenValidatorWithClaims`、`connectHook`、`disconnectHook`、`preJoinRoomHook`。
-- `contextKeys` 从 JWT claims 提取到 session metadata。
+- 钩子: `tokenValidator`、`connectHook`、`disconnectHook`、`preJoinRoomHook`。
+- `TokenValidator` 同时负责校验 token 和返回已验证 claims，签名为 `func(string) (map[string]any, bool)`；认证和 metadata 提取共用一次校验结果。
+- 连接时从 JWT claims 提取身份到 session metadata：标准身份键按 `authctx.DefaultClaimAliases`（canonical 键 + 别名）默认提取，`WithContextKeys` 只增补额外 claim 名（按原名存储）；claims 缺失 `auth-type` 时按 `device-id` 有无兜底推导 `user`/`device`。
 
-依据：`common/socketiox/server.go`。
+依据：`common/socketiox/server.go`、`common/authctx/claims.go`。
 
 ### 内置事件
 
@@ -37,7 +38,9 @@
 ### Session 管理
 
 - `Session` 提供房间操作 (`JoinRoom`、`LeaveRoom`)、多种 Emit 方法 (`EmitAny`、`EmitString`、`EmitDown`、`EmitEventDown`、`ReplyEventDown`)。
-- Session 元数据: `GetMetadata(key)`、`AllMetadata()`、`SetMetadata(key, val)`。
+- Session 元数据: `GetMetadata(key)`、`AllMetadata()`、`SetMetadata(key, val)`；`auth-type` 首次写入后不可覆盖。
+- 事件上下文: 一律用 `session.NewCtx(event)` 构造，内含 authorization token、metadata 中全部标准身份键和 log 字段 `socketId`/`event`，禁止在事件回调里手工拼 `logx.WithFields` + `authctx.WithAuthorization`。
+- 身份 metadata 存储键为 canonical 标准键（`user-id`、`device-id`…）；`GetSessionByKey` 内部用 `authctx.ResolveClaimKey` 归一化查询键（`userId`/`user_id`/`uid` 均可命中），未知键（配置增补的 claim 名）按原名比对。
 - 查询: `GetSession(id)`、`GetSessionByDeviceId()`、`GetSessionByUserId()`、`GetSessionByKey()`。
 
 ### 多节点 (SocketContainer)

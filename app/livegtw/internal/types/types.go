@@ -70,7 +70,24 @@ type GenerateMeetingTicketRequest struct {
 	TicketType        int32    `json:"ticketType,optional"`
 }
 
+type GenerateTokenReply struct {
+	Token        string `json:"token"`
+	AccessExpire int64  `json:"accessExpire"`
+	RefreshAfter int64  `json:"refreshAfter"`
+	ExpireTime   string `json:"expireTime"`
+}
+
+type GenerateTokenRequest struct {
+	AuthType      string `json:"authType"`
+	UserId        string `json:"userId"`
+	UserName      string `json:"userName,optional"`
+	DeptCode      string `json:"deptCode,optional"`
+	ExpireSeconds int32  `json:"expireSeconds,optional"`
+	SignKey       string `json:"signKey"`
+}
+
 type GetCurrentUserReply struct {
+	AuthType string `json:"authType"`
 	UserId   string `json:"userId"`
 	UserName string `json:"userName"`
 	DeptCode string `json:"deptCode"`
@@ -102,7 +119,6 @@ type JoinMeetingByTicketRequest struct {
 
 type JoinMeetingReply struct {
 	Token             string      `json:"token"`
-	WsUrl             string      `json:"wsUrl"`
 	Meeting           MeetingInfo `json:"meeting"`
 	CanPublish        bool        `json:"canPublish"`
 	CanSubscribe      bool        `json:"canSubscribe"`

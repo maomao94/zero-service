@@ -41,18 +41,6 @@ func requireMeetingIdentity(meetingNo, identity string) error {
 	return nil
 }
 
-// wsURL 把 LiveKit HTTP 地址换算为浏览器直连的 WebSocket 地址。
-func wsURL(httpURL string) string {
-	switch {
-	case strings.HasPrefix(httpURL, "https://"):
-		return "wss://" + strings.TrimPrefix(httpURL, "https://")
-	case strings.HasPrefix(httpURL, "http://"):
-		return "ws://" + strings.TrimPrefix(httpURL, "http://")
-	default:
-		return httpURL
-	}
-}
-
 // toMeetingInfo 转换会议单据为 RPC 视图（时间用 carbon 格式化输出）。
 func toMeetingInfo(m *gormmodel.LiveMeeting) *live.MeetingInfo {
 	return &live.MeetingInfo{

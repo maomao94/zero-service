@@ -12,7 +12,6 @@ import (
 	"zero-service/common/authctx"
 
 	"github.com/doquangtan/socketio/v4"
-	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/threading"
@@ -276,6 +275,7 @@ type Session struct {
 	socket        *socketio.Socket
 	lock          sync.Mutex
 	metadata      map[string]string
+	token         string
 	roomLoadError string
 }
 
@@ -306,15 +306,78 @@ func (s *Session) AllMetadata() map[string]string {
 	return cp
 }
 
+// immutableMetadataKeys lists metadata keys that must not be overwritten once set.
+// auth-type is derived from verified token claims (or server-side detection) and
+// must stay authoritative for the whole session lifetime.
+var immutableMetadataKeys = map[string]struct{}{
+	authctx.CtxAuthTypeKey: {},
+}
+
 func (s *Session) SetMetadata(key string, val any) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+	if _, immutable := immutableMetadataKeys[key]; immutable {
+		if _, exists := s.metadata[key]; exists {
+			logx.Debugf("[socketio] skipped overwrite of immutable metadata key %q for conn %s", key, s.socketId)
+			return
+		}
+	}
 	if str, ok := val.(string); ok && str != "" {
 		s.metadata[key] = str
 		logx.Debugf("[socketio] set metadata key %q with value %v for conn %s", key, str, s.socketId)
 	} else {
 		logx.Debugf("[socketio] skipped non-string metadata key %q with value %v (type: %T) for conn %s", key, val, val, s.socketId)
 	}
+}
+
+// NewCtx builds the event context for this session: authorization token plus
+// every standard identity key present in metadata, decorated with the log
+// fields socketId and event.
+func (s *Session) NewCtx(event string) context.Context {
+	ctx := authctx.WithAuthorization(context.Background(), s.token)
+	for _, key := range authctx.ContextKeys {
+		if key == authctx.CtxAuthorizationKey {
+			continue
+		}
+		if v, ok := s.GetMetadata(key).(string); ok && v != "" {
+			ctx = authctx.WithKey(ctx, key, v)
+		}
+	}
+	ctx = logx.WithFields(ctx,
+		logx.Field("socketId", s.socketId),
+		logx.Field("event", event),
+		logx.Field("authType", authctx.GetAuthType(ctx)))
+	if len(authctx.GetUserId(ctx)) > 0 {
+		ctx = logx.WithFields(ctx, logx.Field("userId", authctx.GetUserId(ctx)))
+	}
+	if len(authctx.GetDeptCode(ctx)) > 0 {
+		ctx = logx.WithFields(ctx, logx.Field("deptCode", authctx.GetDeptCode(ctx)))
+	}
+	return ctx
+}
+
+// applyTokenClaims writes verified token claims into session metadata.
+// Standard identity keys are resolved through authctx.DefaultClaimAliases
+// (canonical key + aliases); extraKeys are stored under their original name.
+func applyTokenClaims(session *Session, claims map[string]any, extraKeys []string) {
+	for canonical := range authctx.DefaultClaimAliases {
+		if v := authctx.ClaimStringByAliases(claims, canonical); v != "" {
+			session.SetMetadata(canonical, v)
+		}
+	}
+	for _, key := range extraKeys {
+		if v := authctx.ClaimString(claims, key); v != "" {
+			session.SetMetadata(key, v)
+		}
+	}
+}
+
+// ensureAuthType stores auth-type "user" when the claims did not carry one.
+func ensureAuthType(session *Session) {
+	if v, _ := session.GetMetadata(authctx.CtxAuthTypeKey).(string); v != "" {
+		return
+	}
+	session.SetMetadata(authctx.CtxAuthTypeKey, "user")
 }
 
 func (s *Session) EmitAny(event string, payload any) error {
@@ -397,9 +460,7 @@ func (f EventHandlerFunc) Handle(ctx context.Context, event string, payload *soc
 
 type EventHandlers map[string]EventHandler
 
-type TokenValidator func(token string) bool
-
-type TokenValidatorWithClaims func(token string) (map[string]any, bool)
+type TokenValidator func(token string) (map[string]any, bool)
 
 type ConnectHook func(ctx context.Context, session *Session) ([]string, error)
 
@@ -413,6 +474,9 @@ func WithEventHandlers(handlers EventHandlers) Option {
 	return func(s *Server) { s.eventHandlers = handlers }
 }
 
+// WithContextKeys appends extra JWT claim names to extract into session
+// metadata (stored under their original name). The standard identity keys
+// defined by authctx.DefaultClaimAliases are always extracted by default.
 func WithContextKeys(keys []string) Option {
 	return func(s *Server) { s.contextKeys = keys }
 }
@@ -430,12 +494,10 @@ func WithHandler(event string, handler EventHandler) Option {
 	}
 }
 
+// WithTokenValidator configures token validation and returns the verified
+// claims for session metadata extraction.
 func WithTokenValidator(validator TokenValidator) Option {
 	return func(s *Server) { s.tokenValidator = validator }
-}
-
-func WithTokenValidatorWithClaims(validator TokenValidatorWithClaims) Option {
-	return func(s *Server) { s.tokenValidatorWithClaims = validator }
 }
 
 func WithConnectHook(hook ConnectHook) Option {
@@ -452,18 +514,17 @@ func WithDisconnectHook(hook DisconnectHook) Option {
 
 type Server struct {
 	*socketio.Io
-	eventHandlers            EventHandlers
-	sessions                 map[string]*Session
-	lock                     sync.RWMutex
-	statInterval             time.Duration
-	stopChan                 chan struct{}
-	stopOnce                 sync.Once
-	contextKeys              []string // 从上下文提取的键列表
-	tokenValidator           TokenValidator
-	tokenValidatorWithClaims TokenValidatorWithClaims
-	connectHook              ConnectHook
-	disconnectHook           DisconnectHook
-	preJoinRoomHook          PreJoinRoomHook
+	eventHandlers   EventHandlers
+	sessions        map[string]*Session
+	lock            sync.RWMutex
+	statInterval    time.Duration
+	stopChan        chan struct{}
+	stopOnce        sync.Once
+	contextKeys     []string // 增补的额外 claim 名（默认身份键始终提取）
+	tokenValidator  TokenValidator
+	connectHook     ConnectHook
+	disconnectHook  DisconnectHook
+	preJoinRoomHook PreJoinRoomHook
 }
 
 func MustServer(opts ...Option) *Server {
@@ -495,46 +556,35 @@ func (srv *Server) bindEvents() {
 	})
 	srv.OnAuthentication(func(params map[string]string) bool {
 		token := params["token"]
-		logx.Infof("[socketio] new connection auth: token_present=%t", token != "")
+		logx.Infof("[socketio] new connection token_present=%t", token != "")
+		valid := true
 		if srv.tokenValidator != nil {
-			valid := srv.tokenValidator(token)
-			if !valid {
-				logx.Errorw("[socketio] token validation failed", logx.Field("token_present", token != ""))
-				return false
-			}
+			_, valid = srv.tokenValidator(token)
 		}
-		return true
+		if !valid {
+			logx.Errorw("[socketio] token validation failed", logx.Field("token_present", token != ""))
+		}
+		return valid
 	})
 	srv.OnConnection(func(socket *socketio.Socket) {
 		token := socket.Handshake.Auth.Token
-		logx.Infof("[socketio] new connection: token_present=%t", token != "")
 		session := &Session{
 			socketId: socket.Id,
 			socket:   socket,
 			metadata: make(map[string]string),
+			token:    token,
 		}
 		srv.lock.Lock()
-		if srv.tokenValidatorWithClaims != nil && token != "" {
-			claims, valid := srv.tokenValidatorWithClaims(token)
+		if srv.tokenValidator != nil && token != "" {
+			claims, valid := srv.tokenValidator(token)
 			if valid {
-				if len(srv.contextKeys) > 0 {
-					for _, key := range srv.contextKeys {
-						if v, ok := claims[key]; ok {
-							if str, ok := v.(string); ok && str != "" {
-								session.SetMetadata(key, convertor.ToString(v))
-							}
-						}
-					}
-				}
+				applyTokenClaims(session, claims, srv.contextKeys)
 			}
 		}
+		ensureAuthType(session)
 		srv.sessions[socket.Id] = session
 		srv.lock.Unlock()
-		connectCtx := logx.WithFields(context.Background(),
-			logx.Field("socketId", socket.Id),
-			logx.Field("event", "connection"),
-		)
-		connectCtx = authctx.WithAuthorization(connectCtx, token)
+		connectCtx := session.NewCtx("connection")
 		if srv.connectHook != nil {
 			rooms, err := srv.connectHook(connectCtx, session)
 			if err != nil {
@@ -551,11 +601,7 @@ func (srv *Server) bindEvents() {
 		}
 		logx.WithContext(connectCtx).Infof("[socketio] new connection established: conn=%s", socket.Id)
 		socket.On(EventJoinRoom, func(payload *socketio.EventPayload) {
-			ctx := logx.WithFields(context.Background(),
-				logx.Field("socketId", payload.SID),
-				logx.Field("event", EventJoinRoom),
-			)
-			ctx = authctx.WithAuthorization(ctx, token)
+			ctx := session.NewCtx(EventJoinRoom)
 			upReq, ok := parseRoomPayload(ctx, session, payload, socket.Id)
 			if !ok {
 				return
@@ -572,11 +618,7 @@ func (srv *Server) bindEvents() {
 			})
 		})
 		socket.On(EventLeaveRoom, func(payload *socketio.EventPayload) {
-			ctx := logx.WithFields(context.Background(),
-				logx.Field("socketId", payload.SID),
-				logx.Field("event", EventLeaveRoom),
-			)
-			ctx = authctx.WithAuthorization(ctx, token)
+			ctx := session.NewCtx(EventLeaveRoom)
 			upReq, ok := parseRoomPayload(ctx, session, payload, socket.Id)
 			if !ok {
 				return
@@ -587,11 +629,7 @@ func (srv *Server) bindEvents() {
 			})
 		})
 		socket.On(EventRoomsPage, func(payload *socketio.EventPayload) {
-			ctx := logx.WithFields(context.Background(),
-				logx.Field("socketId", payload.SID),
-				logx.Field("event", EventRoomsPage),
-			)
-			ctx = authctx.WithAuthorization(ctx, token)
+			ctx := session.NewCtx(EventRoomsPage)
 			req, ok := parseRoomsPagePayload(ctx, session, payload, socket.Id)
 			if !ok {
 				return
@@ -603,11 +641,7 @@ func (srv *Server) bindEvents() {
 			})
 		})
 		socket.On(EventUp, func(payload *socketio.EventPayload) {
-			ctx := logx.WithFields(context.Background(),
-				logx.Field("socketId", payload.SID),
-				logx.Field("event", EventUp),
-			)
-			ctx = authctx.WithAuthorization(ctx, token)
+			ctx := session.NewCtx(EventUp)
 			handlerPayload := extractPayload(payload)
 			if handlerPayload == nil {
 				logx.WithContext(ctx).Errorw("[socketio] failed to marshal data", logx.Field("event", EventUp))
@@ -666,11 +700,7 @@ func (srv *Server) bindEvents() {
 			})
 		})
 		socket.On(EventRoomBroadcast, func(payload *socketio.EventPayload) {
-			ctx := logx.WithFields(context.Background(),
-				logx.Field("socketId", payload.SID),
-				logx.Field("event", EventRoomBroadcast),
-			)
-			ctx = authctx.WithAuthorization(ctx, token)
+			ctx := session.NewCtx(EventRoomBroadcast)
 			upReq, ok := parseUpPayload(ctx, session, payload, socket.Id, true)
 			if !ok {
 				return
@@ -691,11 +721,7 @@ func (srv *Server) bindEvents() {
 			})
 		})
 		socket.On(EventGlobalBroadcast, func(payload *socketio.EventPayload) {
-			ctx := logx.WithFields(context.Background(),
-				logx.Field("socketId", payload.SID),
-				logx.Field("event", EventGlobalBroadcast),
-			)
-			ctx = authctx.WithAuthorization(ctx, token)
+			ctx := session.NewCtx(EventGlobalBroadcast)
 			upReq, ok := parseUpPayload(ctx, session, payload, socket.Id, true)
 			if !ok {
 				return
@@ -723,11 +749,7 @@ func (srv *Server) bindEvents() {
 				}
 			}
 			// 执行断开连接钩子
-			ctx := logx.WithFields(context.WithValue(context.Background(), "socketId", socket.Id),
-				logx.Field("socketId", socket.Id),
-				logx.Field("event", "disconnect"),
-			)
-			ctx = authctx.WithAuthorization(ctx, token)
+			ctx := session.NewCtx("disconnect")
 			srv.lock.RLock()
 			deleteSession, ok := srv.sessions[socket.Id]
 			srv.lock.RUnlock()
@@ -747,11 +769,7 @@ func (srv *Server) bindEvents() {
 			currentEvent := eventName
 			currentHandler := handler
 			socket.On(currentEvent, func(payload *socketio.EventPayload) {
-				ctx := logx.WithFields(context.Background(),
-					logx.Field("socketId", payload.SID),
-					logx.Field("event", currentEvent),
-				)
-				ctx = authctx.WithAuthorization(ctx, token)
+				ctx := session.NewCtx(currentEvent)
 				var handlerPayload []byte
 				if len(payload.Data) > 0 && payload.Data[0] != nil {
 					switch data := payload.Data[0].(type) {
@@ -868,12 +886,8 @@ func (srv *Server) GetSession(socketId string) *Session {
 	return srv.sessions[socketId]
 }
 
-func (srv *Server) GetSessionByDeviceId(deviceId string) ([]*Session, bool) {
-	return srv.GetSessionByKey("deviceId", deviceId)
-}
-
 func (srv *Server) GetSessionByUserId(userId string) ([]*Session, bool) {
-	return srv.GetSessionByKey("userId", userId)
+	return srv.GetSessionByKey(authctx.CtxUserIdKey, userId)
 }
 
 func (srv *Server) GetSessionByKey(key, value string) ([]*Session, bool) {
@@ -884,9 +898,15 @@ func (srv *Server) GetSessionByKey(key, value string) ([]*Session, bool) {
 	}
 	srv.lock.RUnlock()
 
+	// 身份键归一化：userId/user_id/uid 等别名都归到 canonical 标准键；
+	// 未知键（如配置增补的自定义 claim 名）按原样比对。
+	canonical := authctx.ResolveClaimKey(key)
+	if canonical == "" {
+		canonical = key
+	}
 	var sessions []*Session
 	for _, sess := range snapshot {
-		if sess.GetMetadata(key) == value {
+		if sess.GetMetadata(canonical) == value {
 			sessions = append(sessions, sess)
 		}
 	}

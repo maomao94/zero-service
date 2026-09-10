@@ -26,6 +26,7 @@ func NewGetCurrentUserLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Ge
 
 func (l *GetCurrentUserLogic) GetCurrentUser(req *types.GetCurrentUserRequest) (resp *types.GetCurrentUserReply, err error) {
 	return &types.GetCurrentUserReply{
+		AuthType: authctx.GetAuthType(l.ctx),
 		UserId:   authctx.GetUserId(l.ctx),
 		UserName: authctx.GetUserName(l.ctx),
 		DeptCode: authctx.GetDeptCode(l.ctx),

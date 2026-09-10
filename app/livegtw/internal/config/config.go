@@ -21,4 +21,11 @@ type Config struct {
 	}
 	// 测试页路由开关（默认开启，便于联调）
 	EnableTestPage bool `json:",default=true"`
+	// TokenSign Token 签发配置
+	TokenSign struct {
+		// 签发密钥（验证调用方身份）
+		SignKey string
+		// 默认过期时间（秒），默认 3600
+		DefaultExpireSeconds int32 `json:",default=3600"`
+	}
 }

@@ -79,8 +79,6 @@ type JoinMeetingRequest {
 type JoinMeetingReply {
 	// join token（浏览器直连 LiveKit 使用）
 	Token string `json:"token"`
-	// LiveKit WebSocket 地址
-	WsUrl string `json:"wsUrl"`
 	// 会议信息
 	Meeting MeetingInfo `json:"meeting"`
 	// 是否可以发布音视频
@@ -287,11 +285,13 @@ type JoinMeetingByTicketReply {
 type GetCurrentUserRequest {}
 
 type GetCurrentUserReply {
-	// 用户 ID
+	// 认证类型：user | device
+	AuthType string `json:"authType"`
+	// 用户/设备 ID（authType 区分类型）
 	UserId string `json:"userId"`
-	// 用户名称
+	// 用户/设备名称
 	UserName string `json:"userName"`
-	// 部门编码
+	// 部门编码（取决于 Token 内容）
 	DeptCode string `json:"deptCode"`
 }
 
@@ -349,6 +349,43 @@ service livegtw {
 	@doc "根据票据加入会议（无需JWT）"
 	@handler joinMeetingByTicket
 	get /joinMeetingByTicket (JoinMeetingByTicketRequest) returns (JoinMeetingByTicketReply)
+}
+
+// ===== Token 签发（不需要用户鉴权，使用签发密钥验证）=====
+type GenerateTokenRequest {
+	// 认证类型：user-用户，device-设备
+	AuthType string `json:"authType"`
+	// 用户/设备 ID（必填，authType 区分语义）
+	UserId string `json:"userId"`
+	// 用户/设备名称（可选）
+	UserName string `json:"userName,optional"`
+	// 部门编码（可选）
+	DeptCode string `json:"deptCode,optional"`
+	// 过期时间（秒），默认 3600
+	ExpireSeconds int32 `json:"expireSeconds,optional"`
+	// 签发密钥（验证调用方身份）
+	SignKey string `json:"signKey"`
+}
+
+type GenerateTokenReply {
+	// Token
+	Token string `json:"token"`
+	// 过期时间戳（秒）
+	AccessExpire int64 `json:"accessExpire"`
+	// 建议刷新时间戳（秒，通常是过期时间的一半）
+	RefreshAfter int64 `json:"refreshAfter"`
+	// 过期时间，格式：yyyy-MM-dd HH:mm:ss
+	ExpireTime string `json:"expireTime"`
+}
+
+@server (
+	prefix: live/v1
+	group:  token
+)
+service livegtw {
+	@doc "签发 Token（无需用户鉴权，使用签发密钥验证）"
+	@handler generateToken
+	post /generateToken (GenerateTokenRequest) returns (GenerateTokenReply)
 }
 
 // ===== 业务路由组（需要鉴权）=====

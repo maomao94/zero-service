@@ -431,18 +431,16 @@ type JoinMeetingRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// join token（浏览器直连 LiveKit 使用）
 	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
-	// LiveKit WebSocket 地址
-	WsUrl string `protobuf:"bytes,2,opt,name=ws_url,json=wsUrl,proto3" json:"ws_url,omitempty"`
 	// 会议信息
-	Meeting *MeetingInfo `protobuf:"bytes,3,opt,name=meeting,proto3" json:"meeting,omitempty"`
+	Meeting *MeetingInfo `protobuf:"bytes,2,opt,name=meeting,proto3" json:"meeting,omitempty"`
 	// 是否可以发布音视频
-	CanPublish bool `protobuf:"varint,4,opt,name=can_publish,json=canPublish,proto3" json:"can_publish,omitempty"`
+	CanPublish bool `protobuf:"varint,3,opt,name=can_publish,json=canPublish,proto3" json:"can_publish,omitempty"`
 	// 是否可以订阅音视频
-	CanSubscribe bool `protobuf:"varint,5,opt,name=can_subscribe,json=canSubscribe,proto3" json:"can_subscribe,omitempty"`
+	CanSubscribe bool `protobuf:"varint,4,opt,name=can_subscribe,json=canSubscribe,proto3" json:"can_subscribe,omitempty"`
 	// 是否可以发布数据
-	CanPublishData bool `protobuf:"varint,6,opt,name=can_publish_data,json=canPublishData,proto3" json:"can_publish_data,omitempty"`
+	CanPublishData bool `protobuf:"varint,5,opt,name=can_publish_data,json=canPublishData,proto3" json:"can_publish_data,omitempty"`
 	// 可以发布的轨道源类型（空表示允许所有）
-	CanPublishSources []string `protobuf:"bytes,7,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
+	CanPublishSources []string `protobuf:"bytes,6,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -480,13 +478,6 @@ func (*JoinMeetingRes) Descriptor() ([]byte, []int) {
 func (x *JoinMeetingRes) GetToken() string {
 	if x != nil {
 		return x.Token
-	}
-	return ""
-}
-
-func (x *JoinMeetingRes) GetWsUrl() string {
-	if x != nil {
-		return x.WsUrl
 	}
 	return ""
 }
@@ -3092,16 +3083,15 @@ const file_live_proto_rawDesc = "" +
 	"canPublish\x12#\n" +
 	"\rcan_subscribe\x18\x06 \x01(\bR\fcanSubscribe\x12(\n" +
 	"\x10can_publish_data\x18\a \x01(\bR\x0ecanPublishData\x12.\n" +
-	"\x13can_publish_sources\x18\b \x03(\tR\x11canPublishSources\"\x8a\x02\n" +
+	"\x13can_publish_sources\x18\b \x03(\tR\x11canPublishSources\"\xf3\x01\n" +
 	"\x0eJoinMeetingRes\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\x12\x15\n" +
-	"\x06ws_url\x18\x02 \x01(\tR\x05wsUrl\x12+\n" +
-	"\ameeting\x18\x03 \x01(\v2\x11.live.MeetingInfoR\ameeting\x12\x1f\n" +
-	"\vcan_publish\x18\x04 \x01(\bR\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12+\n" +
+	"\ameeting\x18\x02 \x01(\v2\x11.live.MeetingInfoR\ameeting\x12\x1f\n" +
+	"\vcan_publish\x18\x03 \x01(\bR\n" +
 	"canPublish\x12#\n" +
-	"\rcan_subscribe\x18\x05 \x01(\bR\fcanSubscribe\x12(\n" +
-	"\x10can_publish_data\x18\x06 \x01(\bR\x0ecanPublishData\x12.\n" +
-	"\x13can_publish_sources\x18\a \x03(\tR\x11canPublishSources\".\n" +
+	"\rcan_subscribe\x18\x04 \x01(\bR\fcanSubscribe\x12(\n" +
+	"\x10can_publish_data\x18\x05 \x01(\bR\x0ecanPublishData\x12.\n" +
+	"\x13can_publish_sources\x18\x06 \x03(\tR\x11canPublishSources\".\n" +
 	"\rGetMeetingReq\x12\x1d\n" +
 	"\n" +
 	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\"<\n" +

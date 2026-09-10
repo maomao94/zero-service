@@ -10,7 +10,6 @@ const (
 	CtxDeptCodeKey      = "dept-code"
 	CtxAuthorizationKey = "authorization"
 	CtxAuthTypeKey      = "auth-type"
-	CtxDeviceIdKey      = "device-id"
 )
 
 // ContextKeys lists authentication context keys in propagation order.
@@ -22,7 +21,6 @@ var ContextKeys = []string{
 	CtxUserNameKey,
 	CtxDeptCodeKey,
 	CtxAuthTypeKey,
-	CtxDeviceIdKey,
 }
 
 // DefaultClaimMapping maps standard internal keys to common external JWT claim names.
@@ -40,7 +38,6 @@ type userNameKey struct{}
 type deptCodeKey struct{}
 type authorizationKey struct{}
 type authTypeKey struct{}
-type deviceIDKey struct{}
 
 // WithUserID stores v under the typed user-id context key.
 func WithUserID(ctx context.Context, v string) context.Context {
@@ -67,11 +64,6 @@ func WithAuthType(ctx context.Context, v string) context.Context {
 	return context.WithValue(ctx, authTypeKey{}, v)
 }
 
-// WithDeviceID stores v under the typed device-id context key.
-func WithDeviceID(ctx context.Context, v string) context.Context {
-	return context.WithValue(ctx, deviceIDKey{}, v)
-}
-
 // WithKey stores v under the typed key matching the wire/claim key.
 // Unknown keys are ignored.
 func WithKey(ctx context.Context, key, v string) context.Context {
@@ -86,8 +78,6 @@ func WithKey(ctx context.Context, key, v string) context.Context {
 		return WithAuthorization(ctx, v)
 	case CtxAuthTypeKey:
 		return WithAuthType(ctx, v)
-	case CtxDeviceIdKey:
-		return WithDeviceID(ctx, v)
 	default:
 		return ctx
 	}
@@ -134,14 +124,6 @@ func GetAuthType(ctx context.Context) string {
 	return ""
 }
 
-// GetDeviceId reads the typed device-id context key.
-func GetDeviceId(ctx context.Context) string {
-	if v, ok := ctx.Value(deviceIDKey{}).(string); ok {
-		return v
-	}
-	return ""
-}
-
 // GetByKey reads the value stored under the typed key matching the wire/claim key.
 // It returns "" for unknown keys or non-string values.
 func GetByKey(ctx context.Context, key string) string {
@@ -156,8 +138,6 @@ func GetByKey(ctx context.Context, key string) string {
 		return GetAuthorization(ctx)
 	case CtxAuthTypeKey:
 		return GetAuthType(ctx)
-	case CtxDeviceIdKey:
-		return GetDeviceId(ctx)
 	default:
 		return ""
 	}
