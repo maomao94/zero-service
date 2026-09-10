@@ -108,7 +108,6 @@ func (m *MeetingAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         ctx := r.Context()
         if auth := r.Header.Get("Authorization"); auth != "" {
-            ctx = authctx.WithAuthType(ctx, "user")
             ctx = authctx.WithAuthorization(ctx, auth)
         }
         ctx = authctx.BridgeJWTClaims(ctx, m.claimMapping)
@@ -117,7 +116,7 @@ func (m *MeetingAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 }
 ```
 
-- 中间件在 `ServiceContext` 中初始化：`m := middleware.NewMeetingAuthMiddleware(c.JwtAuth.ClaimMapping)`
+- 中间件不再硬编码 `auth-type`，由 `BridgeJWTClaims` 从 JWT claims 中提取（设备 token 为 `device`，用户 token 为 `user`）
 - `routes.go` 通过 `serverCtx.MeetingAuth` 引用
 - **用户身份**通过 `authctx.GetUserId(ctx)` / `authctx.GetUserName(ctx)` 获取，写入 gRPC metadata 透传
 

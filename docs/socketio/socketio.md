@@ -66,16 +66,16 @@ socket.on('connect_error', (err) => {
 
 ### 用户与设备鉴权
 
-socketgtw 支持单实例同时服务用户和设备连接，通过 token claims 自动识别身份类型：
+socketgtw 支持单实例同时服务用户和设备连接，通过 token claims 自动识别身份类型。设备 token 复用 `user-id`/`user-name` 等标准身份键，仅通过 `auth-type` 区分：
 
-| Token 类型 | claims特征 | auth-type |
+| Token 类型 | claims 特征 | auth-type |
 |-----------|-----------|-----------|
-| 用户 Token | 包含 `user-id`/`user_id`/`userId`/`uid` | `user` |
-| 设备 Token | 包含 `device-id`/`device_id`/`deviceId` | `device` |
+| 用户 Token | 包含 `user-id`、`user-name` 等标准身份键 | `user` |
+| 设备 Token | 包含 `user-id`、`user-name` 等标准身份键 | `device` |
 
 **内置识别逻辑**（`common/socketiox` 连接流程默认执行）：
 1. 从 token claims 提取标准身份键到 session metadata（`auth-type` 优先采用 claims 中的值）；
-2. claims 缺失 `auth-type` 时按设备身份键兜底推导 `user`/`device`。
+2. claims 缺失 `auth-type` 时默认 `user`。
 
 > `auth-type` 属于受保护元数据：首次写入后 `SetMetadata` 拒绝覆盖，确保会话身份在生命周期内不可篡改。
 
@@ -83,15 +83,14 @@ socketgtw 支持单实例同时服务用户和设备连接，通过 token claims
 ```go
 authType := authctx.GetAuthType(ctx)
 if authType == "device" {
-    deviceId := authctx.GetDeviceId(ctx)
-    // 设备逻辑
+    // 设备逻辑，userId 即设备 ID
 } else {
-    userId := authctx.GetUserId(ctx)
     // 用户逻辑
 }
+userId := authctx.GetUserId(ctx)
 ```
 
-事件处理 ctx（handler/hook 接收到的）已携带解析后的身份键，可直接用 `authctx.GetUserId(ctx)`、`authctx.GetDeviceId(ctx)` 等读取，无需再解析 Token。
+事件处理 ctx（handler/hook 接收到的）已携带解析后的身份键，可直接用 `authctx.GetUserId(ctx)`、`authctx.GetAuthType(ctx)` 等读取，无需再解析 Token。
 
 业务服务通过 gRPC 继续调用下游时，`common/grpcx` 会自动传播以下身份 metadata：
 
@@ -102,7 +101,6 @@ if authType == "device" {
 | `user-name` | `x-user-name` |
 | `dept-code` | `x-dept-code` |
 | `auth-type` | `x-auth-type` |
-| `device-id` | `x-device-id` |
 
 ### 断线重连
 
@@ -169,7 +167,6 @@ SocketGtwConf:
 | `user-name` | `user-name`、`user_name` |
 | `dept-code` | `dept-code`、`dept_code` |
 | `auth-type` | `auth-type`（受保护，不可覆盖） |
-| `device-id` | `device-id`、`device_id`、`deviceId` |
 
 按元数据推送/剔除（`SendToMetaSession` 等）时，Key 支持上述任一别名写法，查询侧自动归一化到标准键。非标准的自定义 claim 使用配置中的原始 key 查询。
 
@@ -398,7 +395,7 @@ socket.on(event, (data) => {
 | `BroadcastRoom` | 向指定房间广播 |
 | `BroadcastGlobal` | 全局广播 |
 | `SendToSession` / `SendToSessions` | 按 Session ID 推送 |
-| `SendToMetaSession` / `SendToMetaSessions` | 按元数据（`user-id`、`device-id` 等）推送 |
+| `SendToMetaSession` / `SendToMetaSessions` | 按元数据（`user-id`、`auth-type` 等）推送 |
 | `KickSession` / `KickMetaSession` | 剔除会话 |
 | `SocketGtwStat` | 网关统计 |
 
@@ -427,5 +424,5 @@ socket.on(event, (data) => {
 - 服务端消息体为 JSON 字符串，前端统一封装解析函数
 - OSD 数据 0.5Hz，避免每次收到时重渲染
 - 生产环境务必配置 `reconnection` 相关参数，确保断线自动恢复
-- 用户和设备使用不同的 Token，服务端通过 claims 自动识别身份类型
+- 用户和设备使用不同的 Token（通过 `auth-type` 区分），设备 Token 复用 `user-id`/`user-name` 等标准身份键
 - 默认只提取标准身份 claim；只有需要按自定义 claim 定位 Session 时才配置 `SocketMetaData`
