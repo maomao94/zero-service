@@ -29,9 +29,13 @@ func patrolDeviceCoordinatesToItems(items []*ispagent.PatrolDeviceCoordinate) []
 		if item == nil {
 			continue
 		}
+		code := item.GetPatrolDeviceCode()
+		if code == "" {
+			continue
+		}
 		out = append(out, isp.Item{
 			"patroldevice_name":    item.GetPatrolDeviceName(),
-			"patroldevice_code":    item.GetPatrolDeviceCode(),
+			"patroldevice_code":    code,
 			"time":                 now,
 			"coordinate_pixel":     item.GetCoordinatePixel(),
 			"coordinate_geography": item.GetCoordinateGeography(),
@@ -48,9 +52,13 @@ func patrolDeviceRunDataToItems(items []*ispagent.PatrolDeviceRunData) []isp.Ite
 		if item == nil {
 			continue
 		}
+		code := item.GetPatrolDeviceCode()
+		if code == "" {
+			continue
+		}
 		out = append(out, isp.Item{
 			"patroldevice_name": item.GetPatrolDeviceName(),
-			"patroldevice_code": item.GetPatrolDeviceCode(),
+			"patroldevice_code": code,
 			"time":              now,
 			"type":              strconv.Itoa(int(item.GetType())),
 			"value":             item.GetValue(),
@@ -68,9 +76,13 @@ func patrolDeviceStatusDataToItems(items []*ispagent.PatrolDeviceStatusData) []i
 		if item == nil {
 			continue
 		}
+		code := item.GetPatrolDeviceCode()
+		if code == "" {
+			continue
+		}
 		out = append(out, isp.Item{
 			"patroldevice_name": item.GetPatrolDeviceName(),
-			"patroldevice_code": item.GetPatrolDeviceCode(),
+			"patroldevice_code": code,
 			"time":              now,
 			"type":              item.GetType(),
 			"value":             item.GetValue(),
@@ -88,9 +100,13 @@ func droneNestRunDataToItems(items []*ispagent.DroneNestRunData) []isp.Item {
 		if item == nil {
 			continue
 		}
+		code := item.GetNestCode()
+		if code == "" {
+			continue
+		}
 		out = append(out, isp.Item{
 			"nest_name":  item.GetNestName(),
-			"nest_code":  item.GetNestCode(),
+			"nest_code":  code,
 			"module_no":  item.GetModuleNo(),
 			"time":       now,
 			"type":       item.GetType(),
@@ -109,13 +125,17 @@ func envDataToItems(items []*ispagent.EnvData) []isp.Item {
 		if item == nil {
 			continue
 		}
+		code := item.GetPatrolDeviceCode()
+		if code == "" {
+			continue
+		}
 		t := item.GetTime()
 		if t == "" {
 			t = now
 		}
 		out = append(out, isp.Item{
 			"patroldevice_name": item.GetPatrolDeviceName(),
-			"patroldevice_code": item.GetPatrolDeviceCode(),
+			"patroldevice_code": code,
 			"time":              t,
 			"type":              item.GetType(),
 			"value":             item.GetValue(),
