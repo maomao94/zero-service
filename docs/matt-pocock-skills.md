@@ -521,7 +521,7 @@
 
 ## 本仓库的轻量工作流
 
-本项目直接使用 Matt 技能，不再依赖额外的任务生命周期框架。根目录 `AGENTS.md` 只保存默认行为和知识入口，稳定工程契约与领域不变量按需放在 `docs/agent/`。
+本项目直接使用 Matt 技能，不再依赖额外的任务生命周期框架。根目录 `AGENTS.md` 只保存默认行为和知识入口，稳定工程契约与领域不变量由 OpenViking 记忆系统提供（`viking://resources/project/zero-service`）。
 
 ### Idea → Ship
 
@@ -537,7 +537,7 @@
 | 信息 | 位置或技能 |
 | --- | --- |
 | 每次任务都需要的少量默认行为 | `AGENTS.md` |
-| 稳定工程契约、领域不变量和任务路由 | `docs/agent/` |
+| 稳定工程契约、领域不变量和任务路由 | OpenViking 记忆系统（`viking://resources/project/zero-service`） |
 | 领域术语表与重要决策 | `domain-modeling` 管理的 `CONTEXT.md` 与 ADR |
 | 功能需求与实施切片 | `to-spec`、`to-tickets` 产生的文档或 issue |
 | 一手资料调研 | `research` 产生的带引用 Markdown |
@@ -546,7 +546,7 @@
 
 ### 上下文卫生
 
-需求澄清到 ticket 拆分尽量保持同一上下文。每张 ticket 的实现使用独立上下文，只读取 `docs/agent/README.md` 命中的一份工程规范和一份领域契约；文档明确指出依赖时再展开。
+需求澄清到 ticket 拆分尽量保持同一上下文。每张 ticket 的实现使用独立上下文，只检索 OpenViking 记忆（`openviking_search`）命中的一份工程规范和一份领域契约；文档明确指出依赖时再展开。
 
 ---
 

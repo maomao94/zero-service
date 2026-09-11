@@ -34,8 +34,6 @@ web/
 
 **端口：** 5178
 
-**文档：** [Live 视频会议文档](../docs/agent/domains/livekit/web.md)
-
 ---
 
 ### 2. SocketIO 网关测试 (`socketio/`)
@@ -179,9 +177,6 @@ cd web/workspace && npm run build
 
 ## 相关文档
 
-- [Agent 知识库](../docs/agent/README.md)
-- [SocketIO Server 文档](../docs/agent/standards/networking/socketio.md)
-- [LiveKit Web 前端文档](../docs/agent/domains/livekit/web.md)
 - [领域上下文地图](../CONTEXT-MAP.md)
 
 ---

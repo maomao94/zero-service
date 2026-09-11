@@ -109,5 +109,4 @@ web/socketio/
 
 ## 相关文档
 
-- [SocketIO Server 文档](../../docs/agent/standards/networking/socketio.md)
 - [SocketIO 源码](../../common/socketiox/)

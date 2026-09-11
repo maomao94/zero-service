@@ -147,7 +147,6 @@ npm run dev
 - [SocketIO 网关测试文档](./socketio/README.md)
 - [工作台文档](./workspace/README.md)
 - [总体说明文档](./README.md)
-- [SocketIO Server 文档](../docs/agent/standards/networking/socketio.md)
 
 ---
 
