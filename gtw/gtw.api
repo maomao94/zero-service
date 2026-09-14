@@ -64,9 +64,10 @@ service gtw {
 }
 
 @server (
-	prefix: app/user/v1
-	group:  user
-	jwt:    JwtAuth
+	prefix:     app/user/v1
+	group:      user
+	jwt:        JwtAuth
+	middleware: UserAuth
 )
 service gtw {
 	@doc "获取用户信息"

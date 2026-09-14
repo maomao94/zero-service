@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/payment"
 	"github.com/go-playground/validator/v10"
+	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/zrpc"
 	"zero-service/app/file/file"
 	"zero-service/common/grpcx"
 	"zero-service/common/powerwechatx"
 	"zero-service/gtw/internal/config"
+	"zero-service/gtw/internal/middleware"
 	"zero-service/zerorpc/zerorpc"
 )
 
@@ -18,6 +20,7 @@ type ServiceContext struct {
 	ZeroRpcCli zerorpc.ZerorpcClient
 	FileRpcCLi file.FileRpcClient
 	WxPayCli   *payment.Payment
+	UserAuth   rest.Middleware
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -53,9 +56,11 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	if err != nil {
 		panic(fmt.Errorf("微信支付初始化错误,%v", err))
 	}
+	m := middleware.NewUserAuthMiddleware(c.JwtAuth.ClaimMapping)
 	return &ServiceContext{
 		Config:   c,
 		Validate: validator.New(),
+		UserAuth: m.Handle,
 		ZeroRpcCli: zerorpc.NewZerorpcClient(zrpc.MustNewClient(c.ZeroRpcConf,
 			zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor)).Conn()),
 		FileRpcCLi: file.NewFileRpcClient(zrpc.MustNewClient(c.FileRpcConf,

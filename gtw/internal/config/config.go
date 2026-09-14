@@ -9,7 +9,9 @@ type Config struct {
 	//gateway.GatewayConf
 	rest.RestConf
 	JwtAuth struct {
-		AccessSecret string
+		AccessSecret     string
+		PrevAccessSecret string            `json:",optional"`
+		ClaimMapping     map[string]string `json:",optional"`
 	}
 	ZeroRpcConf  zrpc.RpcClientConf
 	FileRpcConf  zrpc.RpcClientConf

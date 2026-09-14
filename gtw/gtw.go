@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"zero-service/common/authctx"
 	"zero-service/common/gtwx"
 	_ "zero-service/common/nacosx"
 	"zero-service/common/tool"
@@ -19,6 +18,7 @@ import (
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/rest/httpx"
+	xhttp "github.com/zeromicro/x/http"
 )
 
 var configFile = flag.String("f", "etc/gtw.yaml", "the config file")
@@ -53,22 +53,6 @@ func main() {
 
 	server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
 
-	// 全局中间件：网关入口请求均来自浏览器，标记 auth-type=user。
-	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			ctx := authctx.WithAuthType(r.Context(), "user")
-			next(w, r.WithContext(ctx))
-		}
-	})
-
-	// 桥接中间件：在 JWT 验证之后运行，把 go-zero 写入的 string claim 转成 typed key。
-	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			ctx := authctx.BridgeJWTClaims(r.Context(), nil)
-			next(w, r.WithContext(ctx))
-		}
-	})
-
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)
 	serviceGroup := service.NewServiceGroup()
@@ -87,7 +71,7 @@ func main() {
 				body := SwaggerFile{}
 				err := httpx.Parse(r, &body)
 				if err != nil {
-					httpx.ErrorCtx(r.Context(), w, err)
+					xhttp.JsonBaseResponseCtx(r.Context(), w, err)
 					return
 				}
 				w.Header().Set("Content-Type", "application/json")
