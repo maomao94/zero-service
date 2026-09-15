@@ -1,0 +1,47 @@
+# =============================================================
+# reviewdog：在 PR 上自动跑 staticcheck 并内联评论
+# 比 go vet 更严格的 Go 静态检查工具
+# 让 AI（这里就是机器人）在代码里直接标注问题位置
+# =============================================================
+name: reviewdog
+
+# 只在有 PR 时触发（不跑 push）
+on: [pull_request]
+
+jobs:
+  # 跑 staticcheck 的任务
+  staticcheck:
+    name: runner / staticcheck
+    runs-on: ubuntu-latest
+    steps:
+      # 下载代码
+      - uses: actions/checkout@v4
+
+      # 装 Go（版本读 go.mod）
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          check-latest: true
+          cache: true
+
+      # 核心：用 reviewdog 包装 staticcheck
+      # reviewdog 会把 staticcheck 的输出转成 PR 里的内联评论
+      - uses: reviewdog/action-staticcheck@v1
+        with:
+          github_token: ${{ secrets.github_token }}
+          # 报告方式，三种可选：
+          #   github-pr-check   : 显示为 PR 的 Check，不评论
+          #   github-check      : 显示为单个 Check
+          #   github-pr-review  : 以内联评论形式贴在对应代码行
+          reporter: github-pr-review
+          # 报告全部结果，而不是只报新增的
+          filter_mode: nofilter
+          # 发现任何一条就判定任务失败（CI 变红）
+          fail_level: any
+          # 要运行的检查项
+          # 格式：-checks=inherit,-SA1019 表示「用默认检查集，但关闭这几个」
+          # 下面三个是 go-zero 特意关的：
+          #   SA1019 用了已废弃的 API（这个太吵，先关掉）
+          #   SA1029 把结构体当 key 使用（误报多）
+          #   SA5008 重复的 struct tag
+          staticcheck_flags: -checks=inherit,-SA1019,-SA1029,-SA5008
