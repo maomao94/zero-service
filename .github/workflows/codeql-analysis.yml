@@ -20,6 +20,13 @@ on:
   schedule:
     - cron: '18 19 * * 6'
 
+# CodeQL 上传结果到 Security 需要写 security-events 权限
+# 缺了会报 Resource not accessible by integration
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
 jobs:
   # 分析任务
   analyze:
@@ -41,7 +48,7 @@ jobs:
       # 第 2 步：初始化 CodeQL
       # 告诉工具要分析哪种语言、用哪套内置规则
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           # 想加自定义规则就在 queries 里写路径，默认用 GitHub 内置规则
@@ -49,9 +56,9 @@ jobs:
       # 第 3 步：自动构建
       # CodeQL 需要看懂代码，对 Go 会自动执行 go build
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4
 
       # 第 4 步：真正执行分析并生成结果
       # 结果会出现在仓库 Security 标签页，PR 上也会显示
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4

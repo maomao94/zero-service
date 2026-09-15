@@ -8,6 +8,12 @@ name: reviewdog
 # 只在有 PR 时触发（不跑 push）
 on: [pull_request]
 
+# reviewdog 要写 Check 和 PR 评论，缺了会报 Resource not accessible by integration
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
+
 jobs:
   # 跑 staticcheck 的任务
   staticcheck:
