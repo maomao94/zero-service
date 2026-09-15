@@ -1,0 +1,57 @@
+# =============================================================
+# CodeQL 是 GitHub 官方的安全代码扫描工具
+# 它会对代码做静态分析，查找潜在的安全漏洞
+# 这个文件是从 go-zero 参考移植过来的，可放心学习使用
+# =============================================================
+name: "CodeQL"
+
+# =============================================================
+# 触发条件：三种
+#  1. push 到 master
+#  2. 向 master 提 PR
+#  3. 定时任务：每周六 19:18（cron 是 UTC 时间）
+# =============================================================
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    # 注意：这里的分支必须是上面 push 分支的子集
+    branches: [ master ]
+  schedule:
+    - cron: '18 19 * * 6'
+
+jobs:
+  # 分析任务
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+
+    # strategy.matrix：让同一任务跑多个参数组合
+    # 这里只有 go 一种语言，用矩阵是为将来加语言预留
+    strategy:
+      fail-fast: false   # 一个组合失败不取消其它组合
+      matrix:
+        language: [ 'go' ]   # 只扫描 Go
+
+    steps:
+      # 第 1 步：下载代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 第 2 步：初始化 CodeQL
+      # 告诉工具要分析哪种语言、用哪套内置规则
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # 想加自定义规则就在 queries 里写路径，默认用 GitHub 内置规则
+
+      # 第 3 步：自动构建
+      # CodeQL 需要看懂代码，对 Go 会自动执行 go build
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      # 第 4 步：真正执行分析并生成结果
+      # 结果会出现在仓库 Security 标签页，PR 上也会显示
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
