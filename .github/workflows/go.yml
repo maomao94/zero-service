@@ -38,15 +38,28 @@ jobs:
           check-latest: true       # 有更新的补丁版本就用最新的
           cache: true              # 缓存 Go 模块，加快下次运行
 
-      # 第 3 步：下载依赖
+      # 第 3 步：装系统依赖
+      # 本项目用了几个 C 库，这里逐一说明哪些必须装、哪些不用：
+      #   - GEOS（common/gisx/geos → go-geos）：必须装 libgeos-dev，
+      #     编译时要 pkg-config 能找到 geos.pc，否则报 Package geos was not found
+      #   - H3（uber/h3-go/v4）：C 源码随包附带（h3_*.c），无需系统库
+      #   - SQLite（mattn/go-sqlite3）：自带 amalgamation，无需系统库
+      #   - FFmpeg（u2takey/ffmpeg-go）：只是调 ffmpeg 命令行，编译期不需要，
+      #     只有跑到视频转码时才依赖可执行文件，CI 不装也不影响 vet/test
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgeos-dev
+
+      # 第 4 步：下载依赖
       - name: Get dependencies
         run: |
           go get -v -t -d ./...    # 拉取 go.mod 声明的所有依赖
 
-      # 第 4 步：静态检查（go vet 是 Go 自带的代码质量检查）
+      # 第 5 步：静态检查（go vet 是 Go 自带的代码质量检查）
       - name: Vet
         run: go vet ./...
 
-      # 第 5 步：跑全部单元测试，带 -race 开启数据竞争检测
+      # 第 6 步：跑全部单元测试，带 -race 开启数据竞争检测
       - name: Test
         run: go test -race ./...
