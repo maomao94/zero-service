@@ -50,7 +50,7 @@ require (
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2
 	github.com/minio/minio-go/v7 v7.3.0
 	github.com/mmcloughlin/geohash v0.10.0
-	github.com/modelcontextprotocol/go-sdk v1.7.0
+	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.5
 	github.com/panjf2000/ants/v2 v2.12.1
 	github.com/panjf2000/gnet/v2 v2.10.0
