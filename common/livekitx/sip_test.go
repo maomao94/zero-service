@@ -13,6 +13,7 @@ package livekitx_test
 import (
 	"context"
 	"fmt"
+	"net"
 	"testing"
 	"time"
 
@@ -33,6 +34,18 @@ const (
 	freeSWITCHNumber = "1000"
 )
 
+// requireSIPServer 探测本机 LiveKit SIP Server 是否可用。
+// 本文件是集成测试，依赖 deploy/livekit/start.sh 启动的 Docker 环境；
+// 环境未启动时直接跳过，避免 CI 因连接被拒而失败。
+func requireSIPServer(t *testing.T) {
+	t.Helper()
+	conn, err := net.DialTimeout("tcp", "127.0.0.1:7880", 500*time.Millisecond)
+	if err != nil {
+		t.Skipf("跳过 SIP 集成测试：LiveKit Server 未启动（%v）", err)
+	}
+	_ = conn.Close()
+}
+
 func newSIPTestClient(t *testing.T) *livekitx.Client {
 	t.Helper()
 	client, err := livekitx.New(
@@ -48,6 +61,7 @@ func newSIPTestClient(t *testing.T) *livekitx.Client {
 
 // TestSIPTrunkCRUD 测试 SIP Trunk 的创建、列出、删除。
 func TestSIPTrunkCRUD(t *testing.T) {
+	requireSIPServer(t)
 	client := newSIPTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -108,6 +122,7 @@ func TestSIPTrunkCRUD(t *testing.T) {
 
 // TestSIPDispatchRuleCRUD 测试 Dispatch Rule 的创建、列出、删除。
 func TestSIPDispatchRuleCRUD(t *testing.T) {
+	requireSIPServer(t)
 	client := newSIPTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -174,6 +189,7 @@ func TestSIPDispatchRuleCRUD(t *testing.T) {
 // TestSIPDial 测试 SIP 外呼拨号。
 // 注意：需要 FreeSWITCH 中有注册的分机才能真正接通。
 func TestSIPDial(t *testing.T) {
+	requireSIPServer(t)
 	client := newSIPTestClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

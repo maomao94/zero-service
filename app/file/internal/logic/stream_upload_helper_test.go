@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -28,6 +29,9 @@ import (
 )
 
 type logicFakeTemplate struct {
+	// mu 保护下列字段：异步缩略图任务会并发调用 PutObject，
+	// 主测试 goroutine 同时读取，不加锁会触发 data race。
+	mu            sync.Mutex
 	data          bytes.Buffer
 	contentType   string
 	putCalls      int
@@ -51,6 +55,9 @@ func (t *logicFakeTemplate) PutStream(context.Context, string, string, string, s
 	return nil, nil
 }
 func (t *logicFakeTemplate) PutObject(ctx context.Context, tenantID, bucketName, filename, contentType string, reader io.Reader, objectSize int64, pathPrefix ...string) (*ossx.File, error) {
+	// reader 的读取与字段写入必须整体持锁：异步任务与主 goroutine 会并发访问。
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	t.putCalls++
 	t.contentType = contentType
 	t.ctxErr = ctx.Err()
@@ -71,6 +78,13 @@ func (t *logicFakeTemplate) PutObject(ctx context.Context, tenantID, bucketName,
 		Size:   int64(t.data.Len()),
 		Md5:    fmt.Sprintf("%x", md5.Sum(t.data.Bytes())),
 	}, nil
+}
+
+// snapshot 在锁保护下拷贝出三态快照，供测试断言使用，避免直接读未加锁字段。
+func (t *logicFakeTemplate) snapshot() (putCalls int, dataLen int, data string, contentType string, ctxErr error) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.putCalls, t.data.Len(), t.data.String(), t.contentType, t.ctxErr
 }
 func (t *logicFakeTemplate) SignUrl(context.Context, string, string, string, time.Duration) (string, error) {
 	return "", nil
@@ -316,10 +330,22 @@ func TestProcessUploadResult_AsyncThumbUsesContextWithoutCancel(t *testing.T) {
 	if pbFile.ThumbLink == "" || pbFile.ThumbName == "" {
 		t.Fatal("Thumb fields should be set before async task finishes")
 	}
-	if template.ctxErr != nil {
-		t.Fatalf("async upload ctxErr = %v, want nil", template.ctxErr)
+	// 异步任务可能仍在跑，用短轮询等它把 ctxErr 写进去再断言，避免读不到。
+	deadline := time.Now().Add(2 * time.Second)
+	var gotCtxErr error
+	for {
+		_, _, _, _, gotCtxErr = template.snapshot()
+		if gotCtxErr != nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
 	}
-	time.Sleep(20 * time.Millisecond)
+	if gotCtxErr != nil {
+		t.Fatalf("async upload ctxErr = %v, want nil", gotCtxErr)
+	}
 }
 
 func TestProcessUploadResult_NilFile(t *testing.T) {
@@ -429,11 +455,12 @@ func TestRelayFileCopiesDetectedHeadBytes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RelayFile() error = %v", err)
 	}
-	if !bytes.Equal(template.data.Bytes(), source) {
-		t.Fatalf("relay data length = %d, want %d", template.data.Len(), len(source))
+	_, dataLen, dataStr, contentType, _ := template.snapshot()
+	if !bytes.Equal([]byte(dataStr), source) {
+		t.Fatalf("relay data length = %d, want %d", dataLen, len(source))
 	}
-	if template.contentType != "image/png" {
-		t.Fatalf("contentType = %q, want image/png", template.contentType)
+	if contentType != "image/png" {
+		t.Fatalf("contentType = %q, want image/png", contentType)
 	}
 }
 
@@ -472,11 +499,12 @@ func TestRelayFileCopiesSourceToAllTargets(t *testing.T) {
 		t.Fatal("relay response md5 should not be empty")
 	}
 	for i, template := range templates {
-		if template.putCalls != 1 {
-			t.Fatalf("target %d put calls = %d, want 1", i, template.putCalls)
+		putCalls, _, dataStr, _, _ := template.snapshot()
+		if putCalls != 1 {
+			t.Fatalf("target %d put calls = %d, want 1", i, putCalls)
 		}
-		if template.data.String() != "relay data" {
-			t.Fatalf("target %d data = %q, want relay data", i, template.data.String())
+		if dataStr != "relay data" {
+			t.Fatalf("target %d data = %q, want relay data", i, dataStr)
 		}
 	}
 }
@@ -513,14 +541,16 @@ func TestRelayFileContinuesAfterOneTargetPutObjectFails(t *testing.T) {
 	if len(res.Files) != 1 {
 		t.Fatalf("files length = %d, want 1", len(res.Files))
 	}
-	if templates[0].data.Len() != 0 {
-		t.Fatalf("failed target data length = %d, want 0", templates[0].data.Len())
+	_, failedLen, _, _, _ := templates[0].snapshot()
+	if failedLen != 0 {
+		t.Fatalf("failed target data length = %d, want 0", failedLen)
 	}
-	if templates[1].putCalls != 1 {
-		t.Fatalf("second target put calls = %d, want 1", templates[1].putCalls)
+	secondCalls, _, secondData, _, _ := templates[1].snapshot()
+	if secondCalls != 1 {
+		t.Fatalf("second target put calls = %d, want 1", secondCalls)
 	}
-	if templates[1].data.String() != "relay data" {
-		t.Fatalf("second target data = %q, want relay data", templates[1].data.String())
+	if secondData != "relay data" {
+		t.Fatalf("second target data = %q, want relay data", secondData)
 	}
 }
 
@@ -544,11 +574,12 @@ func TestRelayFileFromURL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RelayFile() error = %v", err)
 	}
-	if !bytes.Equal(template.data.Bytes(), source) {
-		t.Fatalf("relay data length = %d, want %d", template.data.Len(), len(source))
+	_, dataLen, dataStr, contentType, _ := template.snapshot()
+	if !bytes.Equal([]byte(dataStr), source) {
+		t.Fatalf("relay data length = %d, want %d", dataLen, len(source))
 	}
-	if template.contentType != "image/png" {
-		t.Fatalf("contentType = %q, want image/png", template.contentType)
+	if contentType != "image/png" {
+		t.Fatalf("contentType = %q, want image/png", contentType)
 	}
 }
 
