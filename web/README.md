@@ -175,12 +175,6 @@ cd web/workspace && npm run build
 
 ---
 
-## 相关文档
-
-- [领域上下文地图](../CONTEXT-MAP.md)
-
----
-
 ## 常见问题
 
 ### Q: 如何修改端口？
