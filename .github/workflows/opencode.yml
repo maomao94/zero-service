@@ -14,11 +14,15 @@ jobs:
       contains(github.event.comment.body, ' /opencode') ||
       startsWith(github.event.comment.body, '/opencode')
     runs-on: ubuntu-latest
+    # 最小权限之外的写权限：装了 OpenCode GitHub App 后，
+    # 评论靠 App token 能通，但建分支/push/开 PR 走完整功能时，
+    # 官方要求这三个给 write，否则回写会被拒
     permissions:
-      id-token: write
-      contents: read
-      pull-requests: read
-      issues: read
+      id-token: write      # OIDC 换 App token 用，必须
+      contents: write      # 推分支、提交文件用
+      pull-requests: write # 开 PR、提交到 PR 分支用
+      issues: write        # 回写 issue 评论、用 issue 开 PR 用
+      actions: write       # 存 opencode 二进制缓存用，消 cache write denied 警告
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
