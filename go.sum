@@ -1169,8 +1169,8 @@ github.com/smartystreets/assertions v1.1.0/go.mod h1:tcbTF8ujkAEcZ8TElKY+i30BzYl
 github.com/smartystreets/goconvey v1.6.4/go.mod h1:syvi0/a8iFYH4r/RixwvyeAJjdLS9QV7WQ/tjFTllLA=
 github.com/smartystreets/goconvey v1.8.1 h1:qGjIddxOk4grTu9JPOU31tVfq3cNdBlNa5sSznIX1xY=
 github.com/smartystreets/goconvey v1.8.1/go.mod h1:+/u4qLyY6x1jReYOp7GOM2FSt8aP9CzCZL03bI28W60=
-github.com/songzhibin97/gkit v1.4.0 h1:PKp2ul14AbpFVQe3TRyb1XQIESFWZkaNX0VB8G1Va0Q=
-github.com/songzhibin97/gkit v1.4.0/go.mod h1:dWcGE2Hw3C/xqWTrWlUsAD2of4y8sG7i8amYIVjecBw=
+github.com/songzhibin97/gkit v1.5.0 h1:AKSylBJOA37MasyfUxrU1UucILP+1wFESsdNH3BnHdE=
+github.com/songzhibin97/gkit v1.5.0/go.mod h1:dWcGE2Hw3C/xqWTrWlUsAD2of4y8sG7i8amYIVjecBw=
 github.com/sony/gobreaker v0.4.1/go.mod h1:ZKptC7FHNvhBz7dN2LGjPVBz2sZJmc0/PkyDJOjmxWY=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/spaolacci/murmur3 v1.1.0 h1:7c1g84S4BPRrfL5Xrdp6fOJ206sU9y293DDHaoy0bLI=
