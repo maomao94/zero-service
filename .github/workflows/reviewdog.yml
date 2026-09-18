@@ -48,10 +48,8 @@ jobs:
           #   github-check      : 显示为单个 Check
           #   github-pr-review  : 以内联评论形式贴在对应代码行
           reporter: github-pr-review
-          # 只检查 PR 新增的行：
-          # nofilter 会把全仓库存量问题全报出来（首次跑出 79 条），CI 永远红
-          # 改成 added 后只对新增代码生效，存量问题不阻塞 PR，以后逐步还债
-          filter_mode: added
+          # 报告全仓库的检查结果，和 go-zero 的配置保持一致
+          filter_mode: nofilter
           # 发现任何一条就判定任务失败（CI 变红）
           fail_level: any
           # 要运行的检查项
