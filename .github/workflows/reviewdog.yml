@@ -30,6 +30,14 @@ jobs:
           check-latest: true
           cache: true
 
+      # 装系统依赖（和 go.yml 保持一致）
+      # GEOS（common/gisx/geos → go-geos）必须装 libgeos-dev，缺了 geos.pc
+      # staticcheck 连包都加载不了，会报 Package geos was not found
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgeos-dev
+
       # 核心：用 reviewdog 包装 staticcheck
       # reviewdog 会把 staticcheck 的输出转成 PR 里的内联评论
       - uses: reviewdog/action-staticcheck@v1
@@ -40,8 +48,10 @@ jobs:
           #   github-check      : 显示为单个 Check
           #   github-pr-review  : 以内联评论形式贴在对应代码行
           reporter: github-pr-review
-          # 报告全部结果，而不是只报新增的
-          filter_mode: nofilter
+          # 只检查 PR 新增的行：
+          # nofilter 会把全仓库存量问题全报出来（首次跑出 79 条），CI 永远红
+          # 改成 added 后只对新增代码生效，存量问题不阻塞 PR，以后逐步还债
+          filter_mode: added
           # 发现任何一条就判定任务失败（CI 变红）
           fail_level: any
           # 要运行的检查项
@@ -50,4 +60,7 @@ jobs:
           #   SA1019 用了已废弃的 API（这个太吵，先关掉）
           #   SA1029 把结构体当 key 使用（误报多）
           #   SA5008 重复的 struct tag
-          staticcheck_flags: -checks=inherit,-SA1019,-SA1029,-SA5008
+          # ST1012 是本项目关的：
+          #   protoc-gen-validate 生成的 *.pb.validate.go 里 var _ = errors.New("")
+          #   必报 ST1012，生成文件不可编辑，staticcheck 又不支持按文件排除，只能全局关
+          staticcheck_flags: -checks=inherit,-SA1019,-SA1029,-SA5008,-ST1012
