@@ -117,9 +117,9 @@ func (c *DelimiterCodec) Encode(_ context.Context, msg any, _ Conn) ([]byte, err
 		return nil, err
 	}
 	frameCap := len(payload) + len(c.delimiter)
-	if frameCap < 0 {
-		return nil, fmt.Errorf("gnetx: delimiter frame capacity overflow (payload=%d, delimiter=%d)",
-			len(payload), len(c.delimiter))
+	if frameCap > maxFrameAllocSize {
+		return nil, fmt.Errorf("gnetx: delimiter frame capacity %d exceeds limit %d",
+			frameCap, maxFrameAllocSize)
 	}
 	out := make([]byte, 0, frameCap)
 	out = append(out, payload...)

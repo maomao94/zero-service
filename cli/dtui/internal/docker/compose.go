@@ -113,15 +113,13 @@ func UnzipToDir(zipPath, destDir string) error {
 	}
 	defer r.Close()
 
-	destRoot := filepath.Clean(destDir) + string(os.PathSeparator)
 	for _, f := range r.File {
-		fpath := filepath.Join(destDir, f.Name)
-		// 拒绝 zip 内相对路径逃逸出目标目录（Zip Slip），如 "../evil.txt"
-		// （Join 后落到目标目录之外）；"/" 开头的条目名会被 Join 安全附加
-		// 到目录内，无需拦截
-		if fpath != filepath.Clean(destDir) && !strings.HasPrefix(fpath, destRoot) {
+		// 拒绝条目名含 ".." 的路径穿越（Zip Slip），如 "../evil.txt"；
+		// 在 Join 前对条目名本身做检查，Join 后不会逃逸出目标目录
+		if strings.Contains(f.Name, "..") {
 			return fmt.Errorf("zip 内非法路径: %s", f.Name)
 		}
+		fpath := filepath.Join(destDir, f.Name)
 		if f.FileInfo().IsDir() {
 			os.MkdirAll(fpath, 0755)
 			continue
@@ -177,7 +175,6 @@ func (c *Client) CopyFromContainer(containerID, containerPath, hostPath string) 
 		return fmt.Errorf("创建备份目录失败: %w", err)
 	}
 
-	hostRoot := filepath.Clean(hostPath) + string(os.PathSeparator)
 	tr := tar.NewReader(tarReader)
 	for {
 		header, err := tr.Next()
@@ -187,11 +184,12 @@ func (c *Client) CopyFromContainer(containerID, containerPath, hostPath string) 
 		if err != nil {
 			return fmt.Errorf("读取 tar 失败: %w", err)
 		}
-		target := filepath.Join(hostPath, header.Name)
-		// 拒绝 tar 内相对路径逃逸出备份目录（如 "../../evil"）
-		if target != filepath.Clean(hostPath) && !strings.HasPrefix(target, hostRoot) {
+		// 拒绝条目名含 ".." 的路径穿越（如 "../../evil"），
+		// Join 后不会逃逸出备份目录
+		if strings.Contains(header.Name, "..") {
 			return fmt.Errorf("tar 内非法路径: %s", header.Name)
 		}
+		target := filepath.Join(hostPath, header.Name)
 		switch header.Typeflag {
 		case tar.TypeDir:
 			os.MkdirAll(target, 0755)
