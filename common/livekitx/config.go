@@ -23,9 +23,13 @@ type Config struct {
 	// HTTPClient 可选注入管理 API 的 HTTP 传输（即生成的 twirp client
 	// 所需的 livekit.HTTPClient，*http.Client 天然满足；go-zero
 	// httpc.Service 用 WithHTTPService 注入）：TLS/观测由注入方配置。
-	// nil 时使用 SDK 内部传输——TLS 对自签证书容错，http/https 均可
-	// 直连，调用方无需安装证书。
+	// nil 时使用 SDK 内部传输——TLS 是否跳过证书校验由
+	// TLSInsecureSkipVerify 决定（默认正常校验）。
 	HTTPClient livekit.HTTPClient
+	// TLSInsecureSkipVerify 控制 SDK 内部传输是否跳过 TLS 证书校验，
+	// 仅 HTTPClient 为 nil 的内部传输路径生效；内网自签证书环境显式
+	// 开启，默认 false 走正常证书校验。
+	TLSInsecureSkipVerify bool
 }
 
 // Option 直接作用于 Client：配置类选项写入 c.config。nil option 会被
@@ -50,6 +54,12 @@ func WithHTTPClient(client livekit.HTTPClient) Option {
 // 传输和观测配置，TLS 由注入的 service 决定。
 func WithHTTPService(service HTTPService) Option {
 	return func(c *Client) { c.config.HTTPClient = serviceHTTPClient{service: service} }
+}
+
+// WithInsecureTLS 控制 SDK 内部传输是否跳过 TLS 证书校验（仅未注入
+// HTTP 传输时生效），默认 false 走正常校验；内网自签证书环境显式开启。
+func WithInsecureTLS(skip bool) Option {
+	return func(c *Client) { c.config.TLSInsecureSkipVerify = skip }
 }
 
 // Client 是 livekitx 的统一入口：持有复用的管理 API 与配置；

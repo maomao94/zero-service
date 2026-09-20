@@ -3,6 +3,7 @@ package gnetx
 import (
 	"bytes"
 	"context"
+	"fmt"
 
 	"github.com/panjf2000/gnet/v2"
 )
@@ -115,7 +116,12 @@ func (c *DelimiterCodec) Encode(_ context.Context, msg any, _ Conn) ([]byte, err
 	if err != nil {
 		return nil, err
 	}
-	out := make([]byte, 0, len(payload)+len(c.delimiter))
+	frameCap := len(payload) + len(c.delimiter)
+	if frameCap < 0 {
+		return nil, fmt.Errorf("gnetx: delimiter frame capacity overflow (payload=%d, delimiter=%d)",
+			len(payload), len(c.delimiter))
+	}
+	out := make([]byte, 0, frameCap)
 	out = append(out, payload...)
 	out = append(out, c.delimiter...)
 	return out, nil

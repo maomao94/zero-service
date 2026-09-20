@@ -7,6 +7,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/term"
 	"gopkg.in/yaml.v2"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,13 +25,17 @@ type Service struct {
 
 // ServerConfig represents the structure of server configuration
 type ServerConfig struct {
-	SSHUser     string    `yaml:"sshUser"`
-	SSHHost     string    `yaml:"sshHost"`
-	SSHPort     string    `yaml:"sshPort"`
-	SSHPassword string    `yaml:"sshPassword"`
-	Path        string    `yaml:"path"`
-	Services    []Service `yaml:"serviceName"`
-	Remark      string    `yaml:"remark"`
+	SSHUser     string `yaml:"sshUser"`
+	SSHHost     string `yaml:"sshHost"`
+	SSHPort     string `yaml:"sshPort"`
+	SSHPassword string `yaml:"sshPassword"`
+	// HostKeyFingerprint 服务器 SSH 主机密钥的 SHA256 指纹（如
+	// "SHA256:xxxx"），用于主机身份校验。首次连接会因未配置而失败，
+	// 错误信息会打印实际指纹，录入后即可正常连接。
+	HostKeyFingerprint string    `yaml:"hostKeyFingerprint"`
+	Path               string    `yaml:"path"`
+	Services           []Service `yaml:"serviceName"`
+	Remark             string    `yaml:"remark"`
 }
 
 // Config represents the overall configuration structure
@@ -225,7 +230,7 @@ func runServices(serverConfig ServerConfig) {
 		serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, action, strings.Join(selectedServices, " "))
 
 	//command := fmt.Sprintf("docker compose -f %s up -d %s", serverConfig.Path, strings.Join(selectedServices, " "))
-	fmt.Println("Executing command:", command)
+	fmt.Println("Executing command:", maskCommand(command, serverConfig.SSHPassword))
 
 	// Confirm execution
 	if confirmExecution() {
@@ -270,7 +275,7 @@ func checkServices(serverConfig ServerConfig) {
 	// Print the command to be executed
 	command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker compose -f %s ps -a %s'",
 		serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, strings.Join(selectedServices, " "))
-	fmt.Println("Executing command:", command)
+	fmt.Println("Executing command:", maskCommand(command, serverConfig.SSHPassword))
 
 	// Confirm execution
 	if confirmExecution() {
@@ -312,7 +317,7 @@ func imagesService(serverConfig ServerConfig, save bool) {
 	// Print the command to be executed
 	command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker images|grep \"%s\"'",
 		serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, strings.Join(selectedServices, "\\|"))
-	fmt.Println("Executing command:", command)
+	fmt.Println("Executing command:", maskCommand(command, serverConfig.SSHPassword))
 
 	// Confirm execution
 	if confirmExecution() {
@@ -337,7 +342,7 @@ func imagesService(serverConfig ServerConfig, save bool) {
 			// Print the command to be executed
 			commandSave := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker save -o %s_image.tar %s'",
 				serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, fileName, strings.Join(selectImageId, " "))
-			fmt.Println("Executing command:", commandSave)
+			fmt.Println("Executing command:", maskCommand(commandSave, serverConfig.SSHPassword))
 			output = executeCommand(commandSave)
 			fmt.Println(output)
 			printFullWidthLine()
@@ -422,6 +427,32 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%.2fs", d.Seconds())
 }
 
+// maskCommand 返回用于展示的命令串：把其中的敏感凭据（SSH 密码）
+// 替换为掩码，避免明文打印到终端或日志。
+func maskCommand(command, secret string) string {
+	if secret == "" {
+		return command
+	}
+	return strings.ReplaceAll(command, secret, "******")
+}
+
+// hostKeyCallback 返回校验配置指纹的 HostKeyCallback：远端主机密钥的
+// SHA256 指纹必须与 ServerConfig.HostKeyFingerprint 一致才允许连接；
+// 未配置时拒绝连接，并在错误信息中给出实际指纹便于首次录入。
+func hostKeyCallback(config ServerConfig) ssh.HostKeyCallback {
+	expected := strings.TrimSpace(config.HostKeyFingerprint)
+	return func(hostname string, _ net.Addr, key ssh.PublicKey) error {
+		actual := ssh.FingerprintSHA256(key)
+		if expected == "" {
+			return fmt.Errorf("主机 %s 未配置 hostKeyFingerprint，拒绝连接；实际指纹：%s，请录入 config.yaml 后重试", hostname, actual)
+		}
+		if !strings.EqualFold(actual, expected) {
+			return fmt.Errorf("主机 %s 指纹不匹配：期望 %s，实际 %s", hostname, expected, actual)
+		}
+		return nil
+	}
+}
+
 // executeCommand executes a shell command and returns the output
 func executeCommand(command string) string {
 	cmd := exec.Command("bash", "-c", command)
@@ -451,7 +482,7 @@ func executeRemoteCommand(config ServerConfig, command string) string {
 		Auth: []ssh.AuthMethod{
 			ssh.Password(config.SSHPassword),
 		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Insecure, for testing only
+		HostKeyCallback: hostKeyCallback(config),
 	}
 
 	// Build SSH connection string
@@ -491,7 +522,7 @@ func runRemoteCommand(config ServerConfig, command string) {
 		Auth: []ssh.AuthMethod{
 			ssh.Password(config.SSHPassword),
 		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Insecure, for testing only
+		HostKeyCallback: hostKeyCallback(config),
 	}
 
 	// Build SSH connection string

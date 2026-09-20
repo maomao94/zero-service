@@ -39,13 +39,13 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
 	svcCtx := &ServiceContext{Config: c}
 
-	// LiveKit client：注入 go-zero httpc.Service（底层 transport 忽略 TLS
-	// 校验，兼容自签证书的 https，观测复用 httpc）；不注入时 SDK 走内部
-	// 容错传输
+	// LiveKit client：注入 go-zero httpc.Service（底层 transport 的 TLS
+	// 校验由 LiveKit.InsecureSkipVerify 决定，默认正常校验，内网自签
+	// 证书环境显式开启，观测复用 httpc）；不注入时 SDK 走内部传输
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // 开发/内网自签证书环境
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.LiveKit.InsecureSkipVerify},
 		},
 	}
 	lk, err := livekitx.New(

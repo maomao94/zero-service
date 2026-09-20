@@ -71,9 +71,9 @@ func TestNewUsesInjectedHTTPService(t *testing.T) {
 	}
 }
 
-// TestInternalTransportToleratesSelfSignedCert 验证未注入传输时 SDK 内部
-// client 对自签证书（httptest TLS server）可直接调用，调用方无需安装证书。
-func TestInternalTransportToleratesSelfSignedCert(t *testing.T) {
+// TestInternalTransportVerifiesCertByDefault 验证未注入传输且未开启
+// WithInsecureTLS 时，SDK 内部 client 走正常证书校验，自签证书被拒绝。
+func TestInternalTransportVerifiesCertByDefault(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/protobuf")
 		_, _ = w.Write([]byte{})
@@ -85,12 +85,32 @@ func TestInternalTransportToleratesSelfSignedCert(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer client.Close()
-	if client.Config().HTTPClient != nil {
-		t.Fatal("expected no injected transport")
+	if client.Config().TLSInsecureSkipVerify {
+		t.Fatal("expected insecure TLS to be disabled by default")
 	}
+	if _, err := client.API().Room().ListRooms(context.Background(), &livekit.ListRoomsRequest{}); err == nil {
+		t.Fatal("internal transport must verify certificates by default")
+	}
+}
+
+// TestInternalTransportToleratesSelfSignedCertWithOption 验证显式开启
+// WithInsecureTLS 后，SDK 内部 client 对自签证书（httptest TLS server）
+// 可直接调用，调用方无需安装证书。
+func TestInternalTransportToleratesSelfSignedCertWithOption(t *testing.T) {
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/protobuf")
+		_, _ = w.Write([]byte{})
+	}))
+	defer srv.Close()
+
+	client, err := New(WithURL(srv.URL), WithAPIKey("devkey", "secret"), WithInsecureTLS(true))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
 	resp, err := client.API().Room().ListRooms(context.Background(), &livekit.ListRoomsRequest{})
 	if err != nil {
-		t.Fatalf("internal transport must tolerate self-signed cert: %v", err)
+		t.Fatalf("internal transport must tolerate self-signed cert with InsecureTLS: %v", err)
 	}
 	if resp == nil {
 		t.Fatal("expected empty ListRoomsResponse")

@@ -49,7 +49,7 @@ func (a *API) AgentDispatch() livekit.AgentDispatchService { return a.agentDispa
 func newAPI(cfg Config) (*API, error) {
 	client := cfg.HTTPClient
 	if client == nil {
-		client = internalTransport()
+		client = internalTransport(cfg.TLSInsecureSkipVerify)
 	}
 	baseURL := signalling.ToHttpURL(cfg.URL)
 	opts := []twirp.ClientOption{twirp.WithClientInterceptors(authInterceptor(cfg.APIKey, cfg.APISecret))}
@@ -62,13 +62,14 @@ func newAPI(cfg Config) (*API, error) {
 	}, nil
 }
 
-// internalTransport 返回 SDK 内部默认传输：TLS 对自签证书容错，
-// http/https 均可直连，调用方无需安装证书（开发/内网环境的主要路径）。
+// internalTransport 返回 SDK 内部默认传输：TLS 默认走正常证书校验，
+// InsecureSkipVerify 开启时对自签证书容错（内网/开发环境显式开启）；
+// http/https 均可直连。
 // 返回 *http.Client 时生成的 twirp client 会自动包一层禁重定向处理。
-func internalTransport() livekit.HTTPClient {
+func internalTransport(insecureSkipVerify bool) livekit.HTTPClient {
 	return &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // SDK 内部传输对内网自签证书容错
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
 		},
 	}
 }

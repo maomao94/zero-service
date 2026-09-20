@@ -219,11 +219,12 @@ func newTestSvcCtxWithRedis(t *testing.T, lk *livekitx.Client, r *redis.Redis) *
 	return &svc.ServiceContext{
 		Config: config.Config{
 			LiveKit: struct {
-				Url           string
-				ApiKey        string
-				ApiSecret     string
-				WebhookKey    string
-				TokenValidFor time.Duration `json:",default=2h"`
+				Url                string
+				ApiKey             string
+				ApiSecret          string
+				WebhookKey         string
+				TokenValidFor      time.Duration `json:",default=2h"`
+				InsecureSkipVerify bool          `json:",optional"`
 			}{Url: "https://127.0.0.1:7880", ApiKey: "devkey", ApiSecret: "secret", TokenValidFor: 2 * time.Hour},
 		},
 		LiveKit:     lk,

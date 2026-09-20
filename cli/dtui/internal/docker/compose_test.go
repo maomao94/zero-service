@@ -107,6 +107,64 @@ func TestUnzipToDir(t *testing.T) {
 	}
 }
 
+func TestUnzipToDirZipSlip(t *testing.T) {
+	dir := t.TempDir()
+	zipPath := filepath.Join(dir, "evil.zip")
+	destDir := filepath.Join(dir, "out")
+	escaped := filepath.Join(dir, "evil.txt")
+
+	zf, err := os.Create(zipPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := zip.NewWriter(zf)
+	fw, err := w.Create("../evil.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fw.Write([]byte("escaped")); err != nil {
+		t.Fatal(err)
+	}
+	w.Close()
+	zf.Close()
+
+	err = UnzipToDir(zipPath, destDir)
+	if err == nil {
+		t.Error("expected error for zip slip entry")
+	}
+	if _, err := os.Stat(escaped); !os.IsNotExist(err) {
+		t.Errorf("file escaped dest dir: %v", err)
+	}
+}
+
+func TestUnzipToDirNestedTraversalRejected(t *testing.T) {
+	dir := t.TempDir()
+	zipPath := filepath.Join(dir, "abs.zip")
+	destDir := filepath.Join(dir, "out")
+
+	zf, err := os.Create(zipPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := zip.NewWriter(zf)
+	fw, err := w.Create("sub/../../abs-evil.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fw.Write([]byte("abs")); err != nil {
+		t.Fatal(err)
+	}
+	w.Close()
+	zf.Close()
+
+	if err := UnzipToDir(zipPath, destDir); err == nil {
+		t.Error("expected error for nested traversal zip entry")
+	}
+	if _, err := os.Stat(filepath.Join(dir, "abs-evil.txt")); !os.IsNotExist(err) {
+		t.Errorf("file escaped dest dir: %v", err)
+	}
+}
+
 func TestUnzipToDirInvalidZip(t *testing.T) {
 	dir := t.TempDir()
 	badZip := filepath.Join(dir, "bad.zip")

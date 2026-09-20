@@ -35,6 +35,8 @@ type Config struct {
 		WebhookKey string
 		// 入会 token 有效期，默认 2h
 		TokenValidFor time.Duration `json:",default=2h"`
+		// 跳过 TLS 证书校验（内网自签证书环境），默认 false 走正常校验
+		InsecureSkipVerify bool `json:",optional"`
 	}
 	// 数据库配置（会议单据与参会记录）
 	DB gormx.Config `json:",optional"`

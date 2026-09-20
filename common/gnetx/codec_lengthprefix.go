@@ -276,6 +276,10 @@ func (c *LengthPrefixCodec) Encode(_ context.Context, msg any, _ Conn) ([]byte, 
 	}
 
 	bodyLen := postLen + len(c.trailingBytes)
+	if bodyLen < 0 {
+		return nil, fmt.Errorf("gnetx: body length overflow (postLen=%d, trailing=%d)",
+			postLen, len(c.trailingBytes))
+	}
 	fieldVal := bodyLen - c.lengthAdjust
 	if fieldVal < 0 {
 		return nil, fmt.Errorf("gnetx: negative length field value %d (bodyLen=%d, adjust=%d)",
@@ -286,7 +290,12 @@ func (c *LengthPrefixCodec) Encode(_ context.Context, msg any, _ Conn) ([]byte, 
 			fieldVal, c.lengthBytes)
 	}
 
-	out := make([]byte, headerLen+bodyLen)
+	totalLen := headerLen + bodyLen
+	if totalLen < 0 {
+		return nil, fmt.Errorf("gnetx: frame length overflow (headerLen=%d, bodyLen=%d)",
+			headerLen, bodyLen)
+	}
+	out := make([]byte, totalLen)
 	if len(c.leadingBytes) > 0 {
 		copy(out, c.leadingBytes)
 	}
