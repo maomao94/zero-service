@@ -12,10 +12,6 @@ import (
 	"zero-service/common/tool"
 )
 
-// maxFrameAllocSize 是内置 codec Encode 侧单帧分配的硬上限（64 MiB）。
-// 序列化结果超过该值直接报错，防止拼接长度字段时整数溢出导致超大 make 分配。
-const maxFrameAllocSize = 64 << 20
-
 // Codec 是 gnetx 的编解码契约，一个接口同时承载分帧与序列化（对齐 gnet v1 ICodec 的简洁形态）。
 //
 // Decode 在 OnTraffic（event-loop goroutine）中调用，只能用 gnet.Conn 的 Peek/Discard/

@@ -177,6 +177,28 @@ func TestLengthPrefixCodecEncodeOverflow(t *testing.T) {
 	}
 }
 
+// TestLengthPrefixCodecEncodeMaxFrameSize 验证 Encode 侧同样受 maxFrameSize 约束（收发对称）。
+func TestLengthPrefixCodecEncodeMaxFrameSize(t *testing.T) {
+	c := NewLengthPrefixCodec(2, binary.BigEndian, RawSerializer{}, WithMaxFrameSize(8))
+	if _, err := c.Encode(context.Background(), []byte("hi"), nil); err != nil {
+		t.Fatalf("4-byte frame should encode, got %v", err)
+	}
+	if _, err := c.Encode(context.Background(), make([]byte, 10), nil); err == nil {
+		t.Fatal("expect error when encoded frame exceeds maxFrameSize, got nil")
+	}
+}
+
+// TestDelimiterCodecEncodeMaxSize 验证 Encode 侧同样受 maxSize 约束（收发对称）。
+func TestDelimiterCodecEncodeMaxSize(t *testing.T) {
+	c := NewDelimiterCodec([]byte{0x0A}, RawSerializer{}, WithDelimiterMaxSize(4))
+	if _, err := c.Encode(context.Background(), []byte("hi"), nil); err != nil {
+		t.Fatalf("3-byte frame should encode, got %v", err)
+	}
+	if _, err := c.Encode(context.Background(), []byte("hello"), nil); err == nil {
+		t.Fatal("expect error when encoded frame exceeds maxSize, got nil")
+	}
+}
+
 // TestLengthPrefixCodecInvalidLengthBytes 验证非法 lengthBytes 在构造时 panic（而非运行时）。
 func TestLengthPrefixCodecInvalidLengthBytes(t *testing.T) {
 	defer func() {

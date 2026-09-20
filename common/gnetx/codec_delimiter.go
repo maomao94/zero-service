@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/panjf2000/gnet/v2"
 )
@@ -35,7 +36,7 @@ func WithDelimiterStrip(strip bool) DelimiterOption {
 }
 
 // WithDelimiterMaxSize 设置单帧最大字节数，超过返回 ErrFrameTooLarge。
-// 防御一直不出现分隔符导致缓冲区无限增长。
+// 防御一直不出现分隔符导致缓冲区无限增长；Encode 侧同样受此约束（见 Encode）。
 func WithDelimiterMaxSize(max int) DelimiterOption {
 	return func(c *DelimiterCodec) { c.maxSize = max }
 }
@@ -116,10 +117,16 @@ func (c *DelimiterCodec) Encode(_ context.Context, msg any, _ Conn) ([]byte, err
 	if err != nil {
 		return nil, err
 	}
+	// 帧上限与 Decode 侧共用 maxSize（0 = 不限，收发对称）；显式比较一次
+	// 防止 frameCap 整数溢出导致超大 make 分配。
+	limit := c.maxSize
+	if limit <= 0 {
+		limit = math.MaxInt // 0 表示不限
+	}
 	frameCap := len(payload) + len(c.delimiter)
-	if frameCap > maxFrameAllocSize {
+	if frameCap > limit {
 		return nil, fmt.Errorf("gnetx: delimiter frame capacity %d exceeds limit %d",
-			frameCap, maxFrameAllocSize)
+			frameCap, limit)
 	}
 	out := make([]byte, 0, frameCap)
 	out = append(out, payload...)

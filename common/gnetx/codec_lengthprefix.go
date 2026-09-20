@@ -286,10 +286,16 @@ func (c *LengthPrefixCodec) Encode(_ context.Context, msg any, _ Conn) ([]byte, 
 			fieldVal, c.lengthBytes)
 	}
 
+	// 帧上限与 Decode 侧共用 maxFrameSize（0 = 不限，收发对称）；显式比较一次
+	// 防止 totalLen 整数溢出导致超大 make 分配。
+	limit := c.maxFrameSize
+	if limit <= 0 {
+		limit = math.MaxInt // 0 表示不限
+	}
 	totalLen := headerLen + bodyLen
-	if totalLen > maxFrameAllocSize {
+	if totalLen > limit {
 		return nil, fmt.Errorf("gnetx: frame length %d exceeds limit %d",
-			totalLen, maxFrameAllocSize)
+			totalLen, limit)
 	}
 	out := make([]byte, totalLen)
 	if len(c.leadingBytes) > 0 {
