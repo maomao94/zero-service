@@ -15,6 +15,23 @@ if err != nil {
 
 `OpenWithConf` 依赖 go-zero 配置加载时的 tag 默认值（`default=100`、`default=true` 等），因此不要在代码里直接构造零值 `Config{}`。需要编程式构建连接选项时使用 `Open(dsn, With...)`。
 
+## 支持的数据库
+
+按 DSN 前缀自动识别：
+
+| 数据库 | DSN 示例 |
+|--------|---------|
+| MySQL | `user:pass@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai` |
+| PostgreSQL / GaussDB | `postgres://user:pass@127.0.0.1:5432/app?sslmode=disable` |
+| SQLite | `file:./data.db?cache=shared` |
+| 达梦 DM8 | `dm://SYSDBA:SYSDBA@127.0.0.1:5236?schema=SYSDBA&appName=app&connectTimeout=30000` |
+
+达梦使用 `github.com/godoes/gorm-dameng`（基于达梦官方 Go 驱动源码 go-20250513 整理、
+发布在 Go module proxy 的 GORM v2 方言包，比官网文档提供的 2023 版 dmgorm2.zip 更新）。
+`dm://` DSN 中 `schema` 参数指定模式，默认端口 5236；需要字符长度语义的 VARCHAR 或
+其它方言配置时，用 `gormx.OpenWithDialector(dameng.New(dameng.Config{...}))` 自行构造。
+注意达梦 VARCHAR 长度按字节计算（UTF-8 下一个汉字占 3 字节），建表字段长度需按需放大。
+
 ## 模型选择
 
 gormx 提供原子级 mixin，按需组合；Legacy 表保留 `LegacyBaseModel` / `LegacyStringBaseModel` 作为旧系统兼容字段组合。

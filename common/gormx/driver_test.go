@@ -3,6 +3,7 @@ package gormx
 import (
 	"testing"
 
+	dameng "github.com/godoes/gorm-dameng"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -52,6 +53,34 @@ func TestParseDatabaseTypeDetectsMySQL(t *testing.T) {
 		if got := ParseDatabaseType(tc.dsn); got != tc.want {
 			t.Fatalf("ParseDatabaseType(%q) = %s, want %s", tc.dsn, got, tc.want)
 		}
+	}
+}
+
+func TestParseDatabaseTypeDetectsDM(t *testing.T) {
+	cases := []struct {
+		dsn  string
+		want DatabaseType
+	}{
+		{"dm://SYSDBA:SYSDBA@localhost:5236?schema=SYSDBA", DatabaseDM},
+		{"DM://SYSDBA:SYSDBA@localhost:5236", DatabaseDM},
+	}
+	for _, tc := range cases {
+		if got := ParseDatabaseType(tc.dsn); got != tc.want {
+			t.Fatalf("ParseDatabaseType(%q) = %s, want %s", tc.dsn, got, tc.want)
+		}
+	}
+}
+
+func TestGetDialectorReturnsDM(t *testing.T) {
+	d, err := GetDialector(DatabaseDM, "dm://SYSDBA:SYSDBA@localhost:5236?schema=SYSDBA")
+	if err != nil {
+		t.Fatalf("get dialector error = %v", err)
+	}
+	if _, ok := d.(*dameng.Dialector); !ok {
+		t.Fatalf("dialector type = %T, want *dameng.Dialector", d)
+	}
+	if d.Name() != "dm" {
+		t.Fatalf("dialector name = %s, want dm", d.Name())
 	}
 }
 

@@ -3,6 +3,7 @@ package gormx
 import (
 	"strings"
 
+	dameng "github.com/godoes/gorm-dameng"
 	"github.com/pkg/errors"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -16,6 +17,7 @@ const (
 	DatabaseMySQL    DatabaseType = "mysql"
 	DatabasePostgres DatabaseType = "postgres"
 	DatabaseSQLite   DatabaseType = "sqlite"
+	DatabaseDM       DatabaseType = "dm"
 )
 
 func ParseDatabaseType(dsn string) DatabaseType {
@@ -38,6 +40,9 @@ func ParseDatabaseType(dsn string) DatabaseType {
 	if strings.HasPrefix(lower, "mysql://") {
 		return DatabaseMySQL
 	}
+	if strings.HasPrefix(lower, "dm://") {
+		return DatabaseDM
+	}
 	return DatabaseMySQL
 }
 
@@ -49,6 +54,8 @@ func GetDialector(dbType DatabaseType, dsn string) (gorm.Dialector, error) {
 		return postgres.Open(dsn), nil
 	case DatabaseSQLite:
 		return sqlite.Open(dsn), nil
+	case DatabaseDM:
+		return dameng.Open(dsn), nil
 	default:
 		return nil, errors.Errorf("unsupported database type: %s", dbType)
 	}
@@ -65,6 +72,8 @@ func GetDatabaseTypeFromDialector(db *gorm.DB) DatabaseType {
 		return DatabasePostgres
 	case *sqlite.Dialector:
 		return DatabaseSQLite
+	case *dameng.Dialector:
+		return DatabaseDM
 	default:
 		return DatabaseMySQL
 	}
