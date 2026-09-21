@@ -464,6 +464,8 @@ func executeCommand(command string) string {
 }
 
 // executeInteractiveCommand executes an interactive shell command
+//
+//lint:ignore U1000 预留：交互式命令执行，运维菜单后续接入
 func executeInteractiveCommand(command string) {
 	cmd := exec.Command("bash", "-c", command)
 	cmd.Stdout = os.Stdout
@@ -475,6 +477,8 @@ func executeInteractiveCommand(command string) {
 }
 
 // Execute remote command via SSH
+//
+//lint:ignore U1000 预留：返回输出的 SSH 远程执行，与 runRemoteCommand 成对，供需要回显结果的菜单项使用
 func executeRemoteCommand(config ServerConfig, command string) string {
 	// Create the SSH client configuration
 	sshConfig := &ssh.ClientConfig{

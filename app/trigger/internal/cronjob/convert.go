@@ -217,7 +217,7 @@ func extraFromModel(job *gormmodel.CronJob) (*CronJobExtra, error) {
 // ParseExtra 解析 TaskConfig.Extra 中的 Trigger 业务字段。
 func ParseExtra(value json.RawMessage) (*CronJobExtra, error) {
 	if len(value) == 0 {
-		return nil, errors.New("Cron Job Extra 不能为空")
+		return nil, errors.New("cron job extra 不能为空")
 	}
 	var extra CronJobExtra
 	if err := json.Unmarshal(value, &extra); err != nil {
@@ -233,17 +233,6 @@ func MarshalExtra(extra *CronJobExtra) (json.RawMessage, error) {
 		return nil, fmt.Errorf("序列化 Cron Job Extra 失败: %w", err)
 	}
 	return value, nil
-}
-
-func parseOptionalTime(value string) (sql.NullTime, error) {
-	if value == "" {
-		return sql.NullTime{}, nil
-	}
-	parsed, err := time.ParseInLocation(dateTimeLayout, value, time.Local)
-	if err != nil {
-		return sql.NullTime{}, err
-	}
-	return sql.NullTime{Time: parsed, Valid: true}, nil
 }
 
 func marshalOptionalStrings(values []string) (sql.NullString, error) {

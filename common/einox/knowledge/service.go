@@ -263,9 +263,7 @@ func (s *Service) Search(ctx context.Context, userID, baseID, query string, topK
 	outHits := make([]Citation, 0, len(hits))
 	docs := make([]*schema.Document, 0, len(hits))
 	for _, h := range hits {
-		outHits = append(outHits, Citation{
-			ChunkID: h.ChunkID, SourceID: h.SourceID, Filename: h.Filename, Text: h.Text, Score: h.Score,
-		})
+		outHits = append(outHits, Citation(h))
 		docs = append(docs, &schema.Document{
 			ID:      h.ChunkID,
 			Content: h.Text,

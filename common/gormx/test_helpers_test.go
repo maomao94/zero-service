@@ -19,16 +19,6 @@ func (legacyDeleteTestModel) TableName() string {
 	return "legacy_delete_test_models"
 }
 
-type stringAuditTestModel struct {
-	ID uint `gorm:"primarykey"`
-	StringAuditMixin
-	Name string `gorm:"column:name"`
-}
-
-func (stringAuditTestModel) TableName() string {
-	return "string_audit_test_models"
-}
-
 type legacyStringIDTestModel struct {
 	LegacyStringBaseModel
 	Name string `gorm:"column:name"`

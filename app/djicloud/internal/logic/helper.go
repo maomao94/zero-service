@@ -60,19 +60,6 @@ func nullTimeMillis(t sql.NullTime) int64 {
 	return timeMillis(t.Time)
 }
 
-func normalizePage(page, pageSize int64) (int64, int64) {
-	if page <= 0 {
-		page = 1
-	}
-	if pageSize <= 0 {
-		pageSize = 20
-	}
-	if pageSize > 200 {
-		pageSize = 200
-	}
-	return page, pageSize
-}
-
 func toDeviceInfo(m *gormmodel.DjiDevice) *djicloud.DeviceInfo {
 	if m == nil {
 		return nil

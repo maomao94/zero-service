@@ -22,11 +22,13 @@ var (
 	cmdbarHintStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color(theme.ColorDim))
 
+	//lint:ignore U1000 预留："/" 指令提示高亮，指令面板交互开发中
 	slashHintStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color(theme.ColorYellow)).
 			Background(lipgloss.Color(theme.ColorSelected)).
 			Padding(0, 1)
 
+	//lint:ignore U1000 预留："#" 文件引用提示高亮，引用交互开发中
 	hashHintStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color(theme.ColorYellow)).
 			Background(lipgloss.Color(theme.ColorSelected)).

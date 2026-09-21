@@ -3,7 +3,6 @@ package file
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -65,7 +64,7 @@ func (l *PutFileLogic) PutFile(req *types.PutFileRequest) (resp *types.GetFileRe
 		return nil, err
 	}
 	u, _ := uuid.NewUUID()
-	path := dirPath + "/" + strings.Replace(fmt.Sprintf("%s", u), "-", "", -1) + path.Ext(fileHeader.Filename)
+	path := dirPath + "/" + strings.Replace(u.String(), "-", "", -1) + path.Ext(fileHeader.Filename)
 	f, err := os.Create(path)
 	if err != nil {
 		return nil, err

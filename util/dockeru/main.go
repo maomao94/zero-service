@@ -421,8 +421,7 @@ func executeActionCommandWithInteractive(action string, container ContainerInfo)
 }
 
 func executeCommandWithInteractive(action, name string, arg ...string) {
-	var cmd *exec.Cmd
-	cmd = exec.Command(name, arg...)
+	cmd := exec.Command(name, arg...)
 	// 将标准输入、输出和错误与当前终端关联
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout

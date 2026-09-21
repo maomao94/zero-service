@@ -29,10 +29,7 @@ type NodeReporter struct {
 
 func NewNodeReporter(svcCtx *svc.ServiceContext) *NodeReporter {
 	// nodeID 格式 "oryx-node-{uuid}"，Redis key 用短 ID（去掉前缀避免重复）
-	nodeID := svcCtx.NodeID
-	if strings.HasPrefix(nodeID, "oryx-node-") {
-		nodeID = strings.TrimPrefix(nodeID, "oryx-node-")
-	}
+	nodeID := strings.TrimPrefix(svcCtx.NodeID, "oryx-node-")
 	return &NodeReporter{
 		svcCtx: svcCtx,
 		nodeID: nodeID,

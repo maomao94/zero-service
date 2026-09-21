@@ -127,12 +127,6 @@ const (
 	readerChild                     // Copy 产生的子流
 )
 
-// reader 是内部读取器接口，统一不同类型读取器的调用方式。
-type reader[T any] interface {
-	recv() (T, error)
-	close()
-}
-
 // StreamReader 是流管道的读取端，支持多种底层实现（stream/array/multi/convert/child）。
 // 通过 Recv 逐个读取数据，通过 Close 释放资源。
 //
@@ -279,8 +273,6 @@ func (ar *arrayReader[T]) recv() (T, error) {
 	var zero T
 	return zero, io.EOF
 }
-
-func (ar *arrayReader[T]) close() {}
 
 // copy 创建 n 个共享底层数组但各自独立游标的 arrayReader 副本。
 func (ar *arrayReader[T]) copy(n int) []*arrayReader[T] {

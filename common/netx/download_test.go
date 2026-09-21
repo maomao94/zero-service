@@ -288,6 +288,7 @@ func TestClient_Download_NilContext(t *testing.T) {
 	defer ts.Close()
 
 	c := NewClient()
+	//lint:ignore SA1012 故意传 nil，验证 Client 的 nil context 回退行为
 	body, err := c.Download(nil, ts.URL)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

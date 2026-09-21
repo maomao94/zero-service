@@ -20,7 +20,6 @@ type ChunkSender interface {
 // GRPCSender gRPC 流发送器实现
 // 用于将流式数据发送到 gRPC 客户端
 type GRPCSender struct {
-	sender    ChunkSender
 	sendFunc  func(any) error
 	sessionID string
 }

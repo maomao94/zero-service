@@ -394,9 +394,8 @@ func newClientOption(cfg ClientConfig) *cs104.ClientOption {
 
 // formatServerUrl 格式化服务器URL
 func formatServerUrl(cfg ClientConfig) string {
-	var server string
 	// 暂时只支持tcp协议，因为没有TLS字段
-	server = "tcp://" + cfg.Host + ":" + strconv.Itoa(cfg.Port)
+	server := "tcp://" + cfg.Host + ":" + strconv.Itoa(cfg.Port)
 	return server
 }
 

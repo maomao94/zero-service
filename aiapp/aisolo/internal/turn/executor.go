@@ -575,10 +575,6 @@ func (e *Executor) markSessionInterrupted(ctx context.Context, sess *session.Ses
 	return e.sessions.UpdateSession(ctx, sess)
 }
 
-func (e *Executor) applyRunLease(sess *session.Session) {
-	sess.RunOwner, sess.RunLeaseUntil = e.runLease()
-}
-
 func (e *Executor) runLease() (string, time.Time) {
 	return e.runInstanceID, time.Now().Add(e.runLeaseTTL)
 }

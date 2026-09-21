@@ -32,8 +32,7 @@ func (l *PushTerminalBindLogic) PushTerminalBind(in *xfusionmock.ReqPushTerminal
 	var jsonData []byte
 	var err error
 	if in.PushMode {
-		jsonData, err = protojson.Marshal(in.Data)
-		if err != nil {
+		if _, err = protojson.Marshal(in.Data); err != nil {
 			return nil, err
 		}
 	} else {

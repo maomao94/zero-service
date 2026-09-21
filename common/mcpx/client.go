@@ -422,6 +422,8 @@ func (c *Client) GetConnectionState() map[string]ConnectionState {
 }
 
 // refreshAll 刷新所有连接的 tools、prompts、resources
+//
+//lint:ignore U1000 预留：全量刷新入口，供重连/管理操作接入
 func (c *Client) refreshAll() {
 	for _, conn := range c.connections {
 		conn.refreshAll()
@@ -728,6 +730,8 @@ func (conn *Connection) loadResources() error {
 }
 
 // refreshAll 刷新所有 MCP 资源
+//
+//lint:ignore U1000 预留：单连接全量刷新，供 Client.refreshAll 与重连逻辑使用
 func (conn *Connection) refreshAll() {
 	if err := conn.loadAll(); err != nil {
 		logx.WithContext(conn.ctx).Errorf("[mcpx] %s refresh failed: %v", conn.name, err)

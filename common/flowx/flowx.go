@@ -2,7 +2,6 @@ package flowx
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	flow "github.com/Azure/go-workflow"
@@ -55,13 +54,6 @@ func AttemptFields(extra ...func(context.Context, flow.Steper, uint64) []logx.Lo
 	})
 }
 
-func stepName(step flow.Steper) string {
-	if s, ok := step.(fmt.Stringer); ok {
-		return s.String()
-	}
-	return fmt.Sprintf("%T", step)
-}
-
 // New 创建一个 *flow.Workflow。
 func New(opts ...FlowOption) *flow.Workflow {
 	o := &FlowOptions{}
@@ -85,6 +77,3 @@ func New(opts ...FlowOption) *flow.Workflow {
 
 	return w
 }
-
-//go:fix inline
-func ptr[T any](v T) *T { return new(v) }

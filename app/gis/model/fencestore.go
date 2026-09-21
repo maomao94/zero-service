@@ -348,18 +348,3 @@ func kmToH3RecallK(km float64) int {
 	k := max(int(math.Ceil(km/h3RecallAverageEdgeKm)), 1)
 	return k
 }
-
-func kmToGeohashPrecision(km float64) int {
-	switch {
-	case km > 1000:
-		return 2
-	case km > 100:
-		return 3
-	case km > 10:
-		return 4
-	case km > 1:
-		return 5
-	default:
-		return 6
-	}
-}

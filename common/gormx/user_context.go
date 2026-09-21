@@ -4,10 +4,9 @@ import "context"
 
 type contextKey string
 
-const (
-	userContextKey  contextKey = "gormx:user"
-	DefaultTenantID            = "default"
-)
+const userContextKey contextKey = "gormx:user"
+
+const DefaultTenantID = "default"
 
 type AuditUserID interface {
 	~uint | ~uint64 | ~int64 | ~string

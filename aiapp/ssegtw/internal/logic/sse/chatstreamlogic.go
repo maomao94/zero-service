@@ -69,8 +69,7 @@ func (l *ChatStreamLogic) ChatStream(req *types.ChatStreamRequest) error {
 	sw.WriteEvent("connected", fmt.Sprintf(`{"channel":"%s"}`, channel))
 
 	go func() {
-		tokens := []rune(prompt)
-		for _, token := range tokens {
+		for _, token := range prompt {
 			time.Sleep(500 * time.Millisecond)
 			l.svcCtx.Emitter.Emit(channel, svc.SSEEvent{
 				Event: "token",

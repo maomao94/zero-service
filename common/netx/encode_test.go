@@ -113,6 +113,7 @@ func TestBuildBody_URLEncodedDirect(t *testing.T) {
 	defer ts.Close()
 
 	c := NewClient()
+	//lint:ignore SA1012 故意传 nil，验证 Client 的 nil context 回退行为
 	resp, err := c.Do(nil, NewRequest(ts.URL, "POST",
 		WithBody([]byte("foo=bar&baz=qux")),
 		WithHeader("Content-Type", "application/x-www-form-urlencoded"),

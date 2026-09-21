@@ -10,8 +10,6 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
-var emptyDevicePointMapping = &gormmodel.GormDevicePointMapping{}
-
 type ServiceContext struct {
 	Config                  config.Config
 	TaosConn                sqlx.SqlConn

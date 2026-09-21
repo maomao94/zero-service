@@ -9,7 +9,6 @@ import (
 	"github.com/zeromicro/go-zero/core/timex"
 	trace2 "github.com/zeromicro/go-zero/core/trace"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/trace"
 	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
@@ -93,9 +92,9 @@ func NewMux() *asynq.ServeMux {
 }
 
 // StartAsynqConsumerSpan 创建 Consumer span（需要先 Extract carrier 的场景使用，如 trigger）
-func StartAsynqConsumerSpan(ctx context.Context, typename string) (context.Context, trace.Span) {
-	trace := otel.Tracer(trace2.TraceName)
-	ctx, span := trace.Start(ctx, "asynq-cosumer", oteltrace.WithSpanKind(oteltrace.SpanKindConsumer))
+func StartAsynqConsumerSpan(ctx context.Context, typename string) (context.Context, oteltrace.Span) {
+	tracer := otel.Tracer(trace2.TraceName)
+	ctx, span := tracer.Start(ctx, "asynq-cosumer", oteltrace.WithSpanKind(oteltrace.SpanKindConsumer))
 	span.SetAttributes(AsynqTypeKey.String(typename))
 	return ctx, span
 }

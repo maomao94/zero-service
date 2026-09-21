@@ -111,8 +111,6 @@ func (c *Client) SIP() livekit.SIP { return c.api.SIP() }
 // Config 返回构造时的配置副本；HTTPClient 指针由调用方拥有并负责关闭。
 func (c *Client) Config() Config { return c.config }
 
-func (c *Client) isClosed() bool { return c != nil && c.closed.Load() }
-
 // Close 幂等标记 Client 为已关闭；调用方注入的 HTTP client 不被关闭。
 // 已建立的实时连接由业务自行 room.Disconnect()，本方法不管理连接资源。
 func (c *Client) Close() error {

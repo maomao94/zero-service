@@ -39,7 +39,7 @@ func (l *PreviewCronJobScheduleLogic) PreviewCronJobSchedule(in *trigger.Preview
 		return nil, err
 	}
 	if l.svcCtx == nil || l.svcCtx.CronJobStore == nil || l.svcCtx.CronJobScheduler == nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, errors.New("Cron Job preview dependencies are not initialized"), "预览 Cron Job 调度规则失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, errors.New("cron job preview dependencies are not initialized"), "预览 Cron Job 调度规则失败")
 	}
 	task, err := l.svcCtx.CronJobStore.GetByID(l.ctx, in.JobId)
 	if err != nil {

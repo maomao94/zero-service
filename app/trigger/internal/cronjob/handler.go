@@ -23,7 +23,7 @@ type EventClient interface {
 
 func handleEvent(ctx context.Context, task *crontask.TaskConfig, client EventClient) (string, error) {
 	if client == nil {
-		return "", errors.New("Eventstream 客户端不能为空")
+		return "", errors.New("eventstream 客户端不能为空")
 	}
 	extra, err := ParseExtra(task.Extra)
 	if err != nil {
@@ -50,7 +50,7 @@ func handleEvent(ctx context.Context, task *crontask.TaskConfig, client EventCli
 		return "", fmt.Errorf("调用 Eventstream Cron Job 回调失败: %w", err)
 	}
 	if response == nil {
-		return "", errors.New("Eventstream Cron Job 回调返回为空")
+		return "", errors.New("eventstream cron job 回调返回为空")
 	}
 	switch response.Receipt {
 	case streamevent.CronJobReceiptPb_CRON_JOB_RECEIPT_SUCCESS:
@@ -58,7 +58,7 @@ func handleEvent(ctx context.Context, task *crontask.TaskConfig, client EventCli
 	case streamevent.CronJobReceiptPb_CRON_JOB_RECEIPT_TASK_NOT_FOUND:
 		return response.Message, fmt.Errorf("%w: %s", crontask.ErrDeleteTask, response.Message)
 	default:
-		return response.Message, fmt.Errorf("Eventstream Cron Job 回执未知: receipt=%s message=%s", response.Receipt.String(), response.Message)
+		return response.Message, fmt.Errorf("eventstream cron job 回执未知: receipt=%s message=%s", response.Receipt.String(), response.Message)
 	}
 }
 

@@ -3,7 +3,6 @@ package common
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -65,7 +64,7 @@ func (l *MfsUploadFileLogic) MfsUploadFile(req *types.UploadFileRequest) (resp *
 		return nil, err
 	}
 	u, _ := random.UUIdV4()
-	filePath := dirPath + "/" + strings.Replace(fmt.Sprintf("%s", u), "-", "", -1) + path.Ext(fileHeader.Filename)
+	filePath := dirPath + "/" + strings.Replace(u, "-", "", -1) + path.Ext(fileHeader.Filename)
 	f, err := os.Create(filePath)
 	if err != nil {
 		return nil, err
@@ -107,7 +106,7 @@ func (l *MfsUploadFileLogic) MfsUploadFile(req *types.UploadFileRequest) (resp *
 		}
 		if req.IsThumb {
 			thumbStart := timex.Now()
-			thumbPath := dirPath + "/" + strings.Replace(fmt.Sprintf("%s", u), "-", "", -1) + "_thumb" + path.Ext(fileHeader.Filename)
+			thumbPath := dirPath + "/" + strings.Replace(u, "-", "", -1) + "_thumb" + path.Ext(fileHeader.Filename)
 			err = imagex.FromFileToFile(filePath, thumbPath, 200, 200)
 			if err != nil {
 				l.Logger.Errorf("thumb error: %v", err)

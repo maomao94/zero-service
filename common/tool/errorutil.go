@@ -121,9 +121,5 @@ func getErrorInfoByPbCode(code extproto.Code) (string, int) {
 
 func IsErrorByPbCode(err error, code extproto.Code) bool {
 	expectedReason := fmt.Sprintf("%d", code)
-	grpcReason := gkiterrors.Reason(err)
-	if grpcReason == expectedReason {
-		return true
-	}
-	return false
+	return gkiterrors.Reason(err) == expectedReason
 }

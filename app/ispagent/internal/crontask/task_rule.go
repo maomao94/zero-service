@@ -111,19 +111,6 @@ func (f *IspTaskFields) ToRRuleStr() string {
 	}
 }
 
-// toROption 返回 ISP 任务对应的 ROption。
-func (f *IspTaskFields) toROption() *rrule.ROption {
-	switch f.TaskType() {
-	case "fixed":
-		return buildFixedROption(f)
-	case "cycle":
-		return buildCycleROption(f)
-	case "interval":
-		return buildIntervalROption(f)
-	}
-	return nil
-}
-
 // CalcInitNextRun 根据完整 RRULE Set 计算首次调度时间，无效区间内的候选由谓词在单趟迭代中跳过。
 func (f *IspTaskFields) CalcInitNextRun() (time.Time, error) {
 	rruleStr := f.ToRRuleStr()

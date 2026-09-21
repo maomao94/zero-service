@@ -1,3 +1,4 @@
+//lint:file-ignore U1000 预留：多数据库（pg/sqlite）SQL 适配层，配合 WithDBType 使用，trigger/modbus 多库支持随时可能接入
 package model
 
 import (

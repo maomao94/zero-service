@@ -51,7 +51,7 @@ func TestMemoryStorageGetReturnsSliceCopy(t *testing.T) {
 
 	msgs, _ := s.GetMessages(ctx, "u1", "s1", 0)
 	// Append to returned slice should not affect original
-	msgs = append(msgs, &ConversationMessage{Content: "injected"})
+	_ = append(msgs, &ConversationMessage{Content: "injected"})
 
 	msgs2, _ := s.GetMessages(ctx, "u1", "s1", 0)
 	if len(msgs2) != 2 {

@@ -144,10 +144,6 @@ type YearSummaryInfo struct {
 	Names []string
 }
 
-func dateKey(t time.Time, loc *time.Location) string {
-	return t.In(loc).Format(time.DateOnly)
-}
-
 func isWeekend(t time.Time) bool {
 	weekday := t.Weekday()
 	return weekday == time.Saturday || weekday == time.Sunday

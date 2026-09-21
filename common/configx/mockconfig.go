@@ -125,8 +125,7 @@ func (mc *MockConfig) GetResponse(method, path, scene string) (string, error) {
 			return "", err
 		}
 		time.Sleep(time.Duration(msInt) * time.Millisecond)
-		resp, ok = sceneMap["default"]
-		if !ok {
+		if _, ok = sceneMap["default"]; !ok {
 			return "", fmt.Errorf("no scene %s for %s", scene, key)
 		}
 		scene = "default"

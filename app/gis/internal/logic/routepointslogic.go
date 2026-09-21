@@ -38,8 +38,7 @@ func (l *RoutePointsLogic) RoutePoints(in *gis.RoutePointsReq) (*gis.RoutePoints
 	if len(in.Points) > 500 {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "点数不能超过500")
 	}
-	var err error
-	err = ValidatePoints(append([]*gis.Point{in.Start}, in.Points...)...)
+	err := ValidatePoints(append([]*gis.Point{in.Start}, in.Points...)...)
 	if err != nil {
 		return nil, err
 	}
