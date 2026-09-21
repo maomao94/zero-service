@@ -93,7 +93,7 @@ require (
 	gorm.io/plugin/opentelemetry v0.1.16
 	gorm.io/plugin/optimisticlock v1.1.3
 	gorm.io/plugin/soft_delete v1.2.1
-	modernc.org/sqlite v1.58.0
+	modernc.org/sqlite v1.59.0
 )
 
 require (
