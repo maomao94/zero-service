@@ -1564,7 +1564,7 @@ message DeleteCronJobRes {
 // DeleteCronJobsReq 按 JobId 批量软删除 Cron Job。
 message DeleteCronJobsReq {
   // Trigger 生成的 JobId 列表。
-  repeated string job_ids = 1 [json_name = "jobIds", (validate.rules).repeated = {min_items: 1, max_items: 500, items: {string: {min_len: 1, max_len: 64}}}];
+  repeated string job_ids = 1 [json_name = "jobIds", (validate.rules).repeated = {min_items: 1, items: {string: {min_len: 1}}}];
 }
 
 // DeleteCronJobsRes 返回批量删除结果。
@@ -1576,7 +1576,7 @@ message DeleteCronJobsRes {
 // DeleteCronJobsByGroupReq 按任务分组批量软删除 Cron Job。
 message DeleteCronJobsByGroupReq {
   // 任务分组 ID 列表，删除这些分组下的全部 Cron Job。
-  repeated string group_ids = 1 [json_name = "groupIds", (validate.rules).repeated = {min_items: 1, max_items: 100, items: {string: {min_len: 1, max_len: 64}}}];
+  repeated string group_ids = 1 [json_name = "groupIds", (validate.rules).repeated = {min_items: 1, items: {string: {min_len: 1}}}];
 }
 
 // DeleteCronJobsByGroupRes 返回批量删除结果。

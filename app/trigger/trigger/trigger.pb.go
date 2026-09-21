@@ -11356,13 +11356,13 @@ const file_trigger_proto_rawDesc = "" +
 	"\x11DisableCronJobRes\"2\n" +
 	"\x10DeleteCronJobReq\x12\x1e\n" +
 	"\x06job_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05jobId\"\x12\n" +
-	"\x10DeleteCronJobRes\"A\n" +
-	"\x11DeleteCronJobsReq\x12,\n" +
-	"\ajob_ids\x18\x01 \x03(\tB\x13\xfaB\x10\x92\x01\r\b\x01\x10\xf4\x03\"\x06r\x04\x10\x01\x18@R\x06jobIds\"-\n" +
+	"\x10DeleteCronJobRes\"<\n" +
+	"\x11DeleteCronJobsReq\x12'\n" +
+	"\ajob_ids\x18\x01 \x03(\tB\x0e\xfaB\v\x92\x01\b\b\x01\"\x04r\x02\x10\x01R\x06jobIds\"-\n" +
 	"\x11DeleteCronJobsRes\x12\x18\n" +
-	"\adeleted\x18\x01 \x01(\x03R\adeleted\"K\n" +
-	"\x18DeleteCronJobsByGroupReq\x12/\n" +
-	"\tgroup_ids\x18\x01 \x03(\tB\x12\xfaB\x0f\x92\x01\f\b\x01\x10d\"\x06r\x04\x10\x01\x18@R\bgroupIds\"4\n" +
+	"\adeleted\x18\x01 \x01(\x03R\adeleted\"G\n" +
+	"\x18DeleteCronJobsByGroupReq\x12+\n" +
+	"\tgroup_ids\x18\x01 \x03(\tB\x0e\xfaB\v\x92\x01\b\b\x01\"\x04r\x02\x10\x01R\bgroupIds\"4\n" +
 	"\x18DeleteCronJobsByGroupRes\x12\x18\n" +
 	"\adeleted\x18\x01 \x01(\x03R\adeleted\"/\n" +
 	"\rRunCronJobReq\x12\x1e\n" +

@@ -16297,10 +16297,10 @@ func (m *DeleteCronJobsReq) validate(all bool) error {
 
 	var errors []error
 
-	if l := len(m.GetJobIds()); l < 1 || l > 500 {
+	if len(m.GetJobIds()) < 1 {
 		err := DeleteCronJobsReqValidationError{
 			field:  "JobIds",
-			reason: "value must contain between 1 and 500 items, inclusive",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
@@ -16311,10 +16311,10 @@ func (m *DeleteCronJobsReq) validate(all bool) error {
 	for idx, item := range m.GetJobIds() {
 		_, _ = idx, item
 
-		if l := utf8.RuneCountInString(item); l < 1 || l > 64 {
+		if utf8.RuneCountInString(item) < 1 {
 			err := DeleteCronJobsReqValidationError{
 				field:  fmt.Sprintf("JobIds[%v]", idx),
-				reason: "value length must be between 1 and 64 runes, inclusive",
+				reason: "value length must be at least 1 runes",
 			}
 			if !all {
 				return err
@@ -16530,10 +16530,10 @@ func (m *DeleteCronJobsByGroupReq) validate(all bool) error {
 
 	var errors []error
 
-	if l := len(m.GetGroupIds()); l < 1 || l > 100 {
+	if len(m.GetGroupIds()) < 1 {
 		err := DeleteCronJobsByGroupReqValidationError{
 			field:  "GroupIds",
-			reason: "value must contain between 1 and 100 items, inclusive",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
@@ -16544,10 +16544,10 @@ func (m *DeleteCronJobsByGroupReq) validate(all bool) error {
 	for idx, item := range m.GetGroupIds() {
 		_, _ = idx, item
 
-		if l := utf8.RuneCountInString(item); l < 1 || l > 64 {
+		if utf8.RuneCountInString(item) < 1 {
 			err := DeleteCronJobsByGroupReqValidationError{
 				field:  fmt.Sprintf("GroupIds[%v]", idx),
-				reason: "value length must be between 1 and 64 runes, inclusive",
+				reason: "value length must be at least 1 runes",
 			}
 			if !all {
 				return err
