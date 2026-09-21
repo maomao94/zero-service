@@ -289,6 +289,24 @@ func (s *DBStore) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
+// DeleteMany 按 JobId 列表幂等软删除 Cron Job，返回实际删除数量。
+func (s *DBStore) DeleteMany(ctx context.Context, ids []string) (int64, error) {
+	result := s.db.WithContext(ctx).Where("id IN ?", ids).Delete(&gormmodel.CronJob{})
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return result.RowsAffected, nil
+}
+
+// DeleteManyByGroup 按任务分组 ID 列表幂等软删除 Cron Job，返回实际删除数量。
+func (s *DBStore) DeleteManyByGroup(ctx context.Context, groupIDs []string) (int64, error) {
+	result := s.db.WithContext(ctx).Where("group_id IN ?", groupIDs).Delete(&gormmodel.CronJob{})
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return result.RowsAffected, nil
+}
+
 // List 按条件返回任务；NextRun 为 NULL 的终态任务也保留在结果中。
 func (s *DBStore) List(ctx context.Context, condition crontask.ListCondition) ([]*crontask.TaskConfig, error) {
 	var records []gormmodel.CronJob

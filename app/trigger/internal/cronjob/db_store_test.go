@@ -604,6 +604,86 @@ func TestDBStoreDeleteIsIdempotent(t *testing.T) {
 	}
 }
 
+func TestDBStoreDeleteMany(t *testing.T) {
+	db := newCronJobTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	now := time.Now().Add(time.Hour)
+	first := cronJobTestConfig(t, now)
+	first.TaskCode = "BATCH-1"
+	second := cronJobTestConfig(t, now)
+	second.TaskCode = "BATCH-2"
+	third := cronJobTestConfig(t, now)
+	third.TaskCode = "BATCH-3"
+	for _, cfg := range []*crontask.TaskConfig{first, second, third} {
+		if err := store.Insert(context.Background(), cfg); err != nil {
+			t.Fatal(err)
+		}
+	}
+	deleted, err := store.DeleteMany(context.Background(), []string{first.ID, second.ID, "missing-id"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if deleted != 2 {
+		t.Fatalf("deleted = %d, want 2", deleted)
+	}
+	deleted, err = store.DeleteMany(context.Background(), []string{first.ID})
+	if err != nil {
+		t.Fatalf("repeated delete: %v", err)
+	}
+	if deleted != 0 {
+		t.Fatalf("repeated deleted = %d, want 0", deleted)
+	}
+	remaining, err := store.List(context.Background(), crontask.ListCondition{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(remaining) != 1 || remaining[0].ID != third.ID {
+		t.Fatalf("remaining = %d, want only third job", len(remaining))
+	}
+}
+
+func TestDBStoreDeleteManyByGroup(t *testing.T) {
+	db := newCronJobTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	now := time.Now().Add(time.Hour)
+	newConfig := func(taskCode, groupID string) *crontask.TaskConfig {
+		config := cronJobTestConfig(t, now)
+		config.TaskCode = taskCode
+		extra, err := ParseExtra(config.Extra)
+		if err != nil {
+			t.Fatal(err)
+		}
+		extra.GroupId = groupID
+		config.Extra, err = MarshalExtra(extra)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return config
+	}
+	g1a := newConfig("GROUP-1A", "G-BATCH-1")
+	g1b := newConfig("GROUP-1B", "G-BATCH-1")
+	g2 := newConfig("GROUP-2", "G-BATCH-2")
+	for _, cfg := range []*crontask.TaskConfig{g1a, g1b, g2} {
+		if err := store.Insert(context.Background(), cfg); err != nil {
+			t.Fatal(err)
+		}
+	}
+	deleted, err := store.DeleteManyByGroup(context.Background(), []string{"G-BATCH-1", "G-MISSING"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if deleted != 2 {
+		t.Fatalf("deleted = %d, want 2", deleted)
+	}
+	remaining, err := store.List(context.Background(), crontask.ListCondition{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(remaining) != 1 || remaining[0].ID != g2.ID {
+		t.Fatalf("remaining = %d, want only G-BATCH-2 job", len(remaining))
+	}
+}
+
 func TestDBStoreListByStatuses(t *testing.T) {
 	db := newCronJobTestDB(t)
 	store := NewDBStore(&gormx.DB{DB: db})

@@ -116,11 +116,11 @@ service TriggerRpc {
 
   // ==================== CronTask / CronJob Service ====================
 
-  // 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId
+  // 创建基于 RRULE 的周期任务，返回 Trigger 生成的 JobId。
   rpc CreateCronJob(CreateCronJobReq) returns (CreateCronJobRes);
-  // 按 Trigger JobId 更新完整 Cron Job 配置，不允许修改 TaskCode
+  // 按 Trigger JobId 更新完整 Cron Job 配置，不允许修改 TaskCode。
   rpc UpdateCronJob(UpdateCronJobReq) returns (UpdateCronJobRes);
-  // 按 TaskCode 幂等提交完整 Cron Job 配置，不存在时创建，存在时更新
+  // 按 TaskCode 幂等提交完整 Cron Job 配置，不存在时创建，存在时更新。
   rpc SubmitCronJob(SubmitCronJobReq) returns (SubmitCronJobRes);
   // 启用 Cron Job，并从当前时间重新计算未来执行时间
   rpc EnableCronJob(EnableCronJobReq) returns (EnableCronJobRes);
@@ -128,6 +128,10 @@ service TriggerRpc {
   rpc DisableCronJob(DisableCronJobReq) returns (DisableCronJobRes);
   // 软删除 Cron Job，重复删除按幂等成功处理
   rpc DeleteCronJob(DeleteCronJobReq) returns (DeleteCronJobRes);
+  // 按 JobId 批量软删除 Cron Job，重复删除按幂等成功处理
+  rpc DeleteCronJobs(DeleteCronJobsReq) returns (DeleteCronJobsRes);
+  // 按任务分组批量软删除 Cron Job，重复删除按幂等成功处理
+  rpc DeleteCronJobsByGroup(DeleteCronJobsByGroupReq) returns (DeleteCronJobsByGroupRes);
   // 立即异步执行一次 Cron Job，不改变周期计划
   rpc RunCronJob(RunCronJobReq) returns (RunCronJobRes);
   // 获取 Cron Job 详情
@@ -1555,6 +1559,30 @@ message DeleteCronJobReq {
 
 // DeleteCronJobRes 表示删除操作已完成；任务原本不存在时也返回成功。
 message DeleteCronJobRes {
+}
+
+// DeleteCronJobsReq 按 JobId 批量软删除 Cron Job。
+message DeleteCronJobsReq {
+  // Trigger 生成的 JobId 列表。
+  repeated string job_ids = 1 [json_name = "jobIds", (validate.rules).repeated = {min_items: 1, max_items: 500, items: {string: {min_len: 1, max_len: 64}}}];
+}
+
+// DeleteCronJobsRes 返回批量删除结果。
+message DeleteCronJobsRes {
+  // 实际删除的 Cron Job 数量；已删除或不存在的 JobId 不计入。
+  int64 deleted = 1 [json_name = "deleted"];
+}
+
+// DeleteCronJobsByGroupReq 按任务分组批量软删除 Cron Job。
+message DeleteCronJobsByGroupReq {
+  // 任务分组 ID 列表，删除这些分组下的全部 Cron Job。
+  repeated string group_ids = 1 [json_name = "groupIds", (validate.rules).repeated = {min_items: 1, max_items: 100, items: {string: {min_len: 1, max_len: 64}}}];
+}
+
+// DeleteCronJobsByGroupRes 返回批量删除结果。
+message DeleteCronJobsByGroupRes {
+  // 实际删除的 Cron Job 数量；已删除或不存在的分组不计入。
+  int64 deleted = 1 [json_name = "deleted"];
 }
 
 // RunCronJobReq 是 Cron Job 立即执行请求。

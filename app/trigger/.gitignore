@@ -1,0 +1,2 @@
+# Local Go codegen artifact for the protoc-gen-validate dependency.
+/github.com/envoyproxy/protoc-gen-validate/validate/validate.pb.go
