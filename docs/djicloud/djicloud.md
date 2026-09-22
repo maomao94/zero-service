@@ -385,6 +385,18 @@ DJI 错误码整体采用 `ABCDEF` 六位格式：
 
 各位段对应的具体业务域以 DJI 官方资料为准。本项目已收录的错误码及中文描述见 `common/djisdk/error_descriptions.go`；未收录的错误码会回退为 `third_party/dji_error_code` 中的枚举名称。
 
+### HMS 告警文案字典
+
+HMS 告警文案通过 `common/djisdk/hms.json` 提供多语言映射，经 `//go:embed` 嵌入二进制，由 `HmsResolver` 按 `fpv_tip_{code}[_in_the_sky]` / `dock_tip_{code}` 规则拼接 key 查询（飞机在空中优先查 `_in_the_sky` 变体，缺失时回退基础 key）。
+
+字典文件必须保持 DJI 官方原版，不手工增删条目：
+
+- 下载地址：[hms.json（DJI CDN）](https://terra-1-g.djicdn.com/fee90c2e03e04e8da67ea6f56365fc76/SDK%20%E6%96%87%E6%A1%A3/CloudAPI/hms.json)
+- 文档入口：[HMS 功能说明](https://developer.dji.com/doc/cloud-api-tutorial/cn/feature-set/dock-feature-set/hms.html)
+- 更新方式：下载新版后直接覆盖 `common/djisdk/hms.json`，运行 `go test ./common/djisdk/` 验证
+
+部分 `_in_the_sky` 变体在官方字典中缺失，属 DJI 侧数据不完整；Go 侧回退逻辑可正常解析，下游系统若显示"未知错误"需自行核对其映射实现。
+
 ### 蛙跳拓扑
 
 同一飞行器可被多个机巢绑定，`DjiDeviceTopo` 允许同一 `sub_device_sn` 存在多条记录：
