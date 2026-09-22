@@ -21,6 +21,10 @@ gtw/env/
 # Git worktrees
 /.worktrees/
 
+# AI agent skills (local tooling, not part of service)
+.agents/
+skills-lock.json
+
 # Web frontend
 web/*/node_modules/
 web/*/dist/
