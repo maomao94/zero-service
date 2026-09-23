@@ -28,3 +28,7 @@ skills-lock.json
 # Web frontend
 web/*/node_modules/
 web/*/dist/
+
+# Kingbase 部署包（镜像 tar 与数据卷不入库）
+deploy/kingbase/*.tar
+deploy/kingbase/data/
