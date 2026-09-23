@@ -3,10 +3,11 @@
 # 用法: bash deploy/kingbase/deploy.sh [命令]
 #   (无参数)  部署: 自动 load 镜像 -> retag kingbase:kes -> compose up -> 等待就绪（幂等，可重跑）
 #   stop      移除容器，保留 ./data 数据
-#   clean     移除容器并清空 ./data（改初始化参数后需此命令重新初始化）
 #   restart   重启容器（数据库进程异常时的恢复手段）
 #   status    查看容器状态与授权剩余天数
 #   logs      查看容器日志（最近 100 行）
+#
+# 重新初始化（危险操作，脚本不代做）: stop 后手动 rm -rf data，再执行本脚本检测到空目录会自动重新 initdb
 #
 # 说明:
 #   - 环境变量仅在首次初始化（data 为空）时生效，见 docker-compose.yaml
@@ -40,7 +41,7 @@ wait_ready() {
     fi
     sleep 2
   done
-  echo "警告: 超时未就绪；数据异常可执行 bash $0 clean 重新初始化，或 bash $0 logs 查看日志"
+  echo "警告: 超时未就绪；可执行 bash $0 logs 查看日志，数据异常时 stop 后手动清空 data 目录重新部署"
   return 1
 }
 
@@ -107,11 +108,6 @@ case "${1:-deploy}" in
     docker compose down
     echo "容器已移除，数据保留在 $(pwd)/data"
     ;;
-  clean)
-    docker compose down
-    rm -rf data
-    echo "容器已移除且 data 已清空，重新执行 bash $0 将按当前配置重新初始化"
-    ;;
   restart)
     docker restart kingbase
     wait_ready
@@ -125,7 +121,7 @@ case "${1:-deploy}" in
     docker compose logs --tail 100
     ;;
   *)
-    echo "未知命令: $1；可用: deploy(默认)/stop/clean/restart/status/logs"
+    echo "未知命令: $1；可用: deploy(默认)/stop/restart/status/logs"
     exit 1
     ;;
 esac

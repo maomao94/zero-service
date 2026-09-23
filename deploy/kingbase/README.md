@@ -30,11 +30,12 @@ docker exec -i kingbase ksql -Usystem -d kingbase -p 54321 < deploy/kingbase/ini
 ```bash
 bash deploy/kingbase/deploy.sh            # 部署（默认，幂等可重跑）
 bash deploy/kingbase/deploy.sh stop       # 移除容器，保留数据
-bash deploy/kingbase/deploy.sh clean      # 移除容器并清空 data（重新初始化用）
 bash deploy/kingbase/deploy.sh restart    # 重启容器（数据库进程异常时恢复）
 bash deploy/kingbase/deploy.sh status     # 容器状态 + 授权剩余天数
 bash deploy/kingbase/deploy.sh logs       # 最近 100 行容器日志
 ```
+
+**重新初始化**（危险操作，脚本不提供一键清空命令）：`stop` 后手动 `rm -rf data`，再执行 `deploy.sh`——检测到空目录会自动重新 initdb。
 
 ## 连接信息
 
@@ -54,7 +55,7 @@ bash deploy/kingbase/deploy.sh logs       # 最近 100 行容器日志
 
 **`DB_MODE` 初始化后不可修改**：兼容模式（pg/oracle/mysql/sqlserver）是 initdb 级别的参数，记录在
 `data/initdb.conf`，整个数据库集群生效。初始化后修改 compose 里的值无效（entrypoint 检测到数据目录
-非空会跳过 initdb）。换兼容模式的唯一方法是 `clean` 清空 data 重新初始化——**数据会全部丢失**，
+非空会跳过 initdb）。换兼容模式需 `stop` 后手动清空 `data` 再重新部署——**数据会全部丢失**，
 需保留数据请先导出再导入。
 
 换密码不受此限制：初始化后用 `alter user system with password '...'` 修改即可。
@@ -69,7 +70,7 @@ bash deploy/kingbase/deploy.sh logs       # 最近 100 行容器日志
   `deploy.sh` 内置每 10s 幂等补 `sys_ctl start` 兜底（实测有效）。
 - **授权 90 天**：镜像自带授权有限期，`deploy.sh` 部署时实时查询剩余天数；到期替换
   `data/etc/license.dat` 后 `docker exec kingbase /home/kingbase/install/kingbase/bin/sys_ctl reload -D /home/kingbase/userdata/data`。
-- **运行中删 data 目录**会导致挂载进入异常状态（Operation not permitted），恢复走 `deploy.sh clean`。
+- **运行中删 data 目录**会导致挂载进入异常状态（Operation not permitted），恢复需 `stop` 后手动清空 `data` 再部署。
 
 ## 参考
 
