@@ -51,13 +51,14 @@ bash deploy/kingbase/deploy.sh logs       # 最近 100 行容器日志
 
 ### Java（Spring Boot + MyBatis）
 
-PG 兼容模式下直接用 PostgreSQL JDBC 驱动，无需金仓专用驱动：
+官方标准接入方式（[官方 MyBatis 文档](https://docs.kingbase.com.cn/cn/KES-V9R1C10/quick_start/access_tool/java/Mybatis)），用金仓官方 JDBC 驱动 kingbase8，Maven 中央仓库可直接拉取：
 
 ```xml
 <!-- pom.xml -->
 <dependency>
-    <groupId>org.postgresql</groupId>
-    <artifactId>postgresql</artifactId>
+    <groupId>cn.com.kingbase</groupId>
+    <artifactId>kingbase8</artifactId>
+    <version>9.0.0</version>
 </dependency>
 ```
 
@@ -65,20 +66,24 @@ PG 兼容模式下直接用 PostgreSQL JDBC 驱动，无需金仓专用驱动：
 # application.yml（MyBatis / MyBatis-Plus 同样适用，底层共用 spring.datasource）
 spring:
   datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://127.0.0.1:54321/kingbase
+    driver-class-name: com.kingbase8.Driver
+    url: jdbc:kingbase8://127.0.0.1:54321/kingbase
     username: system
     password: 12345678ab
 ```
 
 ```java
-// MyBatis-Plus 示例（金仓 PG 模式兼容 PG 方言，DbType.POSTGRE_SQL）
+// MyBatis-Plus 分页（内置金仓方言，无需按 PG 配置）
 MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.POSTGRE_SQL));
+interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.KINGBASE_ES));
 ```
 
-如需金仓官方 JDBC（`com.kingbase8.Driver` + `jdbc:kingbase8://host:54321/db`），jar 包在金仓安装目录
-`Drivers/JDBC` 下，需手动安装到本地 Maven 仓库或私服；PG 兼容场景通常无需。
+原生 MyBatis + PageHelper 的官方示例工程可下载参考：
+`https://kingbase.oss-cn-beijing.aliyuncs.com/KES_INTERFACE/quickstart/mybatis-kingbase.zip`
+
+**备选（PG 兼容模式）**：本部署 DB_MODE=pg，也可直接用 postgresql 驱动——
+`org.postgresql.Driver` + `jdbc:postgresql://127.0.0.1:54321/kingbase`，分页用 `DbType.POSTGRE_SQL`。
+零依赖改造时可选，官方推荐仍为 kingbase8。
 
 ### Go（gormx）
 
