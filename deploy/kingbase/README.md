@@ -138,6 +138,23 @@ db, err := gormx.Open(conf) // PG 兼容模式，外部认证 scram-sha-256
 
 `ENABLE_CI`（大小写不敏感）在 pg/mysql 模式下不生效，pg 模式天然大小写敏感（贴近 PG 行为）。
 
+## 时区
+
+镜像 initdb 跟随容器系统时钟，默认 `timezone = 'UTC'`（`now()` 与北京时间差 8 小时，经典坑）。
+`deploy.sh` 部署完成时会自动把服务器级默认时区修正为 `Asia/Shanghai`（写入 `kingbase.conf` 并
+reload，对新会话生效）：
+
+```sql
+show timezone;      -- Asia/Shanghai
+select now();       -- 2026-09-23 14:41:05.90246+08
+```
+
+说明：
+- `timestamptz` 底层按 UTC 存储，显示随会话时区；服务器默认东八区后，Java/Go 客户端无需额外配置
+- 连接远端仍为 UTC 的金仓实例时，可会话级覆盖：gormx DSN 加 `TimeZone=Asia/Shanghai`，
+  Hikari 用 `connection-init-sql: set time zone 'Asia/Shanghai'`
+- 容器系统时钟本身仍是 UTC，仅影响容器内 `date` 显示，不影响数据库时区
+
 ## 已知问题（V009R001C010B0004 镜像，官方文档未提及）
 
 - **镜像内无 crond**：官方设计的 `/etc/cron.d` 每分钟自愈任务不会被执行；数据库进程崩溃但容器存活时

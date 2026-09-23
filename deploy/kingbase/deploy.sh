@@ -88,6 +88,16 @@ cmd_deploy() {
   docker compose up -d
   wait_ready || exit 1
 
+  # 6. 时区: initdb 跟随容器系统时钟默认 UTC（经典 8 小时坑），统一修正为东八区 Asia/Shanghai
+  #    只改服务器级默认（kingbase.conf 持久化 + reload），已存在会话不受影响
+  if [ "$(docker exec -e PGPASSWORD="$DB_PASSWORD" kingbase ksql -U"$DB_USER" -d "$DB_NAME" -p 54321 -tA \
+      -c 'show timezone' 2>/dev/null | tr -d '[:space:]')" != "Asia/Shanghai" ]; then
+    docker exec kingbase sed -i "s/^timezone = .*/timezone = 'Asia\/Shanghai'/; s/^log_timezone = .*/log_timezone = 'Asia\/Shanghai'/" \
+      /home/kingbase/userdata/data/kingbase.conf
+    docker exec kingbase /home/kingbase/install/kingbase/bin/sys_ctl reload -D /home/kingbase/userdata/data >/dev/null
+    echo "时区已由 UTC 修正为 Asia/Shanghai（东八区）"
+  fi
+
   echo ""
   docker compose ps
   echo ""
