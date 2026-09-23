@@ -51,10 +51,52 @@ bash deploy/kingbase/deploy.sh logs       # 最近 100 行容器日志
 
 ### Java（Spring Boot + MyBatis）
 
-官方标准接入方式（[官方 MyBatis 文档](https://docs.kingbase.com.cn/cn/KES-V9R1C10/quick_start/access_tool/java/Mybatis)），用金仓官方 JDBC 驱动 kingbase8，Maven 中央仓库可直接拉取：
+**推荐（PG 兼容模式）**：本部署 `DB_MODE=pg`，直接用 PostgreSQL JDBC 驱动——MyBatis-Plus 对
+`DbType.POSTGRE_SQL` 的分页、批量插入、主键回填支持最成熟，社区资料多；与 gormx 复用 postgres
+驱动是同一思路：
 
 ```xml
 <!-- pom.xml -->
+<dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+</dependency>
+```
+
+```yaml
+# application.yml（MyBatis / MyBatis-Plus 同样适用，底层共用 spring.datasource）
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://127.0.0.1:54321/kingbase?reWriteBatchedInserts=true&tcpKeepAlive=true
+    username: system
+    password: 12345678ab
+```
+
+```java
+// MyBatis-Plus 分页
+MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.POSTGRE_SQL));
+```
+
+URL 参数说明（[官方 JDBC 连接属性](https://docs.kingbase.com.cn/cn/KES-V9R1C10/application/client_interface/Java/Jdbc/jdbc-2)）：
+
+| 参数 | 说明 |
+| --- | --- |
+| `reWriteBatchedInserts=true` | 批量插入重写优化（金仓驱动对应 `rewriteBatchedStatements`） |
+| `tcpKeepAlive=true` | TCP 保活探测，连接池长连接场景防半开连接 |
+| `stringtype=unspecified` | 可选，MP 存 jsonb/枚举字段时的常见坑参数 |
+| `currentSchema=xxx` | 可选，指定模式搜索路径（多 schema 时用） |
+| `ApplicationName=xxx` | 可选，标识应用，便于服务端排查连接来源 |
+| `connectTimeout=5` / `socketTimeout=60` | 可选，连接/读写超时（秒） |
+
+注意：用户名密码走 `username`/`password` 独立配置，不拼进 URL（避免密码出现在日志里）；XML 中写 URL 时 `&` 需转义为 `&amp;`。
+
+**备选（官方 kingbase8 驱动）**：[官方 MyBatis 文档](https://docs.kingbase.com.cn/cn/KES-V9R1C10/quick_start/access_tool/java/Mybatis)
+标准方式，`oracle/mysql` 兼容模式或需金仓特性（国密 SSL 等）时必用；PG 模式下非首选（MP 生态
+兼容性资料较少，示例工程：`https://kingbase.oss-cn-beijing.aliyuncs.com/KES_INTERFACE/quickstart/mybatis-kingbase.zip`）：
+
+```xml
 <dependency>
     <groupId>cn.com.kingbase</groupId>
     <artifactId>kingbase8</artifactId>
@@ -63,40 +105,14 @@ bash deploy/kingbase/deploy.sh logs       # 最近 100 行容器日志
 ```
 
 ```yaml
-# application.yml（MyBatis / MyBatis-Plus 同样适用，底层共用 spring.datasource）
 spring:
   datasource:
     driver-class-name: com.kingbase8.Driver
     url: jdbc:kingbase8://127.0.0.1:54321/kingbase?useServerPrepStmts=true&rewriteBatchedStatements=true&tcpKeepAlive=true
     username: system
     password: 12345678ab
+# MyBatis-Plus 分页: DbType.KINGBASE_ES
 ```
-
-URL 参数说明（[官方 JDBC 连接属性](https://docs.kingbase.com.cn/cn/KES-V9R1C10/application/client_interface/Java/Jdbc/jdbc-2)）：
-
-| 参数 | 说明 |
-| --- | --- |
-| `useServerPrepStmts=true` | 服务端预编译语句，官方 MyBatis 示例推荐 |
-| `rewriteBatchedStatements=true` | 批量插入重写优化，官方 MyBatis 示例推荐 |
-| `tcpKeepAlive=true` | TCP 保活探测，连接池长连接场景防半开连接 |
-| `currentSchema=xxx` | 可选，指定模式搜索路径（多 schema 时用） |
-| `ApplicationName=xxx` | 可选，标识应用，便于服务端排查连接来源 |
-| `connectTimeout=5` / `socketTimeout=60` | 可选，连接/读写超时（秒） |
-
-注意：用户名密码走 `username`/`password` 独立配置，不拼进 URL（避免密码出现在日志里）；XML 中写 URL 时 `&` 需转义为 `&amp;`。
-
-```java
-// MyBatis-Plus 分页（内置金仓方言，无需按 PG 配置）
-MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.KINGBASE_ES));
-```
-
-原生 MyBatis + PageHelper 的官方示例工程可下载参考：
-`https://kingbase.oss-cn-beijing.aliyuncs.com/KES_INTERFACE/quickstart/mybatis-kingbase.zip`
-
-**备选（PG 兼容模式）**：本部署 DB_MODE=pg，也可直接用 postgresql 驱动——
-`org.postgresql.Driver` + `jdbc:postgresql://127.0.0.1:54321/kingbase`，分页用 `DbType.POSTGRE_SQL`。
-零依赖改造时可选，官方推荐仍为 kingbase8。
 
 ### Go（gormx）
 
