@@ -25,12 +25,18 @@ if err != nil {
 | PostgreSQL / GaussDB | `postgres://user:pass@127.0.0.1:5432/app?sslmode=disable` |
 | SQLite | `file:./data.db?cache=shared` |
 | 达梦 DM8 | `dm://SYSDBA:SYSDBA@127.0.0.1:5236?schema=SYSDBA&appName=app&connectTimeout=30000` |
+| 金仓 KingbaseES | `kingbase://SYSTEM:pass@127.0.0.1:54321/TEST?sslmode=disable` |
 
 达梦使用 `github.com/godoes/gorm-dameng`（基于达梦官方 Go 驱动源码 go-20250513 整理、
 发布在 Go module proxy 的 GORM v2 方言包，比官网文档提供的 2023 版 dmgorm2.zip 更新）。
 `dm://` DSN 中 `schema` 参数指定模式，默认端口 5236；需要字符长度语义的 VARCHAR 或
 其它方言配置时，用 `gormx.OpenWithDialector(dameng.New(dameng.Config{...}))` 自行构造。
 注意达梦 VARCHAR 长度按字节计算（UTF-8 下一个汉字占 3 字节），建表字段长度需按需放大。
+
+金仓 KingbaseES 以 PG 兼容模式复用 `gorm.io/driver/postgres` 驱动：`kingbase://` 前缀 DSN
+自动识别并转成 key-value 形式交给 pgx 解析，默认端口 54321。金仓官方 Go 驱动 gokb 使用了
+darwin syscall 未定义的 TCP_KEEPCNT，gorm-kingbase 现版本在 macOS 上编译不过，故未引入；
+需要 SM3/SM4 国密认证等官方驱动能力时，用 `gormx.OpenWithDialector(...)` 自行接入。
 
 ## 模型选择
 

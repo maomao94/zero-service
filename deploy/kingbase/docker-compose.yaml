@@ -1,0 +1,38 @@
+# KingbaseES V9R1C10 单机部署（PG 兼容模式）
+# 对照官方文档: https://docs.kingbase.com.cn/cn/KES-V9R1C10/install/02-docker-install
+#
+# 前置: bash deploy/kingbase/deploy.sh（自动 load 镜像 tar 并 retag 为 kingbase:kes）
+#       Docker >= 20.10.0
+# 说明:
+#   - 环境变量仅在首次初始化（data 为空）时生效，改参数需 stop 后清空 data 重建
+#   - 数据持久化在 ./data（对应容器 /home/kingbase/userdata），down 不丢数据；
+#     deploy.sh 启动前自动创建 data 并赋 755 权限（官方要求）
+#   - 镜像自带授权 90 天（ksql 查询: select GET_LICENSE_VALIDDAYS();），到期需替换
+#     userdata/etc/license.dat 并 sys_ctl reload
+#   - gormx 连接串: kingbase://system:12345678ab@127.0.0.1:54321/kingbase?sslmode=disable
+#     （kingbase 为金仓默认库；业务库用 init.sql 或管理工具创建）
+#     （外部认证默认 scram-sha-256，满足 PG 兼容驱动要求，国密场景另行接入 gokb 驱动）
+#
+# 镜像已知问题（V009R001C010B0004，官方文档未提及）:
+#   - entrypoint 只在容器启动时启动数据库一次；镜像内无 crond 二进制，
+#     /etc/cron.d/KINGBASECRON 每分钟自愈任务不会被执行
+#   - 数据库进程崩溃后用 bash deploy/kingbase/deploy.sh restart 恢复
+
+services:                # 服务定义列表（compose 的顶层键，每个键是一个容器服务）
+  kingbase:              # 服务名，也是 compose 网络内的 DNS 主机名
+    image: kingbase:kes  # 使用本地镜像（由 deploy.sh 从 tar load 后 retag 而来，compose 不会去仓库拉取）
+    container_name: kingbase   # 固定容器名（不设则自动生成 "kingbase-kingbase-1"，固定名方便脚本 exec）
+    privileged: true     # 官方标注可选；entrypoint 内大量使用 sudo，保留以避免权限问题
+    ports:               # 端口映射，格式 "宿主机:容器"
+      - "54321:54321"    # 宿主机所有网卡的 54321 -> 容器内金仓默认端口 54321，供远程客户端连接
+    volumes:             # 数据卷挂载，格式 "宿主机路径:容器路径"
+      - ./data:/home/kingbase/userdata/  # 数据持久化；容器右侧路径必须为 userdata，否则 data 目录无法持久化
+    environment:         # 环境变量（仅首次初始化 data 为空时生效，改后需清空 data 重建）
+      - DB_USER=system   # 初始超级用户名（官方默认 system）
+      - DB_PASSWORD=12345678ab  # 初始密码（官方默认 12345678ab）
+      - DB_MODE=pg           # 兼容模式: oracle/pg/mysql/sqlserver（官方默认 oracle，此处按 gormx 适配选 pg）
+      - ENCODING=UTF8        # 数据库字符集（官方默认 utf8）
+      # - ENABLE_CI=no       # 官方注明 pg/mysql 模式下此项不生效: pg 模式 initdb 不带 --enable-ci，
+                              # 天然大小写敏感（已验证 enable_ci=off），无需设置；oracle 模式默认敏感可设 yes
+      # - LANG=zh_CN.utf8    # 容器环境字符集，可选 en_US.utf8(默认)/zh_CN.gbk/zh_CN.utf8
+    restart: unless-stopped    # 官方示例为 always；unless-stopped 在手动 stop 后不会被守护进程拉起，本机开发更友好
