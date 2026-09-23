@@ -11,7 +11,7 @@
 #
 # 说明:
 #   - 环境变量仅在首次初始化（data 为空）时生效，见 docker-compose.yaml
-#   - gormx 连接串: kingbase://system:12345678ab@127.0.0.1:54321/test?sslmode=disable
+#   - gormx 连接串: kingbase://system:12345678ab@127.0.0.1:54321/kingbase?sslmode=disable
 
 set -e
 cd "$(dirname "$0")"
@@ -19,7 +19,7 @@ cd "$(dirname "$0")"
 IMAGE_TAG=kingbase:kes
 DB_USER=system
 DB_PASSWORD=12345678ab
-DB_NAME=kingbase    # 管理操作连接库（金仓默认库，相当于 PG 的 postgres），业务用 defaultdb
+DB_NAME=kingbase    # 管理操作连接库（金仓默认库，相当于 PG 的 postgres），业务库用 init.sql 或管理工具创建
 
 license_days() {
   docker exec -e PGPASSWORD="$DB_PASSWORD" kingbase \
