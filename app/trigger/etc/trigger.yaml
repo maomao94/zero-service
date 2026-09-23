@@ -25,7 +25,8 @@ RedisDB: 0
 # 数据库配置
 DB:
   DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
-  # DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
+  # DataSource: postgres://postgres:postgres@localhost:5432/zero?sslmode=disable&TimeZone=Asia/Shanghai
+#  DataSource: kingbase://system:12345678ab@127.0.0.1:54321/zero?sslmode=disable
   # 最大空闲连接数，默认 100。
   MaxIdleConns: 100
   # 最大打开连接数，默认 100。
