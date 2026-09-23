@@ -24,7 +24,7 @@ services:                # 服务定义列表（compose 的顶层键，每个键
     container_name: kingbase   # 固定容器名（不设则自动生成 "kingbase-kingbase-1"，固定名方便脚本 exec）
     privileged: true     # 官方标注可选；entrypoint 内大量使用 sudo，保留以避免权限问题
     ports:               # 端口映射，格式 "宿主机:容器"
-      - "54321:54321"    # 宿主机 54321 -> 容器内金仓默认端口 54321
+      - "54321:54321"    # 宿主机所有网卡的 54321 -> 容器内金仓默认端口 54321，供远程客户端连接
     volumes:             # 数据卷挂载，格式 "宿主机路径:容器路径"
       - ./data:/home/kingbase/userdata/  # 数据持久化；容器右侧路径必须为 userdata，否则 data 目录无法持久化
     environment:         # 环境变量（仅首次初始化 data 为空时生效，改后需清空 data 重建）
