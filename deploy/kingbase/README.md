@@ -67,10 +67,23 @@ bash deploy/kingbase/deploy.sh logs       # 最近 100 行容器日志
 spring:
   datasource:
     driver-class-name: com.kingbase8.Driver
-    url: jdbc:kingbase8://127.0.0.1:54321/kingbase
+    url: jdbc:kingbase8://127.0.0.1:54321/kingbase?useServerPrepStmts=true&rewriteBatchedStatements=true&tcpKeepAlive=true
     username: system
     password: 12345678ab
 ```
+
+URL 参数说明（[官方 JDBC 连接属性](https://docs.kingbase.com.cn/cn/KES-V9R1C10/application/client_interface/Java/Jdbc/jdbc-2)）：
+
+| 参数 | 说明 |
+| --- | --- |
+| `useServerPrepStmts=true` | 服务端预编译语句，官方 MyBatis 示例推荐 |
+| `rewriteBatchedStatements=true` | 批量插入重写优化，官方 MyBatis 示例推荐 |
+| `tcpKeepAlive=true` | TCP 保活探测，连接池长连接场景防半开连接 |
+| `currentSchema=xxx` | 可选，指定模式搜索路径（多 schema 时用） |
+| `ApplicationName=xxx` | 可选，标识应用，便于服务端排查连接来源 |
+| `connectTimeout=5` / `socketTimeout=60` | 可选，连接/读写超时（秒） |
+
+注意：用户名密码走 `username`/`password` 独立配置，不拼进 URL（避免密码出现在日志里）；XML 中写 URL 时 `&` 需转义为 `&amp;`。
 
 ```java
 // MyBatis-Plus 分页（内置金仓方言，无需按 PG 配置）

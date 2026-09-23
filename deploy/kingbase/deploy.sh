@@ -97,7 +97,7 @@ cmd_deploy() {
   echo "  数据库: kingbase（金仓默认库；业务库用 init.sql 或管理工具创建）"
   echo "  数据卷: $(pwd)/data"
   echo "  gormx:  kingbase://$DB_USER:$DB_PASSWORD@127.0.0.1:54321/kingbase?sslmode=disable"
-  echo "  JDBC:   jdbc:kingbase8://127.0.0.1:54321/kingbase（官方 kingbase8 驱动，Spring Boot + MyBatis 直接用）"
+  echo "  JDBC:   jdbc:kingbase8://127.0.0.1:54321/kingbase?useServerPrepStmts=true&rewriteBatchedStatements=true&tcpKeepAlive=true"
   echo "  授权:   剩余 $(license_days) 天，到期需替换 userdata/etc/license.dat"
 }
 
