@@ -49,6 +49,48 @@ bash deploy/kingbase/deploy.sh logs       # 最近 100 行容器日志
 
 数据库管理工具（TablePlus / DBeaver / Navicat 等）可直接以 PostgreSQL 协议连接，端口 54321。
 
+### Java（Spring Boot + MyBatis）
+
+PG 兼容模式下直接用 PostgreSQL JDBC 驱动，无需金仓专用驱动：
+
+```xml
+<!-- pom.xml -->
+<dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+</dependency>
+```
+
+```yaml
+# application.yml（MyBatis / MyBatis-Plus 同样适用，底层共用 spring.datasource）
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://127.0.0.1:54321/kingbase
+    username: system
+    password: 12345678ab
+```
+
+```java
+// MyBatis-Plus 示例（金仓 PG 模式兼容 PG 方言，DbType.POSTGRE_SQL）
+MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.POSTGRE_SQL));
+```
+
+如需金仓官方 JDBC（`com.kingbase8.Driver` + `jdbc:kingbase8://host:54321/db`），jar 包在金仓安装目录
+`Drivers/JDBC` 下，需手动安装到本地 Maven 仓库或私服；PG 兼容场景通常无需。
+
+### Go（gormx）
+
+zero-service 的 `common/gormx` 已内置金仓支持，`kingbase://` 前缀 DSN 自动识别并复用 postgres 驱动：
+
+```go
+conf := gormx.Config{
+    DataSource: "kingbase://system:12345678ab@127.0.0.1:54321/kingbase?sslmode=disable",
+}
+db, err := gormx.Open(conf) // PG 兼容模式，外部认证 scram-sha-256
+```
+
 ## 初始化参数（重要）
 
 `DB_USER` / `DB_PASSWORD` / `DB_MODE` / `ENCODING` / `ENABLE_CI` **只在首次初始化（data 为空）时生效**。
