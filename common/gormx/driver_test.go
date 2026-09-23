@@ -1,6 +1,7 @@
 package gormx
 
 import (
+	"strings"
 	"testing"
 
 	dameng "github.com/godoes/gorm-dameng"
@@ -71,6 +72,21 @@ func TestParseDatabaseTypeDetectsDM(t *testing.T) {
 	}
 }
 
+func TestParseDatabaseTypeDetectsKingbase(t *testing.T) {
+	cases := []struct {
+		dsn  string
+		want DatabaseType
+	}{
+		{"kingbase://SYSTEM:pass@localhost:54321/TEST?sslmode=disable", DatabaseKingbase},
+		{"KINGBASE://SYSTEM:pass@localhost:54321/TEST", DatabaseKingbase},
+	}
+	for _, tc := range cases {
+		if got := ParseDatabaseType(tc.dsn); got != tc.want {
+			t.Fatalf("ParseDatabaseType(%q) = %s, want %s", tc.dsn, got, tc.want)
+		}
+	}
+}
+
 func TestGetDialectorReturnsDM(t *testing.T) {
 	d, err := GetDialector(DatabaseDM, "dm://SYSDBA:SYSDBA@localhost:5236?schema=SYSDBA")
 	if err != nil {
@@ -81,6 +97,20 @@ func TestGetDialectorReturnsDM(t *testing.T) {
 	}
 	if d.Name() != "dm" {
 		t.Fatalf("dialector name = %s, want dm", d.Name())
+	}
+}
+
+func TestGetDialectorReturnsKingbase(t *testing.T) {
+	d, err := GetDialector(DatabaseKingbase, "kingbase://SYSTEM:pass@localhost:54321/TEST?sslmode=disable")
+	if err != nil {
+		t.Fatalf("get dialector error = %v", err)
+	}
+	pg, ok := d.(*postgres.Dialector)
+	if !ok {
+		t.Fatalf("dialector type = %T, want *postgres.Dialector", d)
+	}
+	if pg.DSN == "" || strings.HasPrefix(pg.DSN, "kingbase://") {
+		t.Fatalf("dialector dsn = %q, want converted key-value dsn", pg.DSN)
 	}
 }
 
