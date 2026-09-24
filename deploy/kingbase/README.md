@@ -21,6 +21,8 @@
 
 # 2. 部署
 bash deploy/kingbase/deploy.sh
+# 端口冲突时只修改宿主机映射端口（容器内仍为 54321）
+KINGBASE_HOST_PORT=54322 bash deploy/kingbase/deploy.sh
 
 # 3. 建业务库（可选，也可用数据库管理工具在 kingbase 库上执行）
 docker exec -i kingbase ksql -Usystem -d kingbase -p 54321 < deploy/kingbase/init.sql
@@ -29,12 +31,28 @@ docker exec -i kingbase ksql -Usystem -d kingbase -p 54321 < deploy/kingbase/ini
 docker exec -i kingbase ksql -Usystem -d zero -p 54321 < deploy/kingbase/roles.sql
 ```
 
-`roles.sql` 需要对每个业务库分别执行一次。它会创建 `app_user`（初始密码 `app123456`，业务程序读写）、
-`admin_user`（初始密码 `admin123456`，管理员及业务数据读写）和 `query_user`（初始密码 `query123456`，仅查询）；
+`roles.sql` 需要对每个业务库分别执行一次。它会创建 `app_user`（初始密码 `App_user@123`，业务程序读写）、
+`admin_user`（初始密码 `Admin_user@123`，管理员及业务数据读写）和 `query_user`（初始密码 `Query_user@123`，仅查询）；
 角色是实例级对象，多个业务库共用相同角色。首次执行请使用 `system` 等有角色管理权限的账号。脚本仅在角色不存在时创建账号，
 已有账号的密码及 `CREATEROLE`/`CREATEDB` 属性不会被修改；若账号此前已存在，请先确认 `admin_user` 具备管理所需属性，
 并自行修改或核验密码。密码可用 `alter user app_user with password '新密码';`（替换用户名）单独修改。脚本中的初始密码仅用于本机开发，
-部署到共享或生产环境前必须修改，并通过受控渠道分发。
+部署到共享或生产环境前必须修改，并通过受控渠道分发。openGauss、PostgreSQL 和 MySQL 目录下也提供同口径的 `roles.sql`，四种数据库账号与授权口径保持一致。
+
+数据库部署不包含 DTS 迁移工具；需要迁移时使用独立工具，按实际宿主机端口配置源库和目标库连接。
+
+## KDTS 独立部署
+
+KDTS-WEB 已从本目录的数据库 Compose 中拆出，独立配置位于 `deploy/kdts/`，不会随 Kingbase 数据库部署自动启动。
+原有 `kdts_data` 已移动为 `deploy/kdts/data`，其中的 H2 任务数据保留。
+
+```bash
+bash deploy/kdts/deploy.sh             # 部署或启动 KDTS
+bash deploy/kdts/deploy.sh status      # 查看状态
+bash deploy/kdts/deploy.sh logs        # 查看日志
+bash deploy/kdts/deploy.sh stop        # 停止并移除容器，保留任务数据
+```
+
+详细连接方式、端口和宿主机数据库访问配置见 [`deploy/kdts/README.md`](../kdts/README.md)。
 
 ## deploy.sh 命令
 
@@ -44,6 +62,7 @@ bash deploy/kingbase/deploy.sh stop       # 移除容器，保留数据
 bash deploy/kingbase/deploy.sh restart    # 重启容器（数据库进程异常时恢复）
 bash deploy/kingbase/deploy.sh status     # 容器状态 + 授权剩余天数
 bash deploy/kingbase/deploy.sh logs       # 最近 100 行容器日志
+bash deploy/kingbase/deploy.sh ksql       # 进入 ksql 交互（容器内 trust 免密，system 连默认库）
 ```
 
 **重新初始化**（危险操作，脚本不提供一键清空命令）：`stop` 后手动 `rm -rf data`，再执行 `deploy.sh`——检测到空目录会自动重新 initdb。
@@ -52,13 +71,14 @@ bash deploy/kingbase/deploy.sh logs       # 最近 100 行容器日志
 
 | 项 | 值 |
 | --- | --- |
-| Host / Port | `127.0.0.1:54321` |
+| Host / Port | `127.0.0.1:54321`（`KINGBASE_HOST_PORT` 可改宿主机端口） |
 | 用户 / 密码 | `system` / `12345678ab` |
 | 默认库 | `kingbase`（金仓默认库，相当于 PG 的 `postgres`） |
 | 认证 | scram-sha-256（PG 兼容） |
 | gormx DSN | `kingbase://system:12345678ab@127.0.0.1:54321/kingbase?sslmode=disable` |
 
-数据库管理工具（TablePlus / DBeaver / Navicat 等）可直接以 PostgreSQL 协议连接，端口 54321。
+数据库管理工具（TablePlus / DBeaver / Navicat 等）可直接以 PostgreSQL 协议连接，默认端口 54321；
+若设置 `KINGBASE_HOST_PORT`，客户端连接时使用对应的宿主机端口，容器内端口仍为 54321。
 Compose 将端口发布到宿主机网络接口，服务器部署后可由远程客户端连接；请按部署环境配置防火墙访问范围，并修改示例账号密码。
 
 ### Java（Spring Boot + MyBatis）

@@ -6,30 +6,35 @@
 #   restart   重启容器（数据库进程异常时的恢复手段）
 #   status    查看容器状态与授权剩余天数
 #   logs      查看容器日志（最近 100 行）
+#   ksql      进入 ksql 交互（容器内 local trust 免密，直连默认库 kingbase）
 #
 # 重新初始化（危险操作，脚本不代做）: stop 后手动 rm -rf data，再执行本脚本检测到空目录会自动重新 initdb
 #
 # 说明:
 #   - 环境变量仅在首次初始化（data 为空）时生效，见 docker-compose.yaml
+#   - 默认宿主机端口 54321；端口冲突时设置 KINGBASE_HOST_PORT，只修改宿主机映射端口
 #   - gormx 连接串: kingbase://system:12345678ab@127.0.0.1:54321/kingbase?sslmode=disable
 
 set -e
 cd "$(dirname "$0")"
 
 IMAGE_TAG=kingbase:kes
+HOST_PORT="${KINGBASE_HOST_PORT:-54321}"
+export KINGBASE_HOST_PORT="$HOST_PORT"
+export COMPOSE_IGNORE_ORPHANS=1
 DB_USER=system
 DB_PASSWORD=12345678ab
 DB_NAME=kingbase    # 管理操作连接库（金仓默认库，相当于 PG 的 postgres），业务库用 init.sql 或管理工具创建
 
 license_days() {
-  docker exec -e PGPASSWORD="$DB_PASSWORD" kingbase \
+  docker exec -e KINGBASE_PASSWORD="$DB_PASSWORD" kingbase \
     ksql -U"$DB_USER" -d "$DB_NAME" -p 54321 -tA -c 'select GET_LICENSE_VALIDDAYS();' 2>/dev/null
 }
 
 wait_ready() {
   echo "等待数据库就绪..."
-  for i in $(seq 1 60); do
-    if docker exec -e PGPASSWORD="$DB_PASSWORD" kingbase \
+  for ((i = 1; i <= 60; i++)); do
+    if docker exec -e KINGBASE_PASSWORD="$DB_PASSWORD" kingbase \
         ksql -U"$DB_USER" -d "$DB_NAME" -p 54321 -c 'select version();' >/dev/null 2>&1; then
       return 0
     fi
@@ -56,7 +61,10 @@ cmd_deploy() {
   if docker image inspect "$IMAGE_TAG" >/dev/null 2>&1; then
     echo "镜像已存在: $IMAGE_TAG"
   else
-    TAR=$(ls KingbaseES_*_Docker.tar 2>/dev/null | head -1 || true)
+    shopt -s nullglob
+    TARS=(KingbaseES_*_Docker.tar)
+    shopt -u nullglob
+    TAR="${TARS[0]:-}"
     [ -n "$TAR" ] || { echo "错误: 未找到镜像 tar，请将 KingbaseES_*_Docker.tar 放到本目录"; exit 1; }
     echo "加载镜像 $TAR ..."
     # 从 docker load 输出解析本次加载的镜像名，避免误 retag 本地已有旧版镜像
@@ -71,13 +79,13 @@ cmd_deploy() {
   mkdir -p data
   chmod 755 data
 
-  # 4. 容器状态检查（compose 管理的容器: data 为空则先 down 重建以重新初始化，否则复用）
+  # 4. 容器状态检查（compose 管理的容器: data 为空则移除旧容器重建，否则复用）
   if docker ps -a --format '{{.Names}}' | grep -qx "kingbase"; then
     PROJECT=$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' kingbase 2>/dev/null || true)
     [ "$PROJECT" = "kingbase" ] || { echo "错误: 容器 kingbase 已存在且非本 compose 管理，请先移除"; exit 1; }
     if [ -z "$(ls -A data 2>/dev/null)" ]; then
       echo "data 目录为空，移除旧容器以重新初始化数据库..."
-      docker compose down
+      docker compose rm -sf kingbase
     else
       echo "容器已存在（compose 管理），复用..."
     fi
@@ -90,7 +98,7 @@ cmd_deploy() {
 
   # 6. 时区: initdb 跟随容器系统时钟默认 UTC（经典 8 小时坑），统一修正为东八区 Asia/Shanghai
   #    只改服务器级默认（kingbase.conf 持久化 + reload），已存在会话不受影响
-  if [ "$(docker exec -e PGPASSWORD="$DB_PASSWORD" kingbase ksql -U"$DB_USER" -d "$DB_NAME" -p 54321 -tA \
+  if [ "$(docker exec -e KINGBASE_PASSWORD="$DB_PASSWORD" kingbase ksql -U"$DB_USER" -d "$DB_NAME" -p 54321 -tA \
       -c 'show timezone' 2>/dev/null | tr -d '[:space:]')" != "Asia/Shanghai" ]; then
     docker exec kingbase sed -i "s/^timezone = .*/timezone = 'Asia\/Shanghai'/; s/^log_timezone = .*/log_timezone = 'Asia\/Shanghai'/" \
       /home/kingbase/userdata/data/kingbase.conf
@@ -99,15 +107,15 @@ cmd_deploy() {
   fi
 
   echo ""
-  docker compose ps
+  docker compose ps kingbase
   echo ""
   echo "KingbaseES 部署完成:"
-  echo "  端口:   54321（容器内 54321）"
+  echo "  端口:   ${HOST_PORT}（容器内 54321）"
   echo "  用户:   $DB_USER / $DB_PASSWORD"
   echo "  数据库: kingbase（金仓默认库；业务库用 init.sql 或管理工具创建）"
   echo "  数据卷: $(pwd)/data"
-  echo "  gormx:  kingbase://$DB_USER:$DB_PASSWORD@127.0.0.1:54321/kingbase?sslmode=disable"
-  echo "  JDBC:   jdbc:postgresql://127.0.0.1:54321/kingbase?reWriteBatchedInserts=true&tcpKeepAlive=true（PG 模式推荐，MyBatis-Plus 用 DbType.POSTGRE_SQL）"
+  echo "  gormx:  kingbase://$DB_USER:$DB_PASSWORD@127.0.0.1:${HOST_PORT}/kingbase?sslmode=disable"
+  echo "  JDBC:   jdbc:postgresql://127.0.0.1:${HOST_PORT}/kingbase?reWriteBatchedInserts=true&tcpKeepAlive=true（PG 模式推荐，MyBatis-Plus 用 DbType.POSTGRE_SQL）"
   echo "  授权:   剩余 $(license_days) 天，到期需替换 userdata/etc/license.dat"
 }
 
@@ -125,14 +133,17 @@ case "${1:-deploy}" in
     echo "已恢复: $(docker ps --filter name=kingbase --format '{{.Status}}')"
     ;;
   status)
-    docker compose ps
+    docker compose ps kingbase
     echo "授权剩余: $(license_days) 天"
     ;;
   logs)
-    docker compose logs --tail 100
+    docker compose logs --tail 100 kingbase
+    ;;
+  ksql)
+    docker exec -it kingbase ksql -U"$DB_USER" -d "$DB_NAME" -p 54321
     ;;
   *)
-    echo "未知命令: $1；可用: deploy(默认)/stop/restart/status/logs"
+    echo "未知命令: $1；可用: deploy(默认)/stop/restart/status/logs/ksql"
     exit 1
     ;;
 esac

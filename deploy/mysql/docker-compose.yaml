@@ -1,0 +1,27 @@
+# MySQL 8.4 Docker 部署
+# 用途: 本地开发和测试业务系统
+# 对照官方镜像: https://hub.docker.com/_/mysql
+#
+# 前置: bash deploy/mysql/deploy.sh
+# 说明:
+#   - 默认端口 3306 直映射到宿主机；如本机已有 MySQL，占用冲突时由开发者自行修改左侧宿主机端口
+#   - 数据持久化 ./data -> /var/lib/mysql，down 不丢数据
+#   - root 密码 root 仅用于本地开发；业务三账号见 roles.sql
+#   - 服务端时区东八区、字符集 utf8mb4，与 kingbase/opengauss/postgres 部署口径一致
+
+services:
+  mysql:                    # 服务名，compose 网络内 DNS 为 mysql
+    image: mysql:8.4        # 8.4 LTS 长期支持版
+    container_name: mysql8  # 固定容器名，方便脚本 exec；注意与 go-zero-looklook 的 mysql 容器名不冲突（此处用 mysql8）
+    ports:
+      - "${MYSQL_HOST_PORT:-3306}:3306" # 默认端口直映射；需要避让时设置 MYSQL_HOST_PORT
+    volumes:
+      - ./data:/var/lib/mysql  # 持久化
+    environment:
+      - MYSQL_ROOT_PASSWORD=root  # root 密码（本地开发；仅首次初始化空目录时生效）
+      - TZ=Asia/Shanghai         # 容器系统时区（影响容器日志时间戳）
+    restart: unless-stopped
+    command:
+      - --default-time-zone=+08:00        # 服务端默认时区东八区，与 kingbase/opengauss/postgres 一致
+      - --character-set-server=utf8mb4    # 服务端默认字符集 utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci  # 对应排序规则（MySQL 8 默认）

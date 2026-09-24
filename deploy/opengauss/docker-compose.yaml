@@ -1,0 +1,30 @@
+# openGauss 7.0 单机部署（持久化版，替代原无挂卷容器）
+# 对照官方文档: https://docs.opengauss.org/zh/docs/latest/installation_guide/installing_the_container_image.html
+#
+# 前置: bash deploy/opengauss/deploy.sh（自动拉取 opengauss/opengauss-server:latest）
+#       Docker >= 20.10.0
+# 说明:
+#   - 原本地高斯容器未挂卷，已清理；新部署统一持久化到 ./data（容器 /var/lib/opengauss），down 不丢数据
+#   - 默认端口 5432 直映射到宿主机；端口冲突时设置 OPENGAUSS_HOST_PORT，只修改宿主机映射端口
+#   - 密码需满足复杂度: >=8位，含大小写、数字、特殊字符(#?!@$%^&*-)，此处默认 Gauss@123
+#   - 默认库 postgres，默认用户 gaussdb（不可改），超级用户 omm 密码同 GS_PASSWORD
+#   - gsql 连接: gsql -d postgres -U gaussdb -W 'Gauss@123' -h 127.0.0.1 -p5432
+#     PG 协议: psql "host=127.0.0.1 port=5432 dbname=postgres user=gaussdb password=Gauss@123"
+#   - 外部客户端使用宿主机映射端口连接
+
+services:                # 服务定义列表
+  opengauss:             # 服务名，也是 compose 网络内 DNS 主机名
+    image: opengauss/opengauss-server:latest  # Docker Hub 官方镜像，amd64；arm64 需自行构建
+    container_name: opengauss  # 固定容器名，方便脚本 exec
+    privileged: true     # 官方要求特权模式，否则初始化失败
+    ports:               # 端口映射
+      - "${OPENGAUSS_HOST_PORT:-5432}:5432" # 默认端口直映射；需要避让时设置 OPENGAUSS_HOST_PORT
+    volumes:             # 数据卷挂载
+      - ./data:/var/lib/opengauss  # 持久化目录；官方示例 -v /opengauss:/var/lib/opengauss，对应此挂载
+    environment:         # 环境变量（仅首次初始化 data 为空时生效，改后需清空 data 重建）
+      - GS_PASSWORD=Gauss@123  # 必选，omm/gaussdb 密码，需满足复杂度
+      - GS_PORT=5432     # 容器内端口，默认 5432
+      # - GS_NODENAME=gaussdb  # 可选，节点名，默认 gaussdb
+      # - GS_USERNAME=gaussdb  # 可选，默认 gaussdb
+      # - GS_DB=postgres       # 可选，初始库，默认 postgres
+    restart: unless-stopped  # 守护进程/主机重启后自动拉起，手动 stop 后不拉起

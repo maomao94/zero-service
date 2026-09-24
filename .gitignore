@@ -32,3 +32,12 @@ web/*/dist/
 # Kingbase 部署包（镜像 tar 与数据卷不入库）
 deploy/kingbase/*.tar
 deploy/kingbase/data/
+# KDTS 独立部署运行数据
+deploy/kdts/data/
+deploy/kdts/logs/
+deploy/kdts/results/
+# openGauss / PostgreSQL 本地部署持久化（本地开发与测试）
+deploy/opengauss/data/
+deploy/postgres/data/
+# MySQL 本地部署持久化
+deploy/mysql/data/
