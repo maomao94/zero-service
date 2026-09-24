@@ -14,7 +14,7 @@ require (
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/cloudwego/eino v0.9.19
+	github.com/cloudwego/eino v0.9.20
 	github.com/cloudwego/eino-ext/adk/backend/local v0.2.6
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.70
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.7
@@ -33,7 +33,7 @@ require (
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/envoyproxy/protoc-gen-validate v1.3.3
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/go-playground/validator/v10 v10.30.4
+	github.com/go-playground/validator/v10 v10.30.5
 	github.com/go-sql-driver/mysql v1.10.1
 	github.com/godoes/gorm-dameng v0.7.2
 	github.com/golang-jwt/jwt/v4 v4.5.2
