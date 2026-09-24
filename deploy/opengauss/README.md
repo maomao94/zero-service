@@ -23,7 +23,7 @@ bash deploy/opengauss/deploy.sh
 bash deploy/opengauss/deploy.sh status
 bash deploy/opengauss/deploy.sh logs
 
-# 进入数据库
+# 进入数据库（以 omm 免密进入 gsql；gaussdb 本地连接也需密码）
 bash deploy/opengauss/deploy.sh psql
 # 或宿主机 psql
 psql "host=127.0.0.1 port=5432 dbname=postgres user=gaussdb password=Gauss@123"

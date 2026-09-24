@@ -34,7 +34,7 @@ ensure_image() {
 
 wait_ready() {
   echo "等待数据库就绪..."
-  for ((i = 1; i <= 30; i++)); do
+  for ((i = 1; i <= 60; i++)); do
     if docker exec "$CONTAINER" pg_isready -U "$DB_USER" -h 127.0.0.1 -p 5432 >/dev/null 2>&1; then
       return 0
     fi
@@ -63,8 +63,13 @@ case "${1:-deploy}" in
     echo "启动容器..."
     docker compose up -d
     wait_ready || exit 1
-    docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "alter system set timezone = 'Asia/Shanghai';" >/dev/null
-    docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "select pg_reload_conf();" >/dev/null
+    # 时区: compose command 参数已强制 timezone=Asia/Shanghai，此处检查兜底
+    # （无参数启动的旧部署/异常场景），已是东八区则跳过，与 kingbase/opengauss 口径一致
+    if [ "$(docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -tA -c 'show timezone' 2>/dev/null | tr -d '[:space:]')" != "Asia/Shanghai" ]; then
+      docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "alter system set timezone = 'Asia/Shanghai';" >/dev/null
+      docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "select pg_reload_conf();" >/dev/null
+      echo "时区已修正为 Asia/Shanghai（东八区）"
+    fi
     echo ""
     docker compose ps
     echo ""

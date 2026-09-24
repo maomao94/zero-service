@@ -6,6 +6,7 @@
 #   restart   重启容器（数据库进程异常时的恢复手段）
 #   status    查看容器状态与授权剩余天数
 #   logs      查看容器日志（最近 100 行）
+#   ksql      进入 ksql 交互（容器内 local trust 免密，直连默认库 kingbase）
 #
 # 重新初始化（危险操作，脚本不代做）: stop 后手动 rm -rf data，再执行本脚本检测到空目录会自动重新 initdb
 #
@@ -123,7 +124,7 @@ case "${1:-deploy}" in
     cmd_deploy
     ;;
   stop|down)
-    docker compose rm -sf kingbase
+    docker compose down
     echo "容器已移除，数据保留在 $(pwd)/data"
     ;;
   restart)
@@ -138,8 +139,11 @@ case "${1:-deploy}" in
   logs)
     docker compose logs --tail 100 kingbase
     ;;
+  ksql)
+    docker exec -it kingbase ksql -U"$DB_USER" -d "$DB_NAME" -p 54321
+    ;;
   *)
-    echo "未知命令: $1；可用: deploy(默认)/stop/restart/status/logs"
+    echo "未知命令: $1；可用: deploy(默认)/stop/restart/status/logs/ksql"
     exit 1
     ;;
 esac

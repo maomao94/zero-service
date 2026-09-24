@@ -62,6 +62,7 @@ bash deploy/kingbase/deploy.sh stop       # 移除容器，保留数据
 bash deploy/kingbase/deploy.sh restart    # 重启容器（数据库进程异常时恢复）
 bash deploy/kingbase/deploy.sh status     # 容器状态 + 授权剩余天数
 bash deploy/kingbase/deploy.sh logs       # 最近 100 行容器日志
+bash deploy/kingbase/deploy.sh ksql       # 进入 ksql 交互（容器内 trust 免密，system 连默认库）
 ```
 
 **重新初始化**（危险操作，脚本不提供一键清空命令）：`stop` 后手动 `rm -rf data`，再执行 `deploy.sh`——检测到空目录会自动重新 initdb。

@@ -6,7 +6,7 @@
 #   restart   重启容器
 #   status    查看容器状态
 #   logs      查看容器日志（最近 100 行）
-#   psql      进入 gsql 交互（需容器已就绪）
+#   psql      进入 gsql 交互（以 omm 免密进入，需容器已就绪）
 #
 # 重新初始化（危险操作）: stop 后手动 rm -rf data，再执行本脚本会重新 initdb
 #
@@ -120,7 +120,8 @@ case "${1:-deploy}" in
     docker compose logs --tail 100
     ;;
   psql|gsql)
-    docker exec -it "$CONTAINER" gosu omm bash -c 'export GAUSSHOME=/usr/local/opengauss; export PATH=$GAUSSHOME/bin:$PATH; export LD_LIBRARY_PATH=$GAUSSHOME/lib:/scws/lib:$LD_LIBRARY_PATH; gsql -d postgres -U gaussdb'
+    # gaussdb 本地连接也强制密码（openGauss 对非初始用户不适用 trust），统一以 omm 免密进入
+    docker exec -it "$CONTAINER" gosu omm bash -c 'export GAUSSHOME=/usr/local/opengauss; export PATH=$GAUSSHOME/bin:$PATH; export LD_LIBRARY_PATH=$GAUSSHOME/lib:/scws/lib:$LD_LIBRARY_PATH; gsql -d postgres -U omm'
     ;;
   *)
     echo "未知命令: $1；可用: deploy(默认)/stop/restart/status/logs/psql"
