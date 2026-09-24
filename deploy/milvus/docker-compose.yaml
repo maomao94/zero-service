@@ -1,8 +1,6 @@
 # Milvus 向量数据库部署
 # 用于 AI Solo 项目的 RAG 功能
 
-version: '3.8'
-
 services:
   # Milvus Standalone 模式（适合开发测试）
   milvus-etcd:
