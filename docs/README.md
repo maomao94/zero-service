@@ -17,6 +17,7 @@
 | [架构概览](./architecture.md) | 系统分层、模块依赖、数据流和技术选型 |
 | [服务端口清单](./service-ports.md) | 各服务默认端口、协议和用途 |
 | [错误码规范](./error-codes.md) | HTTP/gRPC 状态码映射与 `detail.reason` 编码 |
+| [数据库时区配置](./database-timezone.md) | Kingbase/openGauss/PostgreSQL/MySQL 四库时区设置、会话行为与重启持久性 |
 
 ## 核心服务
 

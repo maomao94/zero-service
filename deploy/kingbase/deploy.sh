@@ -22,14 +22,14 @@ DB_PASSWORD=12345678ab
 DB_NAME=kingbase    # 管理操作连接库（金仓默认库，相当于 PG 的 postgres），业务库用 init.sql 或管理工具创建
 
 license_days() {
-  docker exec -e PGPASSWORD="$DB_PASSWORD" kingbase \
+  docker exec -e KINGBASE_PASSWORD="$DB_PASSWORD" kingbase \
     ksql -U"$DB_USER" -d "$DB_NAME" -p 54321 -tA -c 'select GET_LICENSE_VALIDDAYS();' 2>/dev/null
 }
 
 wait_ready() {
   echo "等待数据库就绪..."
   for i in $(seq 1 60); do
-    if docker exec -e PGPASSWORD="$DB_PASSWORD" kingbase \
+    if docker exec -e KINGBASE_PASSWORD="$DB_PASSWORD" kingbase \
         ksql -U"$DB_USER" -d "$DB_NAME" -p 54321 -c 'select version();' >/dev/null 2>&1; then
       return 0
     fi
@@ -90,7 +90,7 @@ cmd_deploy() {
 
   # 6. 时区: initdb 跟随容器系统时钟默认 UTC（经典 8 小时坑），统一修正为东八区 Asia/Shanghai
   #    只改服务器级默认（kingbase.conf 持久化 + reload），已存在会话不受影响
-  if [ "$(docker exec -e PGPASSWORD="$DB_PASSWORD" kingbase ksql -U"$DB_USER" -d "$DB_NAME" -p 54321 -tA \
+  if [ "$(docker exec -e KINGBASE_PASSWORD="$DB_PASSWORD" kingbase ksql -U"$DB_USER" -d "$DB_NAME" -p 54321 -tA \
       -c 'show timezone' 2>/dev/null | tr -d '[:space:]')" != "Asia/Shanghai" ]; then
     docker exec kingbase sed -i "s/^timezone = .*/timezone = 'Asia\/Shanghai'/; s/^log_timezone = .*/log_timezone = 'Asia\/Shanghai'/" \
       /home/kingbase/userdata/data/kingbase.conf

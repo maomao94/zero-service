@@ -12,6 +12,8 @@
 | `roles.sql` | 业务程序、管理员、现场查询三类账号及授权脚本 |
 | `KingbaseES_*_Docker.tar` | 官网下载的镜像 tar（gitignore，不入库） |
 | `data/` | 数据库持久化目录（gitignore，不入库） |
+| `kdts_data/` | KDTS 迁移工具 h2 持久化目录（仅本地 `kdts` profile 启用时产生，gitignore） |
+| `docker-compose.yaml:kdts` | KDTS Web 迁移服务（profile `kdts`/`local`，默认不启动，仅本地） |
 
 ## 快速开始
 
@@ -29,12 +31,12 @@ docker exec -i kingbase ksql -Usystem -d kingbase -p 54321 < deploy/kingbase/ini
 docker exec -i kingbase ksql -Usystem -d zero -p 54321 < deploy/kingbase/roles.sql
 ```
 
-`roles.sql` 需要对每个业务库分别执行一次。它会创建 `app_user`（初始密码 `app123456`，业务程序读写）、
-`admin_user`（初始密码 `admin123456`，管理员及业务数据读写）和 `query_user`（初始密码 `query123456`，仅查询）；
+`roles.sql` 需要对每个业务库分别执行一次。它会创建 `app_user`（初始密码 `App_user@123`，业务程序读写）、
+`admin_user`（初始密码 `Admin_user@123`，管理员及业务数据读写）和 `query_user`（初始密码 `Query_user@123`，仅查询）；
 角色是实例级对象，多个业务库共用相同角色。首次执行请使用 `system` 等有角色管理权限的账号。脚本仅在角色不存在时创建账号，
 已有账号的密码及 `CREATEROLE`/`CREATEDB` 属性不会被修改；若账号此前已存在，请先确认 `admin_user` 具备管理所需属性，
 并自行修改或核验密码。密码可用 `alter user app_user with password '新密码';`（替换用户名）单独修改。脚本中的初始密码仅用于本机开发，
-部署到共享或生产环境前必须修改，并通过受控渠道分发。
+部署到共享或生产环境前必须修改，并通过受控渠道分发。openGauss、PostgreSQL 和 MySQL 目录下也提供同口径的 `roles.sql`，四种数据库账号与授权口径保持一致。
 
 ## deploy.sh 命令
 
@@ -176,6 +178,34 @@ select now();       -- 2026-09-23 14:41:05.90246+08
 - **授权 90 天**：镜像自带授权有限期，`deploy.sh` 部署时实时查询剩余天数；到期替换
   `data/etc/license.dat` 后 `docker exec kingbase /home/kingbase/install/kingbase/bin/sys_ctl reload -D /home/kingbase/userdata/data`。
 - **运行中删 data 目录**会导致挂载进入异常状态（Operation not permitted），恢复需 `stop` 后手动清空 `data` 再部署。
+
+## KDTS 迁移工具（仅本地）
+
+本地一键启动的异构迁移服务，基于社区封装的 `KDTS-WEB V9R1` 镜像（官方原包在 `${KES_HOME}/ClientTools/guitools/KDts/KDTS-WEB`，随 `KES` 完整安装包发布）。
+
+> 仅本地开发使用，已通过 `profiles: [kdts, local]` 隔离，`bash deploy/kingbase/deploy.sh` 默认不会启动，不影响服务器部署。
+
+```bash
+# 拉取并启动 kingbase + kdts（首次会从 Docker Hub 拉取 huzhihui/kingbase-kdts-web:v9r1）
+docker compose --profile kdts -f deploy/kingbase/docker-compose.yaml up -d
+
+# 仅启动/重启 kdts（kingbase 已运行时）
+docker compose --profile kdts -f deploy/kingbase/docker-compose.yaml up -d kdts
+docker compose --profile kdts -f deploy/kingbase/docker-compose.yaml logs -f kdts
+docker compose --profile kdts -f deploy/kingbase/docker-compose.yaml ps
+
+# 停止 kdts（保留 kdts_data，下次启动任务/数据源不丢）
+docker compose --profile kdts -f deploy/kingbase/docker-compose.yaml down
+
+# 备选镜像（同一功能，若 huzhihui 拉取慢可替换为 byteluo/kingbase-kdts-web:latest）
+# 需将 docker-compose.yaml 中 image 改为 byteluo/kingbase-kdts-web:latest
+```
+
+* 访问: `http://localhost:54523` (https `https://localhost:54524`)，默认账号 `kingbase / Kb_DI@2019`（部分版本为 `kingbase/kingbase`）
+* 目标库连接: KDTS 与 kingbase 同 compose 网络，目标库主机填 `kingbase` 端口 `54321` 即可；源库（MySQL/Oracle 等）需保证 KDTS 容器可达
+* 持久化: `./kdts_data` 挂载 `h2` 库，删除容器不丢迁移任务；已加入 `.gitignore`
+* 架构: 社区镜像为 `amd64`，`arm64` 本地需从官网 KES 安装包提取 `KDTS-WEB` 自行 `tar -czvf KDTS-WEB.tar.gz KDTS-WEB/*` 并基于 `eclipse-temurin:17-jre` 构建
+* 官方文档: [工具部署](https://docs.kingbase.com.cn/cn/KES-V9R1C10/migration/start_quickly_deploy) / [Web 端使用](https://docs.kingbase.com.cn/cn/KES-V9R1C10/migration/start_quickly_Web) / [help.kingbase 详细版](https://help.kingbase.com.cn/v9.4.12/development/application-develop-guide/tools/migrate_tools.html#id2)
 
 ## 参考
 
