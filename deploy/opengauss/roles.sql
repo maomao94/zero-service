@@ -24,7 +24,20 @@ end $$;
 
 -- 收回 PUBLIC 在 public 模式上的默认建表权限（openGauss 内核默认对所有人放开，
 -- 会导致仅授权 SELECT 的账号也能建表; PG 15+ 已默认收回，此行保持各版本口径一致）
-revoke create on schema public from public;
+do $$ begin
+  if has_schema_privilege('public', 'public', 'CREATE') then
+    execute 'revoke create on schema public from public';
+  end if;
+end $$;
+
+-- 临时表权限属于数据库级权限；收回 PUBLIC 后仅业务账号和管理员保留临时表能力，
+-- 避免 query_user 通过 pg_temp 建表并写入临时数据，严格保持“仅 SELECT”。
+do $$ begin
+  if has_database_privilege('public', current_database(), 'TEMP') then
+    execute format('revoke temporary on database %I from public', current_database());
+  end if;
+  execute format('grant temporary on database %I to app_user, admin_user', current_database());
+end $$;
 
 grant usage, create on schema public to app_user;
 grant select, insert, update, delete on all tables in schema public to app_user;

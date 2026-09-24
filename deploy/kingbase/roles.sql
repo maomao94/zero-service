@@ -29,7 +29,20 @@ end $$;
 -- 2. 授权（对当前连接的数据库生效; 重复执行无副作用）
 -- 先收回 PUBLIC 在 public 模式上的默认建表权限（PG 15 以前的内核及兼容库默认对所有人放开，
 -- 会导致仅授权 SELECT 的账号也能建表; PG 15+ 已默认收回，此行保持各版本口径一致）
-revoke create on schema public from public;
+do $$ begin
+  if has_schema_privilege('public', 'public', 'CREATE') then
+    execute 'revoke create on schema public from public';
+  end if;
+end $$;
+
+-- 临时表权限属于数据库级权限；收回 PUBLIC 后仅业务账号和管理员保留临时表能力，
+-- 避免 query_user 通过 pg_temp 建表并写入临时数据，严格保持“仅 SELECT”。
+do $$ begin
+  if has_database_privilege('public', current_database(), 'TEMP') then
+    execute format('revoke temporary on database %I from public', current_database());
+  end if;
+  execute format('grant temporary on database %I to app_user, admin_user', current_database());
+end $$;
 
 -- app_user 与 admin_user: schema 建表权限 + 业务表查增删改（含自增序列使用权）
 grant usage, create on schema public to app_user;
