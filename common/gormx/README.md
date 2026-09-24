@@ -26,6 +26,7 @@ if err != nil {
 | SQLite | `file:./data.db?cache=shared` |
 | 达梦 DM8 | `dm://SYSDBA:SYSDBA@127.0.0.1:5236?schema=SYSDBA&appName=app&connectTimeout=30000` |
 | 金仓 KingbaseES | `kingbase://SYSTEM:pass@127.0.0.1:54321/TEST?sslmode=disable` |
+| H3 | `h3://user:pass@127.0.0.1:5432/app?sslmode=disable` |
 
 达梦使用 `github.com/godoes/gorm-dameng`（基于达梦官方 Go 驱动源码 go-20250513 整理、
 发布在 Go module proxy 的 GORM v2 方言包，比官网文档提供的 2023 版 dmgorm2.zip 更新）。
@@ -37,6 +38,10 @@ if err != nil {
 自动识别并转成 key-value 形式交给 pgx 解析，默认端口 54321。金仓官方 Go 驱动 gokb 使用了
 darwin syscall 未定义的 TCP_KEEPCNT，gorm-kingbase 现版本在 macOS 上编译不过，故未引入；
 需要 SM3/SM4 国密认证等官方驱动能力时，用 `gormx.OpenWithDialector(...)` 自行接入。
+
+H3 同样以 PostgreSQL 协议兼容模式复用 `gorm.io/driver/postgres` 驱动：`h3://` 前缀 DSN
+自动识别并转成 key-value 形式交给 pgx 解析。如需 H3 专有驱动能力，用
+`gormx.OpenWithDialector(...)` 自行接入。
 
 ## 模型选择
 

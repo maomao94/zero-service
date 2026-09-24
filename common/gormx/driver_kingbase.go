@@ -22,21 +22,27 @@ func newKingbaseDialector(dsn string) (gorm.Dialector, error) {
 	return postgres.Open(kv), nil
 }
 
-var kingbaseDSNEscaper = strings.NewReplacer(`\`, `\\`, " ", `\ `, "'", `\'`)
+var pgCompatDSNEscaper = strings.NewReplacer(`\`, `\\`, " ", `\ `, "'", `\'`)
 
 func kingbaseURLToKVDSN(dsn string) (string, error) {
-	if !strings.HasPrefix(strings.ToLower(dsn), string(DatabaseKingbase)+"://") {
+	return pgCompatURLToKVDSN(dsn, DatabaseKingbase)
+}
+
+// pgCompatURLToKVDSN 把 <dbType>:// 前缀的 URL 形式 DSN 转成 pgx 可解析的 key-value
+// DSN，供金仓 KingbaseES、H3 等 PostgreSQL 协议兼容数据库复用；非该前缀时原样返回。
+func pgCompatURLToKVDSN(dsn string, dbType DatabaseType) (string, error) {
+	if !strings.HasPrefix(strings.ToLower(dsn), string(dbType)+"://") {
 		return dsn, nil
 	}
 	u, err := url.Parse(dsn)
 	if err != nil {
-		return "", errors.Wrap(err, "invalid kingbase dsn")
+		return "", errors.Wrapf(err, "invalid %s dsn", dbType)
 	}
 
 	var parts []string
 	appendKV := func(k, v string) {
 		if v != "" {
-			parts = append(parts, k+"="+kingbaseDSNEscaper.Replace(v))
+			parts = append(parts, k+"="+pgCompatDSNEscaper.Replace(v))
 		}
 	}
 
