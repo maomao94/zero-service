@@ -19,6 +19,7 @@ const (
 	DatabaseSQLite   DatabaseType = "sqlite"
 	DatabaseDM       DatabaseType = "dm"
 	DatabaseKingbase DatabaseType = "kingbase"
+	DatabaseH3       DatabaseType = "h3"
 )
 
 func ParseDatabaseType(dsn string) DatabaseType {
@@ -47,6 +48,9 @@ func ParseDatabaseType(dsn string) DatabaseType {
 	if strings.HasPrefix(lower, "kingbase://") {
 		return DatabaseKingbase
 	}
+	if strings.HasPrefix(lower, "h3://") {
+		return DatabaseH3
+	}
 	return DatabaseMySQL
 }
 
@@ -62,6 +66,8 @@ func GetDialector(dbType DatabaseType, dsn string) (gorm.Dialector, error) {
 		return dameng.Open(dsn), nil
 	case DatabaseKingbase:
 		return newKingbaseDialector(dsn)
+	case DatabaseH3:
+		return newH3Dialector(dsn)
 	default:
 		return nil, errors.Errorf("unsupported database type: %s", dbType)
 	}
