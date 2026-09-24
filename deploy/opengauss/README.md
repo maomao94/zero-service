@@ -40,7 +40,7 @@ psql "host=127.0.0.1 port=5432 dbname=postgres user=gaussdb password=Gauss@123"
 
 密码需满足复杂度（>=8位，含大小写、数字、特殊字符 `#?!@$%^&*-`），修改后需 `stop` 后清空 `data` 重建。
 
-默认使用 openGauss 原生端口 `5432:5432`。本机需要同时运行 PostgreSQL 中转库时，可只修改宿主机映射端口：
+默认使用 openGauss 原生端口 `5432:5432`。端口冲突时可只修改宿主机映射端口：
 
 ```bash
 OPENGAUSS_HOST_PORT=15432 bash deploy/opengauss/deploy.sh

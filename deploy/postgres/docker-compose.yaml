@@ -1,13 +1,13 @@
 # PostgreSQL 16 Docker 部署
-# 用途: 本地开发和测试业务系统，也可按需作为数据迁移过程中的临时数据库
+# 用途: 本地开发和测试业务系统
 # 对照官方镜像: https://hub.docker.com/_/postgres
 #
 # 前置: bash deploy/postgres/deploy.sh
 # 说明:
-#   - 默认端口 5432 直映射到宿主机；如本机已有 PostgreSQL，占用冲突时由开发者自行修改左侧宿主机端口
+#   - 默认端口 5432 直映射到宿主机；端口冲突时设置 POSTGRES_HOST_PORT，只修改宿主机映射端口
 #   - 数据持久化 ./data -> /var/lib/postgresql/data，down 不丢数据
 #   - 默认用户 postgres / postgres，库 postgres
-#   - 如需让外部迁移工具访问，使用宿主机映射端口；KDTS 跨 compose 时可使用 host.docker.internal
+#   - 外部客户端使用宿主机映射端口连接
 
 services:
   postgres:              # 服务名，compose 网络内 DNS 为 postgres

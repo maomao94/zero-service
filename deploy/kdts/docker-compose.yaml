@@ -1,0 +1,16 @@
+# Kingbase KDTS-WEB 独立部署
+# 用途: 本地数据库迁移与转换；不属于 Kingbase 数据库服务本身
+# 前置: bash deploy/kdts/deploy.sh
+#
+# 数据库连接由 KDTS Web 页面按实际环境配置；本文件不预设数据库网络或连接参数。
+
+services:
+  kdts:
+    image: huzhihui/kingbase-kdts-web:v9r1
+    container_name: kdts
+    ports:
+      - "${KDTS_HTTP_HOST_PORT:-54523}:54523"
+      - "${KDTS_HTTPS_HOST_PORT:-54524}:54524"
+    volumes:
+      - ./data:/software/KDTS-WEB/conf/h2
+    restart: unless-stopped

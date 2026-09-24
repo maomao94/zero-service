@@ -13,13 +13,28 @@ cd "$(dirname "$0")"
 
 CONTAINER=pgsql
 HOST_PORT="${POSTGRES_HOST_PORT:-5432}"
+export POSTGRES_HOST_PORT="$HOST_PORT"
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_NAME=postgres
+IMAGE=postgres:16-alpine
+
+ensure_image() {
+  echo "从 Docker 仓库拉取镜像 $IMAGE ..."
+  if docker pull "$IMAGE"; then
+    return 0
+  fi
+  if docker image inspect "$IMAGE" >/dev/null 2>&1; then
+    echo "警告: 无法从仓库拉取 $IMAGE，使用本地已有镜像"
+    return 0
+  fi
+  echo "错误: 无法拉取 $IMAGE，且本地不存在可用镜像"
+  return 1
+}
 
 wait_ready() {
   echo "等待数据库就绪..."
-  for i in $(seq 1 30); do
+  for ((i = 1; i <= 30; i++)); do
     if docker exec "$CONTAINER" pg_isready -U "$DB_USER" -h 127.0.0.1 -p 5432 >/dev/null 2>&1; then
       return 0
     fi
@@ -32,14 +47,19 @@ wait_ready() {
 case "${1:-deploy}" in
   deploy)
     docker info >/dev/null 2>&1 || { echo "错误: Docker 未运行"; exit 1; }
+    ensure_image
     mkdir -p data
     chmod 755 data
     if docker ps -a --format '{{.Names}}' | grep -qx "$CONTAINER"; then
       PROJECT=$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$CONTAINER" 2>/dev/null || true)
       [ "$PROJECT" = "postgres" ] || { echo "错误: 容器 $CONTAINER 已存在且非本 compose 管理"; exit 1; }
+      if [ -z "$(ls -A data 2>/dev/null)" ]; then
+        echo "data 目录为空，移除旧容器以重新初始化数据库..."
+        docker compose rm -sf postgres
+      else
+        echo "容器已存在（compose 管理），复用..."
+      fi
     fi
-    echo "拉取镜像 postgres:16-alpine ..."
-    docker pull postgres:16-alpine >/dev/null 2>&1 || true
     echo "启动容器..."
     docker compose up -d
     wait_ready || exit 1
@@ -54,7 +74,6 @@ case "${1:-deploy}" in
     echo "  数据库: $DB_NAME"
     echo "  数据卷: $(pwd)/data"
     echo "  psql:   psql \"host=127.0.0.1 port=$HOST_PORT dbname=postgres user=postgres password=postgres\""
-    echo "  KDTS:   源库主机 host.docker.internal 端口 $HOST_PORT"
     ;;
   stop|down)
     docker compose down

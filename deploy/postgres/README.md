@@ -1,6 +1,6 @@
 # PostgreSQL 16 Docker 部署
 
-用于本地开发和测试业务系统，也可按需作为数据迁移过程中的临时数据库。
+用于本地开发和测试业务系统。
 
 ## 文件说明
 
@@ -28,7 +28,7 @@ psql "host=127.0.0.1 port=5432 dbname=postgres user=postgres password=postgres"
 | 用户 / 密码 | `postgres` / `postgres` |
 | 默认库 | `postgres` |
 
-默认使用 PostgreSQL 原生端口 `5432:5432`。本机需要同时运行 openGauss 时，可只修改宿主机映射端口：
+默认使用 PostgreSQL 原生端口 `5432:5432`。端口冲突时可只修改宿主机映射端口：
 
 ```bash
 POSTGRES_HOST_PORT=5433 bash deploy/postgres/deploy.sh

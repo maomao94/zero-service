@@ -5,18 +5,17 @@
 #       Docker >= 20.10.0
 # 说明:
 #   - 原本地高斯容器未挂卷，已清理；新部署统一持久化到 ./data（容器 /var/lib/opengauss），down 不丢数据
-#   - 默认端口 5432 直映射到宿主机；如本机已有 PostgreSQL，占用冲突时由开发者自行修改左侧宿主机端口
+#   - 默认端口 5432 直映射到宿主机；端口冲突时设置 OPENGAUSS_HOST_PORT，只修改宿主机映射端口
 #   - 密码需满足复杂度: >=8位，含大小写、数字、特殊字符(#?!@$%^&*-)，此处默认 Gauss@123
 #   - 默认库 postgres，默认用户 gaussdb（不可改），超级用户 omm 密码同 GS_PASSWORD
 #   - gsql 连接: gsql -d postgres -U gaussdb -W 'Gauss@123' -h 127.0.0.1 -p5432
 #     PG 协议: psql "host=127.0.0.1 port=5432 dbname=postgres user=gaussdb password=Gauss@123"
-#   - KDTS 跨 compose 访问时主机填 host.docker.internal 端口 5432（已为 KDTS 配置 extra_hosts）
-#   - 如需数据迁移，可由开发者自行配置外部迁移工具连接本实例
+#   - 外部客户端使用宿主机映射端口连接
 
 services:                # 服务定义列表
   opengauss:             # 服务名，也是 compose 网络内 DNS 主机名
     image: opengauss/opengauss-server:latest  # Docker Hub 官方镜像，amd64；arm64 需自行构建
-    container_name: opengauss  # 固定容器名，方便脚本 exec 与 KDTS 配置
+    container_name: opengauss  # 固定容器名，方便脚本 exec
     privileged: true     # 官方要求特权模式，否则初始化失败
     ports:               # 端口映射
       - "${OPENGAUSS_HOST_PORT:-5432}:5432" # 默认端口直映射；需要避让时设置 OPENGAUSS_HOST_PORT

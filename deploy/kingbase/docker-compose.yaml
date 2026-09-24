@@ -7,6 +7,7 @@
 #   - 环境变量仅在首次初始化（data 为空）时生效，改参数需 stop 后清空 data 重建
 #   - 数据持久化在 ./data（对应容器 /home/kingbase/userdata），down 不丢数据；
 #     deploy.sh 启动前自动创建 data 并赋 755 权限（官方要求）
+#   - 默认宿主机端口 54321；端口冲突时设置 KINGBASE_HOST_PORT，只修改宿主机映射端口
 #   - 镜像自带授权 90 天（ksql 查询: select GET_LICENSE_VALIDDAYS();），到期需替换
 #     userdata/etc/license.dat 并 sys_ctl reload
 #   - gormx 连接串: kingbase://system:12345678ab@127.0.0.1:54321/kingbase?sslmode=disable
@@ -21,10 +22,11 @@
 services:                # 服务定义列表（compose 的顶层键，每个键是一个容器服务）
   kingbase:              # 服务名，也是 compose 网络内的 DNS 主机名
     image: kingbase:kes  # 使用本地镜像（由 deploy.sh 从 tar load 后 retag 而来，compose 不会去仓库拉取）
+    pull_policy: never   # 商业镜像只允许使用本地 docker load 的镜像
     container_name: kingbase   # 固定容器名（不设则自动生成 "kingbase-kingbase-1"，固定名方便脚本 exec）
     privileged: true     # 官方标注可选；entrypoint 内大量使用 sudo，保留以避免权限问题
     ports:               # 端口映射，格式 "宿主机:容器"
-      - "54321:54321"    # 宿主机所有网卡的 54321 -> 容器内金仓默认端口 54321，供远程客户端连接
+      - "${KINGBASE_HOST_PORT:-54321}:54321" # 宿主机端口 -> 容器内金仓默认端口 54321
     volumes:             # 数据卷挂载，格式 "宿主机路径:容器路径"
       - ./data:/home/kingbase/userdata/  # 数据持久化；容器右侧路径必须为 userdata，否则 data 目录无法持久化
     environment:         # 环境变量（仅首次初始化 data 为空时生效，改后需清空 data 重建）
@@ -36,33 +38,3 @@ services:                # 服务定义列表（compose 的顶层键，每个键
                                # 天然大小写敏感（已验证 enable_ci=off），无需设置；oracle 模式默认敏感可设 yes
       # - LANG=zh_CN.utf8    # 容器环境字符集，可选 en_US.utf8(默认)/zh_CN.gbk/zh_CN.utf8
     restart: unless-stopped    # 官方示例为 always；unless-stopped 在手动 stop 后不会被守护进程拉起，本机开发更友好
-
-  # KDTS 迁移工具（Web 版）- 仅本地开发使用，不随 kingbase 默认启动
-  # 来源: 社区封装的 KDTS-WEB (V9R1) 镜像，内置 JDK11+，开箱即用；官方原包在 ${KES_HOME}/ClientTools/guitools/KDts/KDTS-WEB
-  # 文档: https://docs.kingbase.com.cn/cn/KES-V9R1C10/migration/start_quickly_deploy
-  #       https://help.kingbase.com.cn/v9.4.12/development/application-develop-guide/tools/migrate_tools.html#id2
-  # 镜像: huzhihui/kingbase-kdts-web:v9r1 (备选 byteluo/kingbase-kdts-web:latest，均非官方镜像，本地可用)
-  # 端口: 54523(http)/54524(https) 为 KDTS Web 固定端口，与 kingbase 54321 区分
-  # 持久化: ./kdts_data 挂载 h2 内嵌库，避免容器删除后迁移任务/数据源配置丢失
-  # 网络: 与 kingbase 同 compose 网络，KDTS 内连接目标库可用主机名 kingbase:54321
-  # 启动: 需显式指定 profile 才会启动，避免污染生产部署；见下方命令
-  #   docker compose --profile kdts up -d              # 启动 kingbase + kdts
-  #   docker compose --profile kdts up -d kdts         # 仅启动 kdts（kingbase 已运行时）
-  #   docker compose --profile kdts logs -f kdts       # 查看日志
-  #   docker compose --profile kdts down               # 停止并移除 kdts（不删 kdts_data）
-  kdts:                  # 服务名，compose 网络内 DNS 为 kdts
-    image: huzhihui/kingbase-kdts-web:v9r1  # 社区镜像，amd64；arm64 需自行从 KES 安装包提取 KDTS-WEB 构建
-    container_name: kdts
-    ports:               # 仅本地访问，生产部署时不启用此 profile 故不暴露
-      - "54523:54523"    # http://localhost:54523  默认账号 kingbase / Kb_DI@2019(部分版本为 kingbase/kingbase)
-      - "54524:54524"    # https://localhost:54524
-    volumes:
-      - ./kdts_data:/software/KDTS-WEB/conf/h2  # h2 持久化；byteluo 镜像若路径不同改为 ./kdts_data:/opt/KDTS-WEB/conf/h2
-    extra_hosts:         # 允许 KDTS 跨 compose 访问宿主机上的其他数据库默认端口 5432
-      - "host.docker.internal:host-gateway"  # 容器内 host.docker.internal -> 宿主机，需用此主机名配 KDTS 源库
-    depends_on:
-      - kingbase
-    restart: unless-stopped
-    profiles:
-      - kdts             # 本地专用 profile，不指定则 docker compose up -d 不会启动 kdts
-      - local            # 别名，同 --profile local
