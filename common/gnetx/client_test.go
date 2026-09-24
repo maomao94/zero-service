@@ -395,6 +395,7 @@ func TestClientOnConnectOnReconnect(t *testing.T) {
 	}
 	initialSession := cli.Session()
 
+	waitFor(t, 2*time.Second, func() bool { return len(srv.Manager().All()) > 0 })
 	// 关闭所有服务端会话模拟断连，客户端重连后 OnConnect 应再次触发
 	for _, s := range srv.Manager().All() {
 		_ = s.Close()
@@ -454,6 +455,9 @@ func TestClientReconnect(t *testing.T) {
 	if initialSession == nil {
 		t.Fatal("Session() nil after initial connect")
 	}
+
+	// 等服务端会话已注册，避免 Client 已连但 Server Manager 仍空的竞态导致 All() 为空
+	waitFor(t, 2*time.Second, func() bool { return len(srv.Manager().All()) > 0 })
 
 	// 从服务端强制断开当前连接，触发 client 重连
 	for _, s := range srv.Manager().All() {
