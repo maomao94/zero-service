@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	dameng "github.com/godoes/gorm-dameng"
+	kingbase "github.com/godoes/gorm-kingbase"
 	"github.com/pkg/errors"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -80,6 +81,8 @@ func GetDatabaseTypeFromDialector(db *gorm.DB) DatabaseType {
 		return DatabaseSQLite
 	case *dameng.Dialector:
 		return DatabaseDM
+	case *kingbase.Dialector:
+		return DatabaseKingbase
 	default:
 		return DatabaseMySQL
 	}

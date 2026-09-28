@@ -26,7 +26,9 @@ RedisDB: 0
 DB:
   DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
   # DataSource: postgres://postgres:postgres@localhost:5432/zero?sslmode=disable&TimeZone=Asia/Shanghai
-#  DataSource: kingbase://system:12345678ab@127.0.0.1:54321/zero?sslmode=disable
+  # DataSource: kingbase://system:12345678ab@127.0.0.1:54321/zero?sslmode=disable&TimeZone=Asia/Shanghai
+  # 金仓推荐 PG 兼容模式部署（见 deploy/kingbase）：gormx 使用官方 gokb 驱动，自动感知服务端兼容模式（pg/oracle/mysql/sqlserver）；
+  # 仅 Oracle 兼容模式（标识符大小写敏感）才需追加 &without_quoting_check=true，PG 模式勿加
   # 最大空闲连接数，默认 100。
   MaxIdleConns: 100
   # 最大打开连接数，默认 100。

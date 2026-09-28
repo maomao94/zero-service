@@ -49,3 +49,43 @@ func TestKingbaseURLToKVDSNPassesThroughKVDSN(t *testing.T) {
 		t.Fatalf("kingbaseURLToKVDSN(%q) = %q, want passthrough", dsn, got)
 	}
 }
+
+func TestPopKingbaseOptionsExtractsOption(t *testing.T) {
+	dsn, opts, err := popKingbaseOptions("kingbase://u:p@h:54321/db?sslmode=disable&without_quoting_check=true")
+	if err != nil {
+		t.Fatalf("popKingbaseOptions error = %v", err)
+	}
+	if dsn != "kingbase://u:p@h:54321/db?sslmode=disable" {
+		t.Fatalf("popKingbaseOptions dsn = %q, want option removed", dsn)
+	}
+	if !opts.withoutQuotingCheck {
+		t.Fatalf("popKingbaseOptions opts = %+v, want withoutQuotingCheck true", opts)
+	}
+}
+
+func TestPopKingbaseOptionsFalseValueKeptOff(t *testing.T) {
+	dsn, opts, err := popKingbaseOptions("kingbase://u:p@h:54321/db?without_quoting_check=false")
+	if err != nil {
+		t.Fatalf("popKingbaseOptions error = %v", err)
+	}
+	if dsn != "kingbase://u:p@h:54321/db" {
+		t.Fatalf("popKingbaseOptions dsn = %q, want option removed", dsn)
+	}
+	if opts.withoutQuotingCheck {
+		t.Fatalf("popKingbaseOptions opts = %+v, want withoutQuotingCheck false", opts)
+	}
+}
+
+func TestPopKingbaseOptionsPassesThroughKVDSN(t *testing.T) {
+	dsn := "host=localhost user=SYSTEM port=54321 dbname=TEST without_quoting_check=true"
+	got, opts, err := popKingbaseOptions(dsn)
+	if err != nil {
+		t.Fatalf("popKingbaseOptions error = %v", err)
+	}
+	if got != dsn {
+		t.Fatalf("popKingbaseOptions(%q) = %q, want passthrough", dsn, got)
+	}
+	if opts.withoutQuotingCheck {
+		t.Fatalf("popKingbaseOptions opts = %+v, kv dsn should not carry gormx options", opts)
+	}
+}

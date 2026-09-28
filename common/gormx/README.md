@@ -33,10 +33,14 @@ if err != nil {
 其它方言配置时，用 `gormx.OpenWithDialector(dameng.New(dameng.Config{...}))` 自行构造。
 注意达梦 VARCHAR 长度按字节计算（UTF-8 下一个汉字占 3 字节），建表字段长度需按需放大。
 
-金仓 KingbaseES 以 PG 兼容模式复用 `gorm.io/driver/postgres` 驱动：`kingbase://` 前缀 DSN
-自动识别并转成 key-value 形式交给 pgx 解析，默认端口 54321。金仓官方 Go 驱动 gokb 使用了
-darwin syscall 未定义的 TCP_KEEPCNT，gorm-kingbase 现版本在 macOS 上编译不过，故未引入；
-需要 SM3/SM4 国密认证等官方驱动能力时，用 `gormx.OpenWithDialector(...)` 自行接入。
+金仓 KingbaseES 使用 `github.com/godoes/gorm-kingbase` 驱动（内置金仓官方 gokb）：`kingbase://`
+前缀 DSN 自动识别并转成 key-value 形式交给 gokb，默认端口 54321。DriverName 固定为
+kingbase，连接后自动感知服务端兼容模式（pg/oracle/mysql/sqlserver）并切换类型 OID 映射，
+支持 SM3 国密认证。Oracle 兼容模式标识符大小写敏感时，在 DSN 查询参数中加
+`without_quoting_check=true` 关闭引号转义检查（仅 URL 形式 DSN 支持）。
+注意：gokb 使用了 darwin syscall 未定义的 TCP_KEEPCNT，上游 v1.11.0 在 macOS 上无法
+编译（linux/windows 不受影响），需通过 go.mod replace 指向带修复的 fork 后才能在
+macOS 开发构建。
 
 ## 模型选择
 

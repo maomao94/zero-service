@@ -36,6 +36,7 @@ require (
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/go-sql-driver/mysql v1.10.1
 	github.com/godoes/gorm-dameng v0.7.2
+	github.com/godoes/gorm-kingbase v1.11.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
@@ -211,6 +212,7 @@ require (
 	github.com/gofiber/websocket/v2 v2.2.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
+	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
@@ -395,3 +397,5 @@ require (
 )
 
 replace github.com/doquangtan/socketio/v4 => github.com/maomao94/socket.io-golang/v4 v4.1.8-fork.20260602090851
+
+replace github.com/godoes/gorm-kingbase => github.com/maomao94/gorm-kingbase v1.11.0-fork.20260928110858
