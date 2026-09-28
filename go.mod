@@ -16,7 +16,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/cloudwego/eino v0.9.20
 	github.com/cloudwego/eino-ext/adk/backend/local v0.2.6
-	github.com/cloudwego/eino-ext/components/model/ark v0.1.70
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.71
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.7
 	github.com/cloudwego/eino-ext/components/model/ollama v0.1.9
 	github.com/cloudwego/eino-ext/components/model/openai v0.1.13
