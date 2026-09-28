@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	dameng "github.com/godoes/gorm-dameng"
+	kingbase "github.com/godoes/gorm-kingbase"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -87,6 +88,24 @@ func TestParseDatabaseTypeDetectsKingbase(t *testing.T) {
 	}
 }
 
+func TestRandomOrderExprPerDatabaseType(t *testing.T) {
+	cases := []struct {
+		dbType DatabaseType
+		want   string
+	}{
+		{DatabasePostgres, "RANDOM()"},
+		{DatabaseSQLite, "RANDOM()"},
+		{DatabaseKingbase, "RANDOM()"},
+		{DatabaseMySQL, "RAND()"},
+		{DatabaseDM, "RAND()"},
+	}
+	for _, tc := range cases {
+		if got := RandomOrderExpr(tc.dbType); got != tc.want {
+			t.Fatalf("RandomOrderExpr(%s) = %s, want %s", tc.dbType, got, tc.want)
+		}
+	}
+}
+
 func TestGetDialectorReturnsDM(t *testing.T) {
 	d, err := GetDialector(DatabaseDM, "dm://SYSDBA:SYSDBA@localhost:5236?schema=SYSDBA")
 	if err != nil {
@@ -105,12 +124,38 @@ func TestGetDialectorReturnsKingbase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get dialector error = %v", err)
 	}
-	pg, ok := d.(*postgres.Dialector)
+	kb, ok := d.(*kingbase.Dialector)
 	if !ok {
-		t.Fatalf("dialector type = %T, want *postgres.Dialector", d)
+		t.Fatalf("dialector type = %T, want *kingbase.Dialector", d)
 	}
-	if pg.DSN == "" || strings.HasPrefix(pg.DSN, "kingbase://") {
-		t.Fatalf("dialector dsn = %q, want converted key-value dsn", pg.DSN)
+	if kb.DriverName != kingbase.DriverName {
+		t.Fatalf("dialector driver name = %s, want %s", kb.DriverName, kingbase.DriverName)
+	}
+	if kb.DSN == "" || strings.HasPrefix(kb.DSN, "kingbase://") {
+		t.Fatalf("dialector dsn = %q, want converted key-value dsn", kb.DSN)
+	}
+	if kb.WithoutQuotingCheck {
+		t.Fatalf("dialector without quoting check should default to false")
+	}
+}
+
+func TestGetDialectorKingbaseWithoutQuotingCheckOption(t *testing.T) {
+	d, err := GetDialector(DatabaseKingbase, "kingbase://SYSTEM:pass@localhost:54321/TEST?sslmode=disable&without_quoting_check=true")
+	if err != nil {
+		t.Fatalf("get dialector error = %v", err)
+	}
+	kb, ok := d.(*kingbase.Dialector)
+	if !ok {
+		t.Fatalf("dialector type = %T, want *kingbase.Dialector", d)
+	}
+	if !kb.WithoutQuotingCheck {
+		t.Fatalf("dialector without quoting check should be enabled by dsn option")
+	}
+	if strings.Contains(kb.DSN, kingbaseOptionWithoutQuotingCheck) {
+		t.Fatalf("dialector dsn = %q, gormx option should not leak into driver dsn", kb.DSN)
+	}
+	if !strings.Contains(kb.DSN, "sslmode=disable") {
+		t.Fatalf("dialector dsn = %q, other params should be preserved", kb.DSN)
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	dameng "github.com/godoes/gorm-dameng"
+	kingbase "github.com/godoes/gorm-kingbase"
 	"github.com/pkg/errors"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -80,7 +81,20 @@ func GetDatabaseTypeFromDialector(db *gorm.DB) DatabaseType {
 		return DatabaseSQLite
 	case *dameng.Dialector:
 		return DatabaseDM
+	case *kingbase.Dialector:
+		return DatabaseKingbase
 	default:
 		return DatabaseMySQL
+	}
+}
+
+// RandomOrderExpr 返回当前方言的随机排序表达式，用于 ORDER BY 随机打散。
+// Kingbase 基于 PostgreSQL 内核（PG 兼容模式），使用 RANDOM()。
+func RandomOrderExpr(dbType DatabaseType) string {
+	switch dbType {
+	case DatabasePostgres, DatabaseSQLite, DatabaseKingbase:
+		return "RANDOM()"
+	default:
+		return "RAND()"
 	}
 }

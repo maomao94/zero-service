@@ -38,12 +38,7 @@ func NewDBStore(db *gormx.DB) *DBStore {
 func (s *DBStore) LockAndFetch(ctx context.Context, now time.Time, defaultLockTimeout time.Duration) (*crontask.TaskClaim, error) {
 	quietCtx := gormx.WithoutSQLTrace(ctx)
 
-	var randomFn string
-	if s.dbType == gormx.DatabasePostgres || s.dbType == gormx.DatabaseSQLite {
-		randomFn = "RANDOM()"
-	} else {
-		randomFn = "RAND()"
-	}
+	randomFn := gormx.RandomOrderExpr(s.dbType)
 
 	var records []gormmodel.GormTaskConfig
 	err := s.db.WithContext(quietCtx).
