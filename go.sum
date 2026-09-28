@@ -530,8 +530,6 @@ github.com/gobwas/ws v1.0.2/go.mod h1:szmBTxLgaFppYjEmNtny/v3w89xOydFnnZMcgRRu/E
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
 github.com/godoes/gorm-dameng v0.7.2 h1:REw2sMyN2z/hfYEJqV1VbiCIl+zwyzIdRWFQYqQ4xrQ=
 github.com/godoes/gorm-dameng v0.7.2/go.mod h1:KP1qenBY+T4ZYwcRhM5VNWd33z2w7Mb5gIQw8X6pBeo=
-github.com/godoes/gorm-kingbase v1.11.0 h1:BMN7tki5/zZ7vo8qQibWR+oyTANqmCRGgpALCDsksGE=
-github.com/godoes/gorm-kingbase v1.11.0/go.mod h1:fGfjozjMApl2O1z7fx2/GGDJqhzPI7lJTM8CZQaG8aQ=
 github.com/gofiber/fiber/v2 v2.52.9 h1:YjKl5DOiyP3j0mO61u3NTmK7or8GzzWzCFzkboyP5cw=
 github.com/gofiber/fiber/v2 v2.52.9/go.mod h1:YEcBbO/FB+5M1IZNBP9FO3J9281zgPAreiI1oqg8nDw=
 github.com/gofiber/websocket/v2 v2.2.1 h1:C9cjxvloojayOp9AovmpQrk8VqvVnT8Oao3+IUygH7w=
@@ -552,7 +550,6 @@ github.com/golang-jwt/jwt/v4 v4.5.2 h1:YtQM7lnr8iZ+j5q71MGKkNw9Mn7AjHM68uc9g5fXe
 github.com/golang-jwt/jwt/v4 v4.5.2/go.mod h1:m21LjoU+eqJr34lmDMbreY2eSTRJ1cv77w39/MY0Ch0=
 github.com/golang-jwt/jwt/v5 v5.3.1 h1:kYf81DTWFe7t+1VvL7eS+jKFVWaUnK9cB1qbwn63YCY=
 github.com/golang-jwt/jwt/v5 v5.3.1/go.mod h1:fxCRLWMO43lRc8nhHWY6LGqRcf+1gQWArsqaEUEa5bE=
-github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe h1:lXe2qZdvpiX5WZkZR4hgp4KJVfY3nMkvmwbVkpv1rVY=
 github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe/go.mod h1:8vg3r2VgvsThLBIFL93Qb5yWzgyZWhEmBwUJWevAkK0=
 github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 h1:au07oEsX2xN0ktxqI+Sida1w446QrXBRJ0nee3SNZlA=
 github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9/go.mod h1:8vg3r2VgvsThLBIFL93Qb5yWzgyZWhEmBwUJWevAkK0=
@@ -843,10 +840,10 @@ github.com/livekit/mageutil v0.0.0-20250511045019-0f1ff63f7731 h1:9x+U2HGLrSw5AT
 github.com/livekit/mageutil v0.0.0-20250511045019-0f1ff63f7731/go.mod h1:Rs3MhFwutWhGwmY1VQsygw28z5bWcnEYmS1OG9OxjOQ=
 github.com/livekit/mediatransportutil v0.0.0-20260727210231-81a5287a7109 h1:jLE+M9fTj4HeTZSy4T7wD1M42uOeBnbzmoCoWDsTBQI=
 github.com/livekit/mediatransportutil v0.0.0-20260727210231-81a5287a7109/go.mod h1:o8CFmAdrVwzJNOCsQCLUzXRjokkufNshnQHOe4fRaqU=
-github.com/livekit/protocol v1.52.0 h1:K7XWd1cJOekMCigjkyBnpmM841J8TX/YWXYWBMK9wYc=
-github.com/livekit/protocol v1.52.0/go.mod h1:YUI8xd1bvdEWtUWwgvsIkUFb4Ll98ngsi7ifLdT5HV0=
-github.com/livekit/psrpc v0.7.7 h1:eZ/jYlayQ3Y+C/3+NPtwTJBXZo/aN4vJf2MmBK6AfT4=
-github.com/livekit/psrpc v0.7.7/go.mod h1:Twno03W8gpTNRpmc2cQwSoxYEo/nJxf+65iMq+9IuHo=
+github.com/livekit/protocol v1.52.1 h1:w8wRjRlj/57AJBxwomEzpEMzf+lT0qOoLQLO7awdTMU=
+github.com/livekit/protocol v1.52.1/go.mod h1:t5CV/LCsWbI9zsSTHTJKDyLtByqvvVkioSP7jgqpIGA=
+github.com/livekit/psrpc v0.8.0 h1:uo3x+DL8pK2OIaCxg/s9sLUO2cIocS5HwdPhhI+m+fQ=
+github.com/livekit/psrpc v0.8.0/go.mod h1:6KnU8vULoizX0Er9NNfeKJDV8ug87j3fuo19M0bhj6Q=
 github.com/livekit/server-sdk-go/v2 v2.18.2-0.20260824201634-1f82cc396645 h1:KGS5da8KCS1sg3PwNUaZMYB2gjn8HJVji8alF9UU7Ys=
 github.com/livekit/server-sdk-go/v2 v2.18.2-0.20260824201634-1f82cc396645/go.mod h1:qkHEZCUjVLpBs2zIhDo7zbX5f1mehGAROkRkPNSyfpc=
 github.com/lrstanley/bubblezone v0.0.0-20240914071701-b48c55a5e78e h1:OLwZ8xVaeVrru0xyeuOX+fne0gQTFEGlzfNjipCbxlU=
