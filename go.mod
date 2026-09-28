@@ -47,7 +47,7 @@ require (
 	github.com/jlaffaye/ftp v0.2.4
 	github.com/larksuite/oapi-sdk-go/v3 v3.12.0
 	github.com/lib/pq v1.12.3
-	github.com/livekit/protocol v1.52.0
+	github.com/livekit/protocol v1.52.1
 	github.com/livekit/server-sdk-go/v2 v2.18.2-0.20260824201634-1f82cc396645
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2
 	github.com/minio/minio-go/v7 v7.3.0
@@ -253,7 +253,7 @@ require (
 	github.com/lithammer/shortuuid/v4 v4.3.0 // indirect
 	github.com/livekit/mageutil v0.0.0-20250511045019-0f1ff63f7731 // indirect
 	github.com/livekit/mediatransportutil v0.0.0-20260727210231-81a5287a7109 // indirect
-	github.com/livekit/psrpc v0.7.7 // indirect
+	github.com/livekit/psrpc v0.8.0 // indirect
 	github.com/lrstanley/bubblezone v0.0.0-20240914071701-b48c55a5e78e // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
 	github.com/magefile/mage v1.17.2 // indirect
@@ -275,9 +275,6 @@ require (
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/nats-io/nats.go v1.53.1 // indirect
-	github.com/nats-io/nkeys v0.4.16 // indirect
-	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nikolalohinski/gonja v1.5.3 // indirect
 	github.com/ollama/ollama v0.32.2 // indirect
