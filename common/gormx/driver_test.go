@@ -88,6 +88,24 @@ func TestParseDatabaseTypeDetectsKingbase(t *testing.T) {
 	}
 }
 
+func TestRandomOrderExprPerDatabaseType(t *testing.T) {
+	cases := []struct {
+		dbType DatabaseType
+		want   string
+	}{
+		{DatabasePostgres, "RANDOM()"},
+		{DatabaseSQLite, "RANDOM()"},
+		{DatabaseKingbase, "RANDOM()"},
+		{DatabaseMySQL, "RAND()"},
+		{DatabaseDM, "RAND()"},
+	}
+	for _, tc := range cases {
+		if got := RandomOrderExpr(tc.dbType); got != tc.want {
+			t.Fatalf("RandomOrderExpr(%s) = %s, want %s", tc.dbType, got, tc.want)
+		}
+	}
+}
+
 func TestGetDialectorReturnsDM(t *testing.T) {
 	d, err := GetDialector(DatabaseDM, "dm://SYSDBA:SYSDBA@localhost:5236?schema=SYSDBA")
 	if err != nil {

@@ -289,7 +289,7 @@ func LockTriggerItem(ctx context.Context, db *gorm.DB, dbType gormx.DatabaseType
 		Where("p.status = ?", model.PlanStatusEnabled).
 		Where("pb.is_deleted = ?", 0).
 		Where("pb.status = ?", model.PlanStatusEnabled).
-		Order(clauseOrderBy(dbType)).
+		Order(gormx.RandomOrderExpr(dbType)).
 		Limit(1)
 	if err := query.Scan(&item).Error; err != nil {
 		return nil, err
@@ -311,15 +311,6 @@ func LockTriggerItem(ctx context.Context, db *gorm.DB, dbType gormx.DatabaseType
 		return nil, model.ErrNoRowsUpdate
 	}
 	return &item, nil
-}
-
-func clauseOrderBy(dbType gormx.DatabaseType) string {
-	switch dbType {
-	case gormx.DatabasePostgres, gormx.DatabaseSQLite:
-		return "RANDOM()"
-	default:
-		return "RAND()"
-	}
 }
 
 // UpdateExecItemStatusToRunning 将执行项状态更新为执行中。
