@@ -12,7 +12,7 @@ type Config struct {
 	// GaussDB:    use PostgreSQL-compatible DSN: postgres://user:pass@host:port/db?sslmode=disable&TimeZone=Asia/Shanghai
 	// SQLite:     file:./data.db?cache=shared
 	// DM(达梦):   dm://user:pass@host:port?schema=SYSDBA&appName=app&connectTimeout=30000
-	// Kingbase(金仓): kingbase://SYSTEM:pass@host:54321/TEST?sslmode=disable
+	// Kingbase(金仓): kingbase://SYSTEM:pass@host:54321/TEST?sslmode=disable&without_quoting_check=true
 	DataSource string `json:",optional"`
 	// 最大空闲连接数，默认 100。建议与 MaxOpenConns 一致，避免连接抖动。
 	MaxIdleConns int `json:",optional,default=100"`

@@ -1,0 +1,19 @@
+# dbswitch-admin 独立部署（异构数据库迁移同步 Web 端）
+# 用途: 开源异构数据库迁移同步工具，替代 KDTS；不属于任何数据库服务本身
+# 前置: bash deploy/dbswitch/deploy.sh
+#
+# 配置库使用容器内 H2（文件位于容器 /tmp/dbswitch_db），通过挂载 ./data 持久化；
+# 数据库连接由 dbswitch Web 页面按实际环境配置；本文件不预设数据库网络或连接参数。
+# 容器内访问宿主机数据库需使用 host.docker.internal（Docker Desktop 支持），不能用 127.0.0.1。
+
+services:
+  dbswitch:
+    image: registry.cn-hangzhou.aliyuncs.com/inrgihc/dbswitch:latest
+    container_name: dbswitch
+    ports:
+      - "${DBSWITCH_HTTP_HOST_PORT:-9088}:9088"
+    volumes:
+      - ./data:/tmp
+    environment:
+      - DBTYPE=h2
+    restart: unless-stopped

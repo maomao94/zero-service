@@ -36,6 +36,8 @@ deploy/kingbase/data/
 deploy/kdts/data/
 deploy/kdts/logs/
 deploy/kdts/results/
+# dbswitch 独立部署运行数据（H2 配置库）
+deploy/dbswitch/data/
 # openGauss / PostgreSQL 本地部署持久化（本地开发与测试）
 deploy/opengauss/data/
 deploy/postgres/data/
