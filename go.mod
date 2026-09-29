@@ -26,7 +26,7 @@ require (
 	github.com/docker/go-connections v0.8.1
 	github.com/doquangtan/socketio/v4 v4.1.8
 	github.com/doug-martin/goqu/v9 v9.19.0
-	github.com/dromara/carbon/v2 v2.6.17
+	github.com/dromara/carbon/v2 v2.6.18
 	github.com/dsoprea/go-exif/v3 v3.0.1
 	github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd
 	github.com/duke-git/lancet/v2 v2.3.9
