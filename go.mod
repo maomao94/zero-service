@@ -69,7 +69,7 @@ require (
 	github.com/teambition/rrule-go v1.8.2
 	github.com/tidwall/gjson v1.19.0
 	github.com/twitchtv/twirp v8.1.3+incompatible
-	github.com/twpayne/go-geos v0.22.0
+	github.com/twpayne/go-geos v0.22.1
 	github.com/u2takey/ffmpeg-go v0.5.0
 	github.com/uber/h3-go/v4 v4.5.0
 	github.com/wendy512/go-iecp5 v1.2.6
