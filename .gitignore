@@ -43,3 +43,6 @@ deploy/opengauss/data/
 deploy/postgres/data/
 # MySQL 本地部署持久化
 deploy/mysql/data/
+# TDengine 本地部署持久化（数据卷与日志卷）
+deploy/tdengine/data/
+deploy/tdengine/log/
