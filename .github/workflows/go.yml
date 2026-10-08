@@ -5,15 +5,15 @@ name: Go
 
 # =============================================================
 # 触发条件（on）——什么时候运行这个 workflow
-#  - push:        代码被推送到 master 时触发
-#  - pull_request:有人向 master 提 PR 时触发
-# 这两个都指向 master，表示只有涉及 master 的变更才跑 CI
+#  - push:        代码被推送到 master 或 develop 时触发
+#  - pull_request:有人向 master 或 develop 提 PR 时触发
+# GitFlow 模式：feature→develop、release→master 的 PR 都需要 CI 保障
 # =============================================================
 on:
   push:
-    branches: [ master ]
+    branches: [ master, develop ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, develop ]
 
 # =============================================================
 # jobs：定义要执行的任务（可多个，这里只一个 test-linux）

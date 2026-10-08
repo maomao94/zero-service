@@ -7,16 +7,17 @@ name: "CodeQL"
 
 # =============================================================
 # 触发条件：三种
-#  1. push 到 master
-#  2. 向 master 提 PR
+#  1. push 到 master 或 develop
+#  2. 向 master 或 develop 提 PR
 #  3. 定时任务：每周六 19:18（cron 是 UTC 时间）
+# GitFlow 模式：feature→develop、release→master 的 PR 都需要安全扫描
 # =============================================================
 on:
   push:
-    branches: [ master ]
+    branches: [ master, develop ]
   pull_request:
     # 注意：这里的分支必须是上面 push 分支的子集
-    branches: [ master ]
+    branches: [ master, develop ]
   schedule:
     - cron: '18 19 * * 6'
 
