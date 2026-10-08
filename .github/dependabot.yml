@@ -1,11 +1,14 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+# Dependabot 版本更新配置
+# 文档：https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
 version: 2
 updates:
-  - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "gomod"    # 检测 Go 模块依赖（go.mod）
+    directory: "/"                 # go.mod 所在目录（仓库根目录）
+    target-branch: "develop"       # PR 提到 develop 分支（Git Flow 集成分支）
     schedule:
-      interval: "daily"
+      interval: "daily"            # 每天检查一次依赖更新
+    open-pull-requests-limit: 5    # 最多同时保持 5 个未合并的 PR
+    labels:                        # 自动给 PR 打标签，方便筛选管理
+      - "dependencies"
+      - "go"
