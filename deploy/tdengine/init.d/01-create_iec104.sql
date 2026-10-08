@@ -1,0 +1,14 @@
+-- IEC 104 采集业务库建库脚本
+-- 由 deploy.sh init 按文件名顺序自动执行（init.d/ 下按序执行所有 .sql）
+-- 手动执行: docker exec tdengine taos -s "$(cat deploy/tdengine/init.d/01-create_iec104.sql)"
+--   （注意: taos 管道 stdin 会按交互终端逐字符解析报 Incomplete SQL statement，不能 taos < file）
+-- 说明:
+--   - PRECISION 'ms'  时间戳精度毫秒（ASDU 采集时间精度）
+--   - KEEP 3650       数据保留 3650 天（10 年），按业务留存要求调整
+--   - IEC 104 采集超表 DDL 单源维护在 model/sql/tdengine.sql（raw_point_data
+--     原始总表 / tele_signal_data 遥信表 / telemetry_data 遥测表），建库后执行:
+--     bash deploy/tdengine/deploy.sh init model/sql/tdengine.sql
+--   - 服务配置对齐: facade/streamevent/etc/streamevent.yaml 的 TaosDB.DBName
+--     必须与本库名一致（示例配置默认值 default 不会命中本库，超表不存在插入会失败）
+--   - 新业务接入: 在 init.d/ 下新增 02-xxx.sql 等建库脚本，按文件名顺序执行
+CREATE DATABASE IF NOT EXISTS iec104 PRECISION 'ms' KEEP 3650;
