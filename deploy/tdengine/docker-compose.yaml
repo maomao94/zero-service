@@ -1,0 +1,46 @@
+# TDengine TSDB 3.4 单机部署（社区版）
+# 对照官方文档: https://docs.tdengine.com/operations-and-tooling/operations/deployment/docker/
+#
+# 前置: Docker >= 20.10.0
+# 说明:
+#   - 镜像 tdengine/tsdb:latest（社区版，3.3.7.0 起 tdengine/tdengine 更名为 tdengine/tsdb）
+#   - 数据持久化在 ./data（对应容器 /var/lib/taos），down 不丢数据
+#   - 日志持久化在 ./log（对应容器 /var/log/taos）
+#   - 默认宿主机端口 6030/6041；端口冲突时设置 TDENGINE_HOST_PORT / TDENGINE_REST_PORT
+#   - 默认账号 root/taosdata，生产环境务必通过 TAOS_ROOT_PASSWORD 修改
+#   - REST 接口: curl -u root:taosdata -d "show databases" localhost:6041/rest/sql
+#   - Web 管理界面（taosExplorer）: 浏览器访问 http://localhost:6060
+#   - taos CLI: docker exec -it tdengine taos
+#
+# 端口说明（对照官方 Network Port Requirements 文档）:
+#   6030        taosd native 协议（taosc，taos CLI / JDBC-JNI / C/C++ 客户端）
+#   6041        taosAdapter WebSocket + RESTful 接口（宿主机外部访问推荐入口）
+#   6043        taosKeeper 监控服务
+#   6044        taosAdapter StatsD 格式写入（TCP/UDP）
+#   6045        taosAdapter collectd 格式写入（TCP/UDP）
+#   6046-6049   taosAdapter OpenTSDB TELNET 及其变体格式写入
+#   6050        REST API
+#   6055        taosX gRPC（Agent / Xnode 数据接入）
+#   6060        taosExplorer Web 管理界面（浏览器访问 http://localhost:6060）
+
+services:
+  tdengine:
+    image: tdengine/tsdb:latest  # Docker Hub 官方社区版镜像（本地已有则不重复拉取）
+    container_name: tdengine
+    hostname: tdengine
+    ports:
+      - "${TDENGINE_HOST_PORT:-6030}:6030"        # taosd native 协议
+      - "${TDENGINE_REST_PORT:-6041}:6041"        # taosAdapter WebSocket/RESTful
+      - "6043:6043"                                # taosKeeper 监控
+      - "6044-6049:6044-6049"                      # StatsD/collectd/OpenTSDB 写入
+      - "6044-6045:6044-6045/udp"                  # StatsD/collectd UDP
+      - "6050:6050"                                # REST API
+      - "6055:6055"                                # taosX gRPC
+      - "6060:6060"                                # taosExplorer Web 管理界面
+    volumes:
+      - ./data:/var/lib/taos                       # 数据持久化
+      - ./log:/var/log/taos                        # 日志持久化
+    environment:
+      - TAOS_FQDN=tdengine                         # 容器内 FQDN，需与 hostname 一致
+      - TAOS_ROOT_PASSWORD=${TDENGINE_ROOT_PASSWORD:-taosdata}  # root 密码，生产环境必须修改
+    restart: unless-stopped
