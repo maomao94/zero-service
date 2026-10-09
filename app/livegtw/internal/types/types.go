@@ -128,6 +128,7 @@ type JoinMeetingByTicketReply struct {
 	CanSubscribe      bool        `json:"canSubscribe"`
 	CanPublishData    bool        `json:"canPublishData"`
 	CanPublishSources []string    `json:"canPublishSources"`
+	CanRecord         bool        `json:"canRecord"`
 }
 
 type JoinMeetingByTicketRequest struct {
@@ -141,6 +142,7 @@ type JoinMeetingReply struct {
 	CanSubscribe      bool        `json:"canSubscribe"`
 	CanPublishData    bool        `json:"canPublishData"`
 	CanPublishSources []string    `json:"canPublishSources"`
+	CanRecord         bool        `json:"canRecord"`
 }
 
 type JoinMeetingRequest struct {

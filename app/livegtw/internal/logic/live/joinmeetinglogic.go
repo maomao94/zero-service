@@ -48,5 +48,6 @@ func (l *JoinMeetingLogic) JoinMeeting(req *types.JoinMeetingRequest) (resp *typ
 		CanSubscribe:      r.GetCanSubscribe(),
 		CanPublishData:    r.GetCanPublishData(),
 		CanPublishSources: r.GetCanPublishSources(),
+		CanRecord:         r.GetCanRecord(),
 	}, nil
 }

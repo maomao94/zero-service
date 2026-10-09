@@ -41,6 +41,8 @@ export interface JoinReply {
   canSubscribe: boolean
   canPublishData: boolean
   canPublishSources: string[]
+  /** 是否可以操作会议录制（仅会议创建者/系统会议为 true） */
+  canRecord: boolean
 }
 
 export interface TicketReply {

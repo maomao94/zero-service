@@ -44,7 +44,7 @@ bash deploy/nginx/deploy.sh
 | 路径 | 目标 | 说明 |
 | --- | --- | --- |
 | `/` | `dist/live` | 会议前端（SPA 回落 index.html） |
-| `/recordings/` | `deploy/livekit/recordings` | 录制文件（只读、目录浏览、Range） |
+| `/recordings/` | `deploy/livekit/recordings` | 录制文件（只读、Range 播放，无目录浏览） |
 | `/live/` | `livegtw:11002` | 会议 HTTP API（`/live/v1/...`） |
 | `/socket.io/` | `socketgtw:11003` | 会议邀请推送（Socket.IO / WS） |
 | `/livekit/` | `livekit-server:7880` | 信令（WS，去掉 `/livekit` 前缀） |

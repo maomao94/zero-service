@@ -10,7 +10,7 @@ import type { MeetingInfo, MeetingMessage, ParticipantInfo, SipProviderInfo, Tic
 
 type Toast = { message: string; tone?: 'error' | 'success' | 'warning' }
 type Screen = 'auth' | 'lobby' | 'room' | 'guest'
-type JoinPerms = { canPublish: boolean; canSubscribe: boolean; canPublishData: boolean; canPublishSources: string[] | null }
+type JoinPerms = { canPublish: boolean; canSubscribe: boolean; canPublishData: boolean; canPublishSources: string[] | null; canRecord: boolean }
 type JoinOptions = { canPublish?: boolean; canSubscribe?: boolean; canPublishData?: boolean; sipWaitingFor?: string }
 type JoinState = { token: string; meeting: MeetingInfo; perms: JoinPerms; sipWaitingFor?: string }
 
@@ -115,7 +115,7 @@ export default function App() {
       canSubscribe: options?.canSubscribe ?? true,
       canPublishData: options?.canPublishData ?? true,
     })
-    setJoin({ ...reply, perms: { canPublish: reply.canPublish, canSubscribe: reply.canSubscribe, canPublishData: reply.canPublishData, canPublishSources: normalizePublishSources(reply.canPublishSources) }, sipWaitingFor: options?.sipWaitingFor }); setScreen('room')
+    setJoin({ ...reply, perms: { canPublish: reply.canPublish, canSubscribe: reply.canSubscribe, canPublishData: reply.canPublishData, canPublishSources: normalizePublishSources(reply.canPublishSources), canRecord: reply.canRecord }, sipWaitingFor: options?.sipWaitingFor }); setScreen('room')
   }
   const joinByTicket = useCallback(async (ticket: string) => {
     try {
@@ -123,7 +123,7 @@ export default function App() {
       setName(guestId)
       setIdentity(guestId)
       const reply = await api.joinByTicket(ticket)
-      setJoin({ ...reply, perms: { canPublish: reply.canPublish, canSubscribe: reply.canSubscribe, canPublishData: reply.canPublishData, canPublishSources: normalizePublishSources(reply.canPublishSources) } })
+      setJoin({ ...reply, perms: { canPublish: reply.canPublish, canSubscribe: reply.canSubscribe, canPublishData: reply.canPublishData, canPublishSources: normalizePublishSources(reply.canPublishSources), canRecord: reply.canRecord } })
       notify('票据验证成功，正在进入会议', 'success')
       return true
     } catch (error) {
@@ -561,7 +561,7 @@ function MeetingRoom({ meeting, perms, name, identity, guest, sipWaitingFor, onL
         : { className: 'disconnected', label: '未连接' }
   useEffect(() => { registerEchoRpc(room, notify); return () => { room.localParticipant.unregisterRpcMethod('echo') } }, [room, notify])
   const toggleEcho = () => { if (echoRegistered) { room.localParticipant.unregisterRpcMethod('echo'); setEchoRegistered(false); notify('已注销 Echo，本端 RPC 调用将返回 Method not supported', 'warning') } else { registerEchoRpc(room, notify); setEchoRegistered(true); notify('已注册 Echo', 'success') } }
-  return <main className={`room-page ${showPanel ? '' : 'panel-collapsed'}`}><section className="room-stage"><div className="room-heading"><div><button className="back-button" onClick={() => window.confirm('确定离开会议？') && onLeave()}><ChevronLeft size={16} />{guest ? '离开会议' : '返回大厅'}</button><h1>{meeting.title || 'Live 会议'}</h1><div className="room-id">会议号 <button onClick={() => { copyText(meeting.meetingNo).then((ok) => notify(ok ? '会议号已复制' : '复制失败', ok ? 'success' : 'error')) }}><Copy size={13} />{meeting.meetingNo}</button></div></div><div className="room-heading-actions">{!guest && <RecordingControl meetingNo={meeting.meetingNo} notify={notify} />}<span className={`live-indicator ${connectionStatus.className}`} role="status" aria-live="polite"><i />{connectionStatus.label}</span></div></div><RoomAudioRenderer /><RoomContent perms={perms} sipWaitingFor={sipWaitingFor} onLeave={onLeave} notify={notify} /></section><aside className={`room-sidebar ${showPanel ? '' : 'collapsed'}`}><button className="sidebar-collapse-handle" title={showPanel ? '收起侧栏' : '展开侧栏'} onClick={togglePanel} aria-label={showPanel ? '收起侧栏' : '展开侧栏'} aria-expanded={showPanel}>{showPanel ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}</button>{showPanel && <><nav className="room-tabs"><button className={pane === 'chat' ? 'active' : ''} onClick={() => setPane('chat')}><MessageSquare size={16} />群聊</button><button className={pane === 'members' ? 'active' : ''} onClick={() => setPane('members')}><Users size={16} />成员</button>{!guest && <button className={pane === 'manage' ? 'active' : ''} onClick={() => setPane('manage')}><Settings2 size={16} />管理</button>}</nav>{pane === 'chat' && <ChatPane meetingNo={meeting.meetingNo} identity={identity} name={name} guest={guest} perms={perms} notify={notify} />}{pane === 'members' && <MembersPane meetingNo={meeting.meetingNo} guest={guest} notify={notify} />}{pane === 'manage' && !guest && <ManagePane meetingNo={meeting.meetingNo} notify={notify} onEnd={onLeave} echoRegistered={echoRegistered} onToggleEcho={toggleEcho} />}</>}</aside></main>
+  return <main className={`room-page ${showPanel ? '' : 'panel-collapsed'}`}><section className="room-stage"><div className="room-heading"><div><button className="back-button" onClick={() => window.confirm('确定离开会议？') && onLeave()}><ChevronLeft size={16} />{guest ? '离开会议' : '返回大厅'}</button><h1>{meeting.title || 'Live 会议'}</h1><div className="room-id">会议号 <button onClick={() => { copyText(meeting.meetingNo).then((ok) => notify(ok ? '会议号已复制' : '复制失败', ok ? 'success' : 'error')) }}><Copy size={13} />{meeting.meetingNo}</button></div></div><div className="room-heading-actions">{perms.canRecord && <RecordingControl meetingNo={meeting.meetingNo} notify={notify} />}<span className={`live-indicator ${connectionStatus.className}`} role="status" aria-live="polite"><i />{connectionStatus.label}</span></div></div><RoomAudioRenderer /><RoomContent perms={perms} sipWaitingFor={sipWaitingFor} onLeave={onLeave} notify={notify} /></section><aside className={`room-sidebar ${showPanel ? '' : 'collapsed'}`}><button className="sidebar-collapse-handle" title={showPanel ? '收起侧栏' : '展开侧栏'} onClick={togglePanel} aria-label={showPanel ? '收起侧栏' : '展开侧栏'} aria-expanded={showPanel}>{showPanel ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}</button>{showPanel && <><nav className="room-tabs"><button className={pane === 'chat' ? 'active' : ''} onClick={() => setPane('chat')}><MessageSquare size={16} />群聊</button><button className={pane === 'members' ? 'active' : ''} onClick={() => setPane('members')}><Users size={16} />成员</button>{!guest && <button className={pane === 'manage' ? 'active' : ''} onClick={() => setPane('manage')}><Settings2 size={16} />管理</button>}</nav>{pane === 'chat' && <ChatPane meetingNo={meeting.meetingNo} identity={identity} name={name} guest={guest} perms={perms} notify={notify} />}{pane === 'members' && <MembersPane meetingNo={meeting.meetingNo} guest={guest} notify={notify} />}{pane === 'manage' && !guest && <ManagePane meetingNo={meeting.meetingNo} notify={notify} onEnd={onLeave} echoRegistered={echoRegistered} onToggleEcho={toggleEcho} />}</>}</aside></main>
 }
 
 function RoomContent({ perms, sipWaitingFor, onLeave, notify }: { perms: JoinPerms; sipWaitingFor?: string; onLeave: () => void; notify: (message: string, tone?: Toast['tone']) => void }) {

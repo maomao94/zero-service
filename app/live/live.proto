@@ -146,6 +146,8 @@ message JoinMeetingRes {
   bool can_publish_data = 5 [json_name = "canPublishData"];
   // 可以发布的轨道源类型（空表示允许所有）
   repeated string can_publish_sources = 6 [json_name = "canPublishSources"];
+  // 是否可以操作会议录制（仅会议创建者或系统创建的会议为 true）
+  bool can_record = 7 [json_name = "canRecord"];
 }
 
 message GetMeetingReq {
@@ -354,6 +356,8 @@ message JoinMeetingByTicketRes {
   bool can_publish_data = 5 [json_name = "canPublishData"];
   // 可以发布的轨道源类型（空表示允许所有）
   repeated string can_publish_sources = 6 [json_name = "canPublishSources"];
+  // 是否可以操作会议录制（仅当票据绑定的身份为会议创建者时为 true）
+  bool can_record = 7 [json_name = "canRecord"];
 }
 
 // NotifyMeetingParticipantReq 向指定参会身份提交会议入会通知。

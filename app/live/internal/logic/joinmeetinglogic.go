@@ -3,7 +3,6 @@ package logic
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"strings"
 
 	"zero-service/app/live/internal/svc"
@@ -100,6 +99,7 @@ func (l *JoinMeetingLogic) JoinMeeting(in *live.JoinMeetingReq) (*live.JoinMeeti
 			CanSubscribe:      in.CanSubscribe,
 			CanPublishData:    in.CanPublishData,
 			CanPublishSources: in.CanPublishSources,
+			CanRecord:         isMeetingOperator(meeting, authctx.GetUserId(l.ctx)),
 		}, nil
 	}
 
@@ -144,13 +144,6 @@ func (l *JoinMeetingLogic) JoinMeeting(in *live.JoinMeetingReq) (*live.JoinMeeti
 		CanSubscribe:      in.CanSubscribe,
 		CanPublishData:    in.CanPublishData,
 		CanPublishSources: in.CanPublishSources,
+		CanRecord:         isMeetingOperator(meeting, authctx.GetUserId(l.ctx)),
 	}, nil
-}
-
-// meetingErr 把 repo 错误映射为 extproto 业务错误码。
-func meetingErr(err error) error {
-	if errors.Is(err, svc.ErrMeetingNotFound) {
-		return tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "会议不存在")
-	}
-	return tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询会议失败")
 }

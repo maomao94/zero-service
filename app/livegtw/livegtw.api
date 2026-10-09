@@ -89,6 +89,8 @@ type JoinMeetingReply {
 	CanPublishData bool `json:"canPublishData"`
 	// 可以发布的轨道源类型（空表示允许所有）
 	CanPublishSources []string `json:"canPublishSources"`
+	// 是否可以操作会议录制（仅会议创建者或系统创建的会议为 true）
+	CanRecord bool `json:"canRecord"`
 }
 
 type NotifyMeetingParticipantRequest {
@@ -279,6 +281,8 @@ type JoinMeetingByTicketReply {
 	CanPublishData bool `json:"canPublishData"`
 	// 可以发布的轨道源类型（空表示允许所有）
 	CanPublishSources []string `json:"canPublishSources"`
+	// 是否可以操作会议录制（仅当票据绑定的身份为会议创建者时为 true）
+	CanRecord bool `json:"canRecord"`
 }
 
 // ===== 聊天消息相关类型 =====

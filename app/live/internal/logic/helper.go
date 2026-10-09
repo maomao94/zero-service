@@ -51,14 +51,20 @@ func requireMeetingIdentity(meetingNo, identity string) error {
 	return nil
 }
 
+// isMeetingOperator 判断调用者是否为会议创建者（主持人）。
+// 系统创建（create_user 为空）或未鉴权身份（operator 为空）时视为可操作，避免误伤系统会议。
+func isMeetingOperator(meeting *gormmodel.LiveMeeting, operator string) bool {
+	if meeting == nil {
+		return true
+	}
+	owner := strings.TrimSpace(meeting.CreateUser.String)
+	return owner == "" || operator == "" || operator == owner
+}
+
 // requireMeetingOperator 校验调用者为会议创建者（主持人）。
 // 系统创建（create_user 为空）或未鉴权身份（operator 为空）时放行，避免误伤系统会议。
 func requireMeetingOperator(meeting *gormmodel.LiveMeeting, operator string) error {
-	if meeting == nil {
-		return nil
-	}
-	owner := strings.TrimSpace(meeting.CreateUser.String)
-	if owner != "" && operator != "" && operator != owner {
+	if !isMeetingOperator(meeting, operator) {
 		return tool.NewErrorByPbCode(extproto.Code__1_03_UNAUTHORIZED, "仅会议创建者可操作录制")
 	}
 	return nil
@@ -172,12 +178,23 @@ func relativeRecordingFile(location, outputDir string) string {
 	return path.Base(location)
 }
 
+// repoErr 把 repo 错误映射为 extproto 业务错误码：sentinel 命中返回 RECORD_NOT_EXIST 提示，
+// 其余按 DB 错误包装。meetingErr / recordingErr 统一委托本函数。
+func repoErr(err error, sentinel error, notFoundMsg, wrapMsg string) error {
+	if errors.Is(err, sentinel) {
+		return tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, notFoundMsg)
+	}
+	return tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, wrapMsg)
+}
+
+// meetingErr 把会议 repo 错误映射为 extproto 业务错误码。
+func meetingErr(err error) error {
+	return repoErr(err, svc.ErrMeetingNotFound, "会议不存在", "查询会议失败")
+}
+
 // recordingErr 把录制 repo 错误映射为 extproto 业务错误码。
 func recordingErr(err error) error {
-	if errors.Is(err, svc.ErrRecordingNotFound) {
-		return tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "录制记录不存在")
-	}
-	return tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询录制记录失败")
+	return repoErr(err, svc.ErrRecordingNotFound, "录制记录不存在", "查询录制记录失败")
 }
 
 // toRecordingInfo 转换录制记录为 RPC 视图。

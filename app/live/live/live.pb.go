@@ -441,8 +441,10 @@ type JoinMeetingRes struct {
 	CanPublishData bool `protobuf:"varint,5,opt,name=can_publish_data,json=canPublishData,proto3" json:"can_publish_data,omitempty"`
 	// 可以发布的轨道源类型（空表示允许所有）
 	CanPublishSources []string `protobuf:"bytes,6,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// 是否可以操作会议录制（仅会议创建者或系统创建的会议为 true）
+	CanRecord     bool `protobuf:"varint,7,opt,name=can_record,json=canRecord,proto3" json:"can_record,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *JoinMeetingRes) Reset() {
@@ -515,6 +517,13 @@ func (x *JoinMeetingRes) GetCanPublishSources() []string {
 		return x.CanPublishSources
 	}
 	return nil
+}
+
+func (x *JoinMeetingRes) GetCanRecord() bool {
+	if x != nil {
+		return x.CanRecord
+	}
+	return false
 }
 
 type GetMeetingReq struct {
@@ -1845,8 +1854,10 @@ type JoinMeetingByTicketRes struct {
 	CanPublishData bool `protobuf:"varint,5,opt,name=can_publish_data,json=canPublishData,proto3" json:"can_publish_data,omitempty"`
 	// 可以发布的轨道源类型（空表示允许所有）
 	CanPublishSources []string `protobuf:"bytes,6,rep,name=can_publish_sources,json=canPublishSources,proto3" json:"can_publish_sources,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// 是否可以操作会议录制（仅当票据绑定的身份为会议创建者时为 true）
+	CanRecord     bool `protobuf:"varint,7,opt,name=can_record,json=canRecord,proto3" json:"can_record,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *JoinMeetingByTicketRes) Reset() {
@@ -1919,6 +1930,13 @@ func (x *JoinMeetingByTicketRes) GetCanPublishSources() []string {
 		return x.CanPublishSources
 	}
 	return nil
+}
+
+func (x *JoinMeetingByTicketRes) GetCanRecord() bool {
+	if x != nil {
+		return x.CanRecord
+	}
+	return false
 }
 
 // NotifyMeetingParticipantReq 向指定参会身份提交会议入会通知。
@@ -3723,7 +3741,7 @@ const file_live_proto_rawDesc = "" +
 	"canPublish\x12#\n" +
 	"\rcan_subscribe\x18\x06 \x01(\bR\fcanSubscribe\x12(\n" +
 	"\x10can_publish_data\x18\a \x01(\bR\x0ecanPublishData\x12.\n" +
-	"\x13can_publish_sources\x18\b \x03(\tR\x11canPublishSources\"\xf3\x01\n" +
+	"\x13can_publish_sources\x18\b \x03(\tR\x11canPublishSources\"\x92\x02\n" +
 	"\x0eJoinMeetingRes\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12+\n" +
 	"\ameeting\x18\x02 \x01(\v2\x11.live.MeetingInfoR\ameeting\x12\x1f\n" +
@@ -3731,7 +3749,9 @@ const file_live_proto_rawDesc = "" +
 	"canPublish\x12#\n" +
 	"\rcan_subscribe\x18\x04 \x01(\bR\fcanSubscribe\x12(\n" +
 	"\x10can_publish_data\x18\x05 \x01(\bR\x0ecanPublishData\x12.\n" +
-	"\x13can_publish_sources\x18\x06 \x03(\tR\x11canPublishSources\".\n" +
+	"\x13can_publish_sources\x18\x06 \x03(\tR\x11canPublishSources\x12\x1d\n" +
+	"\n" +
+	"can_record\x18\a \x01(\bR\tcanRecord\".\n" +
 	"\rGetMeetingReq\x12\x1d\n" +
 	"\n" +
 	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\"<\n" +
@@ -3824,7 +3844,7 @@ const file_live_proto_rawDesc = "" +
 	"\vticket_type\x18\a \x01(\x05R\n" +
 	"ticketType\"0\n" +
 	"\x16JoinMeetingByTicketReq\x12\x16\n" +
-	"\x06ticket\x18\x01 \x01(\tR\x06ticket\"\xfb\x01\n" +
+	"\x06ticket\x18\x01 \x01(\tR\x06ticket\"\x9a\x02\n" +
 	"\x16JoinMeetingByTicketRes\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12+\n" +
 	"\ameeting\x18\x02 \x01(\v2\x11.live.MeetingInfoR\ameeting\x12\x1f\n" +
@@ -3832,7 +3852,9 @@ const file_live_proto_rawDesc = "" +
 	"canPublish\x12#\n" +
 	"\rcan_subscribe\x18\x04 \x01(\bR\fcanSubscribe\x12(\n" +
 	"\x10can_publish_data\x18\x05 \x01(\bR\x0ecanPublishData\x12.\n" +
-	"\x13can_publish_sources\x18\x06 \x03(\tR\x11canPublishSources\"{\n" +
+	"\x13can_publish_sources\x18\x06 \x03(\tR\x11canPublishSources\x12\x1d\n" +
+	"\n" +
+	"can_record\x18\a \x01(\bR\tcanRecord\"{\n" +
 	"\x1bNotifyMeetingParticipantReq\x12\x1d\n" +
 	"\n" +
 	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12!\n" +

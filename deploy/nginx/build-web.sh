@@ -29,8 +29,10 @@ for app in "${APPS[@]}"; do
   echo "=== 构建 web/$app ==="
   ( cd "$src" && npm install --no-audit --no-fund && npm run build )
   dest="$DIST_DIR/$app"
-  rm -rf "$dest"
+  # 只清空目录内容，不删除目录本身：dist/<app> 被 nginx 容器只读挂载，
+  # 删除重建会让 bind mount 指向旧 inode，容器内看到的是空目录（403）
   mkdir -p "$dest"
+  find "$dest" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
   cp -R "$src/dist/." "$dest/"
   echo "✅ web/$app -> deploy/nginx/dist/$app"
 done
