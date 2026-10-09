@@ -2,6 +2,7 @@ package logic
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -35,10 +36,19 @@ type liveKitMock struct {
 	deletedRooms   []string
 	removed        []string
 	sendDataCalls  []string
+	egressStarted  []string
+	egressStopped  []string
 	createErr      error
 	deleteErr      error
 	removeErr      error
 	sendDataErr    error
+	startEgressErr error
+	stopEgressErr  error
+	listEgressErr  error
+	egressInactive bool
+	egressEnding   bool
+	egressSeq      int
+	egressID       string
 	performRpcResp *livekit.PerformRpcResponse
 	performRpcErr  error
 }
@@ -151,6 +161,53 @@ func newLiveKitMockServer(t *testing.T, mock *liveKitMock) *httptest.Server {
 			writeProto(t, w, &livekit.ListParticipantsResponse{})
 		case "/twirp/livekit.RoomService/MutePublishedTrack":
 			writeProto(t, w, &livekit.MuteRoomTrackResponse{})
+		case "/twirp/livekit.Egress/StartRoomCompositeEgress":
+			var req livekit.RoomCompositeEgressRequest
+			readProto(t, r, &req)
+			if mock.startEgressErr != nil {
+				writeTwirpError(t, w, twirp.Internal.Error(mock.startEgressErr.Error()))
+				return
+			}
+			mock.mu.Lock()
+			mock.egressStarted = append(mock.egressStarted, req.GetRoomName())
+			egressID := mock.egressID
+			if egressID == "" {
+				mock.egressSeq++
+				egressID = fmt.Sprintf("EG_mock_%d", mock.egressSeq)
+			}
+			mock.mu.Unlock()
+			writeProto(t, w, &livekit.EgressInfo{EgressId: egressID, RoomName: req.GetRoomName(), Status: livekit.EgressStatus_EGRESS_ACTIVE})
+		case "/twirp/livekit.Egress/StopEgress":
+			var req livekit.StopEgressRequest
+			readProto(t, r, &req)
+			if mock.stopEgressErr != nil {
+				writeTwirpError(t, w, twirp.Internal.Error(mock.stopEgressErr.Error()))
+				return
+			}
+			mock.mu.Lock()
+			mock.egressStopped = append(mock.egressStopped, req.GetEgressId())
+			mock.mu.Unlock()
+			writeProto(t, w, &livekit.EgressInfo{EgressId: req.GetEgressId(), Status: livekit.EgressStatus_EGRESS_ENDING})
+		case "/twirp/livekit.Egress/ListEgress":
+			var req livekit.ListEgressRequest
+			readProto(t, r, &req)
+			if mock.listEgressErr != nil {
+				writeTwirpError(t, w, twirp.Internal.Error(mock.listEgressErr.Error()))
+				return
+			}
+			items := []*livekit.EgressInfo{}
+			if !mock.egressInactive {
+				id := req.GetEgressId()
+				if id == "" {
+					id = "EG_mock"
+				}
+				status := livekit.EgressStatus_EGRESS_ACTIVE
+				if mock.egressEnding {
+					status = livekit.EgressStatus_EGRESS_ENDING
+				}
+				items = append(items, &livekit.EgressInfo{EgressId: id, Status: status})
+			}
+			writeProto(t, w, &livekit.ListEgressResponse{Items: items})
 		default:
 			t.Errorf("unexpected path %s", r.URL.Path)
 			http.NotFound(w, r)
@@ -169,7 +226,7 @@ func openTestDB(t *testing.T) *gormx.DB {
 	if err != nil {
 		t.Fatalf("open db error = %v", err)
 	}
-	if err := db.AutoMigrate(&gormmodel.LiveMeeting{}, &gormmodel.LiveMeetingParticipant{}); err != nil {
+	if err := db.AutoMigrate(&gormmodel.LiveMeeting{}, &gormmodel.LiveMeetingParticipant{}, &gormmodel.LiveMeetingRecording{}); err != nil {
 		t.Fatalf("auto migrate error = %v", err)
 	}
 	return &gormx.DB{DB: db}
@@ -197,14 +254,13 @@ func newTestSvcCtxWithRedis(t *testing.T, lk *livekitx.Client, r *redis.Redis) *
 	db := openTestDB(t)
 	return &svc.ServiceContext{
 		Config: config.Config{
-			LiveKit: struct {
-				Url                string
-				ApiKey             string
-				ApiSecret          string
-				WebhookKey         string
-				TokenValidFor      time.Duration `json:",default=2h"`
-				InsecureSkipVerify bool          `json:",optional"`
-			}{Url: "https://127.0.0.1:7880", ApiKey: "devkey", ApiSecret: "secret", TokenValidFor: 2 * time.Hour},
+			LiveKit: config.LiveKitConf{
+				Url:           "https://127.0.0.1:7880",
+				ApiKey:        "devkey",
+				ApiSecret:     "secret",
+				TokenValidFor: 2 * time.Hour,
+				Record:        config.RecordConf{Enabled: true, OutputDir: "/out"},
+			},
 		},
 		LiveKit:     lk,
 		DB:          db,

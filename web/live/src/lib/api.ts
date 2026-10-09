@@ -1,4 +1,4 @@
-import type { ApiMessages, ApiPage, DialSipReply, JoinReply, MeetingInfo, ParticipantInfo, SipProviderInfo, TicketReply } from '../types'
+import type { ApiMessages, ApiPage, ApiRecordings, DialSipReply, JoinReply, MeetingInfo, MeetingRecording, MeetingRecordState, ParticipantInfo, SipProviderInfo, TicketReply } from '../types'
 
 const API_ROOT = import.meta.env.VITE_API_ROOT || '/live/v1'
 
@@ -29,7 +29,12 @@ async function request<T>(path: string, init: RequestInit = {}, requiresAuth = t
   const payload = await response.json().catch(() => ({}))
   if (!response.ok || (payload.code !== undefined && payload.code !== 0)) {
     const message = payload.msg || payload.message || `请求失败（HTTP ${response.status}）`
-    throw new ApiError(response.status === 401 || payload.code === 104101 ? '登录已失效，请重新登录' : message, response.status)
+    if (response.status === 401 || payload.code === 104101) {
+      // 统一会话过期处理：广播事件，由 App 监听并登出（任何调用路径都会触发）
+      window.dispatchEvent(new CustomEvent('live:session-expired'))
+      throw new ApiError('登录已失效，请重新登录', response.status)
+    }
+    throw new ApiError(message, response.status)
   }
   return (payload.data === undefined ? payload : payload.data) as T
 }
@@ -73,4 +78,9 @@ export const api = {
   updateSipProvider: (params: { id: string; name?: string; address?: string; numbers?: string[]; authUsername?: string; authPassword?: string; status?: number }) => request<{ provider: SipProviderInfo }>('/sip-providers/update', json(params)),
   deleteSipProvider: (id: string) => request<void>('/sip-providers/delete', json({ id })),
   generateToken: (params: { authType: 'user' | 'device'; userId: string; userName?: string; deptCode?: string; expireSeconds?: number; signKey: string }) => request<{ token: string; expireTime: string }>('/generateToken', json(params), false),
+  startMeetingRecord: (meetingNo: string, audioOnly = false, layout = '') => request<{ recording: MeetingRecording }>('/startMeetingRecord', json({ meetingNo, audioOnly, layout })),
+  stopMeetingRecord: (params: { meetingNo?: string; recordId?: string }) => request<void>('/stopMeetingRecord', json(params)),
+  listMeetingRecordings: (meetingNo: string, page = 1, pageSize = 10) => request<ApiRecordings>(`/listMeetingRecordings?meetingNo=${encodeURIComponent(meetingNo)}&page=${page}&pageSize=${pageSize}`),
+  getMeetingRecording: (recordId: string) => request<{ recording: MeetingRecording }>(`/getMeetingRecording?recordId=${encodeURIComponent(recordId)}`),
+  getMeetingRecordState: (meetingNo: string) => request<MeetingRecordState>(`/getMeetingRecordState?meetingNo=${encodeURIComponent(meetingNo)}`),
 }

@@ -46,3 +46,5 @@ deploy/mysql/data/
 # TDengine 本地部署持久化（数据卷与日志卷）
 deploy/tdengine/data/
 deploy/tdengine/log/
+# Redis 本地部署持久化
+deploy/redis/data/

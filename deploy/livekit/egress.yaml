@@ -1,0 +1,46 @@
+# LiveKit Egress 录制服务配置 - Docker 环境
+# 官方文档：https://docs.livekit.io/transport/self-hosting/egress/
+#
+# 架构：
+#   livekit-server ←(Redis 队列)→ egress worker
+#   egress 通过 Docker 内网 ws://livekit-server:7880 连接，经宿主机 Redis 收发录制任务
+#
+# 依赖的外部服务：
+#   - Redis: 必须与 livekit-server.yaml 使用同一实例（部署见 deploy/redis，端口 36379）
+#
+# 输出说明：
+#   本地录制：不配置 s3/gcp/azure 时，录制文件写入容器本地文件系统，
+#   通过 docker-compose 的 volume 映射到宿主机 deploy/livekit/recordings/
+
+# 日志级别：debug/info/warn/error
+log_level: info
+
+# LiveKit API 密钥（必须和 livekit-server.yaml 一致）
+api_key: devkeydevkeydevkeydevkeydevkeydevkey
+api_secret: secretsecretsecretsecretsecretsecret
+
+# LiveKit Server WebSocket 地址（Docker 内部网络，HTTP/WS）
+ws_url: ws://livekit-server:7880
+
+# ws:// 明文连接必须开启（默认 false）
+insecure: true
+
+# Redis 连接（Redis 部署见 deploy/redis，宿主机端口 36379）
+redis:
+  address: host.docker.internal:36379
+  password: G62m50oigInC30sf
+
+# 默认模板托管端口（RoomComposite 录制用 Chrome 渲染该模板）
+template_port: 7980
+
+# 健康检查端口（可选）
+# health_port: 7981
+
+# 云存储（可选）：本地录制无需配置；上云放开其一即可
+# s3:
+#   access_key: your-access-key
+#   secret: your-secret
+#   region: us-east-1
+#   endpoint: https://minio.example.com   # S3 兼容存储时必填
+#   bucket: livekit-recordings
+#   force_path_style: true                # 非 AWS 存储需开启

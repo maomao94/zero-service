@@ -14,6 +14,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/livekit/, ''),
       },
       '/live': 'http://127.0.0.1:11002',
+      '/recordings': 'http://127.0.0.1:8088',
       '/socket.io': {
         target: 'http://127.0.0.1:11003',
         ws: true,

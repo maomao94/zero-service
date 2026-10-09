@@ -96,6 +96,23 @@ type GetCurrentUserReply struct {
 type GetCurrentUserRequest struct {
 }
 
+type GetMeetingRecordStateReply struct {
+	Recording MeetingRecordingInfo `json:"recording"`
+	Active    bool                 `json:"active"`
+}
+
+type GetMeetingRecordStateRequest struct {
+	MeetingNo string `form:"meetingNo"`
+}
+
+type GetMeetingRecordingReply struct {
+	Recording MeetingRecordingInfo `json:"recording"`
+}
+
+type GetMeetingRecordingRequest struct {
+	RecordId string `form:"recordId"`
+}
+
 type GetMeetingReply struct {
 	Meeting MeetingInfo `json:"meeting"`
 }
@@ -146,6 +163,17 @@ type ListMeetingMessagesReply struct {
 }
 
 type ListMeetingMessagesRequest struct {
+	MeetingNo string `form:"meetingNo"`
+	Page      int64  `form:"page,optional"`
+	PageSize  int64  `form:"pageSize,optional"`
+}
+
+type ListMeetingRecordingsReply struct {
+	Recordings []MeetingRecordingInfo `json:"recordings"`
+	Total      int64                  `json:"total"`
+}
+
+type ListMeetingRecordingsRequest struct {
 	MeetingNo string `form:"meetingNo"`
 	Page      int64  `form:"page,optional"`
 	PageSize  int64  `form:"pageSize,optional"`
@@ -215,6 +243,20 @@ type MeetingMessageInfo struct {
 	CreateTime  string `json:"createTime"`
 }
 
+type MeetingRecordingInfo struct {
+	RecordId  string `json:"recordId"`
+	MeetingNo string `json:"meetingNo"`
+	EgressId  string `json:"egressId"`
+	Status    int32  `json:"status"`
+	FileName  string `json:"fileName"`
+	FileUrl   string `json:"fileUrl"`
+	FileSize  int64  `json:"fileSize"`
+	Duration  int64  `json:"duration"`
+	StartTime string `json:"startTime"`
+	EndTime   string `json:"endTime"`
+	Error     string `json:"error"`
+}
+
 type MuteParticipantRequest struct {
 	MeetingNo string `json:"meetingNo"`
 	Identity  string `json:"identity"`
@@ -278,6 +320,24 @@ type SipProviderInfo struct {
 	Status     int32    `json:"status"`
 	CreateTime string   `json:"createTime"`
 	SipTrunkId string   `json:"sipTrunkId"`
+}
+
+type StartMeetingRecordReply struct {
+	Recording MeetingRecordingInfo `json:"recording"`
+}
+
+type StartMeetingRecordRequest struct {
+	MeetingNo string `json:"meetingNo"`
+	AudioOnly bool   `json:"audioOnly,optional"`
+	Layout    string `json:"layout,optional"`
+}
+
+type StopMeetingRecordReply struct {
+}
+
+type StopMeetingRecordRequest struct {
+	MeetingNo string `json:"meetingNo,optional"`
+	RecordId  string `json:"recordId,optional"`
 }
 
 type UpdateSipProviderReply struct {

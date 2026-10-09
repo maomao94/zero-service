@@ -167,6 +167,11 @@ GET  /live/v1/listMeetingMessages      # 查询历史
 | `JoinMeetingByTicket` | 票据加入会议 |
 | `ReportMeetingMessage` | 上报聊天消息 |
 | `ListMeetingMessages` | 查询聊天记录 |
+| `StartMeetingRecord` | 开始会议录制（Egress 房间合成录制） |
+| `StopMeetingRecord` | 停止会议录制 |
+| `ListMeetingRecordings` | 查询会议录制列表 |
+| `GetMeetingRecording` | 查询录制详情 |
+| `GetMeetingRecordState` | 查询会议当前录制状态（是否进行中） |
 | `WebhookNotify` | 接收 LiveKit Webhook 事件 |
 | `CreateSipTrunk` | 创建 SIP 中继线 |
 | `ListSipTrunks` | 列出 SIP 中继线 |
@@ -202,6 +207,11 @@ GET  /live/v1/listMeetingMessages      # 查询历史
 | POST | `/live/v1/notifyMeetingParticipant` | 向已登录用户发送入会提醒 |
 | POST | `/live/v1/reportMeetingMessage` | 上报消息 |
 | GET | `/live/v1/listMeetingMessages` | 查询历史消息 |
+| POST | `/live/v1/startMeetingRecord` | 开始会议录制 |
+| POST | `/live/v1/stopMeetingRecord` | 停止会议录制 |
+| GET | `/live/v1/listMeetingRecordings` | 查询会议录制列表 |
+| GET | `/live/v1/getMeetingRecording` | 查询录制详情 |
+| GET | `/live/v1/getMeetingRecordState` | 查询会议当前录制状态 |
 | POST | `/live/v1/sip-trunks` | 创建 SIP trunk |
 | GET | `/live/v1/sip-trunks` | 列出 SIP trunk |
 | DELETE | `/live/v1/sip-trunks/:id` | 删除 SIP trunk |
@@ -222,6 +232,7 @@ GET  /live/v1/listMeetingMessages      # 查询历史
 ## 依赖
 
 - **LiveKit Server**：SFU 媒体服务器，负责音视频转发
+- **LiveKit Egress**：录制 worker，通过 Redis 队列接收录制任务（房间合成输出 MP4 到本地或对象存储）；部署见 `deploy/livekit/`
 - **LiveKit SIP Server**：SIP↔WebRTC 协议转换桥接
 - **FreeSWITCH**：SIP 电话交换机，管理分机注册和路由
 - **PostgreSQL**：会议单据、参与者记录、聊天消息存储

@@ -1,0 +1,23 @@
+# Redis 7 Docker 部署
+# 用途: 本地开发和测试业务系统（缓存、分布式锁、票据、业务序号）
+# 对照官方镜像: https://hub.docker.com/_/redis
+#
+# 前置: bash deploy/redis/deploy.sh
+# 说明:
+#   - 默认端口 36379 直映射到宿主机；端口冲突时设置 REDIS_HOST_PORT，只修改宿主机映射端口
+#   - 数据持久化 ./data -> /data（AOF），down 不丢数据
+#   - 默认密码 G62m50oigInC30sf（本地示例，生产必须修改）
+#   - 外部客户端使用宿主机映射端口连接；容器内端口始终为 6379
+
+services:
+  redis:                 # 服务名，compose 网络内 DNS 为 redis
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "${REDIS_HOST_PORT:-36379}:6379"  # 默认端口直映射；需要避让时设置 REDIS_HOST_PORT
+    volumes:
+      - ./data:/data  # 持久化（AOF）
+    environment:
+      - TZ=Asia/Shanghai  # 时区
+    command: redis-server --requirepass ${REDIS_PASSWORD:-G62m50oigInC30sf} --appendonly yes
+    restart: unless-stopped

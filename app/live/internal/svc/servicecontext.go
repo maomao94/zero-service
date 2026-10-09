@@ -60,7 +60,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 	// 数据库（会议单据与参会记录）
 	db := gormx.MustOpenWithConf(c.DB)
-	db.MustAutoMigrate(&gormmodel.LiveMeeting{}, &gormmodel.LiveMeetingParticipant{}, &gormmodel.LiveMeetingMessage{}, &gormmodel.LiveSipProvider{})
+	db.MustAutoMigrate(&gormmodel.LiveMeeting{}, &gormmodel.LiveMeetingParticipant{}, &gormmodel.LiveMeetingMessage{}, &gormmodel.LiveMeetingRecording{}, &gormmodel.LiveSipProvider{})
 	svcCtx.DB = db
 
 	// Redis（锁 / 幂等 / 序号），与 oryxserver 一致使用 go-zero 原生 client

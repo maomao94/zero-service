@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LiveKitRoom, RoomAudioRenderer, TrackReference, TrackReferenceOrPlaceholder, VideoTrack, useConnectionState, useLocalParticipant, useParticipants, useRoomContext, useTracks } from '@livekit/components-react'
 import { ConnectionState, Room, RoomEvent, Track } from 'livekit-client'
-import { Archive, ArrowRight, Bell, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clipboard, Copy, Database, DoorOpen, History, LogOut, Maximize2, MessageSquare, Mic, Minimize2, MonitorUp, MoreHorizontal, Phone, PhoneIncoming, Plus, RefreshCw, Search, Send, Settings2, Shield, ShieldCheck, Sparkles, UserRound, Users, Video, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { Archive, ArrowRight, Bell, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle, Clapperboard, Clipboard, Copy, Database, DoorOpen, Download, FileVideo, History, LogOut, Maximize2, MessageSquare, Mic, Minimize2, MonitorUp, MoreHorizontal, Phone, PhoneIncoming, Play, Plus, RefreshCw, Search, Send, Settings2, Shield, ShieldCheck, Sparkles, Square, Timer, UserRound, Users, Video, X, ZoomIn, ZoomOut } from 'lucide-react'
+import type { MeetingRecording } from './types'
 import { api, ApiError } from './lib/api'
 import { connectMeetingNotifications, type MeetingInvitation } from './lib/meetingNotifications'
 import { countLiveParticipants, mergeMeetingParticipants, normalizePublishSources, resolveLiveKitUrl } from './lib/meetingUi'
@@ -24,6 +25,20 @@ function stripMeetingCode(value: string): string { return value.replace(/\D/g, '
 function isMeetingCode(value: string): boolean { return /^\d{9}$/.test(stripMeetingCode(value)) }
 function wsUrl(): string { return resolveLiveKitUrl(location.protocol, location.host, import.meta.env.VITE_LIVEKIT_URL) }
 function canAutoPublish(perms: JoinPerms, source: string): boolean { return perms.canPublish && (!perms.canPublishSources || perms.canPublishSources.includes(source)) }
+function recordingStatusMeta(status: number) {
+  if (status === 3) return { label: '已完成', className: 'completed' }
+  if (status === 4) return { label: '失败', className: 'failed' }
+  if (status === 5) return { label: '已中止', className: 'failed' }
+  if (status === 6) return { label: '超限结束', className: 'completed' }
+  if (status === 0) return { label: '启动中', className: 'recording' }
+  if (status === 2) return { label: '收尾中', className: 'recording' }
+  return { label: '录制中', className: 'recording' }
+}
+function recordingIsActive(status: number) { return status <= 2 }
+function formatBytes(size: number) { if (!size || size <= 0) return '—'; const units = ['B', 'KB', 'MB', 'GB', 'TB']; let value = size; let i = 0; while (value >= 1024 && i < units.length - 1) { value /= 1024; i += 1 } return `${value >= 10 || i === 0 ? Math.round(value) : value.toFixed(1)} ${units[i]}` }
+function formatSeconds(seconds: number) { if (!seconds || seconds <= 0) return '—'; const h = Math.floor(seconds / 3600); const m = Math.floor((seconds % 3600) / 60); const s = Math.floor(seconds % 60); if (h > 0) return `${h}时${m}分${s}秒`; if (m > 0) return `${m}分${s}秒`; return `${s}秒` }
+function parseServerTime(value: string) { return new Date(value.trim().replace(' ', 'T')).getTime() }
+function formatElapsed(startTime: string) { const start = parseServerTime(startTime); if (!Number.isFinite(start)) return '00:00'; const diff = Math.max(0, Date.now() - start); const h = Math.floor(diff / 3600000); const m = Math.floor((diff % 3600000) / 60000); const s = Math.floor((diff % 60000) / 1000); const mm = String(m).padStart(2, '0'); const ss = String(s).padStart(2, '0'); return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}` }
 
 export default function App() {
   const isGuestPath = location.pathname.replace(/\/+$/, '') === '/guest'
@@ -77,6 +92,12 @@ export default function App() {
 
   const login = (nextToken: string) => { if (nextToken.split('.').length !== 3) throw new ApiError('Token 格式不正确，应为标准 JWT', 400); localStorage.setItem('live_jwt', nextToken); setToken(nextToken); setGuest(false); setScreen('lobby') }
   const logout = () => { localStorage.removeItem('live_jwt'); setToken(''); setJoin(null); setInvitations([]); setActiveInvitationId(null); setGuest(false); setScreen('auth') }
+  // 任意 API 返回 401（如录制操作时 token 过期）统一登出
+  useEffect(() => {
+    const onExpired = () => { logout(); notify('登录已失效，请重新登录', 'warning') }
+    window.addEventListener('live:session-expired', onExpired)
+    return () => window.removeEventListener('live:session-expired', onExpired)
+  })
   const leaveRoom = () => {
     setJoin(null)
     if (guest) {
@@ -193,7 +214,8 @@ function IncomingMeetingCall({ invitation, joining, onDismiss, onJoin }: { invit
 
 function LobbyView({ name, identity, onJoin, notify }: { name: string; identity: string; onJoin: (meetingNo: string, options?: JoinOptions) => Promise<void>; notify: (message: string, tone?: Toast['tone']) => void }) {
   const [title, setTitle] = useState(''); const [meetingNo, setMeetingNo] = useState(''); const [rows, setRows] = useState<MeetingInfo[]>([]); const [mineRows, setMineRows] = useState<MeetingInfo[]>([]); const [total, setTotal] = useState(0); const [mode, setMode] = useState<'mine' | 'all'>('mine'); const [status, setStatus] = useState('0'); const [search, setSearch] = useState(''); const [debouncedSearch, setDebouncedSearch] = useState(''); const [loading, setLoading] = useState(true);
-  const [workspaceTab, setWorkspaceTab] = useState<'meetings' | 'providers'>('meetings')
+  const [workspaceTab, setWorkspaceTab] = useState<'meetings' | 'providers' | 'recordings'>('meetings')
+  const [recordingMeetingNo, setRecordingMeetingNo] = useState('')
   const [showAdvanced, setShowAdvanced] = useState(false); const [showTestPhone, setShowTestPhone] = useState(false); const [canPublish, setCanPublish] = useState(true); const [canSubscribe, setCanSubscribe] = useState(true); const [canPublishData, setCanPublishData] = useState(true); const [creating, setCreating] = useState(false); const [joining, setJoining] = useState(false);
   const greeting = (() => { const h = new Date().getHours(); if (h < 6) return '夜深了'; if (h < 12) return '早上好'; if (h < 14) return '中午好'; if (h < 18) return '下午好'; return '晚上好' })();
   const displayName = name || identity || '用户';
@@ -206,13 +228,13 @@ function LobbyView({ name, identity, onJoin, notify }: { name: string; identity:
   const join = async () => { if (!meetingNo.trim()) return notify('请输入会议号或9位会议码', 'warning'); if (joining) return; setJoining(true); try { await onJoin(meetingNo.trim(), { canPublish, canSubscribe, canPublishData }) } catch (e) { notify((e as Error).message, 'error') } finally { setJoining(false) } }
   const endMeeting = async (meetingNo: string) => { try { await api.endMeeting(meetingNo); notify('会议已结束', 'success'); load() } catch (e) { notify((e as Error).message, 'error') } }
   const handleMeetingNoChange = (e: React.ChangeEvent<HTMLInputElement>) => { const raw = e.target.value; if (/^\d{9}$/.test(stripMeetingCode(raw))) { setMeetingNo(formatMeetingCode(raw)) } else { setMeetingNo(raw) } }
-  return <main className="lobby-page"><div className="page-heading"><div><span className="eyebrow">工作台</span><h1>{greeting}，{displayName}</h1><p>管理会议与 SIP 电话联调。</p></div><div className="heading-metric"><span className="metric-icon"><History size={17} /></span><div><b>{total}</b><small>{mode === 'mine' ? '我的会议' : '全部会议'}</small></div></div></div><nav className="workspace-tabs"><button className={workspaceTab === 'meetings' ? 'active' : ''} onClick={() => setWorkspaceTab('meetings')}><Video size={15} />会议与电话</button><button className={workspaceTab === 'providers' ? 'active' : ''} onClick={() => setWorkspaceTab('providers')}><Settings2 size={15} />SIP 供应商</button></nav>{workspaceTab === 'providers' ? <SipProviderPanel notify={notify} /> : <><section className={`test-phone-tool surface ${showTestPhone ? 'open' : ''}`}><button className="test-phone-launcher" onClick={() => setShowTestPhone((visible) => !visible)} aria-expanded={showTestPhone}><span className="tool-icon"><Phone size={16} /></span><span><b>测试电话</b><small>独立 SIP 外呼工具</small></span><span className="tool-status">{showTestPhone ? '收起' : '展开'}<ChevronDown size={15} className={showTestPhone ? 'rotated' : ''} /></span></button>{showTestPhone && <div className="test-phone-content"><div className="test-phone-copy"><span className="eyebrow">SIP TEST</span><p>发起外呼后进入对应会议，等待电话用户加入。</p></div><DialPad compact notify={notify} onIndependentDial={(returnedMeetingNo, number) => onJoin(returnedMeetingNo, { sipWaitingFor: number })} /></div>}</section><div className="lobby-layout"><section className="create-column"><div className="surface create-card"><div className="card-kicker"><span className="icon-badge teal"><Plus size={18} /></span><span>创建会议</span></div><h2>创建一场新会议</h2><p>创建后立即进入会议，也可以在会议中生成访客邀请。</p><label className="field-label" htmlFor="meeting-title">会议名称</label><input id="meeting-title" className="text-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例如：产品评审 / 周会" onKeyDown={(e) => e.key === 'Enter' && create()} /><button className="button primary wide" onClick={create} disabled={creating}>{creating ? '创建中…' : '创建并进入'} <ArrowRight size={16} /></button><div className="split-line"><span>或</span></div><div className="card-kicker"><span className="icon-badge amber"><DoorOpen size={17} /></span><span>加入会议</span></div><label className="field-label" htmlFor="meeting-no">会议号</label><input id="meeting-no" className="text-input" value={meetingNo} onChange={handleMeetingNoChange} placeholder="会议号或9位会议码 (000-000-000)" onKeyDown={(e) => e.key === 'Enter' && join()} />
+  return <main className="lobby-page"><div className="page-heading"><div><span className="eyebrow">工作台</span><h1>{greeting}，{displayName}</h1><p>管理会议与 SIP 电话联调。</p></div><div className="heading-metric"><span className="metric-icon"><History size={17} /></span><div><b>{total}</b><small>{mode === 'mine' ? '我的会议' : '全部会议'}</small></div></div></div><nav className="workspace-tabs"><button className={workspaceTab === 'meetings' ? 'active' : ''} onClick={() => setWorkspaceTab('meetings')}><Video size={15} />会议与电话</button><button className={workspaceTab === 'providers' ? 'active' : ''} onClick={() => setWorkspaceTab('providers')}><Settings2 size={15} />SIP 供应商</button><button className={workspaceTab === 'recordings' ? 'active' : ''} onClick={() => setWorkspaceTab('recordings')}><Clapperboard size={15} />会议录制</button></nav>{workspaceTab === 'providers' ? <SipProviderPanel notify={notify} /> : workspaceTab === 'recordings' ? <RecordingPanel meetingNo={recordingMeetingNo} onSelectMeeting={setRecordingMeetingNo} notify={notify} /> : <><section className={`test-phone-tool surface ${showTestPhone ? 'open' : ''}`}><button className="test-phone-launcher" onClick={() => setShowTestPhone((visible) => !visible)} aria-expanded={showTestPhone}><span className="tool-icon"><Phone size={16} /></span><span><b>测试电话</b><small>独立 SIP 外呼工具</small></span><span className="tool-status">{showTestPhone ? '收起' : '展开'}<ChevronDown size={15} className={showTestPhone ? 'rotated' : ''} /></span></button>{showTestPhone && <div className="test-phone-content"><div className="test-phone-copy"><span className="eyebrow">SIP TEST</span><p>发起外呼后进入对应会议，等待电话用户加入。</p></div><DialPad compact notify={notify} onIndependentDial={(returnedMeetingNo, number) => onJoin(returnedMeetingNo, { sipWaitingFor: number })} /></div>}</section><div className="lobby-layout"><section className="create-column"><div className="surface create-card"><div className="card-kicker"><span className="icon-badge teal"><Plus size={18} /></span><span>创建会议</span></div><h2>创建一场新会议</h2><p>创建后立即进入会议，也可以在会议中生成访客邀请。</p><label className="field-label" htmlFor="meeting-title">会议名称</label><input id="meeting-title" className="text-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例如：产品评审 / 周会" onKeyDown={(e) => e.key === 'Enter' && create()} /><button className="button primary wide" onClick={create} disabled={creating}>{creating ? '创建中…' : '创建并进入'} <ArrowRight size={16} /></button><div className="split-line"><span>或</span></div><div className="card-kicker"><span className="icon-badge amber"><DoorOpen size={17} /></span><span>加入会议</span></div><label className="field-label" htmlFor="meeting-no">会议号</label><input id="meeting-no" className="text-input" value={meetingNo} onChange={handleMeetingNoChange} placeholder="会议号或9位会议码 (000-000-000)" onKeyDown={(e) => e.key === 'Enter' && join()} />
             <button className="text-button small" onClick={() => setShowAdvanced(!showAdvanced)}>{showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />} 高级选项</button>
             {showAdvanced && <div className="advanced-options"><label className="checkbox-label"><input type="checkbox" checked={canPublish} onChange={(e) => setCanPublish(e.target.checked)} />允许发布音视频</label><label className="checkbox-label"><input type="checkbox" checked={canSubscribe} onChange={(e) => setCanSubscribe(e.target.checked)} />允许订阅音视频</label><label className="checkbox-label"><input type="checkbox" checked={canPublishData} onChange={(e) => setCanPublishData(e.target.checked)} />允许发送消息/数据</label></div>}
-            <button className="button secondary wide" onClick={join} disabled={joining}>{joining ? '加入中…' : '加入会议'} <ArrowRight size={16} /></button></div><div className="tip-card"><Shield size={17} /><div><b>会议数据受保护</b><span>只有授权成员可以执行会议管理操作。</span></div></div></section><section className="surface history-card"><div className="section-heading"><div><span className="eyebrow">会议记录</span><div className="section-title-line"><h2>最近的会议</h2><span className="section-count">{total} 场</span></div></div><button className="icon-button" title="刷新会议记录" onClick={() => load()}><RefreshCw size={17} className={loading ? 'spin' : ''} /></button></div><div className="history-tabs"><button className={mode === 'mine' ? 'active' : ''} onClick={() => setMode('mine')}>我的会议</button><button className={mode === 'all' ? 'active' : ''} onClick={() => setMode('all')}>全部会议</button></div><div className="history-filters"><div className="search-input"><Search size={16} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索会议名称" /></div><select value={status} onChange={(e) => setStatus(e.target.value)}><option value="0">全部状态</option><option value="1">已创建</option><option value="2">进行中</option><option value="3">已结束</option></select></div><div className="meeting-list">{loading ? <div className="empty-state"><RefreshCw size={18} className="spin" />加载记录中…</div> : displayRows.length === 0 ? <div className="empty-state"><Archive size={20} />还没有符合条件的会议</div> : displayRows.map((meeting) => <MeetingRow key={meeting.meetingNo} meeting={meeting} onJoin={onJoin} onEnd={endMeeting} notify={notify} />)}</div><div className="list-footer"><span>共 {total} 场会议</span><span>当前身份：{identity}</span></div></section></div></>}</main>
+            <button className="button secondary wide" onClick={join} disabled={joining}>{joining ? '加入中…' : '加入会议'} <ArrowRight size={16} /></button></div><div className="tip-card"><Shield size={17} /><div><b>会议数据受保护</b><span>只有授权成员可以执行会议管理操作。</span></div></div></section><section className="surface history-card"><div className="section-heading"><div><span className="eyebrow">会议记录</span><div className="section-title-line"><h2>最近的会议</h2><span className="section-count">{total} 场</span></div></div><button className="icon-button" title="刷新会议记录" onClick={() => load()}><RefreshCw size={17} className={loading ? 'spin' : ''} /></button></div><div className="history-tabs"><button className={mode === 'mine' ? 'active' : ''} onClick={() => setMode('mine')}>我的会议</button><button className={mode === 'all' ? 'active' : ''} onClick={() => setMode('all')}>全部会议</button></div><div className="history-filters"><div className="search-input"><Search size={16} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索会议名称" /></div><select value={status} onChange={(e) => setStatus(e.target.value)}><option value="0">全部状态</option><option value="1">已创建</option><option value="2">进行中</option><option value="3">已结束</option></select></div><div className="meeting-list">{loading ? <div className="empty-state"><RefreshCw size={18} className="spin" />加载记录中…</div> : displayRows.length === 0 ? <div className="empty-state"><Archive size={20} />还没有符合条件的会议</div> : displayRows.map((meeting) => <MeetingRow key={meeting.meetingNo} meeting={meeting} onJoin={onJoin} onEnd={endMeeting} onViewRecordings={(no) => { setRecordingMeetingNo(no); setWorkspaceTab('recordings') }} notify={notify} />)}</div><div className="list-footer"><span>共 {total} 场会议</span><span>当前身份：{identity}</span></div></section></div></>}</main>
 }
 
-function MeetingRow({ meeting, onJoin, onEnd, notify }: { meeting: MeetingInfo; onJoin: (no: string) => Promise<void>; onEnd: (no: string) => Promise<void>; notify: (message: string, tone?: Toast['tone']) => void }) {
+function MeetingRow({ meeting, onJoin, onEnd, onViewRecordings, notify }: { meeting: MeetingInfo; onJoin: (no: string) => Promise<void>; onEnd: (no: string) => Promise<void>; onViewRecordings?: (no: string) => void; notify: (message: string, tone?: Toast['tone']) => void }) {
   const [expanded, setExpanded] = useState(false)
   const [ticketLoading, setTicketLoading] = useState(false)
   const [ticketInfo, setTicketInfo] = useState<{ ticket: string; joinUrl: string; ticketType?: number; canPublish?: boolean; canSubscribe?: boolean; canPublishData?: boolean; canPublishSources?: string[] } | null>(null)
@@ -324,6 +346,9 @@ function MeetingRow({ meeting, onJoin, onEnd, notify }: { meeting: MeetingInfo; 
           </button>}
           <button className="soft-button" onClick={() => { setShowTicketModal(true); setTicketInfo(null); setTicketError(''); setTicketIdentity(''); setTicketName(''); setTicketExpire('3600'); setTicketType(1); setCanPublish(true); setCanSubscribe(true); setCanPublishData(true); setCanPublishSources(['camera', 'microphone', 'screen_share']) }}>
             <Clipboard size={15} /> 生成邀请票据
+          </button>
+          <button className="soft-button" onClick={() => onViewRecordings?.(meeting.meetingNo)}>
+            <Clapperboard size={15} /> 查看录制
           </button>
         </div>
       </div>
@@ -536,7 +561,7 @@ function MeetingRoom({ meeting, perms, name, identity, guest, sipWaitingFor, onL
         : { className: 'disconnected', label: '未连接' }
   useEffect(() => { registerEchoRpc(room, notify); return () => { room.localParticipant.unregisterRpcMethod('echo') } }, [room, notify])
   const toggleEcho = () => { if (echoRegistered) { room.localParticipant.unregisterRpcMethod('echo'); setEchoRegistered(false); notify('已注销 Echo，本端 RPC 调用将返回 Method not supported', 'warning') } else { registerEchoRpc(room, notify); setEchoRegistered(true); notify('已注册 Echo', 'success') } }
-  return <main className={`room-page ${showPanel ? '' : 'panel-collapsed'}`}><section className="room-stage"><div className="room-heading"><div><button className="back-button" onClick={() => window.confirm('确定离开会议？') && onLeave()}><ChevronLeft size={16} />{guest ? '离开会议' : '返回大厅'}</button><h1>{meeting.title || 'Live 会议'}</h1><div className="room-id">会议号 <button onClick={() => { copyText(meeting.meetingNo).then((ok) => notify(ok ? '会议号已复制' : '复制失败', ok ? 'success' : 'error')) }}><Copy size={13} />{meeting.meetingNo}</button></div></div><div className="room-heading-actions"><span className={`live-indicator ${connectionStatus.className}`} role="status" aria-live="polite"><i />{connectionStatus.label}</span></div></div><RoomAudioRenderer /><RoomContent perms={perms} sipWaitingFor={sipWaitingFor} onLeave={onLeave} notify={notify} /></section><aside className={`room-sidebar ${showPanel ? '' : 'collapsed'}`}><button className="sidebar-collapse-handle" title={showPanel ? '收起侧栏' : '展开侧栏'} onClick={togglePanel} aria-label={showPanel ? '收起侧栏' : '展开侧栏'} aria-expanded={showPanel}>{showPanel ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}</button>{showPanel && <><nav className="room-tabs"><button className={pane === 'chat' ? 'active' : ''} onClick={() => setPane('chat')}><MessageSquare size={16} />群聊</button><button className={pane === 'members' ? 'active' : ''} onClick={() => setPane('members')}><Users size={16} />成员</button>{!guest && <button className={pane === 'manage' ? 'active' : ''} onClick={() => setPane('manage')}><Settings2 size={16} />管理</button>}</nav>{pane === 'chat' && <ChatPane meetingNo={meeting.meetingNo} identity={identity} name={name} guest={guest} perms={perms} notify={notify} />}{pane === 'members' && <MembersPane meetingNo={meeting.meetingNo} guest={guest} notify={notify} />}{pane === 'manage' && !guest && <ManagePane meetingNo={meeting.meetingNo} notify={notify} onEnd={onLeave} echoRegistered={echoRegistered} onToggleEcho={toggleEcho} />}</>}</aside></main>
+  return <main className={`room-page ${showPanel ? '' : 'panel-collapsed'}`}><section className="room-stage"><div className="room-heading"><div><button className="back-button" onClick={() => window.confirm('确定离开会议？') && onLeave()}><ChevronLeft size={16} />{guest ? '离开会议' : '返回大厅'}</button><h1>{meeting.title || 'Live 会议'}</h1><div className="room-id">会议号 <button onClick={() => { copyText(meeting.meetingNo).then((ok) => notify(ok ? '会议号已复制' : '复制失败', ok ? 'success' : 'error')) }}><Copy size={13} />{meeting.meetingNo}</button></div></div><div className="room-heading-actions">{!guest && <RecordingControl meetingNo={meeting.meetingNo} notify={notify} />}<span className={`live-indicator ${connectionStatus.className}`} role="status" aria-live="polite"><i />{connectionStatus.label}</span></div></div><RoomAudioRenderer /><RoomContent perms={perms} sipWaitingFor={sipWaitingFor} onLeave={onLeave} notify={notify} /></section><aside className={`room-sidebar ${showPanel ? '' : 'collapsed'}`}><button className="sidebar-collapse-handle" title={showPanel ? '收起侧栏' : '展开侧栏'} onClick={togglePanel} aria-label={showPanel ? '收起侧栏' : '展开侧栏'} aria-expanded={showPanel}>{showPanel ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}</button>{showPanel && <><nav className="room-tabs"><button className={pane === 'chat' ? 'active' : ''} onClick={() => setPane('chat')}><MessageSquare size={16} />群聊</button><button className={pane === 'members' ? 'active' : ''} onClick={() => setPane('members')}><Users size={16} />成员</button>{!guest && <button className={pane === 'manage' ? 'active' : ''} onClick={() => setPane('manage')}><Settings2 size={16} />管理</button>}</nav>{pane === 'chat' && <ChatPane meetingNo={meeting.meetingNo} identity={identity} name={name} guest={guest} perms={perms} notify={notify} />}{pane === 'members' && <MembersPane meetingNo={meeting.meetingNo} guest={guest} notify={notify} />}{pane === 'manage' && !guest && <ManagePane meetingNo={meeting.meetingNo} notify={notify} onEnd={onLeave} echoRegistered={echoRegistered} onToggleEcho={toggleEcho} />}</>}</aside></main>
 }
 
 function RoomContent({ perms, sipWaitingFor, onLeave, notify }: { perms: JoinPerms; sipWaitingFor?: string; onLeave: () => void; notify: (message: string, tone?: Toast['tone']) => void }) {
@@ -759,6 +784,181 @@ function GuestView({ ticket, join, name, identity, left, onJoin, onLeave, notify
     return <><Topbar name={name} identity={identity} guest onLogout={onLeave} /><LiveKitRoom serverUrl={wsUrl()} token={join.token} connect audio={canAutoPublish(join.perms, 'microphone')} video={canAutoPublish(join.perms, 'camera')} onError={(error) => notify(`会议连接失败：${error.message}`, 'error')} onMediaDeviceFailure={(_failure, kind) => notify(`媒体设备不可用${kind ? `（${kind}）` : ''}`, 'error')} onDisconnected={onLeave}><MeetingRoom meeting={join.meeting} perms={join.perms} name={name} identity={identity} guest onLeave={onLeave} notify={notify} /></LiveKitRoom></>
   }
   return <main className="guest-gate"><div className="surface guest-gate-card"><div className="brand-lockup"><span className="brand-mark">L</span><span>Live 视频会议</span></div><div className="guest-gate-copy"><span className="eyebrow">邀请访客</span><h2>加入会议</h2><p>{loading ? '正在验证票据，请稍候…' : failed ? '票据无效、已使用或已过期，请联系会议主持人重新生成。' : left ? '你已离开会议，如需再次加入请使用新的邀请链接。' : '正在准备会议…'}</p></div>{loading ? <div className="guest-gate-loading"><RefreshCw size={18} className="spin" /><span>正在连接会议</span></div> : failed ? <button className="button primary wide" onClick={() => { consumedTickets.delete(ticket || ''); setRetryCount((n) => n + 1) }}>重新尝试 <ArrowRight size={15} /></button> : null}</div></main>
+}
+
+function useMeetingRecording(meetingNo: string) {
+  const [recording, setRecording] = useState<MeetingRecording | null>(null)
+  const inFlight = useRef(false)
+  const refresh = useCallback(async () => {
+    if (!meetingNo) { setRecording(null); return }
+    if (inFlight.current) return // 上一次刷新未返回时不叠加，防止慢响应覆盖新状态
+    inFlight.current = true
+    try {
+      const state = await api.getMeetingRecordState(meetingNo)
+      setRecording(state.active && state.recording?.recordId ? state.recording : null)
+    } catch { /* 录制状态刷新失败不打断会议操作 */ } finally { inFlight.current = false }
+  }, [meetingNo])
+  useEffect(() => { refresh() }, [refresh])
+  // 录制中 5s 刷新；空闲时 15s 慢轮询，以便发现其他参与者发起的录制
+  useEffect(() => {
+    const timer = window.setInterval(refresh, recording ? 5000 : 15000)
+    return () => window.clearInterval(timer)
+  }, [recording, refresh])
+  return { recording, setRecording, refresh }
+}
+
+function RecordingControl({ meetingNo, notify }: { meetingNo: string; notify: (message: string, tone?: Toast['tone']) => void }) {
+  const { recording, setRecording, refresh } = useMeetingRecording(meetingNo)
+  const [busy, setBusy] = useState(false)
+  const [elapsed, setElapsed] = useState('')
+  const refreshTimer = useRef(0)
+  useEffect(() => () => window.clearTimeout(refreshTimer.current), [])
+  useEffect(() => {
+    // 收尾中（已停止、等待生成文件）：计时冻结，不再走表
+    if (!recording || Number(recording.status) === 2) { if (!recording) setElapsed(''); return }
+    const tick = () => setElapsed(formatElapsed(recording.startTime))
+    tick()
+    const timer = window.setInterval(tick, 1000)
+    return () => window.clearInterval(timer)
+  }, [recording])
+  const isRecording = Boolean(recording)
+  const isEnding = Boolean(recording && Number(recording.status) === 2)
+  const start = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const reply = await api.startMeetingRecord(meetingNo)
+      setRecording(reply.recording)
+      const already = Boolean(recording && reply.recording?.recordId === recording.recordId)
+      notify(already ? '该会议正在录制中' : '会议录制已开始', 'success')
+    } catch (e) {
+      notify((e as Error).message || '开启录制失败', 'error')
+    } finally { setBusy(false) }
+  }
+  const stop = async () => {
+    if (busy || !recording || isEnding) return
+    if (!window.confirm('确定停止本次录制？停止后将开始生成录制文件。')) return
+    setBusy(true)
+    try {
+      await api.stopMeetingRecord({ recordId: recording.recordId })
+      notify('停止指令已发送，正在生成录制文件', 'success')
+      // 停止后稍候拉取一次状态（大概率仍为收尾中，由轮询自然过渡到终态）
+      window.clearTimeout(refreshTimer.current)
+      refreshTimer.current = window.setTimeout(refresh, 1500)
+    } catch (e) {
+      notify((e as Error).message || '停止录制失败', 'error')
+    } finally { setBusy(false) }
+  }
+  return <div className={`recording-control ${isRecording ? 'active' : ''}`} role="group" aria-label="会议录制">
+    {isRecording ? <>
+      {isEnding
+        ? <span className="recording-live" role="status" aria-live="polite"><RefreshCw size={14} className="spin" />生成文件中</span>
+        : <span className="recording-live" role="status" aria-live="polite"><span className="recording-dot" />REC</span>}
+      {!isEnding && <span className="recording-timer"><Timer size={13} />{elapsed}</span>}
+      {!isEnding && <button className="recording-button stop" onClick={stop} disabled={busy}><Square size={12} />{busy ? '停止中…' : '停止录制'}</button>}
+    </> : <button className="recording-button start" onClick={start} disabled={busy}><Circle size={12} />{busy ? '开启中…' : '开启录制'}</button>}
+  </div>
+}
+
+function RecordingRow({ recording, meetingTitle, notify }: { recording: MeetingRecording; meetingTitle: string; notify: (message: string, tone?: Toast['tone']) => void }) {
+  const meta = recordingStatusMeta(Number(recording.status))
+  const playable = Boolean(recording.fileUrl)
+  const copy = async () => { const ok = await copyText(recording.fileUrl); notify(ok ? '播放地址已复制' : '复制失败', ok ? 'success' : 'error') }
+  return <article className={`recording-row ${meta.className}`}>
+    <span className={`recording-status ${meta.className}`}><span className="recording-status-dot" />{meta.label}</span>
+    <div className="recording-main">
+      <b><FileVideo size={15} />{recording.fileName || (recordingIsActive(Number(recording.status)) ? '录制进行中…' : '录制文件')}</b>
+      <small>{meetingTitle ? `${meetingTitle} · ` : ''}{recording.meetingNo} · 开始 {timeLabel(recording.startTime)}{recording.endTime ? ` · 结束 ${timeLabel(recording.endTime)}` : ''}</small>
+      <small>时长 {formatSeconds(recording.duration)} · 大小 {formatBytes(recording.fileSize)}{recording.error ? ` · ${recording.error}` : ''}</small>
+    </div>
+    <div className="recording-actions">
+      {playable ? <>
+        <a className="button secondary compact" href={recording.fileUrl} target="_blank" rel="noreferrer"><Play size={14} />播放</a>
+        <a className="button secondary compact" href={recording.fileUrl} download><Download size={14} />下载</a>
+        <button className="text-button" onClick={copy}>复制链接</button>
+      </> : recordingIsActive(Number(recording.status)) ? <span className="recording-hint"><Timer size={13} />录制中，结束后生成文件</span> : <span className="recording-hint">无可用文件</span>}
+    </div>
+  </article>
+}
+
+function RecordingPanel({ meetingNo, onSelectMeeting, notify }: { meetingNo: string; onSelectMeeting: (no: string) => void; notify: (message: string, tone?: Toast['tone']) => void }) {
+  const [meetings, setMeetings] = useState<MeetingInfo[]>([])
+  const [recordings, setRecordings] = useState<MeetingRecording[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [loading, setLoading] = useState(false)
+  const [meetingsLoaded, setMeetingsLoaded] = useState(false)
+
+  useEffect(() => {
+    api.listMyMeetings(1, 100)
+      .then((data) => setMeetings(data.meetings || []))
+      .catch((e) => notify((e as Error).message || '加载会议列表失败', 'error'))
+      .finally(() => setMeetingsLoaded(true))
+  }, [notify])
+  // 默认选中第一个会议（仅在未选择时）
+  useEffect(() => {
+    if (meetingsLoaded && !meetingNo && meetings.length) onSelectMeeting(meetings[0].meetingNo)
+  }, [meetingsLoaded, meetingNo, meetings, onSelectMeeting])
+
+  const loadSeq = useRef(0)
+  const load = useCallback(async (target: string, targetPage: number, size: number) => {
+    const seq = ++loadSeq.current
+    if (!target) { setRecordings([]); setTotal(0); return }
+    setLoading(true)
+    try {
+      const data = await api.listMeetingRecordings(target, targetPage, size)
+      if (seq !== loadSeq.current) return // 响应晚于更新的请求（快速切换会议/翻页）：丢弃
+      setRecordings(data.recordings || [])
+      setTotal(data.total || 0)
+    } catch (e) {
+      if (seq !== loadSeq.current) return
+      notify((e as Error).message || '加载录制列表失败', 'error')
+      setRecordings([]); setTotal(0) // 失败不展示旧会议的数据
+    } finally {
+      if (seq === loadSeq.current) setLoading(false)
+    }
+  }, [notify])
+
+  useEffect(() => { load(meetingNo, page, pageSize) }, [meetingNo, page, pageSize, load])
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const changeMeeting = (value: string) => { setPage(1); onSelectMeeting(value) }
+  return <section className="surface recording-panel">
+    <div className="section-heading">
+      <div>
+        <span className="eyebrow">RECORDINGS</span>
+        <div className="section-title-line"><h2>会议录制</h2><span className="section-count">{total} 个文件</span></div>
+        <p>查看会议录制文件与状态；文件生成完成后可在线播放或下载。</p>
+      </div>
+      <div className="recording-heading-actions">
+        <select className="text-input" value={meetingNo} onChange={(e) => changeMeeting(e.target.value)} aria-label="选择会议">
+          {meetings.length === 0 && <option value="">暂无我的会议</option>}
+          {meetings.map((m) => <option key={m.meetingNo} value={m.meetingNo}>{m.title || '未命名会议'} · {m.meetingNo}</option>)}
+        </select>
+        <button className="icon-button" title="刷新录制" onClick={() => load(meetingNo, page, pageSize)} disabled={loading}><RefreshCw size={17} className={loading ? 'spin' : ''} /></button>
+      </div>
+    </div>
+    <div className="recording-list">
+      {loading ? <div className="empty-state"><RefreshCw size={18} className="spin" />加载录制中…</div>
+        : !meetingNo ? <div className="empty-state"><Clapperboard size={20} />请选择要查看的会议</div>
+        : recordings.length === 0 ? <div className="empty-state"><FileVideo size={20} />该会议还没有录制文件</div>
+        : recordings.map((r) => <RecordingRow key={r.recordId} recording={r} meetingTitle={meetings.find((m) => m.meetingNo === r.meetingNo)?.title || ''} notify={notify} />)}
+    </div>
+    <div className="list-footer recording-footer">
+      <span>共 {total} 条 · 第 {page}/{totalPages} 页</span>
+      <div className="pagination">
+        <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }} aria-label="每页数量">
+          <option value={5}>5 / 页</option>
+          <option value={10}>10 / 页</option>
+          <option value={20}>20 / 页</option>
+          <option value={50}>50 / 页</option>
+        </select>
+        <button className="icon-button small" disabled={page <= 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))} title="上一页"><ChevronLeft size={16} /></button>
+        <button className="icon-button small" disabled={page >= totalPages || loading} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} title="下一页"><ChevronRight size={16} /></button>
+      </div>
+    </div>
+  </section>
 }
 
 type SipProviderForm = { code: string; name: string; address: string; numbers: string; authUsername: string; authPassword: string; status: number }
