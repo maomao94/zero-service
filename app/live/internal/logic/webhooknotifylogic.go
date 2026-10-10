@@ -266,10 +266,10 @@ func egressStatusName(status int) string {
 	return livekit.EgressStatus(status).String()
 }
 
-// formatEgressTime 格式化录制时间用于日志；零值返回 "-"。
+// formatEgressTime 用 carbon 格式化录制时间用于日志；零值返回 "-"。
 func formatEgressTime(t time.Time) string {
 	if t.IsZero() {
 		return "-"
 	}
-	return t.Format("2006-01-02 15:04:05")
+	return carbonx.FormatDateTime(t)
 }
