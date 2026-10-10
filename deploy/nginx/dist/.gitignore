@@ -1,0 +1,4 @@
+# 前端构建产物（由 deploy/nginx/build-web.sh 生成，或部署时自行上传覆盖）
+# 不纳入版本管理，仅保留目录占位
+*
+!.gitignore

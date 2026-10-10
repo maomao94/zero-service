@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"strings"
+	"time"
 
 	"zero-service/app/live/internal/svc"
 	"zero-service/app/live/live"
@@ -64,9 +65,12 @@ func (l *WebhookNotifyLogic) WebhookNotify(in *live.WebhookNotifyReq) (*live.Web
 	case "track_published", "track_unpublished":
 		// TODO: 轨道发布/取消（后续可统计与会者音视频开关状态）
 		l.logUnhandled(event)
-	case "egress_started", "egress_updated", "egress_ended":
-		// TODO: 录制事件（后续录制能力接入后同步录制状态）
-		l.logUnhandled(event)
+	case "egress_started":
+		l.handleEgressStarted(event)
+	case "egress_updated":
+		l.handleEgressUpdated(event)
+	case "egress_ended":
+		l.handleEgressEnded(event)
 	case "ingress_started", "ingress_ended":
 		// TODO: 输入流事件（后续 Ingress 能力接入后同步状态）
 		l.logUnhandled(event)
@@ -140,6 +144,90 @@ func (l *WebhookNotifyLogic) handleParticipantJoined(event *livekit.WebhookEvent
 		return
 	}
 	l.Logger.Infof("[webhook] participant joined: room=%s identity=%s", room.GetName(), participant.GetIdentity())
+}
+
+// handleEgressStarted Egress 开始/进行中：按 egress_id 幂等 upsert 录制记录（status 取 Egress 状态）。
+// 只处理会议房间的 Egress（room_name 非空）；其它类型安全忽略。
+func (l *WebhookNotifyLogic) handleEgressStarted(event *livekit.WebhookEvent) {
+	info := event.GetEgressInfo()
+	if info == nil || strings.TrimSpace(info.GetEgressId()) == "" || strings.TrimSpace(info.GetRoomName()) == "" {
+		l.logUnhandled(event)
+		return
+	}
+	startedAt := carbonx.NowStartOfSecond().StdTime()
+	if info.GetStartedAt() > 0 {
+		startedAt = time.Unix(0, info.GetStartedAt())
+	}
+	rec := &gormmodel.LiveMeetingRecording{
+		MeetingNo: info.GetRoomName(),
+		EgressId:  info.GetEgressId(),
+		RoomName:  info.GetRoomName(),
+		Status:    int(info.GetStatus()),
+		StartTime: startedAt,
+	}
+	if _, err := l.svcCtx.MeetingRepo.SaveRecordingStarted(l.ctx, rec); err != nil {
+		l.Logger.Errorf("[webhook] upsert recording failed: egress=%s room=%s err=%v", info.GetEgressId(), info.GetRoomName(), err)
+		return
+	}
+	l.Logger.Infof("[webhook] egress started: room=%s egress=%s", info.GetRoomName(), info.GetEgressId())
+}
+
+// handleEgressUpdated Egress 状态更新：终态转 handleEgressEnded，否则按开始处理。
+func (l *WebhookNotifyLogic) handleEgressUpdated(event *livekit.WebhookEvent) {
+	info := event.GetEgressInfo()
+	if info == nil {
+		l.logUnhandled(event)
+		return
+	}
+	switch info.GetStatus() {
+	case livekit.EgressStatus_EGRESS_COMPLETE, livekit.EgressStatus_EGRESS_FAILED,
+		livekit.EgressStatus_EGRESS_ABORTED, livekit.EgressStatus_EGRESS_LIMIT_REACHED:
+		l.handleEgressEnded(event)
+	default:
+		l.handleEgressStarted(event)
+	}
+}
+
+// handleEgressEnded Egress 结束：终态落库（仅 进行中 → 终态，幂等），
+// 状态直接取 Egress 状态（COMPLETE/FAILED/ABORTED/LIMIT_REACHED），
+// 已完成时提取文件信息（文件名/路径/大小/时长）。
+func (l *WebhookNotifyLogic) handleEgressEnded(event *livekit.WebhookEvent) {
+	info := event.GetEgressInfo()
+	if info == nil || strings.TrimSpace(info.GetEgressId()) == "" {
+		l.Logger.Errorf("[webhook] egress_ended without egress info: id=%s", event.GetId())
+		return
+	}
+	status := int(info.GetStatus())
+	result := egressFileResult(info, l.svcCtx.Config.LiveKit.Record.OutputDir)
+	if info.GetStatus() != livekit.EgressStatus_EGRESS_COMPLETE {
+		result.Error = info.GetError()
+		if result.Error == "" {
+			result.Error = info.GetDetails()
+		}
+		if result.Error == "" {
+			result.Error = "egress ended with status " + info.GetStatus().String()
+		}
+	}
+	updated, err := l.svcCtx.MeetingRepo.UpdateRecordingStatus(l.ctx, info.GetEgressId(), status, result)
+	if err != nil {
+		l.Logger.Errorf("[webhook] update recording status failed: egress=%s err=%v", info.GetEgressId(), err)
+		return
+	}
+	if !updated {
+		// 可能已由 egress_updated 先标记完成但缺文件信息：仅为已完成记录补全文件字段
+		if status == gormmodel.RecordingStatusComplete && result.FileName != "" {
+			if err := l.svcCtx.MeetingRepo.BackfillRecordingFile(l.ctx, info.GetEgressId(), result.FileName, result.FilePath, result.FileSize, result.Duration, result.EndedAt); err != nil {
+				l.Logger.Errorf("[webhook] backfill recording file failed: egress=%s err=%v", info.GetEgressId(), err)
+			} else {
+				l.Logger.Infof("[webhook] recording file backfilled: egress=%s file=%s", info.GetEgressId(), result.FileName)
+			}
+			return
+		}
+		// 记录不存在或已是终态：幂等忽略
+		l.Logger.Infof("[webhook] egress ended ignored (no recording or already terminal): egress=%s status=%s", info.GetEgressId(), info.GetStatus().String())
+		return
+	}
+	l.Logger.Infof("[webhook] egress ended: room=%s egress=%s status=%d file=%s", info.GetRoomName(), info.GetEgressId(), status, result.FileName)
 }
 
 // handleParticipantLeft 参与者离会：标记 left。

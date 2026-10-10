@@ -2,13 +2,15 @@
 #
 # 架构：
 #   浏览器(WS) ←→ LiveKit Server(HTTP) ←→ SIPMediaGW ←→ Kamailio ←→ 软电话(SIP视频)
+#   会议录制：livekit-server ←(Redis 队列)→ Egress worker → 本地 recordings/ 或对象存储
 #
 # 依赖的外部服务：
-#   - Redis: Docker 容器 redis（端口 36379，密码 G62m50oigInC30sf）
+#   - Redis: 独立部署，见 deploy/redis（宿主机端口 36379，密码 G62m50oigInC30sf）
 #
 # 端口映射：
 #   7880  - LiveKit Server HTTP API + WS
 #   60000-60100/udp - LiveKit WebRTC RTP 媒体流
+#   egress 不映射端口（内部 worker；模板端口 7980 仅容器内使用）
 #
 # SIPMediaGW 配置见 deploy/sipmediagw/docker-compose.yaml
 #
@@ -33,6 +35,29 @@ services:
     command: --config /etc/livekit.yaml
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    networks:
+      - lk-net
+
+  # LiveKit Egress - 录制/导出 worker（会议合成录制）
+  # 通过 Redis 队列与 livekit-server 通信；RoomComposite 录制依赖 Chrome（镜像自带）
+  # [PROD] 每个实例建议 4C/4G；录制输出目录需可写并对外提供播放服务
+  egress:
+    image: livekit/egress:latest
+    container_name: livekit-egress
+    # v1.7.6+ Chrome 沙箱必需，否则 web/room composite 录制报 "chrome failed to start"
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      - EGRESS_CONFIG_FILE=/etc/egress.yaml
+    volumes:
+      - ./egress.yaml:/etc/egress.yaml
+      # 本地录制输出目录（容器内 /out）→ 宿主机 ./recordings
+      - ./recordings:/out
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - livekit-server
     restart: unless-stopped
     networks:
       - lk-net

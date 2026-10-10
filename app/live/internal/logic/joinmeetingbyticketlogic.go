@@ -117,16 +117,16 @@ func (l *JoinMeetingByTicketLogic) JoinMeetingByTicket(in *live.JoinMeetingByTic
 
 	// 生成 LiveKit token（使用票据中绑定的 identity 和权限）
 	token, err := livekitx.NewJoinToken(livekitx.JoinTokenOptions{
-		APIKey:             l.svcCtx.Config.LiveKit.ApiKey,
-		APISecret:          l.svcCtx.Config.LiveKit.ApiSecret,
-		Room:               data.MeetingNo,
-		Identity:           data.Identity,
-		Name:               data.Name,
-		ValidFor:           l.svcCtx.Config.LiveKit.TokenValidFor,
-		CanPublish:         data.CanPublish,
-		CanSubscribe:       data.CanSubscribe,
-		CanPublishData:     data.CanPublishData,
-		CanPublishSources:  data.CanPublishSources,
+		APIKey:            l.svcCtx.Config.LiveKit.ApiKey,
+		APISecret:         l.svcCtx.Config.LiveKit.ApiSecret,
+		Room:              data.MeetingNo,
+		Identity:          data.Identity,
+		Name:              data.Name,
+		ValidFor:          l.svcCtx.Config.LiveKit.TokenValidFor,
+		CanPublish:        data.CanPublish,
+		CanSubscribe:      data.CanSubscribe,
+		CanPublishData:    data.CanPublishData,
+		CanPublishSources: data.CanPublishSources,
 	})
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "生成入会 token 失败")
@@ -153,5 +153,7 @@ func (l *JoinMeetingByTicketLogic) JoinMeetingByTicket(in *live.JoinMeetingByTic
 		CanSubscribe:      data.CanSubscribe,
 		CanPublishData:    data.CanPublishData,
 		CanPublishSources: data.CanPublishSources,
+		// 票据分用户/设备两类：仅当票据绑定的身份就是会议创建者时才可操作录制
+		CanRecord: isMeetingOperator(meeting, data.Identity),
 	}, nil
 }

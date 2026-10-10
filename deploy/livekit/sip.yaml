@@ -9,7 +9,7 @@ api_secret: secretsecretsecretsecretsecretsecret
 # LiveKit Server WebSocket 地址（Docker 内部网络，HTTP/WS）
 ws_url: ws://livekit-server:7880
 
-# Redis 连接（宿主机已有 Redis，端口 36379）
+# Redis 连接（Redis 部署见 deploy/redis，宿主机端口 36379）
 redis:
   address: host.docker.internal:36379
   password: G62m50oigInC30sf

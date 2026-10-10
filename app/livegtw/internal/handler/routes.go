@@ -50,6 +50,18 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: live.GetMeetingHandler(serverCtx),
 				},
 				{
+					// 查询会议当前录制状态
+					Method:  http.MethodGet,
+					Path:    "/getMeetingRecordState",
+					Handler: live.GetMeetingRecordStateHandler(serverCtx),
+				},
+				{
+					// 查询录制详情
+					Method:  http.MethodGet,
+					Path:    "/getMeetingRecording",
+					Handler: live.GetMeetingRecordingHandler(serverCtx),
+				},
+				{
 					// 加入会议
 					Method:  http.MethodPost,
 					Path:    "/joinMeeting",
@@ -66,6 +78,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Method:  http.MethodGet,
 					Path:    "/listMeetingMessages",
 					Handler: live.ListMeetingMessagesHandler(serverCtx),
+				},
+				{
+					// 查询会议录制列表
+					Method:  http.MethodGet,
+					Path:    "/listMeetingRecordings",
+					Handler: live.ListMeetingRecordingsHandler(serverCtx),
 				},
 				{
 					// 分页查询会议列表
@@ -114,6 +132,18 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Method:  http.MethodPost,
 					Path:    "/sendMeetingData",
 					Handler: live.SendMeetingDataHandler(serverCtx),
+				},
+				{
+					// 开始会议录制
+					Method:  http.MethodPost,
+					Path:    "/startMeetingRecord",
+					Handler: live.StartMeetingRecordHandler(serverCtx),
+				},
+				{
+					// 停止会议录制
+					Method:  http.MethodPost,
+					Path:    "/stopMeetingRecord",
+					Handler: live.StopMeetingRecordHandler(serverCtx),
 				},
 			}...,
 		),

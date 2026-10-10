@@ -40,18 +40,37 @@ func toParticipantInfo(p *live.ParticipantInfo) types.ParticipantInfo {
 	}
 }
 
+func toRecordingInfo(rec *live.MeetingRecordingInfo) types.MeetingRecordingInfo {
+	if rec == nil {
+		return types.MeetingRecordingInfo{}
+	}
+	return types.MeetingRecordingInfo{
+		RecordId:  rec.GetRecordId(),
+		MeetingNo: rec.GetMeetingNo(),
+		EgressId:  rec.GetEgressId(),
+		Status:    rec.GetStatus(),
+		FileName:  rec.GetFileName(),
+		FileUrl:   rec.GetFileUrl(),
+		FileSize:  rec.GetFileSize(),
+		Duration:  rec.GetDuration(),
+		StartTime: rec.GetStartTime(),
+		EndTime:   rec.GetEndTime(),
+		Error:     rec.GetError(),
+	}
+}
+
 func toSipProviderInfo(p *live.SipProviderInfo) types.SipProviderInfo {
 	if p == nil {
 		return types.SipProviderInfo{}
 	}
 	return types.SipProviderInfo{
-		Id:          p.GetId(),
-		Code:        p.GetCode(),
-		Name:        p.GetName(),
-		Address:     p.GetAddress(),
-		Numbers:     p.GetNumbers(),
-		Status:      p.GetStatus(),
-		CreateTime:  p.GetCreateTime(),
-		SipTrunkId:  p.GetSipTrunkId(),
+		Id:         p.GetId(),
+		Code:       p.GetCode(),
+		Name:       p.GetName(),
+		Address:    p.GetAddress(),
+		Numbers:    p.GetNumbers(),
+		Status:     p.GetStatus(),
+		CreateTime: p.GetCreateTime(),
+		SipTrunkId: p.GetSipTrunkId(),
 	}
 }

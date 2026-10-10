@@ -40,6 +40,16 @@ service LiveRpc {
   rpc ReportMeetingMessage(ReportMeetingMessageReq) returns (ReportMeetingMessageRes);
   // 查询聊天记录
   rpc ListMeetingMessages(ListMeetingMessagesReq) returns (ListMeetingMessagesRes);
+  // 开始会议录制（房间合成录制，落库并返回录制任务）
+  rpc StartMeetingRecord(StartMeetingRecordReq) returns (StartMeetingRecordRes);
+  // 停止会议录制（停止 Egress 任务，最终状态以 webhook egress_ended 为准）
+  rpc StopMeetingRecord(StopMeetingRecordReq) returns (StopMeetingRecordRes);
+  // 查询会议录制列表
+  rpc ListMeetingRecordings(ListMeetingRecordingsReq) returns (ListMeetingRecordingsRes);
+  // 查询单个录制详情
+  rpc GetMeetingRecording(GetMeetingRecordingReq) returns (GetMeetingRecordingRes);
+  // 查询会议当前录制状态（是否正在录制；每会议最多一个进行中）
+  rpc GetMeetingRecordState(GetMeetingRecordStateReq) returns (GetMeetingRecordStateRes);
   // 发起 SIP 外呼（拨打电话或在会议中邀请电话参会者）
   rpc DialSip(DialSipReq) returns (DialSipRes);
   // 创建 SIP 供应商
@@ -136,6 +146,8 @@ message JoinMeetingRes {
   bool can_publish_data = 5 [json_name = "canPublishData"];
   // 可以发布的轨道源类型（空表示允许所有）
   repeated string can_publish_sources = 6 [json_name = "canPublishSources"];
+  // 是否可以操作会议录制（仅会议创建者或系统创建的会议为 true）
+  bool can_record = 7 [json_name = "canRecord"];
 }
 
 message GetMeetingReq {
@@ -344,6 +356,8 @@ message JoinMeetingByTicketRes {
   bool can_publish_data = 5 [json_name = "canPublishData"];
   // 可以发布的轨道源类型（空表示允许所有）
   repeated string can_publish_sources = 6 [json_name = "canPublishSources"];
+  // 是否可以操作会议录制（仅当票据绑定的身份为会议创建者时为 true）
+  bool can_record = 7 [json_name = "canRecord"];
 }
 
 // NotifyMeetingParticipantReq 向指定参会身份提交会议入会通知。
@@ -407,6 +421,95 @@ message MeetingMessageInfo {
   string message_type = 5 [json_name = "messageType"];
   // 创建时间，格式：yyyy-MM-dd HH:mm:ss
   string create_time = 6 [json_name = "createTime"];
+}
+
+// ===== 会议录制相关 =====
+
+// MeetingRecordingInfo 会议录制信息。
+message MeetingRecordingInfo {
+  // 录制记录 ID
+  string record_id = 1 [json_name = "recordId"];
+  // 会议号
+  string meeting_no = 2 [json_name = "meetingNo"];
+  // LiveKit Egress 任务 ID
+  string egress_id = 3 [json_name = "egressId"];
+  // 录制状态（直接对齐 LiveKit EgressStatus：0-启动中,1-录制中,2-收尾中,3-已完成,4-失败,5-已中止,6-超限）
+  int32 status = 4 [json_name = "status"];
+  // 录制文件名
+  string file_name = 5 [json_name = "fileName"];
+  // 播放地址（仅已完成或超限结束且已产出文件时有值，由配置的播放基址拼接，不返回本地路径）
+  string file_url = 6 [json_name = "fileUrl"];
+  // 文件大小（字节）
+  int64 file_size = 7 [json_name = "fileSize"];
+  // 录制时长（秒）
+  int64 duration = 8 [json_name = "duration"];
+  // 开始时间，格式：yyyy-MM-dd HH:mm:ss
+  string start_time = 9 [json_name = "startTime"];
+  // 结束时间，格式：yyyy-MM-dd HH:mm:ss（未结束为空字符串）
+  string end_time = 10 [json_name = "endTime"];
+  // 失败原因（失败时有值）
+  string error = 11 [json_name = "error"];
+}
+
+message StartMeetingRecordReq {
+  // 会议号
+  string meeting_no = 1 [json_name = "meetingNo"];
+  // 是否仅录制音频（默认 false，录制音视频）
+  bool audio_only = 2 [json_name = "audioOnly"];
+  // 合成布局（可选，空则使用服务端默认）
+  string layout = 3 [json_name = "layout"];
+}
+
+message StartMeetingRecordRes {
+  // 录制信息
+  MeetingRecordingInfo recording = 1 [json_name = "recording"];
+}
+
+message StopMeetingRecordReq {
+  // 会议号（与 record_id 二选一）
+  string meeting_no = 1 [json_name = "meetingNo"];
+  // 录制记录 ID（与 meeting_no 二选一）
+  string record_id = 2 [json_name = "recordId"];
+}
+
+message StopMeetingRecordRes {}
+
+message ListMeetingRecordingsReq {
+  // 会议号
+  string meeting_no = 1 [json_name = "meetingNo"];
+  // 页码，从 1 开始
+  int64 page = 2 [json_name = "page"];
+  // 每页数量
+  int64 page_size = 3 [json_name = "pageSize"];
+}
+
+message ListMeetingRecordingsRes {
+  // 录制列表
+  repeated MeetingRecordingInfo recordings = 1 [json_name = "recordings"];
+  // 总数量
+  int64 total = 2 [json_name = "total"];
+}
+
+message GetMeetingRecordingReq {
+  // 录制记录 ID
+  string record_id = 1 [json_name = "recordId"];
+}
+
+message GetMeetingRecordingRes {
+  // 录制信息
+  MeetingRecordingInfo recording = 1 [json_name = "recording"];
+}
+
+message GetMeetingRecordStateReq {
+  // 会议号
+  string meeting_no = 1 [json_name = "meetingNo"];
+}
+
+message GetMeetingRecordStateRes {
+  // 当前进行中的录制（无则为空）
+  MeetingRecordingInfo recording = 1 [json_name = "recording"];
+  // LiveKit 侧是否存在活跃录制（与 recording 是否非空一致）
+  bool active = 2 [json_name = "active"];
 }
 
 // ===== SIP 电话相关 =====

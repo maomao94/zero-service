@@ -89,6 +89,8 @@ type JoinMeetingReply {
 	CanPublishData bool `json:"canPublishData"`
 	// 可以发布的轨道源类型（空表示允许所有）
 	CanPublishSources []string `json:"canPublishSources"`
+	// 是否可以操作会议录制（仅会议创建者或系统创建的会议为 true）
+	CanRecord bool `json:"canRecord"`
 }
 
 type NotifyMeetingParticipantRequest {
@@ -279,6 +281,8 @@ type JoinMeetingByTicketReply {
 	CanPublishData bool `json:"canPublishData"`
 	// 可以发布的轨道源类型（空表示允许所有）
 	CanPublishSources []string `json:"canPublishSources"`
+	// 是否可以操作会议录制（仅当票据绑定的身份为会议创建者时为 true）
+	CanRecord bool `json:"canRecord"`
 }
 
 // ===== 聊天消息相关类型 =====
@@ -338,6 +342,93 @@ type ListMeetingMessagesReply {
 	Messages []MeetingMessageInfo `json:"messages"`
 	// 总数量
 	Total int64 `json:"total"`
+}
+
+// ===== 会议录制相关类型 =====
+type MeetingRecordingInfo {
+	// 录制记录 ID
+	RecordId string `json:"recordId"`
+	// 会议号
+	MeetingNo string `json:"meetingNo"`
+	// LiveKit Egress 任务 ID
+	EgressId string `json:"egressId"`
+	// 录制状态（对齐 LiveKit EgressStatus：0-启动中,1-录制中,2-收尾中,3-已完成,4-失败,5-已中止,6-超限）
+	Status int32 `json:"status"`
+	// 录制文件名
+	FileName string `json:"fileName"`
+	// 播放地址（仅已完成或超限结束且已产出文件时有值）
+	FileUrl string `json:"fileUrl"`
+	// 文件大小（字节）
+	FileSize int64 `json:"fileSize"`
+	// 录制时长（秒）
+	Duration int64 `json:"duration"`
+	// 开始时间，格式：yyyy-MM-dd HH:mm:ss
+	StartTime string `json:"startTime"`
+	// 结束时间，格式：yyyy-MM-dd HH:mm:ss（未结束为空字符串）
+	EndTime string `json:"endTime"`
+	// 失败原因（失败时有值）
+	Error string `json:"error"`
+}
+
+type StartMeetingRecordRequest {
+	// 会议号
+	MeetingNo string `json:"meetingNo"`
+	// 是否仅录制音频（默认 false）
+	AudioOnly bool `json:"audioOnly,optional"`
+	// 合成布局（可选，空则使用服务端默认）
+	Layout string `json:"layout,optional"`
+}
+
+type StartMeetingRecordReply {
+	// 录制信息
+	Recording MeetingRecordingInfo `json:"recording"`
+}
+
+type StopMeetingRecordRequest {
+	// 会议号（与 recordId 二选一）
+	MeetingNo string `json:"meetingNo,optional"`
+	// 录制记录 ID（与 meetingNo 二选一）
+	RecordId string `json:"recordId,optional"`
+}
+
+type StopMeetingRecordReply {}
+
+type ListMeetingRecordingsRequest {
+	// 会议号
+	MeetingNo string `form:"meetingNo"`
+	// 页码，从 1 开始
+	Page int64 `form:"page,optional"`
+	// 每页数量
+	PageSize int64 `form:"pageSize,optional"`
+}
+
+type ListMeetingRecordingsReply {
+	// 录制列表
+	Recordings []MeetingRecordingInfo `json:"recordings"`
+	// 总数量
+	Total int64 `json:"total"`
+}
+
+type GetMeetingRecordingRequest {
+	// 录制记录 ID
+	RecordId string `form:"recordId"`
+}
+
+type GetMeetingRecordingReply {
+	// 录制信息
+	Recording MeetingRecordingInfo `json:"recording"`
+}
+
+type GetMeetingRecordStateRequest {
+	// 会议号
+	MeetingNo string `form:"meetingNo"`
+}
+
+type GetMeetingRecordStateReply {
+	// 当前进行中的录制（无则为空）
+	Recording MeetingRecordingInfo `json:"recording"`
+	// 是否正在录制
+	Active bool `json:"active"`
 }
 
 // ===== 票据路由组（不需要鉴权）=====
@@ -459,6 +550,26 @@ service livegtw {
 	@doc "查询聊天记录"
 	@handler listMeetingMessages
 	get /listMeetingMessages (ListMeetingMessagesRequest) returns (ListMeetingMessagesReply)
+
+	@doc "开始会议录制"
+	@handler startMeetingRecord
+	post /startMeetingRecord (StartMeetingRecordRequest) returns (StartMeetingRecordReply)
+
+	@doc "停止会议录制"
+	@handler stopMeetingRecord
+	post /stopMeetingRecord (StopMeetingRecordRequest) returns (StopMeetingRecordReply)
+
+	@doc "查询会议录制列表"
+	@handler listMeetingRecordings
+	get /listMeetingRecordings (ListMeetingRecordingsRequest) returns (ListMeetingRecordingsReply)
+
+	@doc "查询录制详情"
+	@handler getMeetingRecording
+	get /getMeetingRecording (GetMeetingRecordingRequest) returns (GetMeetingRecordingReply)
+
+	@doc "查询会议当前录制状态"
+	@handler getMeetingRecordState
+	get /getMeetingRecordState (GetMeetingRecordStateRequest) returns (GetMeetingRecordStateReply)
 }
 
 // ===== SIP 电话相关类型 =====

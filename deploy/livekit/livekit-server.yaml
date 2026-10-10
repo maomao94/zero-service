@@ -18,7 +18,10 @@ rtc:
   # node_ip: "10.10.11.25"  # 服务器在公司局域网的 IP
   # =============================
 
-  # 默认配置（开发环境）
+  # 宿主机局域网 IP：ICE 候选必须通告浏览器可达的地址。
+  # 不设置时 Docker 环境会通告容器内网 IP（172.x），浏览器无法建连，
+  # 典型表现为 "could not establish pc connection"（Safari 上尤其明显，且时好时坏）。
+  node_ip: "10.10.11.25"
   use_external_ip: false
 
 # API 密钥对（至少 32 字符）
@@ -26,7 +29,7 @@ rtc:
 keys:
   devkeydevkeydevkeydevkeydevkeydevkey: secretsecretsecretsecretsecretsecret
 
-# Redis 连接（宿主机已有 Redis，端口 36379）
+# Redis 连接（Redis 部署见 deploy/redis，宿主机端口 36379）
 redis:
   address: host.docker.internal:36379
   password: G62m50oigInC30sf

@@ -15,6 +15,9 @@ import (
 // ErrMeetingNotFound 会议不存在。
 var ErrMeetingNotFound = errors.New("meeting not found")
 
+// ErrRecordingNotFound 录制记录不存在。
+var ErrRecordingNotFound = errors.New("meeting recording not found")
+
 // MeetingRepo 会议与参会记录的持久化存取。
 type MeetingRepo struct {
 	db *gormx.DB
@@ -201,6 +204,175 @@ func (r *MeetingRepo) ListMessages(ctx context.Context, meetingNo string, page, 
 		return nil, 0, err
 	}
 	return messages, pageRes.Total, nil
+}
+
+// ===== 会议录制 =====
+
+// GetRecording 按记录 ID 查询录制。
+func (r *MeetingRepo) GetRecording(ctx context.Context, id string) (*gormmodel.LiveMeetingRecording, error) {
+	var rec gormmodel.LiveMeetingRecording
+	err := r.db.WithContext(ctx).Where("id = ?", id).First(&rec).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrRecordingNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &rec, nil
+}
+
+// GetRecordingByEgressID 按 Egress 任务 ID 查询录制。
+func (r *MeetingRepo) GetRecordingByEgressID(ctx context.Context, egressID string) (*gormmodel.LiveMeetingRecording, error) {
+	var rec gormmodel.LiveMeetingRecording
+	err := r.db.WithContext(ctx).Where("egress_id = ?", egressID).First(&rec).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrRecordingNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &rec, nil
+}
+
+// GetActiveRecordingByMeeting 查询会议下进行中的录制（status <= ENDING，正常至多一条）。
+func (r *MeetingRepo) GetActiveRecordingByMeeting(ctx context.Context, meetingNo string) (*gormmodel.LiveMeetingRecording, error) {
+	var rec gormmodel.LiveMeetingRecording
+	err := r.db.WithContext(ctx).
+		Where("meeting_no = ? AND status <= ?", meetingNo, gormmodel.RecordingStatusEnding).
+		Order("create_time DESC").First(&rec).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrRecordingNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &rec, nil
+}
+
+// ListRecordings 分页查询会议录制列表。
+func (r *MeetingRepo) ListRecordings(ctx context.Context, meetingNo string, page, pageSize int64) ([]gormmodel.LiveMeetingRecording, int64, error) {
+	q := r.db.WithContext(ctx).Model(&gormmodel.LiveMeetingRecording{}).
+		Where("meeting_no = ?", meetingNo)
+	var recs []gormmodel.LiveMeetingRecording
+	pageRes, err := gormx.QueryPage(q.Order("create_time DESC"), page, pageSize, &recs)
+	if err != nil {
+		return nil, 0, err
+	}
+	return recs, pageRes.Total, nil
+}
+
+// SaveRecordingStarted 记录/更新录制开始（按 egress_id 幂等），并返回落库后的记录。
+//
+// 关键约束：绝不把已进入终态（COMPLETE/FAILED/ABORTED/LIMIT_REACHED）的记录回退为进行中。
+// 因此找到已存在记录时，仅在其仍为进行中（STARTING/ACTIVE/ENDING）时刷新可变字段；终态直接保留。
+// 并发插入（webhook 与本 RPC 同时 SELECT 不到再 INSERT）冲突时，重读已存在记录，
+// 避免把唯一键冲突升级为失败。webhook 抢先建行时补写 create_user/dept_code（审计）。
+func (r *MeetingRepo) SaveRecordingStarted(ctx context.Context, rec *gormmodel.LiveMeetingRecording) (*gormmodel.LiveMeetingRecording, error) {
+	// 注意：这里不使用显式事务。PG 系（PostgreSQL/openGauss/Kingbase）中，
+	// 唯一键冲突会使整个事务 abort，事务内的"重读"必然 25P02 失败；
+	// 因此冲突恢复放到自动提交的独立语句里。
+	var existing gormmodel.LiveMeetingRecording
+	err := r.db.WithContext(ctx).Where("egress_id = ?", rec.EgressId).First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		if cerr := r.db.WithContext(ctx).Create(rec).Error; cerr != nil {
+			// 并发下另一写者（webhook）已插入同一 egress_id：独立语句重读并视为已存在
+			var again gormmodel.LiveMeetingRecording
+			if e2 := r.db.WithContext(ctx).Where("egress_id = ?", rec.EgressId).First(&again).Error; e2 == nil {
+				return &again, nil
+			}
+			return nil, cerr
+		}
+		return rec, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	// 已存在且仍为进行中：刷新可变字段，并补写审计字段（若此前由 webhook 建行）；
+	// 终态直接保留，绝不回退为进行中。
+	if !gormmodel.RecordingStatusIsActive(existing.Status) {
+		return &existing, nil
+	}
+	// 不覆盖 start_time：保留首次写入值，避免 webhook 重放/updated 事件把开始时间后移
+	updates := map[string]any{
+		"meeting_no": rec.MeetingNo,
+		"room_name":  rec.RoomName,
+	}
+	// 状态只允许在进行中区间内单调前进（STARTING→ACTIVE→ENDING），不回退
+	if rec.Status > existing.Status {
+		updates["status"] = rec.Status
+	}
+	if rec.CreateUser.Valid && rec.CreateUser.String != "" {
+		updates["create_user"] = rec.CreateUser
+		updates["update_user"] = rec.UpdateUser
+	}
+	if rec.DeptCode.Valid && rec.DeptCode.String != "" {
+		updates["dept_code"] = rec.DeptCode
+	}
+	if err := r.db.WithContext(ctx).Model(&gormmodel.LiveMeetingRecording{}).
+		Where("egress_id = ? AND status <= ?", rec.EgressId, gormmodel.RecordingStatusEnding).
+		Updates(updates).Error; err != nil {
+		return nil, err
+	}
+	existing.MeetingNo = rec.MeetingNo
+	existing.RoomName = rec.RoomName
+	// StartTime 不动：保留 DB 首次写入值，保证返回值与落库一致
+	return &existing, nil
+}
+
+// BackfillRecordingFile 为已完成但缺文件信息的录制补全文件字段（egress_updated 先于 egress_ended 时使用）。
+func (r *MeetingRepo) BackfillRecordingFile(ctx context.Context, egressID, fileName, filePath string, size, duration int64, endedAt time.Time) error {
+	updates := map[string]any{
+		"file_name": fileName,
+		"file_path": filePath,
+		"file_size": size,
+		"duration":  duration,
+		"end_time":  sql.NullTime{Time: endedAt, Valid: true},
+	}
+	return r.db.WithContext(ctx).Model(&gormmodel.LiveMeetingRecording{}).
+		Where("egress_id = ? AND status = ? AND (file_name = '' OR file_name IS NULL)", egressID, gormmodel.RecordingStatusComplete).
+		Updates(updates).Error
+}
+
+// RecordingResult 录制结果字段（更新状态时的可选内容，零值不覆盖）。
+type RecordingResult struct {
+	FileName string
+	FilePath string
+	FileSize int64
+	Duration int64
+	EndedAt  time.Time
+	Error    string
+}
+
+// UpdateRecordingStatus 更新录制状态与结果。守卫：仅进行中记录可更新，且新状态必须更大
+// （进行中区间内单调前进 + 终态永不回退 + 终态之间不互相覆盖）。
+// status 为 Egress 状态；result 中零值字段不覆盖；返回是否命中更新（幂等）。
+func (r *MeetingRepo) UpdateRecordingStatus(ctx context.Context, egressID string, status int, result RecordingResult) (bool, error) {
+	updates := map[string]any{"status": status}
+	if result.FileName != "" {
+		updates["file_name"] = result.FileName
+	}
+	if result.FilePath != "" {
+		updates["file_path"] = result.FilePath
+	}
+	if result.FileSize > 0 {
+		updates["file_size"] = result.FileSize
+	}
+	if result.Duration > 0 {
+		updates["duration"] = result.Duration
+	}
+	if !result.EndedAt.IsZero() {
+		updates["end_time"] = sql.NullTime{Time: result.EndedAt, Valid: true}
+	}
+	if result.Error != "" {
+		updates["error"] = result.Error
+	}
+	res := r.db.WithContext(ctx).Model(&gormmodel.LiveMeetingRecording{}).
+		Where("egress_id = ? AND status <= ? AND status < ?", egressID, gormmodel.RecordingStatusEnding, status).
+		Updates(updates)
+	if res.Error != nil {
+		return false, res.Error
+	}
+	return res.RowsAffected > 0, nil
 }
 
 // ===== SIP Provider =====

@@ -35,6 +35,11 @@ const (
 	LiveRpc_NotifyMeetingParticipant_FullMethodName = "/live.LiveRpc/NotifyMeetingParticipant"
 	LiveRpc_ReportMeetingMessage_FullMethodName     = "/live.LiveRpc/ReportMeetingMessage"
 	LiveRpc_ListMeetingMessages_FullMethodName      = "/live.LiveRpc/ListMeetingMessages"
+	LiveRpc_StartMeetingRecord_FullMethodName       = "/live.LiveRpc/StartMeetingRecord"
+	LiveRpc_StopMeetingRecord_FullMethodName        = "/live.LiveRpc/StopMeetingRecord"
+	LiveRpc_ListMeetingRecordings_FullMethodName    = "/live.LiveRpc/ListMeetingRecordings"
+	LiveRpc_GetMeetingRecording_FullMethodName      = "/live.LiveRpc/GetMeetingRecording"
+	LiveRpc_GetMeetingRecordState_FullMethodName    = "/live.LiveRpc/GetMeetingRecordState"
 	LiveRpc_DialSip_FullMethodName                  = "/live.LiveRpc/DialSip"
 	LiveRpc_CreateSipProvider_FullMethodName        = "/live.LiveRpc/CreateSipProvider"
 	LiveRpc_UpdateSipProvider_FullMethodName        = "/live.LiveRpc/UpdateSipProvider"
@@ -80,6 +85,16 @@ type LiveRpcClient interface {
 	ReportMeetingMessage(ctx context.Context, in *ReportMeetingMessageReq, opts ...grpc.CallOption) (*ReportMeetingMessageRes, error)
 	// 查询聊天记录
 	ListMeetingMessages(ctx context.Context, in *ListMeetingMessagesReq, opts ...grpc.CallOption) (*ListMeetingMessagesRes, error)
+	// 开始会议录制（房间合成录制，落库并返回录制任务）
+	StartMeetingRecord(ctx context.Context, in *StartMeetingRecordReq, opts ...grpc.CallOption) (*StartMeetingRecordRes, error)
+	// 停止会议录制（停止 Egress 任务，最终状态以 webhook egress_ended 为准）
+	StopMeetingRecord(ctx context.Context, in *StopMeetingRecordReq, opts ...grpc.CallOption) (*StopMeetingRecordRes, error)
+	// 查询会议录制列表
+	ListMeetingRecordings(ctx context.Context, in *ListMeetingRecordingsReq, opts ...grpc.CallOption) (*ListMeetingRecordingsRes, error)
+	// 查询单个录制详情
+	GetMeetingRecording(ctx context.Context, in *GetMeetingRecordingReq, opts ...grpc.CallOption) (*GetMeetingRecordingRes, error)
+	// 查询会议当前录制状态（是否正在录制；每会议最多一个进行中）
+	GetMeetingRecordState(ctx context.Context, in *GetMeetingRecordStateReq, opts ...grpc.CallOption) (*GetMeetingRecordStateRes, error)
 	// 发起 SIP 外呼（拨打电话或在会议中邀请电话参会者）
 	DialSip(ctx context.Context, in *DialSipReq, opts ...grpc.CallOption) (*DialSipRes, error)
 	// 创建 SIP 供应商
@@ -260,6 +275,56 @@ func (c *liveRpcClient) ListMeetingMessages(ctx context.Context, in *ListMeeting
 	return out, nil
 }
 
+func (c *liveRpcClient) StartMeetingRecord(ctx context.Context, in *StartMeetingRecordReq, opts ...grpc.CallOption) (*StartMeetingRecordRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StartMeetingRecordRes)
+	err := c.cc.Invoke(ctx, LiveRpc_StartMeetingRecord_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *liveRpcClient) StopMeetingRecord(ctx context.Context, in *StopMeetingRecordReq, opts ...grpc.CallOption) (*StopMeetingRecordRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StopMeetingRecordRes)
+	err := c.cc.Invoke(ctx, LiveRpc_StopMeetingRecord_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *liveRpcClient) ListMeetingRecordings(ctx context.Context, in *ListMeetingRecordingsReq, opts ...grpc.CallOption) (*ListMeetingRecordingsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListMeetingRecordingsRes)
+	err := c.cc.Invoke(ctx, LiveRpc_ListMeetingRecordings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *liveRpcClient) GetMeetingRecording(ctx context.Context, in *GetMeetingRecordingReq, opts ...grpc.CallOption) (*GetMeetingRecordingRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetMeetingRecordingRes)
+	err := c.cc.Invoke(ctx, LiveRpc_GetMeetingRecording_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *liveRpcClient) GetMeetingRecordState(ctx context.Context, in *GetMeetingRecordStateReq, opts ...grpc.CallOption) (*GetMeetingRecordStateRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetMeetingRecordStateRes)
+	err := c.cc.Invoke(ctx, LiveRpc_GetMeetingRecordState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *liveRpcClient) DialSip(ctx context.Context, in *DialSipReq, opts ...grpc.CallOption) (*DialSipRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DialSipRes)
@@ -348,6 +413,16 @@ type LiveRpcServer interface {
 	ReportMeetingMessage(context.Context, *ReportMeetingMessageReq) (*ReportMeetingMessageRes, error)
 	// 查询聊天记录
 	ListMeetingMessages(context.Context, *ListMeetingMessagesReq) (*ListMeetingMessagesRes, error)
+	// 开始会议录制（房间合成录制，落库并返回录制任务）
+	StartMeetingRecord(context.Context, *StartMeetingRecordReq) (*StartMeetingRecordRes, error)
+	// 停止会议录制（停止 Egress 任务，最终状态以 webhook egress_ended 为准）
+	StopMeetingRecord(context.Context, *StopMeetingRecordReq) (*StopMeetingRecordRes, error)
+	// 查询会议录制列表
+	ListMeetingRecordings(context.Context, *ListMeetingRecordingsReq) (*ListMeetingRecordingsRes, error)
+	// 查询单个录制详情
+	GetMeetingRecording(context.Context, *GetMeetingRecordingReq) (*GetMeetingRecordingRes, error)
+	// 查询会议当前录制状态（是否正在录制；每会议最多一个进行中）
+	GetMeetingRecordState(context.Context, *GetMeetingRecordStateReq) (*GetMeetingRecordStateRes, error)
 	// 发起 SIP 外呼（拨打电话或在会议中邀请电话参会者）
 	DialSip(context.Context, *DialSipReq) (*DialSipRes, error)
 	// 创建 SIP 供应商
@@ -415,6 +490,21 @@ func (UnimplementedLiveRpcServer) ReportMeetingMessage(context.Context, *ReportM
 }
 func (UnimplementedLiveRpcServer) ListMeetingMessages(context.Context, *ListMeetingMessagesReq) (*ListMeetingMessagesRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListMeetingMessages not implemented")
+}
+func (UnimplementedLiveRpcServer) StartMeetingRecord(context.Context, *StartMeetingRecordReq) (*StartMeetingRecordRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method StartMeetingRecord not implemented")
+}
+func (UnimplementedLiveRpcServer) StopMeetingRecord(context.Context, *StopMeetingRecordReq) (*StopMeetingRecordRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method StopMeetingRecord not implemented")
+}
+func (UnimplementedLiveRpcServer) ListMeetingRecordings(context.Context, *ListMeetingRecordingsReq) (*ListMeetingRecordingsRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListMeetingRecordings not implemented")
+}
+func (UnimplementedLiveRpcServer) GetMeetingRecording(context.Context, *GetMeetingRecordingReq) (*GetMeetingRecordingRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetMeetingRecording not implemented")
+}
+func (UnimplementedLiveRpcServer) GetMeetingRecordState(context.Context, *GetMeetingRecordStateReq) (*GetMeetingRecordStateRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetMeetingRecordState not implemented")
 }
 func (UnimplementedLiveRpcServer) DialSip(context.Context, *DialSipReq) (*DialSipRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method DialSip not implemented")
@@ -740,6 +830,96 @@ func _LiveRpc_ListMeetingMessages_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LiveRpc_StartMeetingRecord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartMeetingRecordReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).StartMeetingRecord(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_StartMeetingRecord_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).StartMeetingRecord(ctx, req.(*StartMeetingRecordReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LiveRpc_StopMeetingRecord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopMeetingRecordReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).StopMeetingRecord(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_StopMeetingRecord_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).StopMeetingRecord(ctx, req.(*StopMeetingRecordReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LiveRpc_ListMeetingRecordings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMeetingRecordingsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).ListMeetingRecordings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_ListMeetingRecordings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).ListMeetingRecordings(ctx, req.(*ListMeetingRecordingsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LiveRpc_GetMeetingRecording_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMeetingRecordingReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).GetMeetingRecording(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_GetMeetingRecording_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).GetMeetingRecording(ctx, req.(*GetMeetingRecordingReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LiveRpc_GetMeetingRecordState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMeetingRecordStateReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiveRpcServer).GetMeetingRecordState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LiveRpc_GetMeetingRecordState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiveRpcServer).GetMeetingRecordState(ctx, req.(*GetMeetingRecordStateReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _LiveRpc_DialSip_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DialSipReq)
 	if err := dec(in); err != nil {
@@ -900,6 +1080,26 @@ var LiveRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListMeetingMessages",
 			Handler:    _LiveRpc_ListMeetingMessages_Handler,
+		},
+		{
+			MethodName: "StartMeetingRecord",
+			Handler:    _LiveRpc_StartMeetingRecord_Handler,
+		},
+		{
+			MethodName: "StopMeetingRecord",
+			Handler:    _LiveRpc_StopMeetingRecord_Handler,
+		},
+		{
+			MethodName: "ListMeetingRecordings",
+			Handler:    _LiveRpc_ListMeetingRecordings_Handler,
+		},
+		{
+			MethodName: "GetMeetingRecording",
+			Handler:    _LiveRpc_GetMeetingRecording_Handler,
+		},
+		{
+			MethodName: "GetMeetingRecordState",
+			Handler:    _LiveRpc_GetMeetingRecordState_Handler,
 		},
 		{
 			MethodName: "DialSip",

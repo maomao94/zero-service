@@ -24,6 +24,15 @@ LiveKit:
   ApiSecret: secretsecretsecretsecretsecretsecret
   WebhookKey: secretsecretsecretsecretsecretsecret
   TokenValidFor: 2h
+  Record:
+    Enabled: true
+    # 合成布局，空则用服务端默认
+    Layout: grid
+    # Egress 容器内输出目录（需与 deploy/livekit egress volume 一致）
+    OutputDir: /out
+    # 录制文件对外播放基址（由 deploy/nginx 暴露 deploy/livekit/recordings 目录）。
+    # 为空时不返回 fileUrl（避免暴露本地路径）。用同源相对路径，兼容 http/https。
+    PlayURLBase: "/recordings"
 DB:
 #  DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
   DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai

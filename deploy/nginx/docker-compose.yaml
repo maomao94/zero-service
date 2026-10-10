@@ -1,0 +1,38 @@
+# Zero Service Web 网关 - Docker 部署
+# 用途: 静态托管前端产物（deploy/nginx/dist），并反向代理 livegtw / socketgtw / LiveKit / 录制文件
+# 对照官方镜像: https://hub.docker.com/_/nginx
+#
+# 前置:
+#   1. 生成 TLS 证书: bash deploy/tls/gen-tls.sh
+#   2. 准备前端产物: bash deploy/nginx/build-web.sh（或自行上传到 deploy/nginx/dist）
+#   3. 部署: bash deploy/nginx/deploy.sh
+# 说明:
+#   - 只读挂载 deploy/nginx/dist/<app> 到容器（直接映射真实产物，无需拷贝进镜像）
+#   - HTTP 8088（推荐）；HTTPS 8443（证书来自 deploy/tls，Nginx 不做自签）
+#   - socketio 测试工具 8090；workspace 工作台 8091
+#   - 反代目标走 host.docker.internal（livegtw/socketgtw/LiveKit 运行在宿主机）
+#   - 端口冲突时设置 NGINX_HOST_PORT / NGINX_SSL_HOST_PORT 等
+
+services:
+  nginx:                 # 服务名，compose 网络内 DNS 为 nginx
+    image: nginx:stable-alpine
+    container_name: web-gateway
+    ports:
+      - "${NGINX_HOST_PORT:-8088}:80"        # Live 前端 + 网关（HTTP，推荐）
+      - "${NGINX_SSL_HOST_PORT:-8443}:443"   # Live 前端 + 网关（HTTPS）
+      - "${SOCKETIO_HOST_PORT:-8090}:8090"   # SocketIO 测试工具
+      - "${WORKSPACE_HOST_PORT:-8091}:8091"  # Zero 工作台
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./live-locations.conf:/etc/nginx/snippets/live-locations.conf:ro
+      - ./dist/live:/usr/share/nginx/html/live:ro            # Live 会议前端产物
+      - ./dist/socketio:/usr/share/nginx/html/socketio:ro    # SocketIO 测试工具产物
+      - ./dist/workspace:/usr/share/nginx/html/workspace:ro  # 工作台产物
+      - ../livekit/recordings:/usr/share/nginx/html/recordings:ro # 录制文件（只读）
+      - ${NGINX_TLS_CERT:-../tls/server.crt}:/etc/nginx/tls/server.crt:ro  # TLS 证书（必须存在）
+      - ${NGINX_TLS_KEY:-../tls/server.key}:/etc/nginx/tls/server.key:ro    # TLS 私钥
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Linux 下访问宿主机服务
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped

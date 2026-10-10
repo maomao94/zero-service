@@ -42,6 +42,7 @@ func (l *JoinMeetingByTicketLogic) JoinMeetingByTicket(req *types.JoinMeetingByT
 		CanSubscribe:      r.GetCanSubscribe(),
 		CanPublishData:    r.GetCanPublishData(),
 		CanPublishSources: r.GetCanPublishSources(),
+		CanRecord:         r.GetCanRecord(),
 	}
 	if m := r.GetMeeting(); m != nil {
 		resp.Meeting = types.MeetingInfo{

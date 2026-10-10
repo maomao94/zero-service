@@ -119,6 +119,36 @@ func (s *LiveRpcServer) ListMeetingMessages(ctx context.Context, in *live.ListMe
 	return l.ListMeetingMessages(in)
 }
 
+// 开始会议录制（房间合成录制，落库并返回录制任务）
+func (s *LiveRpcServer) StartMeetingRecord(ctx context.Context, in *live.StartMeetingRecordReq) (*live.StartMeetingRecordRes, error) {
+	l := logic.NewStartMeetingRecordLogic(ctx, s.svcCtx)
+	return l.StartMeetingRecord(in)
+}
+
+// 停止会议录制（停止 Egress 任务，最终状态以 webhook egress_ended 为准）
+func (s *LiveRpcServer) StopMeetingRecord(ctx context.Context, in *live.StopMeetingRecordReq) (*live.StopMeetingRecordRes, error) {
+	l := logic.NewStopMeetingRecordLogic(ctx, s.svcCtx)
+	return l.StopMeetingRecord(in)
+}
+
+// 查询会议录制列表
+func (s *LiveRpcServer) ListMeetingRecordings(ctx context.Context, in *live.ListMeetingRecordingsReq) (*live.ListMeetingRecordingsRes, error) {
+	l := logic.NewListMeetingRecordingsLogic(ctx, s.svcCtx)
+	return l.ListMeetingRecordings(in)
+}
+
+// 查询单个录制详情
+func (s *LiveRpcServer) GetMeetingRecording(ctx context.Context, in *live.GetMeetingRecordingReq) (*live.GetMeetingRecordingRes, error) {
+	l := logic.NewGetMeetingRecordingLogic(ctx, s.svcCtx)
+	return l.GetMeetingRecording(in)
+}
+
+// 查询会议当前录制状态（是否正在录制；每会议最多一个进行中）
+func (s *LiveRpcServer) GetMeetingRecordState(ctx context.Context, in *live.GetMeetingRecordStateReq) (*live.GetMeetingRecordStateRes, error) {
+	l := logic.NewGetMeetingRecordStateLogic(ctx, s.svcCtx)
+	return l.GetMeetingRecordState(in)
+}
+
 // 发起 SIP 外呼（拨打电话或在会议中邀请电话参会者）
 func (s *LiveRpcServer) DialSip(ctx context.Context, in *live.DialSipReq) (*live.DialSipRes, error) {
 	l := logic.NewDialSipLogic(ctx, s.svcCtx)

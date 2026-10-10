@@ -70,6 +70,18 @@ func (f *fakeLiveRpcCli) ReportMeetingMessage(ctx context.Context, in *live.Repo
 func (f *fakeLiveRpcCli) ListMeetingMessages(ctx context.Context, in *live.ListMeetingMessagesReq, opts ...grpc.CallOption) (*live.ListMeetingMessagesRes, error) {
 	return &live.ListMeetingMessagesRes{}, nil
 }
+func (f *fakeLiveRpcCli) StartMeetingRecord(ctx context.Context, in *live.StartMeetingRecordReq, opts ...grpc.CallOption) (*live.StartMeetingRecordRes, error) {
+	return &live.StartMeetingRecordRes{}, nil
+}
+func (f *fakeLiveRpcCli) StopMeetingRecord(ctx context.Context, in *live.StopMeetingRecordReq, opts ...grpc.CallOption) (*live.StopMeetingRecordRes, error) {
+	return &live.StopMeetingRecordRes{}, nil
+}
+func (f *fakeLiveRpcCli) ListMeetingRecordings(ctx context.Context, in *live.ListMeetingRecordingsReq, opts ...grpc.CallOption) (*live.ListMeetingRecordingsRes, error) {
+	return &live.ListMeetingRecordingsRes{}, nil
+}
+func (f *fakeLiveRpcCli) GetMeetingRecording(ctx context.Context, in *live.GetMeetingRecordingReq, opts ...grpc.CallOption) (*live.GetMeetingRecordingRes, error) {
+	return &live.GetMeetingRecordingRes{}, nil
+}
 
 func newTestSvcCtx(fake *fakeLiveRpcCli) *svc.ServiceContext {
 	return &svc.ServiceContext{
