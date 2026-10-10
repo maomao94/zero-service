@@ -51,6 +51,15 @@ bash deploy/nginx/deploy.sh
 
 反代目标通过 `host.docker.internal` 访问宿主机服务（Linux 由 compose `extra_hosts` 注入）。
 
+## 工作台子系统健康检查
+
+工作台 server（8091）提供同源健康检查，供工作台探测子系统在线状态：
+
+| 路径 | 目标（同容器） | 说明 |
+| --- | --- | --- |
+| `/health/live` | `127.0.0.1:80/healthz` | Live 站点健康检查 |
+| `/health/socketio` | `127.0.0.1:8090/` | SocketIO 测试工具首页 |
+
 ## HTTPS / 证书
 
 - 证书来自 `deploy/tls/server.crt|key`（用 `bash deploy/tls/gen-tls.sh` 生成，或用正式证书）。
