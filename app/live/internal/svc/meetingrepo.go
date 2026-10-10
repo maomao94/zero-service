@@ -335,12 +335,13 @@ func (r *MeetingRepo) BackfillRecordingFile(ctx context.Context, egressID, fileN
 
 // RecordingResult 录制结果字段（更新状态时的可选内容，零值不覆盖）。
 type RecordingResult struct {
-	FileName string
-	FilePath string
-	FileSize int64
-	Duration int64
-	EndedAt  time.Time
-	Error    string
+	FileName  string
+	FilePath  string
+	FileSize  int64
+	Duration  int64
+	StartedAt time.Time
+	EndedAt   time.Time
+	Error     string
 }
 
 // UpdateRecordingStatus 更新录制状态与结果。守卫：仅进行中记录可更新，且新状态必须更大
@@ -363,6 +364,9 @@ func (r *MeetingRepo) UpdateRecordingStatus(ctx context.Context, egressID string
 	if !result.EndedAt.IsZero() {
 		updates["end_time"] = sql.NullTime{Time: result.EndedAt, Valid: true}
 	}
+	if !result.StartedAt.IsZero() {
+		updates["start_time"] = result.StartedAt
+	}
 	if result.Error != "" {
 		updates["error"] = result.Error
 	}
@@ -373,6 +377,18 @@ func (r *MeetingRepo) UpdateRecordingStatus(ctx context.Context, egressID string
 		return false, res.Error
 	}
 	return res.RowsAffected > 0, nil
+}
+
+// SyncRecordingStartTime 以 Egress 的真实录制开始时间为准覆盖 start_time（进行中记录）。
+// 录制状态 1:1 对齐 Egress，start_time 直接以 egress 信息为准；仅进行中（<= ENDING）可写，
+// 终态不回退（终态路径由 UpdateRecordingStatus 在状态前进时一并落 start_time）。
+func (r *MeetingRepo) SyncRecordingStartTime(ctx context.Context, egressID string, startedAt time.Time) error {
+	if startedAt.IsZero() {
+		return nil
+	}
+	return r.db.WithContext(ctx).Model(&gormmodel.LiveMeetingRecording{}).
+		Where("egress_id = ? AND status <= ?", egressID, gormmodel.RecordingStatusEnding).
+		Update("start_time", startedAt).Error
 }
 
 // ===== SIP Provider =====
