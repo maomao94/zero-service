@@ -17,6 +17,8 @@ type JoinState = { token: string; meeting: MeetingInfo; perms: JoinPerms; sipWai
 function initials(name: string) { return name.trim().split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase() || 'L' }
 function guestIdentity() { return '访客_' + Math.random().toString(36).slice(2, 8) }
 async function copyText(text: string): Promise<boolean> { try { await navigator.clipboard.writeText(text); return true } catch { return false } }
+// 录制播放地址由后端下发为同源相对路径（/recordings/...，见 PlayURLBase），复制时补全为绝对地址，便于外部粘贴访问。
+function absoluteUrl(value: string) { if (!value) return value; if (/^[a-z][a-z0-9+.-]*:\/\//i.test(value)) return value; try { return new URL(value, location.origin).href } catch { return value } }
 function timeLabel(value: string) { return value || '时间未记录' }
 function statusMeta(status: number) { return status === 3 ? { label: '已结束', className: 'ended' } : status === 2 ? { label: '进行中', className: 'live' } : { label: '已创建', className: 'created' } }
 function formatDuration(startTime: string, endTime?: string) { const start = new Date(startTime).getTime(); if (!Number.isFinite(start)) return '未开始'; const parsedEnd = endTime ? new Date(endTime).getTime() : Date.now(); const end = Number.isFinite(parsedEnd) ? parsedEnd : Date.now(); const diff = Math.max(0, end - start); const hours = Math.floor(diff / 3600000); const minutes = Math.floor((diff % 3600000) / 60000); const seconds = Math.floor((diff % 60000) / 1000); if (hours > 0) return `${hours}时${minutes}分`; if (minutes > 0) return `${minutes}分${seconds}秒`; return `${seconds}秒` }
@@ -863,7 +865,7 @@ function RecordingControl({ meetingNo, notify }: { meetingNo: string; notify: (m
 function RecordingRow({ recording, meetingTitle, notify }: { recording: MeetingRecording; meetingTitle: string; notify: (message: string, tone?: Toast['tone']) => void }) {
   const meta = recordingStatusMeta(Number(recording.status))
   const playable = Boolean(recording.fileUrl)
-  const copy = async () => { const ok = await copyText(recording.fileUrl); notify(ok ? '播放地址已复制' : '复制失败', ok ? 'success' : 'error') }
+  const copy = async () => { const ok = await copyText(absoluteUrl(recording.fileUrl)); notify(ok ? '播放地址已复制' : '复制失败', ok ? 'success' : 'error') }
   return <article className={`recording-row ${meta.className}`}>
     <span className={`recording-status ${meta.className}`}><span className="recording-status-dot" />{meta.label}</span>
     <div className="recording-main">
