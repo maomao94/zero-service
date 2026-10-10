@@ -161,8 +161,8 @@ func newLiveKitMockServer(t *testing.T, mock *liveKitMock) *httptest.Server {
 			writeProto(t, w, &livekit.ListParticipantsResponse{})
 		case "/twirp/livekit.RoomService/MutePublishedTrack":
 			writeProto(t, w, &livekit.MuteRoomTrackResponse{})
-		case "/twirp/livekit.Egress/StartRoomCompositeEgress":
-			var req livekit.RoomCompositeEgressRequest
+		case "/twirp/livekit.Egress/StartEgress":
+			var req livekit.StartEgressRequest
 			readProto(t, r, &req)
 			if mock.startEgressErr != nil {
 				writeTwirpError(t, w, twirp.Internal.Error(mock.startEgressErr.Error()))

@@ -85,27 +85,35 @@ func (l *StartMeetingRecordLogic) StartMeetingRecord(in *live.StartMeetingRecord
 	if outputDir == "" {
 		outputDir = "/out"
 	}
-	req := &livekit.RoomCompositeEgressRequest{
-		RoomName:  in.MeetingNo,
-		AudioOnly: in.AudioOnly,
-		FileOutputs: []*livekit.EncodedFileOutput{
-			{
-				FileType: livekit.EncodedFileType_MP4,
-				Filepath: fmt.Sprintf("%s/{room_name}/{time}", outputDir),
-			},
-		},
-	}
-	// audio_only 不设置 layout/preset，避免强制走视频管线（官方约定）
+	// 统一 StartEgress + TemplateSource（替代已弃用的 StartRoomCompositeEgress）
+	source := &livekit.TemplateSource{AudioOnly: in.AudioOnly}
 	if !in.AudioOnly {
 		layout := strings.TrimSpace(in.Layout)
 		if layout == "" {
 			layout = strings.TrimSpace(l.svcCtx.Config.LiveKit.Record.Layout)
 		}
-		req.Layout = layout
-		req.Options = &livekit.RoomCompositeEgressRequest_Preset{Preset: livekit.EncodingOptionsPreset_H264_720P_30}
+		source.Layout = layout
+	}
+	req := &livekit.StartEgressRequest{
+		RoomName: in.MeetingNo,
+		Source:   &livekit.StartEgressRequest_Template{Template: source},
+		Outputs: []*livekit.Output{
+			{
+				Config: &livekit.Output_File{
+					File: &livekit.FileOutput{
+						FileType: livekit.EncodedFileType_MP4,
+						Filepath: fmt.Sprintf("%s/{room_name}/{time}", outputDir),
+					},
+				},
+			},
+		},
+	}
+	// audio_only 不设置 preset，避免强制走视频管线（官方约定）
+	if !in.AudioOnly {
+		req.Encoding = &livekit.StartEgressRequest_Preset{Preset: livekit.EncodingOptionsPreset_H264_720P_30}
 	}
 
-	info, err := l.svcCtx.LiveKit.API().Egress().StartRoomCompositeEgress(l.ctx, req)
+	info, err := l.svcCtx.LiveKit.API().Egress().StartEgress(l.ctx, req)
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "发起录制失败")
 	}
