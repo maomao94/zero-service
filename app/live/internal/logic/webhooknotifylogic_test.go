@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"testing"
+	"time"
 
 	"zero-service/app/live/live"
 	"zero-service/app/live/model/gormmodel"
@@ -108,6 +109,251 @@ func TestWebhookParticipantJoinedAndLeft(t *testing.T) {
 	ps, _ = svcCtx.MeetingRepo.ListParticipants(ctx, meeting.Meeting.MeetingNo)
 	if ps[0].Status != gormmodel.ParticipantStatusLeft || !ps[0].LeftTime.Valid {
 		t.Fatalf("participant should be left: %+v", ps[0])
+	}
+}
+
+func TestWebhookEgressEndedCompleted(t *testing.T) {
+	mock := &liveKitMock{}
+	svcCtx := newTestSvcCtx(t, mock)
+	ctx := authctx.WithUserID(context.Background(), "alice")
+
+	meeting, _ := NewCreateMeetingLogic(ctx, svcCtx).CreateMeeting(&live.CreateMeetingReq{Title: "t"})
+	meetingNo := meeting.GetMeeting().GetMeetingNo()
+	start, err := NewStartMeetingRecordLogic(ctx, svcCtx).StartMeetingRecord(&live.StartMeetingRecordReq{MeetingNo: meetingNo})
+	if err != nil {
+		t.Fatal(err)
+	}
+	egressID := start.GetRecording().GetEgressId()
+
+	wh := NewWebhookNotifyLogic(ctx, svcCtx)
+	location := "/out/" + meetingNo + "/rec.mp4"
+	data := mustWebhookData(t, &livekit.WebhookEvent{
+		Id: "EVT-E1", Event: "egress_ended",
+		EgressInfo: &livekit.EgressInfo{
+			EgressId: egressID,
+			RoomName: meetingNo,
+			Status:   livekit.EgressStatus_EGRESS_COMPLETE,
+			EndedAt:  time.Now().UnixNano(),
+			FileResults: []*livekit.FileInfo{
+				{Filename: location, Location: location, Size: 1234, Duration: 60},
+			},
+		},
+	})
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: data}); err != nil {
+		t.Fatalf("webhook error = %v", err)
+	}
+	rec, err := svcCtx.MeetingRepo.GetRecordingByEgressID(ctx, egressID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Status != gormmodel.RecordingStatusComplete {
+		t.Fatalf("status = %d, want completed", rec.Status)
+	}
+	if rec.FileName != meetingNo+"/rec.mp4" || rec.FileSize != 1234 || rec.Duration != 60 {
+		t.Fatalf("recording file info = %+v", rec)
+	}
+
+	// 重放幂等：状态不变
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: data}); err != nil {
+		t.Fatalf("replay error = %v", err)
+	}
+	rec2, _ := svcCtx.MeetingRepo.GetRecordingByEgressID(ctx, egressID)
+	if rec2.Status != gormmodel.RecordingStatusComplete {
+		t.Fatalf("replay changed status: %+v", rec2)
+	}
+}
+
+func TestWebhookEgressEndedFailed(t *testing.T) {
+	mock := &liveKitMock{}
+	svcCtx := newTestSvcCtx(t, mock)
+	ctx := authctx.WithUserID(context.Background(), "alice")
+
+	meeting, _ := NewCreateMeetingLogic(ctx, svcCtx).CreateMeeting(&live.CreateMeetingReq{Title: "t"})
+	meetingNo := meeting.GetMeeting().GetMeetingNo()
+	start, err := NewStartMeetingRecordLogic(ctx, svcCtx).StartMeetingRecord(&live.StartMeetingRecordReq{MeetingNo: meetingNo})
+	if err != nil {
+		t.Fatal(err)
+	}
+	egressID := start.GetRecording().GetEgressId()
+
+	wh := NewWebhookNotifyLogic(ctx, svcCtx)
+	data := mustWebhookData(t, &livekit.WebhookEvent{
+		Id: "EVT-E2", Event: "egress_ended",
+		EgressInfo: &livekit.EgressInfo{
+			EgressId: egressID,
+			RoomName: meetingNo,
+			Status:   livekit.EgressStatus_EGRESS_FAILED,
+			Error:    "boom",
+			EndedAt:  time.Now().UnixNano(),
+		},
+	})
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: data}); err != nil {
+		t.Fatalf("webhook error = %v", err)
+	}
+	rec, err := svcCtx.MeetingRepo.GetRecordingByEgressID(ctx, egressID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Status != gormmodel.RecordingStatusFailed || rec.Error != "boom" {
+		t.Fatalf("recording = %+v", rec)
+	}
+}
+
+// TestWebhookEgressStartedAfterEndedDoesNotRegress 验证迟到的 egress_started/非终态事件
+// 不会把已完成记录回退为"录制中"（Blocker：状态只允许 录制中→终态 单向流转）。
+func TestWebhookEgressStartedAfterEndedDoesNotRegress(t *testing.T) {
+	mock := &liveKitMock{}
+	svcCtx := newTestSvcCtx(t, mock)
+	ctx := authctx.WithUserID(context.Background(), "alice")
+	meeting, _ := NewCreateMeetingLogic(ctx, svcCtx).CreateMeeting(&live.CreateMeetingReq{Title: "t"})
+	meetingNo := meeting.GetMeeting().GetMeetingNo()
+	start, err := NewStartMeetingRecordLogic(ctx, svcCtx).StartMeetingRecord(&live.StartMeetingRecordReq{MeetingNo: meetingNo})
+	if err != nil {
+		t.Fatal(err)
+	}
+	egressID := start.GetRecording().GetEgressId()
+
+	wh := NewWebhookNotifyLogic(ctx, svcCtx)
+	ended := mustWebhookData(t, &livekit.WebhookEvent{Id: "EVT-END", Event: "egress_ended", EgressInfo: &livekit.EgressInfo{
+		EgressId: egressID, RoomName: meetingNo, Status: livekit.EgressStatus_EGRESS_COMPLETE,
+	}})
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: ended}); err != nil {
+		t.Fatal(err)
+	}
+
+	// 迟到/重放的 egress_started 不得回退终态
+	started := mustWebhookData(t, &livekit.WebhookEvent{Id: "EVT-START", Event: "egress_started", EgressInfo: &livekit.EgressInfo{
+		EgressId: egressID, RoomName: meetingNo, Status: livekit.EgressStatus_EGRESS_ACTIVE,
+	}})
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: started}); err != nil {
+		t.Fatal(err)
+	}
+	rec, _ := svcCtx.MeetingRepo.GetRecordingByEgressID(ctx, egressID)
+	if rec.Status != gormmodel.RecordingStatusComplete {
+		t.Fatalf("terminal status regressed: %+v", rec)
+	}
+}
+
+// TestWebhookEgressUpdatedThenEndedBackfillsFile 验证 egress_updated 先标记完成（无文件信息）后，
+// egress_ended 能补全文件字段。
+func TestWebhookEgressUpdatedThenEndedBackfillsFile(t *testing.T) {
+	mock := &liveKitMock{}
+	svcCtx := newTestSvcCtx(t, mock)
+	ctx := authctx.WithUserID(context.Background(), "alice")
+	meeting, _ := NewCreateMeetingLogic(ctx, svcCtx).CreateMeeting(&live.CreateMeetingReq{Title: "t"})
+	meetingNo := meeting.GetMeeting().GetMeetingNo()
+	start, err := NewStartMeetingRecordLogic(ctx, svcCtx).StartMeetingRecord(&live.StartMeetingRecordReq{MeetingNo: meetingNo})
+	if err != nil {
+		t.Fatal(err)
+	}
+	egressID := start.GetRecording().GetEgressId()
+	wh := NewWebhookNotifyLogic(ctx, svcCtx)
+
+	updated := mustWebhookData(t, &livekit.WebhookEvent{Id: "EVT-UPD", Event: "egress_updated", EgressInfo: &livekit.EgressInfo{
+		EgressId: egressID, RoomName: meetingNo, Status: livekit.EgressStatus_EGRESS_COMPLETE,
+	}})
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: updated}); err != nil {
+		t.Fatal(err)
+	}
+	rec, _ := svcCtx.MeetingRepo.GetRecordingByEgressID(ctx, egressID)
+	if rec.Status != gormmodel.RecordingStatusComplete || rec.FileName != "" {
+		t.Fatalf("expected completed without file, got %+v", rec)
+	}
+
+	location := "/out/" + meetingNo + "/rec.mp4"
+	ended := mustWebhookData(t, &livekit.WebhookEvent{Id: "EVT-END2", Event: "egress_ended", EgressInfo: &livekit.EgressInfo{
+		EgressId: egressID, RoomName: meetingNo, Status: livekit.EgressStatus_EGRESS_COMPLETE,
+		EndedAt:     time.Now().UnixNano(),
+		FileResults: []*livekit.FileInfo{{Filename: location, Location: location, Size: 999, Duration: 30}},
+	}})
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: ended}); err != nil {
+		t.Fatal(err)
+	}
+	rec, _ = svcCtx.MeetingRepo.GetRecordingByEgressID(ctx, egressID)
+	if rec.FileName != meetingNo+"/rec.mp4" || rec.FileSize != 999 || rec.Duration != 30 {
+		t.Fatalf("file info not backfilled: %+v", rec)
+	}
+}
+
+// TestWebhookEgressActiveSyncsStartTime 验证进入 ACTIVE 后以 egress 的 fileResults[].started_at
+// 覆盖 start_time（以 egress 为准，消除业务侧本地估算的时差）。
+func TestWebhookEgressActiveSyncsStartTime(t *testing.T) {
+	mock := &liveKitMock{}
+	svcCtx := newTestSvcCtx(t, mock)
+	ctx := authctx.WithUserID(context.Background(), "alice")
+	meeting, _ := NewCreateMeetingLogic(ctx, svcCtx).CreateMeeting(&live.CreateMeetingReq{Title: "t"})
+	meetingNo := meeting.GetMeeting().GetMeetingNo()
+	start, err := NewStartMeetingRecordLogic(ctx, svcCtx).StartMeetingRecord(&live.StartMeetingRecordReq{MeetingNo: meetingNo})
+	if err != nil {
+		t.Fatal(err)
+	}
+	egressID := start.GetRecording().GetEgressId()
+
+	// egress 权威的真实媒体开始时间，与业务侧写入的本地时间不同
+	realStart := time.Now().Add(-90 * time.Second).Truncate(time.Second)
+	wh := NewWebhookNotifyLogic(ctx, svcCtx)
+	data := mustWebhookData(t, &livekit.WebhookEvent{
+		Id: "EVT-A1", Event: "egress_updated",
+		EgressInfo: &livekit.EgressInfo{
+			EgressId: egressID,
+			RoomName: meetingNo,
+			Status:   livekit.EgressStatus_EGRESS_ACTIVE,
+			FileResults: []*livekit.FileInfo{
+				{Filename: "/out/" + meetingNo + "/rec.mp4", StartedAt: realStart.UnixNano()},
+			},
+		},
+	})
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: data}); err != nil {
+		t.Fatalf("webhook error = %v", err)
+	}
+	rec, err := svcCtx.MeetingRepo.GetRecordingByEgressID(ctx, egressID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !rec.StartTime.Equal(realStart) {
+		t.Fatalf("start_time = %v, want egress started_at %v", rec.StartTime, realStart)
+	}
+}
+
+// TestWebhookEgressEndedSyncsStartTime 验证 ACTIVE 事件丢失、仅收到终态事件时，
+// 仍以 egress 的 fileResults[].started_at 落 start_time。
+func TestWebhookEgressEndedSyncsStartTime(t *testing.T) {
+	mock := &liveKitMock{}
+	svcCtx := newTestSvcCtx(t, mock)
+	ctx := authctx.WithUserID(context.Background(), "alice")
+	meeting, _ := NewCreateMeetingLogic(ctx, svcCtx).CreateMeeting(&live.CreateMeetingReq{Title: "t"})
+	meetingNo := meeting.GetMeeting().GetMeetingNo()
+	start, err := NewStartMeetingRecordLogic(ctx, svcCtx).StartMeetingRecord(&live.StartMeetingRecordReq{MeetingNo: meetingNo})
+	if err != nil {
+		t.Fatal(err)
+	}
+	egressID := start.GetRecording().GetEgressId()
+
+	realStart := time.Now().Add(-120 * time.Second).Truncate(time.Second)
+	end := time.Now().Truncate(time.Second)
+	location := "/out/" + meetingNo + "/rec.mp4"
+	wh := NewWebhookNotifyLogic(ctx, svcCtx)
+	data := mustWebhookData(t, &livekit.WebhookEvent{
+		Id: "EVT-A2", Event: "egress_ended",
+		EgressInfo: &livekit.EgressInfo{
+			EgressId: egressID,
+			RoomName: meetingNo,
+			Status:   livekit.EgressStatus_EGRESS_COMPLETE,
+			EndedAt:  end.UnixNano(),
+			FileResults: []*livekit.FileInfo{
+				{Filename: location, Location: location, Size: 100, Duration: 120, StartedAt: realStart.UnixNano(), EndedAt: end.UnixNano()},
+			},
+		},
+	})
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: data}); err != nil {
+		t.Fatalf("webhook error = %v", err)
+	}
+	rec, err := svcCtx.MeetingRepo.GetRecordingByEgressID(ctx, egressID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Status != gormmodel.RecordingStatusComplete || !rec.StartTime.Equal(realStart) {
+		t.Fatalf("recording = %+v, want complete with start_time %v", rec, realStart)
 	}
 }
 

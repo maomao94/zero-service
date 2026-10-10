@@ -7,6 +7,8 @@ interface SubSystem {
   description: string
   icon: React.ReactNode
   url: string
+  /** 同源健康检查地址（由 nginx / vite 代理到对应子系统） */
+  healthUrl: string
   port: number
   color: string
   features: string[]
@@ -20,14 +22,27 @@ const STATUS_TEXT: Record<HealthStatus, string> = {
   offline: '未启动',
 }
 
+// 子系统访问地址：优先使用 VITE_* 覆盖；未配置时按当前站点主机 + 端口推导，
+// 适配 nginx 反代 / 远端访问（避免写死 localhost 导致打开与探活都失效）。
+function systemUrl(override: string | undefined, port: number) {
+  if (override) return override
+  return `${location.protocol}//${location.hostname}:${port}`
+}
+
+// 卡片展示的主机（去掉协议），如 127.0.0.1:8088
+function displayHost(url: string) {
+  try { return new URL(url).host } catch { return url }
+}
+
 const subSystems: SubSystem[] = [
   {
     id: 'live',
     name: 'Live 视频会议',
     description: '实时视频会议系统，支持多人通话、屏幕共享与会议管理',
     icon: <Video size={32} />,
-    url: 'http://localhost:5178',
-    port: 5178,
+    url: systemUrl(import.meta.env.VITE_LIVE_URL, 8088),
+    healthUrl: '/health/live',
+    port: 8088,
     color: '#6366f1',
     features: ['视频通话', '屏幕共享', '会议管理', 'SIP 电话']
   },
@@ -36,20 +51,23 @@ const subSystems: SubSystem[] = [
     name: 'SocketIO 网关测试',
     description: 'SocketIO 消息网关测试工具，支持用户域和设备域连接',
     icon: <Wifi size={32} />,
-    url: 'http://localhost:5179',
-    port: 5179,
+    url: systemUrl(import.meta.env.VITE_SOCKETIO_URL, 8090),
+    healthUrl: '/health/socketio',
+    port: 8090,
     color: '#10b981',
     features: ['消息收发', '房间管理', '事件监听', '用户/设备域']
   }
 ]
 
+// 子系统探活走同源健康检查地址（nginx / vite 代理到对应子系统），
+// 不再用 no-cors 跨域探测写死的 localhost 端口，nginx 代理与远端访问下同样可用。
 async function ping(url: string, timeoutMs = 2500): Promise<boolean> {
   try {
     const controller = new AbortController()
     const timer = window.setTimeout(() => controller.abort(), timeoutMs)
-    await fetch(url, { mode: 'no-cors', cache: 'no-store', signal: controller.signal })
+    const response = await fetch(url, { cache: 'no-store', signal: controller.signal })
     window.clearTimeout(timer)
-    return true
+    return response.ok
   } catch {
     return false
   }
@@ -63,7 +81,7 @@ export default function App() {
 
   const checkAll = useCallback(async () => {
     await Promise.all(subSystems.map(async (system) => {
-      const online = await ping(system.url)
+      const online = await ping(system.healthUrl)
       setHealth((current) => ({ ...current, [system.id]: online ? 'online' : 'offline' }))
     }))
     setLastCheck(new Date().toLocaleTimeString('zh-CN', { hour12: false }))
@@ -176,7 +194,7 @@ export default function App() {
                 <div className="card-footer">
                   <div className="card-url">
                     <Monitor size={14} />
-                    <span>localhost:{system.port}</span>
+                    <span>{displayHost(system.url)}</span>
                   </div>
                   <button
                     type="button"
