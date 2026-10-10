@@ -123,11 +123,12 @@ func reconcileRecordingState(ctx context.Context, svcCtx *svc.ServiceContext, re
 			}
 			rec.Status = status
 		}
-		// 以 Egress 为准同步真实录制开始时间（webhook 丢失时兜底）
-		if startedAt := egressStartedAt(found); !startedAt.IsZero() {
+		// 以 Egress 为准同步真实录制开始时间（webhook 丢失时兜底）；值未变则跳过，避免轮询写库
+		if startedAt := egressStartedAt(found); !startedAt.IsZero() && !startedAt.Equal(rec.StartTime) {
 			if err := svcCtx.MeetingRepo.SyncRecordingStartTime(ctx, rec.EgressId, startedAt); err != nil {
 				return true, err
 			}
+			rec.StartTime = startedAt
 		}
 		return true, nil
 	}
@@ -173,7 +174,7 @@ func egressFileResult(info *livekit.EgressInfo, outputDir string) svc.RecordingR
 
 // egressStartedAt 取 Egress 的真实录制开始时间（fileResults[].started_at）：
 // 该值在管线进入 PLAYING（状态转 ACTIVE）时写入，早于此刻不可得。
-// 排除 worker 在录制未真正开始时用 ended_at 兜底写入的假值。
+// 排除 worker 在录制未真正开始时用 ended_at 兜底写入的假值；统一截到秒，便于幂等比较。
 func egressStartedAt(info *livekit.EgressInfo) time.Time {
 	for _, f := range info.GetFileResults() {
 		ns := f.GetStartedAt()
@@ -183,7 +184,7 @@ func egressStartedAt(info *livekit.EgressInfo) time.Time {
 		if end := f.GetEndedAt(); end > 0 && ns >= end {
 			continue
 		}
-		return time.Unix(0, ns)
+		return time.Unix(0, ns).Truncate(time.Second)
 	}
 	return time.Time{}
 }

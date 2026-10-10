@@ -184,14 +184,15 @@ func (l *WebhookNotifyLogic) handleEgressActive(event *livekit.WebhookEvent, inf
 		Status:    status,
 		StartTime: recStart,
 	}
-	if _, err := l.svcCtx.MeetingRepo.SaveRecordingStarted(l.ctx, rec); err != nil {
+	saved, err := l.svcCtx.MeetingRepo.SaveRecordingStarted(l.ctx, rec)
+	if err != nil {
 		l.Logger.Errorf("[webhook] 录制开始记录写入失败: id=%s, room=%s, egress=%s, status=%s, err=%v",
 			event.GetId(), info.GetRoomName(), info.GetEgressId(), egressStatusName(status), err)
 		return
 	}
-	// 以 Egress 为准覆盖真实录制开始时间（fileResults[].started_at，进入 ACTIVE 后才有）
-	startedAt := recStart
-	if realStart := egressStartedAt(info); !realStart.IsZero() {
+	// 以 Egress 为准覆盖真实录制开始时间（fileResults[].started_at，进入 ACTIVE 后才有）；值未变则跳过
+	startedAt := saved.StartTime
+	if realStart := egressStartedAt(info); !realStart.IsZero() && !realStart.Equal(startedAt) {
 		if err := l.svcCtx.MeetingRepo.SyncRecordingStartTime(l.ctx, info.GetEgressId(), realStart); err != nil {
 			l.Logger.Errorf("[webhook] 录制开始时间同步失败: id=%s, egress=%s, err=%v", event.GetId(), info.GetEgressId(), err)
 		} else {
