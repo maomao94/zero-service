@@ -32,6 +32,11 @@ func RecordingStatusIsActive(status int) bool {
 	return status >= RecordingStatusStarting && status <= RecordingStatusEnding
 }
 
+// RecordingStatusIsTerminal 判断状态是否为终态（COMPLETE/FAILED/ABORTED/LIMIT_REACHED）。
+func RecordingStatusIsTerminal(status int) bool {
+	return status >= RecordingStatusComplete
+}
+
 // LiveMeetingRecording 会议录制记录（一次录制 = 一个 LiveKit Egress 任务）。
 // 表风格与 LiveMeeting 一致：LegacyStringBaseModel（string 主键 + 时间 + 软删除）
 // + CreateUser/UpdateUser/DeptCode（取自 gRPC metadata）。

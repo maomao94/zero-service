@@ -275,6 +275,88 @@ func TestWebhookEgressUpdatedThenEndedBackfillsFile(t *testing.T) {
 	}
 }
 
+// TestWebhookEgressActiveSyncsStartTime 验证进入 ACTIVE 后以 egress 的 fileResults[].started_at
+// 覆盖 start_time（以 egress 为准，消除业务侧本地估算的时差）。
+func TestWebhookEgressActiveSyncsStartTime(t *testing.T) {
+	mock := &liveKitMock{}
+	svcCtx := newTestSvcCtx(t, mock)
+	ctx := authctx.WithUserID(context.Background(), "alice")
+	meeting, _ := NewCreateMeetingLogic(ctx, svcCtx).CreateMeeting(&live.CreateMeetingReq{Title: "t"})
+	meetingNo := meeting.GetMeeting().GetMeetingNo()
+	start, err := NewStartMeetingRecordLogic(ctx, svcCtx).StartMeetingRecord(&live.StartMeetingRecordReq{MeetingNo: meetingNo})
+	if err != nil {
+		t.Fatal(err)
+	}
+	egressID := start.GetRecording().GetEgressId()
+
+	// egress 权威的真实媒体开始时间，与业务侧写入的本地时间不同
+	realStart := time.Now().Add(-90 * time.Second).Truncate(time.Second)
+	wh := NewWebhookNotifyLogic(ctx, svcCtx)
+	data := mustWebhookData(t, &livekit.WebhookEvent{
+		Id: "EVT-A1", Event: "egress_updated",
+		EgressInfo: &livekit.EgressInfo{
+			EgressId: egressID,
+			RoomName: meetingNo,
+			Status:   livekit.EgressStatus_EGRESS_ACTIVE,
+			FileResults: []*livekit.FileInfo{
+				{Filename: "/out/" + meetingNo + "/rec.mp4", StartedAt: realStart.UnixNano()},
+			},
+		},
+	})
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: data}); err != nil {
+		t.Fatalf("webhook error = %v", err)
+	}
+	rec, err := svcCtx.MeetingRepo.GetRecordingByEgressID(ctx, egressID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !rec.StartTime.Equal(realStart) {
+		t.Fatalf("start_time = %v, want egress started_at %v", rec.StartTime, realStart)
+	}
+}
+
+// TestWebhookEgressEndedSyncsStartTime 验证 ACTIVE 事件丢失、仅收到终态事件时，
+// 仍以 egress 的 fileResults[].started_at 落 start_time。
+func TestWebhookEgressEndedSyncsStartTime(t *testing.T) {
+	mock := &liveKitMock{}
+	svcCtx := newTestSvcCtx(t, mock)
+	ctx := authctx.WithUserID(context.Background(), "alice")
+	meeting, _ := NewCreateMeetingLogic(ctx, svcCtx).CreateMeeting(&live.CreateMeetingReq{Title: "t"})
+	meetingNo := meeting.GetMeeting().GetMeetingNo()
+	start, err := NewStartMeetingRecordLogic(ctx, svcCtx).StartMeetingRecord(&live.StartMeetingRecordReq{MeetingNo: meetingNo})
+	if err != nil {
+		t.Fatal(err)
+	}
+	egressID := start.GetRecording().GetEgressId()
+
+	realStart := time.Now().Add(-120 * time.Second).Truncate(time.Second)
+	end := time.Now().Truncate(time.Second)
+	location := "/out/" + meetingNo + "/rec.mp4"
+	wh := NewWebhookNotifyLogic(ctx, svcCtx)
+	data := mustWebhookData(t, &livekit.WebhookEvent{
+		Id: "EVT-A2", Event: "egress_ended",
+		EgressInfo: &livekit.EgressInfo{
+			EgressId: egressID,
+			RoomName: meetingNo,
+			Status:   livekit.EgressStatus_EGRESS_COMPLETE,
+			EndedAt:  end.UnixNano(),
+			FileResults: []*livekit.FileInfo{
+				{Filename: location, Location: location, Size: 100, Duration: 120, StartedAt: realStart.UnixNano(), EndedAt: end.UnixNano()},
+			},
+		},
+	})
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: data}); err != nil {
+		t.Fatalf("webhook error = %v", err)
+	}
+	rec, err := svcCtx.MeetingRepo.GetRecordingByEgressID(ctx, egressID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Status != gormmodel.RecordingStatusComplete || !rec.StartTime.Equal(realStart) {
+		t.Fatalf("recording = %+v, want complete with start_time %v", rec, realStart)
+	}
+}
+
 func TestWebhookUnknownEventIgnored(t *testing.T) {
 	svcCtx := newTestSvcCtx(t, &liveKitMock{})
 	wh := NewWebhookNotifyLogic(context.Background(), svcCtx)

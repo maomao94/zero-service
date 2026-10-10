@@ -123,6 +123,12 @@ func reconcileRecordingState(ctx context.Context, svcCtx *svc.ServiceContext, re
 			}
 			rec.Status = status
 		}
+		// 以 Egress 为准同步真实录制开始时间（webhook 丢失时兜底）
+		if startedAt := egressStartedAt(found); !startedAt.IsZero() {
+			if err := svcCtx.MeetingRepo.SyncRecordingStartTime(ctx, rec.EgressId, startedAt); err != nil {
+				return true, err
+			}
+		}
 		return true, nil
 	}
 	// 终态：落库（COMPLETE 回填文件信息；其余记录错误原因）
@@ -142,9 +148,12 @@ func reconcileRecordingState(ctx context.Context, svcCtx *svc.ServiceContext, re
 	return false, nil
 }
 
-// egressFileResult 从 EgressInfo 提取文件信息与结束时间（相对文件名用于拼接播放地址）。
+// egressFileResult 从 EgressInfo 提取文件信息与起止时间（相对文件名用于拼接播放地址）。
 func egressFileResult(info *livekit.EgressInfo, outputDir string) svc.RecordingResult {
-	result := svc.RecordingResult{EndedAt: carbonx.NowStartOfSecond().StdTime()}
+	result := svc.RecordingResult{
+		StartedAt: egressStartedAt(info),
+		EndedAt:   carbonx.NowStartOfSecond().StdTime(),
+	}
 	if info.GetEndedAt() > 0 {
 		result.EndedAt = time.Unix(0, info.GetEndedAt())
 	}
@@ -160,6 +169,23 @@ func egressFileResult(info *livekit.EgressInfo, outputDir string) svc.RecordingR
 		result.Duration = f.GetDuration()
 	}
 	return result
+}
+
+// egressStartedAt 取 Egress 的真实录制开始时间（fileResults[].started_at）：
+// 该值在管线进入 PLAYING（状态转 ACTIVE）时写入，早于此刻不可得。
+// 排除 worker 在录制未真正开始时用 ended_at 兜底写入的假值。
+func egressStartedAt(info *livekit.EgressInfo) time.Time {
+	for _, f := range info.GetFileResults() {
+		ns := f.GetStartedAt()
+		if ns <= 0 {
+			continue
+		}
+		if end := f.GetEndedAt(); end > 0 && ns >= end {
+			continue
+		}
+		return time.Unix(0, ns)
+	}
+	return time.Time{}
 }
 
 // relativeRecordingFile 把 Egress 返回的位置转为相对输出根目录的文件名（用于拼接播放地址）；
