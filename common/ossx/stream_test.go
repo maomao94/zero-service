@@ -14,6 +14,7 @@ import (
 type streamFakeTemplate struct {
 	data        bytes.Buffer
 	contentType string
+	size        int64
 }
 
 func (f *streamFakeTemplate) MakeBucket(context.Context, string, string) error   { return nil }
@@ -29,6 +30,7 @@ func (f *streamFakeTemplate) PutFile(context.Context, string, string, *multipart
 }
 func (f *streamFakeTemplate) PutObject(_ context.Context, tenantID, bucketName, filename, contentType string, reader io.Reader, size int64, pathPrefix ...string) (*File, error) {
 	f.contentType = contentType
+	f.size = size
 	_, _ = io.Copy(&f.data, reader)
 	return &File{Name: filename, Size: int64(f.data.Len())}, nil
 }
@@ -103,5 +105,28 @@ func TestUploadStreamUnknownSizeEmptyFallsBackToZero(t *testing.T) {
 	}
 	if result.Size != 0 {
 		t.Fatalf("Size = %d, want 0", result.Size)
+	}
+}
+
+// TestUploadStreamNormalizesNonPositiveSizeToUnknown：0（proto 默认/未设置）与负值统一归一为未知大小(-1)，
+// provider 不应再收到 0，避免被当作已知空文件丢数据。
+func TestUploadStreamNormalizesNonPositiveSizeToUnknown(t *testing.T) {
+	template := &streamFakeTemplate{}
+	result, err := UploadStream(context.Background(), StreamUploadRequest{
+		Template:   template,
+		TenantID:   "t1",
+		BucketName: "bucket",
+		Filename:   "a.bin",
+		Reader:     bytes.NewReader([]byte("hello")),
+		Size:       0,
+	})
+	if err != nil {
+		t.Fatalf("UploadStream() error = %v", err)
+	}
+	if template.size != -1 {
+		t.Fatalf("provider size = %d, want -1", template.size)
+	}
+	if result.Size != 5 {
+		t.Fatalf("Size = %d, want 5", result.Size)
 	}
 }

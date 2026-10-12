@@ -48,6 +48,13 @@ func UploadStream(ctx context.Context, req StreamUploadRequest) (*StreamUploadRe
 		return nil, err
 	}
 
+	// 未知大小语义：0（proto 默认/未设置）与负值统一归一为 -1，交由各后端走流式未知大小上传。
+	// 避免 0 被当作“已知空文件”，导致 MinIO/S3 等后端丢弃请求体造成静默丢数据。
+	size := req.Size
+	if size <= 0 {
+		size = -1
+	}
+
 	uploadedFile, err := req.Template.PutObject(
 		ctx,
 		req.TenantID,
@@ -55,7 +62,7 @@ func UploadStream(ctx context.Context, req StreamUploadRequest) (*StreamUploadRe
 		req.Filename,
 		contentType,
 		io.TeeReader(reader, io.MultiWriter(capture.Writers()...)),
-		req.Size,
+		size,
 		req.PathPrefix,
 	)
 	if err != nil {
@@ -65,7 +72,7 @@ func UploadStream(ctx context.Context, req StreamUploadRequest) (*StreamUploadRe
 
 	_ = capture.Close()
 
-	written := req.Size
+	written := size
 	if uploadedFile != nil && uploadedFile.Size > 0 {
 		written = uploadedFile.Size
 	} else if written < 0 {

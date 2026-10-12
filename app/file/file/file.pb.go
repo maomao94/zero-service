@@ -1805,7 +1805,7 @@ type PutStreamFileReq struct {
 	Filename      string                 `protobuf:"bytes,4,opt,name=filename,proto3" json:"filename,omitempty"`                       // 上传文件名
 	ContentType   string                 `protobuf:"bytes,5,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
 	Content       []byte                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"`                         // 文件内容
-	Size          int64                  `protobuf:"varint,7,opt,name=size,proto3" json:"size,omitempty"`                              // 文件大小, 未知传 -1
+	Size          int64                  `protobuf:"varint,7,opt,name=size,proto3" json:"size,omitempty"`                              // 文件大小, 未知传 -1（0 按未知）
 	IsThumb       bool                   `protobuf:"varint,8,opt,name=is_thumb,json=isThumb,proto3" json:"is_thumb,omitempty"`         // 是否缩略图
 	PathPrefix    string                 `protobuf:"bytes,9,opt,name=path_prefix,json=pathPrefix,proto3" json:"path_prefix,omitempty"` // 默认值 upload 文件路径前缀, 文件格式 pathPrefix/20060102/uuid.ext
 	unknownFields protoimpl.UnknownFields
