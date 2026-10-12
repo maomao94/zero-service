@@ -42,6 +42,12 @@
 | 文件删除 | `RemoveFile` / `RemoveFiles` | 删除/批量删除文件 |
 | 视频截帧 | `CaptureVideoStream` | 视频流抓帧上传为图片 |
 
+### 上传大小约定
+
+- `PutStreamFile` 的 `size`：`> 0` 为已知实际字节数（推荐）；`0` 表示空文件；`< 0`（如 `-1`）表示未知大小。
+- 未知大小时各后端按流式方式上传：MinIO/S3 使用 16MiB 分片（收敛默认约 528MiB 的内存分配），七牛走可续传 v2 分片，腾讯/阿里走 chunked。
+- 未知大小请显式传 `-1`，不要用 `0` 代替；传入的 `size` 与流实际大小不一致时行为未定义，调用方需保证一致。
+
 ## 路径约定
 
 - 文件路径格式：`{pathPrefix}/YYYYMMDD/{uuid}.{ext}`；`pathPrefix` 默认 `upload`（`PutFile` 默认 `default`）。

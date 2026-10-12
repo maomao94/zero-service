@@ -232,3 +232,21 @@ func TestMinioTemplatePathLink(t *testing.T) {
 		t.Errorf("getOssHost() = %q, want %q", got, want)
 	}
 }
+
+// TestMinioPutOptionsPartSize：未知大小（size<0）必须显式设置 PartSize 以限制内存，
+// 已知大小（含 0）保持 0，交由 minio-go 按实际大小决策。
+func TestMinioPutOptionsPartSize(t *testing.T) {
+	if got := minioPutOptions("image/png", 1024); got.PartSize != 0 {
+		t.Errorf("known-size PartSize = %d, want 0", got.PartSize)
+	}
+	if got := minioPutOptions("image/png", 0); got.PartSize != 0 {
+		t.Errorf("empty-file PartSize = %d, want 0", got.PartSize)
+	}
+	got := minioPutOptions("image/png", -1)
+	if got.PartSize != streamUploadPartSize {
+		t.Errorf("unknown-size PartSize = %d, want %d", got.PartSize, streamUploadPartSize)
+	}
+	if got.ContentType != "image/png" {
+		t.Errorf("ContentType = %q, want image/png", got.ContentType)
+	}
+}

@@ -69,3 +69,39 @@ func TestUploadStreamDetectsContentTypeAndCapturesHead(t *testing.T) {
 		t.Fatalf("head = %q, want png signature prefix", got)
 	}
 }
+
+// TestUploadStreamUnknownSizeUsesProviderSize：未知大小上传成功时，结果大小取 provider 回填值。
+func TestUploadStreamUnknownSizeUsesProviderSize(t *testing.T) {
+	result, err := UploadStream(context.Background(), StreamUploadRequest{
+		Template:   &streamFakeTemplate{},
+		TenantID:   "t1",
+		BucketName: "bucket",
+		Filename:   "a.bin",
+		Reader:     bytes.NewReader([]byte("hello")),
+		Size:       -1,
+	})
+	if err != nil {
+		t.Fatalf("UploadStream() error = %v", err)
+	}
+	if result.Size != 5 {
+		t.Fatalf("Size = %d, want 5", result.Size)
+	}
+}
+
+// TestUploadStreamUnknownSizeEmptyFallsBackToZero：未知大小上传空流时归零，不把 -1 透出到响应。
+func TestUploadStreamUnknownSizeEmptyFallsBackToZero(t *testing.T) {
+	result, err := UploadStream(context.Background(), StreamUploadRequest{
+		Template:   &streamFakeTemplate{},
+		TenantID:   "t1",
+		BucketName: "bucket",
+		Filename:   "empty.bin",
+		Reader:     bytes.NewReader(nil),
+		Size:       -1,
+	})
+	if err != nil {
+		t.Fatalf("UploadStream() error = %v", err)
+	}
+	if result.Size != 0 {
+		t.Fatalf("Size = %d, want 0", result.Size)
+	}
+}

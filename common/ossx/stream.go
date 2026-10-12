@@ -68,6 +68,9 @@ func UploadStream(ctx context.Context, req StreamUploadRequest) (*StreamUploadRe
 	written := req.Size
 	if uploadedFile != nil && uploadedFile.Size > 0 {
 		written = uploadedFile.Size
+	} else if written < 0 {
+		// 未知大小上传空流：provider 未回填正数，统一归零，避免响应里出现 -1。
+		written = 0
 	}
 	return &StreamUploadResult{
 		File:        uploadedFile,
