@@ -51,9 +51,6 @@ func (t *logicFakeTemplate) BucketExists(context.Context, string, string) (bool,
 func (t *logicFakeTemplate) PutFile(context.Context, string, string, *multipart.FileHeader, ...string) (*ossx.File, error) {
 	return nil, nil
 }
-func (t *logicFakeTemplate) PutStream(context.Context, string, string, string, string, io.Reader, int64) (*ossx.File, error) {
-	return nil, nil
-}
 func (t *logicFakeTemplate) PutObject(ctx context.Context, tenantID, bucketName, filename, contentType string, reader io.Reader, objectSize int64, pathPrefix ...string) (*ossx.File, error) {
 	// reader 的读取与字段写入必须整体持锁：异步任务与主 goroutine 会并发访问。
 	t.mu.Lock()

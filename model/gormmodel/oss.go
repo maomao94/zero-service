@@ -6,7 +6,7 @@ type Oss struct {
 	gormx.LegacyStringBaseModel
 	gormx.VersionMixin
 	TenantId   string `gorm:"column:tenant_id;type:varchar(12);default:000000;uniqueIndex:uk_oss_tenant_id_oss_code;comment:租户ID"`
-	Category   int    `gorm:"column:category;default:0;comment:分类 1-minio 2-qiniu 3-ali 4-tecent"`
+	Category   int    `gorm:"column:category;default:0;comment:分类 1-minio 2-qiniu 3-ali 4-tencent 5-s3"`
 	OssCode    string `gorm:"column:oss_code;type:varchar(32);default:'';uniqueIndex:uk_oss_tenant_id_oss_code;comment:资源编号"`
 	Endpoint   string `gorm:"column:endpoint;type:varchar(255);default:'';comment:资源地址"`
 	AccessKey  string `gorm:"column:access_key;type:varchar(255);default:'';comment:accessKey"`

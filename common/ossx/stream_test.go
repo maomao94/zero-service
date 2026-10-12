@@ -27,10 +27,7 @@ func (f *streamFakeTemplate) BucketExists(context.Context, string, string) (bool
 func (f *streamFakeTemplate) PutFile(context.Context, string, string, *multipart.FileHeader, ...string) (*File, error) {
 	return nil, nil
 }
-func (f *streamFakeTemplate) PutStream(context.Context, string, string, string, string, io.Reader, int64) (*File, error) {
-	return nil, nil
-}
-func (f *streamFakeTemplate) PutObject(_ context.Context, tenantID, bucketName, filename, contentType string, reader io.Reader, objectSize int64, pathPrefix ...string) (*File, error) {
+func (f *streamFakeTemplate) PutObject(_ context.Context, tenantID, bucketName, filename, contentType string, reader io.Reader, size int64, pathPrefix ...string) (*File, error) {
 	f.contentType = contentType
 	_, _ = io.Copy(&f.data, reader)
 	return &File{Name: filename, Size: int64(f.data.Len())}, nil

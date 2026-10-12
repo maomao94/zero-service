@@ -9,6 +9,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/NimbleMarkets/ntcharts v0.5.1
 	github.com/alicebob/miniredis/v2 v2.39.0
+	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/benbjohnson/clock v1.3.5
 	github.com/brianvoe/gofakeit/v7 v7.17.1
 	github.com/charmbracelet/bubbles v1.0.0
@@ -60,6 +61,7 @@ require (
 	github.com/pkg/errors v0.9.2-0.20201214064552-5dd12d0cfe7f
 	github.com/prometheus/client_golang v1.24.1
 	github.com/qichengzx/coordtransform v0.0.0-20220708113031-010878418826
+	github.com/qiniu/go-sdk/v7 v7.25.2
 	github.com/redis/go-redis/v9 v9.23.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shopspring/decimal v1.5.0
@@ -67,6 +69,7 @@ require (
 	github.com/spf13/cast v1.10.0
 	github.com/taosdata/driver-go/v3 v3.8.2
 	github.com/teambition/rrule-go v1.8.2
+	github.com/tencentyun/cos-go-sdk-v5 v0.7.60
 	github.com/tidwall/gjson v1.20.0
 	github.com/twitchtv/twirp v8.1.3+incompatible
 	github.com/twpayne/go-geos v0.23.0
@@ -105,9 +108,11 @@ require (
 	cel.dev/cel-go v0.32.0 // indirect
 	cel.dev/expr v0.25.3 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
+	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/ClickHouse/ch-go v0.61.5 // indirect
 	github.com/ClickHouse/clickhouse-go/v2 v2.30.0 // indirect
 	github.com/Microsoft/go-winio v0.6.3-0.20251027160822-ad3df93bed29 // indirect
+	github.com/alex-ant/gomath v0.0.0-20160516115720-89013a210a82 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-pop v0.0.6 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.5 // indirect
 	github.com/alibabacloud-go/darabonba-array v0.1.0 // indirect
@@ -150,6 +155,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.11.7 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
+	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
@@ -185,6 +191,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.15 // indirect
 	github.com/gammazero/deque v1.2.1 // indirect
+	github.com/gammazero/toposort v0.1.1 // indirect
 	github.com/getsentry/sentry-go v0.12.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
@@ -210,6 +217,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/gofiber/fiber/v2 v2.52.9 // indirect
 	github.com/gofiber/websocket/v2 v2.2.1 // indirect
+	github.com/gofrs/flock v0.13.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
@@ -219,6 +227,7 @@ require (
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/jsonschema-go v0.4.3 // indirect
 	github.com/goph/emperror v0.17.2 // indirect
 	github.com/grafana/pyroscope-go v1.3.0 // indirect
@@ -267,10 +276,12 @@ require (
 	github.com/milvus-io/milvus-proto/go-api/v2 v2.4.10-0.20240819025435-512e3b98866a // indirect
 	github.com/minio/crc64nvme v1.1.1 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/sys/atomicwriter v0.1.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
+	github.com/mozillazg/go-httpheader v0.2.1 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
@@ -385,6 +396,7 @@ require (
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 	k8s.io/utils v0.0.0-20260319190234-28399d86e0b5 // indirect
+	modernc.org/fileutil v1.4.0 // indirect
 	modernc.org/libc v1.77.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
