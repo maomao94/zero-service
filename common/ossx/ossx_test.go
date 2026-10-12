@@ -3,13 +3,9 @@ package ossx
 import (
 	"context"
 	"errors"
-	"io"
-	"mime/multipart"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/minio/minio-go/v7"
 )
 
 func TestOssRuleFullBucketName(t *testing.T) {
@@ -74,22 +70,76 @@ func TestOssRuleFilenameFixedObjectName(t *testing.T) {
 	}
 }
 
-func TestNeedRebuild(t *testing.T) {
-	cached := &Config{Endpoint: "e1", AccessKey: "a1", SecretKey: "s1"}
-	current := &Config{Endpoint: "e1", AccessKey: "a1", SecretKey: "s1"}
-	if needRebuild(cached, fakeOssTemplate{}, current) {
-		t.Fatal("needRebuild() = true, want false for same credentials")
+func TestTemplateRefreshesOnUpdateTimeChange(t *testing.T) {
+	CacheInvalidate("t1") // 确保干净起点
+
+	updateTime := time.Now()
+	getConfig := func(ctx context.Context, tenantId, code string) (*Config, error) {
+		return &Config{Category: Category_Minio, Endpoint: "http://m.example.com:9000",
+			AccessKey: "ak", SecretKey: "sk", BucketName: "b", UpdateTime: updateTime}, nil
 	}
 
-	current.SecretKey = "s2"
-	if !needRebuild(cached, fakeOssTemplate{}, current) {
-		t.Fatal("needRebuild() = false, want true after secret key changed")
+	first, err := Template(context.Background(), "t1", "c1", false, getConfig)
+	if err != nil {
+		t.Fatalf("first Template err = %v", err)
 	}
-	if !needRebuild(nil, fakeOssTemplate{}, current) {
-		t.Fatal("needRebuild() = false, want true when cached config is nil")
+	// update_time 未变化 → 复用同一缓存客户端
+	second, err := Template(context.Background(), "t1", "c1", false, getConfig)
+	if err != nil {
+		t.Fatalf("second Template err = %v", err)
 	}
-	if !needRebuild(cached, nil, current) {
-		t.Fatal("needRebuild() = false, want true when template is nil")
+	if first != second {
+		t.Fatal("update_time unchanged: want cached template reused")
+	}
+	// update_time 前进（配置被编辑）→ 重建客户端
+	updateTime = updateTime.Add(time.Second)
+	third, err := Template(context.Background(), "t1", "c1", false, getConfig)
+	if err != nil {
+		t.Fatalf("third Template err = %v", err)
+	}
+	if third == first {
+		t.Fatal("update_time changed: want template rebuilt")
+	}
+}
+
+func TestTemplateSeparatesByTenantAndCode(t *testing.T) {
+	CacheInvalidate("t1")
+	getConfig := func(_ context.Context, tenantId, code string) (*Config, error) {
+		return &Config{Category: Category_Minio, Endpoint: "http://m.example.com:9000",
+			AccessKey: "ak", SecretKey: "sk", BucketName: code}, nil
+	}
+
+	a, err := Template(context.Background(), "t1", "c1", false, getConfig)
+	if err != nil {
+		t.Fatalf("c1 Template err = %v", err)
+	}
+	b, err := Template(context.Background(), "t1", "c2", false, getConfig)
+	if err != nil {
+		t.Fatalf("c2 Template err = %v", err)
+	}
+	if a == b {
+		t.Fatal("different oss_code must map to different cached templates")
+	}
+}
+
+func TestTemplateInvalidateForcesReload(t *testing.T) {
+	CacheInvalidate("t1")
+	getConfig := func(_ context.Context, tenantId, code string) (*Config, error) {
+		return &Config{Category: Category_Minio, Endpoint: "http://m.example.com:9000",
+			AccessKey: "ak", SecretKey: "sk", BucketName: "b"}, nil
+	}
+
+	first, err := Template(context.Background(), "t1", "c1", false, getConfig)
+	if err != nil {
+		t.Fatalf("first Template err = %v", err)
+	}
+	CacheInvalidate("t1")
+	second, err := Template(context.Background(), "t1", "c1", false, getConfig)
+	if err != nil {
+		t.Fatalf("after invalidate Template err = %v", err)
+	}
+	if second == first {
+		t.Fatal("after CacheInvalidate: want template rebuilt")
 	}
 }
 
@@ -98,35 +148,10 @@ func TestBuildFileKeepsMd5(t *testing.T) {
 		ossProperties: OssProperties{Endpoint: "http://oss"},
 		ossRule:       OssRule{tenantMode: true},
 	}
-	got := template.buildFile("t1", "bucket", "upload/a.txt", "a.txt", minio.UploadInfo{Size: 11}, "5eb63bbbe01eeed093cb22bb8f5acdc3")
+	got := template.buildFile("t1", "bucket", "upload/a.txt", "a.txt", 11, "5eb63bbbe01eeed093cb22bb8f5acdc3")
 	if got.Md5 != "5eb63bbbe01eeed093cb22bb8f5acdc3" {
 		t.Fatalf("Md5 = %q, want expected hash", got.Md5)
 	}
-}
-
-type fakeOssTemplate struct{}
-
-func (fakeOssTemplate) MakeBucket(context.Context, string, string) error   { return nil }
-func (fakeOssTemplate) RemoveBucket(context.Context, string, string) error { return nil }
-func (fakeOssTemplate) StatFile(context.Context, string, string, string) (*OssFile, error) {
-	return nil, nil
-}
-func (fakeOssTemplate) BucketExists(context.Context, string, string) (bool, error) { return true, nil }
-func (fakeOssTemplate) PutFile(context.Context, string, string, *multipart.FileHeader, ...string) (*File, error) {
-	return nil, nil
-}
-func (fakeOssTemplate) PutStream(context.Context, string, string, string, string, io.Reader, int64) (*File, error) {
-	return nil, nil
-}
-func (fakeOssTemplate) PutObject(context.Context, string, string, string, string, io.Reader, int64, ...string) (*File, error) {
-	return nil, nil
-}
-func (fakeOssTemplate) SignUrl(context.Context, string, string, string, time.Duration) (string, error) {
-	return "", nil
-}
-func (fakeOssTemplate) RemoveFile(context.Context, string, string, string) error { return nil }
-func (fakeOssTemplate) RemoveFiles(context.Context, string, string, []string) ([]RemoveFileResult, error) {
-	return nil, nil
 }
 
 type templateCtxKey struct{}

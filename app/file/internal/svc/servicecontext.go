@@ -85,5 +85,6 @@ func toOssConfig(oss *gormmodel.Oss) *ossx.Config {
 		BucketName: oss.BucketName,
 		AppId:      oss.AppId,
 		Region:     oss.Region,
+		UpdateTime: oss.UpdateTime,
 	}
 }
