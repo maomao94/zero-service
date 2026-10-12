@@ -154,7 +154,13 @@ func generateAndUploadVariant(
 	}
 	defer f.Close()
 
-	if _, err = ossTemplate.PutObject(ctx, tenantID, bucketName, filename, "image/jpeg", f, -1, "", ossName); err != nil {
+	fileInfo, err := f.Stat()
+	if err != nil {
+		logx.WithContext(ctx).Errorf("Failed to stat %s image: %v", variant, err)
+		return
+	}
+
+	if _, err = ossTemplate.PutObject(ctx, tenantID, bucketName, filename, "image/jpeg", f, fileInfo.Size(), "", ossName); err != nil {
 		logx.WithContext(ctx).Errorf("Failed to upload %s image: %v", variant, err)
 		return
 	}
