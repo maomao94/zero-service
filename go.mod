@@ -24,7 +24,7 @@ require (
 	github.com/cloudwego/eino-ext/components/model/qwen v0.1.9
 	github.com/disintegration/imaging v1.6.2
 	github.com/docker/docker v28.5.2+incompatible
-	github.com/docker/go-connections v0.8.1
+	github.com/docker/go-connections v0.8.2
 	github.com/doquangtan/socketio/v4 v4.1.8
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/dromara/carbon/v2 v2.6.18
