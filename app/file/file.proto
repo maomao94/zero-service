@@ -197,7 +197,7 @@ message PutStreamFileReq {
   string filename = 4 [json_name = "filename"]; // 上传文件名
   string content_type = 5 [json_name = "contentType"];
   bytes content = 6 [json_name = "content"];   // 文件内容
-  int64 size = 7 [json_name = "size"]; // 文件大小
+  int64 size = 7 [json_name = "size"]; // 文件大小, 未知传 -1（0 按未知）
   bool is_thumb = 8 [json_name = "isThumb"]; // 是否缩略图
   string path_prefix = 9 [json_name = "pathPrefix"]; // 默认值 upload 文件路径前缀, 文件格式 pathPrefix/20060102/uuid.ext
 }

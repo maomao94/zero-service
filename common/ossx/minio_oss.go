@@ -168,6 +168,22 @@ func (m MinioTemplate) buildFile(tenantId, bucketName, objectName, originalName 
 	}
 }
 
+// streamUploadPartSize 是未知大小流式上传（size < 0）时使用的分片大小。
+// 未知大小会走 minio-go 的 no-length multipart 分支：不指定 PartSize 时它按 5TiB 估算并分配
+// 约 528MiB 缓冲；这里固定为 16MiB（minio-go minPartSize），单次上传内存 16MiB、对象上限 160GiB，
+// 且与已知大小路径的分片基准一致。
+const streamUploadPartSize = 16 << 20
+
+// minioPutOptions 构建 PutObject 选项。未知大小（size < 0）显式指定 PartSize 以限制单次上传内存占用；
+// 已知大小（含 0，0 表示空对象）交由 minio-go 按实际大小决策，避免对超大数据（>PartSize*10000）分片数超限。
+func minioPutOptions(contentType string, size int64) minio.PutObjectOptions {
+	opts := minio.PutObjectOptions{ContentType: contentType}
+	if size < 0 {
+		opts.PartSize = streamUploadPartSize
+	}
+	return opts
+}
+
 // putObjectWithMD5 在上传对象时同步计算内容 MD5，返回实际写入大小与内容 MD5。
 func (m MinioTemplate) putObjectWithMD5(ctx context.Context, tenantId, bucketName, objectName, contentType string, reader io.Reader, size int64) (int64, string, error) {
 	var (
@@ -176,9 +192,7 @@ func (m MinioTemplate) putObjectWithMD5(ctx context.Context, tenantId, bucketNam
 	)
 	md5Hex, err := filex.UploadWithMD5(reader, func(md5Reader io.Reader) error {
 		info, err = m.client.PutObject(ctx, m.ossRule.fullBucketName(tenantId, bucketName),
-			objectName, md5Reader, size, minio.PutObjectOptions{
-				ContentType: contentType,
-			})
+			objectName, md5Reader, size, minioPutOptions(contentType, size))
 		return err
 	})
 	if err != nil {

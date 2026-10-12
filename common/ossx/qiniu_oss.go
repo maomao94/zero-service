@@ -1,7 +1,6 @@
 package ossx
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"io"
@@ -18,11 +17,12 @@ import (
 // QiniuTemplate 七牛云存储实现。Endpoint 为空间绑定的访问域名（CDN 域名），
 // Region 用于空间创建（z0/z1/z2/na0/as0 等）。
 type QiniuTemplate struct {
-	uploader      *storage.FormUploader
-	bucketManager *storage.BucketManager
-	mac           *auth.Credentials
-	ossProperties OssProperties
-	ossRule       OssRule
+	uploader       *storage.FormUploader     // 已知大小表单上传
+	resumeUploader *storage.ResumeUploaderV2 // 未知大小分片流式上传（v2）
+	bucketManager  *storage.BucketManager
+	mac            *auth.Credentials
+	ossProperties  OssProperties
+	ossRule        OssRule
 }
 
 var _ OssTemplate = (*QiniuTemplate)(nil)
@@ -111,14 +111,10 @@ func (q QiniuTemplate) RemoveFiles(ctx context.Context, tenantId string, bucketN
 }
 
 // putObjectWithMD5 上传对象并同步计算内容 MD5，返回实际大小与 MD5。
-// 七牛表单上传要求已知大小，未知时先读入内存补齐。
+// 已知大小走表单上传；未知大小（size < 0）走可续传 v2 的分片流式上传，避免整文件读入内存。
 func (q QiniuTemplate) putObjectWithMD5(ctx context.Context, tenantId, bucketName, objectName, contentType string, reader io.Reader, size int64) (int64, string, error) {
 	if size < 0 {
-		data, err := io.ReadAll(reader)
-		if err != nil {
-			return 0, "", err
-		}
-		reader, size = bytes.NewReader(data), int64(len(data))
+		return q.putObjectUnknownSizeWithMD5(ctx, tenantId, bucketName, objectName, contentType, reader)
 	}
 
 	token := (&storage.PutPolicy{Scope: q.bucket(tenantId, bucketName)}).UploadToken(q.mac)
@@ -130,6 +126,22 @@ func (q QiniuTemplate) putObjectWithMD5(ctx context.Context, tenantId, bucketNam
 		return 0, "", err
 	}
 	return size, md5Hex, nil
+}
+
+// putObjectUnknownSizeWithMD5 以未知大小分片流式上传，用计数 Reader 回填实际写入大小，
+// 同时经 UploadWithMD5 在流上同步计算内容 MD5。
+// 未注入 Recorder，仅本次调用内分片；如需跨进程断点续传，需为 RputV2Extra 提供 Recorder。
+func (q QiniuTemplate) putObjectUnknownSizeWithMD5(ctx context.Context, tenantId, bucketName, objectName, contentType string, reader io.Reader) (int64, string, error) {
+	token := (&storage.PutPolicy{Scope: q.bucket(tenantId, bucketName)}).UploadToken(q.mac)
+	counter := filex.NewCountingReader(reader)
+	var ret storage.PutRet
+	md5Hex, err := filex.UploadWithMD5(counter, func(r io.Reader) error {
+		return q.resumeUploader.PutWithoutSize(ctx, &ret, token, objectName, r, &storage.RputV2Extra{MimeType: contentType})
+	})
+	if err != nil {
+		return 0, "", err
+	}
+	return counter.N(), md5Hex, nil
 }
 
 // buildFile 统一构建 File 返回结构（与 MinioTemplate.buildFile 对齐）。
@@ -175,10 +187,11 @@ func NewQiniuTemplate(config *Config, ossRule OssRule) (*QiniuTemplate, error) {
 		}
 	}
 	return &QiniuTemplate{
-		uploader:      storage.NewFormUploader(cfg),
-		bucketManager: storage.NewBucketManager(mac, cfg),
-		mac:           mac,
-		ossProperties: ossPropertiesFromConfig(config),
-		ossRule:       ossRule,
+		uploader:       storage.NewFormUploader(cfg),
+		resumeUploader: storage.NewResumeUploaderV2(cfg),
+		bucketManager:  storage.NewBucketManager(mac, cfg),
+		mac:            mac,
+		ossProperties:  ossPropertiesFromConfig(config),
+		ossRule:        ossRule,
 	}, nil
 }
