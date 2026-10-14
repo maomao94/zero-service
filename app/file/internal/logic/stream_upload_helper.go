@@ -15,7 +15,6 @@ import (
 	"zero-service/common/filex"
 	"zero-service/common/imagex"
 	"zero-service/common/ossx"
-	"zero-service/common/tool"
 )
 
 // resolveContentType 解析内容类型。若调用方已显式指定则直接返回，否则基于文件头前 512 字节
@@ -118,7 +117,7 @@ func scheduleThumbGeneration(
 	_ = filex.RemoveTempFile(result.TempPath, uploadConf.KeepTempFiles)
 
 	thumbFilename := "thumb_" + filename
-	ossName := tool.GenOssFilename(thumbFilename, "thumb")
+	ossName := ossx.GenOssFilename(thumbFilename, "thumb")
 	pbFile.ThumbLink = pbFile.Domain + "/" + ossName
 	pbFile.ThumbName = ossName
 
@@ -155,7 +154,13 @@ func generateAndUploadVariant(
 	}
 	defer f.Close()
 
-	if _, err = ossTemplate.PutObject(ctx, tenantID, bucketName, filename, "image/jpeg", f, -1, "", ossName); err != nil {
+	fileInfo, err := f.Stat()
+	if err != nil {
+		logx.WithContext(ctx).Errorf("Failed to stat %s image: %v", variant, err)
+		return
+	}
+
+	if _, err = ossTemplate.PutObject(ctx, tenantID, bucketName, filename, "image/jpeg", f, fileInfo.Size(), "", ossName); err != nil {
 		logx.WithContext(ctx).Errorf("Failed to upload %s image: %v", variant, err)
 		return
 	}
