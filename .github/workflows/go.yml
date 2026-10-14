@@ -32,7 +32,7 @@ jobs:
 
       # 第 2 步：安装 Go
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod  # 自动读取 go.mod 里的 go 版本，保持本地和 CI 一致
           check-latest: true       # 有更新的补丁版本就用最新的
