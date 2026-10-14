@@ -28,7 +28,7 @@ jobs:
     steps:
       # 第 1 步：把仓库代码下载到虚拟机
       - name: Check out code
-        uses: actions/checkout@v4   # 官方 checkout 动作
+        uses: actions/checkout@v7   # 官方 checkout 动作
 
       # 第 2 步：安装 Go
       - name: Set up Go
