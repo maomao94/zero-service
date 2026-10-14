@@ -8,7 +8,7 @@ require (
 	github.com/Azure/go-workflow v0.1.14-0.20260515042214-fc60b72c83a8
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/NimbleMarkets/ntcharts v0.5.2
-	github.com/alicebob/miniredis/v2 v2.39.0
+	github.com/alicebob/miniredis/v2 v2.40.0
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/benbjohnson/clock v1.3.5
 	github.com/brianvoe/gofakeit/v7 v7.17.1
