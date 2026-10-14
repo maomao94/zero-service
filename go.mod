@@ -11,7 +11,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.40.0
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/benbjohnson/clock v1.3.5
-	github.com/brianvoe/gofakeit/v7 v7.17.1
+	github.com/brianvoe/gofakeit/v7 v7.18.0
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
