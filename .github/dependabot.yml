@@ -12,3 +12,13 @@ updates:
     labels:                        # 自动给 PR 打标签，方便筛选管理
       - "dependencies"
       - "go"
+
+  - package-ecosystem: "github-actions"  # 检测 .github/workflows 里 action 的版本
+    directory: "/"                       # workflow 均在 .github/workflows，相对仓库根
+    target-branch: "develop"             # 与 gomod 保持一致，PR 提到 develop
+    schedule:
+      interval: "weekly"                 # action 更新没那么频繁，每周检查一次即可
+    open-pull-requests-limit: 5          # 最多同时保持 5 个未合并的 PR
+    labels:
+      - "dependencies"
+      - "github-actions"
