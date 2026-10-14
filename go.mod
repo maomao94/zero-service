@@ -82,8 +82,8 @@ require (
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/trace v1.47.0
 	go.uber.org/zap v1.28.0
-	golang.org/x/crypto v0.57.0
-	golang.org/x/sync v0.23.0
+	golang.org/x/crypto v0.58.0
+	golang.org/x/sync v0.24.0
 	golang.org/x/term v0.47.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260921155816-b14227669459
 	google.golang.org/grpc v1.84.0
@@ -379,10 +379,10 @@ require (
 	golang.org/x/arch v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20260908205506-85c1c2202aba // indirect
 	golang.org/x/image v0.22.0 // indirect
-	golang.org/x/net v0.59.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
-	golang.org/x/text v0.42.0 // indirect
+	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260918162117-cecb64721679 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
