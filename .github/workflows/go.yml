@@ -60,6 +60,17 @@ jobs:
       - name: Vet
         run: go vet ./...
 
-      # 第 6 步：跑全部单元测试，带 -race 开启数据竞争检测
+      # 第 6 步：校验 go.mod/go.sum 是否已整理
+      # go mod tidy 后若文件有改动，说明有人提交了未整理的依赖，
+      # 直接失败并提示，避免 develop 上依赖状态漂移（参考 go-zero 的做法）
+      - name: Check go mod tidy
+        run: |
+          go mod tidy
+          if ! test -z "$(git status --porcelain -- go.mod go.sum)"; then
+            echo "Please run 'go mod tidy'"
+            exit 1
+          fi
+
+      # 第 7 步：跑全部单元测试，带 -race 开启数据竞争检测
       - name: Test
         run: go test -race ./...
