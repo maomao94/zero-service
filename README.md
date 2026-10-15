@@ -14,7 +14,7 @@ Zero-Service 不是一个必须整体部署的单体应用。各服务可以按�
 
 - **视频会议**：基于 LiveKit Server 实现实时音视频会议，提供会议管理、票据邀请、Webhook 状态同步和聊天消息能力。
 - **IEC 104 数采**：多从站通信，通过 Kafka、MQTT 和 gRPC 并行分发采集数据，并支持 ASDU 合并与时序存储。
-- **DJI 云平台接入**：封装 Dock 3 Cloud API，支持航线任务、直播推流和 DRC 指令飞行。
+- **DJI 云平台接入（第一代上云 API · 参考实现）**：封装 Dock 3 Cloud API 的 MQTT 协议，支持航线任务、直播推流和 DRC 指令飞行。新项目建议评估[上云 API 2](https://developer.dji.com/cn/cloud-api-2)，本实现保留作协议学习与存量系统参考。
 - **任务调度**：提供 asynq 异步回调、Plan/Batch/ExecItem 计划任务和基于 RRULE 的 CronJob 周期调度。
 - **实时通信**：通过 SocketIO 网关完成连接管理、房间广播、服务端推送和 MQTT 桥接。
 - **工业协议桥接**：支持 Modbus TCP/RTU、MQTT、Kafka、gRPC-Gateway 及反向隔离装置接入。
@@ -74,7 +74,7 @@ go run . -f etc/trigger.yaml
 | --- | --- | --- |
 | `ieccaller` / `iecstash` / `streamevent` | IEC 104 采集、消息分发、数据合并与落库 | [IEC 104 数采平台](./docs/iec104/iec104.md) |
 | `trigger` | 异步回调、计划任务与 RRULE CronJob 调度 | [Trigger 服务](./docs/trigger/trigger.md) |
-| `djicloud` | DJI Dock 3 云平台接入 | [DJI 云平台](./docs/djicloud/djicloud.md) |
+| `djicloud` | DJI Dock 3 云平台接入（第一代上云 API 参考实现） | [DJI 云平台](./docs/djicloud/djicloud.md) |
 | `socketgtw` / `socketpush` | SocketIO 连接管理与服务端推送 | [SocketIO 实时通信](./docs/socketio/socketio.md) |
 | `bridge*` | Modbus、MQTT、Kafka 和网关协议桥接 | [Bridge 协议桥接](./docs/bridge/README.md) |
 | `ispagent` / `ispserver` | 变电站 ISP 巡检协议代理与服务端 | [ISP 巡检协议](./docs/isp/isp.md) |
