@@ -1,5 +1,19 @@
 # DJI 云平台服务
 
+## 定位说明
+
+本服务实现的是**第一代上云 API（Cloud API）**：协议收发（topic / method / payload）由 `common/djisdk` 手写封装，仅支持 MQTT 单链路，适合协议学习、联调参考与存量系统维护。
+
+**新项目建议优先评估[上云 API 2](https://developer.dji.com/cn/cloud-api-2)**（官方仓库 [dji-sdk/Cloud-API-2](https://github.com/dji-sdk/Cloud-API-2)）：
+
+- 官方定位为面向机场/无人机应用的全栈 PaaS 套件：后端 SDK 协议无感，并提供前端组件、设备模拟器、AI Plugin 与 MCP 脚手架
+- SDK 为 C++ 内核 + Java（SWIG/JNI）绑定，**暂无官方 Go 绑定**；Go 技术栈需自行评估经 BFF 或桥接接入的方案
+- 在 MQTT 之外扩展 WebSocket 通知中心与 RTC/WebRTC 链路，按消息语义自动分流（命令/控制走 MQTT，高频遥测走 WebSocket，音视频走 RTC）
+
+> ⚠️ **运行时约束**：同一设备**不可**同时被第一代 SDK 与上云 API 2 SDK 订阅，否则会出现 TID 路由互抢、上行事件重复入库、回执重复发送。迁移须按设备 / topic 粒度切流。
+
+下文描述的均为本仓库的第一代实现。
+
 ## 概述
 
 `djicloud` 是面向 DJI Dock 3 Cloud API 的云平台服务，封装大疆上云 MQTT Topic 与 method，统一处理设备侧 ACK、上行事件和在线状态。对外提供 gRPC 接口供业务系统调用，对内通过 `common/djisdk` 与 MQTT Broker 通信。

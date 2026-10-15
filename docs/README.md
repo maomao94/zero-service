@@ -26,7 +26,7 @@
 | IEC 104 | [数采平台](./iec104/README.md) | 采集、消息分发、数据合并与控制命令 |
 | Trigger | [Trigger 服务](./trigger/README.md) | 异步任务、计划任务、RRULE CronJob |
 | SocketIO | [实时通信](./socketio/README.md) | 网关对接、事件体系、房间广播和鉴权 |
-| DJI | [云平台](./djicloud/README.md) | Dock 3 Cloud API 与航点任务文件 |
+| DJI | [云平台](./djicloud/README.md) | 第一代上云 API 参考实现（Dock 3 Cloud API 与航点任务文件）；新项目建议[上云 API 2](https://developer.dji.com/cn/cloud-api-2) |
 | ISP | [巡检协议](./isp/README.md) | ISP 服务端/代理、帧格式、任务和模型同步 |
 | LiveKit | [视频会议](./live/README.md) | 会议管理、入会 token、票据邀请、Webhook、聊天消息；[LiveKit](https://github.com/livekit/livekit) · [Server SDK](https://github.com/livekit/server-sdk-go) · [对接指南](./live/integration-guide.md) |
 | Oryx | [流媒体](./oryx/README.md) | HTTP 回调网关、gRPC API 代理、录制管理与中继拉流；[Oryx](https://github.com/ossrs/oryx) · [SRS](https://github.com/ossrs/srs) |
