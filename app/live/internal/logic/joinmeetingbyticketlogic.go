@@ -139,6 +139,7 @@ func (l *JoinMeetingByTicketLogic) JoinMeetingByTicket(in *live.JoinMeetingByTic
 		Identity:  data.Identity,
 		Name:      data.Name,
 		Status:    gormmodel.ParticipantStatusJoined,
+		Kind:      gormmodel.ParticipantKindStandard,
 		JoinTime:  now,
 	}
 	if err := l.svcCtx.MeetingRepo.UpsertParticipant(l.ctx, participant); err != nil {

@@ -70,6 +70,18 @@ func requireMeetingOperator(meeting *gormmodel.LiveMeeting, operator string) err
 	return nil
 }
 
+// toIntSlice 把 proto 的 int32 列表转为 int 列表（用于 repo 过滤参数），空输入返回 nil。
+func toIntSlice(values []int32) []int {
+	if len(values) == 0 {
+		return nil
+	}
+	out := make([]int, 0, len(values))
+	for _, v := range values {
+		out = append(out, int(v))
+	}
+	return out
+}
+
 // toMeetingInfo 转换会议单据为 RPC 视图（时间用 carbon 格式化输出）。
 func toMeetingInfo(m *gormmodel.LiveMeeting) *live.MeetingInfo {
 	return &live.MeetingInfo{

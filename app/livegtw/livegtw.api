@@ -37,6 +37,8 @@ type MeetingInfo {
 	MaxParticipants uint32 `json:"maxParticipants"`
 	// LiveKit 房间 Sid（用于 Egress/Webhook 等场景）
 	RoomSid string `json:"roomSid"`
+	// 会议录制数量（列表查询返回，用于展示"有录制/N 段录制"）
+	RecordingCount int32 `json:"recordingCount"`
 }
 
 type ParticipantInfo {
@@ -50,6 +52,8 @@ type ParticipantInfo {
 	JoinTime string `json:"joinTime"`
 	// 离开时间，格式：yyyy-MM-dd HH:mm:ss（未离开为空字符串）
 	LeftTime string `json:"leftTime"`
+	// 参与者类型（对齐 LiveKit ParticipantInfo_Kind）：0-标准,1-INGRESS,2-EGRESS,3-SIP,4-AGENT,7-CONNECTOR,8-BRIDGE
+	Kind int32 `json:"kind"`
 }
 
 type CreateMeetingRequest {
@@ -134,6 +138,8 @@ type ListMeetingsRequest {
 	Title string `form:"title,optional"`
 	// 参会人身份（按参会人检索，查询与某用户相关的会议）
 	Identity string `form:"identity,optional"`
+	// 按录制情况过滤：0-全部（默认），1-仅有录制，2-仅无录制
+	HasRecording int32 `form:"hasRecording,optional"`
 }
 
 type ListMyMeetingsRequest {
@@ -143,6 +149,10 @@ type ListMyMeetingsRequest {
 	Page int64 `form:"page,optional"`
 	// 每页数量
 	PageSize int64 `form:"pageSize,optional"`
+	// 标题模糊查询
+	Title string `form:"title,optional"`
+	// 按录制情况过滤：0-全部（默认），1-仅有录制，2-仅无录制
+	HasRecording int32 `form:"hasRecording,optional"`
 }
 
 type ListMeetingsReply {
@@ -177,6 +187,9 @@ type MuteParticipantRequest {
 type ListParticipantsRequest {
 	// 会议号
 	MeetingNo string `form:"meetingNo"`
+	// 需要排除的参与者类型（对齐 LiveKit ParticipantInfo_Kind），
+	// 空表示不过滤；例如传 excludeKinds=2 排除 EGRESS（录屏机器人）。
+	ExcludeKinds []int32 `form:"excludeKinds,optional"`
 }
 
 type ListParticipantsReply {

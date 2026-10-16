@@ -62,11 +62,22 @@ export const api = {
   joinByTicket: (ticket: string) => request<JoinReply>(`/joinMeetingByTicket?ticket=${encodeURIComponent(ticket)}`, {}, false),
   getMeeting: (meetingNo: string) => request<{ meeting: MeetingInfo }>(`/getMeeting?meetingNo=${encodeURIComponent(meetingNo)}`),
   listMeetings: (params: Record<string, string | number> = {}) => request<ApiPage<MeetingInfo>>(`/listMeetings?${new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]))}`),
-  listMyMeetings: (page = 1, pageSize = 20) => request<ApiPage<MeetingInfo>>(`/myMeetings?page=${page}&pageSize=${pageSize}`),
+  listMyMeetings: (page = 1, pageSize = 20, options?: { status?: number; title?: string; hasRecording?: number }) => {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+    if (options?.status) params.set('status', String(options.status))
+    if (options?.title) params.set('title', options.title)
+    if (options?.hasRecording) params.set('hasRecording', String(options.hasRecording))
+    return request<ApiPage<MeetingInfo>>(`/myMeetings?${params.toString()}`)
+  },
   endMeeting: (meetingNo: string) => request<void>('/endMeeting', json({ meetingNo })),
   kickParticipant: (meetingNo: string, identity: string) => request<void>('/kickParticipant', json({ meetingNo, identity })),
   muteParticipant: (meetingNo: string, identity: string, muted: boolean, kind: 'audio' | 'video') => request<void>('/muteParticipant', json({ meetingNo, identity, muted, kind })),
-  listParticipants: (meetingNo: string) => request<{ participants: ParticipantInfo[] }>(`/listParticipants?meetingNo=${encodeURIComponent(meetingNo)}`),
+  listParticipants: (meetingNo: string, options?: { excludeKinds?: number[] }) => {
+    const params = new URLSearchParams({ meetingNo })
+    // excludeKinds 逐项排除参与者类型（如 2=EGRESS 录屏机器人），空则不传、返回全部
+    if (options?.excludeKinds?.length) options.excludeKinds.forEach((kind) => params.append('excludeKinds', String(kind)))
+    return request<{ participants: ParticipantInfo[] }>(`/listParticipants?${params.toString()}`)
+  },
   sendMeetingData: (meetingNo: string, topic: string, payload: string, destinations: string[] = []) => request<void>('/sendMeetingData', json({ meetingNo, topic, payload, destinations })),
   performRpc: (meetingNo: string, identity: string, payload: string) => request<{ response: string }>('/performMeetingRpc', json({ meetingNo, identity, method: 'echo', payload, responseTimeoutMs: 5000 })),
   generateTicket: (meetingNo: string, identity: string, name: string, expireSeconds: number, canPublish = true, canSubscribe = true, canPublishData = true, canPublishSources: string[] = [], ticketType = 1) => request<TicketReply>('/generateMeetingTicket', json({ meetingNo, identity, name, expireSeconds, canPublish, canSubscribe, canPublishData, canPublishSources, ticketType })),

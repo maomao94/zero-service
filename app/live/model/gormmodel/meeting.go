@@ -64,6 +64,24 @@ const (
 	ParticipantStatusLeft = int(2)
 )
 
+// ParticipantKind 参与者类型（对齐 LiveKit ParticipantInfo_Kind，不做业务映射）。
+const (
+	// ParticipantKindStandard 标准用户
+	ParticipantKindStandard = int(0)
+	// ParticipantKindIngress 输入流（Ingress）
+	ParticipantKindIngress = int(1)
+	// ParticipantKindEgress 媒体输出（录制/推流机器人，如录屏 EG_xxx）
+	ParticipantKindEgress = int(2)
+	// ParticipantKindSip 电话参会者
+	ParticipantKindSip = int(3)
+	// ParticipantKindAgent AI Agent
+	ParticipantKindAgent = int(4)
+	// ParticipantKindConnector 连接器
+	ParticipantKindConnector = int(7)
+	// ParticipantKindBridge 桥接
+	ParticipantKindBridge = int(8)
+)
+
 // LiveMeetingParticipant 参会记录（同一会议同一身份唯一）。
 type LiveMeetingParticipant struct {
 	gormx.LegacyStringBaseModel
@@ -79,6 +97,8 @@ type LiveMeetingParticipant struct {
 	Name string `gorm:"column:name;size:64;comment:展示名"`
 	// 状态：1-已加入，2-已离开
 	Status int `gorm:"column:status;comment:状态:1-已加入,2-已离开;index:idx_live_meeting_participants_status"`
+	// 参与者类型（对齐 LiveKit ParticipantInfo_Kind）：0-标准,1-INGRESS,2-EGRESS,3-SIP,4-AGENT,7-CONNECTOR,8-BRIDGE
+	Kind int `gorm:"column:kind;not null;default:0;comment:参与者类型(对齐LiveKit ParticipantInfo_Kind):0-标准,1-INGRESS,2-EGRESS,3-SIP,4-AGENT,7-CONNECTOR,8-BRIDGE"`
 	// 加入时间
 	JoinTime time.Time `gorm:"column:join_time;comment:加入时间"`
 	// 离开时间

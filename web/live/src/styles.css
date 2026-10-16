@@ -356,3 +356,11 @@
 
 /* 键盘可访问 */
 .meeting-row:focus-visible{outline:2px solid #087f80;outline-offset:2px}
+
+/* 会议录制标记 */
+.recording-badge{flex:none;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid #d7ddf3;border-radius:99px;background:#eef0fa;color:#53649b;font-size:10px;font-weight:750;line-height:1.2}
+.recording-badge:hover{border-color:#53649b;background:#e5e9f7}
+
+/* 会议列表分页与标题换行 */
+.meeting-row-title{flex-wrap:wrap;row-gap:6px}
+.list-footer{align-items:center;gap:10px;flex-wrap:wrap}

@@ -82,8 +82,8 @@ func (l *EndMeetingLogic) EndMeeting(in *live.EndMeetingReq) (*live.EndMeetingRe
 		return &live.EndMeetingRes{}, nil
 	}
 
-	// 批量标记在会参与者为已离开
-	participants, err := l.svcCtx.MeetingRepo.ListParticipants(l.ctx, in.MeetingNo)
+	// 批量标记在会参与者为已离开（需要全量记录，不过滤任何参与者类型）
+	participants, err := l.svcCtx.MeetingRepo.ListParticipants(l.ctx, in.MeetingNo, nil)
 	if err == nil {
 		for _, p := range participants {
 			if p.Status == gormmodel.ParticipantStatusJoined {

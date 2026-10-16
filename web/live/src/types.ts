@@ -15,6 +15,8 @@ export interface MeetingInfo {
   departureTimeout: number
   maxParticipants: number
   roomSid: string
+  /** 会议录制数量（列表查询返回，用于展示"有录制/N 段录制"） */
+  recordingCount: number
 }
 
 export interface ParticipantInfo {
@@ -23,6 +25,8 @@ export interface ParticipantInfo {
   status: number
   joinTime: string
   leftTime: string
+  /** 参与者类型（对齐 LiveKit ParticipantInfo_Kind）：2=EGRESS（录屏机器人） */
+  kind: number
 }
 
 export interface MeetingMessage {

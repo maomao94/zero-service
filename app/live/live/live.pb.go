@@ -53,9 +53,11 @@ type MeetingInfo struct {
 	// LiveKit 房间 Sid（用于 Egress/Webhook 等场景）
 	RoomSid string `protobuf:"bytes,14,opt,name=room_sid,json=roomSid,proto3" json:"room_sid,omitempty"`
 	// 会议元数据 JSON
-	Metadata      string `protobuf:"bytes,15,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Metadata string `protobuf:"bytes,15,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	// 会议录制数量（列表查询时按会议聚合返回，仅用于展示"有录制/N 段录制"）
+	RecordingCount int32 `protobuf:"varint,16,opt,name=recording_count,json=recordingCount,proto3" json:"recording_count,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *MeetingInfo) Reset() {
@@ -191,6 +193,13 @@ func (x *MeetingInfo) GetMetadata() string {
 		return x.Metadata
 	}
 	return ""
+}
+
+func (x *MeetingInfo) GetRecordingCount() int32 {
+	if x != nil {
+		return x.RecordingCount
+	}
+	return 0
 }
 
 type CreateMeetingReq struct {
@@ -635,7 +644,9 @@ type ListMeetingsReq struct {
 	// 标题模糊查询
 	Title string `protobuf:"bytes,8,opt,name=title,proto3" json:"title,omitempty"`
 	// 参会人身份（按参会人检索，查询与某用户相关的会议）
-	Identity      string `protobuf:"bytes,9,opt,name=identity,proto3" json:"identity,omitempty"`
+	Identity string `protobuf:"bytes,9,opt,name=identity,proto3" json:"identity,omitempty"`
+	// 按录制情况过滤：0-全部（默认），1-仅有录制，2-仅无录制
+	HasRecording  int32 `protobuf:"varint,10,opt,name=has_recording,json=hasRecording,proto3" json:"has_recording,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -731,6 +742,13 @@ func (x *ListMeetingsReq) GetIdentity() string {
 		return x.Identity
 	}
 	return ""
+}
+
+func (x *ListMeetingsReq) GetHasRecording() int32 {
+	if x != nil {
+		return x.HasRecording
+	}
+	return 0
 }
 
 type ListMeetingsRes struct {
@@ -1077,7 +1095,10 @@ type ParticipantInfo struct {
 	// 加入时间，格式：yyyy-MM-dd HH:mm:ss
 	JoinTime string `protobuf:"bytes,4,opt,name=join_time,json=joinTime,proto3" json:"join_time,omitempty"`
 	// 离开时间，格式：yyyy-MM-dd HH:mm:ss（未离开为空字符串）
-	LeftTime      string `protobuf:"bytes,5,opt,name=left_time,json=leftTime,proto3" json:"left_time,omitempty"`
+	LeftTime string `protobuf:"bytes,5,opt,name=left_time,json=leftTime,proto3" json:"left_time,omitempty"`
+	// 参与者类型（对齐 LiveKit ParticipantInfo_Kind）：
+	// 0-标准,1-INGRESS,2-EGRESS,3-SIP,4-AGENT,7-CONNECTOR,8-BRIDGE
+	Kind          int32 `protobuf:"varint,6,opt,name=kind,proto3" json:"kind,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1147,10 +1168,21 @@ func (x *ParticipantInfo) GetLeftTime() string {
 	return ""
 }
 
+func (x *ParticipantInfo) GetKind() int32 {
+	if x != nil {
+		return x.Kind
+	}
+	return 0
+}
+
 type ListParticipantsReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 会议号
-	MeetingNo     string `protobuf:"bytes,1,opt,name=meeting_no,json=meetingNo,proto3" json:"meeting_no,omitempty"`
+	MeetingNo string `protobuf:"bytes,1,opt,name=meeting_no,json=meetingNo,proto3" json:"meeting_no,omitempty"`
+	// 需要排除的参与者类型（对齐 LiveKit ParticipantInfo_Kind），
+	// 空表示不过滤；逐项排除，例如传 [2] 排除 EGRESS（录屏机器人）。
+	// 枚举值：0-标准,1-INGRESS,2-EGRESS,3-SIP,4-AGENT,7-CONNECTOR,8-BRIDGE。
+	ExcludeKinds  []int32 `protobuf:"varint,2,rep,packed,name=exclude_kinds,json=excludeKinds,proto3" json:"exclude_kinds,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1190,6 +1222,13 @@ func (x *ListParticipantsReq) GetMeetingNo() string {
 		return x.MeetingNo
 	}
 	return ""
+}
+
+func (x *ListParticipantsReq) GetExcludeKinds() []int32 {
+	if x != nil {
+		return x.ExcludeKinds
+	}
+	return nil
 }
 
 type ListParticipantsRes struct {
@@ -3700,7 +3739,7 @@ var File_live_proto protoreflect.FileDescriptor
 const file_live_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"live.proto\x12\x04live\"\xeb\x03\n" +
+	"live.proto\x12\x04live\"\x94\x04\n" +
 	"\vMeetingInfo\x12\x1d\n" +
 	"\n" +
 	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12!\n" +
@@ -3722,7 +3761,8 @@ const file_live_proto_rawDesc = "" +
 	"\x11departure_timeout\x18\f \x01(\rR\x10departureTimeout\x12)\n" +
 	"\x10max_participants\x18\r \x01(\rR\x0fmaxParticipants\x12\x19\n" +
 	"\broom_sid\x18\x0e \x01(\tR\aroomSid\x12\x1a\n" +
-	"\bmetadata\x18\x0f \x01(\tR\bmetadata\"\xc1\x01\n" +
+	"\bmetadata\x18\x0f \x01(\tR\bmetadata\x12'\n" +
+	"\x0frecording_count\x18\x10 \x01(\x05R\x0erecordingCount\"\xc1\x01\n" +
 	"\x10CreateMeetingReq\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12#\n" +
 	"\rempty_timeout\x18\x02 \x01(\rR\femptyTimeout\x12+\n" +
@@ -3756,7 +3796,7 @@ const file_live_proto_rawDesc = "" +
 	"\n" +
 	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\"<\n" +
 	"\rGetMeetingRes\x12+\n" +
-	"\ameeting\x18\x01 \x01(\v2\x11.live.MeetingInfoR\ameeting\"\x9e\x02\n" +
+	"\ameeting\x18\x01 \x01(\v2\x11.live.MeetingInfoR\ameeting\"\xc3\x02\n" +
 	"\x0fListMeetingsReq\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\x05R\x06status\x12\x12\n" +
 	"\x04page\x18\x02 \x01(\x03R\x04page\x12\x1b\n" +
@@ -3767,7 +3807,9 @@ const file_live_proto_rawDesc = "" +
 	"\vcreate_user\x18\a \x01(\tR\n" +
 	"createUser\x12\x14\n" +
 	"\x05title\x18\b \x01(\tR\x05title\x12\x1a\n" +
-	"\bidentity\x18\t \x01(\tR\bidentity\"V\n" +
+	"\bidentity\x18\t \x01(\tR\bidentity\x12#\n" +
+	"\rhas_recording\x18\n" +
+	" \x01(\x05R\fhasRecording\"V\n" +
 	"\x0fListMeetingsRes\x12-\n" +
 	"\bmeetings\x18\x01 \x03(\v2\x11.live.MeetingInfoR\bmeetings\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\".\n" +
@@ -3786,16 +3828,18 @@ const file_live_proto_rawDesc = "" +
 	"\bidentity\x18\x02 \x01(\tR\bidentity\x12\x14\n" +
 	"\x05muted\x18\x03 \x01(\bR\x05muted\x12\x12\n" +
 	"\x04kind\x18\x04 \x01(\tR\x04kind\"\x14\n" +
-	"\x12MuteParticipantRes\"\x93\x01\n" +
+	"\x12MuteParticipantRes\"\xa7\x01\n" +
 	"\x0fParticipantInfo\x12\x1a\n" +
 	"\bidentity\x18\x01 \x01(\tR\bidentity\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
 	"\x06status\x18\x03 \x01(\x05R\x06status\x12\x1b\n" +
 	"\tjoin_time\x18\x04 \x01(\tR\bjoinTime\x12\x1b\n" +
-	"\tleft_time\x18\x05 \x01(\tR\bleftTime\"4\n" +
+	"\tleft_time\x18\x05 \x01(\tR\bleftTime\x12\x12\n" +
+	"\x04kind\x18\x06 \x01(\x05R\x04kind\"Y\n" +
 	"\x13ListParticipantsReq\x12\x1d\n" +
 	"\n" +
-	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\"P\n" +
+	"meeting_no\x18\x01 \x01(\tR\tmeetingNo\x12#\n" +
+	"\rexclude_kinds\x18\x02 \x03(\x05R\fexcludeKinds\"P\n" +
 	"\x13ListParticipantsRes\x129\n" +
 	"\fparticipants\x18\x01 \x03(\v2\x15.live.ParticipantInfoR\fparticipants\"\x87\x01\n" +
 	"\x12SendMeetingDataReq\x12\x1d\n" +

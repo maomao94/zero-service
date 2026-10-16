@@ -138,6 +138,7 @@ func (l *WebhookNotifyLogic) handleParticipantJoined(event *livekit.WebhookEvent
 		Identity:  participant.GetIdentity(),
 		Name:      participant.GetName(),
 		Status:    gormmodel.ParticipantStatusJoined,
+		Kind:      int(participant.GetKind()),
 		JoinTime:  carbonx.NowStartOfSecond().StdTime(),
 	}
 	if err := l.svcCtx.MeetingRepo.UpsertParticipant(l.ctx, p); err != nil {
