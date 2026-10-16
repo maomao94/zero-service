@@ -44,7 +44,7 @@ jobs:
     steps:
       # 第 1 步：下载代码
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # 第 2 步：初始化 CodeQL
       # 告诉工具要分析哪种语言、用哪套内置规则

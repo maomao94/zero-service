@@ -25,7 +25,7 @@ jobs:
       actions: write       # 存 opencode 二进制缓存用，消 cache write denied 警告
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 

@@ -360,7 +360,7 @@ func (nilTaskStore) Update(context.Context, *crontask.TaskConfig) error {
 	return nil
 }
 
-func (nilTaskStore) Enable(context.Context, string) error {
+func (nilTaskStore) SetEnabled(context.Context, string, time.Time) error {
 	return nil
 }
 

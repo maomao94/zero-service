@@ -28,10 +28,12 @@ func NewListMyMeetingsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Li
 func (l *ListMyMeetingsLogic) ListMyMeetings(req *types.ListMyMeetingsRequest) (resp *types.ListMeetingsReply, err error) {
 	identity := authctx.GetUserId(l.ctx)
 	r, err := l.svcCtx.LiveRpcCli.ListMeetings(l.ctx, &live.ListMeetingsReq{
-		Status:   req.Status,
-		Page:     req.Page,
-		PageSize: req.PageSize,
-		Identity: identity,
+		Status:       req.Status,
+		Page:         req.Page,
+		PageSize:     req.PageSize,
+		Identity:     identity,
+		Title:        req.Title,
+		HasRecording: req.HasRecording,
 	})
 	if err != nil {
 		return nil, err

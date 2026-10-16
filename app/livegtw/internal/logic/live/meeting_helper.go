@@ -24,6 +24,7 @@ func toMeetingInfo(m *live.MeetingInfo) types.MeetingInfo {
 		DepartureTimeout: m.GetDepartureTimeout(),
 		MaxParticipants:  m.GetMaxParticipants(),
 		RoomSid:          m.GetRoomSid(),
+		RecordingCount:   m.GetRecordingCount(),
 	}
 }
 
@@ -37,6 +38,7 @@ func toParticipantInfo(p *live.ParticipantInfo) types.ParticipantInfo {
 		Status:   p.GetStatus(),
 		JoinTime: p.GetJoinTime(),
 		LeftTime: p.GetLeftTime(),
+		Kind:     p.GetKind(),
 	}
 }
 

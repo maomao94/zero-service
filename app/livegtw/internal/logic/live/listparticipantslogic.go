@@ -26,7 +26,8 @@ func NewListParticipantsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 
 func (l *ListParticipantsLogic) ListParticipants(req *types.ListParticipantsRequest) (resp *types.ListParticipantsReply, err error) {
 	r, err := l.svcCtx.LiveRpcCli.ListParticipants(l.ctx, &live.ListParticipantsReq{
-		MeetingNo: req.MeetingNo,
+		MeetingNo:    req.MeetingNo,
+		ExcludeKinds: req.ExcludeKinds,
 	})
 	if err != nil {
 		return nil, err

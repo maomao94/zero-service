@@ -21,10 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # 下载代码
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # 装 Go（版本读 go.mod）
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           check-latest: true

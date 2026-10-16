@@ -104,6 +104,8 @@ type MeetingListQuery struct {
 	Title           string
 	// Identity 参会人身份（非空时只查该用户作为参会人的会议）
 	Identity string
+	// HasRecording 按录制情况过滤：0-全部，1-仅有录制，2-仅无录制
+	HasRecording int32
 }
 
 // ListMeetings 分页查询会议列表；status 为 0 时不过滤。
@@ -127,6 +129,15 @@ func (r *MeetingRepo) ListMeetings(ctx context.Context, q *MeetingListQuery) ([]
 	}
 	if q.Title != "" {
 		db = db.Where("title LIKE ?", "%"+q.Title+"%")
+	}
+	if q.HasRecording == 1 {
+		// 仅有录制：存在未删除的录制记录
+		subq := r.db.WithContext(ctx).Model(&gormmodel.LiveMeetingRecording{}).Select("meeting_no")
+		db = db.Where("meeting_no IN (?)", subq)
+	} else if q.HasRecording == 2 {
+		// 仅无录制：不存在未删除的录制记录
+		subq := r.db.WithContext(ctx).Model(&gormmodel.LiveMeetingRecording{}).Select("meeting_no")
+		db = db.Where("meeting_no NOT IN (?)", subq)
 	}
 	if q.CreateTimeStart != "" {
 		db = db.Where("create_time >= ?", q.CreateTimeStart)
@@ -179,13 +190,16 @@ func (r *MeetingRepo) MarkParticipantLeft(ctx context.Context, meetingNo, identi
 		}).Error
 }
 
-// ListParticipants 查询会议全部参会记录。
-func (r *MeetingRepo) ListParticipants(ctx context.Context, meetingNo string) ([]gormmodel.LiveMeetingParticipant, error) {
+// ListParticipants 查询会议参会记录。
+// excludeKinds 非空时逐项排除对应参与者类型（对齐 LiveKit ParticipantInfo_Kind），
+// 仅用于查询展示；endMeeting 等需要全量记录的场景传 nil。
+func (r *MeetingRepo) ListParticipants(ctx context.Context, meetingNo string, excludeKinds []int) ([]gormmodel.LiveMeetingParticipant, error) {
+	db := r.db.WithContext(ctx).Where("meeting_no = ?", meetingNo)
+	if len(excludeKinds) > 0 {
+		db = db.Where("kind NOT IN ?", excludeKinds)
+	}
 	var participants []gormmodel.LiveMeetingParticipant
-	err := r.db.WithContext(ctx).
-		Where("meeting_no = ?", meetingNo).
-		Order("join_time ASC").
-		Find(&participants).Error
+	err := db.Order("join_time ASC").Find(&participants).Error
 	return participants, err
 }
 
@@ -259,6 +273,32 @@ func (r *MeetingRepo) ListRecordings(ctx context.Context, meetingNo string, page
 		return nil, 0, err
 	}
 	return recs, pageRes.Total, nil
+}
+
+// CountRecordingsByMeetings 按会议号批量统计录制数量（仅统计未删除记录）。
+// 返回 meeting_no -> 数量；无录制的会议不会出现在 map 中。
+func (r *MeetingRepo) CountRecordingsByMeetings(ctx context.Context, meetingNos []string) (map[string]int64, error) {
+	counts := make(map[string]int64, len(meetingNos))
+	if len(meetingNos) == 0 {
+		return counts, nil
+	}
+	type recordingCount struct {
+		MeetingNo string
+		Count     int64
+	}
+	var rows []recordingCount
+	if err := r.db.WithContext(ctx).
+		Model(&gormmodel.LiveMeetingRecording{}).
+		Select("meeting_no, COUNT(*) AS count").
+		Where("meeting_no IN ?", meetingNos).
+		Group("meeting_no").
+		Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		counts[row.MeetingNo] = row.Count
+	}
+	return counts, nil
 }
 
 // SaveRecordingStarted 记录/更新录制开始（按 egress_id 幂等），并返回落库后的记录。

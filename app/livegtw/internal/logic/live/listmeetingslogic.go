@@ -35,6 +35,7 @@ func (l *ListMeetingsLogic) ListMeetings(req *types.ListMeetingsRequest) (resp *
 		CreateUser:      req.CreateUser,
 		Title:           req.Title,
 		Identity:        req.Identity,
+		HasRecording:    req.HasRecording,
 	})
 	if err != nil {
 		return nil, err

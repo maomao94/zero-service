@@ -204,7 +204,7 @@ func TestMemoryStoreEnableDisable(t *testing.T) {
 	if got.Status != StatusDisabled {
 		t.Fatalf("expected disabled, got %v", got.Status)
 	}
-	if err := store.Enable(ctx, cfg.ID); err != nil {
+	if err := store.SetEnabled(ctx, cfg.ID, time.Now().Add(time.Hour).Truncate(time.Second)); err != nil {
 		t.Fatal(err)
 	}
 	got, _ = store.GetByCode(ctx, "t")
@@ -216,7 +216,7 @@ func TestMemoryStoreEnableDisable(t *testing.T) {
 	}
 }
 
-func TestMemoryStoreEnablePreservesOneShotSchedule(t *testing.T) {
+func TestSchedulerEnablePreservesOneShotSchedule(t *testing.T) {
 	store := NewMemoryStore()
 	ctx := context.Background()
 	scheduled := time.Now().Add(time.Hour).Truncate(time.Second)
@@ -227,15 +227,68 @@ func TestMemoryStoreEnablePreservesOneShotSchedule(t *testing.T) {
 	if err := store.Disable(ctx, cfg.ID); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.Enable(ctx, cfg.ID); err != nil {
+	if err := NewScheduler(store, nil).Enable(ctx, cfg.ID); err != nil {
 		t.Fatal(err)
 	}
 	got, err := store.GetByID(ctx, cfg.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
+	if got.Status != StatusEnabled {
+		t.Fatalf("enable status = %v, want enabled", got.Status)
+	}
 	if !got.NextRun.Equal(scheduled) {
 		t.Fatalf("one-shot next run = %v, want preserved %v", got.NextRun, scheduled)
+	}
+}
+
+func TestSchedulerEnableRecalculatesRecurringWithPredicate(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	cfg := &TaskConfig{
+		TaskCode: "enable-recurring",
+		Status:   StatusDisabled,
+		RRuleStr: "DTSTART:20200101T000000Z\nRRULE:FREQ=DAILY",
+		NextRun:  time.Now().Add(-time.Hour).Truncate(time.Second),
+	}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	scheduler := NewScheduler(store, nil, WithInvalidTimePredicate(func(_ *TaskConfig, _ time.Time) bool {
+		return true
+	}))
+	if err := scheduler.Enable(ctx, cfg.ID); err != nil {
+		t.Fatal(err)
+	}
+	got, err := store.GetByID(ctx, cfg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Status != StatusEnabled {
+		t.Fatalf("enable status = %v, want enabled", got.Status)
+	}
+	if !got.NextRun.IsZero() {
+		t.Fatalf("predicate rejecting every candidate must leave no next run, got %v", got.NextRun)
+	}
+}
+
+func TestSchedulerEnableIsIdempotent(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	next := time.Now().Add(time.Hour).Truncate(time.Second)
+	cfg := &TaskConfig{TaskCode: "enable-idempotent", Status: StatusEnabled, RRuleStr: testRRuleSet("FREQ=DAILY"), NextRun: next}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	if err := NewScheduler(store, nil).Enable(ctx, cfg.ID); err != nil {
+		t.Fatal(err)
+	}
+	got, err := store.GetByID(ctx, cfg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.NextRun.Equal(next) {
+		t.Fatalf("already enabled task next run changed: %v, want %v", got.NextRun, next)
 	}
 }
 
@@ -967,6 +1020,119 @@ func TestExecuteTaskStaleSkipDoesNotRecordSuccess(t *testing.T) {
 	}
 	if !got.LastRun.Equal(originalLastRun) || !got.LastScheduledRun.Equal(originalScheduledRun) {
 		t.Fatalf("stale skip changed success history: %+v", got)
+	}
+}
+
+func TestExecuteTaskMisfireSkipReportsAndSkips(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	now := time.Now().Truncate(time.Second)
+	cfg := &TaskConfig{TaskCode: "misfire-skip", Status: StatusEnabled, RRuleStr: testRRuleSet("FREQ=DAILY"), NextRun: now.Add(-time.Hour)}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	claim, err := store.LockAndFetch(ctx, now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var called bool
+	var events []SkipEvent
+	NewScheduler(store, func(context.Context, *TaskConfig) error {
+		called = true
+		return nil
+	}, WithMaxDelay(time.Minute), WithOnSkip(func(_ context.Context, event SkipEvent) {
+		events = append(events, event)
+	})).executeTask(claim)
+	if called {
+		t.Fatal("default misfire policy must not invoke handler")
+	}
+	if len(events) != 1 {
+		t.Fatalf("skip events = %d, want 1", len(events))
+	}
+	event := events[0]
+	if event.Policy != MisfirePolicySkip || event.Reason != SkipReasonMisfire || event.Task.TaskCode != cfg.TaskCode {
+		t.Fatalf("unexpected skip event: %+v", event)
+	}
+	if event.ScheduledTime.IsZero() || event.MaxDelay != time.Minute || event.Delay <= event.MaxDelay {
+		t.Fatalf("skip event missing schedule detail: %+v", event)
+	}
+	got, _ := store.GetByID(ctx, cfg.ID)
+	if !got.LastRun.IsZero() {
+		t.Fatalf("skip recorded a successful run: %+v", got)
+	}
+}
+
+func TestExecuteTaskMisfireRunImmediatelyInvokesHandler(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	now := time.Now().Truncate(time.Second)
+	cfg := &TaskConfig{
+		TaskCode: "misfire-run", Status: StatusEnabled, RRuleStr: testRRuleSet("FREQ=DAILY"),
+		NextRun: now.Add(-time.Hour), Misfire: MisfirePolicyRunImmediately,
+	}
+	if err := store.Insert(ctx, cfg); err != nil {
+		t.Fatal(err)
+	}
+	claim, err := store.LockAndFetch(ctx, now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var called bool
+	skipEvents := 0
+	NewScheduler(store, func(context.Context, *TaskConfig) error {
+		called = true
+		return nil
+	}, WithMaxDelay(time.Minute), WithOnSkip(func(context.Context, SkipEvent) {
+		skipEvents++
+	})).executeTask(claim)
+	if !called {
+		t.Fatal("run-immediately policy must invoke handler")
+	}
+	if skipEvents != 0 {
+		t.Fatalf("run-immediately must not report skip, got %d", skipEvents)
+	}
+	got, _ := store.GetByID(ctx, cfg.ID)
+	if got.LastRun.IsZero() || !got.LastScheduledRun.Equal(claim.Task.ScheduledTime) {
+		t.Fatalf("catch-up run history = %+v", got)
+	}
+}
+
+func TestExecuteTaskMisfirePolicyPrecedence(t *testing.T) {
+	tests := []struct {
+		name          string
+		taskPolicy    MisfirePolicy
+		defaultPolicy MisfirePolicy
+		wantCalled    bool
+	}{
+		{name: "task policy overrides scheduler default", taskPolicy: MisfirePolicySkip, defaultPolicy: MisfirePolicyRunImmediately, wantCalled: false},
+		{name: "scheduler default used when task unset", taskPolicy: MisfirePolicyDefault, defaultPolicy: MisfirePolicyRunImmediately, wantCalled: true},
+		{name: "fallback is skip when both unset", taskPolicy: MisfirePolicyDefault, defaultPolicy: MisfirePolicyDefault, wantCalled: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := NewMemoryStore()
+			ctx := context.Background()
+			now := time.Now().Truncate(time.Second)
+			cfg := &TaskConfig{
+				TaskCode: "precedence", Status: StatusEnabled, RRuleStr: testRRuleSet("FREQ=DAILY"),
+				NextRun: now.Add(-time.Hour), Misfire: tt.taskPolicy,
+			}
+			if err := store.Insert(ctx, cfg); err != nil {
+				t.Fatal(err)
+			}
+			claim, err := store.LockAndFetch(ctx, now, time.Minute)
+			if err != nil {
+				t.Fatal(err)
+			}
+			called := false
+			NewScheduler(store, func(context.Context, *TaskConfig) error {
+				called = true
+				return nil
+			}, WithMaxDelay(time.Minute), WithMisfireDefault(tt.defaultPolicy)).executeTask(claim)
+			if called != tt.wantCalled {
+				t.Fatalf("handler called = %v, want %v", called, tt.wantCalled)
+			}
+		})
 	}
 }
 

@@ -94,6 +94,8 @@ message MeetingInfo {
   string room_sid = 14 [json_name = "roomSid"];
   // 会议元数据 JSON
   string metadata = 15 [json_name = "metadata"];
+  // 会议录制数量（列表查询时按会议聚合返回，仅用于展示"有录制/N 段录制"）
+  int32 recording_count = 16 [json_name = "recordingCount"];
 }
 
 message CreateMeetingReq {
@@ -179,6 +181,8 @@ message ListMeetingsReq {
   string title = 8 [json_name = "title"];
   // 参会人身份（按参会人检索，查询与某用户相关的会议）
   string identity = 9 [json_name = "identity"];
+  // 按录制情况过滤：0-全部（默认），1-仅有录制，2-仅无录制
+  int32 has_recording = 10 [json_name = "hasRecording"];
 }
 
 message ListMeetingsRes {
@@ -228,11 +232,18 @@ message ParticipantInfo {
   string join_time = 4 [json_name = "joinTime"];
   // 离开时间，格式：yyyy-MM-dd HH:mm:ss（未离开为空字符串）
   string left_time = 5 [json_name = "leftTime"];
+  // 参与者类型（对齐 LiveKit ParticipantInfo_Kind）：
+  // 0-标准,1-INGRESS,2-EGRESS,3-SIP,4-AGENT,7-CONNECTOR,8-BRIDGE
+  int32 kind = 6 [json_name = "kind"];
 }
 
 message ListParticipantsReq {
   // 会议号
   string meeting_no = 1 [json_name = "meetingNo"];
+  // 需要排除的参与者类型（对齐 LiveKit ParticipantInfo_Kind），
+  // 空表示不过滤；逐项排除，例如传 [2] 排除 EGRESS（录屏机器人）。
+  // 枚举值：0-标准,1-INGRESS,2-EGRESS,3-SIP,4-AGENT,7-CONNECTOR,8-BRIDGE。
+  repeated int32 exclude_kinds = 2 [json_name = "excludeKinds"];
 }
 
 message ListParticipantsRes {

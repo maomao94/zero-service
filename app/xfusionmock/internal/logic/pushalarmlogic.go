@@ -11,6 +11,7 @@ import (
 
 	"zero-service/app/xfusionmock/internal/svc"
 	"zero-service/app/xfusionmock/xfusionmock"
+	"zero-service/common/carbonx"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -123,7 +124,7 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 // 生成报警编号的工具函数
 func generateAlarmNo() string {
 	// 1. 获取当前日期（格式：yyyymmdd）
-	now := time.Now().Format("20060102")
+	now := carbonx.NowDateCompact()
 
 	// 2. 生成流水号（线程安全）
 	// 实际项目中可以用 Redis/数据库 等持久化计数

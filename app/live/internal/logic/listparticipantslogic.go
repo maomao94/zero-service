@@ -31,7 +31,7 @@ func (l *ListParticipantsLogic) ListParticipants(in *live.ListParticipantsReq) (
 	if err := requireMeetingNo(in.MeetingNo); err != nil {
 		return nil, err
 	}
-	participants, err := l.svcCtx.MeetingRepo.ListParticipants(l.ctx, in.MeetingNo)
+	participants, err := l.svcCtx.MeetingRepo.ListParticipants(l.ctx, in.MeetingNo, toIntSlice(in.ExcludeKinds))
 	if err != nil {
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询参与者失败")
 	}
@@ -41,6 +41,7 @@ func (l *ListParticipantsLogic) ListParticipants(in *live.ListParticipantsReq) (
 			Identity: participants[i].Identity,
 			Name:     participants[i].Name,
 			Status:   int32(participants[i].Status),
+			Kind:     int32(participants[i].Kind),
 			JoinTime: carbonx.FormatDateTimeOrEmpty(participants[i].JoinTime),
 			LeftTime: carbonx.FormatNullDateTime(participants[i].LeftTime),
 		})

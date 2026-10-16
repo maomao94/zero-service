@@ -95,7 +95,7 @@ func TestWebhookParticipantJoinedAndLeft(t *testing.T) {
 	})}); err != nil {
 		t.Fatal(err)
 	}
-	ps, err := svcCtx.MeetingRepo.ListParticipants(ctx, meeting.Meeting.MeetingNo)
+	ps, err := svcCtx.MeetingRepo.ListParticipants(ctx, meeting.Meeting.MeetingNo, nil)
 	if err != nil || len(ps) != 1 || ps[0].Status != gormmodel.ParticipantStatusJoined {
 		t.Fatalf("participants = %v err=%v", ps, err)
 	}
@@ -106,9 +106,39 @@ func TestWebhookParticipantJoinedAndLeft(t *testing.T) {
 	})}); err != nil {
 		t.Fatal(err)
 	}
-	ps, _ = svcCtx.MeetingRepo.ListParticipants(ctx, meeting.Meeting.MeetingNo)
+	ps, _ = svcCtx.MeetingRepo.ListParticipants(ctx, meeting.Meeting.MeetingNo, nil)
 	if ps[0].Status != gormmodel.ParticipantStatusLeft || !ps[0].LeftTime.Valid {
 		t.Fatalf("participant should be left: %+v", ps[0])
+	}
+}
+
+func TestWebhookParticipantJoinedRecordsKind(t *testing.T) {
+	mock := &liveKitMock{}
+	svcCtx := newTestSvcCtx(t, mock)
+	ctx := authctx.WithUserID(context.Background(), "alice")
+
+	l := NewCreateMeetingLogic(ctx, svcCtx)
+	meeting, err := l.CreateMeeting(&live.CreateMeetingReq{Title: "t"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wh := NewWebhookNotifyLogic(ctx, svcCtx)
+	room := &livekit.Room{Name: meeting.Meeting.MeetingNo}
+
+	// Egress 录屏机器人入会：kind=EGRESS 应落库
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: mustWebhookData(t, &livekit.WebhookEvent{
+		Id: "EVT-EG1", Event: "participant_joined", Room: room,
+		Participant: &livekit.ParticipantInfo{Identity: "EG_x", Name: "egress", Kind: livekit.ParticipantInfo_EGRESS},
+	})}); err != nil {
+		t.Fatal(err)
+	}
+	ps, err := svcCtx.MeetingRepo.ListParticipants(ctx, meeting.Meeting.MeetingNo, nil)
+	if err != nil || len(ps) != 1 || ps[0].Kind != gormmodel.ParticipantKindEgress {
+		t.Fatalf("egress kind not persisted: %+v err=%v", ps, err)
+	}
+	filtered, err := svcCtx.MeetingRepo.ListParticipants(ctx, meeting.Meeting.MeetingNo, []int{gormmodel.ParticipantKindEgress})
+	if err != nil || len(filtered) != 0 {
+		t.Fatalf("egress should be excluded: %+v err=%v", filtered, err)
 	}
 }
 

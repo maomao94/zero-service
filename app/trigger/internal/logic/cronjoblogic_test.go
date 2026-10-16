@@ -26,7 +26,7 @@ import (
 
 func TestCronJobLifecycle(t *testing.T) {
 	store, db := newCronJobLogicTestStore(t)
-	serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store}
+	serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store, CronJobScheduler: crontask.NewScheduler(store, nil)}
 	ctx := context.Background()
 	nextHour := time.Now().Add(time.Hour).Hour()
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/carbonx"
 	"zero-service/common/rrulex"
 
 	"github.com/dromara/carbon/v2"
@@ -90,7 +91,7 @@ func compileSchedule(rule *trigger.PlanRulePb, startText, endText string, exclud
 			}
 		}
 		for _, specifiedTime := range parsedSpecifiedTimes {
-			if specifiedTime.Format("2006-01-02") == value {
+			if carbonx.FormatDate(specifiedTime) == value {
 				set.ExDate(specifiedTime)
 			}
 		}
@@ -137,7 +138,7 @@ func parseExactTimes(values []string, startTime, endTime time.Time, fieldName st
 		if err != nil {
 			return nil, fmt.Errorf("%s格式错误 %q: %w", fieldName, value, err)
 		}
-		if exactTime.Format(dateTimeLayout) != value {
+		if carbonx.FormatDateTime(exactTime) != value {
 			return nil, fmt.Errorf("%s格式错误 %q: 必须为 yyyy-MM-dd HH:mm:ss", fieldName, value)
 		}
 		exactTime = exactTime.Truncate(time.Second)

@@ -98,7 +98,7 @@ func TestMeetingRepoUpsertParticipantKeepsFirstJoinTime(t *testing.T) {
 	if err := repo.UpsertParticipant(ctx, p2); err != nil {
 		t.Fatal(err)
 	}
-	list, err := repo.ListParticipants(ctx, "M001")
+	list, err := repo.ListParticipants(ctx, "M001", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,7 +133,7 @@ func TestMeetingRepoMarkParticipantLeft(t *testing.T) {
 	if err := repo.MarkParticipantLeft(ctx, "M001", "bob", leftAt); err != nil {
 		t.Fatal(err)
 	}
-	list, err := repo.ListParticipants(ctx, "M001")
+	list, err := repo.ListParticipants(ctx, "M001", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -165,6 +165,62 @@ func TestMeetingRepoListMeetingsPaged(t *testing.T) {
 	}
 	if total != 3 || len(meetings) != 2 {
 		t.Fatalf("total=%d len=%d", total, len(meetings))
+	}
+}
+
+func TestMeetingRepoListParticipantsExcludeKinds(t *testing.T) {
+	db := openTestDB(t)
+	repo := NewMeetingRepo(db)
+	ctx := context.Background()
+	now := time.Now()
+	for _, p := range []*gormmodel.LiveMeetingParticipant{
+		{MeetingNo: "M001", Identity: "bob", Name: "bob", Status: gormmodel.ParticipantStatusJoined, Kind: gormmodel.ParticipantKindStandard, JoinTime: now},
+		{MeetingNo: "M001", Identity: "EG_1", Name: "egress", Status: gormmodel.ParticipantStatusJoined, Kind: gormmodel.ParticipantKindEgress, JoinTime: now},
+	} {
+		if err := repo.UpsertParticipant(ctx, p); err != nil {
+			t.Fatal(err)
+		}
+	}
+	all, err := repo.ListParticipants(ctx, "M001", nil)
+	if err != nil || len(all) != 2 {
+		t.Fatalf("want 2 participants, got %d err=%v", len(all), err)
+	}
+	filtered, err := repo.ListParticipants(ctx, "M001", []int{gormmodel.ParticipantKindEgress})
+	if err != nil || len(filtered) != 1 || filtered[0].Identity != "bob" {
+		t.Fatalf("exclude egress failed: %+v err=%v", filtered, err)
+	}
+}
+
+func TestMeetingRepoListMeetingsHasRecordingAndCount(t *testing.T) {
+	db := openTestDB(t)
+	if err := db.AutoMigrate(&gormmodel.LiveMeetingRecording{}); err != nil {
+		t.Fatal(err)
+	}
+	repo := NewMeetingRepo(db)
+	ctx := context.Background()
+	for _, no := range []string{"M1", "M2"} {
+		m := &gormmodel.LiveMeeting{MeetingNo: no, Title: "t", Status: gormmodel.MeetingStatusActive, StartTime: time.Now()}
+		if err := repo.CreateMeeting(ctx, m); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := db.WithContext(ctx).Create(&gormmodel.LiveMeetingRecording{
+		MeetingNo: "M1", EgressId: "EG_1", RoomName: "M1", Status: gormmodel.RecordingStatusComplete, StartTime: time.Now(),
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	withRec, total, err := repo.ListMeetings(ctx, &MeetingListQuery{Page: 1, PageSize: 10, HasRecording: 1})
+	if err != nil || total != 1 || len(withRec) != 1 || withRec[0].MeetingNo != "M1" {
+		t.Fatalf("has recording filter failed: total=%d meetings=%v err=%v", total, withRec, err)
+	}
+	noRec, total, err := repo.ListMeetings(ctx, &MeetingListQuery{Page: 1, PageSize: 10, HasRecording: 2})
+	if err != nil || total != 1 || len(noRec) != 1 || noRec[0].MeetingNo != "M2" {
+		t.Fatalf("no recording filter failed: total=%d meetings=%v err=%v", total, noRec, err)
+	}
+	counts, err := repo.CountRecordingsByMeetings(ctx, []string{"M1", "M2"})
+	if err != nil || counts["M1"] != 1 || counts["M2"] != 0 {
+		t.Fatalf("counts=%v err=%v", counts, err)
 	}
 }
 

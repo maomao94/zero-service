@@ -130,6 +130,7 @@ func (l *JoinMeetingLogic) JoinMeeting(in *live.JoinMeetingReq) (*live.JoinMeeti
 		Identity:   in.Identity,
 		Name:       strings.TrimSpace(in.Name),
 		Status:     gormmodel.ParticipantStatusJoined,
+		Kind:       gormmodel.ParticipantKindStandard,
 		JoinTime:   now,
 	}
 	if err := l.svcCtx.MeetingRepo.UpsertParticipant(l.ctx, participant); err != nil {

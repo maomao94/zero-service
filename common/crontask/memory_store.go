@@ -195,28 +195,15 @@ func (m *MemoryStore) Update(ctx context.Context, cfg *TaskConfig) error {
 	return nil
 }
 
-// Enable 启用任务，并从当前时间重新计算未来 NextRun。
-func (m *MemoryStore) Enable(ctx context.Context, id string) error {
+// SetEnabled 启用任务并写入调用方计算好的 NextRun，同时清空在途执行的 ScheduledTime。
+// 本方法只落库、不计算下次时间。
+func (m *MemoryStore) SetEnabled(ctx context.Context, id string, nextRun time.Time) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	task, ok := m.tasks[id]
 	if !ok {
 		return ErrNotFound
-	}
-	if task.Status == StatusEnabled {
-		return nil
-	}
-	nextRun := task.NextRun
-	if !task.ScheduledTime.IsZero() {
-		nextRun = task.ScheduledTime
-	}
-	if task.RRuleStr != "" {
-		set, err := rrulex.ParseSet(task.RRuleStr)
-		if err != nil {
-			return err
-		}
-		nextRun = set.After(time.Now(), false)
 	}
 	task.Status = StatusEnabled
 	task.NextRun = nextRun

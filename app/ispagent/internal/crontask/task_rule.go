@@ -332,6 +332,7 @@ func NewTaskConfig(existing *crontask.TaskConfig, fields *IspTaskFields) (*cront
 	if existing != nil {
 		cfg.ID = existing.ID
 		cfg.LockTimeout = existing.LockTimeout
+		cfg.Misfire = existing.Misfire
 	}
 	return cfg, nil
 }

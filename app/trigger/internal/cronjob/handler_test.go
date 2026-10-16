@@ -155,6 +155,29 @@ func TestLoggingEventHandlerLeavesMessageEmptyWithoutResponse(t *testing.T) {
 	}
 }
 
+func TestSkipRecorderWritesSkippedLog(t *testing.T) {
+	db := newCronJobTestDB(t)
+	task := eventHandlerTask(t)
+	NewSkipRecorder(&gormx.DB{DB: db})(context.Background(), crontask.SkipEvent{
+		Task:          task,
+		ScheduledTime: task.ScheduledTime,
+		Delay:         2 * time.Hour,
+		MaxDelay:      time.Minute,
+		Policy:        crontask.MisfirePolicySkip,
+		Reason:        crontask.SkipReasonMisfire,
+	})
+	var log gormmodel.CronExecLog
+	if err := db.Order("create_time DESC").First(&log).Error; err != nil {
+		t.Fatal(err)
+	}
+	if !log.Skipped || log.Status != 0 || log.JobId != task.ID || log.TaskCode != task.TaskCode {
+		t.Fatalf("unexpected skip log: %+v", log)
+	}
+	if log.ScheduledTime.IsZero() || log.Message == "" {
+		t.Fatalf("skip log missing schedule detail or message: %+v", log)
+	}
+}
+
 func eventHandlerTask(t *testing.T) *crontask.TaskConfig {
 	t.Helper()
 	rule, _ := json.Marshal(map[string]any{"freq": 3})

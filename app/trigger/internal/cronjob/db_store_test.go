@@ -475,9 +475,10 @@ func TestDBStoreDisableIsIdempotentAndRejectsMissingJob(t *testing.T) {
 	}
 }
 
-func TestDBStoreEnableRecalculatesOnceAndClearsInFlightSchedule(t *testing.T) {
+func TestSchedulerEnableRecalculatesOnceAndClearsInFlightSchedule(t *testing.T) {
 	db := newCronJobTestDB(t)
 	store := NewDBStore(&gormx.DB{DB: db})
+	scheduler := crontask.NewScheduler(store, nil)
 	now := time.Now()
 	cfg := cronJobTestConfig(t, now.Add(-time.Minute))
 	if err := store.Insert(context.Background(), cfg); err != nil {
@@ -490,7 +491,7 @@ func TestDBStoreEnableRecalculatesOnceAndClearsInFlightSchedule(t *testing.T) {
 	if err := store.Disable(context.Background(), cfg.ID); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.Enable(context.Background(), cfg.ID); err != nil {
+	if err := scheduler.Enable(context.Background(), cfg.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -505,7 +506,7 @@ func TestDBStoreEnableRecalculatesOnceAndClearsInFlightSchedule(t *testing.T) {
 		t.Fatalf("enable must clear in-flight scheduled time: %v", enabled.ScheduledTime)
 	}
 	firstNextRun := enabled.NextRun.Time
-	if err := store.Enable(context.Background(), cfg.ID); err != nil {
+	if err := scheduler.Enable(context.Background(), cfg.ID); err != nil {
 		t.Fatal(err)
 	}
 	enabled = gormmodel.CronJob{}
@@ -520,7 +521,7 @@ func TestDBStoreEnableRecalculatesOnceAndClearsInFlightSchedule(t *testing.T) {
 	}
 }
 
-func TestDBStoreEnableRecalculatesFromPersistedExactTimeSet(t *testing.T) {
+func TestSchedulerEnableRecalculatesFromPersistedExactTimeSet(t *testing.T) {
 	db := newCronJobTestDB(t)
 	store := NewDBStore(&gormx.DB{DB: db})
 	now := time.Now().UTC().Truncate(time.Second)
@@ -538,7 +539,7 @@ func TestDBStoreEnableRecalculatesFromPersistedExactTimeSet(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := store.Enable(context.Background(), cfg.ID); err != nil {
+	if err := crontask.NewScheduler(store, nil).Enable(context.Background(), cfg.ID); err != nil {
 		t.Fatal(err)
 	}
 	loaded, err := store.GetByID(context.Background(), cfg.ID)
@@ -550,9 +551,10 @@ func TestDBStoreEnableRecalculatesFromPersistedExactTimeSet(t *testing.T) {
 	}
 }
 
-func TestDBStoreEnablePreservesOneShotSchedule(t *testing.T) {
+func TestSchedulerEnablePreservesOneShotSchedule(t *testing.T) {
 	db := newCronJobTestDB(t)
 	store := NewDBStore(&gormx.DB{DB: db})
+	scheduler := crontask.NewScheduler(store, nil)
 	scheduled := time.Now().Add(time.Hour).Truncate(time.Second)
 	cfg := cronJobTestConfig(t, scheduled)
 	cfg.TaskCode = "ONE-SHOT-ENABLE"
@@ -563,7 +565,7 @@ func TestDBStoreEnablePreservesOneShotSchedule(t *testing.T) {
 	if err := store.Disable(context.Background(), cfg.ID); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.Enable(context.Background(), cfg.ID); err != nil {
+	if err := scheduler.Enable(context.Background(), cfg.ID); err != nil {
 		t.Fatal(err)
 	}
 	got, err := store.GetByID(context.Background(), cfg.ID)
@@ -790,6 +792,23 @@ func TestDBStoreGetByIDAndProto(t *testing.T) {
 	}
 	if pbJob.RruleStr != alphaRecord.RRuleStr || pbJob.ScheduleDescription == "" {
 		t.Fatalf("unexpected proto schedule fields: %+v", pbJob)
+	}
+}
+
+func TestDBStoreMisfireRoundTrip(t *testing.T) {
+	db := newCronJobTestDB(t)
+	store := NewDBStore(&gormx.DB{DB: db})
+	cfg := cronJobTestConfig(t, time.Now().Add(time.Hour))
+	cfg.Misfire = crontask.MisfirePolicyDelayNext
+	if err := store.Insert(context.Background(), cfg); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := store.GetByID(context.Background(), cfg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Misfire != crontask.MisfirePolicyDelayNext {
+		t.Fatalf("misfire = %v, want %v", loaded.Misfire, crontask.MisfirePolicyDelayNext)
 	}
 }
 
