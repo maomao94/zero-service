@@ -8,12 +8,12 @@ import (
 	"os"
 	"path"
 	"strings"
+	"zero-service/common/carbonx"
 	"zero-service/common/imagex"
 
 	"zero-service/gtw/internal/svc"
 	"zero-service/gtw/internal/types"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/random"
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -57,7 +57,7 @@ func (l *MfsUploadFileLogic) MfsUploadFile(req *types.UploadFileRequest) (resp *
 	if req.MfsType == 2 {
 		typeFile = "bizFile"
 	}
-	dayStr := carbon.Now().Format("20060102")
+	dayStr := carbonx.NowDateCompact()
 	dirPath := l.svcCtx.Config.NfsRootPath + "/" + typeFile + "/" + dayStr
 	err = os.MkdirAll(dirPath, os.ModePerm)
 	if err != nil {

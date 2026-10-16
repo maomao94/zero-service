@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"zero-service/common/carbonx"
 )
 
 // ContainerDetail 容器完整详情。
@@ -144,5 +146,5 @@ func parseDockerTime(s string) string {
 	if err != nil {
 		return s
 	}
-	return t.Format("2006-01-02 15:04:05")
+	return carbonx.FormatDateTime(t)
 }

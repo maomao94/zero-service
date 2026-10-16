@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"zero-service/common/carbonx"
+
 	"github.com/duke-git/lancet/v2/mathutil"
 )
 
@@ -122,7 +124,7 @@ func fillTakenTime(meta *ImageMeta, tags ExifTags) {
 	}
 	cleanTime := strings.Trim(tag.Value, "\"")
 	if t, err := time.Parse("2006:01:02 15:04:05", cleanTime); err == nil {
-		meta.Time = t.Format("2006-01-02 15:04:05")
+		meta.Time = carbonx.FormatDateTime(t)
 		return
 	}
 	meta.Time = cleanTime
