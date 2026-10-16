@@ -27,12 +27,15 @@ func NewEnableCronJobLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Ena
 	}
 }
 
-// 启用 Cron Job，并从当前时间重新计算未来执行时间
+// 启用 Cron Job，下次执行时间由调度器统一计算
 func (l *EnableCronJobLogic) EnableCronJob(in *trigger.EnableCronJobReq) (*trigger.EnableCronJobRes, error) {
 	if err := in.Validate(); err != nil {
 		return nil, err
 	}
-	if err := l.svcCtx.CronJobStore.Enable(l.ctx, in.JobId); err != nil {
+	if l.svcCtx == nil || l.svcCtx.CronJobScheduler == nil {
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, errors.New("cron job scheduler is not initialized"), "启用 Cron Job 失败")
+	}
+	if err := l.svcCtx.CronJobScheduler.Enable(l.ctx, in.JobId); err != nil {
 		if errors.Is(err, crontask.ErrNotFound) {
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
 		}

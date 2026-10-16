@@ -199,29 +199,9 @@ func (s *DBStore) Update(ctx context.Context, cfg *crontask.TaskConfig) error {
 	return nil
 }
 
-// Enable 启用任务，并根据已保存的 RRULE 从当前时间重新计算未来 NextRun。
-func (s *DBStore) Enable(ctx context.Context, id string) error {
-	var record gormmodel.GormTaskConfig
-	if err := s.db.WithContext(ctx).Where("id = ?", id).First(&record).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return crontask.ErrNotFound
-		}
-		return err
-	}
-	if crontask.TaskStatus(record.Status) == crontask.StatusEnabled {
-		return nil
-	}
-	nextRun := record.NextRun.Time
-	if record.ScheduledTime.Valid {
-		nextRun = record.ScheduledTime.Time
-	}
-	if record.RRuleStr != "" {
-		set, err := rrulex.ParseSet(record.RRuleStr)
-		if err != nil {
-			return err
-		}
-		nextRun = set.After(time.Now(), false)
-	}
+// SetEnabled 启用任务并写入调用方计算好的 NextRun，同时清空在途执行的 ScheduledTime。
+// 本方法只落库、不计算下次时间；下次时间由 Scheduler.Enable 统一计算。
+func (s *DBStore) SetEnabled(ctx context.Context, id string, nextRun time.Time) error {
 	result := s.db.WithContext(ctx).
 		Model(&gormmodel.GormTaskConfig{}).
 		Where("id = ?", id).
