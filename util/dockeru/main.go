@@ -12,6 +12,8 @@ import (
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	"zero-service/common/carbonx"
 )
 
 type ContainerInfo struct {
@@ -119,7 +121,7 @@ func main() {
 				createdTime = time.Now() // 如果解析错误，使用当前时间
 			}
 			// 格式化为日期和时间（YYYY-MM-DD HH:MM:SS）
-			formattedCreated := createdTime.Format("2006-01-02 15:04:05")
+			formattedCreated := carbonx.FormatDateTime(createdTime)
 
 			// 限制列宽最大长度，避免过长内容影响表格格式
 			truncate := func(s string, maxLen int) string {
@@ -227,7 +229,7 @@ func main() {
 				createdTime = time.Now() // 如果解析错误，使用当前时间
 			}
 			// 格式化为日期和时间（YYYY-MM-DD HH:MM:SS）
-			formattedCreated := createdTime.Format("2006-01-02 15:04:05")
+			formattedCreated := carbonx.FormatDateTime(createdTime)
 
 			// 检查状态并设置颜色
 			var statusColor string

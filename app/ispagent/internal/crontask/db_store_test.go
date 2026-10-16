@@ -359,9 +359,10 @@ func TestDBStoreCompleteUsesLeaseTokenNotStatus(t *testing.T) {
 	}
 }
 
-func TestDBStoreEnableDisableAreIdempotent(t *testing.T) {
+func TestSchedulerEnableDisableAreIdempotent(t *testing.T) {
 	db := newDBStoreTestDB(t)
 	store := NewDBStore(&gormx.DB{DB: db})
+	scheduler := commoncrontask.NewScheduler(store, nil)
 	now := time.Now()
 	record := &gormmodel.GormTaskConfig{
 		TaskCode: "ENABLE",
@@ -382,7 +383,7 @@ func TestDBStoreEnableDisableAreIdempotent(t *testing.T) {
 	if err := store.Disable(context.Background(), "missing"); !errors.Is(err, commoncrontask.ErrUpdate) {
 		t.Fatalf("disable missing task = %v, want ErrUpdate", err)
 	}
-	if err := store.Enable(context.Background(), record.Id); err != nil {
+	if err := scheduler.Enable(context.Background(), record.Id); err != nil {
 		t.Fatal(err)
 	}
 	var enabled gormmodel.GormTaskConfig
@@ -393,7 +394,7 @@ func TestDBStoreEnableDisableAreIdempotent(t *testing.T) {
 	if enabled.Status != int(commoncrontask.StatusEnabled) || !firstNextRun.Valid || !firstNextRun.Time.After(now) {
 		t.Fatalf("unexpected enabled task: %+v", enabled)
 	}
-	if err := store.Enable(context.Background(), record.Id); err != nil {
+	if err := scheduler.Enable(context.Background(), record.Id); err != nil {
 		t.Fatalf("repeated enable: %v", err)
 	}
 	enabled = gormmodel.GormTaskConfig{}
@@ -405,9 +406,10 @@ func TestDBStoreEnableDisableAreIdempotent(t *testing.T) {
 	}
 }
 
-func TestDBStoreEnablePreservesOneShotSchedule(t *testing.T) {
+func TestSchedulerEnablePreservesOneShotSchedule(t *testing.T) {
 	db := newDBStoreTestDB(t)
 	store := NewDBStore(&gormx.DB{DB: db})
+	scheduler := commoncrontask.NewScheduler(store, nil)
 	scheduled := time.Now().Add(time.Hour).Truncate(time.Second)
 	record := &gormmodel.GormTaskConfig{
 		TaskCode: "ONE-SHOT-ENABLE",
@@ -420,7 +422,7 @@ func TestDBStoreEnablePreservesOneShotSchedule(t *testing.T) {
 	if err := store.Disable(context.Background(), record.Id); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.Enable(context.Background(), record.Id); err != nil {
+	if err := scheduler.Enable(context.Background(), record.Id); err != nil {
 		t.Fatal(err)
 	}
 	got, err := store.GetByID(context.Background(), record.Id)

@@ -18,6 +18,7 @@ type CronJob struct {
 	Priority         int          `gorm:"column:priority;default:0;index:idx_cron_job_priority;comment:调度优先级，数字越大越优先"`
 	LockTimeout      int64        `gorm:"column:lock_timeout;default:0;comment:单次调度锁超时（毫秒），0 使用调度器默认值"`
 	MaxDelay         int64        `gorm:"column:max_delay;default:0;comment:最大延迟容忍（秒），0 使用调度器默认值"`
+	Misfire          int          `gorm:"column:misfire;default:0;comment:错过执行策略：0-默认 1-跳过 2-立即补跑 3-顺延"`
 	Payload          string       `gorm:"column:payload;type:text;comment:业务执行参数 JSON"`
 	Status           int          `gorm:"column:status;index:idx_cron_job_scan,priority:1;comment:状态：0-禁用，1-启用"`
 	NextRun          sql.NullTime `gorm:"column:next_run;type:timestamp;index:idx_cron_job_scan,priority:2;comment:下次计划调度时间，NULL 表示无下次调度"`

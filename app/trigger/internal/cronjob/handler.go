@@ -12,6 +12,7 @@ import (
 	"zero-service/common/gormx"
 	"zero-service/facade/streamevent/streamevent"
 
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/trace"
 	"google.golang.org/grpc"
 )
@@ -105,5 +106,29 @@ func NewLoggingEventHandler(db *gormx.DB, client EventClient) crontask.Handler {
 		}
 
 		return err
+	}
+}
+
+// NewSkipRecorder 创建跳过上报回调，把被 misfire 策略跳过的计划执行写入 CronExecLog（skipped=true）。
+// 跳过必须留痕，避免静默漏检；日志写入失败只记录、不阻断调度主流程。
+func NewSkipRecorder(db *gormx.DB) crontask.SkipHandler {
+	return func(ctx context.Context, event crontask.SkipEvent) {
+		now := time.Now()
+		log := &gormmodel.CronExecLog{
+			TraceId:       trace.TraceIDFromContext(ctx),
+			JobId:         event.Task.ID,
+			TaskCode:      event.Task.TaskCode,
+			TaskName:      event.Task.TaskName,
+			ScheduledTime: event.ScheduledTime,
+			StartTime:     now,
+			EndTime:       now,
+			CostMs:        0,
+			Status:        0,
+			Skipped:       true,
+			Message:       fmt.Sprintf("错过计划时间，按 misfire 策略 %s 跳过", event.Policy),
+		}
+		if createErr := db.WithContext(ctx).Create(log).Error; createErr != nil {
+			logx.WithContext(ctx).Errorf("[cron-task] skip log write failed: %v", createErr)
+		}
 	}
 }

@@ -32,6 +32,8 @@ type Scheduler struct {
 	interval             time.Duration
 	lockExpire           time.Duration
 	maxDelay             time.Duration
+	misfireDefault       MisfirePolicy
+	onSkip               SkipHandler
 	stopCh               chan struct{}
 	startOnce            sync.Once
 	stopOnce             sync.Once
@@ -56,6 +58,8 @@ func NewScheduler(store TaskStore, handler Handler, opts ...SchedulerOption) *Sc
 		interval:             o.Interval,
 		lockExpire:           o.LockExpire,
 		maxDelay:             o.MaxDelay,
+		misfireDefault:       o.MisfireDefault,
+		onSkip:               o.OnSkip,
 		stopCh:               make(chan struct{}),
 		tracer:               otel.Tracer(trace.TraceName),
 		invalidTimePredicate: o.InvalidTimePredicate,
@@ -158,8 +162,19 @@ func (s *Scheduler) executeTask(claim *TaskClaim) {
 		maxDelay = task.MaxDelay
 	}
 	if maxDelay > 0 && !task.ScheduledTime.IsZero() && time.Since(task.ScheduledTime) > maxDelay {
-		logx.WithContext(ctx).Infof("[cron-task] task skipped: delayed %v > max %v", time.Since(task.ScheduledTime), maxDelay)
-		stale = true
+		delay := time.Since(task.ScheduledTime)
+		policy := s.resolveMisfirePolicy(task)
+		switch policy {
+		case MisfirePolicyRunImmediately:
+			// 窗口内立即补跑：不视为过期，按正常流程执行本次 handler。
+			logx.WithContext(ctx).Infof("[cron-task] task misfired, catching up immediately: delayed %v > max %v", delay, maxDelay)
+		default:
+			// MisfirePolicySkip（默认）与 MisfirePolicyDelayNext：跳过本次错过执行，保持推进语义不变。
+			// 两者当前推进结果一致，仅记录策略以便区分；跳过必须留痕，杜绝静默漏检。
+			logx.WithContext(ctx).Infof("[cron-task] task skipped by misfire policy %s: delayed %v > max %v", policy, delay, maxDelay)
+			stale = true
+			s.reportSkip(ctx, task, claim, delay, maxDelay, policy)
+		}
 	}
 
 	lastRun := time.Time{}
@@ -200,6 +215,40 @@ func (s *Scheduler) executeTask(claim *TaskClaim) {
 	} else {
 		logx.WithContext(completionCtx).Info("[cron-task] completion committed")
 	}
+}
+
+// resolveMisfirePolicy 返回任务本次错过的执行策略：任务级优先，其次调度器默认，最后保持现状（跳过）。
+// 默认值已于 2026-10-16 业务确认为 MisfirePolicySkip（跳过）。
+func (s *Scheduler) resolveMisfirePolicy(task *TaskConfig) MisfirePolicy {
+	if task != nil && task.Misfire != MisfirePolicyDefault {
+		return task.Misfire
+	}
+	if s.misfireDefault != MisfirePolicyDefault {
+		return s.misfireDefault
+	}
+	return MisfirePolicySkip
+}
+
+// reportSkip 调用跳过上报回调记录一次被跳过的计划执行；回调缺失或 panic 均不影响调度主流程。
+func (s *Scheduler) reportSkip(ctx context.Context, task *TaskConfig, claim *TaskClaim, delay, maxDelay time.Duration, policy MisfirePolicy) {
+	if s.onSkip == nil {
+		return
+	}
+	event := SkipEvent{
+		Task:          task,
+		ScheduledTime: task.ScheduledTime,
+		LockedUntil:   claim.LockedUntil,
+		Delay:         delay,
+		MaxDelay:      maxDelay,
+		Policy:        policy,
+		Reason:        SkipReasonMisfire,
+	}
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			logx.WithContext(ctx).Errorf("[cron-task] skip report panic: %v", recovered)
+		}
+	}()
+	s.onSkip(ctx, event)
 }
 
 // RunNow 立即异步触发一次任务执行，成功时只记录 LastRun，不修改周期计划。
@@ -243,6 +292,38 @@ func (s *Scheduler) RunNow(ctx context.Context, taskCode string) (string, error)
 		}
 	})
 	return traceID, nil
+}
+
+// Enable 启用任务并统一计算下次执行时间。
+// 已启用任务直接返回（幂等）；周期性任务复用带无效时间谓词与起点平移的 nextRuns 计算下次时间，
+// 空 RRuleStr 的一次性任务保留原有计划点。下次时间只在此处计算，Store 只负责落库。
+func (s *Scheduler) Enable(ctx context.Context, id string) error {
+	if s == nil || s.store == nil {
+		return errors.New("scheduler is nil")
+	}
+	task, err := s.store.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if task.Status == StatusEnabled {
+		return nil
+	}
+	nextRun := task.NextRun
+	if !task.ScheduledTime.IsZero() {
+		nextRun = task.ScheduledTime
+	}
+	if task.RRuleStr != "" {
+		runs, err := s.nextRuns(task, carbon.Now().StdTime(), 1)
+		if err != nil {
+			return err
+		}
+		if len(runs) == 0 {
+			nextRun = time.Time{}
+		} else {
+			nextRun = runs[0]
+		}
+	}
+	return s.store.SetEnabled(ctx, id, nextRun)
 }
 
 // PreviewNextRuns 返回严格晚于 after 的后续有效计划时间。

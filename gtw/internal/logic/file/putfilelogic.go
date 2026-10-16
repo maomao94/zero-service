@@ -9,11 +9,11 @@ import (
 	"path"
 	"strings"
 	"zero-service/app/file/file"
+	"zero-service/common/carbonx"
 	"zero-service/common/tool"
 	"zero-service/gtw/internal/svc"
 	"zero-service/gtw/internal/types"
 
-	"github.com/dromara/carbon/v2"
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 
@@ -57,7 +57,7 @@ func (l *PutFileLogic) PutFile(req *types.PutFileRequest) (resp *types.GetFileRe
 		fileHeader.Filename, tool.DecimalBytes(fileHeader.Size), fileHeader.Header)
 	// 执行普通上传
 	typeFile := "tempFile"
-	dayStr := carbon.Now().Format("20060102")
+	dayStr := carbonx.NowDateCompact()
 	dirPath := l.svcCtx.Config.NfsRootPath + "/" + typeFile + "/" + dayStr
 	err = os.MkdirAll(dirPath, os.ModePerm)
 	if err != nil {

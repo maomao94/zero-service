@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"zero-service/common/carbonx"
+
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 )
@@ -63,7 +65,7 @@ func (c *Client) ListContainers(filter string) ([]Container, error) {
 			name = strings.TrimPrefix(ctr.Names[0], "/")
 		}
 
-		createdTime := time.Unix(ctr.Created, 0).Format("2006-01-02 15:04:05")
+		createdTime := carbonx.FormatDateTime(time.Unix(ctr.Created, 0))
 
 		ct := Container{
 			ID:      ctr.ID,

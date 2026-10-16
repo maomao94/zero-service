@@ -54,8 +54,9 @@ type TaskStore interface {
 	// Update 按 id 全量更新任务配置；更新未影响任何任务时返回 ErrUpdate。
 	Update(ctx context.Context, cfg *TaskConfig) error
 
-	// Enable 启用任务，并根据已保存的 RRULE 从当前时间重新计算未来 NextRun。
-	Enable(ctx context.Context, id string) error
+	// SetEnabled 启用任务并写入调用方计算好的 NextRun，同时清空在途执行的 ScheduledTime。
+	// 本方法只落库、不计算下次时间，下次时间统一由 Scheduler.Enable 计算，保证谓词来源唯一。
+	SetEnabled(ctx context.Context, id string, nextRun time.Time) error
 
 	// Disable 禁用任务；已被 claim 的在途执行仍可按 lease token 完成本次执行。
 	// 任务已处于禁用状态时幂等成功，任务不存在或已删除时返回 ErrUpdate。

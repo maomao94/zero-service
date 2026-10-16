@@ -18,9 +18,10 @@ type GormTaskConfig struct {
 	RRuleStr         string       `gorm:"column:rrule_str;type:text;comment:RFC 5545 规则字符串"`            // RFC 5545 规则字符串
 	Priority         int          `gorm:"column:priority;default:1;index;comment:任务优先级"`                // 任务优先级
 	LockTimeout      int64        `gorm:"column:lock_timeout;default:0;comment:单次调度锁超时（毫秒），0 使用调度器默认值"` // 单次调度锁超时，单位毫秒
-	Payload          string       `gorm:"column:payload;type:text;comment:业务参数（如 device_list）"`         // 业务参数（如 device_list）
-	Status           int          `gorm:"column:status;default:1;index;comment:任务配置状态"`                 // 任务配置状态
-	NextRun          sql.NullTime `gorm:"column:next_run;type:timestamp;index;comment:下次执行时间"`          // 下次执行时间，NULL 表示无下次调度
+	Misfire          int          `gorm:"column:misfire;default:0;comment:错过执行策略：0-默认 1-跳过 2-立即补跑 3-顺延"`
+	Payload          string       `gorm:"column:payload;type:text;comment:业务参数（如 device_list）"` // 业务参数（如 device_list）
+	Status           int          `gorm:"column:status;default:1;index;comment:任务配置状态"`         // 任务配置状态
+	NextRun          sql.NullTime `gorm:"column:next_run;type:timestamp;index;comment:下次执行时间"`  // 下次执行时间，NULL 表示无下次调度
 	LastRun          sql.NullTime `gorm:"column:last_run;type:timestamp;comment:上次成功执行的实际完成时间"`
 	LastScheduledRun sql.NullTime `gorm:"column:last_scheduled_run;type:timestamp;comment:上次成功周期执行的原计划时间"`
 	ScheduledTime    sql.NullTime `gorm:"column:scheduled_time;type:timestamp;comment:在途执行的原计划时间"`

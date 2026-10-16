@@ -19,6 +19,7 @@ func fromTaskConfig(cfg *crontask.TaskConfig) *gormmodel.GormTaskConfig {
 		RRuleStr:         cfg.RRuleStr,
 		Priority:         cfg.Priority,
 		LockTimeout:      cfg.LockTimeout.Milliseconds(),
+		Misfire:          int(cfg.Misfire),
 		Payload:          string(cfg.Payload),
 		Status:           int(cfg.Status),
 		NextRun:          carbonx.ToNullTime(cfg.NextRun),
@@ -47,6 +48,7 @@ func toTaskConfig(g *gormmodel.GormTaskConfig) *crontask.TaskConfig {
 		RRuleStr:    g.RRuleStr,
 		Priority:    g.Priority,
 		LockTimeout: time.Duration(g.LockTimeout) * time.Millisecond,
+		Misfire:     crontask.MisfirePolicy(g.Misfire),
 		Payload:     json.RawMessage(g.Payload),
 		Status:      crontask.TaskStatus(g.Status),
 	}

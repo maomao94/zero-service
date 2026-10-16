@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"zero-service/common/carbonx"
+
 	"github.com/google/uuid"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -148,7 +150,7 @@ func (s *Screenshotter) CaptureFrameByIndexToFile(ctx context.Context, frameInde
 // baseDir: 基础目录（如 ./temp_snapshots）
 // ext: 文件扩展名（如 .jpg）
 func (s *Screenshotter) GenerateTempFilePath(baseDir, ext string) string {
-	dateDir := time.Now().Format("20060102")
+	dateDir := carbonx.NowDateCompact()
 	fullDir := filepath.Join(baseDir, dateDir)
 	_ = os.MkdirAll(fullDir, 0755)
 	return filepath.Join(fullDir, fmt.Sprintf("%s%s", uuid.NewString(), ext))

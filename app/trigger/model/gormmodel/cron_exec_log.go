@@ -19,6 +19,7 @@ type CronExecLog struct {
 	EndTime       time.Time `gorm:"column:end_time;type:timestamp;comment:实际结束执行时间"`
 	CostMs        int64     `gorm:"column:cost_ms;comment:执行耗时(毫秒)"`
 	Status        int       `gorm:"column:status;comment:执行状态：1-成功 0-失败"`
+	Skipped       bool      `gorm:"column:skipped;default:false;comment:是否因错过执行策略被跳过：true-跳过未执行，false-已执行"`
 	Message       string    `gorm:"column:message;type:text;comment:gRPC 回调返回的业务消息"`
 	ErrorMessage  string    `gorm:"column:error_message;type:text;comment:失败时的错误信息"`
 }

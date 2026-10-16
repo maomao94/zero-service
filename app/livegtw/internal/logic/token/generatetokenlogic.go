@@ -10,6 +10,7 @@ import (
 
 	"zero-service/app/livegtw/internal/svc"
 	"zero-service/app/livegtw/internal/types"
+	"zero-service/common/carbonx"
 	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -95,6 +96,6 @@ func (l *GenerateTokenLogic) GenerateToken(req *types.GenerateTokenRequest) (res
 		Token:        tokenString,
 		AccessExpire: accessExpire,
 		RefreshAfter: refreshAfter,
-		ExpireTime:   time.Unix(accessExpire, 0).Format("2006-01-02 15:04:05"),
+		ExpireTime:   carbonx.FormatDateTime(time.Unix(accessExpire, 0)),
 	}, nil
 }

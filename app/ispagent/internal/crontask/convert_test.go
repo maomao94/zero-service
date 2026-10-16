@@ -35,6 +35,7 @@ func TestConvertRoundTrip(t *testing.T) {
 		RRuleStr:         f.ToRRuleStr(),
 		Priority:         f.ToPriority(),
 		LockTimeout:      90 * time.Second,
+		Misfire:          crontask.MisfirePolicyRunImmediately,
 		Status:           f.ToStatus(),
 		NextRun:          nextRun,
 		LastRun:          lastRun,
@@ -59,6 +60,9 @@ func TestConvertRoundTrip(t *testing.T) {
 	}
 	if back.LockTimeout != cfg.LockTimeout {
 		t.Fatalf("round-trip lock timeout mismatch: %v vs %v", back.LockTimeout, cfg.LockTimeout)
+	}
+	if back.Misfire != cfg.Misfire {
+		t.Fatalf("round-trip misfire mismatch: %v vs %v", back.Misfire, cfg.Misfire)
 	}
 	if back.Status != cfg.Status {
 		t.Fatal("round-trip status mismatch")
