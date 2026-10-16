@@ -196,12 +196,15 @@ type ListMeetingsRequest struct {
 	CreateUser      string `form:"createUser,optional"`
 	Title           string `form:"title,optional"`
 	Identity        string `form:"identity,optional"`
+	HasRecording    int32  `form:"hasRecording,optional"`
 }
 
 type ListMyMeetingsRequest struct {
-	Status   int32 `form:"status,optional"`
-	Page     int64 `form:"page,optional"`
-	PageSize int64 `form:"pageSize,optional"`
+	Status       int32  `form:"status,optional"`
+	Page         int64  `form:"page,optional"`
+	PageSize     int64  `form:"pageSize,optional"`
+	Title        string `form:"title,optional"`
+	HasRecording int32  `form:"hasRecording,optional"`
 }
 
 type ListParticipantsReply struct {
@@ -209,7 +212,8 @@ type ListParticipantsReply struct {
 }
 
 type ListParticipantsRequest struct {
-	MeetingNo string `form:"meetingNo"`
+	MeetingNo    string  `form:"meetingNo"`
+	ExcludeKinds []int32 `form:"excludeKinds,optional"`
 }
 
 type ListSipProvidersReply struct {
@@ -234,6 +238,7 @@ type MeetingInfo struct {
 	DepartureTimeout uint32 `json:"departureTimeout"`
 	MaxParticipants  uint32 `json:"maxParticipants"`
 	RoomSid          string `json:"roomSid"`
+	RecordingCount   int32  `json:"recordingCount"`
 }
 
 type MeetingMessageInfo struct {
@@ -282,6 +287,7 @@ type ParticipantInfo struct {
 	Status   int32  `json:"status"`
 	JoinTime string `json:"joinTime"`
 	LeftTime string `json:"leftTime"`
+	Kind     int32  `json:"kind"`
 }
 
 type PerformMeetingRpcReply struct {

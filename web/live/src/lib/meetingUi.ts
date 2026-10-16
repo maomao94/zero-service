@@ -1,14 +1,29 @@
 import type { ParticipantInfo } from '../types'
 
+/** 参与者类型（对齐 LiveKit ParticipantInfo_Kind）。 */
+export const PARTICIPANT_KIND_EGRESS = 2
+
 export type LiveParticipantView = {
   identity: string
   name?: string
+  /** 参与者类型（LiveKit Participant.kind）；2=EGRESS（录屏机器人） */
+  kind?: number
 }
 
 export type MeetingMember = {
   identity: string
   name: string
   online: boolean
+}
+
+/** 是否为 Egress（录屏机器人）参与者，UI 需屏蔽。 */
+export function isEgressParticipant(participant: { kind?: number }): boolean {
+  return participant.kind === PARTICIPANT_KIND_EGRESS
+}
+
+/** 过滤掉 Egress（录屏机器人）参与者，返回真实业务参与者。 */
+export function excludeEgressParticipants<T extends { kind?: number }>(participants: T[]): T[] {
+  return participants.filter((participant) => !isEgressParticipant(participant))
 }
 
 export function resolveLiveKitUrl(protocol: string, host: string, configuredUrl?: string): string {
