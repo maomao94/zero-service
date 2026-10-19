@@ -51,7 +51,7 @@ require (
 	github.com/livekit/protocol v1.52.1
 	github.com/livekit/server-sdk-go/v2 v2.19.0
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2
-	github.com/minio/minio-go/v7 v7.3.0
+	github.com/minio/minio-go/v7 v7.4.1
 	github.com/mmcloughlin/geohash v0.10.0
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.5
@@ -152,7 +152,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
-	github.com/charmbracelet/x/ansi v0.11.7 // indirect
+	github.com/charmbracelet/x/ansi v0.11.8 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/clbanning/mxj v1.8.4 // indirect
@@ -216,7 +216,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/gofiber/fiber/v2 v2.52.9 // indirect
 	github.com/gofiber/websocket/v2 v2.2.1 // indirect
-	github.com/gofrs/flock v0.13.0 // indirect
+	github.com/gofrs/flock v0.13.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
@@ -263,13 +263,13 @@ require (
 	github.com/livekit/mediatransportutil v0.0.0-20260821083140-f234b534b095 // indirect
 	github.com/livekit/psrpc v0.8.0 // indirect
 	github.com/lrstanley/bubblezone v0.0.0-20240914071701-b48c55a5e78e // indirect
-	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
+	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
 	github.com/magefile/mage v1.17.2 // indirect
 	github.com/mailru/easyjson v0.9.2 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
-	github.com/mattn/go-runewidth v0.0.23 // indirect
+	github.com/mattn/go-runewidth v0.0.24 // indirect
 	github.com/mattn/go-sqlite3 v1.14.24 // indirect
 	github.com/meguminnnnnnnnn/go-openai v0.1.2 // indirect
 	github.com/milvus-io/milvus-proto/go-api/v2 v2.4.10-0.20240819025435-512e3b98866a // indirect
@@ -322,7 +322,7 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/reugn/async v0.10.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/rogpeppe/go-internal v1.15.0 // indirect
+	github.com/rogpeppe/go-internal v1.16.0 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/sahilm/fuzzy v0.1.1 // indirect
 	github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee // indirect
@@ -349,7 +349,7 @@ require (
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
+	github.com/xo/terminfo v1.0.0 // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	github.com/yuin/gopher-lua v1.1.2 // indirect
