@@ -13,8 +13,8 @@ set -e
 cd "$(dirname "$0")"
 
 CONTAINER=web-gateway
-HOST_PORT="${NGINX_HOST_PORT:-8088}"
-SSL_HOST_PORT="${NGINX_SSL_HOST_PORT:-8443}"
+HOST_PORT="${NGINX_HOST_PORT:-80}"
+SSL_HOST_PORT="${NGINX_SSL_HOST_PORT:-443}"
 SOCKETIO_HOST_PORT="${SOCKETIO_HOST_PORT:-8090}"
 WORKSPACE_HOST_PORT="${WORKSPACE_HOST_PORT:-8091}"
 GITLAB_DIRECT_PORT="${GITLAB_DIRECT_PORT:-8929}"
@@ -28,6 +28,20 @@ CERT="${NGINX_TLS_CERT:-../tls/server.crt}"
 KEY="${NGINX_TLS_KEY:-../tls/server.key}"
 export NGINX_TLS_CERT="$CERT"
 export NGINX_TLS_KEY="$KEY"
+
+# 标准端口时地址不带 :port，便于输出与复制
+HTTP_BASE="http://127.0.0.1"
+HTTP_SUFFIX=""
+if [ "$HOST_PORT" != "80" ]; then
+  HTTP_BASE="${HTTP_BASE}:${HOST_PORT}"
+  HTTP_SUFFIX=":${HOST_PORT}"
+fi
+HTTPS_BASE="https://127.0.0.1"
+HTTPS_SUFFIX=""
+if [ "$SSL_HOST_PORT" != "443" ]; then
+  HTTPS_BASE="${HTTPS_BASE}:${SSL_HOST_PORT}"
+  HTTPS_SUFFIX=":${SSL_HOST_PORT}"
+fi
 
 ensure_image() {
   echo "从 Docker 仓库拉取镜像 $IMAGE ..."
@@ -89,14 +103,14 @@ case "${1:-deploy}" in
     docker compose ps
     echo ""
     echo "Web 网关部署完成:"
-    echo "  Live 前端(HTTP):  http://127.0.0.1:${HOST_PORT}/        （推荐）"
-    echo "  Live 前端(HTTPS): https://127.0.0.1:${SSL_HOST_PORT}/"
-    echo "  GitLab(HTTP):     http://gitlab.localhost:${HOST_PORT}/"
-    echo "  GitLab(HTTPS):    https://gitlab.localhost:${SSL_HOST_PORT}/"
+    echo "  Live 前端(HTTP):  ${HTTP_BASE}/        （推荐）"
+    echo "  Live 前端(HTTPS): ${HTTPS_BASE}/"
+    echo "  GitLab(HTTP):     http://gitlab.localhost${HTTP_SUFFIX}/"
+    echo "  GitLab(HTTPS):    https://gitlab.localhost${HTTPS_SUFFIX}/"
     echo "  GitLab(OpenChamber): http://127.0.0.1:${GITLAB_DIRECT_PORT:-8929}/"
     echo "  SocketIO 工具:    http://127.0.0.1:${SOCKETIO_HOST_PORT}/"
     echo "  Zero 工作台:      http://127.0.0.1:${WORKSPACE_HOST_PORT}/"
-    echo "  录制文件:         http://127.0.0.1:${HOST_PORT}/recordings/"
+    echo "  录制文件:         ${HTTP_BASE}/recordings/"
     echo "  前端产物目录:     $(cd dist && pwd)"
     echo "  反代:             /live/ -> livegtw:11002, /socket.io/ -> socketgtw:11003, /livekit/ -> livekit:7880"
     echo "  GitLab 反代:      gitlab.localhost -> 10.10.1.100:8929"
@@ -117,10 +131,10 @@ case "${1:-deploy}" in
     docker compose logs --tail 100
     ;;
   url)
-    echo "HTTP : http://127.0.0.1:${HOST_PORT}/"
-    echo "HTTPS: https://127.0.0.1:${SSL_HOST_PORT}/"
-    echo "录制: http://127.0.0.1:${HOST_PORT}/recordings/"
-    echo "GitLab: http://gitlab.localhost:${HOST_PORT}/"
+    echo "HTTP : ${HTTP_BASE}/"
+    echo "HTTPS: ${HTTPS_BASE}/"
+    echo "录制: ${HTTP_BASE}/recordings/"
+    echo "GitLab: http://gitlab.localhost${HTTP_SUFFIX}/"
     echo "GitLab(OpenChamber): http://127.0.0.1:${GITLAB_DIRECT_PORT}/"
     ;;
   *)
