@@ -20,8 +20,8 @@
 
 | 宿主机端口（可覆盖） | 容器端口 | 用途 |
 | --- | --- | --- |
-| `8088`（`NGINX_HOST_PORT`） | 80 | 统一 HTTP 入口：Live 默认站点 + GitLab 子域名 |
-| `8443`（`NGINX_SSL_HOST_PORT`） | 443 | 统一 HTTPS 入口：同上 |
+| `80`（`NGINX_HOST_PORT`） | 80 | 统一 HTTP 入口：Live 默认站点 + GitLab 子域名 |
+| `443`（`NGINX_SSL_HOST_PORT`） | 443 | 统一 HTTPS 入口：同上 |
 | `8090`（`SOCKETIO_HOST_PORT`） | 8090 | SocketIO 测试工具（仅 HTTP） |
 | `8091`（`WORKSPACE_HOST_PORT`） | 8091 | Zero 工作台（仅 HTTP） |
 | `8929`（`GITLAB_DIRECT_PORT`） | 8929 | GitLab 本机直连，仅绑定 `127.0.0.1`（OpenChamber 集成用） |
@@ -47,9 +47,9 @@ bash deploy/nginx/deploy.sh
 
 | 站点 | HTTP（推荐） | HTTPS |
 | --- | --- | --- |
-| Live 会议前端 | http://127.0.0.1:8088/ | https://127.0.0.1:8443/ |
-| 录制文件 | http://127.0.0.1:8088/recordings/ | https://127.0.0.1:8443/recordings/ |
-| 公司 GitLab | http://gitlab.localhost:8088/ | https://gitlab.localhost:8443/ |
+| Live 会议前端 | http://127.0.0.1/ | https://127.0.0.1/ |
+| 录制文件 | http://127.0.0.1/recordings/ | https://127.0.0.1/recordings/ |
+| 公司 GitLab | http://gitlab.localhost/ | https://gitlab.localhost/ |
 | GitLab（OpenChamber） | http://127.0.0.1:8929/ | - |
 | SocketIO 测试工具 | http://127.0.0.1:8090/ | - |
 | Zero 工作台 | http://127.0.0.1:8091/ | - |
@@ -74,13 +74,13 @@ bash deploy/nginx/deploy.sh
 
 | 入口 | 目标 |
 | --- | --- |
-| `http://gitlab.localhost:8088/` | `http://10.10.1.100:8929` |
-| `https://gitlab.localhost:8443/` | 同上（复用网关自签证书） |
+| `http://gitlab.localhost/` | `http://10.10.1.100:8929` |
+| `https://gitlab.localhost/` | 同上（复用网关自签证书） |
 
 - `*.localhost` 由浏览器自动解析到 `127.0.0.1`，无需修改 hosts。
-- git 命令行同样可用：`git clone http://gitlab.localhost:8088/<group>/<repo>.git`。
+- git 命令行同样可用：`git clone http://gitlab.localhost/<group>/<repo>.git`。
 - 代理参数：`client_max_body_size 0`（大仓库 push）、`proxy_buffering off`（流式 clone）、600s 超时。
-- 只监听 `gitlab.localhost`，不影响默认站点（`127.0.0.1:8088` 仍是 Live 前端）。
+- 只监听 `gitlab.localhost`，不影响默认站点（`127.0.0.1` 仍是 Live 前端）。
 - upstream 不可达时返回 502；如需改地址，修改 `gitlab-upstream.conf` 中的 `proxy_pass`。
 
 ### 接入 OpenChamber
@@ -97,7 +97,7 @@ OpenChamber 的 GitLab 集成只接受 HTTPS，或 `http://` + `localhost/127.0.
 
 ## 新增一个平台代理（扩展约定）
 
-统一入口只有容器内的 80/443（宿主 8088/8443），**新平台不要再占新端口**，按子域名分流：
+统一入口只有容器内的 80/443（宿主机标准端口 80/443），**新平台不要再占新端口**，按子域名分流：
 
 1. 新建 `deploy/nginx/<app>.conf`，内容是一个完整 server 块：
 
@@ -162,7 +162,7 @@ LiveKit:
     PlayURLBase: "/recordings"
 ```
 
-这样无论页面是 http(8088) 还是 https(8443)，播放地址都解析到当前站点 `/recordings/...`，不会出现混合内容。Vite 开发模式（5178）已在 `web/live/vite.config.ts` 增加 `/recordings` 代理到本网关。
+这样无论页面是 http(80) 还是 https(443)，播放地址都解析到当前站点 `/recordings/...`，不会出现混合内容。Vite 开发模式（5178）已在 `web/live/vite.config.ts` 增加 `/recordings` 代理到本网关。
 
 ## 注意
 

@@ -90,7 +90,7 @@ web/workspace/
 - 生产（nginx）：由 `deploy/nginx/nginx.conf` 的工作台 server（8091）代理到同容器的 Live（80）与 SocketIO（8090）。
 - 开发（vite dev，5180）：由 `vite.config.ts` 代理到本地 5178 / 5179。
 
-子系统访问地址默认按“当前站点主机 + 端口”推导（Live 8088、SocketIO 8090），
+子系统访问地址默认按“当前站点主机 + 端口”推导（Live 80/443、SocketIO 8090），
 也可用 `VITE_LIVE_URL` / `VITE_SOCKETIO_URL` 覆盖（开发默认见 `.env.development`）。
 
 ## 技术栈

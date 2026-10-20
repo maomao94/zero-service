@@ -26,10 +26,12 @@ const STATUS_TEXT: Record<HealthStatus, string> = {
 // 适配 nginx 反代 / 远端访问（避免写死 localhost 导致打开与探活都失效）。
 function systemUrl(override: string | undefined, port: number) {
   if (override) return override
-  return `${location.protocol}//${location.hostname}:${port}`
+  // 80/443 为默认端口，不拼接，避免出现 https://host:80 这类无效地址
+  const suffix = port === 80 || port === 443 ? '' : `:${port}`
+  return `${location.protocol}//${location.hostname}${suffix}`
 }
 
-// 卡片展示的主机（去掉协议），如 127.0.0.1:8088
+// 卡片展示的主机（去掉协议），如 127.0.0.1
 function displayHost(url: string) {
   try { return new URL(url).host } catch { return url }
 }
@@ -40,9 +42,9 @@ const subSystems: SubSystem[] = [
     name: 'Live 视频会议',
     description: '实时视频会议系统，支持多人通话、屏幕共享与会议管理',
     icon: <Video size={32} />,
-    url: systemUrl(import.meta.env.VITE_LIVE_URL, 8088),
+    url: systemUrl(import.meta.env.VITE_LIVE_URL, 80),
     healthUrl: '/health/live',
-    port: 8088,
+    port: 80,
     color: '#6366f1',
     features: ['视频通话', '屏幕共享', '会议管理', 'SIP 电话']
   },
