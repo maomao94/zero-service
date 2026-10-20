@@ -17,10 +17,12 @@ HOST_PORT="${NGINX_HOST_PORT:-8088}"
 SSL_HOST_PORT="${NGINX_SSL_HOST_PORT:-8443}"
 SOCKETIO_HOST_PORT="${SOCKETIO_HOST_PORT:-8090}"
 WORKSPACE_HOST_PORT="${WORKSPACE_HOST_PORT:-8091}"
+GITLAB_DIRECT_PORT="${GITLAB_DIRECT_PORT:-8929}"
 export NGINX_HOST_PORT="$HOST_PORT"
 export NGINX_SSL_HOST_PORT="$SSL_HOST_PORT"
 export SOCKETIO_HOST_PORT="$SOCKETIO_HOST_PORT"
 export WORKSPACE_HOST_PORT="$WORKSPACE_HOST_PORT"
+export GITLAB_DIRECT_PORT="$GITLAB_DIRECT_PORT"
 IMAGE=nginx:stable-alpine
 CERT="${NGINX_TLS_CERT:-../tls/server.crt}"
 KEY="${NGINX_TLS_KEY:-../tls/server.key}"
@@ -89,11 +91,15 @@ case "${1:-deploy}" in
     echo "Web 网关部署完成:"
     echo "  Live 前端(HTTP):  http://127.0.0.1:${HOST_PORT}/        （推荐）"
     echo "  Live 前端(HTTPS): https://127.0.0.1:${SSL_HOST_PORT}/"
+    echo "  GitLab(HTTP):     http://gitlab.localhost:${HOST_PORT}/"
+    echo "  GitLab(HTTPS):    https://gitlab.localhost:${SSL_HOST_PORT}/"
+    echo "  GitLab(OpenChamber): http://127.0.0.1:${GITLAB_DIRECT_PORT:-8929}/"
     echo "  SocketIO 工具:    http://127.0.0.1:${SOCKETIO_HOST_PORT}/"
     echo "  Zero 工作台:      http://127.0.0.1:${WORKSPACE_HOST_PORT}/"
     echo "  录制文件:         http://127.0.0.1:${HOST_PORT}/recordings/"
     echo "  前端产物目录:     $(cd dist && pwd)"
     echo "  反代:             /live/ -> livegtw:11002, /socket.io/ -> socketgtw:11003, /livekit/ -> livekit:7880"
+    echo "  GitLab 反代:      gitlab.localhost -> 10.10.1.100:8929"
     ;;
   stop|down)
     docker compose down
@@ -114,6 +120,8 @@ case "${1:-deploy}" in
     echo "HTTP : http://127.0.0.1:${HOST_PORT}/"
     echo "HTTPS: https://127.0.0.1:${SSL_HOST_PORT}/"
     echo "录制: http://127.0.0.1:${HOST_PORT}/recordings/"
+    echo "GitLab: http://gitlab.localhost:${HOST_PORT}/"
+    echo "GitLab(OpenChamber): http://127.0.0.1:${GITLAB_DIRECT_PORT}/"
     ;;
   *)
     echo "未知命令: $1；可用: deploy(默认)/build/stop/restart/status/logs/url"
