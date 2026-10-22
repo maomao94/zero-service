@@ -193,8 +193,12 @@ select now();       -- 2026-09-23 14:41:05.90246+08
   无自动拉起，用 `deploy.sh restart` 恢复。守护进程/主机重启场景由 `restart: unless-stopped` 覆盖。
 - **容器重建暂态失败**：`down`/`stop` 后重建，entrypoint 一次性启动可能因数据目录属主/残留 pid 失败，
   `deploy.sh` 内置每 10s 幂等补 `sys_ctl start` 兜底（实测有效）。
-- **授权 90 天**：镜像自带授权有限期，`deploy.sh` 部署时实时查询剩余天数；到期替换
-  `data/etc/license.dat` 后 `docker exec kingbase /home/kingbase/install/kingbase/bin/sys_ctl reload -D /home/kingbase/userdata/data`。
+- **授权 90 天**：镜像自带的试用授权在容器创建时生成到容器层（`/home/kingbase/install/kingbase/bin/license.dat`），
+  `deploy.sh status` 实时查询剩余天数。到期后执行 `bash deploy.sh stop` 再 `bash deploy.sh` 重建容器即可回到 90 天，
+  `./data` 数据完整保留；`bash deploy.sh restart` 不会刷新天数。
+- **换正式授权**：把授权文件放到 `data/etc/license.dat`（或任意路径），执行 `bash deploy.sh license [文件]`。
+  该命令会备份容器内当前生效授权、按内容写入容器内 `bin/license.dat` 并重启校验天数，回滚只需对备份文件再执行一次。
+  注意：不能只改 `data/etc/license.dat` 就重启——该文件仅首次初始化时被软链引用，重建后容器读的是自己那份副本。
 - **运行中删 data 目录**会导致挂载进入异常状态（Operation not permitted），恢复需 `stop` 后手动清空 `data` 再部署。
 
 ## 参考
