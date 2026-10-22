@@ -64,7 +64,7 @@ require (
 	github.com/qiniu/go-sdk/v7 v7.29.0
 	github.com/redis/go-redis/v9 v9.23.0
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/shopspring/decimal v1.5.0
+	github.com/shopspring/decimal v1.6.0
 	github.com/songzhibin97/gkit v1.5.0
 	github.com/spf13/cast v1.10.0
 	github.com/taosdata/driver-go/v3 v3.8.2
