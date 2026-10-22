@@ -12,6 +12,7 @@
 #   - socketio 测试工具 8090；workspace 工作台 8091
 #   - GitLab 子域名代理（gitlab.localhost）走主站点 80/443，见 gitlab.conf
 #   - GitLab 本机直连 8929（仅绑 127.0.0.1），供 OpenChamber 集成
+#   - GitLab SSH 经 nginx stream 转发（容器 22 -> 10.10.1.100:2224），客户端免 ~/.ssh/config
 #   - 反代目标走 host.docker.internal（livegtw/socketgtw/LiveKit 运行在宿主机）
 #   - 端口冲突时设置 NGINX_HOST_PORT / NGINX_SSL_HOST_PORT 等
 
@@ -25,7 +26,10 @@ services:
       - "${SOCKETIO_HOST_PORT:-8090}:8090"   # SocketIO 测试工具
       - "${WORKSPACE_HOST_PORT:-8091}:8091"  # Zero 工作台
       - "127.0.0.1:${GITLAB_DIRECT_PORT:-8929}:8929"  # GitLab 本机直连（OpenChamber 集成）
+      - "${GITLAB_SSH_HOST_PORT:-22}:22"     # GitLab SSH 转发（git@gitlab.localhost，免 ssh config）
     volumes:
+      - ./nginx.main.conf:/etc/nginx/nginx.conf:ro          # 主配置（用于 include stream）
+      - ./gitlab-ssh.conf:/etc/nginx/stream.d/gitlab.conf:ro # GitLab SSH TCP 转发（22 -> 2224）
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./live-locations.conf:/etc/nginx/snippets/live-locations.conf:ro
       - ./gitlab.conf:/etc/nginx/snippets/gitlab.conf:ro
