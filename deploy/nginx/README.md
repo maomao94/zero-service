@@ -9,12 +9,26 @@
 | `dist/` | 前端产物目录（`dist/live`、`dist/socketio`、`dist/workspace`），gitignore，部署时可自行覆盖/上传 |
 | `build-web.sh` | 前端打包脚本：构建各 web 子项目并汇总产物到 `dist/<app>/` |
 | `deploy.sh` | 部署与运维脚本（不构建、不校验产物，仅部署） |
-| `docker-compose.yaml` | 容器编排（只读挂载 `dist/<app>` 与录制目录、证书） |
-| `nginx.conf` | server 定义与端口规划（Live 默认站点 HTTP/HTTPS、SocketIO 工具、工作台） |
-| `live-locations.conf` | Live 网关共享 location（前端 SPA、录制、反代） |
-| `gitlab.conf` | 公司 GitLab 反向代理（子域名 `gitlab.localhost` HTTP/HTTPS + 本机 `127.0.0.1:8929`） |
-| `gitlab-upstream.conf` | GitLab 上游代理参数（`proxy_pass`、Header、流式与超时） |
-| `tls.conf` | HTTPS 共享证书与协议参数 |
+| `docker-compose.yaml` | 容器编排（只读挂载配置目录、`dist/<app>`、录制目录与证书） |
+| `nginx.conf` | 主配置：`events` / `http` / `stream` 与全局 include |
+| `conf.d/default.conf` | HTTP 站点定义（Live 默认站点、SocketIO 工具、工作台、GitLab 本机直连） |
+| `stream.d/gitlab-ssh.conf` | GitLab SSH（容器 22 → `10.10.1.100:2224`）TCP 转发 |
+| `snippets/live-locations.conf` | Live 网关共享 location（前端 SPA、录制、反代） |
+| `snippets/gitlab.conf` | 公司 GitLab 反向代理（子域名 `gitlab.localhost` HTTP/HTTPS + 本机 `127.0.0.1:8929`） |
+| `snippets/gitlab-upstream.conf` | GitLab 上游代理参数（`proxy_pass`、Header、流式与超时） |
+| `snippets/tls.conf` | HTTPS 共享证书与协议参数 |
+
+目录约定：
+
+```
+deploy/nginx/
+├── nginx.conf            # 主配置（容器 /etc/nginx/nginx.conf）
+├── conf.d/               # HTTP server 块（容器 /etc/nginx/conf.d）
+├── stream.d/             # TCP/SSH 转发（容器 /etc/nginx/stream.d）
+├── snippets/             # 可复用 location / 参数（容器 /etc/nginx/snippets）
+├── dist/                 # 前端产物
+└── docker-compose.yaml
+```
 
 ## 端口规划
 
@@ -25,6 +39,7 @@
 | `8090`（`SOCKETIO_HOST_PORT`） | 8090 | SocketIO 测试工具（仅 HTTP） |
 | `8091`（`WORKSPACE_HOST_PORT`） | 8091 | Zero 工作台（仅 HTTP） |
 | `8929`（`GITLAB_DIRECT_PORT`） | 8929 | GitLab 本机直连，仅绑定 `127.0.0.1`（OpenChamber 集成用） |
+| `22`（`GITLAB_SSH_HOST_PORT`） | 22 | GitLab SSH 转发（`git@gitlab.localhost`，客户端免 ssh 端口配置） |
 
 容器内 80/443 按 `Host` 头分发：默认站点是 Live，`gitlab.localhost` 走 GitLab 反代。
 
@@ -50,11 +65,12 @@ bash deploy/nginx/deploy.sh
 | Live 会议前端 | http://127.0.0.1/ | https://127.0.0.1/ |
 | 录制文件 | http://127.0.0.1/recordings/ | https://127.0.0.1/recordings/ |
 | 公司 GitLab | http://gitlab.localhost/ | https://gitlab.localhost/ |
+| GitLab SSH | `git@gitlab.localhost:<group>/<repo>.git` | - |
 | GitLab（OpenChamber） | http://127.0.0.1:8929/ | - |
 | SocketIO 测试工具 | http://127.0.0.1:8090/ | - |
 | Zero 工作台 | http://127.0.0.1:8091/ | - |
 
-端口可用环境变量覆盖：`NGINX_HOST_PORT`、`NGINX_SSL_HOST_PORT`、`SOCKETIO_HOST_PORT`、`WORKSPACE_HOST_PORT`、`GITLAB_DIRECT_PORT`。
+端口可用环境变量覆盖：`NGINX_HOST_PORT`、`NGINX_SSL_HOST_PORT`、`SOCKETIO_HOST_PORT`、`WORKSPACE_HOST_PORT`、`GITLAB_DIRECT_PORT`、`GITLAB_SSH_HOST_PORT`。
 
 ## 反向代理规则（Live 网关）
 
@@ -77,29 +93,29 @@ bash deploy/nginx/deploy.sh
 | `http://gitlab.localhost/` | `http://10.10.1.100:8929` |
 | `https://gitlab.localhost/` | 同上（复用网关自签证书） |
 
-- `*.localhost` 由浏览器自动解析到 `127.0.0.1`，无需修改 hosts。
-- git 命令行同样可用：`git clone http://gitlab.localhost/<group>/<repo>.git`。
+- 浏览器访问 `*.localhost` 会自动解析到 `127.0.0.1`；但 **ssh 与 Node 不会**，命令行使用前需要一条 hosts 记录：`127.0.0.1 gitlab.localhost`（或内网 DNS）。
+- SSH clone/fetch（推荐）：`git clone git@gitlab.localhost:<group>/<repo>.git`。网关把容器 22 端口透传到 `10.10.1.100:2224`，**客户端无需 `~/.ssh/config` 端口映射**。
+- HTTPS clone 需信任网关自签证书，例如：`git -c http.sslCAInfo=deploy/tls/server.crt clone https://gitlab.localhost/<group>/<repo>.git`。
 - 代理参数：`client_max_body_size 0`（大仓库 push）、`proxy_buffering off`（流式 clone）、600s 超时。
 - 只监听 `gitlab.localhost`，不影响默认站点（`127.0.0.1` 仍是 Live 前端）。
-- upstream 不可达时返回 502；如需改地址，修改 `gitlab-upstream.conf` 中的 `proxy_pass`。
+- upstream 不可达时返回 502；如需改地址，修改 `snippets/gitlab-upstream.conf` 中的 `proxy_pass`。
 
 ### 接入 OpenChamber
 
-OpenChamber 的 GitLab 集成只接受 HTTPS，或 `http://` + `localhost/127.0.0.1`（`gitlab.localhost` 不在白名单内），因此使用本机直连端口：
+推荐使用子域名 HTTPS 入口，使 OpenChamber 的实例地址与 git 远端主机名一致（自动识别）：
 
 1. GitLab 生成个人访问令牌：头像 → **Preferences → Access Tokens**，勾选 `api`（需要读写仓库再勾 `read_repository`/`write_repository`）。
-2. OpenChamber → 设置 → **GitLab → 添加实例**：
-   - 实例：`http://127.0.0.1:8929`
-   - 个人访问令牌：粘贴上一步的 token
-3. 连接成功后即可在 OpenChamber 内浏览 MR / Issue / CI。
+2. 让 OpenChamber 信任网关证书（自签时必须）：`launchctl setenv NODE_EXTRA_CA_CERTS <repo>/deploy/tls/server.crt`，然后完全退出并重启 OpenChamber。
+3. 设置 → **GitLab → 添加实例**：`https://gitlab.localhost`，粘贴 token。
+4. git 远端用 SSH：`git@gitlab.localhost:<group>/<repo>.git`（走网关 22 端口转发，不受 HTTPS 传输校验影响）。
 
-该端口只在宿主机 `127.0.0.1` 监听，不对局域网暴露。
+备选：本机直连 `http://127.0.0.1:8929`（仅绑 `127.0.0.1`），不依赖证书，但与 `git@gitlab.localhost` 主机名不一致，无法自动关联仓库。
 
 ## 新增一个平台代理（扩展约定）
 
 统一入口只有容器内的 80/443（宿主机标准端口 80/443），**新平台不要再占新端口**，按子域名分流：
 
-1. 新建 `deploy/nginx/<app>.conf`，内容是一个完整 server 块：
+1. 新建 `deploy/nginx/conf.d/<app>.conf`，内容是一个完整 server 块：
 
    ```nginx
    server {
@@ -120,9 +136,12 @@ OpenChamber 的 GitLab 集成只接受 HTTPS，或 `http://` + `localhost/127.0.
    }
    ```
 
-2. `nginx.conf` 里加一行：`include /etc/nginx/snippets/<app>.conf;`
-3. `docker-compose.yaml` 里加一行挂载：`- ./<app>.conf:/etc/nginx/snippets/<app>.conf:ro`
-4. `docker exec web-gateway nginx -t && docker exec web-gateway nginx -s reload`
+2. 无需修改 `nginx.conf`：主配置已 `include /etc/nginx/conf.d/*.conf`。
+3. 可复用的 location/参数片段放 `deploy/nginx/snippets/`，用 `include /etc/nginx/snippets/<name>.conf;` 引用。
+4. compose 已按目录挂载 `conf.d/`、`stream.d/`、`snippets/`，新增文件无需改挂载。
+5. `docker exec web-gateway nginx -t && docker exec web-gateway nginx -s reload`。
+
+需要独立端口的场景（如本仓库的 GitLab SSH 22）放 `stream.d/`，并在 `nginx.conf` 的 stream include 范围内生效。
 
 规则：
 
