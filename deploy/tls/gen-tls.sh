@@ -133,6 +133,8 @@ echo ""
 mkdir -p "$CERT_DIR"
 
 openssl genrsa -out "$CERT_DIR/server.key" 2048 2>/dev/null
+# 私钥只允许当前用户读取
+chmod 600 "$CERT_DIR/server.key"
 
 # 生成 SAN 配置（含环境与用途注释）
 {

@@ -11,21 +11,21 @@
 #   - HTTP 80（标准端口）；HTTPS 443（证书来自 deploy/tls，Nginx 不做自签）
 #   - socketio 测试工具 8090；workspace 工作台 8091
 #   - GitLab 子域名代理（gitlab.localhost）走主站点 80/443，见 gitlab.conf
-#   - GitLab 本机直连 8929（仅绑 127.0.0.1），供 OpenChamber 集成
 #   - GitLab SSH 经 nginx stream 转发（容器 22 -> 10.10.1.100:2224），客户端免 ~/.ssh/config
+#   - GitLab 统一入口：https://gitlab.localhost（不再提供 127.0.0.1:8929 直连）
 #   - 反代目标走 host.docker.internal（livegtw/socketgtw/LiveKit 运行在宿主机）
 #   - 端口冲突时设置 NGINX_HOST_PORT / NGINX_SSL_HOST_PORT 等
 
 services:
   nginx:                 # 服务名，compose 网络内 DNS 为 nginx
-    image: nginx:stable-alpine
+    # 固定版本，避免 stable 标签漂移导致行为变化；升级时显式改这里
+    image: ${NGINX_IMAGE:-nginx:1.30.6-alpine}
     container_name: web-gateway
     ports:
       - "${NGINX_HOST_PORT:-80}:80"          # 统一 HTTP 入口（标准端口）
       - "${NGINX_SSL_HOST_PORT:-443}:443"    # 统一 HTTPS 入口（标准端口）
       - "${SOCKETIO_HOST_PORT:-8090}:8090"   # SocketIO 测试工具
       - "${WORKSPACE_HOST_PORT:-8091}:8091"  # Zero 工作台
-      - "127.0.0.1:${GITLAB_DIRECT_PORT:-8929}:8929"  # GitLab 本机直连（OpenChamber 集成）
       - "${GITLAB_SSH_HOST_PORT:-22}:22"     # GitLab SSH 转发（git@gitlab.localhost，免 ssh config）
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro              # 主配置（http + stream include）
@@ -42,4 +42,17 @@ services:
       - "host.docker.internal:host-gateway"  # Linux 下访问宿主机服务
     environment:
       - TZ=Asia/Shanghai
+    healthcheck:
+      # 与 deploy.sh 的就绪检查一致，走同容器 80 端口的 /healthz
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/healthz || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    logging:
+      # 限制 JSON 日志体积，避免长期运行占满磁盘
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
     restart: unless-stopped
