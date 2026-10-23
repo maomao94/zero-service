@@ -27,7 +27,7 @@ npm install
 npm run dev
 ```
 
-将在 http://localhost:5179 启动
+将在 http://127.0.0.1:5179 启动
 
 ### 构建生产版本
 

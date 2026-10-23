@@ -35,15 +35,15 @@ func (l *DeleteCustomFlyRegionByFileIdLogic) DeleteCustomFlyRegionByFileId(in *d
 	var region gormmodel.DjiFlyRegion
 	if err := l.svcCtx.DB.WithContext(l.ctx).Where("file_id = ?", fileId).First(&region).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "未找到飞行区配置")
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "未找到飞行区配置")
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询飞行区配置失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询飞行区配置失败")
 	}
 
 	gatewaySn := region.GatewaySn
 
 	if err := l.svcCtx.DB.WithContext(l.ctx).Delete(&region).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "删除飞行区配置失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "删除飞行区配置失败")
 	}
 
 	tid, err := l.svcCtx.DjiClient.FlightAreasUpdate(l.ctx, gatewaySn)

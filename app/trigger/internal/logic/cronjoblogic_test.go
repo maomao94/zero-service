@@ -96,7 +96,7 @@ func TestCreateCronJobRemainsStrict(t *testing.T) {
 	if _, err := logic.CreateCronJob(req); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := logic.CreateCronJob(req); !tool.IsErrorByPbCode(err, extproto.Code__1_02_RECORD_ALREADY_EXIST) {
+	if _, err := logic.CreateCronJob(req); !tool.IsErrorByPbCode(err, extproto.Code__1_00_RECORD_ALREADY_EXIST) {
 		t.Fatalf("duplicate create error = %v, want RECORD_ALREADY_EXIST", err)
 	}
 }
@@ -261,7 +261,7 @@ func TestUpdateCronJobRejectsInFlightTask(t *testing.T) {
 
 			config := validUpdateCronJobRequest(created.JobId)
 			config.TaskName = "更新后的任务"
-			if _, err := NewUpdateCronJobLogic(ctx, serviceContext).UpdateCronJob(config); !tool.IsErrorByPbCode(err, extproto.Code__1_02_DB) {
+			if _, err := NewUpdateCronJobLogic(ctx, serviceContext).UpdateCronJob(config); !tool.IsErrorByPbCode(err, extproto.Code__1_00_DB) {
 				t.Fatalf("in-flight update error = %v, want DB", err)
 			}
 			loaded, err := store.GetByID(ctx, created.JobId)
@@ -283,7 +283,7 @@ func TestUpdateCronJobRejectsMissing(t *testing.T) {
 	store, db := newCronJobLogicTestStore(t)
 	ctx := context.Background()
 	serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store}
-	if _, err := NewUpdateCronJobLogic(ctx, serviceContext).UpdateCronJob(validUpdateCronJobRequest("missing")); !tool.IsErrorByPbCode(err, extproto.Code__1_02_RECORD_NOT_EXIST) {
+	if _, err := NewUpdateCronJobLogic(ctx, serviceContext).UpdateCronJob(validUpdateCronJobRequest("missing")); !tool.IsErrorByPbCode(err, extproto.Code__1_00_RECORD_NOT_EXIST) {
 		t.Fatalf("missing update error = %v, want RECORD_NOT_EXIST", err)
 	}
 }
@@ -387,7 +387,7 @@ func TestSubmitCronJobCreatesUpdatesAndRejectsDeletedCode(t *testing.T) {
 	if err := store.Delete(ctx, deleted.JobId); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := submit.SubmitCronJob(validSubmitCronJobRequest("submit-deleted")); !tool.IsErrorByPbCode(err, extproto.Code__1_02_RECORD_ALREADY_EXIST) {
+	if _, err := submit.SubmitCronJob(validSubmitCronJobRequest("submit-deleted")); !tool.IsErrorByPbCode(err, extproto.Code__1_00_RECORD_ALREADY_EXIST) {
 		t.Fatalf("deleted code submit error = %v, want RECORD_ALREADY_EXIST", err)
 	}
 }
@@ -417,7 +417,7 @@ func TestSubmitCronJobAcceptsOmittedIdentityOnlyForUpdate(t *testing.T) {
 	newReq := validSubmitCronJobRequest("submit-missing-create-identity")
 	newReq.DeptCode = ""
 	newReq.Type = ""
-	if _, err := submit.SubmitCronJob(newReq); !tool.IsErrorByPbCode(err, extproto.Code__1_01_PARAM_INVALID) {
+	if _, err := submit.SubmitCronJob(newReq); !tool.IsErrorByPbCode(err, extproto.Code__1_00_PARAM_INVALID) {
 		t.Fatalf("submit create identity error = %v, want PARAM_INVALID", err)
 	}
 }
@@ -441,7 +441,7 @@ func TestSubmitCronJobRejectsInFlightTask(t *testing.T) {
 	}
 	req := validSubmitCronJobRequest("submit-in-flight")
 	req.TaskName = "must-not-change"
-	if _, err := submit.SubmitCronJob(req); !tool.IsErrorByPbCode(err, extproto.Code__1_02_DB) {
+	if _, err := submit.SubmitCronJob(req); !tool.IsErrorByPbCode(err, extproto.Code__1_00_DB) {
 		t.Fatalf("in-flight submit error = %v, want DB", err)
 	}
 	loaded, err := store.GetByID(ctx, created.JobId)
@@ -644,10 +644,10 @@ func TestCronJobRunGetAndList(t *testing.T) {
 		t.Fatalf("list exact times did not round trip: %+v", list.CronJobs[0])
 	}
 
-	if _, err := NewGetCronJobLogic(ctx, serviceContext).GetCronJob(&trigger.GetCronJobReq{JobId: "missing"}); !tool.IsErrorByPbCode(err, extproto.Code__1_02_RECORD_NOT_EXIST) {
+	if _, err := NewGetCronJobLogic(ctx, serviceContext).GetCronJob(&trigger.GetCronJobReq{JobId: "missing"}); !tool.IsErrorByPbCode(err, extproto.Code__1_00_RECORD_NOT_EXIST) {
 		t.Fatalf("get missing error = %v, want RECORD_NOT_EXIST", err)
 	}
-	if _, err := NewRunCronJobLogic(ctx, serviceContext).RunCronJob(&trigger.RunCronJobReq{JobId: "missing"}); !tool.IsErrorByPbCode(err, extproto.Code__1_02_RECORD_NOT_EXIST) {
+	if _, err := NewRunCronJobLogic(ctx, serviceContext).RunCronJob(&trigger.RunCronJobReq{JobId: "missing"}); !tool.IsErrorByPbCode(err, extproto.Code__1_00_RECORD_NOT_EXIST) {
 		t.Fatalf("run missing error = %v, want RECORD_NOT_EXIST", err)
 	}
 }
@@ -744,7 +744,7 @@ func TestPreviewCronJobScheduleErrorsAndExhaustion(t *testing.T) {
 	}
 	logic := NewPreviewCronJobScheduleLogic(ctx, serviceContext)
 
-	if _, err := logic.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: "missing"}); !tool.IsErrorByPbCode(err, extproto.Code__1_02_RECORD_NOT_EXIST) {
+	if _, err := logic.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: "missing"}); !tool.IsErrorByPbCode(err, extproto.Code__1_00_RECORD_NOT_EXIST) {
 		t.Fatalf("missing preview error = %v, want RECORD_NOT_EXIST", err)
 	}
 
@@ -779,7 +779,7 @@ func TestPreviewCronJobScheduleErrorsAndExhaustion(t *testing.T) {
 	if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", malformed.ID).Update("rrule_str", "FREQ=DAILY").Error; err != nil {
 		t.Fatal(err)
 	}
-	if _, err := logic.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: malformed.ID}); !tool.IsErrorByPbCode(err, extproto.Code__1_01_PARAM_INVALID) {
+	if _, err := logic.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: malformed.ID}); !tool.IsErrorByPbCode(err, extproto.Code__1_00_PARAM_INVALID) {
 		t.Fatalf("malformed preview error = %v, want PARAM_INVALID", err)
 	}
 
@@ -796,7 +796,7 @@ func TestPreviewCronJobScheduleErrorsAndExhaustion(t *testing.T) {
 	if err := db.Model(&gormmodel.CronJob{}).Where("id = ?", emptyRule.ID).Update("rrule_str", "").Error; err != nil {
 		t.Fatal(err)
 	}
-	if _, err := logic.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: emptyRule.ID}); !tool.IsErrorByPbCode(err, extproto.Code__1_01_PARAM_INVALID) {
+	if _, err := logic.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: emptyRule.ID}); !tool.IsErrorByPbCode(err, extproto.Code__1_00_PARAM_INVALID) {
 		t.Fatalf("empty rule preview error = %v, want PARAM_INVALID", err)
 	}
 
@@ -804,7 +804,7 @@ func TestPreviewCronJobScheduleErrorsAndExhaustion(t *testing.T) {
 		t.Fatal("nil request must return an error")
 	}
 	missingScheduler := NewPreviewCronJobScheduleLogic(ctx, &svc.ServiceContext{CronJobStore: store})
-	if _, err := missingScheduler.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: exhausted.ID}); !tool.IsErrorByPbCode(err, extproto.Code__1_02_DB) {
+	if _, err := missingScheduler.PreviewCronJobSchedule(&trigger.PreviewCronJobScheduleReq{JobId: exhausted.ID}); !tool.IsErrorByPbCode(err, extproto.Code__1_00_DB) {
 		t.Fatalf("missing scheduler error = %v, want DB", err)
 	}
 }

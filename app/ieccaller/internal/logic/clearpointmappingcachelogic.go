@@ -35,7 +35,7 @@ func (l *ClearPointMappingCacheLogic) ClearPointMappingCache(in *ieccaller.Clear
 		for _, key := range in.Keys {
 			if _, exists := l.svcCtx.DevicePointMappingStore.GetCache(l.ctx, key); exists {
 				if err := l.svcCtx.DevicePointMappingStore.RemoveCache(l.ctx, key); err != nil {
-					return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "清除缓存失败(key)")
+					return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_CACHE, err, "清除缓存失败(key)")
 				}
 				clearedCount++
 			}
@@ -46,7 +46,7 @@ func (l *ClearPointMappingCacheLogic) ClearPointMappingCache(in *ieccaller.Clear
 			key := l.svcCtx.DevicePointMappingStore.GenerateCacheKey(info.TagStation, info.Coa, info.Ioa)
 			if _, exists := l.svcCtx.DevicePointMappingStore.GetCache(l.ctx, key); exists {
 				if err := l.svcCtx.DevicePointMappingStore.RemoveCache(l.ctx, key); err != nil {
-					return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "清除缓存失败(keyInfo)")
+					return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_CACHE, err, "清除缓存失败(keyInfo)")
 				}
 				clearedCount++
 			}

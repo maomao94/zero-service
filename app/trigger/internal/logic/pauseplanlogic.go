@@ -43,7 +43,7 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 
 	// 检查参数
 	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.PlanId) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "参数错误")
 	}
 
 	// 查询计划
@@ -55,13 +55,13 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 		err = db.Where("plan_id = ?", in.PlanId).First(&plan).Error
 	}
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划失败")
 	}
 	if plan.Status == model.PlanStatusTerminated || plan.FinishedTime.Valid {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态已结束,无需暂停")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划状态已结束,无需暂停")
 	}
 	if plan.Status != model.PlanStatusEnabled {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态非启用状态,无需暂停")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划状态非启用状态,无需暂停")
 	}
 
 	// 执行事务
@@ -93,7 +93,7 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 	})
 
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "暂停计划事务失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "暂停计划事务失败")
 	}
 
 	planscope.PlanScope(&plan).Logger(l.ctx).Info("RPC 暂停计划：计划状态已更新，事务已提交")

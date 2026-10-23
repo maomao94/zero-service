@@ -49,5 +49,5 @@ func (l *IsDeviceOnlineLogic) IsDeviceOnline(in *djicloud.IsDeviceOnlineReq) (*d
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return &djicloud.IsDeviceOnlineRes{IsOnline: false}, nil
 	}
-	return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询设备在线状态失败")
+	return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询设备在线状态失败")
 }

@@ -35,7 +35,7 @@ func (l *EncodeH3Logic) EncodeH3(in *gis.EncodeH3Req) (*gis.EncodeH3Res, error) 
 	if resolution <= 0 {
 		resolution = 9
 	} else if resolution > 15 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "h3分辨率必须为0-15")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "h3分辨率必须为0-15")
 	}
 
 	latLng := h3.NewLatLng(in.Point.Lat, in.Point.Lon)

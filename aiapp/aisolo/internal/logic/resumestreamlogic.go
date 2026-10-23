@@ -31,22 +31,22 @@ func NewResumeStreamLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Resu
 
 func (l *ResumeStreamLogic) ResumeStream(in *aisolo.ResumeReq, stream aisolo.AiSolo_ResumeStreamServer) error {
 	if l.svcCtx.Executor == nil {
-		return tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "executor not ready (chat model may be missing)")
+		return tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "executor not ready (chat model may be missing)")
 	}
 	if in == nil {
-		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "resume request is required")
+		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "resume request is required")
 	}
 	sessionID := strings.TrimSpace(in.SessionId)
 	userID := strings.TrimSpace(in.UserId)
 	interruptID := strings.TrimSpace(in.InterruptId)
 	if sessionID == "" || interruptID == "" {
-		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "session_id and interrupt_id are required")
+		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "session_id and interrupt_id are required")
 	}
 	if userID == "" {
-		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "user_id is required")
+		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "user_id is required")
 	}
 	if in.Action != aisolo.ResumeAction_RESUME_ACTION_YES && in.Action != aisolo.ResumeAction_RESUME_ACTION_NO {
-		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "resume action must be yes or no")
+		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "resume action must be yes or no")
 	}
 
 	turnID := uuid.NewString()

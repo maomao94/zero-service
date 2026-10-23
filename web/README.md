@@ -9,6 +9,7 @@ web/
 ├── live/                    # Live 视频会议系统
 ├── socketio/                # SocketIO 网关测试工具
 ├── workspace/               # 统一工作台
+├── openapi/                 # OpenAPI 测试控制台
 └── start.sh                 # 一键启动脚本
 ```
 
@@ -81,6 +82,30 @@ SocketIO 消息网关测试工具，支持用户域和设备域连接。
 
 ---
 
+### 4. OpenAPI 测试控制台 (`openapi/`)
+
+`openapp/opengtw` 的配套调试控制台，仅限开发/测试环境。
+
+**功能特性：**
+- API 调试（19 个 method：Podman 4 + Modbus 15、method 分组搜索、写操作提示、JSON 编辑器、响应高亮）
+- Basic 凭据与 Base URL 管理
+- 应用创建、启停、密钥重置（JWT 管理面）
+- 最近 50 条请求历史与回填重放
+- 错误码速查与处理建议
+
+**技术栈：**
+- React 18 + TypeScript
+- Vite
+- Lucide React
+
+**端口：** 5181
+
+**生产路径：** `/openapi/`
+
+**文档：** [OpenAPI 控制台文档](./openapi/README.md)
+
+---
+
 ## 快速开始
 
 ### 方式一：一键启动（推荐）
@@ -111,13 +136,21 @@ npm run dev
 cd web/workspace
 npm install
 npm run dev
+
+# 4. 启动 OpenAPI 测试控制台
+cd web/openapi
+npm install
+npm run dev
 ```
 
 ### 访问地址
 
-- **工作台：** http://localhost:5180
-- **Live 视频会议：** http://localhost:5178
-- **SocketIO 网关测试：** http://localhost:5179
+- **工作台：** http://127.0.0.1:5180
+- **Live 视频会议：** http://127.0.0.1:5178
+- **SocketIO 网关测试：** http://127.0.0.1:5179
+- **OpenAPI 测试控制台：** http://127.0.0.1:5181
+
+> 开发服务器统一监听 `127.0.0.1`，避免 `localhost` 在某些环境解析到 IPv6 后连接失败。
 
 ---
 
@@ -143,12 +176,20 @@ npm run dev
 
 各子系统支持环境变量配置：
 
+**工作台：**
+- `VITE_LIVE_URL`：Live 子系统访问地址
+- `VITE_SOCKETIO_URL`：SocketIO 子系统访问地址
+- `VITE_OPENAPI_URL`：OpenAPI 控制台访问地址（路径型站点，生产留空走 `/openapi/`）
+
 **Live 视频会议：**
 - `VITE_LIVEKIT_URL`：LiveKit 服务器 URL
 - `VITE_SOCKET_URL`：SocketIO 服务器 URL
 
 **SocketIO 网关测试：**
 - `VITE_SOCKET_URL`：SocketIO 服务器 URL
+
+**OpenAPI 测试控制台：**
+- `VITE_OPENAPI_BASE_URL`：默认 Base URL，留空表示同源；页面内仍可覆盖
 
 ---
 
@@ -165,6 +206,10 @@ npm run dev
 cd web/live && npm run build
 cd web/socketio && npm run build
 cd web/workspace && npm run build
+cd web/openapi && npm run build
+
+# 或统一构建到 deploy/nginx/dist
+bash deploy/nginx/build-web.sh
 
 # 部署 dist 目录到 Web 服务器
 ```

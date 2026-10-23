@@ -36,11 +36,11 @@ func (l *GetPodLogic) GetPod(in *podengine.GetPodReq) (*podengine.GetPodRes, err
 	}
 	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
 	if !ok {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "node: "+in.Node)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "node: "+in.Node)
 	}
 	container, err := dockerClient.ContainerInspect(l.ctx, in.Id)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_RECORD_NOT_EXIST, err, "container: "+in.Id)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_RECORD_NOT_EXIST, err, "container: "+in.Id)
 	}
 	pod := &podengine.PodPb{
 		Id:          container.ID,

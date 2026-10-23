@@ -33,25 +33,25 @@ func NewCreateSipProviderLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 func (l *CreateSipProviderLogic) CreateSipProvider(in *live.CreateSipProviderReq) (*live.CreateSipProviderRes, error) {
 	code := strings.TrimSpace(in.GetCode())
 	if code == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "供应商编码不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "供应商编码不能为空")
 	}
 	if strings.TrimSpace(in.GetName()) == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "供应商名称不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "供应商名称不能为空")
 	}
 	if strings.TrimSpace(in.GetAddress()) == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "SIP 服务器地址不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "SIP 服务器地址不能为空")
 	}
 	if len(in.GetNumbers()) == 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "号码池不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "号码池不能为空")
 	}
 
 	// 检查编码唯一
 	existing, err := l.svcCtx.MeetingRepo.GetSipProviderByCode(l.ctx, code)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询供应商失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询供应商失败")
 	}
 	if existing != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_ALREADY_EXIST, "供应商编码已存在")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_ALREADY_EXIST, "供应商编码已存在")
 	}
 
 	// 创建 LiveKit SIP Outbound Trunk
@@ -65,7 +65,7 @@ func (l *CreateSipProviderLogic) CreateSipProvider(in *live.CreateSipProviderReq
 		},
 	})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "创建 SIP trunk 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "创建 SIP trunk 失败")
 	}
 
 	numbersJSON, _ := json.Marshal(in.GetNumbers())
@@ -86,7 +86,7 @@ func (l *CreateSipProviderLogic) CreateSipProvider(in *live.CreateSipProviderReq
 	if err := l.svcCtx.MeetingRepo.CreateSipProvider(l.ctx, p); err != nil {
 		// 创建供应商失败，清理已创建的 trunk
 		_, _ = l.svcCtx.LiveKit.SIP().DeleteSIPTrunk(l.ctx, &livekit.DeleteSIPTrunkRequest{SipTrunkId: trunkRes.SipTrunkId})
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "创建供应商失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "创建供应商失败")
 	}
 
 	l.Logger.Infof("SIP provider created: %s (%s) trunk=%s", code, p.Name, trunkRes.SipTrunkId)

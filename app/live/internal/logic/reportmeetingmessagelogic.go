@@ -31,16 +31,16 @@ func NewReportMeetingMessageLogic(ctx context.Context, svcCtx *svc.ServiceContex
 // 上报聊天消息
 func (l *ReportMeetingMessageLogic) ReportMeetingMessage(in *live.ReportMeetingMessageReq) (*live.ReportMeetingMessageRes, error) {
 	if in.MeetingNo == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "会议号不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议号不能为空")
 	}
 	if in.Content == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "消息内容不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "消息内容不能为空")
 	}
 
 	// 生成 messageId
 	messageID, err := l.svcCtx.IdUtil.SimpleUUID()
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "生成消息ID失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_CACHE, err, "生成消息ID失败")
 	}
 
 	// 获取发送者信息
@@ -65,7 +65,7 @@ func (l *ReportMeetingMessageLogic) ReportMeetingMessage(in *live.ReportMeetingM
 	}
 	if err := l.svcCtx.MeetingRepo.CreateMessage(l.ctx, message); err != nil {
 		l.Logger.Errorf("create message failed: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "存储消息失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "存储消息失败")
 	}
 
 	l.Logger.Infof("message reported: meeting=%s messageId=%s sender=%s", in.MeetingNo, messageID, senderID)

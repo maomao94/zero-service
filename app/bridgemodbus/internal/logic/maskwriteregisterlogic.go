@@ -37,11 +37,11 @@ func (l *MaskWriteRegisterLogic) MaskWriteRegister(in *bridgemodbus.MaskWriteReg
 
 	andMask, err := bytex.Uint32ToUint16Validate(in.AndMask)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "AND 掩码超过 16 位寄存器的最大值 (65535)")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "AND 掩码超过 16 位寄存器的最大值 (65535)")
 	}
 	orMask, err := bytex.Uint32ToUint16Validate(in.OrMask)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "OR 掩码超过 16 位寄存器的最大值 (65535)")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "OR 掩码超过 16 位寄存器的最大值 (65535)")
 	}
 
 	results, err := mbCli.MaskWriteRegister(l.ctx, uint16(in.Address), andMask, orMask)

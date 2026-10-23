@@ -61,7 +61,7 @@ func buildCronJobTask(data cronJobTaskData) (*crontask.TaskConfig, string, error
 		carbonx.NowStartOfSecond().StdTime(),
 	)
 	if err != nil {
-		return nil, "", tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "Cron Job 规则无效")
+		return nil, "", tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "Cron Job 规则无效")
 	}
 	extra, err := cronjob.MarshalExtra(&cronjob.CronJobExtra{
 		DeptCode:       data.deptCode,
@@ -79,7 +79,7 @@ func buildCronJobTask(data cronJobTaskData) (*crontask.TaskConfig, string, error
 		Ext5:           data.ext5,
 	})
 	if err != nil {
-		return nil, "", tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "Cron Job 扩展字段无效")
+		return nil, "", tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "Cron Job 扩展字段无效")
 	}
 	return &crontask.TaskConfig{
 		TaskCode:    data.taskCode,
@@ -102,7 +102,7 @@ func optionalJSON(value, field string) (json.RawMessage, error) {
 		return nil, nil
 	}
 	if !json.Valid([]byte(value)) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, field+" 必须是合法 JSON")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, field+" 必须是合法 JSON")
 	}
 	return json.RawMessage(value), nil
 }
@@ -114,16 +114,16 @@ func parseHolidayDate(date string) (time.Time, error) {
 	c := carbon.ParseByFormat(date, carbon.DateFormat)
 	if c.Error != nil || c.IsInvalid() {
 		if c.Error != nil {
-			return time.Time{}, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, c.Error, "日期格式错误，应为 yyyy-MM-dd")
+			return time.Time{}, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, c.Error, "日期格式错误，应为 yyyy-MM-dd")
 		}
-		return time.Time{}, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "日期格式错误，应为 yyyy-MM-dd")
+		return time.Time{}, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "日期格式错误，应为 yyyy-MM-dd")
 	}
 	return c.StdTime(), nil
 }
 
 func validateHolidayDate(date string) error {
 	if date == "" {
-		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "日期不能为空")
+		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "日期不能为空")
 	}
 	_, err := parseHolidayDate(date)
 	return err

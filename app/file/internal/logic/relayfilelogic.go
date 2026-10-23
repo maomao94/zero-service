@@ -39,10 +39,10 @@ func NewRelayFileLogic(ctx context.Context, svcCtx *svc.ServiceContext) *RelayFi
 
 func (l *RelayFileLogic) RelayFile(in *file.RelayFileReq) (*file.RelayFileRes, error) {
 	if in.SourceUrl == "" && in.SourcePath == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "sourceUrl or sourcePath must be provided")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "sourceUrl or sourcePath must be provided")
 	}
 	if len(in.Targets) == 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "at least one target must be specified")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "at least one target must be specified")
 	}
 	source, err := l.prepareRelaySource(in)
 	if err != nil {
@@ -89,16 +89,16 @@ func (l *RelayFileLogic) openLocalSource(sourcePath, reqContentType string) (*re
 func (l *RelayFileLogic) fetchURLSource(sourceURL, reqContentType string) (*relaySource, error) {
 	body, err := l.svcCtx.NetClient.Download(l.ctx, sourceURL)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "download from source URL failed")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "download from source URL failed")
 	}
 	defer body.Close()
 
 	if err := os.MkdirAll(l.svcCtx.Config.Upload.TempDir, os.ModePerm); err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "create relay temp dir failed")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "create relay temp dir failed")
 	}
 	f, err := os.CreateTemp(l.svcCtx.Config.Upload.TempDir, relayDownloadPattern)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "create relay temp file failed")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "create relay temp file failed")
 	}
 	tempPath := f.Name()
 
@@ -107,16 +107,16 @@ func (l *RelayFileLogic) fetchURLSource(sourceURL, reqContentType string) (*rela
 	if copyErr != nil {
 		_ = f.Close()
 		_ = os.Remove(tempPath)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, copyErr, "download source URL body failed")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, copyErr, "download source URL body failed")
 	}
 	if written > relayMaxSourceBytes {
 		_ = f.Close()
 		_ = os.Remove(tempPath)
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, fmt.Sprintf("source URL body exceeds limit: %d", relayMaxSourceBytes))
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, fmt.Sprintf("source URL body exceeds limit: %d", relayMaxSourceBytes))
 	}
 	if err = f.Close(); err != nil {
 		_ = os.Remove(tempPath)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "close relay temp file failed")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "close relay temp file failed")
 	}
 
 	contentType := resolveContentType(l.ctx, reqContentType, headWriter.Bytes())

@@ -30,7 +30,7 @@ func (l *SrsRequestsLogic) SrsRequests(in *oryxserver.SrsRequestsReq) (*oryxserv
 	data, err := l.svcCtx.OryxClient.SrsRequests(l.ctx)
 	if err != nil {
 		l.Logger.Errorf("调用 SRS API 失败: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "调用 SRS API 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用 SRS API 失败")
 	}
 	return &oryxserver.SrsRequestsRes{
 		Uri:    data.URI,

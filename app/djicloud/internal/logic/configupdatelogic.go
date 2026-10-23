@@ -31,7 +31,7 @@ func NewConfigUpdateLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Conf
 func (l *ConfigUpdateLogic) ConfigUpdate(in *djicloud.ConfigUpdateReq) (*djicloud.CommonRes, error) {
 	var config map[string]any
 	if err := json.Unmarshal([]byte(in.Config), &config); err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "config JSON 不合法")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "config JSON 不合法")
 	}
 
 	data := &djisdk.ConfigUpdateData{

@@ -30,7 +30,7 @@ func (l *RecordQueryLogic) RecordQuery(in *oryxserver.RecordQueryReq) (*oryxserv
 	data, err := l.svcCtx.OryxClient.RecordQuery(l.ctx)
 	if err != nil {
 		l.Logger.Errorf("调用 Oryx API 失败: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "调用 Oryx API 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用 Oryx API 失败")
 	}
 	return &oryxserver.RecordQueryRes{
 		All:          data.All,

@@ -40,7 +40,7 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 	}
 
 	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.BatchId) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "参数错误")
 	}
 	var planBatch gormmodel.PlanBatch
 	db := l.svcCtx.DB.WithContext(l.ctx).DB
@@ -51,21 +51,21 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 	}
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划批次失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划批次失败")
 	}
 
 	// 获取批次执行项状态统计
 	statusCounts, err := gormmodel.GetBatchStatusCounts(l.ctx, db, planBatch.Id)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "获取批次状态统计失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "获取批次状态统计失败")
 	}
 
 	// 获取批次总执行项数
 	totalExecItems, err := gormmodel.GetBatchTotalExecItems(l.ctx, db, planBatch.Id)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "获取批次总数失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "获取批次总数失败")
 	}
 
 	// 初始化状态统计

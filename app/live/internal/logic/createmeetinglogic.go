@@ -35,13 +35,13 @@ func NewCreateMeetingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cre
 // 创建会议（落库 + 创建 LiveKit 房间）
 func (l *CreateMeetingLogic) CreateMeeting(in *live.CreateMeetingReq) (*live.CreateMeetingRes, error) {
 	if strings.TrimSpace(in.Title) == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "会议标题不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议标题不能为空")
 	}
 	// 创建人/机构取自 gRPC metadata（网关注入 user-id/dept-code），不通过 proto 传输；
 	// 创建时创建人与更新人同时赋值（项目惯例，对齐 trigger）
 	creator := authctx.GetUserId(l.ctx)
 	if creator == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_03_UNAUTHORIZED, "缺少用户身份")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_UNAUTHORIZED, "缺少用户身份")
 	}
 	deptCode := authctx.GetDeptCode(l.ctx)
 	now := carbonx.NowStartOfSecond().StdTime()
@@ -49,7 +49,7 @@ func (l *CreateMeetingLogic) CreateMeeting(in *live.CreateMeetingReq) (*live.Cre
 	// outDescType=M 标识会议单据）。Redis 是 live 服务必需依赖。
 	meetingNo, err := l.svcCtx.IdUtil.NextId("M", "live")
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "生成会议号失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_CACHE, err, "生成会议号失败")
 	}
 
 	// 生成9位用户会议号，加分布式锁防并发生成重复 meeting_code
@@ -57,27 +57,27 @@ func (l *CreateMeetingLogic) CreateMeeting(in *live.CreateMeetingReq) (*live.Cre
 	codeLock.SetExpire(meetingCodeLockTTL)
 	codeLockOk, err := codeLock.AcquireCtx(l.ctx)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "获取会议号生成锁失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_CACHE, err, "获取会议号生成锁失败")
 	}
 	if !codeLockOk {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_REPEAT, "会议号生成中，请稍后重试")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_REPEAT, "会议号生成中，请稍后重试")
 	}
 	defer codeLock.Release()
 
 	meetingCode, err := tool.RandomDigits(9)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "生成会议号失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_CACHE, err, "生成会议号失败")
 	}
 	for i := 0; i < 3; i++ {
 		exists, err := l.svcCtx.MeetingRepo.IsMeetingCodeExists(l.ctx, meetingCode)
 		if err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询会议号失败")
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议号失败")
 		}
 		if !exists {
 			break
 		}
 		if i == 2 {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_03_CACHE, "会议号生成冲突，请重试")
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_CACHE, "会议号生成冲突，请重试")
 		}
 		meetingCode, _ = tool.RandomDigits(9)
 	}
@@ -104,7 +104,7 @@ func (l *CreateMeetingLogic) CreateMeeting(in *live.CreateMeetingReq) (*live.Cre
 		Metadata:         in.GetMetadata(),
 	})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "创建房间失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "创建房间失败")
 	}
 	meeting := &gormmodel.LiveMeeting{
 		CreateUser:       sql.NullString{String: creator, Valid: creator != ""},
@@ -123,7 +123,7 @@ func (l *CreateMeetingLogic) CreateMeeting(in *live.CreateMeetingReq) (*live.Cre
 	}
 	if err := l.svcCtx.MeetingRepo.CreateMeeting(l.ctx, meeting); err != nil {
 		_, _ = l.svcCtx.LiveKit.Room().DeleteRoom(l.ctx, &livekit.DeleteRoomRequest{Room: meetingNo})
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "会议落库失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "会议落库失败")
 	}
 	l.Logger.Infof("meeting created: %s title=%q creator=%s", meetingNo, meeting.Title, creator)
 	return &live.CreateMeetingRes{Meeting: toMeetingInfo(meeting)}, nil

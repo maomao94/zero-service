@@ -28,48 +28,87 @@ extend google.protobuf.EnumValueOptions {
 }
 
 /**
- * Code 表示系统统一错误码定义
+ * Code 表示系统统一错误码定义（参考大疆上云 DJIErrorCode 的 ABCDEF 设计）
  *
- * 错误码整体为 “ABCDEF” 六位数字：
- *   - A     ：错误来源（当前统一为 1，表示平台/服务端）
- *   - BC    ：功能模块
- *   - DEF   ：模块内自定义错误
+ * 错误码整体为 “ABCDEF” 六位数字，各维度含义固定，不得混用：
+ *   - A   ：错误来源（上报方）
+ *           0 = 成功（仅 000000）
+ *           1 = 平台服务端（本仓库微服务、HTTP/gRPC 网关）
+ *           3 = 设备 / 边缘端（机场、飞行器、IEC/Modbus 现场设备）
+ *           5 = 云端 / 第三方平台（DJI 上云、微信、OSS 等）
+ *           2、4、6-9 预留
+ *   - BC  ：功能模块（两位），仅对 A=1 的码生效，按产品能力划分
+ *           已启用：00 通用、30 开放平台
+ *           其他功能域按需申请，不提前预分配；90-99 预留
+ *           通用（00）内部按 DEF 段细分：
+ *           100-199 参数  200-299 数据  300-399 缓存/消息
+ *           400-499 认证  500-599 业务  600-699 外部依赖
+ *           700-799 限流  800-899 网关  900-999 兜底/折叠
+ *   - DEF ：模块内错误（三位）
+ *           100-899 具体错误；900-999 兜底与对外折叠
+ *
+ * 编码规则：
+ *   1. 0 是唯一成功码，不得用于构造错误。
+ *   2. v2 发布后数字码冻结，只允许追加，不得重编号或复用。
+ *   3. http_code 是“语义 HTTP 状态”，用于推导 gRPC Code 与客户端分类；
+ *      网关实际统一返回 HTTP 200，业务结果以 body.code 为准。
+ *   4. 对外错误必须可安全展示；内部细节（SQL、地址、堆栈）只写日志。
+ *   5. A=3/5 的码来自 dji_error_code.proto，原样透传，不按本表的 BC 解释。
  */
 enum Code {
-  // ===== proto3 兜底 =====
-  CODE_UNSPECIFIED = 0 [(name) = "未指定错误码", (http_code) = 500];
+  // 0 的历史名称仍需兼容早期生成代码；统一使用 _0_OK。
+  option allow_alias = true;
 
-  // ===== 通用系统错误（A=1, BC=00）=====
-  _1_00_UNKNOWN = 100999 [(name) = "未知错误", (http_code) = 500];
-  _1_00_INTERNAL = 100998 [(name) = "系统内部错误", (http_code) = 500];
+  // ===== 成功（ABCDEF 全 0）=====
+  _0_OK = 0 [(name) = "成功", (http_code) = 200];
+  // Deprecated: 仅为兼容历史生成代码保留，0 表示成功，不得用于构造错误。
+  CODE_UNSPECIFIED = 0 [(name) = "成功", (http_code) = 200];
+
+  // ===== 通用（A=1, BC=00）：跨域基础错误 =====
+  // 参数/校验（DEF 100-199）
+  _1_00_PARAM = 100101 [(name) = "参数错误", (http_code) = 400];
+  _1_00_PARAM_MISSING = 100102 [(name) = "缺少必要参数", (http_code) = 400];
+  _1_00_PARAM_INVALID = 100103 [(name) = "参数不合法", (http_code) = 400];
+
+  // 数据/存储（DEF 200-299）
+  _1_00_DB = 100201 [(name) = "数据库错误", (http_code) = 500];
+  _1_00_RECORD_NOT_EXIST = 100202 [(name) = "记录不存在", (http_code) = 404];
+  _1_00_RECORD_ALREADY_EXIST = 100203 [(name) = "记录已存在", (http_code) = 409];
+  _1_00_DATA_CONFLICT = 100204 [(name) = "数据冲突", (http_code) = 409];
+
+  // 缓存/消息（DEF 300-399）
+  _1_00_CACHE = 100301 [(name) = "缓存错误", (http_code) = 500];
+  _1_00_CACHE_MISS = 100302 [(name) = "缓存未命中", (http_code) = 500];
+  _1_00_MQ = 100303 [(name) = "消息队列错误", (http_code) = 503];
+
+  // 认证/授权（DEF 400-499）
+  _1_00_UNAUTHORIZED = 100401 [(name) = "未认证", (http_code) = 401];
+  _1_00_FORBIDDEN = 100402 [(name) = "无权限访问", (http_code) = 403];
+
+  // 业务通用（DEF 500-599）
+  _1_00_BIZ = 100501 [(name) = "业务处理失败", (http_code) = 400];
+  _1_00_BIZ_STATE = 100502 [(name) = "业务状态不允许", (http_code) = 409];
+  _1_00_BIZ_REPEAT = 100503 [(name) = "重复操作", (http_code) = 409];
+
+  // 外部依赖（DEF 600-699）
+  _1_00_RPC = 100601 [(name) = "远程调用失败", (http_code) = 503];
+  _1_00_THIRD_PARTY = 100602 [(name) = "第三方服务异常", (http_code) = 503];
+
+  // 限流（DEF 700-799）
+  _1_00_RATE_LIMITED = 100701 [(name) = "请求过于频繁", (http_code) = 429];
+
+  // 网关/传输（DEF 800-899）
+  _1_00_ROUTE_NOT_FOUND = 100801 [(name) = "接口不存在", (http_code) = 404];
+  _1_00_METHOD_NOT_ALLOWED = 100802 [(name) = "请求方法不允许", (http_code) = 405];
+
+  // 系统兜底（DEF 900-999）
   _1_00_TIMEOUT = 100997 [(name) = "系统超时", (http_code) = 504];
+  _1_00_INTERNAL = 100998 [(name) = "系统内部错误", (http_code) = 500];
+  _1_00_UNKNOWN = 100999 [(name) = "未知错误", (http_code) = 500];
 
-  // ===== 参数 / 校验错误（A=1, BC=01）=====
-  _1_01_PARAM = 101101 [(name) = "参数错误", (http_code) = 400];
-  _1_01_PARAM_MISSING = 101102 [(name) = "缺少必要参数", (http_code) = 400];
-  _1_01_PARAM_INVALID = 101103 [(name) = "参数不合法", (http_code) = 400];
-
-  // ===== 数据相关错误（A=1, BC=02）=====
-  _1_02_DB = 102101 [(name) = "数据库错误", (http_code) = 500];
-  _1_02_RECORD_NOT_EXIST = 102102 [(name) = "记录不存在", (http_code) = 404];
-  _1_02_RECORD_ALREADY_EXIST = 102103 [(name) = "记录已存在", (http_code) = 409];
-  _1_02_DATA_CONFLICT = 102104 [(name) = "数据冲突", (http_code) = 409];
-
-  // ===== 缓存 / 中间件错误（A=1, BC=03）=====
-  _1_03_CACHE = 103101 [(name) = "缓存错误", (http_code) = 500];
-  _1_03_CACHE_MISS = 103102 [(name) = "缓存未命中", (http_code) = 500];
-  _1_03_MQ = 103103 [(name) = "消息队列错误", (http_code) = 503];
-
-  // ===== 权限 / 认证错误（A=1, BC=04）=====
-  _1_03_UNAUTHORIZED = 104101 [(name) = "未认证", (http_code) = 401];
-  _1_03_FORBIDDEN = 104102 [(name) = "无权限访问", (http_code) = 403];
-
-  // ===== 业务通用错误（A=1, BC=05）=====
-  _1_05_BIZ = 105101 [(name) = "业务处理失败", (http_code) = 400];
-  _1_05_BIZ_STATE = 105102 [(name) = "业务状态不允许", (http_code) = 409];
-  _1_05_BIZ_REPEAT = 105103 [(name) = "重复操作", (http_code) = 409];
-
-  // ===== 外部依赖错误（A=1, BC=06）=====
-  _1_06_RPC = 106101 [(name) = "远程调用失败", (http_code) = 503];
-  _1_06_THIRD_PARTY = 106102 [(name) = "第三方服务异常", (http_code) = 503];
+  // ===== 开放平台（A=1, BC=30）=====
+  _1_30_APP_NOT_FOUND = 130101 [(name) = "应用不存在或已停用", (http_code) = 403];
+  _1_30_APP_SECRET_INVALID = 130102 [(name) = "密钥无效", (http_code) = 401];
+  _1_30_METHOD_NOT_OPEN = 130103 [(name) = "方法未开放", (http_code) = 404];
+  _1_30_RATE_LIMITED = 130104 [(name) = "请求超过限制", (http_code) = 429];
 }

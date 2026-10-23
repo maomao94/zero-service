@@ -28,12 +28,12 @@ func NewGridDiskLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GridDisk
 
 func (l *GridDiskLogic) GridDisk(in *gis.GridDiskReq) (*gis.GridDiskRes, error) {
 	if in.H3Index == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "h3_index")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "h3_index")
 	}
 
 	origin := h3.CellFromString(in.H3Index)
 	if !origin.IsValid() {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "无效的 H3 index")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "无效的 H3 index")
 	}
 
 	k := int(in.K)

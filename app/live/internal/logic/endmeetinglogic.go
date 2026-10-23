@@ -49,10 +49,10 @@ func (l *EndMeetingLogic) EndMeeting(in *live.EndMeetingReq) (*live.EndMeetingRe
 	lock.SetExpire(meetingLockTTL)
 	ok, err := lock.AcquireCtx(l.ctx)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "获取会议锁失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_CACHE, err, "获取会议锁失败")
 	}
 	if !ok {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_REPEAT, "会议正在被结束，请稍后重试")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_REPEAT, "会议正在被结束，请稍后重试")
 	}
 	defer lock.Release()
 
@@ -68,7 +68,7 @@ func (l *EndMeetingLogic) EndMeeting(in *live.EndMeetingReq) (*live.EndMeetingRe
 	// 删除 LiveKit 房间（结束会议统一入口），断开全部参与者
 	if _, err := l.svcCtx.LiveKit.Room().DeleteRoom(l.ctx, &livekit.DeleteRoomRequest{Room: in.MeetingNo}); err != nil {
 		l.Logger.Errorf("delete room failed: meeting=%s err=%v", in.MeetingNo, err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "删除房间失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "删除房间失败")
 	}
 
 	now := carbonx.NowStartOfSecond().StdTime()
@@ -76,7 +76,7 @@ func (l *EndMeetingLogic) EndMeeting(in *live.EndMeetingReq) (*live.EndMeetingRe
 	operator := authctx.GetUserId(l.ctx)
 	deptCode := authctx.GetDeptCode(l.ctx)
 	if updated, err := l.svcCtx.MeetingRepo.UpdateMeetingEnded(l.ctx, in.MeetingNo, now, operator, deptCode); err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "更新会议状态失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "更新会议状态失败")
 	} else if !updated {
 		l.Logger.Infof("meeting already ended by other path: %s", in.MeetingNo)
 		return &live.EndMeetingRes{}, nil

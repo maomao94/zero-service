@@ -18,7 +18,6 @@ import (
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/rest/httpx"
-	xhttp "github.com/zeromicro/x/http"
 )
 
 var configFile = flag.String("f", "etc/gtw.yaml", "the config file")
@@ -49,9 +48,24 @@ func main() {
 	//	}))
 	//})
 
-	gtwx.SetGrpcErrorHandler()
+	gtwx.SetUnifiedErrorHandler()
 
-	server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
+	server := rest.MustNewServer(c.RestConf,
+		gtwx.CorsOption(),
+		// 业务错误统一返回 HTTP 200 + {code,msg,data}，鉴权失败、404、405 也走信封。
+		rest.WithUnauthorizedCallback(gtwx.UnauthorizedHandler),
+		rest.WithNotFoundHandler(http.HandlerFunc(gtwx.NotFoundHandler)),
+		rest.WithNotAllowedHandler(http.HandlerFunc(gtwx.MethodNotAllowedHandler)),
+	)
+
+	// 请求 ID 优先复用调用方传入值，缺失时生成并回显
+	server.Use(gtwx.RequestIDMiddleware)
+
+	// 请求日志（method, path, duration 写入 context，供 ok/error handler 读取）
+	server.Use(gtwx.RequestLogMiddleware)
+
+	// 响应日志
+	gtwx.SetLogOkHandler()
 
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)
@@ -71,7 +85,7 @@ func main() {
 				body := SwaggerFile{}
 				err := httpx.Parse(r, &body)
 				if err != nil {
-					xhttp.JsonBaseResponseCtx(r.Context(), w, err)
+					gtwx.WriteParseError(r.Context(), w, err)
 					return
 				}
 				w.Header().Set("Content-Type", "application/json")

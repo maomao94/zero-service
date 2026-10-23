@@ -109,9 +109,9 @@ npm run dev
 
 ### 访问地址
 
-- **工作台：** http://localhost:5180
-- **Live 视频会议：** http://localhost:5178
-- **SocketIO 网关测试：** http://localhost:5179
+- **工作台：** http://127.0.0.1:5180
+- **Live 视频会议：** http://127.0.0.1:5178
+- **SocketIO 网关测试：** http://127.0.0.1:5179
 
 ---
 

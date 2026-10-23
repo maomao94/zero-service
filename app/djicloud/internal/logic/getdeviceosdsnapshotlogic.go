@@ -30,7 +30,7 @@ func NewGetDeviceOsdSnapshotLogic(ctx context.Context, svcCtx *svc.ServiceContex
 func (l *GetDeviceOsdSnapshotLogic) GetDeviceOsdSnapshot(in *djicloud.GetDeviceOsdSnapshotReq) (*djicloud.GetDeviceOsdSnapshotRes, error) {
 	var item gormmodel.DjiDeviceOsdSnapshot
 	if err := l.svcCtx.DB.WithContext(l.ctx).Where("device_sn = ?", in.DeviceSn).First(&item).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_RECORD_NOT_EXIST, err, "查询设备OSD快照失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_RECORD_NOT_EXIST, err, "查询设备OSD快照失败")
 	}
 	return &djicloud.GetDeviceOsdSnapshotRes{Data: toOsdSnapshot(&item)}, nil
 }

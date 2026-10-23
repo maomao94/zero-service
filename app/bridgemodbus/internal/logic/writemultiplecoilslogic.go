@@ -29,7 +29,7 @@ func NewWriteMultipleCoilsLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 // 写多个线圈 (Function Code 0x0F)
 func (l *WriteMultipleCoilsLogic) WriteMultipleCoils(in *bridgemodbus.WriteMultipleCoilsReq) (*bridgemodbus.WriteMultipleCoilsRes, error) {
 	if int(in.Quantity) != len(in.Values) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "数量与值数量不一致")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "数量与值数量不一致")
 	}
 
 	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)

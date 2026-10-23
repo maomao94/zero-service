@@ -35,6 +35,7 @@ services:
       - ./dist/live:/usr/share/nginx/html/live:ro            # Live 会议前端产物
       - ./dist/socketio:/usr/share/nginx/html/socketio:ro    # SocketIO 测试工具产物
       - ./dist/workspace:/usr/share/nginx/html/workspace:ro  # 工作台产物
+      - ./dist/openapi:/usr/share/nginx/html/openapi:ro      # OpenAPI 测试控制台产物
       - ../livekit/recordings:/usr/share/nginx/html/recordings:ro # 录制文件（只读）
       - ${NGINX_TLS_CERT:-../tls/server.crt}:/etc/nginx/tls/server.crt:ro  # TLS 证书（必须存在）
       - ${NGINX_TLS_KEY:-../tls/server.key}:/etc/nginx/tls/server.key:ro    # TLS 私钥

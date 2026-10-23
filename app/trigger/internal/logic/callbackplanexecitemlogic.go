@@ -48,7 +48,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		return nil, err
 	}
 	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.ExecId) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "参数错误")
 	}
 
 	db := l.svcCtx.DB.WithContext(l.ctx).DB
@@ -60,9 +60,9 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	}
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
 		}
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_DB, "查询执行项失败")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_DB, "查询执行项失败")
 	}
 
 	lockKey := fmt.Sprintf("trigger:lock:plan:exec:%s", execItem.ExecId)
@@ -75,27 +75,27 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	b, lockErr := lock.AcquireCtx(l.ctx)
 	if lockErr != nil {
 		planscope.ExecCallback(&execItem).Logger(l.ctx).Errorf("RPC 执行回调：获取 Redis 分布式锁失败: %v", lockErr)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, lockErr, "获取 Redis 分布式锁失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_CACHE, lockErr, "获取 Redis 分布式锁失败")
 	}
 	if !b {
 		lockScope := planscope.ExecCallback(&execItem)
 		lockScope.Logger(l.ctx).Error("RPC 执行回调：未获取到 Redis 锁（可能并发回调同一执行单）")
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_03_CACHE, "执行回调未获取到 Redis 锁")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_CACHE, "执行回调未获取到 Redis 锁")
 	}
 	defer lock.Release()
 
 	// 加锁后补查询一次，获取最新状态
 	if err := db.Where("id = ?", execItem.Id).First(&execItem).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询执行项失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询执行项失败")
 	}
 
 	var plan gormmodel.Plan
 	if err := db.Where("id = ?", execItem.PlanPk).First(&plan).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划失败")
 	}
 	var planBatch gormmodel.PlanBatch
 	if err := db.Where("id = ?", execItem.BatchPk).First(&planBatch).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询批次失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询批次失败")
 	}
 
 	scope := planscope.CallbackScope(&execItem, &plan, &planBatch)
@@ -107,10 +107,10 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	).Info("RPC 执行回调：收到下游回执，将按 exec_result 回写执行项与流水")
 
 	if execItem.Status == model.StatusCompleted || execItem.Status == model.StatusTerminated {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "执行项已结束")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "执行项已结束")
 	}
 	if execItem.Status != model.StatusRunning {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "执行项状态错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "执行项状态错误")
 	}
 
 	statusIn := []int{model.StatusRunning}
@@ -188,12 +188,12 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	})
 	if err != nil {
 		if errors.Is(err, model.ErrNoRowsUpdate) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "执行项状态已变化，回调未生效")
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "执行项状态已变化，回调未生效")
 		}
 		if errors.Is(err, errInvalidPlanExecItemResult) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "无效的回执执行结果: "+in.GetExecResult())
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "无效的回执执行结果: "+in.GetExecResult())
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "回调事务失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "回调事务失败")
 	}
 
 	batchCount, err := gormmodel.UpdatePlanBatchFinishedTime(l.ctx, db, execItem.BatchPk)

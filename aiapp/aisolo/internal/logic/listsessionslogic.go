@@ -29,7 +29,7 @@ func NewListSessionsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *List
 func (l *ListSessionsLogic) ListSessions(in *aisolo.ListSessionsReq) (*aisolo.ListSessionsResp, error) {
 	userID := strings.TrimSpace(in.GetUserId())
 	if userID == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "user_id is required")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "user_id is required")
 	}
 	page := int(in.Page)
 	size := int(in.PageSize)

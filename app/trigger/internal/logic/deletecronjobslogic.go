@@ -32,7 +32,7 @@ func (l *DeleteCronJobsLogic) DeleteCronJobs(in *trigger.DeleteCronJobsReq) (*tr
 	}
 	deleted, err := l.svcCtx.CronJobStore.DeleteMany(l.ctx, in.JobIds)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "批量删除 Cron Job 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "批量删除 Cron Job 失败")
 	}
 	return &trigger.DeleteCronJobsRes{Deleted: deleted}, nil
 }

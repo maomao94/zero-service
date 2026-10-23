@@ -37,14 +37,14 @@ func (l *BatchConvertDecimalToRegisterLogic) BatchConvertDecimalToRegister(in *b
 		}
 		uint16s, errIdx, err := bytex.Uint32SliceToUint16SliceValidate(uint32s)
 		if err != nil {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "第 %d 个无符号值 %d 超出 16 位寄存器范围 [0, 65535]", errIdx+1, in.Values[errIdx])
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "第 %d 个无符号值 %d 超出 16 位寄存器范围 [0, 65535]", errIdx+1, in.Values[errIdx])
 		}
 		uint16Values = uint16s
 	} else {
 		// int32 → int16 → uint16（带范围校验 [-32768, 32767]）
 		int16s, errIdx, err := bytex.Int32SliceToInt16SliceValidate(in.Values)
 		if err != nil {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "第 %d 个有符号值 %d 超出 16 位寄存器范围 [-32768, 32767]", errIdx+1, in.Values[errIdx])
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "第 %d 个有符号值 %d 超出 16 位寄存器范围 [-32768, 32767]", errIdx+1, in.Values[errIdx])
 		}
 		uint16Values = make([]uint16, len(int16s))
 		for i, v := range int16s {

@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package openapi;
+
+option go_package = "./openapi";
+option java_multiple_files = true;
+option java_package = "com.github.openapi.grpc";
+option java_outer_classname = "OpenApiProto";
+
+// OpenApiRpc 开放 API 统一转发服务。
+// method 决定下游调用，data 为该方法的 protojson。
+service OpenApiRpc {
+  rpc Invoke(InvokeReq) returns (InvokeRes);
+}
+
+message InvokeReq {
+  string app_id    = 1 [json_name = "appId"];
+  string method    = 2 [json_name = "method"];
+  bytes  data      = 3 [json_name = "data"];
+  string tid       = 4 [json_name = "tid"];
+  int64  timestamp = 5 [json_name = "timestamp"];
+}
+
+message InvokeRes {
+  int32  code = 1; // extproto 六位码，0 成功
+  string msg  = 2;
+  bytes  data = 3; // 结果 protojson
+  string tid  = 4;
+}

@@ -30,7 +30,7 @@ func NewGetDeviceStateSnapshotLogic(ctx context.Context, svcCtx *svc.ServiceCont
 func (l *GetDeviceStateSnapshotLogic) GetDeviceStateSnapshot(in *djicloud.GetDeviceStateSnapshotReq) (*djicloud.GetDeviceStateSnapshotRes, error) {
 	var item gormmodel.DjiDeviceStateSnapshot
 	if err := l.svcCtx.DB.WithContext(l.ctx).Where("device_sn = ?", in.DeviceSn).First(&item).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_RECORD_NOT_EXIST, err, "查询设备State快照失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_RECORD_NOT_EXIST, err, "查询设备State快照失败")
 	}
 	return &djicloud.GetDeviceStateSnapshotRes{Data: toStateSnapshot(&item)}, nil
 }

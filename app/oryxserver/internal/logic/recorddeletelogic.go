@@ -34,7 +34,7 @@ func NewRecordDeleteLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Reco
 // 3. 其他 Oryx 调用失败返回错误，不删除本地记录
 func (l *RecordDeleteLogic) RecordDelete(in *oryxserver.RecordDeleteReq) (*oryxserver.RecordDeleteRes, error) {
 	if in.Uuid == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "录制任务 UUID 不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "录制任务 UUID 不能为空")
 	}
 
 	// 1. 删除 Oryx 上的录制文件
@@ -45,7 +45,7 @@ func (l *RecordDeleteLogic) RecordDelete(in *oryxserver.RecordDeleteReq) (*oryxs
 			l.Infof("Oryx 无对应录制（幂等，跳过删除）: uuid=%s", in.Uuid)
 		} else {
 			l.Errorf("调用 Oryx RecordRemove 失败: %v, uuid=%s", err, in.Uuid)
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "调用 Oryx 删除录制文件失败")
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用 Oryx 删除录制文件失败")
 		}
 	}
 

@@ -30,7 +30,7 @@ func NewSendDoubleCommandLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 func (l *SendDoubleCommandLogic) SendDoubleCommand(in *ieccaller.SendDoubleCommandReq) (*ieccaller.SendDoubleCommandRes, error) {
 	cli, err := l.svcCtx.ClientManager.GetClientOrNil(in.Host, int(in.Port))
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_RPC, err, "获取IEC客户端失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_RPC, err, "获取IEC客户端失败")
 	}
 	if cli == nil && l.svcCtx.IsBroadcast() {
 		var res ieccaller.SendDoubleCommandRes
@@ -50,5 +50,5 @@ func (l *SendDoubleCommandLogic) SendDoubleCommand(in *ieccaller.SendDoubleComma
 		}
 		return &ieccaller.SendDoubleCommandRes{Value: ieccaller.DoubleCommandValue(int32(value))}, nil
 	}
-	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

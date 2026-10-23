@@ -37,7 +37,7 @@ func (l *WriteSingleRegisterLogic) WriteSingleRegister(in *bridgemodbus.WriteSin
 
 	uint16Value, err := bytex.Uint32ToUint16Validate(in.Value)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "值超过 16 位寄存器的最大值 (65535)")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "值超过 16 位寄存器的最大值 (65535)")
 	}
 	// 创建包含单个值的切片
 	uint16Values := []uint16{uint16Value}

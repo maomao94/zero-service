@@ -38,28 +38,28 @@ func (l *StartRelayPullLogic) StartRelayPull(in *oryxserver.StartRelayPullReq) (
 	if stream == "" {
 		genStream, err := tool.SimpleUUID()
 		if err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "生成流名失败")
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "生成流名失败")
 		}
 		stream = genStream
 	}
 	// 校验 app/stream 合法性（不能含 /，确保后续 key 正确）
 	if strings.Contains(app, "/") {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "app 不能包含 /")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "app 不能包含 /")
 	}
 	if strings.Contains(stream, "/") {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "stream 不能包含 /")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "stream 不能包含 /")
 	}
 	if strings.Contains(app, ":") {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "app 不能包含 :")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "app 不能包含 :")
 	}
 	if strings.Contains(stream, ":") {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "stream 不能包含 :")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "stream 不能包含 :")
 	}
 	rc := l.svcCtx.Config.RelayConfig
 	// source_url 必须提供
 	source := strings.TrimSpace(in.SourceUrl)
 	if source == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "source_url 不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "source_url 不能为空")
 	}
 	// 目标地址
 	target := strings.TrimRight(rc.SrsRtmpAddr, "/") + "/" + app + "/" + stream
@@ -83,7 +83,7 @@ func (l *StartRelayPullLogic) StartRelayPull(in *oryxserver.StartRelayPullReq) (
 	uuid, err := l.svcCtx.RelayRegistry.StartRelay(l.ctx, source, target, relayURL, in.MaxDurationSeconds)
 	if err != nil {
 		l.Logger.Errorf("启动中继拉流失败: source=%s target=%s err=%v", source, target, err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "启动中继拉流失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "启动中继拉流失败")
 	}
 	l.Logger.Infof("启动中继拉流成功: uuid=%s app=%s stream=%s source=%s", uuid, app, stream, source)
 	return &oryxserver.StartRelayPullRes{

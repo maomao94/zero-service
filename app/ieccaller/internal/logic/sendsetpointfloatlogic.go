@@ -31,20 +31,20 @@ func NewSendSetpointFloatLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 
 func (l *SendSetpointFloatLogic) SendSetpointFloat(in *ieccaller.SendSetpointFloatReq) (*ieccaller.SendSetpointFloatRes, error) {
 	if !validator.IsNumberStr(in.Value) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "浮点设点值格式无效: %s", in.Value)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RPC, "浮点设点值格式无效: %s", in.Value)
 	}
 	fv, err := convertor.ToFloat(in.Value)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "浮点设点值解析失败: %s", in.Value)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RPC, "浮点设点值解析失败: %s", in.Value)
 	}
 	sigDigits := tool.CountSignificantDigits(in.Value)
 	if sigDigits > 7 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "浮点设点值有效数字(%d位)超出IEEE754单精度上限(7位), 输入: %s", sigDigits, in.Value)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RPC, "浮点设点值有效数字(%d位)超出IEEE754单精度上限(7位), 输入: %s", sigDigits, in.Value)
 	}
 
 	cli, err := l.svcCtx.ClientManager.GetClientOrNil(in.Host, int(in.Port))
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_RPC, err, "获取IEC客户端失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_RPC, err, "获取IEC客户端失败")
 	}
 	if cli == nil && l.svcCtx.IsBroadcast() {
 		var res ieccaller.SendSetpointFloatRes
@@ -64,5 +64,5 @@ func (l *SendSetpointFloatLogic) SendSetpointFloat(in *ieccaller.SendSetpointFlo
 		}
 		return &ieccaller.SendSetpointFloatRes{Value: convertor.ToString(ackValue)}, nil
 	}
-	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

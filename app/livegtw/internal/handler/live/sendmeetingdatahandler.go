@@ -7,10 +7,10 @@ import (
 	"net/http"
 
 	"github.com/zeromicro/go-zero/rest/httpx"
-	xhttp "github.com/zeromicro/x/http"
 	"zero-service/app/livegtw/internal/logic/live"
 	"zero-service/app/livegtw/internal/svc"
 	"zero-service/app/livegtw/internal/types"
+	"zero-service/common/gtwx"
 )
 
 // 向会议发送 Data（广播/定向）
@@ -18,16 +18,16 @@ func SendMeetingDataHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req types.SendMeetingDataRequest
 		if err := httpx.Parse(r, &req); err != nil {
-			xhttp.JsonBaseResponseCtx(r.Context(), w, err)
+			gtwx.WriteParseError(r.Context(), w, err)
 			return
 		}
 
 		l := live.NewSendMeetingDataLogic(r.Context(), svcCtx)
 		err := l.SendMeetingData(&req)
 		if err != nil {
-			xhttp.JsonBaseResponseCtx(r.Context(), w, err)
+			gtwx.WriteError(r.Context(), w, err)
 		} else {
-			xhttp.JsonBaseResponseCtx(r.Context(), w, nil)
+			gtwx.WriteOK(r.Context(), w, nil)
 		}
 	}
 }

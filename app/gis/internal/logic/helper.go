@@ -22,7 +22,7 @@ import (
 func ValidateH3Resolution(resolution uint32) (int, error) {
 	r := int(resolution)
 	if r > 15 {
-		return 0, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "H3分辨率必须为0-15")
+		return 0, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "H3分辨率必须为0-15")
 	}
 	return r, nil
 }
@@ -31,7 +31,7 @@ func ValidateH3Resolution(resolution uint32) (int, error) {
 func ValidateGeoHashPrecision(precision uint32) (int, error) {
 	p := int(precision)
 	if p < 1 || p > 12 {
-		return 0, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "geohash精度必须为1-12")
+		return 0, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "geohash精度必须为1-12")
 	}
 	return p, nil
 }
@@ -44,7 +44,7 @@ func resolveH3Resolution(r uint32) (int, error) {
 	if resolution == 0 {
 		resolution = 9
 	} else if resolution > 15 {
-		return 0, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "H3分辨率必须在0-15之间")
+		return 0, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "H3分辨率必须在0-15之间")
 	}
 	return resolution, nil
 }
@@ -55,7 +55,7 @@ func resolveGeohashPrecision(p uint32) (int, error) {
 	if precision <= 0 {
 		precision = 7
 	} else if precision > 12 {
-		return 0, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "geohash精度最大为12")
+		return 0, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "geohash精度最大为12")
 	}
 	return precision, nil
 }
@@ -162,7 +162,7 @@ func geohashCellSize(precision int, _ float64) (widthDeg, heightDeg float64) {
 func validateCoordType(t gis.CoordType) error {
 	val := uint32(t)
 	if val < 1 || val > 3 {
-		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID,
+		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID,
 			fmt.Sprintf("invalid coord type: %v (only support 1=WGS84, 2=GCJ02, 3=BD09)", val))
 	}
 	return nil
@@ -177,14 +177,14 @@ func EncodeH3Cell(point *gis.Point, resolution int) (h3.Cell, error) {
 // ValidatePoints 批量校验 pb Point 列表：非空、非 nil、经纬度范围合法。
 func ValidatePoints(points ...*gis.Point) error {
 	if len(points) == 0 {
-		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "points")
+		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "points")
 	}
 	for i, p := range points {
 		if p == nil {
-			return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, fmt.Sprintf("第 %d 个 point", i))
+			return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, fmt.Sprintf("第 %d 个 point", i))
 		}
 		if err := gisx.ValidateCoordinate(p.Lon, p.Lat, i); err != nil {
-			return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, err.Error())
+			return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, err.Error())
 		}
 	}
 	return nil
@@ -192,16 +192,16 @@ func ValidatePoints(points ...*gis.Point) error {
 
 func pbRingToOrbRing(points []*gis.Point, name string) (orb.Ring, error) {
 	if len(points) < 3 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, name+"至少需要3个点")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, name+"至少需要3个点")
 	}
 
 	var ring orb.Ring
 	for i, p := range points {
 		if p == nil {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, fmt.Sprintf("第 %d 个 point", i))
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, fmt.Sprintf("第 %d 个 point", i))
 		}
 		if err := gisx.ValidateCoordinate(p.Lon, p.Lat, i); err != nil {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, err.Error())
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, err.Error())
 		}
 		ring = append(ring, orb.Point{p.Lon, p.Lat})
 	}
@@ -212,7 +212,7 @@ func pbRingToOrbRing(points []*gis.Point, name string) (orb.Ring, error) {
 // polygon[0] 为外环，polygon[1:] 为洞。有洞时校验有效性，无效直接拒绝。
 func pbPolygonToOrbPolygon(polygon *gis.Polygon) (orb.Polygon, error) {
 	if polygon == nil || polygon.Outer == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "polygon.outer")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "polygon.outer")
 	}
 
 	outer, err := pbRingToOrbRing(polygon.Outer.Points, "外环")
@@ -223,7 +223,7 @@ func pbPolygonToOrbPolygon(polygon *gis.Polygon) (orb.Polygon, error) {
 	orbPolygon := orb.Polygon{outer}
 	for i, hole := range polygon.Holes {
 		if hole == nil {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, fmt.Sprintf("第 %d 个 hole", i))
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, fmt.Sprintf("第 %d 个 hole", i))
 		}
 		ring, err := pbRingToOrbRing(hole.Points, fmt.Sprintf("第 %d 个 hole", i))
 		if err != nil {
@@ -241,11 +241,11 @@ func pbPolygonToOrbPolygon(polygon *gis.Polygon) (orb.Polygon, error) {
 		valid, err := orbconv.ValidOrb(closed)
 		if err != nil {
 			logx.Errorf("GEOS 校验异常: %v", err)
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID,
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID,
 				"多边形有效性校验异常，请检查围栏顶点")
 		}
 		if !valid {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID,
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID,
 				"多边形无效：洞超出外环或洞之间相交，请检查围栏顶点")
 		}
 	}

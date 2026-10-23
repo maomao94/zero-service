@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: '127.0.0.1',
     port: 5180,
     strictPort: true,
     proxy: {
@@ -15,6 +16,11 @@ export default defineConfig({
       },
       '/health/socketio': {
         target: 'http://127.0.0.1:5179',
+        changeOrigin: true,
+        rewrite: () => '/',
+      },
+      '/health/openapi': {
+        target: 'http://127.0.0.1:5181',
         changeOrigin: true,
         rewrite: () => '/',
       },

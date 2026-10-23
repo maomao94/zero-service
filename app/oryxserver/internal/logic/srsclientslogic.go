@@ -30,7 +30,7 @@ func (l *SrsClientsLogic) SrsClients(in *oryxserver.SrsClientsReq) (*oryxserver.
 	data, err := l.svcCtx.OryxClient.SrsClients(l.ctx, in.Start, in.Count)
 	if err != nil {
 		l.Logger.Errorf("调用 SRS API 失败: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "调用 SRS API 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用 SRS API 失败")
 	}
 
 	items := make([]*oryxserver.SrsClientItem, 0, len(data.Clients))

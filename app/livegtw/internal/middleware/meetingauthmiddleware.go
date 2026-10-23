@@ -8,6 +8,10 @@ import (
 	"strings"
 
 	"zero-service/common/authctx"
+	"zero-service/common/gtwx"
+	"zero-service/third_party/extproto"
+
+	xerrors "github.com/zeromicro/x/errors"
 )
 
 type MeetingAuthMiddleware struct {
@@ -26,7 +30,9 @@ func (m *MeetingAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		}
 		ctx = authctx.BridgeJWTClaims(ctx, m.claimMapping)
 		if strings.TrimSpace(authctx.GetUserId(ctx)) == "" {
-			http.Error(w, "缺少用户身份", http.StatusUnauthorized)
+			// 鉴权失败同样返回 HTTP 200 信封，业务结果以 code 为准。
+			gtwx.WriteError(ctx, w, xerrors.New(
+				int(extproto.Code__1_00_UNAUTHORIZED), "缺少用户身份"))
 			return
 		}
 		next(w, r.WithContext(ctx))
