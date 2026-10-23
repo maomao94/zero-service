@@ -36,13 +36,13 @@ func (l *GetCronJobLogic) GetCronJob(in *trigger.GetCronJobReq) (*trigger.GetCro
 	task, err := l.svcCtx.CronJobStore.GetByID(l.ctx, in.JobId)
 	if err != nil {
 		if errors.Is(err, crontask.ErrNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询 Cron Job 详情失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询 Cron Job 详情失败")
 	}
 	pbJob, err := cronjob.ToProto(task)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "解析 Cron Job 详情失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "解析 Cron Job 详情失败")
 	}
 	return &trigger.GetCronJobRes{CronJob: pbJob}, nil
 }

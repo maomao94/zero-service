@@ -35,7 +35,7 @@ func (l *SendSMSVerifyCodeLogic) SendSMSVerifyCode(in *zerorpc.SendSMSVerifyCode
 	key := fmt.Sprintf("%s:%s:%s", l.svcCtx.Config.Name, in.Mobile, "smsCode")
 	b, _ := l.svcCtx.RedisClient.SetnxExCtx(l.ctx, key, code, 60*3)
 	if !b {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_03_CACHE, "验证码保存错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_CACHE, "验证码保存错误")
 	}
 	return &zerorpc.SendSMSVerifyCodeRes{
 		Code: code,

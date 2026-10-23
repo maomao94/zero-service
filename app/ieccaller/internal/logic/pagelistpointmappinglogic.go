@@ -29,7 +29,7 @@ func NewPageListPointMappingLogic(ctx context.Context, svcCtx *svc.ServiceContex
 // 分页查询点位绑定列表
 func (l *PageListPointMappingLogic) PageListPointMapping(in *ieccaller.PageListPointMappingReq) (*ieccaller.PageListPointMappingRes, error) {
 	if l.svcCtx.DevicePointMappingStore == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "device point mapping model is not initialized")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "device point mapping model is not initialized")
 	}
 	mappings, total, err := l.svcCtx.DevicePointMappingStore.FindPage(l.ctx, gormmodel.DevicePointMappingFilter{
 		TagStation: in.TagStation,
@@ -37,7 +37,7 @@ func (l *PageListPointMappingLogic) PageListPointMapping(in *ieccaller.PageListP
 		DeviceId:   in.DeviceId,
 	}, in.Page, in.PageSize)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "分页查询点位映射失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "分页查询点位映射失败")
 	}
 	pbMappings := make([]*ieccaller.PbDevicePointMapping, 0, len(mappings))
 	for i := range mappings {

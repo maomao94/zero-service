@@ -6,14 +6,15 @@
 
 | 文件 | 作用 |
 | --- | --- |
-| `dist/` | 前端产物目录（`dist/live`、`dist/socketio`、`dist/workspace`），gitignore，部署时可自行覆盖/上传 |
+| `dist/` | 前端产物目录（`dist/live`、`dist/socketio`、`dist/workspace`、`dist/openapi`），gitignore，部署时可自行覆盖/上传 |
 | `build-web.sh` | 前端打包脚本：构建各 web 子项目并汇总产物到 `dist/<app>/` |
 | `deploy.sh` | 部署与运维脚本（不构建、不校验产物，仅部署） |
 | `docker-compose.yaml` | 容器编排（只读挂载配置目录、`dist/<app>`、录制目录与证书） |
 | `nginx.conf` | 主配置：`events` / `http` / `stream` 与全局 include |
-| `conf.d/default.conf` | HTTP 站点定义（Live 默认站点、SocketIO 工具、工作台） |
+| `conf.d/default.conf` | HTTP 站点定义（Live 默认站点、SocketIO 工具、工作台、OpenAPI 控制台） |
 | `stream.d/gitlab-ssh.conf` | GitLab SSH（容器 22 → `10.10.1.100:2224`）TCP 转发 |
 | `snippets/live-locations.conf` | Live 网关共享 location（前端 SPA、录制、反代） |
+| `snippets/openapi-locations.conf` | openapp 开放 API location（`/openapi/` 控制台、`/v1/` 反代；`/open-admin/` 不对外） |
 | `snippets/gitlab.conf` | 公司 GitLab 反向代理（子域名 `gitlab.localhost` HTTP/HTTPS） |
 | `snippets/gitlab-upstream.conf` | GitLab 上游代理参数（`proxy_pass`、Header、流式与超时） |
 | `snippets/gitlab-api-proxy.conf` | GitLab API 代理公共参数（Header、超时、关闭上游压缩） |
@@ -69,6 +70,7 @@ bash deploy/nginx/deploy.sh
 | GitLab SSH | `git@gitlab.localhost:<group>/<repo>.git` | - |
 | SocketIO 测试工具 | http://127.0.0.1:8090/ | - |
 | Zero 工作台 | http://127.0.0.1:8091/ | - |
+| OpenAPI 控制台 | http://127.0.0.1/openapi/ | https://127.0.0.1/openapi/ |
 
 端口可用环境变量覆盖：`NGINX_HOST_PORT`、`NGINX_SSL_HOST_PORT`、`SOCKETIO_HOST_PORT`、`WORKSPACE_HOST_PORT`、`GITLAB_SSH_HOST_PORT`。
 
@@ -81,6 +83,8 @@ bash deploy/nginx/deploy.sh
 | `/live/` | `livegtw:11002` | 会议 HTTP API（`/live/v1/...`） |
 | `/socket.io/` | `socketgtw:11003` | 会议邀请推送（Socket.IO / WS） |
 | `/livekit/` | `livekit-server:7880` | 信令（WS，去掉 `/livekit` 前缀） |
+| `/openapi/` | `dist/openapi` | OpenAPI 测试控制台（SPA 回落 index.html） |
+| `/v1/` | `opengtw:11005` | openapp 开放 API（`/v1/gateway`、`/v1/health`） |
 
 反代目标通过 `host.docker.internal` 访问宿主机服务（Linux 由 compose `extra_hosts` 注入）。
 
@@ -172,6 +176,7 @@ GitLab 的 `external_url` 改为正式域名后，删除该 location 与片段�
 | --- | --- | --- |
 | `/health/live` | `127.0.0.1:80/healthz` | Live 站点健康检查 |
 | `/health/socketio` | `127.0.0.1:8090/` | SocketIO 测试工具首页 |
+| `/health/openapi` | `opengtw:11005/v1/health` | 开放 API 网关健康检查 |
 | `/health/gitlab` | `gitlab.localhost/users/sign_in` | GitLab 登录页可达性 |
 
 ## HTTPS / 证书

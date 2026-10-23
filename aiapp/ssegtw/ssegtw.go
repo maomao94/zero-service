@@ -6,6 +6,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 
 	"zero-service/aiapp/ssegtw/internal/config"
 	"zero-service/aiapp/ssegtw/internal/handler"
@@ -32,7 +33,22 @@ func main() {
 	// Print Go version
 	tool.PrintGoVersion()
 
-	server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
+	server := rest.MustNewServer(c.RestConf,
+		gtwx.CorsOption(),
+		// 非流式接口统一返回 HTTP 200 + {code,msg,data}，鉴权失败、404、405 也走信封。
+		rest.WithUnauthorizedCallback(gtwx.UnauthorizedHandler),
+		rest.WithNotFoundHandler(http.HandlerFunc(gtwx.NotFoundHandler)),
+		rest.WithNotAllowedHandler(http.HandlerFunc(gtwx.MethodNotAllowedHandler)),
+	)
+
+	// 请求 ID 优先复用调用方传入值，缺失时生成并回显
+	server.Use(gtwx.RequestIDMiddleware)
+
+	// 请求日志（method, path, duration 写入 context，供 ok/error handler 读取）
+	server.Use(gtwx.RequestLogMiddleware)
+
+	// 响应日志
+	gtwx.SetLogOkHandler()
 
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)

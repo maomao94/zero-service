@@ -3,7 +3,7 @@ package gtw
 import (
 	"net/http"
 
-	xhttp "github.com/zeromicro/x/http"
+	"zero-service/common/gtwx"
 	"zero-service/gtw/internal/logic/gtw"
 	"zero-service/gtw/internal/svc"
 )
@@ -14,9 +14,9 @@ func PingHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		l := gtw.NewPingLogic(r.Context(), svcCtx)
 		resp, err := l.Ping()
 		if err != nil {
-			xhttp.JsonBaseResponseCtx(r.Context(), w, err)
+			gtwx.WriteError(r.Context(), w, err)
 		} else {
-			xhttp.JsonBaseResponseCtx(r.Context(), w, resp)
+			gtwx.WriteOK(r.Context(), w, resp)
 		}
 	}
 }

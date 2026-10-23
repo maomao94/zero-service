@@ -29,7 +29,7 @@ func NewUpdateFenceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Updat
 // 流程：校验参数 → 重建多边形 → 重算 H3 + geohash cells → 覆盖写入 store。
 func (l *UpdateFenceLogic) UpdateFence(in *gis.UpdateFenceReq) (*gis.UpdateFenceRes, error) {
 	if in.FenceId == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "fenceId")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "fenceId")
 	}
 
 	polygon, err := pbPolygonToOrbPolygon(in.Polygon)

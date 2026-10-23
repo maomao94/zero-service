@@ -36,7 +36,7 @@ func NewRoutePointsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Route
 // 适用于中小规模点集（≤500），不保证全局最优但实际效果较好。
 func (l *RoutePointsLogic) RoutePoints(in *gis.RoutePointsReq) (*gis.RoutePointsRes, error) {
 	if len(in.Points) > 500 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "点数不能超过500")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "点数不能超过500")
 	}
 	err := ValidatePoints(append([]*gis.Point{in.Start}, in.Points...)...)
 	if err != nil {

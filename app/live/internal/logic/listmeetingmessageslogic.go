@@ -29,14 +29,14 @@ func NewListMeetingMessagesLogic(ctx context.Context, svcCtx *svc.ServiceContext
 // 查询聊天记录
 func (l *ListMeetingMessagesLogic) ListMeetingMessages(in *live.ListMeetingMessagesReq) (*live.ListMeetingMessagesRes, error) {
 	if in.MeetingNo == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "会议号不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议号不能为空")
 	}
 
 	// 查询消息
 	messages, total, err := l.svcCtx.MeetingRepo.ListMessages(l.ctx, in.MeetingNo, in.Page, in.PageSize)
 	if err != nil {
 		l.Logger.Errorf("list messages failed: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询消息失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询消息失败")
 	}
 
 	// 转换为响应格式

@@ -52,7 +52,7 @@ func TestStartMeetingRecordMeetingNotFound(t *testing.T) {
 	svcCtx := newTestSvcCtx(t, &liveKitMock{})
 	_, err := NewStartMeetingRecordLogic(context.Background(), svcCtx).
 		StartMeetingRecord(&live.StartMeetingRecordReq{MeetingNo: "M404"})
-	if !tool.IsErrorByPbCode(err, extproto.Code__1_02_RECORD_NOT_EXIST) {
+	if !tool.IsErrorByPbCode(err, extproto.Code__1_00_RECORD_NOT_EXIST) {
 		t.Fatalf("want RECORD_NOT_EXIST, got %v", err)
 	}
 }
@@ -84,7 +84,7 @@ func TestStartMeetingRecordForbiddenForNonOwner(t *testing.T) {
 	bob := authctx.WithUserID(context.Background(), "bob")
 	_, err := NewStartMeetingRecordLogic(bob, svcCtx).
 		StartMeetingRecord(&live.StartMeetingRecordReq{MeetingNo: meeting.GetMeeting().GetMeetingNo()})
-	if !tool.IsErrorByPbCode(err, extproto.Code__1_03_UNAUTHORIZED) {
+	if !tool.IsErrorByPbCode(err, extproto.Code__1_00_UNAUTHORIZED) {
 		t.Fatalf("want UNAUTHORIZED for non-owner, got %v", err)
 	}
 }

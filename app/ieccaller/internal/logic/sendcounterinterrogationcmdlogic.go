@@ -29,7 +29,7 @@ func NewSendCounterInterrogationCmdLogic(ctx context.Context, svcCtx *svc.Servic
 func (l *SendCounterInterrogationCmdLogic) SendCounterInterrogationCmd(in *ieccaller.SendCounterInterrogationCmdReq) (*ieccaller.SendCounterInterrogationCmdRes, error) {
 	cli, err := l.svcCtx.ClientManager.GetClientOrNil(in.Host, int(in.Port))
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_RPC, err, "获取IEC客户端失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_RPC, err, "获取IEC客户端失败")
 	}
 	if cli == nil && l.svcCtx.IsBroadcast() {
 		var res ieccaller.SendCounterInterrogationCmdRes
@@ -40,9 +40,9 @@ func (l *SendCounterInterrogationCmdLogic) SendCounterInterrogationCmd(in *iecca
 		return &res, nil
 	} else if cli != nil {
 		if err = cli.SendCounterInterrogationCmd(uint16(in.Coa)); err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "IEC发送累积量召唤失败")
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "IEC发送累积量召唤失败")
 		}
 		return &ieccaller.SendCounterInterrogationCmdRes{}, nil
 	}
-	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

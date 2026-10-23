@@ -33,10 +33,10 @@ func NewStartRtpPubLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Start
 func (l *StartRtpPubLogic) StartRtpPub(in *lalproxy.StartRtpPubReq) (*lalproxy.StartRtpPubRes, error) {
 	// 参数验证
 	if in.Port <= 0 || in.Port > 65535 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "无效的端口号")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "无效的端口号")
 	}
 	if in.StreamName == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "流名称不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "流名称不能为空")
 	}
 
 	// 构建请求URL
@@ -56,21 +56,21 @@ func (l *StartRtpPubLogic) StartRtpPub(in *lalproxy.StartRtpPubReq) (*lalproxy.S
 	resp, err := l.svcCtx.LalClient.Do(l.ctx, http.MethodPost, fullUrl, reqBody)
 	if err != nil {
 		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "调用LAL API失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用LAL API失败")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(resp.Body)
 		l.Logger.Errorf("LAL API返回非200状态码: %d, 响应内容: %s", resp.StatusCode, string(body))
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_06_THIRD_PARTY, fmt.Sprintf("LAL API返回异常状态码: %d", resp.StatusCode))
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_THIRD_PARTY, fmt.Sprintf("LAL API返回异常状态码: %d", resp.StatusCode))
 	}
 
 	// 读取响应体
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		l.Logger.Errorf("读取响应体失败: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "读取响应体失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "读取响应体失败")
 	}
 
 	// 解析JSON响应
@@ -81,7 +81,7 @@ func (l *StartRtpPubLogic) StartRtpPub(in *lalproxy.StartRtpPubReq) (*lalproxy.S
 	}
 	if err := json.Unmarshal(body, &httpResp); err != nil {
 		l.Logger.Errorf("解析响应JSON失败: %v, 响应内容: %s", err, string(body))
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "解析响应JSON失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "解析响应JSON失败")
 	}
 
 	return &lalproxy.StartRtpPubRes{

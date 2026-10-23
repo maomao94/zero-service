@@ -41,6 +41,15 @@ Bridge 系列是一组将外部协议接入内部系统的桥接服务，包含 
 配置：`app/bridgemodbus/etc/bridgemodbus.yaml`（`ModbusPool`、默认 `ModbusClientConf`、`DB`）。
 契约：[`app/bridgemodbus/bridgemodbus.proto`](../../app/bridgemodbus/bridgemodbus.proto)。
 
+### 开放平台接入
+
+`facade/openapi` 通过 `BridgeModbusConf` 调用本服务，`opengtw` 对外开放 15 个 I/O method：
+
+- 读取：`modbus.readCoils`、`modbus.readDiscreteInputs`、`modbus.readInputRegisters`、`modbus.readHoldingRegisters`、`modbus.readFIFOQueue`、`modbus.readDeviceIdentification`、`modbus.readDeviceIdentificationSpecificObject`
+- 写入：`modbus.writeSingleCoil`、`modbus.writeMultipleCoils`、`modbus.writeSingleRegister`、`modbus.writeSingleRegisterWithDecimal`、`modbus.writeMultipleRegisters`、`modbus.writeMultipleRegistersWithDecimal`、`modbus.readWriteMultipleRegisters`、`modbus.maskWriteRegister`
+
+配置管理（保存/删除/查询）与本地换算暂不对外开放。字段、示例与安全提示见 [`docs/open-api/modbus.md`](../open-api/modbus.md)。
+
 ## bridgemqtt — MQTT 桥接
 
 - 提供 `Publish` 与 `PublishWithTrace`（返回 OTel trace ID）两个发布 RPC。

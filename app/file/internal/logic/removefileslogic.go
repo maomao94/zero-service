@@ -30,11 +30,11 @@ func NewRemoveFilesLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Remov
 func (l *RemoveFilesLogic) RemoveFiles(in *file.RemoveFilesReq) (*file.RemoveFileRes, error) {
 	ossTemplate, err := l.svcCtx.GetOssTemplate(l.ctx, in.TenantId, in.Code)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "获取OSS模板失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "获取OSS模板失败")
 	}
 	results, err := ossTemplate.RemoveFiles(l.ctx, in.TenantId, in.BucketName, in.Filename)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "批量删除OSS文件失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "批量删除OSS文件失败")
 	}
 	var errs []string
 	for _, r := range results {
@@ -43,7 +43,7 @@ func (l *RemoveFilesLogic) RemoveFiles(in *file.RemoveFilesReq) (*file.RemoveFil
 		}
 	}
 	if len(errs) > 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_06_THIRD_PARTY, fmt.Sprintf("failed to remove files: %s", strings.Join(errs, "; ")))
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_THIRD_PARTY, fmt.Sprintf("failed to remove files: %s", strings.Join(errs, "; ")))
 	}
 	return &file.RemoveFileRes{}, nil
 }

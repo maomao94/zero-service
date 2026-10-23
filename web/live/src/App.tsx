@@ -3,7 +3,7 @@ import { LiveKitRoom, RoomAudioRenderer, TrackReference, TrackReferenceOrPlaceho
 import { ConnectionState, Room, RoomEvent, Track } from 'livekit-client'
 import { Archive, ArrowRight, Bell, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle, Clapperboard, Clipboard, Copy, Database, DoorOpen, Download, FileVideo, History, LogOut, Maximize2, MessageSquare, Mic, Minimize2, MonitorUp, MoreHorizontal, Phone, PhoneIncoming, Play, Plus, RefreshCw, Search, Send, Settings2, Shield, ShieldCheck, Sparkles, Square, Timer, UserRound, Users, Video, X, ZoomIn, ZoomOut } from 'lucide-react'
 import type { MeetingRecording } from './types'
-import { api, ApiError } from './lib/api'
+import { api, ApiError, isAuthError } from './lib/api'
 import { connectMeetingNotifications, type MeetingInvitation } from './lib/meetingNotifications'
 import { countLiveParticipants, excludeEgressParticipants, mergeMeetingParticipants, normalizePublishSources, PARTICIPANT_KIND_EGRESS, resolveLiveKitUrl } from './lib/meetingUi'
 import type { MeetingInfo, MeetingMessage, ParticipantInfo, SipProviderInfo, TicketReply } from './types'
@@ -64,13 +64,8 @@ export default function App() {
   useEffect(() => {
     if (!token || guest) return
     api.getCurrentUser().then((user) => { setIdentity(user.userId); setName(user.userName); setDeptCode(user.deptCode) }).catch((error) => {
-      if (error instanceof ApiError && error.status === 401) {
-        localStorage.removeItem('live_jwt')
-        setToken('')
-        setScreen('auth')
-        notify('登录已失效，请重新登录', 'warning')
-        return
-      }
+      // 登录失效由 live:session-expired 事件统一登出并提示，这里静默返回，避免重复 toast
+      if (isAuthError(error)) return
       notify((error as Error).message || '获取用户信息失败', 'error')
     })
   }, [token, guest, notify])
@@ -94,7 +89,7 @@ export default function App() {
 
   const login = (nextToken: string) => { if (nextToken.split('.').length !== 3) throw new ApiError('Token 格式不正确，应为标准 JWT', 400); localStorage.setItem('live_jwt', nextToken); setToken(nextToken); setGuest(false); setScreen('lobby') }
   const logout = () => { localStorage.removeItem('live_jwt'); setToken(''); setJoin(null); setInvitations([]); setActiveInvitationId(null); setGuest(false); setScreen('auth') }
-  // 任意 API 返回 401（如录制操作时 token 过期）统一登出
+  // 任意 API 返回认证失败（信封 code 100401/130102，如录制操作时 token 过期）统一登出
   useEffect(() => {
     const onExpired = () => { logout(); notify('登录已失效，请重新登录', 'warning') }
     window.addEventListener('live:session-expired', onExpired)

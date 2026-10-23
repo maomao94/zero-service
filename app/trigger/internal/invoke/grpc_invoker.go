@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/common/errx"
 	"zero-service/common/grpcx"
-	"zero-service/common/gtwx"
 	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/conf"
@@ -63,7 +63,7 @@ func (g *GRPCInvoker) Execute(ctx context.Context, svcCtx *svc.ServiceContext, t
 		logx.WithContext(ctx).Errorf("invoke grpc failed: id=%s target=%s method=%s err=%v", task.ID, cli.Conn().Target(), task.Method, err)
 		result.Error = err.Error()
 		if st, ok := status.FromError(err); ok {
-			result.StatusCode = int32(gtwx.GrpcCodeToHTTPStatus(st.Code()))
+			result.StatusCode = int32(errx.GrpcCodeToHTTPStatus(st.Code()))
 		}
 		return result
 	}

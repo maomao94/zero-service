@@ -33,7 +33,7 @@ func (l *DeleteCronJobLogic) DeleteCronJob(in *trigger.DeleteCronJobReq) (*trigg
 		return nil, err
 	}
 	if err := l.svcCtx.CronJobStore.Delete(l.ctx, in.JobId); err != nil && !errors.Is(err, crontask.ErrNotFound) {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "删除 Cron Job 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "删除 Cron Job 失败")
 	}
 	return &trigger.DeleteCronJobRes{}, nil
 }

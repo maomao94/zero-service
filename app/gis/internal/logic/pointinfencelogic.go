@@ -36,7 +36,7 @@ func (l *PointInFenceLogic) PointInFence(in *gis.PointInFenceReq) (*gis.PointInF
 		return nil, err
 	}
 	if in.Fence == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "fence")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "fence")
 	}
 	var polygon orb.Polygon
 	if in.Fence.Polygon != nil {
@@ -52,7 +52,7 @@ func (l *PointInFenceLogic) PointInFence(in *gis.PointInFenceReq) (*gis.PointInF
 			return nil, err
 		}
 	} else {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "polygon或FenceId")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "polygon或FenceId")
 	}
 	point := orb.Point{in.Point.Lon, in.Point.Lat}
 	hit := planar.PolygonContains(polygon, point)

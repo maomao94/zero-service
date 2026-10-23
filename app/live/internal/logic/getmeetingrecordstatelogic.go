@@ -40,7 +40,7 @@ func (l *GetMeetingRecordStateLogic) GetMeetingRecordState(in *live.GetMeetingRe
 		if errors.Is(err, svc.ErrRecordingNotFound) {
 			return &live.GetMeetingRecordStateRes{Active: false}, nil
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询录制记录失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询录制记录失败")
 	}
 	active, rerr := reconcileRecordingState(l.ctx, l.svcCtx, rec)
 	if rerr != nil {

@@ -18,11 +18,11 @@ func wrapCommandAckError(err error, fallbackMsg string) error {
 	case errors.Is(err, antsx.ErrReplyExpired), errors.Is(err, context.DeadlineExceeded):
 		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_TIMEOUT, err, "IEC控制命令ACK超时: %v", err)
 	case errors.Is(err, antsx.ErrDuplicateID):
-		return tool.NewErrorByPbCodeWrap(extproto.Code__1_05_BIZ_REPEAT, err, "IEC控制命令重复下发: %v", err)
+		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ_REPEAT, err, "IEC控制命令重复下发: %v", err)
 	case isCommandRejectedError(err):
-		return tool.NewErrorByPbCodeWrap(extproto.Code__1_05_BIZ_STATE, err, "IEC命令被设备拒绝: %v", err)
+		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ_STATE, err, "IEC命令被设备拒绝: %v", err)
 	default:
-		return tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "%s: %v", fallbackMsg, err)
+		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "%s: %v", fallbackMsg, err)
 	}
 }
 

@@ -30,7 +30,7 @@ func (l *RecordApplyLogic) RecordApply(in *oryxserver.RecordApplyReq) (*oryxserv
 	err := l.svcCtx.OryxClient.RecordApply(l.ctx, in.All)
 	if err != nil {
 		l.Logger.Errorf("调用 Oryx API 失败: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "调用 Oryx API 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用 Oryx API 失败")
 	}
 	return &oryxserver.RecordApplyRes{}, nil
 }

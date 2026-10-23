@@ -47,12 +47,12 @@ func NewNotifyMeetingParticipantLogic(ctx context.Context, svcCtx *svc.ServiceCo
 func (l *NotifyMeetingParticipantLogic) NotifyMeetingParticipant(in *live.NotifyMeetingParticipantReq) (*live.NotifyMeetingParticipantRes, error) {
 	identity := strings.TrimSpace(in.GetIdentity())
 	if identity == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "参会人身份不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "参会人身份不能为空")
 	}
 	meetingNo := strings.TrimSpace(in.GetMeetingNo())
 	meetingCode := strings.TrimSpace(in.GetMeetingCode())
 	if meetingNo == "" && meetingCode == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "会议号或会议码不能同时为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议号或会议码不能同时为空")
 	}
 	var meeting *gormmodel.LiveMeeting
 	var err error
@@ -65,10 +65,10 @@ func (l *NotifyMeetingParticipantLogic) NotifyMeetingParticipant(in *live.Notify
 		return nil, meetingErr(err)
 	}
 	if meeting.Status == gormmodel.MeetingStatusEnded {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "会议已结束")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "会议已结束")
 	}
 	if l.svcCtx.SocketPushCli == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "通知服务未配置")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RPC, "通知服务未配置")
 	}
 
 	requestID, err := tool.SimpleUUID()
@@ -89,7 +89,7 @@ func (l *NotifyMeetingParticipantLogic) NotifyMeetingParticipant(in *live.Notify
 		ReqId: requestID, Room: meetingInviteRoom(identity),
 		Event: meetingInviteEvent, Payload: string(payload),
 	}); err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_RPC, err, "提交入会通知失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_RPC, err, "提交入会通知失败")
 	}
 	l.Logger.Infof("meeting invitation submitted: meeting=%s identity=%s request=%s", meeting.MeetingNo, identity, requestID)
 	return &live.NotifyMeetingParticipantRes{RequestId: requestID}, nil

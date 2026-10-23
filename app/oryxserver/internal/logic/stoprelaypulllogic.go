@@ -106,10 +106,10 @@ func (l *StopRelayPullLogic) stopRelatedRecordings(app, stream string) {
 // 广播失败返回 error，由调用方决定重试策略。
 func (l *StopRelayPullLogic) stopRelayPullOnce(in *oryxserver.StopRelayPullReq) (*oryxserver.StopRelayPullRes, error) {
 	if strings.TrimSpace(in.App) == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "app 不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "app 不能为空")
 	}
 	if strings.TrimSpace(in.Stream) == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "stream 不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "stream 不能为空")
 	}
 
 	app := strings.TrimSpace(in.App)
@@ -143,7 +143,7 @@ func (l *StopRelayPullLogic) stopRelayPullOnce(in *oryxserver.StopRelayPullReq) 
 
 	payload, err := protojson.Marshal(&oryxserver.StopRelayPullReq{App: in.App, Stream: in.Stream})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "编码停止请求失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "编码停止请求失败")
 	}
 
 	_, broadcastErr := l.svcCtx.Broadcaster.BroadcastReply(l.ctx, oryxserver.OryxServer_StopRelayPull_FullMethodName,

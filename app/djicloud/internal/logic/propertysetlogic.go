@@ -30,7 +30,7 @@ func NewPropertySetLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Prope
 func (l *PropertySetLogic) PropertySet(in *djicloud.PropertySetReq) (*djicloud.CommonRes, error) {
 	var properties djisdk.PropertySetData
 	if err := json.Unmarshal([]byte(in.Properties), &properties); err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "properties JSON 不合法")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "properties JSON 不合法")
 	}
 
 	tid, err := l.svcCtx.DjiClient.PropertySet(l.ctx, in.DeviceSn, properties)

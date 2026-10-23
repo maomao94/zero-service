@@ -43,7 +43,7 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 
 	// 检查参数
 	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.ExecId) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "参数错误")
 	}
 
 	// 查询执行项
@@ -55,32 +55,32 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 		err = db.Where("exec_id = ?", in.ExecId).First(&execItem).Error
 	}
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询执行项失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询执行项失败")
 	}
 	// 查询计划批次
 	var planBatch gormmodel.PlanBatch
 	if err := db.Where("id = ?", execItem.BatchPk).First(&planBatch).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划批次失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划批次失败")
 	}
 	// 查询计划
 	var plan gormmodel.Plan
 	if err := db.Where("plan_id = ?", execItem.PlanId).First(&plan).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划失败")
 	}
 	if plan.Status == model.PlanStatusTerminated || plan.FinishedTime.Valid {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态已结束,无需暂停")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划状态已结束,无需暂停")
 	}
 
 	if planBatch.Status == model.PlanStatusTerminated || planBatch.FinishedTime.Valid {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划批次状态已结束,无需暂停")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次状态已结束,无需暂停")
 	}
 
 	if execItem.Status == model.StatusCompleted || execItem.Status == model.StatusTerminated || execItem.Status == model.StatusPaused {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "执行项状态已结束,无需暂停")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "执行项状态已结束,无需暂停")
 	}
 
 	if execItem.Status == model.StatusRunning {
-		return &trigger.PausePlanExecItemRes{}, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "执行项正在运行中，请稍后再试")
+		return &trigger.PausePlanExecItemRes{}, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "执行项正在运行中，请稍后再试")
 	}
 
 	// 执行事务
@@ -96,7 +96,7 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 	})
 
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "暂停执行项事务失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "暂停执行项事务失败")
 	}
 
 	planscope.ExecScope(&execItem).Logger(l.ctx).Info("RPC 暂停执行项：执行项状态已更新，事务已提交")

@@ -29,7 +29,7 @@ func NewWriteMultipleRegistersLogic(ctx context.Context, svcCtx *svc.ServiceCont
 // 写多个保持寄存器 (Function Code 0x10)
 func (l *WriteMultipleRegistersLogic) WriteMultipleRegisters(in *bridgemodbus.WriteMultipleRegistersReq) (*bridgemodbus.WriteMultipleRegistersRes, error) {
 	if int(in.Quantity) != len(in.Values) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "数量与值数量不一致")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "数量与值数量不一致")
 	}
 
 	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)
@@ -41,7 +41,7 @@ func (l *WriteMultipleRegistersLogic) WriteMultipleRegisters(in *bridgemodbus.Wr
 
 	uint16Values, errIdx, err := bytex.Uint32SliceToUint16SliceValidate(in.Values)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "第 %d 个值超过 16 位寄存器的最大值 (65535)", errIdx+1)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "第 %d 个值超过 16 位寄存器的最大值 (65535)", errIdx+1)
 	}
 	binaryValues := bytex.Uint16SliceToBinaryValues(uint16Values)
 	l.Infof("写多个保持寄存器: 0x%X, hex=%v, uint16=%v, int16=%v, binary=%v", binaryValues.Bytes, binaryValues.Hex, binaryValues.Uint16, binaryValues.Int16, binaryValues.Binary)

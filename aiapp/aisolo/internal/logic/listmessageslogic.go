@@ -30,7 +30,7 @@ func (l *ListMessagesLogic) ListMessages(in *aisolo.ListMessagesReq) (*aisolo.Li
 	userID := strings.TrimSpace(in.GetUserId())
 	sessionID := strings.TrimSpace(in.GetSessionId())
 	if userID == "" || sessionID == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "user_id and session_id are required")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "user_id and session_id are required")
 	}
 	if l.svcCtx.Messages == nil {
 		return &aisolo.ListMessagesResp{}, nil

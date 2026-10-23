@@ -3,13 +3,13 @@ package webhook
 import (
 	"net/http"
 
-	"zero-service/common/livekitx"
 	webhooklogic "zero-service/app/livegtw/internal/logic/webhook"
 	"zero-service/app/livegtw/internal/svc"
+	"zero-service/common/gtwx"
+	"zero-service/common/livekitx"
 
 	"github.com/livekit/protocol/webhook"
 	"github.com/zeromicro/go-zero/core/logx"
-	xhttp "github.com/zeromicro/x/http"
 )
 
 // LiveKitWebhookHandler 接收 LiveKit 推送的 webhook：
@@ -33,6 +33,6 @@ func LiveKitWebhookHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			http.Error(w, "webhook notify failed", http.StatusInternalServerError)
 			return
 		}
-		xhttp.JsonBaseResponseCtx(r.Context(), w, nil)
+		gtwx.WriteOK(r.Context(), w, nil)
 	}
 }

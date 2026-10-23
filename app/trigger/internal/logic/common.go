@@ -45,7 +45,7 @@ func prepareEnqueue(
 		var err error
 		msgId, err = tool.SimpleUUID()
 		if err != nil {
-			return nil, nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_MQ, err, "生成消息ID失败")
+			return nil, nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_MQ, err, "生成消息ID失败")
 		}
 		// 由于 msg 是接口，我们不能直接设置 MsgId，需要调用方自己设置
 	}
@@ -53,7 +53,7 @@ func prepareEnqueue(
 
 	payload, err := jsonx.Marshal(msg)
 	if err != nil {
-		return nil, nil, tool.NewErrorByPbCode(extproto.Code__1_03_MQ, "序列化消息失败")
+		return nil, nil, tool.NewErrorByPbCode(extproto.Code__1_00_MQ, "序列化消息失败")
 	}
 
 	err = svcCtx.Validate.Struct(msg)
@@ -70,11 +70,11 @@ func prepareEnqueue(
 	if len(triggerTime) > 0 {
 		t := carbon.Parse(triggerTime)
 		if t.Error != nil {
-			return nil, nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "triggerTime格式错误")
+			return nil, nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "triggerTime格式错误")
 		}
 		internal := carbon.Now().DiffInSeconds(t)
 		if internal < 0 {
-			return nil, nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "triggerTime is invalid")
+			return nil, nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "triggerTime is invalid")
 		}
 		d = time.Duration(internal) * time.Second
 	} else {

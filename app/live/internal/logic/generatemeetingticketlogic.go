@@ -34,10 +34,10 @@ func NewGenerateMeetingTicketLogic(ctx context.Context, svcCtx *svc.ServiceConte
 func (l *GenerateMeetingTicketLogic) GenerateMeetingTicket(in *live.GenerateMeetingTicketReq) (*live.GenerateMeetingTicketRes, error) {
 	// 校验：meeting_no 和 meeting_code 至少提供一个
 	if strings.TrimSpace(in.MeetingNo) == "" && strings.TrimSpace(in.MeetingCode) == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "会议号或会议码不能同时为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议号或会议码不能同时为空")
 	}
 	if strings.TrimSpace(in.Identity) == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "参会人身份不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "参会人身份不能为空")
 	}
 
 	// 查找会议
@@ -52,13 +52,13 @@ func (l *GenerateMeetingTicketLogic) GenerateMeetingTicket(in *live.GenerateMeet
 		return nil, meetingErr(err)
 	}
 	if meeting.Status == gormmodel.MeetingStatusEnded {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "会议已结束")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "会议已结束")
 	}
 
 	// 生成票据
 	uuidStr, err := l.svcCtx.IdUtil.SimpleUUID()
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "生成票据失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_CACHE, err, "生成票据失败")
 	}
 	ticket := fmt.Sprintf("%s-%s", carbon.Now().Format("Ymd"), uuidStr)
 
@@ -91,7 +91,7 @@ func (l *GenerateMeetingTicketLogic) GenerateMeetingTicket(in *live.GenerateMeet
 	ticketKey := fmt.Sprintf("live:ticket:%s", ticket)
 	err = l.svcCtx.Redis.SetexCtx(l.ctx, ticketKey, string(ticketDataBytes), int(expireSeconds))
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "存储票据失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_CACHE, err, "存储票据失败")
 	}
 
 	l.Logger.Infof("meeting ticket generated: meeting=%s identity=%s ticket=%s type=%d", meeting.MeetingNo, in.Identity, ticket, ticketType)

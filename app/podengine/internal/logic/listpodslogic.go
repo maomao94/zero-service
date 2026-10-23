@@ -37,7 +37,7 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 	}
 	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
 	if !ok {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "node: "+in.Node)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "node: "+in.Node)
 	}
 
 	filter := filters.NewArgs()
@@ -67,7 +67,7 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 	})
 	if err != nil {
 		l.Errorf("Failed to list containers: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "failed to list containers")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "failed to list containers")
 	}
 
 	var items []*podengine.ListPodItemPb

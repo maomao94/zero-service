@@ -26,5 +26,5 @@ func NewStopRtpPubLogic(ctx context.Context, svcCtx *svc.ServiceContext) *StopRt
 
 // 关闭GB28181 RTP接收端口（注：根据lalserver文档，当前需通过KickSession接口实现，本接口暂未开放）
 func (l *StopRtpPubLogic) StopRtpPub(in *lalproxy.StopRtpPubReq) (*lalproxy.StopRtpPubRes, error) {
-	return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "未开放")
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "未开放")
 }

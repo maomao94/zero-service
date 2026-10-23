@@ -35,7 +35,7 @@ func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusR
 		return nil, err
 	}
 	if in.RadiusMeters <= 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "radius_meters必须大于0")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "radius_meters必须大于0")
 	}
 	center := orb.Point{in.Center.Lon, in.Center.Lat}
 	hits := make([]*gis.RadiusHit, 0)

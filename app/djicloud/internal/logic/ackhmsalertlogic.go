@@ -37,10 +37,10 @@ func (l *AckHmsAlertLogic) AckHmsAlert(in *djicloud.AckHmsAlertReq) (*djicloud.A
 		"update_time": time.Now(),
 	})
 	if result.Error != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, result.Error, "确认 HMS 告警失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, result.Error, "确认 HMS 告警失败")
 	}
 	if result.RowsAffected == 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "HMS 告警不存在")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "HMS 告警不存在")
 	}
 	return &djicloud.AckHmsAlertRes{}, nil
 }

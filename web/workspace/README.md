@@ -14,12 +14,18 @@
 ### 1. Live 视频会议
 - 端口：5178
 - 功能：实时视频会议、屏幕共享、会议管理、SIP 电话
-- 路径：`/web/live`
+- 路径：`web/live`
 
 ### 2. SocketIO 网关测试
 - 端口：5179
 - 功能：SocketIO 消息网关测试、用户域/设备域连接、房间管理
-- 路径：`/web/socketio`
+- 路径：`web/socketio`
+
+### 3. OpenAPI 测试控制台
+- 端口：5181
+- 功能：开放平台 API 调试、应用管理、错误码速查
+- 路径：`web/openapi`
+- 生产路径：`/openapi/`
 
 ## 快速开始
 
@@ -31,7 +37,7 @@ npm install
 npm run dev
 ```
 
-工作台将在 http://localhost:5180 启动
+工作台将在 http://127.0.0.1:5180 启动（dev server 固定监听 IPv4，避免 localhost 解析到 IPv6 后无法访问）
 
 ### 2. 启动子系统
 
@@ -47,13 +53,19 @@ npm run dev
 cd web/socketio
 npm install
 npm run dev
+
+# 启动 OpenAPI 控制台
+cd web/openapi
+npm install
+npm run dev
 ```
 
 ### 3. 访问系统
 
-- 工作台：http://localhost:5180
-- Live 视频会议：http://localhost:5178
-- SocketIO 网关测试：http://localhost:5179
+- 工作台：http://127.0.0.1:5180
+- Live 视频会议：http://127.0.0.1:5178
+- SocketIO 网关测试：http://127.0.0.1:5179
+- OpenAPI 控制台：http://127.0.0.1:5181
 
 ## 开发说明
 

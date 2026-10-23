@@ -60,7 +60,7 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 	var plans []gormmodel.Plan
 	page, err := gormx.QueryPage(db.Order("id DESC"), in.PageNum, in.PageSize, &plans)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划列表失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划列表失败")
 	}
 
 	// 构建响应
@@ -79,7 +79,7 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 		}
 		scheduleDescription, err := rrulex.Describe(plans[i].RRuleStr)
 		if err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "生成计划规则描述失败")
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "生成计划规则描述失败")
 		}
 
 		pbPlan := &trigger.PlanPb{
@@ -117,7 +117,7 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 
 		progress, err := gormmodel.CalculatePlanProgress(l.ctx, rawDB, plans[i].Id)
 		if err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "计算计划进度失败")
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "计算计划进度失败")
 		}
 		pbPlan.Progress = progress
 

@@ -35,7 +35,7 @@ func (l *EncodeGeoHashLogic) EncodeGeoHash(in *gis.EncodeGeoHashReq) (*gis.Encod
 	if precision <= 0 {
 		precision = 7
 	} else if precision > 12 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "geohash精度最大为12")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "geohash精度最大为12")
 	}
 	hash := geohash.EncodeWithPrecision(in.Point.Lat, in.Point.Lon, uint(precision))
 	return &gis.EncodeGeoHashRes{

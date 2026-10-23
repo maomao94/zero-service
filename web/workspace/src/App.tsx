@@ -1,4 +1,4 @@
-import { Activity, ExternalLink, Layout, Monitor, RefreshCw, Video, Wifi, Zap } from 'lucide-react'
+import { Activity, Braces, ExternalLink, Layout, Monitor, RefreshCw, Video, Wifi, Zap } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
 interface SubSystem {
@@ -31,6 +31,12 @@ function systemUrl(override: string | undefined, port: number) {
   return `${location.protocol}//${location.hostname}${suffix}`
 }
 
+// 路径型站点：openapi 控制台挂在 /openapi/ 下，不能按端口推导。
+function pathUrl(override: string | undefined, path: string) {
+  if (override) return override
+  return `${location.origin}${path}`
+}
+
 // 卡片展示的主机（去掉协议），如 127.0.0.1
 function displayHost(url: string) {
   try { return new URL(url).host } catch { return url }
@@ -58,6 +64,17 @@ const subSystems: SubSystem[] = [
     port: 8090,
     color: '#10b981',
     features: ['消息收发', '房间管理', '事件监听', '用户/设备域']
+  },
+  {
+    id: 'openapi',
+    name: 'OpenAPI 测试控制台',
+    description: 'openapp 开放 API 调试台，验证 Basic 鉴权、protojson 与错误码',
+    icon: <Braces size={32} />,
+    url: pathUrl(import.meta.env.VITE_OPENAPI_URL, '/openapi/'),
+    healthUrl: '/health/openapi',
+    port: 80,
+    color: '#0e7490',
+    features: ['API 调试', '应用管理', '错误码速查', '请求历史']
   }
 ]
 

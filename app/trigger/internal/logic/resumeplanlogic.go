@@ -44,7 +44,7 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 
 	// 检查参数
 	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.PlanId) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "参数错误")
 	}
 
 	// 查询计划
@@ -59,12 +59,12 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return &trigger.ResumePlanRes{}, nil
 		}
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_DB, "查询计划失败")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_DB, "查询计划失败")
 	}
 
 	// 只有暂停状态的计划才能恢复，已终止的计划无法恢复
 	if plan.Status != model.PlanStatusPaused {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划非暂停,不可恢复")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划非暂停,不可恢复")
 	}
 
 	// 执行事务
@@ -96,7 +96,7 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 	})
 
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "恢复计划事务失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "恢复计划事务失败")
 	}
 
 	planscope.PlanScope(&plan).Logger(l.ctx).Info("RPC 恢复计划：计划状态已更新，事务已提交")

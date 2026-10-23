@@ -40,7 +40,7 @@ func (l *ListFlyRegionsLogic) ListFlyRegions(in *djicloud.ListFlyRegionsReq) (*d
 	var regions []gormmodel.DjiFlyRegion
 	pageResult, err := gormx.QueryPage(db.Order("id DESC"), in.GetPage(), in.GetPageSize(), &regions)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询飞行区列表失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询飞行区列表失败")
 	}
 
 	needSign := in.GetSignUrl()

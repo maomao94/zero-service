@@ -34,10 +34,10 @@ func NewAddIpBlacklistLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Ad
 func (l *AddIpBlacklistLogic) AddIpBlacklist(in *lalproxy.AddIpBlacklistReq) (*lalproxy.AddIpBlacklistRes, error) {
 	// 参数验证（IP地址格式）
 	if net.ParseIP(in.Ip) == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "无效的IP地址: "+in.Ip)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "无效的IP地址: "+in.Ip)
 	}
 	if in.DurationSec < 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "过期时间不能为负数")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "过期时间不能为负数")
 	}
 
 	// 构建请求URL
@@ -57,21 +57,21 @@ func (l *AddIpBlacklistLogic) AddIpBlacklist(in *lalproxy.AddIpBlacklistReq) (*l
 	resp, err := l.svcCtx.LalClient.Do(l.ctx, http.MethodPost, fullUrl, reqBody)
 	if err != nil {
 		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "调用LAL API失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用LAL API失败")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(resp.Body)
 		l.Logger.Errorf("LAL API返回非200状态码: %d, 响应内容: %s", resp.StatusCode, string(body))
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_06_THIRD_PARTY, fmt.Sprintf("LAL API返回异常状态码: %d", resp.StatusCode))
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_THIRD_PARTY, fmt.Sprintf("LAL API返回异常状态码: %d", resp.StatusCode))
 	}
 
 	// 读取响应体
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		l.Logger.Errorf("读取响应体失败: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "读取响应体失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "读取响应体失败")
 	}
 
 	// 解析JSON响应
@@ -81,7 +81,7 @@ func (l *AddIpBlacklistLogic) AddIpBlacklist(in *lalproxy.AddIpBlacklistReq) (*l
 	}
 	if err := json.Unmarshal(body, &httpResp); err != nil {
 		l.Logger.Errorf("解析响应JSON失败: %v, 响应内容: %s", err, string(body))
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "解析响应JSON失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "解析响应JSON失败")
 	}
 
 	return &lalproxy.AddIpBlacklistRes{

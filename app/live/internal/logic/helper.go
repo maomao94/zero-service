@@ -38,7 +38,7 @@ const recordingLockTTL = 30
 // requireMeetingNo 校验会议号非空。
 func requireMeetingNo(meetingNo string) error {
 	if strings.TrimSpace(meetingNo) == "" {
-		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "会议号不能为空")
+		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议号不能为空")
 	}
 	return nil
 }
@@ -46,7 +46,7 @@ func requireMeetingNo(meetingNo string) error {
 // requireMeetingIdentity 校验会议号与身份非空。
 func requireMeetingIdentity(meetingNo, identity string) error {
 	if strings.TrimSpace(meetingNo) == "" || strings.TrimSpace(identity) == "" {
-		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "会议号与身份不能为空")
+		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议号与身份不能为空")
 	}
 	return nil
 }
@@ -65,7 +65,7 @@ func isMeetingOperator(meeting *gormmodel.LiveMeeting, operator string) bool {
 // 系统创建（create_user 为空）或未鉴权身份（operator 为空）时放行，避免误伤系统会议。
 func requireMeetingOperator(meeting *gormmodel.LiveMeeting, operator string) error {
 	if !isMeetingOperator(meeting, operator) {
-		return tool.NewErrorByPbCode(extproto.Code__1_03_UNAUTHORIZED, "仅会议创建者可操作录制")
+		return tool.NewErrorByPbCode(extproto.Code__1_00_UNAUTHORIZED, "仅会议创建者可操作录制")
 	}
 	return nil
 }
@@ -221,9 +221,9 @@ func relativeRecordingFile(location, outputDir string) string {
 // 其余按 DB 错误包装。meetingErr / recordingErr 统一委托本函数。
 func repoErr(err error, sentinel error, notFoundMsg, wrapMsg string) error {
 	if errors.Is(err, sentinel) {
-		return tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, notFoundMsg)
+		return tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, notFoundMsg)
 	}
-	return tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, wrapMsg)
+	return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, wrapMsg)
 }
 
 // meetingErr 把会议 repo 错误映射为 extproto 业务错误码。

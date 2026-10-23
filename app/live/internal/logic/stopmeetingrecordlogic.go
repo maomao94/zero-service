@@ -56,7 +56,7 @@ func (l *StopMeetingRecordLogic) StopMeetingRecord(in *live.StopMeetingRecordReq
 			l.Logger.Infof("meeting record already finalized: meeting=%s egress=%s", rec.MeetingNo, rec.EgressId)
 			return &live.StopMeetingRecordRes{}, nil
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "停止录制失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "停止录制失败")
 	}
 	l.Logger.Infof("meeting record stopping: meeting=%s egress=%s", rec.MeetingNo, rec.EgressId)
 	return &live.StopMeetingRecordRes{}, nil

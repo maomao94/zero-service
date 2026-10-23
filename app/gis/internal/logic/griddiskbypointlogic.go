@@ -35,7 +35,7 @@ func (l *GridDiskByPointLogic) GridDiskByPoint(in *gis.GridDiskByPointReq) (*gis
 	if resolution <= 0 {
 		resolution = 9
 	} else if resolution > 15 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "H3分辨率必须为0-15")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "H3分辨率必须为0-15")
 	}
 
 	cell, err := EncodeH3Cell(in.Point, resolution)

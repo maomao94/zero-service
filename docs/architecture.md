@@ -48,7 +48,8 @@
 ┌─────────────────v───────────────────┐
 │  HTTP 网关层                         │
 │  gtw (BFF) / livegtw / oryxgtw /    │
-│  socketgtw / lalhook (已不推荐)      │
+│  opengtw / socketgtw / lalhook      │
+│  (已不推荐)                          │
 └─────────────────┬───────────────────┘
                   │
 ┌─────────────────v───────────────────┐
@@ -56,7 +57,8 @@
 │  ieccaller / iecstash / trigger /   │
 │  djicloud / live / oryxserver /     │
 │  lalproxy / file / gis / podengine /│
-│  bridgemodbus / bridgemqtt / ...    │
+│  facade/openapi / bridgemodbus /    │
+│  bridgemqtt / ...                   │
 └─────────────────┬───────────────────┘
                   │
 ┌─────────────────v───────────────────┐
@@ -130,6 +132,15 @@ Oryx/SRS ──HTTP 回调──> oryxgtw ──gRPC──> oryxserver ──HTT
 ```
 
 `oryxgtw` 接收 Oryx 五类回调并分发，`oryxserver` 封装 Oryx/SRS HTTP API 为 gRPC 接口供业务调用，覆盖录制管理、流状态查询和中继拉流。LAL（`lalhook`/`lalproxy`）已不推荐使用，服务保留但不再维护，流媒体能力已迁移至 Oryx。
+
+### 开放 API
+
+```
+第三方 / Java ──HTTP+Basic──> opengtw ──gRPC──> facade/openapi ──gRPC──> podengine / bridgemodbus
+     └────────────────gRPC（内网直连，不做鉴权）───────────────────────┘
+```
+
+`opengtw` 负责 Basic 鉴权、统一 `{code,msg,data}` 信封、错误码折叠和请求日志；`facade/openapi` 用显式路由表把 `method` 映射到下游 RPC，并用 protojson 转换 `data`。当前开放 Podman（podengine）4 个只读方法和 Modbus（bridgemodbus）15 个 I/O 方法，详见[开放 API 网关](./open-api/README.md)。
 
 ## 技术选型
 

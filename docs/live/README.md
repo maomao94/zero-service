@@ -229,6 +229,21 @@ GET  /live/v1/listMeetingMessages      # 查询历史
 | GET | `/live/v1/joinMeetingByTicket` | 票据加入 |
 | POST | `/webhook/livekit` | LiveKit Webhook |
 
+### 响应契约
+
+业务接口统一返回 HTTP 200，成功以 `code=0` 判断：
+
+```json
+{"code": 0, "msg": "ok", "data": {}}
+```
+
+- 鉴权失败：`{"code":100401,"msg":"未认证"}`（JWT）或 `{"code":100401,"msg":"缺少用户身份"}`（无用户身份）。
+- 参数错误：`100101`；记录不存在：`100202`；下游不可用折叠为 `100999 系统繁忙`。
+- 所有业务响应都带 `X-Request-Id`，排查时以该 ID 检索日志。
+- 仅 `POST /webhook/livekit` 保持状态码语义（验签失败 `401`、处理失败 `500`），供 LiveKit 判断是否重推。
+
+完整错误码与网关约定见 [`docs/error-codes.md`](../error-codes.md)。
+
 ## 依赖
 
 - **LiveKit Server**：SFU 媒体服务器，负责音视频转发

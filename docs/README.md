@@ -16,7 +16,7 @@
 | [快速开始](./quick-start.md) | 环境要求、安装、启动示例、常见问题 |
 | [架构概览](./architecture.md) | 系统分层、模块依赖、数据流和技术选型 |
 | [服务端口清单](./service-ports.md) | 各服务默认端口、协议和用途 |
-| [错误码规范](./error-codes.md) | HTTP/gRPC 状态码映射与 `detail.reason` 编码 |
+| [错误码规范](./error-codes.md) | 错误码维度、模块分配、HTTP/gRPC 映射与网关返回契约 |
 | [数据库时区配置](./database-timezone.md) | Kingbase/openGauss/PostgreSQL/MySQL 四库时区设置、会话行为与重启持久性 |
 
 ## 核心服务
@@ -34,6 +34,7 @@
 | File | [文件与对象存储](./file/README.md) | OSS 配置管理、文件上传/中继、签名 URL 与视频截帧 |
 | GIS | [地理信息服务](./gis/README.md) | H3、GeoHash、电子围栏与坐标转换 |
 | PodEngine | [容器编排](./podengine/README.md) | Docker 容器生命周期管理 |
+| OpenAPI | [开放 API 网关](./open-api/README.md) | Basic 鉴权、统一信封、method 路由、Podman + Modbus |
 | Bridge | [协议桥接](./bridge/README.md) | HTTP/Kafka/Modbus/MQTT 桥接与报文落地 |
 
 ## 开发者
@@ -41,6 +42,7 @@
 | 文档 | 内容 |
 | --- | --- |
 | [开发指南](./development.md) | 环境搭建、代码生成、模块扩展和调试技巧 |
+| [网关标准开发流程](./gateway-standard.md) | 网关分层、路由鉴权、统一信封、错误码出口与新增接口验收 |
 | [部署指南](./deployment.md) | Docker、单服务和集群部署、配置管理 |
 | [antsx 并发原语指南](./antsx-vs-reactive.md) | antsx 核心 API、使用场景与最佳实践 |
 | [Superpowers 技能全量介绍](./superpowers.md) | AI 编程技能集：14 个技能的设计哲学、铁律与使用流程 |

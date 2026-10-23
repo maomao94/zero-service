@@ -2,7 +2,7 @@
 # Zero Service Web 网关部署（Docker Compose）
 # 用法: bash deploy/nginx/deploy.sh [命令]
 #   (无参数)  部署: 拉取镜像 -> 校验证书 -> compose up -> 等待就绪
-#   build     构建前端产物到 deploy/nginx/dist（live/socketio/workspace）
+#   build     构建前端产物到 deploy/nginx/dist（live/socketio/workspace/openapi）
 #   stop      移除容器
 #   restart   重启容器
 #   status    查看状态
@@ -88,7 +88,7 @@ case "${1:-deploy}" in
     ensure_image
     require_cert
     # 预留产物目录，避免 docker 以 root 创建；内容由 build-web.sh 或部署时自行上传
-    mkdir -p dist/live dist/socketio dist/workspace ../livekit/recordings
+    mkdir -p dist/live dist/socketio dist/workspace dist/openapi ../livekit/recordings
     # 迁移：清理旧的 recordings-nginx（早期仅录制静态服务的容器）
     if docker ps -a --format '{{.Names}}' | grep -qx "recordings-nginx"; then
       OLD_PROJECT=$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' recordings-nginx 2>/dev/null || true)
@@ -111,9 +111,11 @@ case "${1:-deploy}" in
     echo "  GitLab SSH:       git@gitlab.localhost:<group>/<repo>.git (host port ${GITLAB_SSH_HOST_PORT})"
     echo "  SocketIO 工具:    http://127.0.0.1:${SOCKETIO_HOST_PORT}/"
     echo "  Zero 工作台:      http://127.0.0.1:${WORKSPACE_HOST_PORT}/"
+    echo "  OpenAPI 控制台:   ${HTTP_BASE}/openapi/"
+    echo "  开放 API:         ${HTTP_BASE}/v1/gateway"
     echo "  录制文件:         ${HTTP_BASE}/recordings/"
     echo "  前端产物目录:     $(cd dist && pwd)"
-    echo "  反代:             /live/ -> livegtw:11002, /socket.io/ -> socketgtw:11003, /livekit/ -> livekit:7880"
+    echo "  反代:             /live/ -> livegtw:11002, /v1/ -> opengtw:11005, /socket.io/ -> socketgtw:11003"
     echo "  GitLab 反代:      gitlab.localhost -> 10.10.1.100:8929"
     ;;
   stop|down)
@@ -134,6 +136,8 @@ case "${1:-deploy}" in
   url)
     echo "HTTP : ${HTTP_BASE}/"
     echo "HTTPS: ${HTTPS_BASE}/"
+    echo "工作台: http://127.0.0.1:${WORKSPACE_HOST_PORT}/"
+    echo "OpenAPI: ${HTTP_BASE}/openapi/"
     echo "录制: ${HTTP_BASE}/recordings/"
     echo "GitLab: http://gitlab.localhost${HTTP_SUFFIX}/"
     echo "GitLab SSH: git@gitlab.localhost:<group>/<repo>.git (port ${GITLAB_SSH_HOST_PORT})"

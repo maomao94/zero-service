@@ -31,16 +31,16 @@ func NewUpdateSipProviderLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 func (l *UpdateSipProviderLogic) UpdateSipProvider(in *live.UpdateSipProviderReq) (*live.UpdateSipProviderRes, error) {
 	id := strings.TrimSpace(in.GetId())
 	if id == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "供应商 ID 不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "供应商 ID 不能为空")
 	}
 
 	// 检查是否存在
 	existing, err := l.svcCtx.MeetingRepo.GetSipProviderByID(l.ctx, id)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询供应商失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询供应商失败")
 	}
 	if existing == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "供应商不存在")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "供应商不存在")
 	}
 
 	// 构造更新字段（只更新非空字段）
@@ -72,7 +72,7 @@ func (l *UpdateSipProviderLogic) UpdateSipProvider(in *live.UpdateSipProviderReq
 	}
 
 	if len(updates) == 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "没有需要更新的字段")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "没有需要更新的字段")
 	}
 
 	// trunk 相关配置变更时，删除旧 trunk 并重建
@@ -82,7 +82,7 @@ func (l *UpdateSipProviderLogic) UpdateSipProvider(in *live.UpdateSipProviderReq
 	}
 
 	if err := l.svcCtx.MeetingRepo.UpdateSipProvider(l.ctx, id, updates); err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "更新供应商失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "更新供应商失败")
 	}
 
 	// trunk 相关配置变更时，创建新 trunk 并更新 SipTrunkId
@@ -100,10 +100,10 @@ func (l *UpdateSipProviderLogic) UpdateSipProvider(in *live.UpdateSipProviderReq
 			},
 		})
 		if err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "创建 SIP trunk 失败")
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "创建 SIP trunk 失败")
 		}
 		if err := l.svcCtx.MeetingRepo.UpdateSipProvider(l.ctx, id, map[string]any{"sip_trunk_id": trunkRes.SipTrunkId}); err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "更新 trunk ID 失败")
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "更新 trunk ID 失败")
 		}
 		l.Logger.Infof("SIP trunk recreated: %s -> %s (provider=%s)", existing.SipTrunkId, trunkRes.SipTrunkId, existing.Code)
 	}

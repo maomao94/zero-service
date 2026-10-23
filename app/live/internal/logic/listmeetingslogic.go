@@ -44,7 +44,7 @@ func (l *ListMeetingsLogic) ListMeetings(in *live.ListMeetingsReq) (*live.ListMe
 		HasRecording:    in.HasRecording,
 	})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询会议列表失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议列表失败")
 	}
 	// 批量统计录制数量，供列表展示"有录制 / N 段录制"
 	meetingNos := make([]string, 0, len(meetings))
@@ -53,7 +53,7 @@ func (l *ListMeetingsLogic) ListMeetings(in *live.ListMeetingsReq) (*live.ListMe
 	}
 	counts, err := l.svcCtx.MeetingRepo.CountRecordingsByMeetings(l.ctx, meetingNos)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询录制数量失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询录制数量失败")
 	}
 	resp := &live.ListMeetingsRes{Total: total}
 	for i := range meetings {
