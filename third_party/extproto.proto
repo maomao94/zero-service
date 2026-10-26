@@ -28,15 +28,17 @@ extend google.protobuf.EnumValueOptions {
 }
 
 /**
- * Code 表示系统统一错误码定义（参考大疆上云 DJIErrorCode 的 ABCDEF 设计）
+ * Code 表示系统统一平台错误码定义。
+ * 编码格式参考大疆上云 DJIErrorCode 的 ABCDEF 六位设计，但码表与语义完全独立，
+ * 不复用、不映射、不透传 DJI 或其他厂商的错误码。
  *
  * 错误码整体为 “ABCDEF” 六位数字，各维度含义固定，不得混用：
  *   - A   ：错误来源（上报方）
  *           0 = 成功（仅 000000）
  *           1 = 平台服务端（本仓库微服务、HTTP/gRPC 网关）
- *           3 = 设备 / 边缘端（机场、飞行器、IEC/Modbus 现场设备）
- *           5 = 云端 / 第三方平台（DJI 上云、微信、OSS 等）
  *           2、4、6-9 预留
+ *           本枚举不定义设备/第三方厂商码；DJI 等厂商码是独立体系，
+ *           其首位含义由厂商定义，不参与本表解析。
  *   - BC  ：功能模块（两位），仅对 A=1 的码生效，按产品能力划分
  *           已启用：00 通用、30 开放平台
  *           其他功能域按需申请，不提前预分配；90-99 预留
@@ -53,7 +55,9 @@ extend google.protobuf.EnumValueOptions {
  *   3. http_code 是“语义 HTTP 状态”，用于推导 gRPC Code 与客户端分类；
  *      网关实际统一返回 HTTP 200，业务结果以 body.code 为准。
  *   4. 对外错误必须可安全展示；内部细节（SQL、地址、堆栈）只写日志。
- *   5. A=3/5 的码来自 dji_error_code.proto，原样透传，不按本表的 BC 解释。
+ *   5. DJI 等设备/第三方平台的错误码是另一套独立体系（如 dji_error_code.proto），
+ *      与本枚举不互通、不映射、不透传，禁止写入 gRPC ErrorInfo.reason；
+ *      厂商原始码只作为业务响应字段（如 reason_code）返回。
  */
 enum Code {
   // 0 的历史名称仍需兼容早期生成代码；统一使用 _0_OK。
