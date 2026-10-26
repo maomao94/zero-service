@@ -206,7 +206,7 @@ NormalizeError
 
 ### 4.4 设备/云端原始码（DJI）
 
-`extproto` 是唯一的信封码表。DJI 的 `dji_error_code.proto` 是独立枚举，不映射也不进入信封：
+`extproto` 是唯一的平台信封码表。DJI 的 `dji_error_code.proto` 是独立的厂商错误码体系，与平台码不互通、不映射、不透传，不进入信封，也不写入 `ErrorInfo.reason`：
 
 - 设备执行结果走业务字段：`CommonRes{code:-1, reasonCode:312014}` → HTTP `data.reasonCode`，信封 `code` 保持 `0`。
 - 网关 `NormalizeError` 只认 extproto 中已登记的码；未登记的原始码一律折叠为 `100999 系统繁忙`，原文进日志。
