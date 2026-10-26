@@ -65,6 +65,22 @@ func TestExtprotoStaysInPlatformNamespace(t *testing.T) {
 	}
 }
 
+func TestIsDefinedCodeRejectsOutOfRange(t *testing.T) {
+	for _, code := range []int{-1, 1000000, 1 << 40} {
+		if IsDefinedCode(code) {
+			t.Fatalf("IsDefinedCode(%d) = true, want false", code)
+		}
+	}
+}
+
+func TestErrorMessageRejectsOutOfRange(t *testing.T) {
+	for _, code := range []int{-1, 1000000, 1 << 40} {
+		if got := ErrorMessage(code); got != "请求失败" {
+			t.Fatalf("ErrorMessage(%d) = %q, want %q", code, got, "请求失败")
+		}
+	}
+}
+
 // 未在 extproto 中定义的码必须降级为 100999。
 func TestNormalizeErrorRejectsUndefinedCode(t *testing.T) {
 	code, msg := NormalizeError(xerrors.New(100555, "made up"))
