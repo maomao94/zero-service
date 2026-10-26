@@ -43,7 +43,7 @@ func (l *InvokeLogic) Invoke(in *openapi.InvokeReq) (*openapi.InvokeRes, error) 
 	msg, err := l.svcCtx.Registry.Invoke(l.ctx, in.Method, in.Data)
 	if err != nil {
 		code, msgText := errx.CodeFromStatus(err)
-		if code == 0 {
+		if code <= 0 || code > 999999 {
 			code = int(extproto.Code__1_00_INTERNAL)
 		}
 		res.Code = int32(code)

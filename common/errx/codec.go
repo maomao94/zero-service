@@ -17,7 +17,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // SystemBusyMessage 是对外折叠后的统一文案。
@@ -34,8 +33,11 @@ func SourceOf(code int) int {
 // IsDefinedCode 判断 code 是否为 extproto 中已定义的错误码。
 //
 // 这是唯一的码表判据：存在即合法，不存在即降级为 100999。
-// 判据与来源位无关——不推断是平台码、设备码还是云端码，只看是否登记在册。
+// 只判断是否登记在 extproto，登记即视为平台码；不按来源位推断。
 func IsDefinedCode(code int) bool {
+	if code < 0 || code > 999999 {
+		return false
+	}
 	_, ok := extproto.Code_name[int32(code)]
 	return ok
 }
@@ -66,7 +68,7 @@ func CodeFromStatus(err error) (int, string) {
 
 	// 数字型 reason，但不在 extproto 枚举内：无法识别的原始码，禁止进入信封。
 	// 标记后统一按内部错误折叠，避免未定义码被当成平台业务码透传。
-	// 判据只看枚举是否存在，与来源位无关：将来纳入 extproto 的云端码同样会放行。
+	// 判据只看是否登记在 extproto，与来源位无关；未登记一律折叠。
 	undefinedCode := false
 	for _, detail := range st.Details() {
 		info, ok := detail.(*errdetails.ErrorInfo)
@@ -155,12 +157,15 @@ func PublicMessage(code int, msg string) string {
 
 // ErrorMessage 读取 extproto 中定义的错误名称。
 func ErrorMessage(code int) string {
+	if code < 0 || code > 999999 {
+		return "请求失败"
+	}
 	enumCode := extproto.Code(code)
 	desc := enumCode.Descriptor()
 	if desc == nil {
 		return "请求失败"
 	}
-	value := desc.Values().ByNumber(protoreflect.EnumNumber(code))
+	value := desc.Values().ByNumber(enumCode.Number())
 	if value == nil {
 		return "请求失败"
 	}
