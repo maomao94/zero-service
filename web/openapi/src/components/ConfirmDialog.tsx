@@ -1,4 +1,5 @@
 import { AlertTriangle, LoaderCircle } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -21,6 +22,19 @@ export default function ConfirmDialog({
   onCancel,
   onConfirm,
 }: ConfirmDialogProps) {
+  const cancelRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    // 默认聚焦「取消」：破坏性操作不应因为一次回车就执行。
+    cancelRef.current?.focus()
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !loading) onCancel()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [open, loading, onCancel])
+
   if (!open) return null
 
   return (
@@ -32,7 +46,7 @@ export default function ConfirmDialog({
         <h3>{title}</h3>
         <p>{message}</p>
         <div className="modal-actions">
-          <button type="button" className="button secondary" onClick={onCancel} disabled={loading}>
+          <button type="button" className="button secondary" onClick={onCancel} disabled={loading} ref={cancelRef}>
             取消
           </button>
           <button

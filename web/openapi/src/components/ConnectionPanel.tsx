@@ -44,6 +44,7 @@ export default function ConnectionPanel({ settings, onChange, health, checking, 
             placeholder="留空 = 当前站点（同源）"
             onChange={(event) => onChange({ baseUrl: event.target.value })}
             spellCheck={false}
+            autoComplete="off"
           />
         </div>
         <div className="preset-row">

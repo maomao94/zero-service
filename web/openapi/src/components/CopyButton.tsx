@@ -20,7 +20,14 @@ export default function CopyButton({ text, label = '复制', className = '', onR
   }
 
   return (
-    <button type="button" className={`copy-button ${className}`} onClick={handleCopy} disabled={!text}>
+    <button
+      type="button"
+      className={`copy-button ${className}`}
+      onClick={handleCopy}
+      disabled={!text}
+      aria-label={copied ? '已复制' : label || '复制'}
+      title={copied ? '已复制' : label || '复制'}
+    >
       {copied ? <Check size={13} /> : <Copy size={13} />}
       <span>{copied ? '已复制' : label}</span>
     </button>

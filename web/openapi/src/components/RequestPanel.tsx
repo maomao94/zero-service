@@ -1,4 +1,4 @@
-import { AlertTriangle, Braces, CheckCircle2, Eraser, LoaderCircle, Play, RotateCcw, Wand2 } from 'lucide-react'
+import { AlertTriangle, Braces, CheckCircle2, Eraser, Fingerprint, LoaderCircle, Play, RotateCcw, Wand2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { minifyJsonText, parseJsonObject, prettyJsonText } from '../lib/format'
 import type { MethodDefinition, ToastKind } from '../types'
@@ -12,6 +12,7 @@ interface RequestPanelProps {
   onTidChange: (value: string) => void
   sending: boolean
   disabledReason: string
+  signed: boolean
   onSend: () => void
   notify: (kind: ToastKind, text: string) => void
 }
@@ -24,6 +25,7 @@ export default function RequestPanel({
   onTidChange,
   sending,
   disabledReason,
+  signed,
   onSend,
   notify,
 }: RequestPanelProps) {
@@ -58,6 +60,7 @@ export default function RequestPanel({
             <span className="method-key">{method.key}</span>
             <h2>{method.label}</h2>
             {method.write && <span className="write-badge">WRITE</span>}
+            {signed && <span className="sign-badge"><Fingerprint size={11} /> SIGNED</span>}
           </div>
           <p className="request-desc">{method.description}</p>
           {method.write && (
@@ -79,13 +82,18 @@ export default function RequestPanel({
             value={tid}
             onChange={(event) => onTidChange(event.target.value)}
             spellCheck={false}
+            autoComplete="off"
           />
           <p className="field-hint">回显到响应头 X-Request-Id；留空时由网关生成。</p>
         </div>
         <div className="field compact-field">
-          <span className="field-label">时间戳</span>
-          <div className="static-field">发送时自动填充 Unix 毫秒</div>
-          <p className="field-hint">本期只接收不校验，为后续签名预留。</p>
+          <span className="field-label">时间戳与 nonce</span>
+          <div className="static-field">{signed ? '发送时自动写入 timestamp + nonce' : '未启用签名时不发送'}</div>
+          <p className="field-hint">
+            {signed
+              ? 'timestamp 需在网关 5 分钟窗口内，nonce 由 Redis 防重放。'
+              : '当前请求只走 Basic 鉴权；填写 Sign Key 后才会生成 X-Sign。'}
+          </p>
         </div>
       </div>
 

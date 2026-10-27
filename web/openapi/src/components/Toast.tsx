@@ -16,7 +16,7 @@ export default function Toast({ message, onClose }: ToastProps) {
   if (!message) return null
   const Icon = ICONS[message.kind]
   return (
-    <div className={`toast toast-${message.kind}`} role="status">
+    <div className={`toast toast-${message.kind}`} role="status" aria-live="polite">
       <Icon size={18} />
       <span>{message.text}</span>
       <button type="button" className="toast-close" onClick={onClose} aria-label="关闭提示">

@@ -277,6 +277,7 @@ export default function App() {
                   onTidChange={setTid}
                   sending={sending}
                   disabledReason={disabledReason}
+                  signed={settings.signKey.trim() !== ''}
                   onSend={() => void handleSend()}
                   notify={notify}
                 />

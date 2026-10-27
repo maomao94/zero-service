@@ -230,10 +230,6 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
             <div className="static-field mono">{buildUrl(settings.baseUrl, '/open-admin/v1')}</div>
             <p className="field-hint">与开放面同端口，由 nginx 默认不对外转发。</p>
           </div>
-          <label className="field-check">
-            <input type="checkbox" checked={signRequired} onChange={(event) => setSignRequired(event.target.checked)} />
-            <span>启用请求签名（HMAC-SHA256）</span>
-          </label>
           <div className="field">
             <label className="field-label" htmlFor="adminToken">JWT Token</label>
             <div className="secret-input-group">
@@ -282,6 +278,8 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
               onChange={(event) => setName(event.target.value)}
               placeholder="例如：podman 试点 / Java 巡检服务"
               maxLength={64}
+              autoComplete="off"
+              spellCheck={false}
             />
           </div>
           <div className="field">
@@ -293,8 +291,23 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
               onChange={(event) => setRemark(event.target.value)}
               placeholder="可选，说明调用方与用途"
               maxLength={255}
+              autoComplete="off"
+              spellCheck={false}
             />
           </div>
+          <label className="sign-option">
+            <input
+              type="checkbox"
+              checked={signRequired}
+              onChange={(event) => setSignRequired(event.target.checked)}
+              aria-label="启用请求签名"
+            />
+            <div>
+              <b>启用请求签名</b>
+              <small>HMAC-SHA256 · 创建后 signKey 仅展示一次，需要 Redis 防重放</small>
+            </div>
+            <ShieldCheck size={16} />
+          </label>
           <button type="button" className="button primary wide" onClick={() => void handleCreate()} disabled={!canQuery || creating}>
             {creating ? <LoaderCircle size={15} className="spin" /> : <Plus size={15} />}
             {creating ? '创建中…' : '创建应用'}
