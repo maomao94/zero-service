@@ -31,7 +31,7 @@ const MODBUS_TIPS = [
 ]
 
 /**
- * 与 facade/openapi/internal/dispatch 的 method 注册表人工同步。
+ * 与 app/openapi/internal/dispatch 的 method 注册表人工同步。
  * 后端新增 method 时，这里必须同步补一条，否则控制台无法选择。
  */
 export const METHODS: MethodDefinition[] = [

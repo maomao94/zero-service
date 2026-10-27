@@ -1,6 +1,6 @@
 # OpenAPI 测试控制台
 
-`web/openapi` 是 `openapp/opengtw` 的配套调试控制台，用于验证开放 API、管理应用凭据和查阅错误码。仅限开发/测试环境使用。
+`web/openapi` 是 `app/opengtw` 的配套调试控制台，用于验证开放 API、管理应用凭据和查阅错误码。仅限开发/测试环境使用。
 
 ## 功能
 
@@ -42,10 +42,10 @@ npm run dev
 
 ```bash
 # 终端 1：Mock 模式的转发服务
-cd facade/openapi && go run . -f etc/openapi.yaml
+cd app/openapi && go run . -f etc/openapi.yaml
 
 # 终端 2：HTTP 网关（本地默认金仓 zero 库；dev/test 自动建表）
-cd openapp/opengtw && go run . -f etc/opengtw.yaml
+cd app/opengtw && go run . -f etc/opengtw.yaml
 ```
 
 管理面 JWT 需使用与 `etc/opengtw.yaml` 中 `JwtAuth.AccessSecret` 相同的密钥签发。
@@ -76,7 +76,7 @@ bash deploy/nginx/build-web.sh openapi
 
 ## 开发约束
 
-1. `src/lib/methods.ts` 的 method 清单必须与 `facade/openapi/internal/dispatch/registry.go` 人工同步。
+1. `src/lib/methods.ts` 的 method 清单必须与 `app/openapi/internal/dispatch/registry.go` 人工同步。
 2. `src/lib/errors.ts` 必须与 `third_party/extproto.proto`、`common/errx/codec.go` 同步。
 3. 路径型站点不能按端口推导地址，生产访问必须使用 `/openapi/`；工作台通过 `VITE_OPENAPI_URL` 覆盖开发地址。
 4. 跨域直连需要 opengtw 开启 CORS；本地开发优先使用 Vite 同源代理。

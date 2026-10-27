@@ -11,6 +11,7 @@ export const DEFAULT_SETTINGS: Settings = {
   baseUrl: envBaseUrl,
   appId: '',
   secret: '',
+  signKey: '',
   adminToken: '',
   lastMethod: DEFAULT_METHOD.key,
 }
@@ -32,6 +33,7 @@ export function loadSettings(): Settings {
       baseUrl: typeof parsed.baseUrl === 'string' ? parsed.baseUrl : DEFAULT_SETTINGS.baseUrl,
       appId: typeof parsed.appId === 'string' ? parsed.appId : '',
       secret: typeof parsed.secret === 'string' ? parsed.secret : '',
+      signKey: typeof parsed.signKey === 'string' ? parsed.signKey : '',
       adminToken: typeof parsed.adminToken === 'string' ? parsed.adminToken : '',
       lastMethod: typeof parsed.lastMethod === 'string' ? parsed.lastMethod : DEFAULT_SETTINGS.lastMethod,
     }
@@ -75,6 +77,7 @@ export function clearStoredCredentials(): void {
       ...settings,
       appId: '',
       secret: '',
+      signKey: '',
       adminToken: '',
     } satisfies Settings))
   } catch {

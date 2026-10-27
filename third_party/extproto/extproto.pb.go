@@ -98,6 +98,7 @@ const (
 	Code__1_30_APP_SECRET_INVALID Code = 130102
 	Code__1_30_METHOD_NOT_OPEN    Code = 130103
 	Code__1_30_RATE_LIMITED       Code = 130104
+	Code__1_30_SIGNATURE_INVALID  Code = 130105
 )
 
 // Enum value maps for Code.
@@ -132,6 +133,7 @@ var (
 		130102: "_1_30_APP_SECRET_INVALID",
 		130103: "_1_30_METHOD_NOT_OPEN",
 		130104: "_1_30_RATE_LIMITED",
+		130105: "_1_30_SIGNATURE_INVALID",
 	}
 	Code_value = map[string]int32{
 		"_0_OK":                      0,
@@ -163,6 +165,7 @@ var (
 		"_1_30_APP_SECRET_INVALID":   130102,
 		"_1_30_METHOD_NOT_OPEN":      130103,
 		"_1_30_RATE_LIMITED":         130104,
+		"_1_30_SIGNATURE_INVALID":    130105,
 	}
 )
 
@@ -373,7 +376,7 @@ const file_extproto_proto_rawDesc = "" +
 	"\x04Dept\x12\x16\n" +
 	"\x06deptId\x18\x01 \x01(\tR\x06deptId\x12\x1a\n" +
 	"\bdeptCode\x18\x02 \x01(\tR\bdeptCode\x12\x1a\n" +
-	"\bdeptName\x18\x03 \x01(\tR\bdeptName*\xb6\v\n" +
+	"\bdeptName\x18\x03 \x01(\tR\bdeptName*\xec\v\n" +
 	"\x04Code\x12\x1a\n" +
 	"\x05_0_OK\x10\x00\x1a\x0fʸ\x02\x06成功и\x02\xc8\x01\x12%\n" +
 	"\x10CODE_UNSPECIFIED\x10\x00\x1a\x0fʸ\x02\x06成功и\x02\xc8\x01\x12(\n" +
@@ -403,7 +406,8 @@ const file_extproto_proto_rawDesc = "" +
 	"\x13_1_30_APP_NOT_FOUND\x10\xb5\xf8\a\x1a$ʸ\x02\x1b应用不存在或已停用и\x02\x93\x03\x125\n" +
 	"\x18_1_30_APP_SECRET_INVALID\x10\xb6\xf8\a\x1a\x15ʸ\x02\f密钥无效и\x02\x91\x03\x125\n" +
 	"\x15_1_30_METHOD_NOT_OPEN\x10\xb7\xf8\a\x1a\x18ʸ\x02\x0f方法未开放и\x02\x94\x03\x125\n" +
-	"\x12_1_30_RATE_LIMITED\x10\xb8\xf8\a\x1a\x1bʸ\x02\x12请求超过限制и\x02\xad\x03\x1a\x02\x10\x01:6\n" +
+	"\x12_1_30_RATE_LIMITED\x10\xb8\xf8\a\x1a\x1bʸ\x02\x12请求超过限制и\x02\xad\x03\x124\n" +
+	"\x17_1_30_SIGNATURE_INVALID\x10\xb9\xf8\a\x1a\x15ʸ\x02\f签名无效и\x02\x91\x03\x1a\x02\x10\x01:6\n" +
 	"\x04name\x12!.google.protobuf.EnumValueOptions\x18\x89' \x01(\tR\x04name:?\n" +
 	"\thttp_code\x12!.google.protobuf.EnumValueOptions\x18\x8a' \x01(\x05R\bhttpCodeBM\n" +
 	"\x13com.github.extprotoB\bExtProtoP\x01Z*zero-service/third_party/extproto;extprotob\x06proto3"

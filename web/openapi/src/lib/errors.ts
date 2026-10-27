@@ -222,7 +222,7 @@ export const ERROR_DOCS: ErrorDoc[] = [
     code: 130103,
     http: 404,
     title: '方法未开放',
-    description: 'method 未在 facade/openapi 的路由表中注册。',
+    description: 'method 未在 app/openapi 的路由表中注册。',
     suggestion: '当前仅开放 pod.list、pod.get、pod.stats、image.list。',
     group: '开放平台',
   },
@@ -232,6 +232,14 @@ export const ERROR_DOCS: ErrorDoc[] = [
     title: '请求超过限制',
     description: '请求频率超过开放平台限制。',
     suggestion: '降低请求频率后重试。',
+    group: '开放平台',
+  },
+  {
+    code: 130105,
+    http: 401,
+    title: '签名无效',
+    description: '应用启用了请求签名，但 timestamp、nonce、sign 缺失或校验不通过。',
+    suggestion: '按 appId/method/timestamp/nonce/tid/dataHash/path 拼接 canonical string，用 signKey 做 HMAC-SHA256；timestamp 需在 5 分钟内且 nonce 不可重复。',
     group: '开放平台',
   },
 ]

@@ -84,7 +84,7 @@ SocketIO 消息网关测试工具，支持用户域和设备域连接。
 
 ### 4. OpenAPI 测试控制台 (`openapi/`)
 
-`openapp/opengtw` 的配套调试控制台，仅限开发/测试环境。
+`app/opengtw` 的配套调试控制台，仅限开发/测试环境。
 
 **功能特性：**
 - API 调试（19 个 method：Podman 4 + Modbus 15、method 分组搜索、写操作提示、JSON 编辑器、响应高亮）

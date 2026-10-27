@@ -130,6 +130,7 @@ export default function App() {
       baseUrl: settings.baseUrl,
       appId: settings.appId,
       secret: settings.secret,
+      signKey: settings.signKey,
       method: method.key,
       data: parsed.value,
       tid: requestTid,
@@ -185,7 +186,7 @@ export default function App() {
 
   const clearCredentials = () => {
     clearStoredCredentials()
-    setSettings((previous) => ({ ...previous, appId: '', secret: '', adminToken: '' }))
+    setSettings((previous) => ({ ...previous, appId: '', secret: '', signKey: '', adminToken: '' }))
     notify('success', '本地凭据已清除')
   }
 

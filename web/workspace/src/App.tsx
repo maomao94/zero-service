@@ -68,7 +68,7 @@ const subSystems: SubSystem[] = [
   {
     id: 'openapi',
     name: 'OpenAPI 测试控制台',
-    description: 'openapp 开放 API 调试台，验证 Basic 鉴权、protojson 与错误码',
+    description: 'app 开放 API 调试台，验证 Basic 鉴权、protojson 与错误码',
     icon: <Braces size={32} />,
     url: pathUrl(import.meta.env.VITE_OPENAPI_URL, '/openapi/'),
     healthUrl: '/health/openapi',

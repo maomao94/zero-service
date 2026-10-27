@@ -7,12 +7,13 @@ import (
 	"zero-service/common/gormx"
 )
 
-// OpenAppSecret 开放平台应用密钥，仅保存 sha256 十六进制摘要。
+// OpenAppSecret 开放平台应用密钥：Basic 密码保存摘要，签名密钥加密保存。
 type OpenAppSecret struct {
-	AppId      string    `gorm:"column:app_id;type:varchar(32);index:idx_open_app_secret_app_status;comment:应用ID"`
-	SecretHash string    `gorm:"column:secret_hash;type:char(64);comment:sha256(secret)"`
-	Status     int       `gorm:"column:status;default:1;index:idx_open_app_secret_app_status;comment:状态 1-生效 2-待失效 3-已失效"`
-	ExpireAt   time.Time `gorm:"column:expire_at;comment:失效时间"`
+	AppId         string    `gorm:"column:app_id;type:varchar(40);index:idx_open_app_secret_app_status;comment:应用ID"`
+	SecretHash    string    `gorm:"column:secret_hash;type:char(64);comment:sha256(secret)"`
+	SignKeyCipher string    `gorm:"column:sign_key_cipher;type:text;comment:加密后的HMAC签名密钥"`
+	Status        int       `gorm:"column:status;default:1;index:idx_open_app_secret_app_status;comment:状态 1-生效 2-待失效 3-已失效"`
+	ExpireAt      time.Time `gorm:"column:expire_at;comment:失效时间"`
 	gormx.TimeMixin
 	gormx.IDModel
 }
@@ -45,8 +46,8 @@ func (s *OpenAppSecretStore) ListUsable(ctx context.Context, now time.Time) ([]O
 	return secrets, nil
 }
 
-// Replace 将应用现有密钥标记为 24 小时后失效，并写入新密钥。
-func (s *OpenAppSecretStore) Replace(ctx context.Context, appID, newHash string, expireAt time.Time) error {
+// Replace 将应用现有 Basic 密钥和签名密钥标记为 24 小时后失效，并写入新凭据。
+func (s *OpenAppSecretStore) Replace(ctx context.Context, appID, newHash, signKeyCipher string, expireAt time.Time) error {
 	return s.db.WithContext(ctx).Transact(func(tx *gormx.DB) error {
 		if err := tx.Model(&OpenAppSecret{}).
 			Where("app_id = ? AND status IN ?", appID, []int{1, 2}).
@@ -54,9 +55,16 @@ func (s *OpenAppSecretStore) Replace(ctx context.Context, appID, newHash string,
 			return err
 		}
 		return tx.Create(&OpenAppSecret{
-			AppId:      appID,
-			SecretHash: newHash,
-			Status:     1,
+			AppId:         appID,
+			SecretHash:    newHash,
+			SignKeyCipher: signKeyCipher,
+			Status:        1,
 		}).Error
 	})
+}
+
+func (s *OpenAppSecretStore) UpdateSignKey(ctx context.Context, appID, signKeyCipher string) error {
+	return s.db.WithContext(ctx).Model(&OpenAppSecret{}).
+		Where("app_id = ? AND status = ?", appID, 1).
+		Update("sign_key_cipher", signKeyCipher).Error
 }

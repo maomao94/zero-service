@@ -17,6 +17,7 @@ const LOCAL_BASE = 'http://127.0.0.1:11005'
 
 export default function ConnectionPanel({ settings, onChange, health, checking, onCheck, onClear }: ConnectionPanelProps) {
   const [showSecret, setShowSecret] = useState(false)
+  const [showSignKey, setShowSignKey] = useState(false)
   const customBase = settings.baseUrl !== '' && settings.baseUrl !== LOCAL_BASE
 
   return (
@@ -101,6 +102,26 @@ export default function ConnectionPanel({ settings, onChange, health, checking, 
             {showSecret ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
         </div>
+      </div>
+
+      <div className="field">
+        <label className="field-label" htmlFor="signKey">Sign Key（可选）</label>
+        <div className="secret-input-group">
+          <input
+            id="signKey"
+            className="text-input mono"
+            type={showSignKey ? 'text' : 'password'}
+            value={settings.signKey}
+            placeholder="sk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            onChange={(event) => onChange({ signKey: event.target.value.trim() })}
+            spellCheck={false}
+            autoComplete="off"
+          />
+          <button type="button" className="input-action" onClick={() => setShowSignKey((value) => !value)} aria-label={showSignKey ? '隐藏签名密钥' : '显示签名密钥'}>
+            {showSignKey ? <EyeOff size={15} /> : <Eye size={15} />}
+          </button>
+        </div>
+        <p className="field-hint">应用启用 <code>signRequired</code> 时填写，用于对请求做 HMAC-SHA256 签名。</p>
       </div>
 
       <div className="connection-note">

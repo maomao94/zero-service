@@ -57,7 +57,7 @@
 │  ieccaller / iecstash / trigger /   │
 │  djicloud / live / oryxserver /     │
 │  lalproxy / file / gis / podengine /│
-│  facade/openapi / bridgemodbus /    │
+│  app/openapi / bridgemodbus /    │
 │  bridgemqtt / ...                   │
 └─────────────────┬───────────────────┘
                   │
@@ -136,11 +136,11 @@ Oryx/SRS ──HTTP 回调──> oryxgtw ──gRPC──> oryxserver ──HTT
 ### 开放 API
 
 ```
-第三方 / Java ──HTTP+Basic──> opengtw ──gRPC──> facade/openapi ──gRPC──> podengine / bridgemodbus
+第三方 / Java ──HTTP+Basic──> opengtw ──gRPC──> app/openapi ──gRPC──> podengine / bridgemodbus
      └────────────────gRPC（内网直连，不做鉴权）───────────────────────┘
 ```
 
-`opengtw` 负责 Basic 鉴权、统一 `{code,msg,data}` 信封、错误码折叠和请求日志；`facade/openapi` 用显式路由表把 `method` 映射到下游 RPC，并用 protojson 转换 `data`。当前开放 Podman（podengine）4 个只读方法和 Modbus（bridgemodbus）15 个 I/O 方法，详见[开放 API 网关](./open-api/README.md)。
+`opengtw` 负责 Basic 鉴权、统一 `{code,msg,data,timestamp}` 信封、错误码折叠和请求日志；`app/openapi` 用显式路由表把 `method` 映射到下游 RPC，并用 protojson 转换 `data`。当前开放 Podman（podengine）4 个只读方法和 Modbus（bridgemodbus）15 个 I/O 方法，详见[开放 API 网关](./open-api/README.md)。
 
 ## 技术选型
 

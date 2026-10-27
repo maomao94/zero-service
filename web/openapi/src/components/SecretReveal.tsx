@@ -6,13 +6,14 @@ interface SecretRevealProps {
   title: string
   appId: string
   secret: string
+  signKey?: string
   hint?: string
   onDismiss: () => void
   notify: (kind: ToastKind, text: string) => void
 }
 
 /** 密钥只出现一次，突出展示并提示立即保存。 */
-export default function SecretReveal({ title, appId, secret, hint, onDismiss, notify }: SecretRevealProps) {
+export default function SecretReveal({ title, appId, secret, signKey, hint, onDismiss, notify }: SecretRevealProps) {
   return (
     <section className="secret-reveal">
       <div className="secret-heading">
@@ -36,6 +37,13 @@ export default function SecretReveal({ title, appId, secret, hint, onDismiss, no
         <code>{appId}</code>
         <CopyButton text={appId} onResult={(ok) => notify(ok ? 'success' : 'error', ok ? 'App ID 已复制' : '复制失败')} />
       </div>
+      {signKey && (
+        <div className="secret-row">
+          <label>Sign Key</label>
+          <code className="secret-value">{signKey}</code>
+          <CopyButton text={signKey} label="复制签名密钥" onResult={(ok) => notify(ok ? 'success' : 'error', ok ? '签名密钥已复制' : '复制失败')} />
+        </div>
+      )}
       <div className="secret-row">
         <label>Secret</label>
         <code className="secret-value">{secret}</code>

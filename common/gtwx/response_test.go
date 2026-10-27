@@ -136,6 +136,15 @@ func TestWriteOK(t *testing.T) {
 	if body.Code != 0 || body.Msg != "ok" {
 		t.Fatalf("unexpected success envelope: %+v", body)
 	}
+	var response struct {
+		Timestamp int64 `json:"timestamp"`
+	}
+	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+		t.Fatalf("decode timestamp: %v", err)
+	}
+	if response.Timestamp <= 0 {
+		t.Fatalf("timestamp should be positive, got %d", response.Timestamp)
+	}
 }
 
 func TestGatewayFallbackHandlers(t *testing.T) {

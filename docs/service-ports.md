@@ -12,7 +12,7 @@
 | livegtw | 11002 | `app/livegtw/` | LiveKit 会议 HTTP 网关 |
 | socketgtw | 11003 | `socketapp/socketgtw/` | Socket.IO 网关 HTTP 端 |
 | oryxgtw | 11004 | `app/oryxgtw/` | Oryx 流媒体回调网关 |
-| opengtw | 11005 | `openapp/opengtw/` | 开放平台 HTTP 网关（Podman + Modbus） |
+| opengtw | 11005 | `app/opengtw/` | 开放平台 HTTP 网关（Podman + Modbus） |
 | aigtw | 13001 | `aiapp/aigtw/` | AI HTTP 网关 |
 | ssegtw | 13002 | `aiapp/ssegtw/` | AI SSE 网关 |
 | mcpserver | 13003 | `aiapp/mcpserver/` | MCP HTTP 服务 |
@@ -40,7 +40,7 @@
 | ispserver.rpc | 21015 | `app/ispserver/` | ISP 巡检协议服务端 |
 | oryxserver.rpc | 21016 | `app/oryxserver/` | Oryx 流媒体 API 代理 |
 | live.rpc | 21017 | `app/live/` | LiveKit 会议管理 |
-| openapi.rpc | 21018 | `facade/openapi/` | 开放平台统一转发（Podman + Modbus，method 路由 + protojson） |
+| openapi.rpc | 21018 | `app/openapi/` | 开放平台统一转发（Podman + Modbus，method 路由 + protojson） |
 
 ### AI 服务
 

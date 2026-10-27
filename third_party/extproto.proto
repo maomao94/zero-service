@@ -115,4 +115,5 @@ enum Code {
   _1_30_APP_SECRET_INVALID = 130102 [(name) = "密钥无效", (http_code) = 401];
   _1_30_METHOD_NOT_OPEN = 130103 [(name) = "方法未开放", (http_code) = 404];
   _1_30_RATE_LIMITED = 130104 [(name) = "请求超过限制", (http_code) = 429];
+  _1_30_SIGNATURE_INVALID = 130105 [(name) = "签名无效", (http_code) = 401];
 }

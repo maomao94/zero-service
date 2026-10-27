@@ -4,14 +4,37 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"zero-service/common/errx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
+	"github.com/zeromicro/go-zero/rest/httpx"
 	xerrors "github.com/zeromicro/x/errors"
-	xhttp "github.com/zeromicro/x/http"
 )
+
+// Response 是网关统一 HTTP 响应信封。
+// Timestamp 为网关生成响应时的 Unix 毫秒时间戳，不代表客户端请求时间。
+type Response[T any] struct {
+	Code      int    `json:"code"`
+	Msg       string `json:"msg"`
+	Data      T      `json:"data,omitempty"`
+	Timestamp int64  `json:"timestamp"`
+}
+
+func writeResponse(ctx context.Context, w http.ResponseWriter, response Response[any]) {
+	httpx.OkJsonCtx(ctx, w, response)
+}
+
+func newResponse(code int, msg string, data any) Response[any] {
+	return Response[any]{
+		Code:      code,
+		Msg:       msg,
+		Data:      data,
+		Timestamp: time.Now().UnixMilli(),
+	}
+}
 
 // WriteError 以 HTTP 200 + 统一信封返回错误，永不输出 HTTP 4xx/5xx。
 //
@@ -20,7 +43,7 @@ import (
 // 因此必须先经 errx.NormalizeError 归一化并校验，再写入信封。
 func WriteError(ctx context.Context, w http.ResponseWriter, err error) {
 	code, msg := errx.NormalizeError(err)
-	xhttp.JsonBaseResponseCtx(ctx, w, xerrors.New(code, msg))
+	writeResponse(ctx, w, newResponse(code, msg, nil))
 }
 
 // WriteParseError 将请求解析错误映射为参数错误码。
@@ -30,7 +53,7 @@ func WriteParseError(ctx context.Context, w http.ResponseWriter, err error) {
 
 // WriteOK 以 HTTP 200 + 统一信封返回成功数据。
 func WriteOK(ctx context.Context, w http.ResponseWriter, data any) {
-	xhttp.JsonBaseResponseCtx(ctx, w, data)
+	writeResponse(ctx, w, newResponse(0, "ok", data))
 }
 
 // UnauthorizedHandler 供 go-zero rest.WithUnauthorizedCallback 使用。

@@ -5,6 +5,7 @@ export interface Settings {
   baseUrl: string
   appId: string
   secret: string
+  signKey: string
   /** 管理面 JWT，仅保存在当前浏览器 */
   adminToken: string
   lastMethod: string
@@ -80,6 +81,7 @@ export interface AppRecord {
   name: string
   remark: string
   status: number
+  signRequired: boolean
   lastUsedAt?: string
   createdAt: string
 }
@@ -96,6 +98,8 @@ export interface CreateAppData {
   name: string
   secret: string
   status: number
+  signRequired: boolean
+  signKey?: string
   createdAt: string
 }
 
@@ -103,6 +107,8 @@ export interface ResetSecretData {
   appId: string
   secret: string
   oldSecretExpireAt: string
+  signKey?: string
+  signKeyExpireAt?: string
 }
 
 export interface AdminResult<T> {

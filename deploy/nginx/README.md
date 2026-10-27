@@ -14,7 +14,7 @@
 | `conf.d/default.conf` | HTTP 站点定义（Live 默认站点、SocketIO 工具、工作台、OpenAPI 控制台） |
 | `stream.d/gitlab-ssh.conf` | GitLab SSH（容器 22 → `10.10.1.100:2224`）TCP 转发 |
 | `snippets/live-locations.conf` | Live 网关共享 location（前端 SPA、录制、反代） |
-| `snippets/openapi-locations.conf` | openapp 开放 API location（`/openapi/` 控制台、`/v1/` 反代；`/open-admin/` 不对外） |
+| `snippets/openapi-locations.conf` | app 开放 API location（`/openapi/` 控制台、`/v1/` 反代；`/open-admin/` 不对外） |
 | `snippets/gitlab.conf` | 公司 GitLab 反向代理（子域名 `gitlab.localhost` HTTP/HTTPS） |
 | `snippets/gitlab-upstream.conf` | GitLab 上游代理参数（`proxy_pass`、Header、流式与超时） |
 | `snippets/gitlab-api-proxy.conf` | GitLab API 代理公共参数（Header、超时、关闭上游压缩） |
@@ -84,7 +84,7 @@ bash deploy/nginx/deploy.sh
 | `/socket.io/` | `socketgtw:11003` | 会议邀请推送（Socket.IO / WS） |
 | `/livekit/` | `livekit-server:7880` | 信令（WS，去掉 `/livekit` 前缀） |
 | `/openapi/` | `dist/openapi` | OpenAPI 测试控制台（SPA 回落 index.html） |
-| `/v1/` | `opengtw:11005` | openapp 开放 API（`/v1/gateway`、`/v1/health`） |
+| `/v1/` | `opengtw:11005` | app 开放 API（`/v1/gateway`、`/v1/health`） |
 
 反代目标通过 `host.docker.internal` 访问宿主机服务（Linux 由 compose `extra_hosts` 注入）。
 

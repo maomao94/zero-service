@@ -69,10 +69,22 @@ export interface GatewayCallInput {
   baseUrl: string
   appId: string
   secret: string
+  signKey?: string
   method: string
   data: unknown
   tid: string
   timeoutMs?: number
+}
+
+async function hmacSha256(data: string, key: string): Promise<string> {
+  const cryptoKey = await crypto.subtle.importKey('raw', new TextEncoder().encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(data))
+  return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+async function sha256(data: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data))
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
 /**
@@ -85,18 +97,29 @@ export async function callGateway(input: GatewayCallInput): Promise<GatewayCallR
   const timeout = window.setTimeout(() => controller.abort(), input.timeoutMs ?? DEFAULT_TIMEOUT)
 
   try {
+    const timestamp = Date.now()
+    const nonce = crypto.randomUUID()
+    const dataText = JSON.stringify(input.data)
+    const requestBody: Record<string, unknown> = {
+      appId: input.appId,
+      method: input.method,
+      data: input.data,
+      tid: input.tid,
+    }
+    if (input.signKey) {
+      const dataHash = await sha256(dataText)
+      const canonical = `appId=${input.appId}&method=${input.method}&timestamp=${timestamp}&nonce=${nonce}&tid=${input.tid}&dataHash=${dataHash}&path=/v1/gateway`
+      requestBody.timestamp = timestamp
+      requestBody.nonce = nonce
+      requestBody.sign = await hmacSha256(canonical, input.signKey)
+    }
     const response = await fetch(gatewayUrl(input.baseUrl), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: basicAuthHeader(input.appId, input.secret),
       },
-      body: JSON.stringify({
-        method: input.method,
-        data: input.data,
-        tid: input.tid,
-        timestamp: Date.now(),
-      }),
+      body: JSON.stringify(requestBody),
       signal: controller.signal,
     })
 

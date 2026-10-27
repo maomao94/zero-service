@@ -548,6 +548,8 @@ a { color: var(--accent); }
 .app-status { display: inline-flex; align-items: center; padding: 3px 7px; border-radius: 99px; font-size: 10px; font-weight: 750; }
 .app-status.ok { background: var(--success-soft); color: var(--success); }
 .app-status.off { background: #eef2f4; color: #7b8c93; }
+.app-status.sign { margin-left: 5px; background: #dbeafe; color: #1d4ed8; }
+.field-check { display: flex; align-items: center; gap: 7px; margin: 10px 0; color: var(--muted); font-size: 11px; }
 .row-actions { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .apps-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; font-size: 10.5px; flex-wrap: wrap; }
 .pagination { display: flex; align-items: center; gap: 5px; }

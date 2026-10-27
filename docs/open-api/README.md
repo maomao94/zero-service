@@ -1,6 +1,6 @@
-# openapp 开放 API 网关（Podman + Modbus）
+# app 开放 API 网关（Podman + Modbus）
 
-`opengtw` 面向第三方应用（含 Java 服务端）提供统一的 HTTP/JSON 开放 API，当前接入 Podman 容器能力与 Modbus 读写能力。网关负责 Basic 鉴权、统一信封、错误码折叠和请求日志；实际 method 路由与 protojson 转换由 `facade/openapi` 完成。
+`opengtw` 面向第三方应用（含 Java 服务端）提供统一的 HTTP/JSON 开放 API，当前接入 Podman 容器能力与 Modbus 读写能力。网关负责 Basic 鉴权、统一信封、错误码折叠和请求日志；实际 method 路由与 protojson 转换由 `app/openapi` 完成。
 
 ## 架构与端口
 
@@ -8,14 +8,14 @@
 第三方 / Java
    │  HTTP + Basic                    │  gRPC（内网直连，不做鉴权）
    ▼                                  ▼
-openapp/opengtw :11005  ──gRPC──▶  facade/openapi :21018  ──gRPC──▶  app/podengine :21010
+app/opengtw :11005  ──gRPC──▶  app/openapi :21018  ──gRPC──▶  app/podengine :21010
 （鉴权、信封、管理接口）           （method 路由、protojson、Mock）        └──gRPC──▶  app/bridgemodbus :25004
 ```
 
 | 服务 | 目录 | 端口 | 说明 |
 | --- | --- | --- | --- |
-| `opengtw` | `openapp/opengtw` | 11005 | HTTP 网关，`/v1/*` 与 `/open-admin/v1/*` |
-| `openapi` | `facade/openapi` | 21018 | gRPC 转发服务，`OpenApiRpc.Invoke` |
+| `opengtw` | `app/opengtw` | 11005 | HTTP 网关，`/v1/*` 与 `/open-admin/v1/*` |
+| `openapi` | `app/openapi` | 21018 | gRPC 转发服务，`OpenApiRpc.Invoke` |
 | `podengine` | `app/podengine` | 21010 | 下游容器管理服务 |
 | `bridgemodbus` | `app/bridgemodbus` | 25004 | 下游 Modbus TCP 读写服务 |
 
@@ -37,7 +37,7 @@ openapp/opengtw :11005  ──gRPC──▶  facade/openapi :21018  ──gRPC�
 Authorization: Basic base64(appId:secret)
 ```
 
-- `appId` 形如 `app_` + 12 位 hex，`secret` 形如 `sec_` + 32 位 hex。
+- `appId` 形如 `app_` + 32 位 UUID hex；`secret` 与 `signKey` 都是随机密钥，创建/重置时只返回一次。
 - 服务端只保存 `sha256(secret)` 的十六进制摘要，并使用常数时间比较。
 - 应用不存在或已停用返回 `130101`；密钥缺失或不匹配返回 `130102`。HTTP 状态统一为 200，业务结果以响应体 `code` 为准。
 - 凭据缓存在内存中，每 60s 从凭据库刷新；管理面变更后立即刷新。本地默认使用金仓 `zero` 库，生产建议独立 `resource` 库。
@@ -55,22 +55,45 @@ Authorization: Basic ...
 
 ```json
 {
+  "appId": "app_xxx",
   "method": "pod.list",
   "data": {"node": "local", "limit": 100, "offset": 0},
-  "tid": "req-20261022-0001",
-  "timestamp": 1761120000000
+  "tid": "req-20261022-0001"
 }
 ```
+
+应用的 `signRequired` 为 `true` 时，请求还必须携带 `timestamp`、`nonce`、`sign`：
+
+```json
+{
+  "appId": "app_xxx",
+  "method": "pod.list",
+  "timestamp": 1761120000000,
+  "nonce": "nonce-001",
+  "tid": "req-001",
+  "data": {"limit": 100, "offset": 0},
+  "sign": "HMAC-SHA256(canonicalString, signKey)"
+}
+```
+
+签名 canonical string 固定为：
+
+```text
+appId={appId}&method={method}&timestamp={timestamp}&nonce={nonce}&tid={tid}&dataHash={SHA256(data)}&path=/v1/gateway
+```
+
+签名使用 `HMAC-SHA256`；`dataHash` 对实际发送的 UTF-8 JSON 字节计算。`timestamp` 允许与服务端相差 5 分钟，`nonce` 由 Redis 短期占用以防重放。未开启签名的应用继续使用现有 Basic 鉴权，不需要这些字段。
+
+密钥格式、`secret`/`signKey` 的密码学处理、canonical string 详解和完整示例见 [`signature.md`](./signature.md)。
 
 响应：
 
 ```json
-{"code": 0, "msg": "ok", "data": {"items": [], "total": 0}}
+{"code": 0, "msg": "ok", "data": {"items": [], "total": 0}, "timestamp": 1761120000000}
 ```
 
 - `tid` 会回显到响应头 `X-Request-Id`；未传时由网关生成。所有响应（包括鉴权失败、解析失败）都会带 `X-Request-Id`，并优先复用请求头里的同名值。
-- `timestamp` 本期只接收、不校验，为后续签名预留。
-- 所有响应统一为 HTTP 200，响应体固定为 `{code,msg,data}`；错误码表里的 HTTP 列表示语义状态，不代表实际响应状态。
+- 所有响应统一为 HTTP 200，响应体固定为 `{code,msg,data,timestamp}`；错误码表里的 HTTP 列表示语义状态，不代表实际响应状态。
 - `data` 为该 method 的 protojson，网关按原始字节转发，不做二次序列化。
 
 ### 可用 method
@@ -134,7 +157,7 @@ GET /v1/health
 - 枚举使用名称，例如 `POD_PHASE_RUNNING`。
 - `bytes` 字段输出为 base64 字符串，例如 Modbus 的 `results`。
 - 未知字段会被拒绝，返回 `100101`（HTTP 200 + 业务码）。
-- 按 protojson 规范，32 位整型同时接受数字和数字字符串，例如 `{"limit":"100"}` 是合法的。需要排错时以 `facade/openapi/openapi.proto` 与 podengine proto 为准。
+- 按 protojson 规范，32 位整型同时接受数字和数字字符串，例如 `{"limit":"100"}` 是合法的。需要排错时以 `app/openapi/openapi.proto` 与 podengine proto 为准。
 
 ## 错误码
 
@@ -169,22 +192,22 @@ POST /open-admin/v1/app/disable       启用或停用（status=1/2）
 POST /open-admin/v1/app/secret/reset  重置密钥，旧密钥保留 24h
 ```
 
-- 创建：`{"name":"示例应用","remark":"开放平台接入"}`，返回 `appId`、`secret`。
+- 创建：`{"name":"示例应用","remark":"开放平台接入","signRequired":false}`，返回 `appId`、`secret`；`signRequired=true` 时还返回一次 `signKey`。
 - 列表：`GET /open-admin/v1/app/list?keyword=&status=&pageNum=1&pageSize=20`。
-- 停用：`{"appId":"app_xxx","status":2}`。
-- 重置：`{"appId":"app_xxx"}`；旧密钥 `status=2` 且 `expire_at=now+24h`，新密钥立即生效。
-- `secret` 只在创建和重置响应中出现一次，服务端无法找回；丢失只能重置。
-- 管理面同样使用 `HTTP 200 + {code,msg,data}`：JWT 缺失/过期/签名错误返回 `200 {"code":100401,"msg":"未认证"}`，不再使用 HTTP 401。
+- 停用：`{"appId":"app_xxx","status":2}`；可选 `signRequired` 同时切换是否要求签名。
+- 重置：`{"appId":"app_xxx"}`；旧密钥 `status=2` 且 `expire_at=now+24h`，新密钥立即生效；应用开启签名时同时返回新的 `signKey`。
+- `secret` 与 `signKey` 只在创建和重置响应中出现一次，服务端无法找回；丢失只能重置。
+- 管理面同样使用 `HTTP 200 + {code,msg,data,timestamp}`：JWT 缺失/过期/签名错误返回 `200 {"code":100401,"msg":"未认证","timestamp":1761120000000}`，不再使用 HTTP 401。
 - nginx 不对外转发 `/open-admin/`，该前缀应只在内网访问。
 
 ## gRPC 内网直连
 
-Java 等内网调用方可跳过 HTTP 网关，直接调用 `facade/openapi`：
+Java 等内网调用方可跳过 HTTP 网关，直接调用 `app/openapi`：
 
-- 契约：`facade/openapi/openapi.proto`
+- 契约：`app/openapi/openapi.proto`
 - 服务：`openapi.OpenApiRpc/Invoke`
-- `InvokeReq`：`app_id`、`method`、`data`（JSON bytes）、`tid`、`timestamp`
-- `InvokeRes`：`code`（六位错误码，0 成功）、`msg`、`data`（JSON bytes）、`tid`
+- `InvokeReq`：`app_id`、`method`、`data`（protojson string）、`tid`
+- `InvokeRes`：`data`（成功时的 JSON string）；失败通过 gRPC status 返回，六位码位于 `ErrorInfo.reason`
 - 直连路径不做鉴权，依赖网络隔离；`app_id` 由调用方填写，仅用于日志与后续限流扩展。
 - 新增 method 不需要修改 proto，Java stub 只需生成一次。
 
@@ -192,22 +215,24 @@ Java 等内网调用方可跳过 HTTP 网关，直接调用 `facade/openapi`：
 
 ```bash
 # 转发服务（默认 Mock 模式，仅 dev/test）
-cd facade/openapi && go run . -f etc/openapi.yaml
+cd app/openapi && go run . -f etc/openapi.yaml
 
 # HTTP 网关
-cd openapp/opengtw && go run . -f etc/opengtw.yaml
+cd app/opengtw && go run . -f etc/opengtw.yaml
 ```
 
-`facade/openapi/etc/openapi.yaml`：
+`app/openapi/etc/openapi.yaml`：
 
 - `PodEngineConf`：podengine 地址与超时（默认 120s）。
 - `BridgeModbusConf`：bridgemodbus 地址与超时（默认 120s）。
 - `Mock: true`：直接返回固定数据，不连接下游；仅允许 `Mode: dev` / `test`，生产启动会失败。
 
-`openapp/opengtw/etc/opengtw.yaml`：
+`app/opengtw/etc/opengtw.yaml`：
 
 - `DB.DataSource`：默认指向本地金仓 `zero` 库；生产建议独立 `resource` 库。仅在 dev/test 自动创建 `open_app`、`open_app_secret`。
-- `OpenApiConf`：`facade/openapi` 地址，超时 120s。
+- `OpenApiConf`：`app/openapi` 地址，超时 120s。
+- `SignKeyEncryptionKey`：签名应用的签名 key 加密主密钥；仅存在 `signRequired=true` 应用时必填，使用配置文件直接配置，不提交真实密钥。
+- `Redis`：签名 nonce 防重放存储；仅存在 `signRequired=true` 应用时必填。
 - `JwtAuth.AccessSecret`：管理面 JWT 密钥，默认与 `gtw`/`livegtw` 一致，本地签发的 token 可直接复用。
 - `MaxBytes: 1048576`：单请求体上限 1 MiB。
 
@@ -215,10 +240,19 @@ cd openapp/opengtw && go run . -f etc/opengtw.yaml
 
 | 表 | 说明 |
 | --- | --- |
-| `open_app` | 应用主表：`app_id`、`name`、`remark`、`status`、`last_used_at` |
-| `open_app_secret` | 密钥表：`app_id`、`secret_hash`（sha256 hex）、`status`、`expire_at` |
+| `open_app` | 应用主表：`app_id`（varchar(40)）、`name`、`remark`、`status`、`sign_required`、`last_used_at` |
+| `open_app_secret` | 密钥表：`app_id`（varchar(40)）、`secret_hash`（sha256 hex）、`sign_key_cipher`（加密后的签名密钥）、`status`、`expire_at` |
 
 `status`：应用 `1-启用 2-停用`；密钥 `1-生效 2-待失效 3-已失效`。没有 SQL 迁移文件，表结构由 GORM 模型提供，开发/测试环境启动时自动迁移。
+
+生产环境不会自动迁移，升级到本版本前需要手工执行（金仓 / PostgreSQL）：
+
+```sql
+ALTER TABLE open_app ALTER COLUMN app_id TYPE varchar(40);
+ALTER TABLE open_app ADD COLUMN sign_required boolean NOT NULL DEFAULT false;
+ALTER TABLE open_app_secret ALTER COLUMN app_id TYPE varchar(40);
+ALTER TABLE open_app_secret ADD COLUMN sign_key_cipher text;
+```
 
 ## 风险与边界
 

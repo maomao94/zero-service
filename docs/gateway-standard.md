@@ -2,7 +2,7 @@
 
 面向新增或改造 HTTP 网关、网关接口的落地规范。错误码语义以 [`error-codes.md`](./error-codes.md) 为准，本文只回答“代码怎么写、错误从哪里出、怎么验收”。
 
-已按 `feature/openapp-opengtw` 分支源码核对；涉及 go-zero 内置行为的地方标注了出处，未实现的能力不写入本文。
+已按当前仓库源码核对；涉及 go-zero 内置行为的地方标注了出处，未实现的能力不写入本文。
 
 ## 1. 适用范围与分层
 
@@ -10,14 +10,14 @@
 
 | 层 | 职责 | 目录示例 | 对外形态 |
 | --- | --- | --- | --- |
-| HTTP 网关 | 协议适配、鉴权、参数解析、转发、统一信封 | `app/livegtw`、`openapp/opengtw` | `HTTP 200 + {code,msg,data}` |
+| HTTP 网关 | 协议适配、鉴权、参数解析、转发、统一信封 | `app/livegtw`、`app/opengtw` | `HTTP 200 + {code,msg,data,timestamp}` |
 | 业务服务 | 领域校验、事务、错误码构造 | `app/live`、`app/podengine` | gRPC status + `ErrorInfo.reason` |
-| gRPC 契约 | 字段与错误码语义 | `app/live/live.proto`、`facade/openapi/openapi.proto` | 六位码写入 `reason` |
+| gRPC 契约 | 字段与错误码语义 | `app/live/live.proto`、`app/openapi/openapi.proto` | 六位码写入 `reason` |
 
 调用链示例：
 
 ```text
-浏览器/第三方 ──HTTP──▶ livegtw / opengtw ──gRPC──▶ app/live / facade/openapi ──▶ 下游服务
+浏览器/第三方 ──HTTP──▶ livegtw / opengtw ──gRPC──▶ app/live / app/openapi ──▶ 下游服务
 ```
 
 ### 1.2 分层规则
@@ -34,7 +34,7 @@
 | 网关 | 业务前缀 | 管理/特殊前缀 | 鉴权方式 |
 | --- | --- | --- | --- |
 | `app/livegtw` | `/live/v1` | `/webhook/livekit` | JWT + `MeetingAuth`；webhook 验签 |
-| `openapp/opengtw` | `/v1` | `/open-admin/v1` | Basic；管理面 JWT + `UserAuth` |
+| `app/opengtw` | `/v1` | `/open-admin/v1` | Basic；管理面 JWT + `UserAuth` |
 | `gtw`（存量） | `gtw/v1`、`app/user/v1`、`file/v1` 等 | — | JWT（未按本文迁移） |
 
 规则：
@@ -78,14 +78,15 @@ server := rest.MustNewServer(c.RestConf,
 JWT 通过后，业务中间件负责把 claims 桥接到 `authctx` 并校验身份：
 
 - `app/livegtw/internal/middleware/meetingauthmiddleware.go`：没有 `userId` 时返回 `100401`，文案 `缺少用户身份`。
-- `openapp/opengtw/internal/middleware/userauthmiddleware.go`：只做 `authctx.BridgeJWTClaims`，管理面身份由下游 logic 使用。
+- `app/opengtw/internal/middleware/userauthmiddleware.go`：只做 `authctx.BridgeJWTClaims`，管理面身份由下游 logic 使用。
 
 ### 2.3 Basic 鉴权
 
-只有开放平台使用 Basic。实现见 `openapp/opengtw/internal/middleware/openauthmiddleware.go`：
+只有开放平台使用 Basic。实现见 `app/opengtw/internal/middleware/openauthmiddleware.go`：
 
 - 缺少/非法凭据 → `130102`；应用不存在或已停用 → `130101`（两者不区分，避免泄露应用状态）。
 - 密钥只存 `sha256`，用常数时间比较（`internal/security`）；凭据缓存 60s，管理面变更后立即刷新。
+- 应用开启 `signRequired` 后，Basic 鉴权之外还要校验 `timestamp`、`nonce`、`sign`，失败返回 `130105`；依赖 `SignKeyEncryptionKey` 与 Redis，未配置时管理面拒绝开启签名，已开启应用的签名请求会因依赖缺失被拒绝。
 - 鉴权失败同样走 `gtwx.WriteError`，HTTP 状态为 200。
 
 ### 2.4 公开路由
@@ -106,12 +107,13 @@ JWT 通过后，业务中间件负责把 claims 桥接到 `authctx` 并校验身
 ### 3.1 契约
 
 ```json
-{"code": 0, "msg": "ok", "data": {}}
+{"code": 0, "msg": "ok", "data": {}, "timestamp": 1761120000000}
 ```
 
 - 业务响应统一 **HTTP 200**，客户端以 `code == 0` 判断成功。
 - `code` 为六位业务码，`0` 是唯一成功码（`errx.SuccessCode`，见 `common/errx/normalize.go`）。
 - 失败时省略 `data`，`msg` 可展示；基础设施错误折叠为 `系统繁忙`。
+- `timestamp` 为网关生成响应时的 Unix 毫秒时间戳，成功和失败响应均返回，不代表客户端请求时间。
 - 已接入网关的业务响应带 `X-Request-Id`；框架级 `413/503`、panic 与 nginx 错误不保证带该头（见 §5）。
 
 ### 3.2 handler 唯一写法
@@ -155,7 +157,7 @@ server.Use(gtwx.RequestIDMiddleware)
 
 - 优先复用请求头 `X-Request-Id`；为空、超过 128 字符或含控制字符时重新生成。
 - 写入响应头和 context，handler 用 `gtwx.RequestIDFromContext(ctx)` 读取。
-- `openapp/opengtw` 通过 `internal/middleware/requestid.go` 别名复用同一实现；`GatewayHandler` 在 body 带 `tid` 时以 `tid` 覆盖响应头，缺失时使用中间件生成的 ID。
+- `app/opengtw` 通过 `internal/middleware/requestid.go` 别名复用同一实现；`GatewayHandler` 在 body 带 `tid` 时以 `tid` 覆盖响应头，缺失时使用中间件生成的 ID。
 - 鉴权/404/405 等绕过业务中间件的兜底出口由 `ensureRequestID` 补 ID（`common/gtwx/response.go`）。
 
 ## 4. 错误码使用
@@ -279,9 +281,9 @@ NormalizeError
 
 至少覆盖：
 
-- [ ] 成功信封：HTTP 200、`code=0`、`data` 正确（参考 `openapp/opengtw/internal/handler/gateway/gatewayhandler_test.go` 的 `TestGatewaySuccessEnvelope`）。
+- [ ] 成功信封：HTTP 200、`code=0`、`data` 正确（参考 `app/opengtw/internal/handler/gateway/gatewayhandler_test.go` 的 `TestGatewaySuccessEnvelope`）。
 - [ ] 参数错误：非法 JSON → `100101`（`TestGatewayInvalidJSONReturnsParseError`）。
-- [ ] 鉴权失败：JWT 缺失/身份缺失 → `100401`（`app/livegtw/internal/middleware/meetingauthmiddleware_test.go`）；Basic 失败 → `130101/130102`（`openapp/opengtw/internal/middleware/openauthmiddleware_test.go`）。
+- [ ] 鉴权失败：JWT 缺失/身份缺失 → `100401`（`app/livegtw/internal/middleware/meetingauthmiddleware_test.go`）；Basic 失败 → `130101/130102`（`app/opengtw/internal/middleware/openauthmiddleware_test.go`）。
 - [ ] 404/405/未认证兜底 → `100801/100802/100401`（`common/gtwx/response_test.go` 的 `TestGatewayFallbackHandlers`）。
 - [ ] 下游基础设施错误折叠为 `100999 系统繁忙`（`TestGatewayFoldsInfrastructureError`、`TestWriteErrorAlwaysHTTP200`）。
 - [ ] 未登记码/设备原始码折叠为 `100999 系统繁忙`（`TestWriteErrorFoldsVendorCode`、`...OverGRPC`）。
@@ -289,9 +291,9 @@ NormalizeError
 执行：
 
 ```bash
-gofmt -l common/errx common/gtwx gtw app/livegtw openapp/opengtw aiapp/ssegtw aiapp/aigtw
-go test ./common/errx/... ./common/gtwx/... ./gtw/... ./app/livegtw/... ./openapp/opengtw/... ./aiapp/ssegtw/... ./aiapp/aigtw/...
-go vet ./common/errx/... ./common/gtwx/... ./gtw/... ./app/livegtw/... ./openapp/opengtw/... ./aiapp/ssegtw/... ./aiapp/aigtw/...
+gofmt -l common/errx common/gtwx gtw app/livegtw app/opengtw aiapp/ssegtw aiapp/aigtw
+go test ./common/errx/... ./common/gtwx/... ./gtw/... ./app/livegtw/... ./app/opengtw/... ./aiapp/ssegtw/... ./aiapp/aigtw/...
+go vet ./common/errx/... ./common/gtwx/... ./gtw/... ./app/livegtw/... ./app/opengtw/... ./aiapp/ssegtw/... ./aiapp/aigtw/...
 ```
 
 ### 7.3 curl 验收
@@ -322,18 +324,18 @@ curl -sS -i -X POST "$BASE_URL/live/v1/generateToken" \
 curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 ```
 
-判定标准：除明确例外外，HTTP 状态必须是 200，body 必须是 `{code,msg,data}`；失败响应不带 `data`，且带 `X-Request-Id`。
+判定标准：除明确例外外，HTTP 状态必须是 200，body 必须是 `{code,msg,data,timestamp}`；失败响应不带 `data`，且带 `X-Request-Id`。
 
 ## 8. 迁移状态与例外
 
 | 服务/场景 | 状态 | 说明 |
 | --- | --- | --- |
 | `app/livegtw` | 已接入 | 业务、鉴权、参数、404/405、下游错误均走 `gtwx` |
-| `openapp/opengtw` | 已接入 | 开放面 Basic + 管理面 JWT；`tid` 回显 |
+| `app/opengtw` | 已接入 | 开放面 Basic + 管理面 JWT；`tid` 回显 |
 | `gtw` | 已接入 | 中间件/兜底 handler 已补齐；微信支付回调为协议例外 |
 | `app/oryxgtw` | 未迁移 | `httpx.ErrorCtx` / `OkJsonCtx` |
 | `app/bridgegtw` | 未迁移 | grpc-gateway + `httpx`，无信封 |
-| `aiapp/aigtw` | 协议例外 | OpenAI 兼容错误结构（`gtwx.SetOpenAIErrorHandler`），不套 `{code,msg,data}`；401/404/405 也保持 `{"error":{...}}` |
+| `aiapp/aigtw` | 协议例外 | OpenAI 兼容错误结构（`gtwx.SetOpenAIErrorHandler`），不套 `{code,msg,data,timestamp}`；401/404/405 也保持 `{"error":{...}}` |
 | `aiapp/ssegtw` | 部分/例外 | 启动模板已补齐；`/ping` 走信封，SSE 流式响应写流后不套信封 |
 | `POST /webhook/livekit` | 协议例外 | 验签失败 `401`，处理失败 `500`，成功走 `gtwx.WriteOK`；LiveKit 依靠状态码决定重推 |
 | `413 / 503 / panic` | 框架例外 | go-zero 内置响应，不是信封，见 §5 |
@@ -357,10 +359,10 @@ curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 | `app/livegtw/internal/handler/routes.go` | JWT、中间件、前缀的实际生成结果 |
 | `app/livegtw/internal/middleware/meetingauthmiddleware.go` | 身份缺失 → `100401` |
 | `app/livegtw/internal/handler/webhook/webhookhandler.go` | webhook 协议例外 |
-| `openapp/opengtw/opengtw.go` | opengtw 统一出口接线 |
-| `openapp/opengtw/internal/middleware/openauthmiddleware.go` | Basic → `130101/130102` |
-| `openapp/opengtw/internal/handler/gateway/gatewayhandler.go` | 开放面转发与 `tid` 回显 |
-| `openapp/opengtw/internal/logic/gateway/gatewaylogic.go` | 下游错误折叠 |
+| `app/opengtw/opengtw.go` | opengtw 统一出口接线 |
+| `app/opengtw/internal/middleware/openauthmiddleware.go` | Basic → `130101/130102` |
+| `app/opengtw/internal/handler/gateway/gatewayhandler.go` | 开放面转发与 `tid` 回显 |
+| `app/opengtw/internal/logic/gateway/gatewaylogic.go` | 下游错误折叠 |
 | `common/gtwx/response_test.go`、`common/gtwx/codec_test.go` | 公共出口与错误码测试 |
-| `openapp/opengtw/internal/handler/gateway/gatewayhandler_test.go` | 网关信封/解析/折叠测试 |
+| `app/opengtw/internal/handler/gateway/gatewayhandler_test.go` | 网关信封/解析/折叠测试 |
 | `gtw/gtw.go` | 未迁移存量参考（反面示例） |

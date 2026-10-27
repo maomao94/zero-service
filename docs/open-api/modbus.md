@@ -25,7 +25,7 @@ Content-Type: application/json
 响应统一为：
 
 ```json
-{"code": 0, "msg": "ok", "data": { ... }}
+{"code": 0, "msg": "ok", "data": { ... }, "timestamp": 1761120000000}
 ```
 
 ## 公共字段

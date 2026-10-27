@@ -9,11 +9,12 @@ import (
 
 // OpenApp 开放平台应用。
 type OpenApp struct {
-	AppId      string    `gorm:"column:app_id;type:varchar(32);primaryKey;comment:应用ID"`
-	Name       string    `gorm:"column:name;type:varchar(64);comment:应用名称"`
-	Remark     string    `gorm:"column:remark;type:varchar(255);default:'';comment:备注"`
-	Status     int       `gorm:"column:status;default:1;comment:状态 1-启用 2-停用"`
-	LastUsedAt time.Time `gorm:"column:last_used_at;comment:最近调用时间"`
+	AppId        string    `gorm:"column:app_id;type:varchar(40);primaryKey;comment:应用ID"`
+	Name         string    `gorm:"column:name;type:varchar(64);comment:应用名称"`
+	Remark       string    `gorm:"column:remark;type:varchar(255);default:'';comment:备注"`
+	Status       int       `gorm:"column:status;default:1;comment:状态 1-启用 2-停用"`
+	SignRequired bool      `gorm:"column:sign_required;default:false;comment:是否要求请求签名"`
+	LastUsedAt   time.Time `gorm:"column:last_used_at;comment:最近调用时间"`
 	gormx.TimeMixin
 }
 
@@ -69,6 +70,13 @@ func (s *OpenAppStore) UpdateStatus(ctx context.Context, appID string, status in
 	result := s.db.WithContext(ctx).Model(&OpenApp{}).
 		Where("app_id = ?", appID).
 		Updates(map[string]any{"status": status})
+	return result.RowsAffected, result.Error
+}
+
+func (s *OpenAppStore) UpdateSignRequired(ctx context.Context, appID string, required bool) (int64, error) {
+	result := s.db.WithContext(ctx).Model(&OpenApp{}).
+		Where("app_id = ?", appID).
+		Update("sign_required", required)
 	return result.RowsAffected, result.Error
 }
 

@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package openapi;
+
+option go_package = "./openapi";
+option java_multiple_files = true;
+option java_package = "com.github.openapi.grpc";
+option java_outer_classname = "OpenApiProto";
+
+// OpenApiRpc 开放 API 统一转发服务。
+// method 决定下游调用，data 为该方法的 protojson。
+// 业务错误通过 gRPC status 返回：六位错误码写入 ErrorInfo.reason，
+// 可展示文案写入 status message；成功响应只返回 data。
+// timestamp、nonce、sign 属于 app/opengtw 的 HTTP 开放协议，不进入本内部 gRPC 契约。
+service OpenApiRpc {
+  rpc Invoke(InvokeReq) returns (InvokeRes);
+}
+
+message InvokeReq {
+  // 5 号字段曾用于 HTTP 层时间戳，已移出内部契约，保留占位避免被误复用。
+  reserved 5;
+  reserved "timestamp";
+
+  // 网关 Basic 鉴权后的应用标识；直连调用时由调用方填写。
+  string app_id    = 1 [json_name = "appId"];
+  // 方法名，例如 pod.list；未注册的方法返回 130103。
+  string method    = 2 [json_name = "method"];
+  // 该方法请求消息的 protojson UTF-8 原文；空值视为 {}。
+  string data      = 3 [json_name = "data"];
+  // 请求链路 ID，网关未传入时自动生成。
+  string tid       = 4 [json_name = "tid"];
+}
+
+message InvokeRes {
+  // 成功时为结果消息的 protojson UTF-8 原文，失败时为空。
+  string data = 1 [json_name = "data"];
+}

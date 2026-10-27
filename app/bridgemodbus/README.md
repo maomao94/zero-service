@@ -31,7 +31,7 @@
 
 ## 开放平台接入
 
-`facade/openapi` 通过 `BridgeModbusConf` 调用本服务，`opengtw` 对外开放以下 15 个 I/O method：
+`app/openapi` 通过 `BridgeModbusConf` 调用本服务，`opengtw` 对外开放以下 15 个 I/O method：
 
 ```text
 modbus.readCoils

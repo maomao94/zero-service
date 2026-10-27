@@ -45,6 +45,7 @@ interface RevealState {
   title: string
   appId: string
   secret: string
+  signKey?: string
   hint?: string
 }
 
@@ -60,6 +61,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
   const [error, setError] = useState('')
   const [name, setName] = useState('')
   const [remark, setRemark] = useState('')
+  const [signRequired, setSignRequired] = useState(false)
   const [creating, setCreating] = useState(false)
   const [reveal, setReveal] = useState<RevealState | null>(null)
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
@@ -113,7 +115,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
       token: settings.adminToken,
       path: '/open-admin/v1/app/create',
       method: 'POST',
-      body: { name: name.trim(), remark: remark.trim() },
+      body: { name: name.trim(), remark: remark.trim(), signRequired },
     })
     setCreating(false)
     if (!result.ok || !result.data) {
@@ -122,11 +124,13 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
     }
     setName('')
     setRemark('')
+    setSignRequired(false)
     setReveal({
       title: '应用创建成功',
       appId: result.data.appId,
       secret: result.data.secret,
-      hint: 'secret 仅返回一次，请立即保存。之后只能通过重置密钥重新生成。',
+      signKey: result.data.signKey,
+      hint: result.data.signRequired ? 'secret 与 signKey 仅返回一次，请立即保存。' : 'secret 仅返回一次，请立即保存。',
     })
     notify('success', '应用已创建')
     void loadApps(1)
@@ -166,6 +170,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
         title: '密钥已重置',
         appId: data.appId,
         secret: data.secret,
+        signKey: data.signKey,
         hint: `旧密钥将在 ${formatDateTime(data.oldSecretExpireAt)} 失效，期间新旧密钥同时可用。`,
       })
     }
@@ -207,6 +212,10 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
             <div className="static-field mono">{buildUrl(settings.baseUrl, '/open-admin/v1')}</div>
             <p className="field-hint">与开放面同端口，由 nginx 默认不对外转发。</p>
           </div>
+          <label className="field-check">
+            <input type="checkbox" checked={signRequired} onChange={(event) => setSignRequired(event.target.checked)} />
+            <span>启用请求签名（HMAC-SHA256）</span>
+          </label>
           <div className="field">
             <label className="field-label" htmlFor="adminToken">JWT Token</label>
             <div className="secret-input-group">
@@ -272,7 +281,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
             {creating ? <LoaderCircle size={15} className="spin" /> : <Plus size={15} />}
             {creating ? '创建中…' : '创建应用'}
           </button>
-          <p className="field-hint center">app_id 与 secret 由服务端生成，secret 仅返回一次。</p>
+          <p className="field-hint center">appId、secret 由服务端生成；启用签名时 signKey 也仅返回一次。</p>
         </section>
       </div>
 
@@ -282,6 +291,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
             title={reveal.title}
             appId={reveal.appId}
             secret={reveal.secret}
+            signKey={reveal.signKey}
             hint={reveal.hint}
             onDismiss={() => setReveal(null)}
             notify={notify}
@@ -363,6 +373,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
                       <span className={`app-status ${app.status === 1 ? 'ok' : 'off'}`}>
                         {app.status === 1 ? '启用' : '停用'}
                       </span>
+                      {app.signRequired && <span className="app-status sign">已签名</span>}
                     </td>
                     <td className="muted nowrap">{formatDateTime(app.lastUsedAt)}</td>
                     <td className="muted nowrap">{formatDateTime(app.createdAt)}</td>

@@ -10,7 +10,6 @@ import (
 
 	"github.com/zeromicro/go-zero/core/logc"
 	"github.com/zeromicro/go-zero/rest/httpx"
-	xhttp "github.com/zeromicro/x/http"
 )
 
 type ctxKey struct{}
@@ -44,7 +43,7 @@ func getReqMeta(ctx context.Context) *reqMeta {
 func SetUnifiedErrorHandler() {
 	httpx.SetErrorHandlerCtx(func(ctx context.Context, err error) (int, any) {
 		code, msg := errx.NormalizeError(err)
-		return http.StatusOK, xhttp.BaseResponse[any]{Code: code, Msg: msg}
+		return http.StatusOK, newResponse(code, msg, nil)
 	})
 }
 
@@ -52,7 +51,7 @@ func SetUnifiedErrorHandler() {
 func SetLogOkHandler() {
 	httpx.SetOkHandler(func(ctx context.Context, v any) any {
 		if m := getReqMeta(ctx); m != nil {
-			if resp, ok := v.(xhttp.BaseResponse[any]); ok && resp.Code != xhttp.BusinessCodeOK {
+			if resp, ok := v.(Response[any]); ok && resp.Code != 0 {
 				logc.Error(ctx, fmt.Sprintf("[HTTP] [%d] - %s %s - %s - %s",
 					resp.Code, m.Method, m.Path, time.Since(m.StartAt).String(), resp.Msg))
 			}
