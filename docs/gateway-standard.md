@@ -86,7 +86,7 @@ JWT 通过后，业务中间件负责把 claims 桥接到 `authctx` 并校验身
 
 - 缺少/非法凭据 → `130102`；应用不存在或已停用 → `130101`（两者不区分，避免泄露应用状态）。
 - 密钥只存 `sha256`，用常数时间比较（`internal/security`）；凭据缓存 60s，管理面变更后立即刷新。
-- 应用开启 `signRequired` 后，Basic 鉴权之外还要校验 `timestamp`、`nonce`、`sign`，失败返回 `130105`；依赖 `SignKeyEncryptionKey` 与 Redis，未配置时管理面拒绝开启签名，已开启应用的签名请求会因依赖缺失被拒绝。
+- 应用开启 `signRequired` 后，Basic 鉴权之外还要校验 `X-Sign` 请求头（签名覆盖原始 body 字节，`timestamp`/`nonce` 在 body 中），失败返回 `130105`；依赖 `SignKeyEncryptionKey` 与 Redis，未配置时管理面拒绝开启签名，已开启应用的签名请求会因依赖缺失被拒绝。
 - 鉴权失败同样走 `gtwx.WriteError`，HTTP 状态为 200。
 
 ### 2.4 公开路由

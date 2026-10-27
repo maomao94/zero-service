@@ -27,7 +27,9 @@ Basic 鉴权（每个请求）
   └─ 证明“你是谁”
 
 请求签名（可选，signRequired=true）
-  sign = HMAC-SHA256(canonicalString, signKey)
+  X-Sign = v1:HMAC-SHA256(canonicalString, signKey)
+  canonicalString = v1 + appId + path + SHA256(body)
+  timestamp/nonce 放在 body 里，由 SHA256(body) 覆盖
   └─ 证明“这个请求确实由你发出，且内容没被改过、没有被重放”
 ```
 
@@ -48,11 +50,13 @@ CreateApp
 第三方 ──HTTP──▶ opengtw
                   ├─ Basic 鉴权：sha256(secret) 与缓存里的摘要比对
                   ├─ 若 signRequired：
-                  │    ├─ 校验 timestamp（±5 分钟）
+                  │    ├─ 从 header 读取 X-Sign（v1:<hex>）
+                  │    ├─ 读取原始 body，计算 SHA-256 得到 bodyHash
+                  │    ├─ 从 body 读取 timestamp/nonce 并校验（±5 分钟）
                   │    ├─ 解密 sign_key_cipher 得到 signKey
                   │    ├─ 重算 HMAC 并与请求 sign 比对
                   │    └─ Redis SETNX 占用 nonce（防重放）
-                  └─ 转发 app/openapi ──gRPC──▶ podengine / bridgemodbus
+                  └─ 解析 body，转发 app/openapi ──gRPC──▶ podengine / bridgemodbus
 ```
 
 ---
@@ -226,94 +230,110 @@ AES-GCM 是 AEAD，接口更简单（自带完整性），未来如果需要可�
 
 ## 4. 请求签名协议
 
-### 4.1 请求体字段
+### 4.1 请求头与 body
 
-`POST /v1/gateway` 的 JSON body：
+签名头只有一个 `X-Sign`，格式 `v1:<hex>`；`timestamp`、`nonce` 放在 body 里：
 
-| 字段 | 类型 | 必填 | 说明 |
+```http
+POST /v1/gateway
+Authorization: Basic base64(appId:secret)
+X-Sign: v1:a21688f6f7bd082ead7fa5b1a34eb48899210c7702d808d6413e3197cbea13ba
+
+{
+  "method": "pod.list",
+  "data": {"limit":100,"offset":0},
+  "tid": "req-001",
+  "timestamp": 1761120000000,
+  "nonce": "nonce-001"
+}
+```
+
+| 位置 | 字段 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| `appId` | string | 否 | 建议填写；填写时必须与 Basic 用户名完全一致（含 `app_`） |
-| `method` | string | 是 | 开放 method，如 `pod.list` |
-| `data` | object/any | 否 | 该 method 的 protojson；缺省按 `{}` 处理 |
-| `tid` | string | 否 | 链路 ID；参与签名，空串也参与 |
-| `timestamp` | int64 | 签名时必填 | Unix 毫秒时间戳，允许与服务端相差 ±5 分钟 |
-| `nonce` | string | 签名时必填 | 客户端随机串，服务端用 Redis 占用防重放 |
-| `sign` | string | 签名时必填 | HMAC-SHA256 的小写十六进制 |
+| header | `X-Sign` | 签名时必填 | `v1:<hex>`；省略 `v1:` 时按 v1 处理，不识别版本返回 `130105` |
+| body | `method` | 是 | 开放 method，如 `pod.list` |
+| body | `data` | 否 | 该 method 的 protojson，保持 JSON 对象；缺省视为无参数 |
+| body | `tid` | 否 | 链路 ID，参与 bodyHash，空串也参与 |
+| body | `timestamp` | 签名时必填 | Unix 毫秒时间戳，允许与服务端相差 ±5 分钟 |
+| body | `nonce` | 签名时必填 | 1–64 位字母、数字、点、下划线或短横线 |
+
+`data` 保持 JSON 对象，不需要改成字符串；签名覆盖的是整个 body 的原始字节。
 
 ### 4.2 canonical string
 
-顺序固定，不能调整：
+固定 4 行，用换行分隔：
 
 ```text
-appId={appId}&method={method}&timestamp={timestamp}&nonce={nonce}&tid={tid}&dataHash={sha256(data)}&path=/v1/gateway
+v1
+{appId}
+{path}
+{bodyHash}
 ```
 
 说明：
 
-- `appId` 使用 **Basic 鉴权用户名**（服务端可信值），不是客户端 body 里可选的 `appId`；
+- `appId` 使用 **Basic 鉴权用户名**（服务端可信值）；
 - `path` 是请求实际路径，当前固定 `/v1/gateway`；如果以后挂在其他前缀下，签名实现要一起改；
-- `dataHash` 是 `data` **原始 JSON 字节**的 SHA-256 小写 hex；
-- 字段之间用 `&` 连接，字段内部不做 URL 编码（当前所有值都是安全的 ASCII；如果未来支持中文，需要约定编码方式并升级版本号）。
+- `bodyHash = SHA256(原始 body 字节)` 的小写十六进制；
+- `sign = HMAC-SHA256(canonical, signKey)`，小写十六进制。
 
-### 4.3 `dataHash` 的最大坑：不能反序列化再序列化
+body 里的 `method`、`data`、`tid`、`timestamp`、`nonce` 都由 `bodyHash` 覆盖，不再单独进入 canonical；以后 body 新增字段也会自动被签名。
 
-下面两种写法得到的字节可能不同：
+### 4.3 为什么签整个 body
 
-```json
-{"limit":100,"offset":0}
-{ "offset": 0, "limit": 100 }
-```
+签 `data` 的原始 JSON 字节时，客户端必须从 body 里精确截取 `data` 片段：值两侧空白、pretty-print、嵌套字段顺序都会影响结果，多语言下很容易和服务端算出的 hash 不一致。
 
-JSON 对象的键顺序、空格、换行都会改变 SHA-256。因此：
+改成签整个 body 后：
 
-- 客户端必须对“实际放进 HTTP body 的 `data` 字节”计算哈希；
-- 服务端用 `json.RawMessage` 保留原始字节，不能先 `map[string]any` 再 `json.Marshal`；
-- 使用 SDK/框架时，确认它不会重新格式化 JSON。
+- 客户端把业务对象（含 timestamp/nonce）序列化一次，得到 `byte[]`；
+- 对这段字节算 `bodyHash`，再原样发送这段字节；
+- 服务端读取原始 body 算 `bodyHash`，再从中取出 timestamp/nonce 做时间窗和防重放校验。
+
+没有“截取嵌套片段”这一步，也就没有格式歧义。
 
 ### 4.4 完整示例
 
 假设：
 
 ```text
-appId    = app_0123456789abcdef0123456789abcdef
-signKey  = sk_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-method   = pod.list
-timestamp= 1761120000000
-nonce    = nonce-001
-tid      = req-001
-data     = {"limit":100,"offset":0}
+appId     = app_0123456789abcdef0123456789abcdef
+signKey   = sk_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+timestamp = 1761120000000
+nonce     = nonce-001
+path      = /v1/gateway
+body      = {"method":"pod.list","data":{"limit":100,"offset":0},"tid":"req-001","timestamp":1761120000000,"nonce":"nonce-001"}
 ```
 
-`dataHash`：
+`bodyHash`：
 
 ```text
-79cca47b16046efc521110b1af7825c6ea1893f0513b5314c7d4cc8cc4bed0fb
+ba0ebcbe2c20ea9befd138f072721e89b2592800080f04e3f04efd52839f2a7d
 ```
 
 canonical string：
 
 ```text
-appId=app_0123456789abcdef0123456789abcdef&method=pod.list&timestamp=1761120000000&nonce=nonce-001&tid=req-001&dataHash=79cca47b16046efc521110b1af7825c6ea1893f0513b5314c7d4cc8cc4bed0fb&path=/v1/gateway
+v1
+app_0123456789abcdef0123456789abcdef
+/v1/gateway
+ba0ebcbe2c20ea9befd138f072721e89b2592800080f04e3f04efd52839f2a7d
 ```
 
 最终签名：
 
 ```text
-bb16d25c20f94ee46aa8db4b6ecb0b12585120374edaa347845488770d0e2900
+a21688f6f7bd082ead7fa5b1a34eb48899210c7702d808d6413e3197cbea13ba
 ```
 
-请求体：
+请求：
 
-```json
-{
-  "appId": "app_0123456789abcdef0123456789abcdef",
-  "method": "pod.list",
-  "timestamp": 1761120000000,
-  "nonce": "nonce-001",
-  "tid": "req-001",
-  "data": {"limit":100,"offset":0},
-  "sign": "bb16d25c20f94ee46aa8db4b6ecb0b12585120374edaa347845488770d0e2900"
-}
+```http
+POST /v1/gateway HTTP/1.1
+Authorization: Basic ...
+X-Sign: v1:a21688f6f7bd082ead7fa5b1a34eb48899210c7702d808d6413e3197cbea13ba
+Content-Type: application/json
+
+{"method":"pod.list","data":{"limit":100,"offset":0},"tid":"req-001","timestamp":1761120000000,"nonce":"nonce-001"}
 ```
 
 > 示例中的 `signKey` 只用于文档演示，不要在生产使用固定 key；`timestamp` 必须取当前时间，`nonce` 每次请求都要重新生成。
@@ -322,47 +342,55 @@ bb16d25c20f94ee46aa8db4b6ecb0b12585120374edaa347845488770d0e2900
 
 `app/opengtw/internal/middleware/openauthmiddleware.go`：
 
-1. 读取 body，并立刻用 `io.NopCloser(bytes.NewReader(body))` 还原，后续 handler 还要用；
-2. `security.ParseSignedRequest` 解析字段，`Data` 保留原始 JSON；
-3. `Validate`：必填字段、body `appId` 与 Basic 用户一致、时间窗 ±5 分钟；
-4. 检查签名依赖：`SignKeyEncryptionKey` 与 Redis 必须已配置；
-5. 解密当前应用所有有效 `signKey`，逐个重算 HMAC，任一匹配即通过；
-6. 用 `SETNX` 占用 `openapi:nonce:{appId}:{nonce}`，TTL 10 分钟（2 倍时间窗）；
-7. 全部通过后把 `appId` 写入 context，交给 GatewayHandler 转发。
+1. Basic 鉴权得到 `appId`；
+2. 检查签名依赖：`SignKeyEncryptionKey` 与 Redis 必须已配置；
+3. 解析 `X-Sign`（`v1:<hex>`），不识别版本则拒绝；
+4. 读取原始 body，并立刻用 `io.NopCloser(bytes.NewReader(body))` 还原，后续 handler 还要解析；
+5. 从 body 解析 `timestamp`、`nonce`，计算 `bodyHash`，组装 `security.SignatureInput`；
+6. `Validate`：必填项、nonce 字符集、时间窗 ±5 分钟；
+7. 解密当前应用所有有效 `signKey`，逐个重算 HMAC，任一匹配即通过；
+8. 用 `SETNX` 占用 `openapi:nonce:{appId}:{nonce}`，TTL 10 分钟（2 倍时间窗）；
+9. 全部通过后把 `appId` 写入 context，交给 GatewayHandler 解析并转发。
 
 任何一步失败都返回 `130105 签名无效`，不向客户端区分“过期 / 重放 / 不匹配”，避免给攻击者提供探测信息；真实原因可以查服务端日志。
 
 ### 4.6 客户端示例（Go）
 
 ```go
-func signGateway(appID, signKey, method, tid string, data []byte) (int64, string, string) {
-	timestamp := time.Now().UnixMilli()
-	nonce := uuid.NewString()
-
-	sum := sha256.Sum256(data)
-	canonical := fmt.Sprintf(
-		"appId=%s&method=%s&timestamp=%d&nonce=%s&tid=%s&dataHash=%x&path=/v1/gateway",
-		appID, method, timestamp, nonce, tid, sum,
-	)
+func signGateway(appID, signKey string, body []byte) string {
+	sum := sha256.Sum256(body)
+	canonical := strings.Join([]string{
+		"v1", appID, "/v1/gateway", hex.EncodeToString(sum[:]),
+	}, "\n")
 
 	mac := hmac.New(sha256.New, []byte(signKey))
 	mac.Write([]byte(canonical))
-	return timestamp, nonce, hex.EncodeToString(mac.Sum(nil))
+	return "v1:" + hex.EncodeToString(mac.Sum(nil))
 }
 ```
 
-构造 body 时保持 `data` 字节不变：
+body 需要包含 timestamp/nonce：
 
 ```go
 body, _ := json.Marshal(map[string]any{
-	"appId":     appID,
-	"method":    method,
-	"timestamp": timestamp,
-	"nonce":     nonce,
+	"method":    "pod.list",
+	"data":      data,
 	"tid":       tid,
-	"data":      json.RawMessage(data), // 原样嵌入，不再序列化
-	"sign":      sign,
+	"timestamp": time.Now().UnixMilli(),
+	"nonce":     uuid.NewString(),
 })
+```
+
+关键：`body` 必须是**实际发送的字节**。用 `json.Marshal` 得到 `body` 后，发送时直接写这段字节，不要再让 HTTP 客户端重新序列化。
+
+Java 示例：
+
+```java
+byte[] body = mapper.writeValueAsBytes(request);   // request 里包含 timestamp/nonce
+String bodyHash = sha256Hex(body);
+String canonical = "v1\n" + appId + "\n" + "/v1/gateway" + "\n" + bodyHash;
+String sign = "v1:" + hmacSha256Hex(canonical, signKey);
+// 发送时设置 X-Sign: sign，并使用 body 原始字节
 ```
 
 ### 4.7 `signKey` 轮换
@@ -398,22 +426,26 @@ HMAC-SHA256(key, message) = SHA256((key ⊕ opad) || SHA256((key ⊕ ipad) || me
 
 ### Q2：body 里的 `appId` 必须传吗？
 
-不必须。不传时 canonical string 仍然使用 Basic 鉴权用户名。传了就必须与 Basic 用户名完全一致，否则返回 `130105`。
+不需要。`appId` 来自 Basic 鉴权用户名，body 只放 `method`、`data`、`tid` 以及签名用的 `timestamp`、`nonce`。
 
-### Q3：为什么 `secret` 存哈希，`signKey` 存密文？
+### Q3：`data` 可以保持 JSON 对象吗？
+
+可以。签名覆盖的是整个 body 的原始字节，`data` 不需要改成字符串；客户端只要对实际发送的 body 算 `bodyHash` 即可。
+
+### Q4：为什么 `secret` 存哈希，`signKey` 存密文？
 
 - `secret` 只需要“比对”，不需要还原 → 单向哈希；
 - `signKey` 需要参与 HMAC 计算，服务端必须拿到明文 → 可逆加密。
 
-### Q4：签名失败为什么都是 `130105`？
+### Q5：签名失败为什么都是 `130105`？
 
 避免向攻击者区分“时间戳过期”“nonce 重放”“key 不匹配”等细节。排查时看服务端日志或本地复算 canonical string。
 
-### Q5：HTTPS 下还需要签名吗？
+### Q6：HTTPS 下还需要签名吗？
 
 需要。HTTPS 保护传输过程；签名保护的是“请求内容是否被篡改、是否被重放”，两者解决不同问题。
 
-### Q6：为什么 `timestamp` 用毫秒？
+### Q7：为什么 `timestamp` 用毫秒？
 
 与前端 `Date.now()`、Java `System.currentTimeMillis()` 对齐，避免秒/毫秒单位混淆。签名和校验必须使用同一单位。
 
@@ -442,7 +474,9 @@ HMAC-SHA256(key, message) = SHA256((key ⊕ opad) || SHA256((key ⊕ ipad) || me
 | `security.HashSecret` / `VerifySecret` | secret 摘要与常数时间校验 |
 | `security.EncryptSignKey` / `DecryptSignKey` | signKey 加密存储与解密 |
 | `security.deriveCipherKey` | 主密钥派生加密/MAC 子密钥 |
-| `security.SignedRequest` | 签名请求字段（JSON 结构即协议） |
+| `security.ParseSignHeader` | 解析 `X-Sign: v1:<hex>` |
+| `security.SignatureInput` | 签名要素（appId/path/bodyHash） |
+| `security.HashBody` | 原始 body 的 SHA-256 摘要 |
 | `security.CanonicalString` | canonical string |
 | `security.ComputeSign` / `Verify` | HMAC 计算与多 key 校验 |
 | `middleware.OpenAuthMiddleware.verifySignature` | HTTP 层验签、时间窗、nonce |

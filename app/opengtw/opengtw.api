@@ -11,14 +11,13 @@ info (
 type (
 	// GatewayRequest 开放 API 统一转发请求。
 	// data 为该 method 的 protojson，网关原样透传，不做二次序列化。
+	// 签名头为 X-Sign: v1:<hex>；timestamp/nonce 在 body 中，由 bodyHash 覆盖。
 	GatewayRequest {
-		AppId     string      `json:"appId,optional"`
 		Method    string      `json:"method"`
 		Data      interface{} `json:"data,optional"`
+		Tid       string      `json:"tid,optional"`
 		Timestamp int64       `json:"timestamp,optional"`
 		Nonce     string      `json:"nonce,optional"`
-		Tid       string      `json:"tid,optional"`
-		Sign      string      `json:"sign,optional"`
 	}
 	GatewayReply {
 		Code      int         `json:"code"`

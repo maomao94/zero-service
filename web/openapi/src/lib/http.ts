@@ -97,29 +97,33 @@ export async function callGateway(input: GatewayCallInput): Promise<GatewayCallR
   const timeout = window.setTimeout(() => controller.abort(), input.timeoutMs ?? DEFAULT_TIMEOUT)
 
   try {
+    // body 只序列化一次：签名对这段字节算 bodyHash，发送时也必须是同一段字节。
+    // timestamp/nonce 放在 body 里，由 bodyHash 覆盖；签名头只放 X-Sign: v1:<hex>。
     const timestamp = Date.now()
     const nonce = crypto.randomUUID()
-    const dataText = JSON.stringify(input.data)
-    const requestBody: Record<string, unknown> = {
-      appId: input.appId,
+    const body: Record<string, unknown> = {
       method: input.method,
       data: input.data,
       tid: input.tid,
     }
     if (input.signKey) {
-      const dataHash = await sha256(dataText)
-      const canonical = `appId=${input.appId}&method=${input.method}&timestamp=${timestamp}&nonce=${nonce}&tid=${input.tid}&dataHash=${dataHash}&path=/v1/gateway`
-      requestBody.timestamp = timestamp
-      requestBody.nonce = nonce
-      requestBody.sign = await hmacSha256(canonical, input.signKey)
+      body.timestamp = timestamp
+      body.nonce = nonce
+    }
+    const bodyText = JSON.stringify(body)
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Authorization: basicAuthHeader(input.appId, input.secret),
+    }
+    if (input.signKey) {
+      const bodyHash = await sha256(bodyText)
+      const canonical = ['v1', input.appId, '/v1/gateway', bodyHash].join('\n')
+      headers['X-Sign'] = `v1:${await hmacSha256(canonical, input.signKey)}`
     }
     const response = await fetch(gatewayUrl(input.baseUrl), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: basicAuthHeader(input.appId, input.secret),
-      },
-      body: JSON.stringify(requestBody),
+      headers,
+      body: bodyText,
       signal: controller.signal,
     })
 

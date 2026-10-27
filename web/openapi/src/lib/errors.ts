@@ -238,8 +238,8 @@ export const ERROR_DOCS: ErrorDoc[] = [
     code: 130105,
     http: 401,
     title: '签名无效',
-    description: '应用启用了请求签名，但 timestamp、nonce、sign 缺失或校验不通过。',
-    suggestion: '按 appId/method/timestamp/nonce/tid/dataHash/path 拼接 canonical string，用 signKey 做 HMAC-SHA256；timestamp 需在 5 分钟内且 nonce 不可重复。',
+    description: '应用启用了请求签名，但 X-Sign 头或 body 中的 timestamp/nonce 缺失、或校验不通过。',
+    suggestion: '按 v1/appId/path/SHA256(body) 拼接 canonical string，用 signKey 做 HMAC-SHA256；timestamp 需在 5 分钟内且 nonce 不可重复。',
     group: '开放平台',
   },
 ]

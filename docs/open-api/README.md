@@ -55,34 +55,33 @@ Authorization: Basic ...
 
 ```json
 {
-  "appId": "app_xxx",
   "method": "pod.list",
   "data": {"node": "local", "limit": 100, "offset": 0},
   "tid": "req-20261022-0001"
 }
 ```
 
-应用的 `signRequired` 为 `true` 时，请求还必须携带 `timestamp`、`nonce`、`sign`：
+应用的 `signRequired` 为 `true` 时，请求必须携带 `X-Sign: v1:<hex>`，并把 `timestamp`、`nonce` 放进 body：
 
-```json
-{
-  "appId": "app_xxx",
-  "method": "pod.list",
-  "timestamp": 1761120000000,
-  "nonce": "nonce-001",
-  "tid": "req-001",
-  "data": {"limit": 100, "offset": 0},
-  "sign": "HMAC-SHA256(canonicalString, signKey)"
-}
+```http
+POST /v1/gateway
+Authorization: Basic ...
+X-Sign: v1:a21688f6f7bd082ead7fa5b1a34eb48899210c7702d808d6413e3197cbea13ba
+Content-Type: application/json
+
+{"method":"pod.list","data":{"limit":100,"offset":0},"tid":"req-001","timestamp":1761120000000,"nonce":"nonce-001"}
 ```
 
-签名 canonical string 固定为：
+签名 canonical string 固定为 4 行（换行分隔）：
 
 ```text
-appId={appId}&method={method}&timestamp={timestamp}&nonce={nonce}&tid={tid}&dataHash={SHA256(data)}&path=/v1/gateway
+v1
+{appId}
+{path}
+{bodyHash}
 ```
 
-签名使用 `HMAC-SHA256`；`dataHash` 对实际发送的 UTF-8 JSON 字节计算。`timestamp` 允许与服务端相差 5 分钟，`nonce` 由 Redis 短期占用以防重放。未开启签名的应用继续使用现有 Basic 鉴权，不需要这些字段。
+签名使用 `HMAC-SHA256`；`bodyHash = SHA256(原始 body 字节)`，`timestamp`/`nonce` 也由 bodyHash 覆盖。`data` 保持 JSON 对象，不需要改成字符串。`timestamp` 允许与服务端相差 5 分钟，`nonce` 由 Redis 短期占用以防重放。未开启签名的应用继续使用现有 Basic 鉴权，不需要 `X-Sign`。
 
 密钥格式、`secret`/`signKey` 的密码学处理、canonical string 详解和完整示例见 [`signature.md`](./signature.md)。
 

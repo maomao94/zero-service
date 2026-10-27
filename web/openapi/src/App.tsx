@@ -123,7 +123,12 @@ export default function App() {
     const requestTid = tid.trim() || generateTid()
     if (!tid.trim()) setTid(requestTid)
     const timestamp = Date.now()
-    const preview: RequestPreview = { method: method.key, tid: requestTid, dataText, timestamp }
+    const preview: RequestPreview = {
+      method: method.key,
+      tid: requestTid,
+      dataText,
+      signed: settings.signKey.trim() !== '',
+    }
     setLastRequest(preview)
     setSending(true)
     const next = await callGateway({

@@ -23,7 +23,8 @@ export interface RequestPreview {
   method: string
   tid: string
   dataText: string
-  timestamp: number
+  /** 是否使用 signKey 发送签名请求（sign 在 X-Sign 头，timestamp/nonce 在 body）。 */
+  signed?: boolean
 }
 
 interface ResponsePanelProps {
@@ -53,7 +54,6 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
     method: request.method,
     data: safeParse(request.dataText),
     tid: request.tid,
-    timestamp: request.timestamp,
   }) : '', [request])
 
   const copyValue = result?.type === 'response'
@@ -201,7 +201,14 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
             )}
             {tab === 'request' && (
               request
-                ? <JsonHighlight text={requestJson} />
+                ? (
+                  <>
+                    {request.signed && (
+                      <p className="field-hint">签名请求会额外携带 X-Sign: v1:&lt;hex&gt; 请求头，timestamp/nonce 在 body 中。</p>
+                    )}
+                    <JsonHighlight text={requestJson} />
+                  </>
+                )
                 : <div className="json-empty">本次没有可回显的请求数据</div>
             )}
           </div>

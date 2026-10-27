@@ -3,6 +3,7 @@ package middleware
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,9 +13,14 @@ import (
 	"zero-service/common/gtwx"
 	"zero-service/third_party/extproto"
 
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	xerrors "github.com/zeromicro/x/errors"
 )
+
+// HeaderSign 是唯一的签名头，格式为 "v1:<hex>"。
+// timestamp、nonce 放在 body 中，由 bodyHash 覆盖；body 保持 method/data/tid 等业务字段。
+const HeaderSign = "X-Sign"
 
 type appIDKey struct{}
 
@@ -62,7 +68,9 @@ func (m *OpenAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		if cred.SignRequired {
-			if err := m.verifySignature(r, cred); err != nil {
+			if err := m.verifySignature(r, cred, appID); err != nil {
+				// 对外统一 130105，真实原因只写服务端日志，避免泄露时间窗/nonce/key 细节。
+				logx.WithContext(r.Context()).Errorf("openapi signature verify failed app_id=%s: %v", appID, err)
 				gtwx.WriteError(r.Context(), w, xerrors.New(int(extproto.Code__1_30_SIGNATURE_INVALID), "签名无效"))
 				return
 			}
@@ -73,36 +81,57 @@ func (m *OpenAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// verifySignature 完成“读取body → 解析签名要素 → 校验时间窗 → 校验 HMAC → 占用 nonce”。
+// verifySignature 完成“解析 X-Sign → 读取原始 body → 解析 timestamp/nonce → 校验时间窗 → 校验 HMAC → 占用 nonce”。
 //
 // 解析、canonical string 和 HMAC 校验属于跨语言签名协议，统一放在 security 包；
-// 这里只处理 HTTP body、依赖检查和 Redis 防重放。
-func (m *OpenAuthMiddleware) verifySignature(r *http.Request, cred *Credential) error {
+// 这里只处理 HTTP header/body、依赖检查和 Redis 防重放。
+func (m *OpenAuthMiddleware) verifySignature(r *http.Request, cred *Credential, appID string) error {
+	if m.nonceRedis == nil || m.encryptionKey == "" {
+		return fmt.Errorf("signature dependencies not configured")
+	}
+	version, sign, err := security.ParseSignHeader(r.Header.Get(HeaderSign))
+	if err != nil {
+		return err
+	}
+	if version != security.SignatureVersion {
+		return fmt.Errorf("%w: %s", security.ErrSignatureVersion, version)
+	}
+
+	// 签名覆盖原始 body 字节：读取后必须还原，GatewayHandler 还要解析并转发。
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("read signed request: %w", err)
 	}
-	// 读取后必须还原 body：后续 GatewayHandler 还要拿原始 JSON 提取 data 并转发。
 	r.Body = io.NopCloser(bytes.NewReader(body))
 
-	req, err := security.ParseSignedRequest(body)
-	if err != nil {
+	// timestamp、nonce 在 body 里，已由 bodyHash 覆盖；这里只取出用于时间窗和防重放。
+	var meta struct {
+		Timestamp int64  `json:"timestamp"`
+		Nonce     string `json:"nonce"`
+	}
+	if err := json.Unmarshal(body, &meta); err != nil {
+		return fmt.Errorf("parse signed request body: %w", err)
+	}
+
+	input := &security.SignatureInput{
+		AppID:     appID,
+		Timestamp: meta.Timestamp,
+		Nonce:     meta.Nonce,
+		Path:      r.URL.Path,
+		BodyHash:  security.HashBody(body),
+		Sign:      sign,
+	}
+	if err := input.Validate(time.Now()); err != nil {
 		return err
 	}
-	if err := req.Validate(cred.AppId, time.Now()); err != nil {
-		return err
-	}
-	if m.nonceRedis == nil || m.encryptionKey == "" {
-		return fmt.Errorf("signature dependencies not configured")
-	}
-	if err := req.Verify(cred.AppId, r.URL.Path, cred.SignKeys(m.encryptionKey)); err != nil {
+	if err := input.Verify(cred.SignKeys(m.encryptionKey)); err != nil {
 		return err
 	}
 
 	// 签名通过后再占用 nonce；TTL 取两倍时间窗，确保窗口内的重复请求都能命中。
 	created, err := m.nonceRedis.SetnxExCtx(
 		r.Context(),
-		"openapi:nonce:"+cred.AppId+":"+req.Nonce,
+		"openapi:nonce:"+appID+":"+input.Nonce,
 		"1",
 		int(2*security.SignatureTimeWindow.Seconds()),
 	)

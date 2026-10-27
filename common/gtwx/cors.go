@@ -18,7 +18,7 @@ func CorsOption() rest.RunOption {
 
 		header.Set("Access-Control-Allow-Credentials", "true")
 		header.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
-		header.Set("Access-Control-Allow-Headers", "Content-Type, AccessToken, X-CSRF-Token, Authorization, Token, X-Token, X-User-Id")
+		header.Set("Access-Control-Allow-Headers", "Content-Type, AccessToken, X-CSRF-Token, Authorization, Token, X-Token, X-User-Id, X-Sign")
 		header.Set("Access-Control-Expose-Headers", "Content-Length, Content-Type, X-Request-Id")
 	}, nil, "*")
 }

@@ -52,13 +52,11 @@ type GatewayReply struct {
 }
 
 type GatewayRequest struct {
-	AppId     string          `json:"appId,optional"`
 	Method    string          `json:"method"`
 	Data      json.RawMessage `json:"data,optional"`
+	Tid       string          `json:"tid,optional"`
 	Timestamp int64           `json:"timestamp,optional"`
 	Nonce     string          `json:"nonce,optional"`
-	Tid       string          `json:"tid,optional"`
-	Sign      string          `json:"sign,optional"`
 }
 
 type HealthReply struct {

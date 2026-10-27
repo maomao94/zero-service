@@ -25,7 +25,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: app.CreateAppHandler(serverCtx),
 				},
 				{
-					// 启用或停用应用
+					// 启用/停用应用并配置是否要求签名
 					Method:  http.MethodPost,
 					Path:    "/app/disable",
 					Handler: app.DisableAppHandler(serverCtx),

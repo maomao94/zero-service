@@ -36,7 +36,7 @@ GET  /v1/health
 
 业务错误统一 HTTP 200，结果看 `code`；所有响应带 `X-Request-Id`。
 
-应用签名为按应用配置的可选能力。`signRequired=false` 时沿用 Basic 鉴权；启用后请求 body 需要 `timestamp`、`nonce`、`sign`，签名规则与示例见 [`docs/open-api/signature.md`](../../docs/open-api/signature.md)。
+应用签名为按应用配置的可选能力。`signRequired=false` 时沿用 Basic 鉴权；启用后请求需要携带 `X-Sign: v1:<hex>` 头，`timestamp`/`nonce` 放在 body 中，签名覆盖原始 body 字节，`data` 保持 JSON 对象。规则与示例见 [`docs/open-api/signature.md`](../../docs/open-api/signature.md)。
 
 ### 管理面
 
