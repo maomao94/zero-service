@@ -23,6 +23,7 @@ import type {
   AppRecord,
   CreateAppData,
   ResetSecretData,
+  RevealSignKeyData,
   Settings,
   ToastKind,
 } from '../types'
@@ -37,7 +38,7 @@ interface AppsPageProps {
 }
 
 interface ConfirmState {
-  type: 'disable' | 'enable' | 'reset'
+  type: 'disable' | 'enable' | 'reset' | 'reveal'
   app: AppRecord
 }
 
@@ -149,6 +150,14 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
         method: 'POST',
         body: { appId: app.appId },
       })
+    } else if (type === 'reveal') {
+      result = await adminRequest<RevealSignKeyData>({
+        baseUrl: settings.baseUrl,
+        token: settings.adminToken,
+        path: '/open-admin/v1/app/sign-key/reveal',
+        method: 'POST',
+        body: { appId: app.appId },
+      })
     } else {
       result = await adminRequest<unknown>({
         baseUrl: settings.baseUrl,
@@ -173,8 +182,17 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
         signKey: data.signKey,
         hint: `旧密钥将在 ${formatDateTime(data.oldSecretExpireAt)} 失效，期间新旧密钥同时可用。`,
       })
+    } else if (type === 'reveal' && result.data) {
+      const data = result.data as RevealSignKeyData
+      setReveal({
+        title: '当前签名密钥',
+        appId: data.appId,
+        secret: '',
+        signKey: data.signKey,
+        hint: `查看时间 ${formatDateTime(data.revealedAt)}；该操作已记录审计日志，请勿转发到公开渠道。`,
+      })
     }
-    notify('success', type === 'reset' ? '密钥已重置' : type === 'disable' ? '应用已停用' : '应用已启用')
+    notify('success', type === 'reset' ? '密钥已重置' : type === 'reveal' ? '已获取签名密钥' : type === 'disable' ? '应用已停用' : '应用已启用')
     setConfirm(null)
     void loadApps()
   }
@@ -389,6 +407,11 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
                         <button type="button" className="text-button" onClick={() => setConfirm({ type: 'reset', app })}>
                           <RotateCcw size={12} /> 重置密钥
                         </button>
+                        {app.signRequired && (
+                          <button type="button" className="text-button" onClick={() => setConfirm({ type: 'reveal', app })}>
+                            <KeyRound size={12} /> 查看 signKey
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -421,7 +444,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
         title={confirm ? confirmTitle(confirm.type) : ''}
         message={confirm ? confirmMessage(confirm) : ''}
         confirmLabel={confirm ? confirmLabel(confirm.type) : '确认'}
-        danger={confirm?.type !== 'enable'}
+        danger={confirm?.type === 'disable' || confirm?.type === 'reset'}
         loading={confirmLoading}
         onCancel={() => setConfirm(null)}
         onConfirm={() => void executeConfirm()}
@@ -442,12 +465,16 @@ function adminFailure(result: AdminResult<unknown>, token: string): string {
 
 function confirmTitle(type: ConfirmState['type']): string {
   if (type === 'reset') return '重置应用密钥？'
+  if (type === 'reveal') return '查看签名密钥？'
   return type === 'disable' ? '停用应用？' : '启用应用？'
 }
 
 function confirmMessage(state: ConfirmState): string {
   if (state.type === 'reset') {
     return `将为「${state.app.name}」生成新密钥。旧密钥保留 24 小时后失效，期间新旧密钥都可用。`
+  }
+  if (state.type === 'reveal') {
+    return `将查看「${state.app.name}」当前生效的 signKey。该操作会记录审计日志，请确认当前环境允许查看敏感凭据。`
   }
   if (state.type === 'disable') {
     return `停用「${state.app.name}」后，所有使用该应用凭据的请求会立即返回 403 / 130101。`
@@ -457,5 +484,6 @@ function confirmMessage(state: ConfirmState): string {
 
 function confirmLabel(type: ConfirmState['type']): string {
   if (type === 'reset') return '生成新密钥'
+  if (type === 'reveal') return '确认查看'
   return type === 'disable' ? '确认停用' : '确认启用'
 }

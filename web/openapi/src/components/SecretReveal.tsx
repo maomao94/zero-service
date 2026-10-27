@@ -5,14 +5,14 @@ import CopyButton from './CopyButton'
 interface SecretRevealProps {
   title: string
   appId: string
-  secret: string
+  secret?: string
   signKey?: string
   hint?: string
   onDismiss: () => void
   notify: (kind: ToastKind, text: string) => void
 }
 
-/** 密钥只出现一次，突出展示并提示立即保存。 */
+/** 突出展示敏感凭据；secret/signKey 可按场景只展示其中一个。 */
 export default function SecretReveal({ title, appId, secret, signKey, hint, onDismiss, notify }: SecretRevealProps) {
   return (
     <section className="secret-reveal">
@@ -21,7 +21,7 @@ export default function SecretReveal({ title, appId, secret, signKey, hint, onDi
           <span className="secret-icon"><KeyRound size={18} /></span>
           <div>
             <b>{title}</b>
-            <small>{hint ?? '该密钥仅显示这一次，关闭后无法找回。'}</small>
+            <small>{hint ?? '请立即保存到安全位置，关闭后可能无法再次查看。'}</small>
           </div>
         </div>
         <button type="button" className="icon-button subtle" onClick={onDismiss} aria-label="关闭">
@@ -44,15 +44,17 @@ export default function SecretReveal({ title, appId, secret, signKey, hint, onDi
           <CopyButton text={signKey} label="复制签名密钥" onResult={(ok) => notify(ok ? 'success' : 'error', ok ? '签名密钥已复制' : '复制失败')} />
         </div>
       )}
-      <div className="secret-row">
-        <label>Secret</label>
-        <code className="secret-value">{secret}</code>
-        <CopyButton
-          text={secret}
-          label="复制密钥"
-          onResult={(ok) => notify(ok ? 'success' : 'error', ok ? '密钥已复制' : '复制失败')}
-        />
-      </div>
+      {secret && (
+        <div className="secret-row">
+          <label>Secret</label>
+          <code className="secret-value">{secret}</code>
+          <CopyButton
+            text={secret}
+            label="复制密钥"
+            onResult={(ok) => notify(ok ? 'success' : 'error', ok ? '密钥已复制' : '复制失败')}
+          />
+        </div>
+      )}
     </section>
   )
 }

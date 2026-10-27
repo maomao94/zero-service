@@ -37,7 +37,7 @@ app/opengtw :11005  ──gRPC──▶  app/openapi :21018  ──gRPC──▶
 Authorization: Basic base64(appId:secret)
 ```
 
-- `appId` 形如 `app_` + 32 位 UUID hex；`secret` 与 `signKey` 都是随机密钥，创建/重置时只返回一次。
+- `appId` 形如 `app_` + 32 位 UUID hex；`secret` 与 `signKey` 都是随机密钥，创建/重置时返回一次；`signKey` 还可在管理面按开关查看，`secret` 无法找回。
 - 服务端只保存 `sha256(secret)` 的十六进制摘要，并使用常数时间比较。
 - 应用不存在或已停用返回 `130101`；密钥缺失或不匹配返回 `130102`。HTTP 状态统一为 200，业务结果以响应体 `code` 为准。
 - 凭据缓存在内存中，每 60s 从凭据库刷新；管理面变更后立即刷新。本地默认使用金仓 `zero` 库，生产建议独立 `resource` 库。
@@ -189,14 +189,17 @@ POST /open-admin/v1/app/create        创建应用，secret 仅返回一次
 GET  /open-admin/v1/app/list          列表（keyword/status/pageNum/pageSize）
 POST /open-admin/v1/app/disable       启用或停用（status=1/2）
 POST /open-admin/v1/app/secret/reset  重置密钥，旧密钥保留 24h
+POST /open-admin/v1/app/sign-key/reveal  查看当前 signKey（受 SignKeyRevealEnabled 控制）
 ```
 
 - 创建：`{"name":"示例应用","remark":"开放平台接入","signRequired":false}`，返回 `appId`、`secret`；`signRequired=true` 时还返回一次 `signKey`。
 - 列表：`GET /open-admin/v1/app/list?keyword=&status=&pageNum=1&pageSize=20`。
 - 停用：`{"appId":"app_xxx","status":2}`；可选 `signRequired` 同时切换是否要求签名。
 - 重置：`{"appId":"app_xxx"}`；旧密钥 `status=2` 且 `expire_at=now+24h`，新密钥立即生效；应用开启签名时同时返回新的 `signKey`。
-- `secret` 与 `signKey` 只在创建和重置响应中出现一次，服务端无法找回；丢失只能重置。
+- 查看签名密钥：`{"appId":"app_xxx"}`，返回当前 `status=1` 记录的明文 `signKey`；只对 `signRequired=true` 的应用生效，需要配置 `SignKeyEncryptionKey` 且 `SignKeyRevealEnabled=true`，成功时记录 `app_id` 与操作人审计日志。
+- `secret` 仍然只存 sha256 摘要，服务端无法找回，丢失只能重置；`signKey` 可通过上述管理接口查看（受开关控制），也可以通过本地 `cmd/keytool` 解密。
 - 管理面同样使用 `HTTP 200 + {code,msg,data,timestamp}`：JWT 缺失/过期/签名错误返回 `200 {"code":100401,"msg":"未认证","timestamp":1761120000000}`，不再使用 HTTP 401。
+- 管理面响应带 `Cache-Control: no-store`，避免凭据被浏览器或代理缓存。
 - nginx 不对外转发 `/open-admin/`，该前缀应只在内网访问。
 
 ## gRPC 内网直连

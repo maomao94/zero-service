@@ -111,6 +111,13 @@ export interface ResetSecretData {
   signKeyExpireAt?: string
 }
 
+export interface RevealSignKeyData {
+  appId: string
+  signKey: string
+  signRequired: boolean
+  revealedAt: string
+}
+
 export interface AdminResult<T> {
   /** 信封存在时仅以 code===0 为 true；管理面非信封响应一律视为失败。 */
   ok: boolean

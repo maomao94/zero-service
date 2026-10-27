@@ -88,3 +88,14 @@ type ResetAppSecretReply struct {
 type ResetAppSecretRequest struct {
 	AppId string `json:"appId"`
 }
+
+type RevealSignKeyReply struct {
+	AppId        string `json:"appId"`
+	SignKey      string `json:"signKey"`
+	SignRequired bool   `json:"signRequired"`
+	RevealedAt   string `json:"revealedAt"`
+}
+
+type RevealSignKeyRequest struct {
+	AppId string `json:"appId"`
+}

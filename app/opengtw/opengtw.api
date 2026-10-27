@@ -84,6 +84,15 @@ type (
 		SignKey           string `json:"signKey,optional"`
 		SignKeyExpireAt   string `json:"signKeyExpireAt,optional"`
 	}
+	RevealSignKeyRequest {
+		AppId string `json:"appId"`
+	}
+	RevealSignKeyReply {
+		AppId        string `json:"appId"`
+		SignKey      string `json:"signKey"`
+		SignRequired bool   `json:"signRequired"`
+		RevealedAt   string `json:"revealedAt"`
+	}
 )
 
 @server (
@@ -111,7 +120,7 @@ service opengtw {
 	prefix:     /open-admin/v1
 	group:      app
 	jwt:        JwtAuth
-	middleware: UserAuth
+	middleware: UserAuth,NoStore
 )
 service opengtw {
 	@doc "创建应用（secret 仅返回一次）"
@@ -129,4 +138,8 @@ service opengtw {
 	@doc "重置应用密钥（旧密钥保留 24h）"
 	@handler resetAppSecret
 	post /app/secret/reset (ResetAppSecretRequest) returns (ResetAppSecretReply)
+
+	@doc "查看当前签名密钥（审计）"
+	@handler revealSignKey
+	post /app/sign-key/reveal (RevealSignKeyRequest) returns (RevealSignKeyReply)
 }

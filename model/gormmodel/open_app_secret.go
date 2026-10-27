@@ -46,6 +46,20 @@ func (s *OpenAppSecretStore) ListUsable(ctx context.Context, now time.Time) ([]O
 	return secrets, nil
 }
 
+// FindActiveByAppId 返回应用当前生效的密钥记录（status=1）。
+// 同一应用在重置窗口内可能同时存在 status=1 和 status=2 的记录，这里只取 status=1。
+func (s *OpenAppSecretStore) FindActiveByAppId(ctx context.Context, appID string) (*OpenAppSecret, error) {
+	var secret OpenAppSecret
+	err := s.db.WithContext(ctx).
+		Where("app_id = ? AND status = ?", appID, 1).
+		Order("id DESC").
+		First(&secret).Error
+	if err != nil {
+		return nil, err
+	}
+	return &secret, nil
+}
+
 // Replace 将应用现有 Basic 密钥和签名密钥标记为 24 小时后失效，并写入新凭据。
 func (s *OpenAppSecretStore) Replace(ctx context.Context, appID, newHash, signKeyCipher string, expireAt time.Time) error {
 	return s.db.WithContext(ctx).Transact(func(tx *gormx.DB) error {

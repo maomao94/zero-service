@@ -16,7 +16,7 @@ import (
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
 		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.UserAuth},
+			[]rest.Middleware{serverCtx.UserAuth, serverCtx.NoStore},
 			[]rest.Route{
 				{
 					// 创建应用（secret 仅返回一次）
@@ -41,6 +41,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Method:  http.MethodPost,
 					Path:    "/app/secret/reset",
 					Handler: app.ResetAppSecretHandler(serverCtx),
+				},
+				{
+					// 查看当前签名密钥（审计）
+					Method:  http.MethodPost,
+					Path:    "/app/sign-key/reveal",
+					Handler: app.RevealSignKeyHandler(serverCtx),
 				},
 			}...,
 		),

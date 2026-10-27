@@ -224,7 +224,8 @@ AES-GCM 是 AEAD，接口更简单（自带完整性），未来如果需要可�
 - 主密钥长度必须 ≥32 字节；修改主密钥会导致旧 `sign_key_cipher` 无法解密，签名应用会返回 `130105`；
 - 主密钥不要写进代码仓库，使用配置/环境变量注入；
 - 日志里不要打印 `secret`、`signKey`、主密钥；
-- `sign_key_cipher` 是密文，但仍应按敏感字段保护数据库访问权限。
+- `sign_key_cipher` 是密文，但仍应按敏感字段保护数据库访问权限；
+- 管理面查看 `signKey` 受 `SignKeyRevealEnabled` 控制（默认关闭），开启后请确认 `/open-admin/` 只在内网可达，并关注审计日志。
 
 ---
 
@@ -393,14 +394,35 @@ String sign = "v1:" + hmacSha256Hex(canonical, signKey);
 // 发送时设置 X-Sign: sign，并使用 body 原始字节
 ```
 
-### 4.7 `signKey` 轮换
+### 4.7 `signKey` 轮换与查看
 
 - 重置 Basic 密钥时，如果应用开启了签名，会同时生成新的 `signKey`；
 - 旧密钥记录保留 24 小时（`status=2`），新旧 key 在这个窗口内都能验签；
 - 24 小时后旧 key 失效，客户端必须换成新 key；
-- `signKey` 只出现在创建/重置响应中，服务端无法找回，丢失只能重置。
+- `signKey` 在创建/重置响应中返回一次；之后可以通过管理面 `POST /open-admin/v1/app/sign-key/reveal` 查看当前生效的 key（需要 `SignKeyRevealEnabled=true`，且会记录审计日志）；
+- 也可以在本机用 `app/opengtw/cmd/keytool reveal` 直接读库解密，适合排障和交付前核对；
+- `secret` 只存 sha256 摘要，任何时候都无法找回，丢失只能重置。
 
 > 注意：`/open-admin/v1/app/disable` 在传入 `signRequired=true` 时会生成新的 `signKey` 并直接替换当前生效的密钥，旧 key 不会保留 24 小时。仅做启停时不要传 `signRequired`；需要平滑轮换时使用 `secret/reset`。
+
+### 4.8 本地联调工具（keytool）
+
+`app/opengtw/cmd/keytool` 直接读配置和凭据库，不经过 HTTP 管理面，也不依赖 Redis：
+
+```bash
+# 查看当前生效的 signKey（仅 stdout 输出 key）
+go run ./app/opengtw/cmd/keytool reveal -app app_xxx
+
+# 生成签名 body、canonical、X-Sign 和 curl
+go run ./app/opengtw/cmd/keytool sign \
+  -app app_xxx -method pod.list -data '{"limit":10}' -secret sec_xxx
+
+# 签名后直接发送，验证完整链路
+go run ./app/opengtw/cmd/keytool sign \
+  -app app_xxx -method pod.list -data '{"limit":10}' -secret sec_xxx -send
+```
+
+`sign` 内部复用了 `security.SignatureInput`，与 `web/openapi/src/lib/http.ts` 的签名算法一致：对实际发送的 body 字节算 SHA-256，再拼 `v1/appId/path` 做 HMAC-SHA256。省略 `-timestamp`/`-nonce` 时自动取当前毫秒时间和 UUID。
 
 ---
 

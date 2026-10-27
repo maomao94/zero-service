@@ -27,6 +27,7 @@ type ServiceContext struct {
 	NonceRedis      *redis.Redis
 	OpenApiCli      openapi.OpenApiRpcClient
 	UserAuth        rest.Middleware
+	NoStore         rest.Middleware
 	OpenAuth        rest.Middleware
 }
 
@@ -63,6 +64,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		NonceRedis:      nonceRedis,
 		OpenApiCli:      openApiCli,
 		UserAuth:        middleware.NewUserAuthMiddleware(c.JwtAuth.ClaimMapping).Handle,
+		NoStore:         middleware.NewNoStoreMiddleware().Handle,
 		OpenAuth:        middleware.NewOpenAuthMiddleware(credentialCache, c.SignKeyEncryptionKey, nonceRedis).Handle,
 	}
 }

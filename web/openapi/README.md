@@ -8,7 +8,7 @@
 - **API 调试**：19 个 method 的示例与字段说明、method 分组搜索、写操作提示、请求 ID 生成、JSON 校验/格式化/压缩、Ctrl/⌘ + Enter 发送。
 - **响应面板**：HTTP 状态、业务错误码、耗时、大小、`X-Request-Id`；数据/原始响应/错误说明/请求回显四个视图，JSON 语法高亮。
 - **请求历史**：最近 50 条，支持搜索、method 与状态过滤、回填重放；只存 method、data、状态等，不存 secret。
-- **应用管理**：JWT 鉴权，创建应用、启停、重置密钥、分页查询；secret 仅在创建/重置后展示一次。
+- **应用管理**：JWT 鉴权，创建应用、启停、重置密钥、分页查询；secret 仅在创建/重置后展示一次，开启签名的应用可审计查看当前 signKey。
 - **错误码速查**：BC=07 与常用 extproto 错误码、语义 HTTP 映射、处理建议和基础设施折叠规则。
 
 当前开放 19 个 method：Podman 4 个、Modbus I/O 15 个。Modbus 字段、示例和写操作注意事项见 [`docs/open-api/modbus.md`](../../docs/open-api/modbus.md)。
