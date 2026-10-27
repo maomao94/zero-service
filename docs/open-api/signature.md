@@ -74,7 +74,7 @@ CreateApp
 
 **需要，原样使用，不要截断或补全。**
 
-- `appId` 在 Basic 用户名、请求体 `appId`、canonical string 中都带 `app_`；
+- `appId` 在 Basic 用户名和 canonical string 中都带 `app_`；body 不放 `appId`，服务端以 Basic 用户名为准；
 - `secret` 作为 Basic 密码时带 `sec_`，做 sha256 时也带前缀；
 - `signKey` 作为 HMAC 的 key 时带 `sk_`，前缀本身就是密钥材料的一部分。
 

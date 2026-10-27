@@ -82,6 +82,22 @@ cd app/opengtw && go run . -f etc/opengtw.yaml
 cd web/openapi && npm run dev
 ```
 
+默认配置连接本机金仓 `zero` 库。没有金仓时，可复制一份本地配置，把 `DB.DataSource` 换成 SQLite，并按需补充签名配置：
+
+```yaml
+DB:
+  DataSource: file:./opengtw-local.db?cache=shared&parseTime=true&_loc=auto
+# 至少 32 字节；一旦用于创建签名应用就不要更换
+SignKeyEncryptionKey: local-dev-sign-key-encryption-key-32-bytes-min
+# 本地需要从管理面查看 signKey 时开启（默认 false）
+SignKeyRevealEnabled: true
+Redis:
+  Host: 127.0.0.1:6379
+  Type: node
+```
+
+dev 模式启动会自动迁移 `open_app`、`open_app_secret`。只验证 Basic 鉴权时不需要 Redis；验证 `signRequired` 签名和 nonce 防重放时必须同时启动 Redis。
+
 ## 本地 keytool
 
 `cmd/keytool` 直接读配置和凭据库，不依赖 HTTP 管理面、Redis 或 gRPC：
