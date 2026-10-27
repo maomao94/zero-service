@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"zero-service/app/opengtw/internal/middleware"
+	"zero-service/app/opengtw/internal/security"
 	"zero-service/app/opengtw/internal/svc"
 	"zero-service/app/opengtw/internal/types"
 	"zero-service/common/gormx"
@@ -16,6 +18,8 @@ import (
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stores/redis"
+	xerrors "github.com/zeromicro/x/errors"
 	xhttp "github.com/zeromicro/x/http"
 )
 
@@ -125,6 +129,64 @@ func TestAdminFlowCreateCallResetDisable(t *testing.T) {
 	}
 
 	logger.Info("admin flow ok")
+}
+
+func TestDisableMissingAppChecksExistenceBeforeSigning(t *testing.T) {
+	svcCtx, _ := newAdminTestContext(t)
+	required := true
+
+	_, err := NewDisableAppLogic(t.Context(), svcCtx).DisableApp(&types.DisableAppRequest{
+		AppId:        "app_missing",
+		Status:       1,
+		SignRequired: &required,
+	})
+	var codeMsg *xerrors.CodeMsg
+	if !errors.As(err, &codeMsg) || codeMsg.Code != int(extproto.Code__1_00_RECORD_NOT_EXIST) {
+		t.Fatalf("error = %v, want 100202 应用不存在", err)
+	}
+}
+
+func TestDisableAppEnablesSigningWithoutLosingSecret(t *testing.T) {
+	svcCtx, cache := newAdminTestContext(t)
+	svcCtx.Config.SignKeyEncryptionKey = strings.Repeat("k", 32)
+	// SigningReady 只检查客户端是否已配置，不会在启用签名时访问 Redis。
+	svcCtx.NonceRedis = redis.MustNewRedis(redis.RedisConf{Host: "127.0.0.1:6379", Type: "node", NonBlock: true})
+	ctx := t.Context()
+
+	created, err := NewCreateAppLogic(ctx, svcCtx).CreateApp(&types.CreateAppRequest{Name: "转签名应用"})
+	if err != nil {
+		t.Fatalf("create app: %v", err)
+	}
+	required := true
+	enabled, err := NewDisableAppLogic(ctx, svcCtx).DisableApp(&types.DisableAppRequest{
+		AppId:        created.AppId,
+		Status:       1,
+		SignRequired: &required,
+	})
+	if err != nil {
+		t.Fatalf("enable signing: %v", err)
+	}
+	if !enabled.SignRequired || enabled.SignKey == "" {
+		t.Fatalf("reply = %+v, want signRequired and signKey", enabled)
+	}
+
+	record, err := svcCtx.SecretStore.FindActiveByAppId(ctx, created.AppId)
+	if err != nil {
+		t.Fatalf("find active secret: %v", err)
+	}
+	decrypted, err := security.DecryptSignKey(svcCtx.Config.SignKeyEncryptionKey, record.SignKeyCipher)
+	if err != nil {
+		t.Fatalf("decrypt sign key: %v", err)
+	}
+	if decrypted != enabled.SignKey {
+		t.Fatalf("stored sign key != reply sign key")
+	}
+	if !security.VerifySecret(record.SecretHash, created.Secret) {
+		t.Fatal("enabling signing must keep the current Basic secret valid")
+	}
+	if cred, ok := cache.Get(created.AppId); !ok || !cred.SignRequired {
+		t.Fatal("credential cache should require signature after enable")
+	}
 }
 
 func TestAdminFlowValidation(t *testing.T) {

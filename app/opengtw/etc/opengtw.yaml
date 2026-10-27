@@ -34,8 +34,9 @@ DB:
 # 存在 signRequired=true 的应用时再配置：
 # 本地联调可临时取消注释；主密钥一旦用于创建应用就不能随意更换，否则旧 sign_key_cipher 无法解密。
 # SignKeyEncryptionKey: change-me-sign-key-encryption-key-32-bytes-minimum
-# 管理面查看当前 signKey（审计）。代码默认关闭；本仓库本地配置开启，生产按需。
-SignKeyRevealEnabled: true
+# 管理面查看当前 signKey（审计）。默认关闭；本地调试需要时再改为 true。
+# 注意：生产镜像会打包本文件，开启前请确认 /open-admin 只在内网可达。
+SignKeyRevealEnabled: false
 # Redis 用于签名 nonce 防重放，签名应用启用时必须同时配置：
 # Redis:
 #   Host: 127.0.0.1:6379

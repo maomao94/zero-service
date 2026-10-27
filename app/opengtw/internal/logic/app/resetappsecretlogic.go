@@ -42,7 +42,8 @@ func (l *ResetAppSecretLogic) ResetAppSecret(req *types.ResetAppSecretRequest) (
 		return nil, xerrors.New(int(extproto.Code__1_00_PARAM_MISSING), "appId 不能为空")
 	}
 
-	if _, err := l.svcCtx.AppStore.FindByAppId(l.ctx, appID); err != nil {
+	app, err := l.svcCtx.AppStore.FindByAppId(l.ctx, appID)
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, xerrors.New(int(extproto.Code__1_00_RECORD_NOT_EXIST), "应用不存在")
 		}
@@ -54,10 +55,6 @@ func (l *ResetAppSecretLogic) ResetAppSecret(req *types.ResetAppSecretRequest) (
 	if err != nil {
 		l.Errorf("generate app secret failed: %v", err)
 		return nil, xerrors.New(int(extproto.Code__1_00_INTERNAL), "生成应用密钥失败")
-	}
-	app, err := l.svcCtx.AppStore.FindByAppId(l.ctx, appID)
-	if err != nil {
-		return nil, xerrors.New(int(extproto.Code__1_00_DB), "查询应用签名配置失败")
 	}
 	signKey, signKeyCipher := "", ""
 	if app.SignRequired {
