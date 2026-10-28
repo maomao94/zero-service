@@ -1,0 +1,6 @@
+flowchart LR
+    ORYX["Oryx / SRS"] -->|HTTP 回调| OGTW["oryxgtw"]
+    OGTW -->|gRPC| OSV["oryxserver"]
+    OSV -->|HTTP API| ORYX
+    OSV -->|FFmpeg| REC["录制 / 转码"]
+    OSV --> DB["录制与流状态库"]

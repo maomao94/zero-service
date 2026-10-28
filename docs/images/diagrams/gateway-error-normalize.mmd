@@ -1,0 +1,13 @@
+flowchart TB
+    E["业务服务返回 error"] --> N["errx.NormalizeError"]
+    N --> PE["PublicError"]
+    PE --> CM["xerrors.CodeMsg"]
+    PE --> ST["CodeFromStatus<br/>读 gRPC ErrorInfo.reason"]
+    PE --> GC["gRPC Code 兜底"]
+    CM --> V["IsDefinedCode 校验"]
+    ST --> V
+    GC --> V
+    V -->|枚举内| OUT["六位 code + msg"]
+    V -->|未登记| FIX["折叠为 100999 系统繁忙<br/>原文写日志"]
+    OUT --> ENV["统一信封"]
+    FIX --> ENV

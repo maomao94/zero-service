@@ -1,0 +1,26 @@
+flowchart TB
+    subgraph L1["接入层"]
+        FE["前端工作台 / 业务前端 / 第三方应用 / 工业设备"]
+    end
+    subgraph L2["HTTP 网关层"]
+        GTW["gtw (BFF)"]
+        LGTW["livegtw"]
+        SGTW["socketgtw"]
+        OGTW["oryxgtw / opengtw"]
+        BGTW["bridgegtw"]
+    end
+    subgraph L3["gRPC 服务层"]
+        DIR["领域服务<br/>trigger · live · djicloud<br/>file · gis · podengine · alarm"]
+        BR["协议桥接<br/>bridgekafka · bridgemodbus<br/>bridgemqtt · bridgedump"]
+        DATA["数采与开放<br/>ieccaller · iecstash · streamevent<br/>openapi · oryxserver"]
+    end
+    subgraph L4["公共组件层"]
+        COMP["common/<br/>iec104 · djisdk · socketiox · livekitx<br/>gormx · antsx · mqttx · ossx"]
+    end
+    subgraph L5["基础设施"]
+        INFRA["Kafka · Redis · MQTT · TDengine<br/>PostgreSQL / MySQL · Nacos<br/>LiveKit · Oryx(SRS)"]
+    end
+    L1 --> L2
+    L2 --> L3
+    L3 --> L4
+    L4 --> L5

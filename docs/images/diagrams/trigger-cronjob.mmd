@@ -1,0 +1,9 @@
+flowchart TB
+    C["CreateCronJob"] --> J["cron_job 表<br/>RRULE + next_run"]
+    J --> SCH["CronJobScheduler<br/>每 2 秒扫描 + lease 抢占"]
+    SCH --> H["StreamEvent.HandleCronJobEvent"]
+    H -->|SUCCESS| NEXT["计算并提交下一次 next_run"]
+    H -->|TASK_NOT_FOUND| DEL["软删除 CronJob"]
+    H -->|UNKNOWN / RPC 错误| KEEP["保留 lease，过期后可再次扫描"]
+    NEXT --> J
+    KEEP --> SCH

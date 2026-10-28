@@ -1,0 +1,12 @@
+stateDiagram-v2
+    [*] --> WAITING
+    WAITING --> RUNNING: 到期并成功抢占
+    DELAYED --> RUNNING: 到期并成功抢占
+    RUNNING --> COMPLETED: completed
+    RUNNING --> DELAYED: failed / delayed
+    RUNNING --> TERMINATED: terminated
+    WAITING --> PAUSED: pause
+    DELAYED --> PAUSED: pause
+    PAUSED --> WAITING: resume
+    COMPLETED --> [*]
+    TERMINATED --> [*]

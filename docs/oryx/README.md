@@ -11,15 +11,9 @@
 
 ## 架构
 
-```
-Oryx/SRS ──HTTP 回调──> oryxgtw ──gRPC──> oryxserver
-                              │                  │
-                              v                  v
-                         鉴权 / 分发        Oryx HTTP API
-                                              │
-                                              v
-                                        SRS / FFmpeg
-```
+<div align="center">
+  <img src="../images/diagrams/flow-oryx.png" alt="Oryx 流媒体数据流：Oryx/SRS 回调到 oryxgtw，oryxserver 封装 HTTP API" style="max-width: 88%; height: auto;" />
+</div>
 
 - `oryxgtw` 作为 Oryx 回调的统一入口，按 `action` 字段分发到不同处理逻辑
 - `oryxserver` 封装 Oryx 管理 API 和 SRS HTTP API 为 gRPC 接口，供 Java/Go 业务服务通过 Nacos 调用

@@ -4,13 +4,9 @@
 
 ## 架构与端口
 
-```text
-第三方 / Java
-   │  HTTP + Basic                    │  gRPC（内网直连，不做鉴权）
-   ▼                                  ▼
-app/opengtw :11005  ──gRPC──▶  app/openapi :21018  ──gRPC──▶  app/podengine :21010
-（鉴权、信封、管理接口）           （method 路由、protojson、Mock）        └──gRPC──▶  app/bridgemodbus :25004
-```
+<div align="center">
+  <img src="../images/diagrams/flow-openapi.png" alt="开放 API 架构：opengtw 鉴权后调用 app/openapi，再路由到 podengine 与 bridgemodbus" style="max-width: 88%; height: auto;" />
+</div>
 
 | 服务 | 目录 | 端口 | 说明 |
 | --- | --- | --- | --- |

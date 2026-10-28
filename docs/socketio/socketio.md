@@ -16,11 +16,9 @@
 | **socketgtw** | `socketapp/socketgtw` | WebSocket 连接管理、房间管理、消息路由、Token 认证 |
 | **socketpush** | `socketapp/socketpush` | Token 生成/验证、gRPC 推送接口（后端服务调用入口） |
 
-```
-前端客户端 ──WebSocket──> socketgtw ──gRPC──> 业务服务
-                                  <──gRPC──
-后端服务 ──gRPC──> socketpush ──gRPC──> socketgtw ──WebSocket──> 前端客户端
-```
+<div align="center">
+  <img src="../images/diagrams/socketio-architecture.png" alt="SocketIO 双向通信架构：socketgtw 负责连接与房间，socketpush 负责 Token 与推送" style="max-width: 82%; height: auto;" />
+</div>
 
 ## 连接与鉴权
 

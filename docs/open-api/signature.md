@@ -46,18 +46,9 @@ CreateApp
 
 调用时的数据流：
 
-```text
-第三方 ──HTTP──▶ opengtw
-                  ├─ Basic 鉴权：sha256(secret) 与缓存里的摘要比对
-                  ├─ 若 signRequired：
-                  │    ├─ 从 header 读取 X-Sign（v1:<hex>）
-                  │    ├─ 读取原始 body，计算 SHA-256 得到 bodyHash
-                  │    ├─ 从 body 读取 timestamp/nonce 并校验（±5 分钟）
-                  │    ├─ 解密 sign_key_cipher 得到 signKey
-                  │    ├─ 重算 HMAC 并与请求 sign 比对
-                  │    └─ Redis SETNX 占用 nonce（防重放）
-                  └─ 解析 body，转发 app/openapi ──gRPC──▶ podengine / bridgemodbus
-```
+<div align="center">
+  <img src="../images/diagrams/flow-signature-verify.png" alt="开放平台请求校验时序：Basic 鉴权、X-Sign 校验、nonce 防重放与转发" style="max-width: 86%; height: auto;" />
+</div>
 
 ---
 

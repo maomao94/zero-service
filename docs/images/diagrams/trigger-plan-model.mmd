@@ -1,0 +1,10 @@
+flowchart TB
+    P["Plan 计划<br/>RRULE 快照 + 生命周期"]
+    P --> B1["Batch 1<br/>一个计划执行时间"]
+    P --> B2["Batch 2"]
+    B1 --> I1["ExecItem 1"]
+    B1 --> I2["ExecItem 2"]
+    B2 --> I3["ExecItem 3"]
+    I1 --> S1["由 next_trigger_time 驱动扫表"]
+    I2 --> S1
+    I3 --> S1

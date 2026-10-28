@@ -16,9 +16,9 @@
 
 调用链示例：
 
-```text
-浏览器/第三方 ──HTTP──▶ livegtw / opengtw ──gRPC──▶ app/live / app/openapi ──▶ 下游服务
-```
+<div align="center">
+  <img src="./images/diagrams/gateway-request-chain.png" alt="网关调用链：浏览器或第三方经 HTTP 网关到业务服务与下游，统一以 HTTP 200 信封返回" style="max-width: 88%; height: auto;" />
+</div>
 
 ### 1.2 分层规则
 
@@ -193,14 +193,9 @@ return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 
 `errx.PublicError` 的优先级（`common/errx/`）：
 
-```text
-NormalizeError
-  → PublicError
-     → xerrors.CodeMsg
-     → CodeFromStatus（gRPC ErrorInfo.reason，仅 extproto 已登记码）
-     → gRPC Code 兜底
-  → IsDefinedCode 校验（不在枚举内 → 100999 + 日志）
-```
+<div align="center">
+  <img src="./images/diagrams/gateway-error-normalize.png" alt="错误码归一化流程：NormalizeError 到 PublicError，IsDefinedCode 校验后折叠为六位码" style="max-width: 78%; height: auto;" />
+</div>
 
 - `CodeFromStatus` 只在 `reason` 是 extproto 中已登记的码时采用；未登记的数字码按内部错误折叠，非数字 reason 走 gRPC Code 映射（`common/errx/codec.go`）。
 - `FoldPublic` 把 `100201`、`100301`、`100302`、`100303`、`100601`、`100602`、`100998` 折叠为 `100999`，对外文案 `系统繁忙`；真实原因写日志。

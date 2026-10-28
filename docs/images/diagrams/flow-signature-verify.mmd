@@ -1,0 +1,18 @@
+sequenceDiagram
+    autonumber
+    participant C as 第三方
+    participant G as opengtw
+    participant R as Redis
+    participant O as app/openapi
+    C->>G: HTTP + Basic + X-Sign
+    G->>G: Basic 鉴权：sha256(secret) 与缓存摘要比对
+    alt signRequired = true
+        G->>G: 读取 X-Sign 与原始 body，计算 bodyHash
+        G->>G: 校验 timestamp / nonce（允许 ±5 分钟）
+        G->>G: 解密 sign_key_cipher 得到 signKey
+        G->>G: 重算 HMAC 并与 X-Sign 比对
+        G->>R: SETNX 占用 nonce（防重放）
+    end
+    G->>O: 解析 body 后 gRPC 转发（method + protojson）
+    O-->>G: 下游结果
+    G-->>C: 统一信封 {code,msg,data,timestamp}

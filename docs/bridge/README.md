@@ -40,6 +40,7 @@ Bridge 系列是一组将外部协议接入内部系统的桥接服务，包含 
 
 配置：`app/bridgemodbus/etc/bridgemodbus.yaml`（`ModbusPool`、默认 `ModbusClientConf`、`DB`）。
 契约：[`app/bridgemodbus/bridgemodbus.proto`](../../app/bridgemodbus/bridgemodbus.proto)。
+服务说明：[`app/bridgemodbus/README.md`](../../app/bridgemodbus/README.md)。
 
 ### 开放平台接入
 

@@ -120,6 +120,7 @@ docs/        架构、对接和开发文档
 | [架构概览](./docs/architecture.md) | 系统分层、核心数据流和技术选型 |
 | [开发指南](./docs/development.md) | 代码生成、模块扩展和调试方式 |
 | [部署指南](./docs/deployment.md) | Docker、单服务与集群部署 |
+| [部署模板总览](./deploy/README.md) | 数据库、中间件、网关与运维工具的本地编排 |
 | [错误码规范](./docs/error-codes.md) | HTTP/gRPC 状态映射和业务错误编码 |
 
 ## 参与贡献

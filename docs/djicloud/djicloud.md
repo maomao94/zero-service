@@ -26,15 +26,9 @@
 
 ## 架构
 
-```
-业务系统 --> djicloud gRPC (21012) --> common/djisdk --> MQTT Broker --> DJI Dock 3/飞行器
-                                   ^              |
-                                   |              v
-                            services_reply / events / osd / state / status / requests / drc/up
-                                   |
-                                   v
-                              PostgreSQL (设备状态/遥测/事件持久化)
-```
+<div align="center">
+  <img src="../images/diagrams/flow-dji.png" alt="DJI 云平台数据流：djicloud 经 djisdk 通过 MQTT 与 Dock 通信并持久化到 PostgreSQL" style="max-width: 88%; height: auto;" />
+</div>
 
 **两条下行通道**：
 

@@ -67,6 +67,6 @@ go run . -f etc/bridgemodbus.yaml
 
 ## 相关文档
 
-- [Bridge 协议桥接](../bridge/README.md)
+- [Bridge 协议桥接](../../docs/bridge/README.md)
 - [开放 API 网关](../../docs/open-api/README.md)
 - [Modbus 开放接口](../../docs/open-api/modbus.md)

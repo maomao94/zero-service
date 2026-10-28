@@ -1,0 +1,19 @@
+flowchart TB
+    subgraph BASE["① 基础依赖"]
+        DB["kingbase / postgres / mysql / opengauss<br/>redis · tdengine · milvus"]
+    end
+    subgraph MID["② 中间件与流媒体"]
+        KAFKA["Kafka"]
+        LIVEKIT["livekit + sipmediagw"]
+    end
+    subgraph APP["③ 业务服务"]
+        APPS["根目录 docker-compose.yml<br/>ieccaller · iecstash · bridge* ..."]
+    end
+    subgraph EDGE["④ 入口"]
+        TLS["tls 证书"]
+        NGINX["nginx 网关<br/>前端产物 + 反代"]
+    end
+    BASE --> MID
+    MID --> APP
+    APP --> EDGE
+    TLS -.-> NGINX

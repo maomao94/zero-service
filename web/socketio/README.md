@@ -127,4 +127,4 @@ web/socketio/
 
 ## 相关文档
 
-- [SocketIO 源码](../../common/socketiox/)
+- [SocketIO 源码](../../common/socketiox/server.go)

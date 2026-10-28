@@ -114,6 +114,8 @@ fix(<scope>): 修复一句话描述
 - 保持格式一致
 - 代码示例使用 fenced code block
 - 新增服务必须补充文档
+- 新增文档先在 [`docs/README.md`](./docs/README.md) 的对应分区登记，再补交叉链接
+- 架构图与流程图放在 `docs/images/diagrams/`，提交同名 `.mmd` 源文件与导出的 PNG，正文用 `<img>` 引用，约定见该目录的 [`README.md`](./docs/images/diagrams/README.md)
 
 ## 问题反馈
 
