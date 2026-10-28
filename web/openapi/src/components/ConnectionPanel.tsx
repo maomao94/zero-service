@@ -24,7 +24,7 @@ export default function ConnectionPanel({ settings, onChange, health, checking, 
     <section className="card connection-card">
       <div className="card-heading">
         <div>
-          <span className="eyebrow">CONNECTION</span>
+          <span className="eyebrow">连接</span>
           <h2>连接设置</h2>
         </div>
         <span className={`health-pill ${health?.ok ? 'ok' : health ? 'bad' : ''}`}>

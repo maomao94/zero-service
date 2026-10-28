@@ -1,35 +1,33 @@
 # Zero 工作台
 
-统一管理和访问 Zero Service 各个子系统的开发工作台。
+Zero Service 的统一入口与运行状态面板：一屏看清各子系统是否可达，并直接跳转到对应工具。
 
-## 功能特性
+## 功能
 
-- 统一入口访问所有子系统
-- 实时健康检测系统状态（每 15 秒自动检测，支持手动刷新）
-- 快速打开和切换子系统
-- 响应式设计，支持多种屏幕尺寸
+- **状态总览**：在线模块数、平均响应、下次检测倒计时，以及最近 40 次检测的聚合响应趋势。
+- **服务模块**：Live 会议、SocketIO 网关、OpenAPI 控制台、GitLab 仓库四个入口，卡片展示实时延迟、最近检测时间和逐次检测条。
+- **GitHub 入口**：跨满模块网格的横向卡片，直达 `maomao94/zero-service` 公开仓库，可复制仓库地址。
+- **端点速查**：`/v1/`、`/live/v1/`、`/socket.io/`、`/recordings/` 等同源路径与上游端口，一键复制完整地址。
+- **检测记录**：记录启动事件与上下线变化（不刷屏），可清空；无变化时给出空状态说明。
+- **运行环境**：运行模式、站点、版本、构建时间与检测周期。
+- **命令面板**：`⌘K` / `Ctrl K` 搜索模块、端点与操作，支持方向键与回车。
+- **深浅主题**：跟随系统偏好，可手动切换并记住选择。
+- **响应式**：≥1024px 固定侧栏；窄屏收起为抽屉，卡片单列。
 
-## 包含的子系统
+## 子系统与端口
 
-### 1. Live 视频会议
-- 端口：5178
-- 功能：实时视频会议、屏幕共享、会议管理、SIP 电话
-- 路径：`web/live`
+| 子系统 | 开发端口 | 访问位置 |
+| --- | --- | --- |
+| Live 视频会议 | 5178 | 站点根路径 `/` |
+| SocketIO 网关测试 | 5179 | 同主机 `:8090` |
+| OpenAPI 测试控制台 | 5181 | 路径 `/openapi/` |
+| GitLab 代码仓库 | — | `https://gitlab.localhost/` |
+| GitHub 代码仓库 | — | `https://github.com/maomao94/zero-service`（外部站点，不参与探活） |
+| 工作台自身 | 5180 | — |
 
-### 2. SocketIO 网关测试
-- 端口：5179
-- 功能：SocketIO 消息网关测试、用户域/设备域连接、房间管理
-- 路径：`web/socketio`
-
-### 3. OpenAPI 测试控制台
-- 端口：5181
-- 功能：开放平台 API 调试、应用管理、错误码速查
-- 路径：`web/openapi`
-- 生产路径：`/openapi/`
+生产环境由 nginx 的 8091 站点托管工作台静态产物，并代理各健康检查地址（见仓库根目录 `deploy/nginx/conf.d/default.conf`）。
 
 ## 快速开始
-
-### 1. 启动工作台
 
 ```bash
 cd web/workspace
@@ -37,77 +35,77 @@ npm install
 npm run dev
 ```
 
-工作台将在 http://127.0.0.1:5180 启动（dev server 固定监听 IPv4，避免 localhost 解析到 IPv6 后无法访问）
+打开 http://127.0.0.1:5180 。工作台只负责入口与探活，子系统可按需启动；未启动的模块显示「未启动」，不影响其他模块。
 
-### 2. 启动子系统
+## 健康检测
 
-分别在不同的终端中启动各个子系统：
+每 15 秒并发探测一次**同源**健康检查地址（避免跨域与写死端口），页面不可见时暂停，回到前台立即补检。
+
+| 模块 | 检查地址 | 开发代理目标 | 生产代理 |
+| --- | --- | --- | --- |
+| Live 视频会议 | `/health/live` | `127.0.0.1:5178/` | 容器内 80 `/healthz` |
+| SocketIO 网关测试 | `/health/socketio` | `127.0.0.1:5179/` | 容器内 8090 `/` |
+| OpenAPI 控制台 | `/health/openapi` | `127.0.0.1:5181/` | 宿主机 `11005/v1/health` |
+| GitLab 代码仓库 | `/health/gitlab` | `127.0.0.1:80/users/sign_in`（Host: `gitlab.localhost`） | 容器内 80 同路径 |
+
+本地未运行 nginx 时 GitLab 会显示「未启动」，属于预期；需要联调时可启动网关或设置 `VITE_GITLAB_URL` 指向可达实例。
+
+## 环境变量
+
+| 变量 | 说明 |
+| --- | --- |
+| `VITE_LIVE_URL` | Live 会议访问地址；留空按「当前主机 + 80/443」推导 |
+| `VITE_SOCKETIO_URL` | SocketIO 测试工具地址；留空按「当前主机 + 8090」推导 |
+| `VITE_OPENAPI_URL` | 控制台地址；留空使用同源 `/openapi/` |
+| `VITE_GITLAB_URL` | GitLab 地址；留空使用 `https://gitlab.localhost/` |
+| `VITE_GITHUB_URL` | GitHub 仓库地址；留空使用 `https://github.com/maomao94/zero-service` |
+
+开发态默认值见 `.env.development`。生产构建留空即可按站点自动推导。
+
+## 目录结构
+
+```
+src/
+├── App.tsx                 # 页面编排与命令面板数据
+├── components/
+│   ├── ActivityPanel.tsx   # 检测记录
+│   ├── BrandMark.tsx       # 工作台标识
+│   ├── CommandPalette.tsx  # ⌘K 命令面板
+│   ├── EndpointTable.tsx   # 端点速查
+│   ├── EnvironmentPanel.tsx
+│   ├── ExternalCard.tsx    # GitHub 等外部仓库入口
+│   ├── ModuleCard.tsx      # 模块卡片与逐次检测条
+│   ├── Rail.tsx            # 侧栏：状态、运行概况、快捷键、主题
+│   ├── Sparkline.tsx       # 聚合响应趋势
+│   ├── StatusBoard.tsx     # 状态总览面板
+│   ├── Toast.tsx           # 轻提示 live region
+│   └── TopBar.tsx
+├── data/modules.ts         # 模块、端点与检测周期配置
+├── hooks/                  # useHealth / useTheme / useNow / useToast
+├── lib/                    # 探活、剪贴板、格式化、平台判定
+└── styles/
+    ├── tokens.css          # 设计令牌与深浅主题
+    └── app.css             # 布局与组件样式
+```
+
+新增子系统时，在 `src/data/modules.ts` 增加一条配置（名称、描述、图标、强调色、访问地址、健康检查地址），并在 nginx / vite 中补上对应的 `/health/<id>` 代理即可。
+
+## 构建与部署
 
 ```bash
-# 启动 Live 视频会议
-cd web/live
-npm install
-npm run dev
+cd web/workspace
+npm run build
 
-# 启动 SocketIO 网关测试
-cd web/socketio
-npm install
-npm run dev
-
-# 启动 OpenAPI 控制台
-cd web/openapi
-npm install
-npm run dev
+# 或在仓库根目录统一构建全部前端
+bash deploy/nginx/build-web.sh workspace
 ```
 
-### 3. 访问系统
+构建产物输出到 `web/workspace/dist`，再由脚本汇总到 `deploy/nginx/dist/workspace`。构建期通过 Vite `define` 注入 `__APP_VERSION__`（取自 `package.json`）与 `__BUILD_TIME__`，页脚与运行环境面板会展示这两项。
 
-- 工作台：http://127.0.0.1:5180
-- Live 视频会议：http://127.0.0.1:5178
-- SocketIO 网关测试：http://127.0.0.1:5179
-- OpenAPI 控制台：http://127.0.0.1:5181
+## 实现约定
 
-## 开发说明
-
-### 项目结构
-
-```
-web/workspace/
-├── src/
-│   ├── App.tsx          # 主应用组件
-│   ├── main.tsx         # 入口文件
-│   ├── styles.css       # 样式文件
-│   └── vite-env.d.ts    # 类型定义
-├── index.html           # HTML 入口
-├── package.json         # 项目配置
-├── tsconfig.json        # TypeScript 配置
-└── vite.config.ts       # Vite 配置
-```
-
-### 添加新子系统
-
-1. 在 `src/App.tsx` 的 `subSystems` 数组中添加新系统配置
-2. 提供系统名称、描述、图标、端口等信息
-3. 确保新系统已在对应端口运行
-
-## 系统在线检测
-
-工作台每 15 秒探测一次子系统的**同源健康检查地址**（不再跨域探测写死的 localhost 端口）：
-
-| 子系统 | 健康检查地址（同源） | 代理目标 |
-| --- | --- | --- |
-| Live 视频会议 | `/health/live` | Live 站点 `/healthz` |
-| SocketIO 网关测试 | `/health/socketio` | 测试工具首页 `/` |
-
-- 生产（nginx）：由 `deploy/nginx/conf.d/default.conf` 的工作台 server（8091）代理到同容器的 Live（80）与 SocketIO（8090）。
-- 开发（vite dev，5180）：由 `vite.config.ts` 代理到本地 5178 / 5179。
-
-子系统访问地址默认按“当前站点主机 + 端口”推导（Live 80/443、SocketIO 8090），
-也可用 `VITE_LIVE_URL` / `VITE_SOCKETIO_URL` 覆盖（开发默认见 `.env.development`）。
-
-## 技术栈
-
-- React 18
-- TypeScript
-- Vite
-- Lucide React (图标库)
+- 健康检查只使用同源地址，跨域与端口推导问题都收敛在 nginx / vite 配置里。
+- 剪贴板优先 `navigator.clipboard`，900ms 未返回或不可用时回退 `execCommand`，保证内网 http 源站也能复制。
+- 上下线才写入检测记录；首次检测只写一条「工作台已就绪」事件，避免首屏噪音。
+- 主题在 `index.html` 内联脚本中于首屏前确定，避免深色模式闪白。
+- 动效遵循 `prefers-reduced-motion`，交互控件均有可见焦点样式。

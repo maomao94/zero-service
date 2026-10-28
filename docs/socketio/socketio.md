@@ -43,6 +43,8 @@ socket.on('disconnect', (reason) => console.log('断开:', reason));
 
 Token 可以由 `socketpush.GenToken` 生成，也可以由业务网关生成后交给客户端。Token 必须使用 `socketgtw.JwtAuth.AccessSecret` 对应的密钥签名。
 
+> 本地联调可直接使用 `web/socketio` 配置页的「本地签发 Token」生成；设备域使用 `auth-type: device`，身份仍写 `user-id` / `user-name`。
+
 客户端通过 Socket.IO handshake 的 `auth.token` 传入：
 
 ```javascript

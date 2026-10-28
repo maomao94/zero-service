@@ -172,12 +172,16 @@ GitLab 的 `external_url` 改为正式域名后，删除该 location 与片段�
 
 工作台 server（8091）提供同源健康检查，供工作台探测子系统在线状态：
 
-| 路径 | 目标（同容器） | 说明 |
+| 路径 | 目标 | 说明 |
 | --- | --- | --- |
 | `/health/live` | `127.0.0.1:80/healthz` | Live 站点健康检查 |
 | `/health/socketio` | `127.0.0.1:8090/` | SocketIO 测试工具首页 |
-| `/health/openapi` | `opengtw:11005/v1/health` | 开放 API 网关健康检查 |
+| `/health/openapi` | `host.docker.internal:11005/v1/health` | 开放 API 网关健康检查 |
 | `/health/gitlab` | `gitlab.localhost/users/sign_in` | GitLab 登录页可达性 |
+
+- OpenAPI 网关未启动时 `/health/openapi` 返回 502，工作台会显示该模块未启动，其余站点不受影响。
+- GitHub 入口是外部链接，不经过网关；Live / SocketIO 的本地 JWT 签发在浏览器内完成，不需要后端。
+- SocketIO 测试工具在 8090 站点内同源请求 `/socket.io/`，由该 server 反代到 socketgtw；前端生产构建不需要填写 `11003`。
 
 ## HTTPS / 证书
 

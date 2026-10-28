@@ -41,7 +41,7 @@ export default function HistoryPanel({ entries, onReplay, onClear }: HistoryPane
     <section className="card history-card">
       <div className="card-heading history-heading">
         <div>
-          <span className="eyebrow">HISTORY</span>
+          <span className="eyebrow">历史</span>
           <h2>请求历史</h2>
         </div>
         <div className="history-heading-actions">

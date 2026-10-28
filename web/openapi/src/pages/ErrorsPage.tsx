@@ -25,7 +25,7 @@ export default function ErrorsPage() {
     <div className="page-stack">
       <section className="page-intro">
         <div>
-          <span className="eyebrow">REFERENCE</span>
+          <span className="eyebrow">参考</span>
           <h1>错误码速查</h1>
           <p>与 <code>third_party/extproto.proto</code>、<code>common/errx/codec.go</code> 同源维护，覆盖开放平台与常用错误。</p>
         </div>

@@ -81,7 +81,7 @@ go run . -f etc/trigger.yaml
 | `ispagent` / `ispserver` | 变电站 ISP 巡检协议代理与服务端 | [ISP 巡检协议](./docs/isp/isp.md) |
 | `live` / `livegtw` | LiveKit 视频会议管理与 HTTP 网关 | [视频会议](./docs/live/README.md) · [LiveKit](https://github.com/livekit/livekit) · [Server SDK](https://github.com/livekit/server-sdk-go) |
 | `oryxgtw` / `oryxserver` | Oryx/SRS 流媒体回调网关与 gRPC API 代理 | [Oryx 流媒体](./docs/oryx/README.md) · [Oryx](https://github.com/ossrs/oryx) · [SRS](https://github.com/ossrs/srs) |
-| `lalhook` / `lalproxy` | LAL 流媒体 HTTP 回调与 gRPC 代理（已不推荐，迁移至 Oryx） | [LAL 流媒体回调](../app/lalhook/README.md) |
+| `lalhook` / `lalproxy` | LAL 流媒体 HTTP 回调与 gRPC 代理（已不推荐，迁移至 Oryx） | [LAL 流媒体回调](./app/lalhook/README.md) |
 | `file` | 分片文件传输与对象存储集成 | [文件与对象存储](./docs/file/README.md) |
 | `gis` | H3、GeoHash、电子围栏和坐标转换 | [地理信息服务](./docs/gis/README.md) |
 | `podengine` | Docker 容器生命周期管理 | [容器编排](./docs/podengine/README.md) |
@@ -96,6 +96,7 @@ common/      跨服务复用的公共组件
 facade/      跨服务协议与数据契约
 model/       数据模型及生成脚本
 deploy/      Docker Compose 与部署配置
+web/         前端工作台与子系统（Live / SocketIO / OpenAPI）
 docs/        架构、对接和开发文档
 ```
 

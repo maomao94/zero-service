@@ -2,6 +2,16 @@
 
 这是基于 LiveKit `components-js` React 组件体系的独立 Web 工程，提供会议大厅、历史记录、会议房间、实时群聊、邀请票据、会议录制（房间内一键启停 + 录制列表）和主持人管理能力。
 
+## 本地生成 Token
+
+登录页的「本地生成 Token」使用 WebCrypto 在浏览器内完成 HS256 签名，不请求 `POST /live/v1/generateToken`，因此不需要先启动 livegtw。
+
+- 默认签名密钥与 `app/livegtw/etc/livegtw.yaml` 的 `JwtAuth.AccessSecret` 一致，可在弹窗中修改。
+- 可通过 `VITE_JWT_SECRET` 覆盖默认密钥。
+- claims 与后端 `common/tool/jwtutil.go` 一致：`user-id`、`auth-type`、可选 `user-name` / `dept-code`。
+- 仅在 localhost / https 等安全上下文可用（WebCrypto 限制）；该密钥只用于开发联调，不要在生产构建中暴露。
+- 后端不可达时，登录后的用户信息会回退解析本地 Token claims，便于只启动前端预览大厅。
+
 ## 开发
 
 ```bash

@@ -72,7 +72,7 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
     <section className="card response-card">
       <div className="card-heading response-heading">
         <div>
-          <span className="eyebrow">RESPONSE</span>
+          <span className="eyebrow">响应</span>
           <h2>响应结果</h2>
         </div>
         {result?.type === 'response' && (

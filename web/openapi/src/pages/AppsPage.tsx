@@ -204,7 +204,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
     <div className="page-stack">
       <section className="page-intro">
         <div>
-          <span className="eyebrow">APPLICATIONS</span>
+          <span className="eyebrow">应用</span>
           <h1>应用管理</h1>
           <p>创建开放应用、启停状态与重置密钥。管理面使用 JWT 鉴权，与 Basic 凭据相互独立。</p>
         </div>
@@ -218,7 +218,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
         <section className="card admin-connection-card">
           <div className="card-heading compact">
             <div>
-              <span className="eyebrow">ADMIN AUTH</span>
+              <span className="eyebrow">管理鉴权</span>
               <h2>管理面连接</h2>
             </div>
             <span className={`health-pill ${canQuery ? 'ok' : ''}`}>
@@ -264,7 +264,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
         <section className="card create-app-card">
           <div className="card-heading compact">
             <div>
-              <span className="eyebrow">CREATE</span>
+              <span className="eyebrow">新建</span>
               <h2>创建应用</h2>
             </div>
             <span className="method-icon"><Plus size={17} /></span>
@@ -335,7 +335,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
       <section className="card apps-list-card">
         <div className="card-heading">
           <div>
-            <span className="eyebrow">APPS</span>
+            <span className="eyebrow">应用</span>
             <h2>应用列表</h2>
           </div>
           <span className="count-badge">{total}</span>

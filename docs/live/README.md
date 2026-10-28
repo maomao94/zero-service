@@ -24,6 +24,8 @@
 
 用户通过 HTTP 网关 `POST /live/v1/joinMeeting` 获取 join token，浏览器使用该 token 直连 LiveKit Server 建立音视频连接。token 包含参与者身份、权限（发布/订阅/数据）等 grant 信息。
 
+> 联调时，`livegtw` 的登录 JWT 可直接在 `web/live` 登录页本地生成（HS256，claims 与 `common/tool/jwtutil.go` 一致），不依赖 `generateToken` 接口；LiveKit join token 仍由 `/live/v1/joinMeeting` 返回。
+
 ![Token 登录流程](../images/live/token-login.png)
 
 **API 端点**：

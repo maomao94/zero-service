@@ -39,7 +39,7 @@ export default function MethodPicker({ methods, activeKey, onSelect }: MethodPic
     <section className="card method-card">
       <div className="card-heading compact">
         <div>
-          <span className="eyebrow">METHODS</span>
+          <span className="eyebrow">方法</span>
           <h2>开放方法</h2>
         </div>
         <span className="count-badge">{methods.length}</span>

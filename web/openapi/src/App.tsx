@@ -233,6 +233,16 @@ export default function App() {
         </nav>
 
         <div className="header-right">
+          <button
+            type="button"
+            className="header-health"
+            data-state={health ? (health.ok ? 'ok' : 'bad') : 'checking'}
+            onClick={() => void checkConnection()}
+            title="重新检测网关连通性"
+          >
+            <i aria-hidden="true" />
+            {health ? (health.ok ? `网关可达 · ${Math.round(health.durationMs)}ms` : '网关不可达') : '检测中'}
+          </button>
           <span className="env-badge"><FlaskConical size={13} /> 测试环境</span>
           <span className="header-note"><ShieldAlert size={13} /> 仅限测试使用</span>
         </div>
@@ -243,7 +253,7 @@ export default function App() {
           <div className="page-stack">
             <section className="hero">
               <div>
-                <span className="eyebrow">OPEN PLATFORM · PODMAN + MODBUS</span>
+                <span className="eyebrow">开放平台 · Podman / Modbus</span>
                 <h1>开放平台调试台</h1>
                 <p>统一转发 podman 与 Modbus 只读/写入接口，验证 Basic 鉴权、protojson 契约与统一错误信封。</p>
               </div>

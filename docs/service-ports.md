@@ -18,6 +18,17 @@
 | mcpserver | 13003 | `aiapp/mcpserver/` | MCP HTTP 服务 |
 | bridgegtw | 15001 | `app/bridgegtw/` | gRPC-Gateway 代理转发 |
 
+## Web 前端与网关（5xxx / 8xxx）
+
+| 站点 | 开发端口 | 生产入口 | 目录 |
+| --- | --- | --- | --- |
+| Live 会议前端 | 5178 | 80/443 `/` | `web/live/` |
+| SocketIO 测试工具 | 5179 | 8090 `/` | `web/socketio/` |
+| Zero 工作台 | 5180 | 8091 `/` | `web/workspace/` |
+| OpenAPI 控制台 | 5181 | 80/443 `/openapi/` | `web/openapi/` |
+
+开发端口来自各项目 `vite.config.ts`；生产入口由 `deploy/nginx` 统一托管。
+
 ## gRPC 服务（2xxxx）
 
 ### 核心业务

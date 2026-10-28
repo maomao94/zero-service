@@ -37,6 +37,17 @@
 | OpenAPI | [开放 API 网关](./open-api/README.md) | Basic 鉴权、统一信封、method 路由、Podman + Modbus |
 | Bridge | [协议桥接](./bridge/README.md) | HTTP/Kafka/Modbus/MQTT 桥接与报文落地 |
 
+## Web 前端
+
+| 站点 | 文档 | 内容 |
+| --- | --- | --- |
+| Zero 工作台 | [前端工作台](../web/workspace/README.md) | 统一入口、健康检测、端点速查、GitHub 与命令面板 |
+| Live 会议 | [Live 前端](../web/live/README.md) | 会议大厅、会议室、录制、邀请与本地 Token |
+| SocketIO 测试 | [SocketIO 前端](../web/socketio/README.md) | 连接、消息、房间、事件与底部控制台 |
+| OpenAPI 控制台 | [OpenAPI 前端](../web/openapi/README.md) | 开放 API 调试、应用管理与错误码速查 |
+
+四个项目的构建、部署与验证状态见 [`web/COMPLETION.md`](../web/COMPLETION.md)。
+
 ## 开发者
 
 | 文档 | 内容 |
