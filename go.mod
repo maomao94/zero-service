@@ -30,7 +30,7 @@ require (
 	github.com/dromara/carbon/v2 v2.7.0
 	github.com/dsoprea/go-exif/v3 v3.0.1
 	github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd
-	github.com/duke-git/lancet/v2 v2.3.9
+	github.com/duke-git/lancet/v2 v2.4.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/envoyproxy/protoc-gen-validate v1.3.3
 	github.com/fsnotify/fsnotify v1.10.1
