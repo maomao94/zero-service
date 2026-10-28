@@ -1,247 +1,265 @@
-import { Activity, ExternalLink, Layout, Monitor, RefreshCw, Video, Wifi, Zap } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
-
-interface SubSystem {
-  id: string
-  name: string
-  description: string
-  icon: React.ReactNode
-  url: string
-  /** 同源健康检查地址（由 nginx / vite 代理到对应子系统） */
-  healthUrl: string
-  port: number
-  color: string
-  features: string[]
-}
-
-type HealthStatus = 'checking' | 'online' | 'offline'
-
-const STATUS_TEXT: Record<HealthStatus, string> = {
-  checking: '检测中…',
-  online: '运行中',
-  offline: '未启动',
-}
-
-// 子系统访问地址：优先使用 VITE_* 覆盖；未配置时按当前站点主机 + 端口推导，
-// 适配 nginx 反代 / 远端访问（避免写死 localhost 导致打开与探活都失效）。
-function systemUrl(override: string | undefined, port: number) {
-  if (override) return override
-  return `${location.protocol}//${location.hostname}:${port}`
-}
-
-// 卡片展示的主机（去掉协议），如 127.0.0.1:8088
-function displayHost(url: string) {
-  try { return new URL(url).host } catch { return url }
-}
-
-const subSystems: SubSystem[] = [
-  {
-    id: 'live',
-    name: 'Live 视频会议',
-    description: '实时视频会议系统，支持多人通话、屏幕共享与会议管理',
-    icon: <Video size={32} />,
-    url: systemUrl(import.meta.env.VITE_LIVE_URL, 8088),
-    healthUrl: '/health/live',
-    port: 8088,
-    color: '#6366f1',
-    features: ['视频通话', '屏幕共享', '会议管理', 'SIP 电话']
-  },
-  {
-    id: 'socketio',
-    name: 'SocketIO 网关测试',
-    description: 'SocketIO 消息网关测试工具，支持用户域和设备域连接',
-    icon: <Wifi size={32} />,
-    url: systemUrl(import.meta.env.VITE_SOCKETIO_URL, 8090),
-    healthUrl: '/health/socketio',
-    port: 8090,
-    color: '#10b981',
-    features: ['消息收发', '房间管理', '事件监听', '用户/设备域']
-  }
-]
-
-// 子系统探活走同源健康检查地址（nginx / vite 代理到对应子系统），
-// 不再用 no-cors 跨域探测写死的 localhost 端口，nginx 代理与远端访问下同样可用。
-async function ping(url: string, timeoutMs = 2500): Promise<boolean> {
-  try {
-    const controller = new AbortController()
-    const timer = window.setTimeout(() => controller.abort(), timeoutMs)
-    const response = await fetch(url, { cache: 'no-store', signal: controller.signal })
-    window.clearTimeout(timer)
-    return response.ok
-  } catch {
-    return false
-  }
-}
+import { Copy, Link2, Moon, RefreshCw, Sun } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ActivityPanel } from './components/ActivityPanel'
+import { CommandPalette } from './components/CommandPalette'
+import type { CommandItem } from './components/CommandPalette'
+import { EndpointTable } from './components/EndpointTable'
+import { ExternalCard } from './components/ExternalCard'
+import { EnvironmentPanel } from './components/EnvironmentPanel'
+import { ModuleCard } from './components/ModuleCard'
+import { Rail } from './components/Rail'
+import { StatusBoard } from './components/StatusBoard'
+import { Toast } from './components/Toast'
+import { TopBar } from './components/TopBar'
+import { endpoints, externalRepos, liveBaseUrl, modules, POLL_INTERVAL_MS } from './data/modules'
+import type { ModuleDefinition } from './data/modules'
+import { useHealth } from './hooks/useHealth'
+import { useNow } from './hooks/useNow'
+import { useTheme } from './hooks/useTheme'
+import { useToast } from './hooks/useToast'
+import { copyText } from './lib/clipboard'
+import { hostOf, isoToDateTime } from './lib/format'
 
 export default function App() {
-  const [health, setHealth] = useState<Record<string, HealthStatus>>(() =>
-    Object.fromEntries(subSystems.map((system) => [system.id, 'checking']))
-  )
-  const [lastCheck, setLastCheck] = useState<string>('')
+  const { health, events, snapshots, checking, lastCheckAt, nextCheckAt, checkAll, clearEvents } = useHealth()
+  const { theme, toggleTheme } = useTheme()
+  const { toast, show } = useToast()
+  const now = useNow(1000)
 
-  const checkAll = useCallback(async () => {
-    await Promise.all(subSystems.map(async (system) => {
-      const online = await ping(system.healthUrl)
-      setHealth((current) => ({ ...current, [system.id]: online ? 'online' : 'offline' }))
-    }))
-    setLastCheck(new Date().toLocaleTimeString('zh-CN', { hour12: false }))
+  const [navOpen, setNavOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+
+  const openUrl = useCallback((url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer')
+    setNavOpen(false)
+  }, [])
+
+  const openModule = useCallback((module: ModuleDefinition) => openUrl(module.url), [openUrl])
+
+  const copy = useCallback(
+    async (text: string, label: string) => {
+      const copied = await copyText(text)
+      show(copied ? `已复制 ${label}` : '复制失败，请手动选择地址')
+    },
+    [show],
+  )
+
+  const copyAll = useCallback(() => {
+    void copy(modules.map((module) => module.url).join('\n'), '全部模块地址')
+  }, [copy])
+
+  // 端点挂载在 Live 站点下，复制时要拼 Live 基址而不是工作台自身端口
+  const copyEndpoint = useCallback(
+    (path: string) => {
+      void copy(`${liveBaseUrl.replace(/\/$/, '')}${path}`, path)
+    },
+    [copy],
+  )
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setPaletteOpen((open) => !open)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
   useEffect(() => {
-    checkAll()
-    const timer = window.setInterval(checkAll, 15000)
-    return () => window.clearInterval(timer)
-  }, [checkAll])
+    if (!navOpen) return
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setNavOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previous
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [navOpen])
 
-  const openSystem = useCallback((system: SubSystem) => {
-    window.open(system.url, '_blank', 'noopener')
-  }, [])
+  const online = modules.filter((module) => health[module.id]?.status === 'online').length
+  const latencies = modules
+    .map((module) => health[module.id])
+    .filter((state) => state?.status === 'online' && state.latency !== null)
+    .map((state) => state.latency as number)
+  const average = latencies.length
+    ? Math.round(latencies.reduce((sum, value) => sum + value, 0) / latencies.length)
+    : null
 
-  const openAll = () => {
-    if (!window.confirm('将同时打开所有子系统页面，请允许浏览器弹窗')) return
-    subSystems.forEach(openSystem)
-  }
+  const commands = useMemo<CommandItem[]>(
+    () => [
+      ...modules.map((module) => ({
+        id: `open-${module.id}`,
+        label: `打开 ${module.name}`,
+        hint: hostOf(module.url),
+        group: '模块',
+        icon: module.icon,
+        run: () => openModule(module),
+      })),
+      ...externalRepos.map((repo) => ({
+        id: `open-${repo.id}`,
+        label: `打开 ${repo.name}`,
+        hint: repo.repo,
+        group: '代码仓库',
+        icon: repo.icon,
+        run: () => openUrl(repo.url),
+      })),
+      ...endpoints.map((endpoint) => ({
+        id: `copy-${endpoint.path}`,
+        label: `复制 ${endpoint.path}`,
+        hint: endpoint.title,
+        group: '端点',
+        icon: Link2,
+        run: () => copyEndpoint(endpoint.path),
+      })),
+      {
+        id: 'check-all',
+        label: '立即检测全部模块',
+        hint: 'health',
+        group: '操作',
+        icon: RefreshCw,
+        run: () => void checkAll(),
+      },
+      {
+        id: 'copy-all',
+        label: '复制全部模块地址',
+        hint: `${modules.length} 个地址`,
+        group: '操作',
+        icon: Copy,
+        run: copyAll,
+      },
+      {
+        id: 'toggle-theme',
+        label: theme === 'dark' ? '切换浅色主题' : '切换深色主题',
+        hint: 'appearance',
+        group: '操作',
+        icon: theme === 'dark' ? Sun : Moon,
+        run: toggleTheme,
+      },
+    ],
+    [checkAll, copy, copyAll, copyEndpoint, openModule, openUrl, theme, toggleTheme],
+  )
 
   return (
-    <div className="workspace">
-      {/* 顶部导航 */}
-      <header className="workspace-header">
-        <div className="header-left">
-          <div className="logo">
-            <Layout size={28} />
-            <span>Zero 工作台</span>
-          </div>
-        </div>
-        <div className="header-right">
-          <div className="header-info">
-            <Monitor size={16} />
-            <span>开发环境</span>
-          </div>
-        </div>
-      </header>
+    <div className="shell">
+      <Rail
+        health={health}
+        open={navOpen}
+        theme={theme}
+        online={online}
+        total={modules.length}
+        average={average}
+        checking={checking}
+        nextCheckAt={nextCheckAt}
+        now={now}
+        events={events}
+        onOpenModule={openModule}
+        onToggleTheme={toggleTheme}
+        onClose={() => setNavOpen(false)}
+      />
 
-      {/* 主内容区 */}
-      <main className="workspace-main">
-        {/* 欢迎区域 */}
-        <section className="welcome-section">
-          <div className="welcome-content">
-            <h1>欢迎使用 Zero 工作台</h1>
-            <p>统一管理和访问各个子系统，提升开发和测试效率</p>
-          </div>
-          <div className="welcome-stats">
-            <div className="stat-item">
-              <Zap size={20} />
-              <div>
-                <span className="stat-value">{subSystems.length}</span>
-                <span className="stat-label">可用系统</span>
-              </div>
-            </div>
-            <div className="stat-item">
-              <Activity size={20} />
-              <div>
-                <span className="stat-value">开发</span>
-                <span className="stat-label">当前模式</span>
-              </div>
-            </div>
-          </div>
-        </section>
+      {navOpen && (
+        <button
+          type="button"
+          className="rail-scrim"
+          onClick={() => setNavOpen(false)}
+          aria-label="关闭导航"
+        />
+      )}
 
-        {/* 子系统卡片 */}
-        <section className="systems-section">
-          <div className="section-heading-row">
-            <h2>可用子系统</h2>
-            {lastCheck && <span className="last-check">上次检测 {lastCheck}</span>}
-          </div>
-          <div className="systems-grid">
-            {subSystems.map((system) => (
-              <div
-                key={system.id}
-                className="system-card"
-                role="button"
-                tabIndex={0}
-                onClick={() => openSystem(system)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    openSystem(system)
-                  }
-                }}
-                style={{ '--accent-color': system.color } as React.CSSProperties}
+      <div className="main">
+        <TopBar
+          navOpen={navOpen}
+          onOpenNav={() => setNavOpen(true)}
+          onOpenSearch={() => setPaletteOpen(true)}
+        />
+
+        <main className="content">
+          <div className="page-head">
+            <div className="page-head-copy">
+              <h1>控制台总览</h1>
+              <p>统一入口与运行状态，覆盖会议、网关、开放平台与代码仓库。</p>
+            </div>
+            <div className="page-actions">
+              <button type="button" className="btn btn-ghost" onClick={copyAll}>
+                <Copy size={14} />
+                复制全部地址
+              </button>
+              <button
+                type="button"
+                className="btn btn-solid"
+                onClick={() => void checkAll()}
+                disabled={checking}
               >
-                <div className="card-header">
-                  <div className="card-icon" style={{ backgroundColor: `${system.color}15`, color: system.color }}>
-                    {system.icon}
-                  </div>
-                  <div className={`card-status ${health[system.id]}`}>
-                    <span className="status-dot" />
-                    <span>{STATUS_TEXT[health[system.id]]}</span>
-                  </div>
-                </div>
+                <RefreshCw size={15} className={checking ? 'spin' : undefined} />
+                {checking ? '检测中…' : '立即检测'}
+              </button>
+            </div>
+          </div>
 
-                <div className="card-content">
-                  <h3>{system.name}</h3>
-                  <p>{system.description}</p>
+          <StatusBoard
+            online={online}
+            total={modules.length}
+            average={average}
+            checking={checking}
+            lastCheckAt={lastCheckAt}
+            nextCheckAt={nextCheckAt}
+            now={now}
+            snapshots={snapshots}
+          />
 
-                  <div className="card-features">
-                    {system.features.map((feature, index) => (
-                      <span key={index} className="feature-tag">
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="card-footer">
-                  <div className="card-url">
-                    <Monitor size={14} />
-                    <span>{displayHost(system.url)}</span>
-                  </div>
-                  <button
-                    type="button"
-                    className="open-button"
-                    style={{ backgroundColor: system.color }}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      openSystem(system)
-                    }}
-                  >
-                    <ExternalLink size={16} />
-                    <span>打开</span>
-                  </button>
-                </div>
+          <section className="section" aria-labelledby="modules-title">
+            <div className="section-head">
+              <div>
+                <h2 id="modules-title">服务模块</h2>
+                <p>点击打开对应子系统，状态每 {POLL_INTERVAL_MS / 1000} 秒自动刷新</p>
               </div>
-            ))}
-          </div>
-        </section>
+            </div>
 
-        {/* 快速操作 */}
-        <section className="quick-actions">
-          <h2>快速操作</h2>
-          <div className="actions-grid">
-            <button type="button" className="action-button" onClick={checkAll}>
-              <Activity size={20} />
-              <span>检测系统状态</span>
-            </button>
-            <button
-              type="button"
-              className="action-button"
-              onClick={openAll}
-            >
-              <ExternalLink size={20} />
-              <span>打开所有系统</span>
-            </button>
-            <button type="button" className="action-button" onClick={() => window.location.reload()}>
-              <RefreshCw size={20} />
-              <span>刷新工作台</span>
-            </button>
-          </div>
-        </section>
-      </main>
+            <div className="module-grid">
+              {modules.map((module) => (
+                <ModuleCard
+                  key={module.id}
+                  module={module}
+                  health={health[module.id]}
+                  onOpen={() => openModule(module)}
+                  onCopy={() => void copy(module.url, module.name)}
+                />
+              ))}
+              {externalRepos.map((repo) => (
+                <ExternalCard
+                  key={repo.id}
+                  repo={repo}
+                  onOpen={() => openUrl(repo.url)}
+                  onCopy={() => void copy(repo.url, repo.name)}
+                />
+              ))}
+            </div>
+          </section>
 
-      {/* 底部信息 */}
-      <footer className="workspace-footer">
-        <p>Zero Service 工作台 v1.0.0 | 开发环境</p>
-      </footer>
+          <div className="lower-grid">
+            <EndpointTable baseUrl={liveBaseUrl} onCopy={copyEndpoint} />
+            <div className="side-stack">
+              <EnvironmentPanel />
+              <ActivityPanel events={events} onClear={clearEvents} />
+            </div>
+          </div>
+
+          <footer className="foot">
+            <span>Zero Service · 工作台 v{__APP_VERSION__}</span>
+            <span>
+              构建 {isoToDateTime(__BUILD_TIME__)} · {import.meta.env.DEV ? '开发模式' : '生产模式'}
+            </span>
+          </footer>
+        </main>
+      </div>
+
+      <CommandPalette open={paletteOpen} items={commands} onClose={() => setPaletteOpen(false)} />
+      <Toast toast={toast} />
     </div>
   )
 }

@@ -40,7 +40,7 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 		return nil, err
 	}
 	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.PlanId) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "参数错误")
 	}
 	var plan gormmodel.Plan
 	if !strutil.IsBlank(in.Id) {
@@ -50,19 +50,19 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 	}
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划失败")
 	}
 	// 解析规则
 	var pbRule trigger.PlanRulePb
 	err = protojson.Unmarshal([]byte(plan.RecurrenceRule), &pbRule)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "计划规则格式错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "计划规则格式错误")
 	}
 	scheduleDescription, err := rrulex.Describe(plan.RRuleStr)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "生成计划规则描述失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "生成计划规则描述失败")
 	}
 
 	// 构建响应
@@ -99,7 +99,7 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 	}
 	progress, err := gormmodel.CalculatePlanProgress(l.ctx, l.svcCtx.DB.WithContext(l.ctx).DB, plan.Id)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "计算计划进度失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "计算计划进度失败")
 	}
 	pbPlan.Progress = progress
 	return &trigger.GetPlanRes{

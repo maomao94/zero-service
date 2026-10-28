@@ -35,7 +35,7 @@ func (l *KickParticipantLogic) KickParticipant(in *live.KickParticipantReq) (*li
 		return nil, meetingErr(err)
 	}
 	if _, err := l.svcCtx.LiveKit.Room().RemoveParticipant(l.ctx, &livekit.RoomParticipantIdentity{Room: in.MeetingNo, Identity: in.Identity}); err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "移除参与者失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "移除参与者失败")
 	}
 	l.Logger.Infof("participant kicked: meeting=%s identity=%s", in.MeetingNo, in.Identity)
 	return &live.KickParticipantRes{}, nil

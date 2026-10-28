@@ -47,29 +47,29 @@ type ticketData struct {
 // 根据票据加入会议
 func (l *JoinMeetingByTicketLogic) JoinMeetingByTicket(in *live.JoinMeetingByTicketReq) (*live.JoinMeetingByTicketRes, error) {
 	if in.Ticket == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "票据不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "票据不能为空")
 	}
 
 	// 从 Redis 获取票据
 	ticketKey := fmt.Sprintf("live:ticket:%s", in.Ticket)
 	ticketJson, err := l.svcCtx.Redis.GetCtx(l.ctx, ticketKey)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_03_CACHE, "获取票据失败")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_CACHE, "获取票据失败")
 	}
 	if ticketJson == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "票据不存在或已过期")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "票据不存在或已过期")
 	}
 
 	// 解析票据数据
 	var data ticketData
 	if err := json.Unmarshal([]byte(ticketJson), &data); err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "票据数据格式错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "票据数据格式错误")
 	}
 
 	// 校验票据是否过期（expireTime 格式：yyyy-MM-dd HH:mm:ss）
 	if data.ExpireTime != "" {
 		if expireAt := carbon.Parse(data.ExpireTime); expireAt.IsValid() && expireAt.Lt(carbon.Now()) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "票据已过期")
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "票据已过期")
 		}
 	}
 
@@ -79,20 +79,20 @@ func (l *JoinMeetingByTicketLogic) JoinMeetingByTicket(in *live.JoinMeetingByTic
 	lock.SetExpire(meetingLockTTL)
 	ok, err := lock.AcquireCtx(l.ctx)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "获取会议锁失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_CACHE, err, "获取会议锁失败")
 	}
 	if !ok {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_REPEAT, "会议正在被操作，请稍后重试")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_REPEAT, "会议正在被操作，请稍后重试")
 	}
 	defer lock.Release()
 
 	// 二次检查票据是否仍然有效（锁等待期间可能已被使用）
 	ticketJson, err = l.svcCtx.Redis.GetCtx(l.ctx, ticketKey)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_03_CACHE, "获取票据失败")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_CACHE, "获取票据失败")
 	}
 	if ticketJson == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "票据不存在或已过期")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "票据不存在或已过期")
 	}
 
 	// 根据票据类型处理：一次性票据删除，有效期票据保留
@@ -107,12 +107,12 @@ func (l *JoinMeetingByTicketLogic) JoinMeetingByTicket(in *live.JoinMeetingByTic
 		return nil, meetingErr(err)
 	}
 	if meeting.Status == gormmodel.MeetingStatusEnded {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "会议已结束")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "会议已结束")
 	}
 
 	// 校验参会人是否已在会议中
 	if l.svcCtx.MeetingRepo.IsParticipantInMeeting(l.ctx, data.MeetingNo, data.Identity) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "您已在此会议中")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "您已在此会议中")
 	}
 
 	// 生成 LiveKit token（使用票据中绑定的 identity 和权限）
@@ -129,7 +129,7 @@ func (l *JoinMeetingByTicketLogic) JoinMeetingByTicket(in *live.JoinMeetingByTic
 		CanPublishSources: data.CanPublishSources,
 	})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "生成入会 token 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "生成入会 token 失败")
 	}
 
 	// Upsert 参会人记录（使用票据中绑定的 identity 和 name）

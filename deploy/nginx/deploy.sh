@@ -2,7 +2,7 @@
 # Zero Service Web 网关部署（Docker Compose）
 # 用法: bash deploy/nginx/deploy.sh [命令]
 #   (无参数)  部署: 拉取镜像 -> 校验证书 -> compose up -> 等待就绪
-#   build     构建前端产物到 deploy/nginx/dist（live/socketio/workspace）
+#   build     构建前端产物到 deploy/nginx/dist（live/socketio/workspace/openapi）
 #   stop      移除容器
 #   restart   重启容器
 #   status    查看状态
@@ -13,19 +13,36 @@ set -e
 cd "$(dirname "$0")"
 
 CONTAINER=web-gateway
-HOST_PORT="${NGINX_HOST_PORT:-8088}"
-SSL_HOST_PORT="${NGINX_SSL_HOST_PORT:-8443}"
+HOST_PORT="${NGINX_HOST_PORT:-80}"
+SSL_HOST_PORT="${NGINX_SSL_HOST_PORT:-443}"
 SOCKETIO_HOST_PORT="${SOCKETIO_HOST_PORT:-8090}"
 WORKSPACE_HOST_PORT="${WORKSPACE_HOST_PORT:-8091}"
+GITLAB_SSH_HOST_PORT="${GITLAB_SSH_HOST_PORT:-22}"
 export NGINX_HOST_PORT="$HOST_PORT"
 export NGINX_SSL_HOST_PORT="$SSL_HOST_PORT"
 export SOCKETIO_HOST_PORT="$SOCKETIO_HOST_PORT"
 export WORKSPACE_HOST_PORT="$WORKSPACE_HOST_PORT"
-IMAGE=nginx:stable-alpine
+export GITLAB_SSH_HOST_PORT="$GITLAB_SSH_HOST_PORT"
+IMAGE="${NGINX_IMAGE:-nginx:1.30.6-alpine}"
+export NGINX_IMAGE="$IMAGE"
 CERT="${NGINX_TLS_CERT:-../tls/server.crt}"
 KEY="${NGINX_TLS_KEY:-../tls/server.key}"
 export NGINX_TLS_CERT="$CERT"
 export NGINX_TLS_KEY="$KEY"
+
+# 标准端口时地址不带 :port，便于输出与复制
+HTTP_BASE="http://127.0.0.1"
+HTTP_SUFFIX=""
+if [ "$HOST_PORT" != "80" ]; then
+  HTTP_BASE="${HTTP_BASE}:${HOST_PORT}"
+  HTTP_SUFFIX=":${HOST_PORT}"
+fi
+HTTPS_BASE="https://127.0.0.1"
+HTTPS_SUFFIX=""
+if [ "$SSL_HOST_PORT" != "443" ]; then
+  HTTPS_BASE="${HTTPS_BASE}:${SSL_HOST_PORT}"
+  HTTPS_SUFFIX=":${SSL_HOST_PORT}"
+fi
 
 ensure_image() {
   echo "从 Docker 仓库拉取镜像 $IMAGE ..."
@@ -71,7 +88,7 @@ case "${1:-deploy}" in
     ensure_image
     require_cert
     # 预留产物目录，避免 docker 以 root 创建；内容由 build-web.sh 或部署时自行上传
-    mkdir -p dist/live dist/socketio dist/workspace ../livekit/recordings
+    mkdir -p dist/live dist/socketio dist/workspace dist/openapi ../livekit/recordings
     # 迁移：清理旧的 recordings-nginx（早期仅录制静态服务的容器）
     if docker ps -a --format '{{.Names}}' | grep -qx "recordings-nginx"; then
       OLD_PROJECT=$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' recordings-nginx 2>/dev/null || true)
@@ -87,13 +104,19 @@ case "${1:-deploy}" in
     docker compose ps
     echo ""
     echo "Web 网关部署完成:"
-    echo "  Live 前端(HTTP):  http://127.0.0.1:${HOST_PORT}/        （推荐）"
-    echo "  Live 前端(HTTPS): https://127.0.0.1:${SSL_HOST_PORT}/"
+    echo "  Live 前端(HTTP):  ${HTTP_BASE}/        （推荐）"
+    echo "  Live 前端(HTTPS): ${HTTPS_BASE}/"
+    echo "  GitLab(HTTP):     http://gitlab.localhost${HTTP_SUFFIX}/"
+    echo "  GitLab(HTTPS):    https://gitlab.localhost${HTTPS_SUFFIX}/"
+    echo "  GitLab SSH:       git@gitlab.localhost:<group>/<repo>.git (host port ${GITLAB_SSH_HOST_PORT})"
     echo "  SocketIO 工具:    http://127.0.0.1:${SOCKETIO_HOST_PORT}/"
     echo "  Zero 工作台:      http://127.0.0.1:${WORKSPACE_HOST_PORT}/"
-    echo "  录制文件:         http://127.0.0.1:${HOST_PORT}/recordings/"
+    echo "  OpenAPI 控制台:   ${HTTP_BASE}/openapi/"
+    echo "  开放 API:         ${HTTP_BASE}/v1/gateway"
+    echo "  录制文件:         ${HTTP_BASE}/recordings/"
     echo "  前端产物目录:     $(cd dist && pwd)"
-    echo "  反代:             /live/ -> livegtw:11002, /socket.io/ -> socketgtw:11003, /livekit/ -> livekit:7880"
+    echo "  反代:             /live/ -> livegtw:11002, /v1/ -> opengtw:11005, /socket.io/ -> socketgtw:11003"
+    echo "  GitLab 反代:      gitlab.localhost -> 10.10.1.100:8929"
     ;;
   stop|down)
     docker compose down
@@ -111,9 +134,13 @@ case "${1:-deploy}" in
     docker compose logs --tail 100
     ;;
   url)
-    echo "HTTP : http://127.0.0.1:${HOST_PORT}/"
-    echo "HTTPS: https://127.0.0.1:${SSL_HOST_PORT}/"
-    echo "录制: http://127.0.0.1:${HOST_PORT}/recordings/"
+    echo "HTTP : ${HTTP_BASE}/"
+    echo "HTTPS: ${HTTPS_BASE}/"
+    echo "工作台: http://127.0.0.1:${WORKSPACE_HOST_PORT}/"
+    echo "OpenAPI: ${HTTP_BASE}/openapi/"
+    echo "录制: ${HTTP_BASE}/recordings/"
+    echo "GitLab: http://gitlab.localhost${HTTP_SUFFIX}/"
+    echo "GitLab SSH: git@gitlab.localhost:<group>/<repo>.git (port ${GITLAB_SSH_HOST_PORT})"
     ;;
   *)
     echo "未知命令: $1；可用: deploy(默认)/build/stop/restart/status/logs/url"

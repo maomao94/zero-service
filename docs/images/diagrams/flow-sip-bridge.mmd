@@ -1,0 +1,5 @@
+flowchart LR
+    B["浏览器<br/>WebRTC 音视频 / Data / RPC"] <-->|":7880"| LK["LiveKit Server<br/>房间与参与者管理"]
+    LK <-->|":7880 HTTP API"| SIP["LiveKit SIP Server<br/>SIP ↔ WebRTC 协议转换"]
+    SIP <-->|":5070 SIP 信令"| PROV["SIP 供应商<br/>FreeSWITCH / Telnyx"]
+    PROV <-->|":5060 / :5080"| PSTN["电话网络"]

@@ -1,0 +1,9 @@
+flowchart LR
+    BIZ["业务系统"] -->|"gRPC :21012"| DJI["djicloud"]
+    DJI --> SDK["common/djisdk"]
+    SDK -->|"MQTT services"| BROKER["MQTT Broker"]
+    SDK -->|"MQTT drc/down"| BROKER
+    BROKER --> DOCK["DJI Dock 3 / 飞行器"]
+    DOCK -->|"services_reply / events / osd / state"| BROKER
+    BROKER --> SDK
+    SDK -->|持久化| PG["PostgreSQL<br/>设备状态 / 遥测 / 事件"]

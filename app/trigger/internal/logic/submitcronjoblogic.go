@@ -51,10 +51,10 @@ func (l *SubmitCronJobLogic) SubmitCronJob(in *trigger.SubmitCronJobReq) (*trigg
 		}, nil
 	}
 	if !errors.Is(err, crontask.ErrNotFound) {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询待提交 Cron Job 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询待提交 Cron Job 失败")
 	}
 	if in.Type == "" || in.DeptCode == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "Submit 新建 Cron Job 时 type 和 dept_code 不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "Submit 新建 Cron Job 时 type 和 dept_code 不能为空")
 	}
 	created, err := NewCreateCronJobLogic(l.ctx, l.svcCtx).CreateCronJob(&trigger.CreateCronJobReq{
 		TaskCode: in.TaskCode, TaskName: in.TaskName, Type: in.Type,

@@ -24,17 +24,20 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// CommonRes DJI 命令执行结果响应。
-// 仅用于等待 DJI 设备 ACK 的下行命令；平台参数、数据库、配置、MQTT、超时等错误通过 gRPC error 返回。
+// CommonRes 纯 DJI 下行命令的执行结果。
+// 仅用于等待 DJI 设备 ACK、且没有业务扩展字段的命令接口。
+// 平台侧失败（参数、数据库、配置、MQTT、超时等）仍通过 gRPC error 返回，错误码取 extproto.Code。
+// 业务接口请定义独立的 XxxRes，并保留扁平的 code/message/tid/reason_code 字段，便于后续追加业务字段。
 type CommonRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// code DJI 命令结果码，0 表示设备执行成功，-1 表示设备拒绝执行。
+	// code DJI 命令结果码：0 设备执行成功，-1 设备拒绝执行；不是平台错误码。
 	Code int32 `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
 	// message DJI 命令结果描述，成功时为 "success"，设备拒绝时为错误详情。
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	// tid 事务 ID（DJI Cloud API 中的 tid），用于追踪本次请求在 MQTT 链路中的唯一标识。
 	Tid string `protobuf:"bytes,3,opt,name=tid,proto3" json:"tid,omitempty"`
-	// reason_code DJI 设备原始错误码（对应 DJIErrorCode 枚举值），仅在设备返回错误时有值，成功时为 0。
+	// reason_code DJI 设备原始错误码（对应 DJIErrorCode 枚举值），仅 code=-1 时非 0，成功时为 0；
+	// 不要写入 gRPC ErrorInfo.reason。
 	ReasonCode    int32 `protobuf:"varint,4,opt,name=reason_code,json=reasonCode,proto3" json:"reason_code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -8853,7 +8856,8 @@ func (x *SubmitCustomFlyRegionReq) GetFeatures() []*FlyRegionFeature {
 }
 
 // SubmitCustomFlyRegionRes 提交自定义飞行区响应。
-// 平台处理失败通过 gRPC error 返回；DJI flight_areas_update ACK 结果通过以下字段返回。
+// 平台处理失败通过 gRPC error 返回；DJI flight_areas_update ACK 结果通过以下扁平字段返回。
+// 业务字段直接追加到本消息，保持每个业务接口独立的 XxxRes，不复用 CommonRes。
 type SubmitCustomFlyRegionRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Code          int32                  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
@@ -8976,7 +8980,8 @@ func (x *DeleteCustomFlyRegionReq) GetDeviceSn() string {
 }
 
 // DeleteCustomFlyRegionRes 删除自定义飞行区响应。
-// 平台处理失败通过 gRPC error 返回；DJI flight_areas_update ACK 结果通过以下字段返回。
+// 平台处理失败通过 gRPC error 返回；DJI flight_areas_update ACK 结果通过以下扁平字段返回。
+// 业务字段直接追加到本消息，保持每个业务接口独立的 XxxRes，不复用 CommonRes。
 type DeleteCustomFlyRegionRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Code          int32                  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
@@ -9091,7 +9096,8 @@ func (x *DeleteCustomFlyRegionByFileIdReq) GetFileId() string {
 }
 
 // DeleteCustomFlyRegionByFileIdRes 按文件 ID 删除飞行区响应。
-// 平台处理失败通过 gRPC error 返回；DJI flight_areas_update ACK 结果通过以下字段返回。
+// 平台处理失败通过 gRPC error 返回；DJI flight_areas_update ACK 结果通过以下扁平字段返回。
+// 业务字段直接追加到本消息，保持每个业务接口独立的 XxxRes，不复用 CommonRes。
 type DeleteCustomFlyRegionByFileIdRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Code          int32                  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`

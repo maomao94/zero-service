@@ -30,7 +30,7 @@ func (l *DvrFilesLogic) DvrFiles(in *oryxserver.DvrFilesReq) (*oryxserver.DvrFil
 	files, err := l.svcCtx.OryxClient.DvrFiles(l.ctx)
 	if err != nil {
 		l.Logger.Errorf("调用 Oryx API 失败: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "调用 Oryx API 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用 Oryx API 失败")
 	}
 	list := make([]*oryxserver.DvrFile, 0, len(files))
 	for _, f := range files {

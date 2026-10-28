@@ -28,11 +28,11 @@ func NewQueryPointMappingByKeyLogic(ctx context.Context, svcCtx *svc.ServiceCont
 // 根据tagStation、coa、ioa查询点位绑定信息
 func (l *QueryPointMappingByKeyLogic) QueryPointMappingByKey(in *ieccaller.QueryPointMappingByKeyReq) (*ieccaller.QueryPointMappingByKeyRes, error) {
 	if l.svcCtx.DevicePointMappingStore == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "device point mapping model is not initialized")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "device point mapping model is not initialized")
 	}
 	mapping, err := l.svcCtx.DevicePointMappingStore.FindOneByTagStationCoaIoa(l.ctx, in.TagStation, in.Coa, in.Ioa)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询点位映射失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询点位映射失败")
 	}
 	return &ieccaller.QueryPointMappingByKeyRes{
 		Mapping: toPbDevicePointMapping(mapping),

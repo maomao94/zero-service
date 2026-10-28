@@ -1,0 +1,8 @@
+flowchart LR
+    SLAVE["IEC 104 从站"] -->|TCP| CALLER["ieccaller"]
+    CALLER -->|Kafka| STASH["iecstash"]
+    CALLER -->|MQTT| EXT["外部系统"]
+    CALLER -->|gRPC 流事件| SE["streamevent"]
+    STASH -->|gRPC 批量| SE
+    SE -->|写入| TD["TDengine"]
+    SE -->|分发| CONSUMER["业务消费端"]

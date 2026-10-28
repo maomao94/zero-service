@@ -30,14 +30,14 @@ func (l *DeleteSessionLogic) DeleteSession(in *aisolo.DeleteSessionReq) (*aisolo
 	userID := strings.TrimSpace(in.GetUserId())
 	sessionID := strings.TrimSpace(in.GetSessionId())
 	if userID == "" || sessionID == "" {
-		return &aisolo.DeleteSessionResp{Success: false}, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "user_id and session_id are required")
+		return &aisolo.DeleteSessionResp{Success: false}, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "user_id and session_id are required")
 	}
 	sess, err := l.svcCtx.Sessions.GetSession(l.ctx, userID, sessionID)
 	if err != nil {
 		return &aisolo.DeleteSessionResp{Success: false}, err
 	}
 	if sess.Status == aisolo.SessionStatus_SESSION_STATUS_RUNNING {
-		return &aisolo.DeleteSessionResp{Success: false}, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "cannot delete running session")
+		return &aisolo.DeleteSessionResp{Success: false}, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "cannot delete running session")
 	}
 	if l.svcCtx.Messages != nil {
 		if err := l.svcCtx.Messages.DeleteSession(l.ctx, userID, sessionID); err != nil {

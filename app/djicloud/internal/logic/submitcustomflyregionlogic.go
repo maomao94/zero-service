@@ -36,7 +36,7 @@ func NewSubmitCustomFlyRegionLogic(ctx context.Context, svcCtx *svc.ServiceConte
 // 写入飞行区配置记录后通过 MQTT 触发目标设备更新。
 func (l *SubmitCustomFlyRegionLogic) SubmitCustomFlyRegion(in *djicloud.SubmitCustomFlyRegionReq) (*djicloud.SubmitCustomFlyRegionRes, error) {
 	if len(in.GetFeatures()) == 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "至少需要一个 feature")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "至少需要一个 feature")
 	}
 
 	fileId := uuid.NewString()
@@ -62,7 +62,7 @@ func (l *SubmitCustomFlyRegionLogic) SubmitCustomFlyRegion(in *djicloud.SubmitCu
 			c := g.Circle.GetCenter()
 			features = append(features, djisdk.NewGeofenceCircleFeature(id, ft.GetGeofenceType(), c.GetLng(), c.GetLat(), g.Circle.GetRadius(), ft.GetEnable()))
 		default:
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "缺少 geometry")
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "缺少 geometry")
 		}
 	}
 
@@ -73,7 +73,7 @@ func (l *SubmitCustomFlyRegionLogic) SubmitCustomFlyRegion(in *djicloud.SubmitCu
 	fc := djisdk.NewGeofenceFeatureCollection(features...)
 	jsonBytes, err := fc.ToJSON()
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "生成 GeoJSON 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "生成 GeoJSON 失败")
 	}
 
 	fileName := geofenceType + "_" + fileId + ".json"
@@ -82,7 +82,7 @@ func (l *SubmitCustomFlyRegionLogic) SubmitCustomFlyRegion(in *djicloud.SubmitCu
 
 	ossFile, err := l.svcCtx.OssTemplate.PutObject(l.ctx, "", bucketName, fileName, "application/json", bytes.NewReader(jsonBytes), int64(len(jsonBytes)))
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "上传 OSS 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "上传 OSS 失败")
 	}
 
 	checksum := fmt.Sprintf("%x", sha256.Sum256(jsonBytes))
@@ -98,7 +98,7 @@ func (l *SubmitCustomFlyRegionLogic) SubmitCustomFlyRegion(in *djicloud.SubmitCu
 		GeofenceJSON: string(jsonBytes),
 	}
 	if err := l.svcCtx.DB.WithContext(l.ctx).Create(region).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "写入飞行区记录失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "写入飞行区记录失败")
 	}
 
 	tid, err := l.svcCtx.DjiClient.FlightAreasUpdate(l.ctx, gatewaySn)

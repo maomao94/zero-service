@@ -12,10 +12,22 @@
 | livegtw | 11002 | `app/livegtw/` | LiveKit 会议 HTTP 网关 |
 | socketgtw | 11003 | `socketapp/socketgtw/` | Socket.IO 网关 HTTP 端 |
 | oryxgtw | 11004 | `app/oryxgtw/` | Oryx 流媒体回调网关 |
+| opengtw | 11005 | `app/opengtw/` | 开放平台 HTTP 网关（Podman + Modbus） |
 | aigtw | 13001 | `aiapp/aigtw/` | AI HTTP 网关 |
 | ssegtw | 13002 | `aiapp/ssegtw/` | AI SSE 网关 |
 | mcpserver | 13003 | `aiapp/mcpserver/` | MCP HTTP 服务 |
 | bridgegtw | 15001 | `app/bridgegtw/` | gRPC-Gateway 代理转发 |
+
+## Web 前端与网关（5xxx / 8xxx）
+
+| 站点 | 开发端口 | 生产入口 | 目录 |
+| --- | --- | --- | --- |
+| Live 会议前端 | 5178 | 80/443 `/` | `web/live/` |
+| SocketIO 测试工具 | 5179 | 8090 `/` | `web/socketio/` |
+| Zero 工作台 | 5180 | 8091 `/` | `web/workspace/` |
+| OpenAPI 控制台 | 5181 | 80/443 `/openapi/` | `web/openapi/` |
+
+开发端口来自各项目 `vite.config.ts`；生产入口由 `deploy/nginx` 统一托管。
 
 ## gRPC 服务（2xxxx）
 
@@ -39,6 +51,7 @@
 | ispserver.rpc | 21015 | `app/ispserver/` | ISP 巡检协议服务端 |
 | oryxserver.rpc | 21016 | `app/oryxserver/` | Oryx 流媒体 API 代理 |
 | live.rpc | 21017 | `app/live/` | LiveKit 会议管理 |
+| openapi.rpc | 21018 | `app/openapi/` | 开放平台统一转发（Podman + Modbus，method 路由 + protojson） |
 
 ### AI 服务
 
@@ -63,10 +76,10 @@
 
 | 端口段 | 用途 |
 |--------|------|
-| 11001 – 11004 | HTTP 网关 |
+| 11001 – 11005 | HTTP 网关 |
 | 13001 – 13003 | AI HTTP 服务 |
 | 15001 | 桥接 HTTP 网关 |
-| 21001 – 21017 | 核心业务 gRPC |
+| 21001 – 21018 | 核心业务 gRPC |
 | 23001 – 23002 | AI gRPC 服务 |
 | 25001 – 25007 | 桥接与扩展 gRPC |
 
@@ -80,4 +93,5 @@
 ## 备注
 
 - **socketgtw** 是混合型服务，同时暴露 HTTP（11003）和 gRPC（25001）。
+- **opengtw** 同端口同时提供开放面 `/v1/*` 与管理面 `/open-admin/v1/*`；nginx 默认只反代 `/v1/`。
 - **lalhook**（原 11002）和 **lalproxy**（原 21002）已不推荐使用，服务保留但不再维护。流媒体能力已迁移至 [Oryx](./oryx/README.md)。

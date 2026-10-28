@@ -1,0 +1,5 @@
+flowchart LR
+    B["浏览器 / 第三方"] -->|HTTP| GW["livegtw / opengtw"]
+    GW -->|gRPC| SVC["app/live · app/openapi"]
+    SVC -->|gRPC| DOWN["下游服务"]
+    GW -->|HTTP 200 信封| B

@@ -20,6 +20,7 @@ Zero-Service 不是一个必须整体部署的单体应用。各服务可以按�
 - **工业协议桥接**：支持 Modbus TCP/RTU、MQTT、Kafka、gRPC-Gateway 及反向隔离装置接入。
 - **变电站巡检**：提供 ISP 协议服务端与代理，连接上级平台和下级巡检设备。
 - **通用基础能力**：包含地理信息计算、对象存储、文件传输、容器管理、服务发现和可观测性组件。
+- **开放 API 网关**：面向第三方应用提供 Basic 鉴权、统一 JSON 信封和 method 路由，当前接入 Podman 容器与 Modbus 读写能力。
 
 ## 快速开始
 
@@ -80,7 +81,7 @@ go run . -f etc/trigger.yaml
 | `ispagent` / `ispserver` | 变电站 ISP 巡检协议代理与服务端 | [ISP 巡检协议](./docs/isp/isp.md) |
 | `live` / `livegtw` | LiveKit 视频会议管理与 HTTP 网关 | [视频会议](./docs/live/README.md) · [LiveKit](https://github.com/livekit/livekit) · [Server SDK](https://github.com/livekit/server-sdk-go) |
 | `oryxgtw` / `oryxserver` | Oryx/SRS 流媒体回调网关与 gRPC API 代理 | [Oryx 流媒体](./docs/oryx/README.md) · [Oryx](https://github.com/ossrs/oryx) · [SRS](https://github.com/ossrs/srs) |
-| `lalhook` / `lalproxy` | LAL 流媒体 HTTP 回调与 gRPC 代理（已不推荐，迁移至 Oryx） | [LAL 流媒体回调](../app/lalhook/README.md) |
+| `lalhook` / `lalproxy` | LAL 流媒体 HTTP 回调与 gRPC 代理（已不推荐，迁移至 Oryx） | [LAL 流媒体回调](./app/lalhook/README.md) |
 | `file` | 分片文件传输与对象存储集成 | [文件与对象存储](./docs/file/README.md) |
 | `gis` | H3、GeoHash、电子围栏和坐标转换 | [地理信息服务](./docs/gis/README.md) |
 | `podengine` | Docker 容器生命周期管理 | [容器编排](./docs/podengine/README.md) |
@@ -95,6 +96,7 @@ common/      跨服务复用的公共组件
 facade/      跨服务协议与数据契约
 model/       数据模型及生成脚本
 deploy/      Docker Compose 与部署配置
+web/         前端工作台与子系统（Live / SocketIO / OpenAPI）
 docs/        架构、对接和开发文档
 ```
 
@@ -118,6 +120,7 @@ docs/        架构、对接和开发文档
 | [架构概览](./docs/architecture.md) | 系统分层、核心数据流和技术选型 |
 | [开发指南](./docs/development.md) | 代码生成、模块扩展和调试方式 |
 | [部署指南](./docs/deployment.md) | Docker、单服务与集群部署 |
+| [部署模板总览](./deploy/README.md) | 数据库、中间件、网关与运维工具的本地编排 |
 | [错误码规范](./docs/error-codes.md) | HTTP/gRPC 状态映射和业务错误编码 |
 
 ## 参与贡献

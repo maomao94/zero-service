@@ -1,0 +1,102 @@
+/* 设计令牌：浅色为主，深色主题整体替换；深色只改语义变量，不改组件样式 */
+
+:root {
+  color-scheme: light;
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: "SFMono-Regular", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  --page: #edf1f3;
+  --surface: #ffffff;
+  --surface-soft: #f5f8f9;
+  --surface-sink: #e9eff1;
+  --line: #dae4e7;
+  --line-soft: #e8eef0;
+  --text: #0f2029;
+  --text-soft: #3c5663;
+  --muted: #556a73;
+  --muted-2: #637880;
+
+  --accent: #0b7c7b;
+  --accent-strong: #086463;
+  --accent-fg: #ffffff;
+  --accent-soft: #e3f2f1;
+  --accent-line: #b6dad8;
+
+  --online: #12795a;
+  --online-soft: #e3f3ec;
+  --warn: #96621a;
+  --warn-soft: #faf0dc;
+  --offline: #ab4038;
+  --offline-soft: #fbeceb;
+
+  --rail-bg: #0b171d;
+  --rail-bg-2: #0e1e26;
+  --rail-line: #1c3038;
+  --rail-text: #e9f2f4;
+  --rail-soft: #a8bcc3;
+  --rail-muted: #7b929b;
+  --rail-hover: #12252d;
+  --rail-accent: #2fb3ad;
+
+  --board-1: #0b1a22;
+  --board-2: #103039;
+  --board-text: #f1f8f9;
+  --board-soft: #9fb6be;
+  --board-line: rgba(255, 255, 255, 0.1);
+  --board-spark: #5fd3c9;
+
+  --radius-xs: 4px;
+  --radius-sm: 7px;
+  --radius: 11px;
+  --radius-lg: 14px;
+
+  --shadow-1: 0 1px 2px rgba(15, 32, 41, 0.04), 0 12px 28px -20px rgba(15, 32, 41, 0.35);
+  --shadow-2: 0 2px 6px rgba(15, 32, 41, 0.05), 0 24px 48px -28px rgba(15, 32, 41, 0.4);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --page: #081216;
+  --surface: #0e1c23;
+  --surface-soft: #12232b;
+  --surface-sink: #162b34;
+  --line: #1d323c;
+  --line-soft: #162a33;
+  --text: #e6eff2;
+  --text-soft: #b1c5cc;
+  --muted: #8aa0a9;
+  --muted-2: #7c939c;
+
+  --accent: #2fb3ad;
+  --accent-strong: #46c6c0;
+  --accent-fg: #04211f;
+  --accent-soft: #10302f;
+  --accent-line: #1f4a48;
+
+  --online: #3fbb8b;
+  --online-soft: #0f2a22;
+  --warn: #d9a34a;
+  --warn-soft: #2b2216;
+  --offline: #e0796f;
+  --offline-soft: #2e1b1a;
+
+  --rail-bg: #070f13;
+  --rail-bg-2: #0a161b;
+  --rail-line: #182a32;
+  --rail-hover: #0f2027;
+  --rail-accent: #3fc3bc;
+
+  --board-1: #0a171d;
+  --board-2: #0f2a32;
+  --board-text: #edf6f7;
+  --board-soft: #93aab2;
+  --board-line: rgba(255, 255, 255, 0.08);
+  --board-spark: #4fc9c1;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 28px -20px rgba(0, 0, 0, 0.8);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.4), 0 24px 48px -28px rgba(0, 0, 0, 0.9);
+}

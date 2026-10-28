@@ -38,10 +38,10 @@ func (l *MuteParticipantLogic) MuteParticipant(in *live.MuteParticipantReq) (*li
 	case "audio", "":
 		trackType = livekit.TrackType_AUDIO
 	default:
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "kind 仅支持 audio/video")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "kind 仅支持 audio/video")
 	}
 	if err := muteTracksByType(l.ctx, l.svcCtx.LiveKit.Room(), in.MeetingNo, in.Identity, trackType, in.Muted); err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "静音操作失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "静音操作失败")
 	}
 	return &live.MuteParticipantRes{}, nil
 }

@@ -69,7 +69,7 @@ func NewChatCompletionStreamLogic(ctx context.Context, svcCtx *svc.ServiceContex
 func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompletionReq, stream aichat.AiChat_ChatCompletionStreamServer) error {
 	p, backendModel, providerName, err := l.svcCtx.Registry.GetProvider(in.Model)
 	if err != nil {
-		return tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "model %s not found", in.Model)
+		return tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "model %s not found", in.Model)
 	}
 
 	req := toProviderRequest(in, backendModel, providerName)

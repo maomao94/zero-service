@@ -44,7 +44,7 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 
 	// 检查参数
 	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.BatchId) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "参数错误")
 	}
 
 	// 查询计划批次
@@ -56,22 +56,22 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		err = db.Where("batch_id = ?", in.BatchId).First(&planBatch).Error
 	}
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划批次失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划批次失败")
 	}
 
 	// 查询计划
 	var plan gormmodel.Plan
 	if err := db.Where("plan_id = ?", planBatch.PlanId).First(&plan).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划失败")
 	}
 
 	// 检查当前状态是否允许终止操作
 	if plan.Status == model.PlanStatusTerminated || plan.FinishedTime.Valid {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态已结束,无需终止")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划状态已结束,无需终止")
 	}
 
 	if planBatch.Status == model.PlanStatusTerminated || planBatch.FinishedTime.Valid {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划批次状态已结束,无需终止")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次状态已结束,无需终止")
 	}
 
 	// 执行事务
@@ -104,12 +104,12 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 
 	if err != nil {
 		if errors.Is(err, errPlanExecItemRunning) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划批次存在正在执行的执行项，请执行项结束后再终止")
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次存在正在执行的执行项，请执行项结束后再终止")
 		}
 		if errors.Is(err, model.ErrNoRowsUpdate) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划批次状态已变化，无法终止")
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次状态已变化，无法终止")
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "终止批次事务失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "终止批次事务失败")
 	}
 	bScope := planscope.BatchScope(&plan, &planBatch)
 	bLog := bScope.Logger(l.ctx)

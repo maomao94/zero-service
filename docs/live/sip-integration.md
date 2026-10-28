@@ -7,17 +7,9 @@ LiveKit SIP 集成允许浏览器用户（WebRTC）和电话用户（SIP）在�
 
 ## 架构总览
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   浏览器     │     │  LiveKit     │     │  LiveKit     │     │  SIP 供应商  │
-│   (WebRTC)   │◄───►│  Server      │◄───►│  SIP Server  │◄───►│  (FreeSWITCH │
-│              │     │              │     │              │     │   /Telnyx)   │
-│  音视频通话   │     │  房间管理    │     │  协议转换    │     │  SIP 路由    │
-│  Data/RPC    │     │  参与者管理  │     │  SIP↔WebRTC  │     │  电话网络    │
-└──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
-     :7880                :7880                :5070                :5060/5080
-   (WebRTC)           (HTTP API)           (SIP 信令)           (SIP 信令)
-```
+<div align="center">
+  <img src="../images/diagrams/flow-sip-bridge.png" alt="SIP 电话集成架构：浏览器 WebRTC 经 LiveKit 与 SIP Server 桥接到 SIP 供应商和电话网络" style="max-width: 88%; height: auto;" />
+</div>
 
 ## 各组件职责
 

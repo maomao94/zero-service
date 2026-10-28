@@ -35,17 +35,17 @@ func (l *RestartPodLogic) RestartPod(in *podengine.RestartPodReq) (*podengine.Re
 	}
 	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
 	if !ok {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "node: "+in.Node)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "node: "+in.Node)
 	}
 
 	err = dockerClient.ContainerRestart(l.ctx, in.Id, container.StopOptions{})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "failed to restart container")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "failed to restart container")
 	}
 
 	containerInfo, err := dockerClient.ContainerInspect(l.ctx, in.Id)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "failed to inspect container after restart")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "failed to inspect container after restart")
 	}
 
 	pod := &podengine.PodPb{

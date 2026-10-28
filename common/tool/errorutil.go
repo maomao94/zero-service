@@ -11,6 +11,10 @@ import (
 )
 
 func NewErrorByPbCode(code extproto.Code, args ...any) error {
+	if code == extproto.Code__0_OK {
+		// 0 是唯一成功码，禁止用它构造错误，避免把失败当成功。
+		return gkiterrors.InternalServer(fmt.Sprintf("%d", extproto.Code__1_00_INTERNAL), "成功码不能用于构造错误")
+	}
 	errorName, httpCode := getErrorInfoByPbCode(code)
 	message := errorName
 	if len(args) > 0 {
@@ -43,6 +47,8 @@ func NewErrorByPbCode(code extproto.Code, args ...any) error {
 		return gkiterrors.NotFound(reason, message)
 	case 409:
 		return gkiterrors.Conflict(reason, message)
+	case 429:
+		return gkiterrors.New(429, reason, message)
 	case 499:
 		return gkiterrors.ClientClosed(reason, message)
 	case 500:

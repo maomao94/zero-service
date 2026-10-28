@@ -31,7 +31,7 @@ func NewChatCompletionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Ch
 func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aichat.ChatCompletionRes, error) {
 	p, backendModel, providerName, err := l.svcCtx.Registry.GetProvider(in.Model)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "model %s not found", in.Model)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "model %s not found", in.Model)
 	}
 
 	// 构建 provider 请求
@@ -53,7 +53,7 @@ func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aic
 			totalTokens += 4 + tool.EstimateTokens(msg.Content)
 		}
 		if totalTokens > maxTokens {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "context too large: %d tokens > %d limit", totalTokens, maxTokens)
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "context too large: %d tokens > %d limit", totalTokens, maxTokens)
 		}
 	}
 
@@ -117,7 +117,7 @@ func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aic
 		}
 	}
 
-	return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "max tool rounds (%d) exceeded", l.svcCtx.Config.MaxToolRounds)
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "max tool rounds (%d) exceeded", l.svcCtx.Config.MaxToolRounds)
 }
 
 // toProviderRequest 将 gRPC proto 请求转为 provider 内部请求。

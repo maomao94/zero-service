@@ -31,7 +31,7 @@ func (l *EncodeGeoHashMultiLogic) EncodeGeoHashMulti(in *gis.EncodeGeoHashMultiR
 		return nil, err
 	}
 	if len(in.Precisions) == 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "precisions")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "precisions")
 	}
 
 	items := make([]*gis.GeoHashIndex, 0, len(in.Precisions))

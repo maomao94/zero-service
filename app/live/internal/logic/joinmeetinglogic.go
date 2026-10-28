@@ -36,10 +36,10 @@ func NewJoinMeetingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *JoinM
 func (l *JoinMeetingLogic) JoinMeeting(in *live.JoinMeetingReq) (*live.JoinMeetingRes, error) {
 	// 校验：meeting_no 和 meeting_code 至少提供一个
 	if strings.TrimSpace(in.MeetingNo) == "" && strings.TrimSpace(in.MeetingCode) == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "会议号或会议码不能同时为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议号或会议码不能同时为空")
 	}
 	if strings.TrimSpace(in.Identity) == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "参会人身份不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "参会人身份不能为空")
 	}
 	// 优先用 meeting_code 查找会议
 	var meeting *gormmodel.LiveMeeting
@@ -63,15 +63,15 @@ func (l *JoinMeetingLogic) JoinMeeting(in *live.JoinMeetingReq) (*live.JoinMeeti
 	lock.SetExpire(meetingLockTTL)
 	ok, err := lock.AcquireCtx(l.ctx)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "获取会议锁失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_CACHE, err, "获取会议锁失败")
 	}
 	if !ok {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_REPEAT, "会议正在被操作，请稍后重试")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_REPEAT, "会议正在被操作，请稍后重试")
 	}
 	defer lock.Release()
 
 	if meeting.Status == gormmodel.MeetingStatusEnded {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "会议已结束")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "会议已结束")
 	}
 
 	// 校验 Identity 不在当前会议中
@@ -90,7 +90,7 @@ func (l *JoinMeetingLogic) JoinMeeting(in *live.JoinMeetingReq) (*live.JoinMeeti
 			CanPublishSources: in.CanPublishSources,
 		})
 		if err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "生成入会 token 失败")
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "生成入会 token 失败")
 		}
 		return &live.JoinMeetingRes{
 			Token:             token,
@@ -116,7 +116,7 @@ func (l *JoinMeetingLogic) JoinMeeting(in *live.JoinMeetingReq) (*live.JoinMeeti
 		CanPublishSources: in.CanPublishSources,
 	})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "生成入会 token 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "生成入会 token 失败")
 	}
 
 	// 参会记录（webhook participant_joined 到达前先落库，保证查询即时准确）；

@@ -8,8 +8,9 @@
 - `sip_db`: Kamailio MySQL 数据库
 - `turn_server`: 本地构建的 Coturn 镜像，使用 host network
 - `hep_db`、`heplify_server`、`homer_webapp`: SIP 抓包和 Homer 监控
-- `scaler`: 官方的扩缩容组件，默认使用 host network
+- `scaler`: 官方的扩缩容组件，默认使用 host network，参数与用法见 [`scaler/scaler.md`](./scaler/scaler.md)
 - `services/sipmediagw.service`: 通过官方脚本启动媒体网关实例
+- `proxyAPI/`: 网关房间管理用的 HTTP 代理，见 [`proxyAPI/README.md`](./proxyAPI/README.md)
 
 注意：官方 `docker-compose.yml` 没有 `sipmediagw` service。`docker compose up -d` 只启动基础设施；媒体网关镜像由官方 systemd service 和启动脚本单独启动。
 

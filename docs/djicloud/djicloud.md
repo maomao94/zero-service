@@ -26,15 +26,9 @@
 
 ## 架构
 
-```
-业务系统 --> djicloud gRPC (21012) --> common/djisdk --> MQTT Broker --> DJI Dock 3/飞行器
-                                   ^              |
-                                   |              v
-                            services_reply / events / osd / state / status / requests / drc/up
-                                   |
-                                   v
-                              PostgreSQL (设备状态/遥测/事件持久化)
-```
+<div align="center">
+  <img src="../images/diagrams/flow-dji.png" alt="DJI 云平台数据流：djicloud 经 djisdk 通过 MQTT 与 Dock 通信并持久化到 PostgreSQL" style="max-width: 88%; height: auto;" />
+</div>
 
 **两条下行通道**：
 
@@ -70,7 +64,7 @@ app/djicloud/
 │   │   ├── online_cache.go     # 在线状态缓存
 │   │   └── store_helper.go     # 数据库持久化工具
 │   ├── logic/                  # 每个 RPC 一个 logic 文件
-│   │   ├── helper.go           # 公共工具（errRes、okRes、模型转换）
+│   │   ├── helper.go           # 公共工具（commandRes、okRes、模型转换）
 │   │   └── drchelper.go        # DRC MQTT Broker 地址构造
 │   └── server/                 # go-zero 生成的服务骨架
 ├── model/gormmodel/            # 数据模型
@@ -263,6 +257,8 @@ common/djisdk/
 | `tid` | string | 事务 ID，追踪 MQTT 链路 |
 | `reason_code` | int32 | DJI 设备原始错误码，成功时为 0 |
 
+> `CommonRes` 只用于没有业务扩展字段的纯命令接口。飞行区等业务接口保留独立 `XxxRes`，同样使用扁平的 `code/message/tid/reason_code` 字段，便于后续追加业务字段。
+
 ## 配置说明
 
 ```yaml
@@ -382,8 +378,15 @@ SDK 通过 `SubscribeAll()` 订阅 6 个通配符主题，每个主题对应一�
 ### 错误处理
 
 - 设备错误码通过 `DJIError` 类型包装，`error_descriptions.go` 提供约 450 条中文描述
-- Logic 层通过 `errRes(tid, err)` 将 SDK 错误映射到 `CommonRes`，自动提取 `reason_code` 和中文描述
+- Logic 层通过 `commandRes(tid, err)` 将 SDK 错误映射到 `CommonRes`，自动提取 `reason_code` 和中文描述
 - 部分模块（HMS、Organization、AirSense、PSDK）仅处理上行消息，gRPC 暂未暴露下行接口
+
+#### 平台错误与设备结果
+
+- 平台侧失败（参数、数据库、配置、MQTT、超时、OSS 等）通过 gRPC error 返回，错误码取 `extproto.Code`，写入 `ErrorInfo.reason`。
+- DJI 设备拒绝通过业务响应的扁平字段返回：`code`（0 成功 / -1 拒绝）、`message`、`tid`、`reason_code`（DJI 原始码）。
+- DJI 错误码与 `extproto` 是两套独立体系，不互通、不映射、不作为平台码透传；DJI 原始码不写入 gRPC `ErrorInfo.reason`，也不注册到 `extproto`，只通过业务响应字段返回。
+- 纯命令接口使用 `CommonRes`；有业务扩展字段的接口保留独立的 `XxxRes`，结果字段与业务字段扁平并列，不复用 `CommonRes`，便于后续追加字段。
 
 #### 错误码编码规则
 

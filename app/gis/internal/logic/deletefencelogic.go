@@ -28,7 +28,7 @@ func NewDeleteFenceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Delet
 // DeleteFence 删除电子围栏及其关联的空间索引数据。
 func (l *DeleteFenceLogic) DeleteFence(in *gis.DeleteFenceReq) (*gis.DeleteFenceRes, error) {
 	if in.FenceId == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "fenceId")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "fenceId")
 	}
 
 	if err := l.svcCtx.FenceStore.RemoveFence(l.ctx, in.FenceId); err != nil {

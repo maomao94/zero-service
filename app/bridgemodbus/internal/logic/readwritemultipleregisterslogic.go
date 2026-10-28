@@ -37,7 +37,7 @@ func (l *ReadWriteMultipleRegistersLogic) ReadWriteMultipleRegisters(in *bridgem
 
 	uint16Values, errIdx, err := bytex.Uint32SliceToUint16SliceValidate(in.Values)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "第 %d 个值超过 16 位寄存器的最大值 (65535)", errIdx+1)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "第 %d 个值超过 16 位寄存器的最大值 (65535)", errIdx+1)
 	}
 	binaryValues := bytex.Uint16SliceToBinaryValues(uint16Values)
 	l.Infof("读写多个保持寄存器: 写值=0x%X, hex=%v, uint16=%v, int16=%v, binary=%v", binaryValues.Bytes, binaryValues.Hex, binaryValues.Uint16, binaryValues.Int16, binaryValues.Binary)

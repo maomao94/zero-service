@@ -27,7 +27,7 @@ func NewSendReadCmdLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SendR
 func (l *SendReadCmdLogic) SendReadCmd(in *ieccaller.SendReadCmdReq) (*ieccaller.SendReadCmdRes, error) {
 	cli, err := l.svcCtx.ClientManager.GetClientOrNil(in.Host, int(in.Port))
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_RPC, err, "获取IEC客户端失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_RPC, err, "获取IEC客户端失败")
 	}
 	if cli == nil && l.svcCtx.IsBroadcast() {
 		var res ieccaller.SendReadCmdRes
@@ -38,9 +38,9 @@ func (l *SendReadCmdLogic) SendReadCmd(in *ieccaller.SendReadCmdReq) (*ieccaller
 		return &res, nil
 	} else if cli != nil {
 		if err = cli.SendReadCmd(uint16(in.Coa), uint(in.Ioa)); err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "IEC发送读命令失败")
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "IEC发送读命令失败")
 		}
 		return &ieccaller.SendReadCmdRes{}, nil
 	}
-	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

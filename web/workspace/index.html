@@ -1,12 +1,32 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Zero Service 前端工作台，统一管理 Live 视频会议与 SocketIO 网关测试等子系统" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%236366f1'/%3E%3Ctext x='16' y='22' font-size='17' font-weight='700' text-anchor='middle' fill='white' font-family='sans-serif'%3EZ%3C/text%3E%3C/svg%3E" />
+    <meta name="description" content="Zero Service 工作台：统一入口、运行状态与端点速查，覆盖会议、网关与开放平台" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b171d'/%3E%3Cpath d='M16 7l9 5-9 5-9-5 9-5z' fill='%232fb3ad'/%3E%3Cpath d='M7 16l9 5 9-5' stroke='%232fb3ad' stroke-width='2' fill='none' opacity='.6' stroke-linejoin='round'/%3E%3Cpath d='M7 21l9 5 9-5' stroke='%232fb3ad' stroke-width='2' fill='none' opacity='.35' stroke-linejoin='round'/%3E%3C/svg%3E" />
     <title>Zero 工作台</title>
+    <script>
+      // 首屏前确定主题，避免深色模式闪白
+      ;(function () {
+        try {
+          var saved = localStorage.getItem('zero-workspace-theme')
+          var theme = saved === 'light' || saved === 'dark'
+            ? saved
+            : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+          document.documentElement.dataset.theme = theme
+        } catch (error) {
+          document.documentElement.dataset.theme = 'light'
+        }
+      })()
+    </script>
   </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

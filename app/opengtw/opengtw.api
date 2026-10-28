@@ -1,0 +1,145 @@
+syntax = "v1"
+
+info (
+	title:   "opengtw"
+	desc:    "app 开放 API 网关（podman 试点）"
+	author:  "hehanpeng"
+	email:   "hehanpengyy@163.com"
+	version: "v1"
+)
+
+type (
+	// GatewayRequest 开放 API 统一转发请求。
+	// data 为该 method 的 protojson，网关原样透传，不做二次序列化。
+	// 签名头为 X-Sign: v1:<hex>；timestamp/nonce 在 body 中，由 bodyHash 覆盖。
+	GatewayRequest {
+		Method    string      `json:"method"`
+		Data      interface{} `json:"data,optional"`
+		Tid       string      `json:"tid,optional"`
+		Timestamp int64       `json:"timestamp,optional"`
+		Nonce     string      `json:"nonce,optional"`
+	}
+	GatewayReply {
+		Code      int         `json:"code"`
+		Msg       string      `json:"msg"`
+		Data      interface{} `json:"data,optional"`
+		Timestamp int64       `json:"timestamp"`
+	}
+	HealthReply {
+		Status string `json:"status"`
+	}
+	CreateAppRequest {
+		Name         string `json:"name"`
+		Remark       string `json:"remark,optional"`
+		SignRequired bool   `json:"signRequired,optional"`
+	}
+	CreateAppReply {
+		AppId        string `json:"appId"`
+		Name         string `json:"name"`
+		Secret       string `json:"secret"`
+		Status       int    `json:"status"`
+		SignRequired bool   `json:"signRequired"`
+		SignKey      string `json:"signKey,optional"`
+		CreatedAt    string `json:"createdAt"`
+	}
+	ListAppsRequest {
+		Keyword  string `form:"keyword,optional"`
+		Status   int    `form:"status,optional"`
+		PageNum  int64  `form:"pageNum,optional"`
+		PageSize int64  `form:"pageSize,optional"`
+	}
+	AppItem {
+		AppId        string `json:"appId"`
+		Name         string `json:"name"`
+		Remark       string `json:"remark"`
+		Status       int    `json:"status"`
+		SignRequired bool   `json:"signRequired"`
+		LastUsedAt   string `json:"lastUsedAt,omitempty"`
+		CreatedAt    string `json:"createdAt"`
+	}
+	ListAppsReply {
+		Items    []AppItem `json:"items"`
+		Total    int64     `json:"total"`
+		PageNum  int64     `json:"pageNum"`
+		PageSize int64     `json:"pageSize"`
+	}
+	DisableAppRequest {
+		AppId        string `json:"appId"`
+		Status       int    `json:"status"`
+		SignRequired *bool  `json:"signRequired,optional"`
+	}
+	DisableAppReply {
+		AppId        string `json:"appId"`
+		Status       int    `json:"status"`
+		SignRequired bool   `json:"signRequired"`
+		SignKey      string `json:"signKey,optional"`
+	}
+	ResetAppSecretRequest {
+		AppId string `json:"appId"`
+	}
+	ResetAppSecretReply {
+		AppId             string `json:"appId"`
+		Secret            string `json:"secret"`
+		OldSecretExpireAt string `json:"oldSecretExpireAt"`
+		SignKey           string `json:"signKey,optional"`
+		SignKeyExpireAt   string `json:"signKeyExpireAt,optional"`
+	}
+	RevealSignKeyRequest {
+		AppId string `json:"appId"`
+	}
+	RevealSignKeyReply {
+		AppId        string `json:"appId"`
+		SignKey      string `json:"signKey"`
+		SignRequired bool   `json:"signRequired"`
+		RevealedAt   string `json:"revealedAt"`
+	}
+)
+
+@server (
+	prefix:     /v1
+	group:      gateway
+	middleware: OpenAuth
+)
+service opengtw {
+	@doc "统一转发（Basic 鉴权，method 决定下游调用）"
+	@handler gateway
+	post /gateway (GatewayRequest) returns (GatewayReply)
+}
+
+@server (
+	prefix: /v1
+	group:  gateway
+)
+service opengtw {
+	@doc "存活探针（不鉴权）"
+	@handler health
+	get /health returns (HealthReply)
+}
+
+@server (
+	prefix:     /open-admin/v1
+	group:      app
+	jwt:        JwtAuth
+	middleware: UserAuth,NoStore
+)
+service opengtw {
+	@doc "创建应用（secret 仅返回一次）"
+	@handler createApp
+	post /app/create (CreateAppRequest) returns (CreateAppReply)
+
+	@doc "应用列表"
+	@handler listApps
+	get /app/list (ListAppsRequest) returns (ListAppsReply)
+
+	@doc "启用/停用应用并配置是否要求签名"
+	@handler disableApp
+	post /app/disable (DisableAppRequest) returns (DisableAppReply)
+
+	@doc "重置应用密钥（旧密钥保留 24h）"
+	@handler resetAppSecret
+	post /app/secret/reset (ResetAppSecretRequest) returns (ResetAppSecretReply)
+
+	@doc "查看当前签名密钥（审计）"
+	@handler revealSignKey
+	post /app/sign-key/reveal (RevealSignKeyRequest) returns (RevealSignKeyReply)
+}

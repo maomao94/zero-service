@@ -33,7 +33,7 @@ func (l *PerformMeetingRpcLogic) PerformMeetingRpc(in *live.PerformMeetingRpcReq
 		return nil, err
 	}
 	if strings.TrimSpace(in.Method) == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "method 不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "method 不能为空")
 	}
 	resp, err := l.svcCtx.LiveKit.Room().PerformRpc(l.ctx, &livekit.PerformRpcRequest{
 		Room:                in.MeetingNo,
@@ -43,7 +43,7 @@ func (l *PerformMeetingRpcLogic) PerformMeetingRpc(in *live.PerformMeetingRpcReq
 		ResponseTimeoutMs:   in.ResponseTimeoutMs,
 	})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "RPC 调用失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "RPC 调用失败")
 	}
 	return &live.PerformMeetingRpcRes{Response: resp.GetPayload()}, nil
 }

@@ -45,6 +45,6 @@ func (l *GetCurrentUserLogic) GetCurrentUser(req *types.GetCurrentUserRequest) (
 			User: user,
 		}, nil
 	} else {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_03_UNAUTHORIZED, "未登录")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_UNAUTHORIZED, "未登录")
 	}
 }

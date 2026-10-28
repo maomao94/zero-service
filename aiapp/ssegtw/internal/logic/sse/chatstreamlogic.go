@@ -59,7 +59,7 @@ func (l *ChatStreamLogic) ChatStream(req *types.ChatStreamRequest) error {
 	// 1. 注册完成信号（ReplyPool）
 	donePromise, err := l.svcCtx.PendingReg.Register(channel, 60*time.Second)
 	if err != nil {
-		return tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "register pending failed")
+		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "register pending failed")
 	}
 
 	// 2. 订阅事件流（EventEmitter）

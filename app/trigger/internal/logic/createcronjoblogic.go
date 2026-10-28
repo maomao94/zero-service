@@ -46,9 +46,9 @@ func (l *CreateCronJobLogic) CreateCronJob(in *trigger.CreateCronJobReq) (*trigg
 	}
 	if err := l.svcCtx.CronJobStore.Insert(l.ctx, task); err != nil {
 		if errors.Is(err, crontask.ErrDuplicate) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_ALREADY_EXIST)
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_ALREADY_EXIST)
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "创建 Cron Job 失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "创建 Cron Job 失败")
 	}
 	nextRun := ""
 	if !task.NextRun.IsZero() {

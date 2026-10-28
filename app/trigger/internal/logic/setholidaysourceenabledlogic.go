@@ -37,7 +37,7 @@ func (l *SetHolidaySourceEnabledLogic) SetHolidaySourceEnabled(in *trigger.SetHo
 	}
 	if err := l.svcCtx.HolidaySource.SetEnabled(l.ctx, in.Date, in.Enabled); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
 		}
 		return nil, err
 	}

@@ -2,9 +2,12 @@ package gtwx
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+
+	"zero-service/common/errx"
 
 	"github.com/zeromicro/go-zero/rest/httpx"
 	"google.golang.org/grpc/codes"
@@ -81,7 +84,7 @@ func SetOpenAIErrorHandler() {
 
 		// gRPC status error -> OpenAI error
 		if st, ok := status.FromError(err); ok {
-			httpStatus := GrpcCodeToHTTPStatus(st.Code())
+			httpStatus := errx.GrpcCodeToHTTPStatus(st.Code())
 			return httpStatus, &openAIErrorBody{
 				ErrorMsg: OpenAIErrorDetail{
 					Type:    grpcCodeToOpenAIType(st.Code()),
@@ -147,4 +150,31 @@ func grpcCodeToOpenAICode(code codes.Code) string {
 	default:
 		return ""
 	}
+}
+
+// ===== OpenAI 协议面的框架级兜底 =====
+// aigtw 的业务错误走 OpenAI 格式（HTTP 4xx/5xx + {"error":{...}}），
+// 因此 JWT 失败、404、405 也必须保持同样的形状，不能落成纯文本。
+
+func writeOpenAIError(w http.ResponseWriter, status int, typ, msg, code string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(openAIErrorBody{
+		ErrorMsg: OpenAIErrorDetail{Type: typ, Message: msg, Code: code},
+	})
+}
+
+// OpenAIUnauthorizedHandler 供 rest.WithUnauthorizedCallback 使用。
+func OpenAIUnauthorizedHandler(w http.ResponseWriter, _ *http.Request, _ error) {
+	writeOpenAIError(w, http.StatusUnauthorized, "invalid_request_error", "invalid authentication credentials", "invalid_api_key")
+}
+
+// OpenAINotFoundHandler 供 rest.WithNotFoundHandler 使用。
+func OpenAINotFoundHandler(w http.ResponseWriter, _ *http.Request) {
+	writeOpenAIError(w, http.StatusNotFound, "invalid_request_error", "resource not found", "not_found")
+}
+
+// OpenAINotAllowedHandler 供 rest.WithNotAllowedHandler 使用。
+func OpenAINotAllowedHandler(w http.ResponseWriter, _ *http.Request) {
+	writeOpenAIError(w, http.StatusMethodNotAllowed, "invalid_request_error", "method not allowed", "method_not_allowed")
 }

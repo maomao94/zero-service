@@ -1,0 +1,50 @@
+Name: opengtw
+Host: 0.0.0.0
+Port: 11005
+Mode: dev
+Timeout: 120000
+MaxBytes: 1048576
+Log:
+  Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/opengtw
+  Level: info
+  KeepDays: 300
+# 管理面 JWT 鉴权：与 gtw/livegtw 保持同一密钥，本地签发的 token 可直接复用
+JwtAuth:
+  AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
+# 应用凭据库：本地默认使用金仓 zero 库（与 trigger 本地示例一致），仅 dev/test 自动建表
+# 生产建议独立 resource 库：kingbase://<user>:<pass>@<host>:54321/RESOURCE?sslmode=disable
+DB:
+  DataSource: kingbase://system:12345678ab@127.0.0.1:54321/zero?sslmode=disable&TimeZone=Asia/Shanghai
+  # 最大空闲连接数，默认 100。
+  MaxIdleConns: 100
+  # 最大打开连接数，默认 100。
+  MaxOpenConns: 100
+  # 慢 SQL 阈值，默认 200ms。
+  SlowThreshold: 200ms
+  # GORM 日志级别，默认 error，可选 silent/error/warn/info。
+  LogLevel: error
+  # 是否参数化 SQL 日志，默认 false。生产环境建议开启以避免日志暴露敏感参数。
+  ParameterizedQueries: false
+  # 是否忽略 record not found 日志，默认 false。
+  IgnoreRecordNotFoundError: false
+  # 是否按字段名显式查询，默认 false。
+  QueryFields: false
+# 存在 signRequired=true 的应用时再配置：
+# 本地联调可临时取消注释；主密钥一旦用于创建应用就不能随意更换，否则旧 sign_key_cipher 无法解密。
+# SignKeyEncryptionKey: change-me-sign-key-encryption-key-32-bytes-minimum
+# 管理面查看当前 signKey（审计）。默认关闭；本地调试需要时再改为 true。
+# 注意：生产镜像会打包本文件，开启前请确认 /open-admin 只在内网可达。
+SignKeyRevealEnabled: false
+# Redis 用于签名 nonce 防重放，签名应用启用时必须同时配置：
+# Redis:
+#   Host: 127.0.0.1:6379
+#   Type: node
+#   NonBlock: true
+# app/openapi 统一转发服务
+OpenApiConf:
+  Endpoints:
+    - 127.0.0.1:21018
+  NonBlock: true
+  Timeout: 120000

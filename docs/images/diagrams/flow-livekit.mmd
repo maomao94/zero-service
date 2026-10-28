@@ -1,0 +1,8 @@
+flowchart LR
+    CLIENT["前端客户端"] -->|HTTP| LGTW["livegtw"]
+    LGTW -->|gRPC| LIVE["live"]
+    LIVE -->|管理 API| LK["LiveKit Server"]
+    CLIENT <-->|WebRTC 音视频| LK
+    LK -->|Webhook| LGTW
+    LGTW -->|验签后转发| LIVE
+    LIVE --> STORE["PostgreSQL / Redis"]

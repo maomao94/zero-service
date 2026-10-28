@@ -33,7 +33,7 @@ func (l *SendMeetingDataLogic) SendMeetingData(in *live.SendMeetingDataReq) (*li
 		return nil, err
 	}
 	if strings.TrimSpace(in.Topic) == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "topic 不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "topic 不能为空")
 	}
 	if _, err := l.svcCtx.LiveKit.Room().SendData(l.ctx, &livekit.SendDataRequest{
 		Room:                  in.MeetingNo,
@@ -42,7 +42,7 @@ func (l *SendMeetingDataLogic) SendMeetingData(in *live.SendMeetingDataReq) (*li
 		Kind:                  livekit.DataPacket_RELIABLE,
 		DestinationIdentities: in.Destinations,
 	}); err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "发送数据失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "发送数据失败")
 	}
 	return &live.SendMeetingDataRes{}, nil
 }

@@ -37,7 +37,7 @@ func (l *GetPodStatsLogic) GetPodStats(in *podengine.GetPodStatsReq) (*podengine
 	}
 	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
 	if !ok {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "node: "+in.Node)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "node: "+in.Node)
 	}
 
 	// Inspect container to get basic info

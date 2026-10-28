@@ -4,7 +4,7 @@
 # nginx 只读挂载该 dist 目录（未来测试/生产可直接覆盖或上传此目录）
 #
 # 用法:
-#   bash deploy/nginx/build-web.sh              # 构建全部（live/socketio/workspace）
+#   bash deploy/nginx/build-web.sh              # 构建全部（live/socketio/workspace/openapi）
 #   bash deploy/nginx/build-web.sh live         # 只构建 live
 #   bash deploy/nginx/build-web.sh live socketio
 
@@ -16,7 +16,7 @@ DIST_DIR="$NGINX_DIR/dist"
 
 APPS=("$@")
 if [ ${#APPS[@]} -eq 0 ]; then
-  APPS=(live socketio workspace)
+  APPS=(live socketio workspace openapi)
 fi
 
 for app in "${APPS[@]}"; do

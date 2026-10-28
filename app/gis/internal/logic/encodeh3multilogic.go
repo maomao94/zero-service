@@ -30,7 +30,7 @@ func (l *EncodeH3MultiLogic) EncodeH3Multi(in *gis.EncodeH3MultiReq) (*gis.Encod
 		return nil, err
 	}
 	if len(in.Resolutions) == 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "resolutions")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "resolutions")
 	}
 
 	items := make([]*gis.H3Index, 0, len(in.Resolutions))

@@ -39,14 +39,14 @@ func NewWebhookNotifyLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Web
 // 流转、unknown 会议安全忽略），重复/补发重放结果一致，保证业务闭环。
 func (l *WebhookNotifyLogic) WebhookNotify(in *live.WebhookNotifyReq) (*live.WebhookNotifyRes, error) {
 	if len(in.Data) == 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "webhook 数据不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "webhook 数据不能为空")
 	}
 	event := &livekit.WebhookEvent{}
 	if err := proto.Unmarshal(in.Data, event); err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "webhook 数据解析失败")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "webhook 数据解析失败")
 	}
 	if strings.TrimSpace(event.GetId()) == "" || strings.TrimSpace(event.GetEvent()) == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "webhook 事件缺失 id 或类型")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "webhook 事件缺失 id 或类型")
 	}
 
 	// 入口摘要：串起 hook 链路（事件 id/类型/房间/egress），便于按 id 追踪整条事件

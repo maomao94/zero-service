@@ -32,12 +32,12 @@ func NewBatchDistanceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Bat
 // BatchDistance 批量计算点对之间的大圆距离（Haversine 公式，单位：米）。
 func (l *BatchDistanceLogic) BatchDistance(in *gis.BatchDistanceReq) (*gis.BatchDistanceRes, error) {
 	if len(in.Pairs) == 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "pairs")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "pairs")
 	}
 	meters := make([]float64, len(in.Pairs))
 	for i, pair := range in.Pairs {
 		if err := ValidatePoints(pair.A, pair.B); err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, fmt.Sprintf("第 %d 个点对错误", i))
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, fmt.Sprintf("第 %d 个点对错误", i))
 		}
 		a := orb.Point{pair.A.Lon, pair.A.Lat}
 		b := orb.Point{pair.B.Lon, pair.B.Lat}

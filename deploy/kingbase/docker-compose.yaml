@@ -8,8 +8,9 @@
 #   - 数据持久化在 ./data（对应容器 /home/kingbase/userdata），down 不丢数据；
 #     deploy.sh 启动前自动创建 data 并赋 755 权限（官方要求）
 #   - 默认宿主机端口 54321；端口冲突时设置 KINGBASE_HOST_PORT，只修改宿主机映射端口
-#   - 镜像自带授权 90 天（ksql 查询: select GET_LICENSE_VALIDDAYS();），到期需替换
-#     userdata/etc/license.dat 并 sys_ctl reload
+#   - 镜像自带授权 90 天（ksql 查询: select GET_LICENSE_VALIDDAYS();），到期执行 stop 后
+#     重新部署即可刷新，data 保留；restart 不刷新
+#   - 换正式授权用 bash deploy/kingbase/deploy.sh license <文件>（写入容器内 bin/license.dat）
 #   - gormx 连接串: kingbase://system:12345678ab@127.0.0.1:54321/kingbase?sslmode=disable
 #     （kingbase 为金仓默认库；业务库用 init.sql 或管理工具创建）
 #     （外部认证默认 scram-sha-256，满足 PG 兼容驱动要求，国密场景另行接入 gokb 驱动）

@@ -52,20 +52,19 @@ Trigger 是基于 go-zero 的统一任务调度服务，对外契约见 [`trigge
 
 计划任务使用三级模型：
 
-```text
-Plan（计划）
-  +-- Batch 1（一个计划执行时间）
-  |     +-- ExecItem 1（业务执行单元）
-  |     +-- ExecItem 2
-  +-- Batch 2
-        +-- ExecItem 3
-```
+<div align="center">
+  <img src="../images/diagrams/trigger-plan-model.png" alt="Plan / Batch / ExecItem 三级模型：计划预展开为批次与执行项" style="max-width: 72%; height: auto;" />
+</div>
 
 创建时，Trigger 根据 `PlanRulePb`、`startTime`、`endTime`、`specifiedTimes`、`excludedTimes` 和 `excludeDates` 生成 RFC 5545 RRULE Set，再将有效候选预展开为 Batch 和 ExecItem；规则有效期跨度不能超过 3 年，且最终候选数与执行项数的乘积不能超过 5000。`skipTimeFilter=false` 时创建会过滤过去候选。`plan.rrule_str` 保存创建时的规则快照，实际运行仍由 ExecItem 的 `next_trigger_time` 驱动。
 
 Plan 与 CronJob 共用 `(RRULE ∪ specifiedTimes) - excludedTimes - expanded(excludeDates)` 集合语义：指定时间编译为 RDATE，精确时间和整日排除编译为 EXDATE，排除优先且同一秒去重。完整字段与请求示例见 [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md)。
 
 ### 执行流程
+
+<div align="center">
+  <img src="../images/diagrams/trigger-plan-sequence.png" alt="计划任务执行时序：创建计划、扫表抢占、下发 StreamEvent、回调与聚合" style="max-width: 82%; height: auto;" />
+</div>
 
 1. `CreatePlanTask` 创建 Plan，并预展开 Batch 和 ExecItem。
 2. CronService 扫描到期 ExecItem，通过带状态、版本和时间条件的更新抢占执行项。
@@ -75,19 +74,9 @@ Plan 与 CronJob 共用 `(RRULE ∪ specifiedTimes) - excludedTimes - expanded(e
 
 ### ExecItem 状态
 
-```text
-WAITING(0) / DELAYED(10)
-          |
-          | 到期并成功抢占
-          v
-      RUNNING(100)
-       |    |    |
-       |    |    +-- terminated --> TERMINATED(300)
-       |    +------- completed  --> COMPLETED(200)
-       +------------ failed/delayed --> DELAYED(10)
-
-WAITING(0) / DELAYED(10) -- pause --> PAUSED(150) -- resume --> WAITING(0)
-```
+<div align="center">
+  <img src="../images/diagrams/trigger-execitem-state.png" alt="ExecItem 状态机：WAITING / DELAYED / RUNNING / PAUSED / COMPLETED / TERMINATED 的流转" style="max-width: 72%; height: auto;" />
+</div>
 
 | 状态 | 值 | 说明 |
 | --- | ---: | --- |
@@ -166,20 +155,9 @@ CronJob 不预展开执行数据，100 年仅是显式生效区间的上限。�
 
 ### 周期执行流程
 
-```text
-CreateCronJob
-      |
-      v
-cron_job（RRULE + next_run）
-      |
-      | CronJobScheduler 扫描并通过 lease 条件更新抢占
-      v
-StreamEvent.HandleCronJobEvent
-      |
-      +-- SUCCESS ---------> 计算并提交下一次 next_run
-      +-- TASK_NOT_FOUND --> 软删除 CronJob
-      +-- UNKNOWN / RPC 错误 -> 保留 lease，过期后允许再次扫描
-```
+<div align="center">
+  <img src="../images/diagrams/trigger-cronjob.png" alt="CronJob 周期执行流程：扫表抢占、回调 StreamEvent、回执分支与下一次 next_run" style="max-width: 78%; height: auto;" />
+</div>
 
 调度器默认每 2 秒扫描一次；抢占到任务后会快速继续扫描其他到期任务。默认 lease 为 5 分钟，任务可以通过 `lockTimeout` 覆盖。完成更新必须匹配本次 `locked_until`，避免旧 worker 覆盖新的 claim。
 
@@ -308,6 +286,6 @@ go run . -f etc/trigger.yaml
 
 - [`trigger.proto`](../../app/trigger/trigger.proto) - Trigger RPC 契约
 - [`streamevent.proto`](../../facade/streamevent/streamevent.proto) - Plan 与 CronJob 业务回调契约
-- [`app/trigger/internal/cronjob`](../../app/trigger/internal/cronjob) - CronJob 规则编译、Store 和 Handler 适配
-- [`common/crontask`](../../common/crontask) - 通用 RRULE 调度器与 lease 契约
+- [`app/trigger/internal/cronjob/schedule.go`](../../app/trigger/internal/cronjob/schedule.go) - CronJob 规则编译、Store 和 Handler 适配
+- [`common/crontask/crontask.go`](../../common/crontask/crontask.go) - 通用 RRULE 调度器与 lease 契约
 - [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md) - 周期规则、指定时间、精确与整日排除及 Plan/CronJob 示例

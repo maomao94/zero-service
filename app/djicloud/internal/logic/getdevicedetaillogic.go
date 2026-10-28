@@ -31,7 +31,7 @@ func (l *GetDeviceDetailLogic) GetDeviceDetail(in *djicloud.GetDeviceDetailReq) 
 	if err := l.svcCtx.DB.WithContext(l.ctx).
 		Where("device_sn = ?", in.DeviceSn).
 		First(&device).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_RECORD_NOT_EXIST, err, "查询设备详情失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_RECORD_NOT_EXIST, err, "查询设备详情失败")
 	}
 	res := &djicloud.GetDeviceDetailRes{Device: toDeviceInfo(&device)}
 	var osd gormmodel.DjiDeviceOsdSnapshot

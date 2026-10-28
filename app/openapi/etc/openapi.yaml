@@ -1,0 +1,24 @@
+Name: openapi.rpc
+ListenOn: 0.0.0.0:21018
+Mode: dev
+Timeout: 120000
+MaxConns: 10000
+Log:
+  Encoding: plain
+  Path: /opt/logs/openapi.rpc
+  Level: info
+  KeepDays: 300
+# 下游 podengine；Mock 为 true 时不建立连接
+PodEngineConf:
+  Endpoints:
+    - 127.0.0.1:21010
+  NonBlock: true
+  Timeout: 120000
+# 下游 bridgemodbus；Mock 为 true 时不建立连接
+BridgeModbusConf:
+  Endpoints:
+    - 127.0.0.1:25004
+  NonBlock: true
+  Timeout: 120000
+# 仅 dev/test 可启用；生产必须为 false
+Mock: true

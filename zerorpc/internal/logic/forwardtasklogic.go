@@ -59,11 +59,11 @@ func (l *ForwardTaskLogic) ForwardTask(in *zerorpc.ForwardTaskReq) (*zerorpc.For
 	if len(in.TriggerTime) > 0 {
 		triggerTime := carbon.Parse(in.TriggerTime)
 		if triggerTime.Error != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, triggerTime.Error, "triggerTime 格式错误")
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, triggerTime.Error, "triggerTime 格式错误")
 		}
 		internal := carbon.Now().DiffInSeconds(triggerTime)
 		if internal < 0 {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "triggerTime 必须晚于当前时间")
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "triggerTime 必须晚于当前时间")
 		}
 		d = time.Duration(internal) * time.Second
 	} else {

@@ -1,0 +1,6 @@
+flowchart LR
+    THIRD["第三方 / Java"] -->|"HTTP + Basic"| OGTW["opengtw :11005"]
+    OGTW -->|gRPC| OPEN["app/openapi :21018"]
+    OPEN -->|gRPC| POD["podengine :21010"]
+    OPEN -->|gRPC| MODBUS["bridgemodbus :25004"]
+    THIRD -.->|"内网直连，不做鉴权"| OPEN

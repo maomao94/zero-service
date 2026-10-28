@@ -5,6 +5,7 @@
 #   stop      移除容器，保留 ./data 数据
 #   restart   重启容器（数据库进程异常时的恢复手段）
 #   status    查看容器状态与授权剩余天数
+#   license   用新授权文件覆盖容器内生效授权并重启（默认读 data/etc/license.dat，也可传路径）
 #   logs      查看容器日志（最近 100 行）
 #   ksql      进入 ksql 交互（容器内 local trust 免密，直连默认库 kingbase）
 #
@@ -48,6 +49,56 @@ wait_ready() {
   done
   echo "警告: 超时未就绪；可执行 bash $0 logs 查看日志，数据异常时 stop 后手动清空 data 目录重新部署"
   return 1
+}
+
+cmd_license() {
+  # 金仓只读容器内 /home/kingbase/install/kingbase/bin/license.dat，
+  # 宿主机 data/etc/license.dat 仅首次初始化时被软链引用，重建后不再生效，
+  # 因此换授权必须覆盖容器内文件，不能只改挂载目录。
+  SRC="${1:-$(pwd)/data/etc/license.dat}"
+  [ -f "$SRC" ] || { echo "错误: 未找到授权文件 $SRC"; exit 1; }
+  head -c 200 "$SRC" | grep -q 'BEGIN LICENSE' \
+    || { echo "错误: $SRC 不是金仓授权文件（缺少 BEGIN LICENSE 头）"; exit 1; }
+  docker ps --format '{{.Names}}' | grep -qx kingbase \
+    || { echo "错误: 容器 kingbase 未运行，先执行 bash $0 完成部署"; exit 1; }
+
+  mkdir -p data/etc
+  STAMP=$(date +%Y%m%d_%H%M%S)
+  BACKUP="$(pwd)/data/etc/license.dat.bak.$STAMP"
+  # 授权实际生效在容器可写层，重建即丢，换之前先落一份到宿主机便于回滚。
+  # 注意：bin/license.dat 可能是软链，docker cp 会原样带出软链（落到宿主机成为断链），
+  # 必须按内容读取，才能得到真正的授权文件。
+  if docker exec kingbase cat /home/kingbase/install/kingbase/bin/license.dat > "$BACKUP" 2>/dev/null \
+      && [ -s "$BACKUP" ]; then
+    echo "已备份当前生效授权: data/etc/license.dat.bak.$STAMP"
+  else
+    rm -f "$BACKUP"
+    echo "警告: 未能备份当前授权（容器内文件不可读），继续替换"
+  fi
+
+  echo "写入新授权: $SRC"
+  # 同样不能用 docker cp：目标若为软链会被当成普通文件覆盖掉软链关系。
+  # 用 cat 重定向写到解析后的真实文件，软链场景即写入挂载目录的 data/etc/license.dat。
+  docker exec -i -u 0 kingbase sh -c 'cat > /home/kingbase/install/kingbase/bin/license.dat' < "$SRC"
+  docker exec -u 0 kingbase chmod 755 /home/kingbase/install/kingbase/bin/license.dat >/dev/null 2>&1 || true
+  docker exec -u 0 kingbase chown kingbase:kingbase /home/kingbase/install/kingbase/bin/license.dat >/dev/null 2>&1 || true
+
+  # 宿主机留一份最新副本，下次重建或回滚时可直接使用
+  SRC_ABS="$(cd "$(dirname "$SRC")" && pwd)/$(basename "$SRC")"
+  if [ "$SRC_ABS" != "$(pwd)/data/etc/license.dat" ]; then
+    cp -f "$SRC" data/etc/license.dat
+    echo "已同步副本到 data/etc/license.dat"
+  fi
+
+  echo "重启数据库使授权生效..."
+  docker restart kingbase >/dev/null
+  if ! wait_ready; then
+    echo "错误: 重启后数据库未就绪"
+    echo "回滚: bash $0 license $BACKUP"
+    exit 1
+  fi
+  echo "授权剩余: $(license_days) 天"
+  echo "回滚: bash $0 license $BACKUP"
 }
 
 cmd_deploy() {
@@ -116,7 +167,7 @@ cmd_deploy() {
   echo "  数据卷: $(pwd)/data"
   echo "  gormx:  kingbase://$DB_USER:$DB_PASSWORD@127.0.0.1:${HOST_PORT}/kingbase?sslmode=disable"
   echo "  JDBC:   jdbc:postgresql://127.0.0.1:${HOST_PORT}/kingbase?reWriteBatchedInserts=true&tcpKeepAlive=true（PG 模式推荐，MyBatis-Plus 用 DbType.POSTGRE_SQL）"
-  echo "  授权:   剩余 $(license_days) 天，到期需替换 userdata/etc/license.dat"
+  echo "  授权:   剩余 $(license_days) 天（镜像自带 90 天，到期执行 stop 后重新部署即可刷新，data 不受影响）"
 }
 
 case "${1:-deploy}" in
@@ -136,6 +187,9 @@ case "${1:-deploy}" in
     docker compose ps kingbase
     echo "授权剩余: $(license_days) 天"
     ;;
+  license)
+    cmd_license "${2:-}"
+    ;;
   logs)
     docker compose logs --tail 100 kingbase
     ;;
@@ -143,7 +197,7 @@ case "${1:-deploy}" in
     docker exec -it kingbase ksql -U"$DB_USER" -d "$DB_NAME" -p 54321
     ;;
   *)
-    echo "未知命令: $1；可用: deploy(默认)/stop/restart/status/logs/ksql"
+    echo "未知命令: $1；可用: deploy(默认)/stop/restart/status/license/logs/ksql"
     exit 1
     ;;
 esac

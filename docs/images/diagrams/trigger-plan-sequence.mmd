@@ -1,0 +1,19 @@
+sequenceDiagram
+    participant C as 调用方
+    participant T as trigger
+    participant DB as 数据库
+    participant SE as streamevent
+    C->>T: CreatePlanTask
+    T->>DB: 写入 plan / plan_batch / plan_exec_item
+    T-->>C: 受理结果
+    loop CronService 扫表
+        T->>DB: 按状态+版本+时间条件抢占到期 ExecItem
+        T->>SE: HandlerPlanTaskEvent
+        alt 直接返回结果
+            SE-->>T: execResult
+        else 后续回调
+            SE->>T: CallbackPlanExecItem(execId)
+        end
+        T->>DB: 更新 ExecItem 并写入 plan_exec_log
+    end
+    T->>DB: 全部执行项结束后聚合 Batch 与 Plan

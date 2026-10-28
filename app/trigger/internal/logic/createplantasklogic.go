@@ -48,10 +48,10 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	err = db.Where("plan_id = ?", in.PlanId).First(&plan).Error
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划失败")
 		}
 	} else {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_ALREADY_EXIST)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_ALREADY_EXIST)
 	}
 	calculated, err := NewCalcPlanTaskDateLogic(l.ctx, l.svcCtx).CalcPlanTaskDate(&trigger.CalcPlanTaskDateReq{
 		StartTime:      in.StartTime,
@@ -67,17 +67,17 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	rruleStr := calculated.GetRruleStr()
 	set, err := rrule.StrToRRuleSet(rruleStr)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "解析计划规则失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "解析计划规则失败")
 	}
 	rule := set.GetRRule()
 	if rule == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "计划规则缺少 RRULE")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "计划规则缺少 RRULE")
 	}
 	dates := make([]time.Time, 0, len(calculated.PlanDates))
 	for _, value := range calculated.PlanDates {
 		date := carbon.ParseByLayout(value, carbon.DateTimeLayout, carbon.Shanghai)
 		if date.Error != nil || date.IsInvalid() {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, date.Error, "解析计划日期失败")
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, date.Error, "解析计划日期失败")
 		}
 		dates = append(dates, date.StdTime())
 	}
@@ -91,15 +91,15 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		}
 		dates = validDates
 		if len(dates) == 0 {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "计划任务时间段内没有触发时间")
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "计划任务时间段内没有触发时间")
 		}
 	}
 	if len(dates) > 5000/len(in.ExecItems) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "计划任务时间段内调度项过多")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "计划任务时间段内调度项过多")
 	}
 	ruleJSON, err := protojson.Marshal(in.Rule)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "序列化计划规则失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "序列化计划规则失败")
 	}
 	currentUserId := authctx.GetUserId(l.ctx)
 
@@ -227,7 +227,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		return nil
 	})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "创建计划事务失败")
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "创建计划事务失败")
 	}
 	return &trigger.CreatePlanTaskRes{
 		Id:       insertPlan.Id,

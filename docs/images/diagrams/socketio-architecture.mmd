@@ -1,0 +1,5 @@
+flowchart LR
+    CLIENT["前端客户端"] <-->|WebSocket| SGTW["socketgtw<br/>连接 · 房间 · 路由"]
+    SGTW <-->|gRPC| SVC["业务服务"]
+    SVC <-->|gRPC| PUSH["socketpush<br/>Token · 推送"]
+    PUSH <-->|gRPC| SGTW

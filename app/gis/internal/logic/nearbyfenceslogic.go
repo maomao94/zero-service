@@ -34,7 +34,7 @@ func (l *NearbyFencesLogic) NearbyFences(in *gis.NearbyFencesReq) (*gis.NearbyFe
 		return nil, err
 	}
 	if in.Km <= 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "km必须大于0")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "km必须大于0")
 	}
 
 	fenceIds, err := l.svcCtx.FenceStore.FindNearbyFenceIds(l.ctx, in.Point.Lon, in.Point.Lat, in.Km)

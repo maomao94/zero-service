@@ -10,6 +10,7 @@ import (
 	"zero-service/app/livegtw/internal/logic/live"
 	"zero-service/app/livegtw/internal/svc"
 	"zero-service/app/livegtw/internal/types"
+	"zero-service/common/gtwx"
 )
 
 // 查询录制详情
@@ -17,16 +18,16 @@ func GetMeetingRecordingHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req types.GetMeetingRecordingRequest
 		if err := httpx.Parse(r, &req); err != nil {
-			httpx.ErrorCtx(r.Context(), w, err)
+			gtwx.WriteParseError(r.Context(), w, err)
 			return
 		}
 
 		l := live.NewGetMeetingRecordingLogic(r.Context(), svcCtx)
 		resp, err := l.GetMeetingRecording(&req)
 		if err != nil {
-			httpx.ErrorCtx(r.Context(), w, err)
+			gtwx.WriteError(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, resp)
+			gtwx.WriteOK(r.Context(), w, resp)
 		}
 	}
 }

@@ -66,6 +66,10 @@ func main() {
 	server := rest.MustNewServer(c.RestConf,
 		gtwx.CorsOption(),
 		rest.WithFileServer("/static", http.Dir(staticRoot)),
+		// OpenAI 协议面：框架级错误也保持 {"error":{...}} 形状，不落纯文本。
+		rest.WithUnauthorizedCallback(gtwx.OpenAIUnauthorizedHandler),
+		rest.WithNotFoundHandler(http.HandlerFunc(gtwx.OpenAINotFoundHandler)),
+		rest.WithNotAllowedHandler(http.HandlerFunc(gtwx.OpenAINotAllowedHandler)),
 	)
 
 	// 全局中间件

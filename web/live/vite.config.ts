@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: '127.0.0.1',
     port: 5178,
     strictPort: true,
     proxy: {
@@ -14,7 +15,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/livekit/, ''),
       },
       '/live': 'http://127.0.0.1:11002',
-      '/recordings': 'http://127.0.0.1:8088',
+      '/recordings': 'http://127.0.0.1',
       '/socket.io': {
         target: 'http://127.0.0.1:11003',
         ws: true,
