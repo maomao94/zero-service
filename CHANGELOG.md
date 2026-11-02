@@ -9,12 +9,14 @@
 ### 新增
 
 - 文档质量门禁：`scripts/check_docs.py` 校验相对链接、页内锚点与代码块闭合，并由 `.github/workflows/docs.yml` 在 CI 执行。
+- CI 门禁：新增 `pr-title.yml`，按 Conventional Commits 校验 PR 标题，修改标题后自动重跑。
 - 仓库治理文件：`SECURITY.md`、`CODE_OF_CONDUCT.md`、`SUPPORT.md`、Issue 表单与 PR 模板。
 - 文档：`docs/antsx.md`（原语选型与项目实践）、`docs/ai-collaboration.md`（AI 协作与技能集来源）。
 
 ### 变更
 
 - 错误码：网关折叠策略从 `errx` 下沉到 `gtwx`，默认不折叠、按 `Error.Fold.Codes` 折叠；`100603` 强制透传。
+- CI 门禁：`master` 分支保护补齐 `Linux`、`gofmt & whitespace`、`Analyze (go)`、`runner / staticcheck`、`Markdown links` 五项必需检查，并开启 `enforce_admins`，与 `develop` 保持一致。
 - 文档：按「规则/示例」「正文/附录」拆分 `trigger-rrule-api-guide.md` 与 `iec104-message.md`。
 
 ### 移除

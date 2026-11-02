@@ -1,7 +1,7 @@
 <!--
 提交前请确认：
 - 标题使用 Conventional Commits 格式，例如 fix(trigger): 修正 CronJob 补触发边界
-- 变更类型由标题前缀表达（feat/fix/docs/refactor/chore/ci/test/perf），正文不重复勾选：
+- 变更类型由标题前缀表达（feat/fix/docs/style/refactor/test/chore/ci/perf/build/revert），正文不重复勾选：
   单选语义的复选框会让 PR 列表永久显示 "x of N tasks"，稀释下方自检清单的信号
 - 目标分支为 develop（feature/fix）或 master（release/hotfix）
 - 已阅读 CONTRIBUTING.md 的分支模型与提交规范

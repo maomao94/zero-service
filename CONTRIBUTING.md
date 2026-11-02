@@ -39,17 +39,19 @@ git push origin feature/your-feature
 ### 提交前检查（与 CI 对齐）
 
 ```bash
-gofmt -l .            # 应无输出
+# 只检查本次改动过的 Go 文件（与 pr-hygiene 口径一致；仓库有历史未格式化文件，全量 gofmt -l . 会有输出）
+for f in $(git diff --name-only --diff-filter=ACMR origin/develop...HEAD -- '*.go'); do gofmt -l "$f"; done
 go vet ./...          # 对应 .github/workflows/go.yml 的 Vet 步骤
 go test -race ./...   # 对应 go.yml 的 Test 步骤，按需加包路径缩小范围
-python3 scripts/check_docs.py  # 改动了 Markdown 时，对应 docs.yml
-git diff --check      # 应无输出
+python3 scripts/check_docs.py  # 对应 docs.yml，PR 上无条件运行
+git diff --check      # 应无输出，对应 pr-hygiene 的空白校验
 ```
 
 说明：
 
 - CI 触发分支为 `master` 与 `develop`（`go.yml`：push/PR 到这两个分支都会跑）。
-- PR 还会跑 `reviewdog.yml`（staticcheck，`fail_level: any`，见文件内注释的排除项）。
+- PR 还会跑 `reviewdog.yml`（staticcheck，`fail_level: any`，见文件内注释的排除项）、`codeql-analysis.yml`（`Analyze (go)`）、`pr-hygiene.yml`（`gofmt & whitespace`）、`docs.yml`（`Markdown links`）与 `pr-title.yml`（`PR title`）。
+- `gofmt` 只检查本 PR 改动的 `.go` 文件（排除 `vendor/`、`*.pb*.go`、`zz_generated*`）；仓库仍有历史未格式化文件，不要用全量 `gofmt -l .` 的结果判断本次改动。
 - 系统依赖：用到 `common/gisx/geos` 时 CI 需装 `libgeos-dev`，本地 macOS 用 `brew install geos pkg-config` 对齐。
 
 ### 提交规范
@@ -72,6 +74,10 @@ git diff --check      # 应无输出
 - `refactor`：重构
 - `test`：测试
 - `chore`：构建/工具依赖（如 `chore(deps)`）
+- `ci`：CI 工作流与自动化配置
+- `perf`：性能优化
+- `build`：构建系统与依赖打包
+- `revert`：回滚既有提交
 
 示例（格式示意，勿照抄业务内容）：
 ```
@@ -88,11 +94,12 @@ fix(<scope>): 修复一句话描述
 
 ## Pull Request 要求
 
-- 使用仓库的 [PR 模板](./.github/PULL_REQUEST_TEMPLATE.md)填写变更说明、影响范围与验证结果（贴命令输出，不要只写「已测试」）。
-- PR 标题使用与提交相同的 Conventional Commits 格式，并写清目标分支（`-> develop` 或 `-> master`）。
-- 关联相关 Issue，包含变更说明与验证方式（跑了哪些 `go test` / `go vet`）。
-- 通过 CI 检查（`go vet`、`go test -race`、reviewdog staticcheck、`Docs` 文档校验）。
-- 等待 Reviewer 批准；CI 变红先本地复现再推新提交。
+- 使用仓库的 [PR 模板](./.github/PULL_REQUEST_TEMPLATE.md)填写变更说明、关联 Issue、影响范围、破坏性变更与验证结果（贴真实命令输出，不要只写「已测试」）。
+- PR 标题使用与提交相同的 Conventional Commits 格式，并写清目标分支（`-> develop` 或 `-> master`）。变更类型（`feat` / `fix` / `docs` / `style` / `refactor` / `test` / `chore` / `ci` / `perf` / `build` / `revert`）只由标题前缀表达，正文不再重复勾选。
+- PR 标题由 `pr-title.yml`（`PR title`）工作流校验，不符合约定格式时 CI 变红；改标题会重新触发校验。
+- 破坏性变更必须写明迁移与回滚方式；无则写「无」。
+- 合并前必须通过分支保护的 5 项必需检查（`develop` 与 `master` 均已配置）：`Linux`、`gofmt & whitespace`、`Analyze (go)`、`runner / staticcheck`、`Markdown links`。管理员同样受门禁约束（`enforce_admins`），CI 红时不能合并。
+- 等待 Reviewer 批准；CI 变红先本地复现再推新提交，不要靠改 PR 描述绕过门禁。
 
 ## 版本与变更记录
 
