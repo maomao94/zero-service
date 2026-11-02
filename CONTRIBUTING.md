@@ -2,7 +2,7 @@
 
 感谢你对 Zero-Service 项目的关注！
 
-提交代码前请先阅读 [README](./README.md)（环境要求 Go 1.26+）和 [开发指南](./docs/development.md)。
+提交代码前请先阅读 [README](./README.md)（环境要求 Go 1.26+）和 [开发指南](./docs/development.md)。参与本项目即表示同意遵守[贡献者公约](./CODE_OF_CONDUCT.md)；安全问题请按[安全策略](./SECURITY.md)私密报告，不要公开提 Issue。
 
 ## 分支模型（Git Flow）
 
@@ -42,12 +42,13 @@ git push origin feature/your-feature
 gofmt -l .            # 应无输出
 go vet ./...          # 对应 .github/workflows/go.yml 的 Vet 步骤
 go test -race ./...   # 对应 go.yml 的 Test 步骤，按需加包路径缩小范围
+python3 scripts/check_docs.py  # 改动了 Markdown 时，对应 docs.yml
 git diff --check      # 应无输出
 ```
 
 说明：
 
-- CI 触发分支为 `master`（`go.yml`：push/PR 到 `master` 才跑）。
+- CI 触发分支为 `master` 与 `develop`（`go.yml`：push/PR 到这两个分支都会跑）。
 - PR 还会跑 `reviewdog.yml`（staticcheck，`fail_level: any`，见文件内注释的排除项）。
 - 系统依赖：用到 `common/gisx/geos` 时 CI 需装 `libgeos-dev`，本地 macOS 用 `brew install geos pkg-config` 对齐。
 
@@ -87,10 +88,17 @@ fix(<scope>): 修复一句话描述
 
 ## Pull Request 要求
 
+- 使用仓库的 [PR 模板](./.github/PULL_REQUEST_TEMPLATE.md)填写变更说明、影响范围与验证结果（贴命令输出，不要只写「已测试」）。
 - PR 标题使用与提交相同的 Conventional Commits 格式，并写清目标分支（`-> develop` 或 `-> master`）。
 - 关联相关 Issue，包含变更说明与验证方式（跑了哪些 `go test` / `go vet`）。
-- 通过 CI 检查（`go vet`、`go test -race`、reviewdog staticcheck）。
+- 通过 CI 检查（`go vet`、`go test -race`、reviewdog staticcheck、`Docs` 文档校验）。
 - 等待 Reviewer 批准；CI 变红先本地复现再推新提交。
+
+## 版本与变更记录
+
+- 版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)，标签前缀为 `v`（见 `.gitflow`）。
+- 面向使用者的改动（新增能力、行为变更、弃用、修复）需在 [`CHANGELOG.md`](./CHANGELOG.md) 的「未发布」下补一条，按 `新增` / `变更` / `弃用` / `移除` / `修复` / `文档` / `依赖` 分类。
+- `release/*` 合并到 `master` 前，把「未发布」改为目标版本号与发布日期，再由 tag 触发发布说明。
 
 ## Issue 规范
 
@@ -116,6 +124,19 @@ fix(<scope>): 修复一句话描述
 - 新增服务必须补充文档
 - 新增文档先在 [`docs/README.md`](./docs/README.md) 的对应分区登记，再补交叉链接
 - 架构图与流程图放在 `docs/images/diagrams/`，提交同名 `.mmd` 源文件与导出的 PNG，正文用 `<img>` 引用，约定见该目录的 [`README.md`](./docs/images/diagrams/README.md)
+
+### 文档体量与拆分
+
+- 单篇超过 **600 行**时按语义拆分，不要靠目录硬撑：规则与示例（如 `trigger-rrule-syntax.md` 与 `trigger-rrule-api-guide.md`）、正文与附录（如 `iec104-message.md` 与 `iec104-reference.md`）。
+- 拆分后父文档保留入口表格，子文档互相链接，并在分区 `README.md` 登记；不复制正文。
+- 包级 API 说明放组件目录的 `README.md`，跨服务的选型与实践放 `docs/`，避免同一份 API 在两处各讲一遍。
+- `docs/` 的分区索引（`docs/<topic>/README.md`）只做导航，不承载正文。
+
+### 不收录的内容
+
+- 不在仓库内抄录外部工具、依赖库或 AI 技能集的目录与全量说明，只保留上游链接、安装位置和版本核对方式（参见 [`docs/ai-collaboration.md`](./docs/ai-collaboration.md)）。
+- 端口、字段、错误码、方法数等易变事实，以源码、`.proto`/`.api` 与 `etc/*.yaml` 为准，文档只给结论并标明出处。
+
 
 ## 问题反馈
 

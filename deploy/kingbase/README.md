@@ -43,7 +43,7 @@ docker exec -i kingbase ksql -Usystem -d zero -p 54321 < deploy/kingbase/roles.s
 ## KDTS 独立部署
 
 KDTS-WEB 已从本目录的数据库 Compose 中拆出，独立配置位于 `deploy/kdts/`，不会随 Kingbase 数据库部署自动启动。
-原有 `kdts_data` 已移动为 `deploy/kdts/data`，其中的 H2 任务数据保留。
+原有 `kdts_data` 已移动为 `deploy/kdts/data`，其中的 H2 任务数据保留；该目录被 `.gitignore` 忽略，新环境由 `deploy.sh` 首次运行时自动创建。
 
 ```bash
 bash deploy/kdts/deploy.sh             # 部署或启动 KDTS

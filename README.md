@@ -1,53 +1,37 @@
 # Zero-Service
 
+[![Go](https://github.com/maomao94/zero-service/actions/workflows/go.yml/badge.svg)](https://github.com/maomao94/zero-service/actions/workflows/go.yml)
+[![Docs](https://github.com/maomao94/zero-service/actions/workflows/docs.yml/badge.svg)](https://github.com/maomao94/zero-service/actions/workflows/docs.yml)
+[![Release](https://img.shields.io/github/v/release/maomao94/zero-service?sort=semver)](https://github.com/maomao94/zero-service/releases)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/maomao94/zero-service)](https://go.dev/)
-[![Go Zero](https://img.shields.io/badge/go--zero-1.10-00ADD8)](https://github.com/zeromicro/go-zero)
 [![License](https://img.shields.io/github/license/maomao94/zero-service)](./LICENSE)
 
-面向工业物联网与边缘集成场景的 Go 微服务集合。项目基于 [go-zero](https://github.com/zeromicro/go-zero) 构建，覆盖工业协议接入、流数据处理、任务调度、实时通信和无人机机场等能力。
+面向工业物联网与边缘集成场景的 Go 微服务集合。基于 [go-zero](https://github.com/zeromicro/go-zero) 构建，覆盖工业协议接入、流数据处理、任务调度、实时通信和无人机机场等能力。
 
-Zero-Service 不是一个必须整体部署的单体应用。各服务可以按需独立运行，也可以通过 gRPC、Kafka、MQTT 和 SocketIO 组合成完整业务链路。
+Zero-Service 不是必须整体部署的单体应用：各服务可独立运行，也可通过 gRPC、Kafka、MQTT 和 SocketIO 组合成完整业务链路。
 
-[快速开始](#快速开始) · [架构概览](./docs/architecture.md) · [完整文档](./docs/README.md) · [参与贡献](./CONTRIBUTING.md)
+## 目录
+
+- [核心能力](#核心能力)
+- [架构概览](#架构概览)
+- [快速开始](#快速开始)
+- [文档](#文档)
+- [仓库结构](#仓库结构)
+- [参与贡献](#参与贡献)
+- [版本与变更](#版本与变更)
+- [开源许可](#开源许可)
 
 ## 核心能力
 
-- **视频会议**：基于 LiveKit Server 实现实时音视频会议，提供会议管理、票据邀请、Webhook 状态同步和聊天消息能力。
-- **IEC 104 数采**：多从站通信，通过 Kafka、MQTT 和 gRPC 并行分发采集数据，并支持 ASDU 合并与时序存储。
-- **DJI 云平台接入（第一代上云 API · 参考实现）**：封装 Dock 3 Cloud API 的 MQTT 协议，支持航线任务、直播推流和 DRC 指令飞行。新项目建议评估[上云 API 2](https://developer.dji.com/cn/cloud-api-2)，本实现保留作协议学习与存量系统参考。
-- **任务调度**：提供 asynq 异步回调、Plan/Batch/ExecItem 计划任务和基于 RRULE 的 CronJob 周期调度。
-- **实时通信**：通过 SocketIO 网关完成连接管理、房间广播、服务端推送和 MQTT 桥接。
-- **工业协议桥接**：支持 Modbus TCP/RTU、MQTT、Kafka、gRPC-Gateway 及反向隔离装置接入。
-- **变电站巡检**：提供 ISP 协议服务端与代理，连接上级平台和下级巡检设备。
-- **通用基础能力**：包含地理信息计算、对象存储、文件传输、容器管理、服务发现和可观测性组件。
-- **开放 API 网关**：面向第三方应用提供 Basic 鉴权、统一 JSON 信封和 method 路由，当前接入 Podman 容器与 Modbus 读写能力。
-
-## 快速开始
-
-### 环境要求
-
-- Go 1.26 或更高版本
-- Git
-- 与目标服务匹配的外部依赖，例如 Redis、Kafka、数据库或 MQTT Broker
-
-### 获取代码
-
-```bash
-git clone https://github.com/maomao94/zero-service.git
-cd zero-service
-go mod download
-```
-
-### 启动服务
-
-各服务均可独立运行。以 Trigger 任务调度服务为例，先根据本地环境调整 Redis 和数据库配置，再启动服务：
-
-```bash
-cd app/trigger
-go run . -f etc/trigger.yaml
-```
-
-配置文件通常位于服务的 `etc/` 目录。更多启动方式、依赖说明和常见问题见[快速开始指南](./docs/quick-start.md)，端口分配见[服务端口清单](./docs/service-ports.md)。
+- **视频会议**：基于 LiveKit 的实时音视频会议，提供会议管理、票据邀请、Webhook 状态同步、Egress 录制与聊天消息。
+- **IEC 104 数采**：多从站通信，通过 Kafka、MQTT 和 gRPC 并行分发采集数据，支持 ASDU 合并与时序存储。
+- **DJI 云平台接入**：封装第一代上云 API（Dock 3 Cloud API）的 MQTT 协议，支持航线任务、直播推流和 DRC 指令飞行。新项目建议评估[上云 API 2](https://developer.dji.com/cn/cloud-api-2)，本实现保留作协议学习与存量系统参考。
+- **任务调度**：asynq 异步回调、Plan/Batch/ExecItem 计划任务，以及基于 RRULE 的 CronJob 周期调度。
+- **实时通信**：SocketIO 网关负责连接管理、房间广播、服务端推送与 MQTT 桥接。
+- **工业协议桥接**：Modbus TCP/RTU、MQTT、Kafka、gRPC-Gateway 及反向隔离装置接入。
+- **变电站巡检**：ISP 协议服务端与代理，连接上级平台和下级巡检设备。
+- **开放 API 网关**：面向第三方应用提供 Basic 鉴权、请求签名、统一 JSON 信封与 method 路由。
+- **通用基础能力**：地理信息计算、对象存储、文件传输、容器管理、服务发现与可观测性组件。
 
 ## 架构概览
 
@@ -67,24 +51,59 @@ go run . -f etc/trigger.yaml
  Kafka      Redis      数据库 / 对象存储
 ```
 
-系统以 gRPC 作为主要服务间通信协议，并通过 Kafka、MQTT、SocketIO 等通道适配不同实时性和吞吐需求。详细的模块依赖与数据流见[架构文档](./docs/architecture.md)。
+系统以 gRPC 作为主要服务间通信协议，通过 Kafka、MQTT、SocketIO 适配不同实时性与吞吐需求。分层结构与核心数据流见[架构文档](./docs/architecture.md)。
 
-## 核心服务
+## 快速开始
 
-| 服务 | 主要职责 | 相关文档 |
-| --- | --- | --- |
-| `ieccaller` / `iecstash` / `streamevent` | IEC 104 采集、消息分发、数据合并与落库 | [IEC 104 数采平台](./docs/iec104/iec104.md) |
-| `trigger` | 异步回调、计划任务与 RRULE CronJob 调度 | [Trigger 服务](./docs/trigger/trigger.md) |
-| `djicloud` | DJI Dock 3 云平台接入（第一代上云 API 参考实现） | [DJI 云平台](./docs/djicloud/djicloud.md) |
-| `socketgtw` / `socketpush` | SocketIO 连接管理与服务端推送 | [SocketIO 实时通信](./docs/socketio/socketio.md) |
-| `bridge*` | Modbus、MQTT、Kafka 和网关协议桥接 | [Bridge 协议桥接](./docs/bridge/README.md) |
-| `ispagent` / `ispserver` | 变电站 ISP 巡检协议代理与服务端 | [ISP 巡检协议](./docs/isp/isp.md) |
-| `live` / `livegtw` | LiveKit 视频会议管理与 HTTP 网关 | [视频会议](./docs/live/README.md) · [LiveKit](https://github.com/livekit/livekit) · [Server SDK](https://github.com/livekit/server-sdk-go) |
-| `oryxgtw` / `oryxserver` | Oryx/SRS 流媒体回调网关与 gRPC API 代理 | [Oryx 流媒体](./docs/oryx/README.md) · [Oryx](https://github.com/ossrs/oryx) · [SRS](https://github.com/ossrs/srs) |
-| `lalhook` / `lalproxy` | LAL 流媒体 HTTP 回调与 gRPC 代理（已不推荐，迁移至 Oryx） | [LAL 流媒体回调](./app/lalhook/README.md) |
-| `file` | 分片文件传输与对象存储集成 | [文件与对象存储](./docs/file/README.md) |
-| `gis` | H3、GeoHash、电子围栏和坐标转换 | [地理信息服务](./docs/gis/README.md) |
-| `podengine` | Docker 容器生命周期管理 | [容器编排](./docs/podengine/README.md) |
+### 环境要求
+
+- Go 1.26 或更高版本（以 `go.mod` 为准）
+- Git
+- 与目标服务匹配的外部依赖，例如 Redis、Kafka、数据库或 MQTT Broker
+
+### 获取代码
+
+```bash
+git clone https://github.com/maomao94/zero-service.git
+cd zero-service
+go mod download
+```
+
+### 启动服务
+
+各服务均可独立运行。以 Trigger 为例，先按本地环境调整 `app/trigger/etc/trigger.yaml` 中的 Redis 与数据库配置：
+
+```bash
+cd app/trigger
+go run . -f etc/trigger.yaml
+```
+
+### 验证
+
+```bash
+# Trigger 开发模式默认开启 gRPC reflection
+grpcurl -plaintext localhost:21006 list
+
+# gtw 已配置对应路由时检查 HTTP 入口
+curl http://localhost:11001/health
+```
+
+更多启动方式、依赖矩阵和常见问题见[快速开始指南](./docs/quick-start.md)，端口分配见[服务端口清单](./docs/service-ports.md)。
+
+## 文档
+
+[文档索引](./docs/README.md)是唯一入口，按使用场景分类导航。
+
+| 文档 | 内容 |
+| --- | --- |
+| [快速开始](./docs/quick-start.md) | 环境准备、服务启动、验证与常见问题 |
+| [架构概览](./docs/architecture.md) | 系统分层、模块依赖、核心数据流与技术选型 |
+| [服务端口清单](./docs/service-ports.md) | 各服务默认端口、协议与用途 |
+| [网关标准开发流程](./docs/gateway-standard.md) | 分层、路由鉴权、统一信封、错误码出口与验收清单 |
+| [错误码规范](./docs/error-codes.md) | 错误码维度、模块分配、HTTP/gRPC 映射与折叠策略 |
+| [开发指南](./docs/development.md) | 代码生成、模块扩展与调试方式 |
+| [部署指南](./docs/deployment.md) | Docker、单服务与集群部署 |
+| [部署模板总览](./deploy/README.md) | 数据库、中间件、网关与运维工具的本地编排 |
 
 ## 仓库结构
 
@@ -98,34 +117,29 @@ model/       数据模型及生成脚本
 deploy/      Docker Compose 与部署配置
 web/         前端工作台与子系统（Live / SocketIO / OpenAPI）
 docs/        架构、对接和开发文档
+scripts/     仓库维护脚本（文档校验等）
 ```
-
-## 技术栈
-
-| 类别 | 技术 |
-| --- | --- |
-| 服务框架 | Go、go-zero、gRPC、gRPC-Gateway |
-| 消息与任务 | Kafka、MQTT、asynq、Redis、SocketIO |
-| 实时通信与会议 | SocketIO、LiveKit |
-| 工业与设备协议 | IEC 60870-5-104、Modbus、ISP、DJI Cloud API |
-| 数据与存储 | MySQL、PostgreSQL、SQLite、TDengine、MinIO、OSS |
-| 服务治理 | Nacos、OpenTelemetry、Prometheus、Docker |
-
-## 文档
-
-| 文档 | 内容 |
-| --- | --- |
-| [文档索引](./docs/README.md) | 按用户、对接方和开发者分类的完整导航 |
-| [快速开始](./docs/quick-start.md) | 环境准备、服务启动和常见问题 |
-| [架构概览](./docs/architecture.md) | 系统分层、核心数据流和技术选型 |
-| [开发指南](./docs/development.md) | 代码生成、模块扩展和调试方式 |
-| [部署指南](./docs/deployment.md) | Docker、单服务与集群部署 |
-| [部署模板总览](./deploy/README.md) | 数据库、中间件、网关与运维工具的本地编排 |
-| [错误码规范](./docs/error-codes.md) | HTTP/gRPC 状态映射和业务错误编码 |
 
 ## 参与贡献
 
-欢迎通过 [Issues](https://github.com/maomao94/zero-service/issues) 反馈问题或提出建议。提交代码前，请先阅读[贡献指南](./CONTRIBUTING.md)。
+- 提交代码前请阅读[贡献指南](./CONTRIBUTING.md)：分支模型、提交规范、代码生成与 PR 要求。
+- 参与讨论即表示同意遵守[贡献者公约](./CODE_OF_CONDUCT.md)。
+- 报告安全漏洞请走[安全策略](./SECURITY.md)中的私密通道，不要公开提 Issue。
+- 使用与对接问题见[获取帮助](./SUPPORT.md)。
+
+开发自检：
+
+```bash
+gofmt -l .                      # 应无输出
+go vet ./...
+go test -race ./...
+python3 scripts/check_docs.py   # 改动 Markdown 时
+git diff --check                # 应无输出
+```
+
+## 版本与变更
+
+版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)，发布记录见[变更日志](./CHANGELOG.md)与 [Releases](https://github.com/maomao94/zero-service/releases)。分支模型为 Git Flow：`master` 为稳定发布分支，`develop` 为集成分支。
 
 ## 开源许可
 

@@ -9,6 +9,21 @@
 3. 查看[服务端口清单](./service-ports.md)确认服务入口。
 4. 根据协议或业务场景进入下方的专项文档。
 
+## 按任务查找
+
+| 我要做的事 | 看这篇 | 类型 |
+| --- | --- | --- |
+| 第一次跑起来 | [快速开始](./quick-start.md) | 教程 |
+| 用 Docker 部署到服务器 | [部署指南](./deployment.md) · [部署模板总览](../deploy/README.md) | 操作指南 |
+| 新增一个网关接口 | [网关标准开发流程](./gateway-standard.md) | 操作指南 |
+| 生成代码或加新模块 | [开发指南](./development.md) | 操作指南 |
+| 对接 IEC 104 数据 | [数采平台](./iec104/README.md) | 操作指南 |
+| 对接开放平台或签名 | [开放 API 网关](./open-api/README.md) · [签名协议](./open-api/signature.md) | 操作指南 |
+| 查端口、错误码、字段 | [端口清单](./service-ports.md) · [错误码规范](./error-codes.md) | 参考 |
+| 理解系统为什么这样分层 | [架构概览](./architecture.md) | 解释 |
+| 选并发原语 | [antsx 选型与实践](./antsx.md) | 解释 |
+| 配置数据库时区 | [数据库时区配置](./database-timezone.md) | 参考 |
+
 ## 文档地图
 
 `README.md` 只做仓库入口，本文件是唯一索引；链接方向固定为「入口 → 索引 → 专项文档 → 源码或脚本」，文档之间不互相引用成环。新增文档时先在本索引登记，再补交叉链接。
@@ -21,8 +36,10 @@
 
 - `docs/` 放跨服务的架构、协议、对接与规范；单个服务的实现细节放各自目录的 `README.md`。
 - 每篇文档先给结论或表格，再展开细节；命令与配置一律使用 fenced code block。
+- 单篇超过 600 行按语义拆分，包级 API 放组件 README，跨服务实践放 `docs/`（规则见[贡献指南](../CONTRIBUTING.md#文档体量与拆分)）。
 - 架构图与流程图统一放在 [`docs/images/diagrams/`](./images/diagrams/)，同目录保留同名 `.mmd` 源文件；正文用 `<img>` 引用导出的 PNG，避免依赖编辑器是否支持 Mermaid。
 - 端口、路径和字段以源码、`.proto`/`.api` 与 `etc/*.yaml` 为准，写文档时同步核对。
+- 提交前执行 `python3 scripts/check_docs.py` 校验相对链接、页内锚点与代码块闭合；CI 会在 Markdown 变更时自动运行。
 
 ## 用户与对接方
 
@@ -57,7 +74,7 @@
 
 | 组件 | 文档 | 内容 |
 | --- | --- | --- |
-| antsx | [并发编排指南](./antsx-vs-reactive.md) · [README](../common/antsx/README.md) | 泛型异步编排、Stream API、协程池与 reactive 写法对比 |
+| antsx | [选型与实践指南](./antsx.md) · [README](../common/antsx/README.md) | 设计原则、原语选型、项目使用场景；API 细节见包 README |
 | bytex | [README](../common/bytex/README.md) | 字节/数值转换、位操作与 Modbus 寄存器约定 |
 | flowx | [README](../common/flowx/README.md) | 基于 Azure/go-workflow 的 go-zero 集成封装 |
 | gormx | [README](../common/gormx/README.md) | 多库 GORM 封装：回调、租户、软删、分页、日志与追踪 |
@@ -112,8 +129,11 @@
 | [网关标准开发流程](./gateway-standard.md) | 网关分层、路由鉴权、统一信封、错误码出口与新增接口验收 |
 | [OpenViking 记忆系统](./openviking-memory.md) | 工程契约的记忆库部署、MCP 工具与同步流程 |
 | [Agent 协作约定](../AGENTS.md) | 默认行为、修改范围与完成标准 |
-| [贡献指南](../CONTRIBUTING.md) | 分支模型、提交规范、代码生成与 PR 要求 |
-| [Superpowers 技能全量介绍](./superpowers.md) | AI 编程技能集：14 个技能的设计哲学、铁律与使用流程 |
-| [Matt Pocock 技能全量介绍](./matt-pocock-skills.md) | AI 编程技能集：37 个技能的工程实践、调试诊断与需求拆分 |
+| [贡献指南](../CONTRIBUTING.md) | 分支模型、提交规范、代码生成、PR 要求与文档规则 |
+| [AI 协作与技能集](./ai-collaboration.md) | 协作契约、技能集来源与安装位置、使用约定 |
+| [变更日志](../CHANGELOG.md) | 版本历史与未发布变更 |
+| [安全策略](../SECURITY.md) | 支持的版本、漏洞报告渠道与安全开发约定 |
+| [贡献者公约](../CODE_OF_CONDUCT.md) | 社区行为准则 |
+| [获取帮助](../SUPPORT.md) | 提问渠道与响应预期 |
 
 错误码定义与折叠规则见上文的[错误码规范](./error-codes.md)，组件用法见[公共组件](#公共组件)。

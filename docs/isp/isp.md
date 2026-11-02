@@ -282,7 +282,7 @@ ModelSync:
 ## 实现边界
 
 - `common/isp` 提供协议帧编解码、XML 动态 Item 解析、Type/Command 常量和模型 XML 生成。
-- `app/ispagent/internal/isp` 负责 TCP 长连接、注册、心跳、请求响应匹配和消息路由。
+- `app/ispagent/internal/ispclient` 负责 TCP 长连接、注册、心跳、请求响应匹配和消息路由。
 - `app/ispagent/internal/handler` 负责任务下发、任务控制、模型同步和控制指令处理。
 - 未匹配的入站消息会记录日志并返回 `251-3` 通用成功应答，避免上级系统阻塞。
 - 控制类指令当前未直接驱动机器人硬件；如需落地动作，需要在 handler 中接入实际设备控制链路。
