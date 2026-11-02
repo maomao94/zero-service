@@ -111,11 +111,18 @@ curl http://localhost:11001/health
 app/         核心业务、视频会议、流媒体与协议服务
 aiapp/       AI 应用与模型接入服务
 socketapp/   SocketIO 网关与推送服务
+gtw/         存量 BFF HTTP 网关
+zerorpc/     核心业务 gRPC 服务
 common/      跨服务复用的公共组件
 facade/      跨服务协议与数据契约
 model/       数据模型及生成脚本
 deploy/      Docker Compose 与部署配置
 web/         前端工作台与子系统（Live / SocketIO / OpenAPI）
+cli/         Docker TUI 等命令行工具
+util/        运维脚本与 Taskfile
+swagger/     生成的服务 Swagger 描述
+third_party/ protobuf 依赖与代码生成插件
+1.7.1/、1.9.x/  goctl 代码生成模板（按版本固定，供 model/ 下的脚本使用）
 docs/        架构、对接和开发文档
 scripts/     仓库维护脚本（文档校验等）
 ```

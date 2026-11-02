@@ -39,7 +39,7 @@
 - 单篇超过 600 行按语义拆分，包级 API 放组件 README，跨服务实践放 `docs/`（规则见[贡献指南](../CONTRIBUTING.md#文档体量与拆分)）。
 - 架构图与流程图统一放在 [`docs/images/diagrams/`](./images/diagrams/)，同目录保留同名 `.mmd` 源文件；正文用 `<img>` 引用导出的 PNG，避免依赖编辑器是否支持 Mermaid。
 - 端口、路径和字段以源码、`.proto`/`.api` 与 `etc/*.yaml` 为准，写文档时同步核对。
-- 提交前执行 `python3 scripts/check_docs.py` 校验相对链接、页内锚点与代码块闭合；CI 会在 Markdown 变更时自动运行。
+- 提交前执行 `python3 scripts/check_docs.py` 校验相对链接、HTML `<img>`/`<a href>`、页内锚点、代码块闭合与 `.mmd`/`.png` 配对；CI 会在 Markdown 变更时自动运行。
 
 ## 用户与对接方
 

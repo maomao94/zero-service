@@ -24,6 +24,9 @@
 
 ### 修复
 
+- 文档门禁：`scripts/check_docs.py` 补齐 HTML `<img>`/`<a href>` 校验、重复标题的 `-1` 锚点、`~~~` 与四反引号围栏、`.mmd`/`.png` 配对检查。
+- 文档：`README.md` 仓库结构补上 `gtw/`、`zerorpc/`、`cli/`、`util/`、`swagger/`、`third_party/` 与 goctl 模板目录。
+- 文档：Bug 报告模板的服务下拉去掉非服务的 `streamevent`，补齐 `iecagent`、`socketpush`、`file`/`gis`/`podengine`/`openapi` 等实际服务。
 - 文档：修正 `CONTRIBUTING.md` 中 CI 触发分支说明（实际为 `master` 与 `develop`）。
 - 文档：修正 `docs/isp/isp.md` 中 ispagent 包路径（`internal/ispclient`）。
 
