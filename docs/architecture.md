@@ -13,8 +13,8 @@ Zero-Service 由一组可独立运行的服务组成，服务之间以 gRPC 为�
 | 层 | 组成 | 目录 |
 | --- | --- | --- |
 | 接入层 | 前端工作台、业务前端、第三方应用、工业设备 | `web/`、设备侧 |
-| HTTP 网关层 | `gtw`(BFF)、`livegtw`、`socketgtw`、`oryxgtw`、`opengtw`、`bridgegtw`；`lalhook` 已不推荐 | `gtw/`、`app/*gtw/`、`socketapp/socketgtw/` |
-| gRPC 服务层 | 领域服务、协议桥接、流处理与调度 | `app/`、`socketapp/`、`facade/` |
+| HTTP 网关层 | `gtw`(BFF)、`livegtw`、`socketgtw`、`oryxgtw`、`opengtw`、`bridgegtw`、AI 侧 `aigtw`/`ssegtw`/`mcpserver`；`lalhook` 已不推荐 | `gtw/`、`app/*gtw/`、`socketapp/socketgtw/`、`aiapp/` |
+| gRPC 服务层 | 领域服务、协议桥接、流处理与调度、AI 对话与 Agent（`aichat`/`aisolo`） | `app/`、`socketapp/`、`facade/`、`aiapp/` |
 | 公共组件层 | 协议编解码、存储封装、并发原语、追踪与错误处理 | `common/` |
 | 基础设施 | Kafka、Redis、MQTT Broker、关系数据库、TDengine、Nacos、LiveKit、Oryx(SRS)、LAL | `deploy/` |
 

@@ -42,7 +42,7 @@ KDTS_HTTP_HOST_PORT=54533 KDTS_HTTPS_HOST_PORT=54534 bash deploy/kdts/deploy.sh
 
 ## 数据迁移
 
-KDTS 数据目录从原来的 `deploy/kingbase/kdts_data` 移动到本目录的 `data/`，原 H2 任务数据保留。
+KDTS 数据目录从原来的 `deploy/kingbase/kdts_data` 移动到本目录的 `data/`，原 H2 任务数据保留。`data/` 与 `logs/`、`results/` 均在 `.gitignore` 中，新环境执行 `deploy.sh` 时自动创建。
 数据库部署脚本不会自动启动或停止 KDTS；迁移工具生命周期由本目录的脚本单独管理。
 
 生产环境建议将 KDTS 部署在独立迁移机或跳板机，避免占用数据库宿主机资源。
