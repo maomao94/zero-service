@@ -360,6 +360,8 @@ var file_extproto_proto_extTypes = []protoimpl.ExtensionInfo{
 var (
 	// optional string name = 5001;
 	E_Name = &file_extproto_proto_extTypes[0]
+	// 扩展字段不支持 json_name 选项，按 proto 字段名 http_code 输出。
+	//
 	// optional int32 http_code = 5002;
 	E_HttpCode = &file_extproto_proto_extTypes[1]
 )

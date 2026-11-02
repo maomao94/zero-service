@@ -109,7 +109,7 @@ _1_30_APP_SECRET_INVALID = 130102 [(name) = "密钥无效", (http_code) = 401];
 | `100503` | 409 | 重复操作 |
 | `100601` | 503 | 远程调用失败 |
 | `100602` | 503 | 第三方服务异常（默认透传，可配置折叠） |
-| `100603` | 503 | 第三方接口错误（不折叠，`msg` 固定模板） |
+| `100603` | 503 | 第三方接口错误（强制透传，`msg` 固定模板） |
 | `100701` | 429 | 请求过于频繁 |
 | `100801` | 404 | 接口不存在 |
 | `100802` | 405 | 请求方法不允许 |
@@ -161,7 +161,7 @@ return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议标�
 | `DeadlineExceeded` | `100997` |
 | `Internal` / `Unknown` / `DataLoss` | `100998` |
 
-折叠是网关的可选策略：**默认不折叠，所有已登记码原样透传**。网关在 `etc/*.yaml` 配置 `Error.Fold` 并列出 `Codes` 后，命中的码才折叠为 `100999 系统繁忙`；`100603` 不参与折叠，按 §5.2 的模板对外返回。折叠配置只影响 HTTP 信封，gRPC 传输永不折叠。
+折叠是网关的可选策略：**默认不折叠，所有已登记码原样透传**。网关在 `etc/*.yaml` 配置 `Error.Fold` 并列出 `Codes` 后，命中的码才折叠为 `100999 系统繁忙`；`100603` 由 `common/gtwx/fold.go` 强制透传，即使配置在 `Codes` 中也不会折叠，按 §5.2 的模板对外返回。折叠配置只影响 HTTP 信封，gRPC 传输永不折叠。
 
 ### 5.1 设备/第三方厂商错误码返回（DJI）
 
@@ -186,7 +186,7 @@ DJI 原始码**不进网关信封**。信封 `code` 只承载 extproto 中定义
 Go 侧规则：
 
 - 设备命令的拒绝结果由 `commandRes` 包装成 `CommonRes{Code: -1, ReasonCode: 312014}`，作为**正常响应**返回，不构造 error。
-- 网关的 `PublicError` / `CodeFromStatus` 只认 extproto 中已登记的码；DJI 等厂商码不进入该路径，误写入时会被折叠为 `100999 系统繁忙`，原始值只写服务端日志。
+- 网关的 `errx.PublicError` / `errx.CodeFromStatus` 只认 extproto 中已登记的码；DJI 等厂商码不进入该路径，误写入时会被降级为 `100999 系统繁忙`，原始值只写服务端日志。
 - 需要跨服务传递设备结果时，继续使用 `CommonRes.reasonCode`（或响应体 `data.reasonCode`），不要写入 `ErrorInfo.reason`。
 - 第三方平台的**故障**（超时、连接失败、鉴权失败、限流、5xx）应在厂商包内映射成平台码（如 `100601`、`100602`、`100997`），再以 error 返回。
 
@@ -248,7 +248,7 @@ vendor, code, message, ok := tool.ParseThirdPartyAPIError(resp.Msg)
 约束：
 
 1. 只允许解析 `100603` 的固定模板；其他 `msg` 只给人看，客户端**不得解析**做分支。
-2. 不放凭据、URL、堆栈、完整厂商响应体；构造器会压平空白并把描述截断到 200 字符。
+2. 不放凭据、URL、堆栈、完整厂商响应体；构造器会压平空白，并在描述超过 200 字符时截断后追加省略号。
 3. 厂商码不登记进 `extproto`，不做 1:1 映射；平台码只表达“失败来自第三方接口”。
 4. 未在 extproto 登记的码一律降级 `100999`，原始值只进服务端日志。
 
@@ -301,7 +301,7 @@ vendor, code, message, ok := tool.ParseThirdPartyAPIError(resp.Msg)
 | panic | `500`（go-zero 恢复中间件，空 body） |
 | 反向代理不可达 | `502/504`（nginx 产生，非信封） |
 
-业务路由内抛出的错误统一经 `gtwx.NormalizeError` 归一化：码必须存在于 `extproto` 枚举，否则降级为 `100999` 并记录日志。上表中由 go-zero 内置中间件直接写出的框架级错误不经过该函数。
+业务路由内抛出的错误统一经 `errx.NormalizeError` 归一化：码必须存在于 `extproto` 枚举，否则降级为 `100999` 并记录日志。上表中由 go-zero 内置中间件直接写出的框架级错误不经过该函数。
 
 ### 6.5 明确例外
 
@@ -376,5 +376,5 @@ v2 把技术分层模块（参数/数据/缓存/认证/业务/外部/开放平�
 | `opengtw` 统一信封与 `code=0` | 已具备；管理面 JWT 失败已改为信封 |
 | `livegtw` 统一信封与 `code=0` | 已对齐：鉴权、参数、下游错误均返回六位码 |
 | `livegtw` webhook | 保持状态码语义（协议例外） |
-| `gtw`（BFF） | 成功信封已具备；错误码仍为 gRPC 数字码，待接入 |
+| `gtw`（BFF） | 成功信封、错误码归一化与 `Error.Fold` 配置均已具备 |
 | 其余网关（`aigtw`/`ssegtw`/`oryxgtw`/`bridgegtw`） | 待按第 6 节接入 |

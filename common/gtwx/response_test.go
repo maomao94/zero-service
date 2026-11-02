@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"zero-service/common/djisdk"
@@ -99,6 +100,25 @@ func TestWriteErrorFoldsConfiguredCodeKeepMsg(t *testing.T) {
 	body := decodeEnvelope(t, rr)
 	if body.Code != int(extproto.Code__1_00_UNKNOWN) || body.Msg != "db password leaked" {
 		t.Fatalf("want 100999/db password leaked, got code=%d msg=%q", body.Code, body.Msg)
+	}
+}
+
+func TestWriteErrorNeverFoldsThirdPartyAPI(t *testing.T) {
+	SetFoldConfig(FoldConfig{
+		Enabled: true,
+		Codes:   []int{int(extproto.Code__1_00_THIRD_PARTY_API)},
+	})
+	t.Cleanup(func() { SetFoldConfig(FoldConfig{}) })
+
+	rr := httptest.NewRecorder()
+	WriteError(context.Background(), rr, tool.NewThirdPartyAPIError("dji", "312014", "设备升级中"))
+
+	body := decodeEnvelope(t, rr)
+	if body.Code != int(extproto.Code__1_00_THIRD_PARTY_API) {
+		t.Fatalf("want 100603, got %d", body.Code)
+	}
+	if !strings.Contains(body.Msg, "vendor=dji") || !strings.Contains(body.Msg, "code=312014") {
+		t.Fatalf("want vendor template msg, got %q", body.Msg)
 	}
 }
 

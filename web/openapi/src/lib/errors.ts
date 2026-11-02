@@ -87,8 +87,9 @@ export const ERROR_DOCS: ErrorDoc[] = [
     code: 100302,
     http: 500,
     title: '缓存未命中',
-    description: '查询的缓存 key 不存在，需要回源或重建缓存。',
+    description: '查询的缓存 key 不存在，需要回源或重建缓存；默认透传；可在网关 Error.Fold 中配置折叠为 100999。',
     suggestion: '确认 key 是否已过期或从未写入，必要时回源后重试。',
+    folded: true,
     group: '基础设施',
   },
   {

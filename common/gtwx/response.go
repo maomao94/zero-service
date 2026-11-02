@@ -40,7 +40,7 @@ func newResponse(code int, msg string, data any) Response[any] {
 //
 // 注意：xhttp.JsonBaseResponseCtx 只负责套信封，不解析 extproto 错误码——
 // 它遇到 gRPC status 时取的是 gRPC 数字码（3/5/16），遇到普通 error 时是 -1。
-// 因此必须先经 errx.NormalizeError 归一化并校验，再写入信封。
+// 因此必须先经 errx.NormalizeError 归一化并校验，再按网关折叠策略处理后写入信封。
 func WriteError(ctx context.Context, w http.ResponseWriter, err error) {
 	code, msg := errx.NormalizeError(err)
 	code, msg = applyFold(code, msg)

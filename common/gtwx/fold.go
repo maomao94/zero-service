@@ -5,6 +5,8 @@ import (
 
 	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
+
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 // FoldConfig 是网关错误折叠配置。
@@ -27,11 +29,19 @@ type foldPolicy struct {
 
 func newFoldPolicy(cfg FoldConfig) foldPolicy {
 	target := cfg.Target
-	if target == 0 {
+	if target == 0 ||
+		target == int(extproto.Code__1_00_THIRD_PARTY_API) ||
+		!errx.IsDefinedCode(target) {
 		target = int(extproto.Code__1_00_UNKNOWN)
 	}
 	codes := make(map[int]struct{}, len(cfg.Codes))
 	for _, code := range cfg.Codes {
+		// 100603 固定透传，避免厂商原始信息被折叠成系统繁忙；
+		// 未登记码不会到达网关，忽略即可。
+		if code == int(extproto.Code__1_00_THIRD_PARTY_API) || !errx.IsDefinedCode(code) {
+			logx.Errorf("错误折叠配置忽略不可折叠或未登记的错误码：%d", code)
+			continue
+		}
 		codes[code] = struct{}{}
 	}
 	return foldPolicy{
@@ -47,6 +57,10 @@ func (p foldPolicy) apply(code int, msg string) (int, string) {
 		return code, msg
 	}
 	if code == p.target {
+		return code, msg
+	}
+	// 100603 的 msg 是厂商码与原文的结构化载体，任何配置下都不折叠。
+	if code == int(extproto.Code__1_00_THIRD_PARTY_API) {
 		return code, msg
 	}
 	if _, ok := p.codes[code]; !ok {
