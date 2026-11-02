@@ -1,6 +1,8 @@
 <!--
 提交前请确认：
 - 标题使用 Conventional Commits 格式，例如 fix(trigger): 修正 CronJob 补触发边界
+- 变更类型由标题前缀表达（feat/fix/docs/refactor/chore/ci/test/perf），正文不重复勾选：
+  单选语义的复选框会让 PR 列表永久显示 "x of N tasks"，稀释下方自检清单的信号
 - 目标分支为 develop（feature/fix）或 master（release/hotfix）
 - 已阅读 CONTRIBUTING.md 的分支模型与提交规范
 - 机械检查由 CI 负责：gofmt（本 PR 改动的 .go）、go vet、go test -race、
@@ -14,15 +16,6 @@
 ## 关联 Issue
 
 <!-- 例如：Closes #123 / Refs #456；没有则写「无」 -->
-
-## 变更类型
-
-- [ ] 新功能（feat）
-- [ ] 缺陷修复（fix）
-- [ ] 重构（refactor）
-- [ ] 文档（docs）
-- [ ] 构建 / 依赖（chore）
-- [ ] 其他：
 
 ## 影响范围
 
