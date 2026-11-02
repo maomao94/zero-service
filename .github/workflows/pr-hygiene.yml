@@ -1,0 +1,80 @@
+# =============================================================
+# PR 卫生检查：承接从 PR 模板「检查清单」中移除的机械项
+#  - gofmt：只检查本 PR 改动过的 .go 文件
+#    （仓库里仍有历史遗留的未格式化文件，全量检查会立刻红，所以按改动范围收敛）
+#  - git diff --check：检查 diff 里的行尾空白、冲突标记
+#
+# 为什么单独建 workflow 而不是塞进 go.yml：
+#  - 这项检查只要 checkout + gofmt，不需要装 libgeos、跑 go test，几十秒即可完成
+#  - 与 go.yml（vet/test）、docs.yml（Markdown 链接）职责分离，失败原因一眼可见
+#  - 只在 pull_request 上跑，push 到 develop/master 时由 CI 结果背书即可
+# =============================================================
+name: PR hygiene
+
+on:
+  pull_request:
+    branches: [ master, develop ]
+
+# 只读仓库即可，不写代码、不写评论
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    # 这个 job 名会作为 required status check 的名字出现在分支保护里，不要随意改
+    name: gofmt & whitespace
+    runs-on: ubuntu-latest
+
+    steps:
+      # fetch-depth: 0 是必需的：要用 merge-base 精确算出「本 PR 改了什么」，
+      # 浅克隆拿不到分叉点，会把 base 分支自身的改动也算进来
+      - name: Check out code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod   # 与 go.yml 保持一致，读 go.mod 里的版本
+          check-latest: true
+          cache: true
+
+      - name: Check gofmt on changed files
+        run: |
+          set -euo pipefail
+          base_ref="origin/${{ github.base_ref }}"
+          git fetch --no-tags origin "+refs/heads/${{ github.base_ref }}:${base_ref}"
+          merge_base=$(git merge-base "${base_ref}" HEAD)
+
+          # 只看本 PR 新增/修改/重命名的 Go 文件；生成代码与 vendor 不参与
+          changed=$(git diff --name-only --diff-filter=ACMR "${merge_base}" HEAD -- '*.go' \
+            | grep -v -E '(^|/)vendor/|\.pb\.go$|\.pb\.gw\.go$|zz_generated' || true)
+
+          if [ -z "${changed}" ]; then
+            echo "本 PR 未改动 Go 文件，跳过 gofmt"
+            exit 0
+          fi
+
+          echo "检查以下文件："
+          echo "${changed}"
+
+          unformatted=$(echo "${changed}" | xargs -r gofmt -l)
+          if [ -n "${unformatted}" ]; then
+            echo "::error::以下文件未通过 gofmt，请执行 gofmt -w 后重新提交"
+            echo "${unformatted}"
+            echo
+            gofmt -d ${unformatted}
+            exit 1
+          fi
+
+          echo "gofmt 通过：$(echo "${changed}" | wc -l | tr -d ' ') 个文件"
+
+      - name: Check whitespace errors
+        run: |
+          set -euo pipefail
+          base_ref="origin/${{ github.base_ref }}"
+          git fetch --no-tags origin "+refs/heads/${{ github.base_ref }}:${base_ref}"
+          merge_base=$(git merge-base "${base_ref}" HEAD)
+          # 有输出即代表存在行尾空白或冲突标记，git diff --check 的退出码非 0
+          git diff --check "${merge_base}" HEAD
