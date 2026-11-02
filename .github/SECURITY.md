@@ -46,6 +46,6 @@
 
 ## 安全开发约定
 
-- 示例配置只保留占位值，不提交真实密钥与连接串（见 `CONTRIBUTING.md`）。
+- 示例配置只保留占位值，不提交真实密钥与连接串（见 `.github/CONTRIBUTING.md`）。
 - 新增外部入口时必须走统一鉴权与错误码出口（见 `docs/gateway-standard.md`）。
 - 依赖更新由 Dependabot 每日检查，代码扫描由 CodeQL 负责。

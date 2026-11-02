@@ -4,7 +4,7 @@
 - 变更类型由标题前缀表达（feat/fix/docs/style/refactor/test/chore/ci/perf/build/revert），正文不重复勾选：
   单选语义的复选框会让 PR 列表永久显示 "x of N tasks"，稀释下方自检清单的信号
 - 目标分支为 develop（feature/fix）或 master（release/hotfix）
-- 已阅读 CONTRIBUTING.md 的分支模型与提交规范
+- 已阅读 .github/CONTRIBUTING.md 的分支模型与提交规范
 - 机械检查由 CI 负责：gofmt（本 PR 改动的 .go）、go vet、go test -race、
   Markdown 链接校验、git diff --check。这里只记录 CI 判断不了的信息。
 -->

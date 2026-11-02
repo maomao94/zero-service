@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: 使用与对接问题
-    url: https://github.com/maomao94/zero-service/blob/develop/SUPPORT.md
-    about: 先查文档索引与支持说明，多数问题已有答案
+    url: https://github.com/maomao94/zero-service/blob/develop/docs/README.md
+    about: 先查文档索引，多数问题已有答案
   - name: 安全漏洞
     url: https://github.com/maomao94/zero-service/security/advisories/new
     about: 请勿公开提交，使用私密漏洞报告通道
