@@ -55,3 +55,42 @@ func TestFoldPolicyCustomTarget(t *testing.T) {
 		t.Fatalf("apply() = %d, want %d", code, extproto.Code__1_00_BIZ)
 	}
 }
+
+func TestFoldPolicyNeverFoldsThirdPartyAPI(t *testing.T) {
+	policy := newFoldPolicy(FoldConfig{
+		Enabled: true,
+		Codes:   []int{int(extproto.Code__1_00_THIRD_PARTY_API)},
+	})
+
+	msg := "第三方接口错误，vendor=dji，code=312014，message=设备升级中"
+	code, gotMsg := policy.apply(int(extproto.Code__1_00_THIRD_PARTY_API), msg)
+	if code != int(extproto.Code__1_00_THIRD_PARTY_API) || gotMsg != msg {
+		t.Fatalf("apply() = %d/%q, want %d/%q",
+			code, gotMsg, int(extproto.Code__1_00_THIRD_PARTY_API), msg)
+	}
+}
+
+func TestFoldPolicyInvalidTargetFallsBack(t *testing.T) {
+	policy := newFoldPolicy(FoldConfig{
+		Enabled: true,
+		Target:  123456,
+		Codes:   []int{100998},
+	})
+
+	code, msg := policy.apply(100998, "db down")
+	if code != int(extproto.Code__1_00_UNKNOWN) || msg != "系统繁忙" {
+		t.Fatalf("apply() = %d/%q, want 100999/系统繁忙", code, msg)
+	}
+}
+
+func TestFoldPolicyIgnoresUndefinedCodes(t *testing.T) {
+	policy := newFoldPolicy(FoldConfig{
+		Enabled: true,
+		Codes:   []int{123456},
+	})
+
+	code, msg := policy.apply(123456, "raw")
+	if code != 123456 || msg != "raw" {
+		t.Fatalf("apply() = %d/%q, want 123456/raw", code, msg)
+	}
+}

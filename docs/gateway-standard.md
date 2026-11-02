@@ -112,7 +112,7 @@ JWT 通过后，业务中间件负责把 claims 桥接到 `authctx` 并校验身
 
 - 业务响应统一 **HTTP 200**，客户端以 `code == 0` 判断成功。
 - `code` 为六位业务码，`0` 是唯一成功码（`errx.SuccessCode`，见 `common/errx/normalize.go`）。
-- 失败时省略 `data`，`msg` 可展示；基础设施错误折叠为 `系统繁忙`。
+- 失败时省略 `data`，`msg` 可展示；基础设施错误默认透传，配置 `Error.Fold` 命中后折叠为 `系统繁忙`。
 - `timestamp` 为网关生成响应时的 Unix 毫秒时间戳，成功和失败响应均返回，不代表客户端请求时间。
 - 已接入网关的业务响应带 `X-Request-Id`；框架级 `413/503`、panic 与 nginx 错误不保证带该头（见 §5）。
 
@@ -194,11 +194,11 @@ return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 `errx.PublicError` 的优先级（`common/errx/`）：
 
 <div align="center">
-  <img src="./images/diagrams/gateway-error-normalize.png" alt="错误码归一化流程：NormalizeError 到 PublicError，IsDefinedCode 校验后折叠为六位码" style="max-width: 78%; height: auto;" />
+  <img src="./images/diagrams/gateway-error-normalize.png" alt="错误码归一化流程：NormalizeError 到 PublicError，IsDefinedCode 校验后得到六位码，再由网关按 Error.Fold 配置决定是否折叠" style="max-width: 78%; height: auto;" />
 </div>
 
 - `CodeFromStatus` 只在 `reason` 是 extproto 中已登记的码时采用；未登记的数字码按 `100999 系统繁忙` 处理，非数字 reason 走 gRPC Code 映射（`common/errx/codec.go`）。
-- 折叠是网关策略（`common/gtwx/fold.go`）：默认不配置即统一透传；网关在 `etc/*.yaml` 的 `Error.Fold` 中列出 `Codes` 后，命中的码折叠为 `Target`（默认 `100999`），`KeepMsg=false` 时文案统一为 `系统繁忙`。
+- 折叠是网关策略（`common/gtwx/fold.go`）：默认不配置即统一透传；网关在 `etc/*.yaml` 的 `Error.Fold` 中列出 `Codes` 后，命中的码折叠为 `Target`（默认 `100999`），`KeepMsg=false` 时文案统一为 `系统繁忙`。`100603` 固定透传，不参与折叠。
 - 普通 `error`（未结构化、也未携带 `CodeMsg`）一律返回 `100999 系统繁忙`，原始文本只写服务端日志。因此业务与下游必须先转换成 extproto 错误，不能把 SQL、地址、堆栈直接抛给网关。
 
 ### 4.4 设备/云端原始码（DJI）
@@ -206,7 +206,7 @@ return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 `extproto` 是唯一的平台信封码表。DJI 的 `dji_error_code.proto` 是独立的厂商错误码体系，与平台码不互通、不映射、不透传，不进入信封，也不写入 `ErrorInfo.reason`：
 
 - 设备执行结果走业务字段：`CommonRes{code:-1, reasonCode:312014}` → HTTP `data.reasonCode`，信封 `code` 保持 `0`。
-- 网关 `NormalizeError` 只认 extproto 中已登记的码；未登记的原始码一律折叠为 `100999 系统繁忙`，原文进日志。
+- 网关 `NormalizeError` 只认 extproto 中已登记的码；未登记的原始码一律降级为 `100999 系统繁忙`，原文进日志。
 - 第三方平台的故障（超时、鉴权、限流、5xx）由厂商适配层转换成 extproto 码后再以 error 返回，见 `docs/error-codes.md` §5.2。
 
 ## 5. 统一出口
@@ -281,6 +281,7 @@ return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 - [ ] 鉴权失败：JWT 缺失/身份缺失 → `100401`（`app/livegtw/internal/middleware/meetingauthmiddleware_test.go`）；Basic 失败 → `130101/130102`（`app/opengtw/internal/middleware/openauthmiddleware_test.go`）。
 - [ ] 404/405/未认证兜底 → `100801/100802/100401`（`common/gtwx/response_test.go` 的 `TestGatewayFallbackHandlers`）。
 - [ ] 下游基础设施错误默认透传；配置 `Error.Fold` 命中后折叠为 `100999 系统繁忙`（`TestGatewayPassesThroughInfrastructureErrorByDefault`、`TestGatewayFoldsInfrastructureErrorWhenConfigured`、`TestWriteErrorFoldsConfiguredCode`）。
+- [ ] `100603` 即使配置在 `Error.Fold.Codes` 中也保持透传（`TestFoldPolicyNeverFoldsThirdPartyAPI`、`TestWriteErrorNeverFoldsThirdPartyAPI`）；非法 `Target` 回退到 `100999`（`TestFoldPolicyInvalidTargetFallsBack`）。
 - [ ] 未登记码/设备原始码统一为 `100999 系统繁忙`（`TestWriteErrorFoldsVendorCode`、`...OverGRPC`）。
 
 执行：
@@ -327,7 +328,7 @@ curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 | --- | --- | --- |
 | `app/livegtw` | 已接入 | 业务、鉴权、参数、404/405、下游错误均走 `gtwx` |
 | `app/opengtw` | 已接入 | 开放面 Basic + 管理面 JWT；`tid` 回显 |
-| `gtw` | 已接入 | 中间件/兜底 handler 已补齐；微信支付回调为协议例外 |
+| `gtw` | 已接入 | 中间件/兜底 handler 与 `Error.Fold` 已补齐；微信支付回调为协议例外 |
 | `app/oryxgtw` | 未迁移 | `httpx.ErrorCtx` / `OkJsonCtx` |
 | `app/bridgegtw` | 未迁移 | grpc-gateway + `httpx`，无信封 |
 | `aiapp/aigtw` | 协议例外 | OpenAI 兼容错误结构（`gtwx.SetOpenAIErrorHandler`），不套 `{code,msg,data,timestamp}`；401/404/405 也保持 `{"error":{...}}` |
@@ -344,7 +345,8 @@ curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 | --- | --- |
 | `third_party/extproto.proto` | 六位错误码定义与 `http_code` |
 | `docs/error-codes.md` | 错误码语义、v1→v2 映射、网关契约 |
-| `common/gtwx/response.go` | `SuccessCode`、`PublicError`、三个写出口、兜底 handler |
+| `common/gtwx/response.go` | `WriteError/WriteOK` 等统一信封写出口 |
+| `common/errx/normalize.go` | `SuccessCode`、`PublicError`、`NormalizeError` |
 | `common/errx/codec.go` | `CodeFromStatus`、`IsDefinedCode`、`ErrorMessage` |
 | `common/gtwx/fold.go` | 网关折叠配置 `FoldConfig` 与默认透传策略 |
 | `common/gtwx/requestid.go` | `X-Request-Id` 中间件与 context 读取 |
@@ -359,6 +361,6 @@ curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 | `app/opengtw/internal/middleware/openauthmiddleware.go` | Basic → `130101/130102` |
 | `app/opengtw/internal/handler/gateway/gatewayhandler.go` | 开放面转发与 `tid` 回显 |
 | `app/opengtw/internal/logic/gateway/gatewaylogic.go` | 下游错误归一化（不折叠） |
-| `common/gtwx/response_test.go`、`common/gtwx/codec_test.go` | 公共出口与错误码测试 |
+| `common/gtwx/response_test.go`、`common/errx/codec_test.go` | 公共出口与错误码测试 |
 | `app/opengtw/internal/handler/gateway/gatewayhandler_test.go` | 网关信封/解析/折叠测试 |
-| `gtw/gtw.go` | 未迁移存量参考（反面示例） |
+| `gtw/gtw.go` | gtw 统一出口接线（存量 BFF，已接入） |
