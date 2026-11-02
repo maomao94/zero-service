@@ -44,15 +44,17 @@ body:
       label: 受影响服务
       description: 不确定时选「不确定」。
       options:
-        - gtw / livegtw / opengtw / socketgtw
-        - ieccaller / iecstash / streamevent
+        - gtw / livegtw / opengtw / oryxgtw / bridgegtw / socketgtw
+        - ieccaller / iecagent / iecstash
         - trigger
         - djicloud
         - live（LiveKit 会议）
-        - oryxgtw / oryxserver
-        - bridge*（协议桥接）
+        - oryxserver
+        - bridge*（协议桥接）与 bridgedump
         - ispagent / ispserver
-        - aiapp（AI 服务）
+        - file / gis / podengine / openapi
+        - aiapp（aigtw / ssegtw / aichat / aisolo / mcpserver）
+        - socketpush（SocketIO 推送）
         - web（前端）
         - 其他 / 不确定
     validations:

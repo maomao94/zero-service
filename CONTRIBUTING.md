@@ -124,6 +124,7 @@ fix(<scope>): 修复一句话描述
 - 新增服务必须补充文档
 - 新增文档先在 [`docs/README.md`](./docs/README.md) 的对应分区登记，再补交叉链接
 - 架构图与流程图放在 `docs/images/diagrams/`，提交同名 `.mmd` 源文件与导出的 PNG，正文用 `<img>` 引用，约定见该目录的 [`README.md`](./docs/images/diagrams/README.md)
+- 提交前执行 `python3 scripts/check_docs.py`：校验相对链接、HTML `<img>`/`<a href>`、页内锚点（含重复标题的 `-1` 后缀）、代码块闭合与 `.mmd`/`.png` 配对
 
 ### 文档体量与拆分
 
