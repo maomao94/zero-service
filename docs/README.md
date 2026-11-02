@@ -36,7 +36,7 @@
 
 - `docs/` 放跨服务的架构、协议、对接与规范；单个服务的实现细节放各自目录的 `README.md`。
 - 每篇文档先给结论或表格，再展开细节；命令与配置一律使用 fenced code block。
-- 单篇超过 600 行按语义拆分，包级 API 放组件 README，跨服务实践放 `docs/`（规则见[贡献指南](../CONTRIBUTING.md#文档体量与拆分)）。
+- 单篇超过 600 行按语义拆分，包级 API 放组件 README，跨服务实践放 `docs/`（规则见[贡献指南](../.github/CONTRIBUTING.md#文档体量与拆分)）。
 - 架构图与流程图统一放在 [`docs/images/diagrams/`](./images/diagrams/)，同目录保留同名 `.mmd` 源文件；正文用 `<img>` 引用导出的 PNG，避免依赖编辑器是否支持 Mermaid。
 - 端口、路径和字段以源码、`.proto`/`.api` 与 `etc/*.yaml` 为准，写文档时同步核对。
 - 提交前执行 `python3 scripts/check_docs.py` 校验相对链接、HTML `<img>`/`<a href>`、页内锚点、代码块闭合与 `.mmd`/`.png` 配对；CI 会在 Markdown 变更时自动运行。
@@ -129,11 +129,8 @@
 | [网关标准开发流程](./gateway-standard.md) | 网关分层、路由鉴权、统一信封、错误码出口与新增接口验收 |
 | [OpenViking 记忆系统](./openviking-memory.md) | 工程契约的记忆库部署、MCP 工具与同步流程 |
 | [Agent 协作约定](../AGENTS.md) | 默认行为、修改范围与完成标准 |
-| [贡献指南](../CONTRIBUTING.md) | 分支模型、提交规范、代码生成、PR 要求与文档规则 |
+| [贡献指南](../.github/CONTRIBUTING.md) | 分支模型、提交规范、代码生成、PR 要求与文档规则 |
 | [AI 协作与技能集](./ai-collaboration.md) | 协作契约、技能集来源与安装位置、使用约定 |
-| [变更日志](../CHANGELOG.md) | 版本历史与未发布变更 |
-| [安全策略](../SECURITY.md) | 支持的版本、漏洞报告渠道与安全开发约定 |
-| [贡献者公约](../CODE_OF_CONDUCT.md) | 社区行为准则 |
-| [获取帮助](../SUPPORT.md) | 提问渠道与响应预期 |
+| [安全策略](../.github/SECURITY.md) | 支持的版本、漏洞报告渠道与安全开发约定 |
 
 错误码定义与折叠规则见上文的[错误码规范](./error-codes.md)，组件用法见[公共组件](#公共组件)。

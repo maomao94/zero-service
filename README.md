@@ -129,15 +129,15 @@ scripts/     仓库维护脚本（文档校验等）
 
 ## 参与贡献
 
-- 提交代码前请阅读[贡献指南](./CONTRIBUTING.md)：分支模型、提交规范、代码生成与 PR 要求。
-- 参与讨论即表示同意遵守[贡献者公约](./CODE_OF_CONDUCT.md)。
-- 报告安全漏洞请走[安全策略](./SECURITY.md)中的私密通道，不要公开提 Issue。
-- 使用与对接问题见[获取帮助](./SUPPORT.md)。
+- 提交代码前请阅读[贡献指南](./.github/CONTRIBUTING.md)：分支模型、提交规范、代码生成与 PR 要求。
+- 报告安全漏洞请走[安全策略](./.github/SECURITY.md)中的私密通道，不要公开提 Issue。
+- 使用与对接问题先查[文档索引](./docs/README.md)，仍无法解决再提 Issue。
 
 开发自检：
 
 ```bash
-gofmt -l .                      # 应无输出
+# 只检查本次改动的 Go 文件；仓库仍有历史未格式化文件，全量 gofmt -l . 会有输出
+for f in $(git diff --name-only --diff-filter=ACMR origin/develop...HEAD -- '*.go'); do gofmt -l "$f"; done
 go vet ./...
 go test -race ./...
 python3 scripts/check_docs.py   # 改动 Markdown 时
@@ -146,7 +146,7 @@ git diff --check                # 应无输出
 
 ## 版本与变更
 
-版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)，发布记录见[变更日志](./CHANGELOG.md)与 [Releases](https://github.com/maomao94/zero-service/releases)。分支模型为 Git Flow：`master` 为稳定发布分支，`develop` 为集成分支。
+版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)，发布记录见 [Releases](https://github.com/maomao94/zero-service/releases)。分支模型为 Git Flow：`master` 为稳定发布分支，`develop` 为集成分支。
 
 ## 开源许可
 

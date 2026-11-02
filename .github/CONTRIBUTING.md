@@ -2,7 +2,7 @@
 
 感谢你对 Zero-Service 项目的关注！
 
-提交代码前请先阅读 [README](./README.md)（环境要求 Go 1.26+）和 [开发指南](./docs/development.md)。参与本项目即表示同意遵守[贡献者公约](./CODE_OF_CONDUCT.md)；安全问题请按[安全策略](./SECURITY.md)私密报告，不要公开提 Issue。
+提交代码前请先阅读 [README](../README.md)（环境要求 Go 1.26+）和 [开发指南](../docs/development.md)。安全问题请按[安全策略](./SECURITY.md)私密报告，不要公开提 Issue。
 
 ## 分支模型（Git Flow）
 
@@ -94,7 +94,7 @@ fix(<scope>): 修复一句话描述
 
 ## Pull Request 要求
 
-- 使用仓库的 [PR 模板](./.github/PULL_REQUEST_TEMPLATE.md)填写变更说明、关联 Issue、影响范围、破坏性变更与验证结果（贴真实命令输出，不要只写「已测试」）。
+- 使用仓库的 [PR 模板](./PULL_REQUEST_TEMPLATE.md)填写变更说明、关联 Issue、影响范围、破坏性变更与验证结果（贴真实命令输出，不要只写「已测试」）。
 - PR 标题使用与提交相同的 Conventional Commits 格式，并写清目标分支（`-> develop` 或 `-> master`）。变更类型（`feat` / `fix` / `docs` / `style` / `refactor` / `test` / `chore` / `ci` / `perf` / `build` / `revert`）只由标题前缀表达，正文不再重复勾选。
 - PR 标题由 `pr-title.yml`（`PR title`）工作流校验，不符合约定格式时 CI 变红；改标题会重新触发校验。
 - 破坏性变更必须写明迁移与回滚方式；无则写「无」。
@@ -106,8 +106,8 @@ fix(<scope>): 修复一句话描述
 ## 版本与变更记录
 
 - 版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)，标签前缀为 `v`（见 `.gitflow`）。
-- 面向使用者的改动（新增能力、行为变更、弃用、修复）需在 [`CHANGELOG.md`](./CHANGELOG.md) 的「未发布」下补一条，按 `新增` / `变更` / `弃用` / `移除` / `修复` / `文档` / `依赖` 分类。
-- `release/*` 合并到 `master` 前，把「未发布」改为目标版本号与发布日期，再由 tag 触发发布说明。
+- 仓库不维护 `CHANGELOG.md`：版本历史以 [Releases](https://github.com/maomao94/zero-service/releases) 与 tag 为准。
+- `release/*` 合并到 `master` 并打 tag 时，面向使用者的改动（新增能力、行为变更、弃用、修复、依赖升级）写在该 tag 的 Release 正文中，按 `新功能` / `修复` / `文档` / `依赖更新` 分类。
 
 ## Issue 规范
 
@@ -131,8 +131,8 @@ fix(<scope>): 修复一句话描述
 - 保持格式一致
 - 代码示例使用 fenced code block
 - 新增服务必须补充文档
-- 新增文档先在 [`docs/README.md`](./docs/README.md) 的对应分区登记，再补交叉链接
-- 架构图与流程图放在 `docs/images/diagrams/`，提交同名 `.mmd` 源文件与导出的 PNG，正文用 `<img>` 引用，约定见该目录的 [`README.md`](./docs/images/diagrams/README.md)
+- 新增文档先在 [`docs/README.md`](../docs/README.md) 的对应分区登记，再补交叉链接
+- 架构图与流程图放在 `docs/images/diagrams/`，提交同名 `.mmd` 源文件与导出的 PNG，正文用 `<img>` 引用，约定见该目录的 [`README.md`](../docs/images/diagrams/README.md)
 - 提交前执行 `python3 scripts/check_docs.py`：校验相对链接、HTML `<img>`/`<a href>`、页内锚点（含重复标题的 `-1` 后缀）、代码块闭合与 `.mmd`/`.png` 配对
 
 ### 文档体量与拆分
@@ -144,7 +144,7 @@ fix(<scope>): 修复一句话描述
 
 ### 不收录的内容
 
-- 不在仓库内抄录外部工具、依赖库或 AI 技能集的目录与全量说明，只保留上游链接、安装位置和版本核对方式（参见 [`docs/ai-collaboration.md`](./docs/ai-collaboration.md)）。
+- 不在仓库内抄录外部工具、依赖库或 AI 技能集的目录与全量说明，只保留上游链接、安装位置和版本核对方式（参见 [`docs/ai-collaboration.md`](../docs/ai-collaboration.md)）。
 - 端口、字段、错误码、方法数等易变事实，以源码、`.proto`/`.api` 与 `etc/*.yaml` 为准，文档只给结论并标明出处。
 
 

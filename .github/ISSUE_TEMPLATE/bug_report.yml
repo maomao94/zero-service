@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         感谢反馈！提交前请先查阅 [文档索引](https://github.com/maomao94/zero-service/blob/develop/docs/README.md) 与对应服务的 `etc/*.yaml`。
-        安全漏洞请勿公开提交，见 [安全策略](https://github.com/maomao94/zero-service/blob/develop/SECURITY.md)。
+        安全漏洞请勿公开提交，见 [安全策略](https://github.com/maomao94/zero-service/blob/develop/.github/SECURITY.md)。
 
   - type: textarea
     id: what-happened
@@ -48,6 +48,7 @@ body:
         - ieccaller / iecagent / iecstash
         - trigger
         - djicloud
+        - alarm（告警） / logdump（日志导出） / xfusionmock（X-Fusion 模拟）
         - live（LiveKit 会议）
         - oryxserver
         - bridge*（协议桥接）与 bridgedump

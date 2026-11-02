@@ -6,7 +6,7 @@
 
 - 行为约束以仓库根目录 [`AGENTS.md`](../AGENTS.md) 为准：中文沟通、改动前查证源码与契约、只改任务范围、完成前跑验证。
 - 工程契约与领域规范存放在 OpenViking 记忆系统，见 [OpenViking 记忆系统](./openviking-memory.md)。
-- 项目内的文档与代码规范以 [`CONTRIBUTING.md`](../CONTRIBUTING.md) 与本文档索引为准。
+- 项目内的文档与代码规范以 [`CONTRIBUTING.md`](../.github/CONTRIBUTING.md) 与本文档索引为准。
 
 ## 技能集来源
 
@@ -28,7 +28,7 @@ git -C ~/.skills/vendor/mattpocock-skills pull --ff-only
 
 ## 使用约定
 
-1. **优先级**：项目内规范（`AGENTS.md`、`CONTRIBUTING.md`、本目录文档）> 个人技能 > 外部技能集。
+1. **优先级**：项目内规范（`AGENTS.md`、`.github/CONTRIBUTING.md`、本目录文档）> 个人技能 > 外部技能集。
 2. **技能是流程建议，不是事实来源**：涉及端口、字段、错误码时，一律以源码、`.proto`/`.api` 与 `etc/*.yaml` 为准。
 3. **不批量导入文档**：项目文档以本目录为唯一事实源，技能只做工作流辅助。
 
@@ -36,4 +36,4 @@ git -C ~/.skills/vendor/mattpocock-skills pull --ff-only
 
 - [Agent 协作约定](../AGENTS.md)
 - [OpenViking 记忆系统](./openviking-memory.md)
-- [贡献指南](../CONTRIBUTING.md)
+- [贡献指南](../.github/CONTRIBUTING.md)
