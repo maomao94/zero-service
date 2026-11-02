@@ -98,8 +98,10 @@ fix(<scope>): 修复一句话描述
 - PR 标题使用与提交相同的 Conventional Commits 格式，并写清目标分支（`-> develop` 或 `-> master`）。变更类型（`feat` / `fix` / `docs` / `style` / `refactor` / `test` / `chore` / `ci` / `perf` / `build` / `revert`）只由标题前缀表达，正文不再重复勾选。
 - PR 标题由 `pr-title.yml`（`PR title`）工作流校验，不符合约定格式时 CI 变红；改标题会重新触发校验。
 - 破坏性变更必须写明迁移与回滚方式；无则写「无」。
-- 合并前必须通过分支保护的 5 项必需检查（`develop` 与 `master` 均已配置）：`Linux`、`gofmt & whitespace`、`Analyze (go)`、`runner / staticcheck`、`Markdown links`。管理员同样受门禁约束（`enforce_admins`），CI 红时不能合并。
-- 等待 Reviewer 批准；CI 变红先本地复现再推新提交，不要靠改 PR 描述绕过门禁。
+- 合并前必须通过分支保护的必需检查（`develop` 与 `master` 均已配置，完整列表以 Settings → Branches 的实际配置为准，避免此处写死数量后与配置漂移）：
+  `Linux`、`gofmt & whitespace`、`Analyze (go)`、`runner / staticcheck`、`Markdown links`、`PR title`。
+  管理员同样受门禁约束（`enforce_admins`），CI 红时不能合并。
+- 仓库当前未强制要求 Reviewer 批准（单人维护时 GitHub 不允许自己批准自己的 PR，强制 review 会直接锁死合并）；有协作者参与时请在合并前请求 Review。CI 变红先本地复现再推新提交，不要靠改 PR 描述或标题绕过门禁。
 
 ## 版本与变更记录
 

@@ -17,6 +17,7 @@
 
 - 错误码：网关折叠策略从 `errx` 下沉到 `gtwx`，默认不折叠、按 `Error.Fold.Codes` 折叠；`100603` 强制透传。
 - CI 门禁：`master` 分支保护补齐 `Linux`、`gofmt & whitespace`、`Analyze (go)`、`runner / staticcheck`、`Markdown links` 五项必需检查，并开启 `enforce_admins`，与 `develop` 保持一致。
+- CI 门禁：`PR title` 纳入 `master` 与 `develop` 的必需检查，两个分支的 required checks 现为 6 项；`CONTRIBUTING.md` 不再写死检查数量，改为以分支保护实际配置为准，并澄清仓库未强制要求 Reviewer 批准。
 - 文档：按「规则/示例」「正文/附录」拆分 `trigger-rrule-api-guide.md` 与 `iec104-message.md`。
 
 ### 移除
