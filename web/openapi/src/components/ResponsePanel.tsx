@@ -191,7 +191,7 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
                   </div>
                 )}
                 {doc?.folded && (
-                  <div className="error-note">该错误属于基础设施类，开放面已折叠为 100999；真实原因请查看服务端日志。</div>
+                  <div className="error-note">该错误属于基础设施类；网关默认透传，可在 Error.Fold 中配置折叠为 100999，真实原因请查看服务端日志。</div>
                 )}
                 <div className="error-raw">
                   <label>服务端消息</label>

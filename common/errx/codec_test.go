@@ -31,7 +31,7 @@ func TestCodeFromStatus(t *testing.T) {
 	}{
 		{name: "nil", err: nil, code: 0, msg: ""},
 		{name: "error info reason", err: withReason.Err(), code: 100601, msg: "downstream down"},
-		{name: "dji reason rejected", err: withDJIReason.Err(), code: 100998, msg: ""},
+		{name: "dji reason rejected", err: withDJIReason.Err(), code: 100999, msg: SystemBusyMessage},
 		{name: "not found fallback", err: status.Error(codes.NotFound, "missing"), code: 100202, msg: "missing"},
 		{name: "deadline fallback", err: status.Error(codes.DeadlineExceeded, ""), code: 100997, msg: "系统超时"},
 		{name: "code msg", err: xerrors.New(130102, "bad secret"), code: 130102, msg: "bad secret"},
@@ -97,29 +97,13 @@ func TestNormalizeErrorKeepsDefinedCode(t *testing.T) {
 	}
 }
 
-func TestFoldPublic(t *testing.T) {
-	tests := map[int]int{
-		0:      0,
-		100998: int(extproto.Code__1_00_UNKNOWN),
-		100201: int(extproto.Code__1_00_UNKNOWN),
-		100301: int(extproto.Code__1_00_UNKNOWN),
-		100601: int(extproto.Code__1_00_UNKNOWN),
-		100101: 100101,
-		130101: 130101,
-	}
-	for in, want := range tests {
-		if got := FoldPublic(in); got != want {
-			t.Fatalf("FoldPublic(%d) = %d, want %d", in, got, want)
+func TestNormalizeErrorPassesThroughByDefault(t *testing.T) {
+	// 默认不折叠：已登记码原样返回，折叠交给网关按配置应用。
+	for _, code := range []int{100201, 100301, 100302, 100303, 100601, 100602, 100998} {
+		got, _ := NormalizeError(xerrors.New(code, "detail"))
+		if got != code {
+			t.Fatalf("NormalizeError(%d) = %d, want %d", code, got, code)
 		}
-	}
-}
-
-func TestPublicMessage(t *testing.T) {
-	if got := PublicMessage(100601, "db down"); got != "系统繁忙" {
-		t.Fatalf("folded message = %q", got)
-	}
-	if got := PublicMessage(130101, "应用不存在或已停用"); got != "应用不存在或已停用" {
-		t.Fatalf("public message = %q", got)
 	}
 }
 

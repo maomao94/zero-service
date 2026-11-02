@@ -29,6 +29,9 @@ func main() {
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
 
+	// 错误折叠是网关展示策略，默认不配置即统一透传。
+	gtwx.SetFoldConfig(c.Error.Fold)
+
 	tool.PrintGoVersion()
 
 	if secret := os.Getenv("LIVEGTW_JWT_ACCESS_SECRET"); secret != "" {

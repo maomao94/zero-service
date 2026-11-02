@@ -82,8 +82,11 @@ const (
 	Code__1_00_BIZ_STATE  Code = 100502
 	Code__1_00_BIZ_REPEAT Code = 100503
 	// 外部依赖（DEF 600-699）
-	Code__1_00_RPC         Code = 100601
+	Code__1_00_RPC Code = 100601
+	// 内部基础设施类第三方故障，网关会折叠为 100999，原始信息只进日志。
 	Code__1_00_THIRD_PARTY Code = 100602
+	// 第三方接口明确返回错误码，允许对外展示；msg 固定模板见 docs/error-codes.md。
+	Code__1_00_THIRD_PARTY_API Code = 100603
 	// 限流（DEF 700-799）
 	Code__1_00_RATE_LIMITED Code = 100701
 	// 网关/传输（DEF 800-899）
@@ -123,6 +126,7 @@ var (
 		100503: "_1_00_BIZ_REPEAT",
 		100601: "_1_00_RPC",
 		100602: "_1_00_THIRD_PARTY",
+		100603: "_1_00_THIRD_PARTY_API",
 		100701: "_1_00_RATE_LIMITED",
 		100801: "_1_00_ROUTE_NOT_FOUND",
 		100802: "_1_00_METHOD_NOT_ALLOWED",
@@ -155,6 +159,7 @@ var (
 		"_1_00_BIZ_REPEAT":           100503,
 		"_1_00_RPC":                  100601,
 		"_1_00_THIRD_PARTY":          100602,
+		"_1_00_THIRD_PARTY_API":      100603,
 		"_1_00_RATE_LIMITED":         100701,
 		"_1_00_ROUTE_NOT_FOUND":      100801,
 		"_1_00_METHOD_NOT_ALLOWED":   100802,
@@ -376,7 +381,7 @@ const file_extproto_proto_rawDesc = "" +
 	"\x04Dept\x12\x16\n" +
 	"\x06deptId\x18\x01 \x01(\tR\x06deptId\x12\x1a\n" +
 	"\bdeptCode\x18\x02 \x01(\tR\bdeptCode\x12\x1a\n" +
-	"\bdeptName\x18\x03 \x01(\tR\bdeptName*\xec\v\n" +
+	"\bdeptName\x18\x03 \x01(\tR\bdeptName*\xa9\f\n" +
 	"\x04Code\x12\x1a\n" +
 	"\x05_0_OK\x10\x00\x1a\x0fʸ\x02\x06成功и\x02\xc8\x01\x12%\n" +
 	"\x10CODE_UNSPECIFIED\x10\x00\x1a\x0fʸ\x02\x06成功и\x02\xc8\x01\x12(\n" +
@@ -396,7 +401,8 @@ const file_extproto_proto_rawDesc = "" +
 	"\x0f_1_00_BIZ_STATE\x10\x96\x91\x06\x1a\x1eʸ\x02\x15业务状态不允许и\x02\x99\x03\x12-\n" +
 	"\x10_1_00_BIZ_REPEAT\x10\x97\x91\x06\x1a\x15ʸ\x02\f重复操作и\x02\x99\x03\x12,\n" +
 	"\t_1_00_RPC\x10\xf9\x91\x06\x1a\x1bʸ\x02\x12远程调用失败и\x02\xf7\x03\x127\n" +
-	"\x11_1_00_THIRD_PARTY\x10\xfa\x91\x06\x1a\x1eʸ\x02\x15第三方服务异常и\x02\xf7\x03\x125\n" +
+	"\x11_1_00_THIRD_PARTY\x10\xfa\x91\x06\x1a\x1eʸ\x02\x15第三方服务异常и\x02\xf7\x03\x12;\n" +
+	"\x15_1_00_THIRD_PARTY_API\x10\xfb\x91\x06\x1a\x1eʸ\x02\x15第三方接口错误и\x02\xf7\x03\x125\n" +
 	"\x12_1_00_RATE_LIMITED\x10ݒ\x06\x1a\x1bʸ\x02\x12请求过于频繁и\x02\xad\x03\x125\n" +
 	"\x15_1_00_ROUTE_NOT_FOUND\x10\xc1\x93\x06\x1a\x18ʸ\x02\x0f接口不存在и\x02\x94\x03\x12>\n" +
 	"\x18_1_00_METHOD_NOT_ALLOWED\x10\u0093\x06\x1a\x1eʸ\x02\x15请求方法不允许и\x02\x95\x03\x12*\n" +
