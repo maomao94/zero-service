@@ -39,7 +39,7 @@ func TestWriteErrorAlwaysHTTP200(t *testing.T) {
 		{name: "code msg", err: xerrors.New(130102, "密钥无效"), wantCode: 130102, wantMsg: "密钥无效"},
 		{name: "grpc unauthorized", err: tool.NewErrorByPbCode(extproto.Code__1_00_UNAUTHORIZED), wantCode: 100401, wantMsg: "未认证"},
 		{name: "grpc not found", err: tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST), wantCode: 100202, wantMsg: "记录不存在"},
-		{name: "fold internal", err: xerrors.New(int(extproto.Code__1_00_INTERNAL), "db password leaked"), wantCode: 100999, wantMsg: "系统繁忙"},
+		{name: "internal passes through by default", err: xerrors.New(int(extproto.Code__1_00_INTERNAL), "db password leaked"), wantCode: 100998, wantMsg: "db password leaked"},
 		{name: "plain error", err: errors.New("boom"), wantCode: 100999, wantMsg: "系统繁忙"},
 	}
 
@@ -56,6 +56,49 @@ func TestWriteErrorAlwaysHTTP200(t *testing.T) {
 				t.Fatalf("want code=%d msg=%q, got code=%d msg=%q", tc.wantCode, tc.wantMsg, body.Code, body.Msg)
 			}
 		})
+	}
+}
+
+func TestWriteErrorFoldsConfiguredCode(t *testing.T) {
+	SetFoldConfig(FoldConfig{Enabled: true, Codes: []int{int(extproto.Code__1_00_INTERNAL)}})
+	t.Cleanup(func() { SetFoldConfig(FoldConfig{}) })
+
+	rr := httptest.NewRecorder()
+	WriteError(context.Background(), rr, xerrors.New(int(extproto.Code__1_00_INTERNAL), "db password leaked"))
+
+	body := decodeEnvelope(t, rr)
+	if body.Code != int(extproto.Code__1_00_UNKNOWN) || body.Msg != "系统繁忙" {
+		t.Fatalf("want 100999/系统繁忙, got code=%d msg=%q", body.Code, body.Msg)
+	}
+}
+
+func TestWriteErrorFoldConfigLeavesOtherCodes(t *testing.T) {
+	SetFoldConfig(FoldConfig{Enabled: true, Codes: []int{int(extproto.Code__1_00_INTERNAL)}})
+	t.Cleanup(func() { SetFoldConfig(FoldConfig{}) })
+
+	rr := httptest.NewRecorder()
+	WriteError(context.Background(), rr, xerrors.New(int(extproto.Code__1_00_DB), "db down"))
+
+	body := decodeEnvelope(t, rr)
+	if body.Code != int(extproto.Code__1_00_DB) || body.Msg != "db down" {
+		t.Fatalf("want 100201/db down, got code=%d msg=%q", body.Code, body.Msg)
+	}
+}
+
+func TestWriteErrorFoldsConfiguredCodeKeepMsg(t *testing.T) {
+	SetFoldConfig(FoldConfig{
+		Enabled: true,
+		Codes:   []int{int(extproto.Code__1_00_INTERNAL)},
+		KeepMsg: true,
+	})
+	t.Cleanup(func() { SetFoldConfig(FoldConfig{}) })
+
+	rr := httptest.NewRecorder()
+	WriteError(context.Background(), rr, xerrors.New(int(extproto.Code__1_00_INTERNAL), "db password leaked"))
+
+	body := decodeEnvelope(t, rr)
+	if body.Code != int(extproto.Code__1_00_UNKNOWN) || body.Msg != "db password leaked" {
+		t.Fatalf("want 100999/db password leaked, got code=%d msg=%q", body.Code, body.Msg)
 	}
 }
 

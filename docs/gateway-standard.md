@@ -197,9 +197,9 @@ return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
   <img src="./images/diagrams/gateway-error-normalize.png" alt="错误码归一化流程：NormalizeError 到 PublicError，IsDefinedCode 校验后折叠为六位码" style="max-width: 78%; height: auto;" />
 </div>
 
-- `CodeFromStatus` 只在 `reason` 是 extproto 中已登记的码时采用；未登记的数字码按内部错误折叠，非数字 reason 走 gRPC Code 映射（`common/errx/codec.go`）。
-- `FoldPublic` 把 `100201`、`100301`、`100302`、`100303`、`100601`、`100602`、`100998` 折叠为 `100999`，对外文案 `系统繁忙`；真实原因写日志。
-- 普通 `error`（未结构化、也未携带 `CodeMsg`）会被折叠为 `100999 系统繁忙`，原始文本只写服务端日志。因此业务与下游必须先转换成 extproto 错误，不能把 SQL、地址、堆栈直接抛给网关。
+- `CodeFromStatus` 只在 `reason` 是 extproto 中已登记的码时采用；未登记的数字码按 `100999 系统繁忙` 处理，非数字 reason 走 gRPC Code 映射（`common/errx/codec.go`）。
+- 折叠是网关策略（`common/gtwx/fold.go`）：默认不配置即统一透传；网关在 `etc/*.yaml` 的 `Error.Fold` 中列出 `Codes` 后，命中的码折叠为 `Target`（默认 `100999`），`KeepMsg=false` 时文案统一为 `系统繁忙`。
+- 普通 `error`（未结构化、也未携带 `CodeMsg`）一律返回 `100999 系统繁忙`，原始文本只写服务端日志。因此业务与下游必须先转换成 extproto 错误，不能把 SQL、地址、堆栈直接抛给网关。
 
 ### 4.4 设备/云端原始码（DJI）
 
@@ -219,7 +219,7 @@ return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 | 应用不存在/已停用 | `OpenAuthMiddleware` → `gtwx.WriteError` | `130101` | 200 |
 | 参数解析失败 | `gtwx.WriteParseError` | `100101` | 200 |
 | 下游 gRPC 业务错误 | `gtwx.WriteError` | 原始六位码 | 200 |
-| 下游基础设施错误 | `gtwx.WriteError` | 折叠为 `100999` | 200 |
+| 下游基础设施错误 | `gtwx.WriteError` | 默认透传；配置命中时 `100999` | 200 |
 | 未在 extproto 登记的码 | `gtwx.WriteError` → `NormalizeError` | `100999`（原文进日志） | 200 |
 | 未转换的普通 `error` | `gtwx.WriteError` → `NormalizeError` | `100999 系统繁忙` | 200 |
 | 路由不存在 | `rest.WithNotFoundHandler(gtwx.NotFoundHandler)` | `100801` | 200 |
@@ -280,8 +280,8 @@ return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 - [ ] 参数错误：非法 JSON → `100101`（`TestGatewayInvalidJSONReturnsParseError`）。
 - [ ] 鉴权失败：JWT 缺失/身份缺失 → `100401`（`app/livegtw/internal/middleware/meetingauthmiddleware_test.go`）；Basic 失败 → `130101/130102`（`app/opengtw/internal/middleware/openauthmiddleware_test.go`）。
 - [ ] 404/405/未认证兜底 → `100801/100802/100401`（`common/gtwx/response_test.go` 的 `TestGatewayFallbackHandlers`）。
-- [ ] 下游基础设施错误折叠为 `100999 系统繁忙`（`TestGatewayFoldsInfrastructureError`、`TestWriteErrorAlwaysHTTP200`）。
-- [ ] 未登记码/设备原始码折叠为 `100999 系统繁忙`（`TestWriteErrorFoldsVendorCode`、`...OverGRPC`）。
+- [ ] 下游基础设施错误默认透传；配置 `Error.Fold` 命中后折叠为 `100999 系统繁忙`（`TestGatewayPassesThroughInfrastructureErrorByDefault`、`TestGatewayFoldsInfrastructureErrorWhenConfigured`、`TestWriteErrorFoldsConfiguredCode`）。
+- [ ] 未登记码/设备原始码统一为 `100999 系统繁忙`（`TestWriteErrorFoldsVendorCode`、`...OverGRPC`）。
 
 执行：
 
@@ -345,7 +345,8 @@ curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 | `third_party/extproto.proto` | 六位错误码定义与 `http_code` |
 | `docs/error-codes.md` | 错误码语义、v1→v2 映射、网关契约 |
 | `common/gtwx/response.go` | `SuccessCode`、`PublicError`、三个写出口、兜底 handler |
-| `common/errx/codec.go` | `CodeFromStatus`、`FoldPublic`、`PublicMessage` |
+| `common/errx/codec.go` | `CodeFromStatus`、`IsDefinedCode`、`ErrorMessage` |
+| `common/gtwx/fold.go` | 网关折叠配置 `FoldConfig` 与默认透传策略 |
 | `common/gtwx/requestid.go` | `X-Request-Id` 中间件与 context 读取 |
 | `common/gtwx/cors.go` | 统一 CORS，暴露 `X-Request-Id` |
 | `common/tool/errorutil.go` | `NewErrorByPbCode` / `NewErrorByPbCodeWrap` |
@@ -357,7 +358,7 @@ curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 | `app/opengtw/opengtw.go` | opengtw 统一出口接线 |
 | `app/opengtw/internal/middleware/openauthmiddleware.go` | Basic → `130101/130102` |
 | `app/opengtw/internal/handler/gateway/gatewayhandler.go` | 开放面转发与 `tid` 回显 |
-| `app/opengtw/internal/logic/gateway/gatewaylogic.go` | 下游错误折叠 |
+| `app/opengtw/internal/logic/gateway/gatewaylogic.go` | 下游错误归一化（不折叠） |
 | `common/gtwx/response_test.go`、`common/gtwx/codec_test.go` | 公共出口与错误码测试 |
 | `app/opengtw/internal/handler/gateway/gatewayhandler_test.go` | 网关信封/解析/折叠测试 |
 | `gtw/gtw.go` | 未迁移存量参考（反面示例） |

@@ -43,6 +43,7 @@ func newResponse(code int, msg string, data any) Response[any] {
 // 因此必须先经 errx.NormalizeError 归一化并校验，再写入信封。
 func WriteError(ctx context.Context, w http.ResponseWriter, err error) {
 	code, msg := errx.NormalizeError(err)
+	code, msg = applyFold(code, msg)
 	writeResponse(ctx, w, newResponse(code, msg, nil))
 }
 

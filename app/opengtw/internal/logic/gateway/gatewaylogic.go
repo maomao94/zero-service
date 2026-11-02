@@ -49,7 +49,7 @@ func (l *GatewayLogic) Gateway(req *types.GatewayRequest) (json.RawMessage, erro
 		}
 		l.Errorf("invoke openapi failed app_id=%s method=%s code=%d err=%v",
 			middleware.AppIDFromContext(l.ctx), req.Method, code, err)
-		return nil, xerrors.New(errx.FoldPublic(code), errx.PublicMessage(code, msg))
+		return nil, xerrors.New(code, msg)
 	}
 	if res == nil {
 		return nil, xerrors.New(int(extproto.Code__1_00_INTERNAL), "openapi 返回空响应")
