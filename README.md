@@ -146,7 +146,7 @@ git diff --check                # 应无输出
 
 ## 版本与变更
 
-版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)，发布记录见[变更日志](./CHANGELOG.md)与 [Releases](https://github.com/maomao94/zero-service/releases)。分支模型为 Git Flow：`master` 为稳定发布分支，`develop` 为集成分支。
+版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)，发布记录见 [Releases](https://github.com/maomao94/zero-service/releases)。分支模型为 Git Flow：`master` 为稳定发布分支，`develop` 为集成分支。
 
 ## 开源许可
 

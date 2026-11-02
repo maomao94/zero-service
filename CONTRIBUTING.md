@@ -106,8 +106,8 @@ fix(<scope>): 修复一句话描述
 ## 版本与变更记录
 
 - 版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)，标签前缀为 `v`（见 `.gitflow`）。
-- 面向使用者的改动（新增能力、行为变更、弃用、修复）需在 [`CHANGELOG.md`](./CHANGELOG.md) 的「未发布」下补一条，按 `新增` / `变更` / `弃用` / `移除` / `修复` / `文档` / `依赖` 分类。
-- `release/*` 合并到 `master` 前，把「未发布」改为目标版本号与发布日期，再由 tag 触发发布说明。
+- 仓库不维护 `CHANGELOG.md`：版本历史以 [Releases](https://github.com/maomao94/zero-service/releases) 与 tag 为准。
+- `release/*` 合并到 `master` 并打 tag 时，面向使用者的改动（新增能力、行为变更、弃用、修复、依赖升级）写在该 tag 的 Release 正文中，按 `新功能` / `修复` / `文档` / `依赖更新` 分类。
 
 ## Issue 规范
 
