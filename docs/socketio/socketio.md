@@ -56,13 +56,22 @@ const socket = io('http://your-server:11003', {
 });
 ```
 
-连接失败时，服务端会拒绝握手；客户端应通过 `connect_error` 获取失败状态：
+连接阶段分两级校验：
+
+| 阶段 | 校验方 | 失败表现 |
+|------|--------|----------|
+| 握手 | socketgtw 本地校验 Token | 握手被拒绝，客户端收到 `connect_error` |
+| 连接建立后 | `EnableStreamEventNotify: true` 时把 `__connection__` 事件推送给 StreamEvent 服务校验 | 网关直接断开连接，客户端收到 `disconnect`，`reason` 为 `io server disconnect` |
+
+握手失败时客户端通过 `connect_error` 获取失败状态：
 
 ```javascript
 socket.on('connect_error', (err) => {
     console.error('Socket.IO 连接失败:', err.message);
 });
 ```
+
+> 连接建立后的下游校验失败不会下发 `__down__` 或 Ack，只表现为服务端主动断开；客户端需要在 `disconnect` 回调中处理。
 
 ### 用户与设备鉴权
 
@@ -74,8 +83,14 @@ socketgtw 支持单实例同时服务用户和设备连接，通过 token claims
 | 设备 Token | 包含 `user-id`、`user-name` 等标准身份键 | `device` |
 
 **内置识别逻辑**（`common/socketiox` 连接流程默认执行）：
-1. 从 token claims 提取标准身份键到 session metadata（`auth-type` 优先采用 claims 中的值）；
+1. 从 token claims 提取标准身份键到 session metadata（`auth-type` 支持 `auth-type`、`auth_type`、`authType`，优先采用 claims 中的值）；
 2. claims 缺失 `auth-type` 时默认 `user`。
+
+> `auth-type` 仅支持 `user`、`device`，其他值或非字符串会在握手阶段直接拒绝，不会回落成 `user`。
+>
+> `user-id`（含 `user_id`、`userId`、`uid` 别名）是必填身份键：用户 Token 和设备 Token 都必须携带，缺失时握手直接拒绝。设备 Token 的 `user-id` 即设备 ID。
+>
+> 身份类 claim 建议使用字符串。超过 2^53 的 JSON 数字（float64）或超过 2^24 的 float32 无法精确表示，会被丢弃；`user-id` 被丢弃时按缺少身份键处理，连接拒绝。
 
 > `auth-type` 属于受保护元数据：首次写入后 `SetMetadata` 拒绝覆盖，确保会话身份在生命周期内不可篡改。
 
@@ -124,7 +139,7 @@ userId := authctx.GetUserId(ctx)
 
 **重连行为**：
 - 客户端断开（网络问题等）：最多 50秒后 socket.io 自动重连，指数退避 1s → 2s → 4s → 5s
-- 服务端主动断开（房间加载失败等）：5秒后手动重连
+- 服务端主动断开（如 `__connection__` 下游校验失败）：socket.io 不会自动重连，需按下方示例 5 秒后手动重连
 - 连接成功后自动重新加入房间
 
 **服务端主动断开重连**：
@@ -148,7 +163,7 @@ http:
 JwtAuth:
   AccessSecret: your-secret
 # SocketMetaData: [custom_claim]  # 可选：增补额外 claim 名，按原名存入 session metadata
-EnableStreamEventNotify: false    # 是否通知下游 StreamEvent 服务
+EnableStreamEventNotify: false    # 是否把 __connection__ 等事件推送给下游 StreamEvent 服务校验，校验失败直接断开连接
 
 # socketpush
 Name: socketpush.rpc
@@ -166,7 +181,7 @@ SocketGtwConf:
 | `user-id` | `user-id`、`user_id`、`userId`、`uid` |
 | `user-name` | `user-name`、`user_name` |
 | `dept-code` | `dept-code`、`dept_code` |
-| `auth-type` | `auth-type`（受保护，不可覆盖） |
+| `auth-type` | `auth-type`、`auth_type`、`authType`（受保护，不可覆盖） |
 
 按元数据推送/剔除（`SendToMetaSession` 等）时，Key 支持上述任一别名写法，查询侧自动归一化到标准键。非标准的自定义 claim 使用配置中的原始 key 查询。
 
@@ -175,6 +190,8 @@ SocketGtwConf:
 ```yaml
 SocketMetaData: [tenant_id, dept_id]
 ```
+
+> 标准身份键及其别名（`user-id`、`user_id`、`userId`、`uid`、`auth_type` 等）无需加入 `SocketMetaData`；即使配置也会被跳过，统一以 canonical 键存入，不会产生重复 metadata。
 
 ## 事件体系
 
@@ -194,7 +211,7 @@ SocketMetaData: [tenant_id, dept_id]
 | 事件 | 说明 | 数据格式 |
 |------|------|----------|
 | `__down__` | 非 ack 模式的异步响应 | `SocketResp` |
-| `__stat_down__` | 统计信息（含 roomLoadError） | `StatDown` |
+| `__stat_down__` | 统计信息 | `StatDown` |
 | 自定义事件 | 后端主动业务推送 | `SocketDown` |
 
 > `__down__` 是系统保留事件。后端主动推送业务通知时推荐使用自定义事件名（如 `mqtt`、`drc:heart_beat`），数据结构仍为 `SocketDown`。
@@ -276,7 +293,6 @@ SocketMetaData: [tenant_id, dept_id]
 | `rooms` | string[] | 当前会话房间列表，最多包含 50 个房间 |
 | `nps` | string | Socket.IO 连接统计值 |
 | `metadata` | object | 当前会话的标准身份 metadata |
-| `roomLoadError` | string | 初始房间加载失败原因 |
 
 ## 错误处理
 
@@ -288,20 +304,16 @@ SocketMetaData: [tenant_id, dept_id]
 | 400 | 请求参数错误、payload 解析失败或缺少必填字段 |
 | 500 | 业务处理失败、房间操作或下游服务失败 |
 
-Token 无效时连接握手直接失败，不会进入业务事件响应流程。
+### 连接阶段错误
 
-### 房间加载错误
+| 场景 | 客户端表现 | 说明 |
+|------|-----------|------|
+| Token 无效或缺失 | `connect_error` | 握手阶段被拒绝，不建立连接，不进入业务事件响应流程 |
+| Token 缺少 `user-id` | `connect_error` | 验签通过但没有身份键，握手拒绝，避免建立无法定位的空身份会话 |
+| `auth-type` 非法 | `connect_error` | 仅支持 `user`、`device`；缺失或空值默认 `user`，其他值或非字符串在握手阶段拒绝 |
+| `__connection__` 下游校验失败 | `disconnect`，`reason` 为 `io server disconnect` | 网关调用 `session.Close()` 直接断开，不下发错误消息、Ack 或 `__down__` |
 
-连接建立后，服务端通过 `__stat_down__` 事件推送当前会话统计信息。如果加载初始房间失败，`roomLoadError` 字段携带失败原因：
-
-```javascript
-socket.on('__stat_down__', (data) => {
-    const stat = normalizeSocketPayload(data);
-    if (stat.roomLoadError) {
-        console.warn('房间加载失败:', stat.roomLoadError.failedRooms);
-    }
-});
-```
+> 连接建立后的校验由 StreamEvent 服务决定：`socketgtw` 的 `WithConnectHook` 以 `__connection__` 事件推送会话 metadata，下游返回错误时网关只记录服务端日志并关闭会话，客户端只能从 `disconnect` 事件感知。
 
 ## 业务场景
 

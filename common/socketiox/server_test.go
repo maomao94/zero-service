@@ -162,6 +162,61 @@ func TestApplyTokenClaimsCanonicalWinsOverAlias(t *testing.T) {
 	}
 }
 
+func TestApplyTokenClaimsAuthTypeAliases(t *testing.T) {
+	tests := []struct {
+		name   string
+		claims map[string]any
+	}{
+		{"snake", map[string]any{"user_id": "dev-1", "auth_type": "device"}},
+		{"camel", map[string]any{"user_id": "dev-1", "authType": "device"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			session := &Session{socketId: "sess-1", metadata: make(map[string]string)}
+
+			applyTokenClaims(session, tt.claims, nil)
+			ensureAuthType(session)
+
+			if got := session.GetMetadata(authctx.CtxAuthTypeKey); got != "device" {
+				t.Fatalf("auth-type = %v, want device", got)
+			}
+		})
+	}
+}
+
+func TestValidateAuthTypeClaims(t *testing.T) {
+	tests := []struct {
+		name    string
+		claims  map[string]any
+		wantErr bool
+	}{
+		{"nil claims", nil, false},
+		{"missing", map[string]any{"user_id": "u1"}, false},
+		{"empty value", map[string]any{"auth-type": ""}, false},
+		{"user", map[string]any{"auth-type": "user"}, false},
+		{"device", map[string]any{"auth-type": "device"}, false},
+		{"snake alias", map[string]any{"auth_type": "device"}, false},
+		{"camel alias", map[string]any{"authType": "user"}, false},
+		{"empty canonical falls through", map[string]any{"auth-type": "", "auth_type": "device"}, false},
+		{"unknown value", map[string]any{"auth-type": "admin"}, true},
+		{"wrong case", map[string]any{"auth-type": "DEVICE"}, true},
+		{"numeric value", map[string]any{"auth-type": 1}, true},
+		{"bool value", map[string]any{"auth-type": true}, true},
+		{"unknown alias value", map[string]any{"auth-type": "", "authType": "service"}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateAuthTypeClaims(tt.claims)
+			if tt.wantErr && err == nil {
+				t.Fatalf("validateAuthTypeClaims(%#v) = nil, want error", tt.claims)
+			}
+			if !tt.wantErr && err != nil {
+				t.Fatalf("validateAuthTypeClaims(%#v) = %v, want nil", tt.claims, err)
+			}
+		})
+	}
+}
+
 func TestApplyTokenClaimsNumericAndExtraKeys(t *testing.T) {
 	session := &Session{socketId: "sess-1", metadata: make(map[string]string)}
 	claims := map[string]any{
@@ -179,6 +234,29 @@ func TestApplyTokenClaimsNumericAndExtraKeys(t *testing.T) {
 	}
 	if got := session.GetMetadata("missing"); got != "" {
 		t.Fatalf("missing = %v, want empty", got)
+	}
+}
+
+func TestApplyTokenClaimsExtraKeysSkipStandardAliases(t *testing.T) {
+	session := &Session{socketId: "sess-1", metadata: make(map[string]string)}
+	claims := map[string]any{
+		"user_id":   "u1",
+		"tenant_id": "t1",
+	}
+
+	applyTokenClaims(session, claims, []string{"user_id", "userId", "tenant_id"})
+
+	if got := session.GetMetadata(authctx.CtxUserIdKey); got != "u1" {
+		t.Fatalf("user-id = %v, want u1", got)
+	}
+	if got := session.GetMetadata("user_id"); got != "" {
+		t.Fatalf("raw user_id = %v, want empty", got)
+	}
+	if got := session.GetMetadata("userId"); got != "" {
+		t.Fatalf("raw userId = %v, want empty", got)
+	}
+	if got := session.GetMetadata("tenant_id"); got != "t1" {
+		t.Fatalf("tenant_id = %v, want t1", got)
 	}
 }
 

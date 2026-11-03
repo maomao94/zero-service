@@ -79,12 +79,11 @@ type SocketDown struct {
 }
 
 type StatDown struct {
-	SocketId      string            `json:"socketId"`
-	RoomCount     int               `json:"roomCount"`
-	Rooms         []string          `json:"rooms,omitempty"`
-	Nps           string            `json:"nps"`
-	MetaData      map[string]string `json:"metadata,omitempty"`
-	RoomLoadError string            `json:"roomLoadError,omitempty"`
+	SocketId  string            `json:"socketId"`
+	RoomCount int               `json:"roomCount"`
+	Rooms     []string          `json:"rooms,omitempty"`
+	Nps       string            `json:"nps"`
+	MetaData  map[string]string `json:"metadata,omitempty"`
 }
 
 const (
@@ -271,12 +270,11 @@ func parseUpPayload(ctx context.Context, session *Session, payload *socketio.Eve
 }
 
 type Session struct {
-	socketId      string
-	socket        *socketio.Socket
-	lock          sync.Mutex
-	metadata      map[string]string
-	token         string
-	roomLoadError string
+	socketId string
+	socket   *socketio.Socket
+	lock     sync.Mutex
+	metadata map[string]string
+	token    string
 }
 
 func (s *Session) Close() error {
@@ -358,7 +356,8 @@ func (s *Session) NewCtx(event string) context.Context {
 
 // applyTokenClaims writes verified token claims into session metadata.
 // Standard identity keys are resolved through authctx.DefaultClaimAliases
-// (canonical key + aliases); extraKeys are stored under their original name.
+// (canonical key + aliases); extraKeys are stored under their original name,
+// skipping standard keys and aliases already stored in canonical form.
 func applyTokenClaims(session *Session, claims map[string]any, extraKeys []string) {
 	for canonical := range authctx.DefaultClaimAliases {
 		if v := authctx.ClaimStringByAliases(claims, canonical); v != "" {
@@ -366,10 +365,38 @@ func applyTokenClaims(session *Session, claims map[string]any, extraKeys []strin
 		}
 	}
 	for _, key := range extraKeys {
+		if authctx.ResolveClaimKey(key) != "" {
+			continue
+		}
 		if v := authctx.ClaimString(claims, key); v != "" {
 			session.SetMetadata(key, v)
 		}
 	}
+}
+
+// validateAuthTypeClaims rejects unsupported auth-type values during the
+// handshake. A missing or empty value is allowed and defaults to user later;
+// non-string values are rejected so malformed claims never reach identity metadata.
+func validateAuthTypeClaims(claims map[string]any) error {
+	keys := append([]string{authctx.CtxAuthTypeKey}, authctx.DefaultClaimAliases[authctx.CtxAuthTypeKey]...)
+	for _, key := range keys {
+		raw, ok := claims[key]
+		if !ok {
+			continue
+		}
+		v, isString := raw.(string)
+		if !isString {
+			return fmt.Errorf("auth-type claim %q must be a string", key)
+		}
+		if v == "" {
+			continue
+		}
+		if !authctx.IsValidAuthType(v) {
+			return fmt.Errorf("unsupported auth-type %q", v)
+		}
+		return nil
+	}
+	return nil
 }
 
 // ensureAuthType stores auth-type "user" when the claims did not carry one.
@@ -475,8 +502,8 @@ func WithEventHandlers(handlers EventHandlers) Option {
 }
 
 // WithContextKeys appends extra JWT claim names to extract into session
-// metadata (stored under their original name). The standard identity keys
-// defined by authctx.DefaultClaimAliases are always extracted by default.
+// metadata (stored under their original name). Standard identity keys and their
+// aliases are skipped here because they are already stored in canonical form.
 func WithContextKeys(keys []string) Option {
 	return func(s *Server) { s.contextKeys = keys }
 }
@@ -559,7 +586,14 @@ func (srv *Server) bindEvents() {
 		logx.Infof("[socketio] new connection token_present=%t", token != "")
 		valid := true
 		if srv.tokenValidator != nil {
-			_, valid = srv.tokenValidator(token)
+			claims, tokenValid := srv.tokenValidator(token)
+			valid = tokenValid
+			if valid {
+				if err := validateAuthTypeClaims(claims); err != nil {
+					logx.Errorw("[socketio] invalid auth-type claim", logx.Field("error", err.Error()))
+					valid = false
+				}
+			}
 		}
 		if !valid {
 			logx.Errorw("[socketio] token validation failed", logx.Field("token_present", token != ""))
@@ -588,12 +622,10 @@ func (srv *Server) bindEvents() {
 		if srv.connectHook != nil {
 			rooms, err := srv.connectHook(connectCtx, session)
 			if err != nil {
-				session.roomLoadError = err.Error()
 				logx.WithContext(connectCtx).Errorf("[socketio] failed to load rooms: %v", err)
 			} else {
 				for _, r := range rooms {
 					if err := session.JoinRoom(r); err != nil {
-						session.roomLoadError = err.Error()
 						logx.WithContext(connectCtx).Errorw("[socketio] failed to join initial room: "+err.Error(), logx.Field("room", r))
 					}
 				}
@@ -850,12 +882,11 @@ func (srv *Server) statLoop() {
 						statRooms = statRooms[:maxStatRooms]
 					}
 					stat := StatDown{
-						SocketId:      sess.socketId,
-						RoomCount:     len(rooms),
-						Rooms:         statRooms,
-						Nps:           sess.socket.Nps,
-						MetaData:      sess.AllMetadata(),
-						RoomLoadError: sess.roomLoadError,
+						SocketId:  sess.socketId,
+						RoomCount: len(rooms),
+						Rooms:     statRooms,
+						Nps:       sess.socket.Nps,
+						MetaData:  sess.AllMetadata(),
 					}
 					b, _ := jsonx.Marshal(&stat)
 					sess.EmitString(EventStatDown, string(b))
