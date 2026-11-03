@@ -3,6 +3,7 @@ package svc
 import (
 	"context"
 	"math"
+	"zero-service/common/authctx"
 	"zero-service/common/grpcx"
 	"zero-service/common/socketiox"
 	"zero-service/common/tool"
@@ -52,6 +53,10 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			}
 			claims, err := tool.ParseToken(token, secrets...)
 			if err != nil {
+				return nil, false
+			}
+			if !hasIdentity(claims) {
+				logx.Errorf("[socketgtw] token rejected: missing user-id claim")
 				return nil, false
 			}
 			return claims, true
@@ -125,4 +130,10 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		}),
 	)
 	return svcCtx
+}
+
+// hasIdentity reports whether verified claims carry a user or device identity.
+// User and device tokens both store the identifier under user-id (aliases included).
+func hasIdentity(claims map[string]any) bool {
+	return authctx.ClaimStringByAliases(claims, authctx.CtxUserIdKey) != ""
 }

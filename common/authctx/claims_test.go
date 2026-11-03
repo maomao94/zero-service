@@ -58,6 +58,8 @@ func TestResolveClaimKey(t *testing.T) {
 		{"dept-code", CtxDeptCodeKey},
 		{"dept_code", CtxDeptCodeKey},
 		{"auth-type", CtxAuthTypeKey},
+		{"auth_type", CtxAuthTypeKey},
+		{"authType", CtxAuthTypeKey},
 		{"unknown", ""},
 		{"dept_id", ""},
 		{"", ""},
@@ -68,6 +70,25 @@ func TestResolveClaimKey(t *testing.T) {
 				t.Fatalf("ResolveClaimKey(%q) = %q, want %q", tt.name, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestIsValidAuthType(t *testing.T) {
+	tests := []struct {
+		value string
+		want  bool
+	}{
+		{"user", true},
+		{"device", true},
+		{"", false},
+		{"admin", false},
+		{"DEVICE", false},
+		{"user ", false},
+	}
+	for _, tt := range tests {
+		if got := IsValidAuthType(tt.value); got != tt.want {
+			t.Fatalf("IsValidAuthType(%q) = %t, want %t", tt.value, got, tt.want)
+		}
 	}
 }
 
@@ -84,6 +105,9 @@ func TestClaimStringByAliases(t *testing.T) {
 		{"uid fallback", map[string]any{"uid": "u3"}, CtxUserIdKey, "u3"},
 		{"numeric claim", map[string]any{"user_id": float64(42)}, CtxUserIdKey, "42"},
 		{"first alias wins", map[string]any{"user_id": "a", "userId": "b"}, CtxUserIdKey, "a"},
+		{"auth type canonical wins", map[string]any{"auth-type": "device", "auth_type": "user"}, CtxAuthTypeKey, "device"},
+		{"auth type snake fallback", map[string]any{"auth_type": "device"}, CtxAuthTypeKey, "device"},
+		{"auth type camel fallback", map[string]any{"authType": "device"}, CtxAuthTypeKey, "device"},
 		{"missing", map[string]any{"other": "x"}, CtxUserIdKey, ""},
 		{"bool skipped", map[string]any{"user_id": true}, CtxUserIdKey, ""},
 	}
@@ -117,14 +141,18 @@ func TestNormalizeClaimString(t *testing.T) {
 		{"uint16", uint16(42), "42"},
 		{"uint32", uint32(42), "42"},
 		{"uint64", uint64(42), "42"},
-		// Floats use convertor.ToString (user ids are normally small integers,
-		// so fractional/oversized values are simply converted, not rejected).
+		// Floats use convertor.ToString for values inside their exact integer
+		// range; oversized values are dropped to avoid binding a wrong identity.
 		{"float32 integer", float32(42), "42"},
+		{"float32 boundary 2^24", float32(1 << 24), "16777216"},
+		{"float32 beyond exact range", float32(1e8), ""},
 		{"float64 integer", float64(42), "42"},
 		{"float64 negative integer", float64(-42), "-42"},
 		{"float64 boundary 2^53", float64(9007199254740992), "9007199254740992"},
 		{"float64 fractional", float64(1.5), "1.5"},
-		{"float64 oversized", float64(1e19), "10000000000000000000"},
+		{"float64 oversized", float64(1e19), ""},
+		{"float64 beyond exact range", float64(1e16), ""},
+		{"float64 negative beyond exact range", float64(-1e16), ""},
 		// json.Number (from the token parser) converts via convertor.ToString;
 		// legal literals keep their exact decimal form.
 		{"json.Number integer", json.Number("42"), "42"},
