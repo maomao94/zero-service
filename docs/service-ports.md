@@ -13,9 +13,6 @@
 | socketgtw | 11003 | `socketapp/socketgtw/` | Socket.IO 网关 HTTP 端 |
 | oryxgtw | 11004 | `app/oryxgtw/` | Oryx 流媒体回调网关 |
 | opengtw | 11005 | `app/opengtw/` | 开放平台 HTTP 网关（Podman + Modbus） |
-| aigtw | 13001 | `aiapp/aigtw/` | AI HTTP 网关 |
-| ssegtw | 13002 | `aiapp/ssegtw/` | AI SSE 网关 |
-| mcpserver | 13003 | `aiapp/mcpserver/` | MCP HTTP 服务 |
 | bridgegtw | 15001 | `app/bridgegtw/` | gRPC-Gateway 代理转发 |
 
 ## Web 前端与网关（5xxx / 8xxx）
@@ -53,13 +50,6 @@
 | live.rpc | 21017 | `app/live/` | LiveKit 会议管理 |
 | openapi.rpc | 21018 | `app/openapi/` | 开放平台统一转发（Podman + Modbus，method 路由 + protojson） |
 
-### AI 服务
-
-| 服务 | 端口 | 目录 | 说明 |
-|------|------|------|------|
-| aichat.rpc | 23001 | `aiapp/aichat/` | AI 对话服务 |
-| aisolo.rpc | 23002 | `aiapp/aisolo/` | AI Agent 服务 |
-
 ### 桥接与扩展
 
 | 服务 | 端口 | 目录 | 说明 |
@@ -77,10 +67,8 @@
 | 端口段 | 用途 |
 |--------|------|
 | 11001 – 11005 | HTTP 网关 |
-| 13001 – 13003 | AI HTTP 服务 |
 | 15001 | 桥接 HTTP 网关 |
 | 21001 – 21018 | 核心业务 gRPC |
-| 23001 – 23002 | AI gRPC 服务 |
 | 25001 – 25007 | 桥接与扩展 gRPC |
 
 ## 特殊端口
@@ -94,4 +82,4 @@
 
 - **socketgtw** 是混合型服务，同时暴露 HTTP（11003）和 gRPC（25001）。
 - **opengtw** 同端口同时提供开放面 `/v1/*` 与管理面 `/open-admin/v1/*`；nginx 默认只反代 `/v1/`。
-- **lalhook**（原 11002）和 **lalproxy**（原 21002）已不推荐使用，服务保留但不再维护。流媒体能力已迁移至 [Oryx](./oryx/README.md)。
+- **lalhook** 默认配置仍监听 11002、**lalproxy** 仍监听 21002，与 `livegtw`（11002）重叠；两者已不推荐使用，如临时启用必须先改端口。流媒体能力已迁移至 [Oryx](./oryx/README.md)。

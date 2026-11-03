@@ -1,8 +1,8 @@
 # IEC 104 附录与数据消费参考
 
-本文件是 [IEC 104 消息对接文档](./iec104-message.md) 的附录部分：品质描述、状态值、地址规则、业务单位枚举，以及 Kafka / MQTT / gRPC 三种通道的消费建议。
+本文件补充 [IEC 104 消息对接文档](./iec104-message.md) 未展开的参考内容：品质描述、状态值、地址规则、业务单位枚举，以及 Kafka / MQTT / gRPC 三种通道的消费建议。
 
-## 4. 附录
+## 附录
 
 ### 附录 A：品质描述
 
@@ -124,9 +124,9 @@ statusChange := (scd >> 16) & 0xFFFF
 | `COMMUNICATION` | 通信状态 | 0、1 | 通信链路。 |
 | `NONE` | 无单位 | 空 | 预留。 |
 
-## 5. 数据消费指南
+## 数据消费指南
 
-### 5.1 唯一键生成规则
+### 唯一键生成规则
 
 ieccaller 生成 Kafka key 时使用 `MsgBody.GetKey()`，格式为：
 
@@ -144,39 +144,39 @@ key = f"{host}_{coa}_0x{ioa:06x}"
 print(key)  # 127.0.0.1_1_0x0007d1
 ```
 
-### 5.2 Kafka 消费建议
+### Kafka 消费建议
 
 - 使用消息 key 保证同一 `host`、`coa`、`ioa` 的事件落在同一分区。
 - 以 `msgId` 做幂等处理，避免重试造成重复写入。
 - 按 `typeId` 或 `asdu` 分流，再按 `body.ioa` 更新点位状态。
 - 链路追踪信息位于 Kafka message headers，同时 JSON payload 顶层 `headers` 也为同一内容。
 
-### 5.3 MQTT 消费建议
+### MQTT 消费建议
 
 - Topic 可由 `pm`、`asdu`、`coa` 等字段模板生成。
 - 消费者不能假设 `pm` 一定存在。没有点位映射时，仍可使用 `host`、`coa`、`body.ioa` 识别点位。
 - 多 Topic 推送时，同一条消息的 JSON 内容一致。
 - 如需恢复链路追踪上下文，从顶层 `headers.traceparent` / `headers.tracestate` 读取 W3C trace context；不要从 `metaData` 读取追踪传输字段。
 
-### 5.4 gRPC 流事件消费建议
+### gRPC 流事件消费建议
 
 - gRPC 推送内容与 Kafka/MQTT payload 的 JSON 保持一致。`streamevent.MsgBody` 已包含 `headers` 字段（map<string, string>），服务端可直接读取 `headers["traceparent"]` 还原链路上下文。
 - 批量或流式消费方应逐条解析 `body`，不要按批次共享同一个信息体类型。
 
-### 5.5 时区与时标处理
+### 时区与时标处理
 
 - `time` 为推送时间，UTC+8，微秒级字符串。
 - `body.time` 为设备侧 ASDU 时标，只有带时标 ASDU 才有有效值。
 - 下游排序优先使用 `body.time`。如果为空，再使用消息级 `time`。
 
-### 5.6 异常数据处理
+### 异常数据处理
 
 - 对带 QDS 的信息体，重点检查 `iv`、`ov`、`bl`、`nt`。
 - 对累计量，重点检查 `value.isInvalid`、`value.hasCarry`、`value.isAdjusted`。
 - 对保护事件，重点检查 QDP 展开的 `iv`、`ei`。
 - 点表含义优先于通用说明。双点状态、比特串、SCD、保护事件位含义都可能因设备点表不同而变化。
 
-### 5.7 Python 解析示例
+### Python 解析示例
 
 ```python
 import json
@@ -214,7 +214,7 @@ if body.get("iv"):
 print(point_key, body["value"])
 ```
 
-## 6. 技术支持
+## 技术支持
 
 - **文档版本**：v2.0.0（2026-06-15）
 - **协议版本**：IEC 60870-5-104

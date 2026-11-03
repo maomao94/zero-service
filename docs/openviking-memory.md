@@ -9,7 +9,7 @@
 | 部署仓库 | `openviking-memory`（GitHub 私库，自包含：compose + 配置 + data） |
 | 服务地址 | `http://localhost:1933`（API + Web Studio `/studio`） |
 | 账号 / 用户 | `developer` / `admin`（admin 角色） |
-| 本项目的知识 | `viking://resources/project/zero-service/`（standards / domains / guides） |
+| 本项目的知识 | `viking://resources/project/zero-service/`（standards / domains / runbooks） |
 | 存储 | `~/.openviking` 由容器挂载到 `/app/.openviking`，workspace 指向 `/app/.openviking/data` |
 
 启动与验证：
@@ -87,14 +87,14 @@ openviking_find query="handler 分层职责" target_uri="viking://resources/proj
 
 ```
 viking://resources/                          # 共享知识资源（团队级）
-└── project/zero-service/                    # 本项目的规范与契约（tags: lang=go, framework=go-zero, project=zero-service）
+└── project/zero-service/                    # 本项目的规范与契约（检索 tags: lang=go, framework=go-zero, project=zero-service）
     ├── standards/                           # 工程规范
     ├── domains/                             # 领域契约
-    └── guides/                              # 分析指南
+    └── runbooks/                            # 可复用工作流与检查清单
 viking://user/admin/                         # 用户私有空间（memories / skills / peers / privacy）
 ```
 
-命名约定：AI 编程记忆按 **语言/框架/项目** 三层组织（`lang/`、`framework/`、`project/`），检索时按当前任务组合限定 `target_uri`，避免跨项目污染。
+命名约定：记忆按项目组织在 `viking://resources/project/<project>/`，目录内按 `standards` / `domains` / `runbooks` 分类；检索时用 `target_uri` 限定当前项目，避免跨项目污染。`lang`、`framework` 只作为检索 tags，不是目录层级。
 
 ## 使用指导
 

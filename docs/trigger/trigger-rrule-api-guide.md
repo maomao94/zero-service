@@ -4,6 +4,8 @@
 
 > 约定：示例 JSON 一律使用 snake_case 字段名，与 proto 字段名一致；以下日期仅用于展示规则，实际接入时应替换 `task_code`、业务字段与生效区间。
 
+创建之后如何补触发、预览计划时间、人工执行一次，见[运行与对接](./trigger-rrule-operations.md)。
+
 ## 创建示例
 
 以下日期仅用于展示规则。实际接入时应替换 `task_code`、业务字段和生效区间，并确保区间没有过期。
@@ -521,125 +523,4 @@
 }
 ```
 
-如果该唯一候选点早于创建时间且 `skip_time_filter` 为 `false`，规则已经耗尽，响应中的 `next_run` 为空。需要创建后补触发这个过去候选点时，可以设置 `skip_time_filter: true`，并将 `max_delay` 配置为足以覆盖候选点到创建时刻的延迟；否则调度器可能跳过 Handler 并直接耗尽规则。
-
-## 不直接支持的调度语义
-
-下列需求无法由当前 `PlanRulePb` 直接表达，需要拆分 CronJob、预先计算具体日期，或交给外部业务逻辑处理：
-
-| 需求 | 当前限制与处理建议 |
-| --- | --- |
-| 从任意锚点滚动每 N 天、周、月、年、小时 | 已支持 `interval: N`（锚定开始时间）；每 N 分钟仍用固定 `minutes` 列表（`interval` 与 `minutes` 交互见[规则字段](./trigger-rrule-syntax.md#规则字段)） |
-| 精确执行 N 次后停止 | 请求没有 `count`；只能用包含边界的 `end_time` 限定区间，不能保证生成数量恰为 N |
-| 直接填写序号星期，或从候选集合取第 N 个 | `week` 只接收普通星期值，没有序号或 `BYSETPOS` 字段。部分固定序号星期可改用 `day` 与 `week` 的交集表达，例如每月第一个周一使用 `day: [1,2,3,4,5,6,7]` 和 `week: [1]`；通用候选排序与选位仍不支持 |
-| 法定工作日、动态节假日、最后一个工作日 | CronJob 规则不接入动态节假日日历；`exclude_dates` 只是调用方提交的静态日期，不会识别调休工作日 |
-| 节假日或周末自动前移、后移 | 排除日期只会删除原候选点，不会生成替代日期；替代执行日需由外部计算和管理 |
-| 只用 `rule` 字段精确表达 09:00 和 17:30 | `hours` 与 `minutes` 会形成笛卡尔积；可用 RRULE 表达一个稳定基线，并通过 `specified_times` 逐项加入已知日期的另一个精确时刻 |
-| 不提供 RRULE、只提交精确时间 | `rule` 必填；当前不支持纯 RDATE-only 请求，应提供合法 RRULE 并用 `specified_times` 补充候选 |
-| 排除一个连续时间段 | 当前只支持 `excluded_times` 的单秒排除和 `exclude_dates` 的上海自然日排除，不支持任意时间范围排除 |
-| 将每月 29、30、31 日自动收敛到月末 | 不存在的日期会跳过；仅当业务语义就是最后一个日历日时使用 `day: [-1]` |
-| 单条规则覆盖超过 100 年或永久不设结束时间 | CronJob 生效区间最多 100 年；省略 `end_time` 只会默认到开始时间所在年份年末，不会生成无界规则 |
-
-## 创建后立即补触发一次
-
-“创建后立即执行”不是调用 `RunCronJob`，而是在 `CreateCronJob` 请求中设置 `skip_time_filter: true`。Trigger 会在规则范围内选择不晚于当前时间的最近一个候选作为首次 `next_run`；最多补一个已经发生的计划点，不会追赶全部历史周期。该计划点进入调度时仍会检查 `max_delay`：若相对当前时间的延迟超过有效容忍值，调度器会跳过 Handler 并推进到下一周期。因此需要按规则频率配置足以覆盖最近候选点的 `max_delay`。补触发完成后，任务仍按原 RRULE 继续执行。
-
-下面示例在 2026 年每天 09:00 执行。若创建时范围内已有过去的 09:00 候选，首次调度会选择最近一个过去候选尽快补触发；若还没有过去候选，则仍使用未来的首次计划点。示例将 `max_delay` 设为 86400 秒，可覆盖每日规则中距当前时间不到 24 小时的最近候选点。
-
-```json
-{
-  "task_code": "demo-create-and-catch-up",
-  "task_name": "创建后补触发示例",
-  "type": "demo",
-  "group_id": "cron-guide",
-  "description": "创建后最多补一个过去计划点，之后每天 09:00 继续执行",
-  "start_time": "2026-01-01 00:00:00",
-  "end_time": "2026-12-31 23:59:59",
-  "rule": {
-    "freq": 3,
-    "month": [],
-    "day": [],
-    "week": [],
-    "hours": [9],
-    "minutes": [0]
-  },
-  "exclude_dates": [],
-  "priority": 20,
-  "payload": "{\"action\":\"catch-up-demo\"}",
-  "lock_timeout": 120000,
-  "max_delay": 86400,
-  "skip_time_filter": true,
-  "dept_code": "DEMO"
-}
-```
-
-创建响应示例：
-
-```json
-{
-  "job_id": "0198-demo-cron-job-id",
-  "next_run": "2026-08-11 09:00:00",
-  "group_id": "cron-guide"
-}
-```
-
-`next_run` 是本次规则编译得到的首次计划点。任务创建成功与 Handler 业务处理成功是两个不同阶段。
-
-## 预览未来计划时间
-
-`PreviewCronJobSchedule` 接收 `job_id` 和可选 `count`。`count` 为 `0` 时默认返回最多 10 条，显式值最大为 100；规则耗尽时 `execution_times` 为空。预览严格从请求处理时刻之后开始，禁用任务也可以查询。
-
-响应中的 `rrule_str` 是当前持久化并用于调度的完整 RRULE Set，`schedule_description` 和 `execution_times` 均基于该字符串生成。预览会自然应用其中的 `DTSTART`、`UNTIL`、BY*、`RDATE` 和 `EXDATE`，不会从管理视图的 `rule`、`start_time`、`end_time`、`specified_times`、`excluded_times` 或 `exclude_dates` 重新编译，也不会修改 `next_run`、启停状态、运行历史或 lease。
-
-请求示例：
-
-```json
-{
-  "job_id": "0198-demo-cron-job-id",
-  "count": 5
-}
-```
-
-响应示例：
-
-```json
-{
-  "job_id": "0198-demo-cron-job-id",
-  "task_code": "demo-every-minute",
-  "execution_times": ["2026-08-11 10:01:00", "2026-08-11 10:02:00"],
-  "schedule_description": "按分钟生成候选，并在每分钟的 00 秒执行",
-  "rrule_str": "DTSTART;TZID=Asia/Shanghai:20260101T000000\nRRULE:FREQ=MINUTELY;UNTIL=20261231T155959Z;BYSECOND=0"
-}
-```
-
-## 已有任务人工执行一次
-
-`RunCronJob` 必须使用已经创建且未删除任务的 `job_id`。它异步调用同一个 Handler，不创建新任务，也不改变原周期 `next_run`、启停状态或 `last_scheduled_run`；只有 Handler 成功时才更新 `last_run`。即使任务处于禁用状态，也可以人工执行。
-
-请求：
-
-```json
-{
-  "job_id": "0198-demo-cron-job-id"
-}
-```
-
-响应：
-
-```json
-{
-  "trace_id": "4f6f9b724a0e47f2aeb09f44df4f02de"
-}
-```
-
-`trace_id` 用于追踪异步执行过程；未接入 OpenTelemetry 时可能为空字符串。RPC 返回表示异步执行请求已受理，不表示业务 Handler 已经成功完成。
-
-## 对接检查
-
-- 确认 `task_code` 在业务侧稳定且全局唯一，并保存创建响应中的 `job_id`。
-- 需要组织多个单规则 CronJob 时复用同一个 `group_id`；未传时保存响应中 Trigger 自动生成的 UUID。
-- 确认 `task_name`、`type`、`dept_code` 非空，`hours` 和 `minutes` 均至少包含一个合法元素。
-- 显式填写 `start_time` 与 `end_time`，并检查上海时区、边界顺序和 CronJob 100 年跨度。
-- 确认 `payload` 是空字符串或合法 JSON 字符串，而不是直接嵌套的 JSON 对象。
-- 需要创建后补一次时设置 `skip_time_filter: true`；需要人工执行已有任务时调用 `RunCronJob`。
-- 不把创建响应、人工执行响应或 gRPC 调用成功当作业务完成，下游按计划点实现幂等。
+如果该唯一候选点早于创建时间且 `skip_time_filter` 为 `false`，规则已经耗尽，响应中的 `next_run` 为空。需要创建后补触发这个过去候选点时，可以设置 `skip_time_filter: true`，并将 `max_delay` 配置为足以覆盖候选点到创建时刻的延迟；否则调度器可能跳过 Handler 并直接耗尽规则。具体做法见[创建后立即补触发一次](./trigger-rrule-operations.md#创建后立即补触发一次)。

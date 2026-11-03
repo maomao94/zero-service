@@ -58,7 +58,7 @@ Trigger 是基于 go-zero 的统一任务调度服务，对外契约见 [`trigge
 
 创建时，Trigger 根据 `PlanRulePb`、`startTime`、`endTime`、`specifiedTimes`、`excludedTimes` 和 `excludeDates` 生成 RFC 5545 RRULE Set，再将有效候选预展开为 Batch 和 ExecItem；规则有效期跨度不能超过 3 年，且最终候选数与执行项数的乘积不能超过 5000。`skipTimeFilter=false` 时创建会过滤过去候选。`plan.rrule_str` 保存创建时的规则快照，实际运行仍由 ExecItem 的 `next_trigger_time` 驱动。
 
-Plan 与 CronJob 共用 `(RRULE ∪ specifiedTimes) - excludedTimes - expanded(excludeDates)` 集合语义：指定时间编译为 RDATE，精确时间和整日排除编译为 EXDATE，排除优先且同一秒去重。完整字段与请求示例见 [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md)。
+Plan 与 CronJob 共用 `(RRULE ∪ specifiedTimes) - excludedTimes - expanded(excludeDates)` 集合语义：指定时间编译为 RDATE，精确时间和整日排除编译为 EXDATE，排除优先且同一秒去重。完整字段与请求示例见 [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md)，创建后补触发、预览与人工执行见[运行与对接](./trigger-rrule-operations.md)。
 
 ### 执行流程
 
@@ -132,7 +132,7 @@ CronJob 面向“一个稳定任务编码对应一个周期 Handler”的场景�
 
 `taskCode` 是调用方提供的全局唯一业务编码，供调度器和业务侧稳定识别任务；`jobId` 是 Trigger 创建的 `cron_job.id`，用于管理 RPC。两者不能混用。
 
-常见周期、指定时间、精确排除、固定时间单次执行、创建后补触发和人工执行的完整请求见 [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md)。本节只保留能力边界和运行语义。
+常见周期、指定时间、精确排除与固定时间单次执行的完整请求见 [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md)；创建后补触发、计划预览与人工执行见[运行与对接](./trigger-rrule-operations.md)。本节只保留能力边界和运行语义。
 
 ### 规则编译
 
@@ -289,3 +289,4 @@ go run . -f etc/trigger.yaml
 - [`app/trigger/internal/cronjob/schedule.go`](../../app/trigger/internal/cronjob/schedule.go) - CronJob 规则编译、Store 和 Handler 适配
 - [`common/crontask/crontask.go`](../../common/crontask/crontask.go) - 通用 RRULE 调度器与 lease 契约
 - [Trigger Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md) - 周期规则、指定时间、精确与整日排除及 Plan/CronJob 示例
+- [Trigger CronJob 运行与对接](./trigger-rrule-operations.md) - 补触发、计划预览、人工执行与上线检查

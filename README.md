@@ -84,48 +84,19 @@ go run . -f etc/trigger.yaml
 # Trigger 开发模式默认开启 gRPC reflection
 grpcurl -plaintext localhost:21006 list
 
-# gtw 已配置对应路由时检查 HTTP 入口
-curl http://localhost:11001/health
+# gtw 的 ping 路由（前缀 /gtw/v1）
+curl http://localhost:11001/gtw/v1/ping
 ```
 
 更多启动方式、依赖矩阵和常见问题见[快速开始指南](./docs/quick-start.md)，端口分配见[服务端口清单](./docs/service-ports.md)。
 
 ## 文档
 
-[文档索引](./docs/README.md)是唯一入口，按使用场景分类导航。
-
-| 文档 | 内容 |
-| --- | --- |
-| [快速开始](./docs/quick-start.md) | 环境准备、服务启动、验证与常见问题 |
-| [架构概览](./docs/architecture.md) | 系统分层、模块依赖、核心数据流与技术选型 |
-| [服务端口清单](./docs/service-ports.md) | 各服务默认端口、协议与用途 |
-| [网关标准开发流程](./docs/gateway-standard.md) | 分层、路由鉴权、统一信封、错误码出口与验收清单 |
-| [错误码规范](./docs/error-codes.md) | 错误码维度、模块分配、HTTP/gRPC 映射与折叠策略 |
-| [开发指南](./docs/development.md) | 代码生成、模块扩展与调试方式 |
-| [部署指南](./docs/deployment.md) | Docker、单服务与集群部署 |
-| [部署模板总览](./deploy/README.md) | 数据库、中间件、网关与运维工具的本地编排 |
+仓库文档的唯一目录是[文档索引](./docs/README.md)，按使用场景导航至用户、对接、开发和运维资料。
 
 ## 仓库结构
 
-```text
-app/         核心业务、视频会议、流媒体与协议服务
-aiapp/       AI 应用与模型接入服务
-socketapp/   SocketIO 网关与推送服务
-gtw/         存量 BFF HTTP 网关
-zerorpc/     核心业务 gRPC 服务
-common/      跨服务复用的公共组件
-facade/      跨服务协议与数据契约
-model/       数据模型及生成脚本
-deploy/      Docker Compose 与部署配置
-web/         前端工作台与子系统（Live / SocketIO / OpenAPI）
-cli/         Docker TUI 等命令行工具
-util/        运维脚本与 Taskfile
-swagger/     生成的服务 Swagger 描述
-third_party/ protobuf 依赖与代码生成插件
-1.7.1/、1.9.x/  goctl 代码生成模板（按版本固定，供 model/ 下的脚本使用）
-docs/        架构、对接和开发文档
-scripts/     仓库维护脚本（文档校验等）
-```
+仓库目录职责见[文档索引的仓库目录](./docs/README.md#仓库目录)，统一在索引中维护，避免根 README 与文档索引出现两份不同步的目录清单。
 
 ## 参与贡献
 

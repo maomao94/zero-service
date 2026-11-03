@@ -22,7 +22,7 @@
 | 形态 | 联测要点 |
 |------|----------|
 | **Deep** | 选 **deep** mode；观察 `deep_research` / `deep_synthesis` 子 Agent 是否在合适步骤被 task 委派（前端 SSE 中带 `agent_name`）。 |
-| **Workflow** | **workflow** mode：顺序子 Agent 输出是否串联；并行/循环若启用则看事件顺序。 |
+| **Workflow** | 选 `workflow-sequential`（并行、循环分别用 `workflow-parallel` / `workflow-loop`）：顺序子 Agent 输出是否串联；并行/循环若启用则看事件顺序。 |
 | **Supervisor** | **supervisor** mode：`researcher` vs `interactor` 分工与中断归属。 |
 
 ## 4. 前端可观测性
