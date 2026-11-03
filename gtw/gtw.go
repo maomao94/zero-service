@@ -49,6 +49,8 @@ func main() {
 	//})
 
 	gtwx.SetUnifiedErrorHandler()
+	// 错误折叠是网关展示策略，默认不配置即统一透传。
+	gtwx.SetFoldConfig(c.Error.Fold)
 
 	server := rest.MustNewServer(c.RestConf,
 		gtwx.CorsOption(),

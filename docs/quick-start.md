@@ -88,8 +88,11 @@ docker compose up -d
 # Trigger 开发模式默认开启 gRPC reflection
 grpcurl -plaintext localhost:21006 list
 
-# gtw 已配置对应路由时检查 HTTP 入口
-curl http://localhost:11001/health
+# gtw 的 ping 路由（前缀 /gtw/v1）
+curl http://localhost:11001/gtw/v1/ping
+
+# 开放 API 网关健康检查（opengtw）
+curl http://localhost:11005/v1/health
 ```
 
 完整端口和协议见[服务端口清单](./service-ports.md)。

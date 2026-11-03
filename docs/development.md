@@ -104,14 +104,16 @@ grpcurl -plaintext \
 
 ### HTTP 调试
 
-```bash
-# 使用 httpie
-http GET localhost:11001/health
+`gtw` 是 BFF 网关，路由按 group 加前缀（`/gtw/v1`、`/file/v1`、`/app/user/v1` 等），没有 `/health` 这类根路径。Trigger 只提供 gRPC 接口，HTTP 调用需由上游网关转发；直接把 `/api/trigger/send` 这类路径打到 `gtw` 会返回 `100801 接口不存在`。
 
-# 使用 curl
-curl -X POST http://localhost:11001/api/trigger/send \
+```bash
+# gtw ping（前缀 /gtw/v1），内部透传 zerorpc.Ping，需先启动 zerorpc
+http GET localhost:11001/gtw/v1/ping
+
+# 文件信息查询（前缀 /file/v1，转发到 file.rpc）
+curl -sS -X POST http://localhost:11001/file/v1/oss/endpoint/statFile \
   -H "Content-Type: application/json" \
-  -d '{"taskType":"test","payload":"hello"}'
+  -d '{"tenantId":"1000","code":"demo","bucketName":"zero","filename":"2026/01/demo.png","isSign":true}'
 ```
 
 ### WebSocket 调试

@@ -48,3 +48,19 @@ OpenApiConf:
     - 127.0.0.1:21018
   NonBlock: true
   Timeout: 120000
+
+# 错误折叠策略：默认不折叠，所有已登记平台码统一透传。
+# 需要把指定错误码折叠成 100999 时，打开 Enabled 并列出 Codes。
+Error:
+  Fold:
+    Enabled: false
+    # Target: 100999
+    # KeepMsg: false
+    # Codes:
+    #   - 100201
+    #   - 100301
+    #   - 100302
+    #   - 100303
+    #   - 100601
+    #   - 100602
+    #   - 100998

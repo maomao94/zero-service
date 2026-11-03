@@ -43,6 +43,7 @@ func getReqMeta(ctx context.Context) *reqMeta {
 func SetUnifiedErrorHandler() {
 	httpx.SetErrorHandlerCtx(func(ctx context.Context, err error) (int, any) {
 		code, msg := errx.NormalizeError(err)
+		code, msg = applyFold(code, msg)
 		return http.StatusOK, newResponse(code, msg, nil)
 	})
 }

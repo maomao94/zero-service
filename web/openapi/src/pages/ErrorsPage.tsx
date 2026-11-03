@@ -39,7 +39,7 @@ export default function ErrorsPage() {
         <div className="folding-icon"><GitBranch size={20} /></div>
         <div>
           <b>基础设施错误折叠规则</b>
-          <p><code>100201</code>、<code>100301</code>、<code>100303</code>、<code>1006xx</code>、<code>100998</code> 对第三方统一返回 <code>100999 系统繁忙</code>，真实原因只写服务端日志。</p>
+          <p>默认统一透传；如网关在 <code>Error.Fold</code> 中列出 <code>100201</code>、<code>100301</code>、<code>100302</code>、<code>100303</code>、<code>100601</code>、<code>100602</code>、<code>100998</code>，则折叠为 <code>100999 系统繁忙</code>。真实原因只写服务端日志；<code>100603</code> 由代码强制透传，不参与折叠。</p>
         </div>
       </section>
 
@@ -85,7 +85,7 @@ export default function ErrorsPage() {
                   <td><span className={`http-tag http-${doc.http >= 500 ? 'error' : doc.http >= 400 ? 'warn' : 'ok'}`}>{doc.http}</span></td>
                   <td>
                     <b>{doc.title}</b>
-                    {doc.folded && <span className="folded-tag">折叠</span>}
+                    {doc.folded && <span className="folded-tag">可折叠</span>}
                   </td>
                   <td>
                     <p>{doc.description}</p>

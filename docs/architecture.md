@@ -68,7 +68,7 @@ Zero-Service 由一组可独立运行的服务组成，服务之间以 gRPC 为�
   <img src="./images/diagrams/flow-openapi.png" alt="开放 API 数据流：opengtw 鉴权后转发 app/openapi，再路由到 podengine 与 bridgemodbus" style="max-width: 88%; height: auto;" />
 </div>
 
-`opengtw` 负责 Basic 鉴权、统一 `{code,msg,data,timestamp}` 信封、错误码折叠和请求日志；`app/openapi` 用显式路由表把 `method` 映射到下游 RPC，并用 protojson 转换 `data`。当前开放 Podman（podengine）4 个只读方法和 Modbus（bridgemodbus）15 个 I/O 方法，详见[开放 API 网关](./open-api/README.md)。
+`opengtw` 负责 Basic 鉴权、统一 `{code,msg,data,timestamp}` 信封、错误码透传与可选折叠、请求日志；`app/openapi` 用显式路由表把 `method` 映射到下游 RPC，并用 protojson 转换 `data`。当前开放 Podman（podengine）4 个只读方法和 Modbus（bridgemodbus）15 个 I/O 方法，详见[开放 API 网关](./open-api/README.md)。
 
 ## 技术选型
 

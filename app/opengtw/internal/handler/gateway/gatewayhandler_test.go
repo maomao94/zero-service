@@ -11,6 +11,7 @@ import (
 	"zero-service/app/openapi/openapi"
 	"zero-service/app/opengtw/internal/middleware"
 	"zero-service/app/opengtw/internal/svc"
+	"zero-service/common/gtwx"
 	"zero-service/third_party/extproto"
 
 	xerrors "github.com/zeromicro/x/errors"
@@ -104,12 +105,30 @@ func TestGatewayUnknownMethod(t *testing.T) {
 	}
 }
 
-func TestGatewayFoldsInfrastructureError(t *testing.T) {
+func TestGatewayPassesThroughInfrastructureErrorByDefault(t *testing.T) {
 	client := &fakeOpenApiClient{err: xerrors.New(int(extproto.Code__1_00_RPC), "dial tcp: connection refused")}
 	rec := doGatewayRequest(t, client, `{"method":"pod.list","data":{}}`)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, body = %s", rec.Code, rec.Body.String())
 	}
+	var body xhttp.BaseResponse[any]
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if body.Code != int(extproto.Code__1_00_RPC) || body.Msg != "dial tcp: connection refused" {
+		t.Fatalf("unexpected passed-through error: %+v", body)
+	}
+}
+
+func TestGatewayFoldsInfrastructureErrorWhenConfigured(t *testing.T) {
+	gtwx.SetFoldConfig(gtwx.FoldConfig{
+		Enabled: true,
+		Codes:   []int{int(extproto.Code__1_00_RPC)},
+	})
+	t.Cleanup(func() { gtwx.SetFoldConfig(gtwx.FoldConfig{}) })
+
+	client := &fakeOpenApiClient{err: xerrors.New(int(extproto.Code__1_00_RPC), "dial tcp: connection refused")}
+	rec := doGatewayRequest(t, client, `{"method":"pod.list","data":{}}`)
 	var body xhttp.BaseResponse[any]
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode body: %v", err)

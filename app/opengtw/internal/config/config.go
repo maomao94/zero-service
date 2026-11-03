@@ -2,6 +2,7 @@ package config
 
 import (
 	"zero-service/common/gormx"
+	"zero-service/common/gtwx"
 
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/rest"
@@ -26,4 +27,8 @@ type Config struct {
 	Redis redis.RedisConf `json:",optional"`
 	// OpenApiConf app/openapi 转发服务。
 	OpenApiConf zrpc.RpcClientConf
+	// Error 控制网关错误折叠。默认 Enabled=false，统一透传。
+	Error struct {
+		Fold gtwx.FoldConfig `json:",optional"`
+	} `json:",optional"`
 }

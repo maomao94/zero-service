@@ -19,7 +19,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// SystemBusyMessage 是对外折叠后的统一文案。
+// SystemBusyMessage 是未登记码、未转换错误的统一对外文案。
 const SystemBusyMessage = "系统繁忙"
 
 // SourceOf 返回六位错误码的来源位 A；非六位码返回 -1。
@@ -44,7 +44,7 @@ func IsDefinedCode(code int) bool {
 
 // CodeFromStatus 将错误转换为六位错误码与可展示消息。
 // 优先读取 google.rpc.ErrorInfo.reason（仅接受 extproto 中已定义的码），
-// 取不到时按 gRPC Code 兜底；未定义的原始码不进入信封，按内部错误折叠。
+// 取不到时按 gRPC Code 兜底；未定义的原始码不进入信封，统一降级为 100999 系统繁忙。
 func CodeFromStatus(err error) (int, string) {
 	if err == nil {
 		return 0, ""
@@ -58,17 +58,17 @@ func CodeFromStatus(err error) (int, string) {
 	st, ok := status.FromError(err)
 	if !ok {
 		// 既不是 CodeMsg，也不是 gRPC status：说明业务侧没有做错误转换。
-		// 不能把内部 error 文本回显给客户端，折叠为系统繁忙，原始值写日志。
-		logx.Errorf("未转换的普通错误，已折叠为系统繁忙：%v", err)
-		return int(extproto.Code__1_00_INTERNAL), ""
+		// 不能把内部 error 文本回显给客户端，统一降级为系统繁忙，原始值写日志。
+		logx.Errorf("未转换的普通错误，已降级为系统繁忙：%v", err)
+		return int(extproto.Code__1_00_UNKNOWN), SystemBusyMessage
 	}
 	if st.Code() == codes.OK {
 		return 0, ""
 	}
 
 	// 数字型 reason，但不在 extproto 枚举内：无法识别的原始码，禁止进入信封。
-	// 标记后统一按内部错误折叠，避免未定义码被当成平台业务码透传。
-	// 判据只看是否登记在 extproto，与来源位无关；未登记一律折叠。
+	// 标记后统一降级为 100999，避免未定义码被当成平台业务码透传。
+	// 判据只看是否登记在 extproto，与来源位无关；未登记一律降级。
 	undefinedCode := false
 	for _, detail := range st.Details() {
 		info, ok := detail.(*errdetails.ErrorInfo)
@@ -80,7 +80,7 @@ func CodeFromStatus(err error) (int, string) {
 			continue
 		}
 		if !IsDefinedCode(code) {
-			logx.Errorf("未登记的错误码 %s（domain=%s），已折叠为系统繁忙", info.GetReason(), info.GetDomain())
+			logx.Errorf("未登记的错误码 %s（domain=%s），已降级为系统繁忙", info.GetReason(), info.GetDomain())
 			undefinedCode = true
 			continue
 		}
@@ -91,7 +91,7 @@ func CodeFromStatus(err error) (int, string) {
 		return code, msg
 	}
 	if undefinedCode {
-		return int(extproto.Code__1_00_INTERNAL), ""
+		return int(extproto.Code__1_00_UNKNOWN), SystemBusyMessage
 	}
 
 	code := codeFromGRPCStatus(st.Code())
@@ -129,30 +129,6 @@ func codeFromGRPCStatus(code codes.Code) int {
 	default:
 		return int(extproto.Code__1_00_UNKNOWN)
 	}
-}
-
-// FoldPublic 将基础设施类错误折叠为对外的“系统繁忙”，真实原因只进日志。
-func FoldPublic(code int) int {
-	switch code {
-	case int(extproto.Code__1_00_INTERNAL),
-		int(extproto.Code__1_00_DB),
-		int(extproto.Code__1_00_CACHE),
-		int(extproto.Code__1_00_CACHE_MISS),
-		int(extproto.Code__1_00_MQ),
-		int(extproto.Code__1_00_RPC),
-		int(extproto.Code__1_00_THIRD_PARTY):
-		return int(extproto.Code__1_00_UNKNOWN)
-	default:
-		return code
-	}
-}
-
-// PublicMessage 在错误被折叠时返回统一的对外消息。
-func PublicMessage(code int, msg string) string {
-	if FoldPublic(code) != code {
-		return SystemBusyMessage
-	}
-	return msg
 }
 
 // ErrorMessage 读取 extproto 中定义的错误名称。

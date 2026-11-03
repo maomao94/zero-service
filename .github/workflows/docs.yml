@@ -1,0 +1,36 @@
+# =============================================================
+# 文档质量门禁
+#  - 校验 Markdown 的相对链接、页内锚点与代码块闭合
+#  - 与本地命令一致：python3 scripts/check_docs.py
+#  - pull_request 上无条件运行（它是 required status check，不能按路径过滤）
+#  - push 上只在文档或脚本变更时触发，避免合并后重复占用资源
+# =============================================================
+name: Docs
+
+on:
+  push:
+    branches: [ master, develop ]
+    paths:
+      - "**/*.md"
+      - "scripts/check_docs.py"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    branches: [ master, develop ]
+    # 注意：pull_request 上刻意不加 paths 过滤。
+    # 这个 job 名（Markdown links）是分支保护的 required status check，
+    # 一旦按路径过滤，改动里不含 .md 的 PR 就永远不会上报该检查，
+    # 结果是被 branch protection 永久卡在 "Expected — Waiting for status to be reported"。
+    # push 上保留过滤，避免合并后重复占用资源。
+
+jobs:
+  links:
+    name: Markdown links
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      # ubuntu-latest 自带 python3，脚本只依赖标准库，无需额外安装
+      - name: Check docs
+        run: python3 scripts/check_docs.py

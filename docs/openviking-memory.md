@@ -9,7 +9,7 @@
 | 部署仓库 | `openviking-memory`（GitHub 私库，自包含：compose + 配置 + data） |
 | 服务地址 | `http://localhost:1933`（API + Web Studio `/studio`） |
 | 账号 / 用户 | `developer` / `admin`（admin 角色） |
-| 本项目的知识 | `viking://resources/project/zero-service/`（standards / domains / guides） |
+| 本项目的知识 | `viking://resources/project/zero-service/`（standards / domains / runbooks） |
 | 存储 | `~/.openviking` 由容器挂载到 `/app/.openviking`，workspace 指向 `/app/.openviking/data` |
 
 启动与验证：
@@ -34,7 +34,7 @@ export OPENVIKING_API_KEY="<user key>"
 
 **Web Studio**：<http://localhost:1933/studio>，浏览器查看/管理记忆，连接时填 Server URL 与 user key。
 
-## MCP 工具（15 个，OpenCode 中带 `openviking_` 前缀）
+## MCP 工具（24 个，OpenCode 中带 `openviking_` 前缀）
 
 ### 检索
 
@@ -47,6 +47,7 @@ export OPENVIKING_API_KEY="<user key>"
 | `openviking_tree` | 递归目录树（可带摘要） |
 | `openviking_grep` | 精确文本/正则搜索 |
 | `openviking_glob` | 文件名模式匹配 |
+| `openviking_download` | 获取单个文件原始字节的短期下载链接 |
 
 检索可以限定范围（`target_uri`），例如只在 zero-service 契约内搜：
 
@@ -71,18 +72,29 @@ openviking_find query="handler 分层职责" target_uri="viking://resources/proj
 | `openviking_health` | 服务健康检查 |
 | `openviking_list_watches` / `openviking_cancel_watch` | 查看/取消资源自动刷新订阅 |
 
+### 技能、权限与凭据
+
+| 工具 | 用途 |
+| --- | --- |
+| `openviking_add_skill` | 创建/安装/替换 Agent Skill（唯一会改动技能包的入口） |
+| `openviking_list_groups` / `openviking_list_users` | 查询可授权的组与用户 |
+| `openviking_get_acl` / `openviking_set_acl` | 读取/设置共享资源的 ACL |
+| `openviking_privacy_tree` | 列出已保存的凭据与字段引用（不返回明文） |
+| `openviking_privacy_resolve` | 按 `{{ov_privacy:...}}` 引用取回当前字段值 |
+| `openviking_privacy_upsert` | 新增或更新凭据字段（生成新版本） |
+
 ## 记忆层级
 
 ```
 viking://resources/                          # 共享知识资源（团队级）
-└── project/zero-service/                    # 本项目的规范与契约（tags: lang=go, framework=go-zero, project=zero-service）
+└── project/zero-service/                    # 本项目的规范与契约（检索 tags: lang=go, framework=go-zero, project=zero-service）
     ├── standards/                           # 工程规范
     ├── domains/                             # 领域契约
-    └── guides/                              # 分析指南
+    └── runbooks/                            # 可复用工作流与检查清单
 viking://user/admin/                         # 用户私有空间（memories / skills / peers / privacy）
 ```
 
-命名约定：AI 编程记忆按 **语言/框架/项目** 三层组织（`lang/`、`framework/`、`project/`），检索时按当前任务组合限定 `target_uri`，避免跨项目污染。
+命名约定：记忆按项目组织在 `viking://resources/project/<project>/`，目录内按 `standards` / `domains` / `runbooks` 分类；检索时用 `target_uri` 限定当前项目，避免跨项目污染。`lang`、`framework` 只作为检索 tags，不是目录层级。
 
 ## 使用指导
 

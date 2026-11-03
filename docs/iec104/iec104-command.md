@@ -4,7 +4,7 @@
 
 平台架构、服务组件、配置管理、部署等内容参见：[IEC 104 数采平台](./iec104.md)。
 
-消息格式、信息体结构、数据消费等内容参见：[IEC 104 消息对接文档](./iec104-message.md)。
+消息格式和信息体结构参见：[IEC 104 消息对接文档](./iec104-message.md)；Kafka、MQTT、gRPC 消费方式参见：[附录与数据消费参考](./iec104-reference.md)。
 
 ## 1. 接入方式
 
@@ -368,5 +368,6 @@ IEC命令被设备拒绝: command rejected: cot=UnknownTypeID isNegative=true ty
 相关文档：
 
 - [IEC 104 数采平台架构](./iec104.md)，服务组件、数据流、配置管理。
-- [IEC 104 消息对接文档](./iec104-message.md)，消息格式、信息体结构、数据消费指南。
+- [IEC 104 消息对接文档](./iec104-message.md)，消息格式、ASDU 类型映射和信息体结构。
+- [IEC 104 附录与数据消费参考](./iec104-reference.md)，品质位、状态值、业务单位和 Kafka/MQTT/gRPC 消费指南。
 - [`ieccaller.proto`](../../app/ieccaller/ieccaller.proto)，控制指令 RPC 接口定义。

@@ -24,7 +24,8 @@ message Dept {
 
 extend google.protobuf.EnumValueOptions {
   string name = 5001;
-  int32 http_code = 5002 [json_name = "httpCode"];
+  // 扩展字段不支持 json_name 选项，按 proto 字段名 http_code 输出。
+  int32 http_code = 5002;
 }
 
 /**
@@ -96,7 +97,10 @@ enum Code {
 
   // 外部依赖（DEF 600-699）
   _1_00_RPC = 100601 [(name) = "远程调用失败", (http_code) = 503];
+  // 内部基础设施类第三方故障，网关会折叠为 100999，原始信息只进日志。
   _1_00_THIRD_PARTY = 100602 [(name) = "第三方服务异常", (http_code) = 503];
+  // 第三方接口明确返回错误码，允许对外展示；msg 固定模板见 docs/error-codes.md。
+  _1_00_THIRD_PARTY_API = 100603 [(name) = "第三方接口错误", (http_code) = 503];
 
   // 限流（DEF 700-799）
   _1_00_RATE_LIMITED = 100701 [(name) = "请求过于频繁", (http_code) = 429];

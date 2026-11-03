@@ -1,0 +1,100 @@
+name: Bug 报告
+description: 报告可复现的缺陷，帮助定位问题
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！提交前请先查阅 [文档索引](https://github.com/maomao94/zero-service/blob/develop/docs/README.md) 与对应服务的 `etc/*.yaml`。
+        安全漏洞请勿公开提交，见 [安全策略](https://github.com/maomao94/zero-service/blob/develop/.github/SECURITY.md)。
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 问题现象
+      description: 实际发生了什么？尽量附上完整报错、日志或响应体。
+      placeholder: 调用 POST /v1/... 返回 code=100999，日志报 ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+      description: 你预期应该是什么结果？
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 按顺序写出最小复现路径。
+      placeholder: |
+        1. 启动 app/trigger
+        2. 调用 ...
+        3. 观察到 ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: service
+    attributes:
+      label: 受影响服务
+      description: 不确定时选「不确定」。
+      options:
+        - gtw / livegtw / opengtw / oryxgtw / bridgegtw / socketgtw
+        - ieccaller / iecagent / iecstash
+        - trigger
+        - djicloud
+        - alarm（告警） / logdump（日志导出） / xfusionmock（X-Fusion 模拟）
+        - live（LiveKit 会议）
+        - oryxserver
+        - bridge*（协议桥接）与 bridgedump
+        - ispagent / ispserver
+        - file / gis / podengine / openapi
+        - aiapp（aigtw / ssegtw / aichat / aisolo / mcpserver）
+        - socketpush（SocketIO 推送）
+        - web（前端）
+        - 其他 / 不确定
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: 版本
+      description: tag 或 commit（`git describe --tags` 的输出）
+      placeholder: v0.1.14
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: 运行环境
+      description: 操作系统、Go 版本、数据库与中间件版本
+      placeholder: macOS 15 / Go 1.27 / KingbaseES V9 / Kafka 3.7
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: 补充信息
+      description: 相关配置片段、截图、已尝试的排查步骤。
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 已搜索现有 Issue，确认没有重复
+          required: true
+        - label: 已在最新的 `develop` 分支确认问题仍存在
+          required: true
+        - label: 内容中不包含真实凭据、密钥或生产环境连接信息
+          required: true

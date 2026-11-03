@@ -30,7 +30,7 @@ func NewGatewayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GatewayLo
 	}
 }
 
-// Gateway 将 data 原样转发给 app/openapi，只做错误码折叠与成功信封。
+// Gateway 将 data 原样转发给 app/openapi，只做错误归一化与成功信封；折叠由 handler 出口按网关配置统一处理。
 func (l *GatewayLogic) Gateway(req *types.GatewayRequest) (json.RawMessage, error) {
 	if req == nil || req.Method == "" {
 		return nil, xerrors.New(int(extproto.Code__1_00_PARAM_MISSING), "method 不能为空")
@@ -49,7 +49,7 @@ func (l *GatewayLogic) Gateway(req *types.GatewayRequest) (json.RawMessage, erro
 		}
 		l.Errorf("invoke openapi failed app_id=%s method=%s code=%d err=%v",
 			middleware.AppIDFromContext(l.ctx), req.Method, code, err)
-		return nil, xerrors.New(errx.FoldPublic(code), errx.PublicMessage(code, msg))
+		return nil, xerrors.New(code, msg)
 	}
 	if res == nil {
 		return nil, xerrors.New(int(extproto.Code__1_00_INTERNAL), "openapi 返回空响应")

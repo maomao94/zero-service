@@ -2,6 +2,8 @@
 
 基于 [LiveKit](https://github.com/livekit/livekit) 的实时音视频会议服务，提供会议管理、入会 token 签发、票据邀请、Webhook 状态同步和聊天消息能力。
 
+专题指南：[LiveKit SDK 集成与自托管边界](./integration-guide.md) · [RoomCallback 场景与字段](./callbacks-guide.md) · [SIP 电话集成与部署](./sip-integration.md)。
+
 ## 服务组成
 
 | 服务 | 职责 | 端口 | 文档 |
@@ -240,7 +242,7 @@ GET  /live/v1/listMeetingMessages      # 查询历史
 ```
 
 - 鉴权失败：`{"code":100401,"msg":"未认证"}`（JWT）或 `{"code":100401,"msg":"缺少用户身份"}`（无用户身份）。
-- 参数错误：`100101`；记录不存在：`100202`；下游不可用折叠为 `100999 系统繁忙`。
+- 参数错误：`100101`；记录不存在：`100202`；下游不可用默认透传，配置 `Error.Fold` 后才折叠为 `100999 系统繁忙`。
 - 所有业务响应都带 `X-Request-Id`，排查时以该 ID 检索日志。
 - 仅 `POST /webhook/livekit` 保持状态码语义（验签失败 `401`、处理失败 `500`），供 LiveKit 判断是否重推。
 

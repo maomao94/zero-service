@@ -7,4 +7,6 @@
 | 文档 | 内容 |
 | --- | --- |
 | [Trigger 服务](./trigger.md) | 异步任务、计划任务、RRULE CronJob、API 和状态流转 |
-| [Plan/CronJob RRULE API 场景指南](./trigger-rrule-api-guide.md) | 周期规则、指定时间、排除条件和请求示例 |
+| [规则与字段参考](./trigger-rrule-syntax.md) | 候选集合编译、`PlanRulePb` 字段、时间边界、更新限制与不支持的调度语义 |
+| [场景示例](./trigger-rrule-api-guide.md) | 分钟级、日历、节假日、区间、一次性等可直接复制的请求示例 |
+| [运行与对接](./trigger-rrule-operations.md) | 创建后补触发、预览计划时间、人工执行与上线检查清单 |

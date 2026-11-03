@@ -87,16 +87,20 @@ WantedBy=multi-user.target
 
 ### 服务发现
 
-通过 Nacos 实现服务注册与发现：
+通过 Nacos 实现服务注册与发现。服务侧配置键为 `NacosConfig`（见各服务 `internal/config/config.go`），`IsRegister` 为 `false` 时不注册：
 
 ```yaml
-# 在服务配置中添加
-Nacos:
-  Host: nacos-server:8848
-  Namespace: production
-  Group: DEFAULT_GROUP
-  ClusterName: default
+NacosConfig:
+  IsRegister: true
+  Host: nacos-server
+  Port: 8848
+  Username: nacos
+  PassWord: <nacos 密码>
+  NamespaceId: production
+  ServiceName: trigger
 ```
+
+调用侧则用 `nacos://` 目标串代替直连地址，例如 `Target: nacos://nacos:<密码>@nacos-server:8848/stream-event?namespaceid=production`；resolver 实现见 [`common/nacosx`](../common/nacosx/README.md)。
 
 ### 负载均衡
 
@@ -121,31 +125,36 @@ Nacos:
 
 各服务配置文件通常位于：
 - `app/{service}/etc/{service}.yaml`
-- `aiapp/{service}/etc/{service}.yaml`
 - `gtw/etc/gtw.yaml`
 
 ### 典型配置项
 
+gRPC 服务监听 `ListenOn`，HTTP 网关监听 `Host` + `Port`，两者不要混用：
+
 ```yaml
-Name: service-name
-Host: 0.0.0.0
-Port: 21006
+Name: trigger.rpc
+ListenOn: 0.0.0.0:21006
 
 # Redis
 Redis:
   Host: redis-server:6379
   Type: node
 
-# Kafka
-Kafka:
-  Brokers:
-    - kafka-server:9092
+# Nacos 注册（可选，IsRegister 为 false 时跳过）
+NacosConfig:
+  IsRegister: false
+  Host: nacos-server
+  Port: 8848
+  NamespaceId: production
+  ServiceName: trigger
 
-# Nacos
-Nacos:
-  Host: nacos-server:8848
-  Namespace: production
+# 下游 gRPC 依赖；不同服务的中介件配置键不同（如 iecstash 用 KafkaASDUConfig），以各自 etc/*.yaml 为准
+StreamEventConf:
+  Endpoints:
+    - streamevent:21009
 ```
+
+> 上例只示意键名与层次；Kafka、MQTT、对象存储等配置键在各服务间并不统一，落地时以该服务 `etc/*.yaml` 与配置结构体为准。
 
 ### 配置安全
 

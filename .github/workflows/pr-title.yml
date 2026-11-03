@@ -1,0 +1,47 @@
+# =============================================================
+# PR 标题校验
+#  - PR 模板已移除「变更类型」勾选，类型只由标题前缀表达，这里做机器校验
+#  - 格式：<type>(<scope>): <description>，type 小写，scope 可省略，破坏性变更用 !
+#  - 在 opened / edited / reopened / synchronize 时重跑，改标题即可恢复
+#  - 与 pr-hygiene 分开：这项只读 PR 元数据，秒级完成，失败原因一眼可见
+# =============================================================
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+    branches: [ master, develop ]
+
+# 只读 PR 标题，不需要任何写权限
+permissions:
+  contents: read
+
+jobs:
+  # 这个 job 名会作为 required status check 的名字出现在分支保护里，不要随意改
+  title:
+    name: PR title
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate Conventional Commits title
+        env:
+          # 通过环境变量传值，避免把 PR 标题直接拼进 shell 造成注入
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          # type 白名单与 .github/CONTRIBUTING.md「提交规范」保持一致
+          pattern='^(feat|fix|docs|style|refactor|test|chore|ci|perf|build|revert)(\([a-zA-Z0-9._/-]+\))?!?: .+'
+
+          if printf '%s\n' "$PR_TITLE" | grep -Eq "$pattern"; then
+            echo "PR 标题符合 Conventional Commits：$PR_TITLE"
+            exit 0
+          fi
+
+          echo "::error::PR 标题不符合 Conventional Commits：$PR_TITLE"
+          cat <<'EOF'
+          期望格式：<type>(<scope>): <description>
+          允许的 type：feat fix docs style refactor test chore ci perf build revert
+          示例：fix(trigger): 修正 CronJob 补触发边界
+          破坏性变更：feat(api)!: 移除旧版鉴权头
+          EOF
+          exit 1
