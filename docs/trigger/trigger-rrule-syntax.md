@@ -239,7 +239,7 @@ Create、Update 和 Submit 成功响应都直接返回本次编译得到的 `nex
 }
 ```
 
-两者返回的 `CronJobPb` 都直接回显持久化的 `specified_times` 和 `excluded_times`；数据库用可空 JSON 文本列保存原始列表，未配置或已清空时写入 SQL `NULL`，API 统一返回空列表。`rrule_str` 与 `schedule_description` 来自持久化完整 Set，不会从回显列表重新推导。Preview 请求和响应示例见[预览未来计划时间](./trigger-rrule-api-guide.md#预览未来计划时间)，其结果自然包含 RDATE 并应用精确与整日 EXDATE，且严格只读。
+两者返回的 `CronJobPb` 都直接回显持久化的 `specified_times` 和 `excluded_times`；数据库用可空 JSON 文本列保存原始列表，未配置或已清空时写入 SQL `NULL`，API 统一返回空列表。`rrule_str` 与 `schedule_description` 来自持久化完整 Set，不会从回显列表重新推导。Preview 请求和响应示例见[预览未来计划时间](./trigger-rrule-operations.md#预览未来计划时间)，其结果自然包含 RDATE 并应用精确与整日 EXDATE，且严格只读。
 
 ## API 边界
 
@@ -357,6 +357,23 @@ MINUTELY + interval 的三种实际效果（以 `start_time` 分钟为 00 为例
 ### 更新字段边界
 
 `UpdateCronJob` 只接收可变配置字段（名称、描述、规则及范围、排除日期、优先级、payload、超时策略和 `ext1` 至 `ext5`），不包含 `task_code`、`group_id`、`dept_code`、`type` 和 `status`。`SubmitCronJob` 更新已有任务时委托 Update 处理，同样不修改身份字段。任务存在正在执行或重试的 `scheduled_time` 时，Update 会失败，调用方应在本次执行完成后重试。
+
+## 不直接支持的调度语义
+
+下列需求无法由当前 `PlanRulePb` 直接表达，需要拆分 CronJob、预先计算具体日期，或交给外部业务逻辑处理：
+
+| 需求 | 当前限制与处理建议 |
+| --- | --- |
+| 从任意锚点滚动每 N 天、周、月、年、小时 | 已支持 `interval: N`（锚定开始时间）；每 N 分钟仍用固定 `minutes` 列表（`interval` 与 `minutes` 交互见[规则字段](#规则字段)） |
+| 精确执行 N 次后停止 | 请求没有 `count`；只能用包含边界的 `end_time` 限定区间，不能保证生成数量恰为 N |
+| 直接填写序号星期，或从候选集合取第 N 个 | `week` 只接收普通星期值，没有序号或 `BYSETPOS` 字段。部分固定序号星期可改用 `day` 与 `week` 的交集表达，例如每月第一个周一使用 `day: [1,2,3,4,5,6,7]` 和 `week: [1]`；通用候选排序与选位仍不支持 |
+| 法定工作日、动态节假日、最后一个工作日 | CronJob 规则不接入动态节假日日历；`exclude_dates` 只是调用方提交的静态日期，不会识别调休工作日 |
+| 节假日或周末自动前移、后移 | 排除日期只会删除原候选点，不会生成替代日期；替代执行日需由外部计算和管理 |
+| 只用 `rule` 字段精确表达 09:00 和 17:30 | `hours` 与 `minutes` 会形成笛卡尔积；可用 RRULE 表达一个稳定基线，并通过 `specified_times` 逐项加入已知日期的另一个精确时刻 |
+| 不提供 RRULE、只提交精确时间 | `rule` 必填；当前不支持纯 RDATE-only 请求，应提供合法 RRULE 并用 `specified_times` 补充候选 |
+| 排除一个连续时间段 | 当前只支持 `excluded_times` 的单秒排除和 `exclude_dates` 的上海自然日排除，不支持任意时间范围排除 |
+| 将每月 29、30、31 日自动收敛到月末 | 不存在的日期会跳过；仅当业务语义就是最后一个日历日时使用 `day: [-1]` |
+| 单条规则覆盖超过 100 年或永久不设结束时间 | CronJob 生效区间最多 100 年；省略 `end_time` 只会默认到开始时间所在年份年末，不会生成无界规则 |
 
 ## 下一步
 

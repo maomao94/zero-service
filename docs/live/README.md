@@ -2,6 +2,8 @@
 
 基于 [LiveKit](https://github.com/livekit/livekit) 的实时音视频会议服务，提供会议管理、入会 token 签发、票据邀请、Webhook 状态同步和聊天消息能力。
 
+专题指南：[LiveKit SDK 集成与自托管边界](./integration-guide.md) · [RoomCallback 场景与字段](./callbacks-guide.md) · [SIP 电话集成与部署](./sip-integration.md)。
+
 ## 服务组成
 
 | 服务 | 职责 | 端口 | 文档 |

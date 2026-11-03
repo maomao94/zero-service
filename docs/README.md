@@ -26,7 +26,7 @@
 
 ## 文档地图
 
-`README.md` 只做仓库入口，本文件是唯一索引；链接方向固定为「入口 → 索引 → 专项文档 → 源码或脚本」，文档之间不互相引用成环。新增文档时先在本索引登记，再补交叉链接。
+根目录 `README.md` 只做仓库入口，本文件是唯一索引；功能介绍、端口、启动和部署信息以专项文档为准，根 README 不重复维护专项目录。主要链接方向为「入口 → 索引 → 专项文档 → 源码或脚本」，必要的专项文档交叉链接允许存在，但不得形成循环导航。新增文档时先在本索引登记，再补交叉链接。
 
 <div align="center">
   <img src="./images/diagrams/doc-map.png" alt="文档流转关系：仓库入口、文档索引与各专项文档分区" style="max-width: 80%; height: auto;" />
@@ -34,12 +34,12 @@
 
 写作约定：
 
-- `docs/` 放跨服务的架构、协议、对接与规范；单个服务的实现细节放各自目录的 `README.md`。
+- `docs/` 放跨服务的架构、协议、对接与规范；`docs/<topic>/README.md` 是该主题的主文档（可以包含主题总览或服务契约），同目录其他页面通过该入口导航；组件/API 包的独立使用说明放其源码目录的 `README.md`。
 - 每篇文档先给结论或表格，再展开细节；命令与配置一律使用 fenced code block。
-- 单篇超过 600 行按语义拆分，包级 API 放组件 README，跨服务实践放 `docs/`（规则见[贡献指南](../.github/CONTRIBUTING.md#文档体量与拆分)）。
+- 普通说明文档超过 600 行时按语义拆分；接口契约、协议字段表等内容紧密且拆分会增加查阅成本时，可保留单篇并提供清晰目录。包级 API 放组件 README，跨服务实践放 `docs/`（规则见[贡献指南](../.github/CONTRIBUTING.md#文档体量与拆分)）。
 - 架构图与流程图统一放在 [`docs/images/diagrams/`](./images/diagrams/)，同目录保留同名 `.mmd` 源文件；正文用 `<img>` 引用导出的 PNG，避免依赖编辑器是否支持 Mermaid。
 - 端口、路径和字段以源码、`.proto`/`.api` 与 `etc/*.yaml` 为准，写文档时同步核对。
-- 提交前执行 `python3 scripts/check_docs.py` 校验相对链接、HTML `<img>`/`<a href>`、页内锚点、代码块闭合与 `.mmd`/`.png` 配对；CI 会在 Markdown 变更时自动运行。
+- 提交前执行 `python3 scripts/check_docs.py` 校验仓库受管 Markdown 的相对链接、HTML `<img>`/`<a href>`、页内锚点、代码块闭合与 `.mmd`/`.png` 配对；默认覆盖隐藏目录下的 `.github/` 文档，不覆盖第三方依赖和生成数据目录。CI 会在 PR 上运行该检查。
 
 ## 用户与对接方
 
@@ -54,21 +54,21 @@
 
 | 服务 | 文档 | 内容 |
 | --- | --- | --- |
-| IEC 104 | [数采平台](./iec104/README.md) | 采集、消息分发、数据合并与控制命令 |
-| Trigger | [Trigger 服务](./trigger/README.md) | 异步任务、计划任务、RRULE CronJob |
-| SocketIO | [实时通信](./socketio/README.md) | 网关对接、事件体系、房间广播和鉴权 |
-| DJI | [云平台](./djicloud/README.md) | 第一代上云 API 参考实现（Dock 3 Cloud API 与航点任务文件）；新项目建议[上云 API 2](https://developer.dji.com/cn/cloud-api-2) |
+| IEC 104 | [数采平台](./iec104/README.md) | 采集、消息分发、数据合并与控制命令；接口字段见[消息对接](./iec104/iec104-message.md) |
+| Trigger | [Trigger 服务](./trigger/README.md) | 异步任务与计划任务；CronJob 的[规则字段](./trigger/trigger-rrule-syntax.md)、[场景示例](./trigger/trigger-rrule-api-guide.md)和[运行对接](./trigger/trigger-rrule-operations.md) |
+| SocketIO | [实时通信](./socketio/README.md) | [对接文档](./socketio/socketio.md)：网关对接、事件体系、房间广播和鉴权 |
+| DJI | [云平台](./djicloud/README.md) | [服务实现](./djicloud/djicloud.md)与[KML/KMZ 航点任务指南](./djicloud/kml-kmz-guide.md)；第一代上云 API 参考实现，新项目建议[上云 API 2](https://developer.dji.com/cn/cloud-api-2) |
 | ISP | [巡检协议](./isp/README.md) | ISP 服务端/代理、帧格式、任务和模型同步 |
-| LiveKit | [视频会议](./live/README.md) | 会议管理、入会 token、票据邀请、Webhook、聊天消息；[LiveKit](https://github.com/livekit/livekit) · [Server SDK](https://github.com/livekit/server-sdk-go) · [对接指南](./live/integration-guide.md) |
-| Oryx | [流媒体](./oryx/README.md) | HTTP 回调网关、gRPC API 代理、录制管理与中继拉流；[Oryx](https://github.com/ossrs/oryx) · [SRS](https://github.com/ossrs/srs) |
+| LiveKit | [视频会议服务总览](./live/README.md) | 服务 API 与对接入口；[SDK 集成指南](./live/integration-guide.md)、[RoomCallback 指南](./live/callbacks-guide.md)、[SIP 电话集成](./live/sip-integration.md)；[LiveKit](https://github.com/livekit/livekit) · [Server SDK](https://github.com/livekit/server-sdk-go) |
+| Oryx | [流媒体](./oryx/README.md) | [oryxgtw 回调网关](./oryx/oryxgtw.md)、[oryxserver gRPC 服务](./oryx/oryxserver.md)，涵盖录制管理与中继拉流；[Oryx](https://github.com/ossrs/oryx) · [SRS](https://github.com/ossrs/srs) |
 | LAL | [流媒体回调](../app/lalhook/README.md) | LAL HTTP 回调事件与 gRPC 代理（已不推荐，迁移至 Oryx）；[LAL](https://github.com/q191201771/lal) |
 | File | [文件与对象存储](./file/README.md) | OSS 配置管理、文件上传/中继、签名 URL 与视频截帧 |
 | GIS | [地理信息服务](./gis/README.md) | H3、GeoHash、电子围栏与坐标转换 |
 | PodEngine | [容器编排](./podengine/README.md) | Docker 容器生命周期管理 |
-| OpenAPI | [开放 API 网关](./open-api/README.md) | Basic 鉴权、统一信封、method 路由、Podman + Modbus |
+| OpenAPI | [开放 API 网关](./open-api/README.md) | Basic 鉴权、统一信封、method 路由、Podman + Modbus；[签名协议](./open-api/signature.md)、[Modbus 方法与示例](./open-api/modbus.md) |
 | Bridge | [协议桥接](./bridge/README.md) | HTTP/Kafka/Modbus/MQTT 桥接与报文落地 |
 
-`gtw`（存量 BFF）、`zerorpc`、`alarm`、`logdump`、`xfusionmock` 等服务暂无专项文档，端口与目录以[服务端口清单](./service-ports.md)为准，实现细节见各自目录源码。
+`gtw`（存量 BFF）、`zerorpc`、`alarm`、`logdump`、`xfusionmock` 等服务暂无专项功能文档；其目录和端口可由[服务端口清单](./service-ports.md)定位，实现细节见各自目录源码。
 
 ## 公共组件
 
@@ -82,7 +82,7 @@
 | livekitx | [README](../common/livekitx/README.md) | LiveKit Server SDK 封装：Twirp 管理 API、Token、Room、Webhook 验签 |
 | nacosx | [README](../common/nacosx/README.md) | Nacos 注册中心适配与 `nacos://` gRPC resolver |
 
-其余 `common/*`（`iec104`、`djisdk`、`socketiox`、`mqttx`、`ossx`、`gtwx`、`errx`、`asynqx` 等）暂以源码和引用它们的专项文档为准；补充时在组件目录下新增同名 `README.md`，并在本表登记。
+`common/gisx/geos` 是多文件指南，见上方入口；尚无独立说明的组件（例如 `iec104`、`djisdk`、`socketiox`、`mqttx`、`ossx`、`gtwx`、`errx`、`asynqx`）以包注释、源码和引用它们的专项文档为准。新增组件说明应先确认存在独立使用契约，再在组件目录补充 README，避免重复已有专项文档。
 
 ## Web 前端
 
@@ -93,16 +93,8 @@
 | SocketIO 测试 | [SocketIO 前端](../web/socketio/README.md) | 连接、消息、房间、事件与底部控制台 |
 | OpenAPI 控制台 | [OpenAPI 前端](../web/openapi/README.md) | 开放 API 调试、应用管理与错误码速查 |
 
-四个项目的组成、构建与验证状态见 [`web/COMPLETION.md`](../web/COMPLETION.md)。
-
-## AI 应用
-
-| 服务 | 文档 | 内容 |
-| --- | --- | --- |
-| aigtw / aisolo | [AI Solo Web UI](../aiapp/aigtw/static/solo/README.md) | 零构建 SPA、SSE 事件流、模式对齐与 6 种中断面板 |
-| aisolo | [分布式与持久化部署](../aiapp/aisolo/docs/DISTRIBUTED_DEPLOYMENT.md) | 多副本会话、Checkpoint 与 RUNNING 租约 |
-| aisolo | [Eino 联测指南](../aiapp/aisolo/docs/EINO_INTEGRATION_TESTING.md) | 工具、Skill、Workflow 与子 Agent 的联测步骤 |
-| Skill 样例 | [calculator](../aiapp/aisolo/skills/calculator/SKILL.md) · [coder](../aiapp/aisolo/skills/coder/SKILL.md) · [example](../aiapp/mcpserver/skills/example/SKILL.md) | `SKILL.md` 结构与技能实现样例 |
+四个项目的组成、构建与验证状态见 [`web/COMPLETION.md`](../web/COMPLETION.md)；各子项目 README 说明本地开发和部署入口。
+LiveKit 界面截图资产位于 [`docs/images/live/`](./images/live/)；截图只用于解释界面，不替代 API 契约。
 
 ## 命令行工具
 
@@ -120,6 +112,26 @@
 | [Web 网关（Nginx）](../deploy/nginx/README.md) | 前端产物托管、反向代理、TLS 与健康检查 |
 | [金仓部署](../deploy/kingbase/README.md) | KingbaseES 单机编排、授权替换与业务库初始化 |
 | [TDengine 部署](../deploy/tdengine/README.md) | 时序库编排、业务库初始化与采集服务对齐 |
+| 其他部署模板 | [deploy 目录索引](../deploy/README.md) | 数据迁移、Milvus、SIPMediaGW、Filebeat 与 TLS 工具 |
+
+## 仓库目录
+
+| 目录 | 职责 | 文档入口 |
+| --- | --- | --- |
+| `.github/` | 贡献、安全、Issue/PR 模板与 CI 治理 | [贡献指南](../.github/CONTRIBUTING.md)、[安全策略](../.github/SECURITY.md)、[PR 模板](../.github/PULL_REQUEST_TEMPLATE.md) |
+| `1.7.1/`、`1.9.x/` | 按 goctl 版本固定的模型代码生成模板 | [开发指南](./development.md) |
+| `app/` | 业务服务、协议接入、网关与流媒体 | 本索引的核心服务与专项文档 |
+| `socketapp/` | Socket.IO 网关与推送服务 | [Socket.IO](./socketio/README.md) |
+| `gtw/`、`zerorpc/` | 存量 BFF 与核心 RPC | [服务端口清单](./service-ports.md)，实现以源码为准 |
+| `common/` | 可复用公共组件 | [公共组件](#公共组件) |
+| `facade/` | 跨服务协议与数据契约 | 从各专项文档链接的 `.proto` 契约进入；流事件协议见[IEC 104 文档](./iec104/README.md) |
+| `model/` | 数据模型和生成脚本 | [开发指南](./development.md) |
+| `deploy/` | 部署模板与运维脚本 | [部署模板总览](../deploy/README.md) |
+| `web/` | 前端工作台与子系统 | [Web 前端](../web/README.md) |
+| `cli/`、`util/` | 命令行工具、终端 UI 组件与运维工具 | [dtui](../cli/dtui/README.md)；`cli/uix/` 和 `util/` 以源码为准 |
+| `swagger/`、`third_party/` | 生成的 API 描述与第三方协议依赖 | [third_party 说明](../third_party/README.md)；`swagger/` 为生成产物 |
+| `scripts/` | 仓库维护与文档校验脚本 | [文档校验脚本](../scripts/check_docs.py) |
+| 根目录脚本 | 依赖更新等仓库级维护入口 | [`update_deps.sh`](../update_deps.sh) |
 
 ## 开发者
 
@@ -127,7 +139,7 @@
 | --- | --- |
 | [开发指南](./development.md) | 环境搭建、代码生成、模块扩展和调试技巧 |
 | [网关标准开发流程](./gateway-standard.md) | 网关分层、路由鉴权、统一信封、错误码出口与新增接口验收 |
-| [OpenViking 记忆系统](./openviking-memory.md) | 工程契约的记忆库部署、MCP 工具与同步流程 |
+| [OpenViking 记忆系统](./openviking-memory.md) | 工程契约知识库的部署、MCP 工具与同步流程 |
 | [Agent 协作约定](../AGENTS.md) | 默认行为、修改范围与完成标准 |
 | [贡献指南](../.github/CONTRIBUTING.md) | 分支模型、提交规范、代码生成、PR 要求与文档规则 |
 | [AI 协作与技能集](./ai-collaboration.md) | 协作契约、技能集来源与安装位置、使用约定 |

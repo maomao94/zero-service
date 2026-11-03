@@ -37,8 +37,6 @@
 | --- | --- | --- |
 | `common/mcpx` | `Invoke` + `EventEmitter` + `Reactor` + `Promise` | MCP 工具并行调用编排、进度事件分发、协程池并发控制 |
 | `app/file` | `TeeWriter` + `Reactor` + `InvokeAllSettled` | 文件流同时写入 OSS 与计算 MD5，多目标并行上传 |
-| `aiapp/ssegtw` | `EventEmitter` + `ReplyPool` | SSE 事件流推送与流完成信号通知 |
-| `aiapp/aichat` | `Promise` + `StreamReader` | AI 对话流式输出，异步流接收带超时控制 |
 | `app/trigger` | `Invoke` + `InvokeAllSettled` + `Reactor` | 计划任务并行执行、fast-fail 取消、HTTP/gRPC 回调编排 |
 | `common/mqttx` | `ReplyPool` + `RequestReply` | MQTT 请求-响应关联与异步 RPC 超时控制 |
 | `common/iec104` | `ReplyPool` | 控制命令 ACK 匹配 |

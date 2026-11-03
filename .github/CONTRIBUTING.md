@@ -137,10 +137,10 @@ fix(<scope>): 修复一句话描述
 
 ### 文档体量与拆分
 
-- 单篇超过 **600 行**时按语义拆分，不要靠目录硬撑：规则与示例（如 `trigger-rrule-syntax.md` 与 `trigger-rrule-api-guide.md`）、正文与附录（如 `iec104-message.md` 与 `iec104-reference.md`）。
+- 普通说明文档超过 **600 行**时按语义拆分，不要靠目录硬撑：规则与示例（如 `trigger-rrule-syntax.md` 与 `trigger-rrule-api-guide.md`）、场景与运行（如 `trigger-rrule-api-guide.md` 与 `trigger-rrule-operations.md`）。协议字段表、接口契约等强关联内容若拆分会增加查阅成本，可保留单篇并提供目录；拆分应解决单篇内容职责混杂，而不是单纯追求行数。
 - 拆分后父文档保留入口表格，子文档互相链接，并在分区 `README.md` 登记；不复制正文。
 - 包级 API 说明放组件目录的 `README.md`，跨服务的选型与实践放 `docs/`，避免同一份 API 在两处各讲一遍。
-- `docs/` 的分区索引（`docs/<topic>/README.md`）只做导航，不承载正文。
+- `docs/<topic>/README.md` 是该主题的主入口，可承载主题总览或服务契约；同分区的专题页面应从该入口登记。组件目录 README 则只描述该组件自身的独立使用契约。
 
 ### 不收录的内容
 

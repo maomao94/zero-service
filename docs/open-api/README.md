@@ -2,6 +2,8 @@
 
 `opengtw` 面向第三方应用（含 Java 服务端）提供统一的 HTTP/JSON 开放 API，当前接入 Podman 容器能力与 Modbus 读写能力。网关负责 Basic 鉴权、统一信封、错误码透传与可选折叠、请求日志；实际 method 路由与 protojson 转换由 `app/openapi` 完成。
 
+专题参考：[凭据与请求签名协议](./signature.md) · [Modbus 方法、字段与调用示例](./modbus.md)。
+
 ## 架构与端口
 
 <div align="center">

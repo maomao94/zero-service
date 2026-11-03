@@ -2,6 +2,8 @@
 
 本目录存放 `docs/` 与 `deploy/` 文档中引用的架构图、流程图和数据流图。每张图由同名 `.mmd`（Mermaid 源码）导出 PNG，文档正文只引用 PNG，避免依赖阅读器是否支持 Mermaid。
 
+LiveKit 页面截图单独存放在 [`../live/`](../live/)；截图是界面说明资产，不属于 Mermaid 源图配对规则。
+
 | 图片 | 用于 |
 | --- | --- |
 | `doc-map.png` | [docs/README.md](../../README.md) 文档地图 |

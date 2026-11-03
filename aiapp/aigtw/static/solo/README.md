@@ -45,14 +45,15 @@ static/solo/
 
 `POST /solo/v1/chat` 请求体可带 `uiLang`（`zh` / `en`），写入 aisolo 会话默认 UI 语言，例如 `{ "uiLang": "zh" }`。
 
-向量库维护走 **`/solo/v1/rag/*`** REST（与 `client.js` 中 `rag*` 方法一致），需在 `aigtw.yaml` 打开 `Rag.Enabled` 并配置 Embedding；与 aisolo 对话进程独立。
+向量库维护走 **`/solo/v1/knowledge/*`** JSON REST（与 `client.js` 中 `knowledge*` 方法一致），需在 `aigtw.yaml` 打开 `Rag.Enabled` 并配置 Embedding；知识库管理与 aisolo 对话进程独立。
 网关透传到 `aisolo` 后写入**会话默认 UI 语言**；若某次中断 payload 未带 `ui_lang`，
 服务端与流式 `interrupt` 事件会用会话默认值补齐。`GET /solo/v1/sessions/:id` 返回的
 `uiLang` 为当前会话中的该值。
 
-所有对外接口都是 SSE + JSON NDJSON 流: 每一帧 `data:` 后面是一个完整 JSON 对象
-(定义见 `common/einox/protocol/event.go`)。前端 `api/sse.js` 按 `\n\n` 拆帧,
-单帧 JSON.parse, 派发给 App 的事件状态机 `applyEvent`。
+会话、模式、技能、中断详情与知识库维护接口使用普通 JSON REST；只有
+`POST /solo/v1/chat` 和 `POST /solo/v1/interrupt/:interruptId/resume` 使用 SSE。
+SSE 每个 `data:` 帧包含一个完整 JSON 对象（定义见 `common/einox/protocol/event.go`）。
+前端 `api/sse.js` 按 `\n\n` 拆帧、单帧 `JSON.parse`，再派发给 App 的事件状态机 `applyEvent`。
 
 事件类型:
 

@@ -24,7 +24,7 @@ import re
 import sys
 import urllib.parse
 
-SKIP_DIRS = {".git", "node_modules", "vendor", ".worktrees", "dist"}
+SKIP_DIRS = {".git", "node_modules", "vendor", ".worktrees", "dist", ".openchamber"}
 # 这些目录由第三方或运行时生成，不参与文档质量门禁
 SKIP_PREFIXES = ("deploy/kingbase/data/", "third_party/")
 
@@ -41,13 +41,14 @@ SCHEME_PREFIXES = ("http://", "https://", "mailto:", "data:", "tel:")
 
 
 def iter_markdown(root: str):
+    root = os.path.normpath(root)
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
         for name in filenames:
             if not name.endswith(".md"):
                 continue
             path = os.path.normpath(os.path.join(dirpath, name))
-            if path.startswith(SKIP_PREFIXES):
+            if path.replace(os.sep, "/").startswith(SKIP_PREFIXES):
                 continue
             yield path
 
@@ -183,7 +184,7 @@ def check_diagrams(roots: list[str]) -> list[str]:
                 if not name.endswith(".mmd"):
                     continue
                 source = os.path.normpath(os.path.join(dirpath, name))
-                if source in seen or source.startswith(SKIP_PREFIXES):
+                if source in seen or source.replace(os.sep, "/").startswith(SKIP_PREFIXES):
                     continue
                 seen.add(source)
                 if not os.path.exists(os.path.join(dirpath, name[:-4] + ".png")):
