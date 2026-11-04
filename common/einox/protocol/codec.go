@@ -95,7 +95,9 @@ func DecodeSSE(frame []byte) (Event, error) {
 // Emitter 是一个轮次级的事件写入器。内部维护 seq、sessionID、turnID，
 // 业务层只关心 emit 什么事件，不需要每次都填元数据。
 //
-// 线程不安全：一个 Emitter 对应一次 Run，单 goroutine 使用。
+// 并发约束：一个 Emitter 对应一次 Run，Emit 必须由单个 goroutine 调用。
+// seq 递增使用原子操作，仅保证序号不重复；底层 Writer 写入未加锁，
+// 并发调用会导致帧内容交错。
 type Emitter struct {
 	w         io.Writer
 	sessionID string

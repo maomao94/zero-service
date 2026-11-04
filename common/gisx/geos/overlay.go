@@ -593,6 +593,7 @@ func Densify(g *gogeos.Geom, tolerance float64) (*gogeos.Geom, error) {
 //
 //	road, _ := geos.NewLineString([][]float64{{0,0}, {100,0}})
 //	lane, _ := geos.OffsetCurve(road, 3.75, 8)  // 向左偏移 3.75 米（一个车道宽度）
+//
 // OffsetCurve 计算线几何的偏移曲线。
 //
 // 参数：

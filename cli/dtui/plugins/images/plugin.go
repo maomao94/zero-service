@@ -33,10 +33,10 @@ type Module struct {
 	tagMode     bool
 	saveMode    bool
 
-	history      []dt.ImageHistoryEntry
-	tagInput     textinput.Model
-	saveInput    textinput.Model
-	pendingRef   string
+	history    []dt.ImageHistoryEntry
+	tagInput   textinput.Model
+	saveInput  textinput.Model
+	pendingRef string
 
 	pendingRemoveRef string
 	pendingPrune     bool
