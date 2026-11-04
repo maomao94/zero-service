@@ -17,16 +17,16 @@
 //
 // # 包内分工
 //
-//   construct.go    — 12 个几何构造（Point / LineString / Ring / Polygon / MultiPolygon / MultiPolygonFromGeoms / CollectionFromGeoms / BoundsRect / 4 个空几何）
-//   convert.go      — 6 个格式转换（WKT / WKB / GeoJSON 的解析与序列化）
-//   extract.go      — 7 个数据提取函数 + PolygonData 类型 + 泛型 ExtractMulti[T]
-//   predicate.go    — 11 个空间谓词（Intersects / Contains / Covers / Touches 等）
-//   prepared.go     — Prepared Geometry + 11 个加速谓词
-//   overlay.go      — Overlay / Valid / Measure / Simplify / Transform / Meta 共 30+ 函数
-//   relation.go     — DE-9IM 关系矩阵 / 距离 / 最近点
-//   introspect.go   — 5 个几何内省函数（IsEmpty / IsSimple / IsClosed / IsRing / HasZ）
-//   strtree.go      — STRtree R-Tree 空间索引
-//   context.go      — GEOS 版本 / safeRun panic 捕获 / 默认 Context / 泛型辅助函数 oneAttr
+//	construct.go    — 12 个几何构造（Point / LineString / Ring / Polygon / MultiPolygon / MultiPolygonFromGeoms / CollectionFromGeoms / BoundsRect / 4 个空几何）
+//	convert.go      — 6 个格式转换（WKT / WKB / GeoJSON 的解析与序列化）
+//	extract.go      — 7 个数据提取函数 + PolygonData 类型 + 泛型 ExtractMulti[T]
+//	predicate.go    — 11 个空间谓词（Intersects / Contains / Covers / Touches 等）
+//	prepared.go     — Prepared Geometry + 11 个加速谓词
+//	overlay.go      — Overlay / Valid / Measure / Simplify / Transform / Meta 共 30+ 函数
+//	relation.go     — DE-9IM 关系矩阵 / 距离 / 最近点
+//	introspect.go   — 5 个几何内省函数（IsEmpty / IsSimple / IsClosed / IsRing / HasZ）
+//	strtree.go      — STRtree R-Tree 空间索引
+//	context.go      — GEOS 版本 / safeRun panic 捕获 / 默认 Context / 泛型辅助函数 oneAttr
 //
 // # GEOS 版本信息
 //

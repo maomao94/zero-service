@@ -39,7 +39,6 @@ func TestValidateCoordinate(t *testing.T) {
 	}
 }
 
-
 func TestOrbRingToH3LatLng_AutoClose(t *testing.T) {
 	ring := orb.Ring{
 		{116.0, 39.0},
@@ -173,7 +172,7 @@ func TestOrbPolygonToH3GeoPolygon_WithHole(t *testing.T) {
 func TestOrbPolygonToH3GeoPolygon_ClosedOuterUnclosedHole(t *testing.T) {
 	polygon := orb.Polygon{
 		orb.Ring{{116.0, 39.0}, {117.0, 39.0}, {117.0, 40.0}, {116.0, 40.0}, {116.0, 39.0}}, // 已闭合外环
-		orb.Ring{{116.3, 39.3}, {116.7, 39.3}, {116.7, 39.7}, {116.3, 39.7}},                  // 未闭合洞
+		orb.Ring{{116.3, 39.3}, {116.7, 39.3}, {116.7, 39.7}, {116.3, 39.7}},                // 未闭合洞
 	}
 	gp, err := OrbPolygonToH3GeoPolygon(polygon)
 	if err != nil {
@@ -205,8 +204,8 @@ func TestOrbPolygonToH3GeoPolygon_Errors(t *testing.T) {
 	})
 	t.Run("无效洞被静默跳过", func(t *testing.T) {
 		polygon := orb.Polygon{
-			orb.Ring{{0, 0}, {4, 0}, {4, 4}, {0, 4}},       // 有效外环
-			orb.Ring{{1, 1}, {2, 2}},                         // 无效洞（< 3 点，应跳过）
+			orb.Ring{{0, 0}, {4, 0}, {4, 4}, {0, 4}}, // 有效外环
+			orb.Ring{{1, 1}, {2, 2}},                 // 无效洞（< 3 点，应跳过）
 		}
 		gp, err := OrbPolygonToH3GeoPolygon(polygon)
 		if err != nil {
@@ -331,8 +330,8 @@ func TestEnsureRingClosed(t *testing.T) {
 func TestEnsurePolygonClosed(t *testing.T) {
 	t.Run("外环未闭合+洞已闭合", func(t *testing.T) {
 		poly := orb.Polygon{
-			orb.Ring{{0, 0}, {10, 0}, {10, 10}, {0, 10}},           // 未闭合外环
-			orb.Ring{{2, 2}, {8, 2}, {8, 8}, {2, 8}, {2, 2}},       // 已闭合洞
+			orb.Ring{{0, 0}, {10, 0}, {10, 10}, {0, 10}},     // 未闭合外环
+			orb.Ring{{2, 2}, {8, 2}, {8, 8}, {2, 8}, {2, 2}}, // 已闭合洞
 		}
 		result, err := EnsurePolygonClosed(poly)
 		if err != nil {
@@ -353,8 +352,8 @@ func TestEnsurePolygonClosed(t *testing.T) {
 	})
 	t.Run("外环和洞都未闭合", func(t *testing.T) {
 		poly := orb.Polygon{
-			orb.Ring{{0, 0}, {10, 0}, {10, 10}, {0, 10}},           // 未闭合外环
-			orb.Ring{{2, 2}, {8, 2}, {8, 8}, {2, 8}},                // 未闭合洞
+			orb.Ring{{0, 0}, {10, 0}, {10, 10}, {0, 10}}, // 未闭合外环
+			orb.Ring{{2, 2}, {8, 2}, {8, 8}, {2, 8}},     // 未闭合洞
 		}
 		result, err := EnsurePolygonClosed(poly)
 		if err != nil {
@@ -385,7 +384,7 @@ func TestEnsurePolygonClosed_Errors(t *testing.T) {
 	t.Run("洞不足3点", func(t *testing.T) {
 		poly := orb.Polygon{
 			orb.Ring{{0, 0}, {4, 0}, {4, 4}, {0, 4}, {0, 0}}, // 有效外环
-			orb.Ring{{1, 1}, {2, 2}}, // 不足 3 点的洞
+			orb.Ring{{1, 1}, {2, 2}},                         // 不足 3 点的洞
 		}
 		_, err := EnsurePolygonClosed(poly)
 		if err == nil {

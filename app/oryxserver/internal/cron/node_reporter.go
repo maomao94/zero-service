@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	nodeSetKey    = "oryx:nodes"
-	nodeInfoKey   = "oryx:node:%s"  // nodeID 本身不含 "oryx:node:" 前缀
-	nodeExpireSec = 5
+	nodeSetKey     = "oryx:nodes"
+	nodeInfoKey    = "oryx:node:%s" // nodeID 本身不含 "oryx:node:" 前缀
+	nodeExpireSec  = 5
 	reportInterval = time.Second
 )
 

@@ -44,7 +44,6 @@ type ServiceContext struct {
 	AsynqClient    *asynq.Client
 	AsynqInspector *asynq.Inspector
 	StateStore     *relay.Store
-
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {

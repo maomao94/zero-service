@@ -78,8 +78,8 @@ func NewLinearRing(coords [][]float64) (*gogeos.Geom, error) {
 //
 // 参数：
 //   - rings: 三维坐标数组，结构为 [][][]float64
-//     - rings[0]: 外环（shell）的坐标，定义多边形的外边界
-//     - rings[1:]: 洞（holes）的坐标，定义多边形内部的孔洞
+//   - rings[0]: 外环（shell）的坐标，定义多边形的外边界
+//   - rings[1:]: 洞（holes）的坐标，定义多边形内部的孔洞
 //
 // 每个 ring 的坐标格式为 [][]float64{{x1,y1}, {x2,y2}, ..., {x1,y1}}，首尾必须闭合。
 //
@@ -154,9 +154,9 @@ func NewEmptyCollection(typeID gogeos.TypeID) (*gogeos.Geom, error) {
 //
 // 参数：
 //   - geomss: 四维坐标数组，最外层表示多个独立多边形
-//     - geomss[0]: 第一个多边形的坐标（包含外环和洞）
-//     - geomss[1]: 第二个多边形的坐标
-//     - ...
+//   - geomss[0]: 第一个多边形的坐标（包含外环和洞）
+//   - geomss[1]: 第二个多边形的坐标
+//   - ...
 //
 // 每个多边形的坐标格式为 [][][]float64：
 //   - [0]: 外环坐标
