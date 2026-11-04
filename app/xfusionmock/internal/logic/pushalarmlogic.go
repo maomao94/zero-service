@@ -128,8 +128,8 @@ func generateAlarmNo() string {
 
 	// 2. 生成流水号（线程安全）
 	// 实际项目中可以用 Redis/数据库 等持久化计数
-	var counter uint64
-	seq := atomic.AddUint64(&counter, 1) // 原子操作避免并发冲突
+	var counter atomic.Uint64
+	seq := counter.Add(1) // 原子操作避免并发冲突
 
 	return fmt.Sprintf("ALARM-%s-%04d", now, seq)
 }

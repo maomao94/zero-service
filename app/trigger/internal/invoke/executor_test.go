@@ -138,19 +138,19 @@ func TestRun_TimeoutCancel(t *testing.T) {
 }
 
 func TestRun_ConcurrencyControl(t *testing.T) {
-	var current int64
-	var maxConcurrent int64
+	var current atomic.Int64
+	var maxConcurrent atomic.Int64
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c := atomic.AddInt64(&current, 1)
+		c := current.Add(1)
 		for {
-			old := atomic.LoadInt64(&maxConcurrent)
-			if c <= old || atomic.CompareAndSwapInt64(&maxConcurrent, old, c) {
+			old := maxConcurrent.Load()
+			if c <= old || maxConcurrent.CompareAndSwap(old, c) {
 				break
 			}
 		}
 		time.Sleep(100 * time.Millisecond)
-		atomic.AddInt64(&current, -1)
+		current.Add(-1)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"ok":true}`))
 	}))
@@ -178,7 +178,7 @@ func TestRun_ConcurrencyControl(t *testing.T) {
 		}
 	}
 
-	mc := atomic.LoadInt64(&maxConcurrent)
+	mc := maxConcurrent.Load()
 	if mc > 2 {
 		t.Errorf("expected max concurrent <= 2, got %d", mc)
 	}
