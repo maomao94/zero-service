@@ -100,7 +100,7 @@ type Emitter struct {
 	w         io.Writer
 	sessionID string
 	turnID    string
-	seq       int64
+	seq       atomic.Int64
 	sse       bool // true => SSE 帧；false => 裸 JSON 行
 }
 
@@ -128,7 +128,7 @@ func (e *Emitter) Emit(t EventType, data any) error {
 		Type:      t,
 		SessionID: e.sessionID,
 		TurnID:    e.turnID,
-		Seq:       atomic.AddInt64(&e.seq, 1) - 1,
+		Seq:       e.seq.Add(1) - 1,
 		Timestamp: time.Now().UnixMilli(),
 		Data:      raw,
 	}
