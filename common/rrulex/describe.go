@@ -71,7 +71,7 @@ func Describe(value string) (string, error) {
 	}
 
 	if parsed.option.Count > 0 {
-		description.WriteString(fmt.Sprintf("，周期规则最多生成 %d 次", parsed.option.Count))
+		fmt.Fprintf(&description, "，周期规则最多生成 %d 次", parsed.option.Count)
 	}
 	description.WriteString(renderBoundary(parsed.dtstart, parsed.option.Until, parsed.location))
 	description.WriteString(renderDates("，额外纳入候选：", parsed.rdates, parsed.location))
