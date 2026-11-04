@@ -3,6 +3,7 @@ package containers
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -645,8 +646,7 @@ func (m *Module) renderStats() string {
 		if len(show) > 10 {
 			show = show[len(show)-10:]
 		}
-		for i := len(show) - 1; i >= 0; i-- {
-			entry := show[i]
+		for _, entry := range slices.Backward(show) {
 			b.WriteString(dimStyle.Render(fmt.Sprintf("  %s  CPU %5.1f%%  MEM %5.1f%%",
 				entry.Timestamp.Format("15:04:05"),
 				entry.CPUPercent,

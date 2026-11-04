@@ -72,8 +72,7 @@ func (e *SourceEOF) Error() string {
 // GetSourceName 尝试从 err 中提取 SourceEOF 携带的源流名称。
 // 返回 (name, true) 表示 err 是 SourceEOF；否则返回 ("", false)。
 func GetSourceName(err error) (string, bool) {
-	var se *SourceEOF
-	if errors.As(err, &se) {
+	if se, ok := errors.AsType[*SourceEOF](err); ok {
 		return se.source, true
 	}
 	return "", false

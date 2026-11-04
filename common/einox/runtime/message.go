@@ -1,6 +1,10 @@
 package runtime
 
-import "github.com/cloudwego/eino/schema"
+import (
+	"slices"
+
+	"github.com/cloudwego/eino/schema"
+)
 
 // Messages builds the common system/history/user prompt shape used by simple runners.
 func Messages(system string, history []*schema.Message, user string) []*schema.Message {
@@ -16,11 +20,11 @@ func Messages(system string, history []*schema.Message, user string) []*schema.M
 }
 
 func LastText(msgs []*schema.Message) string {
-	for i := len(msgs) - 1; i >= 0; i-- {
-		if msgs[i] == nil || msgs[i].Content == "" {
+	for _, msg := range slices.Backward(msgs) {
+		if msg == nil || msg.Content == "" {
 			continue
 		}
-		return msgs[i].Content
+		return msg.Content
 	}
 	return ""
 }

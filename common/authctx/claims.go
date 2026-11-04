@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"math"
+	"slices"
 
 	"github.com/duke-git/lancet/v2/convertor"
 )
@@ -56,10 +57,8 @@ func ResolveClaimKey(name string) string {
 		}
 	}
 	for canonical, aliases := range DefaultClaimAliases {
-		for _, alias := range aliases {
-			if name == alias {
-				return canonical
-			}
+		if slices.Contains(aliases, name) {
+			return canonical
 		}
 	}
 	return ""

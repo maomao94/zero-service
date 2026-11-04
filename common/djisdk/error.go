@@ -37,8 +37,7 @@ func NewDJIError(code int) *DJIError {
 
 // IsDJIError 判断 err 是否为 DJIError，是则返回解包后的 DJIError 指针。
 func IsDJIError(err error) (*DJIError, bool) {
-	var djiErr *DJIError
-	if errors.As(err, &djiErr) {
+	if djiErr, ok := errors.AsType[*DJIError](err); ok {
 		return djiErr, true
 	}
 	return nil, false
@@ -60,8 +59,7 @@ func (e *PlatformError) Unwrap() error { return e.Err }
 
 // ResultFromError 从 error 中提取 PlatformResult 码。若 err 为 *PlatformError 则取其 Code，否则默认 PlatformResultHandlerError。
 func ResultFromError(err error) PlatformResult {
-	var pe *PlatformError
-	if errors.As(err, &pe) {
+	if pe, ok := errors.AsType[*PlatformError](err); ok {
 		return pe.Code
 	}
 	return PlatformResultHandlerError

@@ -58,7 +58,7 @@ func popKingbaseOptions(dsn string) (string, kingbaseOptions, error) {
 		return "", opts, err
 	}
 	var kept []string
-	for _, pair := range strings.Split(u.RawQuery, "&") {
+	for pair := range strings.SplitSeq(u.RawQuery, "&") {
 		key, value, _ := strings.Cut(pair, "=")
 		if decoded, unescapeErr := url.QueryUnescape(key); unescapeErr == nil {
 			key = decoded

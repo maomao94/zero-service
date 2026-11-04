@@ -87,7 +87,7 @@ func (c serviceHTTPClient) Do(req *http.Request) (*http.Response, error) {
 // token 由管理 API 凭据派生，不落日志。
 func authInterceptor(key, secret string) twirp.Interceptor {
 	return func(next twirp.Method) twirp.Method {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			grant := &auth.VideoGrant{
 				RoomCreate: true, RoomList: true, RoomRecord: true, RoomAdmin: true,
 				IngressAdmin: true,
@@ -110,7 +110,7 @@ func authInterceptor(key, secret string) twirp.Interceptor {
 
 // requestRoom 从常见房间管理请求中提取房间名，用于把管理 token 的
 // grant 限定到单个房间；请求类型不在清单内时返回空字符串（不限定）。
-func requestRoom(req interface{}) string {
+func requestRoom(req any) string {
 	switch request := req.(type) {
 	case *livekit.ListParticipantsRequest:
 		return request.Room

@@ -485,11 +485,11 @@ func (r *RelayRegistry) handleStderr(_ context.Context, id, line string) {
 // parseHostPortFromTarget 从 target URL 解析 host 和 port（日志用）。
 func parseHostPortFromTarget(target string) (string, int) {
 	normalized := NormalizeTarget(target)
-	i := strings.Index(normalized, "/")
-	if i < 0 {
+	before, _, ok := strings.Cut(normalized, "/")
+	if !ok {
 		return normalized, 0
 	}
-	hostPort := normalized[:i]
+	hostPort := before
 	parts := strings.SplitN(hostPort, ":", 2)
 	if len(parts) == 2 {
 		port := 0

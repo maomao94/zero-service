@@ -77,8 +77,7 @@ func NewInternalError(msg string) *OpenAIError {
 func SetOpenAIErrorHandler() {
 	httpx.SetErrorHandlerCtx(func(ctx context.Context, err error) (int, any) {
 		// 已经是 OpenAIError，直接返回
-		var openAIErr *OpenAIError
-		if errors.As(err, &openAIErr) {
+		if openAIErr, ok := errors.AsType[*OpenAIError](err); ok {
 			return openAIErr.HTTPStatus, &openAIErrorBody{ErrorMsg: openAIErr.ErrorMsg}
 		}
 

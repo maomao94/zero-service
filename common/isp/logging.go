@@ -46,8 +46,7 @@ func LogErrorResponse(ctx context.Context, req *Message, err error, code string)
 	case StatusError:
 		name = "错误(500)"
 	}
-	var ie *IspError
-	if errors.As(err, &ie) {
+	if ie, ok := errors.AsType[*IspError](err); ok {
 		logx.WithContext(ctx).Errorf("[isp] 回复%s type=%d command=%d reqCode=%s msg=%s", name, req.Type, req.Command, req.Code, ie.Msg)
 	} else if err != nil {
 		logx.WithContext(ctx).Errorf("[isp] 回复%s type=%d command=%d reqCode=%s err=%v", name, req.Type, req.Command, req.Code, err)
