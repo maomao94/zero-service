@@ -2,6 +2,7 @@ package dispatch
 
 import (
 	"context"
+	"maps"
 
 	"zero-service/app/podengine/podengine"
 
@@ -17,9 +18,7 @@ func NewMockRegistry() *Registry {
 		MethodPodStats:  mockGetPodStats,
 		MethodImageList: mockListImages,
 	}
-	for method, handler := range newMockModbusRoutes() {
-		routes[method] = handler
-	}
+	maps.Copy(routes, newMockModbusRoutes())
 	return &Registry{routes: routes}
 }
 

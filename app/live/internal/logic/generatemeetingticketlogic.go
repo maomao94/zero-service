@@ -76,7 +76,7 @@ func (l *GenerateMeetingTicketLogic) GenerateMeetingTicket(in *live.GenerateMeet
 	}
 
 	// 存储到 Redis（包含会议号、identity、name、过期时间、权限、票据类型）
-	ticketDataBytes, _ := json.Marshal(map[string]interface{}{
+	ticketDataBytes, _ := json.Marshal(map[string]any{
 		"meetingNo":         meeting.MeetingNo,
 		"identity":          in.Identity,
 		"name":              in.Name,

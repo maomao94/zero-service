@@ -22,8 +22,7 @@ func (e *OryxError) Error() string {
 
 // IsOryxError 判断 err 是否为 Oryx 业务错误，是则返回解包后的 OryxError 指针。
 func IsOryxError(err error) (*OryxError, bool) {
-	var oe *OryxError
-	if errors.As(err, &oe) {
+	if oe, ok := errors.AsType[*OryxError](err); ok {
 		return oe, true
 	}
 	return nil, false
