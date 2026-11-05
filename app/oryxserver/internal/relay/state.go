@@ -50,18 +50,18 @@ type StaleEntry struct {
 
 // RelayState 中继期望状态（Redis string，存在 ⟺ 应该运行）
 type RelayState struct {
-	UUID             string `json:"uuid"`                        // 中继会话 UUID（每次开启中继生成）
-	App              string `json:"app,omitempty"`                // 目标应用名
-	Stream           string `json:"stream,omitempty"`             // 目标流名
-	Host             string `json:"host,omitempty"`               // SRS 主机地址（日志用）
-	Port             int    `json:"port,omitempty"`               // SRS RTMP 端口（日志用）
-	Source           string `json:"source"`                       // 源流地址
-	RelayURL         string `json:"relay_url"`                    // 完整推流地址（含鉴权参数，ffmpeg 用）
+	UUID             string `json:"uuid"`             // 中继会话 UUID（每次开启中继生成）
+	App              string `json:"app,omitempty"`    // 目标应用名
+	Stream           string `json:"stream,omitempty"` // 目标流名
+	Host             string `json:"host,omitempty"`   // SRS 主机地址（日志用）
+	Port             int    `json:"port,omitempty"`   // SRS RTMP 端口（日志用）
+	Source           string `json:"source"`           // 源流地址
+	RelayURL         string `json:"relay_url"`        // 完整推流地址（含鉴权参数，ffmpeg 用）
 	DeadlineAtUnix   int64  `json:"deadline_at_unix,omitempty"`
-	DeadlineAtStr    string `json:"deadline_at_str,omitempty"`    // yyyy-MM-dd HH:mm:ss
-	CreatedAtStr     string `json:"created_at_str,omitempty"`     // yyyy-MM-dd HH:mm:ss
-	RetryCount       int    `json:"retry_count,omitempty"`        // 当前补拉重试次数
-	PendingReconcile bool   `json:"pending_reconcile,omitempty"`  // 防扫描器重复入队
+	DeadlineAtStr    string `json:"deadline_at_str,omitempty"`   // yyyy-MM-dd HH:mm:ss
+	CreatedAtStr     string `json:"created_at_str,omitempty"`    // yyyy-MM-dd HH:mm:ss
+	RetryCount       int    `json:"retry_count,omitempty"`       // 当前补拉重试次数
+	PendingReconcile bool   `json:"pending_reconcile,omitempty"` // 防扫描器重复入队
 }
 
 // ReconcilePayload 补拉任务 payload
@@ -100,12 +100,12 @@ func NewStore(r *redis.Redis) *Store {
 // Deprecated: 新逻辑使用 app:stream 作为 key，此函数保留仅用于向后兼容和测试。
 func CanonicalUID(target string) (string, error) {
 	normalized := NormalizeTarget(target)
-	i := strings.Index(normalized, "/")
-	if i < 0 {
+	before, after, ok := strings.Cut(normalized, "/")
+	if !ok {
 		return "", fmt.Errorf("target must have /{app}/{stream}, got: %s", target)
 	}
-	host := strings.ReplaceAll(normalized[:i], ":", "_")
-	path := normalized[i+1:]
+	host := strings.ReplaceAll(before, ":", "_")
+	path := after
 	parts := strings.Split(path, "/")
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 		return "", fmt.Errorf("target must have exactly /{app}/{stream}, got: %s", target)

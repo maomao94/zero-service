@@ -210,7 +210,7 @@ func relativeRecordingFile(location, outputDir string) string {
 	}
 	dir := strings.TrimRight(outputDir, "/")
 	if dir != "" {
-		if rel := strings.TrimPrefix(location, dir+"/"); rel != location {
+		if rel, ok := strings.CutPrefix(location, dir+"/"); ok {
 			return rel
 		}
 	}

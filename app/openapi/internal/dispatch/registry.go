@@ -2,6 +2,7 @@ package dispatch
 
 import (
 	"context"
+	"maps"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/podengine/podengine"
@@ -35,9 +36,7 @@ func NewRegistry(client podengine.PodEngineClient, modbusClient bridgemodbus.Bri
 		MethodPodStats:  relayGetPodStats(client),
 		MethodImageList: relayListImages(client),
 	}
-	for method, handler := range newModbusRoutes(modbusClient) {
-		routes[method] = handler
-	}
+	maps.Copy(routes, newModbusRoutes(modbusClient))
 	return &Registry{routes: routes}
 }
 

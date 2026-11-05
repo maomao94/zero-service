@@ -147,7 +147,7 @@ func TestMeetingRepoListMeetingsPaged(t *testing.T) {
 	db := openTestDB(t)
 	repo := NewMeetingRepo(db)
 	ctx := context.Background()
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		m := &gormmodel.LiveMeeting{
 			MeetingNo:  "M" + string(rune('A'+i)),
 			Title:      "t",

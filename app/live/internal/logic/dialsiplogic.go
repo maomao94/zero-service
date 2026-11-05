@@ -77,7 +77,7 @@ func (l *DialSipLogic) DialSip(in *live.DialSipReq) (*live.DialSipRes, error) {
 		if err != nil {
 			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_CACHE, err, "生成会议号失败")
 		}
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			exists, err := l.svcCtx.MeetingRepo.IsMeetingCodeExists(l.ctx, meetingCode)
 			if err != nil {
 				return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议号失败")

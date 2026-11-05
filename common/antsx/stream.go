@@ -25,8 +25,8 @@ type stream[T any] struct {
 	items          chan streamItem[T]
 	closed         chan struct{}
 	automaticClose bool
-	closedFlag     uint32
-	sendClosedFlag uint32
+	closedFlag     atomic.Uint32
+	sendClosedFlag atomic.Uint32
 }
 
 // newStream 创建指定缓冲容量的 stream 实例。
@@ -69,7 +69,7 @@ func (s *stream[T]) recv() (T, error) {
 // closeSend 关闭发送端（items channel），通知接收方数据已全部发送完毕。
 // 使用 atomic CAS 保证幂等：多次调用不会 panic，仅第一次实际执行 close。
 func (s *stream[T]) closeSend() {
-	if atomic.CompareAndSwapUint32(&s.sendClosedFlag, 0, 1) {
+	if s.sendClosedFlag.CompareAndSwap(0, 1) {
 		close(s.items)
 	}
 }
@@ -77,7 +77,7 @@ func (s *stream[T]) closeSend() {
 // closeRecv 关闭接收端（closed channel），通知发送方接收端已退出。
 // 使用 atomic CAS 保证幂等：多次调用不会 panic，仅第一次实际执行 close。
 func (s *stream[T]) closeRecv() {
-	if atomic.CompareAndSwapUint32(&s.closedFlag, 0, 1) {
+	if s.closedFlag.CompareAndSwap(0, 1) {
 		close(s.closed)
 	}
 }
@@ -600,7 +600,7 @@ type cpElement[T any] struct {
 type parentReader[T any] struct {
 	sr        *StreamReader[T]
 	cursors   []*cpElement[T]
-	closedNum uint32
+	closedNum atomic.Uint32
 }
 
 // copyReaders 将一个 StreamReader 复制为 n 个共享源流的子 reader。
@@ -654,7 +654,7 @@ func (p *parentReader[T]) closeChild(idx int) {
 		return
 	}
 	p.cursors[idx] = nil
-	cur := atomic.AddUint32(&p.closedNum, 1)
+	cur := p.closedNum.Add(1)
 	if int(cur) == len(p.cursors) {
 		p.sr.Close()
 	}

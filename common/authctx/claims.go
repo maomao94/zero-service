@@ -3,6 +3,8 @@ package authctx
 import (
 	"context"
 	"encoding/json"
+	"math"
+	"slices"
 
 	"github.com/duke-git/lancet/v2/convertor"
 )
@@ -38,7 +40,12 @@ var DefaultClaimAliases = map[string][]string{
 	CtxUserIdKey:   {"user_id", "userId", "uid"},
 	CtxUserNameKey: {"user_name"},
 	CtxDeptCodeKey: {"dept_code"},
-	CtxAuthTypeKey: {},
+	CtxAuthTypeKey: {"auth_type", "authType"},
+}
+
+// IsValidAuthType reports whether v is a supported session identity type.
+func IsValidAuthType(v string) bool {
+	return v == "user" || v == "device"
 }
 
 // ResolveClaimKey returns the canonical internal key for an external claim name
@@ -50,10 +57,8 @@ func ResolveClaimKey(name string) string {
 		}
 	}
 	for canonical, aliases := range DefaultClaimAliases {
-		for _, alias := range aliases {
-			if name == alias {
-				return canonical
-			}
+		if slices.Contains(aliases, name) {
+			return canonical
 		}
 	}
 	return ""
@@ -84,13 +89,32 @@ func ClaimString(claims map[string]any, key string) string {
 	return normalizeClaimString(v)
 }
 
+// Largest integer ranges a float can represent exactly. A JSON number larger
+// than this is already rounded by the token parser, so the resulting identity
+// would be wrong; such values are dropped instead of silently stored.
+const (
+	maxExactFloat32 = 1 << 24
+	maxExactFloat64 = 1 << 53
+)
+
 // normalizeClaimString converts a JWT identity claim value to string via
 // convertor.ToString. Only string and numeric types (incl. json.Number from the
 // token parser) are accepted; other types (bool/array/map/…) are ignored to keep
-// malformed values out of identity keys.
+// malformed values out of identity keys. Floats outside their exact integer
+// range are dropped rather than truncated.
 func normalizeClaimString(v any) string {
-	switch v.(type) {
-	case string, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64, json.Number:
+	switch value := v.(type) {
+	case float32:
+		if math.Abs(float64(value)) > maxExactFloat32 {
+			return ""
+		}
+		return convertor.ToString(v)
+	case float64:
+		if math.Abs(value) > maxExactFloat64 {
+			return ""
+		}
+		return convertor.ToString(v)
+	case string, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, json.Number:
 		return convertor.ToString(v)
 	default:
 		return ""

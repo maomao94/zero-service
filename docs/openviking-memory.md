@@ -9,7 +9,7 @@
 | 部署仓库 | `openviking-memory`（GitHub 私库，自包含：compose + 配置 + data） |
 | 服务地址 | `http://localhost:1933`（API + Web Studio `/studio`） |
 | 账号 / 用户 | `developer` / `admin`（admin 角色） |
-| 本项目的知识 | `viking://resources/project/zero-service/`（standards / domains / runbooks） |
+| 本项目的知识 | `viking://resources/projects/zero-service/`（standards / domains / runbooks） |
 | 存储 | `~/.openviking` 由容器挂载到 `/app/.openviking`，workspace 指向 `/app/.openviking/data` |
 
 启动与验证：
@@ -52,7 +52,7 @@ export OPENVIKING_API_KEY="<user key>"
 检索可以限定范围（`target_uri`），例如只在 zero-service 契约内搜：
 
 ```
-openviking_find query="handler 分层职责" target_uri="viking://resources/project/zero-service"
+openviking_find query="handler 分层职责" target_uri="viking://resources/projects/zero-service"
 ```
 
 ### 写入
@@ -87,19 +87,19 @@ openviking_find query="handler 分层职责" target_uri="viking://resources/proj
 
 ```
 viking://resources/                          # 共享知识资源（团队级）
-└── project/zero-service/                    # 本项目的规范与契约（检索 tags: lang=go, framework=go-zero, project=zero-service）
+└── projects/zero-service/                   # 本项目的规范与契约（检索 tags: lang=go, framework=go-zero, project=zero-service）
     ├── standards/                           # 工程规范
     ├── domains/                             # 领域契约
     └── runbooks/                            # 可复用工作流与检查清单
 viking://user/admin/                         # 用户私有空间（memories / skills / peers / privacy）
 ```
 
-命名约定：记忆按项目组织在 `viking://resources/project/<project>/`，目录内按 `standards` / `domains` / `runbooks` 分类；检索时用 `target_uri` 限定当前项目，避免跨项目污染。`lang`、`framework` 只作为检索 tags，不是目录层级。
+命名约定：记忆按项目组织在 `viking://resources/projects/<project>/`，目录内按 `standards` / `domains` / `runbooks` 分类；检索时用 `target_uri` 限定当前项目，避免跨项目污染。`lang`、`framework` 只作为检索 tags，不是目录层级。
 
 ## 使用指导
 
 1. **开发中查询契约**：直接问或调 `openviking_find` / `openviking_search`；需要精确规则时 `openviking_read` 对应 URI。插件自动召回是近似提醒，落地前以源码、测试、`.proto`、`.api` 为准。
-2. **沉淀新结论**：任务中形成的稳定决策用 `openviking_remember` 记录；契约/规范更新用 `openviking_write` / `openviking_edit` 修改 `viking://resources/project/zero-service` 下对应文档。
+2. **沉淀新结论**：任务中形成的稳定决策用 `openviking_remember` 记录；契约/规范更新用 `openviking_write` / `openviking_edit` 修改 `viking://resources/projects/zero-service` 下对应文档。
 3. **新项目初始化**（记忆为空时的一次性操作）：用 `openviking_add_resource` 或容器内 `ov add-resource` 导入项目现有 md 文档，此后不再批量导入。
 4. **冲突处理**：记忆与源码/事实冲突时，查明当前行为，并在同一改动中修正记忆。
 

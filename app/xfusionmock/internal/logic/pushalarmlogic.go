@@ -105,8 +105,8 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 				Lon: 100.41165033341075,
 				Alt: 30.12,
 			},
-			StartFences: []model.FenceInfo{model.FenceInfo{FenceCode: randomFenceCode(), OrgCode: "001013002"}},
-			EndFences:   []model.FenceInfo{model.FenceInfo{FenceCode: randomFenceCode(), OrgCode: "001013002"}},
+			StartFences: []model.FenceInfo{{FenceCode: randomFenceCode(), OrgCode: "001013002"}},
+			EndFences:   []model.FenceInfo{{FenceCode: randomFenceCode(), OrgCode: "001013002"}},
 			StartTime:   time.Now().Add(-30 * time.Minute).UnixMilli(),
 			EndTime:     time.Now().UnixMilli(),
 			Duration:    600,
@@ -128,8 +128,8 @@ func generateAlarmNo() string {
 
 	// 2. 生成流水号（线程安全）
 	// 实际项目中可以用 Redis/数据库 等持久化计数
-	var counter uint64
-	seq := atomic.AddUint64(&counter, 1) // 原子操作避免并发冲突
+	var counter atomic.Uint64
+	seq := counter.Add(1) // 原子操作避免并发冲突
 
 	return fmt.Sprintf("ALARM-%s-%04d", now, seq)
 }

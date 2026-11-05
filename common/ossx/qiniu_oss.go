@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"mime/multipart"
+	"slices"
 	"time"
 
 	"zero-service/common/filex"
@@ -56,10 +57,8 @@ func (q QiniuTemplate) BucketExists(ctx context.Context, tenantId, bucketName st
 		return false, err
 	}
 	target := q.bucket(tenantId, bucketName)
-	for _, b := range buckets {
-		if b == target {
-			return true, nil
-		}
+	if slices.Contains(buckets, target) {
+		return true, nil
 	}
 	return false, nil
 }

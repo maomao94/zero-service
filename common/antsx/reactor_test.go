@@ -117,15 +117,15 @@ func TestReactor_Go(t *testing.T) {
 	}
 	defer r.Release()
 
-	var called int32
+	var called atomic.Int32
 	err = r.Go(context.Background(), func(ctx context.Context) {
-		atomic.StoreInt32(&called, 1)
+		called.Store(1)
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(50 * time.Millisecond)
-	if atomic.LoadInt32(&called) != 1 {
+	if called.Load() != 1 {
 		t.Fatal("Go callback not called")
 	}
 }

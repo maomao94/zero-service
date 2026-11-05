@@ -35,8 +35,7 @@ func NewIspError(code, msg string) *IspError {
 
 // ResponseCode 根据 error 提取 ISP 响应状态码。
 func ResponseCode(err error) string {
-	var ispErr *IspError
-	if errors.As(err, &ispErr) {
+	if ispErr, ok := errors.AsType[*IspError](err); ok {
 		return ispErr.Code
 	}
 	if err != nil {

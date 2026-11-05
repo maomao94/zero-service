@@ -109,7 +109,7 @@ func mockRegistersRes(count int) *bridgemodbus.ReadInputRegistersRes {
 	intValues := make([]int32, 0, count)
 	hexValues := make([]string, 0, count)
 	binaryValues := make([]string, 0, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		value := uint32(100 + i)
 		values = append(values, value)
 		intValues = append(intValues, int32(value))

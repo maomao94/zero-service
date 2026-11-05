@@ -27,8 +27,7 @@ type StreamReader interface {
 
 // ToGrpcError 将 provider 错误转为 gRPC status error
 func ToGrpcError(err error) error {
-	var apiErr *APIError
-	if errors.As(err, &apiErr) {
+	if apiErr, ok := errors.AsType[*APIError](err); ok {
 		switch {
 		case apiErr.StatusCode == 401 || apiErr.StatusCode == 403:
 			return status.Errorf(codes.PermissionDenied, "upstream auth error: %s", apiErr.Body)

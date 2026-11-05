@@ -9,9 +9,9 @@
 //
 // # 包内分工
 //
-//   validate.go  — 坐标合法性校验（ValidateCoordinate），错误类型 ValidationError 支持 errors.As
-//   gisx.go      — orb ↔ H3 格式互转（OrbRingToH3LatLng / H3LatLngsToOrbRing）+ 闭合检测/自动闭合（IsRingClosed / EnsureRingClosed / EnsurePolygonClosed）
-//   store.go     — 围栏数据存取接口（FenceStore）+ 空实现（NoopFenceStore），围栏多边形使用 orb.Polygon（外环 + 洞）
+//	validate.go  — 坐标合法性校验（ValidateCoordinate），错误类型 ValidationError 支持 errors.As
+//	gisx.go      — orb ↔ H3 格式互转（OrbRingToH3LatLng / H3LatLngsToOrbRing）+ 闭合检测/自动闭合（IsRingClosed / EnsureRingClosed / EnsurePolygonClosed）
+//	store.go     — 围栏数据存取接口（FenceStore）+ 空实现（NoopFenceStore），围栏多边形使用 orb.Polygon（外环 + 洞）
 //
 // # 子包 geos/
 //

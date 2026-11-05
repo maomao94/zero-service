@@ -40,7 +40,7 @@ func urlToKVDSN(dsn, scheme string) (string, error) {
 	}
 
 	var hosts, ports []string
-	for _, item := range strings.Split(u.Host, ",") {
+	for item := range strings.SplitSeq(u.Host, ",") {
 		if item == "" {
 			continue
 		}
@@ -60,7 +60,7 @@ func urlToKVDSN(dsn, scheme string) (string, error) {
 	appendKV("dbname", strings.TrimPrefix(u.Path, "/"))
 
 	seen := make(map[string]struct{})
-	for _, pair := range strings.Split(u.RawQuery, "&") {
+	for pair := range strings.SplitSeq(u.RawQuery, "&") {
 		key, value, _ := strings.Cut(pair, "=")
 		if key == "" {
 			continue

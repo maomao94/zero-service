@@ -185,8 +185,8 @@ func TestPredicates(t *testing.T) {
 	})
 	t.Run("ContainsVsCovers边界", func(t *testing.T) {
 		// 验证 Contains 和 Covers 在边界点上的差异
-		bp := must(NewPoint(0, 0))   // 边界点
-		ip := must(NewPoint(2, 2))   // 内部点
+		bp := must(NewPoint(0, 0)) // 边界点
+		ip := must(NewPoint(2, 2)) // 内部点
 		if must(Contains(p1, bp)) {
 			t.Error("Contains 边界点应为 false")
 		}
