@@ -1,24 +1,21 @@
 package svc
 
 import (
-	"context"
 	"zero-service/app/bridgemodbus/internal/config"
 	"zero-service/common/gormx"
 	"zero-service/common/modbusx"
-	"zero-service/common/tool"
 	"zero-service/model/gormmodel"
-	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/service"
 )
 
+// ServiceContext 持有 bridgemodbus 的共享依赖。
 type ServiceContext struct {
-	Config                config.Config
-	DB                    *gormx.DB
-	ModbusConfigConverter *gormmodel.ModbusConfigConverter
-	ModbusClientPool      *modbusx.ModbusClientPool
-	Manager               *modbusx.PoolManager
+	Config                config.Config                    // 服务配置：数据库与文件默认客户端
+	DB                    *gormx.DB                        // 数据库连接，用于按 modbusCode 查询从站配置
+	ModbusConfigConverter *gormmodel.ModbusConfigConverter // 数据库模型到 Modbus 客户端配置的转换器
+	Manager               *modbusx.ClientManager           // 空 code 使用文件配置，非空 code 使用表配置
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -35,61 +32,11 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Config:                c,
 		DB:                    db,
 		ModbusConfigConverter: gormmodel.NewModbusConfigConverter(),
-		ModbusClientPool:      modbusx.NewModbusClientPool(&c.ModbusClientConf, c.ModbusPool),
-		Manager:               modbusx.NewPoolManager(),
+		Manager:               modbusx.NewClientManager(),
 	}
 }
 
 // isDevOrTest 判断是否为开发或测试环境
 func isDevOrTest(mode string) bool {
 	return mode == service.DevMode || mode == service.TestMode
-}
-
-func (s *ServiceContext) AddPool(ctx context.Context, modbusCode string) (*modbusx.ModbusClientPool, error) {
-	if modbusCode == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "modbusCode")
-	}
-	var slaveConfig gormmodel.ModbusSlaveConfig
-	err := s.DB.WithContext(ctx).Where("modbus_code = ?", modbusCode).First(&slaveConfig).Error
-	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询Modbus配置失败")
-	}
-	if slaveConfig.Status != 1 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "配置不存在或未启用: "+modbusCode)
-	}
-	clientConf := s.ModbusConfigConverter.ToClientConf(&slaveConfig)
-	if clientConf == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "配置转换失败")
-	}
-	pool, err := s.Manager.AddPool(ctx, modbusCode, clientConf, s.Config.ModbusPool)
-	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "创建Modbus连接池失败")
-	}
-	return pool, nil
-}
-
-// GetModbusClientPool 获取 Modbus 连接池
-// 如果 modbusCode 为空，返回默认连接池
-// 如果 modbusCode 不为空，尝试从管理器获取连接池，如果不存在则创建新的连接池
-func (s *ServiceContext) GetModbusClientPool(ctx context.Context, modbusCode string) (*modbusx.ModbusClientPool, error) {
-	if len(modbusCode) == 0 {
-		return s.ModbusClientPool, nil
-	}
-
-	var mdCliPool *modbusx.ModbusClientPool
-	var ok bool
-	mdCliPool, ok = s.Manager.GetPool(modbusCode)
-	if !ok {
-		var err error
-		mdCliPool, err = s.AddPool(ctx, modbusCode)
-		if err != nil {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "创建Modbus连接池失败")
-		}
-	}
-
-	if mdCliPool == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "获取的Modbus连接池为空")
-	}
-
-	return mdCliPool, nil
 }

@@ -31,6 +31,9 @@ func NewGetConfigByCodeLogic(ctx context.Context, svcCtx *svc.ServiceContext) *G
 
 // 根据编码查询详情
 func (l *GetConfigByCodeLogic) GetConfigByCode(in *bridgemodbus.GetConfigByCodeReq) (*bridgemodbus.GetConfigByCodeRes, error) {
+	if err := validateConfigText("modbusCode", in.GetModbusCode(), 128); err != nil {
+		return nil, err
+	}
 	var cfg gormmodel.ModbusSlaveConfig
 	err := l.svcCtx.DB.WithContext(l.ctx).Where("modbus_code = ?", in.ModbusCode).First(&cfg).Error
 	if err != nil {

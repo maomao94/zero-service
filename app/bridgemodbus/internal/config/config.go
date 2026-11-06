@@ -9,7 +9,6 @@ import (
 
 type Config struct {
 	zrpc.RpcServerConf
-	ModbusPool  int `json:",default=32"`
 	NacosConfig struct {
 		IsRegister  bool
 		Host        string

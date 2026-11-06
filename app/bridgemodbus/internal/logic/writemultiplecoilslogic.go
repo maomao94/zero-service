@@ -3,8 +3,6 @@ package logic
 import (
 	"context"
 	"zero-service/common/bytex"
-	"zero-service/common/tool"
-	"zero-service/third_party/extproto"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
@@ -28,22 +26,28 @@ func NewWriteMultipleCoilsLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 
 // 写多个线圈 (Function Code 0x0F)
 func (l *WriteMultipleCoilsLogic) WriteMultipleCoils(in *bridgemodbus.WriteMultipleCoilsReq) (*bridgemodbus.WriteMultipleCoilsRes, error) {
-	if int(in.Quantity) != len(in.Values) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "数量与值数量不一致")
-	}
-
-	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)
+	address, err := validateAddress("address", in.Address)
 	if err != nil {
 		return nil, err
 	}
-	mbCli := mdCliPool.Get()
-	defer mdCliPool.Put(mbCli)
+	quantity, err := validateQuantity("quantity", in.Quantity, maxWriteBits)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateValuesCount("quantity", in.Quantity, len(in.Values)); err != nil {
+		return nil, err
+	}
+
+	mbCli, err := l.svcCtx.GetModbusClient(l.ctx, in.ModbusCode)
+	if err != nil {
+		return nil, err
+	}
 
 	binaryValues := bytex.BoolsToBitValues(in.Values)
 	l.Infof("写多个线圈: 0x%X, bools=%v, binary=%v", binaryValues.Bytes, binaryValues.Bools, binaryValues.Binary)
-	results, err := mbCli.WriteMultipleCoils(l.ctx, uint16(in.Address), uint16(in.Quantity), binaryValues.Bytes)
+	results, err := mbCli.WriteMultipleCoils(l.ctx, address, quantity, binaryValues.Bytes)
 	if err != nil {
-		return nil, err
+		return nil, wrapModbusWriteError("写多个线圈", err)
 	}
 	return &bridgemodbus.WriteMultipleCoilsRes{
 		Results: results,

@@ -33,6 +33,7 @@ func main() {
 	tool.PrintGoVersion()
 
 	ctx := svc.NewServiceContext(c)
+	defer ctx.Manager.Close()
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
 		bridgemodbus.RegisterBridgeModbusServer(grpcServer, server.NewBridgeModbusServer(ctx))
