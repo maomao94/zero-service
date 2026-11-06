@@ -7,8 +7,8 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/errx"
 	"zero-service/common/gormx"
-	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -65,7 +65,7 @@ func (l *ListCronJobsLogic) ListCronJobs(in *trigger.ListCronJobsReq) (*trigger.
 		&records,
 	)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询 Cron Job 列表失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询 Cron Job 列表失败")
 	}
 	response := &trigger.ListCronJobsRes{
 		CronJobs: make([]*trigger.CronJobPb, 0, len(records)),
@@ -74,11 +74,11 @@ func (l *ListCronJobsLogic) ListCronJobs(in *trigger.ListCronJobsReq) (*trigger.
 	for i := range records {
 		task, err := cronjob.ToTaskConfig(&records[i])
 		if err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "解析 Cron Job 列表失败")
+			return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "解析 Cron Job 列表失败")
 		}
 		job, err := cronjob.ToProto(task)
 		if err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "解析 Cron Job 列表失败")
+			return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "解析 Cron Job 列表失败")
 		}
 		response.CronJobs = append(response.CronJobs, job)
 	}

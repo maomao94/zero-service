@@ -6,7 +6,7 @@ import (
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -31,7 +31,7 @@ func (l *GetDeviceDetailLogic) GetDeviceDetail(in *djicloud.GetDeviceDetailReq) 
 	if err := l.svcCtx.DB.WithContext(l.ctx).
 		Where("device_sn = ?", in.DeviceSn).
 		First(&device).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_RECORD_NOT_EXIST, err, "查询设备详情失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_RECORD_NOT_EXIST, err, "查询设备详情失败")
 	}
 	res := &djicloud.GetDeviceDetailRes{Device: toDeviceInfo(&device)}
 	var osd gormmodel.DjiDeviceOsdSnapshot

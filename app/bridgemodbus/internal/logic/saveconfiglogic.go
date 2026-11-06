@@ -5,8 +5,8 @@ import (
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
+	"zero-service/common/errx"
 	"zero-service/common/gormx"
-	"zero-service/common/tool"
 	"zero-service/model/gormmodel"
 	"zero-service/third_party/extproto"
 
@@ -65,7 +65,7 @@ func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemod
 		return nil
 	})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "保存Modbus配置失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "保存Modbus配置失败")
 	}
 
 	// 配置变更后按 code 移除旧客户端，下一次请求读取新配置。

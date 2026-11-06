@@ -5,7 +5,7 @@ import (
 
 	"zero-service/app/gis/gis"
 	"zero-service/app/gis/internal/svc"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/paulmach/orb"
@@ -34,7 +34,7 @@ func (l *NearbyFencesLogic) NearbyFences(in *gis.NearbyFencesReq) (*gis.NearbyFe
 		return nil, err
 	}
 	if in.Km <= 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "km必须大于0")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "km必须大于0")
 	}
 
 	fenceIds, err := l.svcCtx.FenceStore.FindNearbyFenceIds(l.ctx, in.Point.Lon, in.Point.Lat, in.Km)

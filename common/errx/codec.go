@@ -1,4 +1,5 @@
-// Package errx 是项目唯一的错误码转换层：把任意错误归一化成 extproto 六位码。
+// Package errx 是项目唯一的错误构造与转换层：业务错误统一用 extproto 六位码
+// 构造，任意错误也在这里归一化成 extproto 六位码。
 //
 // 它不依赖 HTTP、不依赖网关，服务端、facade、SDK 都可以直接复用。
 // HTTP 信封写出属于 common/gtwx，不属于这里。
@@ -50,6 +51,12 @@ func CodeFromStatus(err error) (int, string) {
 		return 0, ""
 	}
 
+	// errx 构造的错误优先于 cause：包装链里的 CodeMsg/status 不能反向覆盖外层平台码。
+	var platformErr *Error
+	if errors.As(err, &platformErr) {
+		return platformErr.code, platformErr.message
+	}
+
 	var codeMsg *xerrors.CodeMsg
 	if errors.As(err, &codeMsg) && codeMsg != nil {
 		return codeMsg.Code, codeMsg.Msg
@@ -57,7 +64,13 @@ func CodeFromStatus(err error) (int, string) {
 
 	st, ok := status.FromError(err)
 	if !ok {
-		// 既不是 CodeMsg，也不是 gRPC status：说明业务侧没有做错误转换。
+		// context 错误不是 gRPC status，但保留取消/超时语义。
+		if ctxStatus := status.FromContextError(err); ctxStatus.Code() != codes.Unknown {
+			st, ok = ctxStatus, true
+		}
+	}
+	if !ok {
+		// 既不是 CodeMsg，也不是 gRPC/context 错误：说明业务侧没有做错误转换。
 		// 不能把内部 error 文本回显给客户端，统一降级为系统繁忙，原始值写日志。
 		logx.Errorf("未转换的普通错误，已降级为系统繁忙：%v", err)
 		return int(extproto.Code__1_00_UNKNOWN), SystemBusyMessage
@@ -122,6 +135,10 @@ func codeFromGRPCStatus(code codes.Code) int {
 		return int(extproto.Code__1_00_RATE_LIMITED)
 	case codes.Unavailable:
 		return int(extproto.Code__1_00_RPC)
+	case codes.Unimplemented:
+		return int(extproto.Code__1_00_METHOD_NOT_ALLOWED)
+	case codes.Canceled:
+		return int(extproto.Code__1_00_CANCELED)
 	case codes.DeadlineExceeded:
 		return int(extproto.Code__1_00_TIMEOUT)
 	case codes.Internal, codes.Unknown, codes.DataLoss:
@@ -133,25 +150,42 @@ func codeFromGRPCStatus(code codes.Code) int {
 
 // ErrorMessage 读取 extproto 中定义的错误名称。
 func ErrorMessage(code int) string {
-	if code < 0 || code > 999999 {
+	name, _ := errorInfo(code)
+	if name == "" {
 		return "请求失败"
+	}
+	return name
+}
+
+// semanticHTTPCode 读取 extproto 中定义的语义 HTTP 状态；未登记时按 400 处理。
+func semanticHTTPCode(code int) int {
+	_, httpCode := errorInfo(code)
+	if httpCode == 0 {
+		return 400
+	}
+	return httpCode
+}
+
+// errorInfo 读取 extproto 枚举值的 name 与 http_code 扩展选项。
+func errorInfo(code int) (string, int) {
+	if code < 0 || code > 999999 {
+		return "", 0
 	}
 	enumCode := extproto.Code(code)
 	desc := enumCode.Descriptor()
 	if desc == nil {
-		return "请求失败"
+		return "", 0
 	}
 	value := desc.Values().ByNumber(enumCode.Number())
 	if value == nil {
-		return "请求失败"
+		return "", 0
 	}
 	opts := value.Options()
 	if opts == nil {
-		return "请求失败"
+		return "", 0
 	}
-	name, ok := proto.GetExtension(opts, extproto.E_Name).(string)
-	if !ok || name == "" {
-		return "请求失败"
-	}
-	return name
+
+	name, _ := proto.GetExtension(opts, extproto.E_Name).(string)
+	httpCode, _ := proto.GetExtension(opts, extproto.E_HttpCode).(int32)
+	return name, int(httpCode)
 }

@@ -6,7 +6,7 @@ import (
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -37,7 +37,7 @@ func (l *SetHolidaySourceEnabledLogic) SetHolidaySourceEnabled(in *trigger.SetHo
 	}
 	if err := l.svcCtx.HolidaySource.SetEnabled(l.ctx, in.Date, in.Enabled); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
 		}
 		return nil, err
 	}

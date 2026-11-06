@@ -7,7 +7,7 @@ import (
 	"zero-service/app/trigger/internal/taskpayload"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/asynqx"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/hibiken/asynq"
@@ -44,7 +44,7 @@ func (l *SendProtoTriggerLogic) SendProtoTrigger(in *trigger.SendProtoTriggerReq
 
 	match := GrpcServerRegexp.MatchString(in.GrpcServer)
 	if !match {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "grpcServer is invalid")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "grpcServer is invalid")
 	}
 
 	msg := &taskpayload.GrpcPayload{

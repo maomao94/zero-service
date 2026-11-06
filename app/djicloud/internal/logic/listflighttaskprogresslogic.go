@@ -7,8 +7,8 @@ import (
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
 	"zero-service/common/carbonx"
+	"zero-service/common/errx"
 	"zero-service/common/gormx"
-	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -40,7 +40,7 @@ func (l *ListFlightTaskProgressLogic) ListFlightTaskProgress(in *djicloud.ListFl
 	var records []gormmodel.DjiDockFlightTask
 	pageResult, err := gormx.QueryPage(db.Order("reported_at DESC,id DESC"), in.GetPage(), in.GetPageSize(), &records)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询航线任务列表失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询航线任务列表失败")
 	}
 	list := make([]*djicloud.FlightTaskProgressInfo, 0, len(records))
 	for i := range records {

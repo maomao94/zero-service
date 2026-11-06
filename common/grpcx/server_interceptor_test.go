@@ -8,7 +8,6 @@ import (
 
 	"zero-service/common/authctx"
 	"zero-service/common/errx"
-	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -44,10 +43,13 @@ func TestLoggerInterceptor(t *testing.T) {
 		t.Fatalf("response = %v, want original response", gotResp)
 	}
 	assertRPCStatus(t, err, codes.Internal, errx.SystemBusyMessage)
+	if reason := rpcErrorReason(t, err); reason != int(extproto.Code__1_00_UNKNOWN) {
+		t.Fatalf("reason = %d, want %d", reason, int(extproto.Code__1_00_UNKNOWN))
+	}
 }
 
 func TestLoggerInterceptorKeepsBusinessCode(t *testing.T) {
-	wantErr := tool.NewErrorByPbCode(extproto.Code__1_00_DB, "查询设备失败")
+	wantErr := errx.NewErrorByPbCode(extproto.Code__1_00_DB, "查询设备失败")
 
 	_, err := LoggerInterceptor(context.Background(), &struct{}{}, &grpc.UnaryServerInfo{FullMethod: "/test.Service/Unary"},
 		func(ctx context.Context, req any) (any, error) {
@@ -61,13 +63,30 @@ func TestLoggerInterceptorKeepsBusinessCode(t *testing.T) {
 }
 
 func TestLoggerInterceptorKeepsContextError(t *testing.T) {
-	_, err := LoggerInterceptor(context.Background(), &struct{}{}, &grpc.UnaryServerInfo{FullMethod: "/test.Service/Unary"},
-		func(ctx context.Context, req any) (any, error) {
-			return nil, context.DeadlineExceeded
-		})
+	tests := []struct {
+		name   string
+		err    error
+		code   codes.Code
+		reason extproto.Code
+	}{
+		{name: "deadline", err: context.DeadlineExceeded, code: codes.DeadlineExceeded, reason: extproto.Code__1_00_TIMEOUT},
+		{name: "canceled", err: context.Canceled, code: codes.Canceled, reason: extproto.Code__1_00_CANCELED},
+	}
 
-	if code := status.Code(err); code != codes.DeadlineExceeded {
-		t.Fatalf("code = %v, want %v", code, codes.DeadlineExceeded)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := LoggerInterceptor(context.Background(), &struct{}{}, &grpc.UnaryServerInfo{FullMethod: "/test.Service/Unary"},
+				func(ctx context.Context, req any) (any, error) {
+					return nil, tt.err
+				})
+
+			if code := status.Code(err); code != tt.code {
+				t.Fatalf("code = %v, want %v", code, tt.code)
+			}
+			if reason := rpcErrorReason(t, err); reason != int(tt.reason) {
+				t.Fatalf("reason = %d, want %d", reason, int(tt.reason))
+			}
+		})
 	}
 }
 
@@ -81,6 +100,9 @@ func TestLoggerInterceptorRecoversPanic(t *testing.T) {
 		t.Fatalf("response = %v, want nil", gotResp)
 	}
 	assertRPCStatus(t, err, codes.Internal, errx.SystemBusyMessage)
+	if reason := rpcErrorReason(t, err); reason != int(extproto.Code__1_00_UNKNOWN) {
+		t.Fatalf("reason = %d, want %d", reason, int(extproto.Code__1_00_UNKNOWN))
+	}
 }
 
 func TestStreamLoggerInterceptor(t *testing.T) {
@@ -112,7 +134,7 @@ func TestStreamLoggerInterceptor(t *testing.T) {
 }
 
 func TestStreamLoggerInterceptorKeepsBusinessCode(t *testing.T) {
-	wantErr := tool.NewErrorByPbCode(extproto.Code__1_00_DB, "查询设备失败")
+	wantErr := errx.NewErrorByPbCode(extproto.Code__1_00_DB, "查询设备失败")
 	originalStream := &serverStreamStub{ctx: context.Background()}
 
 	err := StreamLoggerInterceptor(&struct{}{}, originalStream, &grpc.StreamServerInfo{FullMethod: "/test.Service/Watch"},
@@ -135,6 +157,9 @@ func TestStreamLoggerInterceptorRecoversPanic(t *testing.T) {
 		})
 
 	assertRPCStatus(t, err, codes.Internal, errx.SystemBusyMessage)
+	if reason := rpcErrorReason(t, err); reason != int(extproto.Code__1_00_UNKNOWN) {
+		t.Fatalf("reason = %d, want %d", reason, int(extproto.Code__1_00_UNKNOWN))
+	}
 }
 
 type serverStreamStub struct {

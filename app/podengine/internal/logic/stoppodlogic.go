@@ -5,7 +5,7 @@ import (
 
 	"zero-service/app/podengine/internal/svc"
 	"zero-service/app/podengine/podengine"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/docker/docker/api/types/container"
@@ -33,17 +33,17 @@ func (l *StopPodLogic) StopPod(in *podengine.StopPodReq) (*podengine.StopPodRes,
 	}
 	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
 	if !ok {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "node: "+in.Node)
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "node: "+in.Node)
 	}
 
 	err = dockerClient.ContainerStop(l.ctx, in.Id, container.StopOptions{})
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "failed to stop container")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "failed to stop container")
 	}
 
 	_, err = dockerClient.ContainerInspect(l.ctx, in.Id)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "failed to inspect container after stop")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "failed to inspect container after stop")
 	}
 	return &podengine.StopPodRes{}, nil
 }

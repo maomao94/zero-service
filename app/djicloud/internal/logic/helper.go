@@ -8,7 +8,7 @@ import (
 	"zero-service/app/djicloud/model/gormmodel"
 	"zero-service/common/carbonx"
 	"zero-service/common/djisdk"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 )
 
@@ -33,7 +33,7 @@ func commandError(err error) (string, int32, error) {
 }
 
 func drcError(err error, operation string) error {
-	return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, operation)
+	return errx.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, operation)
 }
 
 func okRes(tid string) *djicloud.CommonRes {

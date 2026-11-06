@@ -7,7 +7,7 @@ import (
 	"zero-service/app/alarm/alarm"
 	"zero-service/common/asynqx"
 	"zero-service/common/carbonx"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 	"zero-service/zerorpc/internal/svc"
 	"zero-service/zerorpc/internal/taskpayload"
@@ -59,11 +59,11 @@ func (l *ForwardTaskLogic) ForwardTask(in *zerorpc.ForwardTaskReq) (*zerorpc.For
 	if len(in.TriggerTime) > 0 {
 		triggerTime := carbon.Parse(in.TriggerTime)
 		if triggerTime.Error != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, triggerTime.Error, "triggerTime 格式错误")
+			return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, triggerTime.Error, "triggerTime 格式错误")
 		}
 		internal := carbon.Now().DiffInSeconds(triggerTime)
 		if internal < 0 {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "triggerTime 必须晚于当前时间")
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "triggerTime 必须晚于当前时间")
 		}
 		d = time.Duration(internal) * time.Second
 	} else {

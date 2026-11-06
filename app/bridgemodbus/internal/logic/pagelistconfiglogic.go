@@ -3,8 +3,8 @@ package logic
 import (
 	"context"
 	"zero-service/common/copierx"
+	"zero-service/common/errx"
 	"zero-service/common/gormx"
-	"zero-service/common/tool"
 	"zero-service/model/gormmodel"
 	"zero-service/third_party/extproto"
 
@@ -32,10 +32,10 @@ func NewPageListConfigLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Pa
 // 分页查询配置列表
 func (l *PageListConfigLogic) PageListConfig(in *bridgemodbus.PageListConfigReq) (*bridgemodbus.PageListConfigRes, error) {
 	if in == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "请求不能为空")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "请求不能为空")
 	}
 	if in.GetStatus() > 2 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "status 仅支持 0（不过滤）、1（启用）、2（禁用）")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "status 仅支持 0（不过滤）、1（启用）、2（禁用）")
 	}
 	// 构建查询
 	db := l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.ModbusSlaveConfig{})

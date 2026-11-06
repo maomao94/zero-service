@@ -5,7 +5,7 @@ import (
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
 	"zero-service/common/copierx"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/model/gormmodel"
 	"zero-service/third_party/extproto"
 
@@ -38,9 +38,9 @@ func (l *GetConfigByCodeLogic) GetConfigByCode(in *bridgemodbus.GetConfigByCodeR
 	err := l.svcCtx.DB.WithContext(l.ctx).Where("modbus_code = ?", in.ModbusCode).First(&cfg).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
 		}
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_DB, "查询配置失败")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_DB, "查询配置失败")
 	}
 	var pbCfg bridgemodbus.PbModbusConfig
 	_ = copier.CopyWithOption(&pbCfg, cfg, copierx.Option)

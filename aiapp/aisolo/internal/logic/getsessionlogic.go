@@ -8,7 +8,7 @@ import (
 
 	"zero-service/aiapp/aisolo/aisolo"
 	"zero-service/aiapp/aisolo/internal/svc"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 )
 
@@ -30,7 +30,7 @@ func (l *GetSessionLogic) GetSession(in *aisolo.GetSessionReq) (*aisolo.GetSessi
 	userID := strings.TrimSpace(in.GetUserId())
 	sessionID := strings.TrimSpace(in.GetSessionId())
 	if userID == "" || sessionID == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "user_id and session_id are required")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "user_id and session_id are required")
 	}
 	sess, err := l.svcCtx.Sessions.GetSession(l.ctx, userID, sessionID)
 	if err != nil {

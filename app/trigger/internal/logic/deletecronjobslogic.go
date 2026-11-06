@@ -5,7 +5,7 @@ import (
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -32,7 +32,7 @@ func (l *DeleteCronJobsLogic) DeleteCronJobs(in *trigger.DeleteCronJobsReq) (*tr
 	}
 	deleted, err := l.svcCtx.CronJobStore.DeleteMany(l.ctx, in.JobIds)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "批量删除 Cron Job 失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "批量删除 Cron Job 失败")
 	}
 	return &trigger.DeleteCronJobsRes{Deleted: deleted}, nil
 }
