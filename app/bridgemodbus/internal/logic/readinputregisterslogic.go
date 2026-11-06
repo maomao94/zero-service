@@ -26,44 +26,24 @@ func NewReadInputRegistersLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 
 // 读取输入寄存器 (Function Code 0x04)
 func (l *ReadInputRegistersLogic) ReadInputRegisters(in *bridgemodbus.ReadInputRegistersReq) (*bridgemodbus.ReadInputRegistersRes, error) {
-	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)
+	address, err := validateAddress("address", in.Address)
 	if err != nil {
 		return nil, err
 	}
-	mbCli := mdCliPool.Get()
-	defer mdCliPool.Put(mbCli)
-	results, err := mbCli.ReadInputRegisters(l.ctx, uint16(in.Address), uint16(in.Quantity))
+	quantity, err := validateQuantity("quantity", in.Quantity, maxReadRegisters)
 	if err != nil {
 		return nil, err
 	}
 
-	// 每个寄存器占 2 个字节，所以寄存器数量 = bytes 长度 / 2
-	//n := len(results) / 2
+	mbCli, err := l.svcCtx.GetModbusClient(l.ctx, in.ModbusCode)
+	if err != nil {
+		return nil, err
+	}
 
-	// 创建切片用于存放每个寄存器的 16 进制字符串表示
-	//hexValues := make([]string, n)
-
-	// 循环处理每个寄存器
-	//for i := 0; i < n; i++ {
-	//	hi := results[2*i]   // 当前寄存器的高字节 (第 2*i 个字节)
-	//	lo := results[2*i+1] // 当前寄存器的低字节 (第 2*i+1 个字节)
-	//
-	//	// 把高字节左移 8 位，再和低字节按位或，得到完整的 16 位寄存器值
-	//	val := uint16(hi)<<8 | uint16(lo)
-	//
-	//	// 格式化为 16 进制字符串，例如 "0x1234"
-	//	hexValues[i] = fmt.Sprintf("0x%04X", val)
-	//}
-
-	// 第二种解析 方法
-	//hexValues := make([]string, 0, n)
-	//for i := 0; i < len(results); i += 2 {
-	//	hi := results[i]   // 高字节
-	//	lo := results[i+1] // 低字节
-	//
-	//	val := uint16(hi)<<8 | uint16(lo)                         // 拼成 16 位寄存器值
-	//	hexValues = append(hexValues, fmt.Sprintf("0x%04X", val)) // 转 16 进制字符串
-	//}
+	results, err := mbCli.ReadInputRegisters(l.ctx, address, quantity)
+	if err != nil {
+		return nil, wrapModbusError("读取输入寄存器", err)
+	}
 	bv := bytex.BytesToBinaryValues(results)
 	return &bridgemodbus.ReadInputRegistersRes{
 		Results:      results,

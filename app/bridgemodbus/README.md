@@ -19,15 +19,48 @@
 - **Device Identification**：0x2B/0x0E 读设备标识与指定对象。
 - **本地换算**：十进制数值与 Modbus 寄存器格式批量转换。
 
-## 连接池
+## 客户端复用与配置
 
-请求携带 `modbusCode` 时，服务从 `PoolManager` 解析对应连接池；未命中时查数据库配置并创建。`modbusCode` 为空时使用 `ModbusClientConf` 的默认连接。连接使用后归还池。
+按 `modbusCode` 复用长期客户端：同一 code 串行收发，不同 code 各自持有连接和固定从站号。
 
-配置项：
+- `modbusCode` 为空：使用文件中的 `ModbusClientConf`。
+- `modbusCode` 非空：读取 `modbus_slave_config` 中启用的配置；不存在返回 `100202`，未启用或 `slave` 不在 1–247 返回 `100501`，不回退文件配置。
+- 保存/删除配置后立即失效对应客户端；直接改库时由后台定期校验后生效（通常 30 秒内），无需重启。数据库查询失败时保留现有连接。
+- 服务退出时关闭全部客户端；写操作不会自动重试。
 
-- `ModbusPool`：连接池数量。
-- `ModbusClientConf`：默认 Modbus 地址与从站号。
-- `DB`：配置持久化数据库。
+配置缺省值：`Timeout=10000ms`（上限 600000）、`IdleTimeout=60000ms`、`Slave=1`，恢复窗口与 `ConnectDelay` 为 0。需要长连接可设 `IdleTimeout=-1`；需要只读断链恢复或迟到响应处理，可分别设 `LinkRecoveryTimeout=3000`、`ProtocolRecoveryTimeout=2000`。
+
+表中新建记录的默认值以 GORM 模型 `gormmodel.ModbusSlaveConfig` 为准，已有记录中的显式值不自动改写。TLS 证书文件内容变更需重启服务或改动配置后生效。
+
+## 协议与参数约束
+
+请求参数在服务入口统一校验，超出范围返回 `100103`，不会被截断后下发。
+
+| 接口 / 参数 | 约束 |
+| --- | --- |
+| 保存、单条查询、批量查询的 `modbusCode` | 不能为空或纯空白，最多 128 个字符；按原值精确匹配，不自动去除首尾空格 |
+| 保存的 `slaveAddress` | 必填，最多 64 个字符，格式为 `host:port`（IPv6 使用 `[地址]:port`），端口 1–65535 |
+| 保存的 `slave` | 必须显式传入 1–247，0 不使用默认值 |
+| 删除的 `ids` | 1–500 项，每项非空且不能是纯空白，最多 36 个字符；空数组返回参数错误 |
+| 批量查询的 `modbusCode` | 1–500 项，逐项校验编码 |
+| 分页的 `status` | 0=不过滤、1=启用、2=禁用 |
+| 分页的 `page` / `pageSize` | 非正值分别使用 1 / 10，`pageSize` 超过 500 时限制为 500 |
+
+| 参数 | 约束 |
+| --- | --- |
+| `address` / `readAddress` / `writeAddress` | 0–65535，超范围直接拒绝，不做截断 |
+| `quantity`（0x01/0x02） | 1–2000 |
+| `quantity`（0x03/0x04） | 1–125 |
+| `quantity`（0x0F） | 1–1968，且必须等于 `values` 长度 |
+| `quantity`（0x10） | 1–123，且必须等于 `values` 长度 |
+| `readQuantity`（0x17） | 1–125 |
+| `writeQuantity`（0x17） | 1–121，且必须等于 `values` 长度 |
+
+设备标识 `readDeviceIdCode` 只接受 `1`–`3`；读取指定对象（0x04）使用 `readDeviceIdentificationSpecificObject`。
+
+设备返回 Modbus 异常响应时返回 `100603`，`msg` 形如 `第三方接口错误，vendor=modbus，code=0x02，message=...非法数据地址`；通信超时返回 `100997`，其余通信故障返回 `100602`。
+
+写操作（含 0x17）发生超时、断链或响应流错位时，失败不代表设备没有执行，错误提示为“写入执行结果未知”，需核实设备状态后再决定是否重试。读取发生响应流错位时可直接重新发起。
 
 ## 开放平台接入
 

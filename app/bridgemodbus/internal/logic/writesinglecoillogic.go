@@ -25,12 +25,15 @@ func NewWriteSingleCoilLogic(ctx context.Context, svcCtx *svc.ServiceContext) *W
 
 // 写单个线圈 (Function Code 0x05)
 func (l *WriteSingleCoilLogic) WriteSingleCoil(in *bridgemodbus.WriteSingleCoilReq) (*bridgemodbus.WriteSingleCoilRes, error) {
-	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)
+	address, err := validateAddress("address", in.Address)
 	if err != nil {
 		return nil, err
 	}
-	mbCli := mdCliPool.Get()
-	defer mdCliPool.Put(mbCli)
+
+	mbCli, err := l.svcCtx.GetModbusClient(l.ctx, in.ModbusCode)
+	if err != nil {
+		return nil, err
+	}
 
 	// 将 bool 值转换为 uint16: false=0x0000, true=0xFF00
 	var value uint16
@@ -39,10 +42,10 @@ func (l *WriteSingleCoilLogic) WriteSingleCoil(in *bridgemodbus.WriteSingleCoilR
 	} else {
 		value = 0x0000
 	}
-	l.Infof("写单个线圈: 0x%X", value)
-	results, err := mbCli.WriteSingleCoil(l.ctx, uint16(in.Address), value)
+	l.Infof("写单个线圈: address=%d, value=0x%X", address, value)
+	results, err := mbCli.WriteSingleCoil(l.ctx, address, value)
 	if err != nil {
-		return nil, err
+		return nil, wrapModbusWriteError("写单个线圈", err)
 	}
 	return &bridgemodbus.WriteSingleCoilRes{
 		Results: results,
