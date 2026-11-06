@@ -93,6 +93,7 @@ const (
 	Code__1_00_ROUTE_NOT_FOUND    Code = 100801
 	Code__1_00_METHOD_NOT_ALLOWED Code = 100802
 	// 系统兜底（DEF 900-999）
+	Code__1_00_CANCELED Code = 100996
 	Code__1_00_TIMEOUT  Code = 100997
 	Code__1_00_INTERNAL Code = 100998
 	Code__1_00_UNKNOWN  Code = 100999
@@ -130,6 +131,7 @@ var (
 		100701: "_1_00_RATE_LIMITED",
 		100801: "_1_00_ROUTE_NOT_FOUND",
 		100802: "_1_00_METHOD_NOT_ALLOWED",
+		100996: "_1_00_CANCELED",
 		100997: "_1_00_TIMEOUT",
 		100998: "_1_00_INTERNAL",
 		100999: "_1_00_UNKNOWN",
@@ -163,6 +165,7 @@ var (
 		"_1_00_RATE_LIMITED":         100701,
 		"_1_00_ROUTE_NOT_FOUND":      100801,
 		"_1_00_METHOD_NOT_ALLOWED":   100802,
+		"_1_00_CANCELED":             100996,
 		"_1_00_TIMEOUT":              100997,
 		"_1_00_INTERNAL":             100998,
 		"_1_00_UNKNOWN":              100999,
@@ -383,7 +386,7 @@ const file_extproto_proto_rawDesc = "" +
 	"\x04Dept\x12\x16\n" +
 	"\x06deptId\x18\x01 \x01(\tR\x06deptId\x12\x1a\n" +
 	"\bdeptCode\x18\x02 \x01(\tR\bdeptCode\x12\x1a\n" +
-	"\bdeptName\x18\x03 \x01(\tR\bdeptName*\xa9\f\n" +
+	"\bdeptName\x18\x03 \x01(\tR\bdeptName*\xd9\f\n" +
 	"\x04Code\x12\x1a\n" +
 	"\x05_0_OK\x10\x00\x1a\x0fʸ\x02\x06成功и\x02\xc8\x01\x12%\n" +
 	"\x10CODE_UNSPECIFIED\x10\x00\x1a\x0fʸ\x02\x06成功и\x02\xc8\x01\x12(\n" +
@@ -407,7 +410,8 @@ const file_extproto_proto_rawDesc = "" +
 	"\x15_1_00_THIRD_PARTY_API\x10\xfb\x91\x06\x1a\x1eʸ\x02\x15第三方接口错误и\x02\xf7\x03\x125\n" +
 	"\x12_1_00_RATE_LIMITED\x10ݒ\x06\x1a\x1bʸ\x02\x12请求过于频繁и\x02\xad\x03\x125\n" +
 	"\x15_1_00_ROUTE_NOT_FOUND\x10\xc1\x93\x06\x1a\x18ʸ\x02\x0f接口不存在и\x02\x94\x03\x12>\n" +
-	"\x18_1_00_METHOD_NOT_ALLOWED\x10\u0093\x06\x1a\x1eʸ\x02\x15请求方法不允许и\x02\x95\x03\x12*\n" +
+	"\x18_1_00_METHOD_NOT_ALLOWED\x10\u0093\x06\x1a\x1eʸ\x02\x15请求方法不允许и\x02\x95\x03\x12.\n" +
+	"\x0e_1_00_CANCELED\x10\x84\x95\x06\x1a\x18ʸ\x02\x0f请求已取消и\x02\x98\x03\x12*\n" +
 	"\r_1_00_TIMEOUT\x10\x85\x95\x06\x1a\x15ʸ\x02\f系统超时и\x02\xf8\x03\x121\n" +
 	"\x0e_1_00_INTERNAL\x10\x86\x95\x06\x1a\x1bʸ\x02\x12系统内部错误и\x02\xf4\x03\x12*\n" +
 	"\r_1_00_UNKNOWN\x10\x87\x95\x06\x1a\x15ʸ\x02\f未知错误и\x02\xf4\x03\x12?\n" +

@@ -25,19 +25,26 @@ func NewReadCoilsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ReadCoi
 
 // 读取线圈状态 (Function Code 0x01)
 func (l *ReadCoilsLogic) ReadCoils(in *bridgemodbus.ReadCoilsReq) (*bridgemodbus.ReadCoilsRes, error) {
-	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)
+	address, err := validateAddress("address", in.Address)
 	if err != nil {
 		return nil, err
 	}
-	mbCli := mdCliPool.Get()
-	defer mdCliPool.Put(mbCli)
-
-	results, err := mbCli.ReadCoils(l.ctx, uint16(in.Address), uint16(in.Quantity))
+	quantity, err := validateQuantity("quantity", in.Quantity, maxReadBits)
 	if err != nil {
 		return nil, err
+	}
+
+	mbCli, err := l.svcCtx.GetModbusClient(l.ctx, in.ModbusCode)
+	if err != nil {
+		return nil, err
+	}
+
+	results, err := mbCli.ReadCoils(l.ctx, address, quantity)
+	if err != nil {
+		return nil, wrapModbusError("读取线圈", err)
 	}
 	return &bridgemodbus.ReadCoilsRes{
 		Results: results,
-		Values:  bytex.BytesToBools(results, int(in.Quantity)),
+		Values:  bytex.BytesToBools(results, int(quantity)),
 	}, nil
 }

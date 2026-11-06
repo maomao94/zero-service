@@ -57,7 +57,7 @@
 | DEF | 用途 |
 | --- | --- |
 | `100-899` | 模块内具体错误，按申请顺序递增 |
-| `900-999` | 系统兜底与对外折叠（未知、内部、超时、系统繁忙） |
+| `900-999` | 系统兜底与对外折叠（未知、内部、超时、取消、系统繁忙） |
 
 通用模块 `00` 内部再按 DEF 段细分，便于查找：
 
@@ -113,6 +113,7 @@ _1_30_APP_SECRET_INVALID = 130102 [(name) = "密钥无效", (http_code) = 401];
 | `100701` | 429 | 请求过于频繁 |
 | `100801` | 404 | 接口不存在 |
 | `100802` | 405 | 请求方法不允许 |
+| `100996` | 408 | 请求已取消 |
 | `100997` | 504 | 系统超时 |
 | `100998` | 500 | 系统内部错误 |
 | `100999` | 500 | 未知错误 / 系统繁忙 |
@@ -137,14 +138,15 @@ _1_30_APP_SECRET_INVALID = 130102 [(name) = "密钥无效", (http_code) = 401];
 
 ## 5. gRPC 与错误码的映射
 
-服务端返回错误时使用 `tool.NewErrorByPbCode`：
+服务端返回错误时使用 `errx.NewErrorByPbCode`：
 
 ```go
-return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议标题不能为空")
+return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议标题不能为空")
 ```
 
 - 六位码写入 gRPC `ErrorInfo.reason`；
 - gRPC Code 由 `http_code` 推导；
+- `NewErrorByPbCodeWrap` 遇到已带 extproto 码的 cause 时原样返回，禁止中间层重包覆盖；
 - 调用方（网关）优先读取 `reason`，仅接受 extproto 中已定义的码；取不到时按 gRPC Code 兜底：
 
 | gRPC Code | 兜底错误码 |
@@ -158,8 +160,12 @@ return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议标�
 | `FailedPrecondition` | `100502` |
 | `ResourceExhausted` | `100701` |
 | `Unavailable` | `100601` |
+| `Unimplemented` | `100802` |
+| `Canceled` | `100996` |
 | `DeadlineExceeded` | `100997` |
 | `Internal` / `Unknown` / `DataLoss` | `100998` |
+
+`extproto` 的 `http_code` 与 gRPC Code 对照以 `common/errx/httpstatus.go` 为准：`405` 推导为 `Unimplemented`（业务码 `100802`），`408` 推导为 `Canceled`（业务码 `100996`），`409` 推导为 `Aborted`（业务码 `100203/100204/100502/100503`）。gRPC Code 始终是标准 gRPC code（0-16），六位业务码只写入 `ErrorInfo.reason`，不写入 gRPC Code。`ToGRPCStatus` 对缺少 `ErrorInfo` 的 status 一律补兜底 detail；已有 detail 原样保留，非法码或厂商码仍由 `CodeFromStatus` 统一降级。
 
 折叠是网关的可选策略：**默认不折叠，所有已登记码原样透传**。网关在 `etc/*.yaml` 配置 `Error.Fold` 并列出 `Codes` 后，命中的码才折叠为 `100999 系统繁忙`；`100603` 由 `common/gtwx/fold.go` 强制透传，即使配置在 `Codes` 中也不会折叠，按 §5.2 的模板对外返回。折叠配置只影响 HTTP 信封，gRPC 传输永不折叠。
 
@@ -201,10 +207,10 @@ Go 侧规则：
 | 平台故障（超时、连接失败、鉴权失败、限流、5xx） | 转成最接近的 extproto 码（`100601`、`100602`、`100997`），以 error 返回 |
 | 无法归类 | `100602 第三方服务异常`；连错误都拿不到时用 `100999` |
 
-第三方接口错误统一使用 `tool.NewThirdPartyAPIError`，不要在各调用点手拼字符串：
+第三方接口错误统一使用 `errx.NewThirdPartyAPIError`，不要在各调用点手拼字符串：
 
 ```go
-return tool.NewThirdPartyAPIError("dji", "312014", "设备升级中，请勿重复操作")
+return errx.NewThirdPartyAPIError("dji", "312014", "设备升级中，请勿重复操作")
 ```
 
 生成的 `msg` 使用跨语言 `%s` 模板，Go 与 Java 共用同一份模板字符串：
@@ -237,10 +243,10 @@ msg := fmt.Sprintf(
     vendor, vendorCode, vendorMessage)
 ```
 
-业务侧可以用 `tool.ParseThirdPartyAPIError(msg)`（Go）或等价实现拿到三个值：
+业务侧可以用 `errx.ParseThirdPartyAPIError(msg)`（Go）或等价实现拿到三个值：
 
 ```go
-vendor, code, message, ok := tool.ParseThirdPartyAPIError(resp.Msg)
+vendor, code, message, ok := errx.ParseThirdPartyAPIError(resp.Msg)
 ```
 
 其他语言按同一规则解析：以 `，` 分隔字段，再按 `=` 取值；只使用 `%s` 占位符，禁止 `%d`、`%v`、正则、`*`、`x`、`?`，保证 Java 与 Go 语义一致。
@@ -366,7 +372,7 @@ v2 把技术分层模块（参数/数据/缓存/认证/业务/外部/开放平�
 | `108101` | `100801` | 接口不存在 |
 | `108102` | `100802` | 请求方法不允许 |
 
-> `100997`、`100998`、`100999` 不变。
+> `100996` 为新增的请求取消码；`100997`、`100998`、`100999` 不变。
 
 ## 9. 落地状态
 

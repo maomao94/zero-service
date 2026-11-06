@@ -1,4 +1,4 @@
-package tool
+package errx
 
 import (
 	"strings"
@@ -34,7 +34,7 @@ const (
 //
 // 文案由 NewErrorByPbCode 的 args 直接格式化，模板中的 %s 按顺序替换：
 //
-//	tool.NewThirdPartyAPIError("dji", "312014", "设备升级中，请勿重复操作")
+//	errx.NewThirdPartyAPIError("dji", "312014", "设备升级中，请勿重复操作")
 //	// 第三方接口错误，vendor=dji，code=312014，message=设备升级中，请勿重复操作
 func NewThirdPartyAPIError(vendor, code, message string) error {
 	vendor = sanitizeToken(vendor, thirdPartyAPIMaxVendor)

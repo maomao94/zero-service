@@ -3,7 +3,7 @@ package dispatch
 import (
 	"bytes"
 
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"google.golang.org/protobuf/encoding/protojson"
@@ -18,7 +18,7 @@ func decode(data string, msg proto.Message) error {
 		raw = []byte("{}")
 	}
 	if err := (protojson.UnmarshalOptions{DiscardUnknown: false}).Unmarshal(raw, msg); err != nil {
-		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "data 不是合法的 protojson: %v", err)
+		return errx.NewErrorByPbCode(extproto.Code__1_00_PARAM, "data 不是合法的 protojson: %v", err)
 	}
 	return nil
 }

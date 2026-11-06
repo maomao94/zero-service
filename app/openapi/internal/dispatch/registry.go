@@ -6,7 +6,7 @@ import (
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/podengine/podengine"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"google.golang.org/protobuf/proto"
@@ -43,11 +43,11 @@ func NewRegistry(client podengine.PodEngineClient, modbusClient bridgemodbus.Bri
 // Invoke 按 method 分发；未注册的 method 返回 130103。
 func (r *Registry) Invoke(ctx context.Context, method string, data string) (proto.Message, error) {
 	if r == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_INTERNAL, "路由表未初始化")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_INTERNAL, "路由表未初始化")
 	}
 	handler, ok := r.routes[method]
 	if !ok {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_30_METHOD_NOT_OPEN, "method 未开放: %s", method)
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_30_METHOD_NOT_OPEN, "method 未开放: %s", method)
 	}
 	return handler(ctx, data)
 }

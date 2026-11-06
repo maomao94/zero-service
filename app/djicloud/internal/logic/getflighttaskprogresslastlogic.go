@@ -7,7 +7,7 @@ import (
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
 	"zero-service/common/carbonx"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -38,7 +38,7 @@ func (l *GetFlightTaskProgressLastLogic) GetFlightTaskProgressLast(in *djicloud.
 		if err == gorm.ErrRecordNotFound {
 			return &djicloud.GetFlightTaskProgressLastRes{}, nil
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询最近航线任务进度失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询最近航线任务进度失败")
 	}
 	return &djicloud.GetFlightTaskProgressLastRes{
 		HasProgress:  true,

@@ -25,16 +25,19 @@ func NewReadFIFOQueueLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Rea
 
 // 读取 FIFO 队列 (Function Code 0x18)
 func (l *ReadFIFOQueueLogic) ReadFIFOQueue(in *bridgemodbus.ReadFIFOQueueReq) (*bridgemodbus.ReadFIFOQueueRes, error) {
-	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)
+	address, err := validateAddress("address", in.Address)
 	if err != nil {
 		return nil, err
 	}
-	mbCli := mdCliPool.Get()
-	defer mdCliPool.Put(mbCli)
 
-	results, err := mbCli.ReadFIFOQueue(l.ctx, uint16(in.Address))
+	mbCli, err := l.svcCtx.GetModbusClient(l.ctx, in.ModbusCode)
 	if err != nil {
 		return nil, err
+	}
+
+	results, err := mbCli.ReadFIFOQueue(l.ctx, address)
+	if err != nil {
+		return nil, wrapModbusError("读取 FIFO 队列", err)
 	}
 	return &bridgemodbus.ReadFIFOQueueRes{
 		Results: results,

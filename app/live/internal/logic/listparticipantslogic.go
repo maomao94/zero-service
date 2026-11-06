@@ -8,7 +8,7 @@ import (
 	"zero-service/common/carbonx"
 
 	"github.com/zeromicro/go-zero/core/logx"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 )
 
@@ -33,7 +33,7 @@ func (l *ListParticipantsLogic) ListParticipants(in *live.ListParticipantsReq) (
 	}
 	participants, err := l.svcCtx.MeetingRepo.ListParticipants(l.ctx, in.MeetingNo, toIntSlice(in.ExcludeKinds))
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询参与者失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询参与者失败")
 	}
 	resp := &live.ListParticipantsRes{}
 	for i := range participants {

@@ -7,8 +7,8 @@ import (
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
+	"zero-service/common/errx"
 	"zero-service/common/gormx"
-	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -53,7 +53,7 @@ func (l *ListDevicesLogic) ListDevices(in *djicloud.ListDevicesReq) (*djicloud.L
 	var devices []gormmodel.DjiDevice
 	pageResult, err := gormx.QueryPage(db.Order("id DESC"), in.GetPage(), in.GetPageSize(), &devices)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询设备列表失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询设备列表失败")
 	}
 
 	list := make([]*djicloud.DeviceListItem, 0, len(devices))
@@ -114,7 +114,7 @@ func (l *ListDevicesLogic) ListDevices(in *djicloud.ListDevicesReq) (*djicloud.L
 				return nil
 			},
 		); err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询设备列表失败")
+			return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询设备列表失败")
 		}
 
 		if osd != nil {

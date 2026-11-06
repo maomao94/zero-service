@@ -28,6 +28,9 @@ func NewBatchGetConfigByCodeLogic(ctx context.Context, svcCtx *svc.ServiceContex
 
 // 根据编码数组查询详情
 func (l *BatchGetConfigByCodeLogic) BatchGetConfigByCode(in *bridgemodbus.BatchGetConfigByCodeReq) (*bridgemodbus.BatchGetConfigByCodeRes, error) {
+	if err := validateConfigBatch("modbusCode", in.GetModbusCode(), 128); err != nil {
+		return nil, err
+	}
 	var list []gormmodel.ModbusSlaveConfig
 	err := l.svcCtx.DB.WithContext(l.ctx).Where("modbus_code IN ?", in.ModbusCode).Find(&list).Error
 	if err != nil {

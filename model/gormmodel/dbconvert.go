@@ -12,7 +12,7 @@ func NewModbusConfigConverter() *ModbusConfigConverter {
 
 // ToClientConf 将数据库模型转换为Modbus客户端配置
 // 入参：数据库查询得到的Modbus从站配置模型
-// 出参：可直接用于初始化连接池的客户端配置
+// 出参：可直接用于创建长期客户端的配置
 func (c *ModbusConfigConverter) ToClientConf(model *ModbusSlaveConfig) *modbusx.ModbusClientConf {
 	if model == nil {
 		return nil

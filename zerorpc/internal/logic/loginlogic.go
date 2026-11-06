@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/duke-git/lancet/v2/compare"
 	"github.com/duke-git/lancet/v2/random"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/model"
 	"zero-service/third_party/extproto"
 	"zero-service/zerorpc/internal/svc"
@@ -37,7 +37,7 @@ func (l *LoginLogic) Login(in *zerorpc.LoginReq) (*zerorpc.LoginRes, error) {
 		}
 		if responseGetUserPhoneNumber.ErrCode != 0 {
 			l.Errorf("小程序手机号快速登录失败 %v,%v", responseGetUserPhoneNumber.ErrCode, responseGetUserPhoneNumber.ErrMsg)
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_THIRD_PARTY, "小程序手机号快速登录失败")
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_THIRD_PARTY, "小程序手机号快速登录失败")
 		}
 		phoneNumber := responseGetUserPhoneNumber.PhoneInfo.PhoneNumber
 		u, err := l.svcCtx.UserModel.FindOneByMobile(l.ctx, phoneNumber)
@@ -54,7 +54,7 @@ func (l *LoginLogic) Login(in *zerorpc.LoginReq) (*zerorpc.LoginRes, error) {
 			return nil, err
 		}
 		if !compare.Equal(val, in.Password) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "手机号验证码错误")
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "手机号验证码错误")
 		}
 		_, err = l.svcCtx.RedisClient.Del(key)
 		if err != nil {
@@ -74,12 +74,12 @@ func (l *LoginLogic) Login(in *zerorpc.LoginReq) (*zerorpc.LoginRes, error) {
 		}
 		if responseCode2Session.ErrCode != 0 {
 			l.Errorf("小程序unionId快速登录失败 %v,%v", responseCode2Session.ErrCode, responseCode2Session.ErrMsg)
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_THIRD_PARTY, "小程序unionId快速登录失败")
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_THIRD_PARTY, "小程序unionId快速登录失败")
 		}
 		// todo
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "未保存 unionId")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ, "未保存 unionId")
 	} else {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "未知授权类型")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "未知授权类型")
 	}
 	if userId == 0 {
 		nU, err := l.svcCtx.UserModel.Insert(l.ctx, nil, &model.User{

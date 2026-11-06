@@ -5,7 +5,7 @@ import (
 
 	"zero-service/app/oryxserver/internal/svc"
 	"zero-service/app/oryxserver/oryxserver"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -30,7 +30,7 @@ func (l *RecordApplyLogic) RecordApply(in *oryxserver.RecordApplyReq) (*oryxserv
 	err := l.svcCtx.OryxClient.RecordApply(l.ctx, in.All)
 	if err != nil {
 		l.Logger.Errorf("调用 Oryx API 失败: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用 Oryx API 失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用 Oryx API 失败")
 	}
 	return &oryxserver.RecordApplyRes{}, nil
 }

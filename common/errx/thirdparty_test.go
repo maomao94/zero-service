@@ -1,4 +1,4 @@
-package tool
+package errx
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 
 	"zero-service/third_party/extproto"
 
-	gkiterrors "github.com/songzhibin97/gkit/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -30,8 +29,8 @@ func TestThirdPartyAPIErrorTemplate(t *testing.T) {
 func TestNewThirdPartyAPIErrorUsesArgsFormatting(t *testing.T) {
 	err := NewThirdPartyAPIError("dji", "312014", "设备升级中，请勿重复操作")
 
-	if got := gkiterrors.Reason(err); got != "100603" {
-		t.Fatalf("reason = %q, want 100603", got)
+	if !IsErrorByPbCode(err, extproto.Code__1_00_THIRD_PARTY_API) {
+		t.Fatalf("code = %v, want 100603", status.Code(err))
 	}
 	if got := status.Code(err); got != codes.Unavailable {
 		t.Fatalf("status.Code() = %v, want %v", got, codes.Unavailable)

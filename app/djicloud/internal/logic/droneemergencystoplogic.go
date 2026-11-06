@@ -5,7 +5,7 @@ import (
 
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -27,17 +27,17 @@ func NewDroneEmergencyStopLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 
 func (l *DroneEmergencyStopLogic) DroneEmergencyStop(in *djicloud.DroneEmergencyStopReq) (*djicloud.DroneEmergencyStopRes, error) {
 	if !l.svcCtx.Config.DangerousOps.EnableDroneEmergencyStop {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_FORBIDDEN,
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_FORBIDDEN,
 			"emergency stop is disabled, enable it in config DangerousOps.EnableDroneEmergencyStop")
 	}
 
 	deviceSn := in.GetDeviceSn()
 	seq, err := l.svcCtx.DjiClient.DrcNextSeq(deviceSn)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "获取序列号失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "获取序列号失败")
 	}
 	if _, err := l.svcCtx.DjiClient.DroneEmergencyStop(l.ctx, deviceSn, seq); err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "无人机紧急停桨失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "无人机紧急停桨失败")
 	}
 	return &djicloud.DroneEmergencyStopRes{Seq: int32(seq)}, nil
 }

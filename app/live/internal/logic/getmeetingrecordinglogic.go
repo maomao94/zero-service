@@ -6,7 +6,7 @@ import (
 
 	"zero-service/app/live/internal/svc"
 	"zero-service/app/live/live"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -29,7 +29,7 @@ func NewGetMeetingRecordingLogic(ctx context.Context, svcCtx *svc.ServiceContext
 // 查询单个录制详情。
 func (l *GetMeetingRecordingLogic) GetMeetingRecording(in *live.GetMeetingRecordingReq) (*live.GetMeetingRecordingRes, error) {
 	if strings.TrimSpace(in.RecordId) == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "录制记录ID不能为空")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "录制记录ID不能为空")
 	}
 	rec, err := l.svcCtx.MeetingRepo.GetRecording(l.ctx, in.RecordId)
 	if err != nil {

@@ -174,18 +174,19 @@ server.Use(gtwx.RequestIDMiddleware)
 ### 4.2 业务服务：构造错误
 
 ```go
-return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "meetingNo 不能为空")
+return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "meetingNo 不能为空")
 ```
 
 需要保留底层原因时：
 
 ```go
-return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议失败")
+return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议失败")
 ```
 
 - 六位码写入 gRPC `ErrorInfo.reason`，gRPC Code 按 `http_code` 推导。
 - `NewErrorByPbCode(extproto.Code__0_OK)` 会直接返回内部错误，防止“成功码当错误”。
-- 实现见 `common/tool/errorutil.go`；业务侧示例见 `app/live/internal/logic/startmeetingrecordlogic.go`。
+- `NewErrorByPbCodeWrap` 遇到已带 extproto 码的 cause 时原样返回，禁止中间层重包覆盖，RPC 链路码值全程保真。
+- 实现见 `common/errx/error.go`；业务侧示例见 `app/live/internal/logic/startmeetingrecordlogic.go`。
 
 > `http_code=429` 已映射为 `ResourceExhausted`；`_1_00_RATE_LIMITED (100701)` 会以限流语义返回，不会被误判为 500。
 
@@ -244,7 +245,7 @@ return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 | `httpx.ErrorCtx` / `httpx.OkJsonCtx` | 输出裸 JSON/纯文本，HTTP 状态随错误变化，客户端无法只认 `code` | `gtwx.WriteError` / `gtwx.WriteOK` |
 | 直接 `xhttp.JsonBaseResponseCtx` | 不解析 extproto，错误码会变成 gRPC 数字码或 `-1` | 同上 |
 | 裸 `http.Error` | 纯文本 + 4xx/5xx，破坏信封 | `gtwx.WriteError`；仅 webhook 等协议例外可用 |
-| 把 gRPC 数字码（3/5/16）直接返回 | 客户端无法区分业务语义 | `gtwx.WriteError` 或 `tool.NewErrorByPbCode` |
+| 把 gRPC 数字码（3/5/16）直接返回 | 客户端无法区分业务语义 | `gtwx.WriteError` 或 `errx.NewErrorByPbCode` |
 | 用 `0` 构造错误 | 成功与失败歧义 | 选一个非 0 的六位码 |
 | 在 `msg` 中放 SQL、连接串、堆栈 | 泄露内部信息 | 真实原因写日志，对外用固定文案 |
 | 用 HTTP 4xx/5xx 表达业务失败 | 与契约冲突 | HTTP 200 + 非 0 `code` |
@@ -268,7 +269,7 @@ return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
   - `server.Use(gtwx.RequestLogMiddleware)`
   - `gtwx.SetLogOkHandler()`
 - [ ] handler 只使用 `gtwx.WriteParseError` / `gtwx.WriteError` / `gtwx.WriteOK` 三个出口。
-- [ ] 业务错误由业务服务用 `tool.NewErrorByPbCode` / `NewErrorByPbCodeWrap` 构造，码来自 `extproto`，不使用 `0`。
+- [ ] 业务错误由业务服务用 `errx.NewErrorByPbCode` / `NewErrorByPbCodeWrap` 构造，码来自 `extproto`，不使用 `0`。
 - [ ] 鉴权失败、身份缺失、Basic 失败都有明确错误码，不返回裸状态码。
 - [ ] 下游错误依赖 `ErrorInfo.reason`；不要自己解析 gRPC 数字码。
 
@@ -348,10 +349,11 @@ curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 | `common/gtwx/response.go` | `WriteError/WriteOK` 等统一信封写出口 |
 | `common/errx/normalize.go` | `SuccessCode`、`PublicError`、`NormalizeError` |
 | `common/errx/codec.go` | `CodeFromStatus`、`IsDefinedCode`、`ErrorMessage` |
+| `common/errx/error.go` | `NewErrorByPbCode` / `NewErrorByPbCodeWrap` / `IsErrorByPbCode` |
+| `common/errx/thirdparty.go` | `NewThirdPartyAPIError` / `ParseThirdPartyAPIError` |
 | `common/gtwx/fold.go` | 网关折叠配置 `FoldConfig` 与默认透传策略 |
 | `common/gtwx/requestid.go` | `X-Request-Id` 中间件与 context 读取 |
 | `common/gtwx/cors.go` | 统一 CORS，暴露 `X-Request-Id` |
-| `common/tool/errorutil.go` | `NewErrorByPbCode` / `NewErrorByPbCodeWrap` |
 | `common/djisdk/error.go` | DJI 原始码 `PublicCode` / `GRPCStatus` |
 | `app/livegtw/livegtw.go` | livegtw 统一出口接线 |
 | `app/livegtw/internal/handler/routes.go` | JWT、中间件、前缀的实际生成结果 |

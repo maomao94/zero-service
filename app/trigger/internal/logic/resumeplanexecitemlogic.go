@@ -7,7 +7,7 @@ import (
 	"time"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/authctx"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/model"
 	"zero-service/third_party/extproto"
 
@@ -43,7 +43,7 @@ func (l *ResumePlanExecItemLogic) ResumePlanExecItem(in *trigger.ResumePlanExecI
 
 	// 检查参数
 	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.ExecId) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "参数错误")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM, "参数错误")
 	}
 
 	// 查询执行项
@@ -58,16 +58,16 @@ func (l *ResumePlanExecItemLogic) ResumePlanExecItem(in *trigger.ResumePlanExecI
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return &trigger.ResumePlanExecItemRes{}, nil
 		}
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_DB, "查询执行项失败")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_DB, "查询执行项失败")
 	}
 
 	if execItem.Status != model.StatusPaused {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划执行项非暂停,不可恢复")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划执行项非暂停,不可恢复")
 	}
 
 	var plan gormmodel.Plan
 	if err := db.Where("id = ?", execItem.PlanPk).First(&plan).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划失败")
 	}
 
 	// 执行事务
@@ -83,7 +83,7 @@ func (l *ResumePlanExecItemLogic) ResumePlanExecItem(in *trigger.ResumePlanExecI
 	})
 
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "恢复执行项事务失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "恢复执行项事务失败")
 	}
 
 	planscope.ExecScope(&execItem).Logger(l.ctx).Info("RPC 恢复执行项：执行项状态已更新，事务已提交")

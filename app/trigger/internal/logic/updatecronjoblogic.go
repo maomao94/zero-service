@@ -9,7 +9,7 @@ import (
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/carbonx"
 	"zero-service/common/crontask"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -36,13 +36,13 @@ func (l *UpdateCronJobLogic) UpdateCronJob(in *trigger.UpdateCronJobReq) (*trigg
 	existing, err := l.svcCtx.CronJobStore.GetByID(l.ctx, in.JobId)
 	if err != nil {
 		if errors.Is(err, crontask.ErrNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询待更新 Cron Job 失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询待更新 Cron Job 失败")
 	}
 	extra, err := cronjob.ParseExtra(existing.Extra)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "解析已有 Cron Job 身份失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "解析已有 Cron Job 身份失败")
 	}
 	task, groupID, err := buildCronJobTask(cronJobTaskData{
 		taskCode: existing.TaskCode, taskName: in.TaskName, taskType: extra.Type,
@@ -59,7 +59,7 @@ func (l *UpdateCronJobLogic) UpdateCronJob(in *trigger.UpdateCronJobReq) (*trigg
 	task.ID = existing.ID
 	task.Status = existing.Status
 	if err := l.svcCtx.CronJobStore.Update(l.ctx, task); err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "更新 Cron Job 失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "更新 Cron Job 失败")
 	}
 	nextRun := ""
 	if !task.NextRun.IsZero() {

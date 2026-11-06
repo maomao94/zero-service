@@ -5,7 +5,7 @@ import (
 
 	"zero-service/app/oryxserver/internal/svc"
 	"zero-service/app/oryxserver/oryxserver"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -28,12 +28,12 @@ func NewRecordRemoveLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Reco
 // 删除录制文件
 func (l *RecordRemoveLogic) RecordRemove(in *oryxserver.RecordRemoveReq) (*oryxserver.RecordRemoveRes, error) {
 	if in.Uuid == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "录制任务 UUID 不能为空")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "录制任务 UUID 不能为空")
 	}
 	err := l.svcCtx.OryxClient.RecordRemove(l.ctx, in.Uuid)
 	if err != nil {
 		l.Logger.Errorf("调用 Oryx API 失败: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用 Oryx API 失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用 Oryx API 失败")
 	}
 	return &oryxserver.RecordRemoveRes{}, nil
 }

@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"encoding/json"
+	"zero-service/common/errx"
 	"zero-service/common/tool"
 	"zero-service/socketapp/socketpush/internal/svc"
 	"zero-service/socketapp/socketpush/socketpush"
@@ -28,7 +29,7 @@ func NewVerifyTokenLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Verif
 // 验证token
 func (l *VerifyTokenLogic) VerifyToken(in *socketpush.VerifyTokenReq) (*socketpush.VerifyTokenRes, error) {
 	if len(in.AccessToken) == 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "access token is empty")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "access token is empty")
 	}
 	secrets := []string{l.svcCtx.Config.JwtAuth.AccessSecret}
 	if len(l.svcCtx.Config.JwtAuth.PrevAccessSecret) > 0 {
@@ -36,11 +37,11 @@ func (l *VerifyTokenLogic) VerifyToken(in *socketpush.VerifyTokenReq) (*socketpu
 	}
 	claims, err := tool.ParseToken(in.AccessToken, secrets...)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_UNAUTHORIZED, err, "invalid access token")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_UNAUTHORIZED, err, "invalid access token")
 	}
 	claimJSON, err := json.Marshal(claims)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_INTERNAL, "failed to process token claims")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_INTERNAL, "failed to process token claims")
 	}
 	res := &socketpush.VerifyTokenRes{
 		ClaimJson: string(claimJSON),

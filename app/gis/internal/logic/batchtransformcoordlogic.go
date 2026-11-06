@@ -6,7 +6,7 @@ import (
 	"zero-service/app/gis/gis"
 
 	"zero-service/app/gis/internal/svc"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -30,7 +30,7 @@ func NewBatchTransformCoordLogic(ctx context.Context, svcCtx *svc.ServiceContext
 // 若 source == target 直接拷贝返回，避免无意义计算。
 func (l *BatchTransformCoordLogic) BatchTransformCoord(in *gis.BatchTransformCoordReq) (*gis.BatchTransformCoordRes, error) {
 	if len(in.Points) == 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "points")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "points")
 	}
 	if err := ValidatePoints(in.Points...); err != nil {
 		return nil, err

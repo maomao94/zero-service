@@ -29,6 +29,9 @@ skills-lock.json
 web/*/node_modules/
 web/*/dist/
 
+# bridgemodbus 压测产物（zgh_start.sh 生成）
+app/bridgemodbus/*_report.html
+
 # Kingbase 部署包（镜像 tar 与数据卷不入库）
 deploy/kingbase/*.tar
 deploy/kingbase/data/

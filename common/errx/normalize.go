@@ -1,12 +1,9 @@
 package errx
 
 import (
-	"errors"
-
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
-	xerrors "github.com/zeromicro/x/errors"
 )
 
 // SuccessCode 是统一成功码，所有成功响应都使用它。
@@ -18,7 +15,8 @@ func IsSuccess(code int) bool {
 }
 
 // PublicError 将任意错误转换为可对外返回的六位码与文案。
-// 优先级：CodeMsg → gRPC ErrorInfo.reason（仅 extproto 中已登记的码）→ gRPC Code 兜底。
+// 优先级与 CodeFromStatus 保持一致：errx.Error → CodeMsg → gRPC ErrorInfo.reason
+// （仅 extproto 中已登记的码）→ gRPC Code 兜底。
 //
 // 它只做归一化，不做折叠；折叠是网关的展示策略，见 common/gtwx。
 func PublicError(err error) (int, string) {
@@ -26,18 +24,9 @@ func PublicError(err error) (int, string) {
 		return SuccessCode, ""
 	}
 
-	var codeMsg *xerrors.CodeMsg
-	if errors.As(err, &codeMsg) && codeMsg != nil {
-		code := codeMsg.Code
-		if code == SuccessCode {
-			// 错误对象不允许携带成功码，避免把失败当成功。
-			code = int(extproto.Code__1_00_UNKNOWN)
-		}
-		return code, codeMsg.Msg
-	}
-
 	code, msg := CodeFromStatus(err)
-	if code == 0 {
+	if code == SuccessCode {
+		// 错误对象不允许携带成功码，避免把失败当成功。
 		code = int(extproto.Code__1_00_UNKNOWN)
 	}
 	if msg == "" {

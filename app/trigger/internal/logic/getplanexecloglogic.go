@@ -5,7 +5,7 @@ import (
 	"errors"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/carbonx"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/svc"
@@ -42,9 +42,9 @@ func (l *GetPlanExecLogLogic) GetPlanExecLog(in *trigger.GetPlanExecLogReq) (*tr
 	err = l.svcCtx.DB.WithContext(l.ctx).Where("id = ?", in.Id).First(&execLog).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
 		}
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_DB, "查询执行日志失败")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_DB, "查询执行日志失败")
 	}
 
 	// 构建响应

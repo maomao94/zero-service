@@ -8,7 +8,6 @@ import (
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
 
-	"github.com/grid-x/modbus"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -28,42 +27,65 @@ func NewReadDeviceIdentificationLogic(ctx context.Context, svcCtx *svc.ServiceCo
 
 // 读取设备标识 (Function Code 0x2B / 0x0E)
 func (l *ReadDeviceIdentificationLogic) ReadDeviceIdentification(in *bridgemodbus.ReadDeviceIdentificationReq) (*bridgemodbus.ReadDeviceIdentificationRes, error) {
-	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)
+	// 只接受 0x01 基本 / 0x02 常规 / 0x03 扩展；
+	// 0x04 指定对象必须调用 ReadDeviceIdentificationSpecificObject。
+	code, err := validateReadDeviceIDCode(in.ReadDeviceIdCode)
 	if err != nil {
 		return nil, err
 	}
-	mbCli := mdCliPool.Get()
-	defer mdCliPool.Put(mbCli)
-	results, err := mbCli.ReadDeviceIdentification(l.ctx, modbus.ReadDeviceIDCode(in.ReadDeviceIdCode))
+
+	mbCli, err := l.svcCtx.GetModbusClient(l.ctx, in.ModbusCode)
 	if err != nil {
 		return nil, err
 	}
-	resultsDec := make(map[uint32]string)      // 十进制
-	resultsHex := make(map[string]string)      // 十六进制
-	resultsSemantic := make(map[string]string) // 语义化
+
+	results, err := mbCli.ReadDeviceIdentification(l.ctx, code)
+	if err != nil {
+		return nil, wrapModbusError("读取设备标识", err)
+	}
+	return &bridgemodbus.ReadDeviceIdentificationRes{
+		Results:         toDeviceIDDec(results),
+		HexResults:      toDeviceIDHex(results),
+		SemanticResults: toDeviceIDSemantic(results),
+	}, nil
+}
+
+// toDeviceIDDec 把对象 ID → 原始值映射转为十进制 key 的响应 map。
+func toDeviceIDDec(results map[byte][]byte) map[uint32]string {
+	converted := make(map[uint32]string, len(results))
 	for id, raw := range results {
-		val := string(raw)
 		if len(raw) == 0 {
 			continue
 		}
-
-		// 1. 十进制
-		resultsDec[uint32(id)] = val
-
-		// 2. 十六进制
-		hexKey := fmt.Sprintf("0x%02X", id)
-		resultsHex[hexKey] = val
-
-		// 3. 语义化
-		if name, ok := modbusx.DeviceIDObjectNames[id]; ok {
-			resultsSemantic[name] = val
-		} else {
-			resultsSemantic["Object_"+hexKey] = val // fallback
-		}
+		converted[uint32(id)] = string(raw)
 	}
-	return &bridgemodbus.ReadDeviceIdentificationRes{
-		Results:         resultsDec,
-		HexResults:      resultsHex,
-		SemanticResults: resultsSemantic,
-	}, nil
+	return converted
+}
+
+// toDeviceIDHex 把对象 ID → 原始值映射转为十六进制 key 的响应 map。
+func toDeviceIDHex(results map[byte][]byte) map[string]string {
+	converted := make(map[string]string, len(results))
+	for id, raw := range results {
+		if len(raw) == 0 {
+			continue
+		}
+		converted[fmt.Sprintf("0x%02X", id)] = string(raw)
+	}
+	return converted
+}
+
+// toDeviceIDSemantic 把对象 ID 映射为 Modbus 标准语义名称，未知对象回退为 Object_0xXX。
+func toDeviceIDSemantic(results map[byte][]byte) map[string]string {
+	converted := make(map[string]string, len(results))
+	for id, raw := range results {
+		if len(raw) == 0 {
+			continue
+		}
+		if name, ok := modbusx.DeviceIDObjectName(id); ok {
+			converted[name] = string(raw)
+			continue
+		}
+		converted["Object_"+fmt.Sprintf("0x%02X", id)] = string(raw)
+	}
+	return converted
 }
