@@ -9,7 +9,7 @@ import (
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/authctx"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/model"
 	"zero-service/third_party/extproto"
 
@@ -42,7 +42,7 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 
 	// 检查参数
 	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.BatchId) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "参数错误")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM, "参数错误")
 	}
 
 	// 查询计划批次
@@ -57,23 +57,23 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return &trigger.ResumePlanBatchRes{}, nil
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划批次失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划批次失败")
 	}
 
 	// 查询计划
 	var plan gormmodel.Plan
 	if err := db.Where("plan_id = ?", planBatch.PlanId).First(&plan).Error; err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划失败")
 	}
 
 	if plan.Status == model.PlanStatusTerminated || plan.FinishedTime.Valid {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划状态已结束,无需恢复")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划状态已结束,无需恢复")
 	}
 	if planBatch.Status == model.PlanStatusTerminated || planBatch.FinishedTime.Valid {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次状态已结束,无需恢复")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次状态已结束,无需恢复")
 	}
 	if planBatch.Status != model.PlanStatusPaused {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次非暂停,不可恢复")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次非暂停,不可恢复")
 	}
 
 	// 执行事务
@@ -102,7 +102,7 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 	})
 
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "恢复批次事务失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "恢复批次事务失败")
 	}
 
 	planscope.BatchScope(&plan, &planBatch).Logger(l.ctx).Info("RPC 恢复批次：批次状态已更新，事务已提交")

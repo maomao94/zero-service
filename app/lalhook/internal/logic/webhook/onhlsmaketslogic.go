@@ -3,7 +3,7 @@ package webhook
 import (
 	"context"
 	"database/sql"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/model"
 	"zero-service/third_party/extproto"
 
@@ -34,15 +34,15 @@ func NewOnHlsMakeTsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OnHls
 func (l *OnHlsMakeTsLogic) OnHlsMakeTs(req *types.OnHlsMakeTsRequest) (resp *types.EmptyReply, err error) {
 	tsfileSplitSlice := strutil.SplitAndTrim(req.TsFile, "-")
 	if len(tsfileSplitSlice) < 2 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "tsFile 格式错误，无法解析时间戳")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "tsFile 格式错误，无法解析时间戳")
 	}
 	tsTimestampStr := tsfileSplitSlice[len(tsfileSplitSlice)-2]
 	tsTimestamp, err := convertor2.ToInt(tsTimestampStr)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "tsTimestamp 格式错误")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "tsTimestamp 格式错误")
 	}
 	if tsTimestamp <= 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "tsTimestamp 必须大于 0")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "tsTimestamp 必须大于 0")
 	}
 	hlsTsFiles := model.HlsTsFiles{
 		Event:        req.Event,

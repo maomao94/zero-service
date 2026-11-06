@@ -8,8 +8,8 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/carbonx"
+	"zero-service/common/errx"
 	"zero-service/common/rrulex"
-	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
 	"github.com/teambition/rrule-go"
@@ -38,11 +38,11 @@ func (l *CalcPlanTaskDateLogic) CalcPlanTaskDate(in *trigger.CalcPlanTaskDateReq
 	}
 	schedule, err := cronjob.CompileSchedule(in.Rule, in.StartTime, in.EndTime, in.ExcludeDates, in.SpecifiedTimes, in.ExcludedTimes, false, time.Now())
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "生成计划规则失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "生成计划规则失败")
 	}
 	set, err := rrule.StrToRRuleSet(schedule.RRuleStr)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "解析计划规则失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "解析计划规则失败")
 	}
 	// 获取所有触发时间
 	dates := set.All()
@@ -52,7 +52,7 @@ func (l *CalcPlanTaskDateLogic) CalcPlanTaskDate(in *trigger.CalcPlanTaskDateReq
 	}
 	scheduleDescription, err := rrulex.Describe(schedule.RRuleStr)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "生成计划规则描述失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "生成计划规则描述失败")
 	}
 	return &trigger.CalcPlanTaskDateRes{
 		PlanDates:           planDates,

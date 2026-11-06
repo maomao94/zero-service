@@ -2,7 +2,7 @@ package logic
 
 import (
 	"context"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/model/gormmodel"
 	"zero-service/third_party/extproto"
 
@@ -40,13 +40,13 @@ func (l *DeleteConfigLogic) DeleteConfig(in *bridgemodbus.DeleteConfigReq) (*bri
 		Pluck("modbus_code", &modbusCodes).Error
 	if err != nil {
 		logx.Errorf("Query modbus_code failed, ids=%v, err=%v", in.Ids, err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询待删除配置失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询待删除配置失败")
 	}
 
 	err = l.svcCtx.DB.WithContext(l.ctx).Delete(&gormmodel.ModbusSlaveConfig{}, in.Ids).Error
 	if err != nil {
 		logx.Errorf("Batch delete failed, ids=%v, err=%v", in.Ids, err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "批量删除配置失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "批量删除配置失败")
 	}
 
 	for _, modbusCode := range modbusCodes {

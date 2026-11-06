@@ -11,7 +11,6 @@ import (
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/common/errx"
 	"zero-service/common/modbusx"
-	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
 	"github.com/grid-x/modbus"
@@ -155,7 +154,7 @@ func TestWrapModbusErrorException(t *testing.T) {
 		t.Fatalf("code = %d, want %d", code, extproto.Code__1_00_THIRD_PARTY_API)
 	}
 
-	vendor, vendorCode, message, ok := tool.ParseThirdPartyAPIError(msg)
+	vendor, vendorCode, message, ok := errx.ParseThirdPartyAPIError(msg)
 	if !ok {
 		t.Fatalf("ParseThirdPartyAPIError(%q) ok = false", msg)
 	}

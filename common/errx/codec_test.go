@@ -1,6 +1,7 @@
 package errx
 
 import (
+	"context"
 	"testing"
 
 	"zero-service/third_party/extproto"
@@ -34,6 +35,9 @@ func TestCodeFromStatus(t *testing.T) {
 		{name: "dji reason rejected", err: withDJIReason.Err(), code: 100999, msg: SystemBusyMessage},
 		{name: "not found fallback", err: status.Error(codes.NotFound, "missing"), code: 100202, msg: "missing"},
 		{name: "deadline fallback", err: status.Error(codes.DeadlineExceeded, ""), code: 100997, msg: "系统超时"},
+		{name: "canceled fallback", err: status.Error(codes.Canceled, ""), code: 100996, msg: "请求已取消"},
+		{name: "context canceled", err: context.Canceled, code: 100996, msg: "context canceled"},
+		{name: "context deadline", err: context.DeadlineExceeded, code: 100997, msg: "context deadline exceeded"},
 		{name: "code msg", err: xerrors.New(130102, "bad secret"), code: 130102, msg: "bad secret"},
 	}
 

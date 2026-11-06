@@ -11,7 +11,7 @@ import (
 	"zero-service/aiapp/aisolo/internal/svc"
 	"zero-service/aiapp/aisolo/internal/turn"
 	"zero-service/common/einox/protocol"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 )
 
@@ -32,22 +32,22 @@ func NewAskStreamLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AskStre
 // AskStream 流式对话。此 handler 是薄壳, 核心在 turn.Executor。
 func (l *AskStreamLogic) AskStream(in *aisolo.AskReq, stream aisolo.AiSolo_AskStreamServer) error {
 	if l.svcCtx.Executor == nil {
-		return tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "executor not ready (chat model may be missing)")
+		return errx.NewErrorByPbCode(extproto.Code__1_00_BIZ, "executor not ready (chat model may be missing)")
 	}
 	if in == nil {
-		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "ask request is required")
+		return errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "ask request is required")
 	}
 	sessionID := strings.TrimSpace(in.SessionId)
 	userID := strings.TrimSpace(in.UserId)
 	message := strings.TrimSpace(in.Message)
 	if sessionID == "" {
-		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "session_id is required")
+		return errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "session_id is required")
 	}
 	if userID == "" {
-		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "user_id is required")
+		return errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "user_id is required")
 	}
 	if message == "" {
-		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "message is required")
+		return errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "message is required")
 	}
 
 	turnID := uuid.NewString()

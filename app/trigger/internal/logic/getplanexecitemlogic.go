@@ -5,7 +5,7 @@ import (
 	"errors"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/carbonx"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/svc"
@@ -38,7 +38,7 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		return nil, err
 	}
 	if strutil.IsBlank(in.Id) && strutil.IsBlank(in.ExecId) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "参数错误")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM, "参数错误")
 	}
 	var execItem gormmodel.PlanExecItem
 	if !strutil.IsBlank(in.Id) {
@@ -48,9 +48,9 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 	}
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
 		}
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_DB, "查询执行项失败")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_DB, "查询执行项失败")
 	}
 
 	// 构建响应

@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 	"zero-service/common/bytex"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
@@ -42,7 +42,7 @@ func (l *WriteMultipleRegistersLogic) WriteMultipleRegisters(in *bridgemodbus.Wr
 
 	uint16Values, errIdx, err := bytex.Uint32SliceToUint16SliceValidate(in.Values)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID,
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID,
 			"第 %d 个值超过 16 位寄存器的最大值 (65535)", errIdx+1)
 	}
 

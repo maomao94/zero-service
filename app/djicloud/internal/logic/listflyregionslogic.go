@@ -7,8 +7,8 @@ import (
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
+	"zero-service/common/errx"
 	"zero-service/common/gormx"
-	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -40,12 +40,12 @@ func (l *ListFlyRegionsLogic) ListFlyRegions(in *djicloud.ListFlyRegionsReq) (*d
 	var regions []gormmodel.DjiFlyRegion
 	pageResult, err := gormx.QueryPage(db.Order("id DESC"), in.GetPage(), in.GetPageSize(), &regions)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询飞行区列表失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询飞行区列表失败")
 	}
 
 	needSign := in.GetSignUrl()
 	if needSign && l.svcCtx.OssTemplate == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_INTERNAL, "OSS 未配置")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_INTERNAL, "OSS 未配置")
 	}
 
 	list := make([]*djicloud.FlyRegionInfo, len(regions))

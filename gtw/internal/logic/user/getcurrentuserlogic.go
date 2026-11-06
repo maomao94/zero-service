@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 	"zero-service/common/authctx"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 	"zero-service/zerorpc/zerorpc"
 
@@ -45,6 +45,6 @@ func (l *GetCurrentUserLogic) GetCurrentUser(req *types.GetCurrentUserRequest) (
 			User: user,
 		}, nil
 	} else {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_UNAUTHORIZED, "未登录")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_UNAUTHORIZED, "未登录")
 	}
 }

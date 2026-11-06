@@ -3,9 +3,9 @@ package svc
 import (
 	"context"
 	"errors"
+	"zero-service/common/errx"
 	"zero-service/common/gormx"
 	"zero-service/common/modbusx"
-	"zero-service/common/tool"
 	"zero-service/model/gormmodel"
 	"zero-service/third_party/extproto"
 
@@ -35,10 +35,7 @@ func (s *ServiceContext) GetModbusClient(ctx context.Context, modbusCode string)
 		return nil, err
 	}
 	// loadModbusClientConfig 的错误已带平台码：不存在/未启用/转换失败包装了
-	// ErrConfigUnavailable，查库失败是 100201，均保持原码返回。
-	if errors.Is(err, modbusx.ErrConfigUnavailable) || tool.IsErrorByPbCode(err, extproto.Code__1_00_DB) {
-		return nil, err
-	}
+	// ErrConfigUnavailable，查库失败是 100201；NewErrorByPbCodeWrap 会保留原码和文案。
 
 	message := "获取 Modbus 客户端失败"
 	switch {
@@ -47,7 +44,7 @@ func (s *ServiceContext) GetModbusClient(ctx context.Context, modbusCode string)
 	case errors.Is(err, modbusx.ErrConfigChanged):
 		message = "Modbus 配置已变更，请重新发起请求"
 	}
-	return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ, err, message)
+	return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ, err, message)
 }
 
 // loadModbusClientConfig 查询当前已提交的表配置，错误保持原平台码返回。
@@ -58,27 +55,27 @@ func (s *ServiceContext) loadModbusClientConfig(ctx context.Context, modbusCode 
 		Where("modbus_code = ?", modbusCode).
 		First(&slaveConfig).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_RECORD_NOT_EXIST,
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_RECORD_NOT_EXIST,
 			modbusx.ErrConfigUnavailable, "Modbus配置不存在: "+modbusCode)
 	}
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询Modbus配置失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询Modbus配置失败")
 	}
 	if slaveConfig.Status != 1 {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ,
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ,
 			modbusx.ErrConfigUnavailable, "配置未启用: "+modbusCode)
 	}
 	// 历史行可能因旧版接口省略 slave 而落库为 0；不能静默套用文件默认的 1，
 	// 否则请求会指向同一网关下的另一台设备。非法值按不可用处理，后台校验会移除缓存。
 	if slaveConfig.Slave < modbusx.MinSlave || slaveConfig.Slave > modbusx.MaxSlave {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ,
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ,
 			modbusx.ErrConfigUnavailable,
 			"配置从站地址非法: %s（slave=%d，要求 [%d, %d]）",
 			modbusCode, slaveConfig.Slave, modbusx.MinSlave, modbusx.MaxSlave)
 	}
 	clientConf := s.ModbusConfigConverter.ToClientConf(&slaveConfig)
 	if clientConf == nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ,
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ,
 			modbusx.ErrConfigUnavailable, "配置转换失败")
 	}
 	return clientConf, nil

@@ -8,7 +8,7 @@ import (
 	"zero-service/app/live/live"
 	"zero-service/app/live/model/gormmodel"
 	"zero-service/common/authctx"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/livekit/protocol/livekit"
@@ -402,11 +402,11 @@ func TestWebhookInvalidDataRejected(t *testing.T) {
 	svcCtx := newTestSvcCtx(t, &liveKitMock{})
 	wh := NewWebhookNotifyLogic(context.Background(), svcCtx)
 	// 空数据
-	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{}); !tool.IsErrorByPbCode(err, extproto.Code__1_00_PARAM_INVALID) {
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{}); !errx.IsErrorByPbCode(err, extproto.Code__1_00_PARAM_INVALID) {
 		t.Fatalf("want PARAM_INVALID for empty data, got %v", err)
 	}
 	// 非法字节
-	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: []byte("garbage")}); !tool.IsErrorByPbCode(err, extproto.Code__1_00_PARAM_INVALID) {
+	if _, err := wh.WebhookNotify(&live.WebhookNotifyReq{Data: []byte("garbage")}); !errx.IsErrorByPbCode(err, extproto.Code__1_00_PARAM_INVALID) {
 		t.Fatalf("want PARAM_INVALID for garbage data, got %v", err)
 	}
 }

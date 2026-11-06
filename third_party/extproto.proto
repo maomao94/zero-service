@@ -110,6 +110,7 @@ enum Code {
   _1_00_METHOD_NOT_ALLOWED = 100802 [(name) = "请求方法不允许", (http_code) = 405];
 
   // 系统兜底（DEF 900-999）
+  _1_00_CANCELED = 100996 [(name) = "请求已取消", (http_code) = 408];
   _1_00_TIMEOUT = 100997 [(name) = "系统超时", (http_code) = 504];
   _1_00_INTERNAL = 100998 [(name) = "系统内部错误", (http_code) = 500];
   _1_00_UNKNOWN = 100999 [(name) = "未知错误", (http_code) = 500];

@@ -7,7 +7,7 @@ import (
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/podengine/podengine"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"google.golang.org/grpc"
@@ -40,7 +40,7 @@ func (f *fakeBridgeModbus) WriteSingleCoil(ctx context.Context, in *bridgemodbus
 func TestRegistryUnknownMethod(t *testing.T) {
 	registry := NewRegistry(&fakePodEngine{}, nil)
 	_, err := registry.Invoke(context.Background(), "pod.unknown", `{}`)
-	if !tool.IsErrorByPbCode(err, extproto.Code__1_30_METHOD_NOT_OPEN) {
+	if !errx.IsErrorByPbCode(err, extproto.Code__1_30_METHOD_NOT_OPEN) {
 		t.Fatalf("error = %v, want 130103", err)
 	}
 }
@@ -49,7 +49,7 @@ func TestRegistryInvalidData(t *testing.T) {
 	registry := NewRegistry(&fakePodEngine{}, nil)
 	for _, data := range []string{`{"limit":"abc"}`, `{"unknownField":1}`, `{`} {
 		_, err := registry.Invoke(context.Background(), MethodPodList, data)
-		if !tool.IsErrorByPbCode(err, extproto.Code__1_00_PARAM) {
+		if !errx.IsErrorByPbCode(err, extproto.Code__1_00_PARAM) {
 			t.Fatalf("data %s error = %v, want 100101", data, err)
 		}
 	}

@@ -5,7 +5,7 @@ import (
 	"zero-service/app/gis/gis"
 
 	"zero-service/app/gis/internal/svc"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/mmcloughlin/geohash"
@@ -31,7 +31,7 @@ func (l *EncodeGeoHashMultiLogic) EncodeGeoHashMulti(in *gis.EncodeGeoHashMultiR
 		return nil, err
 	}
 	if len(in.Precisions) == 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "precisions")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "precisions")
 	}
 
 	items := make([]*gis.GeoHashIndex, 0, len(in.Precisions))

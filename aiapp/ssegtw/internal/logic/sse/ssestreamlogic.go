@@ -11,6 +11,7 @@ import (
 
 	"zero-service/aiapp/ssegtw/internal/svc"
 	"zero-service/aiapp/ssegtw/internal/types"
+	"zero-service/common/errx"
 	"zero-service/common/ssex"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
@@ -54,7 +55,7 @@ func (l *SseStreamLogic) SseStream(req *types.SSEStreamRequest) error {
 	// 1. 注册完成信号（ReplyPool）
 	donePromise, err := l.svcCtx.PendingReg.Register(channel, 60*time.Second)
 	if err != nil {
-		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "register pending failed")
+		return errx.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "register pending failed")
 	}
 
 	// 2. 订阅事件流（EventEmitter）

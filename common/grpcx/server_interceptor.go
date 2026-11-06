@@ -8,8 +8,6 @@ import (
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // LoggerInterceptor 一元 RPC 服务端拦截器：
@@ -24,12 +22,13 @@ func LoggerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo,
 	defer func() {
 		if r := recover(); r != nil {
 			logx.WithContext(ctx).Errorf("rpc panic: %s: %v\n%s", method, r, debug.Stack())
-			resp, err = nil, status.Error(codes.Internal, errx.SystemBusyMessage)
+			resp, err = nil, errx.SystemBusyError()
 			return
 		}
 		if err != nil {
-			logx.WithContext(ctx).Errorf("rpc error: %s: %+v", method, err)
 			err = errx.ToGRPCStatus(err)
+			code, _ := errx.CodeFromStatus(err)
+			logx.WithContext(ctx).Errorf("rpc error: method=%s code=%d err=%+v", method, code, err)
 		}
 	}()
 	return handler(ctx, req)
@@ -48,12 +47,13 @@ func StreamLoggerInterceptor(srv any, ss grpc.ServerStream, info *grpc.StreamSer
 	defer func() {
 		if r := recover(); r != nil {
 			logx.WithContext(ctx).Errorf("rpc panic: %s: %v\n%s", method, r, debug.Stack())
-			err = status.Error(codes.Internal, errx.SystemBusyMessage)
+			err = errx.SystemBusyError()
 			return
 		}
 		if err != nil {
-			logx.WithContext(ctx).Errorf("rpc error: %s: %+v", method, err)
 			err = errx.ToGRPCStatus(err)
+			code, _ := errx.CodeFromStatus(err)
+			logx.WithContext(ctx).Errorf("rpc error: method=%s code=%d err=%+v", method, code, err)
 		}
 	}()
 	return handler(srv, &wrappedStream{ServerStream: ss, ctx: ctx})

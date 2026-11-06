@@ -6,7 +6,7 @@ import (
 
 	"zero-service/app/oryxserver/internal/svc"
 	"zero-service/app/oryxserver/oryxserver"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -31,7 +31,7 @@ func (l *SrsVhostsLogic) SrsVhosts(in *oryxserver.SrsVhostsReq) (*oryxserver.Srs
 	data, err := l.svcCtx.OryxClient.SrsVhosts(l.ctx)
 	if err != nil {
 		l.Logger.Errorf("调用 SRS API 失败: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用 SRS API 失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "调用 SRS API 失败")
 	}
 
 	items := make([]*oryxserver.SrsVhostItem, 0, len(data.Vhosts))

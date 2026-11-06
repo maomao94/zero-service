@@ -187,6 +187,14 @@ export const ERROR_DOCS: ErrorDoc[] = [
     group: '网关',
   },
   {
+    code: 100996,
+    http: 408,
+    title: '请求已取消',
+    description: '调用方取消请求，或连接在响应返回前被关闭。',
+    suggestion: '确认客户端是否需要重试；取消通常由超时或主动断开触发。',
+    group: '系统',
+  },
+  {
     code: 100997,
     http: 504,
     title: '系统超时',
