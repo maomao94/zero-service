@@ -3,12 +3,19 @@ package grpcx
 import (
 	"context"
 	"errors"
+	"strconv"
 	"testing"
 
 	"zero-service/common/authctx"
+	"zero-service/common/errx"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 func TestLoggerInterceptor(t *testing.T) {
@@ -36,9 +43,44 @@ func TestLoggerInterceptor(t *testing.T) {
 	if gotResp != wantResp {
 		t.Fatalf("response = %v, want original response", gotResp)
 	}
-	if err != wantErr {
-		t.Fatalf("error = %v, want identical error %v", err, wantErr)
+	assertRPCStatus(t, err, codes.Internal, errx.SystemBusyMessage)
+}
+
+func TestLoggerInterceptorKeepsBusinessCode(t *testing.T) {
+	wantErr := tool.NewErrorByPbCode(extproto.Code__1_00_DB, "查询设备失败")
+
+	_, err := LoggerInterceptor(context.Background(), &struct{}{}, &grpc.UnaryServerInfo{FullMethod: "/test.Service/Unary"},
+		func(ctx context.Context, req any) (any, error) {
+			return nil, wantErr
+		})
+
+	assertRPCStatus(t, err, codes.Internal, "查询设备失败")
+	if reason := rpcErrorReason(t, err); reason != int(extproto.Code__1_00_DB) {
+		t.Fatalf("reason = %d, want %d", reason, int(extproto.Code__1_00_DB))
 	}
+}
+
+func TestLoggerInterceptorKeepsContextError(t *testing.T) {
+	_, err := LoggerInterceptor(context.Background(), &struct{}{}, &grpc.UnaryServerInfo{FullMethod: "/test.Service/Unary"},
+		func(ctx context.Context, req any) (any, error) {
+			return nil, context.DeadlineExceeded
+		})
+
+	if code := status.Code(err); code != codes.DeadlineExceeded {
+		t.Fatalf("code = %v, want %v", code, codes.DeadlineExceeded)
+	}
+}
+
+func TestLoggerInterceptorRecoversPanic(t *testing.T) {
+	gotResp, err := LoggerInterceptor(context.Background(), &struct{}{}, &grpc.UnaryServerInfo{FullMethod: "/test.Service/Unary"},
+		func(ctx context.Context, req any) (any, error) {
+			panic("boom: password=secret")
+		})
+
+	if gotResp != nil {
+		t.Fatalf("response = %v, want nil", gotResp)
+	}
+	assertRPCStatus(t, err, codes.Internal, errx.SystemBusyMessage)
 }
 
 func TestStreamLoggerInterceptor(t *testing.T) {
@@ -66,9 +108,33 @@ func TestStreamLoggerInterceptor(t *testing.T) {
 	if !called {
 		t.Fatal("handler was not called")
 	}
-	if err != wantErr {
-		t.Fatalf("error = %v, want identical error %v", err, wantErr)
+	assertRPCStatus(t, err, codes.Internal, errx.SystemBusyMessage)
+}
+
+func TestStreamLoggerInterceptorKeepsBusinessCode(t *testing.T) {
+	wantErr := tool.NewErrorByPbCode(extproto.Code__1_00_DB, "查询设备失败")
+	originalStream := &serverStreamStub{ctx: context.Background()}
+
+	err := StreamLoggerInterceptor(&struct{}{}, originalStream, &grpc.StreamServerInfo{FullMethod: "/test.Service/Watch"},
+		func(srv any, stream grpc.ServerStream) error {
+			return wantErr
+		})
+
+	assertRPCStatus(t, err, codes.Internal, "查询设备失败")
+	if reason := rpcErrorReason(t, err); reason != int(extproto.Code__1_00_DB) {
+		t.Fatalf("reason = %d, want %d", reason, int(extproto.Code__1_00_DB))
 	}
+}
+
+func TestStreamLoggerInterceptorRecoversPanic(t *testing.T) {
+	originalStream := &serverStreamStub{ctx: context.Background()}
+
+	err := StreamLoggerInterceptor(&struct{}{}, originalStream, &grpc.StreamServerInfo{FullMethod: "/test.Service/Watch"},
+		func(srv any, stream grpc.ServerStream) error {
+			panic("boom: password=secret")
+		})
+
+	assertRPCStatus(t, err, codes.Internal, errx.SystemBusyMessage)
 }
 
 type serverStreamStub struct {
@@ -78,4 +144,41 @@ type serverStreamStub struct {
 
 func (s *serverStreamStub) Context() context.Context {
 	return s.ctx
+}
+
+func assertRPCStatus(t *testing.T, err error, wantCode codes.Code, wantMsg string) {
+	t.Helper()
+
+	st, ok := status.FromError(err)
+	if !ok {
+		t.Fatalf("error %v is not a gRPC status", err)
+	}
+	if st.Code() != wantCode {
+		t.Fatalf("code = %v, want %v", st.Code(), wantCode)
+	}
+	if st.Message() != wantMsg {
+		t.Fatalf("message = %q, want %q", st.Message(), wantMsg)
+	}
+}
+
+func rpcErrorReason(t *testing.T, err error) int {
+	t.Helper()
+
+	st, ok := status.FromError(err)
+	if !ok {
+		t.Fatalf("error %v is not a gRPC status", err)
+	}
+	for _, detail := range st.Details() {
+		info, ok := detail.(*errdetails.ErrorInfo)
+		if !ok {
+			continue
+		}
+		reason, convErr := strconv.Atoi(info.GetReason())
+		if convErr != nil {
+			t.Fatalf("reason %q is not numeric: %v", info.GetReason(), convErr)
+		}
+		return reason
+	}
+	t.Fatalf("error %v has no ErrorInfo detail", err)
+	return 0
 }

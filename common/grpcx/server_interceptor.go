@@ -2,32 +2,61 @@ package grpcx
 
 import (
 	"context"
+	"runtime/debug"
+
+	"zero-service/common/errx"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // LoggerInterceptor 一元 RPC 服务端拦截器：
-// 从 gRPC incoming metadata 提取上下文字段，注入到 handler 的 context 中。
+// 从 gRPC incoming metadata 提取上下文字段，注入到 handler 的 context 中；
+// 在出口记录错误、恢复 panic，并把未转换的错误归一化为合规 status。
 func LoggerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 	ctx = ExtractFromGrpcMD(ctx)
-	resp, err = handler(ctx, req)
-	if err != nil {
-		logx.WithContext(ctx).Errorf("rpc error: %+v", err)
+	method := ""
+	if info != nil {
+		method = info.FullMethod
 	}
-	return resp, err
+	defer func() {
+		if r := recover(); r != nil {
+			logx.WithContext(ctx).Errorf("rpc panic: %s: %v\n%s", method, r, debug.Stack())
+			resp, err = nil, status.Error(codes.Internal, errx.SystemBusyMessage)
+			return
+		}
+		if err != nil {
+			logx.WithContext(ctx).Errorf("rpc error: %s: %+v", method, err)
+			err = errx.ToGRPCStatus(err)
+		}
+	}()
+	return handler(ctx, req)
 }
 
 // StreamLoggerInterceptor 流式 RPC 服务端拦截器：
 // 从 gRPC incoming metadata 提取上下文字段，包装到 stream.Context() 中。
 // 解决流式 RPC（如 ChatCompletionStream）中 context values 丢失的问题。
-func StreamLoggerInterceptor(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+// 出口的错误处理与 panic 恢复策略与一元拦截器一致。
+func StreamLoggerInterceptor(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
 	ctx := ExtractFromGrpcMD(ss.Context())
-	err := handler(srv, &wrappedStream{ServerStream: ss, ctx: ctx})
-	if err != nil {
-		logx.WithContext(ctx).Errorf("rpc error: %+v", err)
+	method := ""
+	if info != nil {
+		method = info.FullMethod
 	}
-	return err
+	defer func() {
+		if r := recover(); r != nil {
+			logx.WithContext(ctx).Errorf("rpc panic: %s: %v\n%s", method, r, debug.Stack())
+			err = status.Error(codes.Internal, errx.SystemBusyMessage)
+			return
+		}
+		if err != nil {
+			logx.WithContext(ctx).Errorf("rpc error: %s: %+v", method, err)
+			err = errx.ToGRPCStatus(err)
+		}
+	}()
+	return handler(srv, &wrappedStream{ServerStream: ss, ctx: ctx})
 }
 
 // wrappedStream 包装 grpc.ServerStream，覆盖 Context() 返回增强后的 ctx。
