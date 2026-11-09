@@ -7988,6 +7988,28 @@ func (m *CreatePlanTaskReq) validate(all bool) error {
 
 	}
 
+	if _, ok := _CreatePlanTaskReq_ConfirmType_InLookup[m.GetConfirmType()]; !ok {
+		err := CreatePlanTaskReqValidationError{
+			field:  "ConfirmType",
+			reason: "value must be in list [0 1 2]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if val := m.GetConfirmLeadMinutes(); val < 0 || val > 1440 {
+		err := CreatePlanTaskReqValidationError{
+			field:  "ConfirmLeadMinutes",
+			reason: "value must be inside range [0, 1440]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	// no validation rules for Ext1
 
 	// no validation rules for Ext2
@@ -8077,6 +8099,12 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CreatePlanTaskReqValidationError{}
+
+var _CreatePlanTaskReq_ConfirmType_InLookup = map[int32]struct{}{
+	0: {},
+	1: {},
+	2: {},
+}
 
 // Validate checks the field values on PlanRulePb with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -9827,6 +9855,214 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ResumePlanBatchResValidationError{}
+
+// Validate checks the field values on ConfirmPlanBatchReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ConfirmPlanBatchReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ConfirmPlanBatchReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ConfirmPlanBatchReqMultiError, or nil if none found.
+func (m *ConfirmPlanBatchReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ConfirmPlanBatchReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for BatchId
+
+	if len(errors) > 0 {
+		return ConfirmPlanBatchReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ConfirmPlanBatchReqMultiError is an error wrapping multiple validation
+// errors returned by ConfirmPlanBatchReq.ValidateAll() if the designated
+// constraints aren't met.
+type ConfirmPlanBatchReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ConfirmPlanBatchReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ConfirmPlanBatchReqMultiError) AllErrors() []error { return m }
+
+// ConfirmPlanBatchReqValidationError is the validation error returned by
+// ConfirmPlanBatchReq.Validate if the designated constraints aren't met.
+type ConfirmPlanBatchReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ConfirmPlanBatchReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ConfirmPlanBatchReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ConfirmPlanBatchReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ConfirmPlanBatchReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ConfirmPlanBatchReqValidationError) ErrorName() string {
+	return "ConfirmPlanBatchReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ConfirmPlanBatchReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sConfirmPlanBatchReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ConfirmPlanBatchReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ConfirmPlanBatchReqValidationError{}
+
+// Validate checks the field values on ConfirmPlanBatchRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ConfirmPlanBatchRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ConfirmPlanBatchRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ConfirmPlanBatchResMultiError, or nil if none found.
+func (m *ConfirmPlanBatchRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ConfirmPlanBatchRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return ConfirmPlanBatchResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ConfirmPlanBatchResMultiError is an error wrapping multiple validation
+// errors returned by ConfirmPlanBatchRes.ValidateAll() if the designated
+// constraints aren't met.
+type ConfirmPlanBatchResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ConfirmPlanBatchResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ConfirmPlanBatchResMultiError) AllErrors() []error { return m }
+
+// ConfirmPlanBatchResValidationError is the validation error returned by
+// ConfirmPlanBatchRes.Validate if the designated constraints aren't met.
+type ConfirmPlanBatchResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ConfirmPlanBatchResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ConfirmPlanBatchResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ConfirmPlanBatchResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ConfirmPlanBatchResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ConfirmPlanBatchResValidationError) ErrorName() string {
+	return "ConfirmPlanBatchResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ConfirmPlanBatchResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sConfirmPlanBatchRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ConfirmPlanBatchResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ConfirmPlanBatchResValidationError{}
 
 // Validate checks the field values on PausePlanExecItemReq with the rules
 // defined in the proto definition for this message. If any rules are
@@ -13260,6 +13496,14 @@ func (m *PlanBatchPb) validate(all bool) error {
 	// no validation rules for StatusCountMap
 
 	// no validation rules for ExecCnt
+
+	// no validation rules for ConfirmType
+
+	// no validation rules for ConfirmStatus
+
+	// no validation rules for ConfirmDeadline
+
+	// no validation rules for ConfirmedTime
 
 	// no validation rules for Ext1
 

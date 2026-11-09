@@ -80,6 +80,8 @@ service TriggerRpc {
   rpc TerminatePlanBatch(TerminatePlanBatchReq) returns (TerminatePlanBatchRes);
   // 恢复计划批次
   rpc ResumePlanBatch(ResumePlanBatchReq) returns (ResumePlanBatchRes);
+  // 确认计划批次（批次级二次确认）
+  rpc ConfirmPlanBatch(ConfirmPlanBatchReq) returns (ConfirmPlanBatchRes);
   // 暂停执行项
   rpc PausePlanExecItem(PausePlanExecItemReq) returns (PausePlanExecItemRes);
   // 终止执行项
@@ -735,6 +737,10 @@ message CreatePlanTaskReq {
   repeated string specified_times = 15 [json_name = "specifiedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
   // 精确排除时间列表，格式：yyyy-MM-dd HH:mm:ss。
   repeated string excluded_times = 16 [json_name = "excludedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
+  // 确认类型：0-不需要确认，1-批次确认，2-执行项确认（暂未实现）
+  int32 confirm_type = 17 [json_name = "confirmType", (validate.rules).int32 = {in: [0, 1, 2]}];
+  // 提前通知分钟数，0-到点通知
+  int32 confirm_lead_minutes = 18 [json_name = "confirmLeadMinutes", (validate.rules).int32 = {gte: 0, lte: 1440}];
 
   // 扩展字段
   string ext1 = 50 [json_name = "ext1"];
@@ -872,6 +878,16 @@ message ResumePlanBatchReq {
 }
 
 message ResumePlanBatchRes {
+}
+
+message ConfirmPlanBatchReq {
+  // 批次主键ID
+  string id = 1 [json_name = "id"];
+  // 批次ID
+  string batch_id = 2 [json_name = "batchId"];
+}
+
+message ConfirmPlanBatchRes {
 }
 
 message PausePlanExecItemReq {
@@ -1268,6 +1284,14 @@ message PlanBatchPb {
   map<string, int64> status_count_map = 13 [json_name = "statusCountMap"];
   // 执行计划数
   int64 exec_cnt = 51 [json_name = "execCnt"];
+  // 确认类型：0-不需要确认，1-批次确认，2-执行项确认（暂未实现）
+  int32 confirm_type = 57 [json_name = "confirmType"];
+  // 确认状态：none / waiting / confirmed / expired
+  string confirm_status = 58 [json_name = "confirmStatus"];
+  // 确认截止时间
+  string confirm_deadline = 59 [json_name = "confirmDeadline"];
+  // 确认时间
+  string confirmed_time = 60 [json_name = "confirmedTime"];
   // 扩展字段1
   string ext1 = 52 [json_name = "ext1"];
   // 扩展字段2

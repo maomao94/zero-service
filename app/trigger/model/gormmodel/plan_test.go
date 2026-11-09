@@ -284,7 +284,7 @@ func openPlanTestDB(t *testing.T) *gorm.DB {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&Plan{}, &PlanBatch{}, &PlanExecItem{}); err != nil {
+	if err := db.AutoMigrate(&Plan{}, &PlanBatch{}, &PlanExecItem{}, &PlanConfirm{}); err != nil {
 		t.Fatal(err)
 	}
 	sqlDB, err := db.DB()

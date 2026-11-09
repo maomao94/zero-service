@@ -3934,6 +3934,10 @@ type CreatePlanTaskReq struct {
 	SpecifiedTimes []string `protobuf:"bytes,15,rep,name=specified_times,json=specifiedTimes,proto3" json:"specified_times,omitempty"`
 	// 精确排除时间列表，格式：yyyy-MM-dd HH:mm:ss。
 	ExcludedTimes []string `protobuf:"bytes,16,rep,name=excluded_times,json=excludedTimes,proto3" json:"excluded_times,omitempty"`
+	// 确认类型：0-不需要确认，1-批次确认，2-执行项确认（暂未实现）
+	ConfirmType int32 `protobuf:"varint,17,opt,name=confirm_type,json=confirmType,proto3" json:"confirm_type,omitempty"`
+	// 提前通知分钟数，0-到点通知
+	ConfirmLeadMinutes int32 `protobuf:"varint,18,opt,name=confirm_lead_minutes,json=confirmLeadMinutes,proto3" json:"confirm_lead_minutes,omitempty"`
 	// 扩展字段
 	Ext1          string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	Ext2          string `protobuf:"bytes,51,opt,name=ext2,proto3" json:"ext2,omitempty"`
@@ -4091,6 +4095,20 @@ func (x *CreatePlanTaskReq) GetExcludedTimes() []string {
 		return x.ExcludedTimes
 	}
 	return nil
+}
+
+func (x *CreatePlanTaskReq) GetConfirmType() int32 {
+	if x != nil {
+		return x.ConfirmType
+	}
+	return 0
+}
+
+func (x *CreatePlanTaskReq) GetConfirmLeadMinutes() int32 {
+	if x != nil {
+		return x.ConfirmLeadMinutes
+	}
+	return 0
 }
 
 func (x *CreatePlanTaskReq) GetExt1() string {
@@ -4996,6 +5014,96 @@ func (*ResumePlanBatchRes) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{76}
 }
 
+type ConfirmPlanBatchReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 批次主键ID
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 批次ID
+	BatchId       string `protobuf:"bytes,2,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConfirmPlanBatchReq) Reset() {
+	*x = ConfirmPlanBatchReq{}
+	mi := &file_trigger_proto_msgTypes[77]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConfirmPlanBatchReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConfirmPlanBatchReq) ProtoMessage() {}
+
+func (x *ConfirmPlanBatchReq) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[77]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConfirmPlanBatchReq.ProtoReflect.Descriptor instead.
+func (*ConfirmPlanBatchReq) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{77}
+}
+
+func (x *ConfirmPlanBatchReq) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ConfirmPlanBatchReq) GetBatchId() string {
+	if x != nil {
+		return x.BatchId
+	}
+	return ""
+}
+
+type ConfirmPlanBatchRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConfirmPlanBatchRes) Reset() {
+	*x = ConfirmPlanBatchRes{}
+	mi := &file_trigger_proto_msgTypes[78]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConfirmPlanBatchRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConfirmPlanBatchRes) ProtoMessage() {}
+
+func (x *ConfirmPlanBatchRes) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[78]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConfirmPlanBatchRes.ProtoReflect.Descriptor instead.
+func (*ConfirmPlanBatchRes) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{78}
+}
+
 type PausePlanExecItemReq struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Id     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -5008,7 +5116,7 @@ type PausePlanExecItemReq struct {
 
 func (x *PausePlanExecItemReq) Reset() {
 	*x = PausePlanExecItemReq{}
-	mi := &file_trigger_proto_msgTypes[77]
+	mi := &file_trigger_proto_msgTypes[79]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5020,7 +5128,7 @@ func (x *PausePlanExecItemReq) String() string {
 func (*PausePlanExecItemReq) ProtoMessage() {}
 
 func (x *PausePlanExecItemReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[77]
+	mi := &file_trigger_proto_msgTypes[79]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5033,7 +5141,7 @@ func (x *PausePlanExecItemReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PausePlanExecItemReq.ProtoReflect.Descriptor instead.
 func (*PausePlanExecItemReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{77}
+	return file_trigger_proto_rawDescGZIP(), []int{79}
 }
 
 func (x *PausePlanExecItemReq) GetId() string {
@@ -5065,7 +5173,7 @@ type PausePlanExecItemRes struct {
 
 func (x *PausePlanExecItemRes) Reset() {
 	*x = PausePlanExecItemRes{}
-	mi := &file_trigger_proto_msgTypes[78]
+	mi := &file_trigger_proto_msgTypes[80]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5077,7 +5185,7 @@ func (x *PausePlanExecItemRes) String() string {
 func (*PausePlanExecItemRes) ProtoMessage() {}
 
 func (x *PausePlanExecItemRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[78]
+	mi := &file_trigger_proto_msgTypes[80]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5090,7 +5198,7 @@ func (x *PausePlanExecItemRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PausePlanExecItemRes.ProtoReflect.Descriptor instead.
 func (*PausePlanExecItemRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{78}
+	return file_trigger_proto_rawDescGZIP(), []int{80}
 }
 
 type TerminatePlanExecItemReq struct {
@@ -5105,7 +5213,7 @@ type TerminatePlanExecItemReq struct {
 
 func (x *TerminatePlanExecItemReq) Reset() {
 	*x = TerminatePlanExecItemReq{}
-	mi := &file_trigger_proto_msgTypes[79]
+	mi := &file_trigger_proto_msgTypes[81]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5117,7 +5225,7 @@ func (x *TerminatePlanExecItemReq) String() string {
 func (*TerminatePlanExecItemReq) ProtoMessage() {}
 
 func (x *TerminatePlanExecItemReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[79]
+	mi := &file_trigger_proto_msgTypes[81]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5130,7 +5238,7 @@ func (x *TerminatePlanExecItemReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TerminatePlanExecItemReq.ProtoReflect.Descriptor instead.
 func (*TerminatePlanExecItemReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{79}
+	return file_trigger_proto_rawDescGZIP(), []int{81}
 }
 
 func (x *TerminatePlanExecItemReq) GetId() string {
@@ -5162,7 +5270,7 @@ type TerminatePlanExecItemRes struct {
 
 func (x *TerminatePlanExecItemRes) Reset() {
 	*x = TerminatePlanExecItemRes{}
-	mi := &file_trigger_proto_msgTypes[80]
+	mi := &file_trigger_proto_msgTypes[82]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5174,7 +5282,7 @@ func (x *TerminatePlanExecItemRes) String() string {
 func (*TerminatePlanExecItemRes) ProtoMessage() {}
 
 func (x *TerminatePlanExecItemRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[80]
+	mi := &file_trigger_proto_msgTypes[82]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5187,7 +5295,7 @@ func (x *TerminatePlanExecItemRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TerminatePlanExecItemRes.ProtoReflect.Descriptor instead.
 func (*TerminatePlanExecItemRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{80}
+	return file_trigger_proto_rawDescGZIP(), []int{82}
 }
 
 type ResumePlanExecItemReq struct {
@@ -5200,7 +5308,7 @@ type ResumePlanExecItemReq struct {
 
 func (x *ResumePlanExecItemReq) Reset() {
 	*x = ResumePlanExecItemReq{}
-	mi := &file_trigger_proto_msgTypes[81]
+	mi := &file_trigger_proto_msgTypes[83]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5212,7 +5320,7 @@ func (x *ResumePlanExecItemReq) String() string {
 func (*ResumePlanExecItemReq) ProtoMessage() {}
 
 func (x *ResumePlanExecItemReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[81]
+	mi := &file_trigger_proto_msgTypes[83]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5225,7 +5333,7 @@ func (x *ResumePlanExecItemReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResumePlanExecItemReq.ProtoReflect.Descriptor instead.
 func (*ResumePlanExecItemReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{81}
+	return file_trigger_proto_rawDescGZIP(), []int{83}
 }
 
 func (x *ResumePlanExecItemReq) GetId() string {
@@ -5250,7 +5358,7 @@ type ResumePlanExecItemRes struct {
 
 func (x *ResumePlanExecItemRes) Reset() {
 	*x = ResumePlanExecItemRes{}
-	mi := &file_trigger_proto_msgTypes[82]
+	mi := &file_trigger_proto_msgTypes[84]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5262,7 +5370,7 @@ func (x *ResumePlanExecItemRes) String() string {
 func (*ResumePlanExecItemRes) ProtoMessage() {}
 
 func (x *ResumePlanExecItemRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[82]
+	mi := &file_trigger_proto_msgTypes[84]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5275,7 +5383,7 @@ func (x *ResumePlanExecItemRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResumePlanExecItemRes.ProtoReflect.Descriptor instead.
 func (*ResumePlanExecItemRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{82}
+	return file_trigger_proto_rawDescGZIP(), []int{84}
 }
 
 // 立即执行计划项请求
@@ -5289,7 +5397,7 @@ type RunPlanExecItemReq struct {
 
 func (x *RunPlanExecItemReq) Reset() {
 	*x = RunPlanExecItemReq{}
-	mi := &file_trigger_proto_msgTypes[83]
+	mi := &file_trigger_proto_msgTypes[85]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5301,7 +5409,7 @@ func (x *RunPlanExecItemReq) String() string {
 func (*RunPlanExecItemReq) ProtoMessage() {}
 
 func (x *RunPlanExecItemReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[83]
+	mi := &file_trigger_proto_msgTypes[85]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5314,7 +5422,7 @@ func (x *RunPlanExecItemReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RunPlanExecItemReq.ProtoReflect.Descriptor instead.
 func (*RunPlanExecItemReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{83}
+	return file_trigger_proto_rawDescGZIP(), []int{85}
 }
 
 func (x *RunPlanExecItemReq) GetId() string {
@@ -5340,7 +5448,7 @@ type RunPlanExecItemRes struct {
 
 func (x *RunPlanExecItemRes) Reset() {
 	*x = RunPlanExecItemRes{}
-	mi := &file_trigger_proto_msgTypes[84]
+	mi := &file_trigger_proto_msgTypes[86]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5352,7 +5460,7 @@ func (x *RunPlanExecItemRes) String() string {
 func (*RunPlanExecItemRes) ProtoMessage() {}
 
 func (x *RunPlanExecItemRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[84]
+	mi := &file_trigger_proto_msgTypes[86]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5365,7 +5473,7 @@ func (x *RunPlanExecItemRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RunPlanExecItemRes.ProtoReflect.Descriptor instead.
 func (*RunPlanExecItemRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{84}
+	return file_trigger_proto_rawDescGZIP(), []int{86}
 }
 
 type GetPlanReq struct {
@@ -5378,7 +5486,7 @@ type GetPlanReq struct {
 
 func (x *GetPlanReq) Reset() {
 	*x = GetPlanReq{}
-	mi := &file_trigger_proto_msgTypes[85]
+	mi := &file_trigger_proto_msgTypes[87]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5390,7 +5498,7 @@ func (x *GetPlanReq) String() string {
 func (*GetPlanReq) ProtoMessage() {}
 
 func (x *GetPlanReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[85]
+	mi := &file_trigger_proto_msgTypes[87]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5403,7 +5511,7 @@ func (x *GetPlanReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanReq.ProtoReflect.Descriptor instead.
 func (*GetPlanReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{85}
+	return file_trigger_proto_rawDescGZIP(), []int{87}
 }
 
 func (x *GetPlanReq) GetId() string {
@@ -5429,7 +5537,7 @@ type GetPlanRes struct {
 
 func (x *GetPlanRes) Reset() {
 	*x = GetPlanRes{}
-	mi := &file_trigger_proto_msgTypes[86]
+	mi := &file_trigger_proto_msgTypes[88]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5441,7 +5549,7 @@ func (x *GetPlanRes) String() string {
 func (*GetPlanRes) ProtoMessage() {}
 
 func (x *GetPlanRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[86]
+	mi := &file_trigger_proto_msgTypes[88]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5454,7 +5562,7 @@ func (x *GetPlanRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanRes.ProtoReflect.Descriptor instead.
 func (*GetPlanRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{86}
+	return file_trigger_proto_rawDescGZIP(), []int{88}
 }
 
 func (x *GetPlanRes) GetPlan() *PlanPb {
@@ -5526,7 +5634,7 @@ type PlanPb struct {
 
 func (x *PlanPb) Reset() {
 	*x = PlanPb{}
-	mi := &file_trigger_proto_msgTypes[87]
+	mi := &file_trigger_proto_msgTypes[89]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5538,7 +5646,7 @@ func (x *PlanPb) String() string {
 func (*PlanPb) ProtoMessage() {}
 
 func (x *PlanPb) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[87]
+	mi := &file_trigger_proto_msgTypes[89]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5551,7 +5659,7 @@ func (x *PlanPb) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanPb.ProtoReflect.Descriptor instead.
 func (*PlanPb) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{87}
+	return file_trigger_proto_rawDescGZIP(), []int{89}
 }
 
 func (x *PlanPb) GetCreateTime() string {
@@ -5763,7 +5871,7 @@ type ListPlansReq struct {
 
 func (x *ListPlansReq) Reset() {
 	*x = ListPlansReq{}
-	mi := &file_trigger_proto_msgTypes[88]
+	mi := &file_trigger_proto_msgTypes[90]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5775,7 +5883,7 @@ func (x *ListPlansReq) String() string {
 func (*ListPlansReq) ProtoMessage() {}
 
 func (x *ListPlansReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[88]
+	mi := &file_trigger_proto_msgTypes[90]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5788,7 +5896,7 @@ func (x *ListPlansReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlansReq.ProtoReflect.Descriptor instead.
 func (*ListPlansReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{88}
+	return file_trigger_proto_rawDescGZIP(), []int{90}
 }
 
 func (x *ListPlansReq) GetPageSize() int64 {
@@ -5845,7 +5953,7 @@ type ListPlansRes struct {
 
 func (x *ListPlansRes) Reset() {
 	*x = ListPlansRes{}
-	mi := &file_trigger_proto_msgTypes[89]
+	mi := &file_trigger_proto_msgTypes[91]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5857,7 +5965,7 @@ func (x *ListPlansRes) String() string {
 func (*ListPlansRes) ProtoMessage() {}
 
 func (x *ListPlansRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[89]
+	mi := &file_trigger_proto_msgTypes[91]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5870,7 +5978,7 @@ func (x *ListPlansRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlansRes.ProtoReflect.Descriptor instead.
 func (*ListPlansRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{89}
+	return file_trigger_proto_rawDescGZIP(), []int{91}
 }
 
 func (x *ListPlansRes) GetPlans() []*PlanPb {
@@ -5897,7 +6005,7 @@ type GetPlanBatchReq struct {
 
 func (x *GetPlanBatchReq) Reset() {
 	*x = GetPlanBatchReq{}
-	mi := &file_trigger_proto_msgTypes[90]
+	mi := &file_trigger_proto_msgTypes[92]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5909,7 +6017,7 @@ func (x *GetPlanBatchReq) String() string {
 func (*GetPlanBatchReq) ProtoMessage() {}
 
 func (x *GetPlanBatchReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[90]
+	mi := &file_trigger_proto_msgTypes[92]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5922,7 +6030,7 @@ func (x *GetPlanBatchReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanBatchReq.ProtoReflect.Descriptor instead.
 func (*GetPlanBatchReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{90}
+	return file_trigger_proto_rawDescGZIP(), []int{92}
 }
 
 func (x *GetPlanBatchReq) GetId() string {
@@ -5948,7 +6056,7 @@ type GetPlanBatchRes struct {
 
 func (x *GetPlanBatchRes) Reset() {
 	*x = GetPlanBatchRes{}
-	mi := &file_trigger_proto_msgTypes[91]
+	mi := &file_trigger_proto_msgTypes[93]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5960,7 +6068,7 @@ func (x *GetPlanBatchRes) String() string {
 func (*GetPlanBatchRes) ProtoMessage() {}
 
 func (x *GetPlanBatchRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[91]
+	mi := &file_trigger_proto_msgTypes[93]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5973,7 +6081,7 @@ func (x *GetPlanBatchRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanBatchRes.ProtoReflect.Descriptor instead.
 func (*GetPlanBatchRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{91}
+	return file_trigger_proto_rawDescGZIP(), []int{93}
 }
 
 func (x *GetPlanBatchRes) GetPlanBatch() *PlanBatchPb {
@@ -6005,7 +6113,7 @@ type ListPlanBatchesReq struct {
 
 func (x *ListPlanBatchesReq) Reset() {
 	*x = ListPlanBatchesReq{}
-	mi := &file_trigger_proto_msgTypes[92]
+	mi := &file_trigger_proto_msgTypes[94]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6017,7 +6125,7 @@ func (x *ListPlanBatchesReq) String() string {
 func (*ListPlanBatchesReq) ProtoMessage() {}
 
 func (x *ListPlanBatchesReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[92]
+	mi := &file_trigger_proto_msgTypes[94]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6030,7 +6138,7 @@ func (x *ListPlanBatchesReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlanBatchesReq.ProtoReflect.Descriptor instead.
 func (*ListPlanBatchesReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{92}
+	return file_trigger_proto_rawDescGZIP(), []int{94}
 }
 
 func (x *ListPlanBatchesReq) GetPageSize() int64 {
@@ -6094,7 +6202,7 @@ type ListPlanBatchesRes struct {
 
 func (x *ListPlanBatchesRes) Reset() {
 	*x = ListPlanBatchesRes{}
-	mi := &file_trigger_proto_msgTypes[93]
+	mi := &file_trigger_proto_msgTypes[95]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6106,7 +6214,7 @@ func (x *ListPlanBatchesRes) String() string {
 func (*ListPlanBatchesRes) ProtoMessage() {}
 
 func (x *ListPlanBatchesRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[93]
+	mi := &file_trigger_proto_msgTypes[95]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6119,7 +6227,7 @@ func (x *ListPlanBatchesRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlanBatchesRes.ProtoReflect.Descriptor instead.
 func (*ListPlanBatchesRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{93}
+	return file_trigger_proto_rawDescGZIP(), []int{95}
 }
 
 func (x *ListPlanBatchesRes) GetPlanBatches() []*PlanBatchPb {
@@ -6146,7 +6254,7 @@ type GetPlanExecItemReq struct {
 
 func (x *GetPlanExecItemReq) Reset() {
 	*x = GetPlanExecItemReq{}
-	mi := &file_trigger_proto_msgTypes[94]
+	mi := &file_trigger_proto_msgTypes[96]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6158,7 +6266,7 @@ func (x *GetPlanExecItemReq) String() string {
 func (*GetPlanExecItemReq) ProtoMessage() {}
 
 func (x *GetPlanExecItemReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[94]
+	mi := &file_trigger_proto_msgTypes[96]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6171,7 +6279,7 @@ func (x *GetPlanExecItemReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanExecItemReq.ProtoReflect.Descriptor instead.
 func (*GetPlanExecItemReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{94}
+	return file_trigger_proto_rawDescGZIP(), []int{96}
 }
 
 func (x *GetPlanExecItemReq) GetId() string {
@@ -6197,7 +6305,7 @@ type GetPlanExecItemRes struct {
 
 func (x *GetPlanExecItemRes) Reset() {
 	*x = GetPlanExecItemRes{}
-	mi := &file_trigger_proto_msgTypes[95]
+	mi := &file_trigger_proto_msgTypes[97]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6209,7 +6317,7 @@ func (x *GetPlanExecItemRes) String() string {
 func (*GetPlanExecItemRes) ProtoMessage() {}
 
 func (x *GetPlanExecItemRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[95]
+	mi := &file_trigger_proto_msgTypes[97]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6222,7 +6330,7 @@ func (x *GetPlanExecItemRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanExecItemRes.ProtoReflect.Descriptor instead.
 func (*GetPlanExecItemRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{95}
+	return file_trigger_proto_rawDescGZIP(), []int{97}
 }
 
 func (x *GetPlanExecItemRes) GetPlanExecItem() []*PlanExecItemPb {
@@ -6308,7 +6416,7 @@ type PlanExecItemPb struct {
 
 func (x *PlanExecItemPb) Reset() {
 	*x = PlanExecItemPb{}
-	mi := &file_trigger_proto_msgTypes[96]
+	mi := &file_trigger_proto_msgTypes[98]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6320,7 +6428,7 @@ func (x *PlanExecItemPb) String() string {
 func (*PlanExecItemPb) ProtoMessage() {}
 
 func (x *PlanExecItemPb) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[96]
+	mi := &file_trigger_proto_msgTypes[98]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6333,7 +6441,7 @@ func (x *PlanExecItemPb) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanExecItemPb.ProtoReflect.Descriptor instead.
 func (*PlanExecItemPb) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{96}
+	return file_trigger_proto_rawDescGZIP(), []int{98}
 }
 
 func (x *PlanExecItemPb) GetCreateTime() string {
@@ -6599,7 +6707,7 @@ type ListPlanExecItemsReq struct {
 
 func (x *ListPlanExecItemsReq) Reset() {
 	*x = ListPlanExecItemsReq{}
-	mi := &file_trigger_proto_msgTypes[97]
+	mi := &file_trigger_proto_msgTypes[99]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6611,7 +6719,7 @@ func (x *ListPlanExecItemsReq) String() string {
 func (*ListPlanExecItemsReq) ProtoMessage() {}
 
 func (x *ListPlanExecItemsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[97]
+	mi := &file_trigger_proto_msgTypes[99]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6624,7 +6732,7 @@ func (x *ListPlanExecItemsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlanExecItemsReq.ProtoReflect.Descriptor instead.
 func (*ListPlanExecItemsReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{97}
+	return file_trigger_proto_rawDescGZIP(), []int{99}
 }
 
 func (x *ListPlanExecItemsReq) GetPageSize() int64 {
@@ -6702,7 +6810,7 @@ type ListPlanExecItemsRes struct {
 
 func (x *ListPlanExecItemsRes) Reset() {
 	*x = ListPlanExecItemsRes{}
-	mi := &file_trigger_proto_msgTypes[98]
+	mi := &file_trigger_proto_msgTypes[100]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6714,7 +6822,7 @@ func (x *ListPlanExecItemsRes) String() string {
 func (*ListPlanExecItemsRes) ProtoMessage() {}
 
 func (x *ListPlanExecItemsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[98]
+	mi := &file_trigger_proto_msgTypes[100]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6727,7 +6835,7 @@ func (x *ListPlanExecItemsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlanExecItemsRes.ProtoReflect.Descriptor instead.
 func (*ListPlanExecItemsRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{98}
+	return file_trigger_proto_rawDescGZIP(), []int{100}
 }
 
 func (x *ListPlanExecItemsRes) GetPlanExecItems() []*PlanExecItemPb {
@@ -6753,7 +6861,7 @@ type GetPlanExecLogReq struct {
 
 func (x *GetPlanExecLogReq) Reset() {
 	*x = GetPlanExecLogReq{}
-	mi := &file_trigger_proto_msgTypes[99]
+	mi := &file_trigger_proto_msgTypes[101]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6765,7 +6873,7 @@ func (x *GetPlanExecLogReq) String() string {
 func (*GetPlanExecLogReq) ProtoMessage() {}
 
 func (x *GetPlanExecLogReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[99]
+	mi := &file_trigger_proto_msgTypes[101]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6778,7 +6886,7 @@ func (x *GetPlanExecLogReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanExecLogReq.ProtoReflect.Descriptor instead.
 func (*GetPlanExecLogReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{99}
+	return file_trigger_proto_rawDescGZIP(), []int{101}
 }
 
 func (x *GetPlanExecLogReq) GetId() string {
@@ -6797,7 +6905,7 @@ type GetPlanExecLogRes struct {
 
 func (x *GetPlanExecLogRes) Reset() {
 	*x = GetPlanExecLogRes{}
-	mi := &file_trigger_proto_msgTypes[100]
+	mi := &file_trigger_proto_msgTypes[102]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6809,7 +6917,7 @@ func (x *GetPlanExecLogRes) String() string {
 func (*GetPlanExecLogRes) ProtoMessage() {}
 
 func (x *GetPlanExecLogRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[100]
+	mi := &file_trigger_proto_msgTypes[102]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6822,7 +6930,7 @@ func (x *GetPlanExecLogRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanExecLogRes.ProtoReflect.Descriptor instead.
 func (*GetPlanExecLogRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{100}
+	return file_trigger_proto_rawDescGZIP(), []int{102}
 }
 
 func (x *GetPlanExecLogRes) GetPlanExecLog() *PlanExecLogPb {
@@ -6859,7 +6967,7 @@ type ListPlanExecLogsReq struct {
 
 func (x *ListPlanExecLogsReq) Reset() {
 	*x = ListPlanExecLogsReq{}
-	mi := &file_trigger_proto_msgTypes[101]
+	mi := &file_trigger_proto_msgTypes[103]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6871,7 +6979,7 @@ func (x *ListPlanExecLogsReq) String() string {
 func (*ListPlanExecLogsReq) ProtoMessage() {}
 
 func (x *ListPlanExecLogsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[101]
+	mi := &file_trigger_proto_msgTypes[103]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6884,7 +6992,7 @@ func (x *ListPlanExecLogsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlanExecLogsReq.ProtoReflect.Descriptor instead.
 func (*ListPlanExecLogsReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{101}
+	return file_trigger_proto_rawDescGZIP(), []int{103}
 }
 
 func (x *ListPlanExecLogsReq) GetPageSize() int64 {
@@ -6963,7 +7071,7 @@ type ListPlanExecLogsRes struct {
 
 func (x *ListPlanExecLogsRes) Reset() {
 	*x = ListPlanExecLogsRes{}
-	mi := &file_trigger_proto_msgTypes[102]
+	mi := &file_trigger_proto_msgTypes[104]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6975,7 +7083,7 @@ func (x *ListPlanExecLogsRes) String() string {
 func (*ListPlanExecLogsRes) ProtoMessage() {}
 
 func (x *ListPlanExecLogsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[102]
+	mi := &file_trigger_proto_msgTypes[104]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6988,7 +7096,7 @@ func (x *ListPlanExecLogsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlanExecLogsRes.ProtoReflect.Descriptor instead.
 func (*ListPlanExecLogsRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{102}
+	return file_trigger_proto_rawDescGZIP(), []int{104}
 }
 
 func (x *ListPlanExecLogsRes) GetPlanExecLogs() []*PlanExecLogPb {
@@ -7053,7 +7161,7 @@ type PlanExecLogPb struct {
 
 func (x *PlanExecLogPb) Reset() {
 	*x = PlanExecLogPb{}
-	mi := &file_trigger_proto_msgTypes[103]
+	mi := &file_trigger_proto_msgTypes[105]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7065,7 +7173,7 @@ func (x *PlanExecLogPb) String() string {
 func (*PlanExecLogPb) ProtoMessage() {}
 
 func (x *PlanExecLogPb) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[103]
+	mi := &file_trigger_proto_msgTypes[105]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7078,7 +7186,7 @@ func (x *PlanExecLogPb) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanExecLogPb.ProtoReflect.Descriptor instead.
 func (*PlanExecLogPb) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{103}
+	return file_trigger_proto_rawDescGZIP(), []int{105}
 }
 
 func (x *PlanExecLogPb) GetCreateTime() string {
@@ -7264,6 +7372,14 @@ type PlanBatchPb struct {
 	StatusCountMap map[string]int64 `protobuf:"bytes,13,rep,name=status_count_map,json=statusCountMap,proto3" json:"status_count_map,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
 	// 执行计划数
 	ExecCnt int64 `protobuf:"varint,51,opt,name=exec_cnt,json=execCnt,proto3" json:"exec_cnt,omitempty"`
+	// 确认类型：0-不需要确认，1-批次确认，2-执行项确认（暂未实现）
+	ConfirmType int32 `protobuf:"varint,57,opt,name=confirm_type,json=confirmType,proto3" json:"confirm_type,omitempty"`
+	// 确认状态：none / waiting / confirmed / expired
+	ConfirmStatus string `protobuf:"bytes,58,opt,name=confirm_status,json=confirmStatus,proto3" json:"confirm_status,omitempty"`
+	// 确认截止时间
+	ConfirmDeadline string `protobuf:"bytes,59,opt,name=confirm_deadline,json=confirmDeadline,proto3" json:"confirm_deadline,omitempty"`
+	// 确认时间
+	ConfirmedTime string `protobuf:"bytes,60,opt,name=confirmed_time,json=confirmedTime,proto3" json:"confirmed_time,omitempty"`
 	// 扩展字段1
 	Ext1 string `protobuf:"bytes,52,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段2
@@ -7280,7 +7396,7 @@ type PlanBatchPb struct {
 
 func (x *PlanBatchPb) Reset() {
 	*x = PlanBatchPb{}
-	mi := &file_trigger_proto_msgTypes[104]
+	mi := &file_trigger_proto_msgTypes[106]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7292,7 +7408,7 @@ func (x *PlanBatchPb) String() string {
 func (*PlanBatchPb) ProtoMessage() {}
 
 func (x *PlanBatchPb) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[104]
+	mi := &file_trigger_proto_msgTypes[106]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7305,7 +7421,7 @@ func (x *PlanBatchPb) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanBatchPb.ProtoReflect.Descriptor instead.
 func (*PlanBatchPb) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{104}
+	return file_trigger_proto_rawDescGZIP(), []int{106}
 }
 
 func (x *PlanBatchPb) GetCreateTime() string {
@@ -7448,6 +7564,34 @@ func (x *PlanBatchPb) GetExecCnt() int64 {
 	return 0
 }
 
+func (x *PlanBatchPb) GetConfirmType() int32 {
+	if x != nil {
+		return x.ConfirmType
+	}
+	return 0
+}
+
+func (x *PlanBatchPb) GetConfirmStatus() string {
+	if x != nil {
+		return x.ConfirmStatus
+	}
+	return ""
+}
+
+func (x *PlanBatchPb) GetConfirmDeadline() string {
+	if x != nil {
+		return x.ConfirmDeadline
+	}
+	return ""
+}
+
+func (x *PlanBatchPb) GetConfirmedTime() string {
+	if x != nil {
+		return x.ConfirmedTime
+	}
+	return ""
+}
+
 func (x *PlanBatchPb) GetExt1() string {
 	if x != nil {
 		return x.Ext1
@@ -7498,7 +7642,7 @@ type GetExecItemDashboardReq struct {
 
 func (x *GetExecItemDashboardReq) Reset() {
 	*x = GetExecItemDashboardReq{}
-	mi := &file_trigger_proto_msgTypes[105]
+	mi := &file_trigger_proto_msgTypes[107]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7510,7 +7654,7 @@ func (x *GetExecItemDashboardReq) String() string {
 func (*GetExecItemDashboardReq) ProtoMessage() {}
 
 func (x *GetExecItemDashboardReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[105]
+	mi := &file_trigger_proto_msgTypes[107]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7523,7 +7667,7 @@ func (x *GetExecItemDashboardReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetExecItemDashboardReq.ProtoReflect.Descriptor instead.
 func (*GetExecItemDashboardReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{105}
+	return file_trigger_proto_rawDescGZIP(), []int{107}
 }
 
 func (x *GetExecItemDashboardReq) GetDeptCode() string {
@@ -7560,7 +7704,7 @@ type FinishedItemsStatsPb struct {
 
 func (x *FinishedItemsStatsPb) Reset() {
 	*x = FinishedItemsStatsPb{}
-	mi := &file_trigger_proto_msgTypes[106]
+	mi := &file_trigger_proto_msgTypes[108]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7572,7 +7716,7 @@ func (x *FinishedItemsStatsPb) String() string {
 func (*FinishedItemsStatsPb) ProtoMessage() {}
 
 func (x *FinishedItemsStatsPb) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[106]
+	mi := &file_trigger_proto_msgTypes[108]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7585,7 +7729,7 @@ func (x *FinishedItemsStatsPb) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FinishedItemsStatsPb.ProtoReflect.Descriptor instead.
 func (*FinishedItemsStatsPb) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{106}
+	return file_trigger_proto_rawDescGZIP(), []int{108}
 }
 
 func (x *FinishedItemsStatsPb) GetTotal() int64 {
@@ -7615,7 +7759,7 @@ type PendingItemsStatsPb struct {
 
 func (x *PendingItemsStatsPb) Reset() {
 	*x = PendingItemsStatsPb{}
-	mi := &file_trigger_proto_msgTypes[107]
+	mi := &file_trigger_proto_msgTypes[109]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7627,7 +7771,7 @@ func (x *PendingItemsStatsPb) String() string {
 func (*PendingItemsStatsPb) ProtoMessage() {}
 
 func (x *PendingItemsStatsPb) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[107]
+	mi := &file_trigger_proto_msgTypes[109]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7640,7 +7784,7 @@ func (x *PendingItemsStatsPb) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PendingItemsStatsPb.ProtoReflect.Descriptor instead.
 func (*PendingItemsStatsPb) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{107}
+	return file_trigger_proto_rawDescGZIP(), []int{109}
 }
 
 func (x *PendingItemsStatsPb) GetTotal() int64 {
@@ -7668,7 +7812,7 @@ type GetExecItemDashboardRes struct {
 
 func (x *GetExecItemDashboardRes) Reset() {
 	*x = GetExecItemDashboardRes{}
-	mi := &file_trigger_proto_msgTypes[108]
+	mi := &file_trigger_proto_msgTypes[110]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7680,7 +7824,7 @@ func (x *GetExecItemDashboardRes) String() string {
 func (*GetExecItemDashboardRes) ProtoMessage() {}
 
 func (x *GetExecItemDashboardRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[108]
+	mi := &file_trigger_proto_msgTypes[110]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7693,7 +7837,7 @@ func (x *GetExecItemDashboardRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetExecItemDashboardRes.ProtoReflect.Descriptor instead.
 func (*GetExecItemDashboardRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{108}
+	return file_trigger_proto_rawDescGZIP(), []int{110}
 }
 
 func (x *GetExecItemDashboardRes) GetStats() []*ExecItemDashboardItemPb {
@@ -7720,7 +7864,7 @@ type ExecItemDashboardItemPb struct {
 
 func (x *ExecItemDashboardItemPb) Reset() {
 	*x = ExecItemDashboardItemPb{}
-	mi := &file_trigger_proto_msgTypes[109]
+	mi := &file_trigger_proto_msgTypes[111]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7732,7 +7876,7 @@ func (x *ExecItemDashboardItemPb) String() string {
 func (*ExecItemDashboardItemPb) ProtoMessage() {}
 
 func (x *ExecItemDashboardItemPb) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[109]
+	mi := &file_trigger_proto_msgTypes[111]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7745,7 +7889,7 @@ func (x *ExecItemDashboardItemPb) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecItemDashboardItemPb.ProtoReflect.Descriptor instead.
 func (*ExecItemDashboardItemPb) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{109}
+	return file_trigger_proto_rawDescGZIP(), []int{111}
 }
 
 func (x *ExecItemDashboardItemPb) GetPlanType() string {
@@ -7797,7 +7941,7 @@ type CallbackPlanExecItemReq struct {
 
 func (x *CallbackPlanExecItemReq) Reset() {
 	*x = CallbackPlanExecItemReq{}
-	mi := &file_trigger_proto_msgTypes[110]
+	mi := &file_trigger_proto_msgTypes[112]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7809,7 +7953,7 @@ func (x *CallbackPlanExecItemReq) String() string {
 func (*CallbackPlanExecItemReq) ProtoMessage() {}
 
 func (x *CallbackPlanExecItemReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[110]
+	mi := &file_trigger_proto_msgTypes[112]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7822,7 +7966,7 @@ func (x *CallbackPlanExecItemReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CallbackPlanExecItemReq.ProtoReflect.Descriptor instead.
 func (*CallbackPlanExecItemReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{110}
+	return file_trigger_proto_rawDescGZIP(), []int{112}
 }
 
 func (x *CallbackPlanExecItemReq) GetId() string {
@@ -7879,7 +8023,7 @@ type DelayConfigPb struct {
 
 func (x *DelayConfigPb) Reset() {
 	*x = DelayConfigPb{}
-	mi := &file_trigger_proto_msgTypes[111]
+	mi := &file_trigger_proto_msgTypes[113]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7891,7 +8035,7 @@ func (x *DelayConfigPb) String() string {
 func (*DelayConfigPb) ProtoMessage() {}
 
 func (x *DelayConfigPb) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[111]
+	mi := &file_trigger_proto_msgTypes[113]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7904,7 +8048,7 @@ func (x *DelayConfigPb) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DelayConfigPb.ProtoReflect.Descriptor instead.
 func (*DelayConfigPb) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{111}
+	return file_trigger_proto_rawDescGZIP(), []int{113}
 }
 
 func (x *DelayConfigPb) GetNextTriggerTime() string {
@@ -7929,7 +8073,7 @@ type CallbackPlanExecItemRes struct {
 
 func (x *CallbackPlanExecItemRes) Reset() {
 	*x = CallbackPlanExecItemRes{}
-	mi := &file_trigger_proto_msgTypes[112]
+	mi := &file_trigger_proto_msgTypes[114]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7941,7 +8085,7 @@ func (x *CallbackPlanExecItemRes) String() string {
 func (*CallbackPlanExecItemRes) ProtoMessage() {}
 
 func (x *CallbackPlanExecItemRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[112]
+	mi := &file_trigger_proto_msgTypes[114]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7954,7 +8098,7 @@ func (x *CallbackPlanExecItemRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CallbackPlanExecItemRes.ProtoReflect.Descriptor instead.
 func (*CallbackPlanExecItemRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{112}
+	return file_trigger_proto_rawDescGZIP(), []int{114}
 }
 
 // CreateCronJobReq 是独立 RRULE 周期任务创建请求。
@@ -8011,7 +8155,7 @@ type CreateCronJobReq struct {
 
 func (x *CreateCronJobReq) Reset() {
 	*x = CreateCronJobReq{}
-	mi := &file_trigger_proto_msgTypes[113]
+	mi := &file_trigger_proto_msgTypes[115]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8023,7 +8167,7 @@ func (x *CreateCronJobReq) String() string {
 func (*CreateCronJobReq) ProtoMessage() {}
 
 func (x *CreateCronJobReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[113]
+	mi := &file_trigger_proto_msgTypes[115]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8036,7 +8180,7 @@ func (x *CreateCronJobReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCronJobReq.ProtoReflect.Descriptor instead.
 func (*CreateCronJobReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{113}
+	return file_trigger_proto_rawDescGZIP(), []int{115}
 }
 
 func (x *CreateCronJobReq) GetTaskCode() string {
@@ -8208,7 +8352,7 @@ type CreateCronJobRes struct {
 
 func (x *CreateCronJobRes) Reset() {
 	*x = CreateCronJobRes{}
-	mi := &file_trigger_proto_msgTypes[114]
+	mi := &file_trigger_proto_msgTypes[116]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8220,7 +8364,7 @@ func (x *CreateCronJobRes) String() string {
 func (*CreateCronJobRes) ProtoMessage() {}
 
 func (x *CreateCronJobRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[114]
+	mi := &file_trigger_proto_msgTypes[116]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8233,7 +8377,7 @@ func (x *CreateCronJobRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCronJobRes.ProtoReflect.Descriptor instead.
 func (*CreateCronJobRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{114}
+	return file_trigger_proto_rawDescGZIP(), []int{116}
 }
 
 func (x *CreateCronJobRes) GetJobId() string {
@@ -8304,7 +8448,7 @@ type UpdateCronJobReq struct {
 
 func (x *UpdateCronJobReq) Reset() {
 	*x = UpdateCronJobReq{}
-	mi := &file_trigger_proto_msgTypes[115]
+	mi := &file_trigger_proto_msgTypes[117]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8316,7 +8460,7 @@ func (x *UpdateCronJobReq) String() string {
 func (*UpdateCronJobReq) ProtoMessage() {}
 
 func (x *UpdateCronJobReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[115]
+	mi := &file_trigger_proto_msgTypes[117]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8329,7 +8473,7 @@ func (x *UpdateCronJobReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateCronJobReq.ProtoReflect.Descriptor instead.
 func (*UpdateCronJobReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{115}
+	return file_trigger_proto_rawDescGZIP(), []int{117}
 }
 
 func (x *UpdateCronJobReq) GetJobId() string {
@@ -8482,7 +8626,7 @@ type UpdateCronJobRes struct {
 
 func (x *UpdateCronJobRes) Reset() {
 	*x = UpdateCronJobRes{}
-	mi := &file_trigger_proto_msgTypes[116]
+	mi := &file_trigger_proto_msgTypes[118]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8494,7 +8638,7 @@ func (x *UpdateCronJobRes) String() string {
 func (*UpdateCronJobRes) ProtoMessage() {}
 
 func (x *UpdateCronJobRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[116]
+	mi := &file_trigger_proto_msgTypes[118]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8507,7 +8651,7 @@ func (x *UpdateCronJobRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateCronJobRes.ProtoReflect.Descriptor instead.
 func (*UpdateCronJobRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{116}
+	return file_trigger_proto_rawDescGZIP(), []int{118}
 }
 
 func (x *UpdateCronJobRes) GetJobId() string {
@@ -8591,7 +8735,7 @@ type SubmitCronJobReq struct {
 
 func (x *SubmitCronJobReq) Reset() {
 	*x = SubmitCronJobReq{}
-	mi := &file_trigger_proto_msgTypes[117]
+	mi := &file_trigger_proto_msgTypes[119]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8603,7 +8747,7 @@ func (x *SubmitCronJobReq) String() string {
 func (*SubmitCronJobReq) ProtoMessage() {}
 
 func (x *SubmitCronJobReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[117]
+	mi := &file_trigger_proto_msgTypes[119]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8616,7 +8760,7 @@ func (x *SubmitCronJobReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitCronJobReq.ProtoReflect.Descriptor instead.
 func (*SubmitCronJobReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{117}
+	return file_trigger_proto_rawDescGZIP(), []int{119}
 }
 
 func (x *SubmitCronJobReq) GetTaskCode() string {
@@ -8790,7 +8934,7 @@ type SubmitCronJobRes struct {
 
 func (x *SubmitCronJobRes) Reset() {
 	*x = SubmitCronJobRes{}
-	mi := &file_trigger_proto_msgTypes[118]
+	mi := &file_trigger_proto_msgTypes[120]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8802,7 +8946,7 @@ func (x *SubmitCronJobRes) String() string {
 func (*SubmitCronJobRes) ProtoMessage() {}
 
 func (x *SubmitCronJobRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[118]
+	mi := &file_trigger_proto_msgTypes[120]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8815,7 +8959,7 @@ func (x *SubmitCronJobRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitCronJobRes.ProtoReflect.Descriptor instead.
 func (*SubmitCronJobRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{118}
+	return file_trigger_proto_rawDescGZIP(), []int{120}
 }
 
 func (x *SubmitCronJobRes) GetJobId() string {
@@ -8857,7 +9001,7 @@ type EnableCronJobReq struct {
 
 func (x *EnableCronJobReq) Reset() {
 	*x = EnableCronJobReq{}
-	mi := &file_trigger_proto_msgTypes[119]
+	mi := &file_trigger_proto_msgTypes[121]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8869,7 +9013,7 @@ func (x *EnableCronJobReq) String() string {
 func (*EnableCronJobReq) ProtoMessage() {}
 
 func (x *EnableCronJobReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[119]
+	mi := &file_trigger_proto_msgTypes[121]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8882,7 +9026,7 @@ func (x *EnableCronJobReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnableCronJobReq.ProtoReflect.Descriptor instead.
 func (*EnableCronJobReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{119}
+	return file_trigger_proto_rawDescGZIP(), []int{121}
 }
 
 func (x *EnableCronJobReq) GetJobId() string {
@@ -8901,7 +9045,7 @@ type EnableCronJobRes struct {
 
 func (x *EnableCronJobRes) Reset() {
 	*x = EnableCronJobRes{}
-	mi := &file_trigger_proto_msgTypes[120]
+	mi := &file_trigger_proto_msgTypes[122]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8913,7 +9057,7 @@ func (x *EnableCronJobRes) String() string {
 func (*EnableCronJobRes) ProtoMessage() {}
 
 func (x *EnableCronJobRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[120]
+	mi := &file_trigger_proto_msgTypes[122]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8926,7 +9070,7 @@ func (x *EnableCronJobRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnableCronJobRes.ProtoReflect.Descriptor instead.
 func (*EnableCronJobRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{120}
+	return file_trigger_proto_rawDescGZIP(), []int{122}
 }
 
 // DisableCronJobReq 禁用指定 Cron Job。
@@ -8940,7 +9084,7 @@ type DisableCronJobReq struct {
 
 func (x *DisableCronJobReq) Reset() {
 	*x = DisableCronJobReq{}
-	mi := &file_trigger_proto_msgTypes[121]
+	mi := &file_trigger_proto_msgTypes[123]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8952,7 +9096,7 @@ func (x *DisableCronJobReq) String() string {
 func (*DisableCronJobReq) ProtoMessage() {}
 
 func (x *DisableCronJobReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[121]
+	mi := &file_trigger_proto_msgTypes[123]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8965,7 +9109,7 @@ func (x *DisableCronJobReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableCronJobReq.ProtoReflect.Descriptor instead.
 func (*DisableCronJobReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{121}
+	return file_trigger_proto_rawDescGZIP(), []int{123}
 }
 
 func (x *DisableCronJobReq) GetJobId() string {
@@ -8984,7 +9128,7 @@ type DisableCronJobRes struct {
 
 func (x *DisableCronJobRes) Reset() {
 	*x = DisableCronJobRes{}
-	mi := &file_trigger_proto_msgTypes[122]
+	mi := &file_trigger_proto_msgTypes[124]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8996,7 +9140,7 @@ func (x *DisableCronJobRes) String() string {
 func (*DisableCronJobRes) ProtoMessage() {}
 
 func (x *DisableCronJobRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[122]
+	mi := &file_trigger_proto_msgTypes[124]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9009,7 +9153,7 @@ func (x *DisableCronJobRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableCronJobRes.ProtoReflect.Descriptor instead.
 func (*DisableCronJobRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{122}
+	return file_trigger_proto_rawDescGZIP(), []int{124}
 }
 
 // DeleteCronJobReq 软删除指定 Cron Job。
@@ -9023,7 +9167,7 @@ type DeleteCronJobReq struct {
 
 func (x *DeleteCronJobReq) Reset() {
 	*x = DeleteCronJobReq{}
-	mi := &file_trigger_proto_msgTypes[123]
+	mi := &file_trigger_proto_msgTypes[125]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9035,7 +9179,7 @@ func (x *DeleteCronJobReq) String() string {
 func (*DeleteCronJobReq) ProtoMessage() {}
 
 func (x *DeleteCronJobReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[123]
+	mi := &file_trigger_proto_msgTypes[125]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9048,7 +9192,7 @@ func (x *DeleteCronJobReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCronJobReq.ProtoReflect.Descriptor instead.
 func (*DeleteCronJobReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{123}
+	return file_trigger_proto_rawDescGZIP(), []int{125}
 }
 
 func (x *DeleteCronJobReq) GetJobId() string {
@@ -9067,7 +9211,7 @@ type DeleteCronJobRes struct {
 
 func (x *DeleteCronJobRes) Reset() {
 	*x = DeleteCronJobRes{}
-	mi := &file_trigger_proto_msgTypes[124]
+	mi := &file_trigger_proto_msgTypes[126]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9079,7 +9223,7 @@ func (x *DeleteCronJobRes) String() string {
 func (*DeleteCronJobRes) ProtoMessage() {}
 
 func (x *DeleteCronJobRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[124]
+	mi := &file_trigger_proto_msgTypes[126]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9092,7 +9236,7 @@ func (x *DeleteCronJobRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCronJobRes.ProtoReflect.Descriptor instead.
 func (*DeleteCronJobRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{124}
+	return file_trigger_proto_rawDescGZIP(), []int{126}
 }
 
 // DeleteCronJobsReq 按 JobId 批量软删除 Cron Job。
@@ -9106,7 +9250,7 @@ type DeleteCronJobsReq struct {
 
 func (x *DeleteCronJobsReq) Reset() {
 	*x = DeleteCronJobsReq{}
-	mi := &file_trigger_proto_msgTypes[125]
+	mi := &file_trigger_proto_msgTypes[127]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9118,7 +9262,7 @@ func (x *DeleteCronJobsReq) String() string {
 func (*DeleteCronJobsReq) ProtoMessage() {}
 
 func (x *DeleteCronJobsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[125]
+	mi := &file_trigger_proto_msgTypes[127]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9131,7 +9275,7 @@ func (x *DeleteCronJobsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCronJobsReq.ProtoReflect.Descriptor instead.
 func (*DeleteCronJobsReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{125}
+	return file_trigger_proto_rawDescGZIP(), []int{127}
 }
 
 func (x *DeleteCronJobsReq) GetJobIds() []string {
@@ -9152,7 +9296,7 @@ type DeleteCronJobsRes struct {
 
 func (x *DeleteCronJobsRes) Reset() {
 	*x = DeleteCronJobsRes{}
-	mi := &file_trigger_proto_msgTypes[126]
+	mi := &file_trigger_proto_msgTypes[128]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9164,7 +9308,7 @@ func (x *DeleteCronJobsRes) String() string {
 func (*DeleteCronJobsRes) ProtoMessage() {}
 
 func (x *DeleteCronJobsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[126]
+	mi := &file_trigger_proto_msgTypes[128]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9177,7 +9321,7 @@ func (x *DeleteCronJobsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCronJobsRes.ProtoReflect.Descriptor instead.
 func (*DeleteCronJobsRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{126}
+	return file_trigger_proto_rawDescGZIP(), []int{128}
 }
 
 func (x *DeleteCronJobsRes) GetDeleted() int64 {
@@ -9198,7 +9342,7 @@ type DeleteCronJobsByGroupReq struct {
 
 func (x *DeleteCronJobsByGroupReq) Reset() {
 	*x = DeleteCronJobsByGroupReq{}
-	mi := &file_trigger_proto_msgTypes[127]
+	mi := &file_trigger_proto_msgTypes[129]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9210,7 +9354,7 @@ func (x *DeleteCronJobsByGroupReq) String() string {
 func (*DeleteCronJobsByGroupReq) ProtoMessage() {}
 
 func (x *DeleteCronJobsByGroupReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[127]
+	mi := &file_trigger_proto_msgTypes[129]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9223,7 +9367,7 @@ func (x *DeleteCronJobsByGroupReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCronJobsByGroupReq.ProtoReflect.Descriptor instead.
 func (*DeleteCronJobsByGroupReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{127}
+	return file_trigger_proto_rawDescGZIP(), []int{129}
 }
 
 func (x *DeleteCronJobsByGroupReq) GetGroupIds() []string {
@@ -9244,7 +9388,7 @@ type DeleteCronJobsByGroupRes struct {
 
 func (x *DeleteCronJobsByGroupRes) Reset() {
 	*x = DeleteCronJobsByGroupRes{}
-	mi := &file_trigger_proto_msgTypes[128]
+	mi := &file_trigger_proto_msgTypes[130]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9256,7 +9400,7 @@ func (x *DeleteCronJobsByGroupRes) String() string {
 func (*DeleteCronJobsByGroupRes) ProtoMessage() {}
 
 func (x *DeleteCronJobsByGroupRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[128]
+	mi := &file_trigger_proto_msgTypes[130]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9269,7 +9413,7 @@ func (x *DeleteCronJobsByGroupRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCronJobsByGroupRes.ProtoReflect.Descriptor instead.
 func (*DeleteCronJobsByGroupRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{128}
+	return file_trigger_proto_rawDescGZIP(), []int{130}
 }
 
 func (x *DeleteCronJobsByGroupRes) GetDeleted() int64 {
@@ -9290,7 +9434,7 @@ type RunCronJobReq struct {
 
 func (x *RunCronJobReq) Reset() {
 	*x = RunCronJobReq{}
-	mi := &file_trigger_proto_msgTypes[129]
+	mi := &file_trigger_proto_msgTypes[131]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9302,7 +9446,7 @@ func (x *RunCronJobReq) String() string {
 func (*RunCronJobReq) ProtoMessage() {}
 
 func (x *RunCronJobReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[129]
+	mi := &file_trigger_proto_msgTypes[131]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9315,7 +9459,7 @@ func (x *RunCronJobReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RunCronJobReq.ProtoReflect.Descriptor instead.
 func (*RunCronJobReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{129}
+	return file_trigger_proto_rawDescGZIP(), []int{131}
 }
 
 func (x *RunCronJobReq) GetJobId() string {
@@ -9336,7 +9480,7 @@ type RunCronJobRes struct {
 
 func (x *RunCronJobRes) Reset() {
 	*x = RunCronJobRes{}
-	mi := &file_trigger_proto_msgTypes[130]
+	mi := &file_trigger_proto_msgTypes[132]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9348,7 +9492,7 @@ func (x *RunCronJobRes) String() string {
 func (*RunCronJobRes) ProtoMessage() {}
 
 func (x *RunCronJobRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[130]
+	mi := &file_trigger_proto_msgTypes[132]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9361,7 +9505,7 @@ func (x *RunCronJobRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RunCronJobRes.ProtoReflect.Descriptor instead.
 func (*RunCronJobRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{130}
+	return file_trigger_proto_rawDescGZIP(), []int{132}
 }
 
 func (x *RunCronJobRes) GetTraceId() string {
@@ -9382,7 +9526,7 @@ type GetCronJobReq struct {
 
 func (x *GetCronJobReq) Reset() {
 	*x = GetCronJobReq{}
-	mi := &file_trigger_proto_msgTypes[131]
+	mi := &file_trigger_proto_msgTypes[133]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9394,7 +9538,7 @@ func (x *GetCronJobReq) String() string {
 func (*GetCronJobReq) ProtoMessage() {}
 
 func (x *GetCronJobReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[131]
+	mi := &file_trigger_proto_msgTypes[133]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9407,7 +9551,7 @@ func (x *GetCronJobReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCronJobReq.ProtoReflect.Descriptor instead.
 func (*GetCronJobReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{131}
+	return file_trigger_proto_rawDescGZIP(), []int{133}
 }
 
 func (x *GetCronJobReq) GetJobId() string {
@@ -9428,7 +9572,7 @@ type GetCronJobRes struct {
 
 func (x *GetCronJobRes) Reset() {
 	*x = GetCronJobRes{}
-	mi := &file_trigger_proto_msgTypes[132]
+	mi := &file_trigger_proto_msgTypes[134]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9440,7 +9584,7 @@ func (x *GetCronJobRes) String() string {
 func (*GetCronJobRes) ProtoMessage() {}
 
 func (x *GetCronJobRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[132]
+	mi := &file_trigger_proto_msgTypes[134]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9453,7 +9597,7 @@ func (x *GetCronJobRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCronJobRes.ProtoReflect.Descriptor instead.
 func (*GetCronJobRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{132}
+	return file_trigger_proto_rawDescGZIP(), []int{134}
 }
 
 func (x *GetCronJobRes) GetCronJob() *CronJobPb {
@@ -9476,7 +9620,7 @@ type PreviewCronJobScheduleReq struct {
 
 func (x *PreviewCronJobScheduleReq) Reset() {
 	*x = PreviewCronJobScheduleReq{}
-	mi := &file_trigger_proto_msgTypes[133]
+	mi := &file_trigger_proto_msgTypes[135]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9488,7 +9632,7 @@ func (x *PreviewCronJobScheduleReq) String() string {
 func (*PreviewCronJobScheduleReq) ProtoMessage() {}
 
 func (x *PreviewCronJobScheduleReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[133]
+	mi := &file_trigger_proto_msgTypes[135]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9501,7 +9645,7 @@ func (x *PreviewCronJobScheduleReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewCronJobScheduleReq.ProtoReflect.Descriptor instead.
 func (*PreviewCronJobScheduleReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{133}
+	return file_trigger_proto_rawDescGZIP(), []int{135}
 }
 
 func (x *PreviewCronJobScheduleReq) GetJobId() string {
@@ -9537,7 +9681,7 @@ type PreviewCronJobScheduleRes struct {
 
 func (x *PreviewCronJobScheduleRes) Reset() {
 	*x = PreviewCronJobScheduleRes{}
-	mi := &file_trigger_proto_msgTypes[134]
+	mi := &file_trigger_proto_msgTypes[136]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9549,7 +9693,7 @@ func (x *PreviewCronJobScheduleRes) String() string {
 func (*PreviewCronJobScheduleRes) ProtoMessage() {}
 
 func (x *PreviewCronJobScheduleRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[134]
+	mi := &file_trigger_proto_msgTypes[136]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9562,7 +9706,7 @@ func (x *PreviewCronJobScheduleRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PreviewCronJobScheduleRes.ProtoReflect.Descriptor instead.
 func (*PreviewCronJobScheduleRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{134}
+	return file_trigger_proto_rawDescGZIP(), []int{136}
 }
 
 func (x *PreviewCronJobScheduleRes) GetJobId() string {
@@ -9625,7 +9769,7 @@ type ListCronJobsReq struct {
 
 func (x *ListCronJobsReq) Reset() {
 	*x = ListCronJobsReq{}
-	mi := &file_trigger_proto_msgTypes[135]
+	mi := &file_trigger_proto_msgTypes[137]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9637,7 +9781,7 @@ func (x *ListCronJobsReq) String() string {
 func (*ListCronJobsReq) ProtoMessage() {}
 
 func (x *ListCronJobsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[135]
+	mi := &file_trigger_proto_msgTypes[137]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9650,7 +9794,7 @@ func (x *ListCronJobsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCronJobsReq.ProtoReflect.Descriptor instead.
 func (*ListCronJobsReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{135}
+	return file_trigger_proto_rawDescGZIP(), []int{137}
 }
 
 func (x *ListCronJobsReq) GetPageSize() int64 {
@@ -9722,7 +9866,7 @@ type ListCronJobsRes struct {
 
 func (x *ListCronJobsRes) Reset() {
 	*x = ListCronJobsRes{}
-	mi := &file_trigger_proto_msgTypes[136]
+	mi := &file_trigger_proto_msgTypes[138]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9734,7 +9878,7 @@ func (x *ListCronJobsRes) String() string {
 func (*ListCronJobsRes) ProtoMessage() {}
 
 func (x *ListCronJobsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[136]
+	mi := &file_trigger_proto_msgTypes[138]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9747,7 +9891,7 @@ func (x *ListCronJobsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCronJobsRes.ProtoReflect.Descriptor instead.
 func (*ListCronJobsRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{136}
+	return file_trigger_proto_rawDescGZIP(), []int{138}
 }
 
 func (x *ListCronJobsRes) GetCronJobs() []*CronJobPb {
@@ -9831,7 +9975,7 @@ type CronJobPb struct {
 
 func (x *CronJobPb) Reset() {
 	*x = CronJobPb{}
-	mi := &file_trigger_proto_msgTypes[137]
+	mi := &file_trigger_proto_msgTypes[139]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9843,7 +9987,7 @@ func (x *CronJobPb) String() string {
 func (*CronJobPb) ProtoMessage() {}
 
 func (x *CronJobPb) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[137]
+	mi := &file_trigger_proto_msgTypes[139]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9856,7 +10000,7 @@ func (x *CronJobPb) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CronJobPb.ProtoReflect.Descriptor instead.
 func (*CronJobPb) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{137}
+	return file_trigger_proto_rawDescGZIP(), []int{139}
 }
 
 func (x *CronJobPb) GetJobId() string {
@@ -10075,7 +10219,7 @@ type NextIdReq struct {
 
 func (x *NextIdReq) Reset() {
 	*x = NextIdReq{}
-	mi := &file_trigger_proto_msgTypes[138]
+	mi := &file_trigger_proto_msgTypes[140]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10087,7 +10231,7 @@ func (x *NextIdReq) String() string {
 func (*NextIdReq) ProtoMessage() {}
 
 func (x *NextIdReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[138]
+	mi := &file_trigger_proto_msgTypes[140]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10100,7 +10244,7 @@ func (x *NextIdReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NextIdReq.ProtoReflect.Descriptor instead.
 func (*NextIdReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{138}
+	return file_trigger_proto_rawDescGZIP(), []int{140}
 }
 
 func (x *NextIdReq) GetOutDescType() string {
@@ -10126,7 +10270,7 @@ type NextIdRes struct {
 
 func (x *NextIdRes) Reset() {
 	*x = NextIdRes{}
-	mi := &file_trigger_proto_msgTypes[139]
+	mi := &file_trigger_proto_msgTypes[141]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10138,7 +10282,7 @@ func (x *NextIdRes) String() string {
 func (*NextIdRes) ProtoMessage() {}
 
 func (x *NextIdRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[139]
+	mi := &file_trigger_proto_msgTypes[141]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10151,7 +10295,7 @@ func (x *NextIdRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NextIdRes.ProtoReflect.Descriptor instead.
 func (*NextIdRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{139}
+	return file_trigger_proto_rawDescGZIP(), []int{141}
 }
 
 func (x *NextIdRes) GetNextId() string {
@@ -10176,7 +10320,7 @@ type BatchNextIdReq struct {
 
 func (x *BatchNextIdReq) Reset() {
 	*x = BatchNextIdReq{}
-	mi := &file_trigger_proto_msgTypes[140]
+	mi := &file_trigger_proto_msgTypes[142]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10188,7 +10332,7 @@ func (x *BatchNextIdReq) String() string {
 func (*BatchNextIdReq) ProtoMessage() {}
 
 func (x *BatchNextIdReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[140]
+	mi := &file_trigger_proto_msgTypes[142]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10201,7 +10345,7 @@ func (x *BatchNextIdReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchNextIdReq.ProtoReflect.Descriptor instead.
 func (*BatchNextIdReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{140}
+	return file_trigger_proto_rawDescGZIP(), []int{142}
 }
 
 func (x *BatchNextIdReq) GetOutDescType() string {
@@ -10235,7 +10379,7 @@ type BatchNextIdRes struct {
 
 func (x *BatchNextIdRes) Reset() {
 	*x = BatchNextIdRes{}
-	mi := &file_trigger_proto_msgTypes[141]
+	mi := &file_trigger_proto_msgTypes[143]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10247,7 +10391,7 @@ func (x *BatchNextIdRes) String() string {
 func (*BatchNextIdRes) ProtoMessage() {}
 
 func (x *BatchNextIdRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[141]
+	mi := &file_trigger_proto_msgTypes[143]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10260,7 +10404,7 @@ func (x *BatchNextIdRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchNextIdRes.ProtoReflect.Descriptor instead.
 func (*BatchNextIdRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{141}
+	return file_trigger_proto_rawDescGZIP(), []int{143}
 }
 
 func (x *BatchNextIdRes) GetNextIds() []string {
@@ -10301,7 +10445,7 @@ type InvokeTaskPb struct {
 
 func (x *InvokeTaskPb) Reset() {
 	*x = InvokeTaskPb{}
-	mi := &file_trigger_proto_msgTypes[142]
+	mi := &file_trigger_proto_msgTypes[144]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10313,7 +10457,7 @@ func (x *InvokeTaskPb) String() string {
 func (*InvokeTaskPb) ProtoMessage() {}
 
 func (x *InvokeTaskPb) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[142]
+	mi := &file_trigger_proto_msgTypes[144]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10326,7 +10470,7 @@ func (x *InvokeTaskPb) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvokeTaskPb.ProtoReflect.Descriptor instead.
 func (*InvokeTaskPb) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{142}
+	return file_trigger_proto_rawDescGZIP(), []int{144}
 }
 
 func (x *InvokeTaskPb) GetId() string {
@@ -10414,7 +10558,7 @@ type InvokeReq struct {
 
 func (x *InvokeReq) Reset() {
 	*x = InvokeReq{}
-	mi := &file_trigger_proto_msgTypes[143]
+	mi := &file_trigger_proto_msgTypes[145]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10426,7 +10570,7 @@ func (x *InvokeReq) String() string {
 func (*InvokeReq) ProtoMessage() {}
 
 func (x *InvokeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[143]
+	mi := &file_trigger_proto_msgTypes[145]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10439,7 +10583,7 @@ func (x *InvokeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvokeReq.ProtoReflect.Descriptor instead.
 func (*InvokeReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{143}
+	return file_trigger_proto_rawDescGZIP(), []int{145}
 }
 
 func (x *InvokeReq) GetTasks() []*InvokeTaskPb {
@@ -10486,7 +10630,7 @@ type InvokeTaskResultPb struct {
 
 func (x *InvokeTaskResultPb) Reset() {
 	*x = InvokeTaskResultPb{}
-	mi := &file_trigger_proto_msgTypes[144]
+	mi := &file_trigger_proto_msgTypes[146]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10498,7 +10642,7 @@ func (x *InvokeTaskResultPb) String() string {
 func (*InvokeTaskResultPb) ProtoMessage() {}
 
 func (x *InvokeTaskResultPb) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[144]
+	mi := &file_trigger_proto_msgTypes[146]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10511,7 +10655,7 @@ func (x *InvokeTaskResultPb) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvokeTaskResultPb.ProtoReflect.Descriptor instead.
 func (*InvokeTaskResultPb) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{144}
+	return file_trigger_proto_rawDescGZIP(), []int{146}
 }
 
 func (x *InvokeTaskResultPb) GetId() string {
@@ -10574,7 +10718,7 @@ type InvokeRes struct {
 
 func (x *InvokeRes) Reset() {
 	*x = InvokeRes{}
-	mi := &file_trigger_proto_msgTypes[145]
+	mi := &file_trigger_proto_msgTypes[147]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10586,7 +10730,7 @@ func (x *InvokeRes) String() string {
 func (*InvokeRes) ProtoMessage() {}
 
 func (x *InvokeRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[145]
+	mi := &file_trigger_proto_msgTypes[147]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10599,7 +10743,7 @@ func (x *InvokeRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvokeRes.ProtoReflect.Descriptor instead.
 func (*InvokeRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{145}
+	return file_trigger_proto_rawDescGZIP(), []int{147}
 }
 
 func (x *InvokeRes) GetResults() []*InvokeTaskResultPb {
@@ -10894,7 +11038,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\x04date\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x98\x01\n" +
 	"R\x04date\x12\x18\n" +
 	"\aenabled\x18\x02 \x01(\bR\aenabled\"\x1c\n" +
-	"\x1aSetHolidaySourceEnabledRes\"\xd7\x06\n" +
+	"\x1aSetHolidaySourceEnabledRes\"\xc5\a\n" +
 	"\x11CreatePlanTaskReq\x12$\n" +
 	"\tdept_code\x18e \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdeptCode\x12 \n" +
 	"\aplan_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\x12$\n" +
@@ -10917,7 +11061,10 @@ const file_trigger_proto_rawDesc = "" +
 	"\x0fspecified_times\x18\x0f \x03(\tB\x10\xfaB\r\x92\x01\n" +
 	"\x10\xe8\a\"\x05r\x03\x98\x01\x13R\x0especifiedTimes\x127\n" +
 	"\x0eexcluded_times\x18\x10 \x03(\tB\x10\xfaB\r\x92\x01\n" +
-	"\x10\xe8\a\"\x05r\x03\x98\x01\x13R\rexcludedTimes\x12\x12\n" +
+	"\x10\xe8\a\"\x05r\x03\x98\x01\x13R\rexcludedTimes\x12.\n" +
+	"\fconfirm_type\x18\x11 \x01(\x05B\v\xfaB\b\x1a\x060\x000\x010\x02R\vconfirmType\x12<\n" +
+	"\x14confirm_lead_minutes\x18\x12 \x01(\x05B\n" +
+	"\xfaB\a\x1a\x05\x18\xa0\v(\x00R\x12confirmLeadMinutes\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
@@ -10978,7 +11125,11 @@ const file_trigger_proto_rawDesc = "" +
 	"\x12ResumePlanBatchReq\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bbatch_id\x18\x02 \x01(\tR\abatchId\"\x14\n" +
-	"\x12ResumePlanBatchRes\"a\n" +
+	"\x12ResumePlanBatchRes\"@\n" +
+	"\x13ConfirmPlanBatchReq\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
+	"\bbatch_id\x18\x02 \x01(\tR\abatchId\"\x15\n" +
+	"\x13ConfirmPlanBatchRes\"a\n" +
 	"\x14PausePlanExecItemReq\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aexec_id\x18\x02 \x01(\tR\x06execId\x12 \n" +
@@ -11176,7 +11327,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\ftrigger_time\x18\f \x01(\tR\vtriggerTime\x12\x1f\n" +
 	"\vexec_result\x18\r \x01(\tR\n" +
 	"execResult\x12\x18\n" +
-	"\amessage\x18\x0e \x01(\tR\amessage\"\xd4\x06\n" +
+	"\amessage\x18\x0e \x01(\tR\amessage\"\xf0\a\n" +
 	"\vPlanBatchPb\x12\x1f\n" +
 	"\vcreate_time\x18e \x01(\tR\n" +
 	"createTime\x12\x1f\n" +
@@ -11204,7 +11355,11 @@ const file_trigger_proto_rawDesc = "" +
 	"\rpaused_reason\x18\v \x01(\tR\fpausedReason\x12#\n" +
 	"\rfinished_time\x18\f \x01(\tR\ffinishedTime\x12R\n" +
 	"\x10status_count_map\x18\r \x03(\v2(.trigger.PlanBatchPb.StatusCountMapEntryR\x0estatusCountMap\x12\x19\n" +
-	"\bexec_cnt\x183 \x01(\x03R\aexecCnt\x12\x12\n" +
+	"\bexec_cnt\x183 \x01(\x03R\aexecCnt\x12!\n" +
+	"\fconfirm_type\x189 \x01(\x05R\vconfirmType\x12%\n" +
+	"\x0econfirm_status\x18: \x01(\tR\rconfirmStatus\x12)\n" +
+	"\x10confirm_deadline\x18; \x01(\tR\x0fconfirmDeadline\x12%\n" +
+	"\x0econfirmed_time\x18< \x01(\tR\rconfirmedTime\x12\x12\n" +
 	"\x04ext1\x184 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x185 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x186 \x01(\tR\x04ext3\x12\x12\n" +
@@ -11485,7 +11640,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\"HOLIDAY_DAY_KIND_STATUTORY_HOLIDAY\x10\x01\x12\x1c\n" +
 	"\x18HOLIDAY_DAY_KIND_WEEKEND\x10\x02\x12#\n" +
 	"\x1fHOLIDAY_DAY_KIND_MAKEUP_WORKDAY\x10\x03\x12#\n" +
-	"\x1fHOLIDAY_DAY_KIND_NORMAL_WORKDAY\x10\x042\xba%\n" +
+	"\x1fHOLIDAY_DAY_KIND_NORMAL_WORKDAY\x10\x042\x8a&\n" +
 	"\n" +
 	"TriggerRpc\x12?\n" +
 	"\vSendTrigger\x12\x17.trigger.SendTriggerReq\x1a\x17.trigger.SendTriggerRes\x12N\n" +
@@ -11523,7 +11678,8 @@ const file_trigger_proto_rawDesc = "" +
 	"ResumePlan\x12\x16.trigger.ResumePlanReq\x1a\x16.trigger.ResumePlanRes\x12H\n" +
 	"\x0ePausePlanBatch\x12\x1a.trigger.PausePlanBatchReq\x1a\x1a.trigger.PausePlanBatchRes\x12T\n" +
 	"\x12TerminatePlanBatch\x12\x1e.trigger.TerminatePlanBatchReq\x1a\x1e.trigger.TerminatePlanBatchRes\x12K\n" +
-	"\x0fResumePlanBatch\x12\x1b.trigger.ResumePlanBatchReq\x1a\x1b.trigger.ResumePlanBatchRes\x12Q\n" +
+	"\x0fResumePlanBatch\x12\x1b.trigger.ResumePlanBatchReq\x1a\x1b.trigger.ResumePlanBatchRes\x12N\n" +
+	"\x10ConfirmPlanBatch\x12\x1c.trigger.ConfirmPlanBatchReq\x1a\x1c.trigger.ConfirmPlanBatchRes\x12Q\n" +
 	"\x11PausePlanExecItem\x12\x1d.trigger.PausePlanExecItemReq\x1a\x1d.trigger.PausePlanExecItemRes\x12]\n" +
 	"\x15TerminatePlanExecItem\x12!.trigger.TerminatePlanExecItemReq\x1a!.trigger.TerminatePlanExecItemRes\x12K\n" +
 	"\x0fRunPlanExecItem\x12\x1b.trigger.RunPlanExecItemReq\x1a\x1b.trigger.RunPlanExecItemRes\x12T\n" +
@@ -11570,7 +11726,7 @@ func file_trigger_proto_rawDescGZIP() []byte {
 }
 
 var file_trigger_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_trigger_proto_msgTypes = make([]protoimpl.MessageInfo, 148)
+var file_trigger_proto_msgTypes = make([]protoimpl.MessageInfo, 150)
 var file_trigger_proto_goTypes = []any{
 	(ExecItemStatusPb)(0),              // 0: trigger.ExecItemStatusPb
 	(HolidayDayKindPb)(0),              // 1: trigger.HolidayDayKindPb
@@ -11651,77 +11807,79 @@ var file_trigger_proto_goTypes = []any{
 	(*TerminatePlanBatchRes)(nil),      // 76: trigger.TerminatePlanBatchRes
 	(*ResumePlanBatchReq)(nil),         // 77: trigger.ResumePlanBatchReq
 	(*ResumePlanBatchRes)(nil),         // 78: trigger.ResumePlanBatchRes
-	(*PausePlanExecItemReq)(nil),       // 79: trigger.PausePlanExecItemReq
-	(*PausePlanExecItemRes)(nil),       // 80: trigger.PausePlanExecItemRes
-	(*TerminatePlanExecItemReq)(nil),   // 81: trigger.TerminatePlanExecItemReq
-	(*TerminatePlanExecItemRes)(nil),   // 82: trigger.TerminatePlanExecItemRes
-	(*ResumePlanExecItemReq)(nil),      // 83: trigger.ResumePlanExecItemReq
-	(*ResumePlanExecItemRes)(nil),      // 84: trigger.ResumePlanExecItemRes
-	(*RunPlanExecItemReq)(nil),         // 85: trigger.RunPlanExecItemReq
-	(*RunPlanExecItemRes)(nil),         // 86: trigger.RunPlanExecItemRes
-	(*GetPlanReq)(nil),                 // 87: trigger.GetPlanReq
-	(*GetPlanRes)(nil),                 // 88: trigger.GetPlanRes
-	(*PlanPb)(nil),                     // 89: trigger.PlanPb
-	(*ListPlansReq)(nil),               // 90: trigger.ListPlansReq
-	(*ListPlansRes)(nil),               // 91: trigger.ListPlansRes
-	(*GetPlanBatchReq)(nil),            // 92: trigger.GetPlanBatchReq
-	(*GetPlanBatchRes)(nil),            // 93: trigger.GetPlanBatchRes
-	(*ListPlanBatchesReq)(nil),         // 94: trigger.ListPlanBatchesReq
-	(*ListPlanBatchesRes)(nil),         // 95: trigger.ListPlanBatchesRes
-	(*GetPlanExecItemReq)(nil),         // 96: trigger.GetPlanExecItemReq
-	(*GetPlanExecItemRes)(nil),         // 97: trigger.GetPlanExecItemRes
-	(*PlanExecItemPb)(nil),             // 98: trigger.PlanExecItemPb
-	(*ListPlanExecItemsReq)(nil),       // 99: trigger.ListPlanExecItemsReq
-	(*ListPlanExecItemsRes)(nil),       // 100: trigger.ListPlanExecItemsRes
-	(*GetPlanExecLogReq)(nil),          // 101: trigger.GetPlanExecLogReq
-	(*GetPlanExecLogRes)(nil),          // 102: trigger.GetPlanExecLogRes
-	(*ListPlanExecLogsReq)(nil),        // 103: trigger.ListPlanExecLogsReq
-	(*ListPlanExecLogsRes)(nil),        // 104: trigger.ListPlanExecLogsRes
-	(*PlanExecLogPb)(nil),              // 105: trigger.PlanExecLogPb
-	(*PlanBatchPb)(nil),                // 106: trigger.PlanBatchPb
-	(*GetExecItemDashboardReq)(nil),    // 107: trigger.GetExecItemDashboardReq
-	(*FinishedItemsStatsPb)(nil),       // 108: trigger.FinishedItemsStatsPb
-	(*PendingItemsStatsPb)(nil),        // 109: trigger.PendingItemsStatsPb
-	(*GetExecItemDashboardRes)(nil),    // 110: trigger.GetExecItemDashboardRes
-	(*ExecItemDashboardItemPb)(nil),    // 111: trigger.ExecItemDashboardItemPb
-	(*CallbackPlanExecItemReq)(nil),    // 112: trigger.CallbackPlanExecItemReq
-	(*DelayConfigPb)(nil),              // 113: trigger.DelayConfigPb
-	(*CallbackPlanExecItemRes)(nil),    // 114: trigger.CallbackPlanExecItemRes
-	(*CreateCronJobReq)(nil),           // 115: trigger.CreateCronJobReq
-	(*CreateCronJobRes)(nil),           // 116: trigger.CreateCronJobRes
-	(*UpdateCronJobReq)(nil),           // 117: trigger.UpdateCronJobReq
-	(*UpdateCronJobRes)(nil),           // 118: trigger.UpdateCronJobRes
-	(*SubmitCronJobReq)(nil),           // 119: trigger.SubmitCronJobReq
-	(*SubmitCronJobRes)(nil),           // 120: trigger.SubmitCronJobRes
-	(*EnableCronJobReq)(nil),           // 121: trigger.EnableCronJobReq
-	(*EnableCronJobRes)(nil),           // 122: trigger.EnableCronJobRes
-	(*DisableCronJobReq)(nil),          // 123: trigger.DisableCronJobReq
-	(*DisableCronJobRes)(nil),          // 124: trigger.DisableCronJobRes
-	(*DeleteCronJobReq)(nil),           // 125: trigger.DeleteCronJobReq
-	(*DeleteCronJobRes)(nil),           // 126: trigger.DeleteCronJobRes
-	(*DeleteCronJobsReq)(nil),          // 127: trigger.DeleteCronJobsReq
-	(*DeleteCronJobsRes)(nil),          // 128: trigger.DeleteCronJobsRes
-	(*DeleteCronJobsByGroupReq)(nil),   // 129: trigger.DeleteCronJobsByGroupReq
-	(*DeleteCronJobsByGroupRes)(nil),   // 130: trigger.DeleteCronJobsByGroupRes
-	(*RunCronJobReq)(nil),              // 131: trigger.RunCronJobReq
-	(*RunCronJobRes)(nil),              // 132: trigger.RunCronJobRes
-	(*GetCronJobReq)(nil),              // 133: trigger.GetCronJobReq
-	(*GetCronJobRes)(nil),              // 134: trigger.GetCronJobRes
-	(*PreviewCronJobScheduleReq)(nil),  // 135: trigger.PreviewCronJobScheduleReq
-	(*PreviewCronJobScheduleRes)(nil),  // 136: trigger.PreviewCronJobScheduleRes
-	(*ListCronJobsReq)(nil),            // 137: trigger.ListCronJobsReq
-	(*ListCronJobsRes)(nil),            // 138: trigger.ListCronJobsRes
-	(*CronJobPb)(nil),                  // 139: trigger.CronJobPb
-	(*NextIdReq)(nil),                  // 140: trigger.NextIdReq
-	(*NextIdRes)(nil),                  // 141: trigger.NextIdRes
-	(*BatchNextIdReq)(nil),             // 142: trigger.BatchNextIdReq
-	(*BatchNextIdRes)(nil),             // 143: trigger.BatchNextIdRes
-	(*InvokeTaskPb)(nil),               // 144: trigger.InvokeTaskPb
-	(*InvokeReq)(nil),                  // 145: trigger.InvokeReq
-	(*InvokeTaskResultPb)(nil),         // 146: trigger.InvokeTaskResultPb
-	(*InvokeRes)(nil),                  // 147: trigger.InvokeRes
-	nil,                                // 148: trigger.PlanBatchPb.StatusCountMapEntry
-	nil,                                // 149: trigger.InvokeTaskPb.HeadersEntry
+	(*ConfirmPlanBatchReq)(nil),        // 79: trigger.ConfirmPlanBatchReq
+	(*ConfirmPlanBatchRes)(nil),        // 80: trigger.ConfirmPlanBatchRes
+	(*PausePlanExecItemReq)(nil),       // 81: trigger.PausePlanExecItemReq
+	(*PausePlanExecItemRes)(nil),       // 82: trigger.PausePlanExecItemRes
+	(*TerminatePlanExecItemReq)(nil),   // 83: trigger.TerminatePlanExecItemReq
+	(*TerminatePlanExecItemRes)(nil),   // 84: trigger.TerminatePlanExecItemRes
+	(*ResumePlanExecItemReq)(nil),      // 85: trigger.ResumePlanExecItemReq
+	(*ResumePlanExecItemRes)(nil),      // 86: trigger.ResumePlanExecItemRes
+	(*RunPlanExecItemReq)(nil),         // 87: trigger.RunPlanExecItemReq
+	(*RunPlanExecItemRes)(nil),         // 88: trigger.RunPlanExecItemRes
+	(*GetPlanReq)(nil),                 // 89: trigger.GetPlanReq
+	(*GetPlanRes)(nil),                 // 90: trigger.GetPlanRes
+	(*PlanPb)(nil),                     // 91: trigger.PlanPb
+	(*ListPlansReq)(nil),               // 92: trigger.ListPlansReq
+	(*ListPlansRes)(nil),               // 93: trigger.ListPlansRes
+	(*GetPlanBatchReq)(nil),            // 94: trigger.GetPlanBatchReq
+	(*GetPlanBatchRes)(nil),            // 95: trigger.GetPlanBatchRes
+	(*ListPlanBatchesReq)(nil),         // 96: trigger.ListPlanBatchesReq
+	(*ListPlanBatchesRes)(nil),         // 97: trigger.ListPlanBatchesRes
+	(*GetPlanExecItemReq)(nil),         // 98: trigger.GetPlanExecItemReq
+	(*GetPlanExecItemRes)(nil),         // 99: trigger.GetPlanExecItemRes
+	(*PlanExecItemPb)(nil),             // 100: trigger.PlanExecItemPb
+	(*ListPlanExecItemsReq)(nil),       // 101: trigger.ListPlanExecItemsReq
+	(*ListPlanExecItemsRes)(nil),       // 102: trigger.ListPlanExecItemsRes
+	(*GetPlanExecLogReq)(nil),          // 103: trigger.GetPlanExecLogReq
+	(*GetPlanExecLogRes)(nil),          // 104: trigger.GetPlanExecLogRes
+	(*ListPlanExecLogsReq)(nil),        // 105: trigger.ListPlanExecLogsReq
+	(*ListPlanExecLogsRes)(nil),        // 106: trigger.ListPlanExecLogsRes
+	(*PlanExecLogPb)(nil),              // 107: trigger.PlanExecLogPb
+	(*PlanBatchPb)(nil),                // 108: trigger.PlanBatchPb
+	(*GetExecItemDashboardReq)(nil),    // 109: trigger.GetExecItemDashboardReq
+	(*FinishedItemsStatsPb)(nil),       // 110: trigger.FinishedItemsStatsPb
+	(*PendingItemsStatsPb)(nil),        // 111: trigger.PendingItemsStatsPb
+	(*GetExecItemDashboardRes)(nil),    // 112: trigger.GetExecItemDashboardRes
+	(*ExecItemDashboardItemPb)(nil),    // 113: trigger.ExecItemDashboardItemPb
+	(*CallbackPlanExecItemReq)(nil),    // 114: trigger.CallbackPlanExecItemReq
+	(*DelayConfigPb)(nil),              // 115: trigger.DelayConfigPb
+	(*CallbackPlanExecItemRes)(nil),    // 116: trigger.CallbackPlanExecItemRes
+	(*CreateCronJobReq)(nil),           // 117: trigger.CreateCronJobReq
+	(*CreateCronJobRes)(nil),           // 118: trigger.CreateCronJobRes
+	(*UpdateCronJobReq)(nil),           // 119: trigger.UpdateCronJobReq
+	(*UpdateCronJobRes)(nil),           // 120: trigger.UpdateCronJobRes
+	(*SubmitCronJobReq)(nil),           // 121: trigger.SubmitCronJobReq
+	(*SubmitCronJobRes)(nil),           // 122: trigger.SubmitCronJobRes
+	(*EnableCronJobReq)(nil),           // 123: trigger.EnableCronJobReq
+	(*EnableCronJobRes)(nil),           // 124: trigger.EnableCronJobRes
+	(*DisableCronJobReq)(nil),          // 125: trigger.DisableCronJobReq
+	(*DisableCronJobRes)(nil),          // 126: trigger.DisableCronJobRes
+	(*DeleteCronJobReq)(nil),           // 127: trigger.DeleteCronJobReq
+	(*DeleteCronJobRes)(nil),           // 128: trigger.DeleteCronJobRes
+	(*DeleteCronJobsReq)(nil),          // 129: trigger.DeleteCronJobsReq
+	(*DeleteCronJobsRes)(nil),          // 130: trigger.DeleteCronJobsRes
+	(*DeleteCronJobsByGroupReq)(nil),   // 131: trigger.DeleteCronJobsByGroupReq
+	(*DeleteCronJobsByGroupRes)(nil),   // 132: trigger.DeleteCronJobsByGroupRes
+	(*RunCronJobReq)(nil),              // 133: trigger.RunCronJobReq
+	(*RunCronJobRes)(nil),              // 134: trigger.RunCronJobRes
+	(*GetCronJobReq)(nil),              // 135: trigger.GetCronJobReq
+	(*GetCronJobRes)(nil),              // 136: trigger.GetCronJobRes
+	(*PreviewCronJobScheduleReq)(nil),  // 137: trigger.PreviewCronJobScheduleReq
+	(*PreviewCronJobScheduleRes)(nil),  // 138: trigger.PreviewCronJobScheduleRes
+	(*ListCronJobsReq)(nil),            // 139: trigger.ListCronJobsReq
+	(*ListCronJobsRes)(nil),            // 140: trigger.ListCronJobsRes
+	(*CronJobPb)(nil),                  // 141: trigger.CronJobPb
+	(*NextIdReq)(nil),                  // 142: trigger.NextIdReq
+	(*NextIdRes)(nil),                  // 143: trigger.NextIdRes
+	(*BatchNextIdReq)(nil),             // 144: trigger.BatchNextIdReq
+	(*BatchNextIdRes)(nil),             // 145: trigger.BatchNextIdRes
+	(*InvokeTaskPb)(nil),               // 146: trigger.InvokeTaskPb
+	(*InvokeReq)(nil),                  // 147: trigger.InvokeReq
+	(*InvokeTaskResultPb)(nil),         // 148: trigger.InvokeTaskResultPb
+	(*InvokeRes)(nil),                  // 149: trigger.InvokeRes
+	nil,                                // 150: trigger.PlanBatchPb.StatusCountMapEntry
+	nil,                                // 151: trigger.InvokeTaskPb.HeadersEntry
 }
 var file_trigger_proto_depIdxs = []int32{
 	4,   // 0: trigger.GetQueueInfoRes.queue_info:type_name -> trigger.QueueInfoPb
@@ -11750,31 +11908,31 @@ var file_trigger_proto_depIdxs = []int32{
 	44,  // 23: trigger.ListHolidaySourceRes.items:type_name -> trigger.HolidaySourcePb
 	64,  // 24: trigger.CreatePlanTaskReq.rule:type_name -> trigger.PlanRulePb
 	65,  // 25: trigger.CreatePlanTaskReq.exec_items:type_name -> trigger.CreatePlanExecItemPb
-	89,  // 26: trigger.GetPlanRes.plan:type_name -> trigger.PlanPb
+	91,  // 26: trigger.GetPlanRes.plan:type_name -> trigger.PlanPb
 	64,  // 27: trigger.PlanPb.rule:type_name -> trigger.PlanRulePb
-	89,  // 28: trigger.ListPlansRes.plans:type_name -> trigger.PlanPb
-	106, // 29: trigger.GetPlanBatchRes.plan_batch:type_name -> trigger.PlanBatchPb
-	106, // 30: trigger.ListPlanBatchesRes.plan_batches:type_name -> trigger.PlanBatchPb
-	98,  // 31: trigger.GetPlanExecItemRes.plan_exec_item:type_name -> trigger.PlanExecItemPb
+	91,  // 28: trigger.ListPlansRes.plans:type_name -> trigger.PlanPb
+	108, // 29: trigger.GetPlanBatchRes.plan_batch:type_name -> trigger.PlanBatchPb
+	108, // 30: trigger.ListPlanBatchesRes.plan_batches:type_name -> trigger.PlanBatchPb
+	100, // 31: trigger.GetPlanExecItemRes.plan_exec_item:type_name -> trigger.PlanExecItemPb
 	0,   // 32: trigger.PlanExecItemPb.status:type_name -> trigger.ExecItemStatusPb
 	0,   // 33: trigger.ListPlanExecItemsReq.status:type_name -> trigger.ExecItemStatusPb
-	98,  // 34: trigger.ListPlanExecItemsRes.plan_exec_items:type_name -> trigger.PlanExecItemPb
-	105, // 35: trigger.GetPlanExecLogRes.plan_exec_log:type_name -> trigger.PlanExecLogPb
-	105, // 36: trigger.ListPlanExecLogsRes.plan_exec_logs:type_name -> trigger.PlanExecLogPb
-	148, // 37: trigger.PlanBatchPb.status_count_map:type_name -> trigger.PlanBatchPb.StatusCountMapEntry
-	111, // 38: trigger.GetExecItemDashboardRes.stats:type_name -> trigger.ExecItemDashboardItemPb
-	108, // 39: trigger.ExecItemDashboardItemPb.finished:type_name -> trigger.FinishedItemsStatsPb
-	109, // 40: trigger.ExecItemDashboardItemPb.pending:type_name -> trigger.PendingItemsStatsPb
-	113, // 41: trigger.CallbackPlanExecItemReq.delay_config:type_name -> trigger.DelayConfigPb
+	100, // 34: trigger.ListPlanExecItemsRes.plan_exec_items:type_name -> trigger.PlanExecItemPb
+	107, // 35: trigger.GetPlanExecLogRes.plan_exec_log:type_name -> trigger.PlanExecLogPb
+	107, // 36: trigger.ListPlanExecLogsRes.plan_exec_logs:type_name -> trigger.PlanExecLogPb
+	150, // 37: trigger.PlanBatchPb.status_count_map:type_name -> trigger.PlanBatchPb.StatusCountMapEntry
+	113, // 38: trigger.GetExecItemDashboardRes.stats:type_name -> trigger.ExecItemDashboardItemPb
+	110, // 39: trigger.ExecItemDashboardItemPb.finished:type_name -> trigger.FinishedItemsStatsPb
+	111, // 40: trigger.ExecItemDashboardItemPb.pending:type_name -> trigger.PendingItemsStatsPb
+	115, // 41: trigger.CallbackPlanExecItemReq.delay_config:type_name -> trigger.DelayConfigPb
 	64,  // 42: trigger.CreateCronJobReq.rule:type_name -> trigger.PlanRulePb
 	64,  // 43: trigger.UpdateCronJobReq.rule:type_name -> trigger.PlanRulePb
 	64,  // 44: trigger.SubmitCronJobReq.rule:type_name -> trigger.PlanRulePb
-	139, // 45: trigger.GetCronJobRes.cron_job:type_name -> trigger.CronJobPb
-	139, // 46: trigger.ListCronJobsRes.cron_jobs:type_name -> trigger.CronJobPb
+	141, // 45: trigger.GetCronJobRes.cron_job:type_name -> trigger.CronJobPb
+	141, // 46: trigger.ListCronJobsRes.cron_jobs:type_name -> trigger.CronJobPb
 	64,  // 47: trigger.CronJobPb.rule:type_name -> trigger.PlanRulePb
-	149, // 48: trigger.InvokeTaskPb.headers:type_name -> trigger.InvokeTaskPb.HeadersEntry
-	144, // 49: trigger.InvokeReq.tasks:type_name -> trigger.InvokeTaskPb
-	146, // 50: trigger.InvokeRes.results:type_name -> trigger.InvokeTaskResultPb
+	151, // 48: trigger.InvokeTaskPb.headers:type_name -> trigger.InvokeTaskPb.HeadersEntry
+	146, // 49: trigger.InvokeReq.tasks:type_name -> trigger.InvokeTaskPb
+	148, // 50: trigger.InvokeRes.results:type_name -> trigger.InvokeTaskResultPb
 	5,   // 51: trigger.TriggerRpc.SendTrigger:input_type -> trigger.SendTriggerReq
 	7,   // 52: trigger.TriggerRpc.SendProtoTrigger:input_type -> trigger.SendProtoTriggerReq
 	9,   // 53: trigger.TriggerRpc.Queues:input_type -> trigger.QueuesReq
@@ -11809,100 +11967,102 @@ var file_trigger_proto_depIdxs = []int32{
 	73,  // 82: trigger.TriggerRpc.PausePlanBatch:input_type -> trigger.PausePlanBatchReq
 	75,  // 83: trigger.TriggerRpc.TerminatePlanBatch:input_type -> trigger.TerminatePlanBatchReq
 	77,  // 84: trigger.TriggerRpc.ResumePlanBatch:input_type -> trigger.ResumePlanBatchReq
-	79,  // 85: trigger.TriggerRpc.PausePlanExecItem:input_type -> trigger.PausePlanExecItemReq
-	81,  // 86: trigger.TriggerRpc.TerminatePlanExecItem:input_type -> trigger.TerminatePlanExecItemReq
-	85,  // 87: trigger.TriggerRpc.RunPlanExecItem:input_type -> trigger.RunPlanExecItemReq
-	83,  // 88: trigger.TriggerRpc.ResumePlanExecItem:input_type -> trigger.ResumePlanExecItemReq
-	87,  // 89: trigger.TriggerRpc.GetPlan:input_type -> trigger.GetPlanReq
-	90,  // 90: trigger.TriggerRpc.ListPlans:input_type -> trigger.ListPlansReq
-	92,  // 91: trigger.TriggerRpc.GetPlanBatch:input_type -> trigger.GetPlanBatchReq
-	94,  // 92: trigger.TriggerRpc.ListPlanBatches:input_type -> trigger.ListPlanBatchesReq
-	96,  // 93: trigger.TriggerRpc.GetPlanExecItem:input_type -> trigger.GetPlanExecItemReq
-	99,  // 94: trigger.TriggerRpc.ListPlanExecItems:input_type -> trigger.ListPlanExecItemsReq
-	101, // 95: trigger.TriggerRpc.GetPlanExecLog:input_type -> trigger.GetPlanExecLogReq
-	103, // 96: trigger.TriggerRpc.ListPlanExecLogs:input_type -> trigger.ListPlanExecLogsReq
-	107, // 97: trigger.TriggerRpc.GetExecItemDashboard:input_type -> trigger.GetExecItemDashboardReq
-	112, // 98: trigger.TriggerRpc.CallbackPlanExecItem:input_type -> trigger.CallbackPlanExecItemReq
-	115, // 99: trigger.TriggerRpc.CreateCronJob:input_type -> trigger.CreateCronJobReq
-	117, // 100: trigger.TriggerRpc.UpdateCronJob:input_type -> trigger.UpdateCronJobReq
-	119, // 101: trigger.TriggerRpc.SubmitCronJob:input_type -> trigger.SubmitCronJobReq
-	121, // 102: trigger.TriggerRpc.EnableCronJob:input_type -> trigger.EnableCronJobReq
-	123, // 103: trigger.TriggerRpc.DisableCronJob:input_type -> trigger.DisableCronJobReq
-	125, // 104: trigger.TriggerRpc.DeleteCronJob:input_type -> trigger.DeleteCronJobReq
-	127, // 105: trigger.TriggerRpc.DeleteCronJobs:input_type -> trigger.DeleteCronJobsReq
-	129, // 106: trigger.TriggerRpc.DeleteCronJobsByGroup:input_type -> trigger.DeleteCronJobsByGroupReq
-	131, // 107: trigger.TriggerRpc.RunCronJob:input_type -> trigger.RunCronJobReq
-	133, // 108: trigger.TriggerRpc.GetCronJob:input_type -> trigger.GetCronJobReq
-	135, // 109: trigger.TriggerRpc.PreviewCronJobSchedule:input_type -> trigger.PreviewCronJobScheduleReq
-	137, // 110: trigger.TriggerRpc.ListCronJobs:input_type -> trigger.ListCronJobsReq
-	140, // 111: trigger.TriggerRpc.NextId:input_type -> trigger.NextIdReq
-	142, // 112: trigger.TriggerRpc.BatchNextId:input_type -> trigger.BatchNextIdReq
-	145, // 113: trigger.TriggerRpc.Invoke:input_type -> trigger.InvokeReq
-	6,   // 114: trigger.TriggerRpc.SendTrigger:output_type -> trigger.SendTriggerRes
-	8,   // 115: trigger.TriggerRpc.SendProtoTrigger:output_type -> trigger.SendProtoTriggerRes
-	10,  // 116: trigger.TriggerRpc.Queues:output_type -> trigger.QueuesRes
-	12,  // 117: trigger.TriggerRpc.GetQueueInfo:output_type -> trigger.GetQueueInfoRes
-	14,  // 118: trigger.TriggerRpc.ArchiveTask:output_type -> trigger.ArchiveTaskRes
-	16,  // 119: trigger.TriggerRpc.DeleteTask:output_type -> trigger.DeleteTaskRes
-	18,  // 120: trigger.TriggerRpc.GetTaskInfo:output_type -> trigger.GetTaskInfoRes
-	20,  // 121: trigger.TriggerRpc.DeleteAllCompletedTasks:output_type -> trigger.DeleteAllCompletedTasksRes
-	22,  // 122: trigger.TriggerRpc.DeleteAllArchivedTasks:output_type -> trigger.DeleteAllArchivedTasksRes
-	24,  // 123: trigger.TriggerRpc.HistoricalStats:output_type -> trigger.HistoricalStatsRes
-	26,  // 124: trigger.TriggerRpc.ListActiveTasks:output_type -> trigger.ListActiveTasksRes
-	28,  // 125: trigger.TriggerRpc.ListPendingTasks:output_type -> trigger.ListPendingTasksRes
-	30,  // 126: trigger.TriggerRpc.ListAggregatingTasks:output_type -> trigger.ListAggregatingTasksRes
-	32,  // 127: trigger.TriggerRpc.ListScheduledTasks:output_type -> trigger.ListScheduledTasksRes
-	34,  // 128: trigger.TriggerRpc.ListRetryTasks:output_type -> trigger.ListRetryTasksRes
-	36,  // 129: trigger.TriggerRpc.ListArchivedTasks:output_type -> trigger.ListArchivedTasksRes
-	38,  // 130: trigger.TriggerRpc.ListCompletedTasks:output_type -> trigger.ListCompletedTasksRes
-	40,  // 131: trigger.TriggerRpc.RunTask:output_type -> trigger.RunTaskRes
-	42,  // 132: trigger.TriggerRpc.CalcPlanTaskDate:output_type -> trigger.CalcPlanTaskDateRes
-	48,  // 133: trigger.TriggerRpc.QueryHoliday:output_type -> trigger.QueryHolidayRes
-	50,  // 134: trigger.TriggerRpc.ListHolidayFestivals:output_type -> trigger.ListHolidayFestivalsRes
-	52,  // 135: trigger.TriggerRpc.GetHolidayFestival:output_type -> trigger.GetHolidayFestivalRes
-	54,  // 136: trigger.TriggerRpc.GetHolidayYearSummary:output_type -> trigger.GetHolidayYearSummaryRes
-	56,  // 137: trigger.TriggerRpc.ListHolidayYears:output_type -> trigger.ListHolidayYearsRes
-	58,  // 138: trigger.TriggerRpc.ListHolidaySource:output_type -> trigger.ListHolidaySourceRes
-	60,  // 139: trigger.TriggerRpc.SaveHolidaySource:output_type -> trigger.SaveHolidaySourceRes
-	62,  // 140: trigger.TriggerRpc.SetHolidaySourceEnabled:output_type -> trigger.SetHolidaySourceEnabledRes
-	66,  // 141: trigger.TriggerRpc.CreatePlanTask:output_type -> trigger.CreatePlanTaskRes
-	68,  // 142: trigger.TriggerRpc.PausePlan:output_type -> trigger.PausePlanRes
-	70,  // 143: trigger.TriggerRpc.TerminatePlan:output_type -> trigger.TerminatePlanRes
-	72,  // 144: trigger.TriggerRpc.ResumePlan:output_type -> trigger.ResumePlanRes
-	74,  // 145: trigger.TriggerRpc.PausePlanBatch:output_type -> trigger.PausePlanBatchRes
-	76,  // 146: trigger.TriggerRpc.TerminatePlanBatch:output_type -> trigger.TerminatePlanBatchRes
-	78,  // 147: trigger.TriggerRpc.ResumePlanBatch:output_type -> trigger.ResumePlanBatchRes
-	80,  // 148: trigger.TriggerRpc.PausePlanExecItem:output_type -> trigger.PausePlanExecItemRes
-	82,  // 149: trigger.TriggerRpc.TerminatePlanExecItem:output_type -> trigger.TerminatePlanExecItemRes
-	86,  // 150: trigger.TriggerRpc.RunPlanExecItem:output_type -> trigger.RunPlanExecItemRes
-	84,  // 151: trigger.TriggerRpc.ResumePlanExecItem:output_type -> trigger.ResumePlanExecItemRes
-	88,  // 152: trigger.TriggerRpc.GetPlan:output_type -> trigger.GetPlanRes
-	91,  // 153: trigger.TriggerRpc.ListPlans:output_type -> trigger.ListPlansRes
-	93,  // 154: trigger.TriggerRpc.GetPlanBatch:output_type -> trigger.GetPlanBatchRes
-	95,  // 155: trigger.TriggerRpc.ListPlanBatches:output_type -> trigger.ListPlanBatchesRes
-	97,  // 156: trigger.TriggerRpc.GetPlanExecItem:output_type -> trigger.GetPlanExecItemRes
-	100, // 157: trigger.TriggerRpc.ListPlanExecItems:output_type -> trigger.ListPlanExecItemsRes
-	102, // 158: trigger.TriggerRpc.GetPlanExecLog:output_type -> trigger.GetPlanExecLogRes
-	104, // 159: trigger.TriggerRpc.ListPlanExecLogs:output_type -> trigger.ListPlanExecLogsRes
-	110, // 160: trigger.TriggerRpc.GetExecItemDashboard:output_type -> trigger.GetExecItemDashboardRes
-	114, // 161: trigger.TriggerRpc.CallbackPlanExecItem:output_type -> trigger.CallbackPlanExecItemRes
-	116, // 162: trigger.TriggerRpc.CreateCronJob:output_type -> trigger.CreateCronJobRes
-	118, // 163: trigger.TriggerRpc.UpdateCronJob:output_type -> trigger.UpdateCronJobRes
-	120, // 164: trigger.TriggerRpc.SubmitCronJob:output_type -> trigger.SubmitCronJobRes
-	122, // 165: trigger.TriggerRpc.EnableCronJob:output_type -> trigger.EnableCronJobRes
-	124, // 166: trigger.TriggerRpc.DisableCronJob:output_type -> trigger.DisableCronJobRes
-	126, // 167: trigger.TriggerRpc.DeleteCronJob:output_type -> trigger.DeleteCronJobRes
-	128, // 168: trigger.TriggerRpc.DeleteCronJobs:output_type -> trigger.DeleteCronJobsRes
-	130, // 169: trigger.TriggerRpc.DeleteCronJobsByGroup:output_type -> trigger.DeleteCronJobsByGroupRes
-	132, // 170: trigger.TriggerRpc.RunCronJob:output_type -> trigger.RunCronJobRes
-	134, // 171: trigger.TriggerRpc.GetCronJob:output_type -> trigger.GetCronJobRes
-	136, // 172: trigger.TriggerRpc.PreviewCronJobSchedule:output_type -> trigger.PreviewCronJobScheduleRes
-	138, // 173: trigger.TriggerRpc.ListCronJobs:output_type -> trigger.ListCronJobsRes
-	141, // 174: trigger.TriggerRpc.NextId:output_type -> trigger.NextIdRes
-	143, // 175: trigger.TriggerRpc.BatchNextId:output_type -> trigger.BatchNextIdRes
-	147, // 176: trigger.TriggerRpc.Invoke:output_type -> trigger.InvokeRes
-	114, // [114:177] is the sub-list for method output_type
-	51,  // [51:114] is the sub-list for method input_type
+	79,  // 85: trigger.TriggerRpc.ConfirmPlanBatch:input_type -> trigger.ConfirmPlanBatchReq
+	81,  // 86: trigger.TriggerRpc.PausePlanExecItem:input_type -> trigger.PausePlanExecItemReq
+	83,  // 87: trigger.TriggerRpc.TerminatePlanExecItem:input_type -> trigger.TerminatePlanExecItemReq
+	87,  // 88: trigger.TriggerRpc.RunPlanExecItem:input_type -> trigger.RunPlanExecItemReq
+	85,  // 89: trigger.TriggerRpc.ResumePlanExecItem:input_type -> trigger.ResumePlanExecItemReq
+	89,  // 90: trigger.TriggerRpc.GetPlan:input_type -> trigger.GetPlanReq
+	92,  // 91: trigger.TriggerRpc.ListPlans:input_type -> trigger.ListPlansReq
+	94,  // 92: trigger.TriggerRpc.GetPlanBatch:input_type -> trigger.GetPlanBatchReq
+	96,  // 93: trigger.TriggerRpc.ListPlanBatches:input_type -> trigger.ListPlanBatchesReq
+	98,  // 94: trigger.TriggerRpc.GetPlanExecItem:input_type -> trigger.GetPlanExecItemReq
+	101, // 95: trigger.TriggerRpc.ListPlanExecItems:input_type -> trigger.ListPlanExecItemsReq
+	103, // 96: trigger.TriggerRpc.GetPlanExecLog:input_type -> trigger.GetPlanExecLogReq
+	105, // 97: trigger.TriggerRpc.ListPlanExecLogs:input_type -> trigger.ListPlanExecLogsReq
+	109, // 98: trigger.TriggerRpc.GetExecItemDashboard:input_type -> trigger.GetExecItemDashboardReq
+	114, // 99: trigger.TriggerRpc.CallbackPlanExecItem:input_type -> trigger.CallbackPlanExecItemReq
+	117, // 100: trigger.TriggerRpc.CreateCronJob:input_type -> trigger.CreateCronJobReq
+	119, // 101: trigger.TriggerRpc.UpdateCronJob:input_type -> trigger.UpdateCronJobReq
+	121, // 102: trigger.TriggerRpc.SubmitCronJob:input_type -> trigger.SubmitCronJobReq
+	123, // 103: trigger.TriggerRpc.EnableCronJob:input_type -> trigger.EnableCronJobReq
+	125, // 104: trigger.TriggerRpc.DisableCronJob:input_type -> trigger.DisableCronJobReq
+	127, // 105: trigger.TriggerRpc.DeleteCronJob:input_type -> trigger.DeleteCronJobReq
+	129, // 106: trigger.TriggerRpc.DeleteCronJobs:input_type -> trigger.DeleteCronJobsReq
+	131, // 107: trigger.TriggerRpc.DeleteCronJobsByGroup:input_type -> trigger.DeleteCronJobsByGroupReq
+	133, // 108: trigger.TriggerRpc.RunCronJob:input_type -> trigger.RunCronJobReq
+	135, // 109: trigger.TriggerRpc.GetCronJob:input_type -> trigger.GetCronJobReq
+	137, // 110: trigger.TriggerRpc.PreviewCronJobSchedule:input_type -> trigger.PreviewCronJobScheduleReq
+	139, // 111: trigger.TriggerRpc.ListCronJobs:input_type -> trigger.ListCronJobsReq
+	142, // 112: trigger.TriggerRpc.NextId:input_type -> trigger.NextIdReq
+	144, // 113: trigger.TriggerRpc.BatchNextId:input_type -> trigger.BatchNextIdReq
+	147, // 114: trigger.TriggerRpc.Invoke:input_type -> trigger.InvokeReq
+	6,   // 115: trigger.TriggerRpc.SendTrigger:output_type -> trigger.SendTriggerRes
+	8,   // 116: trigger.TriggerRpc.SendProtoTrigger:output_type -> trigger.SendProtoTriggerRes
+	10,  // 117: trigger.TriggerRpc.Queues:output_type -> trigger.QueuesRes
+	12,  // 118: trigger.TriggerRpc.GetQueueInfo:output_type -> trigger.GetQueueInfoRes
+	14,  // 119: trigger.TriggerRpc.ArchiveTask:output_type -> trigger.ArchiveTaskRes
+	16,  // 120: trigger.TriggerRpc.DeleteTask:output_type -> trigger.DeleteTaskRes
+	18,  // 121: trigger.TriggerRpc.GetTaskInfo:output_type -> trigger.GetTaskInfoRes
+	20,  // 122: trigger.TriggerRpc.DeleteAllCompletedTasks:output_type -> trigger.DeleteAllCompletedTasksRes
+	22,  // 123: trigger.TriggerRpc.DeleteAllArchivedTasks:output_type -> trigger.DeleteAllArchivedTasksRes
+	24,  // 124: trigger.TriggerRpc.HistoricalStats:output_type -> trigger.HistoricalStatsRes
+	26,  // 125: trigger.TriggerRpc.ListActiveTasks:output_type -> trigger.ListActiveTasksRes
+	28,  // 126: trigger.TriggerRpc.ListPendingTasks:output_type -> trigger.ListPendingTasksRes
+	30,  // 127: trigger.TriggerRpc.ListAggregatingTasks:output_type -> trigger.ListAggregatingTasksRes
+	32,  // 128: trigger.TriggerRpc.ListScheduledTasks:output_type -> trigger.ListScheduledTasksRes
+	34,  // 129: trigger.TriggerRpc.ListRetryTasks:output_type -> trigger.ListRetryTasksRes
+	36,  // 130: trigger.TriggerRpc.ListArchivedTasks:output_type -> trigger.ListArchivedTasksRes
+	38,  // 131: trigger.TriggerRpc.ListCompletedTasks:output_type -> trigger.ListCompletedTasksRes
+	40,  // 132: trigger.TriggerRpc.RunTask:output_type -> trigger.RunTaskRes
+	42,  // 133: trigger.TriggerRpc.CalcPlanTaskDate:output_type -> trigger.CalcPlanTaskDateRes
+	48,  // 134: trigger.TriggerRpc.QueryHoliday:output_type -> trigger.QueryHolidayRes
+	50,  // 135: trigger.TriggerRpc.ListHolidayFestivals:output_type -> trigger.ListHolidayFestivalsRes
+	52,  // 136: trigger.TriggerRpc.GetHolidayFestival:output_type -> trigger.GetHolidayFestivalRes
+	54,  // 137: trigger.TriggerRpc.GetHolidayYearSummary:output_type -> trigger.GetHolidayYearSummaryRes
+	56,  // 138: trigger.TriggerRpc.ListHolidayYears:output_type -> trigger.ListHolidayYearsRes
+	58,  // 139: trigger.TriggerRpc.ListHolidaySource:output_type -> trigger.ListHolidaySourceRes
+	60,  // 140: trigger.TriggerRpc.SaveHolidaySource:output_type -> trigger.SaveHolidaySourceRes
+	62,  // 141: trigger.TriggerRpc.SetHolidaySourceEnabled:output_type -> trigger.SetHolidaySourceEnabledRes
+	66,  // 142: trigger.TriggerRpc.CreatePlanTask:output_type -> trigger.CreatePlanTaskRes
+	68,  // 143: trigger.TriggerRpc.PausePlan:output_type -> trigger.PausePlanRes
+	70,  // 144: trigger.TriggerRpc.TerminatePlan:output_type -> trigger.TerminatePlanRes
+	72,  // 145: trigger.TriggerRpc.ResumePlan:output_type -> trigger.ResumePlanRes
+	74,  // 146: trigger.TriggerRpc.PausePlanBatch:output_type -> trigger.PausePlanBatchRes
+	76,  // 147: trigger.TriggerRpc.TerminatePlanBatch:output_type -> trigger.TerminatePlanBatchRes
+	78,  // 148: trigger.TriggerRpc.ResumePlanBatch:output_type -> trigger.ResumePlanBatchRes
+	80,  // 149: trigger.TriggerRpc.ConfirmPlanBatch:output_type -> trigger.ConfirmPlanBatchRes
+	82,  // 150: trigger.TriggerRpc.PausePlanExecItem:output_type -> trigger.PausePlanExecItemRes
+	84,  // 151: trigger.TriggerRpc.TerminatePlanExecItem:output_type -> trigger.TerminatePlanExecItemRes
+	88,  // 152: trigger.TriggerRpc.RunPlanExecItem:output_type -> trigger.RunPlanExecItemRes
+	86,  // 153: trigger.TriggerRpc.ResumePlanExecItem:output_type -> trigger.ResumePlanExecItemRes
+	90,  // 154: trigger.TriggerRpc.GetPlan:output_type -> trigger.GetPlanRes
+	93,  // 155: trigger.TriggerRpc.ListPlans:output_type -> trigger.ListPlansRes
+	95,  // 156: trigger.TriggerRpc.GetPlanBatch:output_type -> trigger.GetPlanBatchRes
+	97,  // 157: trigger.TriggerRpc.ListPlanBatches:output_type -> trigger.ListPlanBatchesRes
+	99,  // 158: trigger.TriggerRpc.GetPlanExecItem:output_type -> trigger.GetPlanExecItemRes
+	102, // 159: trigger.TriggerRpc.ListPlanExecItems:output_type -> trigger.ListPlanExecItemsRes
+	104, // 160: trigger.TriggerRpc.GetPlanExecLog:output_type -> trigger.GetPlanExecLogRes
+	106, // 161: trigger.TriggerRpc.ListPlanExecLogs:output_type -> trigger.ListPlanExecLogsRes
+	112, // 162: trigger.TriggerRpc.GetExecItemDashboard:output_type -> trigger.GetExecItemDashboardRes
+	116, // 163: trigger.TriggerRpc.CallbackPlanExecItem:output_type -> trigger.CallbackPlanExecItemRes
+	118, // 164: trigger.TriggerRpc.CreateCronJob:output_type -> trigger.CreateCronJobRes
+	120, // 165: trigger.TriggerRpc.UpdateCronJob:output_type -> trigger.UpdateCronJobRes
+	122, // 166: trigger.TriggerRpc.SubmitCronJob:output_type -> trigger.SubmitCronJobRes
+	124, // 167: trigger.TriggerRpc.EnableCronJob:output_type -> trigger.EnableCronJobRes
+	126, // 168: trigger.TriggerRpc.DisableCronJob:output_type -> trigger.DisableCronJobRes
+	128, // 169: trigger.TriggerRpc.DeleteCronJob:output_type -> trigger.DeleteCronJobRes
+	130, // 170: trigger.TriggerRpc.DeleteCronJobs:output_type -> trigger.DeleteCronJobsRes
+	132, // 171: trigger.TriggerRpc.DeleteCronJobsByGroup:output_type -> trigger.DeleteCronJobsByGroupRes
+	134, // 172: trigger.TriggerRpc.RunCronJob:output_type -> trigger.RunCronJobRes
+	136, // 173: trigger.TriggerRpc.GetCronJob:output_type -> trigger.GetCronJobRes
+	138, // 174: trigger.TriggerRpc.PreviewCronJobSchedule:output_type -> trigger.PreviewCronJobScheduleRes
+	140, // 175: trigger.TriggerRpc.ListCronJobs:output_type -> trigger.ListCronJobsRes
+	143, // 176: trigger.TriggerRpc.NextId:output_type -> trigger.NextIdRes
+	145, // 177: trigger.TriggerRpc.BatchNextId:output_type -> trigger.BatchNextIdRes
+	149, // 178: trigger.TriggerRpc.Invoke:output_type -> trigger.InvokeRes
+	115, // [115:179] is the sub-list for method output_type
+	51,  // [51:115] is the sub-list for method input_type
 	51,  // [51:51] is the sub-list for extension type_name
 	51,  // [51:51] is the sub-list for extension extendee
 	0,   // [0:51] is the sub-list for field type_name
@@ -11919,7 +12079,7 @@ func file_trigger_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_trigger_proto_rawDesc), len(file_trigger_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   148,
+			NumMessages:   150,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

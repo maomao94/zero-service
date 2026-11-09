@@ -53,6 +53,7 @@ const (
 	TriggerRpc_PausePlanBatch_FullMethodName          = "/trigger.TriggerRpc/PausePlanBatch"
 	TriggerRpc_TerminatePlanBatch_FullMethodName      = "/trigger.TriggerRpc/TerminatePlanBatch"
 	TriggerRpc_ResumePlanBatch_FullMethodName         = "/trigger.TriggerRpc/ResumePlanBatch"
+	TriggerRpc_ConfirmPlanBatch_FullMethodName        = "/trigger.TriggerRpc/ConfirmPlanBatch"
 	TriggerRpc_PausePlanExecItem_FullMethodName       = "/trigger.TriggerRpc/PausePlanExecItem"
 	TriggerRpc_TerminatePlanExecItem_FullMethodName   = "/trigger.TriggerRpc/TerminatePlanExecItem"
 	TriggerRpc_RunPlanExecItem_FullMethodName         = "/trigger.TriggerRpc/RunPlanExecItem"
@@ -156,6 +157,8 @@ type TriggerRpcClient interface {
 	TerminatePlanBatch(ctx context.Context, in *TerminatePlanBatchReq, opts ...grpc.CallOption) (*TerminatePlanBatchRes, error)
 	// 恢复计划批次
 	ResumePlanBatch(ctx context.Context, in *ResumePlanBatchReq, opts ...grpc.CallOption) (*ResumePlanBatchRes, error)
+	// 确认计划批次（批次级二次确认）
+	ConfirmPlanBatch(ctx context.Context, in *ConfirmPlanBatchReq, opts ...grpc.CallOption) (*ConfirmPlanBatchRes, error)
 	// 暂停执行项
 	PausePlanExecItem(ctx context.Context, in *PausePlanExecItemReq, opts ...grpc.CallOption) (*PausePlanExecItemRes, error)
 	// 终止执行项
@@ -564,6 +567,16 @@ func (c *triggerRpcClient) ResumePlanBatch(ctx context.Context, in *ResumePlanBa
 	return out, nil
 }
 
+func (c *triggerRpcClient) ConfirmPlanBatch(ctx context.Context, in *ConfirmPlanBatchReq, opts ...grpc.CallOption) (*ConfirmPlanBatchRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConfirmPlanBatchRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ConfirmPlanBatch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *triggerRpcClient) PausePlanExecItem(ctx context.Context, in *PausePlanExecItemReq, opts ...grpc.CallOption) (*PausePlanExecItemRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PausePlanExecItemRes)
@@ -926,6 +939,8 @@ type TriggerRpcServer interface {
 	TerminatePlanBatch(context.Context, *TerminatePlanBatchReq) (*TerminatePlanBatchRes, error)
 	// 恢复计划批次
 	ResumePlanBatch(context.Context, *ResumePlanBatchReq) (*ResumePlanBatchRes, error)
+	// 确认计划批次（批次级二次确认）
+	ConfirmPlanBatch(context.Context, *ConfirmPlanBatchReq) (*ConfirmPlanBatchRes, error)
 	// 暂停执行项
 	PausePlanExecItem(context.Context, *PausePlanExecItemReq) (*PausePlanExecItemRes, error)
 	// 终止执行项
@@ -1095,6 +1110,9 @@ func (UnimplementedTriggerRpcServer) TerminatePlanBatch(context.Context, *Termin
 }
 func (UnimplementedTriggerRpcServer) ResumePlanBatch(context.Context, *ResumePlanBatchReq) (*ResumePlanBatchRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method ResumePlanBatch not implemented")
+}
+func (UnimplementedTriggerRpcServer) ConfirmPlanBatch(context.Context, *ConfirmPlanBatchReq) (*ConfirmPlanBatchRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ConfirmPlanBatch not implemented")
 }
 func (UnimplementedTriggerRpcServer) PausePlanExecItem(context.Context, *PausePlanExecItemReq) (*PausePlanExecItemRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method PausePlanExecItem not implemented")
@@ -1816,6 +1834,24 @@ func _TriggerRpc_ResumePlanBatch_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TriggerRpc_ConfirmPlanBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmPlanBatchReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ConfirmPlanBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ConfirmPlanBatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ConfirmPlanBatch(ctx, req.(*ConfirmPlanBatchReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TriggerRpc_PausePlanExecItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PausePlanExecItemReq)
 	if err := dec(in); err != nil {
@@ -2480,6 +2516,10 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResumePlanBatch",
 			Handler:    _TriggerRpc_ResumePlanBatch_Handler,
+		},
+		{
+			MethodName: "ConfirmPlanBatch",
+			Handler:    _TriggerRpc_ConfirmPlanBatch_Handler,
 		},
 		{
 			MethodName: "PausePlanExecItem",

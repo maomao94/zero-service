@@ -101,7 +101,13 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 				"finished_time":     now,
 				"update_user":       sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
 			}).Error
-		return transErr
+		if transErr != nil {
+			return transErr
+		}
+		if _, transErr := gormmodel.ExpirePlanConfirmsByPlan(l.ctx, tx, plan.Id, now); transErr != nil {
+			return transErr
+		}
+		return nil
 	})
 
 	if err != nil {

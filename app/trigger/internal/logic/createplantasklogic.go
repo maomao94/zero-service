@@ -44,6 +44,12 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	if err != nil {
 		return nil, err
 	}
+	if in.ConfirmType == int32(model.ConfirmTypeExecItem) {
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM, "执行项级确认暂未开放")
+	}
+	if in.ConfirmType != int32(model.ConfirmTypeNone) && in.ConfirmType != int32(model.ConfirmTypeBatch) {
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM, "确认类型不支持")
+	}
 	db := l.svcCtx.DB.WithContext(l.ctx).DB
 	var plan gormmodel.Plan
 	err = db.Where("plan_id = ?", in.PlanId).First(&plan).Error
@@ -167,6 +173,23 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			}
 			if err := tx.Create(&batch).Error; err != nil {
 				return err
+			}
+			if in.ConfirmType == int32(model.ConfirmTypeBatch) {
+				confirm := gormmodel.PlanConfirm{
+					CreateUser:  sql.NullString{String: currentUserId, Valid: currentUserId != ""},
+					UpdateUser:  sql.NullString{String: currentUserId, Valid: currentUserId != ""},
+					DeptCode:    sql.NullString{String: in.DeptCode, Valid: in.DeptCode != ""},
+					PlanPk:      insertPlan.Id,
+					BatchPk:     batch.Id,
+					ConfirmType: model.ConfirmTypeBatch,
+					TargetPk:    batch.Id,
+					LeadMinutes: int(in.ConfirmLeadMinutes),
+					NotifyAt:    d.Add(-time.Duration(in.ConfirmLeadMinutes) * time.Minute),
+					Deadline:    gormmodel.BatchConfirmDeadline(d),
+				}
+				if err := tx.Create(&confirm).Error; err != nil {
+					return err
+				}
 			}
 			batchCnt++
 			itemIndex := 0

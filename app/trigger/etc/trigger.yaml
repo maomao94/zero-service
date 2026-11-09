@@ -53,3 +53,13 @@ StreamEventConf:
   NonBlock: true
   Timeout: 120000
   GracePeriod: 30s
+# socketpush 推送服务（可选，未配置时批次确认只记录日志）
+SocketPushConf:
+  Target: 127.0.0.1:25002
+  NonBlock: true
+  Timeout: 3000
+# 批次二次确认通知
+PlanConfirm:
+  NotifyRoomPrefix: "dept:"
+  NotifyFallbackRoom: plan-confirm
+  NotifyEvent: "plan:batch-confirm-required"

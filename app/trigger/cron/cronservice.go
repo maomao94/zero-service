@@ -30,6 +30,8 @@ type CronService struct {
 	cancelChan chan struct{}
 	svcCtx     *svc.ServiceContext
 	taskRunner *threading.TaskRunner
+	// lastConfirmScan 控制批次确认扫描频率，避免执行项繁忙时高频查询确认表。
+	lastConfirmScan time.Time
 }
 
 func NewCronService(svcCtx *svc.ServiceContext) *CronService {
@@ -62,6 +64,10 @@ func (s *CronService) Stop() {
 func (s *CronService) scanLoop() {
 	for {
 		itemsProcessed := s.ScanPlanExecItem()
+		if time.Since(s.lastConfirmScan) >= planConfirmScanInterval {
+			s.ScanPlanConfirm()
+			s.lastConfirmScan = time.Now()
+		}
 		var sleepDuration time.Duration
 		if itemsProcessed {
 			sleepDuration = 10 * time.Millisecond

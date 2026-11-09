@@ -6,6 +6,7 @@ import (
 
 	"zero-service/app/trigger/internal/config"
 	"zero-service/app/trigger/internal/cronjob"
+	"zero-service/app/trigger/internal/planconfirm"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/asynqx"
 	commoncrontask "zero-service/common/crontask"
@@ -15,6 +16,7 @@ import (
 	"zero-service/common/netx"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
+	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/hibiken/asynq"
@@ -35,24 +37,26 @@ const (
 )
 
 type ServiceContext struct {
-	Config           config.Config
-	Validate         *validator.Validate
-	AsynqClient      *asynq.Client
-	AsynqInspector   *asynq.Inspector
-	AsynqServer      *asynq.Server
-	Scheduler        *asynq.Scheduler
-	Httpc            httpc.Service
-	NetClient        *netx.Client
-	ConnMap          *collection.Cache // 使用带过期清理的缓存
-	DB               *gormx.DB
-	UnstableExpiry   mathx.Unstable
-	Redis            *redis.Redis
-	StreamEventCli   streamevent.StreamEventClient
-	IdUtil           *tool.IdUtil
-	HolidaySource    holiday.Store
-	HolidayCalendar  *holiday.Calendar
-	CronJobStore     *cronjob.DBStore
-	CronJobScheduler *commoncrontask.Scheduler
+	Config              config.Config
+	Validate            *validator.Validate
+	AsynqClient         *asynq.Client
+	AsynqInspector      *asynq.Inspector
+	AsynqServer         *asynq.Server
+	Scheduler           *asynq.Scheduler
+	Httpc               httpc.Service
+	NetClient           *netx.Client
+	ConnMap             *collection.Cache // 使用带过期清理的缓存
+	DB                  *gormx.DB
+	UnstableExpiry      mathx.Unstable
+	Redis               *redis.Redis
+	StreamEventCli      streamevent.StreamEventClient
+	SocketPushCli       socketpush.SocketPushClient
+	PlanConfirmNotifier *planconfirm.Notifier
+	IdUtil              *tool.IdUtil
+	HolidaySource       holiday.Store
+	HolidayCalendar     *holiday.Calendar
+	CronJobStore        *cronjob.DBStore
+	CronJobScheduler    *commoncrontask.Scheduler
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -72,6 +76,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			&gormmodel.PlanBatch{},
 			&gormmodel.PlanExecItem{},
 			&gormmodel.PlanExecLog{},
+			&gormmodel.PlanConfirm{},
 			&gormmodel.CronJob{},
 			&gormmodel.CronExecLog{},
 			&holiday.GormHoliday{})
@@ -90,24 +95,31 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		)),
 	).Conn())
 	cronJobStore := cronjob.NewDBStore(db)
+	var socketPushCli socketpush.SocketPushClient
+	if len(c.SocketPushConf.Endpoints) > 0 || c.SocketPushConf.Target != "" {
+		socketPushCli = socketpush.NewSocketPushClient(zrpc.MustNewClient(c.SocketPushConf,
+			zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor)).Conn())
+	}
 	return &ServiceContext{
-		Config:           c,
-		Validate:         validator.New(),
-		AsynqClient:      asynqx.NewAsynqClient(c.Redis.Host, c.Redis.Pass, c.RedisDB),
-		AsynqInspector:   asynqx.NewAsynqInspector(c.Redis.Host, c.Redis.Pass, c.RedisDB),
-		AsynqServer:      asynqx.NewAsynqServer(c.Redis.Host, c.Redis.Pass, c.RedisDB),
-		Scheduler:        asynqx.NewScheduler(c.Redis.Host, c.Redis.Pass, c.RedisDB),
-		Httpc:            httpcSvc,
-		NetClient:        netx.NewClient(netx.WithEngine(netx.NewHTTPEngine(httpcSvc))),
-		ConnMap:          connCache,
-		DB:               db,
-		Redis:            redisDb,
-		UnstableExpiry:   mathx.NewUnstable(expiryDeviation),
-		StreamEventCli:   streamEventCli,
-		IdUtil:           tool.NewIdUtil(redisDb),
-		HolidaySource:    holidaySource,
-		HolidayCalendar:  holidayCal,
-		CronJobStore:     cronJobStore,
-		CronJobScheduler: commoncrontask.NewScheduler(cronJobStore, cronjob.NewLoggingEventHandler(db, streamEventCli), commoncrontask.WithMaxDelay(c.CronTask.MaxDelay), commoncrontask.WithOnSkip(cronjob.NewSkipRecorder(db))),
+		Config:              c,
+		Validate:            validator.New(),
+		AsynqClient:         asynqx.NewAsynqClient(c.Redis.Host, c.Redis.Pass, c.RedisDB),
+		AsynqInspector:      asynqx.NewAsynqInspector(c.Redis.Host, c.Redis.Pass, c.RedisDB),
+		AsynqServer:         asynqx.NewAsynqServer(c.Redis.Host, c.Redis.Pass, c.RedisDB),
+		Scheduler:           asynqx.NewScheduler(c.Redis.Host, c.Redis.Pass, c.RedisDB),
+		Httpc:               httpcSvc,
+		NetClient:           netx.NewClient(netx.WithEngine(netx.NewHTTPEngine(httpcSvc))),
+		ConnMap:             connCache,
+		DB:                  db,
+		Redis:               redisDb,
+		UnstableExpiry:      mathx.NewUnstable(expiryDeviation),
+		StreamEventCli:      streamEventCli,
+		SocketPushCli:       socketPushCli,
+		PlanConfirmNotifier: planconfirm.NewNotifier(socketPushCli, c.PlanConfirm.NotifyRoomPrefix, c.PlanConfirm.NotifyFallbackRoom, c.PlanConfirm.NotifyEvent),
+		IdUtil:              tool.NewIdUtil(redisDb),
+		HolidaySource:       holidaySource,
+		HolidayCalendar:     holidayCal,
+		CronJobStore:        cronJobStore,
+		CronJobScheduler:    commoncrontask.NewScheduler(cronJobStore, cronjob.NewLoggingEventHandler(db, streamEventCli), commoncrontask.WithMaxDelay(c.CronTask.MaxDelay), commoncrontask.WithOnSkip(cronjob.NewSkipRecorder(db))),
 	}
 }

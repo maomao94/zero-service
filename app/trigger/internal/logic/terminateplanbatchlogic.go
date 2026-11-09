@@ -96,6 +96,9 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		if updated == 0 {
 			return model.ErrNoRowsUpdate
 		}
+		if _, transErr := gormmodel.ExpirePlanConfirmsByBatch(l.ctx, tx, planBatch.Id, now); transErr != nil {
+			return transErr
+		}
 		planBatch.Status = model.PlanStatusTerminated
 		planBatch.FinishedTime.Time = now
 		planBatch.FinishedTime.Valid = true
