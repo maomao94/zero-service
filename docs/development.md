@@ -104,7 +104,7 @@ grpcurl -plaintext \
 
 ### HTTP 调试
 
-`gtw` 是 BFF 网关，路由按 group 加前缀（`/gtw/v1`、`/file/v1`、`/app/user/v1` 等），没有 `/health` 这类根路径。Trigger 只提供 gRPC 接口，HTTP 调用需由上游网关转发；直接把 `/api/trigger/send` 这类路径打到 `gtw` 会返回 `100067 接口不存在`。
+`gtw` 是 BFF 网关，路由按 group 加前缀（`/gtw/v1`、`/file/v1`、`/app/user/v1` 等），没有 `/health` 这类根路径。Trigger 只提供 gRPC 接口，HTTP 调用需由上游网关转发；直接把 `/api/trigger/send` 这类路径打到 `gtw` 会返回 `100240 接口不存在`。
 
 ```bash
 # gtw ping（前缀 /gtw/v1），内部透传 zerorpc.Ping，需先启动 zerorpc

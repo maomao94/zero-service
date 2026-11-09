@@ -10,7 +10,7 @@ flowchart TB
     V -->|枚举内| OUT["六位 code + msg"]
     V -->|未登记| FIX["降级为 100002 系统繁忙<br/>原文写日志"]
     OUT --> FOLD["网关 Error.Fold<br/>默认关闭"]
-    FOLD -->|命中 Codes 且非 100058| BUSY["折叠为 100002 系统繁忙"]
-    FOLD -->|默认/未命中/100058| ENV["统一信封"]
+    FOLD -->|命中 Codes 且非 100184| BUSY["折叠为 100002 系统繁忙"]
+    FOLD -->|默认/未命中/100184| ENV["统一信封"]
     FIX --> ENV
     BUSY --> ENV

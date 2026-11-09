@@ -468,7 +468,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
 
 function adminFailure(result: AdminResult<unknown>, token: string): string {
   // 管理面信封恒为 HTTP 200，JWT 失效只能靠 code 识别，不能静默当成普通业务错误。
-  if (result.code === 100036) {
+  if (result.code === 100110) {
     if (!token.trim()) return '请先填写管理面 JWT token'
     return '管理面 JWT 已失效，请重新获取并填写（当前输入已保留）'
   }

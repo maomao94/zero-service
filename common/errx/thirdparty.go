@@ -28,7 +28,7 @@ const (
 
 // NewThirdPartyAPIError 构造“第三方接口明确返回错误码”的平台错误。
 //
-// 使用 extproto.Code__1_00_THIRD_PARTY_API（100058），该码不参与网关折叠，
+// 使用 extproto.Code__1_00_THIRD_PARTY_API（100184），该码不参与网关折叠，
 // 因此 msg 会原样返回给调用方。vendor 是厂商标识（如 dji），code 是厂商原始
 // 错误码（如 312014），message 是厂商原始描述。
 //

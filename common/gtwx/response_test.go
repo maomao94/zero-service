@@ -38,8 +38,8 @@ func TestWriteErrorAlwaysHTTP200(t *testing.T) {
 		wantMsg  string
 	}{
 		{name: "code msg", err: xerrors.New(130002, "密钥无效"), wantCode: 130002, wantMsg: "密钥无效"},
-		{name: "grpc unauthorized", err: errx.NewErrorByPbCode(extproto.Code__1_00_UNAUTHORIZED), wantCode: 100036, wantMsg: "未认证"},
-		{name: "grpc not found", err: errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST), wantCode: 100021, wantMsg: "记录不存在"},
+		{name: "grpc unauthorized", err: errx.NewErrorByPbCode(extproto.Code__1_00_UNAUTHORIZED), wantCode: 100110, wantMsg: "未认证"},
+		{name: "grpc not found", err: errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST), wantCode: 100052, wantMsg: "记录不存在"},
 		{name: "internal passes through by default", err: xerrors.New(int(extproto.Code__1_00_INTERNAL), "db password leaked"), wantCode: 100001, wantMsg: "db password leaked"},
 		{name: "plain error", err: errors.New("boom"), wantCode: 100002, wantMsg: "系统繁忙"},
 	}
@@ -82,7 +82,7 @@ func TestWriteErrorFoldConfigLeavesOtherCodes(t *testing.T) {
 
 	body := decodeEnvelope(t, rr)
 	if body.Code != int(extproto.Code__1_00_DB) || body.Msg != "db down" {
-		t.Fatalf("want 100019/db down, got code=%d msg=%q", body.Code, body.Msg)
+		t.Fatalf("want 100050/db down, got code=%d msg=%q", body.Code, body.Msg)
 	}
 }
 
@@ -115,7 +115,7 @@ func TestWriteErrorNeverFoldsThirdPartyAPI(t *testing.T) {
 
 	body := decodeEnvelope(t, rr)
 	if body.Code != int(extproto.Code__1_00_THIRD_PARTY_API) {
-		t.Fatalf("want 100058, got %d", body.Code)
+		t.Fatalf("want 100184, got %d", body.Code)
 	}
 	if !strings.Contains(body.Msg, "vendor=dji") || !strings.Contains(body.Msg, "code=312014") {
 		t.Fatalf("want vendor template msg, got %q", body.Msg)

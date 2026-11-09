@@ -36,7 +36,7 @@ func newFoldPolicy(cfg FoldConfig) foldPolicy {
 	}
 	codes := make(map[int]struct{}, len(cfg.Codes))
 	for _, code := range cfg.Codes {
-		// 100058 固定透传，避免厂商原始信息被折叠成系统繁忙；
+		// 100184 固定透传，避免厂商原始信息被折叠成系统繁忙；
 		// 未登记码不会到达网关，忽略即可。
 		if code == int(extproto.Code__1_00_THIRD_PARTY_API) || !errx.IsDefinedCode(code) {
 			logx.Errorf("错误折叠配置忽略不可折叠或未登记的错误码：%d", code)
@@ -59,7 +59,7 @@ func (p foldPolicy) apply(code int, msg string) (int, string) {
 	if code == p.target {
 		return code, msg
 	}
-	// 100058 的 msg 是厂商码与原文的结构化载体，任何配置下都不折叠。
+	// 100184 的 msg 是厂商码与原文的结构化载体，任何配置下都不折叠。
 	if code == int(extproto.Code__1_00_THIRD_PARTY_API) {
 		return code, msg
 	}

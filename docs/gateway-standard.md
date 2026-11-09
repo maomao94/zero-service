@@ -73,11 +73,11 @@ server := rest.MustNewServer(c.RestConf,
 )
 ```
 
-见 `app/livegtw/livegtw.go`。`gtwx.UnauthorizedHandler` 先写 `200 + 100036`；go-zero 随后补写的 401 会被 `HeaderOnceResponseWriter` 丢弃，因此响应仍是信封（实现注释见 `common/gtwx/response.go`）。
+见 `app/livegtw/livegtw.go`。`gtwx.UnauthorizedHandler` 先写 `200 + 100110`；go-zero 随后补写的 401 会被 `HeaderOnceResponseWriter` 丢弃，因此响应仍是信封（实现注释见 `common/gtwx/response.go`）。
 
 JWT 通过后，业务中间件负责把 claims 桥接到 `authctx` 并校验身份：
 
-- `app/livegtw/internal/middleware/meetingauthmiddleware.go`：没有 `userId` 时返回 `100036`，文案 `缺少用户身份`。
+- `app/livegtw/internal/middleware/meetingauthmiddleware.go`：没有 `userId` 时返回 `100110`，文案 `缺少用户身份`。
 - `app/opengtw/internal/middleware/userauthmiddleware.go`：只做 `authctx.BridgeJWTClaims`，管理面身份由下游 logic 使用。
 
 ### 2.3 Basic 鉴权
@@ -143,7 +143,7 @@ func GetMeetingHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 | --- | --- | --- |
 | `gtwx.WriteOK(ctx, w, data)` | 成功 | `200 {"code":0,"msg":"ok","data":...}` |
 | `gtwx.WriteError(ctx, w, err)` | 业务/下游错误 | `200 {"code":<六位>,"msg":"..."}` |
-| `gtwx.WriteParseError(ctx, w, err)` | 参数解析失败 | `200 {"code":100007,"msg":<解析错误>}` |
+| `gtwx.WriteParseError(ctx, w, err)` | 参数解析失败 | `200 {"code":100020,"msg":<解析错误>}` |
 
 不要直接调用 `xhttp.JsonBaseResponseCtx`：它只套信封，遇到 gRPC 错误时取的是 gRPC 数字码（3/5/16），遇到普通 error 时是 -1。`gtwx.WriteError` 会先经 `gtwx.NormalizeError` 归一化并校验：码必须在 `extproto` 枚举中，否则降级为 `100002` 并写日志。
 
@@ -189,7 +189,7 @@ return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 - `NewErrorByPbCodeWrap` 遇到已带 extproto 码的 cause 时原样返回，禁止中间层重包覆盖，RPC 链路码值全程保真。
 - 实现见 `common/errx/error.go`；业务侧示例见 `app/live/internal/logic/startmeetingrecordlogic.go`。
 
-> `http_code=429` 已映射为 `ResourceExhausted`；`_1_00_RATE_LIMITED (100064)` 会以限流语义返回，不会被误判为 500。
+> `http_code=429` 已映射为 `ResourceExhausted`；`_1_00_RATE_LIMITED (100220)` 会以限流语义返回，不会被误判为 500。
 
 ### 4.3 网关：错误归一化与折叠
 
@@ -200,7 +200,7 @@ return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 </div>
 
 - `CodeFromStatus` 只在 `reason` 是 extproto 中已登记的码时采用；未登记的数字码按 `100002 系统繁忙` 处理，非数字 reason 走 gRPC Code 映射（`common/errx/codec.go`）。
-- 折叠是网关策略（`common/gtwx/fold.go`）：默认不配置即统一透传；网关在 `etc/*.yaml` 的 `Error.Fold` 中列出 `Codes` 后，命中的码折叠为 `Target`（默认 `100002`），`KeepMsg=false` 时文案统一为 `系统繁忙`。`100058` 固定透传，不参与折叠。
+- 折叠是网关策略（`common/gtwx/fold.go`）：默认不配置即统一透传；网关在 `etc/*.yaml` 的 `Error.Fold` 中列出 `Codes` 后，命中的码折叠为 `Target`（默认 `100002`），`KeepMsg=false` 时文案统一为 `系统繁忙`。`100184` 固定透传，不参与折叠。
 - 普通 `error`（未结构化、也未携带 `CodeMsg`）一律返回 `100002 系统繁忙`，原始文本只写服务端日志。因此业务与下游必须先转换成 extproto 错误，不能把 SQL、地址、堆栈直接抛给网关。
 
 ### 4.4 设备/云端原始码（DJI）
@@ -215,17 +215,17 @@ return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 
 | 场景 | 统一出口 | `code` | HTTP |
 | --- | --- | --- | --- |
-| JWT 缺失/过期/签名错误 | `rest.WithUnauthorizedCallback(gtwx.UnauthorizedHandler)` | `100036` | 200 |
-| JWT 有效但无用户身份（livegtw） | `MeetingAuth` → `gtwx.WriteError` | `100036`（`缺少用户身份`） | 200 |
+| JWT 缺失/过期/签名错误 | `rest.WithUnauthorizedCallback(gtwx.UnauthorizedHandler)` | `100110` | 200 |
+| JWT 有效但无用户身份（livegtw） | `MeetingAuth` → `gtwx.WriteError` | `100110`（`缺少用户身份`） | 200 |
 | Basic 凭据缺失/错误 | `OpenAuthMiddleware` → `gtwx.WriteError` | `130002` | 200 |
 | 应用不存在/已停用 | `OpenAuthMiddleware` → `gtwx.WriteError` | `130001` | 200 |
-| 参数解析失败 | `gtwx.WriteParseError` | `100007` | 200 |
+| 参数解析失败 | `gtwx.WriteParseError` | `100020` | 200 |
 | 下游 gRPC 业务错误 | `gtwx.WriteError` | 原始六位码 | 200 |
 | 下游基础设施错误 | `gtwx.WriteError` | 默认透传；配置命中时 `100002` | 200 |
 | 未在 extproto 登记的码 | `gtwx.WriteError` → `NormalizeError` | `100002`（原文进日志） | 200 |
 | 未转换的普通 `error` | `gtwx.WriteError` → `NormalizeError` | `100002 系统繁忙` | 200 |
-| 路由不存在 | `rest.WithNotFoundHandler(gtwx.NotFoundHandler)` | `100067` | 200 |
-| 方法不允许 | `rest.WithNotAllowedHandler(gtwx.MethodNotAllowedHandler)` | `100068` | 200 |
+| 路由不存在 | `rest.WithNotFoundHandler(gtwx.NotFoundHandler)` | `100240` | 200 |
+| 方法不允许 | `rest.WithNotAllowedHandler(gtwx.MethodNotAllowedHandler)` | `100241` | 200 |
 
 以下不是信封，属于框架/部署层行为，排查时不要误判为漏接：
 
@@ -279,11 +279,11 @@ return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 至少覆盖：
 
 - [ ] 成功信封：HTTP 200、`code=0`、`data` 正确（参考 `app/opengtw/internal/handler/gateway/gatewayhandler_test.go` 的 `TestGatewaySuccessEnvelope`）。
-- [ ] 参数错误：非法 JSON → `100007`（`TestGatewayInvalidJSONReturnsParseError`）。
-- [ ] 鉴权失败：JWT 缺失/身份缺失 → `100036`（`app/livegtw/internal/middleware/meetingauthmiddleware_test.go`）；Basic 失败 → `130001/130002`（`app/opengtw/internal/middleware/openauthmiddleware_test.go`）。
-- [ ] 404/405/未认证兜底 → `100067/100068/100036`（`common/gtwx/response_test.go` 的 `TestGatewayFallbackHandlers`）。
+- [ ] 参数错误：非法 JSON → `100020`（`TestGatewayInvalidJSONReturnsParseError`）。
+- [ ] 鉴权失败：JWT 缺失/身份缺失 → `100110`（`app/livegtw/internal/middleware/meetingauthmiddleware_test.go`）；Basic 失败 → `130001/130002`（`app/opengtw/internal/middleware/openauthmiddleware_test.go`）。
+- [ ] 404/405/未认证兜底 → `100240/100241/100110`（`common/gtwx/response_test.go` 的 `TestGatewayFallbackHandlers`）。
 - [ ] 下游基础设施错误默认透传；配置 `Error.Fold` 命中后折叠为 `100002 系统繁忙`（`TestGatewayPassesThroughInfrastructureErrorByDefault`、`TestGatewayFoldsInfrastructureErrorWhenConfigured`、`TestWriteErrorFoldsConfiguredCode`）。
-- [ ] `100058` 即使配置在 `Error.Fold.Codes` 中也保持透传（`TestFoldPolicyNeverFoldsThirdPartyAPI`、`TestWriteErrorNeverFoldsThirdPartyAPI`）；非法 `Target` 回退到 `100002`（`TestFoldPolicyInvalidTargetFallsBack`）。
+- [ ] `100184` 即使配置在 `Error.Fold.Codes` 中也保持透传（`TestFoldPolicyNeverFoldsThirdPartyAPI`、`TestWriteErrorNeverFoldsThirdPartyAPI`）；非法 `Target` 回退到 `100002`（`TestFoldPolicyInvalidTargetFallsBack`）。
 - [ ] 未登记码/设备原始码统一为 `100002 系统繁忙`（`TestWriteErrorFoldsVendorCode`、`...OverGRPC`）。
 
 执行：
@@ -304,16 +304,16 @@ BASE_URL=http://127.0.0.1:11002   # livegtw；opengtw 用 11005，路径换成 /
 # 1) 公开探针：期望 200 + code=0
 curl -sS -i "$BASE_URL/v1/health"
 
-# 2) 未认证访问受保护接口：期望 200 + code=100036
+# 2) 未认证访问受保护接口：期望 200 + code=100110
 curl -sS -i "$BASE_URL/live/v1/listMeetings"
 
-# 3) 路由不存在：期望 200 + code=100067
+# 3) 路由不存在：期望 200 + code=100240
 curl -sS -i "$BASE_URL/live/v1/not-exist"
 
-# 4) 方法不允许（对公开 GET 路由发 POST）：期望 200 + code=100068
+# 4) 方法不允许（对公开 GET 路由发 POST）：期望 200 + code=100241
 curl -sS -i -X POST "$BASE_URL/live/v1/joinMeetingByTicket"
 
-# 5) 参数解析失败（公开接口 + 非法 JSON）：期望 200 + code=100007
+# 5) 参数解析失败（公开接口 + 非法 JSON）：期望 200 + code=100020
 curl -sS -i -X POST "$BASE_URL/live/v1/generateToken" \
   -H 'Content-Type: application/json' \
   -d 'not-json'
@@ -358,7 +358,7 @@ curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 | `common/djisdk/error.go` | DJI 原始码 `PublicCode` / `GRPCStatus` |
 | `app/livegtw/livegtw.go` | livegtw 统一出口接线 |
 | `app/livegtw/internal/handler/routes.go` | JWT、中间件、前缀的实际生成结果 |
-| `app/livegtw/internal/middleware/meetingauthmiddleware.go` | 身份缺失 → `100036` |
+| `app/livegtw/internal/middleware/meetingauthmiddleware.go` | 身份缺失 → `100110` |
 | `app/livegtw/internal/handler/webhook/webhookhandler.go` | webhook 协议例外 |
 | `app/opengtw/opengtw.go` | opengtw 统一出口接线 |
 | `app/opengtw/internal/middleware/openauthmiddleware.go` | Basic → `130001/130002` |

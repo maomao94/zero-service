@@ -33,7 +33,7 @@ func main() {
 
 	server := rest.MustNewServer(c.RestConf,
 		gtwx.CorsOption(),
-		// 管理面 JWT 失败也返回 HTTP 200 信封，错误码统一为 100036。
+		// 管理面 JWT 失败也返回 HTTP 200 信封，错误码统一为 100110。
 		rest.WithUnauthorizedCallback(gtwx.UnauthorizedHandler),
 		rest.WithNotFoundHandler(http.HandlerFunc(gtwx.NotFoundHandler)),
 		rest.WithNotAllowedHandler(http.HandlerFunc(gtwx.MethodNotAllowedHandler)),

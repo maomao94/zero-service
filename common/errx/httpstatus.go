@@ -55,8 +55,8 @@ var httpCodeToGRPCCode = map[int]codes.Code{
 // grpcCodeToHTTPStatus 是标准 gRPC Code 到语义 HTTP 状态的分类表。
 //
 // 两处按 extproto 口径收敛，避免 fallback detail 与业务码 http_code 错位：
-//   - Unimplemented -> 405：对应 100068 请求方法不允许；
-//   - FailedPrecondition -> 409：对应 100045 业务状态不允许。
+//   - Unimplemented -> 405：对应 100241 请求方法不允许；
+//   - FailedPrecondition -> 409：对应 100141 业务状态不允许。
 //
 // 同一 gRPC Code 可能对应多个 HTTP 状态（如 ResourceExhausted 对应 413/429，
 // Unavailable 对应 502/503），同一 HTTP 状态也可能对应多个 gRPC Code（如 409

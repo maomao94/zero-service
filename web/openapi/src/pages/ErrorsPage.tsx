@@ -39,7 +39,7 @@ export default function ErrorsPage() {
         <div className="folding-icon"><GitBranch size={20} /></div>
         <div>
           <b>基础设施错误折叠规则</b>
-          <p>默认统一透传；如网关在 <code>Error.Fold</code> 中列出 <code>100019</code>、<code>100030</code>、<code>100031</code>、<code>100054</code>、<code>100057</code>、<code>100001</code>，则折叠为 <code>100002 系统繁忙</code>。真实原因只写服务端日志；<code>100058</code> 由代码强制透传，不参与折叠。</p>
+          <p>默认统一透传；如网关在 <code>Error.Fold</code> 中列出 <code>100050</code>、<code>100090</code>、<code>100091</code>、<code>100180</code>、<code>100183</code>、<code>100001</code>，则折叠为 <code>100002 系统繁忙</code>。真实原因只写服务端日志；<code>100184</code> 由代码强制透传，不参与折叠。</p>
         </div>
       </section>
 

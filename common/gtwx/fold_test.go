@@ -28,9 +28,9 @@ func TestFoldPolicyConfiguredCode(t *testing.T) {
 func TestFoldPolicyLeavesOtherCodes(t *testing.T) {
 	policy := newFoldPolicy(FoldConfig{Enabled: true, Codes: []int{100001}})
 
-	code, msg := policy.apply(100019, "db down")
-	if code != 100019 || msg != "db down" {
-		t.Fatalf("apply() = %d/%q, want 100019/db down", code, msg)
+	code, msg := policy.apply(100050, "db down")
+	if code != 100050 || msg != "db down" {
+		t.Fatalf("apply() = %d/%q, want 100050/db down", code, msg)
 	}
 }
 

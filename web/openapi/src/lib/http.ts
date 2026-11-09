@@ -235,7 +235,7 @@ export async function adminRequest<T>(input: AdminRequestInput): Promise<AdminRe
     return {
       ok: false,
       httpStatus: 401,
-      code: 100036,
+      code: 100110,
       msg: '请先填写管理面 JWT token',
       data: null,
       raw: '',
@@ -284,7 +284,7 @@ export async function adminRequest<T>(input: AdminRequestInput): Promise<AdminRe
     return {
       ok: false,
       httpStatus: response.status,
-      code: response.status === 401 ? 100036 : -1,
+      code: response.status === 401 ? 100110 : -1,
       msg: httpFailureMessage(response.status, response.statusText),
       data: null,
       raw,

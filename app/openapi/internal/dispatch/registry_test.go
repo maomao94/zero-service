@@ -50,7 +50,7 @@ func TestRegistryInvalidData(t *testing.T) {
 	for _, data := range []string{`{"limit":"abc"}`, `{"unknownField":1}`, `{`} {
 		_, err := registry.Invoke(context.Background(), MethodPodList, data)
 		if !errx.IsErrorByPbCode(err, extproto.Code__1_00_PARAM) {
-			t.Fatalf("data %s error = %v, want 100007", data, err)
+			t.Fatalf("data %s error = %v, want 100020", data, err)
 		}
 	}
 }

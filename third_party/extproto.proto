@@ -45,7 +45,8 @@ extend google.protobuf.EnumValueOptions {
  *           其他功能域按需申请，不提前预分配；90-99 预留
  *   - DEF ：模块内唯一编号（三位），不承载业务语义
  *           001-999 为可用范围；000 保留
- *           不要求连续；单模块最多 999 个码，用尽后申请新 BC
+ *           按分类区间分配，区间内连续、区间之间预留扩展位
+ *           每个模块最多 999 个码，用尽后申请新 BC
  *
  * 编码规则：
  *   1. 0 是唯一成功码，不得用于构造错误。
@@ -56,16 +57,17 @@ extend google.protobuf.EnumValueOptions {
  *   5. DJI 等设备/第三方平台的错误码是另一套独立体系（如 dji_error_code.proto），
  *      与本枚举不互通、不映射、不透传，禁止写入 gRPC ErrorInfo.reason；
  *      厂商原始码只作为业务响应字段（如 reason_code）返回。
- *   6. DEF 是模块内唯一编号（001-999），不按业务语义分段，也不要求连续；
- *      新码取任意空闲号，用尽后申请新 BC。HTTP 状态放 http_code，gRPC Code
- *      由映射推导，不编码进 DEF；本次已在上线前统一重排，上线后冻结、只追加。
+ *   6. DEF 是模块内唯一编号（001-999），不按业务语义分段，但按分类区间分配并预留扩展位；
+ *      新码优先落在本分类预留号，用尽后再扩展区间或申请新 BC。HTTP 状态放 http_code，
+ *      gRPC Code 由映射推导，不编码进 DEF；本次已在上线前统一重排，上线后冻结、只追加。
  */
 enum Code {
   // ===== 成功（ABCDEF 全 0）=====
   _0_OK = 0 [(name) = "成功", (http_code) = 200];
 
   // ===== 通用（A=1, BC=00）=====
-  // 系统
+  // 下列区间是分类分配建议，预留扩展位；DEF 仍是模块内唯一编号，不参与运行时解析。
+  // 系统（001-019）
   _1_00_INTERNAL = 100001 [(name) = "系统内部错误", (http_code) = 500];
   _1_00_UNKNOWN = 100002 [(name) = "未知错误", (http_code) = 500];
   _1_00_TIMEOUT = 100003 [(name) = "系统超时", (http_code) = 504];
@@ -73,104 +75,104 @@ enum Code {
   _1_00_NOT_IMPLEMENTED = 100005 [(name) = "功能未实现", (http_code) = 501];
   _1_00_SERVICE_UNAVAILABLE = 100006 [(name) = "服务不可用", (http_code) = 503];
 
-  // 参数/请求
-  _1_00_PARAM = 100007 [(name) = "参数错误", (http_code) = 400];
-  _1_00_PARAM_MISSING = 100008 [(name) = "缺少必要参数", (http_code) = 400];
-  _1_00_PARAM_INVALID = 100009 [(name) = "参数不合法", (http_code) = 400];
-  _1_00_PARAM_TYPE = 100010 [(name) = "参数类型错误", (http_code) = 400];
-  _1_00_PARAM_RANGE = 100011 [(name) = "参数超出范围", (http_code) = 400];
-  _1_00_PARAM_FORMAT = 100012 [(name) = "参数格式错误", (http_code) = 400];
-  _1_00_REQUEST_MALFORMED = 100013 [(name) = "请求格式错误", (http_code) = 400];
-  _1_00_REQUEST_BODY_TOO_LARGE = 100014 [(name) = "请求体过大", (http_code) = 413];
-  _1_00_UNSUPPORTED_MEDIA_TYPE = 100015 [(name) = "媒体类型不支持", (http_code) = 415];
-  _1_00_PAGINATION_INVALID = 100016 [(name) = "分页参数错误", (http_code) = 400];
-  _1_00_IDEMPOTENCY_KEY_INVALID = 100017 [(name) = "幂等键无效", (http_code) = 400];
-  _1_00_REQUEST_HEADER_INVALID = 100018 [(name) = "请求头不合法", (http_code) = 400];
+  // 参数/请求（020-049）
+  _1_00_PARAM = 100020 [(name) = "参数错误", (http_code) = 400];
+  _1_00_PARAM_MISSING = 100021 [(name) = "缺少必要参数", (http_code) = 400];
+  _1_00_PARAM_INVALID = 100022 [(name) = "参数不合法", (http_code) = 400];
+  _1_00_PARAM_TYPE = 100023 [(name) = "参数类型错误", (http_code) = 400];
+  _1_00_PARAM_RANGE = 100024 [(name) = "参数超出范围", (http_code) = 400];
+  _1_00_PARAM_FORMAT = 100025 [(name) = "参数格式错误", (http_code) = 400];
+  _1_00_REQUEST_MALFORMED = 100026 [(name) = "请求格式错误", (http_code) = 400];
+  _1_00_REQUEST_BODY_TOO_LARGE = 100027 [(name) = "请求体过大", (http_code) = 413];
+  _1_00_UNSUPPORTED_MEDIA_TYPE = 100028 [(name) = "媒体类型不支持", (http_code) = 415];
+  _1_00_PAGINATION_INVALID = 100029 [(name) = "分页参数错误", (http_code) = 400];
+  _1_00_IDEMPOTENCY_KEY_INVALID = 100030 [(name) = "幂等键无效", (http_code) = 400];
+  _1_00_REQUEST_HEADER_INVALID = 100031 [(name) = "请求头不合法", (http_code) = 400];
 
-  // 数据/存储
-  _1_00_DB = 100019 [(name) = "数据库错误", (http_code) = 500];
-  _1_00_DB_CONSTRAINT = 100020 [(name) = "数据约束冲突", (http_code) = 409];
-  _1_00_RECORD_NOT_EXIST = 100021 [(name) = "记录不存在", (http_code) = 404];
-  _1_00_RECORD_ALREADY_EXIST = 100022 [(name) = "记录已存在", (http_code) = 409];
-  _1_00_DATA_CONFLICT = 100023 [(name) = "数据冲突", (http_code) = 409];
-  _1_00_DATA_CORRUPTED = 100024 [(name) = "数据损坏", (http_code) = 500];
-  _1_00_TRANSACTION_FAILED = 100025 [(name) = "事务失败", (http_code) = 500];
-  _1_00_SERIALIZATION_FAILED = 100026 [(name) = "序列化失败", (http_code) = 500];
-  _1_00_DESERIALIZATION_FAILED = 100027 [(name) = "反序列化失败", (http_code) = 500];
-  _1_00_VERSION_CONFLICT = 100028 [(name) = "版本冲突", (http_code) = 409];
-  _1_00_OPTIMISTIC_LOCK_CONFLICT = 100029 [(name) = "乐观锁冲突", (http_code) = 409];
+  // 数据/存储（050-089）
+  _1_00_DB = 100050 [(name) = "数据库错误", (http_code) = 500];
+  _1_00_DB_CONSTRAINT = 100051 [(name) = "数据约束冲突", (http_code) = 409];
+  _1_00_RECORD_NOT_EXIST = 100052 [(name) = "记录不存在", (http_code) = 404];
+  _1_00_RECORD_ALREADY_EXIST = 100053 [(name) = "记录已存在", (http_code) = 409];
+  _1_00_DATA_CONFLICT = 100054 [(name) = "数据冲突", (http_code) = 409];
+  _1_00_DATA_CORRUPTED = 100055 [(name) = "数据损坏", (http_code) = 500];
+  _1_00_TRANSACTION_FAILED = 100056 [(name) = "事务失败", (http_code) = 500];
+  _1_00_SERIALIZATION_FAILED = 100057 [(name) = "序列化失败", (http_code) = 500];
+  _1_00_DESERIALIZATION_FAILED = 100058 [(name) = "反序列化失败", (http_code) = 500];
+  _1_00_VERSION_CONFLICT = 100059 [(name) = "版本冲突", (http_code) = 409];
+  _1_00_OPTIMISTIC_LOCK_CONFLICT = 100060 [(name) = "乐观锁冲突", (http_code) = 409];
 
-  // 缓存/消息
-  _1_00_CACHE = 100030 [(name) = "缓存错误", (http_code) = 500];
-  _1_00_MQ = 100031 [(name) = "消息队列错误", (http_code) = 503];
-  _1_00_MQ_PUBLISH_FAILED = 100032 [(name) = "消息发送失败", (http_code) = 503];
-  _1_00_MQ_CONSUME_FAILED = 100033 [(name) = "消息消费失败", (http_code) = 500];
-  _1_00_MQ_TIMEOUT = 100034 [(name) = "消息处理超时", (http_code) = 504];
-  _1_00_EVENT_PROCESS_FAILED = 100035 [(name) = "事件处理失败", (http_code) = 500];
+  // 缓存/消息（090-109）
+  _1_00_CACHE = 100090 [(name) = "缓存错误", (http_code) = 500];
+  _1_00_MQ = 100091 [(name) = "消息队列错误", (http_code) = 503];
+  _1_00_MQ_PUBLISH_FAILED = 100092 [(name) = "消息发送失败", (http_code) = 503];
+  _1_00_MQ_CONSUME_FAILED = 100093 [(name) = "消息消费失败", (http_code) = 500];
+  _1_00_MQ_TIMEOUT = 100094 [(name) = "消息处理超时", (http_code) = 504];
+  _1_00_EVENT_PROCESS_FAILED = 100095 [(name) = "事件处理失败", (http_code) = 500];
 
-  // 认证/授权
-  _1_00_UNAUTHORIZED = 100036 [(name) = "未认证", (http_code) = 401];
-  _1_00_TOKEN_EXPIRED = 100037 [(name) = "凭据已过期", (http_code) = 401];
-  _1_00_TOKEN_INVALID = 100038 [(name) = "凭据无效", (http_code) = 401];
-  _1_00_FORBIDDEN = 100039 [(name) = "无权限访问", (http_code) = 403];
-  _1_00_ACCOUNT_DISABLED = 100040 [(name) = "账号已禁用", (http_code) = 403];
-  _1_00_TENANT_MISMATCH = 100041 [(name) = "租户不匹配", (http_code) = 403];
-  _1_00_SCOPE_INSUFFICIENT = 100042 [(name) = "权限范围不足", (http_code) = 403];
-  _1_00_IP_NOT_ALLOWED = 100043 [(name) = "来源 IP 不在白名单", (http_code) = 403];
+  // 认证/授权（110-139）
+  _1_00_UNAUTHORIZED = 100110 [(name) = "未认证", (http_code) = 401];
+  _1_00_TOKEN_EXPIRED = 100111 [(name) = "凭据已过期", (http_code) = 401];
+  _1_00_TOKEN_INVALID = 100112 [(name) = "凭据无效", (http_code) = 401];
+  _1_00_FORBIDDEN = 100113 [(name) = "无权限访问", (http_code) = 403];
+  _1_00_ACCOUNT_DISABLED = 100114 [(name) = "账号已禁用", (http_code) = 403];
+  _1_00_TENANT_MISMATCH = 100115 [(name) = "租户不匹配", (http_code) = 403];
+  _1_00_SCOPE_INSUFFICIENT = 100116 [(name) = "权限范围不足", (http_code) = 403];
+  _1_00_IP_NOT_ALLOWED = 100117 [(name) = "来源 IP 不在白名单", (http_code) = 403];
 
-  // 业务
-  _1_00_BIZ = 100044 [(name) = "业务处理失败", (http_code) = 409];
-  _1_00_BIZ_STATE = 100045 [(name) = "业务状态不允许", (http_code) = 409];
-  _1_00_BIZ_REPEAT = 100046 [(name) = "重复操作", (http_code) = 409];
-  _1_00_BIZ_VALIDATION = 100047 [(name) = "业务校验失败", (http_code) = 400];
-  _1_00_BIZ_RULE_VIOLATION = 100048 [(name) = "业务规则不满足", (http_code) = 409];
-  _1_00_BIZ_QUOTA_EXCEEDED = 100049 [(name) = "业务配额不足", (http_code) = 429];
-  _1_00_BIZ_EXPIRED = 100050 [(name) = "业务已过期", (http_code) = 409];
-  _1_00_BIZ_LOCKED = 100051 [(name) = "业务已锁定", (http_code) = 409];
-  _1_00_OPERATION_NOT_ALLOWED = 100052 [(name) = "操作不允许", (http_code) = 403];
-  _1_00_RESOURCE_IN_USE = 100053 [(name) = "资源使用中", (http_code) = 409];
+  // 业务（140-179）
+  _1_00_BIZ = 100140 [(name) = "业务处理失败", (http_code) = 409];
+  _1_00_BIZ_STATE = 100141 [(name) = "业务状态不允许", (http_code) = 409];
+  _1_00_BIZ_REPEAT = 100142 [(name) = "重复操作", (http_code) = 409];
+  _1_00_BIZ_VALIDATION = 100143 [(name) = "业务校验失败", (http_code) = 400];
+  _1_00_BIZ_RULE_VIOLATION = 100144 [(name) = "业务规则不满足", (http_code) = 409];
+  _1_00_BIZ_QUOTA_EXCEEDED = 100145 [(name) = "业务配额不足", (http_code) = 429];
+  _1_00_BIZ_EXPIRED = 100146 [(name) = "业务已过期", (http_code) = 409];
+  _1_00_BIZ_LOCKED = 100147 [(name) = "业务已锁定", (http_code) = 409];
+  _1_00_OPERATION_NOT_ALLOWED = 100148 [(name) = "操作不允许", (http_code) = 403];
+  _1_00_RESOURCE_IN_USE = 100149 [(name) = "资源使用中", (http_code) = 409];
 
-  // 外部依赖
-  _1_00_RPC = 100054 [(name) = "远程调用失败", (http_code) = 503];
-  _1_00_RPC_TIMEOUT = 100055 [(name) = "远程调用超时", (http_code) = 504];
-  _1_00_RPC_UNAVAILABLE = 100056 [(name) = "下游服务不可用", (http_code) = 503];
-  _1_00_THIRD_PARTY = 100057 [(name) = "第三方服务异常", (http_code) = 503];
-  _1_00_THIRD_PARTY_API = 100058 [(name) = "第三方接口错误", (http_code) = 502];
-  _1_00_THIRD_PARTY_TIMEOUT = 100059 [(name) = "第三方超时", (http_code) = 504];
-  _1_00_THIRD_PARTY_AUTH = 100060 [(name) = "第三方鉴权失败", (http_code) = 502];
-  _1_00_EXTERNAL_RATE_LIMITED = 100061 [(name) = "外部限流", (http_code) = 429];
-  _1_00_WEBHOOK_FAILED = 100062 [(name) = "Webhook 投递失败", (http_code) = 502];
-  _1_00_DNS_ERROR = 100063 [(name) = "DNS 解析失败", (http_code) = 503];
+  // 外部依赖（180-219）
+  _1_00_RPC = 100180 [(name) = "远程调用失败", (http_code) = 503];
+  _1_00_RPC_TIMEOUT = 100181 [(name) = "远程调用超时", (http_code) = 504];
+  _1_00_RPC_UNAVAILABLE = 100182 [(name) = "下游服务不可用", (http_code) = 503];
+  _1_00_THIRD_PARTY = 100183 [(name) = "第三方服务异常", (http_code) = 503];
+  _1_00_THIRD_PARTY_API = 100184 [(name) = "第三方接口错误", (http_code) = 502];
+  _1_00_THIRD_PARTY_TIMEOUT = 100185 [(name) = "第三方超时", (http_code) = 504];
+  _1_00_THIRD_PARTY_AUTH = 100186 [(name) = "第三方鉴权失败", (http_code) = 502];
+  _1_00_EXTERNAL_RATE_LIMITED = 100187 [(name) = "外部限流", (http_code) = 429];
+  _1_00_WEBHOOK_FAILED = 100188 [(name) = "Webhook 投递失败", (http_code) = 502];
+  _1_00_DNS_ERROR = 100189 [(name) = "DNS 解析失败", (http_code) = 503];
 
-  // 限流/配额
-  _1_00_RATE_LIMITED = 100064 [(name) = "请求过于频繁", (http_code) = 429];
-  _1_00_QUOTA_EXCEEDED = 100065 [(name) = "配额已用尽", (http_code) = 429];
-  _1_00_CONCURRENCY_LIMITED = 100066 [(name) = "并发超限", (http_code) = 429];
+  // 限流/配额（220-239）
+  _1_00_RATE_LIMITED = 100220 [(name) = "请求过于频繁", (http_code) = 429];
+  _1_00_QUOTA_EXCEEDED = 100221 [(name) = "配额已用尽", (http_code) = 429];
+  _1_00_CONCURRENCY_LIMITED = 100222 [(name) = "并发超限", (http_code) = 429];
 
-  // 网关/传输
-  _1_00_ROUTE_NOT_FOUND = 100067 [(name) = "接口不存在", (http_code) = 404];
-  _1_00_METHOD_NOT_ALLOWED = 100068 [(name) = "请求方法不允许", (http_code) = 405];
-  _1_00_BAD_GATEWAY = 100069 [(name) = "网关错误", (http_code) = 502];
-  _1_00_GATEWAY_TIMEOUT = 100070 [(name) = "网关超时", (http_code) = 504];
-  _1_00_PROTOCOL_ERROR = 100071 [(name) = "协议错误", (http_code) = 400];
-  _1_00_TLS_ERROR = 100072 [(name) = "TLS 错误", (http_code) = 400];
-  _1_00_REQUEST_TIMEOUT = 100073 [(name) = "请求超时", (http_code) = 408];
-  _1_00_UPSTREAM_UNAVAILABLE = 100074 [(name) = "上游不可用", (http_code) = 503];
+  // 网关/传输（240-269）
+  _1_00_ROUTE_NOT_FOUND = 100240 [(name) = "接口不存在", (http_code) = 404];
+  _1_00_METHOD_NOT_ALLOWED = 100241 [(name) = "请求方法不允许", (http_code) = 405];
+  _1_00_BAD_GATEWAY = 100242 [(name) = "网关错误", (http_code) = 502];
+  _1_00_GATEWAY_TIMEOUT = 100243 [(name) = "网关超时", (http_code) = 504];
+  _1_00_PROTOCOL_ERROR = 100244 [(name) = "协议错误", (http_code) = 400];
+  _1_00_TLS_ERROR = 100245 [(name) = "TLS 错误", (http_code) = 400];
+  _1_00_REQUEST_TIMEOUT = 100246 [(name) = "请求超时", (http_code) = 408];
+  _1_00_UPSTREAM_UNAVAILABLE = 100247 [(name) = "上游不可用", (http_code) = 503];
 
-  // 文件/媒体
-  _1_00_FILE_NOT_FOUND = 100075 [(name) = "文件不存在", (http_code) = 404];
-  _1_00_FILE_TOO_LARGE = 100076 [(name) = "文件过大", (http_code) = 413];
-  _1_00_FILE_TYPE_NOT_ALLOWED = 100077 [(name) = "文件类型不允许", (http_code) = 415];
-  _1_00_FILE_UPLOAD_FAILED = 100078 [(name) = "文件上传失败", (http_code) = 500];
-  _1_00_FILE_DOWNLOAD_FAILED = 100079 [(name) = "文件下载失败", (http_code) = 503];
-  _1_00_FILE_CORRUPTED = 100080 [(name) = "文件损坏", (http_code) = 500];
-  _1_00_FILE_PARSE_FAILED = 100081 [(name) = "文件解析失败", (http_code) = 400];
+  // 文件/媒体（270-299）
+  _1_00_FILE_NOT_FOUND = 100270 [(name) = "文件不存在", (http_code) = 404];
+  _1_00_FILE_TOO_LARGE = 100271 [(name) = "文件过大", (http_code) = 413];
+  _1_00_FILE_TYPE_NOT_ALLOWED = 100272 [(name) = "文件类型不允许", (http_code) = 415];
+  _1_00_FILE_UPLOAD_FAILED = 100273 [(name) = "文件上传失败", (http_code) = 500];
+  _1_00_FILE_DOWNLOAD_FAILED = 100274 [(name) = "文件下载失败", (http_code) = 503];
+  _1_00_FILE_CORRUPTED = 100275 [(name) = "文件损坏", (http_code) = 500];
+  _1_00_FILE_PARSE_FAILED = 100276 [(name) = "文件解析失败", (http_code) = 400];
 
-  // 配置
-  _1_00_CONFIG_NOT_FOUND = 100082 [(name) = "配置不存在", (http_code) = 404];
-  _1_00_CONFIG_INVALID = 100083 [(name) = "配置不合法", (http_code) = 500];
-  _1_00_CONFIG_PARSE_FAILED = 100084 [(name) = "配置解析失败", (http_code) = 500];
-  _1_00_CONFIG_RELOAD_FAILED = 100085 [(name) = "配置重载失败", (http_code) = 500];
+  // 配置（300-319）
+  _1_00_CONFIG_NOT_FOUND = 100300 [(name) = "配置不存在", (http_code) = 404];
+  _1_00_CONFIG_INVALID = 100301 [(name) = "配置不合法", (http_code) = 500];
+  _1_00_CONFIG_PARSE_FAILED = 100302 [(name) = "配置解析失败", (http_code) = 500];
+  _1_00_CONFIG_RELOAD_FAILED = 100303 [(name) = "配置重载失败", (http_code) = 500];
 
   // ===== 开放平台（A=1, BC=30）=====
   _1_30_APP_NOT_FOUND = 130001 [(name) = "应用不存在", (http_code) = 403];

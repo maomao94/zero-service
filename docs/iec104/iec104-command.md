@@ -287,12 +287,12 @@ gRPC 调用失败时，返回的错误码和 HTTP 状态码如下：
 
 | 场景 | 业务错误码 | HTTP | gRPC | 说明 |
 | --- | --- | --- | --- | --- |
-| 设备拒绝命令（isNegative=true） | 100045 | 409 | Aborted | 从站明确拒绝，如 UnknownIOA、UnknownTypeID |
+| 设备拒绝命令（isNegative=true） | 100141 | 409 | Aborted | 从站明确拒绝，如 UnknownIOA、UnknownTypeID |
 | ACK 超时 | 100003 | 504 | DeadlineExceeded | 从站未在规定时间内返回回执 |
-| 同一点位重复下发 | 100046 | 409 | Aborted | 同一控制点已有未完成命令 |
-| 找不到 IEC 客户端 | 100054 | 503 | Unavailable | 未连接到目标从站 |
-| 获取客户端失败 | 100054 | 503 | Unavailable | ClientManager 返回错误 |
-| 第三方服务异常 | 100057 | 503 | Unavailable | 其他 IEC 协议层错误 |
+| 同一点位重复下发 | 100142 | 409 | Aborted | 同一控制点已有未完成命令 |
+| 找不到 IEC 客户端 | 100180 | 503 | Unavailable | 未连接到目标从站 |
+| 获取客户端失败 | 100180 | 503 | Unavailable | ClientManager 返回错误 |
+| 第三方服务异常 | 100183 | 503 | Unavailable | 其他 IEC 协议层错误 |
 
 错误消息格式示例：
 
