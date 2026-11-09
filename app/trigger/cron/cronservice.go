@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+	"zero-service/app/trigger/internal/confirm"
 	"zero-service/app/trigger/internal/execdelay"
 	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
@@ -30,6 +31,8 @@ type CronService struct {
 	cancelChan chan struct{}
 	svcCtx     *svc.ServiceContext
 	taskRunner *threading.TaskRunner
+	// lastConfirmScan 控制批次确认扫描频率，避免执行项繁忙时高频查询确认表。
+	lastConfirmScan time.Time
 }
 
 func NewCronService(svcCtx *svc.ServiceContext) *CronService {
@@ -62,6 +65,10 @@ func (s *CronService) Stop() {
 func (s *CronService) scanLoop() {
 	for {
 		itemsProcessed := s.ScanPlanExecItem()
+		if time.Since(s.lastConfirmScan) >= planConfirmScanInterval {
+			s.ScanPlanConfirm()
+			s.lastConfirmScan = time.Now()
+		}
 		var sleepDuration time.Duration
 		if itemsProcessed {
 			sleepDuration = 10 * time.Millisecond
@@ -363,39 +370,9 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 		log.Errorf(scope.LogMessage("写入执行流水 plan_exec_log 失败: %v"), err)
 	}
 
-	batchCount, err := gormmodel.UpdatePlanBatchFinishedTime(ctx, db, execItem.BatchPk)
-	if err != nil {
-		log.Errorf(scope.LogMessage("更新批次 finished_time（用于收尾判断）失败: %v"), err)
-	}
-	if batchCount > 0 {
-		batchNotifyReq := streamevent.NotifyPlanEventReq{
-			EventType:  streamevent.PlanEventType_BATCH_FINISHED,
-			PlanId:     execItem.PlanId,
-			PlanType:   plan.Type.String,
-			BatchId:    execItem.BatchId,
-			Attributes: map[string]string{},
-		}
-		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Logger(ctx).Info(scope.LogMessage("下游通知：调用 NotifyPlanEvent（批次收尾）"))
-		if _, notifyErr := s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &batchNotifyReq); notifyErr != nil {
-			log.Errorf(scope.LogMessage("下游通知失败（BATCH_FINISHED 事件已丢失，需人工补发）: %v"), notifyErr)
-		}
-	}
-	planCount, err := gormmodel.UpdatePlanFinishedTime(ctx, db, execItem.PlanPk)
-	if err != nil {
-		log.Errorf(scope.LogMessage("更新计划 finished_time（用于收尾判断）失败: %v"), err)
-	}
-	if planCount > 0 {
-		planPlanReq := streamevent.NotifyPlanEventReq{
-			EventType:  streamevent.PlanEventType_PLAN_FINISHED,
-			PlanId:     execItem.PlanId,
-			PlanType:   plan.Type.String,
-			Attributes: map[string]string{},
-		}
-		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Logger(ctx).Info(scope.LogMessage("下游通知：调用 NotifyPlanEvent（计划收尾）"))
-		if _, notifyErr := s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &planPlanReq); notifyErr != nil {
-			log.Errorf(scope.LogMessage("下游通知失败（PLAN_FINISHED 事件已丢失，需人工补发）: %v"), notifyErr)
-		}
-	}
+	batch := &gormmodel.PlanBatch{PlanPk: execItem.PlanPk, PlanId: execItem.PlanId, BatchId: execItem.BatchId}
+	batch.Id = execItem.BatchPk
+	batchCount, planCount := confirm.NotifyBatchFinishedIfNeeded(ctx, db, s.svcCtx.StreamEventCli, plan, batch, res.Reason)
 	scope.WithFields(
 		logx.Field("batch_notify_rows", batchCount),
 		logx.Field("plan_notify_rows", planCount),

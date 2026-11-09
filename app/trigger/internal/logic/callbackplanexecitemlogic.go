@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"zero-service/app/trigger/internal/confirm"
 	"zero-service/app/trigger/internal/execdelay"
 	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
@@ -14,7 +15,7 @@ import (
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/errx"
-	"zero-service/facade/streamevent/streamevent"
+
 	"zero-service/model"
 	"zero-service/third_party/extproto"
 
@@ -196,40 +197,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "回调事务失败")
 	}
 
-	batchCount, err := gormmodel.UpdatePlanBatchFinishedTime(l.ctx, db, execItem.BatchPk)
-	if err != nil {
-		scope.Logger(l.ctx).Errorf("更新批次 finished_time（用于收尾判断）失败: %v", err)
-	}
-	if batchCount > 0 {
-		batchNotifyReq := streamevent.NotifyPlanEventReq{
-			EventType:  streamevent.PlanEventType_BATCH_FINISHED,
-			PlanId:     execItem.PlanId,
-			PlanType:   plan.Type.String,
-			BatchId:    execItem.BatchId,
-			Attributes: map[string]string{},
-		}
-		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Logger(l.ctx).Info("下游通知：调用 NotifyPlanEvent（批次收尾）")
-		if _, notifyErr := l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq); notifyErr != nil {
-			scope.Logger(l.ctx).Errorf("下游通知失败（BATCH_FINISHED 事件已丢失，需人工补发）: %v", notifyErr)
-		}
-	}
-
-	planCount, err := gormmodel.UpdatePlanFinishedTime(l.ctx, db, execItem.PlanPk)
-	if err != nil {
-		scope.Logger(l.ctx).Errorf("更新计划 finished_time（用于收尾判断）失败: %v", err)
-	}
-	if planCount > 0 {
-		planPlanReq := streamevent.NotifyPlanEventReq{
-			EventType:  streamevent.PlanEventType_PLAN_FINISHED,
-			PlanId:     execItem.PlanId,
-			PlanType:   plan.Type.String,
-			Attributes: map[string]string{},
-		}
-		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Logger(l.ctx).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
-		if _, notifyErr := l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq); notifyErr != nil {
-			scope.Logger(l.ctx).Errorf("下游通知失败（PLAN_FINISHED 事件已丢失，需人工补发）: %v", notifyErr)
-		}
-	}
+	confirm.NotifyBatchFinishedIfNeeded(l.ctx, db, l.svcCtx.StreamEventCli, &plan, &planBatch, in.Reason)
 
 	return &trigger.CallbackPlanExecItemRes{}, nil
 }

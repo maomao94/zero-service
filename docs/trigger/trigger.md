@@ -99,6 +99,24 @@ Plan 与 CronJob 共用 `(RRULE ∪ specifiedTimes) - excludedTimes - expanded(e
 
 当前失败退避以 10 秒为基础并带少量抖动，后续逐步指数增长且最高为 30 分钟；`trigger_count` 达到 500 时自动终止。业务系统仍应根据 `execId` 做幂等处理，不能把数据库抢占等同于下游 Exactly Once。
 
+### 批次二次确认
+
+批次可以先挂起等待人工确认，确认通过后才下发执行项。该能力不改变 `plan_batch.status`（仍为 0/1/2/3），确认状态维护在独立表 `plan_confirm`。
+
+- 创建计划时传 `confirm_type=1`（批次级）、`confirm_lead_minutes`（提前通知分钟数，批次确认至少为 1）和可选的 `confirm_timeout_minutes`（确认超时分钟数，从批次触发时间起算，0 表示默认当天 23:59:59）。
+- 每个批次生成一条 `plan_confirm`，`notify_at = 批次触发时间 - 提前量`，`deadline = 批次触发时间 + confirm_timeout_minutes`；超时分钟数为 0 时取触发当天 23:59:59，正数支持跨天。
+- 通知扫描会跳过已过截止时间的批次，避免服务恢复后补发无意义的待确认通知。
+- 扫表任务在 `notify_at` 到点后通过 socketpush 向机构房间 `dept:{deptCode}` 推送一次 `plan:batch-confirm-required` 事件；负载包含计划、批次、触发时间、截止时间和执行项数量。
+- 前端调用 `ConfirmPlanBatch` 确认后，扫表放行该批次执行项：确认早于触发时间则按原计划时间执行，晚于触发时间则立即执行。
+- 前端调用 `RejectPlanBatch` 拒绝后，批次及其未结束执行项立即终止。
+- 超过 `deadline` 仍未确认时，批次及其未结束执行项自动终止，并通知 `BATCH_FINISHED` / `PLAN_FINISHED`。
+- 人工终止计划或批次时，未确认记录同步结束。
+- `confirm_status` 只有 `waiting` / `confirmed` 两种：允许、拒绝、超时、人工终止都归为 `confirmed`，具体结果看 `plan_batch.status`、`terminated_reason` 和 `plan_confirm.remark`。
+- 通知、确认、拒绝、超时通过 Redis 锁按批次串行化，避免多实例重复处理。
+- `confirm_type=2`（执行项级确认）当前仅保留枚举，创建时显式拒绝，避免调用方误以为生效。
+
+未配置确认记录的批次行为与之前完全一致。
+
 ### 计划任务 API
 
 | 方法 | 说明 |
@@ -107,6 +125,7 @@ Plan 与 CronJob 共用 `(RRULE ∪ specifiedTimes) - excludedTimes - expanded(e
 | `CreatePlanTask` | 创建并展开计划任务 |
 | `PausePlan` / `ResumePlan` / `TerminatePlan` | 计划级控制 |
 | `PausePlanBatch` / `ResumePlanBatch` / `TerminatePlanBatch` | 批次级控制 |
+| `ConfirmPlanBatch` | 批次级二次确认，确认后放行执行项 |
 | `PausePlanExecItem` / `ResumePlanExecItem` / `RunPlanExecItem` / `TerminatePlanExecItem` | 执行项级控制 |
 | `CallbackPlanExecItem` | 回报执行项结果 |
 | `GetPlan` / `ListPlans` | 查询计划 |
@@ -121,6 +140,7 @@ Plan 与 CronJob 共用 `(RRULE ∪ specifiedTimes) - excludedTimes - expanded(e
 | --- | --- | --- |
 | `plan` | `plan_id`、`recurrence_rule`、`rrule_str`、`start_time`、`end_time`、`status`、`finished_time` | 计划定义、规则快照和计划级生命周期 |
 | `plan_batch` | `plan_pk`、`batch_id`、`plan_trigger_time`、`status`、`finished_time` | 一个具体计划时间对应的批次 |
+| `plan_confirm` | `confirm_type`、`target_pk`、`notify_at`、`deadline`、`confirm_status` | 批次二次确认状态与通知时间 |
 | `plan_exec_item` | `exec_id`、`item_id`、`next_trigger_time`、`trigger_count`、`status` | 扫表、下发、延期和执行项状态 |
 | `plan_exec_log` | `exec_id`、`trigger_time`、`trace_id`、`exec_result`、`message`、`reason` | 每次执行结果流水 |
 

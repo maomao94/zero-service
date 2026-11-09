@@ -5,11 +5,13 @@ import (
 	"time"
 
 	"zero-service/app/trigger/internal/cronjob"
+	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/carbonx"
 	"zero-service/common/crontask"
 	"zero-service/common/errx"
 	"zero-service/common/holiday"
+	"zero-service/model"
 	"zero-service/third_party/extproto"
 
 	"github.com/dromara/carbon/v2"
@@ -188,4 +190,25 @@ func toHolidaySourcePb(item holiday.StoredEntry) *trigger.HolidaySourcePb {
 		IsFestivalDay: item.Entry.IsFestivalDay,
 		Enabled:       item.Enabled,
 	}
+}
+
+// fillPlanConfirmPb 将批次确认记录映射到批次响应，未配置确认时 confirmStatus=none。
+func fillPlanConfirmPb(pb *trigger.PlanBatchPb, confirm *gormmodel.PlanConfirm) {
+	if confirm == nil {
+		pb.ConfirmStatus = "none"
+		return
+	}
+	pb.ConfirmType = int32(confirm.ConfirmType)
+	if confirm.ConfirmStatus == model.PlanConfirmStatusConfirmed {
+		pb.ConfirmStatus = "confirmed"
+	} else {
+		pb.ConfirmStatus = "waiting"
+	}
+	if !confirm.Deadline.IsZero() {
+		pb.ConfirmDeadline = carbonx.FormatDateTime(confirm.Deadline)
+	}
+	if confirm.ConfirmedTime.Valid {
+		pb.ConfirmedTime = carbonx.FormatDateTime(confirm.ConfirmedTime.Time)
+	}
+	pb.ConfirmedUser = confirm.ConfirmedUser.String
 }

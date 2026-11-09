@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 	"zero-service/common/errx"
-	"zero-service/facade/streamevent/streamevent"
 
+	"zero-service/app/trigger/internal/confirm"
 	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
@@ -96,6 +96,13 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		if updated == 0 {
 			return model.ErrNoRowsUpdate
 		}
+		closeReason := in.Reason
+		if closeReason == "" {
+			closeReason = "计划批次被终止"
+		}
+		if _, transErr := gormmodel.ClosePlanConfirmsByBatch(l.ctx, tx, planBatch.Id, authctx.GetUserId(l.ctx), closeReason, now); transErr != nil {
+			return transErr
+		}
 		planBatch.Status = model.PlanStatusTerminated
 		planBatch.FinishedTime.Time = now
 		planBatch.FinishedTime.Valid = true
@@ -111,36 +118,9 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		}
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "终止批次事务失败")
 	}
+	confirm.NotifyBatchFinished(l.ctx, db, l.svcCtx.StreamEventCli, &plan, &planBatch, in.Reason)
 	bScope := planscope.BatchScope(&plan, &planBatch)
 	bLog := bScope.Logger(l.ctx)
-	batchNotifyReq := streamevent.NotifyPlanEventReq{
-		EventType:  streamevent.PlanEventType_BATCH_FINISHED,
-		PlanId:     planBatch.PlanId,
-		PlanType:   plan.Type.String,
-		BatchId:    planBatch.BatchId,
-		Attributes: map[string]string{},
-	}
-	bLog.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Info("下游通知：调用 NotifyPlanEvent（批次收尾）")
-	if _, notifyErr := l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq); notifyErr != nil {
-		bLog.Errorf("下游通知失败（BATCH_FINISHED 事件已丢失，需人工补发）: %v", notifyErr)
-	}
-	planCount, err := gormmodel.UpdatePlanFinishedTime(l.ctx, db, planBatch.PlanPk)
-	if err != nil {
-		bLog.Errorf("更新计划 finished_time（用于收尾判断）失败: %v", err)
-	}
-	if planCount > 0 {
-		planPlanReq := streamevent.NotifyPlanEventReq{
-			EventType:  streamevent.PlanEventType_PLAN_FINISHED,
-			PlanId:     planBatch.PlanId,
-			PlanType:   plan.Type.String,
-			Attributes: map[string]string{},
-		}
-		bLog.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
-		if _, notifyErr := l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq); notifyErr != nil {
-			bLog.Errorf("下游通知失败（PLAN_FINISHED 事件已丢失，需人工补发）: %v", notifyErr)
-		}
-	}
-
 	bLog.Info("RPC 终止批次：批次状态已更新，事务已提交")
 	return &trigger.TerminatePlanBatchRes{}, nil
 }

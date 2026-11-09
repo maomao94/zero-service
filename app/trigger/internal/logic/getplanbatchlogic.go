@@ -110,6 +110,16 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 		pbPlanBatch.FinishedTime = carbonx.FormatDateTime(planBatch.FinishedTime.Time)
 	}
 
+	confirmMap, err := gormmodel.FindPlanConfirmsByBatchPks(l.ctx, db, []string{planBatch.Id})
+	if err != nil {
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询批次确认记录失败")
+	}
+	var confirm *gormmodel.PlanConfirm
+	if row, ok := confirmMap[planBatch.Id]; ok {
+		confirm = &row
+	}
+	fillPlanConfirmPb(pbPlanBatch, confirm)
+
 	return &trigger.GetPlanBatchRes{
 		PlanBatch: pbPlanBatch,
 	}, nil

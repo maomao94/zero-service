@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 	"zero-service/common/errx"
-	"zero-service/facade/streamevent/streamevent"
 
+	"zero-service/app/trigger/internal/confirm"
 	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
@@ -101,7 +101,17 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 				"finished_time":     now,
 				"update_user":       sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
 			}).Error
-		return transErr
+		if transErr != nil {
+			return transErr
+		}
+		closeReason := in.Reason
+		if closeReason == "" {
+			closeReason = "计划被终止"
+		}
+		if _, transErr := gormmodel.ClosePlanConfirmsByPlan(l.ctx, tx, plan.Id, authctx.GetUserId(l.ctx), closeReason, now); transErr != nil {
+			return transErr
+		}
+		return nil
 	})
 
 	if err != nil {
@@ -113,18 +123,9 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		}
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "终止计划事务失败")
 	}
-	planPlanReq := streamevent.NotifyPlanEventReq{
-		EventType:  streamevent.PlanEventType_PLAN_FINISHED,
-		PlanId:     plan.PlanId,
-		PlanType:   plan.Type.String,
-		Attributes: map[string]string{},
-	}
-	planLog := planscope.PlanScope(&plan).Logger(l.ctx)
-	planLog.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
-	if _, notifyErr := l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq); notifyErr != nil {
-		planLog.Errorf("下游通知失败（PLAN_FINISHED 事件已丢失，需人工补发）: %v", notifyErr)
-	}
+	confirm.NotifyPlanFinished(l.ctx, l.svcCtx.StreamEventCli, &plan, in.Reason)
 
+	planLog := planscope.PlanScope(&plan).Logger(l.ctx)
 	planLog.Info("RPC 终止计划：计划状态已更新，事务已提交")
 	return &trigger.TerminatePlanRes{}, nil
 }
