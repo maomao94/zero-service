@@ -54,7 +54,7 @@ require (
 	github.com/minio/minio-go/v7 v7.4.1
 	github.com/mmcloughlin/geohash v0.10.0
 	github.com/modelcontextprotocol/go-sdk v1.8.0
-	github.com/nacos-group/nacos-sdk-go/v2 v2.3.5
+	github.com/nacos-group/nacos-sdk-go/v2 v2.3.6
 	github.com/panjf2000/ants/v2 v2.12.1
 	github.com/panjf2000/gnet/v2 v2.10.0
 	github.com/paulmach/orb v0.14.0
