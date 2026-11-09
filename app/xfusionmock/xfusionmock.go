@@ -9,6 +9,7 @@ import (
 	"zero-service/app/xfusionmock/internal/svc"
 	"zero-service/app/xfusionmock/kafka"
 	"zero-service/app/xfusionmock/xfusionmock"
+	"zero-service/common/grpcx"
 	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-queue/kq"
@@ -43,6 +44,8 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
+	s.AddOptions(grpc.ChainUnaryInterceptor(grpcx.ServerFinalizeInterceptor))
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
 	logx.AddGlobalFields(logx.Field("app", c.Name))

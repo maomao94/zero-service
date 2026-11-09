@@ -37,6 +37,7 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
+	s.AddOptions(grpc.ChainUnaryInterceptor(grpcx.ServerFinalizeInterceptor))
 	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	defer s.Stop()
 

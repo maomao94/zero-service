@@ -2,7 +2,7 @@ import type { ApiMessages, ApiPage, ApiRecordings, DialSipReply, JoinReply, Meet
 
 const API_ROOT = import.meta.env.VITE_API_ROOT || '/live/v1'
 
-/** 认证类业务码：100401 未认证、130101 应用不存在/停用、130102 密钥无效（见 docs/error-codes.md §6.3） */
+/** 认证类业务码：100401 未认证、130101 应用不存在/停用、130102 密钥无效（见 docs/error-codes.md §7.3） */
 const AUTH_CODES = [100401, 130101, 130102]
 const SESSION_EXPIRED_EVENT = 'live:session-expired'
 /** 非信封错误只截取一小段文本，避免整页 HTML 进入 toast */

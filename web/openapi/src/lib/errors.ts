@@ -9,8 +9,8 @@ export interface ErrorDoc {
 }
 
 /**
- * 与 docs/error-codes.md §4 全量码表保持同源。
- * v2 码位冻结，只允许追加；新增 BC=30（开放平台）错误码时同步更新此处。
+ * 与 docs/error-codes.md §5 全量码表保持同源。
+ * 码值发布后冻结，只允许追加；新增 BC=30（开放平台）错误码时同步更新此处。
  */
 export const ERROR_DOCS: ErrorDoc[] = [
   {
