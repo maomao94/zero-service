@@ -7,6 +7,7 @@ import (
 	"zero-service/app/bridgedump/internal/config"
 	"zero-service/app/bridgedump/internal/server"
 	"zero-service/app/bridgedump/internal/svc"
+	"zero-service/common/grpcx"
 	"zero-service/common/tool"
 
 	_ "zero-service/common/carbonx"
@@ -38,6 +39,8 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
+	s.AddOptions(grpc.ChainUnaryInterceptor(grpcx.ServerFinalizeInterceptor))
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	defer s.Stop()
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)

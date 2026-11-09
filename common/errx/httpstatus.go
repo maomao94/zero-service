@@ -14,7 +14,7 @@ import (
 //
 //	extproto http_code | gRPC Code         | 典型错误码
 //	200                | OK                | 0
-//	400                | InvalidArgument   | 100101/100102/100103
+//	400                | InvalidArgument   | 100101/100102/100103/100501
 //	401                | Unauthenticated   | 100401/130102/130105
 //	403                | PermissionDenied  | 100402/130101
 //	404                | NotFound          | 100202/100801/130103

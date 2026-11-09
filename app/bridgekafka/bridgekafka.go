@@ -79,6 +79,7 @@ func main() {
 	}
 
 	serviceGroup.Add(s)
+	s.AddOptions(grpc.ChainUnaryInterceptor(grpcx.ServerFinalizeInterceptor))
 	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 

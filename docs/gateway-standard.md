@@ -162,11 +162,12 @@ server.Use(gtwx.RequestIDMiddleware)
 
 ## 4. 错误码使用
 
-### 4.1 extproto v2
+### 4.1 extproto 错误码
 
-错误码为 `ABCDEF` 六位：`A` 来源、`BC` 功能模块、`DEF` 模块内序号。定义在 `third_party/extproto.proto`，语义说明见 `docs/error-codes.md`。
+错误码为 `ABCDEF` 六位：`A` 来源、`BC` 功能模块、`DEF` 模块内序号。定义在 `third_party/extproto.proto`，三层映射与语义说明见 `docs/error-codes.md`。
 
-- `A`：`0` 成功、`1` 平台、`3` 设备、`5` 云端，其余预留。
+- `A`：`0` 成功、`1` 平台，其余预留；设备/第三方厂商码是独立体系，不属于平台码。
+- gRPC Code 在代码中统一使用 `google.golang.org/grpc/codes` 的常量（如 `codes.InvalidArgument`），禁止写裸数字。
 - `BC`：当前只启用 `00` 通用、`30` 开放平台；新增功能域必须先申请，不抢段。
 - `00` 内按 DEF 分段：`100-199` 参数、`200-299` 数据、`300-399` 缓存、`400-499` 认证、`500-599` 业务、`600-699` 外部、`700-799` 限流、`800-899` 网关、`900-999` 兜底。
 - `0` 只能表示成功，禁止用于构造错误。
@@ -208,7 +209,7 @@ return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 
 - 设备执行结果走业务字段：`CommonRes{code:-1, reasonCode:312014}` → HTTP `data.reasonCode`，信封 `code` 保持 `0`。
 - 网关 `NormalizeError` 只认 extproto 中已登记的码；未登记的原始码一律降级为 `100999 系统繁忙`，原文进日志。
-- 第三方平台的故障（超时、鉴权、限流、5xx）由厂商适配层转换成 extproto 码后再以 error 返回，见 `docs/error-codes.md` §5.2。
+- 第三方平台的故障（超时、鉴权、限流、5xx）由厂商适配层转换成 extproto 码后再以 error 返回，见 `docs/error-codes.md` §8.1。
 
 ## 5. 统一出口
 
@@ -236,7 +237,7 @@ return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 | nginx 不可达 | `502/504` | nginx |
 | gRPC 直连 | gRPC status + `reason` | 无 HTTP 信封 |
 
-以上内置行为的现有记录见 `docs/error-codes.md` §6.4；本文未新增对这些响应的包装。
+以上内置行为的现有记录见 `docs/error-codes.md` §7.4；本文未新增对这些响应的包装。
 
 ## 6. 明确禁止事项
 
@@ -345,7 +346,7 @@ curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 | 文件 | 作用 |
 | --- | --- |
 | `third_party/extproto.proto` | 六位错误码定义与 `http_code` |
-| `docs/error-codes.md` | 错误码语义、v1→v2 映射、网关契约 |
+| `docs/error-codes.md` | 错误码语义、extproto/gRPC/HTTP 映射、网关契约 |
 | `common/gtwx/response.go` | `WriteError/WriteOK` 等统一信封写出口 |
 | `common/errx/normalize.go` | `SuccessCode`、`PublicError`、`NormalizeError` |
 | `common/errx/codec.go` | `CodeFromStatus`、`IsDefinedCode`、`ErrorMessage` |
