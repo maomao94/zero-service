@@ -196,7 +196,7 @@ func TestWrapModbusErrorGeneric(t *testing.T) {
 	}
 }
 
-// 十进制写入先在转换阶段校验范围，错误码必须与写入校验一致（100103）。
+// 十进制写入先在转换阶段校验范围，错误码必须与写入校验一致（100009）。
 func TestWriteWithDecimalOutOfRangeUsesParamInvalidCode(t *testing.T) {
 	for _, tt := range []struct {
 		name string

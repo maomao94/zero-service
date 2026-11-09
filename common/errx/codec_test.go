@@ -14,7 +14,7 @@ import (
 
 func TestCodeFromStatus(t *testing.T) {
 	withReason, err := status.New(codes.Unavailable, "downstream down").
-		WithDetails(&errdetails.ErrorInfo{Reason: "100601"})
+		WithDetails(&errdetails.ErrorInfo{Reason: "100054"})
 	if err != nil {
 		t.Fatalf("with details: %v", err)
 	}
@@ -31,14 +31,14 @@ func TestCodeFromStatus(t *testing.T) {
 		msg  string
 	}{
 		{name: "nil", err: nil, code: 0, msg: ""},
-		{name: "error info reason", err: withReason.Err(), code: 100601, msg: "downstream down"},
-		{name: "dji reason rejected", err: withDJIReason.Err(), code: 100999, msg: SystemBusyMessage},
-		{name: "not found fallback", err: status.Error(codes.NotFound, "missing"), code: 100202, msg: "missing"},
-		{name: "deadline fallback", err: status.Error(codes.DeadlineExceeded, ""), code: 100997, msg: "系统超时"},
-		{name: "canceled fallback", err: status.Error(codes.Canceled, ""), code: 100996, msg: "请求已取消"},
-		{name: "context canceled", err: context.Canceled, code: 100996, msg: "context canceled"},
-		{name: "context deadline", err: context.DeadlineExceeded, code: 100997, msg: "context deadline exceeded"},
-		{name: "code msg", err: xerrors.New(130102, "bad secret"), code: 130102, msg: "bad secret"},
+		{name: "error info reason", err: withReason.Err(), code: 100054, msg: "downstream down"},
+		{name: "dji reason rejected", err: withDJIReason.Err(), code: 100002, msg: SystemBusyMessage},
+		{name: "not found fallback", err: status.Error(codes.NotFound, "missing"), code: 100021, msg: "missing"},
+		{name: "deadline fallback", err: status.Error(codes.DeadlineExceeded, ""), code: 100003, msg: "系统超时"},
+		{name: "canceled fallback", err: status.Error(codes.Canceled, ""), code: 100004, msg: "请求已取消"},
+		{name: "context canceled", err: context.Canceled, code: 100004, msg: "context canceled"},
+		{name: "context deadline", err: context.DeadlineExceeded, code: 100003, msg: "context deadline exceeded"},
+		{name: "code msg", err: xerrors.New(130002, "bad secret"), code: 130002, msg: "bad secret"},
 	}
 
 	for _, tt := range tests {
@@ -85,11 +85,11 @@ func TestErrorMessageRejectsOutOfRange(t *testing.T) {
 	}
 }
 
-// 未在 extproto 中定义的码必须降级为 100999。
+// 未在 extproto 中定义的码必须降级为 100002。
 func TestNormalizeErrorRejectsUndefinedCode(t *testing.T) {
 	code, msg := NormalizeError(xerrors.New(100555, "made up"))
 	if code != int(extproto.Code__1_00_UNKNOWN) || msg != SystemBusyMessage {
-		t.Fatalf("NormalizeError() = %d/%q, want 100999/%q", code, msg, SystemBusyMessage)
+		t.Fatalf("NormalizeError() = %d/%q, want 100002/%q", code, msg, SystemBusyMessage)
 	}
 }
 
@@ -103,7 +103,7 @@ func TestNormalizeErrorKeepsDefinedCode(t *testing.T) {
 
 func TestNormalizeErrorPassesThroughByDefault(t *testing.T) {
 	// 默认不折叠：已登记码原样返回，折叠交给网关按配置应用。
-	for _, code := range []int{100201, 100301, 100302, 100303, 100601, 100602, 100998} {
+	for _, code := range []int{100019, 100030, 100031, 100054, 100057, 100001} {
 		got, _ := NormalizeError(xerrors.New(code, "detail"))
 		if got != code {
 			t.Fatalf("NormalizeError(%d) = %d, want %d", code, got, code)

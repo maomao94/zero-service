@@ -468,7 +468,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
 
 function adminFailure(result: AdminResult<unknown>, token: string): string {
   // 管理面信封恒为 HTTP 200，JWT 失效只能靠 code 识别，不能静默当成普通业务错误。
-  if (result.code === 100401) {
+  if (result.code === 100036) {
     if (!token.trim()) return '请先填写管理面 JWT token'
     return '管理面 JWT 已失效，请重新获取并填写（当前输入已保留）'
   }
@@ -490,7 +490,7 @@ function confirmMessage(state: ConfirmState): string {
     return `将查看「${state.app.name}」当前生效的 signKey。该操作会记录审计日志，请确认当前环境允许查看敏感凭据。`
   }
   if (state.type === 'disable') {
-    return `停用「${state.app.name}」后，所有使用该应用凭据的请求会立即返回 403 / 130101。`
+    return `停用「${state.app.name}」后，所有使用该应用凭据的请求会立即返回 403 / 130001。`
   }
   return `启用「${state.app.name}」后，现有有效密钥会立即恢复鉴权。`
 }

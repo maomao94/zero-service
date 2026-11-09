@@ -48,7 +48,7 @@ POST /open-admin/v1/app/secret/reset  重置密钥，旧密钥保留 24h
 POST /open-admin/v1/app/sign-key/reveal  查看当前 signKey（受配置开关控制，记录审计日志）
 ```
 
-管理面使用 JWT，默认密钥与 `gtw` / `livegtw` 一致。JWT 失败同样返回 `HTTP 200 + {"code":100401,"msg":"未认证"}`。nginx 默认不转发 `/open-admin/`。
+管理面使用 JWT，默认密钥与 `gtw` / `livegtw` 一致。JWT 失败同样返回 `HTTP 200 + {"code":100036,"msg":"未认证"}`。nginx 默认不转发 `/open-admin/`。
 
 ## 鉴权
 
@@ -58,7 +58,7 @@ Authorization: Basic base64(AppKey:AppSecret)
 
 - 密钥只存 sha256，常数时间比较。
 - 凭据缓存 60s；管理面变更后立即刷新。
-- 停用应用立即返回 `130101`。
+- 停用应用立即返回 `130001`。
 
 ## 配置
 

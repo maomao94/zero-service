@@ -20,7 +20,7 @@ import (
 //     err.Error() 覆盖 message 把 cause 带出去；
 //   - 没有 ErrorInfo 的 status 补一条 extproto 兜底 detail，保证调用方始终
 //     能按六位码处理；
-//   - 其余裸错误统一包装为平台错误，对外返回 100999 + 系统繁忙。
+//   - 其余裸错误统一包装为平台错误，对外返回 100002 + 系统繁忙。
 func ToGRPCStatus(err error) error {
 	if err == nil {
 		return nil
@@ -67,7 +67,7 @@ func ToGRPCStatus(err error) error {
 	return NewErrorByPbCodeWrap(extproto.Code__1_00_UNKNOWN, err, SystemBusyMessage)
 }
 
-// SystemBusyError 返回带 100999 extproto detail 的兜底平台错误。
+// SystemBusyError 返回带 100002 extproto detail 的兜底平台错误。
 // 供 panic 恢复等无法构造业务错误的出口使用，保证调用方仍能读到六位码。
 func SystemBusyError() error {
 	return NewErrorByPbCode(extproto.Code__1_00_UNKNOWN, SystemBusyMessage)

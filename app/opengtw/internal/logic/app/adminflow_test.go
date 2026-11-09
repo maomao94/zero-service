@@ -142,7 +142,7 @@ func TestDisableMissingAppChecksExistenceBeforeSigning(t *testing.T) {
 	})
 	var codeMsg *xerrors.CodeMsg
 	if !errors.As(err, &codeMsg) || codeMsg.Code != int(extproto.Code__1_00_RECORD_NOT_EXIST) {
-		t.Fatalf("error = %v, want 100202 应用不存在", err)
+		t.Fatalf("error = %v, want 100021 应用不存在", err)
 	}
 }
 

@@ -36,9 +36,9 @@ Bridge 系列是一组将外部协议接入内部系统的桥接服务，包含 
 
 - 提供配置管理（保存/删除/分页/详情）与 Modbus 读写 RPC，覆盖标准功能码（Bit Access：0x01/0x02/0x05/0x0F；Register Access：0x03/0x04/0x06/0x10/0x16/0x17/0x18；0x2B 设备识别），支持十进制数值读写。
 - 按 `modbusCode` 复用长期客户端，同 code 串行收发：空 code 使用文件默认配置，非空 code 查启用的表配置，不回退。保存/删除配置后立即失效对应客户端；直接改库时由后台定期校验后生效（通常 30 秒内）；数据库查询失败保留现有连接。写操作不会自动重试。
-- 连接配置可持久化到 DB（`ModbusSlaveConfig`），由 Converter 统一转换；表中 `slave` 不在 1–247 时按配置不可用处理，返回 `100501`，不会静默改用默认从站号。
-- 入口统一校验 `address`（0–65535）与各功能码的 `quantity` 上限，超范围返回 `100103`；设备异常响应转成 `100603`（`vendor=modbus`，原始异常码在 `msg` 中），超时返回 `100997`，其余通信故障返回 `100602`。
-- 配置管理接口校验必填编码、TCP `host:port` 地址、`slave`（1–247）、批量数组和查询状态，非法参数返回 `100103`；完整约束见[服务参数说明](../../app/bridgemodbus/README.md#协议与参数约束)。
+- 连接配置可持久化到 DB（`ModbusSlaveConfig`），由 Converter 统一转换；表中 `slave` 不在 1–247 时按配置不可用处理，返回 `100044`，不会静默改用默认从站号。
+- 入口统一校验 `address`（0–65535）与各功能码的 `quantity` 上限，超范围返回 `100009`；设备异常响应转成 `100058`（`vendor=modbus`，原始异常码在 `msg` 中），超时返回 `100003`，其余通信故障返回 `100057`。
+- 配置管理接口校验必填编码、TCP `host:port` 地址、`slave`（1–247）、批量数组和查询状态，非法参数返回 `100009`；完整约束见[服务参数说明](../../app/bridgemodbus/README.md#协议与参数约束)。
 - 写操作通信失败可能发生在设备执行之后，结果未知时必须核实设备状态后再决定是否重试。
 
 配置：`app/bridgemodbus/etc/bridgemodbus.yaml`（默认 `ModbusClientConf`、`DB`）；缺省 `Timeout=10000ms`、`IdleTimeout=60000ms`、`ConnectDelay=0`、恢复窗口为 0。保持连接可显式设 `IdleTimeout=-1`。

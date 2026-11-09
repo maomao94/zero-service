@@ -33,7 +33,7 @@ func SourceOf(code int) int {
 
 // IsDefinedCode 判断 code 是否为 extproto 中已定义的错误码。
 //
-// 这是唯一的码表判据：存在即合法，不存在即降级为 100999。
+// 这是唯一的码表判据：存在即合法，不存在即降级为 100002。
 // 只判断是否登记在 extproto，登记即视为平台码；不按来源位推断。
 func IsDefinedCode(code int) bool {
 	if code < 0 || code > 999999 {
@@ -45,7 +45,7 @@ func IsDefinedCode(code int) bool {
 
 // CodeFromStatus 将错误转换为六位错误码与可展示消息。
 // 优先读取 google.rpc.ErrorInfo.reason（仅接受 extproto 中已定义的码），
-// 取不到时按 gRPC Code 兜底；未定义的原始码不进入信封，统一降级为 100999 系统繁忙。
+// 取不到时按 gRPC Code 兜底；未定义的原始码不进入信封，统一降级为 100002 系统繁忙。
 func CodeFromStatus(err error) (int, string) {
 	if err == nil {
 		return 0, ""
@@ -80,7 +80,7 @@ func CodeFromStatus(err error) (int, string) {
 	}
 
 	// 数字型 reason，但不在 extproto 枚举内：无法识别的原始码，禁止进入信封。
-	// 标记后统一降级为 100999，避免未定义码被当成平台业务码透传。
+	// 标记后统一降级为 100002，避免未定义码被当成平台业务码透传。
 	// 判据只看是否登记在 extproto，与来源位无关；未登记一律降级。
 	undefinedCode := false
 	for _, detail := range st.Details() {

@@ -8,38 +8,38 @@ import (
 )
 
 func TestFoldPolicyDisabledPassesThrough(t *testing.T) {
-	policy := newFoldPolicy(FoldConfig{Codes: []int{100998}})
+	policy := newFoldPolicy(FoldConfig{Codes: []int{100001}})
 
-	code, msg := policy.apply(100998, "db down")
-	if code != 100998 || msg != "db down" {
-		t.Fatalf("apply() = %d/%q, want 100998/db down", code, msg)
+	code, msg := policy.apply(100001, "db down")
+	if code != 100001 || msg != "db down" {
+		t.Fatalf("apply() = %d/%q, want 100001/db down", code, msg)
 	}
 }
 
 func TestFoldPolicyConfiguredCode(t *testing.T) {
-	policy := newFoldPolicy(FoldConfig{Enabled: true, Codes: []int{100998}})
+	policy := newFoldPolicy(FoldConfig{Enabled: true, Codes: []int{100001}})
 
-	code, msg := policy.apply(100998, "db down")
+	code, msg := policy.apply(100001, "db down")
 	if code != int(extproto.Code__1_00_UNKNOWN) || msg != errx.SystemBusyMessage {
-		t.Fatalf("apply() = %d/%q, want 100999/%q", code, msg, errx.SystemBusyMessage)
+		t.Fatalf("apply() = %d/%q, want 100002/%q", code, msg, errx.SystemBusyMessage)
 	}
 }
 
 func TestFoldPolicyLeavesOtherCodes(t *testing.T) {
-	policy := newFoldPolicy(FoldConfig{Enabled: true, Codes: []int{100998}})
+	policy := newFoldPolicy(FoldConfig{Enabled: true, Codes: []int{100001}})
 
-	code, msg := policy.apply(100201, "db down")
-	if code != 100201 || msg != "db down" {
-		t.Fatalf("apply() = %d/%q, want 100201/db down", code, msg)
+	code, msg := policy.apply(100019, "db down")
+	if code != 100019 || msg != "db down" {
+		t.Fatalf("apply() = %d/%q, want 100019/db down", code, msg)
 	}
 }
 
 func TestFoldPolicyKeepMsg(t *testing.T) {
-	policy := newFoldPolicy(FoldConfig{Enabled: true, Codes: []int{100998}, KeepMsg: true})
+	policy := newFoldPolicy(FoldConfig{Enabled: true, Codes: []int{100001}, KeepMsg: true})
 
-	code, msg := policy.apply(100998, "db down")
+	code, msg := policy.apply(100001, "db down")
 	if code != int(extproto.Code__1_00_UNKNOWN) || msg != "db down" {
-		t.Fatalf("apply() = %d/%q, want 100999/db down", code, msg)
+		t.Fatalf("apply() = %d/%q, want 100002/db down", code, msg)
 	}
 }
 
@@ -47,10 +47,10 @@ func TestFoldPolicyCustomTarget(t *testing.T) {
 	policy := newFoldPolicy(FoldConfig{
 		Enabled: true,
 		Target:  int(extproto.Code__1_00_BIZ),
-		Codes:   []int{100998},
+		Codes:   []int{100001},
 	})
 
-	code, _ := policy.apply(100998, "db down")
+	code, _ := policy.apply(100001, "db down")
 	if code != int(extproto.Code__1_00_BIZ) {
 		t.Fatalf("apply() = %d, want %d", code, extproto.Code__1_00_BIZ)
 	}
@@ -74,12 +74,12 @@ func TestFoldPolicyInvalidTargetFallsBack(t *testing.T) {
 	policy := newFoldPolicy(FoldConfig{
 		Enabled: true,
 		Target:  123456,
-		Codes:   []int{100998},
+		Codes:   []int{100001},
 	})
 
-	code, msg := policy.apply(100998, "db down")
+	code, msg := policy.apply(100001, "db down")
 	if code != int(extproto.Code__1_00_UNKNOWN) || msg != "系统繁忙" {
-		t.Fatalf("apply() = %d/%q, want 100999/系统繁忙", code, msg)
+		t.Fatalf("apply() = %d/%q, want 100002/系统繁忙", code, msg)
 	}
 }
 

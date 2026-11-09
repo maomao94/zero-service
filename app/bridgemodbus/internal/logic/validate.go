@@ -73,7 +73,7 @@ func validate16BitValue(field string, value uint32) (uint16, error) {
 }
 
 // wrapModbusError 把设备异常响应与通信故障转换成平台错误码。
-// 设备异常码（厂商码）只放在 100603 的 msg 中，不映射成平台码。
+// 设备异常码（厂商码）只放在 100058 的 msg 中，不映射成平台码。
 func wrapModbusError(action string, err error) error {
 	return wrapModbusOperationError(action, err, false)
 }

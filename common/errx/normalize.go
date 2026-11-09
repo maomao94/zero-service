@@ -37,7 +37,7 @@ func PublicError(err error) (int, string) {
 
 // NormalizeError 是统一错误出口：先归一化，再校验错误码是否合法。
 //
-// 合法判据只有一条：code 存在于 extproto 枚举。不存在时降级为 100999 并记录日志，
+// 合法判据只有一条：code 存在于 extproto 枚举。不存在时降级为 100002 并记录日志，
 // 把开发者误用暴露在服务端，而不是泄漏给客户端。
 //
 // 默认不折叠：已登记码原样返回。需要对外折叠时，由网关按配置应用 FoldPolicy。
