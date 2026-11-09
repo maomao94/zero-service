@@ -30,7 +30,7 @@ func TestNewThirdPartyAPIErrorUsesArgsFormatting(t *testing.T) {
 	err := NewThirdPartyAPIError("dji", "312014", "设备升级中，请勿重复操作")
 
 	if !IsErrorByPbCode(err, extproto.Code__1_00_THIRD_PARTY_API) {
-		t.Fatalf("code = %v, want 100603", status.Code(err))
+		t.Fatalf("code = %v, want 100184", status.Code(err))
 	}
 	if got := status.Code(err); got != codes.Unavailable {
 		t.Fatalf("status.Code() = %v, want %v", got, codes.Unavailable)
@@ -39,8 +39,8 @@ func TestNewThirdPartyAPIErrorUsesArgsFormatting(t *testing.T) {
 	if got := status.Convert(err).Message(); got != want {
 		t.Fatalf("status message = %q, want %q", got, want)
 	}
-	if int(extproto.Code__1_00_THIRD_PARTY_API) != 100603 {
-		t.Fatalf("THIRD_PARTY_API = %d, want 100603", extproto.Code__1_00_THIRD_PARTY_API)
+	if int(extproto.Code__1_00_THIRD_PARTY_API) != 100184 {
+		t.Fatalf("THIRD_PARTY_API = %d, want 100184", extproto.Code__1_00_THIRD_PARTY_API)
 	}
 }
 

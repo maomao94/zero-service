@@ -33,17 +33,17 @@
 
 ```text
 业务服务
-  extproto code = 100103
+  extproto code = 100022
         │
         ▼
 gRPC status
   Code   = codes.InvalidArgument (3)
-  reason = "100103"
+  reason = "100022"
         │
         ▼
 HTTP 网关
   HTTP 200
-  body = {"code":100103,"msg":"参数不合法"}
+  body = {"code":100022,"msg":"参数不合法"}
         │
         ▼
 客户端：code != 0，判定失败
@@ -63,26 +63,31 @@ HTTP 网关
 
 这是**唯一权威映射**：每个 extproto 码的 `http_code` 决定它的 gRPC Code。
 
-| 语义 HTTP (`http_code`) | gRPC Code（`codes.Code` 常量） | extproto 码（含义） | 客户端处理 |
+| 语义 HTTP (`http_code`) | gRPC Code（`codes.Code` 常量） | 典型场景 | 客户端处理 |
 | --- | --- | --- | --- |
 | `200` | `codes.OK (0)` | `0 成功` | 成功 |
-| `400` | `codes.InvalidArgument (3)` | `100101 参数错误`、`100102 缺少必要参数`、`100103 参数不合法`、`100501 业务处理失败` | 按 `msg` 修正请求或处理业务 |
-| `401` | `codes.Unauthenticated (16)` | `100401 未认证`、`130102 密钥无效`、`130105 签名无效` | 重新获取或修正凭据 |
-| `403` | `codes.PermissionDenied (7)` | `100402 无权限访问`、`130101 应用不存在或已停用` | 检查权限或应用状态，不要重试 |
-| `404` | `codes.NotFound (5)` | `100202 记录不存在`、`100801 接口不存在`、`130103 方法未开放` | 检查资源 ID、路径或 method |
-| `405` | `codes.Unimplemented (12)` | `100802 请求方法不允许` | 修改 HTTP 方法 |
-| `408` | `codes.Canceled (1)` | `100996 请求已取消` | 按需重试 |
-| `409` | `codes.Aborted (10)` | `100203 记录已存在`、`100204 数据冲突`、`100502 业务状态不允许`、`100503 重复操作` | 按 `msg` 处理，不要盲目重试 |
-| `429` | `codes.ResourceExhausted (8)` | `100701 请求过于频繁`、`130104 请求超过限制` | 退避后重试 |
-| `500` | `codes.Internal (13)` | `100201 数据库错误`、`100301 缓存错误`、`100302 缓存未命中`、`100998 系统内部错误`、`100999 未知错误` | 记录请求 ID，服务端排查 |
-| `503` | `codes.Unavailable (14)` | `100303 消息队列错误`、`100601 远程调用失败`、`100602 第三方服务异常`、`100603 第三方接口错误` | 可重试；`100603` 按 `msg` 中的厂商信息处理 |
-| `504` | `codes.DeadlineExceeded (4)` | `100997 系统超时` | 延长超时或排查下游 |
+| `400` | `codes.InvalidArgument (3)` | 参数错误、参数校验、业务校验 | 按 `msg` 修正请求 |
+| `401` | `codes.Unauthenticated (16)` | 未认证、凭据过期/无效、签名/时间戳错误 | 重新获取或修正凭据 |
+| `403` | `codes.PermissionDenied (7)` | 无权限、账号禁用、租户不匹配、IP 限制 | 检查权限或应用状态，不要重试 |
+| `404` | `codes.NotFound (5)` | 记录、路由、文件、配置不存在 | 检查资源 ID、路径或 method |
+| `405` | `codes.Unimplemented (12)` | 请求方法不允许 | 修改 HTTP 方法 |
+| `408` | `codes.Canceled (1)` | 请求取消、请求超时 | 按需重试 |
+| `409` | `codes.Aborted (10)` | 数据冲突、版本冲突、业务状态/规则冲突 | 按 `msg` 处理，不要盲目重试 |
+| `413` | `codes.ResourceExhausted (8)` | 请求体过大、文件过大 | 缩小请求后重试 |
+| `415` | `codes.InvalidArgument (3)` | 媒体类型或文件类型不支持 | 修改 Content-Type / 文件类型 |
+| `429` | `codes.ResourceExhausted (8)` | 平台、业务、外部依赖限流 | 退避后重试 |
+| `500` | `codes.Internal (13)` | 数据库、缓存、序列化、内部异常 | 记录请求 ID，服务端排查 |
+| `501` | `codes.Unimplemented (12)` | 功能未实现 | 换用已支持的能力或升级版本 |
+| `502` | `codes.Unavailable (14)` | 网关错误、第三方接口错误、Webhook 失败 | 按 `msg` 处理；`100184` 看厂商信息 |
+| `503` | `codes.Unavailable (14)` | 下游、第三方、MQ、DNS 不可用 | 可重试 |
+| `504` | `codes.DeadlineExceeded (4)` | 系统、下游、网关超时 | 延长超时或排查下游 |
 
 说明：
 
-- `409` 对应多个业务码，正向传输时都会变成 `codes.Aborted`，**具体是哪一个以 `ErrorInfo.reason` / body `code` 为准**。
+- 多个 HTTP 状态会收敛到同一个 gRPC Code：`400/415 -> InvalidArgument`、`405/501 -> Unimplemented`、`413/429 -> ResourceExhausted`、`502/503 -> Unavailable`。**具体错误以 `ErrorInfo.reason` / body `code` 为准。**
 - `405 -> codes.Unimplemented`、`408 -> codes.Canceled`、`409 -> codes.Aborted` 是本项目的语义约定，不是 gRPC 官方 HTTP 映射。
 - 反向分类时还有 `codes.OutOfRange -> 400`、`codes.AlreadyExists -> 409`、`codes.FailedPrecondition -> 409`、`codes.Unknown/codes.DataLoss -> 500`，这些 gRPC Code 不会由 extproto 的 `http_code` 正向产生，只用于兜底分类。
+- 全量码表见 [§5](#5-全量错误码)。
 
 ### 2.2 gRPC → extproto（兜底）
 
@@ -90,22 +95,22 @@ HTTP 网关
 
 | gRPC Code（`codes.Code` 常量） | 兜底 extproto 码 | 兜底含义 |
 | --- | --- | --- |
-| `codes.InvalidArgument (3)` / `codes.OutOfRange (11)` | `100101` | 参数错误 |
-| `codes.NotFound (5)` | `100202` | 记录不存在 |
-| `codes.AlreadyExists (6)` | `100203` | 记录已存在 |
-| `codes.Aborted (10)` | `100204` | 数据冲突 |
-| `codes.Unauthenticated (16)` | `100401` | 未认证 |
-| `codes.PermissionDenied (7)` | `100402` | 无权限访问 |
-| `codes.FailedPrecondition (9)` | `100502` | 业务状态不允许 |
-| `codes.ResourceExhausted (8)` | `100701` | 请求过于频繁 |
-| `codes.Unavailable (14)` | `100601` | 远程调用失败 |
-| `codes.Unimplemented (12)` | `100802` | 请求方法不允许 |
-| `codes.Canceled (1)` | `100996` | 请求已取消 |
-| `codes.DeadlineExceeded (4)` | `100997` | 系统超时 |
-| `codes.Internal (13)` / `codes.Unknown (2)` / `codes.DataLoss (15)` | `100998` | 系统内部错误 |
-| 其他 | `100999` | 未知错误 / 系统繁忙 |
+| `codes.InvalidArgument (3)` / `codes.OutOfRange (11)` | `100020` | 参数错误 |
+| `codes.NotFound (5)` | `100052` | 记录不存在 |
+| `codes.AlreadyExists (6)` | `100053` | 记录已存在 |
+| `codes.Aborted (10)` | `100054` | 数据冲突 |
+| `codes.Unauthenticated (16)` | `100110` | 未认证 |
+| `codes.PermissionDenied (7)` | `100113` | 无权限访问 |
+| `codes.FailedPrecondition (9)` | `100141` | 业务状态不允许 |
+| `codes.ResourceExhausted (8)` | `100220` | 请求过于频繁 |
+| `codes.Unavailable (14)` | `100180` | 远程调用失败 |
+| `codes.Unimplemented (12)` | `100241` | 请求方法不允许 |
+| `codes.Canceled (1)` | `100004` | 请求已取消 |
+| `codes.DeadlineExceeded (4)` | `100003` | 系统超时 |
+| `codes.Internal (13)` / `codes.Unknown (2)` / `codes.DataLoss (15)` | `100001` | 系统内部错误 |
+| 其他 | `100002` | 未知错误 / 系统繁忙 |
 
-> 兜底会丢失同一类里的细分码。例如 `100203` 正向传输是 `codes.Aborted`，兜底只能还原成 `100204`。因此业务服务必须显式携带 `reason`，不能依赖网关猜测。
+> 兜底会丢失同一类里的细分码。例如 `100053` 正向传输是 `codes.Aborted`，兜底只能还原成 `100054`。因此业务服务必须显式携带 `reason`，不能依赖网关猜测。
 
 ---
 
@@ -115,7 +120,7 @@ HTTP 网关
 
 ```text
   1 30 101
-  │ │  └── DEF：模块内错误（三位）
+  │ │  └── DEF：模块内唯一编号（三位）
   │ └───── BC ：功能模块（两位）
   └─────── A  ：错误来源（一位）
 ```
@@ -141,26 +146,42 @@ HTTP 网关
 
 其他功能域按需申请，不提前预分配；`90-99` 预留。
 
-### 3.3 DEF：模块内错误
+### 3.3 DEF：模块内唯一编号
 
 | DEF | 用途 |
 | --- | --- |
-| `100-899` | 模块内具体错误，按申请顺序递增 |
-| `900-999` | 系统兜底与对外折叠（取消、超时、内部、未知） |
+| `001-999` | 模块内唯一编号，按需分配，不要求连续 |
+| `000` | 保留 |
 
-通用模块 `00` 内部再分段，便于查找：
+DEF 不承载业务语义：不要按参数、数据、缓存等类别去固定百位或十位，也不要求全局连续。当前码表按分类区间分配，区间内连续，区间之间预留扩展位。
 
-| DEF | 子域 |
-| --- | --- |
-| `100-199` | 参数 / 校验 |
-| `200-299` | 数据 / 存储 |
-| `300-399` | 缓存 / 消息 |
-| `400-499` | 认证 / 授权 |
-| `500-599` | 通用业务 |
-| `600-699` | 外部依赖 |
-| `700-799` | 限流 |
-| `800-899` | 网关 / 传输 |
-| `900-999` | 兜底 / 折叠 |
+当前 `BC=00` 为各分类预留了扩展区间，新码优先落在本分类的预留位，避免为了追加一个错误而跨到别的分类：
+
+| DEF 区间 | 分类 | 已用 | 预留 |
+| --- | --- | --- | --- |
+| `001-019` | 系统 | `001-006` | `007-019` |
+| `020-049` | 参数 / 请求 | `020-031` | `032-049` |
+| `050-089` | 数据 / 存储 | `050-060` | `061-089` |
+| `090-109` | 缓存 / 消息 | `090-095` | `096-109` |
+| `110-139` | 认证 / 授权 | `110-117` | `118-139` |
+| `140-179` | 业务 | `140-149` | `150-179` |
+| `180-219` | 外部依赖 | `180-189` | `190-219` |
+| `220-239` | 限流 / 配额 | `220-222` | `223-239` |
+| `240-269` | 网关 / 传输 | `240-247` | `248-269` |
+| `270-299` | 文件 / 媒体 | `270-276` | `277-299` |
+| `300-319` | 配置 | `300-303` | `304-319` |
+| `320-999` | 预留新分类 | — | `320-999` |
+
+> 区间只是分配建议，不是运行时语义；新码优先使用本分类预留位，本区间用尽后再扩展区间或申请新分类。
+
+#### 3.3.1 新增码的分配规则
+
+1. **DEF 是模块内唯一编号**：新码优先取本分类区间的预留号；区间用尽后再扩展区间或申请新分类，不为了连续去跨到别的分类。
+2. **单模块 999 个码**：`BC=00-89` 共 90 个模块，理论容量约 9 万个码；单模块用尽后申请新 `BC`，不重用废弃号。
+3. **上线后冻结**：本次为上线前重排，码表已归一为连续编号；上线后只追加，不再重排或复用。
+4. **不编码 HTTP/gRPC**：HTTP 状态放 `http_code`，gRPC Code 由映射推导，禁止把 4xx/5xx 或 0-16 编进 DEF。
+
+> 本次已在上线前统一重排；上线后按“数字冻结、只追加”执行，不再重排或复用。
 
 ---
 
@@ -169,7 +190,7 @@ HTTP 网关
 Go / proto 枚举名格式：`_<A>_<BC>_<SEMANTIC>`，语义使用大写下划线。
 
 ```proto
-_1_30_APP_SECRET_INVALID = 130102 [(name) = "密钥无效", (http_code) = 401];
+_1_30_APP_SECRET_INVALID = 130002 [(name) = "应用密钥无效", (http_code) = 401];
 ```
 
 规则：
@@ -191,43 +212,136 @@ _1_30_APP_SECRET_INVALID = 130102 [(name) = "密钥无效", (http_code) = 401];
 | code | 名称 | 语义 HTTP | gRPC Code（`codes.Code` 常量） | 说明 |
 | --- | --- | --- | --- | --- |
 | `0` | 成功 | 200 | `codes.OK` | 唯一成功码 |
-| `100101` | 参数错误 | 400 | `codes.InvalidArgument` | 请求参数无法解析 |
-| `100102` | 缺少必要参数 | 400 | `codes.InvalidArgument` | 必填参数为空 |
-| `100103` | 参数不合法 | 400 | `codes.InvalidArgument` | 格式、类型或范围不合法 |
-| `100201` | 数据库错误 | 500 | `codes.Internal` | 数据库访问失败，可配置折叠 |
-| `100202` | 记录不存在 | 404 | `codes.NotFound` | 指定资源不存在 |
-| `100203` | 记录已存在 | 409 | `codes.Aborted` | 唯一约束冲突 |
-| `100204` | 数据冲突 | 409 | `codes.Aborted` | 并发更新或状态冲突 |
-| `100301` | 缓存错误 | 500 | `codes.Internal` | 缓存读写失败，可配置折叠 |
-| `100302` | 缓存未命中 | 500 | `codes.Internal` | 缓存 key 不存在，可配置折叠 |
-| `100303` | 消息队列错误 | 503 | `codes.Unavailable` | MQ 不可达或收发失败，可配置折叠 |
-| `100401` | 未认证 | 401 | `codes.Unauthenticated` | JWT/凭据缺失、无效或过期 |
-| `100402` | 无权限访问 | 403 | `codes.PermissionDenied` | 身份有效但权限不足 |
-| `100501` | 业务处理失败 | 400 | `codes.InvalidArgument` | 业务逻辑拒绝处理 |
-| `100502` | 业务状态不允许 | 409 | `codes.Aborted` | 当前状态不允许该操作 |
-| `100503` | 重复操作 | 409 | `codes.Aborted` | 相同操作已执行 |
-| `100601` | 远程调用失败 | 503 | `codes.Unavailable` | 下游 gRPC 不可达，可配置折叠 |
-| `100602` | 第三方服务异常 | 503 | `codes.Unavailable` | 基础设施类第三方故障，可配置折叠 |
-| `100603` | 第三方接口错误 | 503 | `codes.Unavailable` | 厂商返回错误码，**强制透传**，`msg` 使用固定模板 |
-| `100701` | 请求过于频繁 | 429 | `codes.ResourceExhausted` | 平台限流 |
-| `100801` | 接口不存在 | 404 | `codes.NotFound` | 网关路由不存在 |
-| `100802` | 请求方法不允许 | 405 | `codes.Unimplemented` | 路径不支持当前 HTTP 方法 |
-| `100996` | 请求已取消 | 408 | `codes.Canceled` | 调用方取消或连接中断 |
-| `100997` | 系统超时 | 504 | `codes.DeadlineExceeded` | 下游超时 |
-| `100998` | 系统内部错误 | 500 | `codes.Internal` | 服务内部异常，可配置折叠 |
-| `100999` | 未知错误 | 500 | `codes.Internal` | 未登记码、未转换错误或折叠目标 |
+| `100001` | 系统内部错误 | 500 | `codes.Internal` | 可配置折叠 |
+| `100002` | 未知错误 | 500 | `codes.Internal` | 折叠目标 / 未登记码兜底 |
+| `100003` | 系统超时 | 504 | `codes.DeadlineExceeded` | — |
+| `100004` | 请求已取消 | 408 | `codes.Canceled` | — |
+| `100005` | 功能未实现 | 501 | `codes.Unimplemented` | — |
+| `100006` | 服务不可用 | 503 | `codes.Unavailable` | — |
+| `100020` | 参数错误 | 400 | `codes.InvalidArgument` | — |
+| `100021` | 缺少必要参数 | 400 | `codes.InvalidArgument` | — |
+| `100022` | 参数不合法 | 400 | `codes.InvalidArgument` | — |
+| `100023` | 参数类型错误 | 400 | `codes.InvalidArgument` | — |
+| `100024` | 参数超出范围 | 400 | `codes.InvalidArgument` | — |
+| `100025` | 参数格式错误 | 400 | `codes.InvalidArgument` | — |
+| `100026` | 请求格式错误 | 400 | `codes.InvalidArgument` | — |
+| `100027` | 请求体过大 | 413 | `codes.ResourceExhausted` | — |
+| `100028` | 媒体类型不支持 | 415 | `codes.InvalidArgument` | — |
+| `100029` | 分页参数错误 | 400 | `codes.InvalidArgument` | — |
+| `100030` | 幂等键无效 | 400 | `codes.InvalidArgument` | — |
+| `100031` | 请求头不合法 | 400 | `codes.InvalidArgument` | — |
+| `100050` | 数据库错误 | 500 | `codes.Internal` | 可配置折叠 |
+| `100051` | 数据约束冲突 | 409 | `codes.Aborted` | — |
+| `100052` | 记录不存在 | 404 | `codes.NotFound` | — |
+| `100053` | 记录已存在 | 409 | `codes.Aborted` | — |
+| `100054` | 数据冲突 | 409 | `codes.Aborted` | — |
+| `100055` | 数据损坏 | 500 | `codes.Internal` | — |
+| `100056` | 事务失败 | 500 | `codes.Internal` | — |
+| `100057` | 序列化失败 | 500 | `codes.Internal` | — |
+| `100058` | 反序列化失败 | 500 | `codes.Internal` | — |
+| `100059` | 版本冲突 | 409 | `codes.Aborted` | — |
+| `100060` | 乐观锁冲突 | 409 | `codes.Aborted` | — |
+| `100090` | 缓存错误 | 500 | `codes.Internal` | 可配置折叠 |
+| `100091` | 消息队列错误 | 503 | `codes.Unavailable` | 可配置折叠 |
+| `100092` | 消息发送失败 | 503 | `codes.Unavailable` | — |
+| `100093` | 消息消费失败 | 500 | `codes.Internal` | — |
+| `100094` | 消息处理超时 | 504 | `codes.DeadlineExceeded` | — |
+| `100095` | 事件处理失败 | 500 | `codes.Internal` | — |
+| `100110` | 未认证 | 401 | `codes.Unauthenticated` | — |
+| `100111` | 凭据已过期 | 401 | `codes.Unauthenticated` | — |
+| `100112` | 凭据无效 | 401 | `codes.Unauthenticated` | — |
+| `100113` | 无权限访问 | 403 | `codes.PermissionDenied` | — |
+| `100114` | 账号已禁用 | 403 | `codes.PermissionDenied` | — |
+| `100115` | 租户不匹配 | 403 | `codes.PermissionDenied` | — |
+| `100116` | 权限范围不足 | 403 | `codes.PermissionDenied` | — |
+| `100117` | 来源 IP 不在白名单 | 403 | `codes.PermissionDenied` | — |
+| `100140` | 业务处理失败 | 409 | `codes.Aborted` | — |
+| `100141` | 业务状态不允许 | 409 | `codes.Aborted` | — |
+| `100142` | 重复操作 | 409 | `codes.Aborted` | — |
+| `100143` | 业务校验失败 | 400 | `codes.InvalidArgument` | — |
+| `100144` | 业务规则不满足 | 409 | `codes.Aborted` | — |
+| `100145` | 业务配额不足 | 429 | `codes.ResourceExhausted` | — |
+| `100146` | 业务已过期 | 409 | `codes.Aborted` | — |
+| `100147` | 业务已锁定 | 409 | `codes.Aborted` | — |
+| `100148` | 操作不允许 | 403 | `codes.PermissionDenied` | — |
+| `100149` | 资源使用中 | 409 | `codes.Aborted` | — |
+| `100180` | 远程调用失败 | 503 | `codes.Unavailable` | 可配置折叠 |
+| `100181` | 远程调用超时 | 504 | `codes.DeadlineExceeded` | — |
+| `100182` | 下游服务不可用 | 503 | `codes.Unavailable` | — |
+| `100183` | 第三方服务异常 | 503 | `codes.Unavailable` | 可配置折叠 |
+| `100184` | 第三方接口错误 | 502 | `codes.Unavailable` | 厂商返回错误码，**强制透传**，`msg` 使用固定模板 |
+| `100185` | 第三方超时 | 504 | `codes.DeadlineExceeded` | — |
+| `100186` | 第三方鉴权失败 | 502 | `codes.Unavailable` | — |
+| `100187` | 外部限流 | 429 | `codes.ResourceExhausted` | — |
+| `100188` | Webhook 投递失败 | 502 | `codes.Unavailable` | — |
+| `100189` | DNS 解析失败 | 503 | `codes.Unavailable` | — |
+| `100220` | 请求过于频繁 | 429 | `codes.ResourceExhausted` | — |
+| `100221` | 配额已用尽 | 429 | `codes.ResourceExhausted` | — |
+| `100222` | 并发超限 | 429 | `codes.ResourceExhausted` | — |
+| `100240` | 接口不存在 | 404 | `codes.NotFound` | — |
+| `100241` | 请求方法不允许 | 405 | `codes.Unimplemented` | — |
+| `100242` | 网关错误 | 502 | `codes.Unavailable` | — |
+| `100243` | 网关超时 | 504 | `codes.DeadlineExceeded` | — |
+| `100244` | 协议错误 | 400 | `codes.InvalidArgument` | — |
+| `100245` | TLS 错误 | 400 | `codes.InvalidArgument` | — |
+| `100246` | 请求超时 | 408 | `codes.Canceled` | — |
+| `100247` | 上游不可用 | 503 | `codes.Unavailable` | — |
+| `100270` | 文件不存在 | 404 | `codes.NotFound` | — |
+| `100271` | 文件过大 | 413 | `codes.ResourceExhausted` | — |
+| `100272` | 文件类型不允许 | 415 | `codes.InvalidArgument` | — |
+| `100273` | 文件上传失败 | 500 | `codes.Internal` | — |
+| `100274` | 文件下载失败 | 503 | `codes.Unavailable` | — |
+| `100275` | 文件损坏 | 500 | `codes.Internal` | — |
+| `100276` | 文件解析失败 | 400 | `codes.InvalidArgument` | — |
+| `100300` | 配置不存在 | 404 | `codes.NotFound` | — |
+| `100301` | 配置不合法 | 500 | `codes.Internal` | — |
+| `100302` | 配置解析失败 | 500 | `codes.Internal` | — |
+| `100303` | 配置重载失败 | 500 | `codes.Internal` | — |
 
 ### 5.2 开放平台（BC=30）
 
 | code | 名称 | 语义 HTTP | gRPC Code（`codes.Code` 常量） | 说明 |
 | --- | --- | --- | --- | --- |
-| `130101` | 应用不存在或已停用 | 403 | `codes.PermissionDenied` | Basic 凭据中的应用不可用 |
-| `130102` | 密钥无效 | 401 | `codes.Unauthenticated` | 缺少 Basic 凭据或 secret 不匹配 |
-| `130103` | 方法未开放 | 404 | `codes.NotFound` | method 未在开放平台注册 |
-| `130104` | 请求超过限制 | 429 | `codes.ResourceExhausted` | 开放平台限流 |
-| `130105` | 签名无效 | 401 | `codes.Unauthenticated` | `X-Sign` 缺失或校验失败 |
+| `130001` | 应用不存在 | 403 | `codes.PermissionDenied` | — |
+| `130002` | 应用密钥无效 | 401 | `codes.Unauthenticated` | — |
+| `130003` | 应用已禁用 | 403 | `codes.PermissionDenied` | — |
+| `130004` | 方法未开放 | 404 | `codes.NotFound` | — |
+| `130005` | 请求超过限制 | 429 | `codes.ResourceExhausted` | — |
+| `130006` | 签名无效 | 401 | `codes.Unauthenticated` | — |
+| `130007` | 缺少签名 | 401 | `codes.Unauthenticated` | — |
+| `130008` | 时间戳无效 | 401 | `codes.Unauthenticated` | — |
+| `130009` | 随机数无效 | 401 | `codes.Unauthenticated` | — |
+| `130010` | 应用 IP 不在白名单 | 403 | `codes.PermissionDenied` | — |
+| `130011` | 应用配额不足 | 429 | `codes.ResourceExhausted` | — |
+| `130012` | 应用无权限 | 403 | `codes.PermissionDenied` | — |
+| `130013` | 接口版本不支持 | 400 | `codes.InvalidArgument` | — |
+| `130014` | 请求已过期 | 401 | `codes.Unauthenticated` | — |
 
 > 当前没有专属码的功能域（如设备、会议、GIS、文件、AI、工业协议、容器、用户）按第 3.2 节归属另行申请，不跨域复用。
+
+### 5.3 本次重排旧码对照
+
+本次为上线前重排，旧数字不再保证兼容。其他服务或 SDK 如仍硬编码旧码，按下表迁移：
+
+| 旧码 | 新码 | 旧码 | 新码 |
+| --- | --- | --- | --- |
+| `100101` | `100020` | `100501` | `100140` |
+| `100102` | `100021` | `100502` | `100141` |
+| `100103` | `100022` | `100503` | `100142` |
+| `100201` | `100050` | `100601` | `100180` |
+| `100202` | `100052` | `100602` | `100183` |
+| `100203` | `100053` | `100603` | `100184` |
+| `100204` | `100054` | `100701` | `100220` |
+| `100301` | `100090` | `100801` | `100240` |
+| `100302` | 语义删除（缓存未命中不再作为错误） | `100802` | `100241` |
+| `100303` | `100091` | `100996` | `100004` |
+| `100401` | `100110` | `100997` | `100003` |
+| `100402` | `100113` | `100998` | `100001` |
+| `130101` | `130001` | `100999` | `100002` |
+| `130102` | `130002` | `130103` | `130004` |
+| `130104` | `130005` | `130105` | `130006` |
+
+> 注意：新码 `100302` 是“配置解析失败”，不是旧的“缓存未命中”，不要按数字直接映射。
 
 ---
 
@@ -259,7 +373,7 @@ return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 3. 其他实现了 `GRPCStatus()` 的错误保留原 status；
 4. `context.Canceled` / `context.DeadlineExceeded` 分别保留为 `codes.Canceled` / `codes.DeadlineExceeded`；
 5. 缺少 `ErrorInfo` 的 status 补一条兜底 detail；
-6. 未转换的裸错误统一返回 `100999 系统繁忙`，原始信息只写日志。
+6. 未转换的裸错误统一返回 `100002 系统繁忙`，原始信息只写日志。
 
 ### 6.3 判断错误码
 
@@ -293,7 +407,7 @@ if errx.IsErrorByPbCode(err, extproto.Code__1_00_RECORD_NOT_EXIST) {
 失败示例：
 
 ```json
-{"code": 100102, "msg": "缺少必要参数", "timestamp": 1760000000000}
+{"code": 100021, "msg": "缺少必要参数", "timestamp": 1760000000000}
 ```
 
 ### 7.2 HTTP 状态
@@ -306,17 +420,17 @@ if errx.IsErrorByPbCode(err, extproto.Code__1_00_RECORD_NOT_EXIST) {
 
 | 场景 | 响应 |
 | --- | --- |
-| 缺少 / 错误 Basic 凭据 | `200 {"code":130102,"msg":"缺少或非法的 Basic 凭据"}` |
-| JWT 缺失 / 过期 / 签名错误 | `200 {"code":100401,"msg":"未认证"}` |
-| JWT 有效但缺少用户身份 | `200 {"code":100401,"msg":"缺少用户身份"}` |
-| 应用不存在或已停用 | `200 {"code":130101,"msg":"应用不存在或已停用"}` |
+| 缺少 / 错误 Basic 凭据 | `200 {"code":130002,"msg":"缺少或非法的 Basic 凭据"}` |
+| JWT 缺失 / 过期 / 签名错误 | `200 {"code":100110,"msg":"未认证"}` |
+| JWT 有效但缺少用户身份 | `200 {"code":100110,"msg":"缺少用户身份"}` |
+| 应用不存在或已停用 | `200 {"code":130001,"msg":"应用不存在或已停用"}` |
 
 ### 7.4 网关自身错误
 
 | 场景 | 响应 |
 | --- | --- |
-| 路由不存在 | `200 {"code":100801,"msg":"接口不存在"}` |
-| 方法不允许 | `200 {"code":100802,"msg":"请求方法不允许"}` |
+| 路由不存在 | `200 {"code":100240,"msg":"接口不存在"}` |
+| 方法不允许 | `200 {"code":100241,"msg":"请求方法不允许"}` |
 | 请求体超过上限 | `413`（go-zero 内置，空 body） |
 | 请求超时 | `503` + 纯文本 `Request Timeout` |
 | panic | `500`（go-zero 恢复中间件，空 body） |
@@ -324,17 +438,17 @@ if errx.IsErrorByPbCode(err, extproto.Code__1_00_RECORD_NOT_EXIST) {
 
 业务路由内抛出的错误统一经 `errx.NormalizeError` 归一化：
 
-- 错误码必须存在于 extproto 枚举，否则降级为 `100999` 并记录日志；
-- 未转换的普通 `error` 一律返回 `100999 系统繁忙`，原文只写日志；
+- 错误码必须存在于 extproto 枚举，否则降级为 `100002` 并记录日志；
+- 未转换的普通 `error` 一律返回 `100002 系统繁忙`，原文只写日志；
 - 上表中 go-zero 内置中间件直接写出的框架级错误不经过该函数。
 
 ### 7.5 错误折叠
 
 折叠是网关的可选展示策略，**默认不折叠，所有已登记码原样透传**。
 
-- 在网关 `etc/*.yaml` 的 `Error.Fold` 中配置 `Enabled` 和 `Codes` 后，命中的码折叠为 `Target`（默认 `100999`）；
+- 在网关 `etc/*.yaml` 的 `Error.Fold` 中配置 `Enabled` 和 `Codes` 后，命中的码折叠为 `Target`（默认 `100002`）；
 - `KeepMsg=false` 时文案统一为 `系统繁忙`；
-- `100603` 由 `common/gtwx/fold.go` 强制透传，即使配置在 `Codes` 中也不会折叠；
+- `100184` 由 `common/gtwx/fold.go` 强制透传，即使配置在 `Codes` 中也不会折叠；
 - 折叠只影响 HTTP 信封，gRPC 传输永不折叠。
 
 ### 7.6 明确例外
@@ -363,9 +477,9 @@ if errx.IsErrorByPbCode(err, extproto.Code__1_00_RECORD_NOT_EXIST) {
 | 厂商返回 | 处理 |
 | --- | --- |
 | 业务拒绝，但调用本身成功 | 转成业务字段（如 `CommonRes.reasonCode`），信封 `code` 保持 `0` |
-| 第三方接口明确返回错误码，导致调用失败 | `100603 第三方接口错误`，厂商码与原文写入固定文案 |
-| 平台故障（超时、连接失败、鉴权失败、限流、5xx） | 转成最接近的平台码（`100601`、`100602`、`100997`），以 error 返回 |
-| 无法归类 | `100602 第三方服务异常`；连错误都拿不到时用 `100999` |
+| 第三方接口明确返回错误码，导致调用失败 | `100184 第三方接口错误`，厂商码与原文写入固定文案 |
+| 平台故障（超时、连接失败、鉴权失败、限流、5xx） | 转成最接近的平台码（`100180`、`100183`、`100003`），以 error 返回 |
+| 无法归类 | `100183 第三方服务异常`；连错误都拿不到时用 `100002` |
 
 ### 8.2 DJI 等厂商码
 
@@ -389,7 +503,7 @@ DJI 错误码（`third_party/dji_error_code.proto`）是**独立的厂商错误�
 
 - 设备命令的拒绝结果包装成 `CommonRes{Code: -1, ReasonCode: 312014}`，作为**正常响应**返回，不构造 error。
 - DJI 等厂商码不写入 `ErrorInfo.reason`，也不进网关信封。
-- 误写入网关的未登记码会降级为 `100999 系统繁忙`，原始值只写服务端日志。
+- 误写入网关的未登记码会降级为 `100002 系统繁忙`，原始值只写服务端日志。
 - 需要跨服务传递设备结果时，继续使用 `CommonRes.reasonCode`（或响应体 `data.reasonCode`）。
 
 ### 8.3 第三方接口错误模板
@@ -409,7 +523,7 @@ return errx.NewThirdPartyAPIError("dji", "312014", "设备升级中，请勿重�
 样例：
 
 ```json
-{"code":100603,"msg":"第三方接口错误，vendor=dji，code=312014，message=设备升级中，请勿重复操作"}
+{"code":100184,"msg":"第三方接口错误，vendor=dji，code=312014，message=设备升级中，请勿重复操作"}
 ```
 
 | 片段 | 含义 |
@@ -440,10 +554,10 @@ vendor, code, message, ok := errx.ParseThirdPartyAPIError(resp.Msg)
 
 约束：
 
-1. 只允许解析 `100603` 的固定模板；其他 `msg` 只给人看，客户端**不得解析**做分支。
+1. 只允许解析 `100184` 的固定模板；其他 `msg` 只给人看，客户端**不得解析**做分支。
 2. 不放凭据、URL、堆栈、完整厂商响应体；构造器会压平空白，并在描述超过 200 字符时截断。
 3. 厂商码不登记进 `extproto`，不做 1:1 映射；平台码只表达“失败来自第三方接口”。
-4. 未在 extproto 登记的码一律降级 `100999`，原始值只进服务端日志。
+4. 未在 extproto 登记的码一律降级 `100002`，原始值只进服务端日志。
 
 ---
 
@@ -454,15 +568,15 @@ vendor, code, message, ok := errx.ParseThirdPartyAPIError(resp.Msg)
 Response resp = http.post(...);
 if (resp.code() != 0) {                 // 只认 code
     log.warn("requestId={} code={} msg={}", resp.requestId(), resp.code(), resp.msg());
-    // 认证类：100401 / 130101 / 130102 / 130105
-    // 可重试：100601 / 100602 / 100701 / 100997 / 100999
+    // 认证类：100110 / 130001 / 130002 / 130006
+    // 可重试：100180 / 100183 / 100220 / 100003 / 100002
 }
 ```
 
-- 不要用 `HTTP 401` 触发重新登录，改用 `code == 100401 || code == 130101 || code == 130102 || code == 130105`。
+- 不要用 `HTTP 401` 触发重新登录，改用 `code == 100110 || code == 130001 || code == 130002 || code == 130006`。
 - 日志必须带 `X-Request-Id`。
 - 未知 `code` 按失败处理，保留原始 `msg`。
-- 只有 `100603` 的 `msg` 可以按固定模板解析，其余 `msg` 不得用于业务分支。
+- 只有 `100184` 的 `msg` 可以按固定模板解析，其余 `msg` 不得用于业务分支。
 
 ---
 
@@ -476,9 +590,9 @@ if (resp.code() != 0) {                 // 只认 code
 
 不是。`http_code` 是 extproto 上的语义标记，用来推导 gRPC Code 和分类；网关业务路由固定返回 200。只有 webhook 等明确例外才按协议返回 4xx/5xx。
 
-**Q3：`100203` 和 `100204` 都是 409，怎么区分？**
+**Q3：`100053` 和 `100054` 都是 409，怎么区分？**
 
-`http_code` 只到 409 这一级，细分靠 `ErrorInfo.reason` / `body.code`。如果 `reason` 丢失，网关只能按 gRPC Code 兜底成 `100204`。
+`http_code` 只到 409 这一级，细分靠 `ErrorInfo.reason` / `body.code`。如果 `reason` 丢失，网关只能按 gRPC Code 兜底成 `100054`。
 
 **Q4：gRPC 直连也返回 HTTP 200 吗？**
 
@@ -488,12 +602,13 @@ if (resp.code() != 0) {                 // 只认 code
 
 ## 11. 演进规则
 
-1. **数字冻结**：码值一旦对外发布即冻结，即使文案调整，数字也不变。
-2. **只追加**：新错误从对应功能域的空闲 DEF 递增；功能域用尽后申请新 BC 段。
+1. **数字冻结**：上线前允许重排；上线后码值一旦对外发布即冻结，文案调整不改数字。
+2. **只追加**：新错误取模块内任意空闲 DEF；单个模块用尽 999 个号后申请新 BC，不复用废弃号。
 3. **不复用**：删除的错误码保留占位，不分配给新语义。
 4. **不跨域造码**：同一语义复用同一码；服务差异体现在 `msg` 和日志。
 5. **标识符纠正**：只允许“数字不变、名称修正”。
 6. **废弃流程**：文档标注 `deprecated`，至少保留两个发布周期。
+7. **规则守护**：新增码必须通过 `common/errx/codetable_test.go` 的结构校验，包括 A/BC/DEF 一致性、模块白名单、`http_code` 白名单和成功码唯一性。
 
 ---
 
@@ -517,6 +632,7 @@ if (resp.code() != 0) {                 // 只认 code
 | `common/errx/normalize.go` | `PublicError`、`NormalizeError` |
 | `common/errx/status.go` | `ToGRPCStatus` gRPC 出口归一化 |
 | `common/errx/thirdparty.go` | 第三方接口错误模板 |
+| `common/errx/codetable_test.go` | 码表结构规则守护测试（A/BC/DEF、模块、`http_code`、成功码唯一） |
 | `common/gtwx/response.go` | HTTP 统一信封写出口 |
 | `common/gtwx/fold.go` | 网关折叠配置，默认透传 |
 | `docs/gateway-standard.md` | 网关落地规范与验收清单 |

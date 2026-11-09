@@ -69,7 +69,7 @@ func (m *OpenAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		}
 		if cred.SignRequired {
 			if err := m.verifySignature(r, cred, appID); err != nil {
-				// 对外统一 130105，真实原因只写服务端日志，避免泄露时间窗/nonce/key 细节。
+				// 对外统一 130006，真实原因只写服务端日志，避免泄露时间窗/nonce/key 细节。
 				logx.WithContext(r.Context()).Errorf("openapi signature verify failed app_id=%s: %v", appID, err)
 				gtwx.WriteError(r.Context(), w, xerrors.New(int(extproto.Code__1_30_SIGNATURE_INVALID), "签名无效"))
 				return

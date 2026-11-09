@@ -44,7 +44,7 @@ func GatewayHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			if errors.As(err, &codeMsg) && codeMsg != nil {
 				code = codeMsg.Code
 			} else {
-				code = 100998
+				code = 100001
 			}
 			logGatewayRequest(r, req, code, start)
 			gtwx.WriteError(r.Context(), w, err)

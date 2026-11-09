@@ -43,7 +43,7 @@ InvokeRes {
 - Podman 4 个只读方法；
 - Modbus 15 个 I/O 方法（读取、写入、设备标识）。
 
-未注册 method 返回 `130103`，非法 protojson 返回 `100101`。
+未注册 method 返回 `130004`，非法 protojson 返回 `100020`。
 
 ## 配置
 

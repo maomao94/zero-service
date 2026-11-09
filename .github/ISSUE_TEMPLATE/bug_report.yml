@@ -14,7 +14,7 @@ body:
     attributes:
       label: 问题现象
       description: 实际发生了什么？尽量附上完整报错、日志或响应体。
-      placeholder: 调用 POST /v1/... 返回 code=100999，日志报 ...
+      placeholder: 调用 POST /v1/... 返回 code=100002，日志报 ...
     validations:
       required: true
 
