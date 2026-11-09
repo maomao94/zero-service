@@ -8828,10 +8828,10 @@ func (m *TerminatePlanReq) validate(all bool) error {
 
 	// no validation rules for PlanId
 
-	if utf8.RuneCountInString(m.GetReason()) > 200 {
+	if utf8.RuneCountInString(m.GetReason()) > 2000 {
 		err := TerminatePlanReqValidationError{
 			field:  "Reason",
-			reason: "value length must be at most 200 runes",
+			reason: "value length must be at most 2000 runes",
 		}
 		if !all {
 			return err
@@ -9466,10 +9466,10 @@ func (m *TerminatePlanBatchReq) validate(all bool) error {
 
 	// no validation rules for BatchId
 
-	if utf8.RuneCountInString(m.GetReason()) > 200 {
+	if utf8.RuneCountInString(m.GetReason()) > 2000 {
 		err := TerminatePlanBatchReqValidationError{
 			field:  "Reason",
-			reason: "value length must be at most 200 runes",
+			reason: "value length must be at most 2000 runes",
 		}
 		if !all {
 			return err
@@ -10101,10 +10101,10 @@ func (m *RejectPlanBatchReq) validate(all bool) error {
 
 	// no validation rules for BatchId
 
-	if utf8.RuneCountInString(m.GetReason()) > 200 {
+	if utf8.RuneCountInString(m.GetReason()) > 2000 {
 		err := RejectPlanBatchReqValidationError{
 			field:  "Reason",
-			reason: "value length must be at most 200 runes",
+			reason: "value length must be at most 2000 runes",
 		}
 		if !all {
 			return err
@@ -10539,10 +10539,10 @@ func (m *TerminatePlanExecItemReq) validate(all bool) error {
 
 	// no validation rules for ExecId
 
-	if utf8.RuneCountInString(m.GetReason()) > 200 {
+	if utf8.RuneCountInString(m.GetReason()) > 2000 {
 		err := TerminatePlanExecItemReqValidationError{
 			field:  "Reason",
-			reason: "value length must be at most 200 runes",
+			reason: "value length must be at most 2000 runes",
 		}
 		if !all {
 			return err

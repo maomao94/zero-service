@@ -41,7 +41,7 @@ type PlanConfirm struct {
 	ExpiredTime   sql.NullTime   `gorm:"column:expired_time;comment:确认终止时间：expired（超时）和 closed（人工终止）写入;index:idx_plan_confirm_expire,priority:2"`
 	// ConfirmStatus 确认状态：0-未确认，1-已确认（允许/拒绝/超时/关闭均归为已确认）。
 	ConfirmStatus int            `gorm:"column:confirm_status;comment:确认状态：0-未确认，1-已确认;index:idx_plan_confirm_status"`
-	Remark        sql.NullString `gorm:"column:remark;size:256;comment:处理说明（拒绝原因/终止原因）"`
+	Reason        sql.NullString `gorm:"column:reason;size:2000;comment:处理说明（拒绝原因/终止原因）"`
 }
 
 func (PlanConfirm) TableName() string { return "plan_confirm" }
@@ -107,6 +107,7 @@ func ConfirmPlanTarget(ctx context.Context, db *gorm.DB, confirmType int, target
 }
 
 // FindPendingPlanConfirmNotify 查询一条待通知的批次确认记录。
+// 已过截止时间的记录由超时扫描处理，这里直接跳过，避免通知队列被旧记录阻塞。
 // 并发控制由调用方通过 Redis 锁完成；返回后需在锁内重新校验状态。
 func FindPendingPlanConfirmNotify(ctx context.Context, db *gorm.DB, now time.Time) (*PlanConfirm, error) {
 	var candidate PlanConfirm
@@ -115,10 +116,12 @@ func FindPendingPlanConfirmNotify(ctx context.Context, db *gorm.DB, now time.Tim
 		Select("pc.*").
 		Joins("JOIN plan_batch pb ON pb.id = pc.batch_pk AND pb.is_deleted = 0").
 		Joins("JOIN plan p ON p.id = pc.plan_pk AND p.is_deleted = 0").
+		Where("pc.is_deleted = ?", 0).
 		Where("pc.confirm_type = ?", model.ConfirmTypeBatch).
 		Where("pc.notified_time IS NULL").
 		Where("pc.confirm_status = ?", model.PlanConfirmStatusWaiting).
 		Where("pc.notify_at <= ?", now).
+		Where("pc.deadline > ?", now).
 		Where("pb.status = ? AND pb.finished_time IS NULL", model.PlanStatusEnabled).
 		Where("p.status = ? AND p.finished_time IS NULL", model.PlanStatusEnabled).
 		Order("pc.notify_at ASC").
@@ -149,6 +152,7 @@ func FindPendingPlanConfirmExpire(ctx context.Context, db *gorm.DB, now time.Tim
 		Select("pc.*").
 		Joins("JOIN plan_batch pb ON pb.id = pc.batch_pk AND pb.is_deleted = 0").
 		Joins("JOIN plan p ON p.id = pc.plan_pk AND p.is_deleted = 0").
+		Where("pc.is_deleted = ?", 0).
 		Where("pc.confirm_type = ?", model.ConfirmTypeBatch).
 		Where("pc.confirm_status = ?", model.PlanConfirmStatusWaiting).
 		Where("pc.deadline <= ?", now).
@@ -166,33 +170,20 @@ func FindPendingPlanConfirmExpire(ctx context.Context, db *gorm.DB, now time.Tim
 	return &candidate, nil
 }
 
-// ExpirePlanConfirm 将未确认的批次确认记录标记为已确认（超时终止）。
-func ExpirePlanConfirm(ctx context.Context, db *gorm.DB, id, remark string, now time.Time) error {
-	return db.WithContext(ctx).Model(&PlanConfirm{}).
-		Where("id = ? AND confirm_status = ?", id, model.PlanConfirmStatusWaiting).
-		Updates(map[string]any{
-			"confirm_status": model.PlanConfirmStatusConfirmed,
-			"confirmed_time": sql.NullTime{Time: now, Valid: true},
-			"confirmed_user": sql.NullString{String: "system", Valid: true},
-			"expired_time":   sql.NullTime{Time: now, Valid: true},
-			"remark":         sql.NullString{String: remark, Valid: remark != ""},
-		}).Error
-}
-
 // ClosePlanConfirmsByBatch 将批次下所有未确认的记录标记为已确认（计划/批次被终止）。
 // 不区分 confirm_type：批次终止后，批次级和执行项级确认都应统一关闭。
-func ClosePlanConfirmsByBatch(ctx context.Context, db *gorm.DB, batchPk, user, remark string, now time.Time) (int64, error) {
-	return closePlanConfirms(ctx, db, "batch_pk", batchPk, user, remark, now)
+func ClosePlanConfirmsByBatch(ctx context.Context, db *gorm.DB, batchPk, user, reason string, now time.Time) (int64, error) {
+	return closePlanConfirms(ctx, db, "batch_pk", batchPk, user, reason, now)
 }
 
 // ClosePlanConfirmsByPlan 将计划下所有未确认的记录标记为已确认（计划被终止）。
 // 不区分 confirm_type：计划终止后，批次级和执行项级确认都应统一关闭。
-func ClosePlanConfirmsByPlan(ctx context.Context, db *gorm.DB, planPk, user, remark string, now time.Time) (int64, error) {
-	return closePlanConfirms(ctx, db, "plan_pk", planPk, user, remark, now)
+func ClosePlanConfirmsByPlan(ctx context.Context, db *gorm.DB, planPk, user, reason string, now time.Time) (int64, error) {
+	return closePlanConfirms(ctx, db, "plan_pk", planPk, user, reason, now)
 }
 
 // closePlanConfirms 按指定维度关闭未确认记录。column 仅允许内部固定值（batch_pk / plan_pk）。
-func closePlanConfirms(ctx context.Context, db *gorm.DB, column, value, user, remark string, now time.Time) (int64, error) {
+func closePlanConfirms(ctx context.Context, db *gorm.DB, column, value, user, reason string, now time.Time) (int64, error) {
 	result := db.WithContext(ctx).Model(&PlanConfirm{}).
 		Where(column+" = ?", value).
 		Where("confirm_status = ?", model.PlanConfirmStatusWaiting).
@@ -201,7 +192,7 @@ func closePlanConfirms(ctx context.Context, db *gorm.DB, column, value, user, re
 			"confirmed_time": sql.NullTime{Time: now, Valid: true},
 			"confirmed_user": sql.NullString{String: user, Valid: user != ""},
 			"expired_time":   sql.NullTime{Time: now, Valid: true},
-			"remark":         sql.NullString{String: remark, Valid: remark != ""},
+			"reason":         sql.NullString{String: reason, Valid: reason != ""},
 		})
 	return result.RowsAffected, result.Error
 }

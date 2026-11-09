@@ -118,9 +118,11 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		}
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "终止批次事务失败")
 	}
-	confirm.NotifyBatchFinished(l.ctx, db, l.svcCtx.StreamEventCli, &plan, &planBatch, in.Reason)
 	bScope := planscope.BatchScope(&plan, &planBatch)
 	bLog := bScope.Logger(l.ctx)
+	if _, notifyErr := confirm.NotifyBatchFinished(l.ctx, db, l.svcCtx.StreamEventCli, &plan, &planBatch, in.Reason); notifyErr != nil {
+		bLog.Errorf("更新计划 finished_time 失败: %v", notifyErr)
+	}
 	bLog.Info("RPC 终止批次：批次状态已更新，事务已提交")
 	return &trigger.TerminatePlanBatchRes{}, nil
 }

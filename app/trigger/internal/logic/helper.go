@@ -192,17 +192,24 @@ func toHolidaySourcePb(item holiday.StoredEntry) *trigger.HolidaySourcePb {
 	}
 }
 
+// 计划批次确认状态在接口层的字符串取值。
+const (
+	planConfirmPbStatusNone      = "none"
+	planConfirmPbStatusWaiting   = "waiting"
+	planConfirmPbStatusConfirmed = "confirmed"
+)
+
 // fillPlanConfirmPb 将批次确认记录映射到批次响应，未配置确认时 confirmStatus=none。
 func fillPlanConfirmPb(pb *trigger.PlanBatchPb, confirm *gormmodel.PlanConfirm) {
 	if confirm == nil {
-		pb.ConfirmStatus = "none"
+		pb.ConfirmStatus = planConfirmPbStatusNone
 		return
 	}
 	pb.ConfirmType = int32(confirm.ConfirmType)
 	if confirm.ConfirmStatus == model.PlanConfirmStatusConfirmed {
-		pb.ConfirmStatus = "confirmed"
+		pb.ConfirmStatus = planConfirmPbStatusConfirmed
 	} else {
-		pb.ConfirmStatus = "waiting"
+		pb.ConfirmStatus = planConfirmPbStatusWaiting
 	}
 	if !confirm.Deadline.IsZero() {
 		pb.ConfirmDeadline = carbonx.FormatDateTime(confirm.Deadline)

@@ -5,7 +5,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
+	"zero-service/app/trigger/internal/confirm"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
@@ -194,8 +196,8 @@ func TestRejectPlanBatch(t *testing.T) {
 	if !confirm.ConfirmedTime.Valid || confirm.ConfirmedUser.String != "tester" {
 		t.Fatalf("confirmed_time/user = %v/%q, want set/tester", confirm.ConfirmedTime, confirm.ConfirmedUser.String)
 	}
-	if !strings.Contains(confirm.Remark.String, "条件不满足") {
-		t.Fatalf("remark = %q, want contains 条件不满足", confirm.Remark.String)
+	if !strings.Contains(confirm.Reason.String, "条件不满足") {
+		t.Fatalf("reason = %q, want contains 条件不满足", confirm.Reason.String)
 	}
 
 	var gotBatch gormmodel.PlanBatch
@@ -221,6 +223,46 @@ func TestRejectPlanBatch(t *testing.T) {
 	if _, err := NewConfirmPlanBatchLogic(context.Background(), svcCtx).
 		ConfirmPlanBatch(&trigger.ConfirmPlanBatchReq{Id: batch.Id}); err == nil {
 		t.Fatal("ConfirmPlanBatch() after reject error = nil, want rejected")
+	}
+}
+
+func TestRejectPlanBatchAllowsLongReason(t *testing.T) {
+	db := openConfirmTestDB(t)
+	svcCtx := newConfirmTestServiceContext(t, db)
+	request := createConfirmPlanRequest(int32(1), 1)
+	if _, err := NewCreatePlanTaskLogic(context.Background(), svcCtx).CreatePlanTask(request); err != nil {
+		t.Fatal(err)
+	}
+	var batch gormmodel.PlanBatch
+	if err := db.Where("plan_id = ?", request.PlanId).First(&batch).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	// 用户原因本身已达 pb 上限 2000，拼接「人工拒绝启动批次: 」后超过 TerminatePlanBatchReq 的限制。
+	reason := strings.Repeat("因", 2000)
+	logic := NewRejectPlanBatchLogic(authctx.WithUserID(context.Background(), "tester"), svcCtx)
+	if _, err := logic.RejectPlanBatch(&trigger.RejectPlanBatchReq{Id: batch.Id, Reason: reason}); err != nil {
+		t.Fatal(err)
+	}
+	var gotBatch gormmodel.PlanBatch
+	if err := db.Where("id = ?", batch.Id).First(&gotBatch).Error; err != nil {
+		t.Fatal(err)
+	}
+	if gotBatch.Status != model.PlanStatusTerminated {
+		t.Fatalf("batch status = %d, want terminated", gotBatch.Status)
+	}
+	if n := utf8.RuneCountInString(gotBatch.TerminatedReason.String); n > terminateReasonMaxRunes {
+		t.Fatalf("terminated reason runes = %d, want <= %d", n, terminateReasonMaxRunes)
+	}
+	if !strings.HasPrefix(gotBatch.TerminatedReason.String, confirm.ReasonRejected) {
+		t.Fatalf("terminated reason = %q, want prefix %q", gotBatch.TerminatedReason.String, confirm.ReasonRejected)
+	}
+	var gotConfirm gormmodel.PlanConfirm
+	if err := db.Where("target_pk = ?", batch.Id).First(&gotConfirm).Error; err != nil {
+		t.Fatal(err)
+	}
+	if n := utf8.RuneCountInString(gotConfirm.Reason.String); n > terminateReasonMaxRunes {
+		t.Fatalf("confirm reason runes = %d, want <= %d", n, terminateReasonMaxRunes)
 	}
 }
 

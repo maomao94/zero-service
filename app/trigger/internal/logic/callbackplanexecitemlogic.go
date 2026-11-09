@@ -197,7 +197,9 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "回调事务失败")
 	}
 
-	confirm.NotifyBatchFinishedIfNeeded(l.ctx, db, l.svcCtx.StreamEventCli, &plan, &planBatch, in.Reason)
+	if _, _, notifyErr := confirm.NotifyBatchFinishedIfNeeded(l.ctx, db, l.svcCtx.StreamEventCli, &plan, &planBatch, in.Reason); notifyErr != nil {
+		log.Errorf("更新批次/计划 finished_time 失败: %v", notifyErr)
+	}
 
 	return &trigger.CallbackPlanExecItemRes{}, nil
 }

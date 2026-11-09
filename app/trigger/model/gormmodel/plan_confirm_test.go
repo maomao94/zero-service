@@ -107,6 +107,41 @@ func TestFindPendingPlanConfirmNotifyIsIdempotent(t *testing.T) {
 	}
 }
 
+func TestFindPendingPlanConfirmNotifySkipsExpiredDeadline(t *testing.T) {
+	db := openPlanTestDB(t)
+	ctx := context.Background()
+	now := time.Now()
+	plan := Plan{PlanId: "plan", Status: model.PlanStatusEnabled}
+	plan.Id = "plan-pk"
+	batch := PlanBatch{PlanPk: plan.Id, PlanId: plan.PlanId, BatchId: "batch", Status: model.PlanStatusEnabled}
+	batch.Id = "batch-pk"
+	if err := db.Create(&plan).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&batch).Error; err != nil {
+		t.Fatal(err)
+	}
+	confirm := PlanConfirm{
+		PlanPk:      plan.Id,
+		BatchPk:     batch.Id,
+		ConfirmType: model.ConfirmTypeBatch,
+		TargetPk:    batch.Id,
+		NotifyAt:    now.Add(-time.Hour),
+		Deadline:    now.Add(-time.Minute),
+	}
+	if err := db.Create(&confirm).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := FindPendingPlanConfirmNotify(ctx, db, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != nil {
+		t.Fatalf("FindPendingPlanConfirmNotify() = %v, want nil for expired deadline", got)
+	}
+}
+
 func TestFindPendingPlanConfirmExpireSkipsConfirmed(t *testing.T) {
 	db := openPlanTestDB(t)
 	ctx := context.Background()
@@ -157,7 +192,7 @@ func TestFindPendingPlanConfirmExpireSkipsConfirmed(t *testing.T) {
 	if got.BatchPk != pending.BatchPk {
 		t.Fatalf("pending batch = %s, want %s", got.BatchPk, pending.BatchPk)
 	}
-	if err := ExpirePlanConfirm(ctx, db, got.Id, "expired", now); err != nil {
+	if _, err := ClosePlanConfirmsByBatch(ctx, db, got.BatchPk, "system", "expired", now); err != nil {
 		t.Fatal(err)
 	}
 	second, err := FindPendingPlanConfirmExpire(ctx, db, now)

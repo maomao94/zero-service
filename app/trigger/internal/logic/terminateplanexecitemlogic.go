@@ -101,7 +101,9 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	}
 	batch := &gormmodel.PlanBatch{PlanPk: execItem.PlanPk, PlanId: execItem.PlanId, BatchId: execItem.BatchId}
 	batch.Id = execItem.BatchPk
-	confirm.NotifyBatchFinishedIfNeeded(l.ctx, db, l.svcCtx.StreamEventCli, &plan, batch, in.Reason)
+	if _, _, notifyErr := confirm.NotifyBatchFinishedIfNeeded(l.ctx, db, l.svcCtx.StreamEventCli, &plan, batch, in.Reason); notifyErr != nil {
+		log.Errorf("更新批次/计划 finished_time 失败: %v", notifyErr)
+	}
 
 	log.Info("RPC 终止执行项：执行项状态已更新，事务已提交")
 	return &trigger.TerminatePlanExecItemRes{}, nil

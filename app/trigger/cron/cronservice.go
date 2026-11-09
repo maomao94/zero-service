@@ -372,7 +372,10 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.P
 
 	batch := &gormmodel.PlanBatch{PlanPk: execItem.PlanPk, PlanId: execItem.PlanId, BatchId: execItem.BatchId}
 	batch.Id = execItem.BatchPk
-	batchCount, planCount := confirm.NotifyBatchFinishedIfNeeded(ctx, db, s.svcCtx.StreamEventCli, plan, batch, res.Reason)
+	batchCount, planCount, notifyErr := confirm.NotifyBatchFinishedIfNeeded(ctx, db, s.svcCtx.StreamEventCli, plan, batch, res.Reason)
+	if notifyErr != nil {
+		log.Errorf(scope.LogMessage("更新批次/计划 finished_time 失败: %v"), notifyErr)
+	}
 	scope.WithFields(
 		logx.Field("batch_notify_rows", batchCount),
 		logx.Field("plan_notify_rows", planCount),

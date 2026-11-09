@@ -108,10 +108,11 @@ Plan 与 CronJob 共用 `(RRULE ∪ specifiedTimes) - excludedTimes - expanded(e
 - 通知扫描会跳过已过截止时间的批次，避免服务恢复后补发无意义的待确认通知。
 - 扫表任务在 `notify_at` 到点后通过 socketpush 向机构房间 `dept:{deptCode}` 推送一次 `plan:batch-confirm-required` 事件；负载包含计划、批次、触发时间、截止时间和执行项数量。
 - 前端调用 `ConfirmPlanBatch` 确认后，扫表放行该批次执行项：确认早于触发时间则按原计划时间执行，晚于触发时间则立即执行。
-- 前端调用 `RejectPlanBatch` 拒绝后，批次及其未结束执行项立即终止。
-- 超过 `deadline` 仍未确认时，批次及其未结束执行项自动终止，并通知 `BATCH_FINISHED` / `PLAN_FINISHED`。
+- 前端调用 `RejectPlanBatch` 拒绝后，批次立即终止；其未结束执行项保持 waiting 状态，不再下发。
+- 超过 `deadline` 仍未确认时，批次自动终止，并通知 `BATCH_FINISHED` / `PLAN_FINISHED`；未结束执行项同样保持 waiting 状态，不再下发。
 - 人工终止计划或批次时，未确认记录同步结束。
-- `confirm_status` 只有 `waiting` / `confirmed` 两种：允许、拒绝、超时、人工终止都归为 `confirmed`，具体结果看 `plan_batch.status`、`terminated_reason` 和 `plan_confirm.remark`。
+- 暂停计划/批次不会顺延 `notify_at` 或 `deadline`：暂停期间不通知、不超时，恢复时若已过 `deadline` 会被立即终止。
+- `confirm_status` 只有 `waiting` / `confirmed` 两种：允许、拒绝、超时、人工终止都归为 `confirmed`，具体结果看 `plan_batch.status`、`terminated_reason` 和 `plan_confirm.reason`。
 - 通知、确认、拒绝、超时通过 Redis 锁按批次串行化，避免多实例重复处理。
 - `confirm_type=2`（执行项级确认）当前仅保留枚举，创建时显式拒绝，避免调用方误以为生效。
 

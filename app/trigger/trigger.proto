@@ -842,7 +842,7 @@ message TerminatePlanReq {
   string id = 1 [json_name = "id"];
   string plan_id = 2 [json_name = "planId"];
   // 终止原因
-  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 200}];
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 2000}];
 }
 
 message TerminatePlanRes {
@@ -870,7 +870,7 @@ message TerminatePlanBatchReq {
   string id = 1 [json_name = "id"];
   string batch_id = 2 [json_name = "batchId"];
   // 终止原因
-  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 200}];
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 2000}];
 }
 
 message TerminatePlanBatchRes {
@@ -900,7 +900,7 @@ message RejectPlanBatchReq {
   // 批次ID
   string batch_id = 2 [json_name = "batchId"];
   // 拒绝原因
-  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 200}];
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 2000}];
 }
 
 message RejectPlanBatchRes {
@@ -920,7 +920,7 @@ message TerminatePlanExecItemReq {
   string id = 1 [json_name = "id"];
   string exec_id = 2 [json_name = "execId"];
   // 终止原因
-  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 200}];
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 2000}];
 }
 
 message TerminatePlanExecItemRes {
