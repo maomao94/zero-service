@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 	"zero-service/common/bytex"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
@@ -28,22 +28,42 @@ func NewReadWriteMultipleRegistersLogic(ctx context.Context, svcCtx *svc.Service
 
 // 读写多个保持寄存器 (Function Code 0x17)
 func (l *ReadWriteMultipleRegistersLogic) ReadWriteMultipleRegisters(in *bridgemodbus.ReadWriteMultipleRegistersReq) (*bridgemodbus.ReadWriteMultipleRegistersRes, error) {
-	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)
+	readAddress, err := validateAddress("readAddress", in.ReadAddress)
 	if err != nil {
 		return nil, err
 	}
-	mbCli := mdCliPool.Get()
-	defer mdCliPool.Put(mbCli)
+	readQuantity, err := validateQuantity("readQuantity", in.ReadQuantity, maxReadRegisters)
+	if err != nil {
+		return nil, err
+	}
+	writeAddress, err := validateAddress("writeAddress", in.WriteAddress)
+	if err != nil {
+		return nil, err
+	}
+	writeQuantity, err := validateQuantity("writeQuantity", in.WriteQuantity, maxReadWriteWriteRegisters)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateValuesCount("writeQuantity", in.WriteQuantity, len(in.Values)); err != nil {
+		return nil, err
+	}
 
 	uint16Values, errIdx, err := bytex.Uint32SliceToUint16SliceValidate(in.Values)
 	if err != nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM, "第 %d 个值超过 16 位寄存器的最大值 (65535)", errIdx+1)
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID,
+			"第 %d 个值超过 16 位寄存器的最大值 (65535)", errIdx+1)
 	}
-	binaryValues := bytex.Uint16SliceToBinaryValues(uint16Values)
-	l.Infof("读写多个保持寄存器: 写值=0x%X, hex=%v, uint16=%v, int16=%v, binary=%v", binaryValues.Bytes, binaryValues.Hex, binaryValues.Uint16, binaryValues.Int16, binaryValues.Binary)
-	results, err := mbCli.ReadWriteMultipleRegisters(l.ctx, uint16(in.ReadAddress), uint16(in.ReadQuantity), uint16(in.WriteAddress), uint16(in.WriteQuantity), binaryValues.Bytes)
+
+	mbCli, err := l.svcCtx.GetModbusClient(l.ctx, in.ModbusCode)
 	if err != nil {
 		return nil, err
+	}
+
+	binaryValues := bytex.Uint16SliceToBinaryValues(uint16Values)
+	l.Infof("读写多个保持寄存器: 写值=0x%X, hex=%v, uint16=%v, int16=%v, binary=%v", binaryValues.Bytes, binaryValues.Hex, binaryValues.Uint16, binaryValues.Int16, binaryValues.Binary)
+	results, err := mbCli.ReadWriteMultipleRegisters(l.ctx, readAddress, readQuantity, writeAddress, writeQuantity, binaryValues.Bytes)
+	if err != nil {
+		return nil, wrapModbusWriteError("读写多个保持寄存器", err)
 	}
 	binaryValues = bytex.BytesToBinaryValues(results)
 	return &bridgemodbus.ReadWriteMultipleRegistersRes{

@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"zero-service/common/antsx"
+	"zero-service/common/errx"
 	"zero-service/common/iec104/client"
-	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
 	"github.com/wendy512/go-iecp5/asdu"
@@ -16,13 +16,13 @@ import (
 func wrapCommandAckError(err error, fallbackMsg string) error {
 	switch {
 	case errors.Is(err, antsx.ErrReplyExpired), errors.Is(err, context.DeadlineExceeded):
-		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_TIMEOUT, err, "IEC控制命令ACK超时: %v", err)
+		return errx.NewErrorByPbCodeWrap(extproto.Code__1_00_TIMEOUT, err, "IEC控制命令ACK超时: %v", err)
 	case errors.Is(err, antsx.ErrDuplicateID):
-		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ_REPEAT, err, "IEC控制命令重复下发: %v", err)
+		return errx.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ_REPEAT, err, "IEC控制命令重复下发: %v", err)
 	case isCommandRejectedError(err):
-		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ_STATE, err, "IEC命令被设备拒绝: %v", err)
+		return errx.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ_STATE, err, "IEC命令被设备拒绝: %v", err)
 	default:
-		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "%s: %v", fallbackMsg, err)
+		return errx.NewErrorByPbCodeWrap(extproto.Code__1_00_THIRD_PARTY, err, "%s: %v", fallbackMsg, err)
 	}
 }
 

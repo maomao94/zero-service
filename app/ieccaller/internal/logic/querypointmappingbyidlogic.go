@@ -5,7 +5,7 @@ import (
 
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/svc"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -28,11 +28,11 @@ func NewQueryPointMappingByIdLogic(ctx context.Context, svcCtx *svc.ServiceConte
 // 根据ID查询点位绑定信息
 func (l *QueryPointMappingByIdLogic) QueryPointMappingById(in *ieccaller.QueryPointMappingByIdReq) (*ieccaller.QueryPointMappingByIdRes, error) {
 	if l.svcCtx.DevicePointMappingStore == nil {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_BIZ, "device point mapping model is not initialized")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ, "device point mapping model is not initialized")
 	}
 	mapping, err := l.svcCtx.DevicePointMappingStore.FindOne(l.ctx, in.Id)
 	if err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询点位映射失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询点位映射失败")
 	}
 	return &ieccaller.QueryPointMappingByIdRes{
 		Mapping: toPbDevicePointMapping(mapping),

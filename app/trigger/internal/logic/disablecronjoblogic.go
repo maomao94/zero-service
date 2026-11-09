@@ -7,7 +7,7 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/crontask"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -34,9 +34,9 @@ func (l *DisableCronJobLogic) DisableCronJob(in *trigger.DisableCronJobReq) (*tr
 	}
 	if err := l.svcCtx.CronJobStore.Disable(l.ctx, in.JobId); err != nil {
 		if errors.Is(err, crontask.ErrNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "禁用 Cron Job 失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "禁用 Cron Job 失败")
 	}
 	return &trigger.DisableCronJobRes{}, nil
 }

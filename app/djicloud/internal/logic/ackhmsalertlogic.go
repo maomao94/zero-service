@@ -8,7 +8,7 @@ import (
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -37,10 +37,10 @@ func (l *AckHmsAlertLogic) AckHmsAlert(in *djicloud.AckHmsAlertReq) (*djicloud.A
 		"update_time": time.Now(),
 	})
 	if result.Error != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, result.Error, "确认 HMS 告警失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, result.Error, "确认 HMS 告警失败")
 	}
 	if result.RowsAffected == 0 {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "HMS 告警不存在")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "HMS 告警不存在")
 	}
 	return &djicloud.AckHmsAlertRes{}, nil
 }

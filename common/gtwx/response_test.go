@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"zero-service/common/djisdk"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	xerrors "github.com/zeromicro/x/errors"
@@ -38,8 +38,8 @@ func TestWriteErrorAlwaysHTTP200(t *testing.T) {
 		wantMsg  string
 	}{
 		{name: "code msg", err: xerrors.New(130102, "密钥无效"), wantCode: 130102, wantMsg: "密钥无效"},
-		{name: "grpc unauthorized", err: tool.NewErrorByPbCode(extproto.Code__1_00_UNAUTHORIZED), wantCode: 100401, wantMsg: "未认证"},
-		{name: "grpc not found", err: tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST), wantCode: 100202, wantMsg: "记录不存在"},
+		{name: "grpc unauthorized", err: errx.NewErrorByPbCode(extproto.Code__1_00_UNAUTHORIZED), wantCode: 100401, wantMsg: "未认证"},
+		{name: "grpc not found", err: errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST), wantCode: 100202, wantMsg: "记录不存在"},
 		{name: "internal passes through by default", err: xerrors.New(int(extproto.Code__1_00_INTERNAL), "db password leaked"), wantCode: 100998, wantMsg: "db password leaked"},
 		{name: "plain error", err: errors.New("boom"), wantCode: 100999, wantMsg: "系统繁忙"},
 	}
@@ -111,7 +111,7 @@ func TestWriteErrorNeverFoldsThirdPartyAPI(t *testing.T) {
 	t.Cleanup(func() { SetFoldConfig(FoldConfig{}) })
 
 	rr := httptest.NewRecorder()
-	WriteError(context.Background(), rr, tool.NewThirdPartyAPIError("dji", "312014", "设备升级中"))
+	WriteError(context.Background(), rr, errx.NewThirdPartyAPIError("dji", "312014", "设备升级中"))
 
 	body := decodeEnvelope(t, rr)
 	if body.Code != int(extproto.Code__1_00_THIRD_PARTY_API) {

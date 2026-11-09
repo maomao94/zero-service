@@ -8,7 +8,6 @@ Log:
   Path: /opt/logs/bridgemodbus
   Level: info
   KeepDays: 300
-ModbusPool: 32
 NacosConfig:
   IsRegister: false
   Host: 127.0.0.1
@@ -18,10 +17,33 @@ NacosConfig:
   NamespaceId: public
   ServiceName: bridge-modbus
 DB:
-#  DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
   DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
   LogLevel: info
   QueryFields: true
+# 该段是 code 为空时的默认连接配置；code 非空时按库中 modbus_slave_config 读取，不回退本段。
+# 所有时间单位为毫秒；0 由客户端封装补成 SDK 默认值（Timeout=10000、IdleTimeout=60000，恢复窗口与建连静默期为 0）。
 ModbusClientConf:
+  # 无库默认值，必须提供；本地示例 127.0.0.1:5020
+  # 同 IP:Port 的不同 code 各自持有连接与固定从站号
   Address: 127.0.0.1:5020
+  # 项目默认 1；Unit ID 必须与网关后面的实际从站一致
   Slave: 1
+  # 项目默认 10000ms；建连与单次 socket 收发超时，不含排队和恢复的额外耗时
+  Timeout: 10000
+  # 默认 60000ms，与 SDK 一致；空闲断链后下次请求自动重连
+  # 网关或网络仍可能主动断链，此项不是心跳或保活保证
+  # 如需 SDK 不主动空闲断链，改为 -1（不能保证网关不会主动断开）
+  IdleTimeout: 60000
+  # 默认 0，与 SDK 一致，关闭本次请求的链路恢复；负数同样关闭
+  # 可选 3000：断链后自动重连并重发允许重复的读请求；写请求始终不自动重发
+  LinkRecoveryTimeout: 0
+  # 默认 0，与 SDK 一致，关闭协议恢复；可选 2000 以识别并跳过迟到响应
+  ProtocolRecoveryTimeout: 0
+  # 默认 0，与 SDK 一致，建连后不等待；要求静默期的网关可设 100
+  ConnectDelay: 0
+  TLS:
+    # 默认 false；启用时配置客户端证书、私钥与服务端 CA 文件（路径默认空）
+    Enable: false
+    CertFile: ""
+    KeyFile: ""
+    CAFile: ""

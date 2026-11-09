@@ -6,7 +6,7 @@ import (
 	"zero-service/app/live/internal/svc"
 	"zero-service/app/live/live"
 	"zero-service/common/carbonx"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -29,14 +29,14 @@ func NewListMeetingMessagesLogic(ctx context.Context, svcCtx *svc.ServiceContext
 // 查询聊天记录
 func (l *ListMeetingMessagesLogic) ListMeetingMessages(in *live.ListMeetingMessagesReq) (*live.ListMeetingMessagesRes, error) {
 	if in.MeetingNo == "" {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议号不能为空")
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID, "会议号不能为空")
 	}
 
 	// 查询消息
 	messages, total, err := l.svcCtx.MeetingRepo.ListMessages(l.ctx, in.MeetingNo, in.Page, in.PageSize)
 	if err != nil {
 		l.Logger.Errorf("list messages failed: %v", err)
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询消息失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询消息失败")
 	}
 
 	// 转换为响应格式

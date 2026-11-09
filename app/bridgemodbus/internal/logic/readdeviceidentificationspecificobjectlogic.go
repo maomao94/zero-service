@@ -2,8 +2,8 @@ package logic
 
 import (
 	"context"
-	"fmt"
-	"zero-service/common/modbusx"
+	"zero-service/common/errx"
+	"zero-service/third_party/extproto"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
@@ -27,42 +27,23 @@ func NewReadDeviceIdentificationSpecificObjectLogic(ctx context.Context, svcCtx 
 
 // 读取特定 Object ID 的设备标识 (Function Code 0x2B / 0x0E)
 func (l *ReadDeviceIdentificationSpecificObjectLogic) ReadDeviceIdentificationSpecificObject(in *bridgemodbus.ReadDeviceIdentificationSpecificObjectReq) (*bridgemodbus.ReadDeviceIdentificationSpecificObjectRes, error) {
-	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)
+	if in.ObjectId > 0xFF {
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_INVALID,
+			"objectId 超出范围 [0, 255]（当前 %d）", in.ObjectId)
+	}
+
+	mbCli, err := l.svcCtx.GetModbusClient(l.ctx, in.ModbusCode)
 	if err != nil {
 		return nil, err
 	}
-	mbCli := mdCliPool.Get()
-	defer mdCliPool.Put(mbCli)
+
 	results, err := mbCli.ReadDeviceIdentificationSpecificObject(l.ctx, byte(in.ObjectId))
 	if err != nil {
-		return nil, err
-	}
-	resultsDec := make(map[uint32]string)      // 十进制
-	resultsHex := make(map[string]string)      // 十六进制
-	resultsSemantic := make(map[string]string) // 语义化
-	for id, raw := range results {
-		val := string(raw)
-		if len(raw) == 0 {
-			continue
-		}
-
-		// 1. 十进制
-		resultsDec[uint32(id)] = val
-
-		// 2. 十六进制
-		hexKey := fmt.Sprintf("0x%02X", id)
-		resultsHex[hexKey] = val
-
-		// 3. 语义化
-		if name, ok := modbusx.DeviceIDObjectNames[id]; ok {
-			resultsSemantic[name] = val
-		} else {
-			resultsSemantic["Object_"+hexKey] = val // fallback
-		}
+		return nil, wrapModbusError("读取指定设备标识对象", err)
 	}
 	return &bridgemodbus.ReadDeviceIdentificationSpecificObjectRes{
-		Results:         resultsDec,
-		HexResults:      resultsHex,
-		SemanticResults: resultsSemantic,
+		Results:         toDeviceIDDec(results),
+		HexResults:      toDeviceIDHex(results),
+		SemanticResults: toDeviceIDSemantic(results),
 	}, nil
 }

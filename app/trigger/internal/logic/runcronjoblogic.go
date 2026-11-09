@@ -7,7 +7,7 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/crontask"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -35,16 +35,16 @@ func (l *RunCronJobLogic) RunCronJob(in *trigger.RunCronJobReq) (*trigger.RunCro
 	task, err := l.svcCtx.CronJobStore.GetByID(l.ctx, in.JobId)
 	if err != nil {
 		if errors.Is(err, crontask.ErrNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询 Cron Job 失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询 Cron Job 失败")
 	}
 	traceID, err := l.svcCtx.CronJobScheduler.RunNow(l.ctx, task.TaskCode)
 	if err != nil {
 		if errors.Is(err, crontask.ErrNotFound) {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST)
 		}
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "立即执行 Cron Job 失败")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "立即执行 Cron Job 失败")
 	}
 	return &trigger.RunCronJobRes{TraceId: traceID}, nil
 }

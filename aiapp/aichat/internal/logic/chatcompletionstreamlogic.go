@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"zero-service/common/errx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -69,7 +70,7 @@ func NewChatCompletionStreamLogic(ctx context.Context, svcCtx *svc.ServiceContex
 func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompletionReq, stream aichat.AiChat_ChatCompletionStreamServer) error {
 	p, backendModel, providerName, err := l.svcCtx.Registry.GetProvider(in.Model)
 	if err != nil {
-		return tool.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "model %s not found", in.Model)
+		return errx.NewErrorByPbCode(extproto.Code__1_00_RECORD_NOT_EXIST, "model %s not found", in.Model)
 	}
 
 	req := toProviderRequest(in, backendModel, providerName)
@@ -299,11 +300,11 @@ func (l *ChatCompletionStreamLogic) handleStreamError(awaitErr error, streamCtx 
 	case streamCtx.Err() != nil:
 		l.Logger.Errorf("stream total timeout (%v), awaitErr: %v",
 			l.svcCtx.Config.StreamTimeout, awaitErr)
-		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_TIMEOUT, awaitErr, "stream total timeout")
+		return errx.NewErrorByPbCodeWrap(extproto.Code__1_00_TIMEOUT, awaitErr, "stream total timeout")
 	case errors.Is(awaitErr, context.DeadlineExceeded):
 		l.Logger.Errorf("stream idle timeout (%v), awaitErr: %v",
 			l.svcCtx.Config.StreamIdleTimeout, awaitErr)
-		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_TIMEOUT, awaitErr, "stream idle timeout")
+		return errx.NewErrorByPbCodeWrap(extproto.Code__1_00_TIMEOUT, awaitErr, "stream idle timeout")
 	default:
 		l.Logger.Errorf("stream recv error: %v", awaitErr)
 		return provider.ToGrpcError(awaitErr)

@@ -6,7 +6,7 @@ import (
 	"zero-service/app/gis/gis"
 
 	"zero-service/app/gis/internal/svc"
-	"zero-service/common/tool"
+	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
 	"github.com/qichengzx/coordtransform"
@@ -30,7 +30,7 @@ func NewTransformCoordLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Tr
 // TransformCoord 单点坐标系转换（WGS84 / GCJ02 / BD09 互转）。
 func (l *TransformCoordLogic) TransformCoord(in *gis.TransformCoordReq) (*gis.TransformCoordRes, error) {
 	if err := l.validateReq(in); err != nil {
-		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "坐标转换请求参数无效")
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_PARAM_INVALID, err, "坐标转换请求参数无效")
 	}
 	if in.SourceType == in.TargetType {
 		return &gis.TransformCoordRes{
@@ -53,7 +53,7 @@ func (l *TransformCoordLogic) TransformCoord(in *gis.TransformCoordReq) (*gis.Tr
 
 func (l *TransformCoordLogic) validateReq(in *gis.TransformCoordReq) error {
 	if in.Point == nil {
-		return tool.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "point")
+		return errx.NewErrorByPbCode(extproto.Code__1_00_PARAM_MISSING, "point")
 	}
 	if err := ValidatePoints(in.Point); err != nil {
 		return err

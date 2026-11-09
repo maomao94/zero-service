@@ -5,8 +5,10 @@ import (
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
+	"zero-service/common/errx"
 	"zero-service/common/gormx"
 	"zero-service/model/gormmodel"
+	"zero-service/third_party/extproto"
 
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -29,6 +31,9 @@ func NewSaveConfigLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SaveCo
 
 // 保存（新增或更新）配置
 func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemodbus.SaveConfigRes, error) {
+	if err := validateSaveConfig(in); err != nil {
+		return nil, err
+	}
 	var id string
 	err := l.svcCtx.DB.WithContext(l.ctx).Transact(func(tx *gormx.DB) error {
 		var exist gormmodel.ModbusSlaveConfig
@@ -60,8 +65,12 @@ func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemod
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "保存Modbus配置失败")
 	}
+
+	// 配置变更后按 code 移除旧客户端，下一次请求读取新配置。
+	// modbusCode 已由 validateSaveConfig 保证非空，空 code 的文件配置不经过这里。
+	l.svcCtx.Manager.RemoveClient(in.ModbusCode)
 	return &bridgemodbus.SaveConfigRes{
 		Id: id,
 	}, nil
