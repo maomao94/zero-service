@@ -107,5 +107,5 @@ bash deploy/nginx/build-web.sh workspace
 - 健康检查只使用同源地址，跨域与端口推导问题都收敛在 nginx / vite 配置里。
 - 剪贴板优先 `navigator.clipboard`，900ms 未返回或不可用时回退 `execCommand`，保证内网 http 源站也能复制。
 - 上下线才写入检测记录；首次检测只写一条「工作台已就绪」事件，避免首屏噪音。
-- 主题在 `index.html` 内联脚本中于首屏前确定，避免深色模式闪白。
+- 主题默认浅色，可在侧栏切换深色；首屏前由 `index.html` 内联脚本确定，避免闪烁。
 - 动效遵循 `prefers-reduced-motion`，交互控件均有可见焦点样式。

@@ -7,6 +7,7 @@ import (
 	"zero-service/app/alarm/internal/config"
 	"zero-service/app/alarm/internal/server"
 	"zero-service/app/alarm/internal/svc"
+	"zero-service/common/grpcx"
 	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/conf"
@@ -36,6 +37,8 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
+	s.AddOptions(grpc.ChainUnaryInterceptor(grpcx.ServerFinalizeInterceptor))
+	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	defer s.Stop()
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)

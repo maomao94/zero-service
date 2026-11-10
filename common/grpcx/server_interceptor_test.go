@@ -162,6 +162,129 @@ func TestStreamLoggerInterceptorRecoversPanic(t *testing.T) {
 	}
 }
 
+func TestServerFinalizeInterceptorKeepsBusinessCode(t *testing.T) {
+	wantResp := &struct{}{}
+	wantErr := errx.NewErrorByPbCode(extproto.Code__1_00_DB, "查询设备失败")
+
+	gotResp, err := ServerFinalizeInterceptor(context.Background(), &struct{}{}, &grpc.UnaryServerInfo{FullMethod: "/test.Service/Unary"},
+		func(ctx context.Context, req any) (any, error) {
+			return wantResp, wantErr
+		})
+
+	if gotResp != wantResp {
+		t.Fatalf("response = %v, want %v", gotResp, wantResp)
+	}
+	assertRPCStatus(t, err, codes.Internal, "查询设备失败")
+	if reason := rpcErrorReason(t, err); reason != int(extproto.Code__1_00_DB) {
+		t.Fatalf("reason = %d, want %d", reason, int(extproto.Code__1_00_DB))
+	}
+}
+
+func TestServerFinalizeInterceptorNormalizesBareError(t *testing.T) {
+	_, err := ServerFinalizeInterceptor(context.Background(), &struct{}{}, &grpc.UnaryServerInfo{FullMethod: "/test.Service/Unary"},
+		func(ctx context.Context, req any) (any, error) {
+			return nil, errors.New("db down")
+		})
+
+	assertRPCStatus(t, err, codes.Internal, errx.SystemBusyMessage)
+	if reason := rpcErrorReason(t, err); reason != int(extproto.Code__1_00_UNKNOWN) {
+		t.Fatalf("reason = %d, want %d", reason, int(extproto.Code__1_00_UNKNOWN))
+	}
+}
+
+func TestServerFinalizeInterceptorRecoversPanic(t *testing.T) {
+	gotResp, err := ServerFinalizeInterceptor(context.Background(), &struct{}{}, &grpc.UnaryServerInfo{FullMethod: "/test.Service/Unary"},
+		func(ctx context.Context, req any) (any, error) {
+			panic("boom: password=secret")
+		})
+
+	if gotResp != nil {
+		t.Fatalf("response = %v, want nil", gotResp)
+	}
+	assertRPCStatus(t, err, codes.Internal, errx.SystemBusyMessage)
+}
+
+func TestServerFinalizeInterceptorWithLoggerInterceptor(t *testing.T) {
+	wantErr := errx.NewErrorByPbCode(extproto.Code__1_00_DB, "查询设备失败")
+
+	_, err := ServerFinalizeInterceptor(context.Background(), &struct{}{}, &grpc.UnaryServerInfo{FullMethod: "/test.Service/Unary"},
+		func(ctx context.Context, req any) (any, error) {
+			return LoggerInterceptor(ctx, req, &grpc.UnaryServerInfo{FullMethod: "/test.Service/Unary"},
+				func(ctx context.Context, req any) (any, error) {
+					return nil, wantErr
+				})
+		})
+
+	assertRPCStatus(t, err, codes.Internal, "查询设备失败")
+	if reason := rpcErrorReason(t, err); reason != int(extproto.Code__1_00_DB) {
+		t.Fatalf("reason = %d, want %d", reason, int(extproto.Code__1_00_DB))
+	}
+}
+
+func TestServerStreamFinalizeInterceptorKeepsBusinessCode(t *testing.T) {
+	wantErr := errx.NewErrorByPbCode(extproto.Code__1_00_DB, "查询设备失败")
+	baseCtx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(HeaderUserId, "user-2"))
+	stream := &serverStreamStub{ctx: baseCtx}
+
+	err := ServerStreamFinalizeInterceptor(&struct{}{}, stream, &grpc.StreamServerInfo{FullMethod: "/test.Service/Watch"},
+		func(srv any, stream grpc.ServerStream) error {
+			if got := authctx.GetUserId(stream.Context()); got != "user-2" {
+				t.Fatalf("user id = %q, want %q", got, "user-2")
+			}
+			return wantErr
+		})
+
+	assertRPCStatus(t, err, codes.Internal, "查询设备失败")
+	if reason := rpcErrorReason(t, err); reason != int(extproto.Code__1_00_DB) {
+		t.Fatalf("reason = %d, want %d", reason, int(extproto.Code__1_00_DB))
+	}
+}
+
+func TestServerStreamFinalizeInterceptorRecoversPanic(t *testing.T) {
+	stream := &serverStreamStub{ctx: context.Background()}
+
+	err := ServerStreamFinalizeInterceptor(&struct{}{}, stream, &grpc.StreamServerInfo{FullMethod: "/test.Service/Watch"},
+		func(srv any, stream grpc.ServerStream) error {
+			panic("boom: password=secret")
+		})
+
+	assertRPCStatus(t, err, codes.Internal, errx.SystemBusyMessage)
+}
+
+func TestServerStreamFinalizeInterceptorWithLoggerInterceptor(t *testing.T) {
+	wantErr := errx.NewErrorByPbCode(extproto.Code__1_00_DB, "查询设备失败")
+	stream := &serverStreamStub{ctx: context.Background()}
+
+	err := ServerStreamFinalizeInterceptor(&struct{}{}, stream, &grpc.StreamServerInfo{FullMethod: "/test.Service/Watch"},
+		func(srv any, stream grpc.ServerStream) error {
+			return StreamLoggerInterceptor(srv, stream, &grpc.StreamServerInfo{FullMethod: "/test.Service/Watch"},
+				func(srv any, stream grpc.ServerStream) error {
+					return wantErr
+				})
+		})
+
+	assertRPCStatus(t, err, codes.Internal, "查询设备失败")
+	if reason := rpcErrorReason(t, err); reason != int(extproto.Code__1_00_DB) {
+		t.Fatalf("reason = %d, want %d", reason, int(extproto.Code__1_00_DB))
+	}
+}
+
+// TestServerFinalizeInterceptorAddsDefaultDetailForTimeout 验证超时这类没有
+// ErrorInfo 的 status 会被补上默认 detail，客户端仍能按六位码处理。
+func TestServerFinalizeInterceptorAddsDefaultDetailForTimeout(t *testing.T) {
+	timeoutErr := status.Error(codes.DeadlineExceeded, "context deadline exceeded")
+
+	_, err := ServerFinalizeInterceptor(context.Background(), &struct{}{}, &grpc.UnaryServerInfo{FullMethod: "/test.Service/Slow"},
+		func(ctx context.Context, req any) (any, error) {
+			return nil, timeoutErr
+		})
+
+	assertRPCStatus(t, err, codes.DeadlineExceeded, "context deadline exceeded")
+	if reason := rpcErrorReason(t, err); reason != int(extproto.Code__1_00_TIMEOUT) {
+		t.Fatalf("reason = %d, want %d", reason, int(extproto.Code__1_00_TIMEOUT))
+	}
+}
+
 type serverStreamStub struct {
 	grpc.ServerStream
 	ctx context.Context

@@ -130,18 +130,17 @@ func TestToGRPCStatusAlwaysAddsDetail(t *testing.T) {
 	}
 }
 
-// 每个 extproto 码的 http_code 都必须登记在正向映射表中，且反向分类回同一个
-// http_code，保证业务码、gRPC Code、语义 HTTP 三者一致。
-func TestExtprotoHTTPCodeGRPCCodeRoundTrip(t *testing.T) {
+// 每个 extproto 码的 http_code 都必须登记在正向映射表中；反向分类只要存在即可，
+// 不要求严格可逆（413/429 都收敛到 ResourceExhausted，405/501 都收敛到 Unimplemented）。
+func TestExtprotoHTTPCodeGRPCCodeMapping(t *testing.T) {
 	for num := range extproto.Code_name {
 		httpCode := semanticHTTPCode(int(num))
 		grpcCode, ok := httpCodeToGRPCCode[httpCode]
 		if !ok {
 			t.Fatalf("code=%d http_code=%d 未登记 gRPC Code 映射", num, httpCode)
 		}
-		if got := GrpcCodeToHTTPStatus(grpcCode); got != httpCode {
-			t.Fatalf("code=%d http_code=%d grpc=%v 反向得到 %d，want %d",
-				num, httpCode, grpcCode, got, httpCode)
+		if _, ok := grpcCodeToHTTPStatus[grpcCode]; !ok {
+			t.Fatalf("code=%d http_code=%d grpc=%v 未登记反向分类", num, httpCode, grpcCode)
 		}
 	}
 }

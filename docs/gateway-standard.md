@@ -73,20 +73,20 @@ server := rest.MustNewServer(c.RestConf,
 )
 ```
 
-见 `app/livegtw/livegtw.go`。`gtwx.UnauthorizedHandler` 先写 `200 + 100401`；go-zero 随后补写的 401 会被 `HeaderOnceResponseWriter` 丢弃，因此响应仍是信封（实现注释见 `common/gtwx/response.go`）。
+见 `app/livegtw/livegtw.go`。`gtwx.UnauthorizedHandler` 先写 `200 + 100110`；go-zero 随后补写的 401 会被 `HeaderOnceResponseWriter` 丢弃，因此响应仍是信封（实现注释见 `common/gtwx/response.go`）。
 
 JWT 通过后，业务中间件负责把 claims 桥接到 `authctx` 并校验身份：
 
-- `app/livegtw/internal/middleware/meetingauthmiddleware.go`：没有 `userId` 时返回 `100401`，文案 `缺少用户身份`。
+- `app/livegtw/internal/middleware/meetingauthmiddleware.go`：没有 `userId` 时返回 `100110`，文案 `缺少用户身份`。
 - `app/opengtw/internal/middleware/userauthmiddleware.go`：只做 `authctx.BridgeJWTClaims`，管理面身份由下游 logic 使用。
 
 ### 2.3 Basic 鉴权
 
 只有开放平台使用 Basic。实现见 `app/opengtw/internal/middleware/openauthmiddleware.go`：
 
-- 缺少/非法凭据 → `130102`；应用不存在或已停用 → `130101`（两者不区分，避免泄露应用状态）。
+- 缺少/非法凭据 → `130002`；应用不存在或已停用 → `130001`（两者不区分，避免泄露应用状态）。
 - 密钥只存 `sha256`，用常数时间比较（`internal/security`）；凭据缓存 60s，管理面变更后立即刷新。
-- 应用开启 `signRequired` 后，Basic 鉴权之外还要校验 `X-Sign` 请求头（签名覆盖原始 body 字节，`timestamp`/`nonce` 在 body 中），失败返回 `130105`；依赖 `SignKeyEncryptionKey` 与 Redis，未配置时管理面拒绝开启签名，已开启应用的签名请求会因依赖缺失被拒绝。
+- 应用开启 `signRequired` 后，Basic 鉴权之外还要校验 `X-Sign` 请求头（签名覆盖原始 body 字节，`timestamp`/`nonce` 在 body 中），失败返回 `130006`；依赖 `SignKeyEncryptionKey` 与 Redis，未配置时管理面拒绝开启签名，已开启应用的签名请求会因依赖缺失被拒绝。
 - 鉴权失败同样走 `gtwx.WriteError`，HTTP 状态为 200。
 
 ### 2.4 公开路由
@@ -143,9 +143,9 @@ func GetMeetingHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 | --- | --- | --- |
 | `gtwx.WriteOK(ctx, w, data)` | 成功 | `200 {"code":0,"msg":"ok","data":...}` |
 | `gtwx.WriteError(ctx, w, err)` | 业务/下游错误 | `200 {"code":<六位>,"msg":"..."}` |
-| `gtwx.WriteParseError(ctx, w, err)` | 参数解析失败 | `200 {"code":100101,"msg":<解析错误>}` |
+| `gtwx.WriteParseError(ctx, w, err)` | 参数解析失败 | `200 {"code":100020,"msg":<解析错误>}` |
 
-不要直接调用 `xhttp.JsonBaseResponseCtx`：它只套信封，遇到 gRPC 错误时取的是 gRPC 数字码（3/5/16），遇到普通 error 时是 -1。`gtwx.WriteError` 会先经 `gtwx.NormalizeError` 归一化并校验：码必须在 `extproto` 枚举中，否则降级为 `100999` 并写日志。
+不要直接调用 `xhttp.JsonBaseResponseCtx`：它只套信封，遇到 gRPC 错误时取的是 gRPC 数字码（3/5/16），遇到普通 error 时是 -1。`gtwx.WriteError` 会先经 `gtwx.NormalizeError` 归一化并校验：码必须在 `extproto` 枚举中，否则降级为 `100002` 并写日志。
 
 ### 3.3 X-Request-Id
 
@@ -162,13 +162,14 @@ server.Use(gtwx.RequestIDMiddleware)
 
 ## 4. 错误码使用
 
-### 4.1 extproto v2
+### 4.1 extproto 错误码
 
-错误码为 `ABCDEF` 六位：`A` 来源、`BC` 功能模块、`DEF` 模块内序号。定义在 `third_party/extproto.proto`，语义说明见 `docs/error-codes.md`。
+错误码为 `ABCDEF` 六位：`A` 来源、`BC` 功能模块、`DEF` 模块内唯一编号（不承载业务语义）。定义在 `third_party/extproto.proto`，三层映射、语义说明和新增码分配规则见 `docs/error-codes.md`。
 
-- `A`：`0` 成功、`1` 平台、`3` 设备、`5` 云端，其余预留。
+- `A`：`0` 成功、`1` 平台，其余预留；设备/第三方厂商码是独立体系，不属于平台码。
+- gRPC Code 在代码中统一使用 `google.golang.org/grpc/codes` 的常量（如 `codes.InvalidArgument`），禁止写裸数字。
 - `BC`：当前只启用 `00` 通用、`30` 开放平台；新增功能域必须先申请，不抢段。
-- `00` 内按 DEF 分段：`100-199` 参数、`200-299` 数据、`300-399` 缓存、`400-499` 认证、`500-599` 业务、`600-699` 外部、`700-799` 限流、`800-899` 网关、`900-999` 兜底。
+- `DEF`：模块内唯一编号，`001-999` 可用，`000` 保留；不按业务语义分段，也不要求连续或从 `001` 开始，新码取任意空闲号，用尽后申请新 `BC`。
 - `0` 只能表示成功，禁止用于构造错误。
 
 ### 4.2 业务服务：构造错误
@@ -188,7 +189,7 @@ return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 - `NewErrorByPbCodeWrap` 遇到已带 extproto 码的 cause 时原样返回，禁止中间层重包覆盖，RPC 链路码值全程保真。
 - 实现见 `common/errx/error.go`；业务侧示例见 `app/live/internal/logic/startmeetingrecordlogic.go`。
 
-> `http_code=429` 已映射为 `ResourceExhausted`；`_1_00_RATE_LIMITED (100701)` 会以限流语义返回，不会被误判为 500。
+> `http_code=429` 已映射为 `ResourceExhausted`；`_1_00_RATE_LIMITED (100220)` 会以限流语义返回，不会被误判为 500。
 
 ### 4.3 网关：错误归一化与折叠
 
@@ -198,33 +199,33 @@ return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
   <img src="./images/diagrams/gateway-error-normalize.png" alt="错误码归一化流程：NormalizeError 到 PublicError，IsDefinedCode 校验后得到六位码，再由网关按 Error.Fold 配置决定是否折叠" style="max-width: 78%; height: auto;" />
 </div>
 
-- `CodeFromStatus` 只在 `reason` 是 extproto 中已登记的码时采用；未登记的数字码按 `100999 系统繁忙` 处理，非数字 reason 走 gRPC Code 映射（`common/errx/codec.go`）。
-- 折叠是网关策略（`common/gtwx/fold.go`）：默认不配置即统一透传；网关在 `etc/*.yaml` 的 `Error.Fold` 中列出 `Codes` 后，命中的码折叠为 `Target`（默认 `100999`），`KeepMsg=false` 时文案统一为 `系统繁忙`。`100603` 固定透传，不参与折叠。
-- 普通 `error`（未结构化、也未携带 `CodeMsg`）一律返回 `100999 系统繁忙`，原始文本只写服务端日志。因此业务与下游必须先转换成 extproto 错误，不能把 SQL、地址、堆栈直接抛给网关。
+- `CodeFromStatus` 只在 `reason` 是 extproto 中已登记的码时采用；未登记的数字码按 `100002 系统繁忙` 处理，非数字 reason 走 gRPC Code 映射（`common/errx/codec.go`）。
+- 折叠是网关策略（`common/gtwx/fold.go`）：默认不配置即统一透传；网关在 `etc/*.yaml` 的 `Error.Fold` 中列出 `Codes` 后，命中的码折叠为 `Target`（默认 `100002`），`KeepMsg=false` 时文案统一为 `系统繁忙`。`100184` 固定透传，不参与折叠。
+- 普通 `error`（未结构化、也未携带 `CodeMsg`）一律返回 `100002 系统繁忙`，原始文本只写服务端日志。因此业务与下游必须先转换成 extproto 错误，不能把 SQL、地址、堆栈直接抛给网关。
 
 ### 4.4 设备/云端原始码（DJI）
 
 `extproto` 是唯一的平台信封码表。DJI 的 `dji_error_code.proto` 是独立的厂商错误码体系，与平台码不互通、不映射、不透传，不进入信封，也不写入 `ErrorInfo.reason`：
 
 - 设备执行结果走业务字段：`CommonRes{code:-1, reasonCode:312014}` → HTTP `data.reasonCode`，信封 `code` 保持 `0`。
-- 网关 `NormalizeError` 只认 extproto 中已登记的码；未登记的原始码一律降级为 `100999 系统繁忙`，原文进日志。
-- 第三方平台的故障（超时、鉴权、限流、5xx）由厂商适配层转换成 extproto 码后再以 error 返回，见 `docs/error-codes.md` §5.2。
+- 网关 `NormalizeError` 只认 extproto 中已登记的码；未登记的原始码一律降级为 `100002 系统繁忙`，原文进日志。
+- 第三方平台的故障（超时、鉴权、限流、5xx）由厂商适配层转换成 extproto 码后再以 error 返回，见 `docs/error-codes.md` §8.1。
 
 ## 5. 统一出口
 
 | 场景 | 统一出口 | `code` | HTTP |
 | --- | --- | --- | --- |
-| JWT 缺失/过期/签名错误 | `rest.WithUnauthorizedCallback(gtwx.UnauthorizedHandler)` | `100401` | 200 |
-| JWT 有效但无用户身份（livegtw） | `MeetingAuth` → `gtwx.WriteError` | `100401`（`缺少用户身份`） | 200 |
-| Basic 凭据缺失/错误 | `OpenAuthMiddleware` → `gtwx.WriteError` | `130102` | 200 |
-| 应用不存在/已停用 | `OpenAuthMiddleware` → `gtwx.WriteError` | `130101` | 200 |
-| 参数解析失败 | `gtwx.WriteParseError` | `100101` | 200 |
+| JWT 缺失/过期/签名错误 | `rest.WithUnauthorizedCallback(gtwx.UnauthorizedHandler)` | `100110` | 200 |
+| JWT 有效但无用户身份（livegtw） | `MeetingAuth` → `gtwx.WriteError` | `100110`（`缺少用户身份`） | 200 |
+| Basic 凭据缺失/错误 | `OpenAuthMiddleware` → `gtwx.WriteError` | `130002` | 200 |
+| 应用不存在/已停用 | `OpenAuthMiddleware` → `gtwx.WriteError` | `130001` | 200 |
+| 参数解析失败 | `gtwx.WriteParseError` | `100020` | 200 |
 | 下游 gRPC 业务错误 | `gtwx.WriteError` | 原始六位码 | 200 |
-| 下游基础设施错误 | `gtwx.WriteError` | 默认透传；配置命中时 `100999` | 200 |
-| 未在 extproto 登记的码 | `gtwx.WriteError` → `NormalizeError` | `100999`（原文进日志） | 200 |
-| 未转换的普通 `error` | `gtwx.WriteError` → `NormalizeError` | `100999 系统繁忙` | 200 |
-| 路由不存在 | `rest.WithNotFoundHandler(gtwx.NotFoundHandler)` | `100801` | 200 |
-| 方法不允许 | `rest.WithNotAllowedHandler(gtwx.MethodNotAllowedHandler)` | `100802` | 200 |
+| 下游基础设施错误 | `gtwx.WriteError` | 默认透传；配置命中时 `100002` | 200 |
+| 未在 extproto 登记的码 | `gtwx.WriteError` → `NormalizeError` | `100002`（原文进日志） | 200 |
+| 未转换的普通 `error` | `gtwx.WriteError` → `NormalizeError` | `100002 系统繁忙` | 200 |
+| 路由不存在 | `rest.WithNotFoundHandler(gtwx.NotFoundHandler)` | `100240` | 200 |
+| 方法不允许 | `rest.WithNotAllowedHandler(gtwx.MethodNotAllowedHandler)` | `100241` | 200 |
 
 以下不是信封，属于框架/部署层行为，排查时不要误判为漏接：
 
@@ -236,7 +237,7 @@ return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 | nginx 不可达 | `502/504` | nginx |
 | gRPC 直连 | gRPC status + `reason` | 无 HTTP 信封 |
 
-以上内置行为的现有记录见 `docs/error-codes.md` §6.4；本文未新增对这些响应的包装。
+以上内置行为的现有记录见 `docs/error-codes.md` §7.4；本文未新增对这些响应的包装。
 
 ## 6. 明确禁止事项
 
@@ -278,12 +279,12 @@ return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询会议
 至少覆盖：
 
 - [ ] 成功信封：HTTP 200、`code=0`、`data` 正确（参考 `app/opengtw/internal/handler/gateway/gatewayhandler_test.go` 的 `TestGatewaySuccessEnvelope`）。
-- [ ] 参数错误：非法 JSON → `100101`（`TestGatewayInvalidJSONReturnsParseError`）。
-- [ ] 鉴权失败：JWT 缺失/身份缺失 → `100401`（`app/livegtw/internal/middleware/meetingauthmiddleware_test.go`）；Basic 失败 → `130101/130102`（`app/opengtw/internal/middleware/openauthmiddleware_test.go`）。
-- [ ] 404/405/未认证兜底 → `100801/100802/100401`（`common/gtwx/response_test.go` 的 `TestGatewayFallbackHandlers`）。
-- [ ] 下游基础设施错误默认透传；配置 `Error.Fold` 命中后折叠为 `100999 系统繁忙`（`TestGatewayPassesThroughInfrastructureErrorByDefault`、`TestGatewayFoldsInfrastructureErrorWhenConfigured`、`TestWriteErrorFoldsConfiguredCode`）。
-- [ ] `100603` 即使配置在 `Error.Fold.Codes` 中也保持透传（`TestFoldPolicyNeverFoldsThirdPartyAPI`、`TestWriteErrorNeverFoldsThirdPartyAPI`）；非法 `Target` 回退到 `100999`（`TestFoldPolicyInvalidTargetFallsBack`）。
-- [ ] 未登记码/设备原始码统一为 `100999 系统繁忙`（`TestWriteErrorFoldsVendorCode`、`...OverGRPC`）。
+- [ ] 参数错误：非法 JSON → `100020`（`TestGatewayInvalidJSONReturnsParseError`）。
+- [ ] 鉴权失败：JWT 缺失/身份缺失 → `100110`（`app/livegtw/internal/middleware/meetingauthmiddleware_test.go`）；Basic 失败 → `130001/130002`（`app/opengtw/internal/middleware/openauthmiddleware_test.go`）。
+- [ ] 404/405/未认证兜底 → `100240/100241/100110`（`common/gtwx/response_test.go` 的 `TestGatewayFallbackHandlers`）。
+- [ ] 下游基础设施错误默认透传；配置 `Error.Fold` 命中后折叠为 `100002 系统繁忙`（`TestGatewayPassesThroughInfrastructureErrorByDefault`、`TestGatewayFoldsInfrastructureErrorWhenConfigured`、`TestWriteErrorFoldsConfiguredCode`）。
+- [ ] `100184` 即使配置在 `Error.Fold.Codes` 中也保持透传（`TestFoldPolicyNeverFoldsThirdPartyAPI`、`TestWriteErrorNeverFoldsThirdPartyAPI`）；非法 `Target` 回退到 `100002`（`TestFoldPolicyInvalidTargetFallsBack`）。
+- [ ] 未登记码/设备原始码统一为 `100002 系统繁忙`（`TestWriteErrorFoldsVendorCode`、`...OverGRPC`）。
 
 执行：
 
@@ -303,16 +304,16 @@ BASE_URL=http://127.0.0.1:11002   # livegtw；opengtw 用 11005，路径换成 /
 # 1) 公开探针：期望 200 + code=0
 curl -sS -i "$BASE_URL/v1/health"
 
-# 2) 未认证访问受保护接口：期望 200 + code=100401
+# 2) 未认证访问受保护接口：期望 200 + code=100110
 curl -sS -i "$BASE_URL/live/v1/listMeetings"
 
-# 3) 路由不存在：期望 200 + code=100801
+# 3) 路由不存在：期望 200 + code=100240
 curl -sS -i "$BASE_URL/live/v1/not-exist"
 
-# 4) 方法不允许（对公开 GET 路由发 POST）：期望 200 + code=100802
+# 4) 方法不允许（对公开 GET 路由发 POST）：期望 200 + code=100241
 curl -sS -i -X POST "$BASE_URL/live/v1/joinMeetingByTicket"
 
-# 5) 参数解析失败（公开接口 + 非法 JSON）：期望 200 + code=100101
+# 5) 参数解析失败（公开接口 + 非法 JSON）：期望 200 + code=100020
 curl -sS -i -X POST "$BASE_URL/live/v1/generateToken" \
   -H 'Content-Type: application/json' \
   -d 'not-json'
@@ -345,7 +346,7 @@ curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 | 文件 | 作用 |
 | --- | --- |
 | `third_party/extproto.proto` | 六位错误码定义与 `http_code` |
-| `docs/error-codes.md` | 错误码语义、v1→v2 映射、网关契约 |
+| `docs/error-codes.md` | 错误码语义、extproto/gRPC/HTTP 映射、网关契约 |
 | `common/gtwx/response.go` | `WriteError/WriteOK` 等统一信封写出口 |
 | `common/errx/normalize.go` | `SuccessCode`、`PublicError`、`NormalizeError` |
 | `common/errx/codec.go` | `CodeFromStatus`、`IsDefinedCode`、`ErrorMessage` |
@@ -357,10 +358,10 @@ curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 | `common/djisdk/error.go` | DJI 原始码 `PublicCode` / `GRPCStatus` |
 | `app/livegtw/livegtw.go` | livegtw 统一出口接线 |
 | `app/livegtw/internal/handler/routes.go` | JWT、中间件、前缀的实际生成结果 |
-| `app/livegtw/internal/middleware/meetingauthmiddleware.go` | 身份缺失 → `100401` |
+| `app/livegtw/internal/middleware/meetingauthmiddleware.go` | 身份缺失 → `100110` |
 | `app/livegtw/internal/handler/webhook/webhookhandler.go` | webhook 协议例外 |
 | `app/opengtw/opengtw.go` | opengtw 统一出口接线 |
-| `app/opengtw/internal/middleware/openauthmiddleware.go` | Basic → `130101/130102` |
+| `app/opengtw/internal/middleware/openauthmiddleware.go` | Basic → `130001/130002` |
 | `app/opengtw/internal/handler/gateway/gatewayhandler.go` | 开放面转发与 `tid` 回显 |
 | `app/opengtw/internal/logic/gateway/gatewaylogic.go` | 下游错误归一化（不折叠） |
 | `common/gtwx/response_test.go`、`common/errx/codec_test.go` | 公共出口与错误码测试 |

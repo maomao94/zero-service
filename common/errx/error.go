@@ -19,7 +19,7 @@ import (
 //
 // 错误对象满足 gRPC status 接口：六位码写入 ErrorInfo.reason，gRPC Code 由
 // extproto 的 http_code 推导，message 为可安全展示的文案。
-// 0 是唯一成功码，传入 0 或未登记的码时统一降级为 100998，避免把失败当成功。
+// 0 是唯一成功码，传入 0 或未登记的码时统一降级为 100001，避免把失败当成功。
 func NewErrorByPbCode(code extproto.Code, args ...any) error {
 	if code == extproto.Code__0_OK {
 		return &Error{
@@ -92,7 +92,7 @@ func IsErrorByPbCode(err error, code extproto.Code) bool {
 
 	st, ok := status.FromError(err)
 	if !ok || st.Code() == codes.OK {
-		// 普通错误没有平台码，不能按 100999 兜底匹配。
+		// 普通错误没有平台码，不能按 100002 兜底匹配。
 		return false
 	}
 	return codeFromGRPCStatus(st.Code()) == int(code)

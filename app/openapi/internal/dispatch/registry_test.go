@@ -41,7 +41,7 @@ func TestRegistryUnknownMethod(t *testing.T) {
 	registry := NewRegistry(&fakePodEngine{}, nil)
 	_, err := registry.Invoke(context.Background(), "pod.unknown", `{}`)
 	if !errx.IsErrorByPbCode(err, extproto.Code__1_30_METHOD_NOT_OPEN) {
-		t.Fatalf("error = %v, want 130103", err)
+		t.Fatalf("error = %v, want 130004", err)
 	}
 }
 
@@ -50,7 +50,7 @@ func TestRegistryInvalidData(t *testing.T) {
 	for _, data := range []string{`{"limit":"abc"}`, `{"unknownField":1}`, `{`} {
 		_, err := registry.Invoke(context.Background(), MethodPodList, data)
 		if !errx.IsErrorByPbCode(err, extproto.Code__1_00_PARAM) {
-			t.Fatalf("data %s error = %v, want 100101", data, err)
+			t.Fatalf("data %s error = %v, want 100020", data, err)
 		}
 	}
 }

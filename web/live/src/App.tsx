@@ -100,7 +100,7 @@ export default function App() {
 
   const login = (nextToken: string) => { if (nextToken.split('.').length !== 3) throw new ApiError('Token 格式不正确，应为标准 JWT', 400); localStorage.setItem('live_jwt', nextToken); setToken(nextToken); setGuest(false); setScreen('lobby') }
   const logout = () => { localStorage.removeItem('live_jwt'); setToken(''); setJoin(null); setInvitations([]); setActiveInvitationId(null); setGuest(false); setScreen('auth') }
-  // 任意 API 返回认证失败（信封 code 100401/130102，如录制操作时 token 过期）统一登出
+  // 任意 API 返回认证失败（信封 code 100110/130002，如录制操作时 token 过期）统一登出
   useEffect(() => {
     const onExpired = () => { logout(); notify('登录已失效，请重新登录', 'warning') }
     window.addEventListener('live:session-expired', onExpired)

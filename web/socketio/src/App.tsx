@@ -7,7 +7,7 @@ import {
   Copy, Check, AlertCircle,
   Info, Wifi, WifiOff, Loader2,
   Eye, Terminal, ChevronDown, ChevronRight,
-  CheckCircle2, Circle, Hash, RefreshCw, KeyRound
+  Hash, RefreshCw, KeyRound
 } from 'lucide-react'
 import { decodeJwtClaims } from './lib/token'
 import { buildClaims, signJwt, type AuthType } from './lib/jwt'
@@ -82,8 +82,9 @@ export default function App() {
   const [logFilter, setLogFilter] = useState<LogType | 'all'>('all')
   const [activeTab, setActiveTab] = useState<TabType>('config')
   const [copied, setCopied] = useState<string | null>(null)
-  const [consoleOpen, setConsoleOpen] = useState(true)
-  const [consoleHeight, setConsoleHeight] = useState(260)
+  // 默认收起控制台，优先保证配置区完整可见；开始连接时会自动展开。
+  const [consoleOpen, setConsoleOpen] = useState(false)
+  const [consoleHeight, setConsoleHeight] = useState(200)
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set())
   const [unreadCount, setUnreadCount] = useState(0)
   const consoleBodyRef = useRef<HTMLDivElement>(null)
@@ -240,18 +241,20 @@ export default function App() {
 
   // 连接服务器
   const connect = useCallback(() => {
-    if (connectionState === 'connected' || connectionState === 'connecting') {
+    if (connectionState !== 'disconnected') {
       return
     }
 
     addLog('system', `正在连接到 ${serverUrl}`)
     setConnectionState('connecting')
+    setConsoleOpen(true)
 
     const socketOptions: Record<string, unknown> = {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      reconnectionDelayMax: 2000,
     }
 
     // 构建 auth 对象
@@ -298,18 +301,26 @@ export default function App() {
       }
     })
 
-    newSocket.on('reconnect_attempt', () => {
+    // reconnect_* 事件由 Manager 发出，不是 Socket 实例。
+    newSocket.io.on('reconnect_attempt', (attempt) => {
       setConnectionState('reconnecting')
-      addLog('system', '尝试重连...')
+      addLog('system', `尝试重连（第 ${attempt} 次）...`)
+    })
+
+    newSocket.io.on('reconnect_failed', () => {
+      setConnectionState('disconnected')
+      addLog('error', '重连失败：已达最大重试次数，请检查网关地址或 Token')
     })
 
     newSocket.on('disconnect', (reason) => {
       setConnectionState('disconnected')
       setSocketId('')
+      setRegisteredEvents(prev => prev.map(event => ({ ...event, registered: false })))
       addLog('disconnect', `连接断开，原因: ${reason}`)
     })
 
     newSocket.on('connect_error', (error) => {
+      setConnectionState(newSocket.active ? 'reconnecting' : 'disconnected')
       addLog('error', `连接错误: ${error.message}`)
     })
 
@@ -325,6 +336,11 @@ export default function App() {
 
     setSocket(newSocket)
   }, [serverUrl, authToken, eventName, addLog, registeredEvents, saveRegisteredEvents, connectionState, recordReceive])
+
+  // 卸载时释放 Socket，避免热更新或路由切换留下悬挂连接
+  useEffect(() => () => {
+    socket?.disconnect()
+  }, [socket])
 
   // 断开连接
   const disconnect = useCallback(() => {
@@ -531,10 +547,10 @@ export default function App() {
   // 获取连接状态颜色
   const getConnectionColor = () => {
     switch (connectionState) {
-      case 'connected': return '#10b981'
-      case 'connecting': return '#f59e0b'
-      case 'reconnecting': return '#f59e0b'
-      case 'disconnected': return '#ef4444'
+      case 'connected': return '#0f7a5a'
+      case 'connecting': return '#a16207'
+      case 'reconnecting': return '#a16207'
+      case 'disconnected': return '#b91c1c'
     }
   }
 
@@ -563,12 +579,12 @@ export default function App() {
   // 获取日志类型颜色
   const getLogColor = (type: LogType) => {
     switch (type) {
-      case 'system': return '#6366f1'
-      case 'connect': return '#10b981'
-      case 'disconnect': return '#f59e0b'
-      case 'message': return '#3b82f6'
-      case 'receive': return '#8b5cf6'
-      case 'error': return '#ef4444'
+      case 'system': return '#4f46e5'
+      case 'connect': return '#0f7a5a'
+      case 'disconnect': return '#a16207'
+      case 'message': return '#2563eb'
+      case 'receive': return '#7c3aed'
+      case 'error': return '#b91c1c'
     }
   }
 
@@ -644,10 +660,22 @@ export default function App() {
         <div className="topbar-actions">
           <button
             type="button"
+            className="topbar-ghost"
+            onClick={() => setConsoleOpen((prev) => !prev)}
+            aria-pressed={consoleOpen}
+            aria-label={consoleOpen ? '收起控制台' : '展开控制台'}
+            title={consoleOpen ? '收起控制台' : '展开控制台'}
+          >
+            <Terminal size={15} />
+            <span>控制台</span>
+            {!consoleOpen && unreadCount > 0 && <i className="topbar-ghost-dot" aria-hidden="true" />}
+          </button>
+          <button
+            type="button"
             className="btn btn-connect"
             data-connected={connected}
             onClick={connected ? disconnect : connect}
-            disabled={connectionState === 'connecting'}
+            disabled={connectionState === 'connecting' || connectionState === 'reconnecting'}
           >
             {connected ? (
               <>
@@ -659,21 +687,17 @@ export default function App() {
                 <Loader2 size={15} className="spin" />
                 连接中
               </>
+            ) : connectionState === 'reconnecting' ? (
+              <>
+                <Loader2 size={15} className="spin" />
+                重连中
+              </>
             ) : (
               <>
                 <Plug size={15} />
                 连接
               </>
             )}
-          </button>
-          <button
-            type="button"
-            className="icon-btn topbar-console"
-            onClick={() => setConsoleOpen((prev) => !prev)}
-            aria-label={consoleOpen ? '收起控制台' : '展开控制台'}
-            aria-pressed={consoleOpen}
-          >
-            <Terminal size={16} />
           </button>
         </div>
       </header>
@@ -743,11 +767,10 @@ export default function App() {
 
           <div className="workspace-scroll">
             {activeTab === 'config' && (
-              <>
-              <div className="grid-2">
+              <div className="page grid-2 grid-2--config">
                 <section className="card">
                   <header className="card-head">
-                    <h2>连接参数</h2>
+                    <h2>连接网关</h2>
                     <p>连接成功后地址与 Token 会被锁定。</p>
                   </header>
                   <div className="card-body">
@@ -778,7 +801,7 @@ export default function App() {
                         placeholder="粘贴 JWT Token"
                         disabled={connected}
                       />
-                      <small>可直接粘贴，或在下方「本地签发 Token」生成；不再依赖 live 子系统。</small>
+                      <small>可直接粘贴，或在右侧「本地签发 Token」生成。</small>
                     </label>
 
                     <div className="form-actions">
@@ -786,7 +809,7 @@ export default function App() {
                         type="button"
                         className="btn btn-primary"
                         onClick={connected ? disconnect : connect}
-                        disabled={connectionState === 'connecting'}
+                        disabled={connectionState === 'connecting' || connectionState === 'reconnecting'}
                       >
                         {connected ? (
                           <>
@@ -797,6 +820,11 @@ export default function App() {
                           <>
                             <Loader2 size={15} className="spin" />
                             连接中…
+                          </>
+                        ) : connectionState === 'reconnecting' ? (
+                          <>
+                            <Loader2 size={15} className="spin" />
+                            重连中…
                           </>
                         ) : (
                           <>
@@ -819,198 +847,175 @@ export default function App() {
                     </div>
 
                     <div className="card-divider" />
-                    <dl className="event-facts">
-                      <div>
-                        <dt>传输</dt>
-                        <dd>WebSocket · Polling 回退</dd>
-                      </div>
-                      <div>
-                        <dt>重连</dt>
-                        <dd>5 次 · 1s 间隔</dd>
-                      </div>
-                      <div>
-                        <dt>认证</dt>
-                        <dd>JWT（可选）</dd>
-                      </div>
-                    </dl>
-                  </div>
-                </section>
-
-                <div className="stack">
-                <section className="card">
-                  <header className="card-head">
-                    <h2>Token Claims</h2>
-                    <p>{authToken ? `${Object.keys(tokenClaims).length} 个字段` : '尚未粘贴 Token'}</p>
-                  </header>
-                  <div className="card-body">
-                    {authToken ? (
-                      Object.keys(tokenClaims).length > 0 ? (
-                        <dl className="claims-list">
-                          {Object.entries(tokenClaims).map(([key, value]) => (
-                            <div key={key} className="claim-item">
-                              <dt>{key}</dt>
-                              <dd>{String(value)}</dd>
-                            </div>
-                          ))}
-                        </dl>
-                      ) : (
-                        <div className="empty">
-                          <Eye size={18} />
-                          <p>Token 无法解析</p>
-                          <small>请确认粘贴的是完整的 JWT。</small>
-                        </div>
-                      )
-                    ) : (
-                      <div className="empty">
-                        <Eye size={18} />
-                        <p>粘贴 Token 后解析 claims</p>
-                        <small>claims 只用于本地展示，不会上传。</small>
-                      </div>
-                    )}
-                  </div>
-                </section>
-
-                <section className="card card--soft">
-                  <header className="card-head">
-                    <h2>连接检查</h2>
-                    <p>{connected ? '会话已建立' : '按顺序确认'}</p>
-                  </header>
-                  <div className="card-body">
-                    <ul className="checklist">
+                    <div className="conn-chain" aria-label="连接检查">
                       {[
                         {
-                          label: '网关地址',
+                          label: '地址',
                           done: serverUrl.trim().length > 0,
                           value: serverUrl.trim() ? '已填写' : '待填写',
                         },
                         {
-                          label: 'JWT 认证',
+                          label: '认证',
                           done: Boolean(authToken),
                           value: authToken ? '已粘贴' : '可选',
                         },
                         {
-                          label: 'Socket 会话',
+                          label: '会话',
                           done: connected,
                           value: connected ? '已连接' : '未连接',
                         },
                         {
-                          label: '事件监听',
+                          label: '监听',
                           done: registeredEvents.length > 0,
                           value: registeredEvents.length > 0 ? `${registeredEvents.length} 个` : '未注册',
                         },
-                      ].map((item) => (
-                        <li key={item.label} data-done={item.done}>
-                          {item.done ? <CheckCircle2 size={14} /> : <Circle size={14} />}
-                          <span className="check-label">{item.label}</span>
-                          <span className="check-value">{item.value}</span>
-                        </li>
+                      ].map((step) => (
+                        <div key={step.label} className="conn-step" data-done={step.done}>
+                          <span className="conn-step-dot" aria-hidden="true" />
+                          <span className="conn-step-label">{step.label}</span>
+                          <span className="conn-step-value">{step.value}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
+                    <p className="conn-meta">WebSocket · Polling 回退 · 重连 5 次 / 1–2s 间隔 · JWT 认证可选</p>
                   </div>
                 </section>
-                </div>
-              </div>
-              <section className="card card--soft token-card">
-                <header className="card-head">
-                  <h2>本地签发 Token</h2>
-                  <p>HS256 · 不请求后端</p>
-                </header>
-                <div className="card-body">
-                  <div className="token-form">
-                    <div className="token-form-row">
-                      <div className="token-type-tabs">
-                        <button
-                          type="button"
-                          data-active={tokenAuthType === 'user'}
-                          onClick={() => {
-                            setTokenAuthType('user')
-                            setTokenId('user-10001')
-                            setTokenName('测试用户')
-                          }}
-                        >
-                          用户
-                        </button>
-                        <button
-                          type="button"
-                          data-active={tokenAuthType === 'device'}
-                          onClick={() => {
-                            setTokenAuthType('device')
-                            setTokenId('device-001')
-                            setTokenName('测试设备')
-                          }}
-                        >
-                          设备
-                        </button>
-                      </div>
-                      <label className="field">
-                        <span className="field-label">ID</span>
-                        <input
-                          type="text"
-                          value={tokenId}
-                          onChange={(e) => setTokenId(e.target.value)}
-                          placeholder={tokenAuthType === 'user' ? 'user-10001' : 'device-001'}
-                        />
-                      </label>
-                      <label className="field">
-                        <span className="field-label">名称</span>
-                        <input
-                          type="text"
-                          value={tokenName}
-                          onChange={(e) => setTokenName(e.target.value)}
-                          placeholder={tokenAuthType === 'user' ? '测试用户' : '测试设备'}
-                        />
-                      </label>
-                      {tokenAuthType === 'user' && (
+
+                <div className="stack">
+                  <section className="card">
+                    <header className="card-head">
+                      <h2>Token Claims</h2>
+                      <p>{authToken ? `${Object.keys(tokenClaims).length} 个字段` : '尚未粘贴 Token'}</p>
+                    </header>
+                    <div className="card-body">
+                      {authToken ? (
+                        Object.keys(tokenClaims).length > 0 ? (
+                          <dl className="claims-list">
+                            {Object.entries(tokenClaims).map(([key, value]) => (
+                              <div key={key} className="claim-item">
+                                <dt>{key}</dt>
+                                <dd>{String(value)}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        ) : (
+                          <div className="claims-empty claims-empty--warn">
+                            <AlertCircle size={16} />
+                            <div>
+                              <p>Token 无法解析</p>
+                              <small>请确认粘贴的是完整的 JWT。</small>
+                            </div>
+                          </div>
+                        )
+                      ) : (
+                        <div className="claims-empty">
+                          <Eye size={16} />
+                          <div>
+                            <p>粘贴 Token 后在这里解析 claims</p>
+                            <small>只用于本地展示，不会上传。</small>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+
+                  <section className="card">
+                    <header className="card-head">
+                      <h2>本地签发 Token</h2>
+                      <p>HS256 · 不请求后端</p>
+                    </header>
+                    <div className="card-body">
+                      <div className="token-grid">
+                        <div className="token-type-tabs">
+                          <button
+                            type="button"
+                            data-active={tokenAuthType === 'user'}
+                            onClick={() => {
+                              setTokenAuthType('user')
+                              setTokenId('user-10001')
+                              setTokenName('测试用户')
+                            }}
+                          >
+                            用户
+                          </button>
+                          <button
+                            type="button"
+                            data-active={tokenAuthType === 'device'}
+                            onClick={() => {
+                              setTokenAuthType('device')
+                              setTokenId('device-001')
+                              setTokenName('测试设备')
+                            }}
+                          >
+                            设备
+                          </button>
+                        </div>
                         <label className="field">
-                          <span className="field-label">部门</span>
+                          <span className="field-label">有效期（秒）</span>
                           <input
-                            type="text"
-                            value={tokenDept}
-                            onChange={(e) => setTokenDept(e.target.value)}
-                            placeholder="dept-001"
+                            type="number"
+                            min={60}
+                            value={tokenExpire}
+                            onChange={(e) => setTokenExpire(Number(e.target.value))}
                           />
                         </label>
-                      )}
-                      <label className="field token-expire">
-                        <span className="field-label">有效期（秒）</span>
-                        <input
-                          type="number"
-                          min={60}
-                          value={tokenExpire}
-                          onChange={(e) => setTokenExpire(Number(e.target.value))}
-                        />
-                      </label>
+                        <label className="field">
+                          <span className="field-label">ID</span>
+                          <input
+                            type="text"
+                            value={tokenId}
+                            onChange={(e) => setTokenId(e.target.value)}
+                            placeholder={tokenAuthType === 'user' ? 'user-10001' : 'device-001'}
+                          />
+                        </label>
+                        <label className="field">
+                          <span className="field-label">名称</span>
+                          <input
+                            type="text"
+                            value={tokenName}
+                            onChange={(e) => setTokenName(e.target.value)}
+                            placeholder={tokenAuthType === 'user' ? '测试用户' : '测试设备'}
+                          />
+                        </label>
+                        {tokenAuthType === 'user' && (
+                          <label className="field">
+                            <span className="field-label">部门</span>
+                            <input
+                              type="text"
+                              value={tokenDept}
+                              onChange={(e) => setTokenDept(e.target.value)}
+                              placeholder="dept-001"
+                            />
+                          </label>
+                        )}
+                        <label className="field">
+                          <span className="field-label">签名密钥 AccessSecret</span>
+                          <input
+                            type="password"
+                            value={tokenSecret}
+                            onChange={(e) => setTokenSecret(e.target.value)}
+                            placeholder="与网关配置一致"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="btn btn-ghost token-submit"
+                          onClick={() => void generateLocalToken()}
+                          disabled={generatingToken}
+                        >
+                          {generatingToken ? <Loader2 size={14} className="spin" /> : <KeyRound size={14} />}
+                          生成并填入
+                        </button>
+                      </div>
+                      <p className="hint">密钥只保存在当前页面；生成的 Token 会直接填入上方连接参数。</p>
                     </div>
-
-                    <div className="token-form-row">
-                      <label className="field token-secret">
-                        <span className="field-label">签名密钥 AccessSecret</span>
-                        <input
-                          type="password"
-                          value={tokenSecret}
-                          onChange={(e) => setTokenSecret(e.target.value)}
-                          placeholder="与 livegtw / socketgtw 配置一致"
-                        />
-                        <small>本地 HS256 签名，不请求后端；密钥只保存在当前页面。</small>
-                      </label>
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={() => void generateLocalToken()}
-                        disabled={generatingToken}
-                      >
-                        {generatingToken ? <Loader2 size={14} className="spin" /> : <KeyRound size={14} />}
-                        生成并填入
-                      </button>
-                    </div>
-                  </div>
+                  </section>
                 </div>
-              </section>
-              </>
+              </div>
             )}
 
             {activeTab === 'message' && (
-              <div className="grid-2 grid-2--wide">
+              <div className="page grid-2 grid-2--wide">
                 <section className="card">
                   <header className="card-head">
                     <h2>消息内容</h2>
@@ -1147,7 +1152,7 @@ export default function App() {
             )}
 
             {activeTab === 'room' && (
-              <>
+              <div className="page">
               <div className="grid-2">
                 <section className="card">
                   <header className="card-head">
@@ -1277,11 +1282,11 @@ export default function App() {
                   )}
                 </div>
               </section>
-              </>
+              </div>
             )}
 
             {activeTab === 'event' && (
-              <>
+              <div className="page">
               <div className="grid-2 grid-2--wide">
                 <section className="card">
                   <header className="card-head">
@@ -1403,7 +1408,7 @@ export default function App() {
                   )}
                 </div>
               </section>
-              </>
+              </div>
             )}
           </div>
         </main>
@@ -1516,20 +1521,7 @@ export default function App() {
             )}
           </div>
         </section>
-      ) : (
-        <button
-          type="button"
-          className="console-fab"
-          onClick={() => setConsoleOpen(true)}
-          title="打开控制台"
-        >
-          <Terminal size={15} />
-          <span>控制台</span>
-          {unreadCount > 0 && (
-            <span className="console-fab-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
-          )}
-        </button>
-      )}
+      ) : null}
     </div>
   )
 }

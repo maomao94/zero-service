@@ -40,7 +40,7 @@ func NewRegistry(client podengine.PodEngineClient, modbusClient bridgemodbus.Bri
 	return &Registry{routes: routes}
 }
 
-// Invoke 按 method 分发；未注册的 method 返回 130103。
+// Invoke 按 method 分发；未注册的 method 返回 130004。
 func (r *Registry) Invoke(ctx context.Context, method string, data string) (proto.Message, error) {
 	if r == nil {
 		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_INTERNAL, "路由表未初始化")

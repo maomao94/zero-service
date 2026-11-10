@@ -14,7 +14,7 @@ import (
 
 // GetModbusClient 复用每个 code 的长期客户端，不需要借还。
 // 空 code 使用文件默认配置，非空 code 必须查询启用的表配置，不回退文件配置。
-// 配置加载错误原样返回（已带平台码）；建连失败和管理器内部错误统一收敛为 100501。
+// 配置加载错误原样返回（已带平台码）；建连失败和管理器内部错误统一收敛为 100140。
 func (s *ServiceContext) GetModbusClient(ctx context.Context, modbusCode string) (*modbusx.ModbusClient, error) {
 	load := func(ctx context.Context) (*modbusx.ModbusClientConf, error) {
 		if modbusCode == "" {
@@ -35,7 +35,7 @@ func (s *ServiceContext) GetModbusClient(ctx context.Context, modbusCode string)
 		return nil, err
 	}
 	// loadModbusClientConfig 的错误已带平台码：不存在/未启用/转换失败包装了
-	// ErrConfigUnavailable，查库失败是 100201；NewErrorByPbCodeWrap 会保留原码和文案。
+	// ErrConfigUnavailable，查库失败是 100050；NewErrorByPbCodeWrap 会保留原码和文案。
 
 	message := "获取 Modbus 客户端失败"
 	switch {

@@ -38,7 +38,9 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
+	s.AddOptions(grpc.ChainUnaryInterceptor(grpcx.ServerFinalizeInterceptor))
 	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
+	s.AddOptions(grpc.ChainStreamInterceptor(grpcx.ServerStreamFinalizeInterceptor))
 	s.AddStreamInterceptors(grpcx.StreamLoggerInterceptor)
 	defer s.Stop()
 

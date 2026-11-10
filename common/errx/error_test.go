@@ -65,7 +65,7 @@ func TestNewErrorByPbCodeRateLimited(t *testing.T) {
 		t.Fatalf("status.Code() = %v, want %v", got, codes.ResourceExhausted)
 	}
 	if !IsErrorByPbCode(err, extproto.Code__1_00_RATE_LIMITED) {
-		t.Fatalf("reason = %v, want 100701", err)
+		t.Fatalf("reason = %v, want 100220", err)
 	}
 }
 

@@ -31,149 +31,354 @@ const (
 //   - A   ：错误来源（上报方）
 //     0 = 成功（仅 000000）
 //     1 = 平台服务端（本仓库微服务、HTTP/gRPC 网关）
-//     2、4、6-9 预留
+//     2-9 预留
 //     本枚举不定义设备/第三方厂商码；DJI 等厂商码是独立体系，
 //     其首位含义由厂商定义，不参与本表解析。
 //   - BC  ：功能模块（两位），仅对 A=1 的码生效，按产品能力划分
 //     已启用：00 通用、30 开放平台
 //     其他功能域按需申请，不提前预分配；90-99 预留
-//     通用（00）内部按 DEF 段细分：
-//     100-199 参数  200-299 数据  300-399 缓存/消息
-//     400-499 认证  500-599 业务  600-699 外部依赖
-//     700-799 限流  800-899 网关  900-999 兜底/折叠
-//   - DEF ：模块内错误（三位）
-//     100-899 具体错误；900-999 兜底与对外折叠
+//   - DEF ：模块内唯一编号（三位），不承载业务语义
+//     001-999 为可用范围；000 保留
+//     按分类区间分配，区间内连续、区间之间预留扩展位
+//     每个模块最多 999 个码，用尽后申请新 BC
 //
 // 编码规则：
 //  1. 0 是唯一成功码，不得用于构造错误。
-//  2. v2 发布后数字码冻结，只允许追加，不得重编号或复用。
+//  2. 数字码对外发布后冻结，只允许追加，不得重编号或复用；本次上线前已统一重排。
 //  3. http_code 是“语义 HTTP 状态”，用于推导 gRPC Code 与客户端分类；
 //     网关实际统一返回 HTTP 200，业务结果以 body.code 为准。
 //  4. 对外错误必须可安全展示；内部细节（SQL、地址、堆栈）只写日志。
 //  5. DJI 等设备/第三方平台的错误码是另一套独立体系（如 dji_error_code.proto），
 //     与本枚举不互通、不映射、不透传，禁止写入 gRPC ErrorInfo.reason；
 //     厂商原始码只作为业务响应字段（如 reason_code）返回。
+//  6. DEF 是模块内唯一编号（001-999），不按业务语义分段，但按分类区间分配并预留扩展位；
+//     新码优先落在本分类预留号，用尽后再扩展区间或申请新 BC。HTTP 状态放 http_code，
+//     gRPC Code 由映射推导，不编码进 DEF；本次已在上线前统一重排，上线后冻结、只追加。
 type Code int32
 
 const (
 	// ===== 成功（ABCDEF 全 0）=====
 	Code__0_OK Code = 0
-	// Deprecated: 仅为兼容历史生成代码保留，0 表示成功，不得用于构造错误。
-	Code_CODE_UNSPECIFIED Code = 0
-	// ===== 通用（A=1, BC=00）：跨域基础错误 =====
-	// 参数/校验（DEF 100-199）
-	Code__1_00_PARAM         Code = 100101
-	Code__1_00_PARAM_MISSING Code = 100102
-	Code__1_00_PARAM_INVALID Code = 100103
-	// 数据/存储（DEF 200-299）
-	Code__1_00_DB                   Code = 100201
-	Code__1_00_RECORD_NOT_EXIST     Code = 100202
-	Code__1_00_RECORD_ALREADY_EXIST Code = 100203
-	Code__1_00_DATA_CONFLICT        Code = 100204
-	// 缓存/消息（DEF 300-399）
-	Code__1_00_CACHE      Code = 100301
-	Code__1_00_CACHE_MISS Code = 100302
-	Code__1_00_MQ         Code = 100303
-	// 认证/授权（DEF 400-499）
-	Code__1_00_UNAUTHORIZED Code = 100401
-	Code__1_00_FORBIDDEN    Code = 100402
-	// 业务通用（DEF 500-599）
-	Code__1_00_BIZ        Code = 100501
-	Code__1_00_BIZ_STATE  Code = 100502
-	Code__1_00_BIZ_REPEAT Code = 100503
-	// 外部依赖（DEF 600-699）
-	Code__1_00_RPC Code = 100601
-	// 内部基础设施类第三方故障，网关会折叠为 100999，原始信息只进日志。
-	Code__1_00_THIRD_PARTY Code = 100602
-	// 第三方接口明确返回错误码，允许对外展示；msg 固定模板见 docs/error-codes.md。
-	Code__1_00_THIRD_PARTY_API Code = 100603
-	// 限流（DEF 700-799）
-	Code__1_00_RATE_LIMITED Code = 100701
-	// 网关/传输（DEF 800-899）
-	Code__1_00_ROUTE_NOT_FOUND    Code = 100801
-	Code__1_00_METHOD_NOT_ALLOWED Code = 100802
-	// 系统兜底（DEF 900-999）
-	Code__1_00_CANCELED Code = 100996
-	Code__1_00_TIMEOUT  Code = 100997
-	Code__1_00_INTERNAL Code = 100998
-	Code__1_00_UNKNOWN  Code = 100999
+	// ===== 通用（A=1, BC=00）=====
+	// 下列区间是分类分配建议，预留扩展位；DEF 仍是模块内唯一编号，不参与运行时解析。
+	// 系统（001-019）
+	Code__1_00_INTERNAL            Code = 100001
+	Code__1_00_UNKNOWN             Code = 100002
+	Code__1_00_TIMEOUT             Code = 100003
+	Code__1_00_CANCELED            Code = 100004
+	Code__1_00_NOT_IMPLEMENTED     Code = 100005
+	Code__1_00_SERVICE_UNAVAILABLE Code = 100006
+	// 参数/请求（020-049）
+	Code__1_00_PARAM                   Code = 100020
+	Code__1_00_PARAM_MISSING           Code = 100021
+	Code__1_00_PARAM_INVALID           Code = 100022
+	Code__1_00_PARAM_TYPE              Code = 100023
+	Code__1_00_PARAM_RANGE             Code = 100024
+	Code__1_00_PARAM_FORMAT            Code = 100025
+	Code__1_00_REQUEST_MALFORMED       Code = 100026
+	Code__1_00_REQUEST_BODY_TOO_LARGE  Code = 100027
+	Code__1_00_UNSUPPORTED_MEDIA_TYPE  Code = 100028
+	Code__1_00_PAGINATION_INVALID      Code = 100029
+	Code__1_00_IDEMPOTENCY_KEY_INVALID Code = 100030
+	Code__1_00_REQUEST_HEADER_INVALID  Code = 100031
+	// 数据/存储（050-089）
+	Code__1_00_DB                       Code = 100050
+	Code__1_00_DB_CONSTRAINT            Code = 100051
+	Code__1_00_RECORD_NOT_EXIST         Code = 100052
+	Code__1_00_RECORD_ALREADY_EXIST     Code = 100053
+	Code__1_00_DATA_CONFLICT            Code = 100054
+	Code__1_00_DATA_CORRUPTED           Code = 100055
+	Code__1_00_TRANSACTION_FAILED       Code = 100056
+	Code__1_00_SERIALIZATION_FAILED     Code = 100057
+	Code__1_00_DESERIALIZATION_FAILED   Code = 100058
+	Code__1_00_VERSION_CONFLICT         Code = 100059
+	Code__1_00_OPTIMISTIC_LOCK_CONFLICT Code = 100060
+	// 缓存/消息（090-109）
+	Code__1_00_CACHE                Code = 100090
+	Code__1_00_MQ                   Code = 100091
+	Code__1_00_MQ_PUBLISH_FAILED    Code = 100092
+	Code__1_00_MQ_CONSUME_FAILED    Code = 100093
+	Code__1_00_MQ_TIMEOUT           Code = 100094
+	Code__1_00_EVENT_PROCESS_FAILED Code = 100095
+	// 认证/授权（110-139）
+	Code__1_00_UNAUTHORIZED       Code = 100110
+	Code__1_00_TOKEN_EXPIRED      Code = 100111
+	Code__1_00_TOKEN_INVALID      Code = 100112
+	Code__1_00_FORBIDDEN          Code = 100113
+	Code__1_00_ACCOUNT_DISABLED   Code = 100114
+	Code__1_00_TENANT_MISMATCH    Code = 100115
+	Code__1_00_SCOPE_INSUFFICIENT Code = 100116
+	Code__1_00_IP_NOT_ALLOWED     Code = 100117
+	// 业务（140-179）
+	Code__1_00_BIZ                   Code = 100140
+	Code__1_00_BIZ_STATE             Code = 100141
+	Code__1_00_BIZ_REPEAT            Code = 100142
+	Code__1_00_BIZ_VALIDATION        Code = 100143
+	Code__1_00_BIZ_RULE_VIOLATION    Code = 100144
+	Code__1_00_BIZ_QUOTA_EXCEEDED    Code = 100145
+	Code__1_00_BIZ_EXPIRED           Code = 100146
+	Code__1_00_BIZ_LOCKED            Code = 100147
+	Code__1_00_OPERATION_NOT_ALLOWED Code = 100148
+	Code__1_00_RESOURCE_IN_USE       Code = 100149
+	// 外部依赖（180-219）
+	Code__1_00_RPC                   Code = 100180
+	Code__1_00_RPC_TIMEOUT           Code = 100181
+	Code__1_00_RPC_UNAVAILABLE       Code = 100182
+	Code__1_00_THIRD_PARTY           Code = 100183
+	Code__1_00_THIRD_PARTY_API       Code = 100184
+	Code__1_00_THIRD_PARTY_TIMEOUT   Code = 100185
+	Code__1_00_THIRD_PARTY_AUTH      Code = 100186
+	Code__1_00_EXTERNAL_RATE_LIMITED Code = 100187
+	Code__1_00_WEBHOOK_FAILED        Code = 100188
+	Code__1_00_DNS_ERROR             Code = 100189
+	// 限流/配额（220-239）
+	Code__1_00_RATE_LIMITED        Code = 100220
+	Code__1_00_QUOTA_EXCEEDED      Code = 100221
+	Code__1_00_CONCURRENCY_LIMITED Code = 100222
+	// 网关/传输（240-269）
+	Code__1_00_ROUTE_NOT_FOUND      Code = 100240
+	Code__1_00_METHOD_NOT_ALLOWED   Code = 100241
+	Code__1_00_BAD_GATEWAY          Code = 100242
+	Code__1_00_GATEWAY_TIMEOUT      Code = 100243
+	Code__1_00_PROTOCOL_ERROR       Code = 100244
+	Code__1_00_TLS_ERROR            Code = 100245
+	Code__1_00_REQUEST_TIMEOUT      Code = 100246
+	Code__1_00_UPSTREAM_UNAVAILABLE Code = 100247
+	// 文件/媒体（270-299）
+	Code__1_00_FILE_NOT_FOUND        Code = 100270
+	Code__1_00_FILE_TOO_LARGE        Code = 100271
+	Code__1_00_FILE_TYPE_NOT_ALLOWED Code = 100272
+	Code__1_00_FILE_UPLOAD_FAILED    Code = 100273
+	Code__1_00_FILE_DOWNLOAD_FAILED  Code = 100274
+	Code__1_00_FILE_CORRUPTED        Code = 100275
+	Code__1_00_FILE_PARSE_FAILED     Code = 100276
+	// 配置（300-319）
+	Code__1_00_CONFIG_NOT_FOUND     Code = 100300
+	Code__1_00_CONFIG_INVALID       Code = 100301
+	Code__1_00_CONFIG_PARSE_FAILED  Code = 100302
+	Code__1_00_CONFIG_RELOAD_FAILED Code = 100303
 	// ===== 开放平台（A=1, BC=30）=====
-	Code__1_30_APP_NOT_FOUND      Code = 130101
-	Code__1_30_APP_SECRET_INVALID Code = 130102
-	Code__1_30_METHOD_NOT_OPEN    Code = 130103
-	Code__1_30_RATE_LIMITED       Code = 130104
-	Code__1_30_SIGNATURE_INVALID  Code = 130105
+	Code__1_30_APP_NOT_FOUND             Code = 130001
+	Code__1_30_APP_SECRET_INVALID        Code = 130002
+	Code__1_30_APP_DISABLED              Code = 130003
+	Code__1_30_METHOD_NOT_OPEN           Code = 130004
+	Code__1_30_RATE_LIMITED              Code = 130005
+	Code__1_30_SIGNATURE_INVALID         Code = 130006
+	Code__1_30_SIGNATURE_MISSING         Code = 130007
+	Code__1_30_TIMESTAMP_INVALID         Code = 130008
+	Code__1_30_NONCE_INVALID             Code = 130009
+	Code__1_30_IP_NOT_ALLOWED            Code = 130010
+	Code__1_30_APP_QUOTA_EXCEEDED        Code = 130011
+	Code__1_30_APP_PERMISSION_DENIED     Code = 130012
+	Code__1_30_API_VERSION_NOT_SUPPORTED Code = 130013
+	Code__1_30_REQUEST_EXPIRED           Code = 130014
 )
 
 // Enum value maps for Code.
 var (
 	Code_name = map[int32]string{
-		0: "_0_OK",
-		// Duplicate value: 0: "CODE_UNSPECIFIED",
-		100101: "_1_00_PARAM",
-		100102: "_1_00_PARAM_MISSING",
-		100103: "_1_00_PARAM_INVALID",
-		100201: "_1_00_DB",
-		100202: "_1_00_RECORD_NOT_EXIST",
-		100203: "_1_00_RECORD_ALREADY_EXIST",
-		100204: "_1_00_DATA_CONFLICT",
-		100301: "_1_00_CACHE",
-		100302: "_1_00_CACHE_MISS",
-		100303: "_1_00_MQ",
-		100401: "_1_00_UNAUTHORIZED",
-		100402: "_1_00_FORBIDDEN",
-		100501: "_1_00_BIZ",
-		100502: "_1_00_BIZ_STATE",
-		100503: "_1_00_BIZ_REPEAT",
-		100601: "_1_00_RPC",
-		100602: "_1_00_THIRD_PARTY",
-		100603: "_1_00_THIRD_PARTY_API",
-		100701: "_1_00_RATE_LIMITED",
-		100801: "_1_00_ROUTE_NOT_FOUND",
-		100802: "_1_00_METHOD_NOT_ALLOWED",
-		100996: "_1_00_CANCELED",
-		100997: "_1_00_TIMEOUT",
-		100998: "_1_00_INTERNAL",
-		100999: "_1_00_UNKNOWN",
-		130101: "_1_30_APP_NOT_FOUND",
-		130102: "_1_30_APP_SECRET_INVALID",
-		130103: "_1_30_METHOD_NOT_OPEN",
-		130104: "_1_30_RATE_LIMITED",
-		130105: "_1_30_SIGNATURE_INVALID",
+		0:      "_0_OK",
+		100001: "_1_00_INTERNAL",
+		100002: "_1_00_UNKNOWN",
+		100003: "_1_00_TIMEOUT",
+		100004: "_1_00_CANCELED",
+		100005: "_1_00_NOT_IMPLEMENTED",
+		100006: "_1_00_SERVICE_UNAVAILABLE",
+		100020: "_1_00_PARAM",
+		100021: "_1_00_PARAM_MISSING",
+		100022: "_1_00_PARAM_INVALID",
+		100023: "_1_00_PARAM_TYPE",
+		100024: "_1_00_PARAM_RANGE",
+		100025: "_1_00_PARAM_FORMAT",
+		100026: "_1_00_REQUEST_MALFORMED",
+		100027: "_1_00_REQUEST_BODY_TOO_LARGE",
+		100028: "_1_00_UNSUPPORTED_MEDIA_TYPE",
+		100029: "_1_00_PAGINATION_INVALID",
+		100030: "_1_00_IDEMPOTENCY_KEY_INVALID",
+		100031: "_1_00_REQUEST_HEADER_INVALID",
+		100050: "_1_00_DB",
+		100051: "_1_00_DB_CONSTRAINT",
+		100052: "_1_00_RECORD_NOT_EXIST",
+		100053: "_1_00_RECORD_ALREADY_EXIST",
+		100054: "_1_00_DATA_CONFLICT",
+		100055: "_1_00_DATA_CORRUPTED",
+		100056: "_1_00_TRANSACTION_FAILED",
+		100057: "_1_00_SERIALIZATION_FAILED",
+		100058: "_1_00_DESERIALIZATION_FAILED",
+		100059: "_1_00_VERSION_CONFLICT",
+		100060: "_1_00_OPTIMISTIC_LOCK_CONFLICT",
+		100090: "_1_00_CACHE",
+		100091: "_1_00_MQ",
+		100092: "_1_00_MQ_PUBLISH_FAILED",
+		100093: "_1_00_MQ_CONSUME_FAILED",
+		100094: "_1_00_MQ_TIMEOUT",
+		100095: "_1_00_EVENT_PROCESS_FAILED",
+		100110: "_1_00_UNAUTHORIZED",
+		100111: "_1_00_TOKEN_EXPIRED",
+		100112: "_1_00_TOKEN_INVALID",
+		100113: "_1_00_FORBIDDEN",
+		100114: "_1_00_ACCOUNT_DISABLED",
+		100115: "_1_00_TENANT_MISMATCH",
+		100116: "_1_00_SCOPE_INSUFFICIENT",
+		100117: "_1_00_IP_NOT_ALLOWED",
+		100140: "_1_00_BIZ",
+		100141: "_1_00_BIZ_STATE",
+		100142: "_1_00_BIZ_REPEAT",
+		100143: "_1_00_BIZ_VALIDATION",
+		100144: "_1_00_BIZ_RULE_VIOLATION",
+		100145: "_1_00_BIZ_QUOTA_EXCEEDED",
+		100146: "_1_00_BIZ_EXPIRED",
+		100147: "_1_00_BIZ_LOCKED",
+		100148: "_1_00_OPERATION_NOT_ALLOWED",
+		100149: "_1_00_RESOURCE_IN_USE",
+		100180: "_1_00_RPC",
+		100181: "_1_00_RPC_TIMEOUT",
+		100182: "_1_00_RPC_UNAVAILABLE",
+		100183: "_1_00_THIRD_PARTY",
+		100184: "_1_00_THIRD_PARTY_API",
+		100185: "_1_00_THIRD_PARTY_TIMEOUT",
+		100186: "_1_00_THIRD_PARTY_AUTH",
+		100187: "_1_00_EXTERNAL_RATE_LIMITED",
+		100188: "_1_00_WEBHOOK_FAILED",
+		100189: "_1_00_DNS_ERROR",
+		100220: "_1_00_RATE_LIMITED",
+		100221: "_1_00_QUOTA_EXCEEDED",
+		100222: "_1_00_CONCURRENCY_LIMITED",
+		100240: "_1_00_ROUTE_NOT_FOUND",
+		100241: "_1_00_METHOD_NOT_ALLOWED",
+		100242: "_1_00_BAD_GATEWAY",
+		100243: "_1_00_GATEWAY_TIMEOUT",
+		100244: "_1_00_PROTOCOL_ERROR",
+		100245: "_1_00_TLS_ERROR",
+		100246: "_1_00_REQUEST_TIMEOUT",
+		100247: "_1_00_UPSTREAM_UNAVAILABLE",
+		100270: "_1_00_FILE_NOT_FOUND",
+		100271: "_1_00_FILE_TOO_LARGE",
+		100272: "_1_00_FILE_TYPE_NOT_ALLOWED",
+		100273: "_1_00_FILE_UPLOAD_FAILED",
+		100274: "_1_00_FILE_DOWNLOAD_FAILED",
+		100275: "_1_00_FILE_CORRUPTED",
+		100276: "_1_00_FILE_PARSE_FAILED",
+		100300: "_1_00_CONFIG_NOT_FOUND",
+		100301: "_1_00_CONFIG_INVALID",
+		100302: "_1_00_CONFIG_PARSE_FAILED",
+		100303: "_1_00_CONFIG_RELOAD_FAILED",
+		130001: "_1_30_APP_NOT_FOUND",
+		130002: "_1_30_APP_SECRET_INVALID",
+		130003: "_1_30_APP_DISABLED",
+		130004: "_1_30_METHOD_NOT_OPEN",
+		130005: "_1_30_RATE_LIMITED",
+		130006: "_1_30_SIGNATURE_INVALID",
+		130007: "_1_30_SIGNATURE_MISSING",
+		130008: "_1_30_TIMESTAMP_INVALID",
+		130009: "_1_30_NONCE_INVALID",
+		130010: "_1_30_IP_NOT_ALLOWED",
+		130011: "_1_30_APP_QUOTA_EXCEEDED",
+		130012: "_1_30_APP_PERMISSION_DENIED",
+		130013: "_1_30_API_VERSION_NOT_SUPPORTED",
+		130014: "_1_30_REQUEST_EXPIRED",
 	}
 	Code_value = map[string]int32{
-		"_0_OK":                      0,
-		"CODE_UNSPECIFIED":           0,
-		"_1_00_PARAM":                100101,
-		"_1_00_PARAM_MISSING":        100102,
-		"_1_00_PARAM_INVALID":        100103,
-		"_1_00_DB":                   100201,
-		"_1_00_RECORD_NOT_EXIST":     100202,
-		"_1_00_RECORD_ALREADY_EXIST": 100203,
-		"_1_00_DATA_CONFLICT":        100204,
-		"_1_00_CACHE":                100301,
-		"_1_00_CACHE_MISS":           100302,
-		"_1_00_MQ":                   100303,
-		"_1_00_UNAUTHORIZED":         100401,
-		"_1_00_FORBIDDEN":            100402,
-		"_1_00_BIZ":                  100501,
-		"_1_00_BIZ_STATE":            100502,
-		"_1_00_BIZ_REPEAT":           100503,
-		"_1_00_RPC":                  100601,
-		"_1_00_THIRD_PARTY":          100602,
-		"_1_00_THIRD_PARTY_API":      100603,
-		"_1_00_RATE_LIMITED":         100701,
-		"_1_00_ROUTE_NOT_FOUND":      100801,
-		"_1_00_METHOD_NOT_ALLOWED":   100802,
-		"_1_00_CANCELED":             100996,
-		"_1_00_TIMEOUT":              100997,
-		"_1_00_INTERNAL":             100998,
-		"_1_00_UNKNOWN":              100999,
-		"_1_30_APP_NOT_FOUND":        130101,
-		"_1_30_APP_SECRET_INVALID":   130102,
-		"_1_30_METHOD_NOT_OPEN":      130103,
-		"_1_30_RATE_LIMITED":         130104,
-		"_1_30_SIGNATURE_INVALID":    130105,
+		"_0_OK":                           0,
+		"_1_00_INTERNAL":                  100001,
+		"_1_00_UNKNOWN":                   100002,
+		"_1_00_TIMEOUT":                   100003,
+		"_1_00_CANCELED":                  100004,
+		"_1_00_NOT_IMPLEMENTED":           100005,
+		"_1_00_SERVICE_UNAVAILABLE":       100006,
+		"_1_00_PARAM":                     100020,
+		"_1_00_PARAM_MISSING":             100021,
+		"_1_00_PARAM_INVALID":             100022,
+		"_1_00_PARAM_TYPE":                100023,
+		"_1_00_PARAM_RANGE":               100024,
+		"_1_00_PARAM_FORMAT":              100025,
+		"_1_00_REQUEST_MALFORMED":         100026,
+		"_1_00_REQUEST_BODY_TOO_LARGE":    100027,
+		"_1_00_UNSUPPORTED_MEDIA_TYPE":    100028,
+		"_1_00_PAGINATION_INVALID":        100029,
+		"_1_00_IDEMPOTENCY_KEY_INVALID":   100030,
+		"_1_00_REQUEST_HEADER_INVALID":    100031,
+		"_1_00_DB":                        100050,
+		"_1_00_DB_CONSTRAINT":             100051,
+		"_1_00_RECORD_NOT_EXIST":          100052,
+		"_1_00_RECORD_ALREADY_EXIST":      100053,
+		"_1_00_DATA_CONFLICT":             100054,
+		"_1_00_DATA_CORRUPTED":            100055,
+		"_1_00_TRANSACTION_FAILED":        100056,
+		"_1_00_SERIALIZATION_FAILED":      100057,
+		"_1_00_DESERIALIZATION_FAILED":    100058,
+		"_1_00_VERSION_CONFLICT":          100059,
+		"_1_00_OPTIMISTIC_LOCK_CONFLICT":  100060,
+		"_1_00_CACHE":                     100090,
+		"_1_00_MQ":                        100091,
+		"_1_00_MQ_PUBLISH_FAILED":         100092,
+		"_1_00_MQ_CONSUME_FAILED":         100093,
+		"_1_00_MQ_TIMEOUT":                100094,
+		"_1_00_EVENT_PROCESS_FAILED":      100095,
+		"_1_00_UNAUTHORIZED":              100110,
+		"_1_00_TOKEN_EXPIRED":             100111,
+		"_1_00_TOKEN_INVALID":             100112,
+		"_1_00_FORBIDDEN":                 100113,
+		"_1_00_ACCOUNT_DISABLED":          100114,
+		"_1_00_TENANT_MISMATCH":           100115,
+		"_1_00_SCOPE_INSUFFICIENT":        100116,
+		"_1_00_IP_NOT_ALLOWED":            100117,
+		"_1_00_BIZ":                       100140,
+		"_1_00_BIZ_STATE":                 100141,
+		"_1_00_BIZ_REPEAT":                100142,
+		"_1_00_BIZ_VALIDATION":            100143,
+		"_1_00_BIZ_RULE_VIOLATION":        100144,
+		"_1_00_BIZ_QUOTA_EXCEEDED":        100145,
+		"_1_00_BIZ_EXPIRED":               100146,
+		"_1_00_BIZ_LOCKED":                100147,
+		"_1_00_OPERATION_NOT_ALLOWED":     100148,
+		"_1_00_RESOURCE_IN_USE":           100149,
+		"_1_00_RPC":                       100180,
+		"_1_00_RPC_TIMEOUT":               100181,
+		"_1_00_RPC_UNAVAILABLE":           100182,
+		"_1_00_THIRD_PARTY":               100183,
+		"_1_00_THIRD_PARTY_API":           100184,
+		"_1_00_THIRD_PARTY_TIMEOUT":       100185,
+		"_1_00_THIRD_PARTY_AUTH":          100186,
+		"_1_00_EXTERNAL_RATE_LIMITED":     100187,
+		"_1_00_WEBHOOK_FAILED":            100188,
+		"_1_00_DNS_ERROR":                 100189,
+		"_1_00_RATE_LIMITED":              100220,
+		"_1_00_QUOTA_EXCEEDED":            100221,
+		"_1_00_CONCURRENCY_LIMITED":       100222,
+		"_1_00_ROUTE_NOT_FOUND":           100240,
+		"_1_00_METHOD_NOT_ALLOWED":        100241,
+		"_1_00_BAD_GATEWAY":               100242,
+		"_1_00_GATEWAY_TIMEOUT":           100243,
+		"_1_00_PROTOCOL_ERROR":            100244,
+		"_1_00_TLS_ERROR":                 100245,
+		"_1_00_REQUEST_TIMEOUT":           100246,
+		"_1_00_UPSTREAM_UNAVAILABLE":      100247,
+		"_1_00_FILE_NOT_FOUND":            100270,
+		"_1_00_FILE_TOO_LARGE":            100271,
+		"_1_00_FILE_TYPE_NOT_ALLOWED":     100272,
+		"_1_00_FILE_UPLOAD_FAILED":        100273,
+		"_1_00_FILE_DOWNLOAD_FAILED":      100274,
+		"_1_00_FILE_CORRUPTED":            100275,
+		"_1_00_FILE_PARSE_FAILED":         100276,
+		"_1_00_CONFIG_NOT_FOUND":          100300,
+		"_1_00_CONFIG_INVALID":            100301,
+		"_1_00_CONFIG_PARSE_FAILED":       100302,
+		"_1_00_CONFIG_RELOAD_FAILED":      100303,
+		"_1_30_APP_NOT_FOUND":             130001,
+		"_1_30_APP_SECRET_INVALID":        130002,
+		"_1_30_APP_DISABLED":              130003,
+		"_1_30_METHOD_NOT_OPEN":           130004,
+		"_1_30_RATE_LIMITED":              130005,
+		"_1_30_SIGNATURE_INVALID":         130006,
+		"_1_30_SIGNATURE_MISSING":         130007,
+		"_1_30_TIMESTAMP_INVALID":         130008,
+		"_1_30_NONCE_INVALID":             130009,
+		"_1_30_IP_NOT_ALLOWED":            130010,
+		"_1_30_APP_QUOTA_EXCEEDED":        130011,
+		"_1_30_APP_PERMISSION_DENIED":     130012,
+		"_1_30_API_VERSION_NOT_SUPPORTED": 130013,
+		"_1_30_REQUEST_EXPIRED":           130014,
 	}
 )
 
@@ -386,40 +591,109 @@ const file_extproto_proto_rawDesc = "" +
 	"\x04Dept\x12\x16\n" +
 	"\x06deptId\x18\x01 \x01(\tR\x06deptId\x12\x1a\n" +
 	"\bdeptCode\x18\x02 \x01(\tR\bdeptCode\x12\x1a\n" +
-	"\bdeptName\x18\x03 \x01(\tR\bdeptName*\xd9\f\n" +
+	"\bdeptName\x18\x03 \x01(\tR\bdeptName*\xad+\n" +
 	"\x04Code\x12\x1a\n" +
-	"\x05_0_OK\x10\x00\x1a\x0fʸ\x02\x06成功и\x02\xc8\x01\x12%\n" +
-	"\x10CODE_UNSPECIFIED\x10\x00\x1a\x0fʸ\x02\x06成功и\x02\xc8\x01\x12(\n" +
-	"\v_1_00_PARAM\x10\x85\x8e\x06\x1a\x15ʸ\x02\f参数错误и\x02\x90\x03\x126\n" +
-	"\x13_1_00_PARAM_MISSING\x10\x86\x8e\x06\x1a\x1bʸ\x02\x12缺少必要参数и\x02\x90\x03\x123\n" +
-	"\x13_1_00_PARAM_INVALID\x10\x87\x8e\x06\x1a\x18ʸ\x02\x0f参数不合法и\x02\x90\x03\x12(\n" +
-	"\b_1_00_DB\x10\xe9\x8e\x06\x1a\x18ʸ\x02\x0f数据库错误и\x02\xf4\x03\x126\n" +
-	"\x16_1_00_RECORD_NOT_EXIST\x10\xea\x8e\x06\x1a\x18ʸ\x02\x0f记录不存在и\x02\x94\x03\x12:\n" +
-	"\x1a_1_00_RECORD_ALREADY_EXIST\x10\xeb\x8e\x06\x1a\x18ʸ\x02\x0f记录已存在и\x02\x99\x03\x120\n" +
-	"\x13_1_00_DATA_CONFLICT\x10\xec\x8e\x06\x1a\x15ʸ\x02\f数据冲突и\x02\x99\x03\x12(\n" +
-	"\v_1_00_CACHE\x10͏\x06\x1a\x15ʸ\x02\f缓存错误и\x02\xf4\x03\x120\n" +
-	"\x10_1_00_CACHE_MISS\x10Ώ\x06\x1a\x18ʸ\x02\x0f缓存未命中и\x02\xf4\x03\x12+\n" +
-	"\b_1_00_MQ\x10Ϗ\x06\x1a\x1bʸ\x02\x12消息队列错误и\x02\xf7\x03\x12,\n" +
-	"\x12_1_00_UNAUTHORIZED\x10\xb1\x90\x06\x1a\x12ʸ\x02\t未认证и\x02\x91\x03\x12/\n" +
-	"\x0f_1_00_FORBIDDEN\x10\xb2\x90\x06\x1a\x18ʸ\x02\x0f无权限访问и\x02\x93\x03\x12,\n" +
-	"\t_1_00_BIZ\x10\x95\x91\x06\x1a\x1bʸ\x02\x12业务处理失败и\x02\x90\x03\x125\n" +
-	"\x0f_1_00_BIZ_STATE\x10\x96\x91\x06\x1a\x1eʸ\x02\x15业务状态不允许и\x02\x99\x03\x12-\n" +
-	"\x10_1_00_BIZ_REPEAT\x10\x97\x91\x06\x1a\x15ʸ\x02\f重复操作и\x02\x99\x03\x12,\n" +
-	"\t_1_00_RPC\x10\xf9\x91\x06\x1a\x1bʸ\x02\x12远程调用失败и\x02\xf7\x03\x127\n" +
-	"\x11_1_00_THIRD_PARTY\x10\xfa\x91\x06\x1a\x1eʸ\x02\x15第三方服务异常и\x02\xf7\x03\x12;\n" +
-	"\x15_1_00_THIRD_PARTY_API\x10\xfb\x91\x06\x1a\x1eʸ\x02\x15第三方接口错误и\x02\xf7\x03\x125\n" +
-	"\x12_1_00_RATE_LIMITED\x10ݒ\x06\x1a\x1bʸ\x02\x12请求过于频繁и\x02\xad\x03\x125\n" +
-	"\x15_1_00_ROUTE_NOT_FOUND\x10\xc1\x93\x06\x1a\x18ʸ\x02\x0f接口不存在и\x02\x94\x03\x12>\n" +
-	"\x18_1_00_METHOD_NOT_ALLOWED\x10\u0093\x06\x1a\x1eʸ\x02\x15请求方法不允许и\x02\x95\x03\x12.\n" +
-	"\x0e_1_00_CANCELED\x10\x84\x95\x06\x1a\x18ʸ\x02\x0f请求已取消и\x02\x98\x03\x12*\n" +
-	"\r_1_00_TIMEOUT\x10\x85\x95\x06\x1a\x15ʸ\x02\f系统超时и\x02\xf8\x03\x121\n" +
-	"\x0e_1_00_INTERNAL\x10\x86\x95\x06\x1a\x1bʸ\x02\x12系统内部错误и\x02\xf4\x03\x12*\n" +
-	"\r_1_00_UNKNOWN\x10\x87\x95\x06\x1a\x15ʸ\x02\f未知错误и\x02\xf4\x03\x12?\n" +
-	"\x13_1_30_APP_NOT_FOUND\x10\xb5\xf8\a\x1a$ʸ\x02\x1b应用不存在或已停用и\x02\x93\x03\x125\n" +
-	"\x18_1_30_APP_SECRET_INVALID\x10\xb6\xf8\a\x1a\x15ʸ\x02\f密钥无效и\x02\x91\x03\x125\n" +
-	"\x15_1_30_METHOD_NOT_OPEN\x10\xb7\xf8\a\x1a\x18ʸ\x02\x0f方法未开放и\x02\x94\x03\x125\n" +
-	"\x12_1_30_RATE_LIMITED\x10\xb8\xf8\a\x1a\x1bʸ\x02\x12请求超过限制и\x02\xad\x03\x124\n" +
-	"\x17_1_30_SIGNATURE_INVALID\x10\xb9\xf8\a\x1a\x15ʸ\x02\f签名无效и\x02\x91\x03\x1a\x02\x10\x01:6\n" +
+	"\x05_0_OK\x10\x00\x1a\x0fʸ\x02\x06成功и\x02\xc8\x01\x121\n" +
+	"\x0e_1_00_INTERNAL\x10\xa1\x8d\x06\x1a\x1bʸ\x02\x12系统内部错误и\x02\xf4\x03\x12*\n" +
+	"\r_1_00_UNKNOWN\x10\xa2\x8d\x06\x1a\x15ʸ\x02\f未知错误и\x02\xf4\x03\x12*\n" +
+	"\r_1_00_TIMEOUT\x10\xa3\x8d\x06\x1a\x15ʸ\x02\f系统超时и\x02\xf8\x03\x12.\n" +
+	"\x0e_1_00_CANCELED\x10\xa4\x8d\x06\x1a\x18ʸ\x02\x0f请求已取消и\x02\x98\x03\x125\n" +
+	"\x15_1_00_NOT_IMPLEMENTED\x10\xa5\x8d\x06\x1a\x18ʸ\x02\x0f功能未实现и\x02\xf5\x03\x129\n" +
+	"\x19_1_00_SERVICE_UNAVAILABLE\x10\xa6\x8d\x06\x1a\x18ʸ\x02\x0f服务不可用и\x02\xf7\x03\x12(\n" +
+	"\v_1_00_PARAM\x10\xb4\x8d\x06\x1a\x15ʸ\x02\f参数错误и\x02\x90\x03\x126\n" +
+	"\x13_1_00_PARAM_MISSING\x10\xb5\x8d\x06\x1a\x1bʸ\x02\x12缺少必要参数и\x02\x90\x03\x123\n" +
+	"\x13_1_00_PARAM_INVALID\x10\xb6\x8d\x06\x1a\x18ʸ\x02\x0f参数不合法и\x02\x90\x03\x123\n" +
+	"\x10_1_00_PARAM_TYPE\x10\xb7\x8d\x06\x1a\x1bʸ\x02\x12参数类型错误и\x02\x90\x03\x124\n" +
+	"\x11_1_00_PARAM_RANGE\x10\xb8\x8d\x06\x1a\x1bʸ\x02\x12参数超出范围и\x02\x90\x03\x125\n" +
+	"\x12_1_00_PARAM_FORMAT\x10\xb9\x8d\x06\x1a\x1bʸ\x02\x12参数格式错误и\x02\x90\x03\x12:\n" +
+	"\x17_1_00_REQUEST_MALFORMED\x10\xba\x8d\x06\x1a\x1bʸ\x02\x12请求格式错误и\x02\x90\x03\x12<\n" +
+	"\x1c_1_00_REQUEST_BODY_TOO_LARGE\x10\xbb\x8d\x06\x1a\x18ʸ\x02\x0f请求体过大и\x02\x9d\x03\x12B\n" +
+	"\x1c_1_00_UNSUPPORTED_MEDIA_TYPE\x10\xbc\x8d\x06\x1a\x1eʸ\x02\x15媒体类型不支持и\x02\x9f\x03\x12;\n" +
+	"\x18_1_00_PAGINATION_INVALID\x10\xbd\x8d\x06\x1a\x1bʸ\x02\x12分页参数错误и\x02\x90\x03\x12=\n" +
+	"\x1d_1_00_IDEMPOTENCY_KEY_INVALID\x10\xbe\x8d\x06\x1a\x18ʸ\x02\x0f幂等键无效и\x02\x90\x03\x12?\n" +
+	"\x1c_1_00_REQUEST_HEADER_INVALID\x10\xbf\x8d\x06\x1a\x1bʸ\x02\x12请求头不合法и\x02\x90\x03\x12(\n" +
+	"\b_1_00_DB\x10ҍ\x06\x1a\x18ʸ\x02\x0f数据库错误и\x02\xf4\x03\x126\n" +
+	"\x13_1_00_DB_CONSTRAINT\x10Ӎ\x06\x1a\x1bʸ\x02\x12数据约束冲突и\x02\x99\x03\x126\n" +
+	"\x16_1_00_RECORD_NOT_EXIST\x10ԍ\x06\x1a\x18ʸ\x02\x0f记录不存在и\x02\x94\x03\x12:\n" +
+	"\x1a_1_00_RECORD_ALREADY_EXIST\x10Ս\x06\x1a\x18ʸ\x02\x0f记录已存在и\x02\x99\x03\x120\n" +
+	"\x13_1_00_DATA_CONFLICT\x10֍\x06\x1a\x15ʸ\x02\f数据冲突и\x02\x99\x03\x121\n" +
+	"\x14_1_00_DATA_CORRUPTED\x10\u05cd\x06\x1a\x15ʸ\x02\f数据损坏и\x02\xf4\x03\x125\n" +
+	"\x18_1_00_TRANSACTION_FAILED\x10؍\x06\x1a\x15ʸ\x02\f事务失败и\x02\xf4\x03\x12:\n" +
+	"\x1a_1_00_SERIALIZATION_FAILED\x10ٍ\x06\x1a\x18ʸ\x02\x0f序列化失败и\x02\xf4\x03\x12?\n" +
+	"\x1c_1_00_DESERIALIZATION_FAILED\x10ڍ\x06\x1a\x1bʸ\x02\x12反序列化失败и\x02\xf4\x03\x123\n" +
+	"\x16_1_00_VERSION_CONFLICT\x10ۍ\x06\x1a\x15ʸ\x02\f版本冲突и\x02\x99\x03\x12>\n" +
+	"\x1e_1_00_OPTIMISTIC_LOCK_CONFLICT\x10܍\x06\x1a\x18ʸ\x02\x0f乐观锁冲突и\x02\x99\x03\x12(\n" +
+	"\v_1_00_CACHE\x10\xfa\x8d\x06\x1a\x15ʸ\x02\f缓存错误и\x02\xf4\x03\x12+\n" +
+	"\b_1_00_MQ\x10\xfb\x8d\x06\x1a\x1bʸ\x02\x12消息队列错误и\x02\xf7\x03\x12:\n" +
+	"\x17_1_00_MQ_PUBLISH_FAILED\x10\xfc\x8d\x06\x1a\x1bʸ\x02\x12消息发送失败и\x02\xf7\x03\x12:\n" +
+	"\x17_1_00_MQ_CONSUME_FAILED\x10\xfd\x8d\x06\x1a\x1bʸ\x02\x12消息消费失败и\x02\xf4\x03\x123\n" +
+	"\x10_1_00_MQ_TIMEOUT\x10\xfe\x8d\x06\x1a\x1bʸ\x02\x12消息处理超时и\x02\xf8\x03\x12=\n" +
+	"\x1a_1_00_EVENT_PROCESS_FAILED\x10\xff\x8d\x06\x1a\x1bʸ\x02\x12事件处理失败и\x02\xf4\x03\x12,\n" +
+	"\x12_1_00_UNAUTHORIZED\x10\x8e\x8e\x06\x1a\x12ʸ\x02\t未认证и\x02\x91\x03\x123\n" +
+	"\x13_1_00_TOKEN_EXPIRED\x10\x8f\x8e\x06\x1a\x18ʸ\x02\x0f凭据已过期и\x02\x91\x03\x120\n" +
+	"\x13_1_00_TOKEN_INVALID\x10\x90\x8e\x06\x1a\x15ʸ\x02\f凭据无效и\x02\x91\x03\x12/\n" +
+	"\x0f_1_00_FORBIDDEN\x10\x91\x8e\x06\x1a\x18ʸ\x02\x0f无权限访问и\x02\x93\x03\x126\n" +
+	"\x16_1_00_ACCOUNT_DISABLED\x10\x92\x8e\x06\x1a\x18ʸ\x02\x0f账号已禁用и\x02\x93\x03\x125\n" +
+	"\x15_1_00_TENANT_MISMATCH\x10\x93\x8e\x06\x1a\x18ʸ\x02\x0f租户不匹配и\x02\x93\x03\x12;\n" +
+	"\x18_1_00_SCOPE_INSUFFICIENT\x10\x94\x8e\x06\x1a\x1bʸ\x02\x12权限范围不足и\x02\x93\x03\x12>\n" +
+	"\x14_1_00_IP_NOT_ALLOWED\x10\x95\x8e\x06\x1a\"ʸ\x02\x19来源 IP 不在白名单и\x02\x93\x03\x12,\n" +
+	"\t_1_00_BIZ\x10\xac\x8e\x06\x1a\x1bʸ\x02\x12业务处理失败и\x02\x99\x03\x125\n" +
+	"\x0f_1_00_BIZ_STATE\x10\xad\x8e\x06\x1a\x1eʸ\x02\x15业务状态不允许и\x02\x99\x03\x12-\n" +
+	"\x10_1_00_BIZ_REPEAT\x10\xae\x8e\x06\x1a\x15ʸ\x02\f重复操作и\x02\x99\x03\x127\n" +
+	"\x14_1_00_BIZ_VALIDATION\x10\xaf\x8e\x06\x1a\x1bʸ\x02\x12业务校验失败и\x02\x90\x03\x12>\n" +
+	"\x18_1_00_BIZ_RULE_VIOLATION\x10\xb0\x8e\x06\x1a\x1eʸ\x02\x15业务规则不满足и\x02\x99\x03\x12;\n" +
+	"\x18_1_00_BIZ_QUOTA_EXCEEDED\x10\xb1\x8e\x06\x1a\x1bʸ\x02\x12业务配额不足и\x02\xad\x03\x121\n" +
+	"\x11_1_00_BIZ_EXPIRED\x10\xb2\x8e\x06\x1a\x18ʸ\x02\x0f业务已过期и\x02\x99\x03\x120\n" +
+	"\x10_1_00_BIZ_LOCKED\x10\xb3\x8e\x06\x1a\x18ʸ\x02\x0f业务已锁定и\x02\x99\x03\x12;\n" +
+	"\x1b_1_00_OPERATION_NOT_ALLOWED\x10\xb4\x8e\x06\x1a\x18ʸ\x02\x0f操作不允许и\x02\x93\x03\x125\n" +
+	"\x15_1_00_RESOURCE_IN_USE\x10\xb5\x8e\x06\x1a\x18ʸ\x02\x0f资源使用中и\x02\x99\x03\x12,\n" +
+	"\t_1_00_RPC\x10Ԏ\x06\x1a\x1bʸ\x02\x12远程调用失败и\x02\xf7\x03\x124\n" +
+	"\x11_1_00_RPC_TIMEOUT\x10Վ\x06\x1a\x1bʸ\x02\x12远程调用超时и\x02\xf8\x03\x12;\n" +
+	"\x15_1_00_RPC_UNAVAILABLE\x10֎\x06\x1a\x1eʸ\x02\x15下游服务不可用и\x02\xf7\x03\x127\n" +
+	"\x11_1_00_THIRD_PARTY\x10\u05ce\x06\x1a\x1eʸ\x02\x15第三方服务异常и\x02\xf7\x03\x12;\n" +
+	"\x15_1_00_THIRD_PARTY_API\x10؎\x06\x1a\x1eʸ\x02\x15第三方接口错误и\x02\xf6\x03\x129\n" +
+	"\x19_1_00_THIRD_PARTY_TIMEOUT\x10َ\x06\x1a\x18ʸ\x02\x0f第三方超时и\x02\xf8\x03\x12<\n" +
+	"\x16_1_00_THIRD_PARTY_AUTH\x10ڎ\x06\x1a\x1eʸ\x02\x15第三方鉴权失败и\x02\xf6\x03\x128\n" +
+	"\x1b_1_00_EXTERNAL_RATE_LIMITED\x10ێ\x06\x1a\x15ʸ\x02\f外部限流и\x02\xad\x03\x129\n" +
+	"\x14_1_00_WEBHOOK_FAILED\x10\u070e\x06\x1a\x1dʸ\x02\x14Webhook 投递失败и\x02\xf6\x03\x120\n" +
+	"\x0f_1_00_DNS_ERROR\x10ݎ\x06\x1a\x19ʸ\x02\x10DNS 解析失败и\x02\xf7\x03\x125\n" +
+	"\x12_1_00_RATE_LIMITED\x10\xfc\x8e\x06\x1a\x1bʸ\x02\x12请求过于频繁и\x02\xad\x03\x124\n" +
+	"\x14_1_00_QUOTA_EXCEEDED\x10\xfd\x8e\x06\x1a\x18ʸ\x02\x0f配额已用尽и\x02\xad\x03\x126\n" +
+	"\x19_1_00_CONCURRENCY_LIMITED\x10\xfe\x8e\x06\x1a\x15ʸ\x02\f并发超限и\x02\xad\x03\x125\n" +
+	"\x15_1_00_ROUTE_NOT_FOUND\x10\x90\x8f\x06\x1a\x18ʸ\x02\x0f接口不存在и\x02\x94\x03\x12>\n" +
+	"\x18_1_00_METHOD_NOT_ALLOWED\x10\x91\x8f\x06\x1a\x1eʸ\x02\x15请求方法不允许и\x02\x95\x03\x12.\n" +
+	"\x11_1_00_BAD_GATEWAY\x10\x92\x8f\x06\x1a\x15ʸ\x02\f网关错误и\x02\xf6\x03\x122\n" +
+	"\x15_1_00_GATEWAY_TIMEOUT\x10\x93\x8f\x06\x1a\x15ʸ\x02\f网关超时и\x02\xf8\x03\x121\n" +
+	"\x14_1_00_PROTOCOL_ERROR\x10\x94\x8f\x06\x1a\x15ʸ\x02\f协议错误и\x02\x90\x03\x12*\n" +
+	"\x0f_1_00_TLS_ERROR\x10\x95\x8f\x06\x1a\x13ʸ\x02\n" +
+	"TLS 错误и\x02\x90\x03\x122\n" +
+	"\x15_1_00_REQUEST_TIMEOUT\x10\x96\x8f\x06\x1a\x15ʸ\x02\f请求超时и\x02\x98\x03\x12:\n" +
+	"\x1a_1_00_UPSTREAM_UNAVAILABLE\x10\x97\x8f\x06\x1a\x18ʸ\x02\x0f上游不可用и\x02\xf7\x03\x124\n" +
+	"\x14_1_00_FILE_NOT_FOUND\x10\xae\x8f\x06\x1a\x18ʸ\x02\x0f文件不存在и\x02\x94\x03\x121\n" +
+	"\x14_1_00_FILE_TOO_LARGE\x10\xaf\x8f\x06\x1a\x15ʸ\x02\f文件过大и\x02\x9d\x03\x12A\n" +
+	"\x1b_1_00_FILE_TYPE_NOT_ALLOWED\x10\xb0\x8f\x06\x1a\x1eʸ\x02\x15文件类型不允许и\x02\x9f\x03\x12;\n" +
+	"\x18_1_00_FILE_UPLOAD_FAILED\x10\xb1\x8f\x06\x1a\x1bʸ\x02\x12文件上传失败и\x02\xf4\x03\x12=\n" +
+	"\x1a_1_00_FILE_DOWNLOAD_FAILED\x10\xb2\x8f\x06\x1a\x1bʸ\x02\x12文件下载失败и\x02\xf7\x03\x121\n" +
+	"\x14_1_00_FILE_CORRUPTED\x10\xb3\x8f\x06\x1a\x15ʸ\x02\f文件损坏и\x02\xf4\x03\x12:\n" +
+	"\x17_1_00_FILE_PARSE_FAILED\x10\xb4\x8f\x06\x1a\x1bʸ\x02\x12文件解析失败и\x02\x90\x03\x126\n" +
+	"\x16_1_00_CONFIG_NOT_FOUND\x10̏\x06\x1a\x18ʸ\x02\x0f配置不存在и\x02\x94\x03\x124\n" +
+	"\x14_1_00_CONFIG_INVALID\x10͏\x06\x1a\x18ʸ\x02\x0f配置不合法и\x02\xf4\x03\x12<\n" +
+	"\x19_1_00_CONFIG_PARSE_FAILED\x10Ώ\x06\x1a\x1bʸ\x02\x12配置解析失败и\x02\xf4\x03\x12=\n" +
+	"\x1a_1_00_CONFIG_RELOAD_FAILED\x10Ϗ\x06\x1a\x1bʸ\x02\x12配置重载失败и\x02\xf4\x03\x123\n" +
+	"\x13_1_30_APP_NOT_FOUND\x10\xd1\xf7\a\x1a\x18ʸ\x02\x0f应用不存在и\x02\x93\x03\x12;\n" +
+	"\x18_1_30_APP_SECRET_INVALID\x10\xd2\xf7\a\x1a\x1bʸ\x02\x12应用密钥无效и\x02\x91\x03\x122\n" +
+	"\x12_1_30_APP_DISABLED\x10\xd3\xf7\a\x1a\x18ʸ\x02\x0f应用已禁用и\x02\x93\x03\x125\n" +
+	"\x15_1_30_METHOD_NOT_OPEN\x10\xd4\xf7\a\x1a\x18ʸ\x02\x0f方法未开放и\x02\x94\x03\x125\n" +
+	"\x12_1_30_RATE_LIMITED\x10\xd5\xf7\a\x1a\x1bʸ\x02\x12请求超过限制и\x02\xad\x03\x124\n" +
+	"\x17_1_30_SIGNATURE_INVALID\x10\xd6\xf7\a\x1a\x15ʸ\x02\f签名无效и\x02\x91\x03\x124\n" +
+	"\x17_1_30_SIGNATURE_MISSING\x10\xd7\xf7\a\x1a\x15ʸ\x02\f缺少签名и\x02\x91\x03\x127\n" +
+	"\x17_1_30_TIMESTAMP_INVALID\x10\xd8\xf7\a\x1a\x18ʸ\x02\x0f时间戳无效и\x02\x91\x03\x123\n" +
+	"\x13_1_30_NONCE_INVALID\x10\xd9\xf7\a\x1a\x18ʸ\x02\x0f随机数无效и\x02\x91\x03\x12>\n" +
+	"\x14_1_30_IP_NOT_ALLOWED\x10\xda\xf7\a\x1a\"ʸ\x02\x19应用 IP 不在白名单и\x02\x93\x03\x12;\n" +
+	"\x18_1_30_APP_QUOTA_EXCEEDED\x10\xdb\xf7\a\x1a\x1bʸ\x02\x12应用配额不足и\x02\xad\x03\x12;\n" +
+	"\x1b_1_30_APP_PERMISSION_DENIED\x10\xdc\xf7\a\x1a\x18ʸ\x02\x0f应用无权限и\x02\x93\x03\x12E\n" +
+	"\x1f_1_30_API_VERSION_NOT_SUPPORTED\x10\xdd\xf7\a\x1a\x1eʸ\x02\x15接口版本不支持и\x02\x90\x03\x125\n" +
+	"\x15_1_30_REQUEST_EXPIRED\x10\xde\xf7\a\x1a\x18ʸ\x02\x0f请求已过期и\x02\x91\x03:6\n" +
 	"\x04name\x12!.google.protobuf.EnumValueOptions\x18\x89' \x01(\tR\x04name:?\n" +
 	"\thttp_code\x12!.google.protobuf.EnumValueOptions\x18\x8a' \x01(\x05R\bhttpCodeBM\n" +
 	"\x13com.github.extprotoB\bExtProtoP\x01Z*zero-service/third_party/extproto;extprotob\x06proto3"

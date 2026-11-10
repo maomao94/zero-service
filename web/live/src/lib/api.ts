@@ -2,8 +2,8 @@ import type { ApiMessages, ApiPage, ApiRecordings, DialSipReply, JoinReply, Meet
 
 const API_ROOT = import.meta.env.VITE_API_ROOT || '/live/v1'
 
-/** 认证类业务码：100401 未认证、130101 应用不存在/停用、130102 密钥无效（见 docs/error-codes.md §6.3） */
-const AUTH_CODES = [100401, 130101, 130102]
+/** 认证类业务码：100110 未认证、130001 应用不存在/停用、130002 密钥无效（见 docs/error-codes.md §7.3） */
+const AUTH_CODES = [100110, 130001, 130002]
 const SESSION_EXPIRED_EVENT = 'live:session-expired'
 /** 非信封错误只截取一小段文本，避免整页 HTML 进入 toast */
 const MAX_TEXT_SUMMARY = 120
@@ -24,7 +24,7 @@ export class ApiError extends Error {
   }
 }
 
-/** 登录失效判定：只认信封 code；非信封 HTTP 401 在请求层已归一为 100401。 */
+/** 登录失效判定：只认信封 code；非信封 HTTP 401 在请求层已归一为 100110。 */
 export function isAuthError(error: unknown): error is ApiError {
   return error instanceof ApiError && AUTH_CODES.includes(error.code)
 }
@@ -85,7 +85,7 @@ async function request<T>(path: string, init: RequestInit = {}, requiresAuth = t
   const authCode = envelope && AUTH_CODES.includes(envelope.code)
   const nonEnvelope401 = !envelope && httpStatus === 401
   if (requiresAuth && (authCode || nonEnvelope401)) {
-    const code = envelope?.code ?? 100401
+    const code = envelope?.code ?? 100110
     console.warn('[api] 认证失败', { path, code, requestId, status: httpStatus })
     // 统一会话过期处理：广播事件，由 App 监听并登出（任何调用路径都会触发）
     notifySessionExpired()

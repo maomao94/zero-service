@@ -3,13 +3,14 @@ package logic
 import (
 	"context"
 	"database/sql"
+	"zero-service/app/trigger/internal/confirm"
 	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/authctx"
 	"zero-service/common/errx"
-	"zero-service/facade/streamevent/streamevent"
+
 	"zero-service/model"
 	"zero-service/third_party/extproto"
 
@@ -98,39 +99,10 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	if err != nil {
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "终止执行项事务失败")
 	}
-	batchCount, err := gormmodel.UpdatePlanBatchFinishedTime(l.ctx, db, execItem.BatchPk)
-	if err != nil {
-		log.Errorf("更新批次 finished_time（用于收尾判断）失败: %v", err)
-	}
-	if batchCount > 0 {
-		batchNotifyReq := streamevent.NotifyPlanEventReq{
-			EventType:  streamevent.PlanEventType_BATCH_FINISHED,
-			PlanId:     execItem.PlanId,
-			PlanType:   plan.Type.String,
-			BatchId:    execItem.BatchId,
-			Attributes: map[string]string{},
-		}
-		log.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Info("下游通知：调用 NotifyPlanEvent（批次收尾）")
-		if _, notifyErr := l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq); notifyErr != nil {
-			log.Errorf("下游通知失败（BATCH_FINISHED 事件已丢失，需人工补发）: %v", notifyErr)
-		}
-	}
-
-	planCount, err := gormmodel.UpdatePlanFinishedTime(l.ctx, db, execItem.PlanPk)
-	if err != nil {
-		log.Errorf("更新计划 finished_time（用于收尾判断）失败: %v", err)
-	}
-	if planCount > 0 {
-		planPlanReq := streamevent.NotifyPlanEventReq{
-			EventType:  streamevent.PlanEventType_PLAN_FINISHED,
-			PlanId:     execItem.PlanId,
-			PlanType:   plan.Type.String,
-			Attributes: map[string]string{},
-		}
-		log.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
-		if _, notifyErr := l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq); notifyErr != nil {
-			log.Errorf("下游通知失败（PLAN_FINISHED 事件已丢失，需人工补发）: %v", notifyErr)
-		}
+	batch := &gormmodel.PlanBatch{PlanPk: execItem.PlanPk, PlanId: execItem.PlanId, BatchId: execItem.BatchId}
+	batch.Id = execItem.BatchPk
+	if _, _, notifyErr := confirm.NotifyBatchFinishedIfNeeded(l.ctx, db, l.svcCtx.StreamEventCli, &plan, batch, in.Reason); notifyErr != nil {
+		log.Errorf("更新批次/计划 finished_time 失败: %v", notifyErr)
 	}
 
 	log.Info("RPC 终止执行项：执行项状态已更新，事务已提交")

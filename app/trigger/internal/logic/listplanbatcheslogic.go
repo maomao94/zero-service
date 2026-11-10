@@ -65,6 +65,14 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 	}
 
 	rawDB := l.svcCtx.DB.WithContext(l.ctx).DB
+	batchPks := make([]string, 0, len(planBatches))
+	for _, planBatch := range planBatches {
+		batchPks = append(batchPks, planBatch.Id)
+	}
+	confirmMap, err := gormmodel.FindPlanConfirmsByBatchPks(l.ctx, rawDB, batchPks)
+	if err != nil {
+		return nil, err
+	}
 	for _, planBatch := range planBatches {
 		statusCounts, err := gormmodel.GetBatchStatusCounts(l.ctx, rawDB, planBatch.Id)
 		if err != nil {
@@ -110,6 +118,11 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 		if planBatch.FinishedTime.Valid {
 			pbPlanBatch.FinishedTime = carbonx.FormatDateTime(planBatch.FinishedTime.Time)
 		}
+		var confirm *gormmodel.PlanConfirm
+		if row, ok := confirmMap[planBatch.Id]; ok {
+			confirm = &row
+		}
+		fillPlanConfirmPb(pbPlanBatch, confirm)
 		resp.PlanBatches = append(resp.PlanBatches, pbPlanBatch)
 	}
 	return resp, nil

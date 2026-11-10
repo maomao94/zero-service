@@ -227,6 +227,18 @@ func (s *TriggerRpcServer) ResumePlanBatch(ctx context.Context, in *trigger.Resu
 	return l.ResumePlanBatch(in)
 }
 
+// 确认计划批次（批次级二次确认）
+func (s *TriggerRpcServer) ConfirmPlanBatch(ctx context.Context, in *trigger.ConfirmPlanBatchReq) (*trigger.ConfirmPlanBatchRes, error) {
+	l := logic.NewConfirmPlanBatchLogic(ctx, s.svcCtx)
+	return l.ConfirmPlanBatch(in)
+}
+
+// 拒绝启动计划批次（批次级二次确认）
+func (s *TriggerRpcServer) RejectPlanBatch(ctx context.Context, in *trigger.RejectPlanBatchReq) (*trigger.RejectPlanBatchRes, error) {
+	l := logic.NewRejectPlanBatchLogic(ctx, s.svcCtx)
+	return l.RejectPlanBatch(in)
+}
+
 // 暂停执行项
 func (s *TriggerRpcServer) PausePlanExecItem(ctx context.Context, in *trigger.PausePlanExecItemReq) (*trigger.PausePlanExecItemRes, error) {
 	l := logic.NewPausePlanExecItemLogic(ctx, s.svcCtx)

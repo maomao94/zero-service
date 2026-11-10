@@ -25,7 +25,7 @@ type InvokeReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 网关 Basic 鉴权后的应用标识；直连调用时由调用方填写。
 	AppId string `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
-	// 方法名，例如 pod.list；未注册的方法返回 130103。
+	// 方法名，例如 pod.list；未注册的方法返回 130004。
 	Method string `protobuf:"bytes,2,opt,name=method,proto3" json:"method,omitempty"`
 	// 该方法请求消息的 protojson UTF-8 原文；空值视为 {}。
 	Data string `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
