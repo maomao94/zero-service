@@ -245,22 +245,40 @@ func TestFindPlanConfirmSkipsPausedBatch(t *testing.T) {
 }
 
 func TestBatchConfirmDeadlineUsesEndOfDay(t *testing.T) {
-	triggerTime := time.Date(2026, 11, 9, 9, 30, 0, 0, time.Local)
+	shanghai := time.FixedZone("CST", 8*3600)
+	triggerTime := time.Date(2026, 11, 9, 9, 30, 0, 0, shanghai)
 	deadline := BatchConfirmDeadline(triggerTime, 0)
-	want := time.Date(2026, 11, 9, 23, 59, 59, 0, deadline.Location())
-	if deadline.Year() != want.Year() || deadline.Month() != want.Month() || deadline.Day() != want.Day() {
-		t.Fatalf("deadline date = %s, want %s", deadline, want)
+	want := time.Date(2026, 11, 9, 23, 59, 59, 0, shanghai)
+	if !deadline.Equal(want) {
+		t.Fatalf("deadline = %s, want %s", deadline, want)
 	}
-	if deadline.Hour() != 23 || deadline.Minute() != 59 || deadline.Second() != 59 {
-		t.Fatalf("deadline time = %s, want end of day", deadline)
+	// EndOfDay() 自带 .999999999 纳秒尾巴，秒级精度列会进位到次日 00:00:00，这里必须为 0。
+	if got := deadline.Nanosecond(); got != 0 {
+		t.Fatalf("deadline nanosecond = %d, want 0 (avoid DB rounding to next day)", got)
+	}
+	if got := deadline.Format(time.RFC3339Nano); got != "2026-11-09T23:59:59+08:00" {
+		t.Fatalf("deadline formatted = %s, want 2026-11-09T23:59:59+08:00", got)
 	}
 }
 
 func TestBatchConfirmDeadlineSupportsCrossDay(t *testing.T) {
-	triggerTime := time.Date(2026, 11, 9, 23, 0, 0, 0, time.Local)
+	shanghai := time.FixedZone("CST", 8*3600)
+	triggerTime := time.Date(2026, 11, 9, 23, 0, 0, 0, shanghai)
 	deadline := BatchConfirmDeadline(triggerTime, 180)
-	if deadline.Day() != 10 || deadline.Hour() != 2 || deadline.Minute() != 0 {
+	if !deadline.Equal(time.Date(2026, 11, 10, 2, 0, 0, 0, shanghai)) {
 		t.Fatalf("deadline = %s, want 2026-11-10 02:00:00", deadline)
+	}
+	if got := deadline.Nanosecond(); got != 0 {
+		t.Fatalf("deadline nanosecond = %d, want 0", got)
+	}
+}
+
+func TestBatchConfirmDeadlineTruncatesTriggerSubSecond(t *testing.T) {
+	shanghai := time.FixedZone("CST", 8*3600)
+	triggerTime := time.Date(2026, 11, 9, 8, 10, 0, 123456789, shanghai)
+	deadline := BatchConfirmDeadline(triggerTime, 890)
+	if !deadline.Equal(time.Date(2026, 11, 9, 23, 0, 0, 0, shanghai)) {
+		t.Fatalf("deadline = %s, want 2026-11-09 23:00:00", deadline)
 	}
 }
 
