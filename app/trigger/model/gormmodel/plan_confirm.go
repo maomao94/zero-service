@@ -110,9 +110,10 @@ func ConfirmPlanTarget(ctx context.Context, db *gorm.DB, confirmType int, target
 // FindPendingPlanConfirmNotify 查询一条待通知的批次确认记录。
 // 已过截止时间的记录由超时扫描处理，这里直接跳过，避免通知队列被旧记录阻塞。
 // 并发控制由调用方通过 Redis 锁完成；返回后需在锁内重新校验状态。
+// 与 LockTriggerItem 一致：轮询 SELECT 静默成功日志，避免空转刷屏；错误与慢 SQL 仍会记录。
 func FindPendingPlanConfirmNotify(ctx context.Context, db *gorm.DB, now time.Time) (*PlanConfirm, error) {
 	var candidate PlanConfirm
-	err := db.WithContext(ctx).
+	err := db.WithContext(gormx.WithoutSQLTrace(ctx)).
 		Table("plan_confirm AS pc").
 		Select("pc.*").
 		Joins("JOIN plan_batch pb ON pb.id = pc.batch_pk AND pb.is_deleted = 0").
@@ -146,9 +147,10 @@ func MarkPlanConfirmNotified(ctx context.Context, db *gorm.DB, id string, now ti
 
 // FindPendingPlanConfirmExpire 查询一条已过截止时间且未确认的批次确认记录。
 // 并发控制由调用方通过 Redis 锁完成；返回后需在锁内重新校验状态。
+// 与 LockTriggerItem 一致：轮询 SELECT 静默成功日志，避免空转刷屏；错误与慢 SQL 仍会记录。
 func FindPendingPlanConfirmExpire(ctx context.Context, db *gorm.DB, now time.Time) (*PlanConfirm, error) {
 	var candidate PlanConfirm
-	err := db.WithContext(ctx).
+	err := db.WithContext(gormx.WithoutSQLTrace(ctx)).
 		Table("plan_confirm AS pc").
 		Select("pc.*").
 		Joins("JOIN plan_batch pb ON pb.id = pc.batch_pk AND pb.is_deleted = 0").
