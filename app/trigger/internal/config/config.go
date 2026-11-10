@@ -24,6 +24,8 @@ type Config struct {
 	GracePeriod     time.Duration `json:",default=30s"`
 	StreamEventConf zrpc.RpcClientConf
 	CronTask        CronTaskConfig `json:",optional"`
+	// SocketPushConf socketpush 推送服务（可选，未配置时批次确认只记录日志）
+	SocketPushConf zrpc.RpcClientConf `json:",optional"`
 }
 
 type CronTaskConfig struct {

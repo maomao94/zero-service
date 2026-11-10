@@ -88,6 +88,14 @@ func (l *RunPlanExecItemLogic) RunPlanExecItem(in *trigger.RunPlanExecItemReq) (
 		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次处于暂停状态,不可立即执行")
 	}
 
+	confirmRecord, err := gormmodel.FindPlanConfirmByTarget(l.ctx, db, model.ConfirmTypeBatch, planBatch.Id)
+	if err != nil {
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询批次确认记录失败")
+	}
+	if confirmRecord != nil && confirmRecord.ConfirmStatus == model.PlanConfirmStatusWaiting {
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次待人工确认,暂不可立即执行")
+	}
+
 	// 更新下次触发时间为当前时间，使其立即执行
 	now := time.Now()
 	execItem.NextTriggerTime = now

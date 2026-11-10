@@ -396,6 +396,82 @@ socket.on(event, (data) => {
 
 后端使用 `BroadcastRoom` 向上述房间发送自定义事件。`room` 只负责选择接收连接，`event` 负责客户端事件分发，两者不能互换。
 
+### 计划批次人工确认
+
+`trigger` 开启批次二次确认后，会在 `notify_at`（批次触发时间 - 提前量）通过 socketpush 向机构房间推送一次待确认通知。前端收到后展示确认弹窗，再调用 `ConfirmPlanBatch` / `RejectPlanBatch` 放行或终止批次。
+
+| 事件 | 房间 | 说明 |
+|------|------|------|
+| `plan:batch-confirm-required` | `dept:{deptCode}` | 批次待人工确认；批次未携带机构时使用兜底房间 `plan-confirm` |
+
+房间名由后端按批次所属机构生成。前端按登录用户的 `dept-code` 加入对应房间：
+
+```javascript
+const event = 'plan:batch-confirm-required';
+const deptCode = getDeptCodeFromLogin(); // 与登录 Token 的 dept-code 一致
+const room = deptCode ? `dept:${deptCode}` : 'plan-confirm';
+
+socket.emit('__join_room_up__', { reqId: uuid(), room });
+
+socket.on(event, (data) => {
+    const msg = normalizeSocketPayload(data);
+    // BroadcastRoom 的 payload 是 JSON 字符串，解析后为 BatchConfirmPayload
+    const payload = msg.payload ?? msg;
+
+    // 同一批次只会通知一次，仍建议按 batchPk 去重，避免多标签页重复弹窗
+    showBatchConfirmDialog({
+        batchPk: payload.batchPk,
+        batchId: payload.batchId,
+        planId: payload.planId,
+        planName: payload.planName,
+        triggerTime: payload.planTriggerTime,
+        deadline: payload.confirmDeadline,
+        itemCount: payload.itemCount,
+    });
+});
+```
+
+批次待确认负载（`BatchConfirmPayload`）：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `planPk` | string | 计划主键 |
+| `planId` | string | 计划业务 ID |
+| `planName` | string | 计划名称 |
+| `batchPk` | string | 批次主键，确认/拒绝时优先使用 |
+| `batchId` | string | 批次业务 ID |
+| `batchNum` | string | 批次序号 |
+| `deptCode` | string | 机构 code |
+| `planTriggerTime` | string | 计划触发时间，`yyyy-MM-dd HH:mm:ss` |
+| `confirmDeadline` | string | 确认截止时间，`yyyy-MM-dd HH:mm:ss` |
+| `leadMinutes` | int | 提前通知分钟数 |
+| `itemCount` | int64 | 批次执行项数量 |
+| `notifiedAt` | string | 本次通知时间，`yyyy-MM-dd HH:mm:ss` |
+
+确认/拒绝接口（`trigger.rpc`）：
+
+| 方法 | 参数 | 说明 |
+|------|------|------|
+| `ConfirmPlanBatch` | `id` 或 `batchId` | 确认放行；幂等，重复确认返回成功 |
+| `RejectPlanBatch` | `id` 或 `batchId`、可选 `reason` | 拒绝并终止批次；`reason` 最大 2000 字符 |
+
+```json
+// ConfirmPlanBatch
+{ "id": "batch-pk" }
+
+// RejectPlanBatch
+{ "id": "batch-pk", "reason": "现场条件不满足" }
+```
+
+接入注意：
+
+- 通知只发一次（`notified_time` 写入后不重发）。socket 断线期间可能收不到，前端进入页面时应通过 `ListPlanBatches` / `GetPlanBatch` 拉取 `confirmStatus=waiting` 的批次兜底。
+- 只对启用且未结束的计划/批次发送；计划或批次暂停期间不发送，恢复后若未过截止时间会补发。
+- `confirmDeadline` 是绝对时间，暂停不会顺延。超过截止时间后确认会失败，批次由后端自动终止。
+- 确认成功后，早于触发时间按原计划时间执行，晚于触发时间立即执行；拒绝或超时后批次终止，执行项不再下发。
+- `ConfirmPlanBatch` / `RejectPlanBatch` 需要前端通过业务网关/BFF 转发到 `trigger.rpc`，本仓库未包含对应的 HTTP 路由。
+- 批次确认相关查询字段：`GetPlanBatch` / `ListPlanBatches` 返回 `confirmType`、`confirmStatus`（`none` / `waiting` / `confirmed`）、`confirmDeadline`、`confirmedTime`、`confirmedUser`。
+
 ## 后端推送 API
 
 后端通过 gRPC 调用 socketpush 推送消息（集群扇出模型）：

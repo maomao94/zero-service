@@ -1,4 +1,4 @@
-FROM golang:1.26-alpine3.22 AS builder
+FROM golang:1.26-alpine AS builder
 
 LABEL stage=gobuilder
 
@@ -16,7 +16,7 @@ RUN set -x \
     && if [ -n "$HTTP_PROXY" ]; then export http_proxy=$HTTP_PROXY; fi \
     && if [ -n "$HTTPS_PROXY" ]; then export https_proxy=$HTTPS_PROXY; fi \
     && apk add --no-cache \
-        tzdata ca-certificates make gcc musl-dev pkgconf geos-dev \
+        tzdata ca-certificates make gcc musl-dev pkgconf geos-dev=3.14.1-r0 \
     && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     && echo $TZ > /etc/timezone \
     && geos-config --version
@@ -37,8 +37,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     && go build -trimpath -ldflags="-s -w" -o /out/gis ./app/gis \
     && chmod +x /out/gis
 
-FROM alpine:3.22
-RUN apk add --no-cache geos \
+FROM alpine:3.24
+RUN apk add --no-cache geos=3.14.1-r0 \
     && mkdir -p /etc/ssl/certs /usr/share/zoneinfo/Asia
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /usr/share/zoneinfo/Asia/Shanghai

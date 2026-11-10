@@ -289,6 +289,8 @@ func LockTriggerItem(ctx context.Context, db *gorm.DB, dbType gormx.DatabaseType
 		Where("p.status = ?", model.PlanStatusEnabled).
 		Where("pb.is_deleted = ?", 0).
 		Where("pb.status = ?", model.PlanStatusEnabled).
+		// 批次尚未完成人工确认时，其下执行项一律不下发；超时终止由确认扫描任务负责。
+		Where("NOT EXISTS (SELECT 1 FROM plan_confirm pc WHERE pc.confirm_type = ? AND pc.target_pk = pb.id AND pc.is_deleted = 0 AND pc.confirmed_time IS NULL)", model.ConfirmTypeBatch).
 		Order(gormx.RandomOrderExpr(dbType)).
 		Limit(1)
 	if err := query.Scan(&item).Error; err != nil {

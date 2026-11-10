@@ -80,6 +80,10 @@ service TriggerRpc {
   rpc TerminatePlanBatch(TerminatePlanBatchReq) returns (TerminatePlanBatchRes);
   // 恢复计划批次
   rpc ResumePlanBatch(ResumePlanBatchReq) returns (ResumePlanBatchRes);
+  // 确认计划批次（批次级二次确认）
+  rpc ConfirmPlanBatch(ConfirmPlanBatchReq) returns (ConfirmPlanBatchRes);
+  // 拒绝启动计划批次（批次级二次确认）
+  rpc RejectPlanBatch(RejectPlanBatchReq) returns (RejectPlanBatchRes);
   // 暂停执行项
   rpc PausePlanExecItem(PausePlanExecItemReq) returns (PausePlanExecItemRes);
   // 终止执行项
@@ -735,6 +739,12 @@ message CreatePlanTaskReq {
   repeated string specified_times = 15 [json_name = "specifiedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
   // 精确排除时间列表，格式：yyyy-MM-dd HH:mm:ss。
   repeated string excluded_times = 16 [json_name = "excludedTimes", (validate.rules).repeated = {max_items: 1000, items: {string: {len: 19}}}];
+  // 确认类型：0-不需要确认，1-批次确认，2-执行项确认（暂未实现）
+  int32 confirm_type = 17 [json_name = "confirmType", (validate.rules).int32 = {in: [0, 1, 2]}];
+  // 提前通知分钟数；批次确认时至少为 1
+  int32 confirm_lead_minutes = 18 [json_name = "confirmLeadMinutes", (validate.rules).int32 = {gte: 0, lte: 1440}];
+  // 确认超时分钟数，从批次触发时间起算；0 表示默认当天 23:59:59
+  int32 confirm_timeout_minutes = 19 [json_name = "confirmTimeoutMinutes", (validate.rules).int32 = {gte: 0, lte: 10080}];
 
   // 扩展字段
   string ext1 = 50 [json_name = "ext1"];
@@ -832,7 +842,7 @@ message TerminatePlanReq {
   string id = 1 [json_name = "id"];
   string plan_id = 2 [json_name = "planId"];
   // 终止原因
-  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 200}];
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 2000}];
 }
 
 message TerminatePlanRes {
@@ -860,7 +870,7 @@ message TerminatePlanBatchReq {
   string id = 1 [json_name = "id"];
   string batch_id = 2 [json_name = "batchId"];
   // 终止原因
-  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 200}];
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 2000}];
 }
 
 message TerminatePlanBatchRes {
@@ -872,6 +882,28 @@ message ResumePlanBatchReq {
 }
 
 message ResumePlanBatchRes {
+}
+
+message ConfirmPlanBatchReq {
+  // 批次主键ID
+  string id = 1 [json_name = "id"];
+  // 批次ID
+  string batch_id = 2 [json_name = "batchId"];
+}
+
+message ConfirmPlanBatchRes {
+}
+
+message RejectPlanBatchReq {
+  // 批次主键ID
+  string id = 1 [json_name = "id"];
+  // 批次ID
+  string batch_id = 2 [json_name = "batchId"];
+  // 拒绝原因
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 2000}];
+}
+
+message RejectPlanBatchRes {
 }
 
 message PausePlanExecItemReq {
@@ -888,7 +920,7 @@ message TerminatePlanExecItemReq {
   string id = 1 [json_name = "id"];
   string exec_id = 2 [json_name = "execId"];
   // 终止原因
-  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 200}];
+  string reason = 3 [json_name = "reason", (validate.rules).string = {max_len: 2000}];
 }
 
 message TerminatePlanExecItemRes {
@@ -1268,6 +1300,16 @@ message PlanBatchPb {
   map<string, int64> status_count_map = 13 [json_name = "statusCountMap"];
   // 执行计划数
   int64 exec_cnt = 51 [json_name = "execCnt"];
+  // 确认类型：0-不需要确认，1-批次确认，2-执行项确认（暂未实现）
+  int32 confirm_type = 57 [json_name = "confirmType"];
+  // 确认状态：none / waiting / confirmed
+  string confirm_status = 58 [json_name = "confirmStatus"];
+  // 确认截止时间
+  string confirm_deadline = 59 [json_name = "confirmDeadline"];
+  // 确认时间
+  string confirmed_time = 60 [json_name = "confirmedTime"];
+  // 确认人/处理人（确认或拒绝）
+  string confirmed_user = 61 [json_name = "confirmedUser"];
   // 扩展字段1
   string ext1 = 52 [json_name = "ext1"];
   // 扩展字段2
