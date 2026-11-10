@@ -24,7 +24,7 @@ type PlanConfirm struct {
 
 	CreateUser sql.NullString `gorm:"column:create_user;size:64;comment:创建人"`
 	UpdateUser sql.NullString `gorm:"column:update_user;size:64;comment:更新人"`
-	DeptCode   sql.NullString `gorm:"column:dept_code;size:64;comment:机构code;index:idx_plan_confirm_dept_code"`
+	DeptCode   sql.NullString `gorm:"column:dept_code;size:64;comment:机构code"`
 
 	PlanPk      string         `gorm:"column:plan_pk;size:64;comment:关联的计划主键ID;index:idx_plan_confirm_plan_pk"`
 	BatchPk     string         `gorm:"column:batch_pk;size:64;comment:批次主键ID;index:idx_plan_confirm_batch_pk"`
@@ -33,14 +33,15 @@ type PlanConfirm struct {
 	TargetPk    string         `gorm:"column:target_pk;size:64;comment:确认目标主键ID;uniqueIndex:uk_plan_confirm_target,priority:2"`
 
 	LeadMinutes   int            `gorm:"column:lead_minutes;comment:提前通知分钟数，0-到点通知"`
-	NotifyAt      time.Time      `gorm:"column:notify_at;comment:计划通知时间;index:idx_plan_confirm_notify,priority:2"`
-	NotifiedTime  sql.NullTime   `gorm:"column:notified_time;comment:实际通知时间;index:idx_plan_confirm_notify,priority:1"`
-	Deadline      time.Time      `gorm:"column:deadline;comment:确认截止时间;index:idx_plan_confirm_expire,priority:3"`
-	ConfirmedTime sql.NullTime   `gorm:"column:confirmed_time;comment:处理时间（确认/拒绝）;index:idx_plan_confirm_expire,priority:1"`
+	NotifyAt      time.Time      `gorm:"column:notify_at;comment:计划通知时间;index:idx_plan_confirm_notify,priority:3"`
+	NotifiedTime  sql.NullTime   `gorm:"column:notified_time;comment:实际通知时间;index:idx_plan_confirm_notify,priority:2"`
+	Deadline      time.Time      `gorm:"column:deadline;comment:确认截止时间;index:idx_plan_confirm_expire,priority:2"`
+	ConfirmedTime sql.NullTime   `gorm:"column:confirmed_time;comment:处理时间（确认/拒绝）"`
 	ConfirmedUser sql.NullString `gorm:"column:confirmed_user;size:64;comment:处理人（确认/拒绝）"`
-	ExpiredTime   sql.NullTime   `gorm:"column:expired_time;comment:确认终止时间：expired（超时）和 closed（人工终止）写入;index:idx_plan_confirm_expire,priority:2"`
+	ExpiredTime   sql.NullTime   `gorm:"column:expired_time;comment:确认终止时间：expired（超时）和 closed（人工终止）写入"`
 	// ConfirmStatus 确认状态：0-未确认，1-已确认（允许/拒绝/超时/关闭均归为已确认）。
-	ConfirmStatus int            `gorm:"column:confirm_status;comment:确认状态：0-未确认，1-已确认;index:idx_plan_confirm_status"`
+	// 两个扫描都以 confirm_status 为等值前缀：先按状态排除已处理记录，再按时间范围取最老一条。
+	ConfirmStatus int            `gorm:"column:confirm_status;comment:确认状态：0-未确认，1-已确认;index:idx_plan_confirm_notify,priority:1;index:idx_plan_confirm_expire,priority:1"`
 	Reason        sql.NullString `gorm:"column:reason;size:2000;comment:处理说明（拒绝原因/终止原因）"`
 }
 
