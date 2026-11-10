@@ -48,17 +48,20 @@ type PlanConfirm struct {
 func (PlanConfirm) TableName() string { return "plan_confirm" }
 
 // DefaultConfirmDeadline 返回批次确认默认截止时间：触发当天 23:59:59（东八区）。
+// carbon.EndOfDay() 返回 23:59:59.999999999，写入秒级精度的列时会被四舍五入成次日 00:00:00，
+// 因此统一截断到秒，保证落库值与语义一致。
 func DefaultConfirmDeadline(triggerTime time.Time) time.Time {
-	return carbon.CreateFromStdTime(triggerTime, carbon.Shanghai).EndOfDay().StdTime()
+	return carbon.CreateFromStdTime(triggerTime, carbon.Shanghai).EndOfDay().StdTime().Truncate(time.Second)
 }
 
 // BatchConfirmDeadline 返回批次确认截止时间。
 // timeoutMinutes > 0 时从触发时间起算，支持跨天；<= 0 时默认触发当天 23:59:59。
+// 返回值统一截断到秒，避免数据库按小数秒进位导致截止时间漂移到下一分钟/次日。
 func BatchConfirmDeadline(triggerTime time.Time, timeoutMinutes int) time.Time {
 	if timeoutMinutes <= 0 {
 		return DefaultConfirmDeadline(triggerTime)
 	}
-	return triggerTime.Add(time.Duration(timeoutMinutes) * time.Minute)
+	return triggerTime.Add(time.Duration(timeoutMinutes) * time.Minute).Truncate(time.Second)
 }
 
 // FindPlanConfirmByTarget 按确认类型和目标主键查询确认记录，不存在时返回 nil。

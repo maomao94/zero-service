@@ -23,6 +23,8 @@ export default defineConfig({
     },
   },
   build: {
+    // livekit-client 单包约 550 KB，属预期体积，单独放宽告警阈值。
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
         manualChunks(id) {
