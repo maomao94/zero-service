@@ -1,15 +1,21 @@
 package gormmodel
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"zero-service/common/gormx"
 	"zero-service/model"
+
+	"github.com/zeromicro/go-zero/core/logx"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func TestLockTriggerItemBlockedByPendingConfirm(t *testing.T) {
@@ -255,6 +261,37 @@ func TestBatchConfirmDeadlineSupportsCrossDay(t *testing.T) {
 	deadline := BatchConfirmDeadline(triggerTime, 180)
 	if deadline.Day() != 10 || deadline.Hour() != 2 || deadline.Minute() != 0 {
 		t.Fatalf("deadline = %s, want 2026-11-10 02:00:00", deadline)
+	}
+}
+
+func TestPlanConfirmScanSilencesSuccessfulSQLLog(t *testing.T) {
+	var buf bytes.Buffer
+	logx.SetWriter(logx.NewWriter(&buf))
+	defer logx.Reset()
+
+	db := openPlanTestDB(t).Session(&gorm.Session{Logger: gormx.NewGormLogger(gormx.LoggerConfig{
+		LogLevel:      logger.Info,
+		SlowThreshold: time.Hour,
+	})})
+	now := time.Now()
+
+	if _, err := FindPendingPlanConfirmNotify(context.Background(), db, now); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := FindPendingPlanConfirmExpire(context.Background(), db, now); err != nil {
+		t.Fatal(err)
+	}
+	if got := buf.String(); strings.Contains(got, "plan_confirm AS pc") {
+		t.Fatalf("scan query should be silent at info level, got: %s", got)
+	}
+
+	// 对照：普通查询仍应记录 info SQL，确认静默只作用于扫描查询。
+	var count int64
+	if err := db.Table("plan_confirm").Count(&count).Error; err != nil {
+		t.Fatal(err)
+	}
+	if got := buf.String(); !strings.Contains(got, "plan_confirm") {
+		t.Fatalf("normal query should still log info SQL, got: %s", got)
 	}
 }
 

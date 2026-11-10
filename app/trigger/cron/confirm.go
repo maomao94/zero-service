@@ -11,6 +11,7 @@ import (
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/authctx"
 	"zero-service/common/carbonx"
+	"zero-service/common/gormx"
 	"zero-service/model"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -62,7 +63,8 @@ func (s *CronService) ScanPlanConfirm() {
 func (s *CronService) handleConfirmNotify(ctx context.Context, db *gorm.DB, pending *gormmodel.PlanConfirm) bool {
 	notified := false
 	ran := s.withConfirmLock(ctx, pending.BatchPk, func() {
-		latest, err := gormmodel.FindPlanConfirmByTarget(ctx, db, model.ConfirmTypeBatch, pending.TargetPk)
+		// 扫描链路静默成功 SQL，与 LockTriggerItem 保持一致；该函数同时被 RPC 复用，故在调用侧加开关。
+		latest, err := gormmodel.FindPlanConfirmByTarget(gormx.WithoutSQLTrace(ctx), db, model.ConfirmTypeBatch, pending.TargetPk)
 		if err != nil {
 			planscope.CronLockScope().Logger(ctx).Errorf(planscope.CronLockScope().LogMessage("批次确认扫描：锁内重新加载失败: %v"), err)
 			return
@@ -81,7 +83,8 @@ func (s *CronService) handleConfirmNotify(ctx context.Context, db *gorm.DB, pend
 func (s *CronService) handleConfirmExpire(ctx context.Context, db *gorm.DB, pending *gormmodel.PlanConfirm) bool {
 	expired := false
 	ran := s.withConfirmLock(ctx, pending.BatchPk, func() {
-		latest, err := gormmodel.FindPlanConfirmByTarget(ctx, db, model.ConfirmTypeBatch, pending.TargetPk)
+		// 扫描链路静默成功 SQL，与 LockTriggerItem 保持一致；该函数同时被 RPC 复用，故在调用侧加开关。
+		latest, err := gormmodel.FindPlanConfirmByTarget(gormx.WithoutSQLTrace(ctx), db, model.ConfirmTypeBatch, pending.TargetPk)
 		if err != nil {
 			planscope.CronLockScope().Logger(ctx).Errorf(planscope.CronLockScope().LogMessage("批次确认扫描：锁内重新加载失败: %v"), err)
 			return
