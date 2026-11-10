@@ -17,6 +17,7 @@ import (
 	"zero-service/model"
 
 	"github.com/alicebob/miniredis/v2"
+	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/mathx"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"gorm.io/driver/sqlite"
@@ -94,11 +95,19 @@ func TestCreatePlanTaskWritesBatchConfirm(t *testing.T) {
 	if !confirm.NotifyAt.Before(batch.PlanTriggerTime.Time) {
 		t.Fatalf("notify_at = %s, want before trigger %s", confirm.NotifyAt, batch.PlanTriggerTime.Time)
 	}
-	if confirm.Deadline.Day() != batch.PlanTriggerTime.Time.Day() {
-		t.Fatalf("deadline = %s, want same day as trigger %s", confirm.Deadline, batch.PlanTriggerTime.Time)
+	// 截止时间固定在东八区，用 Asia/Shanghai 断言可避免 CI（TZ=UTC）下的
+	// 时区块差异，sqlite 的 _loc=auto 会把时间按运行环境时区解析回来。
+	location, err := time.LoadLocation(carbon.Shanghai)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if confirm.Deadline.Hour() != 18 || confirm.Deadline.Minute() != 0 {
-		t.Fatalf("deadline = %s, want 18:00:00", confirm.Deadline)
+	triggerTime := batch.PlanTriggerTime.Time.In(location)
+	deadline := confirm.Deadline.In(location)
+	if deadline.Day() != triggerTime.Day() {
+		t.Fatalf("deadline = %s, want same day as trigger %s", deadline, triggerTime)
+	}
+	if deadline.Hour() != 18 || deadline.Minute() != 0 {
+		t.Fatalf("deadline = %s, want 18:00:00", deadline)
 	}
 	if confirm.ConfirmStatus != 0 {
 		t.Fatalf("confirm status = %d, want waiting", confirm.ConfirmStatus)
