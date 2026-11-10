@@ -167,10 +167,10 @@
 @media(max-width:620px){.meeting-list{max-height:420px;min-height:190px;padding-right:2px}.section-title-line{gap:7px}.section-count{font-size:9px}.history-filters{padding:3px}}
 
 /* Viewport-contained meeting workspace and edge-only sidebar control. */
-.lobby-page{height:calc(100vh - 66px);max-width:none;display:flex;flex-direction:column;overflow:hidden;padding:32px max(30px,calc((100vw - 1190px)/2)) 30px}
+.lobby-page{height:auto;min-height:calc(100vh - 66px);max-width:none;display:flex;flex-direction:column;overflow:visible;padding:32px max(30px,calc((100vw - 1190px)/2)) 30px}
 .lobby-layout{min-height:0;flex:1;height:auto}
 .create-column,.history-card{min-height:0}
-.create-column{overflow-y:auto;padding-right:3px;scrollbar-width:thin;scrollbar-color:#b9d4d2 transparent}
+.create-column{overflow:visible;padding-right:0}
 .create-column::-webkit-scrollbar{width:7px}
 .create-column::-webkit-scrollbar-track{background:transparent}
 .create-column::-webkit-scrollbar-thumb{border:2px solid transparent;border-radius:999px;background:#b9d4d2;background-clip:padding-box}
@@ -365,3 +365,40 @@
 .meeting-row-title{flex-wrap:wrap;row-gap:6px}
 .list-footer{align-items:center;gap:10px;flex-wrap:wrap}
 .form-hint{color:#7c8f96;font-size:11px;line-height:1.5}
+
+/* 页面可滚动后保持导航可见 */
+.topbar{position:sticky;top:0;z-index:60}
+
+/* 禁用态：明确不可点击，避免与可用的主按钮混淆 */
+.button.primary:disabled{background:#e4ebed;color:#8a9aa1;opacity:1}
+.button.secondary:disabled{opacity:.6}
+
+/* 移动端提示条改为底部 snackbar，避免遮挡页面标题 */
+@media(max-width:620px){.toast{position:fixed;top:auto;right:14px;bottom:16px;left:14px;max-width:none;z-index:120}}
+
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}}
+
+/* ---------- 全浅色外壳（与工作台统一） ---------- */
+.topbar{background:#fff;color:#0b171d;border-bottom:1px solid #dae4e7}
+.topbar-context{color:#687982}
+.topbar-divider{background:#dae4e7}
+.presence{color:#3c5663}
+.profile-copy small{color:#687982}
+.icon-button{color:#3c5663}
+.icon-button:hover{background:#eef4f5}
+
+/* 登录页左侧视觉区同样使用浅色，避免登录页一半深一半浅 */
+.auth-art{background:linear-gradient(135deg,#e9f6f4 0%,#f6fbfa 70%);border-right:1px solid #dae4e7;color:#0b171d}
+.auth-art:after{border-color:rgba(11,124,123,.18)}
+.auth-orbit{border-color:rgba(11,124,123,.12)}
+.kicker{color:#0b7c7b}
+.auth-art h1{color:#0b171d}
+.auth-art h1 em{color:#0b7c7b}
+.auth-art-copy p{color:#556a73}
+.auth-art-foot{color:#556a73}
+
+/* 提示条改为浅色卡片 */
+.toast{background:#fff;border:1px solid #dae4e7;border-left:4px solid #0b7c7b;color:#24343c;box-shadow:0 12px 30px rgba(15,32,41,.14)}
+.toast.success{border-left-color:#12795a}
+.toast.error{border-left-color:#ab4038}
+.toast.warning{border-left-color:#96621a}
