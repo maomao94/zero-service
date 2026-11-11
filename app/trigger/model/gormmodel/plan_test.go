@@ -169,6 +169,58 @@ func TestLockTriggerItemUsesCandidateCAS(t *testing.T) {
 	}
 }
 
+func TestDeferTriggerItemRestoresStatusAndTime(t *testing.T) {
+	db := openPlanTestDB(t)
+	plan, batch := createPlanHierarchy(t, db, nil)
+	item := PlanExecItem{
+		PlanPk:          plan.Id,
+		PlanId:          plan.PlanId,
+		BatchPk:         batch.Id,
+		BatchId:         batch.BatchId,
+		ExecId:          "exec",
+		ItemId:          "item",
+		Status:          model.StatusWaiting,
+		NextTriggerTime: time.Now().Add(-time.Minute),
+	}
+	item.Id = "item-pk"
+	if err := db.Create(&item).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	claimed, err := LockTriggerItem(context.Background(), db, gormx.DatabaseSQLite, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	next := time.Now().Add(time.Minute).Truncate(time.Second)
+	if err := DeferTriggerItem(context.Background(), db, claimed, next); err != nil {
+		t.Fatal(err)
+	}
+
+	var got PlanExecItem
+	if err := db.First(&got, "id = ?", item.Id).Error; err != nil {
+		t.Fatal(err)
+	}
+	if got.Status != model.StatusWaiting {
+		t.Fatalf("deferred status = %d, want waiting", got.Status)
+	}
+	if !got.NextTriggerTime.Equal(next) {
+		t.Fatalf("deferred next_trigger_time = %s, want %s", got.NextTriggerTime, next)
+	}
+	// 抢占时会写入 last_trigger_time，推迟后必须回到抢占前的空值，避免展示成“已触发过一次”。
+	if got.LastTriggerTime.Valid {
+		t.Fatalf("deferred last_trigger_time = %v, want NULL", got.LastTriggerTime)
+	}
+
+	// 执行项已被其他链路改为终态时，不应再被限速逻辑回退。
+	if err := db.Model(&PlanExecItem{}).Where("id = ?", item.Id).Update("status", model.StatusCompleted).Error; err != nil {
+		t.Fatal(err)
+	}
+	err = DeferTriggerItem(context.Background(), db, claimed, next)
+	if !errors.Is(err, model.ErrNoRowsUpdate) {
+		t.Fatalf("DeferTriggerItem on terminal item error = %v, want ErrNoRowsUpdate", err)
+	}
+}
+
 func TestUpdateExecItemStatusToRunningDoesNotReviveTerminatedItem(t *testing.T) {
 	db := openPlanTestDB(t)
 	item := PlanExecItem{ExecId: "exec", ItemId: "item", Status: model.StatusTerminated}

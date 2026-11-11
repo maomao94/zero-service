@@ -9,6 +9,7 @@ func TestScopeLogMessage(t *testing.T) {
 		want  string
 	}{
 		{name: "cron lock", scope: CronLockScope(), want: "[cron-plan] message"},
+		{name: "cron confirm", scope: CronConfirmScope(), want: "[cron-plan] message"},
 		{name: "cron exec", scope: ExecCron(nil), want: "[cron-plan] message"},
 		{name: "cron trigger", scope: TriggerScope(nil, nil), want: "[cron-plan] message"},
 		{name: "rpc", scope: ExecScope(nil), want: "message"},
