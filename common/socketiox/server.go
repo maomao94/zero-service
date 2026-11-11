@@ -275,6 +275,7 @@ type Session struct {
 	lock     sync.Mutex
 	metadata map[string]string
 	token    string
+	clientIP string // 握手请求解析出的客户端 IP，仅用于日志定位
 }
 
 func (s *Session) Close() error {
@@ -289,6 +290,14 @@ func (s *Session) checkSocketNil() bool {
 }
 
 func (s *Session) ID() string { return s.socketId }
+
+// ClientIP 返回握手请求解析出的客户端 IP，取不到时为空串。
+func (s *Session) ClientIP() string {
+	if s == nil {
+		return ""
+	}
+	return s.clientIP
+}
 
 func (s *Session) GetMetadata(key string) any {
 	s.lock.Lock()
@@ -345,6 +354,9 @@ func (s *Session) NewCtx(event string) context.Context {
 		logx.Field("socketId", s.socketId),
 		logx.Field("event", event),
 		logx.Field("authType", authctx.GetAuthType(ctx)))
+	if s.clientIP != "" {
+		ctx = logx.WithFields(ctx, logx.Field("clientIp", s.clientIP))
+	}
 	if len(authctx.GetUserId(ctx)) > 0 {
 		ctx = logx.WithFields(ctx, logx.Field("userId", authctx.GetUserId(ctx)))
 	}
@@ -607,6 +619,7 @@ func (srv *Server) bindEvents() {
 			socket:   socket,
 			metadata: make(map[string]string),
 			token:    token,
+			clientIP: handshakeClientIP(socket.Handshake),
 		}
 		srv.lock.Lock()
 		if srv.tokenValidator != nil && token != "" {
@@ -790,7 +803,7 @@ func (srv *Server) bindEvents() {
 					logx.WithContext(ctx).Errorf("[socketio] disconnect hook failed: %v", err)
 				}
 			}
-			logx.Infof("[socketio] disconnecting: conn=%s, reason=%s", socket.Id, reason)
+			logx.WithContext(ctx).Infof("[socketio] disconnecting: conn=%s, reason=%s", socket.Id, reason)
 			srv.cleanInvalidSession(socket.Id)
 		})
 
