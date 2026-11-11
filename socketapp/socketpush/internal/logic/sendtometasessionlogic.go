@@ -8,7 +8,6 @@ import (
 	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/threading"
 )
 
 type SendToMetaSessionLogic struct {
@@ -27,17 +26,19 @@ func NewSendToMetaSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 
 // 向指定元数据session 发送消息
 func (l *SendToMetaSessionLogic) SendToMetaSession(in *socketpush.SendToMetaSessionReq) (*socketpush.SendToMetaSessionRes, error) {
-	baseCtx := context.WithoutCancel(l.ctx)
-	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
-		threading.GoSafe(func() {
-			cli.SendToMetaSession(baseCtx, &socketgtw.SendToMetaSessionReq{
+	err := fanoutPush(l.ctx, l.Logger, l.svcCtx.SocketContainer.GetClients(), l.svcCtx.Config.PushTimeout,
+		func(ctx context.Context, cli socketgtw.SocketGtwClient) error {
+			_, err := cli.SendToMetaSession(ctx, &socketgtw.SendToMetaSessionReq{
 				ReqId:   in.ReqId,
 				Key:     in.Key,
 				Value:   in.Value,
 				Event:   in.Event,
 				Payload: in.Payload,
 			})
+			return err
 		})
+	if err != nil {
+		return nil, err
 	}
 	return &socketpush.SendToMetaSessionRes{
 		ReqId: in.ReqId,

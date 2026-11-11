@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 
+	"zero-service/common/socketiox"
 	"zero-service/socketapp/socketgtw/internal/svc"
 	"zero-service/socketapp/socketgtw/socketgtw"
 
@@ -26,17 +27,16 @@ func NewSendToMetaSessionsLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 // 向指定元数据 session 批量发送消息
 func (l *SendToMetaSessionsLogic) SendToMetaSessions(in *socketgtw.SendToMetaSessionsReq) (*socketgtw.SendToMetaSessionsRes, error) {
 	if len(in.MetaSessions) != 0 {
-		payload := parseJsonPayload(in.Payload)
+		var sessions []*socketiox.Session
 		for _, metaSession := range in.MetaSessions {
-			sessions, ok := l.svcCtx.SocketServer.GetSessionByKey(metaSession.Key, metaSession.Value)
-			if ok {
-				for _, session := range sessions {
-					err := session.EmitDown(in.Event, payload, in.ReqId)
-					if err != nil {
-						l.Errorf("SendToMetaSession error: %v", err)
-						continue
-					}
-				}
+			if matched, ok := l.svcCtx.SocketServer.GetSessionByKey(metaSession.Key, metaSession.Value); ok {
+				sessions = append(sessions, matched...)
+			}
+		}
+		if len(sessions) > 0 {
+			payload := parseJsonPayload(in.Payload)
+			if err := emitSessions(l.svcCtx.EmitRunner, l.Logger, sessions, in.Event, payload, in.ReqId); err != nil {
+				return nil, err
 			}
 		}
 	}

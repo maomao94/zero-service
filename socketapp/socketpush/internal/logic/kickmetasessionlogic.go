@@ -8,7 +8,6 @@ import (
 	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/threading"
 )
 
 type KickMetaSessionLogic struct {
@@ -27,15 +26,17 @@ func NewKickMetaSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *K
 
 // 指定元数据剔除 session
 func (l *KickMetaSessionLogic) KickMetaSession(in *socketpush.KickMetaSessionReq) (*socketpush.KickMetaSessionRes, error) {
-	baseCtx := context.WithoutCancel(l.ctx)
-	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
-		threading.GoSafe(func() {
-			cli.KickMetaSession(baseCtx, &socketgtw.KickMetaSessionReq{
+	err := fanoutPush(l.ctx, l.Logger, l.svcCtx.SocketContainer.GetClients(), l.svcCtx.Config.PushTimeout,
+		func(ctx context.Context, cli socketgtw.SocketGtwClient) error {
+			_, err := cli.KickMetaSession(ctx, &socketgtw.KickMetaSessionReq{
 				ReqId: in.ReqId,
 				Key:   in.Key,
 				Value: in.Value,
 			})
+			return err
 		})
+	if err != nil {
+		return nil, err
 	}
 	return &socketpush.KickMetaSessionRes{
 		ReqId: in.ReqId,
