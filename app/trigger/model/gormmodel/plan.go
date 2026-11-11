@@ -279,7 +279,7 @@ func LockTriggerItem(ctx context.Context, db *gorm.DB, dbType gormx.DatabaseType
 	nextTriggerTime := currentTime.Add(expireIn)
 	var item PlanExecItem
 	query := db.WithContext(gormx.WithoutSQLTrace(ctx)).Table("plan_exec_item AS pei").
-		Select("pei.version, pei.id, pei.plan_pk, pei.plan_id, pei.batch_pk, pei.batch_id, pei.exec_id, pei.item_id, pei.item_name, pei.point_id, pei.status, pei.next_trigger_time, pei.payload, pei.plan_trigger_time, pei.request_timeout").
+		Select("pei.version, pei.id, pei.plan_pk, pei.plan_id, pei.batch_pk, pei.batch_id, pei.exec_id, pei.item_id, pei.item_name, pei.point_id, pei.status, pei.next_trigger_time, pei.last_trigger_time, pei.payload, pei.plan_trigger_time, pei.request_timeout").
 		Joins("JOIN plan p ON p.id = pei.plan_pk").
 		Joins("JOIN plan_batch pb ON pb.id = pei.batch_pk").
 		Where("pei.is_deleted = ?", 0).
@@ -313,6 +313,22 @@ func LockTriggerItem(ctx context.Context, db *gorm.DB, dbType gormx.DatabaseType
 		return nil, model.ErrNoRowsUpdate
 	}
 	return &item, nil
+}
+
+// DeferTriggerItem 将被批次限速拦截的执行项恢复到抢占前状态，并推迟到指定时间再次参与扫表。
+// claimed 传 LockTriggerItem 返回的执行项：用它回滚抢占时写入的 status 和 last_trigger_time，
+// 避免限速期间执行项被误标为执行中、或被展示成“已触发过一次”。
+// 只回滚仍处于执行中的行，执行项已被其它链路推进到终态时返回 model.ErrNoRowsUpdate。
+func DeferTriggerItem(ctx context.Context, db *gorm.DB, claimed *PlanExecItem, next time.Time) error {
+	result := db.WithContext(ctx).Model(&PlanExecItem{}).
+		Where("id = ?", claimed.Id).
+		Where("status = ?", model.StatusRunning).
+		Updates(map[string]any{
+			"status":            claimed.Status,
+			"next_trigger_time": next,
+			"last_trigger_time": claimed.LastTriggerTime,
+		})
+	return execItemUpdateError(result)
 }
 
 // UpdateExecItemStatusToRunning 将执行项状态更新为执行中。

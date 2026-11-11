@@ -130,6 +130,19 @@ func CronLockScope() Scope {
 	}
 }
 
+// CronConfirmScope 批次二次确认扫描（通知 / 超时）日志：entry=cron、tag=plan-confirm。
+// 确认链路与抢占链路分属不同排障场景，独立 tag 便于按「本轮推了几条、超时终止了几条」过滤。
+func CronConfirmScope() Scope {
+	return Scope{
+		Entry: EntryCron,
+		Tag:   "plan-confirm",
+		Fields: []logx.LogField{
+			logx.Field("entry", EntryCron),
+			logx.Field("tag", "plan-confirm"),
+		},
+	}
+}
+
 func TriggerScope(exec *gormmodel.PlanExecItem, plan *gormmodel.Plan) Scope {
 	fields := []logx.LogField{
 		logx.Field("entry", EntryCron),

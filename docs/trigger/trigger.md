@@ -114,6 +114,9 @@ Plan 与 CronJob 共用 `(RRULE ∪ specifiedTimes) - excludedTimes - expanded(e
 - 暂停计划/批次不会顺延 `notify_at` 或 `deadline`：暂停期间不通知、不超时，恢复时若已过 `deadline` 会被立即终止。
 - `confirm_status` 只有 `waiting` / `confirmed` 两种：允许、拒绝、超时、人工终止都归为 `confirmed`，具体结果看 `plan_batch.status`、`terminated_reason` 和 `plan_confirm.reason`。
 - 通知、确认、拒绝、超时通过 Redis 锁按批次串行化，避免多实例重复处理。
+- 确认时间晚于批次触发时间的批次按批次级令牌桶限速下发（默认 10 条/秒、突发 10 条）：已集中到期的执行项会按节奏推迟 `next_trigger_time`，避免下游瞬时并发；限速只调整下发节奏，不改变批次状态和计划触发时间；提前确认或未配置二次确认的批次不受影响。
+- 限速只约束调度侧下发节奏，不替代下游幂等和点位串行：异步业务必须按 `execId` 幂等、按点位/设备串行，并返回 `ongoing` 后通过 `CallbackPlanExecItem` 收敛。
+- 排查批次限速：日志按 `throttle=batch_token_bucket` 过滤，即可看到每次被推迟的执行项，字段含 `wait_ms`、`next_trigger`、`confirmed_time`、`plan_trigger_time`、`rate`、`burst`；同一 `ref`（`plan_id/batch_id/exec_id`）下 `next_trigger` 的间隔即为令牌桶实际节奏。
 - `confirm_type=2`（执行项级确认）当前仅保留枚举，创建时显式拒绝，避免调用方误以为生效。
 
 未配置确认记录的批次行为与之前完全一致。
