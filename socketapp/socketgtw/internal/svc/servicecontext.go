@@ -13,6 +13,7 @@ import (
 
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 )
@@ -21,7 +22,12 @@ type ServiceContext struct {
 	Config         config.Config
 	SocketServer   *socketiox.Server
 	StreamEventCli streamevent.StreamEventClient
+	// EmitRunner 是本地 session 投递的共享并发池，避免慢客户端无限占用 goroutine。
+	EmitRunner *threading.TaskRunner
 }
+
+// defaultEmitConcurrency 是 EmitConcurrency 未配置时的并发上限。
+const defaultEmitConcurrency = 256
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	streamEventCli := streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
@@ -37,6 +43,11 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Config:         c,
 		StreamEventCli: streamEventCli,
 	}
+	emitConcurrency := c.EmitConcurrency
+	if emitConcurrency <= 0 {
+		emitConcurrency = defaultEmitConcurrency
+	}
+	svcCtx.EmitRunner = threading.NewTaskRunner(emitConcurrency)
 	svcCtx.SocketServer = socketiox.MustServer(
 		socketiox.WithContextKeys(c.SocketMetaData),
 		socketiox.WithHandler(socketiox.EventUp, sockethandler.NewSocketUpHandler(svcCtx.StreamEventCli)),

@@ -27,4 +27,6 @@ type Config struct {
 	SocketMetaData          []string `json:",optional"`
 	StreamEventConf         zrpc.RpcClientConf
 	EnableStreamEventNotify bool `json:",default=false"`
+	// EmitConcurrency 是本地 session 投递的并发上限，池满时当前消息立即失败返回。
+	EmitConcurrency int `json:",optional,default=256"`
 }

@@ -28,12 +28,8 @@ func (l *SendToMetaSessionLogic) SendToMetaSession(in *socketgtw.SendToMetaSessi
 	sessions, ok := l.svcCtx.SocketServer.GetSessionByKey(in.Key, in.Value)
 	if ok {
 		payload := parseJsonPayload(in.Payload)
-		for _, session := range sessions {
-			err := session.EmitDown(in.Event, payload, in.ReqId)
-			if err != nil {
-				l.Errorf("SendToMetaSession error: %v", err)
-				continue
-			}
+		if err := emitSessions(l.svcCtx.EmitRunner, l.Logger, sessions, in.Event, payload, in.ReqId); err != nil {
+			return nil, err
 		}
 	}
 	return &socketgtw.SendToMetaSessionRes{

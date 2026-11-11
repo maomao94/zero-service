@@ -8,7 +8,6 @@ import (
 	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/threading"
 )
 
 type KickSessionLogic struct {
@@ -27,14 +26,16 @@ func NewKickSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *KickS
 
 // 剔除 session
 func (l *KickSessionLogic) KickSession(in *socketpush.KickSessionReq) (*socketpush.KickSessionRes, error) {
-	baseCtx := context.WithoutCancel(l.ctx)
-	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
-		threading.GoSafe(func() {
-			cli.KickSession(baseCtx, &socketgtw.KickSessionReq{
+	err := fanoutPush(l.ctx, l.Logger, l.svcCtx.SocketContainer.GetClients(), l.svcCtx.Config.PushTimeout,
+		func(ctx context.Context, cli socketgtw.SocketGtwClient) error {
+			_, err := cli.KickSession(ctx, &socketgtw.KickSessionReq{
 				ReqId:    in.ReqId,
 				SocketId: in.SocketId,
 			})
+			return err
 		})
+	if err != nil {
+		return nil, err
 	}
 	return &socketpush.KickSessionRes{
 		ReqId: in.ReqId,

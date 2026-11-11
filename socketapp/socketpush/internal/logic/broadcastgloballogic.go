@@ -8,7 +8,6 @@ import (
 	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/threading"
 )
 
 type BroadcastGlobalLogic struct {
@@ -27,36 +26,19 @@ func NewBroadcastGlobalLogic(ctx context.Context, svcCtx *svc.ServiceContext) *B
 
 // 向所有在线前端广播消息
 func (l *BroadcastGlobalLogic) BroadcastGlobal(in *socketpush.BroadcastGlobalReq) (*socketpush.BroadcastGlobalRes, error) {
-	baseCtx := context.WithoutCancel(l.ctx)
-	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
-		threading.GoSafe(func() {
-			//testpayload := map[string]any{}
-			//testpayload["string"] = "string"
-			//testpayload["list"] = []string{"1", "2", "3"}
-			//testpayload["map"] = map[string]string{"1": "1", "2": "2", "3": "3"}
-			//testpayload["int"] = 1
-			//testpayload["float"] = 1.1
-			//testpayload["bool"] = true
-			//testpayload["nil"] = nil
-			//testpayload["struct"] = struct {
-			//	Name string
-			//	Age  int
-			//}{
-			//	Name: "test",
-			//	Age:  1,
-			//}
-			//list := []map[string]any{}
-			//list = append(list, testpayload)
-			//list = append(list, testpayload)
-			//b, _ := jsonx.Marshal(list)
-			threading.GoSafe(func() {
-				cli.BroadcastGlobal(baseCtx, &socketgtw.BroadcastGlobalReq{
-					ReqId:   in.ReqId,
-					Event:   in.Event,
-					Payload: in.Payload,
-				})
+	// 广播类接口保持原语义：单个网关失败只记录日志，不返回错误，
+	// 避免调用方重试导致重复广播；失败节点已由 fanoutPush 逐个记录。
+	err := fanoutPush(l.ctx, l.Logger, l.svcCtx.SocketContainer.GetClients(), l.svcCtx.Config.PushTimeout,
+		func(ctx context.Context, cli socketgtw.SocketGtwClient) error {
+			_, err := cli.BroadcastGlobal(ctx, &socketgtw.BroadcastGlobalReq{
+				ReqId:   in.ReqId,
+				Event:   in.Event,
+				Payload: in.Payload,
 			})
+			return err
 		})
+	if err != nil {
+		l.Errorf("broadcast global partially failed: reqId=%s err=%v", in.ReqId, err)
 	}
 	return &socketpush.BroadcastGlobalRes{
 		ReqId: in.ReqId,
