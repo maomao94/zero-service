@@ -35,7 +35,7 @@
 纯 Go 服务（含 file 的构建阶段）：
 
 ```dockerfile
-FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS builder
 ENV CGO_ENABLED=0
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
@@ -57,7 +57,7 @@ CGO 服务（gis）：
 
 ```dockerfile
 ARG BASE_IMAGE
-FROM golang:1.26-alpine AS builder      # 不指定 $BUILDPLATFORM，按目标架构运行
+FROM golang:1.27-alpine3.24 AS builder  # 不指定 $BUILDPLATFORM，按目标架构运行
 ENV CGO_ENABLED=1
 ARG GEOS_VERSION
 RUN apk add --no-cache gcc musl-dev pkgconf geos-dev=${GEOS_VERSION}-r0

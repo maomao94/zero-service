@@ -57,7 +57,7 @@ Zero-Service 不是必须整体部署的单体应用：各服务可独立运行�
 
 ### 环境要求
 
-- Go 1.26 或更高版本（以 `go.mod` 为准）
+- Go 1.27 或更高版本（以 `go.mod` 为准）
 - Git
 - 与目标服务匹配的外部依赖，例如 Redis、Kafka、数据库或 MQTT Broker
 
