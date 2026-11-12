@@ -3,6 +3,7 @@ package netx
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -41,7 +42,9 @@ func (c *Client) Upload(ctx context.Context, url string, files []FileUpload, fie
 		_ = pr.CloseWithError(err)
 		return nil, err
 	}
-	if streamErr := <-errCh; streamErr != nil && resp.Err == nil {
+	// 自定义 Engine（如熔断打开）可能未消费请求体即返回，需关闭读端以释放写入协程。
+	_ = pr.CloseWithError(io.ErrClosedPipe)
+	if streamErr := <-errCh; streamErr != nil && resp.Err == nil && !errors.Is(streamErr, io.ErrClosedPipe) {
 		resp.StatusCode = http.StatusBadGateway
 		resp.Success = false
 		resp.Err = streamErr

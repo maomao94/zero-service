@@ -122,6 +122,7 @@ func WithQueryParams(q url.Values) RequestOption {
 // WithFormData 设置表单数据，自动设置 Content-Type 为 application/x-www-form-urlencoded。
 func WithFormData(f url.Values) RequestOption {
 	return func(r *Request) {
+		r.resetBody()
 		r.FormData = cloneValues(f)
 		r.bodyKind = bodyKindForm
 		r.ContentType = "application/x-www-form-urlencoded"
@@ -131,8 +132,8 @@ func WithFormData(f url.Values) RequestOption {
 // WithBody 设置原始 Body 字节数据。
 func WithBody(b []byte) RequestOption {
 	return func(r *Request) {
+		r.resetBody()
 		r.Body = bytes.Clone(b)
-		r.BodyReader = nil
 		r.bodyKind = bodyKindRaw
 	}
 }
@@ -145,8 +146,8 @@ func WithJSONBody(v any) RequestOption {
 			r.OptionError = fmt.Errorf("marshal json body: %w", err)
 			return
 		}
+		r.resetBody()
 		r.Body = data
-		r.BodyReader = nil
 		r.bodyKind = bodyKindJSON
 		r.ContentType = "application/json"
 	}
@@ -159,10 +160,22 @@ func WithBodyReader(reader io.Reader) RequestOption {
 		if reader == nil {
 			return
 		}
+		r.resetBody()
 		r.BodyReader = reader
-		r.Body = nil
 		r.bodyKind = bodyKindReader
 	}
+}
+
+// resetBody 清空已设置的 Body 来源，保证多个 Body 选项按“后设置者生效”。
+// 仅清除由 Form/JSON 选项自动设置的 ContentType，保留调用方显式指定的值。
+func (r *Request) resetBody() {
+	if r.bodyKind == bodyKindForm || r.bodyKind == bodyKindJSON {
+		r.ContentType = ""
+	}
+	r.FormData = nil
+	r.Body = nil
+	r.BodyReader = nil
+	r.bodyKind = bodyKindNone
 }
 
 func cloneValues(values url.Values) url.Values {

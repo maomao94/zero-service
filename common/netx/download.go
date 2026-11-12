@@ -87,10 +87,15 @@ func (c *Client) DownloadFile(ctx context.Context, url, destPath string, opts ..
 	if err = os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("create directory: %w", err)
 	}
-	tmpPath := destPath + ".tmp"
-	f, err := os.Create(tmpPath)
+	f, err := os.CreateTemp(dir, filepath.Base(destPath)+".*.tmp")
 	if err != nil {
 		return fmt.Errorf("create temp file: %w", err)
+	}
+	tmpPath := f.Name()
+	if err = f.Chmod(0o644); err != nil {
+		f.Close()
+		os.Remove(tmpPath)
+		return fmt.Errorf("chmod temp file: %w", err)
 	}
 	if _, err = io.Copy(f, body); err != nil {
 		f.Close()
