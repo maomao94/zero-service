@@ -1,6 +1,6 @@
 # 业务镜像：纯 Go（CGO_ENABLED=0）多阶段构建，运行在 scratch。
 # 由 app/bridgedump/build.sh 构建（deploy.sh 复用它），传 --platform，构建上下文为仓库根目录。
-FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS builder
 
 LABEL stage=gobuilder
 

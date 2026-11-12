@@ -2,7 +2,7 @@
 
 本文档覆盖单服务、Docker Compose 和集群部署。仓库中的 Compose 文件包含环境相关的镜像、主机路径和网络配置，部署前必须先完成替换和校验。
 
-> 根目录 `go.mod` 当前要求 Go 1.26。构建镜像前请确认目标服务的 `Dockerfile` 使用了兼容的 Go builder 镜像。
+> 根目录 `go.mod` 当前要求 Go 1.27。构建镜像前请确认目标服务的 `Dockerfile` 使用了兼容的 Go builder 镜像。
 
 ## Docker 部署
 
