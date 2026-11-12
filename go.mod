@@ -1,6 +1,6 @@
 module zero-service
 
-go 1.26.8
+go 1.27.0
 
 require (
 	github.com/ArtisanCloud/PowerLibs/v3 v3.3.2

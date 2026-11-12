@@ -4,7 +4,7 @@ ARG BASE_IMAGE
 
 # file 是纯 Go（CGO_ENABLED=0）：用构建机架构编译、按目标架构交叉编译，
 # 因此 amd64 机器构建 arm64 镜像（或反向）都不需要 qemu 模拟，速度与本地构建一致。
-FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS builder
 
 LABEL stage=gobuilder
 

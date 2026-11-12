@@ -2,7 +2,7 @@
 # 由 app/gis/build.sh 构建（经 deploy/build-common.sh 准备基础镜像，传 BASE_IMAGE、GEOS_VERSION 和 --platform）。
 ARG BASE_IMAGE
 
-FROM golang:1.26-alpine AS builder
+FROM golang:1.27-alpine3.24 AS builder
 
 LABEL stage=gobuilder
 

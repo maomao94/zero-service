@@ -2,7 +2,7 @@
 
 感谢你对 Zero-Service 项目的关注！
 
-提交代码前请先阅读 [README](../README.md)（环境要求 Go 1.26+）和 [开发指南](../docs/development.md)。安全问题请按[安全策略](./SECURITY.md)私密报告，不要公开提 Issue。
+提交代码前请先阅读 [README](../README.md)（环境要求 Go 1.27+）和 [开发指南](../docs/development.md)。安全问题请按[安全策略](./SECURITY.md)私密报告，不要公开提 Issue。
 
 ## 分支模型（Git Flow）
 
