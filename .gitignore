@@ -32,6 +32,12 @@ web/*/dist/
 # bridgemodbus 压测产物（zgh_start.sh 生成）
 app/bridgemodbus/*_report.html
 
+# 业务服务 build.sh 生成的镜像包（<服务目录>/<镜像名>_<arch>_<时间戳>.tar）
+aiapp/*/*.tar
+app/*/*.tar
+facade/*/*.tar
+socketapp/*/*.tar
+
 # Kingbase 部署包（镜像 tar 与数据卷不入库）
 deploy/kingbase/*.tar
 deploy/kingbase/data/

@@ -1,0 +1,7 @@
+# base-image 的构建上下文是 deploy/。
+# 白名单：只把基础镜像真正需要的证书送进上下文，其余（数据库数据卷、镜像产物等）一律排除，
+# 避免每次构建都把几 GB 内容传给 Docker daemon / BuildKit 缓存。
+# 注：Dockerfile 由 docker build -f 直接读取，不受本文件影响。
+*
+!tls
+!tls/server.crt
