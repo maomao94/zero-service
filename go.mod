@@ -70,7 +70,7 @@ require (
 	github.com/taosdata/driver-go/v3 v3.8.2
 	github.com/teambition/rrule-go v1.8.2
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.76
-	github.com/tidwall/gjson v1.20.1
+	github.com/tidwall/gjson v1.20.2
 	github.com/twitchtv/twirp v8.1.3+incompatible
 	github.com/twpayne/go-geos v0.23.0
 	github.com/u2takey/ffmpeg-go v0.5.0
@@ -335,7 +335,7 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.8.1 // indirect
 	github.com/tetratelabs/wazero v1.12.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.0 // indirect
+	github.com/tidwall/pretty v1.3.0 // indirect
 	github.com/tinylib/msgp v1.6.4 // indirect
 	github.com/titanous/json5 v1.0.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
