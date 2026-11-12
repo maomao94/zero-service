@@ -239,3 +239,27 @@ func TestEncodeURLEncoded_NestedArray(t *testing.T) {
 		t.Errorf("expected all tags in %q", encoded)
 	}
 }
+
+func TestValidateAndFlatten_NumberPrecision(t *testing.T) {
+	data, err := ValidateAndFlatten([]byte(`{"id":1234567890123456789,"big":1e20,"small":0.0000001,"neg":-2.5}`))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := map[string]string{
+		"id":    "1234567890123456789",
+		"big":   "100000000000000000000",
+		"small": "0.0000001",
+		"neg":   "-2.5",
+	}
+	for k, v := range want {
+		if got := data[k][0]; got != v {
+			t.Errorf("expected %s=%s, got %q", k, v, got)
+		}
+	}
+}
+
+func TestValidateAndFlatten_TrailingData(t *testing.T) {
+	if _, err := ValidateAndFlatten([]byte(`{"a":1} {"b":2}`)); err == nil {
+		t.Fatal("expected error for trailing data")
+	}
+}

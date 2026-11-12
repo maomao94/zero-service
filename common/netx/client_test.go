@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -1054,5 +1057,468 @@ func TestNewClient_WithHTTPClientOption_Jar(t *testing.T) {
 	}
 	if eng.client.Jar == nil {
 		t.Fatal("expected cookie jar to be set")
+	}
+}
+
+type echoResult struct {
+	Method      string
+	ContentType string
+	Body        string
+	RawQuery    string
+	Header      http.Header
+}
+
+func newEchoServer(t *testing.T, got *echoResult) *httptest.Server {
+	t.Helper()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		*got = echoResult{
+			Method:      r.Method,
+			ContentType: r.Header.Get("Content-Type"),
+			Body:        string(b),
+			RawQuery:    r.URL.RawQuery,
+			Header:      r.Header.Clone(),
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(ts.Close)
+	return ts
+}
+
+func TestClient_Do_BodyOptionLastWins(t *testing.T) {
+	tests := []struct {
+		name     string
+		opts     []RequestOption
+		wantCT   string
+		wantBody string
+	}{
+		{
+			name:     "form then json",
+			opts:     []RequestOption{WithFormData(url.Values{"a": {"1"}}), WithJSONBody(map[string]int{"b": 2})},
+			wantCT:   "application/json",
+			wantBody: `{"b":2}`,
+		},
+		{
+			name:     "json then form",
+			opts:     []RequestOption{WithJSONBody(map[string]int{"b": 2}), WithFormData(url.Values{"a": {"1"}})},
+			wantCT:   "application/x-www-form-urlencoded",
+			wantBody: "a=1",
+		},
+		{
+			name:     "form then raw",
+			opts:     []RequestOption{WithFormData(url.Values{"a": {"1"}}), WithBody([]byte(`{"b":2}`))},
+			wantCT:   "application/json",
+			wantBody: `{"b":2}`,
+		},
+		{
+			name:     "form then reader",
+			opts:     []RequestOption{WithFormData(url.Values{"a": {"1"}}), WithBodyReader(strings.NewReader("stream"))},
+			wantBody: "stream",
+		},
+		{
+			name:     "reader then json",
+			opts:     []RequestOption{WithBodyReader(strings.NewReader("stream")), WithJSONBody(map[string]int{"b": 2})},
+			wantCT:   "application/json",
+			wantBody: `{"b":2}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got echoResult
+			ts := newEchoServer(t, &got)
+			resp, err := NewClient().Post(ctx(t), ts.URL, tt.opts...)
+			if err != nil || resp.Err != nil {
+				t.Fatalf("unexpected error: %v %v", err, resp.Err)
+			}
+			if got.Body != tt.wantBody {
+				t.Fatalf("expected body %q, got %q", tt.wantBody, got.Body)
+			}
+			if got.ContentType != tt.wantCT {
+				t.Fatalf("expected content type %q, got %q", tt.wantCT, got.ContentType)
+			}
+		})
+	}
+}
+
+func TestClient_Do_EmptyMethodDefaultsToGet(t *testing.T) {
+	var got echoResult
+	ts := newEchoServer(t, &got)
+	if _, err := NewClient().Do(ctx(t), &Request{URL: ts.URL}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.Method != http.MethodGet {
+		t.Fatalf("expected GET, got %s", got.Method)
+	}
+}
+
+func TestClient_Do_EmptyFormData(t *testing.T) {
+	var got echoResult
+	ts := newEchoServer(t, &got)
+	if _, err := NewClient().Post(ctx(t), ts.URL, WithFormData(nil)); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.Body != "" {
+		t.Fatalf("expected empty body, got %q", got.Body)
+	}
+	if got.ContentType != "application/x-www-form-urlencoded" {
+		t.Fatalf("expected form content type, got %q", got.ContentType)
+	}
+}
+
+func TestClient_Do_DirectFieldAssignment(t *testing.T) {
+	t.Run("form data", func(t *testing.T) {
+		var got echoResult
+		ts := newEchoServer(t, &got)
+		req := &Request{URL: ts.URL, Method: http.MethodPost, FormData: url.Values{"k": {"v"}}}
+		if _, err := NewClient().Do(ctx(t), req); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got.Body != "k=v" || got.ContentType != "application/x-www-form-urlencoded" {
+			t.Fatalf("unexpected request: %+v", got)
+		}
+	})
+	t.Run("body reader", func(t *testing.T) {
+		var got echoResult
+		ts := newEchoServer(t, &got)
+		req := &Request{URL: ts.URL, Method: http.MethodPost, BodyReader: strings.NewReader("data"), ContentType: "text/plain"}
+		if _, err := NewClient().Do(ctx(t), req); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got.Body != "data" || got.ContentType != "text/plain" {
+			t.Fatalf("unexpected request: %+v", got)
+		}
+	})
+	t.Run("raw body", func(t *testing.T) {
+		var got echoResult
+		ts := newEchoServer(t, &got)
+		req := &Request{URL: ts.URL, Method: http.MethodPost, Body: []byte(`{"a":1}`)}
+		if _, err := NewClient().Do(ctx(t), req); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got.Body != `{"a":1}` || got.ContentType != "application/json" {
+			t.Fatalf("unexpected request: %+v", got)
+		}
+	})
+}
+
+func TestClient_Do_RawBodyWithFormContentTypeEncodesJSON(t *testing.T) {
+	var got echoResult
+	ts := newEchoServer(t, &got)
+	resp, err := NewClient().Post(ctx(t), ts.URL,
+		WithHeader("Content-Type", "application/x-www-form-urlencoded"),
+		WithBody([]byte(`{"a":"1","n":{"b":2}}`)),
+	)
+	if err != nil || resp.Err != nil {
+		t.Fatalf("unexpected error: %v %v", err, resp.Err)
+	}
+	values, err := url.ParseQuery(got.Body)
+	if err != nil {
+		t.Fatalf("parse body: %v", err)
+	}
+	if values.Get("a") != "1" || values.Get("n.b") != "2" {
+		t.Fatalf("expected flattened form body, got %q", got.Body)
+	}
+}
+
+func TestClient_Do_EmptyRawBodySendsNoContentType(t *testing.T) {
+	var got echoResult
+	ts := newEchoServer(t, &got)
+	if _, err := NewClient().Post(ctx(t), ts.URL, WithBody(nil)); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.Body != "" || got.ContentType != "" {
+		t.Fatalf("expected no body and no content type, got %+v", got)
+	}
+}
+
+func TestClient_Do_MultipartContentTypeOverridesHeader(t *testing.T) {
+	var got echoResult
+	ts := newEchoServer(t, &got)
+	resp, err := NewClient().UploadBytes(ctx(t), ts.URL, "file", "a.txt", []byte("x"), nil,
+		WithHeader("Content-Type", "application/json"),
+	)
+	if err != nil || resp.Err != nil {
+		t.Fatalf("unexpected error: %v %v", err, resp.Err)
+	}
+	if !strings.HasPrefix(got.ContentType, "multipart/form-data; boundary=") {
+		t.Fatalf("expected multipart content type, got %q", got.ContentType)
+	}
+}
+
+func TestClient_Do_QueryParamsMergeWithURL(t *testing.T) {
+	var got echoResult
+	ts := newEchoServer(t, &got)
+	if _, err := NewClient().Get(ctx(t), ts.URL+"?x=1&y=2", WithQueryParams(url.Values{"x": {"3"}})); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	q, _ := url.ParseQuery(got.RawQuery)
+	if strings.Join(q["x"], ",") != "1,3" || q.Get("y") != "2" {
+		t.Fatalf("expected merged query, got %q", got.RawQuery)
+	}
+}
+
+func TestClient_Do_QueryBuilderAppends(t *testing.T) {
+	var got echoResult
+	ts := newEchoServer(t, &got)
+	req := NewRequest(ts.URL, http.MethodGet).Query("k", "1").Query("k", "2")
+	if _, err := NewClient().Do(ctx(t), req); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	q, _ := url.ParseQuery(got.RawQuery)
+	if strings.Join(q["k"], ",") != "1,2" {
+		t.Fatalf("expected repeated query values, got %q", got.RawQuery)
+	}
+}
+
+func TestClient_Do_DefaultHeadersMultiValue(t *testing.T) {
+	var got echoResult
+	ts := newEchoServer(t, &got)
+	c := NewClient(WithDefaultHeaders(http.Header{
+		"X-Multi": {"a", "b"},
+		"X-Keep":  {"client"},
+	}))
+	if _, err := c.Get(ctx(t), ts.URL, WithHeaders(http.Header{"X-Multi": {"c"}})); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if strings.Join(got.Header.Values("X-Multi"), ",") != "c" {
+		t.Fatalf("expected request header to replace all default values, got %v", got.Header.Values("X-Multi"))
+	}
+	if strings.Join(got.Header.Values("X-Keep"), ",") != "client" {
+		t.Fatalf("expected untouched default header, got %v", got.Header.Values("X-Keep"))
+	}
+}
+
+func TestClient_Do_DefaultHeadersNotMutatedByRequest(t *testing.T) {
+	var got echoResult
+	ts := newEchoServer(t, &got)
+	c := NewClient(WithDefaultHeaders(http.Header{"X-Token": {"default"}}))
+	if _, err := c.Get(ctx(t), ts.URL, WithHeader("X-Token", "override")); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, err := c.Get(ctx(t), ts.URL); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.Header.Get("X-Token") != "default" {
+		t.Fatalf("expected default header restored on next request, got %q", got.Header.Get("X-Token"))
+	}
+}
+
+func TestClient_Do_Non2xxKeepsBody(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Reason", "missing")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("not found"))
+	}))
+	defer ts.Close()
+
+	resp, err := NewClient().Get(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success || resp.Err != nil {
+		t.Fatalf("expected non-success without transport error, got %+v", resp)
+	}
+	if resp.StatusCode != http.StatusNotFound || string(resp.Data) != "not found" {
+		t.Fatalf("unexpected response: %d %q", resp.StatusCode, resp.Data)
+	}
+	if resp.Headers.Get("X-Reason") != "missing" {
+		t.Fatal("expected response headers on non-2xx")
+	}
+}
+
+func TestClient_Do_ResponseTooLargeIsTyped(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("abcdef"))
+	}))
+	defer ts.Close()
+
+	resp, err := NewClient(WithMaxResponseBytes(2)).Get(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !errors.Is(resp.Err, ErrResponseTooLarge) {
+		t.Fatalf("expected ErrResponseTooLarge, got %v", resp.Err)
+	}
+	if resp.Data != nil || resp.Headers != nil {
+		t.Fatal("expected no partial data on oversized response")
+	}
+}
+
+func TestClient_Do_ResponseExactlyAtLimit(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("abc"))
+	}))
+	defer ts.Close()
+
+	resp, err := NewClient(WithMaxResponseBytes(3)).Get(ctx(t), ts.URL)
+	if err != nil || resp.Err != nil {
+		t.Fatalf("unexpected error: %v %v", err, resp.Err)
+	}
+	if string(resp.Data) != "abc" {
+		t.Fatalf("expected full body, got %q", resp.Data)
+	}
+}
+
+func TestClient_Do_ResponseBodyReadError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Length", "100")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("short"))
+	}))
+	defer ts.Close()
+
+	resp, err := NewClient().Get(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected failure on truncated body")
+	}
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("expected 503 for read error, got %d", resp.StatusCode)
+	}
+	if resp.Err == nil || !strings.Contains(resp.Err.Error(), "read response body") {
+		t.Fatalf("expected read response body error, got %v", resp.Err)
+	}
+	if errors.Is(resp.Err, ErrResponseTooLarge) {
+		t.Fatal("read error must not be reported as too large")
+	}
+}
+
+type engineFunc func(*http.Request) (*http.Response, error)
+
+func (f engineFunc) Do(req *http.Request) (*http.Response, error) { return f(req) }
+
+func TestClient_Do_EngineError(t *testing.T) {
+	engineErr := errors.New("breaker open")
+	c := NewClient(WithEngine(engineFunc(func(*http.Request) (*http.Response, error) {
+		return nil, engineErr
+	})))
+	resp, err := c.Get(ctx(t), "http://example.com")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !errors.Is(resp.Err, engineErr) {
+		t.Fatalf("expected engine error, got %v", resp.Err)
+	}
+	if resp.StatusCode != http.StatusServiceUnavailable || resp.Success {
+		t.Fatalf("unexpected response: %+v", resp)
+	}
+}
+
+func TestClient_Do_EngineReceivesBuiltRequest(t *testing.T) {
+	var captured *http.Request
+	var capturedBody string
+	c := NewClient(
+		WithDefaultHeaders(http.Header{"X-Default": {"d"}}),
+		WithEngine(engineFunc(func(req *http.Request) (*http.Response, error) {
+			captured = req
+			b, _ := io.ReadAll(req.Body)
+			capturedBody = string(b)
+			return &http.Response{StatusCode: http.StatusCreated, Header: http.Header{}, Body: io.NopCloser(strings.NewReader("ok"))}, nil
+		})),
+	)
+	reqCtx := context.WithValue(ctx(t), struct{}{}, "v")
+	resp, err := c.Put(reqCtx, "http://example.com/path", WithJSONBody(map[string]string{"k": "v"}), WithHeader("X-Req", "r"))
+	if err != nil || resp.Err != nil {
+		t.Fatalf("unexpected error: %v %v", err, resp.Err)
+	}
+	if captured.Method != http.MethodPut || captured.URL.Path != "/path" {
+		t.Fatalf("unexpected request: %s %s", captured.Method, captured.URL)
+	}
+	if captured.Header.Get("X-Default") != "d" || captured.Header.Get("X-Req") != "r" {
+		t.Fatalf("unexpected headers: %v", captured.Header)
+	}
+	if captured.Context().Value(struct{}{}) != "v" {
+		t.Fatal("expected request context to be propagated")
+	}
+	if capturedBody != `{"k":"v"}` {
+		t.Fatalf("unexpected body: %q", capturedBody)
+	}
+	if !resp.Success || resp.StatusCode != http.StatusCreated || string(resp.Data) != "ok" {
+		t.Fatalf("unexpected response: %+v", resp)
+	}
+}
+
+func TestClient_Do_ResponseHeadersCloned(t *testing.T) {
+	upstream := http.Header{"X-A": {"1"}}
+	c := NewClient(WithEngine(engineFunc(func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: http.StatusOK, Header: upstream, Body: io.NopCloser(strings.NewReader(""))}, nil
+	})))
+	resp, err := c.Get(ctx(t), "http://example.com")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	resp.Headers.Set("X-A", "changed")
+	if upstream.Get("X-A") != "1" {
+		t.Fatal("expected response headers to be cloned")
+	}
+}
+
+type closeTrackingBody struct {
+	io.Reader
+	closed bool
+}
+
+func (b *closeTrackingBody) Close() error {
+	b.closed = true
+	return nil
+}
+
+func TestClient_Do_ClosesResponseBody(t *testing.T) {
+	for _, limit := range []int64{0, 2} {
+		body := &closeTrackingBody{Reader: strings.NewReader("abcdef")}
+		c := NewClient(
+			WithMaxResponseBytes(limit),
+			WithEngine(engineFunc(func(*http.Request) (*http.Response, error) {
+				return &http.Response{StatusCode: http.StatusOK, Header: http.Header{}, Body: body}, nil
+			})),
+		)
+		if _, err := c.Get(ctx(t), "http://example.com"); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !body.closed {
+			t.Fatalf("expected response body closed (limit=%d)", limit)
+		}
+	}
+}
+
+func TestSendRequest_WithClientOptions(t *testing.T) {
+	var got echoResult
+	ts := newEchoServer(t, &got)
+	resp, err := SendRequest(ctx(t), NewRequest(ts.URL, http.MethodGet),
+		WithDefaultHeaders(http.Header{"X-Send": {"yes"}}),
+	)
+	if err != nil || !resp.Success {
+		t.Fatalf("unexpected result: %v %+v", err, resp)
+	}
+	if got.Header.Get("X-Send") != "yes" {
+		t.Fatal("expected client option applied")
+	}
+}
+
+func TestClient_Do_ConcurrentRequests(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(r.URL.Query().Get("i")))
+	}))
+	defer ts.Close()
+
+	c := NewClient(WithDefaultHeaders(http.Header{"X-Shared": {"v"}}))
+	const n = 20
+	errCh := make(chan error, n)
+	for i := 0; i < n; i++ {
+		go func(i int) {
+			want := strconv.Itoa(i)
+			resp, err := c.Get(ctx(t), ts.URL, WithQueryParams(url.Values{"i": {want}}), WithHeader("X-Req", want))
+			if err == nil && string(resp.Data) != want {
+				err = fmt.Errorf("expected %s, got %q", want, resp.Data)
+			}
+			errCh <- err
+		}(i)
+	}
+	for i := 0; i < n; i++ {
+		if err := <-errCh; err != nil {
+			t.Fatal(err)
+		}
 	}
 }

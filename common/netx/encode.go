@@ -3,18 +3,25 @@ package netx
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
 // ValidateAndFlatten 将 JSON body 扁平化为 key-value 映射，支持嵌套对象和数组。
 func ValidateAndFlatten(body []byte) (map[string][]string, error) {
 	var raw map[string]any
-	if err := json.Unmarshal(body, &raw); err != nil {
+	dec := json.NewDecoder(bytes.NewReader(body))
+	dec.UseNumber()
+	if err := dec.Decode(&raw); err != nil {
 		return nil, err
+	}
+	if _, err := dec.Token(); err != io.EOF {
+		return nil, errors.New("invalid character after top-level value")
 	}
 	result := make(map[string][]string)
 	flattenMap(raw, "", result)
@@ -107,7 +114,7 @@ func flattenValue(val any, key string, result map[string][]string) {
 	case bool:
 		result[key] = append(result[key], fmt.Sprintf("%v", v))
 	case json.Number:
-		result[key] = append(result[key], string(v))
+		result[key] = append(result[key], formatNumber(v))
 	case float64:
 		result[key] = append(result[key], formatFloat(v))
 	case float32:
@@ -126,9 +133,18 @@ func flattenValue(val any, key string, result map[string][]string) {
 	}
 }
 
-func formatFloat(f float64) string {
-	if f == float64(int64(f)) {
-		return fmt.Sprintf("%d", int64(f))
+func formatNumber(n json.Number) string {
+	s := n.String()
+	if !strings.ContainsAny(s, ".eE") {
+		return s
 	}
-	return strings.TrimRight(fmt.Sprintf("%f", f), "0")
+	f, err := n.Float64()
+	if err != nil {
+		return s
+	}
+	return formatFloat(f)
+}
+
+func formatFloat(f float64) string {
+	return strconv.FormatFloat(f, 'f', -1, 64)
 }

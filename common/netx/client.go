@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 )
@@ -143,23 +142,33 @@ func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 }
 
 func (c *Client) buildBody(req *Request) (io.Reader, string) {
-	if req.FormData != nil || req.bodyKind == bodyKindForm {
-		values := req.FormData
-		if values == nil {
-			values = make(url.Values)
+	kind := req.bodyKind
+	if kind == bodyKindNone {
+		// 兼容直接给 Request 字段赋值的用法。
+		switch {
+		case req.FormData != nil:
+			kind = bodyKindForm
+		case req.BodyReader != nil:
+			kind = bodyKindReader
+		case len(req.Body) > 0:
+			kind = bodyKindRaw
 		}
-		return strings.NewReader(values.Encode()), "application/x-www-form-urlencoded"
 	}
-	if req.BodyReader != nil || req.bodyKind == bodyKindReader {
+	switch kind {
+	case bodyKindForm:
+		return strings.NewReader(req.FormData.Encode()), "application/x-www-form-urlencoded"
+	case bodyKindReader:
 		return req.BodyReader, req.ContentType
-	}
-	if req.bodyKind == bodyKindJSON {
+	case bodyKindJSON:
 		return bytes.NewReader(req.Body), req.ContentType
-	}
-	if len(req.Body) == 0 {
+	case bodyKindRaw:
+		if len(req.Body) == 0 {
+			return nil, ""
+		}
+		return c.buildRawBody(req)
+	default:
 		return nil, ""
 	}
-	return c.buildRawBody(req)
 }
 
 func (c *Client) buildRawBody(req *Request) (io.Reader, string) {
@@ -267,7 +276,8 @@ func (c *Client) buildResponse(resp *http.Response, err error, start time.Time) 
 	if readErr != nil {
 		respErr := readErr
 		statusCode := http.StatusBadGateway
-		if !strings.Contains(readErr.Error(), "request body too large") {
+		var maxBytesErr *http.MaxBytesError
+		if !errors.As(readErr, &maxBytesErr) {
 			statusCode = classifyNetErr(readErr)
 			respErr = fmt.Errorf("read response body: %w", readErr)
 		} else {
