@@ -50,7 +50,7 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/livekit/protocol v1.53.2
 	github.com/livekit/server-sdk-go/v2 v2.19.0
-	github.com/mattn/go-sqlite3 v1.14.52
+	github.com/mattn/go-sqlite3 v1.14.53
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2
 	github.com/minio/minio-go/v7 v7.4.1
 	github.com/mmcloughlin/geohash v0.10.0
