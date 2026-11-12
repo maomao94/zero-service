@@ -1,12 +1,16 @@
+# 业务镜像：Go 多阶段构建 + deploy/base-image 提供的 runtime 基础环境。
+# 由 app/gis/build.sh 构建（经 deploy/build-common.sh 准备基础镜像，传 BASE_IMAGE、GEOS_VERSION 和 --platform）。
+ARG BASE_IMAGE
+
 FROM golang:1.26-alpine AS builder
 
 LABEL stage=gobuilder
 
-ENV TZ=Asia/Shanghai
-
-ENV CGO_ENABLED=1
 ENV GOOS=linux
+# gis 通过 CGO 链接 GEOS，构建阶段需要 gcc 与 geos-dev（版本与基础镜像保持一致）
+ENV CGO_ENABLED=1
 
+ARG GEOS_VERSION=3.14.1
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ARG GOPROXY=https://goproxy.cn,direct
@@ -15,15 +19,10 @@ ENV GOPROXY=$GOPROXY
 RUN set -x \
     && if [ -n "$HTTP_PROXY" ]; then export http_proxy=$HTTP_PROXY; fi \
     && if [ -n "$HTTPS_PROXY" ]; then export https_proxy=$HTTPS_PROXY; fi \
-    && apk add --no-cache \
-        tzdata ca-certificates make gcc musl-dev pkgconf geos-dev=3.14.1-r0 \
-    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
-    && echo $TZ > /etc/timezone \
+    && apk add --no-cache gcc musl-dev pkgconf geos-dev=${GEOS_VERSION}-r0 \
     && geos-config --version
 
 WORKDIR /build
-
-ARG TARGETARCH
 
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod \
@@ -31,18 +30,16 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 COPY . .
 
+# TARGETARCH 由 BuildKit 按 --platform 注入；放在 COPY 之后，切换架构时不失效已缓存的 COPY 层
+ARG TARGETARCH
+
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,id=go-build-${TARGETARCH},target=/root/.cache/go-build \
     mkdir -p /out \
     && go build -trimpath -ldflags="-s -w" -o /out/gis ./app/gis \
     && chmod +x /out/gis
 
-FROM alpine:3.24
-RUN apk add --no-cache geos=3.14.1-r0 \
-    && mkdir -p /etc/ssl/certs /usr/share/zoneinfo/Asia
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /usr/share/zoneinfo/Asia/Shanghai
-ENV TZ=Asia/Shanghai
+FROM ${BASE_IMAGE}
 
 WORKDIR /app
 COPY --from=builder /out/gis /app/gis

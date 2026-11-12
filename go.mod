@@ -50,6 +50,7 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/livekit/protocol v1.53.2
 	github.com/livekit/server-sdk-go/v2 v2.19.0
+	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2
 	github.com/minio/minio-go/v7 v7.4.1
 	github.com/mmcloughlin/geohash v0.10.0
@@ -270,7 +271,6 @@ require (
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.24 // indirect
-	github.com/mattn/go-sqlite3 v1.14.52 // indirect
 	github.com/meguminnnnnnnnn/go-openai v0.1.2 // indirect
 	github.com/milvus-io/milvus-proto/go-api/v2 v2.4.10-0.20240819025435-512e3b98866a // indirect
 	github.com/minio/crc64nvme v1.1.1 // indirect

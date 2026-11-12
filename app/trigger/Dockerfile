@@ -1,42 +1,49 @@
-#FROM golang:alpine AS builder
-FROM golang:1.26-alpine3.22 AS builder
+# 业务镜像：纯 Go（CGO_ENABLED=0）多阶段构建，运行在 scratch。
+# 由 app/trigger/build.sh 构建（deploy.sh 复用它），传 --platform，构建上下文为仓库根目录。
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS builder
 
 LABEL stage=gobuilder
 
-# 指定容器时区:东八区
-ENV TZ=Asia/Shanghai
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+# 纯 Go 交叉编译：amd64 机器构建 arm64（或反向）都不需要 qemu
+ENV CGO_ENABLED=0
 
-ENV CGO_ENABLED 0
-
-# 接收代理参数（构建时通过 --build-arg 传递）
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ARG GOPROXY=https://goproxy.cn,direct
+ENV GOPROXY=$GOPROXY
 
-# 设置 Alpine 包管理器和 Go 的环境变量
+# tzdata 用于给 scratch 运行镜像提供时区文件；ca-certificates 供 HTTPS 客户端使用
 RUN set -x \
     && if [ -n "$HTTP_PROXY" ]; then export http_proxy=$HTTP_PROXY; fi \
     && if [ -n "$HTTPS_PROXY" ]; then export https_proxy=$HTTPS_PROXY; fi \
-    && apk update --no-cache \
-    && apk add --no-cache tzdata
-
-
-RUN apk update --no-cache && apk add --no-cache tzdata
+    && apk add --no-cache ca-certificates tzdata
 
 WORKDIR /build
 
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
+
 COPY . .
+
+# TARGETOS/TARGETARCH 由 BuildKit 按 --platform 注入；放在 COPY 之后，切换架构时不失效已缓存的 COPY 层
+ARG TARGETOS
+ARG TARGETARCH
+
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,id=go-build-${TARGETARCH},target=/root/.cache/go-build \
+    mkdir -p /out \
+    && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags="-s -w" -o /out/trigger ./app/trigger \
+    && chmod +x /out/trigger
 
 FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /usr/share/zoneinfo/Asia/Shanghai
-ENV TZ Asia/Shanghai
+ENV TZ=Asia/Shanghai
 
 WORKDIR /app
-COPY --from=builder /build /app/build
-COPY etc /app/etc
-COPY app/trigger /app/trigger
+COPY --from=builder /out/trigger /app/trigger
+COPY --from=builder /build/app/trigger/etc /app/etc
 
 CMD ["./trigger", "-f", "etc/trigger.yaml"]

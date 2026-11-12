@@ -8,6 +8,7 @@ import (
 	"zero-service/app/file/internal/server"
 	"zero-service/app/file/internal/svc"
 	_ "zero-service/common/carbonx"
+	"zero-service/common/ffmpegx"
 	"zero-service/common/grpcx"
 	"zero-service/common/nacosx"
 	"zero-service/common/tool"
@@ -33,6 +34,9 @@ func main() {
 
 	// Print Go version
 	tool.PrintGoVersion()
+
+	// Print ffmpeg/ffprobe versions
+	ffmpegx.PrintVersions()
 
 	ctx := svc.NewServiceContext(c)
 

@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"zero-service/common/gisx/geos"
 	"zero-service/common/grpcx"
 	"zero-service/common/nacosx"
 	"zero-service/common/tool"
@@ -34,8 +33,8 @@ func main() {
 	// Print Go version
 	tool.PrintGoVersion()
 
-	// Print GEOS version
-	fmt.Printf("GEOS Version: %s\n", geos.GEOSVersionString())
+	// Print GEOS/H3/SQLite versions
+	printDependencyVersions()
 
 	ctx := svc.NewServiceContext(c)
 
