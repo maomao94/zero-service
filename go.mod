@@ -11,7 +11,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.40.0
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/benbjohnson/clock v1.3.5
-	github.com/brianvoe/gofakeit/v7 v7.18.1
+	github.com/brianvoe/gofakeit/v7 v7.18.2
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
@@ -50,6 +50,7 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/livekit/protocol v1.53.2
 	github.com/livekit/server-sdk-go/v2 v2.19.0
+	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2
 	github.com/minio/minio-go/v7 v7.4.1
 	github.com/mmcloughlin/geohash v0.10.0
@@ -98,7 +99,7 @@ require (
 	gorm.io/plugin/opentelemetry v0.1.16
 	gorm.io/plugin/optimisticlock v1.1.3
 	gorm.io/plugin/soft_delete v1.2.1
-	modernc.org/sqlite v1.61.1
+	modernc.org/sqlite v1.62.0
 )
 
 require (
@@ -270,7 +271,6 @@ require (
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.24 // indirect
-	github.com/mattn/go-sqlite3 v1.14.52 // indirect
 	github.com/meguminnnnnnnnn/go-openai v0.1.2 // indirect
 	github.com/milvus-io/milvus-proto/go-api/v2 v2.4.10-0.20240819025435-512e3b98866a // indirect
 	github.com/minio/crc64nvme v1.1.1 // indirect
@@ -395,7 +395,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 	k8s.io/utils v0.0.0-20260319190234-28399d86e0b5 // indirect
 	modernc.org/fileutil v1.4.0 // indirect
-	modernc.org/libc v1.80.0 // indirect
+	modernc.org/libc v1.80.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect

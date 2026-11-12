@@ -8,7 +8,6 @@ import (
 	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/threading"
 )
 
 type SendToSessionsLogic struct {
@@ -27,16 +26,18 @@ func NewSendToSessionsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Se
 
 // 向指定 session 批量发送消息
 func (l *SendToSessionsLogic) SendToSessions(in *socketpush.SendToSessionsReq) (*socketpush.SendToSessionsRes, error) {
-	baseCtx := context.WithoutCancel(l.ctx)
-	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
-		threading.GoSafe(func() {
-			cli.SendToSessions(baseCtx, &socketgtw.SendToSessionsReq{
+	err := fanoutPush(l.ctx, l.Logger, l.svcCtx.SocketContainer.GetClients(), l.svcCtx.Config.PushTimeout,
+		func(ctx context.Context, cli socketgtw.SocketGtwClient) error {
+			_, err := cli.SendToSessions(ctx, &socketgtw.SendToSessionsReq{
 				ReqId:     in.ReqId,
 				SocketIds: in.SocketIds,
 				Event:     in.Event,
 				Payload:   in.Payload,
 			})
+			return err
 		})
+	if err != nil {
+		return nil, err
 	}
 	return &socketpush.SendToSessionsRes{
 		ReqId: in.ReqId,

@@ -2,9 +2,12 @@ package socketiox
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 
 	"zero-service/common/authctx"
+
+	"github.com/doquangtan/socketio/v4/engineio"
 )
 
 func TestBuildRoomsPageResSortsAndPaginates(t *testing.T) {
@@ -354,5 +357,92 @@ func TestSessionNewCtxCarriesIdentity(t *testing.T) {
 	}
 	if got := authctx.GetAuthType(ctx); got != "user" {
 		t.Fatalf("auth-type = %q, want user", got)
+	}
+}
+
+func TestClientIPFromRequest(t *testing.T) {
+	tests := []struct {
+		name       string
+		headers    map[string]string
+		remoteAddr string
+		want       string
+	}{
+		{
+			name:       "forwarded for wins",
+			headers:    map[string]string{"X-Forwarded-For": "203.0.113.7, 10.0.0.1"},
+			remoteAddr: "10.0.0.2:5000",
+			want:       "203.0.113.7",
+		},
+		{
+			name:       "real ip fallback",
+			headers:    map[string]string{"X-Real-Ip": "198.51.100.9"},
+			remoteAddr: "10.0.0.2:5000",
+			want:       "198.51.100.9",
+		},
+		{
+			name:       "remote addr fallback strips port",
+			remoteAddr: "192.0.2.10:4321",
+			want:       "192.0.2.10",
+		},
+		{
+			name:       "ipv6 remote addr",
+			remoteAddr: "[2001:db8::1]:443",
+			want:       "2001:db8::1",
+		},
+		{
+			name:       "invalid header ignored",
+			headers:    map[string]string{"X-Real-Ip": "not-an-ip"},
+			remoteAddr: "192.0.2.10:4321",
+			want:       "192.0.2.10",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &http.Request{Header: make(http.Header), RemoteAddr: tt.remoteAddr}
+			for k, v := range tt.headers {
+				r.Header.Set(k, v)
+			}
+			if got := clientIPFromRequest(r); got != tt.want {
+				t.Fatalf("clientIPFromRequest = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHandshakeClientIP(t *testing.T) {
+	internal := engineio.Handshake{Headers: http.Header{
+		clientIPHeaderInternal:  []string{"203.0.113.7"},
+		clientIPHeaderForwarded: []string{"10.0.0.9"},
+	}}
+	if got := handshakeClientIP(internal); got != "203.0.113.7" {
+		t.Fatalf("internal header ip = %q, want 203.0.113.7", got)
+	}
+
+	direct := engineio.Handshake{Headers: http.Header{
+		clientIPHeaderForwarded: []string{"203.0.113.8, 10.0.0.1"},
+	}}
+	if got := handshakeClientIP(direct); got != "203.0.113.8" {
+		t.Fatalf("forwarded ip = %q, want 203.0.113.8", got)
+	}
+
+	addressOnly := engineio.Handshake{Address: "198.51.100.9:8080"}
+	if got := handshakeClientIP(addressOnly); got != "198.51.100.9" {
+		t.Fatalf("address ip = %q, want 198.51.100.9", got)
+	}
+
+	if got := handshakeClientIP(engineio.Handshake{}); got != "" {
+		t.Fatalf("empty handshake ip = %q, want empty", got)
+	}
+}
+
+func TestSessionClientIP(t *testing.T) {
+	session := &Session{socketId: "sess-1", clientIP: "203.0.113.7"}
+	if got := session.ClientIP(); got != "203.0.113.7" {
+		t.Fatalf("ClientIP = %q, want 203.0.113.7", got)
+	}
+	var nilSession *Session
+	if got := nilSession.ClientIP(); got != "" {
+		t.Fatalf("nil session ClientIP = %q, want empty", got)
 	}
 }

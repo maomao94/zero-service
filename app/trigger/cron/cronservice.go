@@ -15,6 +15,7 @@ import (
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/carbonx"
 	"zero-service/common/gormx"
+	"zero-service/common/limitx"
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/model"
 
@@ -27,10 +28,28 @@ import (
 	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
+const (
+	// planBatchDispatchKeyPrefix 批次下发令牌桶的 Redis key 前缀。
+	planBatchDispatchKeyPrefix = "trigger:rate:batch:"
+	// planBatchDispatchRate 单批次下发令牌桶速率（个/秒）。
+	// 批次二次确认晚于触发时间时，整批执行项会同时过期；按批次限速避免瞬时全部下发。
+	planBatchDispatchRate = 10
+	// planBatchDispatchBurst 单批次令牌桶容量，允许的瞬时下发条数。
+	planBatchDispatchBurst = 10
+	// planTriggerLockTTL 执行项抢占租约：抢占后未正常下发时，执行项最迟在这个时间后重新参与扫表。
+	planTriggerLockTTL = 5 * time.Minute
+	// deferTriggerItemAttempts 限速推迟的写入尝试次数，用于吸收瞬时数据库故障。
+	deferTriggerItemAttempts = 3
+	// deferTriggerItemRetryInterval 限速推迟失败后的重试间隔基数，按尝试次数线性退避。
+	deferTriggerItemRetryInterval = 20 * time.Millisecond
+)
+
 type CronService struct {
 	cancelChan chan struct{}
 	svcCtx     *svc.ServiceContext
 	taskRunner *threading.TaskRunner
+	// batchLimiter 按批次限制执行项下发速率，多实例共享 Redis 中的令牌桶。
+	batchLimiter *limitx.TokenBucket
 	// lastConfirmScan 控制批次确认扫描频率，避免执行项繁忙时高频查询确认表。
 	lastConfirmScan time.Time
 }
@@ -39,6 +58,12 @@ func NewCronService(svcCtx *svc.ServiceContext) *CronService {
 	return &CronService{
 		svcCtx:     svcCtx,
 		taskRunner: threading.NewTaskRunner(16),
+		batchLimiter: limitx.NewTokenBucket(
+			svcCtx.Redis,
+			limitx.WithRate(planBatchDispatchRate),
+			limitx.WithBurst(planBatchDispatchBurst),
+			limitx.WithKeyPrefix(planBatchDispatchKeyPrefix),
+		),
 	}
 }
 
@@ -94,14 +119,15 @@ func (s *CronService) ScanPlanExecItem() bool {
 	defer span.End()
 
 	dbType := gormx.GetDatabaseTypeFromDialector(s.svcCtx.DB.DB)
-	execItem, err := gormmodel.LockTriggerItem(ctx, s.svcCtx.DB.WithContext(ctx).DB, dbType, 5*60*time.Second)
+	execItem, err := gormmodel.LockTriggerItem(ctx, s.svcCtx.DB.WithContext(ctx).DB, dbType, planTriggerLockTTL)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
 			return false
 		}
 		lockScope := planscope.CronLockScope()
 		if errors.Is(err, model.ErrNoRowsUpdate) {
-			lockScope.Logger(ctx).Info(lockScope.LogMessage("定时扫表：待调度执行项已被其他调度器抢占"))
+			// 多实例并发抢占时的高频良性竞争，降为 Debug，避免挤占关键日志。
+			lockScope.Logger(ctx).Debug(lockScope.LogMessage("定时扫表：待调度执行项已被其他调度器抢占"))
 			return false
 		}
 		lockScope.Logger(ctx).Errorf(lockScope.LogMessage("定时扫表：抢占待调度执行项失败: %v"), err)
@@ -140,6 +166,35 @@ func (s *CronService) ScanPlanExecItem() bool {
 		return false
 	}
 
+	// 批次级限速：晚确认后整批执行项会同时过期，按批次令牌桶分散放行，避免下游瞬时并发。
+	decision := s.allowBatchDispatch(ctx, execItem, planBatch)
+	if !decision.allowed {
+		nextTriggerTime := time.Now().Add(decision.wait)
+		if err := s.deferTriggerItem(ctx, execItem, nextTriggerTime); err != nil {
+			if errors.Is(err, model.ErrNoRowsUpdate) {
+				// 执行项已被其它链路推进到终态或已推迟，本次推迟不再生效，属良性并发。
+				execLog.Info(execScope.LogMessage("批次限速：执行项已不在执行中，跳过推迟"))
+			} else {
+				// 推迟失败时执行项停在抢占租约上，最迟在租约到期后重新参与扫表。
+				execLog.WithFields(
+					logx.Field("wait_ms", decision.wait.Milliseconds()),
+					logx.Field("lease_retry_at", time.Now().Add(planTriggerLockTTL).Format(time.RFC3339Nano)),
+				).Errorf(execScope.LogMessage("批次限速：推迟执行项失败，回退到抢占租约重试: %v"), err)
+			}
+		} else {
+			execLog.WithFields(
+				logx.Field("throttle", "batch_token_bucket"),
+				logx.Field("wait_ms", decision.wait.Milliseconds()),
+				logx.Field("next_trigger", nextTriggerTime.Format(time.RFC3339Nano)),
+				logx.Field("confirmed_time", decision.confirmedAt.Format(time.RFC3339Nano)),
+				logx.Field("plan_trigger_time", decision.planTriggerAt.Format(time.RFC3339Nano)),
+				logx.Field("rate", planBatchDispatchRate),
+				logx.Field("burst", planBatchDispatchBurst),
+			).Info(execScope.LogMessage("批次限速：批次令牌不足，执行项已推迟"))
+		}
+		return true
+	}
+
 	scope := planscope.TriggerScope(queryExecItem, plan)
 	scope.Logger(ctx).Infof(
 		scope.LogMessage("定时扫表：执行项已到调度时间，开始调用下游执行任务（HandlerPlanTaskEvent），next_trigger=%s"),
@@ -158,6 +213,61 @@ func (s *CronService) ScanPlanExecItem() bool {
 
 	s.ExecuteCallback(ctx, queryExecItem, plan)
 	return true
+}
+
+// deferTriggerItem 把被限速拦截的执行项恢复到抢占前状态并推迟下一次触发时间。
+// 瞬时数据库故障按短间隔重试；ErrNoRowsUpdate 表示执行项已被其它链路推进，直接返回不再重试。
+func (s *CronService) deferTriggerItem(ctx context.Context, claimed *gormmodel.PlanExecItem, next time.Time) error {
+	var err error
+	for attempt := 1; attempt <= deferTriggerItemAttempts; attempt++ {
+		err = gormmodel.DeferTriggerItem(ctx, s.svcCtx.DB.WithContext(ctx).DB, claimed, next)
+		if err == nil || errors.Is(err, model.ErrNoRowsUpdate) {
+			return err
+		}
+		if attempt < deferTriggerItemAttempts {
+			time.Sleep(time.Duration(attempt) * deferTriggerItemRetryInterval)
+		}
+	}
+	return err
+}
+
+// batchDispatchDecision 批次级限速的判定结果。命中限速时带上确认时间与批次触发时间，
+// 便于在一条日志里说明「为什么这个批次被判为晚确认」。
+type batchDispatchDecision struct {
+	allowed       bool
+	wait          time.Duration
+	confirmedAt   time.Time
+	planTriggerAt time.Time
+}
+
+// allowBatchDispatch 获取批次级下发令牌。仅对「确认时间晚于批次触发时间」的批次限速，提前确认或未配置确认的批次保持原有下发行为。
+// 执行项已在 LockTriggerItem 中抢占成功，这里在锁内查询确认记录并做时间判断，不把时间比较放到 claim SQL 里。
+// 查询或限流组件异常时放行，避免限流故障阻塞调度。
+func (s *CronService) allowBatchDispatch(ctx context.Context, execItem *gormmodel.PlanExecItem, batch *gormmodel.PlanBatch) batchDispatchDecision {
+	allow := batchDispatchDecision{allowed: true}
+	if !s.batchLimiter.Enabled() || batch == nil || !batch.PlanTriggerTime.Valid {
+		return allow
+	}
+	scope := planscope.ExecCron(execItem)
+	record, err := gormmodel.FindPlanConfirmByTarget(ctx, s.svcCtx.DB.WithContext(ctx).DB, model.ConfirmTypeBatch, batch.Id)
+	if err != nil {
+		scope.Logger(ctx).Errorf(scope.LogMessage("批次限速：查询确认记录失败，本次放行 batch_pk=%s err=%v"), batch.Id, err)
+		return allow
+	}
+	if record == nil || !record.ConfirmedTime.Valid || !record.ConfirmedTime.Time.After(batch.PlanTriggerTime.Time) {
+		return allow
+	}
+	allowed, wait, err := s.batchLimiter.Allow(ctx, batch.Id)
+	if err != nil {
+		scope.Logger(ctx).Errorf(scope.LogMessage("批次限速：获取令牌失败，本次放行 batch_pk=%s err=%v"), batch.Id, err)
+		return allow
+	}
+	return batchDispatchDecision{
+		allowed:       allowed,
+		wait:          wait,
+		confirmedAt:   record.ConfirmedTime.Time,
+		planTriggerAt: batch.PlanTriggerTime.Time,
+	}
 }
 
 func (s *CronService) ExecuteCallback(ctx context.Context, execItem *gormmodel.PlanExecItem, plan *gormmodel.Plan) {

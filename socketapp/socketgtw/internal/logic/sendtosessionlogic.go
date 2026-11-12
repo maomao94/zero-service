@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 
+	"zero-service/common/socketiox"
 	"zero-service/socketapp/socketgtw/internal/svc"
 	"zero-service/socketapp/socketgtw/socketgtw"
 
@@ -28,8 +29,7 @@ func (l *SendToSessionLogic) SendToSession(in *socketgtw.SendToSessionReq) (*soc
 	session := l.svcCtx.SocketServer.GetSession(in.SocketId)
 	if session != nil {
 		payload := parseJsonPayload(in.Payload)
-		err := session.EmitDown(in.Event, payload, in.ReqId)
-		if err != nil {
+		if err := emitSessions(l.svcCtx.EmitRunner, l.Logger, []*socketiox.Session{session}, in.Event, payload, in.ReqId); err != nil {
 			return nil, err
 		}
 	}

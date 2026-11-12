@@ -14,6 +14,7 @@ logs
 *.tgz
 
 app/*/env
+aiapp/*/env
 facade/*/env
 socketapp/*/env
 gtw/env
@@ -25,3 +26,18 @@ gtw/env
 .omo
 
 cli/*/bin
+
+# 业务镜像（如 gis）以仓库根目录作为构建上下文，排除与 Go 编译无关的大目录。
+# 注意：deploy 整体排除只作用于根目录上下文；runtime 基础镜像以 deploy/ 为独立上下文，
+# 由 deploy/.dockerignore 保留 deploy/tls 证书，两者互不影响。
+deploy
+web
+docs
+swagger
+scripts
+.github
+.agents
+.worktrees
+.openchamber
+1.7.1
+1.9.x

@@ -22,6 +22,7 @@
 | [`sipmediagw/`](./sipmediagw/README.md) | SIPMediaGW 完整部署单元（Kamailio/Coturn/Homer） | `provision.sh` |
 | [`filebeat/`](./filebeat/conf/filebeat.yml) | 日志采集配置 | `conf/filebeat.yml` |
 | [`tls/`](./tls/gen-tls.sh) | 自签 TLS 证书生成（供 nginx 使用） | `gen-tls.sh` |
+| [`base-image/`](./base-image/README.md) | 业务镜像的通用 runtime 基础环境（GEOS、ffmpeg 等 C 依赖） | `build.sh` · `ensure.sh` |
 
 ## 依赖关系与启动顺序
 
@@ -37,6 +38,29 @@
 2. **② 中间件与流媒体**：`livekit`、`sipmediagw`；Kafka 使用根目录 `docker-compose.yml` 或自建集群。
 3. **③ 业务服务**：按目标链路上线，例如 IEC 104 需要 `ieccaller` + `iecstash` + `facade/streamevent`；`filebeat` 随业务服务一起采集日志。
 4. **④ 入口**：`tls` 生成证书后部署 `nginx`，再按需接入 `web/` 前端产物。
+
+## 业务服务镜像构建与部署
+
+`app/`、`aiapp/`、`facade/`、`socketapp/` 下的业务服务目录均包含 `Dockerfile`、`build.sh`、`deploy.sh`，构建上下文为仓库根目录，支持 `linux/amd64` 与 `linux/arm64`。
+
+| 脚本 | 用途 | 默认平台 | 远端操作 |
+| --- | --- | --- | --- |
+| `build.sh <环境> [平台列表]` | 构建镜像并导出 tar，用于离线交付 | `linux/amd64 linux/arm64` | 无 |
+| `deploy.sh <环境> [平台]` | 调用 `build.sh` 构建单一架构镜像，上传并发布 | `linux/amd64` | 上传、`docker load`、打标签、`docker-compose up -d` |
+
+```bash
+cd app/gis
+bash build.sh test                     # 导出 amd64、arm64 两个 tar
+bash deploy.sh test_199 linux/arm64    # 发布到 arm64 服务器
+```
+
+- 产物架构由平台参数决定，与构建机架构无关；导出前统一校验镜像架构。
+- `deploy.sh` 在构建前读取远端 Docker daemon 架构并与目标平台比对，不一致时直接退出；向不同架构的服务器发布时分别指定平台参数。
+- 除 gis 外的服务均为纯 Go 交叉编译，跨架构构建不需要 qemu；gis 依赖 CGO（GEOS），跨架构构建需要 qemu/binfmt。
+- gis、file 运行在 [`base-image/`](./base-image/README.md) 提供的 `zero-service/runtime:<版本>-<arch>` 上，其余服务运行在 `scratch` 上。
+- `env/<环境>.env` 不入库，`build.sh` 只需要 `IMAGE_NAME`，`deploy.sh` 额外需要远端连接与 `SERVICE_NAME` 等变量。
+
+构建规范、Dockerfile 模板、环境变量与故障排查见 [`MULTI_PLATFORM_BUILD.md`](./MULTI_PLATFORM_BUILD.md)。新增服务时以同类服务为模板：纯 Go 参考 `app/ieccaller`，纯 Go + runtime 基础镜像参考 `app/file`，CGO 参考 `app/gis`。
 
 ## 通用约定
 
