@@ -214,3 +214,25 @@ func TestRequest_BuilderReader(t *testing.T) {
 		t.Fatalf("expected bodyKindReader, got %d", req.bodyKind)
 	}
 }
+
+func TestRequest_BodyOptionsResetPreviousSource(t *testing.T) {
+	req := NewRequest("http://example.com", http.MethodPost,
+		WithFormData(url.Values{"a": {"1"}}),
+		WithBody([]byte("raw")),
+	)
+	if req.FormData != nil || req.ContentType != "" || req.bodyKind != bodyKindRaw {
+		t.Fatalf("expected form state cleared, got %+v", req)
+	}
+
+	req = &Request{ContentType: "application/octet-stream"}
+	WithBodyReader(strings.NewReader("x"))(req)
+	if req.ContentType != "application/octet-stream" {
+		t.Fatalf("expected explicit content type preserved, got %q", req.ContentType)
+	}
+
+	req = NewRequest("http://example.com", http.MethodPost, WithJSONBody(map[string]int{"a": 1}))
+	WithBodyReader(nil)(req)
+	if req.bodyKind != bodyKindJSON {
+		t.Fatal("nil reader should not reset existing body")
+	}
+}

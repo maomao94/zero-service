@@ -2,6 +2,7 @@ package netx
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestClient_Upload(t *testing.T) {
@@ -268,5 +270,28 @@ func TestClient_Upload_WithRequestOptions(t *testing.T) {
 	}
 	if gotAuth != "Bearer upload-token" {
 		t.Fatalf("expected auth header, got %q", gotAuth)
+	}
+}
+
+type unreadBodyEngine struct{}
+
+func (unreadBodyEngine) Do(*http.Request) (*http.Response, error) {
+	return nil, errors.New("breaker open")
+}
+
+func TestClient_Upload_EngineErrorWithoutReadingBody(t *testing.T) {
+	c := NewClient(WithEngine(unreadBodyEngine{}))
+	done := make(chan *Response, 1)
+	go func() {
+		resp, _ := c.UploadBytes(ctx(t), "http://example.com/upload", "file", "a.txt", []byte("hello"), nil)
+		done <- resp
+	}()
+	select {
+	case resp := <-done:
+		if resp == nil || resp.Err == nil || !strings.Contains(resp.Err.Error(), "breaker open") {
+			t.Fatalf("expected engine error, got %+v", resp)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("upload blocked when engine did not consume body")
 	}
 }

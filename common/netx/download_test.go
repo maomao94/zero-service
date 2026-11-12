@@ -148,6 +148,10 @@ func TestClient_DownloadFile_RespectsMaxBytes(t *testing.T) {
 	if _, statErr := os.Stat(destPath); statErr == nil {
 		t.Fatal("destination file should not exist on overflow")
 	}
+	entries, _ := os.ReadDir(filepath.Dir(destPath))
+	if len(entries) != 0 {
+		t.Fatalf("temp files should be cleaned up, got %d entries", len(entries))
+	}
 }
 
 func TestClient_Download_RespectsMaxBytes(t *testing.T) {
