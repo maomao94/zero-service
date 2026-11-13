@@ -21,7 +21,7 @@ var (
 	// ErrChanClosed 表示向已关闭的 UnboundedChan 发送数据。
 	ErrChanClosed = errors.New("antsx: send on closed channel")
 
-	// ErrNoValue 是 StreamReaderWithConvert 中的哨兵错误，
+	// ErrNoValue 是 StreamReader.Convert 中的哨兵错误，
 	// convert 函数返回此错误表示跳过当前元素，继续读取下一个。
 	ErrNoValue = errors.New("antsx: no value")
 
