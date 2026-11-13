@@ -76,6 +76,9 @@ func InvokeCallback[T, U any](ctx context.Context, tasks []Task[T], callback fun
 // errgroup 的 g.Go 会阻塞在 pool.Submit 上，无法响应 ctx 取消。
 // 适用于需要限制并发度的场景。
 func InvokeWithReactor[T any](ctx context.Context, r *Reactor, tasks ...Task[T]) ([]T, error) {
+	if r == nil {
+		return nil, errNilReactor
+	}
 	if len(tasks) == 0 {
 		return []T{}, nil
 	}
@@ -109,6 +112,16 @@ func InvokeWithReactor[T any](ctx context.Context, r *Reactor, tasks ...Task[T])
 		wg.Add(1)
 		submitErr := r.Go(ctx, func(poolCtx context.Context) {
 			defer wg.Done()
+			// invokeSingle 内部已恢复任务 panic；这里再兜一层：任何意外 panic
+			// 都转成 firstErr 并取消其余任务，而不是被协程池静默吞掉导致结果缺位。
+			defer func() {
+				if p := recover(); p != nil {
+					errOnce.Do(func() {
+						firstErr = taskPanicErr(t.Name, p)
+						cancel()
+					})
+				}
+			}()
 			val, err := invokeSingle(poolCtx, t)
 			if err != nil {
 				errOnce.Do(func() {

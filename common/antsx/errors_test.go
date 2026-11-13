@@ -45,7 +45,7 @@ func TestPanicErr_FromReactorSubmit(t *testing.T) {
 	defer r.Release()
 
 	innerErr := errors.New("inner panic error")
-	p, err := antsx.Submit(context.Background(), r, func(ctx context.Context) (int, error) {
+	p, err := r.Submit(context.Background(), func(ctx context.Context) (int, error) {
 		panic(innerErr)
 	})
 	if err != nil {
@@ -73,7 +73,7 @@ func TestPanicErr_Unwrap_NonError(t *testing.T) {
 	}
 	defer r.Release()
 
-	p, err := antsx.Submit(context.Background(), r, func(ctx context.Context) (int, error) {
+	p, err := r.Submit(context.Background(), func(ctx context.Context) (int, error) {
 		panic("string panic")
 	})
 	if err != nil {
@@ -97,7 +97,7 @@ func TestPanicErr_ContainsStack(t *testing.T) {
 	}
 	defer r.Release()
 
-	p, err := antsx.Submit(context.Background(), r, func(ctx context.Context) (int, error) {
+	p, err := r.Submit(context.Background(), func(ctx context.Context) (int, error) {
 		panic("stack trace test")
 	})
 	if err != nil {
