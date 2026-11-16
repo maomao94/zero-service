@@ -1,6 +1,6 @@
 # antsx
 
-Go 泛型异步编排工具包。底层基于 Go channel、context、go-zero TimingWheel / threading.GoSafe 和 [ants](https://github.com/panjf2000/ants) 协程池。Stream API 参考 [eino](https://github.com/cloudwego/eino) 的 Pipe / StreamReader / StreamWriter 范式。
+Go 泛型异步编排工具包。底层基于 Go channel、context、go-zero TimingWheel / threading.GoSafe、`golang.org/x/sync/errgroup` 和 [ants](https://github.com/panjf2000/ants) 协程池。Stream API 参考 [eino](https://github.com/cloudwego/eino) 的 Pipe / StreamReader / StreamWriter 范式，算子（Convert / Map / Filter / Take）通过方法级类型参数实现，全链路无 `any` 装箱。
 
 ## 模块总览
 
@@ -26,8 +26,8 @@ Go 泛型异步编排工具包。底层基于 Go channel、context、go-zero Tim
 | 场景 | 用什么 |
 | --- | --- |
 | 单个后台计算，要拿返回值 | `Go(ctx, fn)` → 返回 `*Promise[T]` |
-| 单个后台计算，要拿返回值，要限并发 | `Submit(ctx, reactor, fn)` → 返回 `*Promise[T]` |
-| 单个后台计算，不关心返回值 | `Post(ctx, reactor, fn)` 或 `reactor.Go(ctx, fn)` |
+| 单个后台计算，要拿返回值，要限并发 | `reactor.Submit(ctx, fn)` → 返回 `*Promise[T]` |
+| 单个后台计算，不关心返回值 | `reactor.Go(ctx, fn)` |
 | N 个函数并行，全成功才算成功 | `Invoke(ctx, tasks...)` |
 | N 个函数并行，各自独立互不影响 | `InvokeAllSettled(ctx, tasks...)` |
 | 上面两个想限并发 | `InvokeWithReactor` / `InvokeAllSettledWithReactor` |
@@ -77,17 +77,17 @@ val, err := p.Await(ctx)
 ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 defer cancel()
 
-userID := antsx.Go(ctx, func(ctx context.Context) (int64, error) {
+greeting := antsx.Go(ctx, func(ctx context.Context) (int64, error) {
     return fetchUserID(ctx)
-})
-name := antsx.Then(ctx, userID, func(id int64) (string, error) {
+}).Then(ctx, func(id int64) (string, error) {
     return fetchUserName(ctx, id)
-})
-greeting := antsx.Map(ctx, name, func(v string) string {
-    return "hello " + v
+}).Map(ctx, func(name string) string {
+    return "hello " + name
 })
 val, err := greeting.Await(ctx)
 ```
+
+`Then` / `Map` / `FlatMap` 是 `*Promise[T]` 的方法（方法级类型参数），链式调用无需再传源 Promise。
 
 > `Then`、`Map`、`FlatMap`、`Go` 都启 goroutine。务必传带超时的 ctx，避免 goroutine 泄漏。
 
@@ -140,18 +140,18 @@ defer reactor.Release()
 
 | API | 返回值 | 场景 |
 | --- | --- | --- |
-| `Submit(ctx, reactor, fn)` | `*Promise[T], error` | 有返回值 |
-| `Post(ctx, reactor, fn)` | `error` | fire-and-forget |
+| `reactor.Submit(ctx, fn)` | `*Promise[T], error` | 有返回值 |
 | `reactor.Go(ctx, fn)` | `error` | fire-and-forget |
 
 ```go
-p, _ := antsx.Submit(ctx, reactor, func(ctx context.Context) (int, error) {
+p, err := reactor.Submit(ctx, func(ctx context.Context) (int, error) {
     return compute(ctx)
 })
 val, err := p.Await(ctx)
 ```
 
-> nil Reactor 返回错误不 panic。`Release()` 后不要再提交。
+> 协程池打满时 `Submit`/`Go` 会阻塞等待空闲 worker，这是 ants 的既有语义，不响应 ctx 取消。
+> nil Reactor 返回错误不 panic。`Release()` 后提交返回错误，已在跑的任务继续完成。
 
 ---
 
@@ -225,11 +225,20 @@ for {
 **转换过滤：**
 
 ```go
-converted := antsx.StreamReaderWithConvert(sr, func(i int) (string, error) {
+converted := sr.Convert(func(i int) (string, error) {
     if i == 0 { return "", antsx.ErrNoValue } // 跳过
     return fmt.Sprintf("v%d", i), nil
 })
+
+evens := sr.Filter(func(i int) bool { return i%2 == 0 })
+labels := sr.Map(strconv.Itoa)     // 无 error 的纯转换
+head := sr.Take(100)               // 最多 100 条，之后 Recv 返回 io.EOF
+all, err := sr.Collect()           // 同步读完剩余元素
 ```
+
+> 算子链的 `Close()` 会转发到上游，链尾关闭即整链释放。`Take` 达到上限后不再消费上游。
+> `Convert` / `Map` / `Filter` / `Take` 都是 `*StreamReader[T]` 的方法（方法级类型参数），
+> 每元素 0 次堆分配，基准见 `bench_test.go`。
 
 **合并：**
 
@@ -305,7 +314,7 @@ fn, ok := ch.ReceiveContext(ctx)  // 支持 ctx 取消
 | 错误 | 来源 | 含义 |
 | --- | --- | --- |
 | `io.EOF` | StreamReader.Recv | 流结束 |
-| `ErrNoValue` | StreamReaderWithConvert | 过滤跳过 |
+| `ErrNoValue` | StreamReader.Convert | 过滤跳过 |
 | `ErrRecvAfterClosed` | Copy 子流 | 关闭后 Recv |
 | `ErrEmptyPromises` | PromiseRace / PromiseAny | 空输入 |
 | `SourceEOF` | MergeNamedStreamReaders | 某条源流结束 |
@@ -330,6 +339,9 @@ fn, ok := ch.ReceiveContext(ctx)  // 支持 ctx 取消
 ### 实现细节
 
 - `Invoke` 基于 `golang.org/x/sync/errgroup`，自动 cancel 和第一错误返回；`InvokeWithReactor` 使用 `WaitGroup + errOnce + cancel`，因为 ants 的 `pool.Submit` 阻塞时不响应 ctx 取消，不能桥接 errgroup。
+- `InvokeWithReactor` 在协程池回调内额外包一层 `recover`：`invokeSingle` 已经恢复任务 panic，这层兜底保证任何意外 panic 都会转成 `firstErr` 并取消其余任务，而不是被协程池静默吞掉导致结果缺位。
+- Stream 算子（Convert/Map/Filter/Take）用闭包承载（`funcReader`），源/目标类型在创建时已实例化，全链路不经过 `any`，无装箱和类型断言。
+- MergeStreamReaders 全 `arrayReader` 输入直接拼接为游标流，不经过 channel。
 - MergeStreamReaders ≤5 路静态 select，>5 路 reflect.Select。
 - StreamReaderFromArray 零 goroutine 同步流。
 - Copy 普通流用链表 + sync.Once 广播。

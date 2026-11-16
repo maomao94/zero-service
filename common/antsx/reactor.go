@@ -20,7 +20,7 @@ type Reactor struct {
 }
 
 // NewReactor 创建一个指定容量的 Reactor。
-// size 为最大并发 goroutine 数量；size <= 0 时 ants 将使用默认池大小。
+// size 为最大并发 goroutine 数量，必须大于 0。
 func NewReactor(size int) (*Reactor, error) {
 	pool, err := ants.NewPool(size)
 	if err != nil {
@@ -31,8 +31,8 @@ func NewReactor(size int) (*Reactor, error) {
 
 // Submit 将一个带返回值的异步任务提交到 Reactor 协程池执行，返回代表结果的 Promise。
 // fn 中的 panic 会被捕获并转换为 Promise 的 error，不会泄漏到调用方。
-// 如果协程池已满或已关闭，返回非 nil error。
-func Submit[T any](ctx context.Context, r *Reactor, fn func(ctx context.Context) (T, error)) (*Promise[T], error) {
+// 如果协程池已满（会阻塞等待空闲 worker）或已关闭，返回非 nil error。
+func (r *Reactor) Submit[T any](ctx context.Context, fn func(ctx context.Context) (T, error)) (*Promise[T], error) {
 	if r == nil {
 		return nil, errNilReactor
 	}
@@ -46,9 +46,9 @@ func Submit[T any](ctx context.Context, r *Reactor, fn func(ctx context.Context)
 		val, fnErr := fn(ctx)
 		if fnErr != nil {
 			p.Reject(fnErr)
-		} else {
-			p.Resolve(val)
+			return
 		}
+		p.Resolve(val)
 	})
 	if err != nil {
 		return nil, err
@@ -56,27 +56,10 @@ func Submit[T any](ctx context.Context, r *Reactor, fn func(ctx context.Context)
 	return p, nil
 }
 
-// Post 将一个带 context 的任务提交到 Reactor 协程池执行（fire-and-forget）。
-// fn 中的 panic 会被内部恢复，不会导致进程崩溃。
-// 如果协程池已满或已关闭，返回非 nil error。
-func Post(ctx context.Context, r *Reactor, fn func(ctx context.Context)) error {
-	if r == nil {
-		return errNilReactor
-	}
-	return r.pool.Submit(func() {
-		defer func() {
-			if p := recover(); p != nil {
-				log.Printf("antsx: Post panic recovered: %v\n%s", p, debug.Stack())
-			}
-		}()
-		fn(ctx)
-	})
-}
-
-// Go 将一个函数提交到协程池执行。
+// Go 将一个函数提交到协程池执行（fire-and-forget）。
 // ctx 用于传递上下文（如超时/取消），fn 内部应检查 ctx.Done() 以响应取消。
 // 内置 panic 恢复保护，fn 中的 panic 不会导致进程崩溃。
-// 如果协程池已满或已关闭，返回非 nil error。
+// 如果协程池已满（会阻塞等待空闲 worker）或已关闭，返回非 nil error。
 func (r *Reactor) Go(ctx context.Context, fn func(ctx context.Context)) error {
 	if r == nil {
 		return errNilReactor

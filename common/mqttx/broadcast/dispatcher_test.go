@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"zero-service/common/antsx"
 	"zero-service/common/mqttx"
@@ -22,16 +24,23 @@ type publishedMessage struct {
 	payload []byte
 }
 
-// mockMqttClient 手写 mqttx.Client mock：记录发布与 handler 注册。
+// mockMqttClient 手写 mqttx.Client mock：记录发布、handler 与 reply router 注册。
 type mockMqttClient struct {
-	mu         sync.Mutex
-	handlers   map[string]func(context.Context, []byte, string, string) error
-	published  []publishedMessage
-	publishErr error
+	mu           sync.Mutex
+	handlers     map[string]func(context.Context, []byte, string, string) error
+	replyRouters map[string]mqttx.ConsumeHandler
+	published    []publishedMessage
+	publishErr   error
+	addReplyErr  error
+	// onPublish 在记录发布后同步回调，用于模拟 ack 回包。
+	onPublish func(topic string, payload []byte)
 }
 
 func newMockMqttClient() *mockMqttClient {
-	return &mockMqttClient{handlers: make(map[string]func(context.Context, []byte, string, string) error)}
+	return &mockMqttClient{
+		handlers:     make(map[string]func(context.Context, []byte, string, string) error),
+		replyRouters: make(map[string]mqttx.ConsumeHandler),
+	}
 }
 
 func (m *mockMqttClient) AddHandler(topicTemplate string, handler mqttx.ConsumeHandler) error {
@@ -52,11 +61,32 @@ func (m *mockMqttClient) Publish(_ context.Context, _ string, _ []byte) error {
 	return nil
 }
 
-func (m *mockMqttClient) PublishWithTrace(_ context.Context, topic string, payload []byte) (string, error) {
+func (m *mockMqttClient) AddReplyRouter(topicTemplate string, router mqttx.ConsumeHandler) error {
+	if m.addReplyErr != nil {
+		return m.addReplyErr
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.replyRouters[topicTemplate] = router
+	return nil
+}
+
+func (m *mockMqttClient) replyRouter(topicTemplate string) mqttx.ConsumeHandler {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.replyRouters[topicTemplate]
+}
+
+func (m *mockMqttClient) PublishWithTrace(_ context.Context, topic string, payload []byte) (string, error) {
+	m.mu.Lock()
 	m.published = append(m.published, publishedMessage{topic: topic, payload: payload})
-	return "mock-trace-id", m.publishErr
+	onPublish := m.onPublish
+	err := m.publishErr
+	m.mu.Unlock()
+	if onPublish != nil {
+		onPublish(topic, payload)
+	}
+	return "mock-trace-id", err
 }
 
 func (m *mockMqttClient) Close() {}
@@ -322,19 +352,100 @@ func TestBroadcastReturnsPublishError(t *testing.T) {
 	}
 }
 
-func TestBroadcastReplyWithoutRouterFailsGracefully(t *testing.T) {
+func TestBroadcastReplyFailsWhenAckRouterRegistrationFails(t *testing.T) {
 	mock := newMockMqttClient()
+	mock.addReplyErr = errors.New("subscribe failed")
 	b := NewBroadcaster(mock, testInstance, WithPrefix(testPrefix))
 
 	_, err := b.BroadcastReply(context.Background(), testBroadcast, []byte("payload"), 0)
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if !errors.Is(err, mqttx.ErrNoReplyRouter) {
-		t.Fatalf("expected ErrNoReplyRouter, got %v", err)
+	if !strings.Contains(err.Error(), "register ack reply router") {
+		t.Fatalf("expected registration error, got %v", err)
 	}
 	if mock.publishedCount() != 0 {
 		t.Fatalf("no publish must happen without router, published=%d", mock.publishedCount())
+	}
+}
+
+// installAckResponder 让 mock 在每次发布广播后，通过已注册的 ack router 同步回一帧成功 ack。
+// router 在发布时才查找，便于覆盖“注册失败后 BroadcastReply 重试注册”的场景。
+// 返回的函数用于关闭 router。
+func installAckResponder(t *testing.T, mock *mockMqttClient, ackTopic string) func() {
+	t.Helper()
+	var router *mqttx.ReplyRouter[*BroadcastAckBody]
+	mock.onPublish = func(_ string, payload []byte) {
+		var req BroadcastBody
+		if err := json.Unmarshal(payload, &req); err != nil {
+			t.Fatalf("unmarshal broadcast body: %v", err)
+		}
+		if req.AckTopic != ackTopic {
+			t.Fatalf("ack topic = %q, want %q", req.AckTopic, ackTopic)
+		}
+		if router == nil {
+			handler := mock.replyRouter(ackTopic)
+			if handler == nil {
+				t.Fatalf("ack reply router not registered on %q", ackTopic)
+			}
+			var ok bool
+			router, ok = handler.(*mqttx.ReplyRouter[*BroadcastAckBody])
+			if !ok {
+				t.Fatalf("registered router = %T, want *mqttx.ReplyRouter[*BroadcastAckBody]", handler)
+			}
+		}
+		ack, err := json.Marshal(&BroadcastAckBody{
+			Tid:          req.Tid,
+			Method:       req.Method,
+			Success:      true,
+			ResponseBody: `{"ok":1}`,
+		})
+		if err != nil {
+			t.Fatalf("marshal ack: %v", err)
+		}
+		if err := router.Consume(context.Background(), ack, ackTopic, ackTopic); err != nil {
+			t.Fatalf("consume ack: %v", err)
+		}
+	}
+	return func() {
+		if router != nil {
+			router.Close()
+		}
+	}
+}
+
+func TestBroadcastReplyResolvesAckThroughRouter(t *testing.T) {
+	mock := newMockMqttClient()
+	b := NewBroadcaster(mock, testInstance, WithPrefix(testPrefix))
+
+	closeRouter := installAckResponder(t, mock, BroadcastAckTopic(testPrefix, testInstance))
+	defer closeRouter()
+
+	got, err := b.BroadcastReply(context.Background(), testBroadcast, []byte(`{"taskId":"abc"}`), time.Second)
+	if err != nil {
+		t.Fatalf("BroadcastReply returned error: %v", err)
+	}
+	if string(got) != `{"ok":1}` {
+		t.Fatalf("BroadcastReply = %q, want response body", got)
+	}
+}
+
+// 启动期订阅抖动导致注册失败后，下一次 BroadcastReply 应重试注册并正常拿到 ack。
+func TestBroadcastReplyRetriesAckRouterRegistration(t *testing.T) {
+	mock := newMockMqttClient()
+	mock.addReplyErr = errors.New("subscribe failed")
+	b := NewBroadcaster(mock, testInstance, WithPrefix(testPrefix))
+
+	mock.addReplyErr = nil // broker 恢复
+	closeRouter := installAckResponder(t, mock, BroadcastAckTopic(testPrefix, testInstance))
+	defer closeRouter()
+
+	got, err := b.BroadcastReply(context.Background(), testBroadcast, []byte(`{"taskId":"abc"}`), time.Second)
+	if err != nil {
+		t.Fatalf("BroadcastReply returned error: %v", err)
+	}
+	if string(got) != `{"ok":1}` {
+		t.Fatalf("BroadcastReply = %q, want response body", got)
 	}
 }
 

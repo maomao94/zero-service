@@ -1081,7 +1081,7 @@ func (c *Client) CallToolAsyncAwait(ctx context.Context, req *CallToolAsyncReque
 	origObserver := req.TaskObserver
 
 	// 提交到 Reactor 池执行
-	_, err := antsx.Submit(ctx, c.reactor, func(ctx context.Context) (string, error) {
+	_, err := c.reactor.Submit(ctx, func(ctx context.Context) (string, error) {
 		// 调用同步方法（带进度回调）
 		result, callErr := c.CallToolWithProgress(ctx, &CallToolWithProgressRequest{
 			Token: taskID,

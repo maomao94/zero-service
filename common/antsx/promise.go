@@ -195,7 +195,7 @@ func PromiseRace[T any](ctx context.Context, promises ...*Promise[T]) (T, error)
 // 注意：内部启动的 goroutine 依赖 ctx 取消或 Promise 完成来退出。
 // 如果 ctx 为 context.Background() 且源 Promise 永远不完成，goroutine 将泄漏。
 // 建议传入带超时的 ctx 以防止泄漏。
-func Then[T, U any](ctx context.Context, p *Promise[T], fn func(T) (U, error)) *Promise[U] {
+func (p *Promise[T]) Then[U any](ctx context.Context, fn func(T) (U, error)) *Promise[U] {
 	next := NewPromise[U]()
 	go func() {
 		defer func() {
@@ -223,7 +223,7 @@ func Then[T, U any](ctx context.Context, p *Promise[T], fn func(T) (U, error)) *
 //
 // 注意：内部启动的 goroutine 依赖 ctx 取消或 Promise 完成来退出。
 // 如果 ctx 为 context.Background() 且源 Promise 永远不完成，goroutine 将泄漏。
-func Map[T, U any](ctx context.Context, p *Promise[T], fn func(T) U) *Promise[U] {
+func (p *Promise[T]) Map[U any](ctx context.Context, fn func(T) U) *Promise[U] {
 	next := NewPromise[U]()
 	go func() {
 		defer func() {
@@ -246,7 +246,7 @@ func Map[T, U any](ctx context.Context, p *Promise[T], fn func(T) U) *Promise[U]
 //
 // 注意：内部启动的 goroutine 依赖 ctx 取消或 Promise 完成来退出。
 // 如果 ctx 为 context.Background() 且源 Promise 永远不完成，goroutine 将泄漏。
-func FlatMap[T, U any](ctx context.Context, p *Promise[T], fn func(T) *Promise[U]) *Promise[U] {
+func (p *Promise[T]) FlatMap[U any](ctx context.Context, fn func(T) *Promise[U]) *Promise[U] {
 	next := NewPromise[U]()
 	go func() {
 		defer func() {
@@ -275,10 +275,11 @@ func FlatMap[T, U any](ctx context.Context, p *Promise[T], fn func(T) *Promise[U
 //
 // 用法:
 //
-//	p := antsx.Go(ctx, func(ctx context.Context) (int, error) {
+//	val, err := antsx.Go(ctx, func(ctx context.Context) (int, error) {
 //	    return computeExpensiveResult(ctx)
-//	})
-//	val, err := p.Await(ctx)
+//	}).Map(ctx, func(v int) string {
+//	    return fmt.Sprintf("result=%d", v)
+//	}).Await(ctx)
 func Go[T any](ctx context.Context, fn func(ctx context.Context) (T, error)) *Promise[T] {
 	p := NewPromise[T]()
 	go func() {

@@ -239,7 +239,7 @@ func TestStream_FromArrayEmpty(t *testing.T) {
 
 func TestStream_Convert(t *testing.T) {
 	sr := antsx.StreamReaderFromArray([]int{0, 1, 2, 3})
-	converted := antsx.StreamReaderWithConvert(sr, func(i int) (string, error) {
+	converted := sr.Convert(func(i int) (string, error) {
 		if i == 0 {
 			return "", antsx.ErrNoValue
 		}
@@ -256,7 +256,7 @@ func TestStream_Convert(t *testing.T) {
 func TestStream_ConvertError(t *testing.T) {
 	testErr := errors.New("convert error")
 	sr := antsx.StreamReaderFromArray([]int{1, 2, 3})
-	converted := antsx.StreamReaderWithConvert(sr, func(i int) (string, error) {
+	converted := sr.Convert(func(i int) (string, error) {
 		if i == 2 {
 			return "", testErr
 		}
@@ -277,7 +277,7 @@ func TestStream_ConvertError(t *testing.T) {
 
 func TestStream_ConvertErrWrapper(t *testing.T) {
 	sr := antsx.StreamReaderFromArray([]int{1, 2, 3})
-	converted := antsx.StreamReaderWithConvert(sr, func(i int) (string, error) {
+	converted := sr.Convert(func(i int) (string, error) {
 		return fmt.Sprintf("v%d", i), nil
 	}, antsx.WithErrWrapper(func(err error) error {
 		return nil
@@ -515,7 +515,7 @@ func TestStream_SetAutomaticClose(t *testing.T) {
 
 func TestStream_ConvertPanicPropagation(t *testing.T) {
 	sr := antsx.StreamReaderFromArray([]int{1, 2, 3})
-	panicSR := antsx.StreamReaderWithConvert(sr, func(i int) (int, error) {
+	panicSR := sr.Convert(func(i int) (int, error) {
 		if i == 2 {
 			panic("boom")
 		}
@@ -639,10 +639,10 @@ func TestStream_MergeMidClose(t *testing.T) {
 
 func TestStream_ConvertChained(t *testing.T) {
 	sr := antsx.StreamReaderFromArray([]int{1, 2, 3, 4, 5})
-	doubled := antsx.StreamReaderWithConvert(sr, func(i int) (int, error) {
+	doubled := sr.Convert(func(i int) (int, error) {
 		return i * 2, nil
 	})
-	asStr := antsx.StreamReaderWithConvert(doubled, func(i int) (string, error) {
+	asStr := doubled.Convert(func(i int) (string, error) {
 		return fmt.Sprintf("%d", i), nil
 	})
 	defer asStr.Close()
@@ -704,7 +704,7 @@ func TestStream_SetAutomaticClose_MultiReader(t *testing.T) {
 
 func TestStream_SetAutomaticClose_ConvertReader(t *testing.T) {
 	sr := antsx.StreamReaderFromArray([]int{1, 2, 3})
-	converted := antsx.StreamReaderWithConvert(sr, func(i int) (string, error) {
+	converted := sr.Convert(func(i int) (string, error) {
 		return fmt.Sprintf("%d", i), nil
 	})
 	converted.SetAutomaticClose()
@@ -762,7 +762,7 @@ func TestStream_ConvertWithUpstreamError(t *testing.T) {
 		sw.Send(2, nil)
 	}()
 
-	converted := antsx.StreamReaderWithConvert(sr, func(i int) (string, error) {
+	converted := sr.Convert(func(i int) (string, error) {
 		return fmt.Sprintf("v%d", i), nil
 	})
 	defer converted.Close()
@@ -789,7 +789,7 @@ func TestStream_ConvertWithUpstreamErrorWrapper_Skip(t *testing.T) {
 		sw.Send(2, nil)
 	}()
 
-	converted := antsx.StreamReaderWithConvert(sr, func(i int) (string, error) {
+	converted := sr.Convert(func(i int) (string, error) {
 		return fmt.Sprintf("v%d", i), nil
 	}, antsx.WithErrWrapper(func(err error) error {
 		return nil
@@ -814,7 +814,7 @@ func TestStream_ConvertWithUpstreamErrorWrapper_Wrap(t *testing.T) {
 		sw.Send(2, nil)
 	}()
 
-	converted := antsx.StreamReaderWithConvert(sr, func(i int) (string, error) {
+	converted := sr.Convert(func(i int) (string, error) {
 		return fmt.Sprintf("v%d", i), nil
 	}, antsx.WithErrWrapper(func(err error) error {
 		return wrappedErr
@@ -834,7 +834,7 @@ func TestStream_ConvertWithUpstreamErrorWrapper_Wrap(t *testing.T) {
 
 func TestStream_ConvertWrappedErrNoValue(t *testing.T) {
 	sr := antsx.StreamReaderFromArray([]int{0, 1, 2, 3})
-	converted := antsx.StreamReaderWithConvert(sr, func(i int) (string, error) {
+	converted := sr.Convert(func(i int) (string, error) {
 		if i == 0 {
 			return "", fmt.Errorf("wrapped: %w", antsx.ErrNoValue)
 		}
@@ -850,7 +850,7 @@ func TestStream_ConvertWrappedErrNoValue(t *testing.T) {
 
 func TestStream_MergeConvertAndStream(t *testing.T) {
 	sr1 := antsx.StreamReaderFromArray([]int{1, 2, 3})
-	converted := antsx.StreamReaderWithConvert(sr1, func(i int) (int, error) {
+	converted := sr1.Convert(func(i int) (int, error) {
 		return i * 10, nil
 	})
 
@@ -918,7 +918,7 @@ func TestStream_CopyCloseChild_Idempotent(t *testing.T) {
 
 func TestStream_CopyConvertReader(t *testing.T) {
 	sr := antsx.StreamReaderFromArray([]int{1, 2, 3})
-	converted := antsx.StreamReaderWithConvert(sr, func(i int) (string, error) {
+	converted := sr.Convert(func(i int) (string, error) {
 		return fmt.Sprintf("v%d", i), nil
 	})
 
@@ -1023,5 +1023,171 @@ func TestStream_MergeNamedSingle(t *testing.T) {
 	}
 	if len(eofs) != 1 || eofs[0] != "only" {
 		t.Fatalf("unexpected eofs: %v", eofs)
+	}
+}
+
+// ======================== 流算子 ========================
+
+func TestStream_Map(t *testing.T) {
+	sr := antsx.StreamReaderFromArray([]int{1, 2, 3})
+	labels := sr.Map(func(v int) int {
+		return v * v
+	}).Map(func(v int) string {
+		return fmt.Sprintf("v%d", v)
+	})
+	defer labels.Close()
+
+	results := drainReader(t, labels)
+	want := []string{"v1", "v4", "v9"}
+	if len(results) != len(want) {
+		t.Fatalf("expected %v, got %v", want, results)
+	}
+	for i := range want {
+		if results[i] != want[i] {
+			t.Fatalf("results[%d] = %q, want %q", i, results[i], want[i])
+		}
+	}
+}
+
+func TestStream_Filter(t *testing.T) {
+	sr := antsx.StreamReaderFromArray([]int{1, 2, 3, 4, 5, 6})
+	evens := sr.Filter(func(v int) bool { return v%2 == 0 })
+	defer evens.Close()
+
+	results := drainReader(t, evens)
+	if len(results) != 3 || results[0] != 2 || results[1] != 4 || results[2] != 6 {
+		t.Fatalf("unexpected: %v", results)
+	}
+}
+
+func TestStream_Take(t *testing.T) {
+	sr := antsx.StreamReaderFromArray([]int{1, 2, 3, 4, 5})
+	taken := sr.Take(2)
+	defer taken.Close()
+
+	got := drainReader(t, taken)
+	if len(got) != 2 || got[0] != 1 || got[1] != 2 {
+		t.Fatalf("unexpected: %v", got)
+	}
+
+	// Take 达到上限后不再消费上游，剩余元素仍可继续读取
+	rest := drainReader(t, sr)
+	if len(rest) != 3 || rest[0] != 3 {
+		t.Fatalf("unexpected rest: %v", rest)
+	}
+}
+
+func TestStream_TakeZero(t *testing.T) {
+	sr := antsx.StreamReaderFromArray([]int{1, 2, 3})
+	empty := sr.Take(0)
+	defer empty.Close()
+
+	if got := drainReader(t, empty); len(got) != 0 {
+		t.Fatalf("expected no items, got %v", got)
+	}
+	if got := drainReader(t, sr); len(got) != 3 {
+		t.Fatalf("upstream should be untouched, got %v", got)
+	}
+}
+
+func TestStream_Collect(t *testing.T) {
+	sr := antsx.StreamReaderFromArray([]int{1, 2, 3})
+	got, err := sr.Collect()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 3 || got[0] != 1 || got[2] != 3 {
+		t.Fatalf("unexpected: %v", got)
+	}
+}
+
+func TestStream_CollectError(t *testing.T) {
+	testErr := errors.New("collect boom")
+	sr := antsx.StreamReaderFromArray([]int{1, 2, 3})
+	broken := sr.Convert(func(v int) (int, error) {
+		if v == 2 {
+			return 0, testErr
+		}
+		return v, nil
+	})
+
+	got, err := broken.Collect()
+	if !errors.Is(err, testErr) {
+		t.Fatalf("expected testErr, got %v", err)
+	}
+	if len(got) != 1 || got[0] != 1 {
+		t.Fatalf("expected partially collected values, got %v", got)
+	}
+}
+
+func TestStream_OperatorChain(t *testing.T) {
+	sr, sw := antsx.Pipe[int](10)
+	go func() {
+		defer sw.Close()
+		for i := range 10 {
+			sw.Send(i, nil)
+		}
+	}()
+
+	out := sr.Convert(func(v int) (int, error) { return v * 2, nil }).
+		Filter(func(v int) bool { return v%4 == 0 }).
+		Map(func(v int) string { return fmt.Sprintf("n%d", v) }).
+		Take(2)
+	defer out.Close()
+
+	got := drainReader(t, out)
+	if len(got) != 2 || got[0] != "n0" || got[1] != "n4" {
+		t.Fatalf("unexpected: %v", got)
+	}
+}
+
+func TestStream_OperatorCloseForwardsUpstream(t *testing.T) {
+	sr, sw := antsx.Pipe[int](1)
+	out := sr.Map(func(v int) int { return v })
+
+	out.Close()
+	if closed := sw.Send(1, nil); !closed {
+		t.Fatal("expected Close to forward to upstream reader")
+	}
+	sw.Close()
+}
+
+func TestStream_OperatorNilFuncPanic(t *testing.T) {
+	sr := antsx.StreamReaderFromArray([]int{1})
+
+	cases := map[string]func(){
+		"Convert": func() { sr.Convert[int](nil) },
+		"Map":     func() { sr.Map[int](nil) },
+		"Filter":  func() { sr.Filter(nil) },
+	}
+	for name, fn := range cases {
+		t.Run(name, func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Fatalf("%s should panic on nil func", name)
+				}
+			}()
+			fn()
+		})
+	}
+}
+
+func TestMergeStreamReaders_AllArraysOrder(t *testing.T) {
+	merged := antsx.MergeStreamReaders([]*antsx.StreamReader[int]{
+		antsx.StreamReaderFromArray([]int{1, 2}),
+		antsx.StreamReaderFromArray([]int{3, 4}),
+		antsx.StreamReaderFromArray([]int{5}),
+	})
+	defer merged.Close()
+
+	got := drainReader(t, merged)
+	want := []int{1, 2, 3, 4, 5}
+	if len(got) != len(want) {
+		t.Fatalf("expected %v, got %v", want, got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("got[%d] = %d, want %d", i, got[i], want[i])
+		}
 	}
 }

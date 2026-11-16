@@ -11,6 +11,7 @@ import (
 	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/jsonx"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 // Broadcaster 广播集群客户端：封装 fire-and-forget 与等待 ack 两种发送模式，
@@ -57,7 +58,7 @@ func WithPrefix(prefix string) BroadcasterOption {
 	}
 }
 
-// WithReplyTTL 设置 BroadcastReply 的默认等待时间（timeout<=0 时生效）。
+// WithReplyTTL 设置 ack 等待的默认时间（timeout<=0 时生效），同时作为 ack router 的 pending TTL。
 func WithReplyTTL(ttl time.Duration) BroadcasterOption {
 	return func(opts *broadcasterOptions) {
 		if ttl > 0 {
@@ -70,18 +71,24 @@ type broadcaster struct {
 	client     mqttx.Client
 	instanceID string
 	options    broadcasterOptions
+	ackRouter  *mqttx.ReplyRouter[*BroadcastAckBody]
+
+	// ackMu/ackReady 保护 ack 路由注册状态：注册可能因 broker 短暂不可用失败，
+	// 失败后由 BroadcastReply 重试，避免一次失败在本进程内永久失效。
+	ackMu    sync.Mutex
+	ackReady bool
 
 	mu        sync.RWMutex
 	executors map[string]Executor
 }
 
 // NewBroadcaster 创建广播客户端。
-//   - c: 已创建的 mqttx.Client（ack 应答 router 需在创建时通过
-//     mqttx.WithReplyRouter(BroadcastAckTopic(prefix, instanceID), NewAckReplyRouter(...)) 注册，
-//     否则 BroadcastReply 返回 mqttx.ErrNoReplyRouter）
+//   - c: 已创建的 mqttx.Client
 //   - instanceID: 本实例唯一 ID（如 "oryx-relay-{uid}"），用于 ack 通道隔离与防回环
 //
 // 必须通过 WithPrefix 提供业务前缀（SDK 不硬编码业务前缀）。
+// ack 应答路由由内部创建并注册到 client（AddReplyRouter），调用方不需要再构造 router；
+// 注册失败（如订阅抖动）不会永久失效，BroadcastReply 会重试注册后再等待 ack。
 func NewBroadcaster(c mqttx.Client, instanceID string, opts ...BroadcasterOption) Broadcaster {
 	options := broadcasterOptions{replyTTL: defaultAckReplyTTL}
 	for _, opt := range opts {
@@ -89,12 +96,38 @@ func NewBroadcaster(c mqttx.Client, instanceID string, opts ...BroadcasterOption
 			opt(&options)
 		}
 	}
-	return &broadcaster{
+	b := &broadcaster{
 		client:     c,
 		instanceID: instanceID,
 		options:    options,
 		executors:  make(map[string]Executor),
 	}
+	if c == nil {
+		return b
+	}
+	b.ackRouter = NewAckReplyRouter(options.replyTTL, "mqtt-ack-reply-"+instanceID)
+	if err := b.registerAckRouter(); err != nil {
+		logx.Errorf("[mqtt-broadcast] register ack reply router failed, will retry on BroadcastReply: %v", err)
+	}
+	return b
+}
+
+// registerAckRouter 将 ack 应答路由注册到 client（幂等）。
+// 成功后不再重复注册；失败时保持未就绪状态，下次 BroadcastReply 会重试。
+func (b *broadcaster) registerAckRouter() error {
+	b.ackMu.Lock()
+	defer b.ackMu.Unlock()
+	if b.ackReady {
+		return nil
+	}
+	if b.ackRouter == nil {
+		return errors.New("broadcast: ack reply router is nil")
+	}
+	if err := b.client.AddReplyRouter(b.ackTopic(), b.ackRouter); err != nil {
+		return fmt.Errorf("broadcast: register ack reply router: %w", err)
+	}
+	b.ackReady = true
+	return nil
 }
 
 // Broadcast 发布广播请求（fire-and-forget，不等待 ack）。
@@ -117,6 +150,9 @@ func (b *broadcaster) BroadcastReply(ctx context.Context, method string, payload
 	if b.client == nil {
 		return nil, errors.New("broadcast: mqtt client is nil")
 	}
+	if err := b.registerAckRouter(); err != nil {
+		return nil, err
+	}
 	body, err := b.wrapRequest(method, payload)
 	if err != nil {
 		return nil, err
@@ -124,7 +160,7 @@ func (b *broadcaster) BroadcastReply(ctx context.Context, method string, payload
 	if timeout <= 0 {
 		timeout = b.options.replyTTL
 	}
-	ack, err := mqttx.RequestReply[*BroadcastAckBody](ctx, b.client, b.ackTopic(), body.Tid, func() error {
+	ack, err := b.ackRouter.RequestReply(ctx, body.Tid, func() error {
 		return b.publishBroadcast(ctx, body)
 	}, timeout)
 	if err != nil {

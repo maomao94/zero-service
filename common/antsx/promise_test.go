@@ -181,7 +181,7 @@ func TestThen_Success(t *testing.T) {
 	p := antsx.NewPromise[int]()
 	go func() { p.Resolve(42) }()
 
-	p2 := antsx.Then(ctx, p, func(v int) (string, error) {
+	p2 := p.Then(ctx, func(v int) (string, error) {
 		return fmt.Sprintf("value is %d", v), nil
 	})
 
@@ -199,7 +199,7 @@ func TestThen_PanicRecovery(t *testing.T) {
 	p := antsx.NewPromise[int]()
 	go func() { p.Resolve(42) }()
 
-	p2 := antsx.Then(ctx, p, func(v int) (string, error) {
+	p2 := p.Then(ctx, func(v int) (string, error) {
 		panic("then boom")
 	})
 
@@ -214,7 +214,7 @@ func TestMap_Success(t *testing.T) {
 	p := antsx.NewPromise[int]()
 	go func() { p.Resolve(10) }()
 
-	mapped := antsx.Map(ctx, p, func(v int) string {
+	mapped := p.Map(ctx, func(v int) string {
 		return fmt.Sprintf("val=%d", v)
 	})
 
@@ -232,7 +232,7 @@ func TestMap_PanicRecovery(t *testing.T) {
 	p := antsx.NewPromise[int]()
 	go func() { p.Resolve(10) }()
 
-	mapped := antsx.Map(ctx, p, func(v int) string {
+	mapped := p.Map(ctx, func(v int) string {
 		panic("map boom")
 	})
 
@@ -247,7 +247,7 @@ func TestFlatMap_Success(t *testing.T) {
 	p := antsx.NewPromise[int]()
 	go func() { p.Resolve(5) }()
 
-	flatMapped := antsx.FlatMap(ctx, p, func(v int) *antsx.Promise[string] {
+	flatMapped := p.FlatMap(ctx, func(v int) *antsx.Promise[string] {
 		inner := antsx.NewPromise[string]()
 		go func() {
 			inner.Resolve(fmt.Sprintf("doubled=%d", v*2))
@@ -269,7 +269,7 @@ func TestFlatMap_PanicRecovery(t *testing.T) {
 	p := antsx.NewPromise[int]()
 	go func() { p.Resolve(5) }()
 
-	flatMapped := antsx.FlatMap(ctx, p, func(v int) *antsx.Promise[string] {
+	flatMapped := p.FlatMap(ctx, func(v int) *antsx.Promise[string] {
 		panic("flatmap boom")
 	})
 
@@ -411,7 +411,7 @@ func TestThen_UpstreamFail(t *testing.T) {
 	p := antsx.NewPromise[int]()
 	go func() { p.Reject(errors.New("upstream err")) }()
 
-	p2 := antsx.Then(ctx, p, func(v int) (string, error) {
+	p2 := p.Then(ctx, func(v int) (string, error) {
 		return "should not reach", nil
 	})
 
@@ -426,7 +426,7 @@ func TestMap_UpstreamFail(t *testing.T) {
 	p := antsx.NewPromise[int]()
 	go func() { p.Reject(errors.New("map upstream")) }()
 
-	mapped := antsx.Map(ctx, p, func(v int) string { return "nope" })
+	mapped := p.Map(ctx, func(v int) string { return "nope" })
 
 	_, err := mapped.Await(ctx)
 	if err == nil || err.Error() != "map upstream" {
@@ -439,7 +439,7 @@ func TestFlatMap_UpstreamFail(t *testing.T) {
 	p := antsx.NewPromise[int]()
 	go func() { p.Reject(errors.New("flatmap upstream")) }()
 
-	flatMapped := antsx.FlatMap(ctx, p, func(v int) *antsx.Promise[string] {
+	flatMapped := p.FlatMap(ctx, func(v int) *antsx.Promise[string] {
 		return antsx.NewPromise[string]()
 	})
 
@@ -526,9 +526,9 @@ func TestThen_Chained(t *testing.T) {
 	p := antsx.NewPromise[int]()
 	go func() { p.Resolve(1) }()
 
-	p2 := antsx.Then(ctx, p, func(v int) (int, error) { return v + 1, nil })
-	p3 := antsx.Then(ctx, p2, func(v int) (int, error) { return v * 10, nil })
-	p4 := antsx.Then(ctx, p3, func(v int) (string, error) { return fmt.Sprintf("result=%d", v), nil })
+	p2 := p.Then(ctx, func(v int) (int, error) { return v + 1, nil })
+	p3 := p2.Then(ctx, func(v int) (int, error) { return v * 10, nil })
+	p4 := p3.Then(ctx, func(v int) (string, error) { return fmt.Sprintf("result=%d", v), nil })
 
 	result, err := p4.Await(ctx)
 	if err != nil {
@@ -544,7 +544,7 @@ func TestFlatMap_InnerPanic(t *testing.T) {
 	p := antsx.NewPromise[int]()
 	go func() { p.Resolve(1) }()
 
-	fm := antsx.FlatMap(ctx, p, func(v int) *antsx.Promise[string] {
+	fm := p.FlatMap(ctx, func(v int) *antsx.Promise[string] {
 		inner := antsx.NewPromise[string]()
 		go func() {
 			defer func() {
@@ -589,7 +589,7 @@ func TestThen_CtxCancelled(t *testing.T) {
 		p.Resolve(42)
 	}()
 
-	result := antsx.Then(ctx, p, func(v int) (string, error) {
+	result := p.Then(ctx, func(v int) (string, error) {
 		return fmt.Sprintf("v=%d", v), nil
 	})
 

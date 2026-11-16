@@ -16,7 +16,7 @@ func TestReactor_Submit(t *testing.T) {
 	}
 	defer r.Release()
 
-	p, err := antsx.Submit(context.Background(), r, func(ctx context.Context) (int, error) {
+	p, err := r.Submit(context.Background(), func(ctx context.Context) (int, error) {
 		return 42, nil
 	})
 	if err != nil {
@@ -36,7 +36,7 @@ func TestReactor_SubmitPanic(t *testing.T) {
 	}
 	defer r.Release()
 
-	p, err := antsx.Submit(context.Background(), r, func(ctx context.Context) (int, error) {
+	p, err := r.Submit(context.Background(), func(ctx context.Context) (int, error) {
 		panic("submit boom")
 	})
 	if err != nil {
@@ -59,7 +59,7 @@ func TestReactor_SubmitCtxCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	p, submitErr := antsx.Submit(ctx, r, func(ctx context.Context) (int, error) {
+	p, submitErr := r.Submit(ctx, func(ctx context.Context) (int, error) {
 		return 0, ctx.Err()
 	})
 	if submitErr != nil {
@@ -70,44 +70,6 @@ func TestReactor_SubmitCtxCancel(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error from cancelled ctx")
 	}
-}
-
-func TestReactor_Post(t *testing.T) {
-	r, err := antsx.NewReactor(10)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Release()
-
-	called := make(chan struct{}, 1)
-	err = antsx.Post(context.Background(), r, func(ctx context.Context) {
-		called <- struct{}{}
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	select {
-	case <-called:
-	case <-time.After(time.Second):
-		t.Fatal("Post callback not called")
-	}
-}
-
-func TestReactor_PostPanic(t *testing.T) {
-	r, err := antsx.NewReactor(10)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Release()
-
-	err = antsx.Post(context.Background(), r, func(ctx context.Context) {
-		panic("post boom")
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(50 * time.Millisecond)
 }
 
 func TestReactor_Go(t *testing.T) {
@@ -157,16 +119,10 @@ func TestReactor_ActiveCount(t *testing.T) {
 }
 
 func TestReactor_SubmitNilReactor(t *testing.T) {
-	_, err := antsx.Submit(context.Background(), nil, func(ctx context.Context) (int, error) {
+	var reactor *antsx.Reactor
+	_, err := reactor.Submit(context.Background(), func(ctx context.Context) (int, error) {
 		return 0, nil
 	})
-	if err == nil {
-		t.Fatal("expected error for nil reactor")
-	}
-}
-
-func TestReactor_PostNilReactor(t *testing.T) {
-	err := antsx.Post(context.Background(), nil, func(ctx context.Context) {})
 	if err == nil {
 		t.Fatal("expected error for nil reactor")
 	}
@@ -188,7 +144,7 @@ func TestReactor_SubmitError(t *testing.T) {
 	defer r.Release()
 
 	testErr := errors.New("task failed")
-	p, err := antsx.Submit(context.Background(), r, func(ctx context.Context) (int, error) {
+	p, err := r.Submit(context.Background(), func(ctx context.Context) (int, error) {
 		return 0, testErr
 	})
 	if err != nil {
@@ -258,7 +214,7 @@ func TestReactor_SubmitConcurrent(t *testing.T) {
 	promises := make([]*antsx.Promise[int], n)
 	for i := range n {
 		idx := i
-		p, err := antsx.Submit(context.Background(), r, func(ctx context.Context) (int, error) {
+		p, err := r.Submit(context.Background(), func(ctx context.Context) (int, error) {
 			time.Sleep(time.Millisecond)
 			return idx * 2, nil
 		})
@@ -286,22 +242,9 @@ func TestReactor_SubmitAfterRelease(t *testing.T) {
 	}
 	r.Release()
 
-	_, err = antsx.Submit(context.Background(), r, func(ctx context.Context) (int, error) {
+	_, err = r.Submit(context.Background(), func(ctx context.Context) (int, error) {
 		return 1, nil
 	})
-	if err == nil {
-		t.Fatal("expected error after release")
-	}
-}
-
-func TestReactor_PostAfterRelease(t *testing.T) {
-	r, err := antsx.NewReactor(2)
-	if err != nil {
-		t.Fatal(err)
-	}
-	r.Release()
-
-	err = antsx.Post(context.Background(), r, func(ctx context.Context) {})
 	if err == nil {
 		t.Fatal("expected error after release")
 	}

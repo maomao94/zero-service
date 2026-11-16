@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"zero-service/common/mqttx"
 )
@@ -41,6 +42,10 @@ func (c *recordingMQTTClient) AddHandler(topic string, handler mqttx.ConsumeHand
 	return c.AddHandlerFunc(topic, handler.Consume)
 }
 
+func (c *recordingMQTTClient) AddReplyRouter(topic string, router mqttx.ConsumeHandler) error {
+	return c.AddHandler(topic, router)
+}
+
 func (c *recordingMQTTClient) Subscribe(topic string) error {
 	return nil
 }
@@ -59,10 +64,11 @@ var errPublishFailed = errors.New("publish failed")
 
 func TestSendCommandRejectsOfflineDeviceBeforePublish(t *testing.T) {
 	mqtt := &recordingMQTTClient{}
-	client := NewClient(mqtt,
+	client := NewHandlerClient(
 		WithPendingTTL(0),
 		WithOnlineChecker(func(gatewaySn string) bool { return gatewaySn == "online-1" }),
 	)
+	client.mqttClient = mqtt
 
 	if _, err := client.SendCommand(context.Background(), "offline-1", MethodFlightTaskExecute, map[string]any{}); err == nil {
 		t.Fatal("SendCommand() succeeded for offline device, want error")
@@ -71,5 +77,39 @@ func TestSendCommandRejectsOfflineDeviceBeforePublish(t *testing.T) {
 	}
 	if len(mqtt.published) != 0 {
 		t.Fatalf("SendCommand() published %d messages, want 0", len(mqtt.published))
+	}
+}
+
+func TestNewHandlerClientSendCommandReturnsNoReplyRouter(t *testing.T) {
+	mqtt := &recordingMQTTClient{}
+	client := NewHandlerClient(WithPendingTTL(time.Second))
+	client.mqttClient = mqtt
+
+	tid, err := client.SendCommand(context.Background(), "gateway-1", MethodFlightTaskExecute, map[string]any{})
+	if !errors.Is(err, mqttx.ErrNoReplyRouter) {
+		t.Fatalf("SendCommand() error = %v, want ErrNoReplyRouter", err)
+	}
+	if tid == "" {
+		t.Fatal("SendCommand() returned an empty tid")
+	}
+	if len(mqtt.published) != 0 {
+		t.Fatalf("SendCommand() published %d messages, want 0 without a reply router", len(mqtt.published))
+	}
+}
+
+func TestNewHandlerClientPropertySetReturnsNoReplyRouter(t *testing.T) {
+	mqtt := &recordingMQTTClient{}
+	client := NewHandlerClient(WithPendingTTL(time.Second))
+	client.mqttClient = mqtt
+
+	tid, err := client.PropertySet(context.Background(), "gateway-1", PropertySetData{})
+	if !errors.Is(err, mqttx.ErrNoReplyRouter) {
+		t.Fatalf("PropertySet() error = %v, want ErrNoReplyRouter", err)
+	}
+	if tid == "" {
+		t.Fatal("PropertySet() returned an empty tid")
+	}
+	if len(mqtt.published) != 0 {
+		t.Fatalf("PropertySet() published %d messages, want 0 without a reply router", len(mqtt.published))
 	}
 }

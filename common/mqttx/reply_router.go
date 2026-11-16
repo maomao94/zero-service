@@ -80,9 +80,15 @@ func NewReplyRouter[T any](decode ReplyDecoder[T], opts ...ReplyRouterOption) *R
 	}
 }
 
-// requestReply registers tid, runs send, then waits for a matching reply.
+// RequestReply registers tid, runs send, then waits for a matching reply.
 // send is responsible for publishing the protocol-specific MQTT request.
-func (r *ReplyRouter[T]) requestReply(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (T, error) {
+// Callers hold the router returned by NewReplyRouter, so the request path needs
+// no registry lookup or type assertion. A nil router returns ErrNoReplyRouter.
+func (r *ReplyRouter[T]) RequestReply(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (T, error) {
+	var zero T
+	if r == nil || r.pool == nil {
+		return zero, ErrNoReplyRouter
+	}
 	return antsx.RequestReply(ctx, r.pool, tid, send, ttl...)
 }
 

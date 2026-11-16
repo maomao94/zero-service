@@ -120,14 +120,14 @@ func (sw *StreamWriter[T]) Close() {
 type readerType int
 
 const (
-	readerStream  readerType = iota // 基于 channel 的标准流
-	readerArray                     // 基于数组的伪流
-	readerMulti                     // 多流合并
-	readerConvert                   // 带类型转换的装饰器流
-	readerChild                     // Copy 产生的子流
+	readerStream readerType = iota // 基于 channel 的标准流
+	readerArray                    // 基于数组的伪流
+	readerMulti                    // 多流合并
+	readerFunc                     // 基于闭包的算子流（Convert/Map/Filter/Take）
+	readerChild                    // Copy 产生的子流
 )
 
-// StreamReader 是流管道的读取端，支持多种底层实现（stream/array/multi/convert/child）。
+// StreamReader 是流管道的读取端，支持多种底层实现（stream/array/multi/func/child）。
 // 通过 Recv 逐个读取数据，通过 Close 释放资源。
 //
 // 协程安全说明：单个 StreamReader 不应在多个 goroutine 中并发调用 Recv。
@@ -137,7 +137,7 @@ type StreamReader[T any] struct {
 	st  *stream[T]
 	ar  *arrayReader[T]
 	mr  *multiReader[T]
-	cr  *convertReader[T]
+	fr  *funcReader[T]
 	csr *childReader[T]
 }
 
@@ -150,8 +150,8 @@ func (sr *StreamReader[T]) Recv() (T, error) {
 		return sr.ar.recv()
 	case readerMulti:
 		return sr.mr.recv()
-	case readerConvert:
-		return sr.cr.recv()
+	case readerFunc:
+		return sr.fr.recv()
 	case readerChild:
 		return sr.csr.recv()
 	default:
@@ -168,8 +168,8 @@ func (sr *StreamReader[T]) Close() {
 	case readerArray:
 	case readerMulti:
 		sr.mr.close()
-	case readerConvert:
-		sr.cr.close()
+	case readerFunc:
+		sr.fr.close()
 	case readerChild:
 		sr.csr.close()
 	}
@@ -193,8 +193,11 @@ func (sr *StreamReader[T]) SetAutomaticClose() {
 		runtime.SetFinalizer(sr, func(r *StreamReader[T]) {
 			r.Close()
 		})
-	case readerConvert:
-		sr.cr.sr.SetAutomaticClose()
+	case readerFunc:
+		sr.fr.setAutomaticClose()
+		runtime.SetFinalizer(sr, func(r *StreamReader[T]) {
+			r.Close()
+		})
 	case readerChild:
 	case readerArray:
 	}
@@ -216,40 +219,6 @@ func (sr *StreamReader[T]) Copy(n int) []*StreamReader[T] {
 		return ret
 	}
 	return copyReaders[T](sr, n)
-}
-
-// iStreamReader 是类型擦除的 StreamReader 接口，用于跨泛型边界传递流。
-type iStreamReader interface {
-	recvAny() (any, error)
-	copyAny(int) []iStreamReader
-	Close()
-	SetAutomaticClose()
-}
-
-// streamReaderAny 将泛型 StreamReader[T] 包装为 iStreamReader 接口，实现类型擦除。
-type streamReaderAny[T any] struct {
-	sr *StreamReader[T]
-}
-
-func (s *streamReaderAny[T]) recvAny() (any, error) {
-	return s.sr.Recv()
-}
-
-func (s *streamReaderAny[T]) Close() {
-	s.sr.Close()
-}
-
-func (s *streamReaderAny[T]) SetAutomaticClose() {
-	s.sr.SetAutomaticClose()
-}
-
-func (s *streamReaderAny[T]) copyAny(n int) []iStreamReader {
-	copies := s.sr.Copy(n)
-	ret := make([]iStreamReader, n)
-	for i, c := range copies {
-		ret[i] = &streamReaderAny[T]{sr: c}
-	}
-	return ret
 }
 
 // StreamReaderFromArray 将切片包装为 StreamReader，按顺序逐个返回元素。
@@ -301,7 +270,7 @@ func (ar *arrayReader[T]) remaining() []T {
 	return ar.arr[ar.index:]
 }
 
-// ConvertOption 是 StreamReaderWithConvert 的函数式选项。
+// ConvertOption 是 StreamReader.Convert 的函数式选项。
 type ConvertOption func(*convertOpts)
 
 type convertOpts struct {
@@ -314,70 +283,146 @@ func WithErrWrapper(fn func(error) error) ConvertOption {
 	return func(o *convertOpts) { o.errWrapper = fn }
 }
 
-// StreamReaderWithConvert 创建一个带类型转换和过滤功能的 StreamReader。
+// Convert 创建一个带类型转换和过滤功能的下游 StreamReader。
 // fn 对每个元素执行转换：
 //   - 返回 (val, nil): 输出 val
 //   - 返回 (_, ErrNoValue): 跳过当前元素，继续读取下一个
 //   - 返回 (_, otherErr): 将 otherErr 传递给调用方
-func StreamReaderWithConvert[T, D any](sr *StreamReader[T], fn func(T) (D, error), opts ...ConvertOption) *StreamReader[D] {
+//
+// 源类型 T 和目标类型 D 在调用点已完成实例化，转换闭包直接持有 *StreamReader[T]，
+// 因此每个元素既不经过 any 装箱，也不做类型断言。
+// 下游 reader 的 Close/SetAutomaticClose 会转发到上游，链式 Close 即可关闭整条链。
+// fn 中的 panic 不会被恢复，会沿 Recv 传播给调用方。
+func (sr *StreamReader[T]) Convert[D any](fn func(T) (D, error), opts ...ConvertOption) *StreamReader[D] {
 	if fn == nil {
-		panic("antsx: StreamReaderWithConvert fn must not be nil")
+		panic("antsx: Convert fn must not be nil")
 	}
 	opt := &convertOpts{}
 	for _, o := range opts {
 		o(opt)
 	}
-	return &StreamReader[D]{
-		typ: readerConvert,
-		cr: &convertReader[D]{
-			sr:         &streamReaderAny[T]{sr: sr},
-			convert:    func(a any) (D, error) { return fn(a.(T)) },
-			errWrapper: opt.errWrapper,
-		},
+	return newFuncReader(func() (D, error) {
+		for {
+			val, err := sr.Recv()
+			if err != nil {
+				var zero D
+				if errors.Is(err, io.EOF) {
+					return zero, err
+				}
+				if opt.errWrapper != nil {
+					err = opt.errWrapper(err)
+					if err != nil {
+						return zero, err
+					}
+					continue
+				}
+				return zero, err
+			}
+			out, err := fn(val)
+			if err == nil {
+				return out, nil
+			}
+			if !isErrNoValue(err) {
+				return out, err
+			}
+		}
+	}, sr.Close, sr.SetAutomaticClose)
+}
+
+// Map 对每个元素执行纯转换 fn（无 error 返回），返回下游 StreamReader。
+// fn 中的 panic 不会被恢复，会沿 Recv 传播给调用方。
+func (sr *StreamReader[T]) Map[D any](fn func(T) D) *StreamReader[D] {
+	if fn == nil {
+		panic("antsx: Map fn must not be nil")
+	}
+	return sr.Convert(func(val T) (D, error) {
+		return fn(val), nil
+	})
+}
+
+// Filter 只保留 pred 返回 true 的元素，返回下游 StreamReader。
+// 内部复用 ErrNoValue 跳过语义，不产生额外的中间分配。
+func (sr *StreamReader[T]) Filter(pred func(T) bool) *StreamReader[T] {
+	if pred == nil {
+		panic("antsx: Filter pred must not be nil")
+	}
+	return sr.Convert(func(val T) (T, error) {
+		if !pred(val) {
+			var zero T
+			return zero, ErrNoValue
+		}
+		return val, nil
+	})
+}
+
+// Take 返回最多只产出 n 个元素的下游 StreamReader，之后 Recv 返回 io.EOF。
+// n <= 0 时立即 EOF，且不会从上游读取任何元素。
+// 达到上限后不再消费上游数据，上游可以继续被其他 reader 使用。
+func (sr *StreamReader[T]) Take(n int) *StreamReader[T] {
+	var taken int
+	return newFuncReader(func() (T, error) {
+		if taken >= n {
+			var zero T
+			return zero, io.EOF
+		}
+		val, err := sr.Recv()
+		if err != nil {
+			return val, err
+		}
+		taken++
+		return val, nil
+	}, sr.Close, sr.SetAutomaticClose)
+}
+
+// Collect 同步读取剩余所有元素，返回切片。
+// 读取到 io.EOF 视为正常结束；其他错误会连同已读到的元素一起返回。
+// Collect 不关闭流，是否关闭由调用方决定。
+func (sr *StreamReader[T]) Collect() ([]T, error) {
+	var out []T
+	for {
+		val, err := sr.Recv()
+		if errors.Is(err, io.EOF) {
+			return out, nil
+		}
+		if err != nil {
+			return out, err
+		}
+		out = append(out, val)
 	}
 }
 
-// convertReader 带类型转换功能的流读取器，支持元素过滤（ErrNoValue 跳过）。
-type convertReader[T any] struct {
-	sr         iStreamReader
-	convert    func(any) (T, error)
-	errWrapper func(error) error
+// funcReader 是用闭包表达的算子流读取器（Convert/Map/Filter/Take）。
+// recv 在构造时已完成泛型实例化，因此不需要 any 擦除或类型断言。
+type funcReader[T any] struct {
+	recv    func() (T, error)
+	closeFn func()
+	autoFn  func()
 }
 
-// recv 读取上游数据并执行转换，ErrNoValue 的元素会被自动跳过。
-func (cr *convertReader[T]) recv() (T, error) {
-	for {
-		out, err := cr.sr.recvAny()
-		if err != nil {
-			var zero T
-			if errors.Is(err, io.EOF) {
-				return zero, err
-			}
-			if cr.errWrapper != nil {
-				err = cr.errWrapper(err)
-				if err != nil {
-					return zero, err
-				}
-				continue
-			}
-			return zero, err
-		}
-		val, err := cr.convert(out)
-		if err == nil {
-			return val, nil
-		}
-		if !isErrNoValue(err) {
-			return val, err
-		}
+// newFuncReader 构造一个基于闭包的 StreamReader。closeFn/autoFn 可为 nil。
+func newFuncReader[T any](recv func() (T, error), closeFn, autoFn func()) *StreamReader[T] {
+	return &StreamReader[T]{
+		typ: readerFunc,
+		fr:  &funcReader[T]{recv: recv, closeFn: closeFn, autoFn: autoFn},
+	}
+}
+
+// close 转发上游关闭，nil 安全的空实现允许构造无上游的算子流。
+func (fr *funcReader[T]) close() {
+	if fr.closeFn != nil {
+		fr.closeFn()
+	}
+}
+
+// setAutomaticClose 转发上游的 GC 兜底关闭注册。
+func (fr *funcReader[T]) setAutomaticClose() {
+	if fr.autoFn != nil {
+		fr.autoFn()
 	}
 }
 
 func isErrNoValue(err error) bool {
 	return errors.Is(err, ErrNoValue)
-}
-
-func (cr *convertReader[T]) close() {
-	cr.sr.Close()
 }
 
 // toStream 将任意类型的 StreamReader 转换为底层 stream，在后台 goroutine 中读取转发。
@@ -421,7 +466,8 @@ func (sr *StreamReader[T]) toStream() *stream[T] {
 
 // MergeStreamReaders 将多个 StreamReader 合并为一个（fan-in），按数据到达顺序交错读取。
 // 优化策略：
-//   - arrayReader 直接拼接为数组，避免不必要的 goroutine
+//   - 全部为 arrayReader 时直接拼接为数组游标流，零 goroutine、零 channel 往返
+//   - arrayReader 与其它类型混合时把数组灌入单个 stream，避免每路一个 goroutine
 //   - multiReader 自动展平，避免嵌套
 //   - ≤5 路使用静态 select（零 reflect 开销），>5 路降级为 reflect.Select
 //
@@ -451,6 +497,11 @@ func MergeStreamReaders[T any](srs []*StreamReader[T]) *StreamReader[T] {
 		default:
 			nonArrays = append(nonArrays, sr.toStream())
 		}
+	}
+
+	// 纯数组输入：直接返回数组游标流，省掉灌入 channel 再读出的往返开销
+	if len(arrays) > 0 && len(nonArrays) == 0 {
+		return &StreamReader[T]{typ: readerArray, ar: &arrayReader[T]{arr: arrays}}
 	}
 
 	if len(arrays) > 0 {

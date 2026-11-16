@@ -21,7 +21,7 @@ func testDrcConfig() DrcConfig {
 
 func TestDrcManagerEnableStartsSessionAndFiresHook(t *testing.T) {
 	var enabledGW string
-	client := NewClient(nil,
+	client := NewHandlerClient(
 		WithDrcSessionEnabled(func(ctx context.Context, gatewaySn, sessionID string) {
 			enabledGW = gatewaySn
 		}),
@@ -46,7 +46,7 @@ func TestDrcManagerEnableStartsSessionAndFiresHook(t *testing.T) {
 
 func TestDrcManagerEnableIdempotentWhileAlive(t *testing.T) {
 	hookCount := 0
-	client := NewClient(nil,
+	client := NewHandlerClient(
 		WithDrcSessionEnabled(func(ctx context.Context, gatewaySn, sessionID string) { hookCount++ }),
 	)
 	defer client.drcManager.Close()
@@ -83,7 +83,7 @@ func TestDrcNextSeqSequence(t *testing.T) {
 }
 
 func TestDrcStatusBeforeEnable(t *testing.T) {
-	client := NewClient(nil)
+	client := NewHandlerClient()
 	defer client.drcManager.Close()
 
 	enabled, startedAt, lastHb, nextSeq, alive := client.DrcStatus("dock-1")
@@ -94,7 +94,7 @@ func TestDrcStatusBeforeEnable(t *testing.T) {
 
 func TestDrcDisableFiresHookAndClearsState(t *testing.T) {
 	var disabledGW string
-	client := NewClient(nil,
+	client := NewHandlerClient(
 		WithDrcSessionDisabled(func(ctx context.Context, gatewaySn, sessionID string) { disabledGW = gatewaySn }),
 	)
 	defer client.drcManager.Close()
@@ -188,7 +188,7 @@ func TestDrcMaxDeadlineExpiryOnHeartbeat(t *testing.T) {
 }
 
 func TestDrcSessionReplacementResetsSeqAndID(t *testing.T) {
-	client := NewClient(nil)
+	client := NewHandlerClient()
 	defer client.drcManager.Close()
 
 	if err := client.EnableDrc(context.Background(), "dock-1"); err != nil {
@@ -216,7 +216,7 @@ func TestDrcSessionReplacementResetsSeqAndID(t *testing.T) {
 }
 
 func TestClientDrcAPIsWithoutManager(t *testing.T) {
-	client := buildClient(nil, &clientOptions{pendingTTL: time.Second})
+	client := buildClient(nil, replyRouteSet{}, &clientOptions{pendingTTL: time.Second})
 	if client.drcManager != nil {
 		t.Fatal("drcManager should be nil when drcConfig is zero")
 	}

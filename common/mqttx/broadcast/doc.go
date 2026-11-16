@@ -10,15 +10,15 @@
 //
 // 约定：
 //   - BroadcastBody.AckTopic 由 SDK 填充为请求方自己的 ack 主题；接收方以此判断是否为自身消息。
-//   - 广播方通过 mqttx.WithReplyRouter(BroadcastAckTopic(prefix, instanceID), NewAckReplyRouter(...))
-//     注册 ack 应答 router（必须在创建 mqttx.Client 时注册，BroadcastReply 依赖它）。
+//   - 广播方只需保证 client 已创建；ack 应答 router 由 NewBroadcaster 内部创建并
+//     AddReplyRouter 注册到 BroadcastAckTopic(prefix, instanceID)，BroadcastReply
+//     直接调用它的 RequestReply 等待 ack。
 //   - 消息采用 PublishWithTrace 发布（注入 trace header），消费侧由 mqttx 自动解包。
 //
 // 用法示例（app 侧）：
 //
-//	ackRouter := broadcast.NewAckReplyRouter(10*time.Second, "mqtt-ack-reply-"+uid)
-//	client := mqttx.MustNewClient(cfg, mqttx.WithReplyRouter(broadcast.BroadcastAckTopic(prefix, id), ackRouter))
-//	btc := broadcast.NewBroadcaster(client, id, broadcast.WithPrefix(prefix))
+//	client := mqttx.MustNewClient(cfg)
+//	btc := broadcast.NewBroadcaster(client, id, broadcast.WithPrefix(prefix), broadcast.WithReplyTTL(10*time.Second))
 //	btc.AddExecutor(method, myExecutor)
 //	btc.AddBroadcastHandler()
 //

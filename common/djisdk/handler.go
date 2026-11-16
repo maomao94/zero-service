@@ -40,13 +40,24 @@ func logFields(fields ...any) string {
 	return strings.Join(parts, " ")
 }
 
-func replyRouters(ttl time.Duration) []mqttx.ClientOption {
+// replyRouteSet 打包 services_reply / property_set_reply 两个应答路由，
+// 避免同类型多返回值/多参数被写反。
+type replyRouteSet struct {
+	services    *mqttx.ReplyRouter[*ServiceReply]
+	propertySet *mqttx.ReplyRouter[*ServiceReply]
+}
+
+// replyRouters 构造 services_reply / property_set_reply 两个应答路由，并返回注册选项。
+// 发送侧直接持有返回的 router 调用 RequestReply，不再按 topicTemplate 反查 client。
+func replyRouters(ttl time.Duration) (replyRouteSet, []mqttx.ClientOption) {
 	if ttl <= 0 {
-		return nil
+		return replyRouteSet{}, nil
 	}
-	return []mqttx.ClientOption{
-		mqttx.WithReplyRouter(servicesReplyTopicPattern(), newServicesReplyRouter(ttl)),
-		mqttx.WithReplyRouter(propertySetReplyTopicPattern(), newPropertySetReplyRouter(ttl)),
+	services := newServicesReplyRouter(ttl)
+	propertySet := newPropertySetReplyRouter(ttl)
+	return replyRouteSet{services: services, propertySet: propertySet}, []mqttx.ClientOption{
+		mqttx.WithReplyRouter(servicesReplyTopicPattern(), services),
+		mqttx.WithReplyRouter(propertySetReplyTopicPattern(), propertySet),
 	}
 }
 

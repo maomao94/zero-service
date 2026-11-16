@@ -36,18 +36,19 @@ const (
 
 // Client is the interface for mqttx operations.
 // Callers should depend on this interface for publish, handler registration, and lifecycle management.
-// RequestReply is a package-level generic function because Go does not support generic methods.
+// Request/reply is driven by the *ReplyRouter[T] returned by NewReplyRouter:
+// register it with WithReplyRouter (before the client is created) or with
+// Client.AddReplyRouter (after the client is created), then call
+// router.RequestReply from the sender.
 type Client interface {
 	AddHandler(topicTemplate string, handler ConsumeHandler) error
 	AddHandlerFunc(topicTemplate string, fn func(context.Context, []byte, string, string) error) error
+	// AddReplyRouter 注册应答路由：登记分发（优先于普通 handler）并按需订阅模板。
+	AddReplyRouter(topicTemplate string, router ConsumeHandler) error
 	Publish(ctx context.Context, topic string, payload []byte) error
 	PublishWithTrace(ctx context.Context, topic string, payload []byte) (string, error)
 	Close()
 	GetClientID() string
-}
-
-type replyHandlerGetter interface {
-	getReplyHandler(topicTemplate string) ConsumeHandler
 }
 
 // mqttClient MQTT 客户端
@@ -205,14 +206,36 @@ func (c *mqttClient) defaultHandler(_ mqtt.Client, msg mqtt.Message) {
 
 // AddHandler 为订阅主题模板添加消息处理器。
 // 如果已连接且 topic 尚未订阅，会自动订阅。
-// reply router 请使用 WithReplyRouter，不要把 ReplyRouter 传入此方法。
+// reply router 请使用 WithReplyRouter（创建前）或 AddReplyRouter（创建后），
+// 不要把 ReplyRouter 传入此方法。
 func (c *mqttClient) AddHandler(topicTemplate string, handler ConsumeHandler) error {
 	if handler == nil {
 		return errors.New("handler cannot be nil")
 	}
 
 	c.handlerMgr.addHandler(topicTemplate, handler)
+	return c.subscribeIfNeeded(topicTemplate)
+}
 
+// AddHandlerFunc 快捷方法：用函数作为消息处理器
+func (c *mqttClient) AddHandlerFunc(topicTemplate string, fn func(context.Context, []byte, string, string) error) error {
+	return c.AddHandler(topicTemplate, ConsumeHandlerFunc(fn))
+}
+
+// AddReplyRouter 注册应答路由：登记分发（优先于普通 handler）并按需订阅模板。
+// 与 WithReplyRouter 的区别是可在 client 创建后调用，构造与注册不必分离。
+func (c *mqttClient) AddReplyRouter(topicTemplate string, router ConsumeHandler) error {
+	if router == nil {
+		return errors.New("reply router cannot be nil")
+	}
+
+	c.handlerMgr.addReplyHandler(topicTemplate, router)
+	return c.subscribeIfNeeded(topicTemplate)
+}
+
+// subscribeIfNeeded 在已连接且模板尚未订阅时立即订阅；未连接时保持静默，
+// 由连接回调里的 restoreSubscriptions 统一恢复，避免各注册入口重复实现。
+func (c *mqttClient) subscribeIfNeeded(topicTemplate string) error {
 	c.mu.Lock()
 	needSubscribe := !c.isSubscribed(topicTemplate)
 	c.mu.Unlock()
@@ -222,11 +245,6 @@ func (c *mqttClient) AddHandler(topicTemplate string, handler ConsumeHandler) er
 		return err
 	}
 	return nil
-}
-
-// AddHandlerFunc 快捷方法：用函数作为消息处理器
-func (c *mqttClient) AddHandlerFunc(topicTemplate string, fn func(context.Context, []byte, string, string) error) error {
-	return c.AddHandler(topicTemplate, ConsumeHandlerFunc(fn))
 }
 
 // subscribe 内部订阅实现
@@ -412,9 +430,4 @@ func (c *mqttClient) Close() {
 // GetClientID 获取客户端 ID
 func (c *mqttClient) GetClientID() string {
 	return c.cfg.ClientID
-}
-
-// getReplyHandler returns the reply handler for a topic template, or nil.
-func (c *mqttClient) getReplyHandler(topicTemplate string) ConsumeHandler {
-	return c.handlerMgr.getReplyHandler(topicTemplate)
 }

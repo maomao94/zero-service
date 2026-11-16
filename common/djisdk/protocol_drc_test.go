@@ -18,7 +18,7 @@ func TestNewClientWithOptionsKeepsExplicitReplySwitches(t *testing.T) {
 		EnableStatusReply:  false,
 		EnableRequestReply: false,
 	}
-	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(options))
+	client := NewHandlerClient(WithPendingTTL(time.Second), WithReplyConfig(options))
 
 	if client.reply != options {
 		t.Fatalf("replyOptions = %+v, want %+v", client.reply, options)
@@ -26,7 +26,7 @@ func TestNewClientWithOptionsKeepsExplicitReplySwitches(t *testing.T) {
 }
 
 func TestNewClientWithPendingTTLOption(t *testing.T) {
-	client := NewClient(nil, WithPendingTTL(time.Second))
+	client := NewHandlerClient(WithPendingTTL(time.Second))
 
 	if client.pendingTTL != time.Second {
 		t.Fatalf("pendingTTL = %v, want %v", client.pendingTTL, time.Second)
@@ -34,7 +34,7 @@ func TestNewClientWithPendingTTLOption(t *testing.T) {
 }
 
 func TestNewClientDefaultReplyConfig(t *testing.T) {
-	client := NewClient(nil, nil)
+	client := NewHandlerClient(nil)
 
 	if client.reply != DefaultReplyConfig() {
 		t.Fatalf("replyOptions = %+v, want default reply options", client.reply)
@@ -55,7 +55,7 @@ func TestHandleRequestsReplySwitch(t *testing.T) {
 
 	t.Run("enabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
-		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: true}),
+		client := NewHandlerClient(WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: true}),
 			WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (any, error) {
 				if gatewaySn != "gateway-1" || req.Method != "airport_bind_status" {
 					t.Fatalf("unexpected request: gateway=%s method=%s", gatewaySn, req.Method)
@@ -76,7 +76,7 @@ func TestHandleRequestsReplySwitch(t *testing.T) {
 	t.Run("disabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
 		called := false
-		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: false}),
+		client := NewHandlerClient(WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: false}),
 			WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (any, error) {
 				called = true
 				return nil, nil
@@ -102,7 +102,7 @@ func TestHandleStatusReplySwitch(t *testing.T) {
 
 	t.Run("enabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
-		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableStatusReply: true}),
+		client := NewHandlerClient(WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableStatusReply: true}),
 			WithStatusHandler(func(ctx context.Context, gatewaySn string, data *StatusMessage) error {
 				if gatewaySn != "gateway-1" || data.Method != MethodUpdateTopo {
 					t.Fatalf("unexpected status: gateway=%s method=%s", gatewaySn, data.Method)
@@ -123,7 +123,7 @@ func TestHandleStatusReplySwitch(t *testing.T) {
 	t.Run("disabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
 		called := false
-		client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableStatusReply: false}),
+		client := NewHandlerClient(WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableStatusReply: false}),
 			WithStatusHandler(func(ctx context.Context, gatewaySn string, data *StatusMessage) error {
 				called = true
 				return nil
@@ -232,7 +232,7 @@ func TestHmsEventDataUnmarshalOfficialShape(t *testing.T) {
 
 func TestHandleStateUsesStateMessage(t *testing.T) {
 	called := false
-	client := NewClient(nil, WithStateHandler(func(ctx context.Context, deviceSn string, data *StateMessage) error {
+	client := NewHandlerClient(WithStateHandler(func(ctx context.Context, deviceSn string, data *StateMessage) error {
 		called = true
 		if deviceSn != "gateway-1" || data.Tid != "tid-state" {
 			t.Fatalf("unexpected state callback: sn=%s data=%+v", deviceSn, data)
@@ -458,7 +458,7 @@ func TestDrcDownStickControlPayloadHasTopLevelSeqAndExpectedDataFields(t *testin
 
 func TestDrcDownClientMethodsReturnTid(t *testing.T) {
 	mqtt := &recordingMQTTClient{}
-	client := NewClient(nil, nil)
+	client := NewHandlerClient(nil)
 	client.mqttClient = mqtt
 
 	tid, err := client.DrcEmergencyLanding(context.Background(), "gateway-1", 0)
@@ -482,7 +482,7 @@ func TestDrcDownClientMethodsReturnTid(t *testing.T) {
 
 func TestDrcDownClientMethodsReturnTidOnPublishError(t *testing.T) {
 	mqtt := &recordingMQTTClient{err: errPublishFailed}
-	client := NewClient(nil, nil)
+	client := NewHandlerClient(nil)
 	client.mqttClient = mqtt
 
 	tid, err := client.StickControl(context.Background(), "gateway-1", 7, &DrcStickControlData{})
@@ -550,7 +550,7 @@ func TestFlightTaskPrepareDataOmitsNilSimulateMission(t *testing.T) {
 
 func TestDroneEmergencyStopPublishesDrcDownTypedMethod(t *testing.T) {
 	mqtt := &recordingMQTTClient{}
-	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(DefaultReplyConfig()))
+	client := NewHandlerClient(WithPendingTTL(time.Second), WithReplyConfig(DefaultReplyConfig()))
 	client.mqttClient = mqtt
 
 	tid, err := client.DroneEmergencyStop(context.Background(), "gateway-1", 0)
@@ -640,7 +640,7 @@ func TestTask5ModulePayloadSerialization(t *testing.T) {
 
 func TestRemoteLogProgressEventHook(t *testing.T) {
 	progressCalled := false
-	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(DefaultReplyConfig()),
+	client := NewHandlerClient(WithPendingTTL(time.Second), WithReplyConfig(DefaultReplyConfig()),
 		WithRemoteLogFileUploadProgressHandler(func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent) error {
 			progressCalled = true
 			if gatewaySn != "gateway-1" || len(data.Files) != 1 || data.Files[0].Progress != 50 {
@@ -662,7 +662,7 @@ func TestRemoteLogProgressEventHook(t *testing.T) {
 
 func TestHmsEventHandlerReceivesOuterCorrelationFromContext(t *testing.T) {
 	called := false
-	client := NewClient(nil, WithHmsEventNotifyHandler(func(ctx context.Context, gatewaySn string, data *HmsEventData) error {
+	client := NewHandlerClient(WithHmsEventNotifyHandler(func(ctx context.Context, gatewaySn string, data *HmsEventData) error {
 		called = true
 		tid, bid := EventCorrelationFromContext(ctx)
 		if tid != "tid-hms" || bid != "bid-hms" {
@@ -704,7 +704,7 @@ func TestRequestsReplyOutputForKnownMethods(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			mqtt := &recordingMQTTClient{}
-			client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: true}),
+			client := NewHandlerClient(WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: true}),
 				WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (any, error) {
 					if gatewaySn != "gateway-1" || req.Method != tc.method {
 						t.Fatalf("unexpected request: gateway=%s method=%s", gatewaySn, req.Method)
@@ -730,7 +730,7 @@ func TestRequestsReplyOutputForKnownMethods(t *testing.T) {
 
 func TestHandleRequestsSkipReplyForLegacyMethods(t *testing.T) {
 	mqtt := &recordingMQTTClient{}
-	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: true}),
+	client := NewHandlerClient(WithPendingTTL(time.Second), WithReplyConfig(ReplyConfig{EnableRequestReply: true}),
 		WithRequestHandler(func(ctx context.Context, gatewaySn string, req *RequestMessage) (any, error) {
 			if req.Method == MethodAirportOrganizationGet || req.Method == MethodAirportBindStatus {
 				return nil, ErrSkipRequestReply
@@ -757,7 +757,7 @@ func TestHandleRequestsSkipReplyForLegacyMethods(t *testing.T) {
 func TestOtaProgressAndUpdateTopoEventHooks(t *testing.T) {
 	otaCalled := false
 	topoCalled := false
-	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyConfig(DefaultReplyConfig()),
+	client := NewHandlerClient(WithPendingTTL(time.Second), WithReplyConfig(DefaultReplyConfig()),
 		WithOtaProgressHandler(func(ctx context.Context, gatewaySn string, data *OtaProgressEvent) error {
 			otaCalled = true
 			if gatewaySn != "gateway-1" || len(data.Devices) != 1 || data.Devices[0].SN != "dock-1" || data.Devices[0].Progress != 42 {
@@ -824,7 +824,7 @@ func TestTask2DownMethodsPublishExpectedTopicsAndMethods(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			mqtt := &recordingMQTTClient{}
-			client := NewClient(nil, WithPendingTTL(time.Millisecond))
+			client := NewHandlerClient(WithPendingTTL(time.Millisecond))
 			client.mqttClient = mqtt
 			tid, err := tc.call(client)
 			if err != nil {
@@ -862,7 +862,7 @@ func TestTask2DownMethodsPublishExpectedTopicsAndMethods(t *testing.T) {
 
 func TestSendCommandFireAndForgetPublishesServicesMessage(t *testing.T) {
 	mqtt := &recordingMQTTClient{}
-	client := NewClient(nil, WithPendingTTL(time.Second))
+	client := NewHandlerClient(WithPendingTTL(time.Second))
 	client.mqttClient = mqtt
 
 	tid, err := client.SendCommandFireAndForget(context.Background(), "gateway-1", MethodLiveStartPush, map[string]any{"url": "rtmp://example/live"})
@@ -909,7 +909,7 @@ func TestReplyRoutersDecodeServiceReplyTid(t *testing.T) {
 
 func TestSubscribeAllSkipsRequestReplyTopics(t *testing.T) {
 	mqtt := &recordingMQTTClient{}
-	client := NewClient(nil, nil)
+	client := NewHandlerClient(nil)
 	client.mqttClient = mqtt
 
 	if err := client.SubscribeAll(); err != nil {
