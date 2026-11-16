@@ -695,7 +695,10 @@ func TestCreateMqttClientAppliesConfig(t *testing.T) {
 		KeepAlive: 3000,
 	}
 
-	paho := c.createMqttClient()
+	paho, err := c.createMqttClient()
+	if err != nil {
+		t.Fatalf("createMqttClient returned error: %v", err)
+	}
 	reader := paho.OptionsReader()
 	if got := reader.ClientID(); got != "cfg-client" {
 		t.Fatalf("client id = %q, want cfg-client", got)

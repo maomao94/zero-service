@@ -18,6 +18,29 @@ type MqttConfig struct {
 	KeepAlive int64 `json:",default=60000"`
 	// SubscribeTopics 初始化时需要订阅的主题列表
 	SubscribeTopics []string `json:",optional"`
+	// TLS 加密连接配置，Broker 使用 ssl:// / tls:// / mqtts:// 等加密协议时生效
+	TLS TLSConfig `json:",optional"`
+}
+
+// TLSConfig MQTT TLS 连接配置。
+// 仅需校验自签服务端证书时配置 CAFile；需要双向认证时同时配置 CertFile 与 KeyFile。
+type TLSConfig struct {
+	// CAFile 服务端证书校验用 CA 证书路径（PEM），为空时使用系统根证书
+	CAFile string `json:",optional"`
+	// CertFile 客户端证书路径（PEM），与 KeyFile 成对配置
+	CertFile string `json:",optional"`
+	// KeyFile 客户端私钥路径（PEM），与 CertFile 成对配置
+	KeyFile string `json:",optional"`
+	// ServerName 服务端证书校验域名，为空时使用 Broker 地址中的 host
+	ServerName string `json:",optional"`
+	// InsecureSkipVerify 跳过服务端证书校验，仅限内网自签证书排障使用
+	InsecureSkipVerify bool `json:",optional"`
+}
+
+// isEmpty 判断是否未配置任何 TLS 参数，未配置时不覆盖 paho 的默认 TLS 行为。
+func (c TLSConfig) isEmpty() bool {
+	return c.CAFile == "" && c.CertFile == "" && c.KeyFile == "" &&
+		c.ServerName == "" && !c.InsecureSkipVerify
 }
 
 // ClientOptions holds configuration for creating a Client.
