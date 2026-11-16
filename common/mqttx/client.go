@@ -2,9 +2,12 @@ package mqttx
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -119,7 +122,12 @@ func NewClient(cfg MqttConfig, opts ...ClientOption) (Client, error) {
 		c.handlerMgr.addReplyHandler(reg.topicTemplate, reg.handler)
 	}
 
-	c.client = c.createMqttClient()
+	client, err := c.createMqttClient()
+	if err != nil {
+		return nil, err
+	}
+	c.client = client
+
 	if err := c.connect(); err != nil {
 		return nil, err
 	}
@@ -141,7 +149,7 @@ func adjustConfig(cfg *MqttConfig) {
 }
 
 // createMqttClient 创建底层 MQTT 客户端
-func (c *mqttClient) createMqttClient() mqtt.Client {
+func (c *mqttClient) createMqttClient() (mqtt.Client, error) {
 	optsMqtt := mqtt.NewClientOptions()
 	for _, broker := range c.cfg.Broker {
 		optsMqtt.AddBroker(broker)
@@ -154,11 +162,72 @@ func (c *mqttClient) createMqttClient() mqtt.Client {
 		SetConnectTimeout(time.Duration(c.cfg.Timeout) * time.Millisecond).
 		SetKeepAlive(time.Duration(c.cfg.KeepAlive) * time.Millisecond)
 
+	tlsCfg, err := c.buildTLSConfig()
+	if err != nil {
+		return nil, err
+	}
+	if tlsCfg != nil {
+		optsMqtt.SetTLSConfig(tlsCfg)
+	}
+
 	optsMqtt.SetDefaultPublishHandler(c.defaultHandler)
 	optsMqtt.OnConnect = c.onConnect
 	optsMqtt.OnConnectionLost = c.onConnectionLost
 
-	return mqtt.NewClient(optsMqtt)
+	return mqtt.NewClient(optsMqtt), nil
+}
+
+// buildTLSConfig 根据 MqttConfig.TLS 构造 paho 使用的 TLS 配置。
+//
+// 配置规则：
+//   - 未配置任何 TLS 参数时返回 (nil, nil)，不覆盖 paho 的默认行为：
+//     Broker 为 ssl:// 等加密协议时使用系统根证书校验，为 tcp:// 时保持明文；
+//   - CAFile 用于校验自签服务端证书，配置后替换系统根证书池；
+//   - CertFile/KeyFile 用于双向认证，必须成对配置；
+//   - ServerName 为空时由 TLS 握手按 Broker 地址自动推导，不必手工填写。
+//
+// 证书、私钥和 CA 在建立连接前一次性读取，任何配置错误都直接返回 error，
+// 避免连接阶段静默降级为明文或不可用状态。
+func (c *mqttClient) buildTLSConfig() (*tls.Config, error) {
+	if c.cfg.TLS.isEmpty() {
+		return nil, nil
+	}
+
+	tlsCfg := &tls.Config{
+		// 禁用 TLS1.0/1.1，避免旧协议降级；供应商网关普遍支持 TLS1.2 及以上。
+		MinVersion:         tls.VersionTLS12,
+		ServerName:         c.cfg.TLS.ServerName,
+		InsecureSkipVerify: c.cfg.TLS.InsecureSkipVerify,
+	}
+
+	// 只配置一半时视为配置错误，避免调用方误以为已启用双向认证。
+	hasCert, hasKey := c.cfg.TLS.CertFile != "", c.cfg.TLS.KeyFile != ""
+	if hasCert != hasKey {
+		return nil, errors.New("mqtt tls: certFile and keyFile must be configured together")
+	}
+	if hasCert {
+		cert, err := tls.LoadX509KeyPair(c.cfg.TLS.CertFile, c.cfg.TLS.KeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("mqtt tls: load client certificate failed: %w", err)
+		}
+		tlsCfg.Certificates = []tls.Certificate{cert}
+	}
+
+	// 供应商自签 CA 常见于内网网关；CA 文件读取或解析失败必须报错，
+	// 不能退回系统根证书，否则连接会因证书不受信任而失败且难以定位。
+	if c.cfg.TLS.CAFile != "" {
+		caCert, err := os.ReadFile(c.cfg.TLS.CAFile)
+		if err != nil {
+			return nil, fmt.Errorf("mqtt tls: read CA file failed: %w", err)
+		}
+		caPool := x509.NewCertPool()
+		if !caPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("mqtt tls: no valid certificate found in CA file %s", c.cfg.TLS.CAFile)
+		}
+		tlsCfg.RootCAs = caPool
+	}
+
+	return tlsCfg, nil
 }
 
 func (c *mqttClient) connect() error {
