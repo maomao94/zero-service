@@ -2,7 +2,6 @@ package svc
 
 import (
 	"fmt"
-	"time"
 
 	"zero-service/app/oryxserver/internal/config"
 	"zero-service/app/oryxserver/internal/relay"
@@ -90,12 +89,10 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 	if svcCtx.IsBroadcast() {
 		svcCtx.relayPrefix = broadcast.Prefix("oryx", "server")
-		ackReplyRouter := broadcast.NewAckReplyRouter(10*time.Second, "mqtt-ack-reply-"+nodeID)
 		cfg := c.MqttConfig.MqttConfig
 		cfg.ClientID = nodeID
 		cfg.Qos = 1
-		svcCtx.MqttClient = mqttx.MustNewClient(cfg, mqttx.WithReplyRouter(
-			broadcast.BroadcastAckTopic(svcCtx.relayPrefix, nodeID), ackReplyRouter))
+		svcCtx.MqttClient = mqttx.MustNewClient(cfg)
 		svcCtx.Broadcaster = broadcast.NewBroadcaster(svcCtx.MqttClient, nodeID,
 			broadcast.WithPrefix(svcCtx.relayPrefix))
 		mqtt.NewBroadcast(svcCtx.RelayRegistry).RegisterExecutors(svcCtx.Broadcaster)

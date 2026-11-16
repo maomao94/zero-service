@@ -44,8 +44,10 @@ func WithOnReady(fn func(Client)) ClientOption {
 
 // WithReplyRouter registers a reply router that takes priority in dispatch.
 // topicTemplate may contain MQTT wildcards such as + or #.
-// Unlike AddHandler, this only registers the handler; MQTT subscription is deferred
-// to the connection event via restoreSubscriptions.
+// Registration happens before the mqttx.Client exists, so MQTT subscription is
+// deferred to the connection event via restoreSubscriptions; use
+// Client.AddReplyRouter when the client already exists (it subscribes immediately).
+// 发送侧需自己持有同一个 router 实例并调用其 RequestReply。
 func WithReplyRouter[T any](topicTemplate string, router *ReplyRouter[T]) ClientOption {
 	return func(o *ClientOptions) {
 		if router != nil {

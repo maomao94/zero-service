@@ -37,8 +37,9 @@ func decodeAck(ctx context.Context, payload []byte, topic string, topicTemplate 
 	}, nil
 }
 
-// NewAckReplyRouter 构造广播 ack 应答路由（供业务在创建 mqttx.Client 时经
-// mqttx.WithReplyRouter(BroadcastAckTopic(prefix, instanceID), router) 注册）。
+// NewAckReplyRouter 构造广播 ack 应答路由（NewBroadcaster 内部已创建并注册，
+// 仅在需要自定义 ack 通道的场景下直接使用，配合 mqttx.Client.AddReplyRouter 注册；
+// 注册失败时 BroadcastReply 会重试注册）。
 //   - ttl <= 0 时使用默认 10s（与 Broadcaster 的默认 TTL 一致）
 //   - name 为空时使用默认路由名
 func NewAckReplyRouter(ttl time.Duration, name string) *mqttx.ReplyRouter[*BroadcastAckBody] {

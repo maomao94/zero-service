@@ -35,7 +35,7 @@ func TestReplyRouterResolvesPendingTid(t *testing.T) {
 	resultCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 	go func() {
-		result, err := router.requestReply(context.Background(), "tid-1", func() error { return nil })
+		result, err := router.RequestReply(context.Background(), "tid-1", func() error { return nil })
 		if err != nil {
 			errCh <- err
 			return
@@ -119,7 +119,7 @@ func TestReplyRouterRejectAndClosePending(t *testing.T) {
 		rejectErr := errors.New("rejected")
 		errCh := make(chan error, 1)
 		go func() {
-			_, err := router.requestReply(context.Background(), "tid-1", func() error { return nil })
+			_, err := router.RequestReply(context.Background(), "tid-1", func() error { return nil })
 			errCh <- err
 		}()
 		waitUntil(t, func() bool { return router.has("tid-1") })
@@ -142,7 +142,7 @@ func TestReplyRouterRejectAndClosePending(t *testing.T) {
 		})
 		errCh := make(chan error, 1)
 		go func() {
-			_, err := router.requestReply(context.Background(), "tid-1", func() error { return nil })
+			_, err := router.RequestReply(context.Background(), "tid-1", func() error { return nil })
 			errCh <- err
 		}()
 		waitUntil(t, func() bool { return router.has("tid-1") })
@@ -174,56 +174,69 @@ func TestWithReplyRouterRegistersReplyTopic(t *testing.T) {
 	assertTopicTemplateSet(t, c.handlerMgr.getAllTopicTemplates(), []string{"reply/+"})
 }
 
-func TestRequestReplyResolvesPendingTid(t *testing.T) {
-	router := newTestReplyRouter(func(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[string], error) {
-		return ReplyMessage[string]{Tid: "tid-1", Value: "ok"}, nil
+func TestNilReplyRouterRequestReplyReturnsNoRouter(t *testing.T) {
+	var router *ReplyRouter[string]
+
+	_, err := router.RequestReply(context.Background(), "tid-1", func() error {
+		t.Fatal("send must not run without a reply router")
+		return nil
 	})
-	defer router.Close()
-	c := &mqttClient{handlerMgr: newHandlerManager()}
-	c.handlerMgr.addReplyHandler("reply/+", router)
-
-	resultCh := make(chan string, 1)
-	errCh := make(chan error, 1)
-	go func() {
-		result, err := RequestReply[string](context.Background(), c, "reply/+", "tid-1", func() error { return nil })
-		if err != nil {
-			errCh <- err
-			return
-		}
-		resultCh <- result
-	}()
-
-	waitUntil(t, func() bool { return router.has("tid-1") })
-	resolved, err := router.handleReply(context.Background(), []byte("{}"), "reply/1", "reply/+")
-	if err != nil {
-		t.Fatalf("handleReply returned error: %v", err)
-	}
-	if !resolved {
-		t.Fatalf("expected reply to resolve pending tid")
-	}
-
-	select {
-	case result := <-resultCh:
-		if result != "ok" {
-			t.Fatalf("expected ok result, got %v", result)
-		}
-	case err := <-errCh:
-		t.Fatalf("RequestReply returned error: %v", err)
-	case <-time.After(time.Second):
-		t.Fatal("timed out waiting for RequestReply result")
+	if !errors.Is(err, ErrNoReplyRouter) {
+		t.Fatalf("expected ErrNoReplyRouter, got %v", err)
 	}
 }
 
-func TestRequestReplySendFailureCleansPendingTid(t *testing.T) {
+func TestReplyRouterWithoutPoolReturnsNoRouter(t *testing.T) {
+	router := &ReplyRouter[string]{}
+
+	_, err := router.RequestReply(context.Background(), "tid-1", func() error {
+		t.Fatal("send must not run without a reply pool")
+		return nil
+	})
+	if !errors.Is(err, ErrNoReplyRouter) {
+		t.Fatalf("expected ErrNoReplyRouter, got %v", err)
+	}
+}
+
+func TestReplyRouterConsumePropagatesErrors(t *testing.T) {
+	t.Run("decode error", func(t *testing.T) {
+		decodeErr := errors.New("decode failed")
+		router := newTestReplyRouter(func(context.Context, []byte, string, string) (ReplyMessage[string], error) {
+			return ReplyMessage[string]{}, decodeErr
+		})
+		defer router.Close()
+
+		if err := router.Consume(context.Background(), nil, "reply/1", "reply/+"); !errors.Is(err, decodeErr) {
+			t.Fatalf("Consume error = %v, want decode error", err)
+		}
+	})
+
+	t.Run("empty tid", func(t *testing.T) {
+		router := newTestReplyRouter(func(context.Context, []byte, string, string) (ReplyMessage[string], error) {
+			return ReplyMessage[string]{Value: "missing tid"}, nil
+		})
+		defer router.Close()
+
+		if err := router.Consume(context.Background(), nil, "reply/1", "reply/+"); !errors.Is(err, ErrEmptyReplyTid) {
+			t.Fatalf("Consume error = %v, want ErrEmptyReplyTid", err)
+		}
+	})
+}
+
+func TestErrEmptyReplyIDAlias(t *testing.T) {
+	if !errors.Is(ErrEmptyReplyID, ErrEmptyReplyTid) {
+		t.Fatal("ErrEmptyReplyID must remain an alias of ErrEmptyReplyTid")
+	}
+}
+
+func TestReplyRouterSendFailureCleansPendingTid(t *testing.T) {
 	router := newTestReplyRouter(func(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[string], error) {
 		return ReplyMessage[string]{Tid: "tid-1", Value: "ok"}, nil
 	})
 	defer router.Close()
-	c := &mqttClient{handlerMgr: newHandlerManager()}
-	c.handlerMgr.addReplyHandler("reply/+", router)
 	sendErr := errors.New("send failed")
 
-	_, err := RequestReply[string](context.Background(), c, "reply/+", "tid-1", func() error { return sendErr })
+	_, err := router.RequestReply(context.Background(), "tid-1", func() error { return sendErr })
 	if !errors.Is(err, sendErr) {
 		t.Fatalf("expected send error, got %v", err)
 	}

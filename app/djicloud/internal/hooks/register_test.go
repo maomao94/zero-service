@@ -67,7 +67,7 @@ func TestRegisterDjiClientRegistersHandlersAndOnlineChecker(t *testing.T) {
 		djisdk.WithReplyConfig(djisdk.ReplyConfig{}),
 	}
 	allOpts = append(allOpts, handlerOpts...)
-	client := djisdk.NewClient(nil, allOpts...)
+	client := djisdk.NewHandlerClient(allOpts...)
 
 	ctx := context.Background()
 	statusPayload := []byte(`{"tid":"tid-1","bid":"bid-1","timestamp":1710000000000,"method":"update_topo","data":{"sub_devices":[]}}`)
@@ -122,7 +122,7 @@ func TestRegisterDjiClientWithoutOnlineCacheHandlesUpstreamWithoutOnlineChecker(
 		djisdk.WithReplyConfig(djisdk.ReplyConfig{}),
 	}
 	allOpts = append(allOpts, handlerOpts...)
-	client := djisdk.NewClient(nil, allOpts...)
+	client := djisdk.NewHandlerClient(allOpts...)
 
 	requestsPayload := []byte(`{"tid":"tid-1","bid":"bid-1","timestamp":1710000000000,"method":"airport_bind_status","data":{"status":1}}`)
 	if err := client.HandleRequests(context.Background(), requestsPayload, "thing/product/gateway-1/requests", ""); err != nil {
@@ -1192,7 +1192,7 @@ func TestHmsAlertStoresCorrelationTraceAndItemSnapshots(t *testing.T) {
 		Remote:  true,
 	}))
 	resolver := djisdk.MustNewHmsResolver(djisdk.HmsConfig{DictionaryPath: dictionaryPath})
-	client := djisdk.NewClient(nil, djisdk.WithHmsEventNotifyHandler(NewHmsEventNotifyHandler(db, resolver)))
+	client := djisdk.NewHandlerClient(djisdk.WithHmsEventNotifyHandler(NewHmsEventNotifyHandler(db, resolver)))
 	payload := []byte(`{"tid":"tid-placement","bid":"bid-placement","gateway":"dock-placement","method":"hms","data":{"list":[{"code":"exact","device_type":"0-67-0","in_the_sky":1},{"code":"fallback","device_type":"0-67-0","in_the_sky":1,"args":{"gimbal_index":7}},{"code":"unknown","device_type":"1-83-0","args":{"gimbal_index":0}}]}}`)
 	if err := client.HandleEvents(ctx, payload, djisdk.EventsTopic("dock-placement"), ""); err != nil {
 		t.Fatalf("handle HMS event error = %v", err)

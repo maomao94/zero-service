@@ -28,7 +28,7 @@ func TestWithPendingTTLIgnoresZero(t *testing.T) {
 
 func TestWithReplyConfigOverridesDefault(t *testing.T) {
 	cfg := ReplyConfig{EnableEventReply: true, EnableStatusReply: false, EnableRequestReply: true}
-	client := NewClient(nil, WithReplyConfig(cfg))
+	client := NewHandlerClient(WithReplyConfig(cfg))
 	if client.reply != cfg {
 		t.Fatalf("reply = %+v, want %+v", client.reply, cfg)
 	}
@@ -38,7 +38,7 @@ func TestHandlerOptionsRegisterFields(t *testing.T) {
 	called := false
 	handler := func(ctx context.Context, gatewaySn string, data *OsdMessage) error { called = true; return nil }
 
-	client := NewClient(nil, WithOsdHandler(handler))
+	client := NewHandlerClient(WithOsdHandler(handler))
 	if client.handlers.onOsd == nil {
 		t.Fatal("onOsd handler not registered")
 	}
@@ -52,7 +52,7 @@ func TestHandlerOptionsRegisterFields(t *testing.T) {
 
 func TestWithOnlineCheckerRegistersChecker(t *testing.T) {
 	checker := func(gatewaySn string) bool { return gatewaySn == "online-1" }
-	client := NewClient(nil, WithOnlineChecker(checker))
+	client := NewHandlerClient(WithOnlineChecker(checker))
 	if client.handlers.onlineChecker == nil {
 		t.Fatal("onlineChecker not registered")
 	}
