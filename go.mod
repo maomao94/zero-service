@@ -62,7 +62,7 @@ require (
 	github.com/pkg/errors v0.9.2-0.20201214064552-5dd12d0cfe7f
 	github.com/prometheus/client_golang v1.25.0
 	github.com/qichengzx/coordtransform v0.0.0-20220708113031-010878418826
-	github.com/qiniu/go-sdk/v7 v7.30.0
+	github.com/qiniu/go-sdk/v7 v7.30.1
 	github.com/redis/go-redis/v9 v9.23.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shopspring/decimal v1.6.0
