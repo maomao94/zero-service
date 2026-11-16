@@ -17,10 +17,14 @@ import (
 // 含：services、events、property、osd/state、sys、requests、DRC 等，详情见包级 doc.go 与各 Topic 函数注释。
 type Client struct {
 	mqttClient mqttx.Client
-	handlers   handlers
-	pendingTTL time.Duration
-	reply      ReplyConfig
-	drcManager *drcManager
+	// servicesReply / propertySetReply 同时注册到 mqttx.Client（消费侧）并保存在此，
+	// 发送侧直接调用它们的 RequestReply，避免再按 topic 反查注册表。
+	servicesReply    *mqttx.ReplyRouter[*ServiceReply]
+	propertySetReply *mqttx.ReplyRouter[*ServiceReply]
+	handlers         handlers
+	pendingTTL       time.Duration
+	reply            ReplyConfig
+	drcManager       *drcManager
 }
 
 // Config bundles SDK-level configuration for MustNewClient (go-zero style).
@@ -46,20 +50,26 @@ func MustNewClient(cfg Config, opts ...ClientOption) *Client {
 			o(&opt)
 		}
 	}
-	return buildClient(mqttx.MustNewClient(cfg.MqttConfig, replyRouters(opt.pendingTTL)...), &opt)
+	routes, routerOpts := replyRouters(opt.pendingTTL)
+	return buildClient(mqttx.MustNewClient(cfg.MqttConfig, routerOpts...), routes, &opt)
 }
 
-func NewClient(mqttClient mqttx.Client, opts ...ClientOption) *Client {
+// NewHandlerClient 构造只用于上行消费与回调分发的 SDK 实例：
+// 不建立 MQTT 连接、不注册应答路由，SendCommand/PropertySet 会返回 mqttx.ErrNoReplyRouter。
+// 需要下发命令并等待应答时请使用 MustNewClient。
+func NewHandlerClient(opts ...ClientOption) *Client {
 	opt := applyOptions(opts...)
-	return buildClient(mqttClient, &opt)
+	return buildClient(nil, replyRouteSet{}, &opt)
 }
 
-func buildClient(mqttClient mqttx.Client, opt *clientOptions) *Client {
+func buildClient(mqttClient mqttx.Client, routes replyRouteSet, opt *clientOptions) *Client {
 	c := &Client{
-		mqttClient: mqttClient,
-		handlers:   opt.handlers,
-		pendingTTL: opt.pendingTTL,
-		reply:      opt.reply,
+		mqttClient:       mqttClient,
+		servicesReply:    routes.services,
+		propertySetReply: routes.propertySet,
+		handlers:         opt.handlers,
+		pendingTTL:       opt.pendingTTL,
+		reply:            opt.reply,
 	}
 	if opt.drcConfig.HeartbeatInterval > 0 {
 		c.drcManager = newDrcManager(c, opt.drcConfig, opt.drcManagerOpts...)
@@ -98,7 +108,7 @@ func (c *Client) SendCommand(ctx context.Context, gatewaySn, method string, data
 	topic := ServicesTopic(gatewaySn)
 	logx.WithContext(ctx).Infof("[dji-sdk] send_command %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", method, "tid", tid))
 
-	reply, err := mqttx.RequestReply[*ServiceReply](ctx, c.mqttClient, servicesReplyTopicPattern(), tid, func() error {
+	reply, err := c.servicesReply.RequestReply(ctx, tid, func() error {
 		return c.mqttClient.Publish(ctx, topic, payload)
 	}, c.pendingTTL)
 	if err != nil {
@@ -166,7 +176,7 @@ func (c *Client) PropertySet(ctx context.Context, gatewaySn string, properties P
 	topic := PropertySetTopic(gatewaySn)
 	logx.WithContext(ctx).Infof("[dji-sdk] property_set %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", MethodPropertySet, "tid", tid))
 
-	reply, err := mqttx.RequestReply[*ServiceReply](ctx, c.mqttClient, propertySetReplyTopicPattern(), tid, func() error {
+	reply, err := c.propertySetReply.RequestReply(ctx, tid, func() error {
 		return c.mqttClient.Publish(ctx, topic, payload)
 	}, c.pendingTTL)
 	if err != nil {

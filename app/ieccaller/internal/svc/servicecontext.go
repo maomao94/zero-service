@@ -72,12 +72,10 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 	if svcCtx.IsBroadcast() {
 		svcCtx.broadcastPrefix = broadcast.Prefix("iec")
-		ackReplyRouter := broadcast.NewAckReplyRouter(10*time.Second, "mqtt-ack-reply-"+uid)
 		cfg := c.MqttConfig.MqttConfig
 		cfg.ClientID = svcCtx.broadcastInstanceId
 		cfg.Qos = 1
-		svcCtx.MqttClient = mqttx.MustNewClient(cfg, mqttx.WithReplyRouter(
-			broadcast.BroadcastAckTopic(svcCtx.broadcastPrefix, svcCtx.broadcastInstanceId), ackReplyRouter))
+		svcCtx.MqttClient = mqttx.MustNewClient(cfg)
 		svcCtx.Broadcaster = broadcast.NewBroadcaster(svcCtx.MqttClient, svcCtx.broadcastInstanceId,
 			broadcast.WithPrefix(svcCtx.broadcastPrefix))
 		// 注册 ieccaller 业务错误类别：IEC104 从站命令拒绝（输出/输入双向映射）
