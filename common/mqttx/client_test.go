@@ -377,11 +377,41 @@ func TestRestoreSubscriptionsReportsPartialFailure(t *testing.T) {
 	if !errors.Is(err, subscribeErr) {
 		t.Fatalf("restoreSubscriptions error = %v, want subscribe error", err)
 	}
-	if result.subscribed != 1 || result.skipped != 0 {
-		t.Fatalf("restore result = %+v, want subscribed=1 skipped=0", result)
+	if result.total != 2 || result.subscribed != 1 || result.skipped != 0 || result.failed != 1 {
+		t.Fatalf("restore result = %+v, want total=2 subscribed=1 skipped=0 failed=1", result)
 	}
 	if c.isSubscribed("bad/+") {
 		t.Fatal("failed topic must not be marked subscribed")
+	}
+}
+
+// TestRestoreSubscriptionsCountsMatchTotal 固定统计口径：
+// total 是本次恢复的 Topic 数，恒等于 ok+skip+fail，不存在漏计的第一条。
+func TestRestoreSubscriptionsCountsMatchTotal(t *testing.T) {
+	paho := newFakePahoClient(true)
+	c := newTestMqttClient(paho)
+	c.handlerMgr.addHandler("device/+", ConsumeHandlerFunc(func(context.Context, []byte, string, string) error {
+		return nil
+	}))
+	c.handlerMgr.addHandler("status/+", ConsumeHandlerFunc(func(context.Context, []byte, string, string) error {
+		return nil
+	}))
+	if _, err := c.subscribe("device/+"); err != nil {
+		t.Fatalf("pre-subscribe returned error: %v", err)
+	}
+
+	result, err := c.restoreSubscriptions()
+	if err != nil {
+		t.Fatalf("restoreSubscriptions returned error: %v", err)
+	}
+	if result.total != 2 {
+		t.Fatalf("restore total = %d, want 2", result.total)
+	}
+	if got := result.subscribed + result.skipped + result.failed; got != result.total {
+		t.Fatalf("sum = %d, want total %d (result=%+v)", got, result.total, result)
+	}
+	if result.subscribed != 1 || result.skipped != 1 || result.failed != 0 {
+		t.Fatalf("restore result = %+v, want subscribed=1 skipped=1 failed=0", result)
 	}
 }
 
