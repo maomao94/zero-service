@@ -43,6 +43,12 @@ MqttConfig:
   Username: "mqtt"
   Password: "password"
   Qos: 0
+  # Broker 使用 ssl:// 等加密协议时启用；自签 CA 需与部署文件一起放到服务运行目录
+  # TLS:
+  #   CAFile: etc/cacert.pem
+  #   # 双向认证时同时配置客户端证书与私钥
+  #   # CertFile: etc/client.pem
+  #   # KeyFile: etc/client.key
   # 推送数据Topic
   Topic:
    - iec/asdu
