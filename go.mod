@@ -48,7 +48,7 @@ require (
 	github.com/jlaffaye/ftp v0.2.4
 	github.com/larksuite/oapi-sdk-go/v3 v3.12.2
 	github.com/lib/pq v1.12.3
-	github.com/livekit/protocol v1.53.2
+	github.com/livekit/protocol v1.54.0
 	github.com/livekit/server-sdk-go/v2 v2.19.0
 	github.com/mattn/go-sqlite3 v1.14.53
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2
