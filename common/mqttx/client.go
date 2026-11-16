@@ -244,28 +244,50 @@ func (c *mqttClient) connect() error {
 }
 
 // onConnect 连接成功回调
+//
+// 首次连接时 SubscribeAll 之类的调用方通常在 NewClient 返回后立即 AddHandler，
+// 那些 Topic 由 subscribeIfNeeded 即时订阅，restoreSubscriptions 此时可能只看到
+// 部分（甚至零个）已注册 Topic，这属于正常时序而不是订阅丢失，因此日志用
+// phase/total 明确区分「本次恢复动作的范围」和「进程最终订阅的主题」。
 func (c *mqttClient) onConnect(_ mqtt.Client) {
-	logx.Infof("[mqtt] connected client=%s", c.cfg.ClientID)
+	firstConnect := c.ready.CompareAndSwap(false, true)
+	logx.Infof("[mqtt] connected client=%s phase=%s", c.cfg.ClientID, connectPhase(firstConnect))
 
 	// 首次连接执行 onReady 回调
-	if c.ready.CompareAndSwap(false, true) && c.onReady != nil {
+	if firstConnect && c.onReady != nil {
 		c.onReady(c)
 	}
 
-	// 恢复订阅
-	if result, err := c.restoreSubscriptions(); err != nil {
-		logx.Errorf("[mqtt] restore subscriptions failed: %v", err)
-	} else {
-		logx.Infof("[mqtt] restore subscriptions done subscribed=%d skipped=%d", result.subscribed, result.skipped)
+	result, err := c.restoreSubscriptions()
+	switch {
+	case result.total == 0:
+		// 首次连接时处理器往往还没注册，这里刻意不打 0/0，避免误读为恢复失败。
+		logx.Infof("[mqtt] restore done total=0 (no topics registered yet, handled by AddHandler)")
+	case err != nil:
+		logx.Errorf("[mqtt] restore done total=%d ok=%d skip=%d fail=%d err=%v",
+			result.total, result.subscribed, result.skipped, result.failed, err)
+	default:
+		logx.Infof("[mqtt] restore done total=%d ok=%d skip=%d fail=%d",
+			result.total, result.subscribed, result.skipped, result.failed)
 	}
+}
+
+// connectPhase 返回本次连接阶段，用于区分首发连接与断线重连。
+func connectPhase(firstConnect bool) string {
+	if firstConnect {
+		return "first-connect"
+	}
+	return "reconnect"
 }
 
 // onConnectionLost 连接丢失回调
 func (c *mqttClient) onConnectionLost(_ mqtt.Client, err error) {
-	logx.Errorf("[mqtt] connection lost: %v", err)
 	c.mu.Lock()
+	cleared := len(c.subscribed)
 	c.subscribed = make(map[string]struct{}) // 重连后需要重新订阅
 	c.mu.Unlock()
+
+	logx.Errorf("[mqtt] connection lost, subscriptions cleared count=%d (will restore on reconnect) err=%v", cleared, err)
 }
 
 // defaultHandler 默认消息处理器（无自定义处理器时）
@@ -336,7 +358,7 @@ func (c *mqttClient) subscribe(topicTemplate string) (bool, error) {
 	}
 
 	c.subscribed[topicTemplate] = struct{}{}
-	logx.Infof("[mqtt] subscribed topic=%s", topicTemplate)
+	logx.Infof("[mqtt] subscribe ok topic=%s", topicTemplate)
 	return true, nil
 }
 
@@ -346,24 +368,28 @@ func (c *mqttClient) isSubscribed(topicTemplate string) bool {
 	return exists
 }
 
-// restoreSubscriptions 恢复所有订阅（连接重连后）
+// restoreSubscriptions 恢复所有订阅（连接重连后）。
+//
+// 统计口径：total 为本次去重后的 Topic 模板数，恒等于 ok+skip+fail；
+// 它只描述「本次恢复动作」，不是进程的订阅总数（见 onConnect 注释）。
 func (c *mqttClient) restoreSubscriptions() (restoreSubscriptionsResult, error) {
 	topicTemplates := c.handlerMgr.getAllTopicTemplates()
 	topicTemplates = append(topicTemplates, c.cfg.SubscribeTopics...)
 	topicTemplates = uniqueTopics(topicTemplates)
 
 	var lastErr error
-	result := restoreSubscriptionsResult{}
+	result := restoreSubscriptionsResult{total: len(topicTemplates)}
 	for _, topicTemplate := range topicTemplates {
 		subscribed, err := c.subscribe(topicTemplate)
-		if err != nil {
-			logx.Errorf("[mqtt] subscribe failed: %v", err)
+		switch {
+		case err != nil:
+			logx.Errorf("[mqtt] subscribe failed topic=%s err=%v", topicTemplate, err)
 			lastErr = err
-			continue
-		}
-		if subscribed {
+			result.failed++
+		case subscribed:
 			result.subscribed++
-		} else {
+		default:
+			logx.Infof("[mqtt] subscribe skip topic=%s reason=already-subscribed", topicTemplate)
 			result.skipped++
 		}
 	}
@@ -371,8 +397,11 @@ func (c *mqttClient) restoreSubscriptions() (restoreSubscriptionsResult, error) 
 }
 
 type restoreSubscriptionsResult struct {
+	// total 本次参与恢复的 Topic 模板数，恒等于 subscribed+skipped+failed。
+	total      int
 	subscribed int
 	skipped    int
+	failed     int
 }
 
 func uniqueTopics(topics []string) []string {
