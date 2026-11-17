@@ -1128,8 +1128,8 @@ github.com/puzpuzpuz/xsync/v4 v4.5.0 h1:vOSWu6b57/emh+L/Cw0BeQfvxa/cogFywXHeGUxQ
 github.com/puzpuzpuz/xsync/v4 v4.5.0/go.mod h1:VJDmTCJMBt8igNxnkQd86r+8KUeN1quSfNKu5bLYFQo=
 github.com/qichengzx/coordtransform v0.0.0-20220708113031-010878418826 h1:xRzV3Mycb7VUY9QSs03UZbmgf7Og7RHEwF2zaHGyTXg=
 github.com/qichengzx/coordtransform v0.0.0-20220708113031-010878418826/go.mod h1:hrRiFtqNSi8E6C+3JsbPGjtCfyS9QFz90IORo3H6mts=
-github.com/qiniu/go-sdk/v7 v7.30.1 h1:jnJL7N8l9GUMK59D8Js5LEqQPtEacJUDiHAJjYS9zfA=
-github.com/qiniu/go-sdk/v7 v7.30.1/go.mod h1:pTwVR1B+8SXcPLhDzBUasiKFTD9F7jRglRDR553BW3k=
+github.com/qiniu/go-sdk/v7 v7.31.0 h1:CvOxsByUpgiJcdVUwpIoOtjtgzgk6Lw5eC/cuqcljx8=
+github.com/qiniu/go-sdk/v7 v7.31.0/go.mod h1:pTwVR1B+8SXcPLhDzBUasiKFTD9F7jRglRDR553BW3k=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/redis/go-redis/v9 v9.23.0 h1:/TTVdJa8BRNsybwwGGnmiYktHNlUXtbOQxlWpHBPL3s=
