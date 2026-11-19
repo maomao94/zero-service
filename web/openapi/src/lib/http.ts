@@ -74,6 +74,7 @@ export interface GatewayCallInput {
   data: unknown
   tid: string
   timeoutMs?: number
+  signal?: AbortSignal
 }
 
 async function hmacSha256(data: string, key: string): Promise<string> {
@@ -95,12 +96,14 @@ export async function callGateway(input: GatewayCallInput): Promise<GatewayCallR
   const started = performance.now()
   const controller = new AbortController()
   const timeout = window.setTimeout(() => controller.abort(), input.timeoutMs ?? DEFAULT_TIMEOUT)
+  const stopWaiting = () => controller.abort()
+  input.signal?.addEventListener('abort', stopWaiting, { once: true })
+  if (input.signal?.aborted) stopWaiting()
 
   try {
     // body 只序列化一次：签名对这段字节算 bodyHash，发送时也必须是同一段字节。
     // timestamp/nonce 放在 body 里，由 bodyHash 覆盖；签名头只放 X-Sign: v1:<hex>。
     const timestamp = Date.now()
-    const nonce = crypto.randomUUID()
     const body: Record<string, unknown> = {
       method: input.method,
       data: input.data,
@@ -108,7 +111,7 @@ export async function callGateway(input: GatewayCallInput): Promise<GatewayCallR
     }
     if (input.signKey) {
       body.timestamp = timestamp
-      body.nonce = nonce
+      body.nonce = crypto.randomUUID()
     }
     const bodyText = JSON.stringify(body)
     const headers: Record<string, string> = {
@@ -165,7 +168,10 @@ export async function callGateway(input: GatewayCallInput): Promise<GatewayCallR
     if (aborted) {
       return {
         type: 'network',
-        message: `请求超时或被取消（${Math.round((input.timeoutMs ?? DEFAULT_TIMEOUT) / 1000)}s）`,
+        cancelled: input.signal?.aborted,
+        message: input.signal?.aborted
+          ? '已停止等待响应，请在服务端核对请求是否执行。'
+          : `等待响应超时（${Math.round((input.timeoutMs ?? DEFAULT_TIMEOUT) / 1000)}s）`,
         requestId: '',
         durationMs,
       }
@@ -177,6 +183,7 @@ export async function callGateway(input: GatewayCallInput): Promise<GatewayCallR
       durationMs,
     }
   } finally {
+    input.signal?.removeEventListener('abort', stopWaiting)
     window.clearTimeout(timeout)
   }
 }
@@ -279,12 +286,11 @@ export async function adminRequest<T>(input: AdminRequestInput): Promise<AdminRe
       }
     }
 
-    // 非信封：业务码不可用，仅对 401 映射为统一的未认证码，其余交给 HTTP 状态。
-    // 管理面契约要求统一信封，非信封一律按失败处理，避免调用方误判成功。
+    // 非信封响应没有业务码，保留 HTTP 状态供诊断。
     return {
       ok: false,
       httpStatus: response.status,
-      code: response.status === 401 ? 100110 : -1,
+      code: -1,
       msg: httpFailureMessage(response.status, response.statusText),
       data: null,
       raw,

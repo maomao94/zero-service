@@ -30,7 +30,7 @@ export default function HistoryPanel({ entries, onReplay, onClear }: HistoryPane
       if (status === 'ok' && !ok) return false
       if (status === 'fail' && ok) return false
       if (!keyword) return true
-      return [entry.method, entry.tid, entry.msg, String(entry.code), entry.appId]
+      return [entry.method, entry.tid, entry.requestId, entry.msg, String(entry.code), entry.appId, entry.baseUrl]
         .join(' ')
         .toLowerCase()
         .includes(keyword)
@@ -58,7 +58,7 @@ export default function HistoryPanel({ entries, onReplay, onClear }: HistoryPane
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="搜索 method、tid、错误码或消息"
+            placeholder="搜索方法、Request ID、网关或错误码"
             aria-label="搜索请求历史"
           />
         </div>
@@ -100,7 +100,7 @@ export default function HistoryPanel({ entries, onReplay, onClear }: HistoryPane
                 return (
                   <tr key={entry.id}>
                     <td className="nowrap muted">{formatDateTime(entry.at)}</td>
-                    <td><code className="method-tag">{entry.method}</code></td>
+                      <td><code className="method-tag">{entry.method}</code></td>
                     <td>
                       <span className={`history-status ${ok ? 'ok' : 'fail'}`}>
                         {entry.type === 'network'
@@ -109,7 +109,9 @@ export default function HistoryPanel({ entries, onReplay, onClear }: HistoryPane
                             ? `HTTP ${entry.httpStatus} · 非信封`
                             : `${entry.httpStatus} / ${entry.code}`}
                       </span>
-                      <small className="history-msg" title={entry.msg}>{entry.msg || '—'}</small>
+                      {entry.msg && entry.msg !== 'ok' && (
+                        <small className="history-msg" title={entry.msg}>{entry.msg}</small>
+                      )}
                     </td>
                     <td className="nowrap">{formatDuration(entry.durationMs)}</td>
                     <td>
