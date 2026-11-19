@@ -70,6 +70,8 @@ export default function MethodPicker({ methods, activeKey, onSelect }: MethodPic
                   type="button"
                   key={method.key}
                   className={`method-item ${activeKey === method.key ? 'active' : ''}`}
+                  aria-pressed={activeKey === method.key}
+                  title={method.key}
                   onClick={() => onSelect(method)}
                 >
                   <span className={`method-icon ${method.write ? 'write' : ''}`}><Icon size={17} /></span>

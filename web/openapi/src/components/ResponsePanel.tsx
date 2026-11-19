@@ -32,11 +32,13 @@ interface ResponsePanelProps {
   sending: boolean
   request: RequestPreview | null
   notify: (kind: ToastKind, text: string) => void
+  onLookupError: (code: number) => void
+  onCancel: () => void
 }
 
 type ResponseTab = 'data' | 'raw' | 'error' | 'request'
 
-export default function ResponsePanel({ result, sending, request, notify }: ResponsePanelProps) {
+export default function ResponsePanel({ result, sending, request, notify, onLookupError, onCancel }: ResponsePanelProps) {
   const [tab, setTab] = useState<ResponseTab>('data')
 
   useEffect(() => {
@@ -72,8 +74,8 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
     <section className="card response-card">
       <div className="card-heading response-heading">
         <div>
-          <span className="eyebrow">响应</span>
           <h2>响应结果</h2>
+          {request && <code className="response-method">{request.method}</code>}
         </div>
         {result?.type === 'response' && (
           <CopyButton
@@ -84,10 +86,11 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
       </div>
 
       {sending && (
-        <div className="response-loading">
+        <div className="response-loading" role="status">
           <div className="loading-orbit"><LoaderCircle size={26} className="spin" /></div>
           <b>正在等待 openapi 返回…</b>
           <span>最长等待 120 秒，慢请求会占用连接。</span>
+          <button type="button" className="button secondary" onClick={onCancel}>停止等待</button>
         </div>
       )}
 
@@ -109,16 +112,16 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
           <div className="network-error-head">
             <span className="error-icon"><ServerCrash size={20} /></span>
             <div>
-              <b>请求未到达网关</b>
+              <b>{result.cancelled ? '已停止等待' : '未收到网关响应'}</b>
               <p>{result.message}</p>
             </div>
           </div>
-          <div className="network-error-grid">
+          {!result.cancelled && <div className="network-error-grid">
             <span>1. 确认 opengtw 已在 11005 端口启动</span>
             <span>2. 本地开发建议 Base URL 留空，走 vite 代理</span>
             <span>3. 跨域直连时确认网关已开启 CORS</span>
             <span>4. 生产环境确认 nginx 已转发 /v1/</span>
-          </div>
+          </div>}
           <div className="network-error-foot"><Clock3 size={13} /> 耗时 {formatDuration(result.durationMs)}</div>
         </div>
       )}
@@ -130,30 +133,33 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
               <b>HTTP</b> {result.httpStatus}
             </span>
             <span className={`result-chip code-${errorTone(result.code)}`}>
-              <b>CODE</b> {result.code}
+              {result.code === -1 ? '无业务码' : <><b>业务码</b> {result.code}</>}
             </span>
             <span className="result-chip neutral"><Clock3 size={13} /> {formatDuration(result.durationMs)}</span>
             <span className="result-chip neutral"><Hash size={13} /> {formatBytes(result.sizeBytes)}</span>
             {result.requestId && (
-              <span className="result-chip request-id" title={result.requestId}>
-                <b>Request ID</b> {result.requestId}
-              </span>
+              <div className="response-id">
+                <span className="result-chip request-id" title={result.requestId}>
+                  <b>Request ID</b> {result.requestId}
+                </span>
+                <CopyButton text={result.requestId} label="复制 Request ID" />
+              </div>
             )}
           </div>
 
-          <div className="response-tabs" role="tablist">
-            <button type="button" role="tab" aria-selected={tab === 'data'} className={tab === 'data' ? 'active' : ''} onClick={() => setTab('data')}>
+          <div className="response-tabs" role="group" aria-label="响应视图">
+            <button type="button" aria-pressed={tab === 'data'} className={tab === 'data' ? 'active' : ''} onClick={() => setTab('data')}>
               <Braces size={13} /> 数据
             </button>
-            <button type="button" role="tab" aria-selected={tab === 'raw'} className={tab === 'raw' ? 'active' : ''} onClick={() => setTab('raw')}>
+            <button type="button" aria-pressed={tab === 'raw'} className={tab === 'raw' ? 'active' : ''} onClick={() => setTab('raw')}>
               <FileJson size={13} /> 原始响应
             </button>
             {result.code !== 0 && (
-              <button type="button" role="tab" aria-selected={tab === 'error'} className={tab === 'error' ? 'active' : ''} onClick={() => setTab('error')}>
+              <button type="button" aria-pressed={tab === 'error'} className={tab === 'error' ? 'active' : ''} onClick={() => setTab('error')}>
                 <ShieldAlert size={13} /> 错误说明
               </button>
             )}
-            <button type="button" role="tab" aria-selected={tab === 'request'} className={tab === 'request' ? 'active' : ''} onClick={() => setTab('request')}>
+            <button type="button" aria-pressed={tab === 'request'} className={tab === 'request' ? 'active' : ''} onClick={() => setTab('request')}>
               <ArrowLeftRight size={13} /> 请求
             </button>
           </div>
@@ -197,6 +203,7 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
                   <label>服务端消息</label>
                   <pre>{result.msg || '—'}</pre>
                 </div>
+                {doc && <button type="button" className="button secondary" onClick={() => onLookupError(doc.code)}>查看此错误码</button>}
               </div>
             )}
             {tab === 'request' && (

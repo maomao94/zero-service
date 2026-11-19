@@ -11,6 +11,8 @@ interface RequestPanelProps {
   tid: string
   onTidChange: (value: string) => void
   sending: boolean
+  busyReason: string
+  onCancelWaiting: () => void
   disabledReason: string
   signed: boolean
   onSend: () => void
@@ -24,6 +26,8 @@ export default function RequestPanel({
   tid,
   onTidChange,
   sending,
+  busyReason,
+  onCancelWaiting,
   disabledReason,
   signed,
   onSend,
@@ -32,7 +36,7 @@ export default function RequestPanel({
   const [showFields, setShowFields] = useState(false)
   const parsed = useMemo(() => parseJsonObject(dataText), [dataText])
   const fieldCount = parsed.value && typeof parsed.value === 'object' ? Object.keys(parsed.value).length : 0
-  const canSend = !sending && !parsed.error && !disabledReason
+  const canSend = !sending && !busyReason && !parsed.error && !disabledReason
 
   const handleFormat = () => {
     try {
@@ -84,7 +88,7 @@ export default function RequestPanel({
             spellCheck={false}
             autoComplete="off"
           />
-          <p className="field-hint">回显到响应头 X-Request-Id；留空时由网关生成。</p>
+          <p className="field-hint">进入业务处理后回显为 X-Request-Id，留空时由控制台补齐。</p>
         </div>
         <div className="field compact-field">
           <span className="field-label">时间戳与 nonce</span>
@@ -146,7 +150,9 @@ export default function RequestPanel({
           <Wand2 size={13} /> {showFields ? '收起字段说明' : '查看字段说明'}
         </button>
         <div className="send-area">
-          {disabledReason && !sending && <span className="disabled-hint">{disabledReason}</span>}
+          {busyReason ? (
+            <button type="button" className="text-button" onClick={onCancelWaiting}>{busyReason} · 停止等待</button>
+          ) : disabledReason && !sending && <span className="disabled-hint">{disabledReason}</span>}
           <button type="button" className="button primary send-button" onClick={onSend} disabled={!canSend}>
             {sending ? <LoaderCircle size={15} className="spin" /> : <Play size={15} />}
             {sending ? '请求中…' : method.write ? '发送写请求' : '发送请求'}

@@ -53,6 +53,7 @@ export interface GatewayCallResponse {
 export interface GatewayCallFailure {
   type: 'network'
   message: string
+  cancelled?: boolean
   /** 网络/超时路径没有响应头，固定为空字符串，避免 undefined 传播。 */
   requestId: string
   durationMs: number
