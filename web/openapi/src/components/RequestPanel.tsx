@@ -84,7 +84,7 @@ export default function RequestPanel({
             spellCheck={false}
             autoComplete="off"
           />
-          <p className="field-hint">回显到响应头 X-Request-Id；留空时由网关生成。</p>
+          <p className="field-hint">进入业务处理后回显为 X-Request-Id，留空时由控制台补齐。</p>
         </div>
         <div className="field compact-field">
           <span className="field-label">时间戳与 nonce</span>

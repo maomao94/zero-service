@@ -100,7 +100,6 @@ export async function callGateway(input: GatewayCallInput): Promise<GatewayCallR
     // body 只序列化一次：签名对这段字节算 bodyHash，发送时也必须是同一段字节。
     // timestamp/nonce 放在 body 里，由 bodyHash 覆盖；签名头只放 X-Sign: v1:<hex>。
     const timestamp = Date.now()
-    const nonce = crypto.randomUUID()
     const body: Record<string, unknown> = {
       method: input.method,
       data: input.data,
@@ -108,7 +107,7 @@ export async function callGateway(input: GatewayCallInput): Promise<GatewayCallR
     }
     if (input.signKey) {
       body.timestamp = timestamp
-      body.nonce = nonce
+      body.nonce = crypto.randomUUID()
     }
     const bodyText = JSON.stringify(body)
     const headers: Record<string, string> = {
@@ -279,12 +278,11 @@ export async function adminRequest<T>(input: AdminRequestInput): Promise<AdminRe
       }
     }
 
-    // 非信封：业务码不可用，仅对 401 映射为统一的未认证码，其余交给 HTTP 状态。
-    // 管理面契约要求统一信封，非信封一律按失败处理，避免调用方误判成功。
+    // 非信封响应没有业务码，保留 HTTP 状态供诊断。
     return {
       ok: false,
       httpStatus: response.status,
-      code: response.status === 401 ? 100110 : -1,
+      code: -1,
       msg: httpFailureMessage(response.status, response.statusText),
       data: null,
       raw,

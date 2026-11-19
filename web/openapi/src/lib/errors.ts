@@ -665,7 +665,7 @@ export const ERROR_DOCS: ErrorDoc[] = [
     http: 404,
     title: '方法未开放',
     description: 'method 未在 app/openapi 的路由表中注册。',
-    suggestion: '当前仅开放 pod.list、pod.get、pod.stats、image.list。',
+    suggestion: '确认 method 的拼写，并从调试台方法列表选择当前支持的接口。',
     group: '开放平台',
   },
   {

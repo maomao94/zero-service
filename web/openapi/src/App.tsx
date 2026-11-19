@@ -1,12 +1,13 @@
-import { AppWindow, BookOpen, Braces, FlaskConical, Info, ShieldAlert, TerminalSquare } from 'lucide-react'
+import { AppWindow, BookOpen, Braces, FlaskConical, ShieldAlert, TerminalSquare } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import ConnectionPanel from './components/ConnectionPanel'
+import ConfirmDialog from './components/ConfirmDialog'
 import HistoryPanel from './components/HistoryPanel'
 import MethodPicker from './components/MethodPicker'
 import RequestPanel from './components/RequestPanel'
 import ResponsePanel, { type RequestPreview } from './components/ResponsePanel'
 import Toast from './components/Toast'
-import { checkHealth, callGateway, type HealthResult } from './lib/http'
+import { checkHealth, callGateway, gatewayUrl, type GatewayCallInput, type HealthResult } from './lib/http'
 import { generateTid, parseJsonObject, shortId } from './lib/format'
 import { DEFAULT_METHOD, METHODS, findMethod } from './lib/methods'
 import {
@@ -36,7 +37,11 @@ const TABS: Array<{ key: TabKey; label: string; icon: typeof TerminalSquare }> =
 
 const initialSettings = loadSettings()
 const initialMethod = findMethod(initialSettings.lastMethod)
-const MODBUS_METHOD_COUNT = METHODS.filter((method) => method.category.startsWith('modbus')).length
+
+interface PendingCall {
+  input: GatewayCallInput
+  preview: RequestPreview
+}
 
 export default function App() {
   const [tab, setTab] = useState<TabKey>('debug')
@@ -53,6 +58,13 @@ export default function App() {
   const [lastRequest, setLastRequest] = useState<RequestPreview | null>(null)
   const [health, setHealth] = useState<HealthResult | null>(null)
   const [checking, setChecking] = useState(false)
+  const [pane, setPane] = useState<'request' | 'response'>('request')
+  const [connectionOpen, setConnectionOpen] = useState(!initialSettings.appId || !initialSettings.secret)
+  const [pendingWrite, setPendingWrite] = useState<PendingCall | null>(null)
+  const [errorCode, setErrorCode] = useState<number | null>(null)
+  const debugContext = useRef(0)
+  const healthSequence = useRef(0)
+  const activeCall = useRef(false)
 
   const toastTimer = useRef<number | undefined>(undefined)
 
@@ -73,14 +85,29 @@ export default function App() {
     toastTimer.current = window.setTimeout(() => setToast(null), 3400)
   }, [])
 
-  const updateSettings = useCallback((patch: Partial<Settings>) => {
-    setSettings((previous) => ({ ...previous, ...patch }))
-    if ('baseUrl' in patch) setHealth(null)
+  const resetDebugResult = useCallback(() => {
+    debugContext.current++
+    setResult(null)
+    setLastRequest(null)
+    setPendingWrite(null)
+    setPane('request')
   }, [])
 
+  const updateSettings = useCallback((patch: Partial<Settings>) => {
+    setSettings((previous) => ({ ...previous, ...patch }))
+    if ('baseUrl' in patch) {
+      healthSequence.current++
+      setHealth(null)
+      setChecking(false)
+    }
+    if ('baseUrl' in patch || 'appId' in patch || 'secret' in patch || 'signKey' in patch) resetDebugResult()
+  }, [resetDebugResult])
+
   const checkConnection = useCallback(async (announce = true) => {
+    const sequence = ++healthSequence.current
     setChecking(true)
     const next = await checkHealth(settings.baseUrl)
+    if (sequence !== healthSequence.current) return
     setHealth(next)
     setChecking(false)
     if (announce) {
@@ -104,13 +131,13 @@ export default function App() {
     if (next.key === method.key) return
     setMethodKey(next.key)
     setTid(generateTid())
-    setResult(null)
-    setLastRequest(null)
+    resetDebugResult()
     updateSettings({ lastMethod: next.key })
   }
 
-  const handleSend = async () => {
-    if (!settings.appId || !settings.secret) {
+  const handleSend = () => {
+    if (activeCall.current || pendingWrite) return
+    if (!settings.appId.trim() || !settings.secret.trim()) {
       notify('error', '请先填写 App ID 与 Secret')
       return
     }
@@ -122,35 +149,49 @@ export default function App() {
 
     const requestTid = tid.trim() || generateTid()
     if (!tid.trim()) setTid(requestTid)
-    const timestamp = Date.now()
     const preview: RequestPreview = {
       method: method.key,
       tid: requestTid,
       dataText,
       signed: settings.signKey.trim() !== '',
     }
-    setLastRequest(preview)
-    setSending(true)
-    const next = await callGateway({
+    const input: GatewayCallInput = {
       baseUrl: settings.baseUrl,
-      appId: settings.appId,
-      secret: settings.secret,
-      signKey: settings.signKey,
+      appId: settings.appId.trim(),
+      secret: settings.secret.trim(),
+      signKey: settings.signKey.trim(),
       method: method.key,
       data: parsed.value,
       tid: requestTid,
-    })
+    }
+    if (method.write) {
+      setPendingWrite({ input, preview })
+      return
+    }
+    void sendCall({ input, preview })
+  }
+
+  const sendCall = async ({ input, preview }: PendingCall) => {
+    if (activeCall.current) return
+    activeCall.current = true
+    const context = debugContext.current
+    const timestamp = Date.now()
+    setResult(null)
+    setLastRequest(preview)
+    setPane('response')
+    setSending(true)
+    const next = await callGateway(input)
+    activeCall.current = false
     setSending(false)
-    setResult(next)
 
     const entry: HistoryEntry = {
       id: `${timestamp}-${Math.random().toString(16).slice(2, 8)}`,
       at: new Date(timestamp).toISOString(),
-      method: method.key,
-      tid: requestTid,
-      dataText,
-      baseUrl: settings.baseUrl,
-      appId: settings.appId,
+      method: input.method,
+      tid: input.tid,
+      dataText: preview.dataText,
+      baseUrl: input.baseUrl,
+      appId: input.appId,
       type: next.type,
       httpStatus: next.type === 'response' ? next.httpStatus : 0,
       code: next.type === 'response' ? next.code : -1,
@@ -159,6 +200,8 @@ export default function App() {
       requestId: next.requestId,
     }
     setHistory((previous) => [entry, ...previous].slice(0, 50))
+    if (context !== debugContext.current) return
+    setResult(next)
 
     if (next.type === 'network') {
       notify('error', next.message)
@@ -182,8 +225,7 @@ export default function App() {
     setMethodKey(target.key)
     setDrafts((previous) => ({ ...previous, [target.key]: entry.dataText }))
     setTid(entry.tid || generateTid())
-    setResult(null)
-    setLastRequest(null)
+    resetDebugResult()
     updateSettings({ lastMethod: target.key })
     window.scrollTo({ top: 0, behavior: 'smooth' })
     notify('info', '已回填请求，可修改后重新发送')
@@ -191,13 +233,13 @@ export default function App() {
 
   const clearCredentials = () => {
     clearStoredCredentials()
-    setSettings((previous) => ({ ...previous, appId: '', secret: '', signKey: '', adminToken: '' }))
+    updateSettings({ appId: '', secret: '', signKey: '', adminToken: '' })
     notify('success', '本地凭据已清除')
   }
 
-  const disabledReason = !settings.appId
+  const disabledReason = !settings.appId.trim()
     ? '填写 App ID 后启用发送'
-    : !settings.secret
+    : !settings.secret.trim()
       ? '填写 Secret 后启用发送'
       : ''
 
@@ -220,7 +262,9 @@ export default function App() {
                 type="button"
                 key={item.key}
                 className={tab === item.key ? 'active' : ''}
+                aria-current={tab === item.key ? 'page' : undefined}
                 onClick={() => {
+                  setErrorCode(null)
                   setTab(item.key)
                   window.scrollTo({ top: 0, behavior: 'auto' })
                 }}
@@ -251,22 +295,13 @@ export default function App() {
       <main className="app-main">
         {tab === 'debug' && (
           <div className="page-stack">
-            <section className="hero">
+            <section className="debug-toolbar">
               <div>
-                <span className="eyebrow">开放平台 · Podman / Modbus</span>
                 <h1>开放平台调试台</h1>
-                <p>统一转发 podman 与 Modbus 只读/写入接口，验证 Basic 鉴权、protojson 契约与统一错误信封。</p>
+                <code>{gatewayUrl(settings.baseUrl || window.location.origin)}</code>
               </div>
-              <div className="hero-badges">
-                <span><TerminalSquare size={14} /> {METHODS.length} 个 method</span>
-                <span><Info size={14} /> {MODBUS_METHOD_COUNT} Modbus I/O</span>
-                <span><Info size={14} /> 120s 超时</span>
-                <span><Braces size={14} /> protojson</span>
-              </div>
-            </section>
-
-            <div className="debug-layout">
-              <aside className="debug-sidebar">
+              <details className="console-disclosure connection-disclosure" open={connectionOpen} onToggle={(event) => setConnectionOpen(event.currentTarget.open)}>
+                <summary>连接设置 · {disabledReason ? '凭据未填写' : settings.signKey.trim() ? 'Basic + 签名' : 'Basic'}</summary>
                 <ConnectionPanel
                   settings={settings}
                   onChange={updateSettings}
@@ -275,33 +310,53 @@ export default function App() {
                   onCheck={() => void checkConnection()}
                   onClear={clearCredentials}
                 />
+              </details>
+            </section>
+
+            <div className="debug-layout">
+              <aside className="debug-sidebar">
                 <MethodPicker methods={METHODS} activeKey={method.key} onSelect={selectMethod} />
               </aside>
 
-              <div className="debug-main">
-                <RequestPanel
-                  method={method}
-                  dataText={dataText}
-                  onDataChange={updateCurrentData}
-                  tid={tid}
-                  onTidChange={setTid}
-                  sending={sending}
-                  disabledReason={disabledReason}
-                  signed={settings.signKey.trim() !== ''}
-                  onSend={() => void handleSend()}
-                  notify={notify}
-                />
-                <ResponsePanel result={result} sending={sending} request={lastRequest} notify={notify} />
-                <HistoryPanel
-                  entries={history}
-                  onReplay={replay}
-                  onClear={() => {
-                    setHistory([])
-                    notify('success', '请求历史已清空')
-                  }}
-                />
+              <div className="debug-main" data-pane={pane}>
+                <div className="pane-switch" role="group" aria-label="调试面板">
+                  <button type="button" className="button secondary" aria-pressed={pane === 'request'} onClick={() => setPane('request')}>请求</button>
+                  <button type="button" className="button secondary" aria-pressed={pane === 'response'} onClick={() => setPane('response')}>响应</button>
+                </div>
+                <div className="request-pane">
+                  <RequestPanel
+                    method={method}
+                    dataText={dataText}
+                    onDataChange={updateCurrentData}
+                    tid={tid}
+                    onTidChange={setTid}
+                    sending={sending}
+                    disabledReason={disabledReason}
+                    signed={settings.signKey.trim() !== ''}
+                    onSend={handleSend}
+                    notify={notify}
+                  />
+                </div>
+                <div className="response-pane">
+                  <ResponsePanel result={result} sending={sending && lastRequest !== null} request={lastRequest} notify={notify} onLookupError={(code) => {
+                    setErrorCode(code)
+                    setTab('errors')
+                    window.scrollTo(0, 0)
+                  }} />
+                </div>
               </div>
             </div>
+            <details className="console-disclosure history-disclosure">
+              <summary>请求历史（{history.length}）</summary>
+              <HistoryPanel
+                entries={history}
+                onReplay={replay}
+                onClear={() => {
+                  setHistory([])
+                  notify('success', '请求历史已清空')
+                }}
+              />
+            </details>
           </div>
         )}
 
@@ -309,7 +364,7 @@ export default function App() {
           <AppsPage settings={settings} onChange={updateSettings} notify={notify} />
         )}
 
-        {tab === 'errors' && <ErrorsPage />}
+        {tab === 'errors' && <ErrorsPage key={errorCode ?? 'all'} initialCode={errorCode} />}
       </main>
 
       <footer className="app-footer">
@@ -318,6 +373,27 @@ export default function App() {
       </footer>
 
       <Toast message={toast} onClose={() => setToast(null)} />
+      {pendingWrite && (
+        <ConfirmDialog
+          open
+          title="确认发送写请求"
+          message="请求可能改变设备状态。核对目标和参数后再发送。"
+          confirmLabel="确认写入"
+          danger
+          onCancel={() => setPendingWrite(null)}
+          onConfirm={() => {
+            setPendingWrite(null)
+            void sendCall(pendingWrite)
+          }}
+        >
+          <dl className="write-target">
+            <dt>网关</dt><dd>{gatewayUrl(pendingWrite.input.baseUrl || window.location.origin)}</dd>
+            <dt>应用</dt><dd>{pendingWrite.input.appId}</dd>
+            <dt>方法</dt><dd>{pendingWrite.input.method}</dd>
+          </dl>
+          <pre className="write-payload">{JSON.stringify(pendingWrite.input.data, null, 2)}</pre>
+        </ConfirmDialog>
+      )}
     </div>
   )
 }

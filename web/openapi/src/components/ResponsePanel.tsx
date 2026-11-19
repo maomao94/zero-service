@@ -32,11 +32,12 @@ interface ResponsePanelProps {
   sending: boolean
   request: RequestPreview | null
   notify: (kind: ToastKind, text: string) => void
+  onLookupError: (code: number) => void
 }
 
 type ResponseTab = 'data' | 'raw' | 'error' | 'request'
 
-export default function ResponsePanel({ result, sending, request, notify }: ResponsePanelProps) {
+export default function ResponsePanel({ result, sending, request, notify, onLookupError }: ResponsePanelProps) {
   const [tab, setTab] = useState<ResponseTab>('data')
 
   useEffect(() => {
@@ -72,8 +73,8 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
     <section className="card response-card">
       <div className="card-heading response-heading">
         <div>
-          <span className="eyebrow">响应</span>
           <h2>响应结果</h2>
+          {request && <code className="response-method">{request.method}</code>}
         </div>
         {result?.type === 'response' && (
           <CopyButton
@@ -84,7 +85,7 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
       </div>
 
       {sending && (
-        <div className="response-loading">
+        <div className="response-loading" role="status">
           <div className="loading-orbit"><LoaderCircle size={26} className="spin" /></div>
           <b>正在等待 openapi 返回…</b>
           <span>最长等待 120 秒，慢请求会占用连接。</span>
@@ -109,7 +110,7 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
           <div className="network-error-head">
             <span className="error-icon"><ServerCrash size={20} /></span>
             <div>
-              <b>请求未到达网关</b>
+              <b>未收到网关响应</b>
               <p>{result.message}</p>
             </div>
           </div>
@@ -135,9 +136,12 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
             <span className="result-chip neutral"><Clock3 size={13} /> {formatDuration(result.durationMs)}</span>
             <span className="result-chip neutral"><Hash size={13} /> {formatBytes(result.sizeBytes)}</span>
             {result.requestId && (
-              <span className="result-chip request-id" title={result.requestId}>
-                <b>Request ID</b> {result.requestId}
-              </span>
+              <div className="response-id">
+                <span className="result-chip request-id" title={result.requestId}>
+                  <b>Request ID</b> {result.requestId}
+                </span>
+                <CopyButton text={result.requestId} label="复制 Request ID" />
+              </div>
             )}
           </div>
 
@@ -197,6 +201,7 @@ export default function ResponsePanel({ result, sending, request, notify }: Resp
                   <label>服务端消息</label>
                   <pre>{result.msg || '—'}</pre>
                 </div>
+                {doc && <button type="button" className="button secondary" onClick={() => onLookupError(doc.code)}>查看此错误码</button>}
               </div>
             )}
             {tab === 'request' && (
