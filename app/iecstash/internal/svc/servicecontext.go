@@ -7,9 +7,9 @@ import (
 	"zero-service/common/executorx"
 	"zero-service/common/grpcx"
 	"zero-service/common/tool"
+	"zero-service/facade/streamevent/msgbody"
 	"zero-service/facade/streamevent/streamevent"
 
-	"github.com/tidwall/gjson"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/timex"
 	"github.com/zeromicro/go-zero/zrpc"
@@ -36,40 +36,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	chunkAsduPusher := executorx.NewChunkMessagesPusher(
 		func(msgs []string) {
 			tid, _ := tool.SimpleUUID()
-			msgBodyList := make([]*streamevent.MsgBody, 0, len(msgs))
-			for _, s := range msgs {
-				result := gjson.Parse(s)
-				bodyRaw := result.Get("body").Raw
-				typeId := result.Get("typeId").Int()
-				msgBody := &streamevent.MsgBody{
-					MsgId:       result.Get("msgId").String(),
-					Host:        result.Get("host").String(),
-					Port:        int32(result.Get("port").Int()),
-					Asdu:        result.Get("asdu").String(),
-					TypeId:      int32(typeId),
-					DataType:    int32(result.Get("dataType").Int()),
-					Coa:         uint32(result.Get("coa").Int()),
-					BodyRaw:     bodyRaw,
-					Time:        result.Get("time").String(),
-					MetaDataRaw: result.Get("metaData").String(),
-					TraceId:     result.Get("traceId").String(),
-					Headers:     gjsonHeadersMap(result.Get("headers")),
-				}
-				pm := result.Get("pm")
-				if pm.Exists() {
-					msgBody.Pm = &streamevent.PointMapping{
-						DeviceId:    pm.Get("deviceId").String(),
-						DeviceName:  pm.Get("deviceName").String(),
-						TdTableType: pm.Get("tdTableType").String(),
-						Ext1:        pm.Get("ext1").String(),
-						Ext2:        pm.Get("ext2").String(),
-						Ext3:        pm.Get("ext3").String(),
-						Ext4:        pm.Get("ext4").String(),
-						Ext5:        pm.Get("ext5").String(),
-					}
-				}
-				msgBodyList = append(msgBodyList, msgBody)
-			}
+			msgBodyList := msgbody.FromJSONBatch(msgs)
 
 			if len(msgBodyList) > 0 {
 				startTime := timex.Now()
@@ -94,15 +61,4 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		StreamEventCli:  streamEventCli,
 		ChunkAsduPusher: chunkAsduPusher,
 	}
-}
-
-func gjsonHeadersMap(r gjson.Result) map[string]string {
-	if !r.Exists() {
-		return nil
-	}
-	m := make(map[string]string)
-	for k, v := range r.Map() {
-		m[k] = v.String()
-	}
-	return m
 }

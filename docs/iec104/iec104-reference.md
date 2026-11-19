@@ -160,8 +160,9 @@ print(key)  # 127.0.0.1_1_0x0007d1
 
 ### gRPC 流事件消费建议
 
-- gRPC 推送内容与 Kafka/MQTT payload 的 JSON 保持一致。`streamevent.MsgBody` 已包含 `headers` 字段（map<string, string>），服务端可直接读取 `headers["traceparent"]` 还原链路上下文。
-- 批量或流式消费方应逐条解析 `body`，不要按批次共享同一个信息体类型。
+- 推送内容与 Kafka/MQTT payload 同源：`MsgBody.bodyRaw`、`MsgBody.metaDataRaw` 是 JSON 文本，分别等价于 JSON payload 的 `body`、`metaData` 子对象，字段映射见[三条通道的字段映射](./iec104-message.md#15-三条通道的字段映射)。消费方可直接 `json.Unmarshal` 转 map，或按 `typeId` 选择 `streamevent` 包中的信息体 message 用 `protojson.Unmarshal` 转强类型。
+- `streamevent.MsgBody` 已包含 `headers` 字段（map<string, string>），服务端可直接读取 `headers["traceparent"]` 还原链路上下文。
+- 批量或流式消费方应逐条解析 `bodyRaw`（JSON 通道为 `body`），不要按批次共享同一个信息体类型。
 
 ### 时区与时标处理
 

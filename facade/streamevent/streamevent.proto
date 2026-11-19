@@ -93,6 +93,15 @@ message PushChunkAsduRes {
 }
 
 // 消息体结构
+//
+// body_raw、meta_data_raw 为 JSON 文本，分别等价于 Kafka、MQTT 通道 payload
+// 中的 body、metaData 子对象。消费方可二选一解析：
+//   - json.Unmarshal 转 map（动态结构）；
+//   - 按 type_id/data_type 选择本文件对应的信息体 message，protojson.Unmarshal 转强类型。
+//
+// 约束：protojson 默认拒绝未知字段，body 新增字段时必须同步更新本文件的
+// 信息体 message，契约由 facade/streamevent/internal/logic/msgbody_contract_test.go 校验。
+// 字段映射说明见 docs/iec104/iec104-message.md。
 message MsgBody {
   // 消息ID
   string msg_id = 1 [json_name = "msgId"];
@@ -109,10 +118,13 @@ message MsgBody {
   // 公共地址（范围：1-65534,全局地址65535保留）
   uint32 coa = 7 [json_name = "coa"];
   // 信息体对象（结构随typeId变化）
+  // JSON 文本，内容等价于 Kafka、MQTT 通道 payload 的 body 子对象；
+  // 按 typeId 解析为本文件对应的信息体 message，或直接转 map。
   string body_raw = 8 [json_name = "bodyRaw"];
   // 消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`,UTC+8时区）
   string time = 9 [json_name = "time"];
   // 应用级元数据（如：应用ID、用户信息、场站信息等）
+  // JSON 文本，键由采集配置决定、无固定结构，只能转 map。
   string meta_data_raw = 10 [json_name = "metaDataRaw"];
   PointMapping pm = 11 [json_name = "pm"];
   // IEC104 帧关联ID（同一帧拆分出来的多条消息共享）

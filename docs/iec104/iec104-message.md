@@ -212,6 +212,32 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
 
 唯一索引为 `UNIQUE(tag_station, coa, ioa)`，同一个站点、公共地址、信息对象地址只能绑定一条映射。
 
+### 1.5 三条通道的字段映射
+
+同一条 ASDU 在 Kafka、MQTT、gRPC 三条通道上承载的是同一份 JSON，区别只在承载方式：
+
+| 通道 | 承载方式 |
+| --- | --- |
+| Kafka | 整篇 JSON 作为消息 value，`body`、`metaData` 是 JSON 对象。 |
+| MQTT | 整篇 JSON 作为 payload，`body`、`metaData` 是 JSON 对象。 |
+| gRPC | `streamevent.MsgBody`；`body` 落入 `bodyRaw`、`metaData` 落入 `metaDataRaw`，两者均为 **JSON 文本字符串**。 |
+
+`bodyRaw` 中的文本与第 2 节 Body 结构体一一对应，消费方按需二选一解析：
+
+- 转通用结构：`json.Unmarshal([]byte(msg.BodyRaw), &m)`，后续按 `typeId` 自行分支。
+- 转强类型：按第 2 节的 `dataType` / `typeId` 选择 `facade/streamevent/streamevent` 包中同名的 message，再 `protojson.Unmarshal([]byte(msg.BodyRaw), pb)`。
+
+`metaDataRaw` 的键由 `IecServerConfig[].MetaData` 配置决定，没有固定结构，只能转 map。
+
+整篇报文层面，Kafka/MQTT 可直接反序列化为 `common/iec104/types.MsgBody` 或任意 `map[string]any`，gRPC 已是 `streamevent.MsgBody`；两者除 `body` → `bodyRaw`、`metaData` → `metaDataRaw` 这一处形态差异外，其余字段一一对应。因此**同一份代码无法原样解析两条通道的完整报文**，只有 `body` 部分可以共用解析逻辑。
+
+两条使用约束：
+
+- `protojson` 默认拒绝未知字段。`body` 新增字段时必须同步更新 `facade/streamevent/streamevent.proto` 的信息体 message，否则强类型解析会直接报错；消费方如需容忍少量新增字段，需显式设置 `protojson.UnmarshalOptions{DiscardUnknown: true}`。
+- `protojson.Marshal` 默认省略零值（`value=false`、`qds=0`、`time=""` 会消失），因此 PB 结构只用于解析入参，不要用它回写出与 MQTT、Kafka 等价的 `body`。
+
+上述同步关系由 `facade/streamevent/internal/logic/msgbody_contract_test.go` 校验：`types` 的 JSON 标签、`streamevent.proto` 的 `json_name`、本文档第 2 节的结构体名单与第 3 节的字段表必须一致，任一处漏改测试都会失败。
+
 ## 2. ASDU 类型映射表
 
 下表列出 ieccaller 会解析并推送给下游的监视方向 ASDU。控制方向命令和回执见[控制命令文档](./iec104-command.md)。
@@ -253,9 +279,11 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
 | 19 | 70 | M_EI_NA_1 | 不推送 | 初始化结束，仅记录日志。 |
 | 20 | 其他 | UNKNOWN | 不推送 | 未识别 ASDU，仅记录日志。 |
 
+> Body 结构体名与 `facade/streamevent/streamevent.proto` 的同名 message 对应，可据此前置生成强类型解析代码；唯一例外是 `PackedOutputCircuitInfoInfo`，其对应的 gRPC message 为 `PackedOutputCircuitInfo`，JSON 字段一致。
+
 ## 3. 信息体结构详解
 
-本节字段名与 `common/iec104/types/types.go` 的 JSON 标签保持一致。`qds`、`qdp`、`scd`、`oci` 的位含义见[附录与消费指南](./iec104-reference.md)。
+本节字段名与 `common/iec104/types/types.go` 的 JSON 标签保持一致，同时与 `facade/streamevent/streamevent.proto` 同名 message 的 `json_name` 一致。`qds`、`qdp`、`scd`、`oci` 的位含义见[附录与消费指南](./iec104-reference.md)。
 
 ### 3.1 单点信息 `SinglePointInfo`
 
