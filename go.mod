@@ -408,3 +408,7 @@ require (
 replace github.com/doquangtan/socketio/v4 => github.com/maomao94/socket.io-golang/v4 v4.1.9-fork.20261103173921
 
 replace github.com/godoes/gorm-kingbase => github.com/maomao94/gorm-kingbase v1.11.0-fork.20260928110858
+
+replace github.com/pion/webrtc/v4 => github.com/livekit/webrtc-pion/v4 v4.2.25-warp.3
+
+replace github.com/pion/ice/v4 => github.com/livekit/ice/v4 v4.4.8-warp.4
