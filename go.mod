@@ -42,7 +42,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 	github.com/grid-x/modbus v1.5.1
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.33.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.34.0
 	github.com/hibiken/asynq v0.26.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/jlaffaye/ftp v0.2.4
@@ -85,8 +85,8 @@ require (
 	golang.org/x/crypto v0.59.0
 	golang.org/x/sync v0.25.0
 	golang.org/x/term v0.48.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20261026165753-2ffab32bce7e
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261026165753-2ffab32bce7e
+	google.golang.org/genproto/googleapis/api v0.0.0-20261110000943-09e21b237f2c
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261104224025-d1e00e9f33ab
 	google.golang.org/grpc v1.85.0
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -376,7 +376,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/arch v0.31.0 // indirect
-	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e // indirect
+	golang.org/x/exp v0.0.0-20261113113407-e3970619a1a4 // indirect
 	golang.org/x/image v0.22.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
