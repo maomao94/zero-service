@@ -372,3 +372,42 @@ func TestNowUnixUnits(t *testing.T) {
 		})
 	}
 }
+
+func TestParseDateTime(t *testing.T) {
+	t.Parallel()
+
+	shanghai := time.FixedZone("CST", 8*60*60)
+	// 写入口径：FormatDateTime 保留输入时区；解析后必须是同一时刻。
+	text := FormatDateTime(time.Date(2026, time.November, 20, 10, 0, 0, 0, shanghai))
+
+	tests := []struct {
+		name     string
+		value    string
+		timezone []string
+		wantTime time.Time
+		wantErr  bool
+	}{
+		{name: "parse with default timezone", value: text, wantTime: time.Date(2026, time.November, 20, 10, 0, 0, 0, shanghai)},
+		{name: "parse with local timezone", value: text, timezone: []string{"Local"}, wantTime: time.Date(2026, time.November, 20, 10, 0, 0, 0, time.Local)},
+		{name: "empty value is an error", value: "", wantErr: true},
+		{name: "invalid value is an error", value: "not-a-time", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseDateTime(tt.value, tt.timezone...)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("ParseDateTime(%q) error = nil, want error", tt.value)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("ParseDateTime(%q) error = %v", tt.value, err)
+			}
+			if !got.Equal(tt.wantTime) {
+				t.Fatalf("ParseDateTime(%q) = %v, want %v", tt.value, got, tt.wantTime)
+			}
+		})
+	}
+}

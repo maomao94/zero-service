@@ -144,3 +144,17 @@ func NowUnixMilli() int64 {
 func NowUnixMicro() int64 {
 	return time.Now().UnixMicro()
 }
+
+// ParseDateTime 以 Carbon 默认布局（yyyy-MM-dd HH:mm:ss）解析秒级日期时间文本为 Go 时间。
+// 默认按 Carbon 全局时区解释，显式传入 timezone 时按指定时区解释（如 "Local" 表示服务器本地时区）。
+// 解析失败或文本为空时返回错误与零值时间。
+func ParseDateTime(value string, timezone ...string) (time.Time, error) {
+	c := carbon.Parse(value, timezone...)
+	if c.Error != nil {
+		return time.Time{}, c.Error
+	}
+	if c.IsEmpty() {
+		return time.Time{}, carbon.ErrFailedParse(value)
+	}
+	return c.StdTime(), nil
+}
