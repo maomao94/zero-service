@@ -4,8 +4,8 @@ import { ERROR_DOCS } from '../lib/errors'
 
 const GROUPS = ['全部', '成功', '开放平台', '参数', '数据', '认证', '业务', '基础设施', '网关', '系统'] as const
 
-export default function ErrorsPage() {
-  const [query, setQuery] = useState('')
+export default function ErrorsPage({ initialCode, onBack }: { initialCode: number | null; onBack?: () => void }) {
+  const [query, setQuery] = useState(initialCode === null ? '' : String(initialCode))
   const [group, setGroup] = useState<(typeof GROUPS)[number]>('全部')
 
   const rows = useMemo(() => {
@@ -13,6 +13,7 @@ export default function ErrorsPage() {
     return ERROR_DOCS.filter((doc) => {
       if (group !== '全部' && doc.group !== group) return false
       if (!keyword) return true
+      if (/^\d{6}$/.test(keyword) || keyword === '0') return String(doc.code) === keyword
       return [doc.code, doc.http, doc.title, doc.description, doc.suggestion]
         .filter(Boolean)
         .join(' ')
@@ -45,6 +46,7 @@ export default function ErrorsPage() {
 
       <section className="card errors-card">
         <div className="errors-toolbar">
+          {onBack && <button type="button" className="button secondary" onClick={onBack}>返回调试结果</button>}
           <div className="search-box">
             <Search size={14} />
             <input
@@ -60,6 +62,7 @@ export default function ErrorsPage() {
                 type="button"
                 key={item}
                 className={group === item ? 'active' : ''}
+                aria-pressed={group === item}
                 onClick={() => setGroup(item)}
               >
                 {item}

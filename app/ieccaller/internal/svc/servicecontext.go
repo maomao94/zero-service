@@ -18,10 +18,10 @@ import (
 	"zero-service/common/mqttx"
 	"zero-service/common/mqttx/broadcast"
 	"zero-service/common/tool"
+	"zero-service/facade/streamevent/msgbody"
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/model/gormmodel"
 
-	"github.com/tidwall/gjson"
 	"github.com/zeromicro/go-queue/kq"
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -112,40 +112,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		svcCtx.ChunkAsduPusher = executorx.NewChunkMessagesPusher(
 			func(messages []string) {
 				tid, _ := tool.SimpleUUID()
-				msgBodyList := make([]*streamevent.MsgBody, 0, len(messages))
-				for _, s := range messages {
-					result := gjson.Parse(s)
-					bodyRaw := result.Get("body").Raw
-					typeId := result.Get("typeId").Int()
-					item := &streamevent.MsgBody{
-						MsgId:       result.Get("msgId").String(),
-						Host:        result.Get("host").String(),
-						Port:        int32(result.Get("port").Int()),
-						Asdu:        result.Get("asdu").String(),
-						TypeId:      int32(typeId),
-						DataType:    int32(result.Get("dataType").Int()),
-						Coa:         uint32(result.Get("coa").Int()),
-						BodyRaw:     bodyRaw,
-						Time:        result.Get("time").String(),
-						MetaDataRaw: result.Get("metaData").String(),
-						TraceId:     result.Get("traceId").String(),
-						Headers:     gjsonHeadersMap(result.Get("headers")),
-					}
-					pm := result.Get("pm")
-					if pm.Exists() {
-						item.Pm = &streamevent.PointMapping{
-							DeviceId:    pm.Get("deviceId").String(),
-							DeviceName:  pm.Get("deviceName").String(),
-							TdTableType: pm.Get("tdTableType").String(),
-							Ext1:        pm.Get("ext1").String(),
-							Ext2:        pm.Get("ext2").String(),
-							Ext3:        pm.Get("ext3").String(),
-							Ext4:        pm.Get("ext4").String(),
-							Ext5:        pm.Get("ext5").String(),
-						}
-					}
-					msgBodyList = append(msgBodyList, item)
-				}
+				msgBodyList := msgbody.FromJSONBatch(messages)
 
 				if len(msgBodyList) > 0 {
 					ctx, span := iec104.StartForwardSpan(context.Background())
@@ -274,17 +241,6 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 		},
 	)
 	return nil
-}
-
-func gjsonHeadersMap(r gjson.Result) map[string]string {
-	if !r.Exists() {
-		return nil
-	}
-	m := make(map[string]string)
-	for k, v := range r.Map() {
-		m[k] = v.String()
-	}
-	return m
 }
 
 // PushPbBroadcast 以 fire-and-forget 方式向集群广播 protobuf 命令（不等待 ack）。

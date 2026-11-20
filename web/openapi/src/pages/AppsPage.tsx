@@ -14,7 +14,7 @@ import {
   ShieldCheck,
   Power,
 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { adminRequest, buildUrl } from '../lib/http'
 import { formatDateTime, shortId } from '../lib/format'
 import type {
@@ -50,66 +50,90 @@ interface RevealState {
   hint?: string
 }
 
+type AppListState =
+  | { phase: 'idle' | 'loading' }
+  | { phase: 'ready'; data: AppListData }
+  | { phase: 'error'; message: string }
+
 export default function AppsPage({ settings, onChange, notify }: AppsPageProps) {
   const [showToken, setShowToken] = useState(false)
-  const [apps, setApps] = useState<AppRecord[]>([])
-  const [total, setTotal] = useState(0)
+  const [connectionOpen, setConnectionOpen] = useState(true)
+  const [list, setList] = useState<AppListState>({ phase: 'idle' })
   const [pageNum, setPageNum] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [keyword, setKeyword] = useState('')
   const [status, setStatus] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
   const [name, setName] = useState('')
   const [remark, setRemark] = useState('')
   const [signRequired, setSignRequired] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
   const [reveal, setReveal] = useState<RevealState | null>(null)
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
   const [confirmLoading, setConfirmLoading] = useState(false)
-  const initialized = useRef(false)
+  const scope = useRef(0)
+  const listSequence = useRef(0)
+  const verified = list.phase === 'ready'
+  const loading = list.phase === 'loading'
+  const error = list.phase === 'error' ? list.message : ''
+  const apps = list.phase === 'ready' ? list.data.items ?? [] : []
+  const total = list.phase === 'ready' ? list.data.total ?? 0 : 0
   const revealRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    scope.current++
+    setList({ phase: 'idle' })
+    setPageNum(1)
+    setReveal(null)
+    setConfirm(null)
+    setConfirmLoading(false)
+    setCreating(false)
+    setShowCreate(false)
+    setShowToken(false)
+    return () => { scope.current++ }
+  }, [settings.adminToken, settings.baseUrl])
 
   useEffect(() => {
     if (reveal) revealRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [reveal])
 
-  const loadApps = useCallback(async (nextPage = pageNum, nextSize = pageSize) => {
-    if (!settings.adminToken.trim()) {
-      setApps([])
-      setTotal(0)
-      setError('')
-      return
-    }
-    setLoading(true)
-    setError('')
+  const loadApps = useCallback(async (
+    nextPage = pageNum,
+    nextSize = pageSize,
+    filters?: { keyword?: string; status?: number },
+  ) => {
+    if (!settings.adminToken.trim()) return
+    setList({ phase: 'loading' })
+    const currentScope = scope.current
+    const sequence = ++listSequence.current
+    // 创建应用后需要清空筛选并加载第一页；显式传入 filters 覆盖当前闭包里的旧值。
+    const nextKeyword = filters?.keyword ?? keyword
+    const nextStatus = filters?.status ?? status
     const result: AdminResult<AppListData> = await adminRequest<AppListData>({
       baseUrl: settings.baseUrl,
       token: settings.adminToken,
       path: '/open-admin/v1/app/list',
-      query: { keyword, status: status || undefined, pageNum: nextPage, pageSize: nextSize },
+      query: { keyword: nextKeyword, status: nextStatus || undefined, pageNum: nextPage, pageSize: nextSize },
     })
-    setLoading(false)
+    if (currentScope !== scope.current || sequence !== listSequence.current) return
     if (!result.ok || !result.data) {
-      setError(adminFailure(result, settings.adminToken))
+      setPageNum(1)
+      setList({ phase: 'error', message: adminFailure(result, settings.adminToken) })
+      setConnectionOpen(true)
       return
     }
-    setApps(result.data.items ?? [])
-    setTotal(result.data.total ?? 0)
+    setList({ phase: 'ready', data: result.data })
+    setConnectionOpen(false)
     setPageNum(result.data.pageNum || nextPage)
   }, [keyword, pageNum, pageSize, settings.adminToken, settings.baseUrl, status])
 
-  useEffect(() => {
-    if (initialized.current) return
-    initialized.current = true
-    if (settings.adminToken.trim()) void loadApps(1)
-  }, [loadApps, settings.adminToken])
-
   const handleCreate = async () => {
+    if (creating || !verified) return
     if (!name.trim()) {
       notify('error', '请填写应用名称')
       return
     }
+    const currentScope = scope.current
     setCreating(true)
     const result = await adminRequest<CreateAppData>({
       baseUrl: settings.baseUrl,
@@ -118,6 +142,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
       method: 'POST',
       body: { name: name.trim(), remark: remark.trim(), signRequired },
     })
+    if (currentScope !== scope.current) return
     setCreating(false)
     if (!result.ok || !result.data) {
       notify('error', adminFailure(result, settings.adminToken))
@@ -126,6 +151,10 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
     setName('')
     setRemark('')
     setSignRequired(false)
+    setShowCreate(false)
+    // 新建应用默认启用；清空筛选确保它立刻出现在列表里，而不是被旧关键词挡住。
+    setKeyword('')
+    setStatus(0)
     setReveal({
       title: '应用创建成功',
       appId: result.data.appId,
@@ -134,11 +163,12 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
       hint: result.data.signRequired ? 'secret 与 signKey 仅返回一次，请立即保存。' : 'secret 仅返回一次，请立即保存。',
     })
     notify('success', '应用已创建')
-    void loadApps(1)
+    void loadApps(1, pageSize, { keyword: '', status: 0 })
   }
 
   const executeConfirm = async () => {
     if (!confirm) return
+    const currentScope = scope.current
     setConfirmLoading(true)
     const { type, app } = confirm
     let result: AdminResult<unknown>
@@ -167,6 +197,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
         body: { appId: app.appId, status: type === 'disable' ? 2 : 1 },
       })
     }
+    if (currentScope !== scope.current) return
     setConfirmLoading(false)
     if (!result.ok) {
       notify('error', adminFailure(result, settings.adminToken))
@@ -214,16 +245,14 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
         </div>
       </section>
 
-      <div className="apps-top-grid">
+      <details className="console-disclosure" open={connectionOpen} onToggle={(event) => setConnectionOpen(event.currentTarget.open)}>
+        <summary>管理面连接 · {verified ? '已验证' : loading ? '验证中' : error ? '验证失败' : canQuery ? '待验证' : '未配置 JWT'}</summary>
         <section className="card admin-connection-card">
           <div className="card-heading compact">
             <div>
               <span className="eyebrow">管理鉴权</span>
               <h2>管理面连接</h2>
             </div>
-            <span className={`health-pill ${canQuery ? 'ok' : ''}`}>
-              <LockKeyhole size={13} /> {canQuery ? 'JWT 已填写' : '未配置 JWT'}
-            </span>
           </div>
           <div className="field">
             <span className="field-label">管理面地址</span>
@@ -247,7 +276,7 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
                 {showToken ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
-            <p className="field-hint">JWT 只保存在当前浏览器，仅限测试环境。401 时请重新获取。</p>
+            <p className="field-hint">JWT 只保存在当前浏览器，仅限测试环境。</p>
           </div>
           <div className="connection-actions">
             <button type="button" className="button secondary" onClick={() => void loadApps(1)} disabled={!canQuery || loading}>
@@ -257,18 +286,21 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
           </div>
           <div className="connection-note">
             <LockKeyhole size={15} />
-            <span>管理面变更会立即刷新开放面凭据缓存；停用后请求立刻返回 403。</span>
+            <span>应用停用后，开放面返回业务错误码 130001。</span>
           </div>
         </section>
+      </details>
 
+      <ConfirmDialog
+        open={showCreate}
+        title="创建应用"
+        message="应用凭据将在创建成功后展示。"
+        confirmLabel="创建应用"
+        loading={creating}
+        onCancel={() => setShowCreate(false)}
+        onConfirm={() => void handleCreate()}
+      >
         <section className="card create-app-card">
-          <div className="card-heading compact">
-            <div>
-              <span className="eyebrow">新建</span>
-              <h2>创建应用</h2>
-            </div>
-            <span className="method-icon"><Plus size={17} /></span>
-          </div>
           <div className="field">
             <label className="field-label" htmlFor="appName">应用名称</label>
             <input
@@ -308,13 +340,8 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
             </div>
             <ShieldCheck size={16} />
           </label>
-          <button type="button" className="button primary wide" onClick={() => void handleCreate()} disabled={!canQuery || creating}>
-            {creating ? <LoaderCircle size={15} className="spin" /> : <Plus size={15} />}
-            {creating ? '创建中…' : '创建应用'}
-          </button>
-          <p className="field-hint center">appId、secret 由服务端生成；启用签名时 signKey 也仅返回一次。</p>
         </section>
-      </div>
+      </ConfirmDialog>
 
       {reveal && (
         <div ref={revealRef}>
@@ -338,7 +365,9 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
             <span className="eyebrow">应用</span>
             <h2>应用列表</h2>
           </div>
-          <span className="count-badge">{total}</span>
+          <button type="button" className="button primary" disabled={!verified} onClick={() => setShowCreate(true)}>
+            <Plus size={15} /> 创建应用
+          </button>
         </div>
 
         <div className="apps-filters">
@@ -365,10 +394,11 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
           </button>
         </div>
 
-        {!apps.length && !loading && (
+        {loading && <div className="history-empty" role="status"><LoaderCircle size={20} className="spin" /><span>正在加载应用列表</span></div>}
+        {!apps.length && !loading && !error && (
           <div className="history-empty">
             <AppWindow size={22} />
-            <span>{canQuery ? '暂无应用，先在上方创建一个。' : '填写 JWT 后点击「验证并加载」。'}</span>
+            <span>{verified ? '没有匹配的应用。可调整筛选条件或创建应用。' : '填写 JWT 后点击「验证并加载」。'}</span>
           </div>
         )}
 
@@ -468,12 +498,17 @@ export default function AppsPage({ settings, onChange, notify }: AppsPageProps) 
 
 function adminFailure(result: AdminResult<unknown>, token: string): string {
   // 管理面信封恒为 HTTP 200，JWT 失效只能靠 code 识别，不能静默当成普通业务错误。
+  const rid = result.requestId ? ` · rid ${shortId(result.requestId, 12)}` : ''
+  // 本机 nginx 默认不转发 /open-admin/，404 时给出路径级说明，避免被当成 JWT 或后端故障。
+  if (result.httpStatus === 404 && result.code === -1) {
+    return `管理面 /open-admin/ 未开放：当前入口未转发该路径，请通过开发代理访问，或在可信内网临时放行。${rid}`
+  }
   if (result.code === 100110) {
-    if (!token.trim()) return '请先填写管理面 JWT token'
-    return '管理面 JWT 已失效，请重新获取并填写（当前输入已保留）'
+    const message = token.trim() ? '管理面 JWT 已失效，请重新获取并填写（当前输入已保留）' : '请先填写管理面 JWT token'
+    return `${message}${rid}`
   }
   const base = result.msg || `管理面请求失败（HTTP ${result.httpStatus}）`
-  return result.requestId ? `${base} · rid ${shortId(result.requestId, 12)}` : base
+  return `${base}${rid}`
 }
 
 function confirmTitle(type: ConfirmState['type']): string {
@@ -490,7 +525,7 @@ function confirmMessage(state: ConfirmState): string {
     return `将查看「${state.app.name}」当前生效的 signKey。该操作会记录审计日志，请确认当前环境允许查看敏感凭据。`
   }
   if (state.type === 'disable') {
-    return `停用「${state.app.name}」后，所有使用该应用凭据的请求会立即返回 403 / 130001。`
+    return `停用「${state.app.name}」后，所有使用该应用凭据的请求会立即返回业务码 130001（HTTP 200）。`
   }
   return `启用「${state.app.name}」后，现有有效密钥会立即恢复鉴权。`
 }
