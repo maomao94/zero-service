@@ -41,7 +41,7 @@ func (l *BatchDistanceLogic) BatchDistance(in *gis.BatchDistanceReq) (*gis.Batch
 		}
 		a := orb.Point{pair.A.Lon, pair.A.Lat}
 		b := orb.Point{pair.B.Lon, pair.B.Lat}
-		meters[i] = geo.Distance(a, b)
+		meters[i] = roundDistance(geo.Distance(a, b))
 	}
 
 	return &gis.BatchDistanceRes{

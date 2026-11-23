@@ -12,11 +12,67 @@ import (
 
 	"github.com/zeromicro/go-zero/core/logx"
 
+	"github.com/duke-git/lancet/v2/mathutil"
 	"github.com/mmcloughlin/geohash"
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/planar"
 	"github.com/uber/h3-go/v4"
 )
+
+// coordDecimalPlaces 坐标响应精度：6 位小数，约 0.11 m。
+// 与项目光伏飞行点台账等既有口径保持一致，远小于 GPS/无人机定位误差。
+const coordDecimalPlaces = 6
+
+// distanceDecimalPlaces 距离响应精度：3 位小数，即 1 mm，远高于球面距离本身的算法误差。
+const distanceDecimalPlaces = 3
+
+// roundCoord 按 6 位小数四舍五入，仅用于转换结果的响应出口，不参与中间计算。
+func roundCoord(v float64) float64 {
+	return normalizeZero(mathutil.RoundToFloat(v, coordDecimalPlaces))
+}
+
+// floorCoord / ceilCoord 用于格网边界：下界向下取、上界向上取，
+// 保证 6 位小数化后包围盒只增不减，不会把边缘点排除在外。
+func floorCoord(v float64) float64 {
+	return normalizeZero(mathutil.FloorToFloat(v, coordDecimalPlaces))
+}
+
+func ceilCoord(v float64) float64 {
+	return normalizeZero(mathutil.CeilToFloat(v, coordDecimalPlaces))
+}
+
+// roundDistance 按 3 位小数四舍五入，仅用于距离类响应出口。
+func roundDistance(v float64) float64 {
+	return normalizeZero(mathutil.RoundToFloat(v, distanceDecimalPlaces))
+}
+
+// normalizeZero 将 -0 归一化为 0，避免 JSON 输出 "-0"。
+func normalizeZero(v float64) float64 {
+	if v == 0 {
+		return 0
+	}
+	return v
+}
+
+// roundPbPoint 返回按 6 位小数取整后的坐标点副本，用于响应出口。
+func roundPbPoint(p *gis.Point) *gis.Point {
+	if p == nil {
+		return nil
+	}
+	return &gis.Point{Lon: roundCoord(p.Lon), Lat: roundCoord(p.Lat)}
+}
+
+// roundPbPoints 批量按 6 位小数取整，返回新切片，不修改入参。
+func roundPbPoints(points []*gis.Point) []*gis.Point {
+	if points == nil {
+		return nil
+	}
+	out := make([]*gis.Point, len(points))
+	for i, p := range points {
+		out[i] = roundPbPoint(p)
+	}
+	return out
+}
 
 // ValidateH3Resolution 校验 H3 分辨率，返回 int 类型或 nil。
 func ValidateH3Resolution(resolution uint32) (int, error) {
@@ -268,7 +324,7 @@ func orbPolygonToPbPolygon(polygon orb.Polygon) *gis.Polygon {
 func orbRingToPbPoints(ring orb.Ring) []*gis.Point {
 	points := make([]*gis.Point, len(ring))
 	for i, p := range ring {
-		points[i] = &gis.Point{Lat: p.Y(), Lon: p.X()}
+		points[i] = roundPbPoint(&gis.Point{Lat: p.Y(), Lon: p.X()})
 	}
 	return points
 }

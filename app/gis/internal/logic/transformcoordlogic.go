@@ -34,7 +34,7 @@ func (l *TransformCoordLogic) TransformCoord(in *gis.TransformCoordReq) (*gis.Tr
 	}
 	if in.SourceType == in.TargetType {
 		return &gis.TransformCoordRes{
-			TransformedPoint: in.Point,
+			TransformedPoint: roundPbPoint(in.Point),
 		}, nil
 	}
 
@@ -45,8 +45,8 @@ func (l *TransformCoordLogic) TransformCoord(in *gis.TransformCoordReq) (*gis.Tr
 
 	return &gis.TransformCoordRes{
 		TransformedPoint: &gis.Point{
-			Lat: transformedLat,
-			Lon: transformedLon,
+			Lat: roundCoord(transformedLat),
+			Lon: roundCoord(transformedLon),
 		},
 	}, nil
 }

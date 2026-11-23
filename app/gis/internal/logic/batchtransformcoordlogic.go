@@ -43,22 +43,15 @@ func (l *BatchTransformCoordLogic) BatchTransformCoord(in *gis.BatchTransformCoo
 	}
 
 	if in.SourceType == in.TargetType {
-		resPoints := make([]*gis.Point, len(in.Points))
-		for i, p := range in.Points {
-			resPoints[i] = &gis.Point{
-				Lat: p.Lat,
-				Lon: p.Lon,
-			}
-		}
 		return &gis.BatchTransformCoordRes{
-			TransformedPoints: resPoints,
+			TransformedPoints: roundPbPoints(in.Points),
 		}, nil
 	}
 
 	resPoints := make([]*gis.Point, len(in.Points))
 	for i, p := range in.Points {
 		lon, lat := doTransformCoord(p.Lon, p.Lat, in.SourceType, in.TargetType)
-		resPoints[i] = &gis.Point{Lat: lat, Lon: lon}
+		resPoints[i] = &gis.Point{Lat: roundCoord(lat), Lon: roundCoord(lon)}
 	}
 
 	return &gis.BatchTransformCoordRes{
