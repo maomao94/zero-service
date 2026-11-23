@@ -215,20 +215,25 @@ func TestClientManagerCleanStaleDoesNotWaitForDeviceIO(t *testing.T) {
 }
 
 // RemoveClient 必须等旧配置加载发布后再删除，不能让旧结果回填。
+// 发布后被删除的客户端仍会返回，但已作废，首次调用返回 ErrClientInvalidated。
 func TestClientManagerRemoveDuringLoad(t *testing.T) {
 	m := NewClientManager()
 	defer m.Close()
 	loaded, resume := make(chan struct{}), make(chan struct{})
 	var unavailable atomic.Bool
-	result := make(chan error, 1)
+	type loadResult struct {
+		cli *ModbusClient
+		err error
+	}
+	result := make(chan loadResult, 1)
 	go func() {
-		_, err := m.GetClient(context.Background(), "device", func(context.Context) (*ModbusClientConf, error) {
+		cli, err := m.GetClient(context.Background(), "device", func(context.Context) (*ModbusClientConf, error) {
 			conf := &ModbusClientConf{Address: "127.0.0.1:1"}
 			close(loaded)
 			<-resume
 			return conf, nil
 		})
-		result <- err
+		result <- loadResult{cli: cli, err: err}
 	}()
 	<-loaded
 	unavailable.Store(true)
@@ -245,8 +250,12 @@ func TestClientManagerRemoveDuringLoad(t *testing.T) {
 	if !<-removed {
 		t.Fatal("loaded client was not removed")
 	}
-	if err := <-result; err != nil && !errors.Is(err, ErrConfigChanged) {
-		t.Fatalf("in-flight load: %v", err)
+	got := <-result
+	if got.err != nil {
+		t.Fatalf("in-flight load: %v", got.err)
+	}
+	if _, err := got.cli.WriteSingleRegister(context.Background(), 0, 42); !errors.Is(err, ErrClientInvalidated) {
+		t.Fatalf("removed in-flight client write = %v", err)
 	}
 	cli, err := m.GetClient(context.Background(), "device", func(context.Context) (*ModbusClientConf, error) {
 		if unavailable.Load() {
