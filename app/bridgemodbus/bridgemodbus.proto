@@ -76,10 +76,29 @@ service BridgeModbus {
   // 读取特定 Object ID 的设备标识 (Function Code 0x2B / 0x0E)
   rpc ReadDeviceIdentificationSpecificObject(ReadDeviceIdentificationSpecificObjectReq) returns (ReadDeviceIdentificationSpecificObjectRes);
 
-  // 批量转换十进制数值为Modbus寄存器格式
-  // 功能：将输入的十进制整数（支持正负）转换为Modbus寄存器使用的两字节格式
-  // 输出：提供无符号值、有符号值、十六进制、二进制和字节数组多种表示形式
-  rpc BatchConvertDecimalToRegister(BatchConvertDecimalToRegisterReq) returns (BatchConvertDecimalToRegisterRes);
+  // 批量将 16 位整数转换为 Modbus 寄存器表示（纯计算，不访问设备）
+  // 功能：int16/uint16 数值 → 每个值一个 16 位寄存器，附带十六进制、二进制、字节数组
+  // 请求示例：{"values":[220,-12],"unsigned":false}
+  // 返回示例：uint16Values [220,65524]（0x00DC 0xFFF4）、int16Values [220,-12]、
+  //   hexValues ["0x00DC","0xFFF4"]、binaryValues ["0000000011011100","1111111111110100"]、
+  //   bytes 00 DC FF F4（每寄存器高字节在前；JSON 中为 base64 "ANz/9A=="）
+  rpc BatchConvertValue16ToRegisters(BatchConvertValue16ToRegistersReq) returns (BatchConvertValue16ToRegistersRes);
+
+  // 批量将 32 位数值按字序拆成两个寄存器（纯计算，不访问设备）
+  // 功能：uint32/int32/float32 → 两个 16 位寄存器，支持 ABCD/CDAB/BADC/DCBA 字序
+  // 请求示例：{"values":[220.5],"dataType":"VALUE32_FLOAT32","wordOrder":"WORD_ORDER_CDAB"}
+  // 返回示例：results[0].registers [32768,17244]（0x8000 0x435C）、bytes 80 00 43 5C、
+  //   hex "0x8000 0x435C"、binary "1000000000000000 0100001101011100"、value 220.5；
+  //   registers [32768,17244]（全部值展平，可直接写连续保持寄存器）
+  rpc BatchConvertValue32ToRegisters(BatchConvertValue32ToRegistersReq) returns (BatchConvertValue32ToRegistersRes);
+
+  // 批量将连续寄存器按字序还原为 32 位数值（纯计算，不访问设备）
+  // 功能：设备顺序的连续寄存器（每 2 个一组）→ uint32/int32/float32，支持 ABCD/CDAB/BADC/DCBA 字序
+  // 请求示例：{"registers":[32768,17244],"dataType":"VALUE32_FLOAT32","wordOrder":"WORD_ORDER_CDAB"}
+  // 返回示例：value 220.5、uint32Value 1130135552（0x435C8000）、int32Value 1130135552、
+  //   float32Value 220.5；registers [32768,17244]、bytes 80 00 43 5C、hex "0x8000 0x435C"
+  // 说明：registers/bytes/hex 是设备报文原样回显，不按 wordOrder 重排
+  rpc BatchConvertRegistersToValue32(BatchConvertRegistersToValue32Req) returns (BatchConvertRegistersToValue32Res);
 }
 
 message PbModbusConfig {
@@ -341,15 +360,106 @@ message ReadDeviceIdentificationSpecificObjectRes {
   map<string, string> semanticResults = 3 [json_name = "semanticResults"];
 }
 
-message BatchConvertDecimalToRegisterReq {
+message BatchConvertValue16ToRegistersReq {
   repeated int32 values = 1 [json_name = "values"]; // 整数数值列表，支持正数和负数, 注意浮点数需要放大到整数倍
   bool unsigned = 2 [json_name = "unsigned"]; // 是否为无符号整数（true: 无符号，false: 有符号）
 }
 
-message BatchConvertDecimalToRegisterRes {
+message BatchConvertValue16ToRegistersRes {
   repeated uint32 uint16Values = 1 [json_name = "uint16Values"]; // 无符号两字节数值列表（范围：0-65535）
   repeated int32 int16Values = 2 [json_name = "int16Values"]; // 有符号数值列表（范围：-32768-32767）
   repeated string hex_values = 3 [json_name = "hexValues"]; // 十六进制表示列表（格式：0xXXXX）
   repeated string binary_values = 4 [json_name = "binaryValues"]; // 二进制表示列表（格式：16位二进制字符串）
   bytes bytes = 5 [json_name = "bytes"]; // 字节数组表示（大端序，每两个字节对应一个值）
+}
+
+// ==================== 32 位寄存器转换（纯计算，不访问设备） ====================
+
+// WordOrder 是 32 位值拆分为两个 16 位寄存器时的字序。
+//
+// 为什么有四种：
+// Modbus 协议只定义 16 位寄存器，一个 32 位值由设备厂商自行拆成两个寄存器，
+// 规范未规定顺序。固件受 CPU 大小端和变量在内存中的摆放方式影响，形成两个
+// 独立的自由度：字顺序（高字在前/低字在前）和字内字节顺序（高字节在前/低字节在前），
+// 组合起来就是 4 种。注意 Modbus 在线上传输时每个寄存器固定高字节先发，
+// 所以 BADC/DCBA 本质是固件把 32 位变量按小端字节放进寄存器、再按大端发出。
+//
+// 以 0x12345678（按发送顺序记作 A=12 B=34 C=56 D=78）为例：
+//   - ABCD: 0x1234 0x5678（高字在前，最常见的默认形式）
+//   - CDAB: 0x5678 0x1234（字交换，低字先存）
+//   - BADC: 0x3412 0x7856（字内字节交换）
+//   - DCBA: 0x7856 0x3412（整体小端）
+//
+// 常见分布（仅为经验值，同一厂商不同型号、不同固件也可能不同，必须以设备手册
+// 的“32 位数据格式”说明或实测结果为准，本服务不做猜测）：
+//   - ABCD：多数欧美 PLC 与仪表的默认形式（如施耐德、西门子、WAGO 等）
+//   - CDAB：常见于部分国产 PLC/仪表（如台达、汇川、信捷的部分系列）
+//   - BADC：多见于部分电力、流量等仪表的字节交换配置
+//   - DCBA：多见于部分温控、称重等小型仪表的整体小端配置
+//
+// 字序选错不会报错，只会得到错误数值（如 220.5 读成极小值或 NaN），
+// 上线前应写入已知值再读回验证。
+enum WordOrder {
+  WORD_ORDER_UNSPECIFIED = 0; // 未指定，接口会拒绝
+  WORD_ORDER_ABCD = 1;
+  WORD_ORDER_CDAB = 2;
+  WORD_ORDER_BADC = 3;
+  WORD_ORDER_DCBA = 4;
+}
+
+// Value32Type 是 32 位值的解释方式。
+enum Value32Type {
+  VALUE32_TYPE_UNSPECIFIED = 0; // 未指定，接口会拒绝
+  VALUE32_UINT32 = 1;
+  VALUE32_INT32 = 2;
+  VALUE32_FLOAT32 = 3;
+}
+
+// BatchConvertValue32ToRegistersReq 是 32 位数值编码为两个寄存器的请求。
+message BatchConvertValue32ToRegistersReq {
+  repeated double values = 1 [json_name = "values"]; // 32 位数值列表，按 data_type 校验范围
+  Value32Type data_type = 2 [json_name = "dataType"]; // 数值类型，同一次请求内所有值使用同一类型
+  WordOrder word_order = 3 [json_name = "wordOrder"]; // 字序，必须显式指定
+}
+
+// Value32EncodeResult 是单个数值的编码结果，字段与 Value32DecodeResult 对应。
+// registers/bytes/hex 是按 word_order 编出的设备协议顺序，可直接按序写入保持寄存器。
+message Value32EncodeResult {
+  repeated uint32 registers = 1 [json_name = "registers"]; // 两个寄存器，顺序即设备协议顺序（寄存器地址顺序），可直接按序写入连续保持寄存器（0-65535）
+  bytes bytes = 2 [json_name = "bytes"]; // 上述两个寄存器在 Modbus 报文中的四字节，每寄存器高字节在前
+  string hex = 3 [json_name = "hex"]; // 上述两个寄存器在 Modbus 报文中的十六进制，格式 "0x%04X 0x%04X"，如 "0x1234 0x5678"
+  string binary = 4 [json_name = "binary"]; // 二进制寄存器，如 "0001001000110100 0101011001111000"
+  double value = 5 [json_name = "value"]; // 回显输入数值
+}
+
+message BatchConvertValue32ToRegistersRes {
+  repeated Value32EncodeResult results = 1 [json_name = "results"]; // 逐值结果，顺序与请求 values 一致
+  // 全部寄存器按输入顺序展平（每个值 2 个寄存器）。
+  // 单次 Modbus 写多个寄存器最多 123 个，超过（约 61 个 32 位值）需按 123 个一组分片下发。
+  repeated uint32 registers = 2 [json_name = "registers"];
+}
+
+// BatchConvertRegistersToValue32Req 是把连续寄存器解码为 32 位数值的请求。
+// registers 每 2 个元素按 word_order 还原成一个 32 位值，长度必须为偶数。
+message BatchConvertRegistersToValue32Req {
+  repeated uint32 registers = 1 [json_name = "registers"]; // 按设备协议顺序（寄存器地址顺序）的连续寄存器（0-65535），长度必须为偶数；不要先按 word_order 重排
+  Value32Type data_type = 2 [json_name = "dataType"]; // 数值类型，决定 value 字段的取值方式，同一次请求内所有组使用同一类型
+  WordOrder word_order = 3 [json_name = "wordOrder"]; // 设备协议的字序，必须显式指定；仅用于把每 2 个寄存器解释成一个 32 位值
+}
+
+// Value32DecodeResult 是一组寄存器（2 个）的解码结果，字段与 Value32EncodeResult 对应。
+// registers/bytes/hex 是设备报文里的字节层原样回显：顺序由设备协议决定（寄存器地址顺序，
+// 每寄存器高字节在前），不按 word_order 重排；word_order 只用于把这两个寄存器解释成 value 系列。
+message Value32DecodeResult {
+  repeated uint32 registers = 1 [json_name = "registers"]; // 回显该组的两个寄存器，顺序即设备协议顺序（寄存器地址顺序），不按 word_order 重排（0-65535）
+  bytes bytes = 2 [json_name = "bytes"]; // 该组在 Modbus 报文中的原始四字节，每寄存器高字节在前，不按 word_order 重排
+  string hex = 3 [json_name = "hex"]; // 该组在 Modbus 报文中的原始十六进制，格式 "0x%04X 0x%04X"，不按 word_order 重排，如 "0x8000 0x435C"
+  double value = 4 [json_name = "value"]; // 按 data_type 的主结果：uint32/int32 为整数，float32 为 float32 精确展开值
+  uint32 uint32_value = 5 [json_name = "uint32Value"]; // 无符号视图（任意类型都有意义）
+  int32 int32_value = 6 [json_name = "int32Value"]; // 有符号视图（任意类型都有意义）
+  float float32_value = 7 [json_name = "float32Value"]; // 浮点视图，仅 data_type=FLOAT32 时填充，JSON 按 float32 最短表示输出
+}
+
+message BatchConvertRegistersToValue32Res {
+  repeated Value32DecodeResult results = 1 [json_name = "results"];
 }

@@ -120,6 +120,16 @@ func Int32SliceToInt16Slice(values []int32) []int16 {
 	return ConvertSlice(values, Int32ToInt16)
 }
 
+// Int32SliceToUint32Slice 把 int32 按原始 32 位比特拓宽为 uint32，负数会变成高位全 1 的大值。
+func Int32SliceToUint32Slice(values []int32) []uint32 {
+	return ConvertSlice(values, func(v int32) uint32 { return uint32(v) })
+}
+
+// Int16SliceToUint16Slice 把 int16 按补码比特重解释为 uint16，-1 变成 65535。
+func Int16SliceToUint16Slice(values []int16) []uint16 {
+	return ConvertSlice(values, func(v int16) uint16 { return uint16(v) })
+}
+
 // ------------------------------
 // 字节 → 完整 BinaryValues
 // ------------------------------
@@ -295,6 +305,19 @@ func Int32SliceToInt16SliceValidate(values []int32) ([]int16, int, error) {
 			return nil, i, fmt.Errorf("index %d: value %d exceeds int16 range [-32768, 32767]", i, v)
 		}
 		result[i] = int16(v)
+	}
+	return result, -1, nil
+}
+
+// Int32SliceToUint16SliceValidate 批量将 int32 按 int16 补码校验并转为 16 位寄存器值。
+// 超出 [-32768, 32767] 时返回第一个出错值的索引（0-based）和 error。
+func Int32SliceToUint16SliceValidate(values []int32) ([]uint16, int, error) {
+	result := make([]uint16, len(values))
+	for i, v := range values {
+		if v > 32767 || v < -32768 {
+			return nil, i, fmt.Errorf("index %d: value %d exceeds int16 range [-32768, 32767]", i, v)
+		}
+		result[i] = uint16(int16(v))
 	}
 	return result, -1, nil
 }

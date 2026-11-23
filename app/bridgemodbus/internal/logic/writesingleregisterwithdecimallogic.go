@@ -25,12 +25,12 @@ func NewWriteSingleRegisterWithDecimalLogic(ctx context.Context, svcCtx *svc.Ser
 
 // 写单个保持寄存器（使用十进制数值）
 func (l *WriteSingleRegisterWithDecimalLogic) WriteSingleRegisterWithDecimal(in *bridgemodbus.WriteSingleRegisterWithDecimalReq) (*bridgemodbus.WriteSingleRegisterWithDecimalRes, error) {
-	convertLogic := NewBatchConvertDecimalToRegisterLogic(l.ctx, l.svcCtx)
-	convertReq := &bridgemodbus.BatchConvertDecimalToRegisterReq{
+	convertLogic := NewBatchConvertValue16ToRegistersLogic(l.ctx, l.svcCtx)
+	convertReq := &bridgemodbus.BatchConvertValue16ToRegistersReq{
 		Values:   []int32{in.Value},
 		Unsigned: in.Unsigned,
 	}
-	convertRes, err := convertLogic.BatchConvertDecimalToRegister(convertReq)
+	convertRes, err := convertLogic.BatchConvertValue16ToRegisters(convertReq)
 	if err != nil {
 		return nil, err
 	}
