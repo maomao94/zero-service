@@ -116,6 +116,6 @@ func (l *RoutePointsLogic) RoutePoints(in *gis.RoutePointsReq) (*gis.RoutePoints
 
 	return &gis.RoutePointsRes{
 		VisitOrder:          order,
-		TotalDistanceMeters: totalDist,
+		TotalDistanceMeters: roundDistance(totalDist),
 	}, nil
 }

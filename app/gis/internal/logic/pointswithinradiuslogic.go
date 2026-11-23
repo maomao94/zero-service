@@ -45,7 +45,7 @@ func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusR
 		if distance <= in.RadiusMeters {
 			hits = append(hits, &gis.RadiusHit{
 				Index:          int32(i),
-				DistanceMeters: distance,
+				DistanceMeters: roundDistance(distance),
 			})
 		}
 	}

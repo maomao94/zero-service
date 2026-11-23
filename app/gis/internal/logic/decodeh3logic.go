@@ -46,16 +46,16 @@ func (l *DecodeH3Logic) DecodeH3(in *gis.DecodeH3Req) (*gis.DecodeH3Res, error) 
 	}
 	boundary := make([]*gis.Point, len(b))
 	for i, v := range b {
-		boundary[i] = &gis.Point{
+		boundary[i] = roundPbPoint(&gis.Point{
 			Lat: v.Lat,
 			Lon: v.Lng,
-		}
+		})
 	}
 	return &gis.DecodeH3Res{
-		Center: &gis.Point{
+		Center: roundPbPoint(&gis.Point{
 			Lat: latLng.Lat,
 			Lon: latLng.Lng,
-		},
+		}),
 		Boundary:   boundary,
 		Resolution: uint32(cell.Resolution()),
 	}, nil

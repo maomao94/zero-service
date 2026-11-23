@@ -36,14 +36,14 @@ func (l *DecodeGeoHashLogic) DecodeGeoHash(in *gis.DecodeGeoHashReq) (*gis.Decod
 	// bbox
 	box := geohash.BoundingBox(in.Geohash)
 	return &gis.DecodeGeoHashRes{
-		Point: &gis.Point{
+		Point: roundPbPoint(&gis.Point{
 			Lat: lat,
 			Lon: lon,
-		},
+		}),
 		Precision: uint32(len(in.Geohash)),
-		LatMin:    box.MinLat,
-		LatMax:    box.MaxLat,
-		LonMin:    box.MinLng,
-		LonMax:    box.MaxLng,
+		LatMin:    floorCoord(box.MinLat),
+		LatMax:    ceilCoord(box.MaxLat),
+		LonMin:    floorCoord(box.MinLng),
+		LonMax:    ceilCoord(box.MaxLng),
 	}, nil
 }
