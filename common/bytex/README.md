@@ -208,6 +208,10 @@ func Uint32ToUint16(u uint32) uint16
 func Int32ToInt16(i int32) int16
 func Uint32SliceToUint16Slice(values []uint32) []uint16
 func Int32SliceToInt16Slice(values []int32) []int16
+
+// 32 位 → 16 位寄存器值：按原始比特重解释，不做范围校验
+func Int32SliceToUint32Slice(values []int32) []uint32 // int32 → uint32（负数变大值）
+func Int16SliceToUint16Slice(values []int16) []uint16 // int16 → uint16（-1 → 65535）
 ```
 
 ### 带校验的转换（uint32 → uint16）
@@ -238,6 +242,10 @@ func Int32ToInt16Validate(v int32) (int16, error)
 
 // 批量校验，返回第一个出错值的索引（0-based）；无错误时 index = -1
 func Int32SliceToInt16SliceValidate(values []int32) ([]int16, int, error)
+
+// 批量校验后直接得到 16 位寄存器值（按 int16 补码），省掉一次 int16 → uint16 转换
+// 超出 [-32768, 32767] 返回第一个出错值的索引（0-based）；无错误时 index = -1
+func Int32SliceToUint16SliceValidate(values []int32) ([]uint16, int, error)
 ```
 
 **示例：**
@@ -258,6 +266,54 @@ if err != nil {
     // errIdx = 2, err = "index 2: value -40000 exceeds int16 range [-32768, 32767]"
     return fmt.Errorf("第 %d 个值超出范围: %w", errIdx+1, err)
 }
+```
+
+### 32 位数值 ↔ 两个寄存器（字序）
+
+一个 32 位值占两个 16 位寄存器，设备对高/低字和字内字节的排列不统一，必须显式给出 `WordOrder`：
+
+| WordOrder | 0x12345678 的寄存器序列 | 说明 |
+| --- | --- | --- |
+| `WordOrderABCD` | 0x1234 0x5678 | 高字在前，最常见 |
+| `WordOrderCDAB` | 0x5678 0x1234 | 字交换，国产仪表常见 |
+| `WordOrderBADC` | 0x3412 0x7856 | 字内字节交换 |
+| `WordOrderDCBA` | 0x7856 0x3412 | 整体小端 |
+
+为什么有四种：Modbus 只定义 16 位寄存器，32 位值由厂商自行拆成两个寄存器，规范没规定顺序。固件受 CPU 大小端和变量摆放影响，"字顺序"（高/低字在前）和"字内字节序"（高/低字节在前）互相独立，2×2 即得四种。线上每个寄存器固定高字节先发，所以 BADC/DCBA 实际是固件把小端存放的字节按大端发出后的结果。
+
+经验分布（同一厂商不同型号、不同固件也可能不同，必须查手册或实测）：ABCD 是多数欧美 PLC/仪表（施耐德、西门子、WAGO 等）的默认形式；CDAB 常见于部分国产 PLC/仪表（台达、汇川、信捷的部分系列）；BADC 多见于部分电力、流量仪表的字节交换配置；DCBA 多见于部分温控、称重等小型仪表的整体小端配置。字序选错不会报错，只会得到错误数值，上线前应写入已知值再读回验证。
+
+零值是 `WordOrderUnspecified`，所有转换函数都会返回 `ErrInvalidWordOrder`，不会静默按 ABCD 处理。
+
+```go
+// uint32：按字序拆成设备顺序的两个寄存器 / 还原
+func SplitUint32(v uint32, order WordOrder) ([2]uint16, error)
+func CombineUint32(regs [2]uint16, order WordOrder) (uint32, error)
+
+// int32：按补码拆分与还原
+func SplitInt32(v int32, order WordOrder) ([2]uint16, error)
+func CombineInt32(regs [2]uint16, order WordOrder) (int32, error)
+
+// float32：按 IEEE 754 单精度拆分与还原
+func SplitFloat32(v float32, order WordOrder) ([2]uint16, error)
+func CombineFloat32(regs [2]uint16, order WordOrder) (float32, error)
+
+// 字序自身
+func (o WordOrder) Valid() bool
+func (o WordOrder) String() string
+```
+
+**示例：**
+
+```go
+regs, err := bytex.SplitFloat32(220.5, bytex.WordOrderCDAB)
+if err != nil {
+    return err
+}
+// regs = [2]uint16{0x8000, 0x435C}
+
+v, err := bytex.CombineFloat32([2]uint16{0x8000, 0x435C}, bytex.WordOrderCDAB)
+// v = 220.5
 ```
 
 ### BinaryValues（寄存器多格式展示）
@@ -348,11 +404,10 @@ mbCli.WriteMultipleCoils(ctx, 0, 8, writeBytes)
 ```go
 // 温度值可能为负（如 -200 表示 -20.0°C，精度 0.1）
 signedVals := []int32{-200, 300, 150}
-int16s, errIdx, err := bytex.Int32SliceToInt16SliceValidate(signedVals)
+regs, errIdx, err := bytex.Int32SliceToUint16SliceValidate(signedVals)
 if err != nil {
-    return fmt.Errorf("第 %d 个温度值超出 int16 范围: %w", errIdx+1, err)
+    return fmt.Errorf("第 %d 个温度值超出 16 位寄存器范围: %w", errIdx+1, err)
 }
-regs := bytex.ConvertSlice(int16s, func(v int16) uint16 { return uint16(v) })
 bytes := bytex.Uint16SliceToBytes(regs)
 mbCli.WriteMultipleRegisters(ctx, 100, uint16(len(regs)), bytes)
 ```

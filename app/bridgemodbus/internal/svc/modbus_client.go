@@ -15,6 +15,8 @@ import (
 // GetModbusClient 复用每个 code 的长期客户端，不需要借还。
 // 空 code 使用文件默认配置，非空 code 必须查询启用的表配置，不回退文件配置。
 // 配置加载错误原样返回（已带平台码）；建连失败和管理器内部错误统一收敛为 100140。
+// 返回的客户端可能被并发淘汰，此时首次读写返回 modbusx.ErrClientInvalidated，
+// 确定未下发设备 I/O，按业务错误提示调用方重新发起请求。
 func (s *ServiceContext) GetModbusClient(ctx context.Context, modbusCode string) (*modbusx.ModbusClient, error) {
 	load := func(ctx context.Context) (*modbusx.ModbusClientConf, error) {
 		if modbusCode == "" {
@@ -24,25 +26,15 @@ func (s *ServiceContext) GetModbusClient(ctx context.Context, modbusCode string)
 	}
 
 	cli, err := s.Manager.GetClient(ctx, modbusCode, load)
-	if errors.Is(err, modbusx.ErrConfigChanged) {
-		// 加载发布后被并发移除，尚未发生设备 I/O，重取一次即可。
-		cli, err = s.Manager.GetClient(ctx, modbusCode, load)
-	}
 	if err == nil {
 		return cli, nil
 	}
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		return nil, err
-	}
 	// loadModbusClientConfig 的错误已带平台码：不存在/未启用/转换失败包装了
 	// ErrConfigUnavailable，查库失败是 100050；NewErrorByPbCodeWrap 会保留原码和文案。
-
+	// ctx 已由 GetClient 和 callClient 检查，走到这里的原始 ctx 错误说明请求方已放弃。
 	message := "获取 Modbus 客户端失败"
-	switch {
-	case errors.Is(err, modbusx.ErrManagerClosed):
+	if errors.Is(err, modbusx.ErrManagerClosed) {
 		message = "服务正在关闭，请稍后重试"
-	case errors.Is(err, modbusx.ErrConfigChanged):
-		message = "Modbus 配置已变更，请重新发起请求"
 	}
 	return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_BIZ, err, message)
 }
