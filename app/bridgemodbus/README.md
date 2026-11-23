@@ -17,7 +17,7 @@
 - **Bit Access**：读线圈 0x01、读离散输入 0x02、写单个线圈 0x05、写多个线圈 0x0F。
 - **Register Access**：读输入寄存器 0x04、读保持寄存器 0x03、写单个寄存器 0x06、写多个寄存器 0x10、读写多个寄存器 0x17、掩码写 0x16、读 FIFO 0x18。
 - **Device Identification**：0x2B/0x0E 读设备标识与指定对象。
-- **本地换算**：十进制数值与 Modbus 寄存器格式批量转换。
+- **本地换算**：16 位整数与 32 位（uint32/int32/float32、支持字序）数值和寄存器格式批量互转，不访问设备。
 
 ## 客户端复用与配置
 
@@ -31,6 +31,42 @@
 配置缺省值：`Timeout=10000ms`（上限 600000）、`IdleTimeout=60000ms`、`Slave=1`，恢复窗口与 `ConnectDelay` 为 0。需要长连接可设 `IdleTimeout=-1`；需要只读断链恢复或迟到响应处理，可分别设 `LinkRecoveryTimeout=3000`、`ProtocolRecoveryTimeout=2000`。
 
 表中新建记录的默认值以 GORM 模型 `gormmodel.ModbusSlaveConfig` 为准，已有记录中的显式值不自动改写。TLS 证书文件内容变更需重启服务或改动配置后生效。
+
+## 本地换算（不访问设备）
+
+纯计算接口，不建立 Modbus 连接，用于数值与寄存器表示互转。
+
+| 接口 | 方向 | 说明 |
+| --- | --- | --- |
+| `BatchConvertValue16ToRegisters` | 整数 → 1 个寄存器 | 16 位，无符号/有符号 |
+| `BatchConvertValue32ToRegisters` | 数值 → 2 个寄存器 | 32 位，uint32/int32/float32，需指定字序；逐值结果另带展平的连续寄存器 |
+| `BatchConvertRegistersToValue32` | 连续寄存器 → 数值 | 每 2 个寄存器一组，回显寄存器与字节，按 dataType 给出主结果及无符号/有符号/浮点视图 |
+
+字序必须显式指定：`ABCD`（高字在前，最常见）、`CDAB`（字交换，国产仪表常见）、`BADC`、`DCBA`；不传会被拒绝。
+
+四种字序的来源是 Modbus 只定义 16 位寄存器，32 位值由厂商自行拆成两个寄存器，"字顺序"与"字内字节序"两个自由度组合成 4 种。经验分布（同一厂商不同型号也可能不同，以手册或实测为准）：ABCD 为多数欧美 PLC/仪表默认形式；CDAB 常见于部分国产 PLC/仪表；BADC、DCBA 多见于电力/流量/温控等仪表的字节交换或小端配置。字序选错不会报错，只会得到错误数值，上线前应写入已知值读回验证。
+
+`dataType` 是请求级字段，同一次请求内所有值必须使用同一类型；混排类型的点表按类型拆成多次调用。
+
+编码与解码的结果结构对称，都包含该组的 `registers`（两个寄存器）、`bytes`（四字节）和 `hex`（两个寄存器的十六进制），三者统一按设备协议顺序（即寄存器地址顺序，每寄存器高字节在前）返回，可直接互相校验。
+
+```json
+// 220.5 按 float32、CDAB 编码
+{"values":[220.5],"dataType":"VALUE32_FLOAT32","wordOrder":"WORD_ORDER_CDAB"}
+// → results[0].registers [32768,17244]，bytes 0x8000 0x435C，hex "0x8000 0x435C"
+// → registers [32768,17244]（全部值展平，可直接用于写多个寄存器）
+
+// 反向解码，连续寄存器每 2 个一组
+{"registers":[32768,17244],"dataType":"VALUE32_FLOAT32","wordOrder":"WORD_ORDER_CDAB"}
+// → registers [32768,17244]，bytes 0x8000 0x435C
+// → hex "0x8000 0x435C"，value 220.5，float32Value 220.5
+```
+
+`registers`/`bytes`/`hex` 是同一段字节的三种表示，顺序由设备协议决定（寄存器地址顺序），两端都不再按 `wordOrder` 二次重排：编码侧 `wordOrder` 只决定"编出哪两个寄存器"，解码侧 `wordOrder` 只决定"这两个寄存器还原成什么数值"。因此编码输出与解码回显完全同构：同一组寄存器原样读回后，`bytes`/`hex` 与当初编码写入时逐字符一致。需要"还原后的 32 位值"时看 `value`/`uint32Value`/`int32Value`/`float32Value`，不必从 `hex` 里再解析。寄存器落在哪个地址、怎么存储由业务侧决定，本服务只做数值与寄存器表示互转。
+
+`value` 是按 `dataType` 选定的主结果：uint32/int32 为整数，float32 为该 float32 精确展开的 double。编码侧 `value` 回显同样按实际载荷给出（float32 会回落为 float32 精度，如 `0.1` 回显 `0.10000000149011612`），便于和设备读回值直接比对。`float32Value` 只在 `dataType=VALUE32_FLOAT32` 时填充，并按 float32 最短表示输出（如 `0.12`），因此整数比特不会以 `"NaN"`/`"Infinity"` 字符串出现在 JSON 中；解码到设备返回的 NaN/Inf 位模式时会原样输出 `"NaN"`/`"Infinity"` 字符串，属于预期行为。
+
+多个值是连续地址时，按输入顺序取 `registers` 整块保存或下发；解码时把读回的寄存器按设备地址顺序整块传入，不要先按 `wordOrder` 自己重排（重排等于让字序生效两次），返回顺序与寄存器顺序一致。注意单次 Modbus 写多个寄存器最多 123 个，超过（约 61 个 32 位值）需按 123 个一组分片调用。
 
 ## 协议与参数约束
 
