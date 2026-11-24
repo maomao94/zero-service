@@ -64,21 +64,28 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划状态已结束,无需终止")
 	}
 
+	closeReason := in.Reason
+	if closeReason == "" {
+		closeReason = "计划被终止"
+	}
+	now := time.Now()
+	var terminatedItems int64
+
 	// 执行事务
 	err = db.Transaction(func(tx *gorm.DB) error {
-		var runningCount int64
-		runningCount, transErr := gormmodel.CountRunningExecItemsByPlan(l.ctx, tx, plan.Id)
+		// 不拦截执行中的执行项：计划终止时把未结束执行项统一收敛为终止态，
+		// 与批次终止保持一致。在途下游任务由业务侧按通知自行闭环。
+		var transErr error
+		terminatedItems, transErr = gormmodel.TerminateUnfinishedExecItemsByPlan(
+			l.ctx, tx, plan.Id, closeReason, authctx.GetUserId(l.ctx), now,
+		)
 		if transErr != nil {
 			return transErr
 		}
-		if runningCount > 0 {
-			return errPlanExecItemRunning
-		}
 
-		now := time.Now()
 		// 只更新父级状态；cron claim 后会重新加载父级并在非 enabled/finished 时停止下发。
 		updated, transErr := gormmodel.UpdatePlanTerminated(
-			l.ctx, tx, plan.Id, in.Reason, authctx.GetUserId(l.ctx), now,
+			l.ctx, tx, plan.Id, closeReason, authctx.GetUserId(l.ctx), now,
 		)
 		if transErr != nil {
 			return transErr
@@ -97,16 +104,12 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 			Where("finished_time IS NULL").
 			Updates(map[string]any{
 				"status":            model.PlanStatusTerminated,
-				"terminated_reason": sql.NullString{String: in.Reason, Valid: in.Reason != ""},
+				"terminated_reason": sql.NullString{String: closeReason, Valid: true},
 				"finished_time":     now,
 				"update_user":       sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
 			}).Error
 		if transErr != nil {
 			return transErr
-		}
-		closeReason := in.Reason
-		if closeReason == "" {
-			closeReason = "计划被终止"
 		}
 		if _, transErr := gormmodel.ClosePlanConfirmsByPlan(l.ctx, tx, plan.Id, authctx.GetUserId(l.ctx), closeReason, now); transErr != nil {
 			return transErr
@@ -115,17 +118,14 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 	})
 
 	if err != nil {
-		if errors.Is(err, errPlanExecItemRunning) {
-			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划存在正在执行的执行项，请执行项结束后再终止")
-		}
 		if errors.Is(err, model.ErrNoRowsUpdate) {
 			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划状态已变化，无法终止")
 		}
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "终止计划事务失败")
 	}
-	confirm.NotifyPlanFinished(l.ctx, l.svcCtx.StreamEventCli, &plan, in.Reason)
+	confirm.NotifyPlanFinished(l.ctx, l.svcCtx.StreamEventCli, &plan, closeReason)
 
 	planLog := planscope.PlanScope(&plan).Logger(l.ctx)
-	planLog.Info("RPC 终止计划：计划状态已更新，事务已提交")
+	planLog.WithFields(logx.Field("terminated_items", terminatedItems)).Info("RPC 终止计划：计划与未结束执行项已更新，事务已提交")
 	return &trigger.TerminatePlanRes{}, nil
 }

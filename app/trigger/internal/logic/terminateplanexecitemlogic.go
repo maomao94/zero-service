@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"database/sql"
+	"time"
 	"zero-service/app/trigger/internal/confirm"
 	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
-	"gorm.io/gorm"
 )
 
 type TerminatePlanExecItemLogic struct {
@@ -83,28 +83,38 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	scope := planscope.ExecScope(&execItem)
 	log := scope.Logger(l.ctx)
 
-	// 执行事务
-	err = db.Transaction(func(tx *gorm.DB) error {
-		// 更新执行项状态为已终止
-		execItem.Status = model.StatusTerminated
-		execItem.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
-		execItem.PausedTime = sql.NullTime{}
-		execItem.PausedReason = sql.NullString{}
-		execItem.UpdateUser = sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""}
-
-		// 更新执行项
-		return tx.Save(&execItem).Error
-	})
-
-	if err != nil {
-		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "终止执行项事务失败")
+	// 未填写终止原因时与计划/批次终止保持一致，写入默认原因，避免执行项终止原因为空。
+	closeReason := in.Reason
+	if closeReason == "" {
+		closeReason = "执行项被终止"
 	}
+
+	// 更新执行项为终止态；更新带上读取时的状态条件（未结束），期间被其它链路推进到终态时不覆盖。
+	now := time.Now()
+	result := db.Model(&gormmodel.PlanExecItem{}).
+		Where("id = ?", execItem.Id).
+		Where("status NOT IN ?", []int{model.StatusCompleted, model.StatusTerminated}).
+		Updates(map[string]any{
+			"status":            model.StatusTerminated,
+			"terminated_reason": sql.NullString{String: closeReason, Valid: true},
+			"paused_time":       sql.NullTime{},
+			"paused_reason":     sql.NullString{},
+			"update_user":       sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
+			"update_time":       now,
+		})
+	if result.Error != nil {
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, result.Error, "终止执行项失败")
+	}
+	if result.RowsAffected == 0 {
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "执行项状态已变化，请刷新后重试")
+	}
+	execItem.Status = model.StatusTerminated
 	batch := &gormmodel.PlanBatch{PlanPk: execItem.PlanPk, PlanId: execItem.PlanId, BatchId: execItem.BatchId}
 	batch.Id = execItem.BatchPk
-	if _, _, notifyErr := confirm.NotifyBatchFinishedIfNeeded(l.ctx, db, l.svcCtx.StreamEventCli, &plan, batch, in.Reason); notifyErr != nil {
+	if _, _, notifyErr := confirm.NotifyBatchFinishedIfNeeded(l.ctx, db, l.svcCtx.StreamEventCli, &plan, batch, closeReason); notifyErr != nil {
 		log.Errorf("更新批次/计划 finished_time 失败: %v", notifyErr)
 	}
 
-	log.Info("RPC 终止执行项：执行项状态已更新，事务已提交")
+	log.Info("RPC 终止执行项：执行项状态已更新")
 	return &trigger.TerminatePlanExecItemRes{}, nil
 }

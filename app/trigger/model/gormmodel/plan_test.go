@@ -14,11 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestCountRunningExecItems(t *testing.T) {
-	db := openPlanTestDB(t)
-	ctx := context.Background()
-	planPk := "plan-pk"
-	batchPk := "batch-pk"
+func TestTerminateUnfinishedExecItems(t *testing.T) {
 	statuses := []int{
 		model.StatusWaiting,
 		model.StatusDelayed,
@@ -27,33 +23,79 @@ func TestCountRunningExecItems(t *testing.T) {
 		model.StatusCompleted,
 		model.StatusTerminated,
 	}
-	for i, status := range statuses {
-		item := PlanExecItem{
-			PlanPk:  planPk,
-			BatchPk: batchPk,
-			ExecId:  fmt.Sprintf("exec-%d", i),
-			ItemId:  fmt.Sprintf("item-%d", i),
-			Status:  status,
-		}
-		item.Id = fmt.Sprintf("item-pk-%d", i)
-		if err := db.Create(&item).Error; err != nil {
-			t.Fatal(err)
-		}
-	}
-	planCount, err := CountRunningExecItemsByPlan(ctx, db, planPk)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if planCount != 1 {
-		t.Fatalf("plan running count = %d, want 1", planCount)
-	}
+	for _, scope := range []string{"plan", "batch"} {
+		t.Run(scope, func(t *testing.T) {
+			db := openPlanTestDB(t)
+			plan, batch := createPlanHierarchy(t, db, statuses)
 
-	batchCount, err := CountRunningExecItemsByBatch(ctx, db, batchPk)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if batchCount != 1 {
-		t.Fatalf("batch running count = %d, want 1", batchCount)
+			// 兄弟批次用于验证终止作用域：批次级终止不能波及同计划的其它批次，计划级终止则应一并收敛。
+			siblingBatch := PlanBatch{PlanPk: plan.Id, PlanId: plan.PlanId, BatchId: "batch-sibling", Status: model.PlanStatusEnabled}
+			siblingBatch.Id = "batch-pk-sibling"
+			if err := db.Create(&siblingBatch).Error; err != nil {
+				t.Fatal(err)
+			}
+			siblingItem := PlanExecItem{
+				PlanPk:  plan.Id,
+				PlanId:  plan.PlanId,
+				BatchPk: siblingBatch.Id,
+				BatchId: siblingBatch.BatchId,
+				ExecId:  "exec-sibling",
+				ItemId:  "item-sibling",
+				Status:  model.StatusWaiting,
+			}
+			siblingItem.Id = "item-pk-sibling"
+			if err := db.Create(&siblingItem).Error; err != nil {
+				t.Fatal(err)
+			}
+
+			now := time.Now()
+			wantRows := int64(4)
+			wantSiblingStatus := model.StatusWaiting
+			var rows int64
+			var err error
+			if scope == "plan" {
+				wantRows = 5
+				wantSiblingStatus = model.StatusTerminated
+				rows, err = TerminateUnfinishedExecItemsByPlan(context.Background(), db, plan.Id, "终止原因", "tester", now)
+			} else {
+				rows, err = TerminateUnfinishedExecItemsByBatch(context.Background(), db, batch.Id, "终止原因", "tester", now)
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if rows != wantRows {
+				t.Fatalf("terminated rows = %d, want %d", rows, wantRows)
+			}
+			assertExecItemStatusesInBatch(t, db, batch.Id, []int{
+				model.StatusTerminated,
+				model.StatusTerminated,
+				model.StatusTerminated,
+				model.StatusTerminated,
+				model.StatusCompleted,
+				model.StatusTerminated,
+			})
+			assertExecItemStatusesInBatch(t, db, siblingBatch.Id, []int{wantSiblingStatus})
+
+			var items []PlanExecItem
+			if err := db.Where("batch_pk = ?", batch.Id).Order("id").Find(&items).Error; err != nil {
+				t.Fatal(err)
+			}
+			for i := range items[:4] {
+				if items[i].TerminatedReason.String != "终止原因" {
+					t.Fatalf("item %d terminated reason = %q, want 终止原因", i, items[i].TerminatedReason.String)
+				}
+				if items[i].UpdateUser.String != "tester" {
+					t.Fatalf("item %d update user = %q, want tester", i, items[i].UpdateUser.String)
+				}
+			}
+			// 已完成/已终止的执行项保持原状态与原终止原因。
+			if items[4].Status != model.StatusCompleted {
+				t.Fatalf("completed item status = %d, want completed", items[4].Status)
+			}
+			if items[5].TerminatedReason.Valid {
+				t.Fatalf("pre-terminated item reason = %q, want empty", items[5].TerminatedReason.String)
+			}
+		})
 	}
 }
 
@@ -320,6 +362,21 @@ func assertExecItemStatuses(t *testing.T, db *gorm.DB, want []int) {
 	if err := db.Order("id").Find(&items).Error; err != nil {
 		t.Fatal(err)
 	}
+	assertExecItemStatusesOf(t, items, want)
+}
+
+// assertExecItemStatusesInBatch 只校验指定批次的执行项，用于验证终止作用域不越界。
+func assertExecItemStatusesInBatch(t *testing.T, db *gorm.DB, batchPk string, want []int) {
+	t.Helper()
+	var items []PlanExecItem
+	if err := db.Where("batch_pk = ?", batchPk).Order("id").Find(&items).Error; err != nil {
+		t.Fatal(err)
+	}
+	assertExecItemStatusesOf(t, items, want)
+}
+
+func assertExecItemStatusesOf(t *testing.T, items []PlanExecItem, want []int) {
+	t.Helper()
 	if len(items) != len(want) {
 		t.Fatalf("item count = %d, want %d", len(items), len(want))
 	}

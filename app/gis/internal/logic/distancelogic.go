@@ -35,6 +35,6 @@ func (l *DistanceLogic) Distance(in *gis.DistanceReq) (*gis.DistanceRes, error) 
 	b := orb.Point{in.B.Lon, in.B.Lat}
 	distance := geo.Distance(a, b)
 	return &gis.DistanceRes{
-		Meters: distance,
+		Meters: roundDistance(distance),
 	}, nil
 }

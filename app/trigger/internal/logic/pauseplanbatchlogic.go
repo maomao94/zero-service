@@ -16,7 +16,6 @@ import (
 
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
-	"gorm.io/gorm"
 )
 
 type PausePlanBatchLogic struct {
@@ -76,22 +75,25 @@ func (l *PausePlanBatchLogic) PausePlanBatch(in *trigger.PausePlanBatchReq) (*tr
 		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划状态非启用状态,无需暂停")
 	}
 
-	// 执行事务
-	err = db.Transaction(func(tx *gorm.DB) error {
-		// 更新计划批次状态为暂停
-		planBatch.Status = model.PlanStatusPaused // 暂停
-		planBatch.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
-		planBatch.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
-		planBatch.UpdateUser = sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""}
-
-		// 更新计划批次
-		return tx.Save(&planBatch).Error
-	})
-
-	if err != nil {
-		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "暂停批次事务失败")
+	// 条件更新批次：期间若已被终止或已结束，本次暂停不生效，避免把终态整行覆盖回暂停。
+	result := db.Model(&gormmodel.PlanBatch{}).
+		Where("id = ?", planBatch.Id).
+		Where("status = ?", model.PlanStatusEnabled).
+		Where("finished_time IS NULL").
+		Updates(map[string]any{
+			"status":        model.PlanStatusPaused,
+			"paused_time":   sql.NullTime{Time: time.Now(), Valid: true},
+			"paused_reason": sql.NullString{String: in.Reason, Valid: in.Reason != ""},
+			"update_user":   sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
+		})
+	if result.Error != nil {
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, result.Error, "暂停批次失败")
 	}
+	if result.RowsAffected == 0 {
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次状态已变化，请刷新后重试")
+	}
+	planBatch.Status = model.PlanStatusPaused
 
-	planscope.BatchScope(&plan, &planBatch).Logger(l.ctx).Info("RPC 暂停批次：批次状态已更新，事务已提交")
+	planscope.BatchScope(&plan, &planBatch).Logger(l.ctx).Info("RPC 暂停批次：批次状态已更新")
 	return &trigger.PausePlanBatchRes{}, nil
 }

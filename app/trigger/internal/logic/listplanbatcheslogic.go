@@ -69,7 +69,8 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 	for _, planBatch := range planBatches {
 		batchPks = append(batchPks, planBatch.Id)
 	}
-	confirmMap, err := gormmodel.FindPlanConfirmsByBatchPks(l.ctx, rawDB, batchPks)
+	// 列表页高频刷新，确认记录查询静默成功 SQL；错误与慢 SQL 仍会记录。
+	confirmMap, err := gormmodel.FindPlanConfirmsByBatchPks(gormx.WithoutSQLTrace(l.ctx), rawDB, batchPks)
 	if err != nil {
 		return nil, err
 	}

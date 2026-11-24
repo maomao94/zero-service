@@ -26,7 +26,7 @@ func NewOssDetailLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OssDeta
 
 func (l *OssDetailLogic) OssDetail(in *file.OssDetailReq) (*file.OssDetailRes, error) {
 	var oss gormmodel.Oss
-	if err := l.svcCtx.DB.WithContext(l.ctx).First(&oss, in.Id).Error; err != nil {
+	if err := l.svcCtx.DB.WithContext(l.ctx).Where("id = ?", in.Id).First(&oss).Error; err != nil {
 		return nil, err
 	}
 	return &file.OssDetailRes{Oss: toPbOss(&oss)}, nil

@@ -27,7 +27,7 @@ func NewDeleteOssLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DeleteO
 
 func (l *DeleteOssLogic) DeleteOss(in *file.DeleteOssReq) (*file.DeleteOssRes, error) {
 	var oss gormmodel.Oss
-	if err := l.svcCtx.DB.WithContext(l.ctx).First(&oss, in.Id).Error; err != nil {
+	if err := l.svcCtx.DB.WithContext(l.ctx).Where("id = ?", in.Id).First(&oss).Error; err != nil {
 		return nil, err
 	}
 	if err := l.svcCtx.DB.WithContext(l.ctx).Delete(&oss).Error; err != nil {

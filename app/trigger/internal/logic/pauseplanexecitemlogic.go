@@ -16,7 +16,6 @@ import (
 
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
-	"gorm.io/gorm"
 )
 
 type PausePlanExecItemLogic struct {
@@ -83,22 +82,26 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 		return &trigger.PausePlanExecItemRes{}, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "执行项正在运行中，请稍后再试")
 	}
 
-	// 执行事务
-	err = db.Transaction(func(tx *gorm.DB) error {
-		// 更新执行项状态为暂停
-		execItem.Status = model.StatusPaused
-		execItem.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
-		execItem.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
-		execItem.UpdateUser = sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""}
-
-		// 更新执行项
-		return tx.Save(&execItem).Error
-	})
-
-	if err != nil {
-		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "暂停执行项事务失败")
+	// 更新执行项状态为暂停；更新带上读取时的状态条件，期间被终止或抢占时不覆盖已变更的状态。
+	now := time.Now()
+	result := db.Model(&gormmodel.PlanExecItem{}).
+		Where("id = ?", execItem.Id).
+		Where("status = ?", execItem.Status).
+		Updates(map[string]any{
+			"status":        model.StatusPaused,
+			"paused_time":   sql.NullTime{Time: now, Valid: true},
+			"paused_reason": sql.NullString{String: in.Reason, Valid: in.Reason != ""},
+			"update_user":   sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
+			"update_time":   now,
+		})
+	if result.Error != nil {
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, result.Error, "暂停执行项失败")
 	}
+	if result.RowsAffected == 0 {
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "执行项状态已变化，请刷新后重试")
+	}
+	execItem.Status = model.StatusPaused
 
-	planscope.ExecScope(&execItem).Logger(l.ctx).Info("RPC 暂停执行项：执行项状态已更新，事务已提交")
+	planscope.ExecScope(&execItem).Logger(l.ctx).Info("RPC 暂停执行项：执行项状态已更新")
 	return &trigger.PausePlanExecItemRes{}, nil
 }

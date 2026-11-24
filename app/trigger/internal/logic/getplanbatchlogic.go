@@ -7,6 +7,7 @@ import (
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/carbonx"
 	"zero-service/common/errx"
+	"zero-service/common/gormx"
 	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/svc"
@@ -110,7 +111,8 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 		pbPlanBatch.FinishedTime = carbonx.FormatDateTime(planBatch.FinishedTime.Time)
 	}
 
-	confirmMap, err := gormmodel.FindPlanConfirmsByBatchPks(l.ctx, db, []string{planBatch.Id})
+	// 详情页高频轮询，确认记录查询静默成功 SQL；错误与慢 SQL 仍会记录。
+	confirmMap, err := gormmodel.FindPlanConfirmsByBatchPks(gormx.WithoutSQLTrace(l.ctx), db, []string{planBatch.Id})
 	if err != nil {
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询批次确认记录失败")
 	}

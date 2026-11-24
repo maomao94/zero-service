@@ -70,22 +70,26 @@ func (l *ResumePlanExecItemLogic) ResumePlanExecItem(in *trigger.ResumePlanExecI
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划失败")
 	}
 
-	// 执行事务
-	err = db.Transaction(func(tx *gorm.DB) error {
-		execItem.Status = model.StatusWaiting
-		execItem.PausedTime = sql.NullTime{}
-		execItem.PausedReason = sql.NullString{}
-		execItem.UpdateUser = sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""}
-		execItem.UpdateTime = time.Now()
-
-		// 更新执行项
-		return tx.Save(&execItem).Error
-	})
-
-	if err != nil {
-		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "恢复执行项事务失败")
+	// 更新执行项状态为等待调度；更新带上读取时的状态条件，期间被终止或抢占时不覆盖已变更的状态。
+	now := time.Now()
+	result := db.Model(&gormmodel.PlanExecItem{}).
+		Where("id = ?", execItem.Id).
+		Where("status = ?", model.StatusPaused).
+		Updates(map[string]any{
+			"status":        model.StatusWaiting,
+			"paused_time":   sql.NullTime{},
+			"paused_reason": sql.NullString{},
+			"update_user":   sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
+			"update_time":   now,
+		})
+	if result.Error != nil {
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, result.Error, "恢复执行项失败")
 	}
+	if result.RowsAffected == 0 {
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "执行项状态已变化，请刷新后重试")
+	}
+	execItem.Status = model.StatusWaiting
 
-	planscope.ExecScope(&execItem).Logger(l.ctx).Info("RPC 恢复执行项：执行项状态已更新，事务已提交")
+	planscope.ExecScope(&execItem).Logger(l.ctx).Info("RPC 恢复执行项：执行项状态已更新")
 	return &trigger.ResumePlanExecItemRes{}, nil
 }

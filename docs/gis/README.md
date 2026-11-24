@@ -43,6 +43,8 @@
 ## 关键约定
 
 - 领域坐标统一为 `longitude, latitude`（proto 中 `Point.lon` / `Point.lat`）。
+- 所有返回坐标的 RPC（`DecodeGeoHash` / `DecodeH3` / `TransformCoord` / `BatchTransformCoord` / 围栏详情）统一按 **6 位小数**（约 0.11 m）四舍五入；`DecodeGeoHash` 的格网边界下界向下取、上界向上取，保证包围盒只增不减。中间计算链路不取整，避免误差累积。proto 仍为 `double`，末尾 0 不补位。
+- 距离类响应（`Distance` / `BatchDistance` / `PointsWithinRadius` / `RoutePoints`）统一保留 **3 位小数**（1 mm），命中过滤仍用全精度距离。
 - H3/geohash cells 仅用于粗召回，最终命中由多边形/圆的精确谓词判断。
 - 围栏主体与 H3 cells 索引在同一事务写入，失败回滚并清理旧索引。
 - H3 默认分辨率 9，geohash 默认精度 7（逻辑层默认值，proto 无默认）。

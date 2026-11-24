@@ -220,8 +220,11 @@ func TestRejectPlanBatch(t *testing.T) {
 	if err := db.Where("batch_pk = ?", batch.Id).First(&item).Error; err != nil {
 		t.Fatal(err)
 	}
-	if item.Status != model.StatusWaiting {
-		t.Fatalf("item status = %d, want waiting (批次终止后不再下发)", item.Status)
+	if item.Status != model.StatusTerminated {
+		t.Fatalf("item status = %d, want terminated (批次终止后子项同步终止)", item.Status)
+	}
+	if !strings.Contains(item.TerminatedReason.String, "条件不满足") {
+		t.Fatalf("item terminated reason = %q, want contains 条件不满足", item.TerminatedReason.String)
 	}
 
 	// 重复拒绝按幂等成功处理。
