@@ -45,10 +45,12 @@ func (l *RejectPlanBatchLogic) RejectPlanBatch(in *trigger.RejectPlanBatchReq) (
 	db := l.svcCtx.DB.WithContext(l.ctx).DB
 	var batch gormmodel.PlanBatch
 	var err error
+	// 锁前只取主键用于加锁，完整数据在锁内重读。
+	lookup := db.Model(&gormmodel.PlanBatch{}).Select("id")
 	if !strutil.IsBlank(in.Id) {
-		err = db.Where("id = ?", in.Id).First(&batch).Error
+		err = lookup.Where("id = ?", in.Id).First(&batch).Error
 	} else {
-		err = db.Where("batch_id = ?", in.BatchId).First(&batch).Error
+		err = lookup.Where("batch_id = ?", in.BatchId).First(&batch).Error
 	}
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -65,9 +67,12 @@ func (l *RejectPlanBatchLogic) RejectPlanBatch(in *trigger.RejectPlanBatchReq) (
 		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "批次确认处理中，请稍后重试")
 	}
 	defer release()
-	if err := db.Where("id = ?", batch.Id).First(&batch).Error; err != nil {
+	// 锁内重新加载，避免使用锁前读到的旧状态。
+	var latestBatch gormmodel.PlanBatch
+	if err := db.First(&latestBatch, "id = ?", batch.Id).Error; err != nil {
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询计划批次失败")
 	}
+	batch = latestBatch
 
 	var plan gormmodel.Plan
 	if err := db.Where("id = ?", batch.PlanPk).First(&plan).Error; err != nil {
