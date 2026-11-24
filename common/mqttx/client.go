@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -355,10 +356,58 @@ func (c *mqttClient) subscribe(topicTemplate string) (bool, error) {
 	if err := token.Error(); err != nil {
 		return false, err
 	}
+	// paho 不会把 SUBACK 的失败原因码（0x80）放进 token.Error()，只能从授予结果里判断；
+	// 不判断会把 Broker 拒绝订阅当成成功，之后一条报文都收不到却没有任何错误日志。
+	if subToken, ok := token.(*mqtt.SubscribeToken); ok {
+		if err := subscribeGrantedError(topicTemplate, c.qos, subToken.Result()); err != nil {
+			return false, err
+		}
+	}
 
 	c.subscribed[topicTemplate] = struct{}{}
 	logx.Infof("[mqtt] subscribe ok topic=%s", topicTemplate)
 	return true, nil
+}
+
+// subscribeGrantedError 校验 SUBACK 授予结果，0x80 表示 Broker 拒绝订阅。
+// MQTT 3.1.1 只有 0x80 表示失败；MQTT 5.0 的失败原因码（0x80~0xA2）均 >= 0x80，统一按阈值判断。
+// 一次 SUBSCRIBE 可包含多个 topic filter（SubscribeMultiple），这里汇总所有被拒 topic 再返回，
+// 排序保证日志顺序稳定；授予 QoS 低于请求 QoS 属于降级而非失败，只记录日志。
+// 空结果或结果里缺少本次订阅的 topic，说明 SUBACK 异常，按失败处理，避免静默当成订阅成功。
+func subscribeGrantedError(topic string, requested byte, result map[string]byte) error {
+	if len(result) == 0 {
+		return fmt.Errorf("subscribe rejected by broker: empty SUBACK result")
+	}
+
+	topics := make([]string, 0, len(result))
+	for grantedTopic := range result {
+		topics = append(topics, grantedTopic)
+	}
+	slices.Sort(topics)
+
+	var failures, downgraded []string
+	for _, grantedTopic := range topics {
+		granted := result[grantedTopic]
+		if granted >= 0x80 {
+			failures = append(failures, fmt.Sprintf("topic=%s granted=%#x", grantedTopic, granted))
+			continue
+		}
+		if granted < requested {
+			downgraded = append(downgraded, fmt.Sprintf("topic=%s requested=%d granted=%d", grantedTopic, requested, granted))
+		}
+	}
+	if _, ok := result[topic]; !ok {
+		failures = append(failures, fmt.Sprintf("topic=%s missing from SUBACK", topic))
+	}
+
+	if len(downgraded) > 0 {
+		logx.Infof("[mqtt] subscribe downgraded: %s", strings.Join(downgraded, "; "))
+	}
+	if len(failures) == 0 {
+		return nil
+	}
+	// 单行分隔而不是 errors.Join：go-zero 日志按行切分，错误信息里带换行会把一条日志拆成多行。
+	return fmt.Errorf("subscribe rejected by broker: %s", strings.Join(failures, "; "))
 }
 
 // isSubscribed 检查是否已订阅
