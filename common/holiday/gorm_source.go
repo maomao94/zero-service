@@ -8,6 +8,8 @@ import (
 	"sync"
 
 	"zero-service/common/gormx"
+
+	"gorm.io/gorm/clause"
 )
 
 const defaultGormTable = "sys_holiday"
@@ -99,10 +101,13 @@ func (s *GormSource) Save(ctx context.Context, item StoredEntry) error {
 	if err := s.prepare(ctx); err != nil {
 		return err
 	}
-	if err := s.db.WithContext(ctx).Save(gormHolidayFromStoredEntry(item)).Error; err != nil {
-		return err
-	}
-	return nil
+	// 冲突时按 date 只更新业务列：显式 upsert，避免 Save 在 0 行时隐式整行插入。
+	return gormx.Upsert(
+		s.db.WithContext(ctx),
+		gormHolidayFromStoredEntry(item),
+		[]clause.Column{{Name: "date"}},
+		[]string{"name", "type", "is_festival_day", "note", "enabled"},
+	)
 }
 
 // SetEnabled 设置单日特殊日期配置是否启用。
@@ -121,8 +126,8 @@ func (s *GormSource) SetEnabled(ctx context.Context, date string, enabled bool) 
 	if err := db.Where("date = ?", date).First(&row).Error; err != nil {
 		return err
 	}
-	row.Enabled = enabled
-	return db.Save(&row).Error
+	// 只更新目标列，避免整行旧快照覆盖并发修改的其它字段。
+	return db.Model(&GormHoliday{}).Where("date = ?", date).Update("enabled", enabled).Error
 }
 
 // List 按年份列出特殊日期源配置。

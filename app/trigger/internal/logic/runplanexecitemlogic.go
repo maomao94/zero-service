@@ -2,10 +2,12 @@ package logic
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 	"zero-service/app/trigger/model/gormmodel"
+	"zero-service/common/authctx"
 	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
@@ -96,12 +98,24 @@ func (l *RunPlanExecItemLogic) RunPlanExecItem(in *trigger.RunPlanExecItemReq) (
 		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次待人工确认,暂不可立即执行")
 	}
 
-	// 更新下次触发时间为当前时间，使其立即执行
+	// 更新下次触发时间为当前时间，使其立即执行。
+	// 更新带上读取时的状态条件：期间若已被终止或抢占，本次更新不生效，避免把终态写回等待调度。
 	now := time.Now()
-	execItem.NextTriggerTime = now
-	if err := db.Save(&execItem).Error; err != nil {
-		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "更新执行项失败")
+	result := db.Model(&gormmodel.PlanExecItem{}).
+		Where("id = ?", execItem.Id).
+		Where("status = ?", execItem.Status).
+		Updates(map[string]any{
+			"next_trigger_time": now,
+			"update_user":       sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
+			"update_time":       now,
+		})
+	if result.Error != nil {
+		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, result.Error, "更新执行项失败")
 	}
+	if result.RowsAffected == 0 {
+		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "执行项状态已变化，请刷新后重试")
+	}
+	execItem.NextTriggerTime = now
 
 	planscope.ExecScope(&execItem).WithFields(
 		logx.Field("plan_name", plan.PlanName.String),

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
 	"zero-service/app/trigger/model/gormmodel"
 	"zero-service/common/authctx"
 	"zero-service/common/errx"
@@ -69,21 +68,26 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 
 	// 执行事务
 	err = db.Transaction(func(tx *gorm.DB) error {
-		// 更新计划状态为启用
-		plan.Status = model.PlanStatusEnabled
-		plan.PausedTime = sql.NullTime{}
-		plan.PausedReason = sql.NullString{}
-		plan.UpdateUser = sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""}
-		plan.UpdateTime = time.Now()
-
-		// 更新计划
-		transErr := tx.Save(&plan).Error
-		if transErr != nil {
-			return transErr
+		// 条件更新计划：期间若已被终止或已结束，本次恢复不生效，避免把终态整行覆盖回启用。
+		result := tx.Model(&gormmodel.Plan{}).
+			Where("id = ?", plan.Id).
+			Where("status = ?", model.PlanStatusPaused).
+			Where("finished_time IS NULL").
+			Updates(map[string]any{
+				"status":        model.PlanStatusEnabled,
+				"paused_time":   sql.NullTime{},
+				"paused_reason": sql.NullString{},
+				"update_user":   sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
+			})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return model.ErrNoRowsUpdate
 		}
 
 		// 更新批次
-		transErr = tx.Model(&gormmodel.PlanBatch{}).
+		return tx.Model(&gormmodel.PlanBatch{}).
 			Where("plan_id = ?", plan.PlanId).
 			Where("status = ?", model.PlanStatusPaused).
 			Updates(map[string]any{
@@ -92,12 +96,15 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 				"paused_reason": sql.NullString{},
 				"update_user":   sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
 			}).Error
-		return transErr
 	})
 
 	if err != nil {
+		if errors.Is(err, model.ErrNoRowsUpdate) {
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划状态已变化，请刷新后重试")
+		}
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "恢复计划事务失败")
 	}
+	plan.Status = model.PlanStatusEnabled
 
 	planscope.PlanScope(&plan).Logger(l.ctx).Info("RPC 恢复计划：计划状态已更新，事务已提交")
 	return &trigger.ResumePlanRes{}, nil

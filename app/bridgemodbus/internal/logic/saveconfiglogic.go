@@ -54,11 +54,16 @@ func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemod
 			}
 			id = newCfg.Id
 		} else {
-			// 更新
-			exist.SlaveAddress = in.SlaveAddress
-			exist.Slave = int64(in.Slave)
-			if err := tx.Save(&exist).Error; err != nil {
-				return err
+			// 更新：只写本次提交的列，避免整行 Save 覆盖并发改动，或并发删除后回退 upsert 复活记录。
+			// 0 行（并发删除或值未变化）按保存成功处理，避免把幂等保存误判成记录不存在。
+			result := tx.Model(&gormmodel.ModbusSlaveConfig{}).
+				Where("id = ?", exist.Id).
+				Updates(map[string]any{
+					"slave_address": in.SlaveAddress,
+					"slave":         int64(in.Slave),
+				})
+			if result.Error != nil {
+				return result.Error
 			}
 			id = exist.Id
 		}

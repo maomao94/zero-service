@@ -217,28 +217,35 @@ func GetBatchTotalExecItems(ctx context.Context, db *gorm.DB, batchPk string) (i
 	return count, err
 }
 
-// CountRunningExecItemsByPlan returns the number of currently running items in a plan.
-func CountRunningExecItemsByPlan(ctx context.Context, db *gorm.DB, planPk string) (int64, error) {
-	var count int64
-	err := db.WithContext(ctx).Model(&PlanExecItem{}).
-		Where("plan_pk = ?", planPk).
-		Where("status = ?", model.StatusRunning).
-		Count(&count).Error
-	return count, err
+// TerminateUnfinishedExecItemsByPlan 将计划下所有未结束的执行项统一置为终止。
+// 父级终止后这些执行项不会再被扫表下发，统一收敛为终态可避免遗留等待中/执行中的僵尸数据。
+// 调用方负责事务边界，与计划终止、批次终止、确认记录关闭保持原子性。
+func TerminateUnfinishedExecItemsByPlan(ctx context.Context, db *gorm.DB, planPk, reason, updateUser string, now time.Time) (int64, error) {
+	return terminateUnfinishedExecItems(ctx, db, "plan_pk", planPk, reason, updateUser, now)
 }
 
-// CountRunningExecItemsByBatch returns the number of currently running items in a batch.
-func CountRunningExecItemsByBatch(ctx context.Context, db *gorm.DB, batchPk string) (int64, error) {
-	var count int64
-	err := db.WithContext(ctx).Model(&PlanExecItem{}).
-		Where("batch_pk = ?", batchPk).
-		Where("status = ?", model.StatusRunning).
-		Count(&count).Error
-	return count, err
+// TerminateUnfinishedExecItemsByBatch 将批次下所有未结束的执行项统一置为终止。
+func TerminateUnfinishedExecItemsByBatch(ctx context.Context, db *gorm.DB, batchPk, reason, updateUser string, now time.Time) (int64, error) {
+	return terminateUnfinishedExecItems(ctx, db, "batch_pk", batchPk, reason, updateUser, now)
 }
 
-// UpdatePlanTerminated terminates only the plan row and leaves all exec items unchanged.
-// The caller owns the running-item check; this update only guards the parent state.
+func terminateUnfinishedExecItems(ctx context.Context, db *gorm.DB, scopeColumn, scopeValue, reason, updateUser string, now time.Time) (int64, error) {
+	result := db.WithContext(ctx).Model(&PlanExecItem{}).
+		Where(scopeColumn+" = ?", scopeValue).
+		Where("status NOT IN ?", []int{model.StatusCompleted, model.StatusTerminated}).
+		Updates(map[string]any{
+			"status":            model.StatusTerminated,
+			"terminated_reason": sql.NullString{String: reason, Valid: reason != ""},
+			"paused_time":       sql.NullTime{},
+			"paused_reason":     sql.NullString{},
+			"update_user":       sql.NullString{String: updateUser, Valid: updateUser != ""},
+			"update_time":       now,
+		})
+	return result.RowsAffected, result.Error
+}
+
+// UpdatePlanTerminated 只更新计划行，不改动执行项。
+// 调用方需在同一事务内先收敛计划下的执行项，本函数只守护父级状态（未终止且未结束）。
 func UpdatePlanTerminated(ctx context.Context, db *gorm.DB, id, reason, updateUser string, now time.Time) (int64, error) {
 	result := db.WithContext(ctx).Model(&Plan{}).
 		Where("id = ?", id).
@@ -255,8 +262,8 @@ func UpdatePlanTerminated(ctx context.Context, db *gorm.DB, id, reason, updateUs
 	return result.RowsAffected, result.Error
 }
 
-// UpdatePlanBatchTerminated terminates only the batch row and leaves all exec items unchanged.
-// The caller owns the running-item check; this update only guards the parent state.
+// UpdatePlanBatchTerminated 只更新批次行，不改动执行项。
+// 调用方需在同一事务内先收敛批次下的执行项，本函数只守护父级状态（未终止且未结束）。
 func UpdatePlanBatchTerminated(ctx context.Context, db *gorm.DB, id, reason, updateUser string, now time.Time) (int64, error) {
 	result := db.WithContext(ctx).Model(&PlanBatch{}).
 		Where("id = ?", id).
