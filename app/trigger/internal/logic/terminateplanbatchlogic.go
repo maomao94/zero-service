@@ -74,31 +74,34 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次状态已结束,无需终止")
 	}
 
+	closeReason := in.Reason
+	if closeReason == "" {
+		closeReason = "计划批次被终止"
+	}
+	now := time.Now()
+	var terminatedItems int64
+
 	// 执行事务
 	err = db.Transaction(func(tx *gorm.DB) error {
-		var runningCount int64
-		runningCount, transErr := gormmodel.CountRunningExecItemsByBatch(l.ctx, tx, planBatch.Id)
+		// 不拦截执行中的执行项：批次终止时把未结束执行项统一收敛为终止态，
+		// 避免父级结束后遗留等待中/执行中的执行项。在途下游任务由业务侧按通知自行闭环。
+		var transErr error
+		terminatedItems, transErr = gormmodel.TerminateUnfinishedExecItemsByBatch(
+			l.ctx, tx, planBatch.Id, closeReason, authctx.GetUserId(l.ctx), now,
+		)
 		if transErr != nil {
 			return transErr
 		}
-		if runningCount > 0 {
-			return errPlanExecItemRunning
-		}
 
-		now := time.Now()
-		// 只更新父级状态；cron claim 后会重新加载父级并在非 enabled/finished 时停止下发。
+		// 更新父级状态；cron claim 后会重新加载父级并在非 enabled/finished 时停止下发。
 		updated, transErr := gormmodel.UpdatePlanBatchTerminated(
-			l.ctx, tx, planBatch.Id, in.Reason, authctx.GetUserId(l.ctx), now,
+			l.ctx, tx, planBatch.Id, closeReason, authctx.GetUserId(l.ctx), now,
 		)
 		if transErr != nil {
 			return transErr
 		}
 		if updated == 0 {
 			return model.ErrNoRowsUpdate
-		}
-		closeReason := in.Reason
-		if closeReason == "" {
-			closeReason = "计划批次被终止"
 		}
 		if _, transErr := gormmodel.ClosePlanConfirmsByBatch(l.ctx, tx, planBatch.Id, authctx.GetUserId(l.ctx), closeReason, now); transErr != nil {
 			return transErr
@@ -110,9 +113,6 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 	})
 
 	if err != nil {
-		if errors.Is(err, errPlanExecItemRunning) {
-			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次存在正在执行的执行项，请执行项结束后再终止")
-		}
 		if errors.Is(err, model.ErrNoRowsUpdate) {
 			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次状态已变化，无法终止")
 		}
@@ -120,9 +120,9 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 	}
 	bScope := planscope.BatchScope(&plan, &planBatch)
 	bLog := bScope.Logger(l.ctx)
-	if _, notifyErr := confirm.NotifyBatchFinished(l.ctx, db, l.svcCtx.StreamEventCli, &plan, &planBatch, in.Reason); notifyErr != nil {
+	if _, notifyErr := confirm.NotifyBatchFinished(l.ctx, db, l.svcCtx.StreamEventCli, &plan, &planBatch, closeReason); notifyErr != nil {
 		bLog.Errorf("更新计划 finished_time 失败: %v", notifyErr)
 	}
-	bLog.Info("RPC 终止批次：批次状态已更新，事务已提交")
+	bLog.WithFields(logx.Field("terminated_items", terminatedItems)).Info("RPC 终止批次：批次与未结束执行项已更新，事务已提交")
 	return &trigger.TerminatePlanBatchRes{}, nil
 }

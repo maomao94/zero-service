@@ -15,8 +15,6 @@ import (
 	"github.com/zeromicro/go-zero/core/jsonx"
 )
 
-var errPlanExecItemRunning = errors.New("plan exec item is running")
-
 var errInvalidPlanExecItemResult = errors.New("invalid plan exec item result")
 
 func asynqListOptions(pageNum, pageSize int64) []asynq.ListOption {

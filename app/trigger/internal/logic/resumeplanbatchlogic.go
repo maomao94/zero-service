@@ -78,18 +78,24 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 
 	// 执行事务
 	err = db.Transaction(func(tx *gorm.DB) error {
-		// 更新计划批次状态为启用
-		planBatch.Status = model.PlanStatusEnabled // 启用
-		planBatch.UpdateUser = sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""}
-
-		// 更新计划批次
-		transErr := tx.Save(&planBatch).Error
-		if transErr != nil {
-			return transErr
+		// 条件更新批次：期间若已被终止或已结束，本次恢复不生效，避免把终态整行覆盖回启用。
+		result := tx.Model(&gormmodel.PlanBatch{}).
+			Where("id = ?", planBatch.Id).
+			Where("status = ?", model.PlanStatusPaused).
+			Where("finished_time IS NULL").
+			Updates(map[string]any{
+				"status":      model.PlanStatusEnabled,
+				"update_user": sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
+			})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return model.ErrNoRowsUpdate
 		}
 
 		// 更新计划启用
-		transErr = tx.Model(&gormmodel.Plan{}).
+		return tx.Model(&gormmodel.Plan{}).
 			Where("id = ?", planBatch.PlanPk).
 			Where("status = ?", model.PlanStatusPaused).
 			Updates(map[string]any{
@@ -98,12 +104,15 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 				"paused_reason": sql.NullString{},
 				"update_user":   sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
 			}).Error
-		return transErr
 	})
 
 	if err != nil {
+		if errors.Is(err, model.ErrNoRowsUpdate) {
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划批次状态已变化，请刷新后重试")
+		}
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "恢复批次事务失败")
 	}
+	planBatch.Status = model.PlanStatusEnabled
 
 	planscope.BatchScope(&plan, &planBatch).Logger(l.ctx).Info("RPC 恢复批次：批次状态已更新，事务已提交")
 	return &trigger.ResumePlanBatchRes{}, nil

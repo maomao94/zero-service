@@ -87,6 +87,8 @@ Plan 与 CronJob 共用 `(RRULE ∪ specifiedTimes) - excludedTimes - expanded(e
 | `COMPLETED` | 200 | 已完成终态 |
 | `TERMINATED` | 300 | 人工终止、业务终止或超过失败重试上限 |
 
+人工终止计划或批次时不校验是否仍有执行中的执行项：目标下 `WAITING` / `DELAYED` / `RUNNING` / `PAUSED` 执行项统一置为 `TERMINATED` 并写入终止原因，与父级状态在同一事务内提交。终止表示“停止调度并结束追踪”，平台不会下发取消指令，已交给下游的在途任务不会被中断；下游收到 `BATCH_FINISHED` / `PLAN_FINISHED` 后应自行判断并闭环在途任务。终止后到达的 `CallbackPlanExecItem` 因执行项已结束会被拒绝，业务侧仍需按 `execId` 幂等。未填写终止原因时，计划、批次、执行项和确认记录统一写入默认原因（计划级为 `计划被终止`，批次级为 `计划批次被终止`，单个执行项终止为 `执行项被终止`），`BATCH_FINISHED` / `PLAN_FINISHED` 通知携带同一原因。
+
 ### 执行结果
 
 | `execResult` | 状态变化 | 调度语义 |
@@ -108,8 +110,8 @@ Plan 与 CronJob 共用 `(RRULE ∪ specifiedTimes) - excludedTimes - expanded(e
 - 通知扫描会跳过已过截止时间的批次，避免服务恢复后补发无意义的待确认通知。
 - 扫表任务在 `notify_at` 到点后通过 socketpush 向机构房间 `dept:{deptCode}` 推送一次 `plan:batch-confirm-required` 事件；负载包含计划、批次、触发时间、截止时间和执行项数量。
 - 前端调用 `ConfirmPlanBatch` 确认后，扫表放行该批次执行项：确认早于触发时间则按原计划时间执行，晚于触发时间则立即执行。
-- 前端调用 `RejectPlanBatch` 拒绝后，批次立即终止；其未结束执行项保持 waiting 状态，不再下发。
-- 超过 `deadline` 仍未确认时，批次自动终止，并通知 `BATCH_FINISHED` / `PLAN_FINISHED`；未结束执行项同样保持 waiting 状态，不再下发。
+- 前端调用 `RejectPlanBatch` 拒绝后，批次立即终止；其未结束执行项同步置为 `TERMINATED`，不再下发。
+- 超过 `deadline` 仍未确认时，批次自动终止，并通知 `BATCH_FINISHED` / `PLAN_FINISHED`；未结束执行项同样置为 `TERMINATED`，不再下发。
 - 人工终止计划或批次时，未确认记录同步结束。
 - 暂停计划/批次不会顺延 `notify_at` 或 `deadline`：暂停期间不通知、不超时，恢复时若已过 `deadline` 会被立即终止。
 - `confirm_status` 只有 `waiting` / `confirmed` 两种：允许、拒绝、超时、人工终止都归为 `confirmed`，具体结果看 `plan_batch.status`、`terminated_reason` 和 `plan_confirm.reason`。

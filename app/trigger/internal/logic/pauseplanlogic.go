@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"zero-service/app/trigger/internal/planscope"
@@ -66,20 +67,26 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 
 	// 执行事务
 	err = db.Transaction(func(tx *gorm.DB) error {
-		// 更新计划状态为暂停
-		plan.Status = model.PlanStatusPaused // 暂停
-		plan.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
-		plan.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
-		plan.UpdateUser = sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""}
-
-		// 更新计划
-		transErr := tx.Save(&plan).Error
-		if transErr != nil {
-			return transErr
+		// 条件更新计划：期间若已被终止或已结束，本次暂停不生效，避免把终态整行覆盖回暂停。
+		result := tx.Model(&gormmodel.Plan{}).
+			Where("id = ?", plan.Id).
+			Where("status = ?", model.PlanStatusEnabled).
+			Where("finished_time IS NULL").
+			Updates(map[string]any{
+				"status":        model.PlanStatusPaused,
+				"paused_time":   sql.NullTime{Time: time.Now(), Valid: true},
+				"paused_reason": sql.NullString{String: in.Reason, Valid: in.Reason != ""},
+				"update_user":   sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
+			})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return model.ErrNoRowsUpdate
 		}
 
 		// 更新批次
-		transErr = tx.Model(&gormmodel.PlanBatch{}).
+		return tx.Model(&gormmodel.PlanBatch{}).
 			Where("plan_id = ?", plan.PlanId).
 			Where("status = ?", model.PlanStatusEnabled).
 			Where("finished_time IS NULL").
@@ -89,12 +96,15 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 				"paused_reason": sql.NullString{String: in.Reason, Valid: in.Reason != ""},
 				"update_user":   sql.NullString{String: authctx.GetUserId(l.ctx), Valid: authctx.GetUserId(l.ctx) != ""},
 			}).Error
-		return transErr
 	})
 
 	if err != nil {
+		if errors.Is(err, model.ErrNoRowsUpdate) {
+			return nil, errx.NewErrorByPbCode(extproto.Code__1_00_BIZ_STATE, "计划状态已变化，请刷新后重试")
+		}
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "暂停计划事务失败")
 	}
+	plan.Status = model.PlanStatusPaused
 
 	planscope.PlanScope(&plan).Logger(l.ctx).Info("RPC 暂停计划：计划状态已更新，事务已提交")
 	return &trigger.PausePlanRes{}, nil
