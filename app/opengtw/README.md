@@ -63,7 +63,8 @@ Authorization: Basic base64(AppKey:AppSecret)
 ## 配置
 
 - `DB`：应用凭据库；本地默认金仓 `zero`，dev/test 自动创建 `open_app`、`open_app_secret`。
-- `OpenApiConf`：`app/openapi` 地址。
+- `NacosConfig.IsRegister`：启用后将 HTTP 实例以 `opengtw` 注册到 Nacos，供 HTTP 调用方发现。
+- `OpenApiConf`：`app/openapi` 地址。使用 Nacos 时，把 `Endpoints` 换成 `Target: nacos://127.0.0.1:8848/openapi.rpc?namespaceid=public`。
 - `SignKeyEncryptionKey` 和 `Redis`：仅在应用启用 `signRequired` 时配置，用于保护签名 key 和 nonce 防重放。
 - `SignKeyRevealEnabled`：是否允许管理面查看当前 signKey，默认 `false`；开启后建议只在内网暴露 `/open-admin/`。
 - `JwtAuth.AccessSecret`：管理面 JWT 密钥。
@@ -72,7 +73,7 @@ Authorization: Basic base64(AppKey:AppSecret)
 ## 本地启动
 
 ```bash
-# 1. 转发服务（Mock）
+# 1. 转发服务（先启动需要调用的下游）
 cd app/openapi && go run . -f etc/openapi.yaml
 
 # 2. HTTP 网关

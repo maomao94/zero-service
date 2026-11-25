@@ -1,11 +1,11 @@
 
-ª
-openapi.protoopenapi"q
+™
+openapi.protoopenapi"`
 	InvokeReq
 app_id (	RappId
 method (	Rmethod
 data (	Rdata
-tid (	RtidJR	timestamp"
+tid (	Rtid"
 	InvokeRes
 data (	Rdata2>
 

@@ -1,15 +1,17 @@
 package dispatch
 
-import (
-	"context"
+import "zero-service/app/bridgemodbus/bridgemodbus"
 
-	"zero-service/app/bridgemodbus/bridgemodbus"
-
-	"google.golang.org/protobuf/proto"
-)
-
-// Modbus 开放 method。只开放 I/O 能力，配置管理和本地换算工具暂不对外。
+// Modbus 网关方法。
 const (
+	MethodModbusSaveConfig                             = "modbus.saveConfig"
+	MethodModbusDeleteConfig                           = "modbus.deleteConfig"
+	MethodModbusPageListConfig                         = "modbus.pageListConfig"
+	MethodModbusGetConfigByCode                        = "modbus.getConfigByCode"
+	MethodModbusBatchGetConfigByCode                   = "modbus.batchGetConfigByCode"
+	MethodModbusBatchConvertValue16ToRegisters         = "modbus.batchConvertValue16ToRegisters"
+	MethodModbusBatchConvertValue32ToRegisters         = "modbus.batchConvertValue32ToRegisters"
+	MethodModbusBatchConvertRegistersToValue32         = "modbus.batchConvertRegistersToValue32"
 	MethodModbusReadCoils                              = "modbus.readCoils"
 	MethodModbusReadDiscreteInputs                     = "modbus.readDiscreteInputs"
 	MethodModbusReadInputRegisters                     = "modbus.readInputRegisters"
@@ -27,112 +29,30 @@ const (
 	MethodModbusReadDeviceIdentificationSpecificObject = "modbus.readDeviceIdentificationSpecificObject"
 )
 
-func newModbusRoutes(client bridgemodbus.BridgeModbusClient) map[string]Handler {
+func modbusRoutes(client bridgemodbus.BridgeModbusClient) map[string]Handler {
 	return map[string]Handler{
-		MethodModbusReadCoils: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.ReadCoilsReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.ReadCoils(ctx, &in)
-		},
-		MethodModbusReadDiscreteInputs: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.ReadDiscreteInputsReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.ReadDiscreteInputs(ctx, &in)
-		},
-		MethodModbusReadInputRegisters: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.ReadInputRegistersReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.ReadInputRegisters(ctx, &in)
-		},
-		MethodModbusReadHoldingRegisters: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.ReadHoldingRegistersReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.ReadHoldingRegisters(ctx, &in)
-		},
-		MethodModbusWriteSingleCoil: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.WriteSingleCoilReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.WriteSingleCoil(ctx, &in)
-		},
-		MethodModbusWriteMultipleCoils: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.WriteMultipleCoilsReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.WriteMultipleCoils(ctx, &in)
-		},
-		MethodModbusWriteSingleRegister: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.WriteSingleRegisterReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.WriteSingleRegister(ctx, &in)
-		},
-		MethodModbusWriteSingleRegisterWithDecimal: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.WriteSingleRegisterWithDecimalReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.WriteSingleRegisterWithDecimal(ctx, &in)
-		},
-		MethodModbusWriteMultipleRegisters: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.WriteMultipleRegistersReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.WriteMultipleRegisters(ctx, &in)
-		},
-		MethodModbusWriteMultipleRegistersWithDecimal: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.WriteMultipleRegistersWithDecimalReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.WriteMultipleRegistersWithDecimal(ctx, &in)
-		},
-		MethodModbusReadWriteMultipleRegisters: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.ReadWriteMultipleRegistersReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.ReadWriteMultipleRegisters(ctx, &in)
-		},
-		MethodModbusMaskWriteRegister: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.MaskWriteRegisterReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.MaskWriteRegister(ctx, &in)
-		},
-		MethodModbusReadFIFOQueue: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.ReadFIFOQueueReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.ReadFIFOQueue(ctx, &in)
-		},
-		MethodModbusReadDeviceIdentification: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.ReadDeviceIdentificationReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.ReadDeviceIdentification(ctx, &in)
-		},
-		MethodModbusReadDeviceIdentificationSpecificObject: func(ctx context.Context, data string) (proto.Message, error) {
-			var in bridgemodbus.ReadDeviceIdentificationSpecificObjectReq
-			if err := decode(data, &in); err != nil {
-				return nil, err
-			}
-			return client.ReadDeviceIdentificationSpecificObject(ctx, &in)
-		},
+		MethodModbusSaveConfig:                             relay(client.SaveConfig),
+		MethodModbusDeleteConfig:                           relay(client.DeleteConfig),
+		MethodModbusPageListConfig:                         relay(client.PageListConfig),
+		MethodModbusGetConfigByCode:                        relay(client.GetConfigByCode),
+		MethodModbusBatchGetConfigByCode:                   relay(client.BatchGetConfigByCode),
+		MethodModbusBatchConvertValue16ToRegisters:         relay(client.BatchConvertValue16ToRegisters),
+		MethodModbusBatchConvertValue32ToRegisters:         relay(client.BatchConvertValue32ToRegisters),
+		MethodModbusBatchConvertRegistersToValue32:         relay(client.BatchConvertRegistersToValue32),
+		MethodModbusReadCoils:                              relay(client.ReadCoils),
+		MethodModbusReadDiscreteInputs:                     relay(client.ReadDiscreteInputs),
+		MethodModbusReadInputRegisters:                     relay(client.ReadInputRegisters),
+		MethodModbusReadHoldingRegisters:                   relay(client.ReadHoldingRegisters),
+		MethodModbusWriteSingleCoil:                        relay(client.WriteSingleCoil),
+		MethodModbusWriteMultipleCoils:                     relay(client.WriteMultipleCoils),
+		MethodModbusWriteSingleRegister:                    relay(client.WriteSingleRegister),
+		MethodModbusWriteSingleRegisterWithDecimal:         relay(client.WriteSingleRegisterWithDecimal),
+		MethodModbusWriteMultipleRegisters:                 relay(client.WriteMultipleRegisters),
+		MethodModbusWriteMultipleRegistersWithDecimal:      relay(client.WriteMultipleRegistersWithDecimal),
+		MethodModbusReadWriteMultipleRegisters:             relay(client.ReadWriteMultipleRegisters),
+		MethodModbusMaskWriteRegister:                      relay(client.MaskWriteRegister),
+		MethodModbusReadFIFOQueue:                          relay(client.ReadFIFOQueue),
+		MethodModbusReadDeviceIdentification:               relay(client.ReadDeviceIdentification),
+		MethodModbusReadDeviceIdentificationSpecificObject: relay(client.ReadDeviceIdentificationSpecificObject),
 	}
 }

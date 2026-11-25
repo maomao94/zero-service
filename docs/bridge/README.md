@@ -52,7 +52,7 @@ Bridge 系列是一组将外部协议接入内部系统的桥接服务，包含 
 - 读取：`modbus.readCoils`、`modbus.readDiscreteInputs`、`modbus.readInputRegisters`、`modbus.readHoldingRegisters`、`modbus.readFIFOQueue`、`modbus.readDeviceIdentification`、`modbus.readDeviceIdentificationSpecificObject`
 - 写入：`modbus.writeSingleCoil`、`modbus.writeMultipleCoils`、`modbus.writeSingleRegister`、`modbus.writeSingleRegisterWithDecimal`、`modbus.writeMultipleRegisters`、`modbus.writeMultipleRegistersWithDecimal`、`modbus.readWriteMultipleRegisters`、`modbus.maskWriteRegister`
 
-配置管理（保存/删除/查询）与本地换算暂不对外开放。字段、示例与安全提示见 [`docs/open-api/modbus.md`](../open-api/modbus.md)。
+开放平台也转发 3 个寄存器换算方法和 5 个链路配置管理方法。字段、示例与安全提示见 [`docs/open-api/modbus.md`](../open-api/modbus.md)。
 
 ## bridgemqtt — MQTT 桥接
 

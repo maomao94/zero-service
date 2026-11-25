@@ -63,14 +63,14 @@ export default function RequestPanel({
           <div className="request-title-row">
             <span className="method-key">{method.key}</span>
             <h2>{method.label}</h2>
-            {method.write && <span className="write-badge">WRITE</span>}
-            {signed && <span className="sign-badge"><Fingerprint size={11} /> SIGNED</span>}
+            {method.write && <span className="write-badge">写操作</span>}
+            {signed && <span className="sign-badge"><Fingerprint size={11} /> 请求签名</span>}
           </div>
           <p className="request-desc">{method.description}</p>
           {method.write && (
             <div className="write-warning">
               <AlertTriangle size={15} />
-              <span>这是写操作，会改变设备寄存器或线圈状态；请确认地址和值后再发送。</span>
+              <span>该请求可能修改数据或设备状态，执行前需要确认。</span>
             </div>
           )}
         </div>
@@ -79,7 +79,7 @@ export default function RequestPanel({
 
       <div className="request-meta-grid">
         <div className="field compact-field">
-          <label className="field-label" htmlFor="tid">请求 ID（tid）</label>
+          <label className="field-label" htmlFor="tid">测试请求 ID（tid）</label>
           <input
             id="tid"
             className="text-input mono"
@@ -88,16 +88,7 @@ export default function RequestPanel({
             spellCheck={false}
             autoComplete="off"
           />
-          <p className="field-hint">进入业务处理后回显为 X-Request-Id，留空时由控制台补齐。</p>
-        </div>
-        <div className="field compact-field">
-          <span className="field-label">时间戳与 nonce</span>
-          <div className="static-field">{signed ? '发送时自动写入 timestamp + nonce' : '未启用签名时不发送'}</div>
-          <p className="field-hint">
-            {signed
-              ? 'timestamp 需在网关 5 分钟窗口内，nonce 由 Redis 防重放。'
-              : '当前请求只走 Basic 鉴权；填写 Sign Key 后才会生成 X-Sign。'}
-          </p>
+          <p className="field-hint">用于关联请求、响应和历史记录，留空时由控制台生成。</p>
         </div>
       </div>
 
@@ -146,8 +137,8 @@ export default function RequestPanel({
       </div>
 
       <div className="request-footer">
-        <button type="button" className="text-button subtle" onClick={() => setShowFields((value) => !value)}>
-          <Wand2 size={13} /> {showFields ? '收起字段说明' : '查看字段说明'}
+          <button type="button" className="text-button subtle" onClick={() => setShowFields((value) => !value)}>
+          <Wand2 size={13} /> {showFields ? '收起契约' : `查看契约 · ${method.fields.length} 请求字段${method.responseFields ? ` / ${method.responseFields.length} 响应字段` : ''}`}
         </button>
         <div className="send-area">
           {busyReason ? (
@@ -155,7 +146,7 @@ export default function RequestPanel({
           ) : disabledReason && !sending && <span className="disabled-hint">{disabledReason}</span>}
           <button type="button" className="button primary send-button" onClick={onSend} disabled={!canSend}>
             {sending ? <LoaderCircle size={15} className="spin" /> : <Play size={15} />}
-            {sending ? '请求中…' : method.write ? '发送写请求' : '发送请求'}
+            {sending ? '执行中…' : '执行请求'}
           </button>
         </div>
       </div>
@@ -172,6 +163,18 @@ export default function RequestPanel({
               <span>{field.note}</span>
             </div>
           ))}
+          {method.responseFields && (
+            <>
+              <div className="field-table-subhead">响应字段</div>
+              {method.responseFields.map((field) => (
+                <div className="field-table-row" key={`response-${field.name}`}>
+                  <code>{field.name}</code>
+                  <span>{field.type}</span>
+                  <span>{field.note}</span>
+                </div>
+              ))}
+            </>
+          )}
         </div>
       )}
     </section>

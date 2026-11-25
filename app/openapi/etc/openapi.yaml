@@ -3,22 +3,35 @@ ListenOn: 0.0.0.0:21018
 Mode: dev
 Timeout: 120000
 MaxConns: 10000
+NacosConfig:
+  IsRegister: false
+  Host: 127.0.0.1
+  Port: 8848
+  NamespaceId: public
+  ServiceName: openapi.rpc
 Log:
   Encoding: plain
   Path: /opt/logs/openapi.rpc
   Level: info
   KeepDays: 300
-# 下游 podengine；Mock 为 true 时不建立连接
+# 下游 podengine
+# 使用 Nacos 发现时，用 Target 替换对应下游的 Endpoints。
 PodEngineConf:
+  # Target: nacos://127.0.0.1:8848/pod-engine?namespaceid=public
   Endpoints:
     - 127.0.0.1:21010
   NonBlock: true
   Timeout: 120000
-# 下游 bridgemodbus；Mock 为 true 时不建立连接
+# 下游 bridgemodbus
 BridgeModbusConf:
+  # Target: nacos://127.0.0.1:8848/bridge-modbus?namespaceid=public
   Endpoints:
     - 127.0.0.1:25004
   NonBlock: true
   Timeout: 120000
-# 仅 dev/test 可启用；生产必须为 false
-Mock: true
+GisConf:
+  # Target: nacos://127.0.0.1:8848/gis?namespaceid=public
+  Endpoints:
+    - 127.0.0.1:25006
+  NonBlock: true
+  Timeout: 120000

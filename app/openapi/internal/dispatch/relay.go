@@ -2,13 +2,28 @@ package dispatch
 
 import (
 	"bytes"
+	"context"
 
 	"zero-service/common/errx"
 	"zero-service/third_party/extproto"
 
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
+
+func relay[T any, P interface {
+	*T
+	proto.Message
+}, R proto.Message](call func(context.Context, P, ...grpc.CallOption) (R, error)) Handler {
+	return func(ctx context.Context, data string) (proto.Message, error) {
+		in := P(new(T))
+		if err := decode(data, in); err != nil {
+			return nil, err
+		}
+		return call(ctx, in)
+	}
+}
 
 // decode 将 data 按 protojson 解析到 msg。
 // 空 data 视为 {}，方便无参数方法调用；未知字段与类型错误会被拒绝。

@@ -96,7 +96,7 @@ export const modules: ModuleDefinition[] = [
   },
   {
     id: 'openapi',
-    name: 'OpenAPI 测试控制台',
+    name: '开放平台控制台',
     description: 'app 开放 API 调试台，验证 Basic 鉴权、protojson 载荷与六位错误码。',
     source: 'web/openapi',
     endpoint: '/openapi/',

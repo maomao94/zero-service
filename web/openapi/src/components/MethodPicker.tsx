@@ -1,6 +1,6 @@
-import { Activity, Box, Cpu, Layers, ListTree, PenLine, Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { METHOD_GROUP_LABELS, METHOD_GROUP_ORDER } from '../lib/methods'
+import { Search, X } from 'lucide-react'
+import { useState } from 'react'
+import { METHOD_GROUPS } from '../lib/methods'
 import type { MethodDefinition } from '../types'
 
 interface MethodPickerProps {
@@ -9,86 +9,79 @@ interface MethodPickerProps {
   onSelect: (method: MethodDefinition) => void
 }
 
-const ICONS = {
-  'pod.list': ListTree,
-  'pod.get': Box,
-  'pod.stats': Activity,
-  'image.list': Layers,
-} as const
-
 export default function MethodPicker({ methods, activeKey, onSelect }: MethodPickerProps) {
   const [query, setQuery] = useState('')
-
-  const groups = useMemo(() => {
-    const keyword = query.trim().toLowerCase()
-    return METHOD_GROUP_ORDER.map((category) => ({
-      category,
-      label: METHOD_GROUP_LABELS[category],
-      items: methods.filter((method) => {
-        if (method.category !== category) return false
-        if (!keyword) return true
-        return [method.key, method.label, method.description, method.rpc]
-          .join(' ')
-          .toLowerCase()
-          .includes(keyword)
-      }),
-    })).filter((group) => group.items.length > 0)
-  }, [methods, query])
+  const [selection, setSelection] = useState<{ service: string; forKey: string }>()
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const activeGroup = methods.find((method) => method.key === activeKey)?.category
+  const service = (selection?.forKey === activeKey ? selection?.service : undefined)
+    ?? (activeGroup && METHOD_GROUPS[activeGroup].service)
+    ?? 'Podman'
+  const keyword = query.trim().toLowerCase()
+  const groups = Object.entries(METHOD_GROUPS).map(([category, group]) => ({
+    ...group, category, items: methods.filter((method) => method.category === category),
+  }))
+  const services = new Set(groups.filter((group) => group.items.length).map((group) => group.service))
+  const visible = groups.map((group) => ({
+    ...group,
+    items: group.items.filter((method) => keyword
+      ? [method.key, method.label, method.rpc, group.service, ...method.fields.map((field) => field.name)].join(' ').toLowerCase().includes(keyword)
+      : group.service === service),
+  })).filter((group) => group.items.length)
 
   return (
-    <section className="card method-card">
-      <div className="card-heading compact">
-        <div>
-          <span className="eyebrow">方法</span>
-          <h2>开放方法</h2>
-        </div>
-        <span className="count-badge">{methods.length}</span>
-      </div>
-
+    <section className="method-card" aria-label="接口目录">
+      <div className="catalog-heading"><h2>接口目录</h2><span>{methods.length} 个接口</span></div>
       <div className="method-search">
-        <Search size={14} />
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="搜索 method 或能力"
-          aria-label="搜索开放方法"
-        />
+        <Search size={16} aria-hidden="true" />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索所有接口" aria-label="搜索所有接口" />
+        {query && <button type="button" className="catalog-clear" onClick={() => setQuery('')} aria-label="清空搜索"><X size={14} /></button>}
       </div>
-
+      <label className="catalog-service">
+        <span>服务</span>
+        <select value={service} onChange={(event) => { setSelection({ service: event.target.value, forKey: activeKey }); setQuery('') }}>
+          {Array.from(services, (name) => <option key={name}>{name}</option>)}
+        </select>
+      </label>
       <div className="method-list grouped">
-        {groups.map((group) => (
-          <div className="method-group" key={group.category}>
-            <div className="method-group-title">
-              <span>{group.label}</span>
-              <span>{group.items.length}</span>
-            </div>
-            {group.items.map((method) => {
-              const Icon = ICONS[method.key as keyof typeof ICONS]
-                ?? (method.write ? PenLine : method.category === 'modbus-read' ? Cpu : Box)
-              return (
+        {visible.map((group, index) => {
+          const activeService = activeGroup && METHOD_GROUPS[activeGroup].service === service
+          const defaultOpen = activeService ? group.category === activeGroup : index === 0
+          return (
+            <details
+              key={`${service}:${activeKey}:${group.category}:${Boolean(keyword)}`}
+              className="method-group"
+              open={Boolean(keyword) || (expanded[group.category] ?? defaultOpen)}
+              onToggle={(event) => {
+                if (keyword) return
+                const open = event.currentTarget.open
+                setExpanded((previous) => (previous[group.category] ?? defaultOpen) === open
+                  ? previous
+                  : { ...previous, [group.category]: open })
+              }}
+            >
+              <summary className="method-group-title"><span>{keyword ? `${group.service} / ` : ''}{group.label}</span><span>{group.items.length}</span></summary>
+              {group.items.map((method) => (
                 <button
                   type="button"
                   key={method.key}
-                  className={`method-item ${activeKey === method.key ? 'active' : ''}`}
-                  aria-pressed={activeKey === method.key}
-                  title={method.key}
-                  onClick={() => onSelect(method)}
+                  className={`method-item${activeKey === method.key ? ' active' : ''}`}
+                  aria-current={activeKey === method.key ? 'true' : undefined}
+                  onClick={() => {
+                    onSelect(method)
+                    setQuery('')
+                    setSelection(undefined)
+                    setExpanded({})
+                  }}
                 >
-                  <span className={`method-icon ${method.write ? 'write' : ''}`}><Icon size={17} /></span>
-                  <span className="method-copy">
-                    <b>{method.key}</b>
-                    <small>{method.label}</small>
-                  </span>
-                  {method.write && <span className="method-write-tag">写</span>}
-                  <span className="method-arrow">→</span>
+                  <span className="method-copy"><b>{method.label}</b><small>{method.key}</small></span>
                 </button>
-              )
-            })}
-          </div>
-        ))}
-        {!groups.length && <div className="method-empty">没有匹配的 method。</div>}
+              ))}
+            </details>
+          )
+        })}
+        {!visible.length && <p className="method-empty">没有匹配的接口。试试接口名或字段名。</p>}
       </div>
-      <p className="method-footnote">Podman 4 个，Modbus I/O 15 个；配置管理与本地换算暂不开放。</p>
     </section>
   )
 }

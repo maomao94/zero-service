@@ -157,7 +157,7 @@ server.Use(gtwx.RequestIDMiddleware)
 
 - 优先复用请求头 `X-Request-Id`；为空、超过 128 字符或含控制字符时重新生成。
 - 写入响应头和 context，handler 用 `gtwx.RequestIDFromContext(ctx)` 读取。
-- `app/opengtw` 通过 `internal/middleware/requestid.go` 别名复用同一实现；`GatewayHandler` 在 body 带 `tid` 时以 `tid` 覆盖响应头，缺失时使用中间件生成的 ID。
+- `app/opengtw` 复用该中间件。当前 `GatewayHandler` 在通过鉴权并解析请求体后，用非空 `tid` 覆盖响应头 `X-Request-Id`，并将 `tid` 转发给下游。省略 `tid` 时沿用中间件的请求 ID。
 - 鉴权/404/405 等绕过业务中间件的兜底出口由 `ensureRequestID` 补 ID（`common/gtwx/response.go`）。
 
 ## 4. 错误码使用
@@ -329,7 +329,7 @@ curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 | 服务/场景 | 状态 | 说明 |
 | --- | --- | --- |
 | `app/livegtw` | 已接入 | 业务、鉴权、参数、404/405、下游错误均走 `gtwx` |
-| `app/opengtw` | 已接入 | 开放面 Basic + 管理面 JWT；`tid` 回显 |
+| `app/opengtw` | 已接入 | 开放面 Basic 与应用签名，管理面 JWT |
 | `gtw` | 已接入 | 中间件/兜底 handler 与 `Error.Fold` 已补齐；微信支付回调为协议例外 |
 | `app/oryxgtw` | 未迁移 | `httpx.ErrorCtx` / `OkJsonCtx` |
 | `app/bridgegtw` | 未迁移 | grpc-gateway + `httpx`，无信封 |
@@ -361,7 +361,7 @@ curl -sS -i "$BASE_URL/live/v1/listMeetings" -H 'X-Request-Id: demo-req-1'
 | `app/livegtw/internal/middleware/meetingauthmiddleware.go` | 身份缺失 → `100110` |
 | `app/livegtw/internal/handler/webhook/webhookhandler.go` | webhook 协议例外 |
 | `app/opengtw/opengtw.go` | opengtw 统一出口接线 |
-| `app/opengtw/internal/middleware/openauthmiddleware.go` | Basic → `130001/130002` |
+| `app/opengtw/internal/middleware/openauthmiddleware.go` | Basic → `130001/130002`，应用验签 → `130006` |
 | `app/opengtw/internal/handler/gateway/gatewayhandler.go` | 开放面转发与 `tid` 回显 |
 | `app/opengtw/internal/logic/gateway/gatewaylogic.go` | 下游错误归一化（不折叠） |
 | `common/gtwx/response_test.go`、`common/errx/codec_test.go` | 公共出口与错误码测试 |
