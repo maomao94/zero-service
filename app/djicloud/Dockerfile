@@ -1,6 +1,6 @@
-# 业务镜像：纯 Go（CGO_ENABLED=0）多阶段构建，运行在 deploy/base-image 提供的 go-runtime 基础镜像上。
+# 业务镜像：纯 Go（CGO_ENABLED=0）多阶段构建，运行在 deploy/base-image/Dockerfile 的 base 阶段提供的 base-runtime 基础镜像上。
 # 由 app/djicloud/build.sh 构建（deploy.sh 复用它），传 BASE_IMAGE 与 --platform，构建上下文为仓库根目录。
-# 纯 Go 服务的运行基础镜像由 deploy/base-image 提供（bash + 常用排查命令），
+# 纯 Go 服务的运行基础镜像 base-runtime 由 deploy/base-image/Dockerfile 提供（bash + 常用排查命令），
 # BASE_IMAGE 由 build.sh 按目标架构传入；传 scratch 可构建无 shell 的精简镜像。
 ARG BASE_IMAGE
 
