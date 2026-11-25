@@ -31,7 +31,7 @@ require (
 	github.com/dsoprea/go-exif/v3 v3.0.1
 	github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd
 	github.com/duke-git/lancet/v2 v2.4.0
-	github.com/eclipse/paho.mqtt.golang v1.5.1
+	github.com/eclipse/paho.mqtt.golang v1.5.2
 	github.com/envoyproxy/protoc-gen-validate v1.3.3
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-playground/validator/v10 v10.30.6
@@ -49,7 +49,7 @@ require (
 	github.com/larksuite/oapi-sdk-go/v3 v3.13.0
 	github.com/lib/pq v1.12.3
 	github.com/livekit/protocol v1.54.2
-	github.com/livekit/server-sdk-go/v2 v2.20.0
+	github.com/livekit/server-sdk-go/v2 v2.20.1
 	github.com/mattn/go-sqlite3 v1.14.53
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2
 	github.com/minio/minio-go/v7 v7.4.1
@@ -63,7 +63,7 @@ require (
 	github.com/prometheus/client_golang v1.25.0
 	github.com/qichengzx/coordtransform v0.0.0-20261113085823-53d036063e78
 	github.com/qiniu/go-sdk/v7 v7.32.0
-	github.com/redis/go-redis/v9 v9.23.0
+	github.com/redis/go-redis/v9 v9.24.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shopspring/decimal v1.6.0
 	github.com/spf13/cast v1.10.0
@@ -261,7 +261,7 @@ require (
 	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/lithammer/shortuuid/v4 v4.3.0 // indirect
 	github.com/livekit/mageutil v0.0.0-20250511045019-0f1ff63f7731 // indirect
-	github.com/livekit/mediatransportutil v0.0.0-20261014192331-dd8e31a0adc0 // indirect
+	github.com/livekit/mediatransportutil v0.0.0-20261116220501-6af81419a977 // indirect
 	github.com/livekit/psrpc v0.8.2 // indirect
 	github.com/lrstanley/bubblezone v0.0.0-20240914071701-b48c55a5e78e // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
@@ -296,12 +296,11 @@ require (
 	github.com/pandatix/go-abnf v0.5.5 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
-	github.com/petermattis/goid v0.0.0-20261120131106-3f141f74aebc // indirect
+	github.com/petermattis/goid v0.0.0-20261124144452-466dc414edf5 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pion/datachannel v1.6.4 // indirect
 	github.com/pion/dtls/v3 v3.1.16 // indirect
-	github.com/pion/dtls/v4 v4.0.0-rc.8 // indirect
 	github.com/pion/ice/v4 v4.4.9 // indirect
 	github.com/pion/interceptor v0.1.51 // indirect
 	github.com/pion/logging v0.2.4 // indirect
@@ -409,7 +408,3 @@ require (
 replace github.com/doquangtan/socketio/v4 => github.com/maomao94/socket.io-golang/v4 v4.1.9-fork.20261103173921
 
 replace github.com/godoes/gorm-kingbase => github.com/maomao94/gorm-kingbase v1.11.0-fork.20260928110858
-
-replace github.com/pion/webrtc/v4 => github.com/livekit/webrtc-pion/v4 v4.2.25-warp.3
-
-replace github.com/pion/ice/v4 => github.com/livekit/ice/v4 v4.4.8-warp.4
