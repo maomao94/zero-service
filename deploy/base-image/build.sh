@@ -1,11 +1,12 @@
 #!/bin/bash
 
-# 构建 gis/file 共用的基础镜像，默认同时构建 amd64 与 arm64。
-# 只在 GEOS、ffmpeg 或 alpine 版本变化时需要重建。
+# 构建业务镜像的运行基础镜像，默认同时构建 amd64 与 arm64。
+# 只在 Alpine 版本、依赖包或镜像内容变化时需要重建。
 #
 # 用法:
-#   bash deploy/base-image/build.sh
-#   PLATFORMS="linux/amd64" bash deploy/base-image/build.sh
+#   bash deploy/base-image/build.sh                              # runtime（gis/file），双架构
+#   bash deploy/base-image/build.sh go                           # go-runtime（纯 Go 服务），双架构
+#   PLATFORMS="linux/amd64" bash deploy/base-image/build.sh go   # 单一架构
 
 set -e
 
@@ -14,10 +15,28 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 CONTEXT_DIR=$(cd "${SCRIPT_DIR}/.." && pwd)
 source "${SCRIPT_DIR}/common.sh"
 
+KIND=${1:-runtime}
 PLATFORMS=${PLATFORMS:-"linux/amd64 linux/arm64"}
 
 log()   { echo -e "\033[1;34m[INFO]\033[0m $1"; }
 error() { echo -e "\033[1;31m[ERROR]\033[0m $1"; }
+
+case "${KIND}" in
+  runtime)
+    DOCKERFILE="${SCRIPT_DIR}/Dockerfile"
+    BUILD_ARGS=(--build-arg "GEOS_VERSION=${BASE_GEOS_VERSION}")
+    image_name() { base_image "$1"; }
+    ;;
+  go)
+    DOCKERFILE="${SCRIPT_DIR}/go-runtime/Dockerfile"
+    BUILD_ARGS=()
+    image_name() { go_base_image "$1"; }
+    ;;
+  *)
+    error "未知的基础镜像类型: ${KIND}（可选 runtime、go）"
+    exit 1
+    ;;
+esac
 
 PROXY_ARGS=()
 if [ -n "$HTTP_PROXY" ]; then
@@ -29,16 +48,16 @@ fi
 
 for PLATFORM in ${PLATFORMS}; do
   ARCH=$(target_arch "${PLATFORM}")
-  IMAGE=$(base_image "${ARCH}")
+  IMAGE=$(image_name "${ARCH}")
 
   log "构建基础镜像: ${IMAGE} (${PLATFORM})"
   DOCKER_BUILDKIT=1 docker build \
       --platform "${PLATFORM}" \
       --progress=plain \
-      --build-arg GEOS_VERSION=${BASE_GEOS_VERSION} \
+      "${BUILD_ARGS[@]}" \
       "${PROXY_ARGS[@]}" \
       -t "${IMAGE}" \
-      -f "${SCRIPT_DIR}/Dockerfile" "${CONTEXT_DIR}" || {
+      -f "${DOCKERFILE}" "${CONTEXT_DIR}" || {
     error "基础镜像构建失败: ${IMAGE}"
     exit 1
   }
@@ -52,5 +71,5 @@ done
 
 log "基础镜像构建完成 ✅"
 for PLATFORM in ${PLATFORMS}; do
-  log "  $(base_image "$(target_arch "${PLATFORM}")")"
+  log "  $(image_name "$(target_arch "${PLATFORM}")")"
 done

@@ -15,6 +15,8 @@
 # 环境变量：
 #   BUILD_TIMESTAMP - 指定时间戳（用于 deploy.sh 调用时保持一致性）
 #   BUILD_OUTPUT_ONLY - 设为 true 时只输出 tar 文件名到 stdout，日志输出到 stderr
+#   BASE_IMAGE - 覆盖运行基础镜像，默认 zero-service/go-runtime:<版本>-<arch>；
+#                设为 scratch 可构建无 shell 的精简镜像
 
 set -e
 
@@ -24,6 +26,7 @@ ENV_FILE="env/${ENVIRONMENT}.env"
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 source "${SCRIPT_DIR}/../../deploy/common.sh"
+source "${SCRIPT_DIR}/../../deploy/base-image/common.sh"
 
 # BUILD_OUTPUT_ONLY=true 时，日志输出到 stderr
 if [ "${BUILD_OUTPUT_ONLY}" = "true" ]; then
@@ -67,6 +70,11 @@ BUILT_TARS=()
 
 for PLATFORM in ${PLATFORMS}; do
   ARCH=$(target_arch "$PLATFORM")
+
+  # 纯 Go 服务运行在带 bash 的基础镜像上，缺失时自动构建；BASE_IMAGE=scratch 退回精简镜像
+  SERVICE_BASE_IMAGE=${BASE_IMAGE:-$(go_base_image "${ARCH}")}
+  bash "${SCRIPT_DIR}/../../deploy/base-image/ensure.sh" "${ARCH}" go >&2
+
   TAG="${TIMESTAMP}-${ARCH}"
   TAR_NAME="${SANITIZED_IMAGE_NAME}_${ARCH}_${TIMESTAMP}.tar"
 
@@ -78,6 +86,7 @@ for PLATFORM in ${PLATFORMS}; do
   DOCKER_BUILDKIT=1 docker build \
       --progress=plain \
       --platform "linux/${ARCH}" \
+      --build-arg "BASE_IMAGE=${SERVICE_BASE_IMAGE}" \
       "${PROXY_ARGS[@]}" \
       -t "${IMAGE_NAME}:${TAG}" \
       -f ./Dockerfile ../../ >&2 || {
