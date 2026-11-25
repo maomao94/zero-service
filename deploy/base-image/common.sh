@@ -8,11 +8,18 @@ _COMMON_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "${_COMMON_DIR}/../common.sh"
 
 # 通用 runtime 基础环境版本：内容升级时 bump，不因新增某个 C 依赖而改名
-BASE_RUNTIME_VERSION=${BASE_RUNTIME_VERSION:-1.0.0}
+BASE_RUNTIME_VERSION=${BASE_RUNTIME_VERSION:-1.1.0}
+# 纯 Go 业务服务基础环境版本：提供 shell 与排查工具，内容变更时 bump
+BASE_GO_RUNTIME_VERSION=${BASE_GO_RUNTIME_VERSION:-1.0.0}
 # 仅作为构建参数，控制基础环境内的 GEOS 版本，不进入镜像名
 BASE_GEOS_VERSION=${BASE_GEOS_VERSION:-3.14.1}
 
-# 业务运行基础镜像：通用 runtime 环境（当前含 GEOS、ffmpeg，后续可继续加 C 依赖）
+# gis/file 的运行基础镜像：GEOS、ffmpeg + shell（后续可继续加 C 依赖）
 base_image() {
   echo "zero-service/runtime:${BASE_RUNTIME_VERSION}-${1:?arch required}"
+}
+
+# 纯 Go 业务服务的运行基础镜像：bash + 常用排查命令 + CA 证书/时区，替代无法 docker exec 的 scratch
+go_base_image() {
+  echo "zero-service/go-runtime:${BASE_GO_RUNTIME_VERSION}-${1:?arch required}"
 }

@@ -1,5 +1,9 @@
-# 业务镜像：纯 Go（CGO_ENABLED=0）多阶段构建，运行在 scratch。
-# 由 app/bridgemqtt/build.sh 构建（deploy.sh 复用它），传 --platform，构建上下文为仓库根目录。
+# 业务镜像：纯 Go（CGO_ENABLED=0）多阶段构建，运行在 deploy/base-image 提供的 go-runtime 基础镜像上。
+# 由 app/bridgemqtt/build.sh 构建（deploy.sh 复用它），传 BASE_IMAGE 与 --platform，构建上下文为仓库根目录。
+# 纯 Go 服务的运行基础镜像由 deploy/base-image 提供（bash + 常用排查命令），
+# BASE_IMAGE 由 build.sh 按目标架构传入；传 scratch 可构建无 shell 的精简镜像。
+ARG BASE_IMAGE
+
 FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS builder
 
 LABEL stage=gobuilder
@@ -11,12 +15,6 @@ ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ARG GOPROXY=https://goproxy.cn,direct
 ENV GOPROXY=$GOPROXY
-
-# tzdata 用于给 scratch 运行镜像提供时区文件；ca-certificates 供 HTTPS 客户端使用
-RUN set -x \
-    && if [ -n "$HTTP_PROXY" ]; then export http_proxy=$HTTP_PROXY; fi \
-    && if [ -n "$HTTPS_PROXY" ]; then export https_proxy=$HTTPS_PROXY; fi \
-    && apk add --no-cache ca-certificates tzdata
 
 WORKDIR /build
 
@@ -36,11 +34,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags="-s -w" -o /out/bridgemqtt ./app/bridgemqtt \
     && chmod +x /out/bridgemqtt
 
-FROM scratch
-
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /usr/share/zoneinfo/Asia/Shanghai
-ENV TZ=Asia/Shanghai
+FROM ${BASE_IMAGE}
 
 WORKDIR /app
 COPY --from=builder /out/bridgemqtt /app/bridgemqtt
