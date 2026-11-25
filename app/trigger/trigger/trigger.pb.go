@@ -791,7 +791,7 @@ type SendProtoTriggerReq struct {
 	MaxRetry int64 `protobuf:"varint,3,opt,name=max_retry,json=maxRetry,proto3" json:"max_retry,omitempty"`
 	// 唯一消息 id 可为空
 	MsgId string `protobuf:"bytes,4,opt,name=msg_id,json=msgId,proto3" json:"msg_id,omitempty"`
-	// 服务名称 不可为空 示例 127.0.0.1:8080 direct:///127.0.0.1:8080,127.0.0.2:8080,nacos://nacos:nacos@127.0.0.1:8848/service?namespaceid=public&timeout=5000s
+	// 服务名称 不可为空 示例 127.0.0.1:8080 direct:///127.0.0.1:8080,127.0.0.2:8080,nacos://nacos:nacos@127.0.0.1:8848/service?namespaceid=public&timeout=5s
 	GrpcServer string `protobuf:"bytes,5,opt,name=grpc_server,json=grpcServer,proto3" json:"grpc_server,omitempty"`
 	// 方法 不可为空
 	Method string `protobuf:"bytes,6,opt,name=method,proto3" json:"method,omitempty"`

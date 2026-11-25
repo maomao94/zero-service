@@ -1,18 +1,13 @@
 package config
 
-import "github.com/zeromicro/go-zero/zrpc"
+import (
+	"github.com/zeromicro/go-zero/zrpc"
+	"zero-service/common/nacosx"
+)
 
 type Config struct {
 	zrpc.RpcServerConf
-	NacosConfig struct {
-		IsRegister  bool
-		Host        string
-		Port        uint64
-		Username    string
-		PassWord    string
-		NamespaceId string
-		ServiceName string
-	} `json:",optional"`
+	NacosConfig nacosx.ServiceConfig `json:",optional"`
 	// LAL服务器配置
 	LalServer struct {
 		// LAL服务器的IP地址

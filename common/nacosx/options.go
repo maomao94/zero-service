@@ -3,15 +3,21 @@ package nacosx
 import "github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 
 const (
-	allEths  = "0.0.0.0"
 	envPodIP = "POD_IP"
+
+	envLogLevel             = "NACOS_LOG_LEVEL"
+	envLogDir               = "NACOS_LOG_DIR"
+	envCacheDir             = "NACOS_CACHE_DIR"
+	envNotLoadCacheAtStart  = "NACOS_NOT_LOAD_CACHE_AT_START"
+	envUpdateCacheWhenEmpty = "NACOS_UPDATE_CACHE_WHEN_EMPTY"
 )
 
 // options
 type Options struct {
 	ListenOn    string
 	ServiceName string
-	Prefix      string
+	// AdvertiseIP 是注册到 Nacos 的实例 IP；为空时按监听地址、POD_IP、内网 IP 依次推导。
+	AdvertiseIP string
 	Weight      float64
 	Cluster     string
 	Group       string
@@ -23,7 +29,7 @@ type Options struct {
 
 type Option func(*Options)
 
-func NewNacosConfig(serviceName, listenOn string, sc []constant.ServerConfig, cc *constant.ClientConfig, opts ...Option) *Options {
+func newNacosConfig(serviceName, listenOn string, sc []constant.ServerConfig, cc *constant.ClientConfig, opts ...Option) *Options {
 	options := &Options{
 		ServiceName:  serviceName,
 		ListenOn:     listenOn,
@@ -38,12 +44,6 @@ func NewNacosConfig(serviceName, listenOn string, sc []constant.ServerConfig, cc
 	}
 
 	return options
-}
-
-func WithPrefix(prefix string) Option {
-	return func(o *Options) {
-		o.Prefix = prefix
-	}
 }
 
 func WithWeight(weight float64) Option {

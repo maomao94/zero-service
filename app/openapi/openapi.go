@@ -13,7 +13,6 @@ import (
 	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/conf"
-	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
@@ -41,7 +40,7 @@ func main() {
 	s.AddOptions(grpc.ChainUnaryInterceptor(grpcx.ServerFinalizeInterceptor))
 	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	defer s.Stop()
-	logx.Must(c.NacosConfig.Register(c.Name, c.ListenOn, true))
+	c.NacosConfig.MustRegisterGRPC(c.Name, c.ListenOn)
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	s.Start()

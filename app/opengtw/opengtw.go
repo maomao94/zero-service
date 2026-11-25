@@ -55,7 +55,7 @@ func main() {
 	handler.RegisterHandlers(server, ctx)
 
 	logx.AddGlobalFields(logx.Field("app", c.Name))
-	logx.Must(c.NacosConfig.Register(c.Name, net.JoinHostPort(c.Host, strconv.Itoa(c.Port)), false))
+	c.NacosConfig.MustRegisterHTTP(c.Name, net.JoinHostPort(c.Host, strconv.Itoa(c.Port)))
 
 	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
 	server.Start()
