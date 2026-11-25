@@ -6,7 +6,7 @@ import (
 
 	"zero-service/common/asynqx"
 	"zero-service/common/grpcx"
-	"zero-service/common/nacosx"
+	_ "zero-service/common/nacosx"
 	"zero-service/common/tool"
 
 	"zero-service/app/oryxserver/internal/config"
@@ -17,8 +17,6 @@ import (
 	"zero-service/app/oryxserver/oryxserver"
 	_ "zero-service/common/carbonx"
 
-	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/proc"
@@ -51,29 +49,14 @@ func main() {
 	})
 
 	// register service to nacos
-	if c.NacosConfig.IsRegister {
-		sc := []constant.ServerConfig{
-			*constant.NewServerConfig(c.NacosConfig.Host, c.NacosConfig.Port),
-		}
-		cc := &constant.ClientConfig{
-			NamespaceId:         c.NacosConfig.NamespaceId,
-			Username:            c.NacosConfig.Username,
-			Password:            c.NacosConfig.PassWord,
-			TimeoutMs:           5000,
-			NotLoadCacheAtStart: true,
-		}
-		m := map[string]string{
-			"gRPC_port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),
-			"preserved.register.source": "go-zero",
-			"deployMode":                c.DeployMode,
-			"broadcastTopic":            ctx.BroadcastTopic(),
-			"broadcastAckTopic":         ctx.BroadcastAckTopic(),
-			"broadcastInstanceId":       ctx.NodeID,
-			"relayNodeId":               ctx.NodeID,
-		}
-		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacosx.WithMetadata(m))
-		_ = nacosx.RegisterService(opts)
-	}
+	c.NacosConfig = c.NacosConfig.WithMetadata(map[string]string{
+		"deployMode":          c.DeployMode,
+		"broadcastTopic":      ctx.BroadcastTopic(),
+		"broadcastAckTopic":   ctx.BroadcastAckTopic(),
+		"broadcastInstanceId": ctx.NodeID,
+		"relayNodeId":         ctx.NodeID,
+	})
+	c.NacosConfig.MustRegisterGRPC(c.Name, c.ListenOn)
 	s.AddOptions(grpc.ChainUnaryInterceptor(grpcx.ServerFinalizeInterceptor))
 	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	logx.AddGlobalFields(logx.Field("app", c.Name))

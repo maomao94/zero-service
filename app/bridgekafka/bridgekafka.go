@@ -11,12 +11,9 @@ import (
 	"zero-service/app/bridgekafka/internal/svc"
 	_ "zero-service/common/carbonx"
 	"zero-service/common/grpcx"
-	"zero-service/common/nacosx"
 	_ "zero-service/common/nacosx"
 	"zero-service/common/tool"
 
-	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/zeromicro/go-queue/kq"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -59,24 +56,8 @@ func main() {
 		}
 	})
 
-	if c.NacosConfig.IsRegister {
-		sc := []constant.ServerConfig{
-			*constant.NewServerConfig(c.NacosConfig.Host, c.NacosConfig.Port),
-		}
-		cc := &constant.ClientConfig{
-			NamespaceId:         c.NacosConfig.NamespaceId,
-			Username:            c.NacosConfig.Username,
-			Password:            c.NacosConfig.PassWord,
-			TimeoutMs:           5000,
-			NotLoadCacheAtStart: true,
-		}
-		m := map[string]string{
-			"gRPC_port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),
-			"preserved.register.source": "go-zero",
-		}
-		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacosx.WithMetadata(m))
-		_ = nacosx.RegisterService(opts)
-	}
+	// register service to nacos
+	c.NacosConfig.MustRegisterGRPC(c.Name, c.ListenOn)
 
 	serviceGroup.Add(s)
 	s.AddOptions(grpc.ChainUnaryInterceptor(grpcx.ServerFinalizeInterceptor))

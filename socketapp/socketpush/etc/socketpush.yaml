@@ -21,7 +21,7 @@ NacosConfig:
   ServiceName: socket-push
 SocketGtwConf:
   # nacos://[user:passwd]@host/service?param=value'
-#  Target: nacos://nacos:nacos@127.0.0.1:8848/socket-gtw?namespaceid=public&timeout=5000s
+#  Target: nacos://nacos:nacos@127.0.0.1:8848/socket-gtw?namespaceid=public&timeout=5s
   Endpoints:
     - 127.0.0.1:25001
   Timeout: 10000

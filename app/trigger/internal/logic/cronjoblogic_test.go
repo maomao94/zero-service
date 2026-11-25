@@ -84,10 +84,6 @@ func TestCronJobLifecycle(t *testing.T) {
 	}
 }
 
-func TestUpdateCronJobRejectsStableIdentityChange(t *testing.T) {
-	t.Skip("UpdateCronJobReq no longer carries Type, GroupId or DeptCode")
-}
-
 func TestCreateCronJobRemainsStrict(t *testing.T) {
 	store, db := newCronJobLogicTestStore(t)
 	serviceContext := &svc.ServiceContext{DB: db, CronJobStore: store}
