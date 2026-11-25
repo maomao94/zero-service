@@ -5,7 +5,6 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/nacos-group/nacos-sdk-go/v2/common/logger"
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/resolver"
@@ -45,7 +44,7 @@ func newWatcher(ctx context.Context, cancel context.CancelFunc, out chan<- []str
 
 func (nw *watcher) CallBackHandle(services []model.Instance, err error) {
 	if err != nil {
-		logger.Error("[Nacos resolver] watcher call back handle error:%v", err)
+		logx.Errorf("[nacos] watcher callback error: %v", err)
 		return
 	}
 	ee := extractHealthyGRPCInstances(services)
@@ -70,7 +69,7 @@ func populateEndpoints(ctx context.Context, clientConn resolver.ClientConn, inpu
 			sort.Sort(byAddressString(conns)) // Don't replace the same address list in the balancer
 			_ = clientConn.UpdateState(resolver.State{Addresses: conns})
 		case <-ctx.Done():
-			logx.Info("[Nacos resolver] Watch has been finished")
+			logx.Debug("[nacos] watch has been finished")
 			return
 		}
 	}
