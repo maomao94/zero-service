@@ -1,8 +1,8 @@
-# app 开放 API 网关（Podman + Modbus）
+# 开放 API 网关
 
-`opengtw` 面向第三方应用（含 Java 服务端）提供统一的 HTTP/JSON 开放 API，当前接入 Podman 容器能力与 Modbus 读写能力。网关负责 Basic 鉴权、统一信封、错误码透传与可选折叠、请求日志；实际 method 路由与 protojson 转换由 `app/openapi` 完成。
+`opengtw` 面向第三方应用提供统一的 HTTP/JSON 入口，负责 Basic 鉴权、按应用验签、统一响应和请求日志。`app/openapi` 按 `method` 转发到 Podman、Modbus 或 GIS，并按下游契约转换 protojson。
 
-专题参考：[凭据与请求签名协议](./signature.md) · [Modbus 方法、字段与调用示例](./modbus.md)。
+专题参考见 [凭据与请求签名协议](./signature.md)、[Modbus 方法与示例](./modbus.md)、[GIS 方法与示例](./gis.md)和 [Nacos 注册与发现](./nacos.md)。
 
 ## 架构与端口
 
@@ -10,19 +10,22 @@
   <img src="../images/diagrams/flow-openapi.png" alt="开放 API 架构：opengtw 鉴权后调用 app/openapi，再路由到 podengine 与 bridgemodbus" style="max-width: 88%; height: auto;" />
 </div>
 
+上图以 Podman 和 Modbus 为例，GIS 走同一条转发链路。
+
 | 服务 | 目录 | 端口 | 说明 |
 | --- | --- | --- | --- |
 | `opengtw` | `app/opengtw` | 11005 | HTTP 网关，`/v1/*` 与 `/open-admin/v1/*` |
 | `openapi` | `app/openapi` | 21018 | gRPC 转发服务，`OpenApiRpc.Invoke` |
 | `podengine` | `app/podengine` | 21010 | 下游容器管理服务 |
 | `bridgemodbus` | `app/bridgemodbus` | 25004 | 下游 Modbus TCP 读写服务 |
+| `gis` | `app/gis` | 25006 | 下游地理信息服务 |
 
 ## 测试控制台
 
-`web/openapi` 是配套的浏览器调试台，仅限开发/测试环境：
+`web/openapi` 是配套的浏览器调试台：
 
 - 开发端口 `5181`，生产挂在 `/openapi/`。
-- API 调试：19 个 method（Podman 4 + Modbus 15）、JSON 编辑器、写操作提示、响应高亮、`X-Request-Id`/耗时/大小/错误码展示。
+- 接口测试目录收录 51 个方法（Podman 4、Modbus 23、GIS 24），支持跨服务搜索、JSON 编辑、写操作确认及响应详情。实际可调用的方法以转发服务注册结果为准。
 - 应用管理：JWT 鉴权，创建、启停、重置密钥，secret 只展示一次。
 - 请求历史：最近 50 条，支持过滤与回填；不保存 secret。
 - 错误码速查：BC=30 与常用 extproto 错误码。
@@ -35,7 +38,7 @@
 Authorization: Basic base64(appId:secret)
 ```
 
-- `appId` 形如 `app_` + 32 位 UUID hex；`secret` 与 `signKey` 都是随机密钥，创建/重置时返回一次；`signKey` 还可在管理面按开关查看，`secret` 无法找回。
+- `appId` 为 `app_` 加 32 个十六进制字符。创建或重置凭据时返回 `secret`，开启签名的应用同时返回 `signKey`。`secret` 丢失后需重置，当前生效的 `signKey` 可在管理面按配置查看。
 - 服务端只保存 `sha256(secret)` 的十六进制摘要，并使用常数时间比较。
 - 应用不存在或已停用返回 `130001`；密钥缺失或不匹配返回 `130002`。HTTP 状态统一为 200，业务结果以响应体 `code` 为准。
 - 凭据缓存在内存中，每 60s 从凭据库刷新；管理面变更后立即刷新。本地默认使用金仓 `zero` 库，生产建议独立 `resource` 库。
@@ -79,52 +82,43 @@ v1
 {bodyHash}
 ```
 
-签名使用 `HMAC-SHA256`；`bodyHash = SHA256(原始 body 字节)`，`timestamp`/`nonce` 也由 bodyHash 覆盖。`data` 保持 JSON 对象，不需要改成字符串。`timestamp` 允许与服务端相差 5 分钟，`nonce` 由 Redis 短期占用以防重放。未开启签名的应用继续使用现有 Basic 鉴权，不需要 `X-Sign`。
+签名使用 `HMAC-SHA256`，`bodyHash` 是整个原始请求体的 SHA-256 小写十六进制摘要。`data` 以 JSON 对象传入，缺省时按 `{}` 处理。`timestamp` 允许与服务端相差 5 分钟，`nonce` 由 Redis 占用 10 分钟。未开启签名的应用只需 Basic 鉴权。
 
 密钥格式、`secret`/`signKey` 的密码学处理、canonical string 详解和完整示例见 [`signature.md`](./signature.md)。
 
 响应：
 
 ```json
-{"code": 0, "msg": "ok", "data": {"items": [], "total": 0}, "timestamp": 1761120000000}
+{"code": 0, "msg": "ok", "data": {}, "timestamp": 1761120000000}
 ```
 
-- `tid` 会回显到响应头 `X-Request-Id`；未传时由网关生成。所有响应（包括鉴权失败、解析失败）都会带 `X-Request-Id`，并优先复用请求头里的同名值。
-- 所有响应统一为 HTTP 200，响应体固定为 `{code,msg,data,timestamp}`；错误码表里的 HTTP 列表示语义状态，不代表实际响应状态。
-- `data` 为该 method 的 protojson，网关按原始字节转发，不做二次序列化。
+- 网关业务响应使用 HTTP 200，以 `code=0` 判断成功。响应含 `code`、`msg` 和网关生成的 Unix 毫秒时间戳 `timestamp`。成功时 `data` 为下游 protojson 对象，失败时省略 `data`。代理或基础设施错误可能使用其他 HTTP 状态。
+- HTTP 中间件优先复用合法的请求头 `X-Request-Id`，缺失或无效时生成。当前 `/v1/gateway` 在通过鉴权并解析请求体后，会用非空 `tid` 覆盖响应头 `X-Request-Id`，并将 `tid` 转发给 `Invoke`。省略 `tid` 时沿用中间件的请求 ID。鉴权或解析失败发生在覆盖之前。
+- 链路追踪 ID 由追踪系统维护。当前开放 API 没有定义 `X-Trace-Id` 响应头。
+- HTTP 网关保留 `data` 的 JSON 内容，转发服务按对应 RPC 的请求和响应消息进行 protojson 编解码。
 
 ### 可用 method
 
 #### Podman
 
-| method | 下游 RPC | 说明 |
+| method | 下游 RPC | `data` 请求字段 |
 | --- | --- | --- |
-| `pod.list` | `podengine.PodEngine/ListPods` | 容器列表，支持名称/ID/标签、分页 |
-| `pod.get` | `podengine.PodEngine/GetPod` | 容器详情 |
-| `pod.stats` | `podengine.PodEngine/GetPodStats` | 容器资源统计 |
-| `image.list` | `podengine.PodEngine/ListImages` | 镜像列表 |
+| `pod.list` | `podengine.PodEngine/ListPods` | `node`、`limit`、`offset`、`names`、`ids`、`labels` |
+| `pod.get` | `podengine.PodEngine/GetPod` | `node`、`id`（必填） |
+| `pod.stats` | `podengine.PodEngine/GetPodStats` | `node`、`id`（必填） |
+| `image.list` | `podengine.PodEngine/ListImages` | `node`、`limit`、`offset`、`references`、`includeDigests` |
+
+`node` 默认 `local`。请求和响应字段以 [podengine.proto](../../app/podengine/podengine.proto) 为准。
 
 #### Modbus
 
-| method | 下游 RPC | 功能码/说明 |
-| --- | --- | --- |
-| `modbus.readCoils` | `bridgemodbus.BridgeModbus/ReadCoils` | 0x01 读线圈 |
-| `modbus.readDiscreteInputs` | `bridgemodbus.BridgeModbus/ReadDiscreteInputs` | 0x02 读离散输入 |
-| `modbus.readInputRegisters` | `bridgemodbus.BridgeModbus/ReadInputRegisters` | 0x04 读输入寄存器 |
-| `modbus.readHoldingRegisters` | `bridgemodbus.BridgeModbus/ReadHoldingRegisters` | 0x03 读保持寄存器 |
-| `modbus.readFIFOQueue` | `bridgemodbus.BridgeModbus/ReadFIFOQueue` | 0x18 读 FIFO 队列 |
-| `modbus.readDeviceIdentification` | `bridgemodbus.BridgeModbus/ReadDeviceIdentification` | 0x2B/0x0E 读设备标识 |
-| `modbus.readDeviceIdentificationSpecificObject` | `bridgemodbus.BridgeModbus/ReadDeviceIdentificationSpecificObject` | 读指定设备对象 |
-| `modbus.writeSingleCoil` | `bridgemodbus.BridgeModbus/WriteSingleCoil` | 0x05 写单个线圈 |
-| `modbus.writeMultipleCoils` | `bridgemodbus.BridgeModbus/WriteMultipleCoils` | 0x0F 写多个线圈 |
-| `modbus.writeSingleRegister` | `bridgemodbus.BridgeModbus/WriteSingleRegister` | 0x06 写单个寄存器 |
-| `modbus.writeSingleRegisterWithDecimal` | `bridgemodbus.BridgeModbus/WriteSingleRegisterWithDecimal` | 十进制写单个寄存器 |
-| `modbus.writeMultipleRegisters` | `bridgemodbus.BridgeModbus/WriteMultipleRegisters` | 0x10 写多个寄存器 |
-| `modbus.writeMultipleRegistersWithDecimal` | `bridgemodbus.BridgeModbus/WriteMultipleRegistersWithDecimal` | 十进制写多个寄存器 |
-| `modbus.readWriteMultipleRegisters` | `bridgemodbus.BridgeModbus/ReadWriteMultipleRegisters` | 0x17 读写多个寄存器 |
-| `modbus.maskWriteRegister` | `bridgemodbus.BridgeModbus/MaskWriteRegister` | 0x16 掩码写寄存器 |
+共 23 个方法，包括 15 个 I/O、3 个寄存器换算和 5 个链路配置管理方法。完整清单和示例见 [Modbus 开放接口](./modbus.md)。
 
-Modbus 详细字段、示例和响应说明见 [`modbus.md`](./modbus.md)。未注册的 method 返回 `130004`。
+#### GIS
+
+共 24 个方法，覆盖 GeoHash、H3、围栏计算与管理、距离、坐标转换和路径优化。完整清单和示例见 [GIS 开放接口](./gis.md)。
+
+未注册的 `method` 返回 `130004`。
 
 ### 请求示例
 
@@ -145,16 +139,16 @@ curl -sS -X POST http://127.0.0.1:11005/v1/gateway \
 GET /v1/health
 ```
 
-不需要鉴权，返回 `{"code":0,"msg":"ok","data":{"status":"ok"}}`。
+无需鉴权。成功时 `code=0`、`data.status="ok"`，并带响应时间戳。该端点用于检查网关存活。
 
 ## protojson 注意事项
 
-- 字段使用 protojson 的 camelCase 名称，例如 `node`、`limit`、`removeVolumes`。
+- 字段以各下游 proto 的 JSON 名称为准，例如 `includeDigests`、`modbusCode`、`h3Index`。
 - `int64` / `uint64` 在输出中固定为字符串；输入时也接受数字。
 - 枚举使用名称，例如 `POD_PHASE_RUNNING`。
 - `bytes` 字段输出为 base64 字符串，例如 Modbus 的 `results`。
 - 未知字段会被拒绝，返回 `100020`（HTTP 200 + 业务码）。
-- 按 protojson 规范，32 位整型同时接受数字和数字字符串，例如 `{"limit":"100"}` 是合法的。需要排错时以 `app/openapi/openapi.proto` 与 podengine proto 为准。
+- 32 位整型也接受数字字符串，例如 `{"limit":"100"}`。响应可能省略默认值字段和空数组，客户端应按 proto 字段的默认值处理。
 
 ## 错误码
 
@@ -177,8 +171,9 @@ GET /v1/health
 | `130002` | 401 | 应用密钥无效 |
 | `130004` | 404 | 方法未开放 |
 | `130005` | 429 | 请求超过限制（本期占位） |
+| `130006` | 401 | 签名无效 |
 
-下游错误优先读取 `google.rpc.ErrorInfo.reason`；取不到时按 gRPC Code 兜底。**默认统一透传**：已登记码原样返回。只有在 `etc/opengtw.yaml` 的 `Error.Fold` 中列出对应 `Codes` 时，`100050`、`100090`、`100091`、`100180`、`100183`、`100001` 才折叠为 `100002 系统繁忙`，真实原因只写日志；`100184` 由代码强制透传，即使配置在 `Codes` 中也不会折叠，按 `%s` 模板返回厂商码与原文。
+下游错误优先读取 `google.rpc.ErrorInfo.reason`，取不到时按 gRPC Code 映射。已登记码默认透传。仅当 `Error.Fold.Enabled: true` 且错误码命中 `Codes` 时，才折叠到 `Target`（未设或无效时用 `100002`）。`KeepMsg` 控制是否保留原文。`100184` 始终透传厂商码与原文。
 
 ## 管理接口
 
@@ -208,7 +203,7 @@ Java 等内网调用方可跳过 HTTP 网关，直接调用 `app/openapi`：
 
 - 契约：`app/openapi/openapi.proto`
 - 服务：`openapi.OpenApiRpc/Invoke`
-- `InvokeReq`：`app_id`、`method`、`data`（protojson string）、`tid`
+- `InvokeReq`：`app_id`、`method`、`data`（protojson string）、`tid`。HTTP 签名字段留在网关层。
 - `InvokeRes`：`data`（成功时的 JSON string）；失败通过 gRPC status 返回，六位码位于 `ErrorInfo.reason`
 - 直连路径不做鉴权，依赖网络隔离；`app_id` 由调用方填写，仅用于日志与后续限流扩展。
 - 新增 method 不需要修改 proto，Java stub 只需生成一次。
@@ -216,7 +211,7 @@ Java 等内网调用方可跳过 HTTP 网关，直接调用 `app/openapi`：
 ## 启动与配置
 
 ```bash
-# 转发服务（默认 Mock 模式，仅 dev/test）
+# 转发服务（请先启动待调试接口的下游服务）
 cd app/openapi && go run . -f etc/openapi.yaml
 
 # HTTP 网关
@@ -227,7 +222,7 @@ cd app/opengtw && go run . -f etc/opengtw.yaml
 
 - `PodEngineConf`：podengine 地址与超时（默认 120s）。
 - `BridgeModbusConf`：bridgemodbus 地址与超时（默认 120s）。
-- `Mock: true`：直接返回固定数据，不连接下游；仅允许 `Mode: dev` / `test`，生产启动会失败。
+- `GisConf`：GIS gRPC 地址，仓库配置默认使用 `127.0.0.1:25006`。省略该配置时不注册 GIS 方法。
 
 `app/opengtw/etc/opengtw.yaml`：
 
@@ -258,9 +253,7 @@ ALTER TABLE open_app_secret ADD COLUMN sign_key_cipher text;
 
 ## 风险与边界
 
-- 透传即契约：podengine / bridgemodbus proto 改名、改枚举会直接破坏第三方调用方。
+- Podman、Modbus 和 GIS 的 proto 字段及枚举都是开放契约的一部分，变更前需检查调用方兼容性。
 - 管理面与开放面同端口，部署时必须确认 nginx 没有转发 `/open-admin/`。
-- 单请求最长 120s，慢请求会长期占用连接。
-- `Mock: true` 只允许 dev/test，生产配置评审必须检查该项。
-- 本期开放 Podman 4 个只读方法与 Modbus 15 个 I/O 方法；Modbus 配置管理暂不对外。
-- Modbus 写方法会改变现场设备状态，生产调用方必须做好地址和值校验。
+- 仓库配置中的网关与 RPC 超时为 120 秒。部署时应协调客户端、网关与反向代理的超时设置。
+- Modbus 写入和链路配置变更，以及 GIS 围栏新增、修改、删除，都会改变下游状态。开放面当前按应用验凭据，部署时应按调用方信任范围控制入口访问。

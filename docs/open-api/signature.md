@@ -245,7 +245,7 @@ X-Sign: v1:a21688f6f7bd082ead7fa5b1a34eb48899210c7702d808d6413e3197cbea13ba
 | header | `X-Sign` | 签名时必填 | `v1:<hex>`；省略 `v1:` 时按 v1 处理，不识别版本返回 `130006` |
 | body | `method` | 是 | 开放 method，如 `pod.list` |
 | body | `data` | 否 | 该 method 的 protojson，保持 JSON 对象；缺省视为无参数 |
-| body | `tid` | 否 | 链路 ID，参与 bodyHash，空串也参与 |
+| body | `tid` | 否 | 调用方提供的关联 ID。只要出现在请求体中，就参与 `bodyHash` |
 | body | `timestamp` | 签名时必填 | Unix 毫秒时间戳，允许与服务端相差 ±5 分钟 |
 | body | `nonce` | 签名时必填 | 1–64 位字母、数字、点、下划线或短横线 |
 
@@ -265,7 +265,7 @@ v1
 说明：
 
 - `appId` 使用 **Basic 鉴权用户名**（服务端可信值）；
-- `path` 是请求实际路径，当前固定 `/v1/gateway`；如果以后挂在其他前缀下，签名实现要一起改；
+- `path` 使用网关收到的路径 `/v1/gateway`，不含查询参数；
 - `bodyHash = SHA256(原始 body 字节)` 的小写十六进制；
 - `sign = HMAC-SHA256(canonical, signKey)`，小写十六进制。
 
@@ -344,7 +344,7 @@ Content-Type: application/json
 8. 用 `SETNX` 占用 `openapi:nonce:{appId}:{nonce}`，TTL 10 分钟（2 倍时间窗）；
 9. 全部通过后把 `appId` 写入 context，交给 GatewayHandler 解析并转发。
 
-任何一步失败都返回 `130006 签名无效`，不向客户端区分“过期 / 重放 / 不匹配”，避免给攻击者提供探测信息；真实原因可以查服务端日志。
+Basic 鉴权通过后，验签失败统一返回 `130006 签名无效`。真实原因可查服务端日志。Basic 错误仍按应用或凭据返回 `130001` 或 `130002`。
 
 ### 4.6 客户端示例（Go）
 
@@ -456,7 +456,7 @@ HMAC-SHA256(key, message) = SHA256((key ⊕ opad) || SHA256((key ⊕ ipad) || me
 
 ### Q6：HTTPS 下还需要签名吗？
 
-需要。HTTPS 保护传输过程；签名保护的是“请求内容是否被篡改、是否被重放”，两者解决不同问题。
+应用开启 `signRequired` 时，HTTPS 请求也必须签名。HTTPS 保护传输过程，应用签名用于校验请求内容和防重放。
 
 ### Q7：为什么 `timestamp` 用毫秒？
 

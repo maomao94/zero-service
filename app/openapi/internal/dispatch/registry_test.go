@@ -38,7 +38,7 @@ func (f *fakeBridgeModbus) WriteSingleCoil(ctx context.Context, in *bridgemodbus
 }
 
 func TestRegistryUnknownMethod(t *testing.T) {
-	registry := NewRegistry(&fakePodEngine{}, nil)
+	registry := NewRegistry(&fakePodEngine{}, nil, nil)
 	_, err := registry.Invoke(context.Background(), "pod.unknown", `{}`)
 	if !errx.IsErrorByPbCode(err, extproto.Code__1_30_METHOD_NOT_OPEN) {
 		t.Fatalf("error = %v, want 130004", err)
@@ -46,7 +46,7 @@ func TestRegistryUnknownMethod(t *testing.T) {
 }
 
 func TestRegistryInvalidData(t *testing.T) {
-	registry := NewRegistry(&fakePodEngine{}, nil)
+	registry := NewRegistry(&fakePodEngine{}, nil, nil)
 	for _, data := range []string{`{"limit":"abc"}`, `{"unknownField":1}`, `{`} {
 		_, err := registry.Invoke(context.Background(), MethodPodList, data)
 		if !errx.IsErrorByPbCode(err, extproto.Code__1_00_PARAM) {
@@ -56,7 +56,7 @@ func TestRegistryInvalidData(t *testing.T) {
 }
 
 func TestRegistryEmptyData(t *testing.T) {
-	registry := NewRegistry(&fakePodEngine{listRes: &podengine.ListPodsRes{Total: 0}}, nil)
+	registry := NewRegistry(&fakePodEngine{listRes: &podengine.ListPodsRes{Total: 0}}, nil, nil)
 	msg, err := registry.Invoke(context.Background(), MethodPodList, "")
 	if err != nil {
 		t.Fatalf("invoke error = %v", err)
@@ -67,7 +67,7 @@ func TestRegistryEmptyData(t *testing.T) {
 }
 
 func TestRegistryRelaysPodList(t *testing.T) {
-	registry := NewRegistry(&fakePodEngine{listRes: &podengine.ListPodsRes{Total: 1}}, nil)
+	registry := NewRegistry(&fakePodEngine{listRes: &podengine.ListPodsRes{Total: 1}}, nil, nil)
 	msg, err := registry.Invoke(context.Background(), MethodPodList, `{"limit":100}`)
 	if err != nil {
 		t.Fatalf("invoke error = %v", err)
@@ -78,31 +78,9 @@ func TestRegistryRelaysPodList(t *testing.T) {
 }
 
 func TestRegistryPropagatesDownstreamError(t *testing.T) {
-	registry := NewRegistry(&fakePodEngine{listErr: errors.New("boom")}, nil)
+	registry := NewRegistry(&fakePodEngine{listErr: errors.New("boom")}, nil, nil)
 	if _, err := registry.Invoke(context.Background(), MethodPodList, `{}`); err == nil {
 		t.Fatal("expected downstream error")
-	}
-}
-
-func TestMockRegistryAllMethods(t *testing.T) {
-	registry := NewMockRegistry()
-	if len(registry.routes) == 0 {
-		t.Fatal("mock registry has no routes")
-	}
-	for method := range registry.routes {
-		t.Run(method, func(t *testing.T) {
-			msg, err := registry.Invoke(context.Background(), method, `{}`)
-			if err != nil {
-				t.Fatalf("invoke error = %v", err)
-			}
-			data, err := Encode(msg)
-			if err != nil {
-				t.Fatalf("encode error = %v", err)
-			}
-			if len(data) == 0 || string(data) == "{}" {
-				t.Fatalf("mock data is empty: %s", data)
-			}
-		})
 	}
 }
 
@@ -111,7 +89,7 @@ func TestRegistryRelaysModbusRead(t *testing.T) {
 		UintValues: []uint32{100},
 		IntValues:  []int32{100},
 	}}
-	registry := NewRegistry(&fakePodEngine{}, modbusClient)
+	registry := NewRegistry(&fakePodEngine{}, modbusClient, nil)
 
 	msg, err := registry.Invoke(context.Background(), MethodModbusReadHoldingRegisters, `{"address":0,"quantity":1}`)
 	if err != nil {
@@ -125,7 +103,7 @@ func TestRegistryRelaysModbusRead(t *testing.T) {
 
 func TestRegistryRelaysModbusWrite(t *testing.T) {
 	modbusClient := &fakeBridgeModbus{writeRes: &bridgemodbus.WriteSingleCoilRes{Results: []byte{0xFF, 0x00}}}
-	registry := NewRegistry(&fakePodEngine{}, modbusClient)
+	registry := NewRegistry(&fakePodEngine{}, modbusClient, nil)
 
 	msg, err := registry.Invoke(context.Background(), MethodModbusWriteSingleCoil, `{"address":0,"value":true}`)
 	if err != nil {

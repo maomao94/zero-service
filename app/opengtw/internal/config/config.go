@@ -3,6 +3,7 @@ package config
 import (
 	"zero-service/common/gormx"
 	"zero-service/common/gtwx"
+	"zero-service/common/nacosx"
 
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/rest"
@@ -11,6 +12,7 @@ import (
 
 type Config struct {
 	rest.RestConf
+	NacosConfig nacosx.ServiceConfig `json:",optional"`
 	// JwtAuth 管理面鉴权配置，复用 gtw 的配置形态。
 	JwtAuth struct {
 		AccessSecret     string

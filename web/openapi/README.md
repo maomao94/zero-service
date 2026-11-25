@@ -1,4 +1,4 @@
-# OpenAPI 测试控制台
+# 开放平台控制台
 
 `web/openapi` 是 `app/opengtw` 的配套调试控制台，用于验证开放 API、管理应用凭据和查阅错误码。仅限开发/测试环境使用。
 
@@ -6,13 +6,16 @@
 
 - **连接设置**：Base URL 支持当前站点同源、本地直连和自定义环境；实时验证 `/v1/health`。
 - **网关状态**：顶栏实时显示网关可达性与耗时，点击可重新检测。
-- **API 调试**：19 个 method 的示例与字段说明、method 分组搜索、写操作提示、请求 ID 生成、JSON 校验/格式化/压缩、Ctrl/⌘ + Enter 发送。
+- **接口测试**：按服务选择接口，展开能力分组，或直接跨服务搜索。选中接口后可查看请求与响应契约、编辑 JSON，并用 Ctrl/⌘ + Enter 执行请求。修改类接口保留二次确认。
 - **响应面板**：HTTP 状态、业务错误码、耗时、大小、`X-Request-Id`；数据/原始响应/错误说明/请求回显四个视图，JSON 语法高亮。
 - **请求历史**：最近 50 条，支持搜索、method 与状态过滤、回填重放；只存 method、data、状态等，不存 secret。
 - **应用管理**：JWT 鉴权，创建应用、启停、重置密钥、分页查询；secret 仅在创建/重置后展示一次，开启签名的应用在服务端 `SignKeyRevealEnabled=true` 时可审计查看当前 signKey。
 - **错误码速查**：BC=30 开放平台与常用 extproto 错误码、语义 HTTP 映射、处理建议和基础设施折叠规则。
 
-当前开放 19 个 method：Podman 4 个、Modbus I/O 15 个。Modbus 字段、示例和写操作注意事项见 [`docs/open-api/modbus.md`](../../docs/open-api/modbus.md)。
+目录收录 51 个接口，包括 Podman 4 个、Modbus 23 个和 GIS 24 个。统一通过 `POST /v1/gateway` 执行。实际可调用的方法由当前环境配置决定。
+
+- Modbus 支持 15 个 I/O 方法、3 个寄存器换算方法和 5 个链路配置管理方法。
+- GIS 的 24 个方法通过 `GisConf` 接入 GIS 服务。
 
 ## 技术栈与端口
 
@@ -41,8 +44,10 @@ npm run dev
 
 ### 本地依赖
 
+启动待调试接口对应的下游服务，并核对 `app/openapi/etc/openapi.yaml` 中的 gRPC 地址。
+
 ```bash
-# 终端 1：Mock 模式的转发服务
+# 终端 1：gRPC 转发服务
 cd app/openapi && go run . -f etc/openapi.yaml
 
 # 终端 2：HTTP 网关（本地默认金仓 zero 库；dev/test 自动建表）

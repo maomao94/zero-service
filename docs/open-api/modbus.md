@@ -1,12 +1,12 @@
 # Modbus 开放接口
 
-本文档描述开放平台通过 `opengtw` 暴露的 Modbus I/O 能力。底层服务为 `app/bridgemodbus`（gRPC `bridgemodbus.BridgeModbus`，端口 25004），协议为 Modbus TCP。
+开放平台通过 `opengtw` 转发 23 个 Modbus 方法，包括设备 I/O、寄存器换算和链路配置管理。下游为 `bridgemodbus.BridgeModbus`，默认端口 `25004`。完整字段见 [bridgemodbus.proto](../../app/bridgemodbus/bridgemodbus.proto)。
 
 ## 调用方式
 
 ```http
 POST /v1/gateway
-Authorization: Basic base64(AppKey:AppSecret)
+Authorization: Basic base64(appId:secret)
 Content-Type: application/json
 ```
 
@@ -22,18 +22,29 @@ Content-Type: application/json
 }
 ```
 
-响应统一为：
+应用要求签名时，按[签名协议](./signature.md)发送 `X-Sign`、`timestamp` 和 `nonce`。下面是成功响应示例。
 
 ```json
-{"code": 0, "msg": "ok", "data": { ... }, "timestamp": 1761120000000}
+{
+  "code": 0,
+  "msg": "ok",
+  "data": {
+    "results": "AGQAZABkAGQ=",
+    "uintValues": [100, 100, 100, 100],
+    "intValues": [100, 100, 100, 100],
+    "hexValues": ["0x0064", "0x0064", "0x0064", "0x0064"],
+    "binaryValues": ["0b0000000001100100", "0b0000000001100100", "0b0000000001100100", "0b0000000001100100"]
+  },
+  "timestamp": 1761120000000
+}
 ```
 
-## 公共字段
+## I/O 常用字段
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `modbusCode` | string | 否 | Modbus 配置唯一编码；留空使用 bridgemodbus 默认连接配置 |
-| `address` | uint32 | 是 | 起始地址，范围 0–65535 |
+| `address` | uint32 | 视方法 | 起始地址，范围 0–65535 |
 | `quantity` | uint32 | 视方法 | 读取/写入数量，需符合 Modbus 功能码限制 |
 
 注意事项：
@@ -71,7 +82,29 @@ Content-Type: application/json
 | `modbus.readWriteMultipleRegisters` | 0x17 | 读写多个保持寄存器 |
 | `modbus.maskWriteRegister` | 0x16 | 使用 AND/OR 掩码写寄存器 |
 
-> Modbus 配置管理（保存/删除/查询配置）暂不对外开放，由平台管理员维护。
+### 寄存器换算
+
+换算在服务端完成，不访问设备。
+
+| method | `data` 请求字段 | `data` 响应字段 |
+| --- | --- | --- |
+| `modbus.batchConvertValue16ToRegisters` | `values` 整数数组，`unsigned` 指定有符号或无符号 | `uint16Values`、`int16Values`、`hexValues`、`binaryValues`、`bytes` |
+| `modbus.batchConvertValue32ToRegisters` | `values`、`dataType`、`wordOrder` | 逐值结果 `results`、展平后的 `registers` |
+| `modbus.batchConvertRegistersToValue32` | 偶数长度的 `registers`、`dataType`、`wordOrder` | 逐组解码结果 `results` |
+
+32 位换算必须显式指定类型和字序。`dataType` 支持 `VALUE32_UINT32`、`VALUE32_INT32`、`VALUE32_FLOAT32`，`wordOrder` 支持 `WORD_ORDER_ABCD`、`WORD_ORDER_CDAB`、`WORD_ORDER_BADC`、`WORD_ORDER_DCBA`。解码时按设备地址顺序传 `registers`。
+
+### 链路配置管理
+
+| method | `data` 请求字段 | `data` 响应字段 |
+| --- | --- | --- |
+| `modbus.saveConfig` | `modbusCode`、`slaveAddress`（`host:port`）、`slave` | 配置 `id` |
+| `modbus.deleteConfig` | 配置 ID 数组 `ids` | `{}` |
+| `modbus.pageListConfig` | `page`、`pageSize`、`keyword`（匹配编码前缀）、`status`（`0` 不筛选、`1` 启用、`2` 禁用） | `total`、配置数组 `cfg` |
+| `modbus.getConfigByCode` | `modbusCode` 字符串 | 配置对象 `cfg` |
+| `modbus.batchGetConfigByCode` | `modbusCode` 字符串数组 | 配置数组 `cfg` |
+
+这 5 个方法与 I/O 使用同一鉴权和转发入口。保存或删除配置会改变下游链路配置。
 
 ## 读取示例
 
@@ -233,18 +266,18 @@ Content-Type: application/json
 | code | 含义 |
 | --- | --- |
 | `100020` | 请求 `data` 不是合法 protojson，或字段类型错误（开放面解析阶段返回） |
-| `100021` | 缺少必要字段（如 `method`、`appId`） |
+| `100021` | 缺少必要参数，例如 `method` |
 | `100022` | 参数不合法：地址、`quantity`、`values` 等取值或范围错误 |
 | `100052` | 记录不存在（例如 modbusCode 对应配置不存在） |
 | `100140` | 业务处理失败（含配置未启用、从站号非法） |
 | `100141` | 设备状态不允许 |
-| `100180` | bridgemodbus 不可达（开放面默认透传，配置 `Error.Fold` 后折叠为 `100002`） |
+| `100180` | RPC 调用失败，例如 bridgemodbus 不可达 |
 | `100183` | Modbus 通信异常（连接失败、响应流错位等） |
 | `100184` | 设备返回 Modbus 异常响应，`msg` 中带厂商码，例如 `vendor=modbus，code=0x02` |
 | `100003` | Modbus 请求超时 |
 | `130004` | method 未开放 |
 
-> `100020`/`100021` 由网关和开放面在解析、校验请求外层字段时返回；进入 bridgemodbus 后，字段取值和范围错误统一返回 `100022`。
+> 请求体或 `data` 解析失败返回 `100020`，缺少 `method` 返回 `100021`，下游 I/O 参数取值或范围错误通常返回 `100022`。
 
 > `100184` 中的 `0x01`–`0x0B` 是 Modbus 协议异常码，原样透出，不映射为平台错误码。常见值：`0x02` 非法数据地址、`0x03` 非法数据值、`0x04` 从站设备故障、`0x06` 从站设备忙、`0x0A` 网关路径不可用、`0x0B` 网关目标设备无响应。
 
@@ -252,6 +285,5 @@ Content-Type: application/json
 
 - Modbus 写操作会直接改变现场设备状态，调用前必须确认地址、数量和值。
 - 写操作（含 `modbus.readWriteMultipleRegisters`）遇到超时、断链或响应流错位时，设备可能已经执行。此时错误提示“写入执行结果未知”，必须核实设备状态后再决定是否重试，避免重复触发命令；读取流错位可重新发起读取。
-- 生产环境建议只给可信应用开放写方法，并按应用/接口做权限控制。
-- 设备通信超时返回 `100003`，其余通信故障返回 `100183`，设备异常响应返回 `100184`；开放面默认透传，配置 `Error.Fold` 后才会折叠为 `100002`，需要查看服务端日志定位具体从站。
-- `modbusCode` 由平台管理员配置，第三方不能通过开放接口创建或修改连接配置。
+- 生产环境仅向可信应用发放能够访问该入口的凭据。链路配置管理和设备写入使用相同的应用鉴权。
+- 设备通信超时返回 `100003`，其余通信故障返回 `100183`，设备异常响应返回 `100184`。默认透传这些错误码，`100184` 始终保留。折叠规则见 [网关错误码](./README.md#错误码)。

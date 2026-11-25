@@ -11,7 +11,9 @@ export interface Settings {
   lastMethod: string
 }
 
-export type MethodCategory = 'podman' | 'modbus-read' | 'modbus-write'
+export type MethodCategory = 'podman' | 'modbus-read' | 'modbus-write' | 'modbus-config' | 'modbus-convert'
+  | 'gis-grid' | 'gis-analysis' | 'gis-fence'
+
 
 export interface MethodField {
   name: string
@@ -28,6 +30,7 @@ export interface MethodDefinition {
   description: string
   example: string
   fields: MethodField[]
+  responseFields?: MethodField[]
   tips: string[]
   write?: boolean
 }
