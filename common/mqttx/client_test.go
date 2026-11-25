@@ -130,6 +130,8 @@ func (c *fakePahoClient) Unsubscribe(_ ...string) mqtt.Token { return &fakeToken
 
 func (c *fakePahoClient) AddRoute(_ string, _ mqtt.MessageHandler) {}
 
+func (c *fakePahoClient) DeleteRoute(_ string) {}
+
 func (c *fakePahoClient) OptionsReader() mqtt.ClientOptionsReader {
 	return mqtt.NewOptionsReader(mqtt.NewClientOptions())
 }
