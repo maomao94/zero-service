@@ -1,5 +1,5 @@
-# 业务镜像：Go 多阶段构建 + deploy/base-image 提供的 runtime 基础环境。
-# 由 app/gis/build.sh 构建（经 deploy/build-common.sh 准备基础镜像，传 BASE_IMAGE、GEOS_VERSION 和 --platform）。
+# 业务镜像：Go 多阶段构建 + deploy/base-image/Dockerfile 的 env 阶段提供的 env-runtime 基础环境。
+# 由 app/gis/build.sh 构建（经 deploy/common.sh 准备基础镜像，传 BASE_IMAGE、GEOS_VERSION 和 --platform）。
 ARG BASE_IMAGE
 
 FROM golang:1.27-alpine3.24 AS builder

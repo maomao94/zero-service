@@ -22,7 +22,7 @@
 | [`sipmediagw/`](./sipmediagw/README.md) | SIPMediaGW 完整部署单元（Kamailio/Coturn/Homer） | `provision.sh` |
 | [`filebeat/`](./filebeat/conf/filebeat.yml) | 日志采集配置 | `conf/filebeat.yml` |
 | [`tls/`](./tls/gen-tls.sh) | 自签 TLS 证书生成（供 nginx 使用） | `gen-tls.sh` |
-| [`base-image/`](./base-image/README.md) | 业务镜像的通用运行基础环境（`runtime`：GEOS、ffmpeg；`go-runtime`：bash、排查命令） | `build.sh` · `ensure.sh` |
+| [`base-image/`](./base-image/README.md) | 业务镜像的两层运行基础环境（`base-runtime`：bash、排查命令、CA；`env-runtime`：base + GEOS、ffmpeg） | `Dockerfile` |
 
 ## 依赖关系与启动顺序
 
@@ -45,7 +45,7 @@
 
 | 脚本 | 用途 | 默认平台 | 远端操作 |
 | --- | --- | --- | --- |
-| `build.sh <环境> [平台列表]` | 构建镜像并导出 tar，用于离线交付 | `linux/amd64 linux/arm64` | 无 |
+| `build.sh <环境> [平台列表]` | 构建镜像并导出 tar，用于离线交付；实际逻辑统一在 `deploy/service-build.sh` | `linux/amd64 linux/arm64` | 无 |
 | `deploy.sh <环境> [平台]` | 调用 `build.sh` 构建单一架构镜像，上传并发布 | `linux/amd64` | 上传、`docker load`、打标签、`docker-compose up -d` |
 
 ```bash
@@ -57,11 +57,11 @@ bash deploy.sh test_199 linux/arm64    # 发布到 arm64 服务器
 - 产物架构由平台参数决定，与构建机架构无关；导出前统一校验镜像架构。
 - `deploy.sh` 在构建前读取远端 Docker daemon 架构并与目标平台比对，不一致时直接退出；向不同架构的服务器发布时分别指定平台参数。
 - 除 gis 外的服务均为纯 Go 交叉编译，跨架构构建不需要 qemu；gis 依赖 CGO（GEOS），跨架构构建需要 qemu/binfmt。
-- 所有业务服务都运行在 [`base-image/`](./base-image/README.md) 提供的基础镜像上：gis、file 使用 `zero-service/runtime`（GEOS、ffmpeg），其余纯 Go 服务使用 `zero-service/go-runtime`（bash + 常用排查命令），可直接 `docker exec -it <容器> /bin/bash`。
+- 所有业务服务都运行在 [`base-image/`](./base-image/README.md) 提供的基础镜像上：gis、file 使用 `zero-service/env-runtime`（base + GEOS、ffmpeg），其余纯 Go 服务使用 `zero-service/base-runtime`（bash + 常用排查命令 + CA 证书），可直接 `docker exec -it <容器> /bin/bash`。两层基础镜像的统一构建入口是 `deploy/build-image.sh`，业务 `build.sh` 缺失时会自动调用。
 - 纯 Go 服务需要最小体积时，可用 `BASE_IMAGE=scratch` 构建回归到无 shell 的精简镜像。
 - `env/<环境>.env` 不入库，`build.sh` 只需要 `IMAGE_NAME`，`deploy.sh` 额外需要远端连接与 `SERVICE_NAME` 等变量。
 
-构建规范、Dockerfile 模板、环境变量与故障排查见 [`MULTI_PLATFORM_BUILD.md`](./MULTI_PLATFORM_BUILD.md)。新增服务时以同类服务为模板：纯 Go 参考 `app/ieccaller`，纯 Go + runtime 基础镜像参考 `app/file`，CGO 参考 `app/gis`。
+构建规范、Dockerfile 模板、环境变量与故障排查见 [`MULTI_PLATFORM_BUILD.md`](./MULTI_PLATFORM_BUILD.md)。新增服务时以同类服务为模板：纯 Go 参考 `app/ieccaller`，需要 GEOS/ffmpeg 的参考 `app/file`，CGO 参考 `app/gis`。
 
 ## 通用约定
 
