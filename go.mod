@@ -8,7 +8,7 @@ require (
 	github.com/Azure/go-workflow v0.1.14-0.20260515042214-fc60b72c83a8
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/NimbleMarkets/ntcharts v0.5.2
-	github.com/alicebob/miniredis/v2 v2.40.0
+	github.com/alicebob/miniredis/v2 v2.41.0
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/benbjohnson/clock v1.3.5
 	github.com/brianvoe/gofakeit/v7 v7.18.11
@@ -46,9 +46,9 @@ require (
 	github.com/hibiken/asynq v0.26.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/jlaffaye/ftp v0.2.4
-	github.com/larksuite/oapi-sdk-go/v3 v3.13.0
+	github.com/larksuite/oapi-sdk-go/v3 v3.14.0
 	github.com/lib/pq v1.12.3
-	github.com/livekit/protocol v1.54.2
+	github.com/livekit/protocol v1.55.0
 	github.com/livekit/server-sdk-go/v2 v2.20.1
 	github.com/mattn/go-sqlite3 v1.14.53
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2
@@ -70,7 +70,7 @@ require (
 	github.com/taosdata/driver-go/v3 v3.8.2
 	github.com/teambition/rrule-go v1.8.2
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.77
-	github.com/tidwall/gjson v1.20.6
+	github.com/tidwall/gjson v1.20.7
 	github.com/twitchtv/twirp v8.1.3+incompatible
 	github.com/twpayne/go-geos v0.23.0
 	github.com/u2takey/ffmpeg-go v0.5.0
@@ -296,7 +296,7 @@ require (
 	github.com/pandatix/go-abnf v0.5.5 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
-	github.com/petermattis/goid v0.0.0-20261124144452-466dc414edf5 // indirect
+	github.com/petermattis/goid v0.0.0-20261125140513-578663ba5663 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pion/datachannel v1.6.4 // indirect
