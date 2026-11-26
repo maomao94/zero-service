@@ -33,11 +33,9 @@ func (b *builder) Build(url resolver.Target, conn resolver.ClientConn, opts reso
 	pipe := make(chan []string)
 	watch := newWatcher(ctx, cancel, pipe)
 
-	go subscribeNacos(cli, tgt, watch.CallBackHandle)
+	go subscribeNacos(ctx, cli, tgt, watch.CallBackHandle)
 
 	go populateEndpoints(ctx, conn, pipe)
-
-	go pollInstances(ctx, cli, tgt, watch.CallBackHandle)
 
 	return &resolvr{
 		cancelFunc: cancel,

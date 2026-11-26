@@ -21,14 +21,20 @@ import (
 )
 
 const (
-	// 定时拉取只做订阅推送的兜底：启动立即拉取，之后指数退避到上限。
-	resolverPollMin = 5 * time.Second
-	resolverPollMax = 5 * time.Minute
+	// 订阅失败时指数退避重试，订阅成功后由 Nacos 推送驱动，不再轮询实例。
+	// 抽成变量便于测试注入更短的间隔。
+	defaultSubscribeRetryMin = time.Second
+	defaultSubscribeRetryMax = 30 * time.Second
+)
+
+var (
+	subscribeRetryMin = defaultSubscribeRetryMin
+	subscribeRetryMax = defaultSubscribeRetryMax
 )
 
 // Discovery 订阅 Nacos 服务实例，实例集合变化时回调 onChange。
 // 除 gRPC resolver 外，需要自行维护客户端集合的场景（如 socket 网关扇出）
-// 也可以直接复用，避免重复实现一套订阅与兜底拉取。
+// 也可以直接复用，避免重复实现一套订阅逻辑。
 type Discovery struct {
 	cancel context.CancelFunc
 	client interface {
@@ -38,7 +44,8 @@ type Discovery struct {
 }
 
 // Discover 解析 nacos:// 地址并启动订阅。onChange 在独立协程中串行回调，
-// 地址已去重并按字典序排序，仅在集合发生变化时触发。
+// 地址已去重并按字典序排序，仅在集合发生变化时触发；实例全部下线时
+// 回调空列表（非 nil 的空切片），调用方据此清空客户端集合。
 func Discover(ctx context.Context, rawTarget string, onChange func([]string)) (*Discovery, error) {
 	if onChange == nil {
 		onChange = func([]string) {}
@@ -72,9 +79,8 @@ func Discover(ctx context.Context, rawTarget string, onChange func([]string)) (*
 		}
 	}
 
-	go subscribeNacos(client, tgt, callback)
+	go subscribeNacos(ctx, client, tgt, callback)
 	go deliverAddrs(ctx, pipe, onChange)
-	go pollInstances(ctx, client, tgt, callback)
 
 	return &Discovery{
 		cancel: cancel,
@@ -120,9 +126,11 @@ func newWatchClient(tgt target) (naming_client.INamingClient, error) {
 		Username:    tgt.User,
 		Password:    tgt.Password,
 		// tgt.Timeout 是 time.Duration（纳秒），SDK 按毫秒解释 TimeoutMs。
-		TimeoutMs:            uint64(tgt.Timeout / time.Millisecond),
-		NotLoadCacheAtStart:  targetBool(tgt.NotLoadCacheAtStart, true),
-		UpdateCacheWhenEmpty: targetBool(tgt.UpdateCacheWhenEmpty, false),
+		TimeoutMs:           uint64(tgt.Timeout / time.Millisecond),
+		NotLoadCacheAtStart: targetBool(tgt.NotLoadCacheAtStart, true),
+		// 默认允许空实例列表进入回调：SDK 在 UpdateCacheWhenEmpty=false 时
+		// 会直接丢弃“实例清空”的推送，消费方将永远保留已下线的节点。
+		UpdateCacheWhenEmpty: targetBool(tgt.UpdateCacheWhenEmpty, true),
 	}
 
 	if tgt.CacheDir != "" {
@@ -138,47 +146,49 @@ func newWatchClient(tgt target) (naming_client.INamingClient, error) {
 	return newNamingClient(sc, cc)
 }
 
-func subscribeNacos(client naming_client.INamingClient, tgt target, callback func([]model.Instance, error)) {
-	err := client.Subscribe(&vo.SubscribeParam{
+// subscribeNacos 建立订阅；订阅成功时 SDK 会立即把当前实例列表回调一次，
+// 之后由服务端推送驱动。首次失败按指数退避重试，避免 Nacos 短暂不可用时
+// 服务永久拿不到地址（SDK 只在连接建立后对已确认的订阅做 redo）。
+func subscribeNacos(ctx context.Context, client naming_client.INamingClient, tgt target,
+	callback func([]model.Instance, error)) {
+	// 复用同一个 SubscribeParam：SDK 以 &param.SubscribeCallback 作为回调标识，
+	// 复用后 Unsubscribe 才能精确摘掉上一次失败注册的回调。
+	param := &vo.SubscribeParam{
 		ServiceName:       tgt.Service,
 		Clusters:          tgt.Clusters,
 		GroupName:         tgt.GroupName,
 		SubscribeCallback: callback, // required
-	})
-	if err != nil {
-		logx.Errorf("[nacos] subscribe %s failed, fallback to polling: %v", tgt.Service, err)
 	}
-}
 
-// pollInstances 是订阅推送的兜底通道：启动时立即拉一次，之后指数退避。
-func pollInstances(ctx context.Context, client naming_client.INamingClient, tgt target,
-	callback func([]model.Instance, error)) {
-	interval := resolverPollMin
-	timer := time.NewTimer(0)
-	defer timer.Stop()
-
-	for {
+	backoff := subscribeRetryMin
+	for attempt := 1; ; attempt++ {
 		select {
 		case <-ctx.Done():
 			return
+		default:
+		}
+
+		if attempt > 1 {
+			// SDK 的 Subscribe 每次都会追加回调且不去重；失败重试前先摘掉上一次注册的
+			// 回调，否则同一次推送会触发 N 次回调并泄漏 listener。
+			_ = client.Unsubscribe(param)
+		}
+
+		if err := client.Subscribe(param); err == nil {
+			logx.Infof("[nacos] subscribed service %s", tgt.Service)
+			return
+		} else {
+			logx.Errorf("[nacos] subscribe %s failed, retry in %s: %v", tgt.Service, backoff, err)
+		}
+
+		timer := time.NewTimer(backoff)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return
 		case <-timer.C:
 		}
-
-		instances, err := client.SelectAllInstances(vo.SelectAllInstancesParam{
-			ServiceName: tgt.Service,
-			Clusters:    tgt.Clusters,
-			GroupName:   tgt.GroupName,
-		})
-		if err != nil {
-			logx.Errorf("[nacos] failed to pull service %s instances: %v", tgt.Service, err)
-		} else {
-			callback(instances, nil)
-		}
-
-		// 这里总是先收到 timer.C 再 Reset：timer 已过期且通道已排空；
-		// Go 1.23+ 的 Timer 通道不会再残留旧值，无需 Stop+drain 写法。
-		interval = min(interval*2, resolverPollMax)
-		timer.Reset(interval)
+		backoff = min(backoff*2, subscribeRetryMax)
 	}
 }
 
@@ -187,7 +197,10 @@ func deliverAddrs(ctx context.Context, input <-chan []string, onChange func([]st
 	var last string
 	for {
 		select {
-		case addrs := <-input:
+		case addrs, ok := <-input:
+			if !ok {
+				return
+			}
 			normalized := normalizeAddrs(addrs)
 			key := strings.Join(normalized, ",")
 			if !first && key == last {
@@ -205,7 +218,9 @@ func deliverAddrs(ctx context.Context, input <-chan []string, onChange func([]st
 func normalizeAddrs(addrs []string) []string {
 	set := make(map[string]struct{}, len(addrs))
 	for _, addr := range addrs {
-		set[addr] = struct{}{}
+		if addr = strings.TrimSpace(addr); addr != "" {
+			set[addr] = struct{}{}
+		}
 	}
 	normalized := make([]string, 0, len(set))
 	for addr := range set {

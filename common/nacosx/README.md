@@ -62,7 +62,7 @@ URL 格式为 `nacos://[user:passwd]@host:port/service?param=value`，支持的�
 | `groupName` | 分组名，缺省 `DEFAULT_GROUP` |
 | `clusters` | 集群过滤，逗号分隔，如 `clusters=DEFAULT,OTHER` |
 | `notLoadCacheAtStart` | 是否忽略本地缓存启动，默认 `true` |
-| `updateCacheWhenEmpty` | 实例为空时是否刷新缓存并触发回调，默认 `false` |
+| `updateCacheWhenEmpty` | 实例为空时是否触发回调，默认 `true`（否则“全部实例下线”不会通知消费方） |
 | `appName` / `cacheDir` | 客户端标识与本地缓存目录 |
 | `logLevel` / `logDir` | 客户端日志配置；受全局 logger 初始化时机限制，通常请改用环境变量或 `SetUpLogger`（见「日志」） |
 
@@ -72,8 +72,9 @@ URL 格式为 `nacos://[user:passwd]@host:port/service?param=value`，支持的�
 
 - 只返回健康且启用的实例；地址去重并按字典序排序，集合未变化时不重复上报。
 - 地址端口优先取 `metadata.gRPC_port`，缺失时回退实例的 `port`（兼容 Java 侧仅注册主端口的服务）。
-- 以 Nacos 订阅推送为主通道；启动时立即全量拉取一次，之后按 5s → 10s → … → 5min 指数退避兜底。
-- 订阅失败会打印错误并继续依靠轮询，不会静默丢地址。
+- 以 Nacos 订阅推送为唯一数据通道：订阅成功时 SDK 立即回调一次当前实例列表，之后由服务端推送变更，不做定时扫描。
+- 首次订阅失败按 1s → 2s → … → 30s 指数退避重试，避免 Nacos 短暂不可用导致永久拿不到地址。
+- 因为默认 `updateCacheWhenEmpty=true`，“实例全部下线”也会回调空列表，消费方据此清空客户端集合。
 
 ## 非 gRPC 场景：Discover
 
@@ -89,7 +90,7 @@ if err != nil {
 defer discovery.Close()
 ```
 
-`Discover` 与 gRPC resolver 共用同一套地址解析、订阅、兜底拉取和日志；`Close` 幂等，会取消订阅并释放 Nacos client。
+`Discover` 与 gRPC resolver 共用同一套地址解析、订阅重试和日志；`Close` 幂等，会取消订阅并释放 Nacos client。
 
 ## 日志
 
