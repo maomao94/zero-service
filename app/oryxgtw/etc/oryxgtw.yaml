@@ -13,7 +13,7 @@ Timeout: 15000
 # HookOpaque 为回调凭证，需与 Oryx hooks/apply 里配置的 opaque 一致（为空则跳过校验）
 HookOpaque: ""
 OryxServerConf:
-  # Target: nacos://nacos:nacos@127.0.0.1:8848/oryxserver.rpc?namespaceid=public&timeout=5000s
+  # Target: nacos://nacos:nacos@127.0.0.1:8848/oryxserver.rpc?namespaceid=public&timeout=5s
   Endpoints:
     - 127.0.0.1:21016
   Timeout: 120000

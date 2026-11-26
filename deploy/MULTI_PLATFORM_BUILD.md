@@ -13,28 +13,31 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `deploy/common.sh` | `target_arch`：将 `linux/arm64`、`linux/arm64/v8`、`arm64` 统一解析为 `arm64`；`assert_image_arch`：校验镜像架构与目标一致 |
-| `deploy/build-common.sh` | gis、file 使用的构建函数：准备基础镜像、`docker build`、架构校验、导出 tar |
-| `deploy/base-image/` | runtime 基础镜像 `zero-service/runtime:<版本>-<arch>`，提供 GEOS、ffmpeg/ffprobe、CA 证书与时区，见 [`base-image/README.md`](./base-image/README.md) |
+| `deploy/common.sh` | 唯一公共库：架构解析与校验、基础镜像命名与准备（`ensure_base_image`）、业务镜像构建（`build_service_image`）、镜像导出与清理 |
+| `deploy/service-build.sh` | 业务镜像构建的唯一实现：读取 env、按平台构建、架构校验、导出 tar；各服务通过 `BASE_KIND`/`NEED_GEOS` 声明差异 |
+| `deploy/build-image.sh` | 构建两层运行基础镜像，参数 `base`、`env` 或 `all`（默认），见 [`base-image/README.md`](./base-image/README.md) |
+| `deploy/base-image/Dockerfile` | 单文件双 `target`：`base` 阶段定义 `base-runtime`，`env` 阶段在其上叠加 GEOS 与 ffmpeg |
 | `<服务目录>/Dockerfile` | 多阶段构建，构建上下文为仓库根目录 |
-| `<服务目录>/build.sh` | 构建一个或多个架构的镜像并导出 tar，不访问远端 |
+| `<服务目录>/build.sh` | 薄壳脚本，声明 `BASE_KIND`（`base`/`env`）与 `NEED_GEOS` 后调用 `deploy/service-build.sh`，不访问远端 |
 | `<服务目录>/deploy.sh` | 调用 `build.sh` 构建单一架构镜像，上传并在远端发布 |
 
 ## 服务分类
 
 | 类型 | 服务 | 编译方式 | 运行镜像 | 跨架构构建 |
 | --- | --- | --- | --- | --- |
-| 纯 Go | 除 gis、file 外的 20 个服务 | `CGO_ENABLED=0`，交叉编译 | `scratch` | 不需要 qemu |
-| 纯 Go + 外部命令 | file | `CGO_ENABLED=0`，交叉编译 | `zero-service/runtime` | 构建阶段不需要 qemu；基础镜像构建需要 |
-| CGO | gis | `CGO_ENABLED=1`，链接 GEOS | `zero-service/runtime` | 需要 qemu/binfmt |
+| 纯 Go | 除 gis、file 外的 20 个服务 | `CGO_ENABLED=0`，交叉编译 | `zero-service/base-runtime` | 不需要 qemu |
+| 纯 Go + 外部命令 | file | `CGO_ENABLED=0`，交叉编译 | `zero-service/env-runtime` | 构建阶段不需要 qemu；基础镜像构建需要 |
+| CGO | gis | `CGO_ENABLED=1`，链接 GEOS | `zero-service/env-runtime` | 需要 qemu/binfmt |
 
-纯 Go 服务的 `scratch` 镜像只包含二进制、`etc/` 配置、系统 CA 证书和 `Asia/Shanghai` 时区文件。
+`base-runtime` 是所有业务镜像的最小底座，包含 bash 与常用排查命令（`curl`、`procps`、`iproute2`、`tcpdump`）、系统 CA 证书与 `deploy/tls/server.crt` 内部自签证书、`Asia/Shanghai` 时区，容器内可直接 `docker exec -it <容器> /bin/bash`。`env-runtime` 在 `base-runtime` 之上叠加 GEOS 与 `ffmpeg`/`ffprobe`，供 gis、file 使用。设置 `BASE_IMAGE=scratch` 可回到只有二进制与 `etc/` 的精简镜像。
 
 ## Dockerfile 规范
 
 纯 Go 服务（含 file 的构建阶段）：
 
 ```dockerfile
+ARG BASE_IMAGE
+
 FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS builder
 ENV CGO_ENABLED=0
 COPY go.mod go.sum ./
@@ -46,8 +49,12 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,id=go-build-${TARGETARCH},target=/root/.cache/go-build \
     GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags="-s -w" -o /out/<服务> ./<服务路径>
 
-FROM scratch          # file 为 FROM ${BASE_IMAGE}
+FROM ${BASE_IMAGE}
 ```
+
+- `ARG BASE_IMAGE` 必须写在第一个 `FROM` 之前：`FROM` 只能引用第一个 `FROM` 之前声明的 `ARG`。
+- `BASE_IMAGE` 不设默认值，由 `build.sh` 按目标架构传入，避免版本与架构在多处维护；单独执行 `docker build` 时需显式传 `--build-arg BASE_IMAGE=<镜像>`，或传 `scratch` 构建无 shell 的精简镜像。
+- CA 证书与时区由基础镜像提供，Dockerfile 不再从 builder 复制这两个文件。
 
 - 构建阶段固定运行在构建机架构（`$BUILDPLATFORM`），由 `TARGETOS`/`TARGETARCH` 决定产物架构。
 - `ARG TARGETOS`/`TARGETARCH` 放在 `COPY . .` 之后，切换目标架构时复用依赖下载与源码层缓存。
@@ -71,6 +78,18 @@ FROM ${BASE_IMAGE}
 
 ## build.sh
 
+所有服务的 `build.sh` 只声明运行基础镜像类型，构建逻辑统一在 `deploy/service-build.sh`：
+
+```bash
+# 纯 Go 服务（20 个）
+export SERVICE_DIR="${SCRIPT_DIR}" BASE_KIND=base
+exec bash "${SCRIPT_DIR}/../../deploy/service-build.sh" "$@"
+
+# file
+export SERVICE_DIR="${SCRIPT_DIR}" BASE_KIND=env
+# gis 额外声明 NEED_GEOS=true
+```
+
 ```bash
 bash build.sh <环境> [平台列表]
 
@@ -80,16 +99,16 @@ bash build.sh test "linux/amd64 linux/arm64"    # 显式指定多个平台
 ```
 
 - 读取 `env/<环境>.env`，仅要求 `IMAGE_NAME`。
-- 每个平台依次执行：`docker build --platform linux/<arch>` → 架构校验 → `docker save` → 删除本地临时标签。
+- 每个平台依次执行：`ensure_base_image` 确认基础镜像 → `docker build --platform linux/<arch>` → 架构校验 → `docker save` → 删除本地临时标签。
 - 输出文件：`<IMAGE_NAME 中 / 替换为 ->_<arch>_<时间戳>.tar`，写入服务目录，已被 `.gitignore` 排除；镜像标签为 `<IMAGE_NAME>:<时间戳>-<arch>`。
-- gis、file 在构建前通过 `deploy/base-image/ensure.sh` 确认对应架构的基础镜像，缺失时自动构建。
+- 基础镜像对应的 `BASE_IMAGE` 通过 `--build-arg` 传入，镜像内容变化只需提升基础镜像版本，不改业务 Dockerfile。
 
 | 环境变量 | 说明 |
 | --- | --- |
 | `BUILD_TIMESTAMP` | 指定时间戳，默认取当前时间；`deploy.sh` 用它对齐本地与远端标签 |
 | `BUILD_OUTPUT_ONLY` | 为 `true` 时 stdout 只输出 tar 文件名（每行一个），日志与构建输出写入 stderr |
 | `HTTP_PROXY` / `HTTPS_PROXY` | 透传为构建参数 |
-| `BASE_IMAGE` | 仅 gis、file：覆盖基础镜像，`ensure.sh` 只检查其存在性，不自动构建 |
+| `BASE_IMAGE` | 覆盖运行基础镜像；默认 gis/file 为 `zero-service/env-runtime`、纯 Go 服务为 `zero-service/base-runtime`。`ensure_base_image` 只检查其存在性，不自动构建；设为 `scratch` 时跳过检查，构建无 shell 的精简镜像 |
 
 ## deploy.sh
 
@@ -136,14 +155,15 @@ docker-compose up -d <SERVICE_NAME>
 
 ## 基础镜像版本
 
-基础镜像版本与 GEOS 版本在 `deploy/base-image/common.sh` 中维护：
+基础镜像版本与 GEOS 版本在 `deploy/common.sh` 中维护：
 
 | 变量 | 含义 |
 | --- | --- |
-| `BASE_RUNTIME_VERSION` | 基础镜像版本，体现在镜像标签中 |
-| `BASE_GEOS_VERSION` | GEOS 版本，同时用于基础镜像与 gis 构建阶段 |
+| `BASE_RUNTIME_VERSION` | `zero-service/base-runtime` 版本，体现在镜像标签中 |
+| `BASE_ENV_VERSION` | `zero-service/env-runtime` 版本，体现在镜像标签中 |
+| `BASE_GEOS_VERSION` | GEOS 版本，同时用于 `env-runtime` 与 gis 构建阶段 |
 
-`ensure.sh` 仅按 `<版本>-<arch>` 判断镜像是否存在。修改基础镜像内容（包括 GEOS 版本、Alpine 版本、`deploy/tls/server.crt`）时必须同时提升 `BASE_RUNTIME_VERSION`，否则构建继续使用本地旧镜像。
+`ensure_base_image` 仅按 `<版本>-<arch>` 判断镜像是否存在。修改基础镜像内容（包括依赖包、Alpine 版本、`deploy/tls/server.crt`）时必须同时提升对应版本变量；`env-runtime` 基于 `base-runtime`，修改 `base` 阶段内容时两个版本都要提升，否则构建继续使用本地旧镜像。
 
 ## 构建机要求
 
@@ -154,12 +174,38 @@ docker-compose up -d <SERVICE_NAME>
   docker run --privileged --rm tonistiigi/binfmt --install all
   ```
 
+## 容器内排查
+
+新构建的业务镜像统一提供 bash，可直接进入容器排查：
+
+```bash
+docker exec -it <容器> /bin/bash
+docker exec <容器> ip -br addr        # 地址与网卡
+docker exec <容器> ss -lntp           # 监听端口与进程
+docker exec <容器> curl -sv <上游地址> # 验证上游 HTTP 接口
+```
+
+服务器上仍是基于 `scratch` 的旧镜像时，可以不重建容器直接排查。在 Linux 宿主机（root）上用 `nsenter` 借用宿主 shell 进入容器的命名空间：
+
+```bash
+nsenter -t "$(docker inspect -f '{{.State.Pid}}' <容器>)" -m -u -i -n -p /bin/bash
+```
+
+也可以把同架构的 `base-runtime` 镜像 `docker save`/`docker load` 到服务器，共享目标容器的网络与进程命名空间临时进入：
+
+```bash
+docker run --rm -it --network=container:<容器> --pid=container:<容器> \
+  zero-service/base-runtime:<版本>-<架构> bash
+```
+
 ## 故障排查
 
 | 现象 | 原因 | 处理 |
 | --- | --- | --- |
+| `exec failed ... /bin/bash: stat /bin/bash: no such file or directory` | 镜像基于 `scratch`，或旧版基础镜像未安装 bash | 重新构建并部署（新镜像基于 `base-runtime`/`env-runtime`）；不重建时按「容器内排查」用宿主机 `nsenter` 或 `base-runtime` 共享命名空间临时进入 |
 | `目标架构 'x' 与远端 ... 架构 'y' 不一致` | `deploy.sh` 的平台参数与服务器架构不符 | 按提示改用 `linux/<服务器架构>`，或确认连到了正确的服务器 |
 | 容器启动报 `exec format error` | 镜像架构与服务器不一致 | `docker image inspect <镜像> -f '{{.Architecture}}'` 对比 `uname -m`，按正确平台重新构建 |
 | gis 跨架构构建在 `apk add` 或 `go build` 处失败 | 未注册 qemu/binfmt | 按「构建机要求」安装 binfmt |
-| `zero-service/runtime:<版本>-<arch>: not found` | 自定义 `BASE_IMAGE` 不存在，或基础镜像构建失败 | 执行 `bash deploy/base-image/ensure.sh <arch>` 查看具体错误 |
+| `zero-service/base-runtime:<版本>-<arch>: not found` | 自定义 `BASE_IMAGE` 不存在，或基础镜像构建失败 | 执行 `bash deploy/build-image.sh base`（gis/file 用 `env`）查看具体错误 |
 | `镜像架构 'x' 与目标架构 'y' 不一致` | 构建环境未按 `--platform` 产出镜像 | 确认 Docker 版本与 BuildKit 已启用 |
+| `invalid reference format` 或 `failed to solve: ... FROM` | 直接 `docker build` 未传 `BASE_IMAGE`，最终阶段 `FROM ${BASE_IMAGE}` 为空 | 用服务目录的 `build.sh` 构建，或显式传 `--build-arg BASE_IMAGE=zero-service/base-runtime:<版本>-<架构>`（gis/file 用 `env-runtime`） |

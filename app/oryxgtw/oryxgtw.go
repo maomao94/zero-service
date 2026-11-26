@@ -12,9 +12,8 @@ import (
 	"zero-service/app/oryxgtw/internal/handler"
 	"zero-service/app/oryxgtw/internal/svc"
 	_ "zero-service/common/carbonx"
-	"zero-service/common/nacosx"
+	_ "zero-service/common/nacosx"
 
-	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/rest"
 )
@@ -46,23 +45,7 @@ func main() {
 	handler.RegisterHandlers(server, ctx)
 
 	// register service to nacos
-	if c.NacosConfig.IsRegister {
-		sc := []constant.ServerConfig{
-			*constant.NewServerConfig(c.NacosConfig.Host, c.NacosConfig.Port),
-		}
-		cc := &constant.ClientConfig{
-			NamespaceId:         c.NacosConfig.NamespaceId,
-			Username:            c.NacosConfig.Username,
-			Password:            c.NacosConfig.PassWord,
-			TimeoutMs:           5000,
-			NotLoadCacheAtStart: true,
-		}
-		m := map[string]string{
-			"preserved.register.source": "go-zero",
-		}
-		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, fmt.Sprintf("%s:%d", c.Host, c.Port), sc, cc, nacosx.WithMetadata(m))
-		_ = nacosx.RegisterService(opts)
-	}
+	c.NacosConfig.MustRegisterHTTP(c.Name, fmt.Sprintf("%s:%d", c.Host, c.Port))
 
 	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
 	server.Start()

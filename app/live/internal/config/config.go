@@ -6,6 +6,7 @@ import (
 	"zero-service/common/gormx"
 
 	"github.com/zeromicro/go-zero/zrpc"
+	"zero-service/common/nacosx"
 )
 
 // RecordConf 会议录制（LiveKit Egress）配置。
@@ -45,15 +46,7 @@ type Config struct {
 	// 部署模式：standalone / cluster
 	DeployMode string `json:",default=standalone,options=standalone|cluster"`
 	// Nacos 服务注册（可选）
-	NacosConfig struct {
-		IsRegister  bool
-		Host        string
-		Port        uint64
-		Username    string
-		PassWord    string
-		NamespaceId string
-		ServiceName string
-	} `json:",optional"`
+	NacosConfig nacosx.ServiceConfig `json:",optional"`
 	// LiveKit 配置（管理 API、webhook 与录制）
 	LiveKit LiveKitConf
 	// 数据库配置（会议单据与参会记录）

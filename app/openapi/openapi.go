@@ -40,6 +40,7 @@ func main() {
 	s.AddOptions(grpc.ChainUnaryInterceptor(grpcx.ServerFinalizeInterceptor))
 	s.AddUnaryInterceptors(grpcx.LoggerInterceptor)
 	defer s.Stop()
+	c.NacosConfig.MustRegisterGRPC(c.Name, c.ListenOn)
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	s.Start()

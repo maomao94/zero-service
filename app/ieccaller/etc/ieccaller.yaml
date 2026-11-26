@@ -60,7 +60,7 @@ MqttConfig:
   IsPush: true
 StreamEventConf:
   # nacos://[user:passwd]@host/service?param=value'
-#  Target: nacos://nacos:nacos@127.0.0.1:8848/stream-event?namespaceid=public&timeout=5000s
+#  Target: nacos://nacos:nacos@127.0.0.1:8848/stream-event?namespaceid=public&timeout=5s
   Endpoints:
     - 127.0.0.1:21009
   NonBlock: true

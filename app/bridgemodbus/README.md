@@ -120,7 +120,7 @@ modbus.readWriteMultipleRegisters
 modbus.maskWriteRegister
 ```
 
-配置管理与本地换算工具暂不通过开放平台暴露。接口字段和示例见 [`docs/open-api/modbus.md`](../../docs/open-api/modbus.md)。
+开放平台也转发 3 个寄存器换算方法和 5 个链路配置管理方法。接口字段和示例见 [`docs/open-api/modbus.md`](../../docs/open-api/modbus.md)。
 
 ## 启动
 

@@ -38,10 +38,12 @@ InvokeRes {
 | `app/podengine` | `pod.*`、`image.list` |
 | `app/bridgemodbus` | `modbus.*` |
 
-当前开放 19 个方法：
+当前支持以下转发能力：
 
 - Podman 4 个只读方法；
 - Modbus 15 个 I/O 方法（读取、写入、设备标识）。
+- Modbus 3 个寄存器换算方法和 5 个链路配置管理方法。
+- GIS 24 个方法。仓库配置中的 `GisConf` 指向本机 GIS gRPC 服务。
 
 未注册 method 返回 `130004`，非法 protojson 返回 `100020`。
 
@@ -56,16 +58,20 @@ BridgeModbusConf:
   Endpoints: [127.0.0.1:25004]
   NonBlock: true
   Timeout: 120000
-Mock: true
+GisConf:
+  Endpoints: [127.0.0.1:25006]
+  NonBlock: true
+  Timeout: 120000
 ```
 
-- `Mock` 仅允许 `Mode: dev` / `test`，生产启动会失败。
-- Mock 模式不建立下游连接，四个 Podman 与十五个 Modbus 方法均返回固定数据。
+请求由已注册的路由直接转发到对应下游 gRPC 服务。
+
+将 `NacosConfig.IsRegister` 设为 `true` 后，服务以 `openapi.rpc` 注册到 Nacos。Podman、Modbus 和 GIS 的客户端配置都支持用 `Target` 替换 `Endpoints`。注册名、命名空间和配置示例见 [Nacos 注册与发现](../../docs/open-api/nacos.md)。
 
 ## 新增 method
 
 1. 在对应业务 proto 中增加请求/响应 message。
-2. 在 `internal/dispatch` 增加 relay（真实调用）与 mock（可选）。
+2. 在 `internal/dispatch` 增加下游 gRPC 转发。
 3. 注册 method 常量与 `Handler`。
 4. 同步更新 `web/openapi/src/lib/methods.ts` 与 `docs/open-api/`。
 

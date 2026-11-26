@@ -7,6 +7,7 @@ import (
 	"zero-service/common/mqttx"
 
 	"github.com/zeromicro/go-zero/zrpc"
+	"zero-service/common/nacosx"
 )
 
 type IecServerConfig struct {
@@ -24,15 +25,7 @@ type Config struct {
 	InterrogationCmdCron    string `json:",optional"`
 	CounterInterrogationCmd string `json:",optional"`
 
-	NacosConfig struct {
-		IsRegister  bool
-		Host        string
-		Port        uint64
-		Username    string
-		PassWord    string
-		NamespaceId string
-		ServiceName string
-	} `json:",optional"`
+	NacosConfig nacosx.ServiceConfig `json:",optional"`
 
 	KafkaConfig struct {
 		Brokers []string `json:",optional"`

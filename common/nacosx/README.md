@@ -1,39 +1,36 @@
 # nacosx
 
-`common/nacosx` 是 [nacos-sdk-go v2](https://github.com/nacos-group/nacos-sdk-go) 的 go-zero 适配层，提供两件事：
+`common/nacosx` 是 [nacos-sdk-go v2](https://github.com/nacos-group/nacos-sdk-go) 的 go-zero 适配层：
 
-- **服务注册**：把 zRPC 服务实例注册到 Nacos（临时实例），进程退出时自动反注册。
-- **服务发现**：向 gRPC 注册 `nacos://` resolver，`zrpc` 的 `Target` 直接写 Nacos 地址即可按服务名解析实例，并由 gRPC 负载均衡轮询。
+- **服务注册**：把 zRPC / HTTP 服务实例注册到 Nacos（临时实例），进程退出时自动反注册。
+- **服务发现**：为 gRPC 注册 `nacos://` resolver，`zrpc` 的 `Target` 直接写 Nacos 地址即可。
+- **通用订阅**：`Discover` 暴露地址变更回调，供 socket 网关扇出等非 gRPC 场景复用。
 
-包本身不含业务语义，注册与解析都通过导入即生效的 `init()` 完成。
+包本身不含业务语义；resolver 与 SDK logger 通过导入即生效的 `init()` 注册。
 
 ## 服务注册
 
+推荐直接使用 `ServiceConfig`（配置结构），启动阶段调用 `MustRegisterXxx`：
+
 ```go
-import "github.com/maomao94/zero-service/common/nacosx"
+// 仅 gRPC：实例端口与 gRPC_port 元数据一致
+c.NacosConfig.MustRegisterGRPC(c.Name, c.ListenOn)
 
-sc := []constant.ServerConfig{
-	*constant.NewServerConfig("127.0.0.1", 8848),
-}
-cc := &constant.ClientConfig{
-	NamespaceId:         "public",
-	TimeoutMs:           5000,
-	NotLoadCacheAtStart: true,
-	LogDir:              "/tmp/nacos/log",
-	CacheDir:            "/tmp/nacos/cache",
-	LogLevel:            "error",
-}
+// 仅 HTTP：只注册实例端口，不写 gRPC_port
+c.NacosConfig.MustRegisterHTTP(c.Name, httpListenOn)
 
-opts := nacosx.NewNacosConfig("trigger.rpc", c.ListenOn, sc, cc,
-	nacosx.WithCluster("DEFAULT"),
-	nacosx.WithGroup("DEFAULT_GROUP"),
-)
-if err := nacosx.RegisterService(opts); err != nil {
-	logx.Must(err)
-}
+// HTTP + gRPC 双端口：实例端口用 HTTP，gRPC 客户端通过 metadata.gRPC_port 找到 gRPC 端口
+c.NacosConfig.MustRegister(c.Name, httpListenOn, c.ListenOn)
 ```
 
-`RegisterService` 的注册 IP 由 `ListenOn` 推导：监听 `0.0.0.0` 或空主机时，优先取环境变量 `POD_IP`，其次取本机内网 IP；显式配置的主机地址原样使用。
+要点：
+
+- **实例端口**（Nacos 中的 `port`）：HTTP 与 gRPC 并存时用 HTTP/主端口；仅 gRPC 服务用 gRPC 端口。
+- **gRPC 端口**：写入 `metadata.gRPC_port`；消费方优先使用该元数据，缺失时回退实例端口，与 Java 侧 Feign + gRPC 的约定一致。
+- socketgtw 这类同时暴露 HTTP 与 gRPC 的服务，注册为 `MustRegister(name, http_addr, grpc_listen_addr)`。
+- 注册 IP 解析顺序：`AdvertiseIP`（显式配置）→ 实例监听地址中的具体 IP → gRPC 监听地址中的具体 IP → `POD_IP` → 本机内网 IP。`0.0.0.0`、`::`、`127.0.0.1`、`::1` 会被跳过；都推导不到时启动报错，不会注册通配/回环地址。
+- 未指定 `CacheDir` / `LogDir` 时默认落到 `$TMPDIR/nacos/{cache,log}`，不会污染进程工作目录。
+- 底层仍可直接调用 `RegisterService(opts)`；`ServiceConfig.Register` 返回 error，`MustRegister*` 失败时通过 `logx.Must` 退出，适合启动阶段。
 
 `Options` 与选项函数：
 
@@ -41,35 +38,65 @@ if err := nacosx.RegisterService(opts); err != nil {
 | --- | --- | --- |
 | `ServiceName` | 注册的服务名，与调用方 `Target` 中的路径一致 | 必填 |
 | `ListenOn` | 服务监听地址，用于推导注册 IP 与端口 | 必填 |
+| `AdvertiseIP` | 注册到 Nacos 的实例 IP，缺省按监听地址/`POD_IP`/内网 IP 推导 | 自动 |
 | `Weight` / `WithWeight` | 实例权重 | `1.0` |
 | `Cluster` / `WithCluster` | 集群名 | 空 |
 | `Group` / `WithGroup` | 分组名 | 空 |
-| `Metadata` / `WithMetadata` | 附加元数据 | 空 map |
+| `Metadata` / `WithMetadata` | 附加元数据；gRPC 端口由注册方法自动写入 `gRPC_port` | 空 map |
 
 ## 服务发现
 
 客户端只需要在配置里写 `Target`，无需额外代码：
 
 ```yaml
-Target: nacos://127.0.0.1:8848/trigger.rpc?namespaceid=public&timeout=5000s
+StreamEventConf:
+  Target: nacos://nacos:nacos@127.0.0.1:8848/stream-event?namespaceid=public&timeout=5s
 ```
 
 URL 格式为 `nacos://[user:passwd]@host:port/service?param=value`，支持的查询参数：
 
 | 参数 | 说明 |
 | --- | --- |
-| `namespaceid` | 命名空间，缺省为 `public` |
-| `timeout` | 连接与请求超时，如 `5000s` |
-| `groupName` | 分组名 |
-| `clusters` | 集群过滤 |
-| `notLoadCacheAtStart` / `updateCacheWhenEmpty` | 本地缓存行为 |
-| `appName` / `logLevel` / `logDir` / `cacheDir` | 客户端标识与日志目录 |
+| `namespaceid` | 命名空间，缺省 `public` |
+| `timeout` | 请求超时，Go duration 格式（如 `5s`），内部换算为毫秒；省略时用 SDK 默认 10s |
+| `groupName` | 分组名，缺省 `DEFAULT_GROUP` |
+| `clusters` | 集群过滤，逗号分隔，如 `clusters=DEFAULT,OTHER` |
+| `notLoadCacheAtStart` | 是否忽略本地缓存启动，默认 `true` |
+| `updateCacheWhenEmpty` | 实例为空时是否触发回调，默认 `true`（否则“全部实例下线”不会通知消费方） |
+| `appName` / `cacheDir` | 客户端标识与本地缓存目录 |
+| `logLevel` / `logDir` | 客户端日志配置；受全局 logger 初始化时机限制，通常请改用环境变量或 `SetUpLogger`（见「日志」） |
 
-`logLevel`、`logDir`、`cacheDir` 会被环境变量 `NACOS_LOG_LEVEL`、`NACOS_LOG_DIR`、`NACOS_CACHE_DIR` 覆盖，便于容器内统一调整。解析器只返回健康实例，并按地址排序更新状态，避免相同地址列表反复触达负载均衡。
+`cacheDir` 等 URL 参数会被环境变量 `NACOS_CACHE_DIR` 覆盖；`logLevel`、`logDir` 虽然也会解析进 client 配置，但全局 logger 只在包初始化时读取一次，实际调整请使用 `NACOS_LOG_LEVEL`、`NACOS_LOG_DIR` 或 `SetUpLogger`。`notLoadCacheAtStart`、`updateCacheWhenEmpty` 同理对应 `NACOS_NOT_LOAD_CACHE_AT_START`、`NACOS_UPDATE_CACHE_WHEN_EMPTY`。缓存目录缺省为 `$TMPDIR/nacos/cache`。
+
+发现行为：
+
+- 只返回健康且启用的实例；地址去重并按字典序排序，集合未变化时不重复上报。
+- 地址端口优先取 `metadata.gRPC_port`，缺失时回退实例的 `port`（兼容 Java 侧仅注册主端口的服务）。
+- 以 Nacos 订阅推送为唯一数据通道：订阅成功时 SDK 立即回调一次当前实例列表，之后由服务端推送变更，不做定时扫描。
+- 首次订阅失败按 1s → 2s → … → 30s 指数退避重试，避免 Nacos 短暂不可用导致永久拿不到地址。
+- 因为默认 `updateCacheWhenEmpty=true`，“实例全部下线”也会回调空列表，消费方据此清空客户端集合。
+
+## 非 gRPC 场景：Discover
+
+需要自行维护客户端集合（例如 socket 网关扇出）时，直接复用 `Discover`，不要另写一套订阅逻辑：
+
+```go
+discovery, err := nacosx.Discover(context.Background(), c.Target, func(addrs []string) {
+	// 已去重、已排序，仅在实例集合变化时串行回调
+})
+if err != nil {
+	logx.Must(err)
+}
+defer discovery.Close()
+```
+
+`Discover` 与 gRPC resolver 共用同一套地址解析、订阅重试和日志；`Close` 幂等，会取消订阅并释放 Nacos client。
 
 ## 日志
 
-包初始化时会以 `error` 级别、追加 stdout 的方式配置 Nacos SDK 全局 logger。需要调整时在启动早期调用：
+所有日志以 `[nacos]` 为前缀。包初始化时会以 `error` 级别、同时输出 stdout 与文件的方式配置 SDK 全局 logger，默认目录 `$TMPDIR/nacos/log`，可用 `NACOS_LOG_LEVEL`、`NACOS_LOG_DIR` 覆盖。
+
+SDK 的全局 logger 只初始化一次，因此各 client 的 `LogLevel` / `LogDir` 在包初始化后不再生效。需要调整时在启动早期调用：
 
 ```go
 _ = nacosx.SetUpLogger(nacosx.LoggerConfig{

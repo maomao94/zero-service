@@ -2,17 +2,8 @@ package nacosx
 
 import (
 	"context"
-	"fmt"
-	"net"
-	"strconv"
-	"time"
 
-	"github.com/nacos-group/nacos-sdk-go/v2/clients"
-	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
-	"github.com/nacos-group/nacos-sdk-go/v2/model"
-	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"github.com/pkg/errors"
-	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/resolver"
 )
 
@@ -24,7 +15,7 @@ func init() {
 // All target URLs like 'nacos://.../...' will be resolved by this resolver
 const schemeName = "nacos"
 
-// builder implements resolver.Builder and use for constructing all consul resolvers
+// builder implements resolver.Builder and use for constructing all nacos resolvers
 type builder struct{}
 
 func (b *builder) Build(url resolver.Target, conn resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
@@ -33,85 +24,18 @@ func (b *builder) Build(url resolver.Target, conn resolver.ClientConn, opts reso
 		return nil, errors.Wrap(err, "Wrong nacos URL")
 	}
 
-	host, ports, err := net.SplitHostPort(tgt.Addr)
+	cli, err := newWatchClient(tgt)
 	if err != nil {
-		return nil, fmt.Errorf("failed parsing address error: %v", err)
-	}
-	port, _ := strconv.ParseUint(ports, 10, 16)
-
-	sc := []constant.ServerConfig{
-		*constant.NewServerConfig(host, port),
-	}
-
-	cc := &constant.ClientConfig{
-		AppName:     tgt.AppName,
-		NamespaceId: tgt.NamespaceID,
-		Username:    tgt.User,
-		Password:    tgt.Password,
-		TimeoutMs:   uint64(tgt.Timeout),
-		//NotLoadCacheAtStart: tgt.NotLoadCacheAtStart,
-		//UpdateCacheWhenEmpty: tgt.UpdateCacheWhenEmpty,
-		NotLoadCacheAtStart:  true,  // 不用旧缓存启动
-		UpdateCacheWhenEmpty: false, // 查询不到就返回空，别用缓存兜底
-	}
-
-	if tgt.CacheDir != "" {
-		cc.CacheDir = tgt.CacheDir
-	}
-	if tgt.LogDir != "" {
-		cc.LogDir = tgt.LogDir
-	}
-	if tgt.LogLevel != "" {
-		cc.LogLevel = tgt.LogLevel
-	}
-
-	cli, err := clients.NewNamingClient(vo.NacosClientParam{
-		ServerConfigs: sc,
-		ClientConfig:  cc,
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "Couldn't connect to the nacos API")
+		return nil, err
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	pipe := make(chan []string)
+	watch := newWatcher(ctx, cancel, pipe)
 
-	go cli.Subscribe(&vo.SubscribeParam{
-		ServiceName:       tgt.Service,
-		Clusters:          tgt.Clusters,
-		GroupName:         tgt.GroupName,
-		SubscribeCallback: newWatcher(ctx, cancel, pipe).CallBackHandle, // required
-	})
+	go subscribeNacos(ctx, cli, tgt, watch.CallBackHandle)
 
 	go populateEndpoints(ctx, conn, pipe)
-
-	go func() {
-		ticker := time.NewTicker(60 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				instances, err := cli.SelectAllInstances(vo.SelectAllInstancesParam{
-					ServiceName: tgt.Service,
-					Clusters:    tgt.Clusters,
-					GroupName:   tgt.GroupName,
-				})
-				if err != nil {
-					logx.Errorf("[nacos] failed to pull nacos service instances: %v", err)
-					continue
-				}
-
-				addrs := extractHealthyGRPCInstances(instances)
-				select {
-				case pipe <- addrs:
-				case <-ctx.Done():
-					return
-				}
-			}
-		}
-	}()
 
 	return &resolvr{
 		cancelFunc: cancel,
@@ -123,24 +47,4 @@ func (b *builder) Build(url resolver.Target, conn resolver.ClientConn, opts reso
 // Scheme is defined at https://github.com/grpc/grpc/blob/master/doc/naming.md.
 func (b *builder) Scheme() string {
 	return schemeName
-}
-
-func extractHealthyGRPCInstances(instances []model.Instance) []string {
-	addrs := make([]string, 0, len(instances))
-	for _, s := range instances {
-		if s.Metadata == nil || s.Metadata["gRPC_port"] == "" {
-			logx.Errorw("[nacos] 忽略实例: 无gRPC_port配置", logx.Field("ip", s.Ip), logx.Field("port", s.Port))
-			continue
-		}
-
-		if !s.Healthy || !s.Enable {
-			logx.Debugf("[nacos] 忽略实例: %s:%s (健康: %t, 启用: %t)",
-				s.Ip, s.Metadata["gRPC_port"], s.Healthy, s.Enable)
-			continue
-		}
-		logx.Debugf("[nacos] 发现健康实例: %s|%s:%s (权重: %.1f)",
-			s.InstanceId, s.Ip, s.Metadata["gRPC_port"], s.Weight)
-		addrs = append(addrs, fmt.Sprintf("%s:%s", s.Ip, s.Metadata["gRPC_port"]))
-	}
-	return addrs
 }

@@ -312,7 +312,7 @@ message SendProtoTriggerReq {
   int64 max_retry = 3 [json_name = "maxRetry"];
   // 唯一消息 id 可为空
   string msg_id = 4 [json_name = "msgId"];
-  // 服务名称 不可为空 示例 127.0.0.1:8080 direct:///127.0.0.1:8080,127.0.0.2:8080,nacos://nacos:nacos@127.0.0.1:8848/service?namespaceid=public&timeout=5000s
+  // 服务名称 不可为空 示例 127.0.0.1:8080 direct:///127.0.0.1:8080,127.0.0.2:8080,nacos://nacos:nacos@127.0.0.1:8848/service?namespaceid=public&timeout=5s
   string grpc_server = 5 [json_name = "grpcServer"];
   // 方法 不可为空
   string method = 6 [json_name = "method"];

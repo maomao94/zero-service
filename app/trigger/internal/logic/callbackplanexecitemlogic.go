@@ -86,9 +86,11 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	defer lock.Release()
 
 	// 加锁后补查询一次，获取最新状态
-	if err := db.Where("id = ?", execItem.Id).First(&execItem).Error; err != nil {
+	var latestExecItem gormmodel.PlanExecItem
+	if err := db.First(&latestExecItem, "id = ?", execItem.Id).Error; err != nil {
 		return nil, errx.NewErrorByPbCodeWrap(extproto.Code__1_00_DB, err, "查询执行项失败")
 	}
+	execItem = latestExecItem
 
 	var plan gormmodel.Plan
 	if err := db.Where("id = ?", execItem.PlanPk).First(&plan).Error; err != nil {

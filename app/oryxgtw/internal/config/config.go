@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/zrpc"
+	"zero-service/common/nacosx"
 )
 
 type Config struct {
@@ -12,13 +13,5 @@ type Config struct {
 	// OryxServerConf oryxserver gRPC 配置（record 生命周期落库通道）
 	OryxServerConf zrpc.RpcClientConf
 	// NacosConfig Nacos 注册配置（本地默认不注册）
-	NacosConfig struct {
-		IsRegister  bool
-		Host        string
-		Port        uint64
-		Username    string
-		PassWord    string
-		NamespaceId string
-		ServiceName string
-	} `json:",optional"`
+	NacosConfig nacosx.ServiceConfig `json:",optional"`
 }

@@ -12,7 +12,7 @@
 | livegtw | 11002 | `app/livegtw/` | LiveKit 会议 HTTP 网关 |
 | socketgtw | 11003 | `socketapp/socketgtw/` | Socket.IO 网关 HTTP 端 |
 | oryxgtw | 11004 | `app/oryxgtw/` | Oryx 流媒体回调网关 |
-| opengtw | 11005 | `app/opengtw/` | 开放平台 HTTP 网关（Podman + Modbus） |
+| opengtw | 11005 | `app/opengtw/` | 开放平台 HTTP 网关 |
 | bridgegtw | 15001 | `app/bridgegtw/` | gRPC-Gateway 代理转发 |
 
 ## Web 前端与网关（5xxx / 8xxx）
@@ -22,7 +22,7 @@
 | Live 会议前端 | 5178 | 80/443 `/` | `web/live/` |
 | SocketIO 测试工具 | 5179 | 8090 `/` | `web/socketio/` |
 | Zero 工作台 | 5180 | 8091 `/` | `web/workspace/` |
-| OpenAPI 控制台 | 5181 | 80/443 `/openapi/` | `web/openapi/` |
+| 开放平台控制台 | 5181 | 80/443 `/openapi/` | `web/openapi/` |
 
 开发端口来自各项目 `vite.config.ts`；生产入口由 `deploy/nginx` 统一托管。
 
@@ -48,7 +48,7 @@
 | ispserver.rpc | 21015 | `app/ispserver/` | ISP 巡检协议服务端 |
 | oryxserver.rpc | 21016 | `app/oryxserver/` | Oryx 流媒体 API 代理 |
 | live.rpc | 21017 | `app/live/` | LiveKit 会议管理 |
-| openapi.rpc | 21018 | `app/openapi/` | 开放平台统一转发（Podman + Modbus，method 路由 + protojson） |
+| openapi.rpc | 21018 | `app/openapi/` | 开放平台统一转发（Podman、Modbus、GIS） |
 
 ### 桥接与扩展
 

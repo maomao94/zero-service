@@ -1,13 +1,18 @@
 package config
 
-import "github.com/zeromicro/go-zero/zrpc"
+import (
+	"zero-service/common/nacosx"
+
+	"github.com/zeromicro/go-zero/zrpc"
+)
 
 type Config struct {
 	zrpc.RpcServerConf
+	NacosConfig nacosx.ServiceConfig `json:",optional"`
 	// PodEngineConf podengine 下游 gRPC 配置
 	PodEngineConf zrpc.RpcClientConf
 	// BridgeModbusConf bridgemodbus 下游 gRPC 配置
 	BridgeModbusConf zrpc.RpcClientConf
-	// Mock 为 true 时路由表返回固定数据，仅允许 dev/test 使用
-	Mock bool `json:",optional"`
+	// GisConf 为 GIS 下游连接配置。省略时不注册 GIS 方法。
+	GisConf *zrpc.RpcClientConf `json:",optional"`
 }

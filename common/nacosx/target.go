@@ -3,6 +3,7 @@ package nacosx
 import (
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,16 +16,16 @@ type target struct {
 	User                 string        `key:",optional"`
 	Password             string        `key:",optional"`
 	Service              string        `key:",optional"`
-	GroupName            string        `key:",optional"`
-	Clusters             []string      `key:",optional"`
+	GroupName            string        `key:"groupName,optional"`
+	Clusters             []string      `key:",optional"` // 逗号分隔，由 parseURL 单独解析
 	NamespaceID          string        `key:"namespaceid,optional"`
 	Timeout              time.Duration `key:"timeout,optional"`
 	AppName              string        `key:"appName,optional"`
-	LogLevel             string        `key:",optional"`
-	LogDir               string        `key:",optional"`
-	CacheDir             string        `key:",optional"`
-	NotLoadCacheAtStart  bool          `key:"notLoadCacheAtStart,optional,string"`
-	UpdateCacheWhenEmpty bool          `key:"updateCacheWhenEmpty,optional,string"`
+	LogLevel             string        `key:"logLevel,optional"`
+	LogDir               string        `key:"logDir,optional"`
+	CacheDir             string        `key:"cacheDir,optional"`
+	NotLoadCacheAtStart  string        `key:"notLoadCacheAtStart,optional"`
+	UpdateCacheWhenEmpty string        `key:"updateCacheWhenEmpty,optional"`
 }
 
 // parseURL with parameters
@@ -38,6 +39,10 @@ func parseURL(rawURL url.URL) (target, error) {
 	var tgt target
 	params := make(map[string]any, len(rawURL.Query()))
 	for name, value := range rawURL.Query() {
+		// clusters 是逗号分隔字符串，mapping 会按 JSON 解析失败，单独处理。
+		if name == "clusters" {
+			continue
+		}
 		params[name] = value[0]
 	}
 
@@ -46,34 +51,54 @@ func parseURL(rawURL url.URL) (target, error) {
 		return target{}, errors.Wrap(err, "Malformed URL parameters")
 	}
 
+	if clusters := rawURL.Query().Get("clusters"); clusters != "" {
+		for _, cluster := range strings.Split(clusters, ",") {
+			if cluster = strings.TrimSpace(cluster); cluster != "" {
+				tgt.Clusters = append(tgt.Clusters, cluster)
+			}
+		}
+	}
+
 	if tgt.NamespaceID == "" {
 		tgt.NamespaceID = "public"
 	}
-
-	tgt.LogLevel = os.Getenv("NACOS_LOG_LEVEL")
-	tgt.LogDir = os.Getenv("NACOS_LOG_DIR")
-	tgt.CacheDir = os.Getenv("NACOS_CACHE_DIR")
 
 	tgt.User = rawURL.User.Username()
 	tgt.Password, _ = rawURL.User.Password()
 	tgt.Addr = rawURL.Host
 	tgt.Service = strings.TrimLeft(rawURL.Path, "/")
 
-	if logLevel, exists := os.LookupEnv("NACOS_LOG_LEVEL"); exists {
+	// 环境变量优先于 URL 参数，未设置时保留 URL 中的值。
+	if logLevel, exists := os.LookupEnv(envLogLevel); exists {
 		tgt.LogLevel = logLevel
 	}
 
-	if logDir, exists := os.LookupEnv("NACOS_LOG_DIR"); exists {
+	if logDir, exists := os.LookupEnv(envLogDir); exists {
 		tgt.LogDir = logDir
 	}
 
-	if notLoadCacheAtStart, exists := os.LookupEnv("NACOS_NOT_LOAD_CACHE_AT_START"); exists {
-		tgt.NotLoadCacheAtStart = notLoadCacheAtStart == "true"
+	if cacheDir, exists := os.LookupEnv(envCacheDir); exists {
+		tgt.CacheDir = cacheDir
 	}
 
-	if updateCacheWhenEmpty, exists := os.LookupEnv("NACOS_UPDATE_CACHE_WHEN_EMPTY"); exists {
-		tgt.UpdateCacheWhenEmpty = updateCacheWhenEmpty == "true"
+	if notLoadCacheAtStart, exists := os.LookupEnv(envNotLoadCacheAtStart); exists {
+		tgt.NotLoadCacheAtStart = notLoadCacheAtStart
+	}
+
+	if updateCacheWhenEmpty, exists := os.LookupEnv(envUpdateCacheWhenEmpty); exists {
+		tgt.UpdateCacheWhenEmpty = updateCacheWhenEmpty
 	}
 
 	return tgt, nil
+}
+
+func targetBool(value string, defaultValue bool) bool {
+	if value == "" {
+		return defaultValue
+	}
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		return defaultValue
+	}
+	return parsed
 }

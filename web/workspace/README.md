@@ -5,7 +5,7 @@ Zero Service 的统一入口与运行状态面板：一屏看清各子系统是�
 ## 功能
 
 - **状态总览**：在线模块数、平均响应、下次检测倒计时，以及最近 40 次检测的聚合响应趋势。
-- **服务模块**：Live 会议、SocketIO 网关、OpenAPI 控制台、GitLab 仓库四个入口，卡片展示实时延迟、最近检测时间和逐次检测条。
+- **服务模块**：Live 会议、SocketIO 网关、开放平台控制台、GitLab 仓库四个入口，卡片展示实时延迟、最近检测时间和逐次检测条。
 - **GitHub 入口**：跨满模块网格的横向卡片，直达 `maomao94/zero-service` 公开仓库，可复制仓库地址。
 - **端点速查**：`/v1/`、`/live/v1/`、`/socket.io/`、`/recordings/` 等同源路径与上游端口，一键复制完整地址。
 - **检测记录**：记录启动事件与上下线变化（不刷屏），可清空；无变化时给出空状态说明。
@@ -20,7 +20,7 @@ Zero Service 的统一入口与运行状态面板：一屏看清各子系统是�
 | --- | --- | --- |
 | Live 视频会议 | 5178 | 站点根路径 `/` |
 | SocketIO 网关测试 | 5179 | 同主机 `:8090` |
-| OpenAPI 测试控制台 | 5181 | 路径 `/openapi/` |
+| 开放平台控制台 | 5181 | 路径 `/openapi/` |
 | GitLab 代码仓库 | — | `https://gitlab.localhost/` |
 | GitHub 代码仓库 | — | `https://github.com/maomao94/zero-service`（外部站点，不参与探活） |
 | 工作台自身 | 5180 | — |
@@ -45,7 +45,7 @@ npm run dev
 | --- | --- | --- | --- |
 | Live 视频会议 | `/health/live` | `127.0.0.1:5178/` | 容器内 80 `/healthz` |
 | SocketIO 网关测试 | `/health/socketio` | `127.0.0.1:5179/` | 容器内 8090 `/` |
-| OpenAPI 控制台 | `/health/openapi` | `127.0.0.1:5181/` | 宿主机 `11005/v1/health` |
+| 开放平台控制台 | `/health/openapi` | `127.0.0.1:5181/` | 宿主机 `11005/v1/health` |
 | GitLab 代码仓库 | `/health/gitlab` | `127.0.0.1:80/users/sign_in`（Host: `gitlab.localhost`） | 容器内 80 同路径 |
 
 本地未运行 nginx 时 GitLab 会显示「未启动」，属于预期；需要联调时可启动网关或设置 `VITE_GITLAB_URL` 指向可达实例。

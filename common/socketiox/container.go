@@ -5,37 +5,35 @@ import (
 	"fmt"
 	"maps"
 	"math/rand/v2"
-	"net"
-	"net/url"
-	"os"
-	"strconv"
 	"strings"
 	"sync"
-	"time"
+
 	"zero-service/common/grpcx"
+	"zero-service/common/nacosx"
 	"zero-service/socketapp/socketgtw/socketgtw"
 
-	"github.com/nacos-group/nacos-sdk-go/v2/clients"
-	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
-	"github.com/nacos-group/nacos-sdk-go/v2/common/logger"
-	"github.com/nacos-group/nacos-sdk-go/v2/model"
-	"github.com/nacos-group/nacos-sdk-go/v2/vo"
-	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/discov"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/mapping"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 )
 
+// SocketContainer 维护 socket 网关客户端集合，支持 direct / etcd / nacos 三种发现方式。
 type SocketContainer struct {
 	ClientMap map[string]socketgtw.SocketGtwClient
 	lock      sync.RWMutex
+
+	closeOnce sync.Once
+	closed    bool
+	closers   map[string]func() error
+	discovery *nacosx.Discovery
+	etcdSub   *discov.Subscriber
 }
 
 func MustNewPubContainer(c zrpc.RpcClientConf) *SocketContainer {
 	p := &SocketContainer{
 		ClientMap: make(map[string]socketgtw.SocketGtwClient),
+		closers:   make(map[string]func() error),
 	}
 	if len(c.Endpoints) != 0 {
 		err := p.getConn4Direct(c)
@@ -61,6 +59,27 @@ func MustNewPubContainer(c zrpc.RpcClientConf) *SocketContainer {
 	return p
 }
 
+// Close 停止服务发现并释放后台订阅、轮询和已建立的 gRPC 连接，可安全重复调用。
+func (p *SocketContainer) Close() {
+	p.closeOnce.Do(func() {
+		p.lock.Lock()
+		p.closed = true
+		closers := p.closers
+		p.closers = make(map[string]func() error)
+		p.lock.Unlock()
+
+		if p.discovery != nil {
+			p.discovery.Close()
+		}
+		if p.etcdSub != nil {
+			p.etcdSub.Close()
+		}
+		for _, closer := range closers {
+			_ = closer()
+		}
+	})
+}
+
 func (p *SocketContainer) GetClient(key string) socketgtw.SocketGtwClient {
 	p.lock.RLock()
 	defer p.lock.RUnlock()
@@ -79,35 +98,123 @@ const (
 	subsetSize = 32
 )
 
-func newSocketClient(endpoint string, c zrpc.RpcClientConf) socketgtw.SocketGtwClient {
+type socketClient struct {
+	client socketgtw.SocketGtwClient
+	close  func() error
+}
+
+func newSocketClient(endpoint string, c zrpc.RpcClientConf) (socketClient, error) {
 	c.Endpoints = []string{endpoint}
-	return socketgtw.NewSocketGtwClient(zrpc.MustNewClient(c,
+	cli, err := zrpc.NewClient(c,
 		zrpc.WithUnaryClientInterceptor(grpcx.UnaryMetadataInterceptor),
 		zrpc.WithDialOption(grpc.WithDefaultCallOptions(
 			//grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
 			grpc.MaxCallSendMsgSize(50*1024*1024), // 发送最大50MB
 			//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
 		)),
-	).Conn())
+	)
+	if err != nil {
+		return socketClient{}, fmt.Errorf("create socket client %s: %w", endpoint, err)
+	}
+
+	conn := cli.Conn()
+	if conn == nil {
+		return socketClient{}, fmt.Errorf("create socket client %s: nil connection", endpoint)
+	}
+
+	return socketClient{
+		client: socketgtw.NewSocketGtwClient(conn),
+		close:  conn.Close,
+	}, nil
 }
 
-// syncClientMap 同步客户端映射，调用者需持有 p.lock
+// newDiscoveredSocketClient 为动态发现创建的客户端强制非阻塞拨号：
+// 避免不可达节点阻塞发现回调，连接就绪前的 RPC 快速失败，由 gRPC 自动重连。
+func newDiscoveredSocketClient(endpoint string, c zrpc.RpcClientConf) (socketClient, error) {
+	c.NonBlock = true
+	return newSocketClient(endpoint, c)
+}
+
+func (p *SocketContainer) isClosed() bool {
+	p.lock.RLock()
+	defer p.lock.RUnlock()
+	return p.closed
+}
+
+// syncClientMap 同步客户端集合：连接在锁外创建，避免阻塞读请求；被摘除的地址会关闭连接。
 func (p *SocketContainer) syncClientMap(addrs []string, c zrpc.RpcClientConf) {
-	target := make(map[string]bool, len(addrs))
+	target := make(map[string]struct{}, len(addrs))
 	for _, addr := range addrs {
-		target[addr] = true
+		target[addr] = struct{}{}
 	}
-	for k := range p.ClientMap {
-		if !target[k] {
-			delete(p.ClientMap, k)
-		}
-	}
+
+	p.lock.RLock()
+	pending := make([]string, 0, len(target))
 	for addr := range target {
 		if _, ok := p.ClientMap[addr]; !ok {
-			p.ClientMap[addr] = newSocketClient(addr, c)
+			pending = append(pending, addr)
 		}
 	}
-	logx.Infof("[socketio] update: total=%d", len(p.ClientMap))
+	p.lock.RUnlock()
+
+	created := make(map[string]socketClient, len(pending))
+	for _, addr := range pending {
+		client, err := newDiscoveredSocketClient(addr, c)
+		if err != nil {
+			logx.Errorf("[socketio] create client for %s failed: %v", addr, err)
+			continue
+		}
+		created[addr] = client
+	}
+
+	p.lock.Lock()
+	if p.closed {
+		p.lock.Unlock()
+		for _, client := range created {
+			_ = client.close()
+		}
+		return
+	}
+
+	removed := 0
+	closeAfter := make([]func() error, 0, len(p.ClientMap))
+	for addr := range p.ClientMap {
+		if _, ok := target[addr]; ok {
+			continue
+		}
+		delete(p.ClientMap, addr)
+		if closer, ok := p.closers[addr]; ok {
+			closeAfter = append(closeAfter, closer)
+			delete(p.closers, addr)
+		}
+		removed++
+	}
+
+	added := 0
+	for addr, client := range created {
+		if _, exist := p.ClientMap[addr]; exist {
+			closeAfter = append(closeAfter, client.close) // 并发更新已创建
+			continue
+		}
+		if _, ok := target[addr]; !ok {
+			closeAfter = append(closeAfter, client.close) // 地址已被后续更新移除
+			continue
+		}
+		p.ClientMap[addr] = client.client
+		p.closers[addr] = client.close
+		added++
+	}
+	total := len(p.ClientMap)
+	p.lock.Unlock()
+
+	for _, closer := range closeAfter {
+		_ = closer()
+	}
+
+	if added > 0 || removed > 0 {
+		logx.Infof("[socketio] clients updated: total=%d added=%d removed=%d",
+			total, added, removed)
+	}
 }
 
 func (p *SocketContainer) getConn4Etcd(c zrpc.RpcClientConf) error {
@@ -115,9 +222,11 @@ func (p *SocketContainer) getConn4Etcd(c zrpc.RpcClientConf) error {
 	if err != nil {
 		return err
 	}
+	p.etcdSub = sub
 	update := func() {
-		p.lock.Lock()
-		defer p.lock.Unlock()
+		if p.isClosed() {
+			return
+		}
 		addrs := subset(sub.Values(), subsetSize)
 		p.syncClientMap(addrs, c)
 	}
@@ -127,257 +236,48 @@ func (p *SocketContainer) getConn4Etcd(c zrpc.RpcClientConf) error {
 }
 
 func (p *SocketContainer) getConn4Direct(c zrpc.RpcClientConf) error {
-	p.lock.Lock()
-	defer p.lock.Unlock()
 	for _, val := range c.Endpoints {
 		if _, ok := p.ClientMap[val]; ok {
 			continue
 		}
-		p.ClientMap[val] = newSocketClient(val, c)
+		client, err := newSocketClient(val, c)
+		if err != nil {
+			return err
+		}
+		p.ClientMap[val] = client.client
+		p.closers[val] = client.close
 	}
 	return nil
 }
 
 func (p *SocketContainer) getConn4Nacos(c zrpc.RpcClientConf) error {
-	rawURLObj, err := url.Parse(c.Target)
-	if err != nil {
-		return errors.Wrap(err, "parse nacos raw url string failed")
-	}
-	tgt, err := parseURL(*rawURLObj)
-	if err != nil {
-		return errors.Wrap(err, "Wrong nacos URL")
-	}
-
-	host, ports, err := net.SplitHostPort(tgt.Addr)
-	if err != nil {
-		return fmt.Errorf("failed parsing address error: %v", err)
-	}
-	port, _ := strconv.ParseUint(ports, 10, 16)
-
-	sc := []constant.ServerConfig{
-		*constant.NewServerConfig(host, port),
-	}
-
-	cc := &constant.ClientConfig{
-		AppName:     tgt.AppName,
-		NamespaceId: tgt.NamespaceID,
-		Username:    tgt.User,
-		Password:    tgt.Password,
-		TimeoutMs:   uint64(tgt.Timeout),
-		//NotLoadCacheAtStart: tgt.NotLoadCacheAtStart,
-		//UpdateCacheWhenEmpty: tgt.UpdateCacheWhenEmpty,
-		NotLoadCacheAtStart:  true,  // 不用旧缓存启动
-		UpdateCacheWhenEmpty: false, // 查询不到就返回空，别用缓存兜底
-	}
-
-	if tgt.CacheDir != "" {
-		cc.CacheDir = tgt.CacheDir
-	}
-	if tgt.LogDir != "" {
-		cc.LogDir = tgt.LogDir
-	}
-	if tgt.LogLevel != "" {
-		cc.LogLevel = tgt.LogLevel
-	}
-
-	cli, err := clients.NewNamingClient(vo.NacosClientParam{
-		ServerConfigs: sc,
-		ClientConfig:  cc,
+	discovery, err := nacosx.Discover(context.Background(), c.Target, func(addrs []string) {
+		p.updateClientMap(addrs, c)
 	})
 	if err != nil {
-		return errors.Wrap(err, "Couldn't connect to the nacos API")
+		return err
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	pipe := make(chan []string)
-
-	go cli.Subscribe(&vo.SubscribeParam{
-		ServiceName:       tgt.Service,
-		Clusters:          tgt.Clusters,
-		GroupName:         tgt.GroupName,
-		SubscribeCallback: newWatcher(ctx, cancel, pipe).CallBackHandle, // required
-	})
-
-	go p.populateClientMap(ctx, c, pipe)
-
-	go func() {
-		ticker := time.NewTicker(60 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				instances, err := cli.SelectAllInstances(vo.SelectAllInstancesParam{
-					ServiceName: tgt.Service,
-					Clusters:    tgt.Clusters,
-					GroupName:   tgt.GroupName,
-				})
-				if err != nil {
-					logx.Errorf("[socketio] failed to pull nacos service instances: %v", err)
-					continue
-				}
-
-				addrs := extractHealthyGRPCInstances(instances)
-				select {
-				case pipe <- addrs:
-				case <-ctx.Done():
-					return
-				}
-			}
-		}
-	}()
+	p.discovery = discovery
 	return nil
 }
 
-type watcher struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	out    chan<- []string
-}
-
-func newWatcher(ctx context.Context, cancel context.CancelFunc, out chan<- []string) *watcher {
-	return &watcher{
-		ctx:    ctx,
-		cancel: cancel,
-		out:    out,
-	}
-}
-
-func (nw *watcher) CallBackHandle(services []model.Instance, err error) {
-	if err != nil {
-		logger.Error("[Nacos resolver] watcher call back handle error:%v", err)
+func (p *SocketContainer) updateClientMap(addrs []string, c zrpc.RpcClientConf) {
+	if p.isClosed() {
 		return
 	}
-	ee := extractHealthyGRPCInstances(services)
-	select {
-	case nw.out <- ee:
-	case <-nw.ctx.Done():
-	}
-}
-
-func (p *SocketContainer) populateClientMap(ctx context.Context, c zrpc.RpcClientConf, input <-chan []string) {
-	for {
-		select {
-		case addrs := <-input:
-			p.updateClientMap(addrs, c)
-		case <-ctx.Done():
-			logx.Info("[socketio] nacos watch finished")
-			return
-		}
-	}
-}
-func (p *SocketContainer) updateClientMap(addrs []string, c zrpc.RpcClientConf) {
-	p.lock.Lock()
-	defer p.lock.Unlock()
 	p.syncClientMap(addrs, c)
 }
 
-func extractHealthyGRPCInstances(instances []model.Instance) []string {
-	addrs := make([]string, 0, len(instances))
-	healthyCount := 0
-	ignoredCount := 0
-
-	for _, s := range instances {
-		if s.Metadata == nil || s.Metadata["gRPC_port"] == "" {
-			logx.Debugf("[socketio] nacos 忽略实例: %s:%d (无gRPC_port配置)", s.Ip, s.Port)
-			ignoredCount++
-			continue
-		}
-
-		if !s.Healthy || !s.Enable {
-			logx.Debugf("[socketio] nacos 忽略实例: %s:%s (健康: %t, 启用: %t)",
-				s.Ip, s.Metadata["gRPC_port"], s.Healthy, s.Enable)
-			ignoredCount++
-			continue
-		}
-		logx.Debugf("[socketio] nacos 发现健康实例: %s|%s:%s (权重: %.1f)",
-			s.InstanceId, s.Ip, s.Metadata["gRPC_port"], s.Weight)
-		addrs = append(addrs, fmt.Sprintf("%s:%s", s.Ip, s.Metadata["gRPC_port"]))
-		healthyCount++
-	}
-
-	if len(instances) > 0 {
-		logx.Infof("[socketio] nacos 实例扫描: 总实例数=%d, 健康实例数=%d, 忽略实例数=%d", len(instances), healthyCount, ignoredCount)
-	}
-	return addrs
-}
-
 func subset(set []string, sub int) []string {
-	rand.Shuffle(len(set), func(i, j int) {
-		set[i], set[j] = set[j], set[i]
+	// Values() 返回的是 subscriber 内部快照，先复制再打乱，避免污染订阅端数据。
+	shuffled := make([]string, len(set))
+	copy(shuffled, set)
+
+	rand.Shuffle(len(shuffled), func(i, j int) {
+		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
 	})
-	if len(set) <= sub {
-		return set
+	if len(shuffled) <= sub {
+		return shuffled
 	}
-	return set[:sub]
-}
-
-type target struct {
-	Addr                 string        `key:",optional"`
-	User                 string        `key:",optional"`
-	Password             string        `key:",optional"`
-	Service              string        `key:",optional"`
-	GroupName            string        `key:",optional"`
-	Clusters             []string      `key:",optional"`
-	NamespaceID          string        `key:"namespaceid,optional"`
-	Timeout              time.Duration `key:"timeout,optional"`
-	AppName              string        `key:"appName,optional"`
-	LogLevel             string        `key:",optional"`
-	LogDir               string        `key:",optional"`
-	CacheDir             string        `key:",optional"`
-	NotLoadCacheAtStart  bool          `key:"notLoadCacheAtStart,optional,string"`
-	UpdateCacheWhenEmpty bool          `key:"updateCacheWhenEmpty,optional,string"`
-}
-
-const schemeName = "nacos"
-
-func parseURL(rawURL url.URL) (target, error) {
-	if rawURL.Scheme != schemeName ||
-		len(rawURL.Host) == 0 || len(strings.TrimLeft(rawURL.Path, "/")) == 0 {
-		return target{},
-			errors.Errorf("Malformed URL('%s'). Must be in the next format: 'nacos://[user:passwd]@host/service?param=value'", rawURL.String())
-	}
-
-	var tgt target
-	params := make(map[string]any, len(rawURL.Query()))
-	for name, value := range rawURL.Query() {
-		params[name] = value[0]
-	}
-
-	err := mapping.UnmarshalKey(params, &tgt)
-	if err != nil {
-		return target{}, errors.Wrap(err, "Malformed URL parameters")
-	}
-
-	if tgt.NamespaceID == "" {
-		tgt.NamespaceID = "public"
-	}
-
-	tgt.User = rawURL.User.Username()
-	tgt.Password, _ = rawURL.User.Password()
-	tgt.Addr = rawURL.Host
-	tgt.Service = strings.TrimLeft(rawURL.Path, "/")
-
-	if logLevel, exists := os.LookupEnv("NACOS_LOG_LEVEL"); exists {
-		tgt.LogLevel = logLevel
-	}
-
-	if logDir, exists := os.LookupEnv("NACOS_LOG_DIR"); exists {
-		tgt.LogDir = logDir
-	}
-
-	if cacheDir, exists := os.LookupEnv("NACOS_CACHE_DIR"); exists {
-		tgt.CacheDir = cacheDir
-	}
-
-	if notLoadCacheAtStart, exists := os.LookupEnv("NACOS_NOT_LOAD_CACHE_AT_START"); exists {
-		tgt.NotLoadCacheAtStart = notLoadCacheAtStart == "true"
-	}
-
-	if updateCacheWhenEmpty, exists := os.LookupEnv("NACOS_UPDATE_CACHE_WHEN_EMPTY"); exists {
-		tgt.UpdateCacheWhenEmpty = updateCacheWhenEmpty == "true"
-	}
-
-	return tgt, nil
+	return shuffled[:sub]
 }

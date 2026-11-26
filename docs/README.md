@@ -65,7 +65,7 @@
 | File | [文件与对象存储](./file/README.md) | OSS 配置管理、文件上传/中继、签名 URL 与视频截帧 |
 | GIS | [地理信息服务](./gis/README.md) | H3、GeoHash、电子围栏与坐标转换 |
 | PodEngine | [容器编排](./podengine/README.md) | Docker 容器生命周期管理 |
-| OpenAPI | [开放 API 网关](./open-api/README.md) | Basic 鉴权、统一信封、method 路由、Podman + Modbus；[签名协议](./open-api/signature.md)、[Modbus 方法与示例](./open-api/modbus.md) |
+| OpenAPI | [开放 API 网关](./open-api/README.md) | Basic 鉴权、统一信封、method 路由。专题见[签名协议](./open-api/signature.md)、[Modbus](./open-api/modbus.md)和 [GIS](./open-api/gis.md) |
 | Bridge | [协议桥接](./bridge/README.md) | HTTP/Kafka/Modbus/MQTT 桥接与报文落地 |
 
 `gtw`（存量 BFF）、`zerorpc`、`alarm`、`logdump`、`xfusionmock` 等服务暂无专项功能文档；其目录和端口可由[服务端口清单](./service-ports.md)定位，实现细节见各自目录源码。
@@ -91,7 +91,7 @@
 | Zero 工作台 | [前端工作台](../web/workspace/README.md) | 统一入口、健康检测、端点速查、GitHub 与命令面板 |
 | Live 会议 | [Live 前端](../web/live/README.md) | 会议大厅、会议室、录制、邀请与本地 Token |
 | SocketIO 测试 | [SocketIO 前端](../web/socketio/README.md) | 连接、消息、房间、事件与底部控制台 |
-| OpenAPI 控制台 | [OpenAPI 前端](../web/openapi/README.md) | 开放 API 调试、应用管理与错误码速查 |
+| 开放平台控制台 | [OpenAPI 前端](../web/openapi/README.md) | 开放 API 调试、应用管理与错误码速查 |
 
 四个项目的组成、构建与验证状态见 [`web/COMPLETION.md`](../web/COMPLETION.md)；各子项目 README 说明本地开发和部署入口。
 LiveKit 界面截图资产位于 [`docs/images/live/`](./images/live/)；截图只用于解释界面，不替代 API 契约。

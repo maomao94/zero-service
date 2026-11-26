@@ -52,7 +52,7 @@ export default function App() {
   const [health, setHealth] = useState<HealthResult | null>(null)
   const [checking, setChecking] = useState(false)
   const [pane, setPane] = useState<'request' | 'response'>('request')
-  const [connectionOpen, setConnectionOpen] = useState(!initialSettings.appId || !initialSettings.secret)
+  const [connectionOpen, setConnectionOpen] = useState(false)
   const [errorCode, setErrorCode] = useState<number | null>(null)
   const healthSequence = useRef(0)
   const activeCall = useRef<AbortController | null>(null)
@@ -228,11 +228,12 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">跳到主要内容</a>
       <header className="app-header">
         <div className="brand">
           <span className="brand-mark"><Braces size={19} /></span>
           <div className="brand-copy">
-            <b>OpenAPI 控制台</b>
+            <b>开放平台控制台</b>
             <small>Zero Service · opengtw</small>
           </div>
         </div>
@@ -263,24 +264,24 @@ export default function App() {
           <button
             type="button"
             className="header-health"
-            data-state={health ? (health.ok ? 'ok' : 'bad') : checking ? 'checking' : 'idle'}
+            data-state={checking ? 'checking' : health ? (health.ok ? 'ok' : 'bad') : 'idle'}
             onClick={() => void checkConnection()}
             title="重新检测网关连通性"
           >
             <i aria-hidden="true" />
-            {health ? (health.ok ? `网关可达 · ${Math.round(health.durationMs)}ms` : '网关不可达') : checking ? '检测中' : '未检测'}
+            <span aria-live="polite">{checking ? '检测中…' : health ? (health.ok ? `网关可达 · ${Math.round(health.durationMs)} ms` : '网关不可达') : '未检测'}</span>
           </button>
           <span className="env-badge"><FlaskConical size={13} /> 测试环境</span>
           <span className="header-note"><ShieldAlert size={13} /> 仅限测试使用</span>
         </div>
       </header>
 
-      <main className="app-main">
+      <main className="app-main" id="main-content" tabIndex={-1}>
         {tab === 'debug' && (
           <div className="page-stack">
             <section className="debug-toolbar">
               <div>
-                <h1>开放平台调试台</h1>
+                <h1>API 调试</h1>
                 <div className="gateway-target"><b>POST</b><code>{gatewayUrl(settings.baseUrl || window.location.origin)}</code></div>
               </div>
               <details className="console-disclosure connection-disclosure" open={connectionOpen} onToggle={(event) => setConnectionOpen(event.currentTarget.open)}>
@@ -353,7 +354,7 @@ export default function App() {
       </main>
 
       <footer className="app-footer">
-        <span>Zero Service · OpenAPI Console v1.0.0</span>
+        <span>Zero Service · 开放平台控制台 v1.0.0</span>
         <span>默认方法 {DEFAULT_METHOD.key} · 凭据仅存于本浏览器</span>
       </footer>
 
@@ -361,9 +362,9 @@ export default function App() {
       {pendingWrite && (
         <ConfirmDialog
           open
-          title="确认发送写请求"
-          message="请求可能改变设备状态。核对目标和参数后再发送。"
-          confirmLabel="确认写入"
+          title="确认执行接口测试"
+          message="此接口可能修改数据或设备状态。请确认目标环境和请求参数。"
+          confirmLabel="执行测试请求"
           danger
           onCancel={() => dispatchExchange({ type: 'reset' })}
           onConfirm={() => {

@@ -7,6 +7,7 @@ import (
 	"zero-service/common/mqttx"
 
 	"github.com/zeromicro/go-zero/zrpc"
+	"zero-service/common/nacosx"
 )
 
 type Config struct {
@@ -14,16 +15,8 @@ type Config struct {
 	// GracePeriod 优雅关闭时的强制退出等待时间（超时后强制 kill）
 	GracePeriod time.Duration `json:",default=500s"`
 	// 部署模式：standalone / cluster（对齐 ieccaller；cluster 模式下跨节点停止转推走 MQTT 广播）
-	DeployMode  string `json:",default=standalone,options=standalone|cluster"`
-	NacosConfig struct {
-		IsRegister  bool
-		Host        string
-		Port        uint64
-		Username    string
-		PassWord    string
-		NamespaceId string
-		ServiceName string
-	} `json:",optional"`
+	DeployMode  string               `json:",default=standalone,options=standalone|cluster"`
+	NacosConfig nacosx.ServiceConfig `json:",optional"`
 	// Oryx 服务器配置
 	OryxConfig struct {
 		// Oryx 服务器的 IP 地址

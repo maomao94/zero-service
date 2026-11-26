@@ -142,12 +142,12 @@ var File_openapi_proto protoreflect.FileDescriptor
 
 const file_openapi_proto_rawDesc = "" +
 	"\n" +
-	"\ropenapi.proto\x12\aopenapi\"q\n" +
+	"\ropenapi.proto\x12\aopenapi\"`\n" +
 	"\tInvokeReq\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12\x16\n" +
 	"\x06method\x18\x02 \x01(\tR\x06method\x12\x12\n" +
 	"\x04data\x18\x03 \x01(\tR\x04data\x12\x10\n" +
-	"\x03tid\x18\x04 \x01(\tR\x03tidJ\x04\b\x05\x10\x06R\ttimestamp\"\x1f\n" +
+	"\x03tid\x18\x04 \x01(\tR\x03tid\"\x1f\n" +
 	"\tInvokeRes\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\tR\x04data2>\n" +
 	"\n" +
