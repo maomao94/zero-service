@@ -592,7 +592,9 @@ func appendJSONHeaders(payload []byte, headers map[string]string) ([]byte, bool)
 		return nil, false
 	}
 
-	out := make([]byte, 0, len(trimmed)+len(encoded)+16)
+	// 按原 payload 长度预分配，追加部分交给 append 扩容。
+	// 不写成 len(trimmed)+len(encoded)+16，避免 CodeQL 判定分配大小可能溢出。
+	out := make([]byte, 0, len(trimmed))
 	out = append(out, trimmed[:len(trimmed)-1]...)
 	if len(trimmed) > 2 {
 		out = append(out, ',')
