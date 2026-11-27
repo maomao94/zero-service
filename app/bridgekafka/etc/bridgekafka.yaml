@@ -23,6 +23,9 @@ KafkaPushConfig:
     - asdu
     - alarm
     - event
+  # 发布端固定按 key 哈希分区：同 key 落同一分区、组内有序；
+  # 不带 key 时由 go-queue 注入纳秒时间戳 key，均匀分散、不保证顺序
+  # 注意 key 必须是业务实体标识（点位/设备/任务），不要用常量 key，否则会压到单一分区
 KafkaConsumeConfig:
   - Brokers:
       - 127.0.0.1:9094

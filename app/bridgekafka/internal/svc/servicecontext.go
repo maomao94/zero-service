@@ -3,6 +3,7 @@ package svc
 import (
 	"zero-service/app/bridgekafka/internal/config"
 	"zero-service/common/grpcx"
+	"zero-service/common/kqx"
 	"zero-service/facade/streamevent/streamevent"
 
 	"github.com/zeromicro/go-queue/kq"
@@ -22,7 +23,12 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 	pushers := make(map[string]*kq.Pusher)
 	for _, topic := range c.KafkaPushConfig.Topics {
-		pushers[topic] = kq.NewPusher(c.KafkaPushConfig.Brokers, topic, kq.WithSyncPush())
+		// 按 key 哈希分区：带 key 时同 key 同分区、组内有序；不带 key 时
+		// go-queue 会注入纳秒时间戳作为 key，哈希后均匀分散到各分区。
+		pushers[topic] = kqx.NewPusher(c.KafkaPushConfig.Brokers, topic,
+			kqx.WithOrdered(),
+			kqx.WithSyncPush(),
+		)
 	}
 
 	var streamEventCli streamevent.StreamEventClient
