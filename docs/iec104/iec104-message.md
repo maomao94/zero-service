@@ -106,10 +106,12 @@
 
 - `traceId` 和 `headers.traceparent` 中的 trace ID 一致。
 - Kafka、MQTT、gRPC 三条推送通道的 JSON payload 均包含上述字段。
-- Kafka 额外在消息 headers 中携带 `traceparent`（Kafka 原生 header 机制）。
+- Kafka 额外在消息 headers 中携带 `traceparent`（Kafka 原生 header 机制）；该 header 只在本次 broker 投递内有效，bridge 类服务转发时只透传 payload。
+- MQTT 通道的 trace 头由 `common/mqttx` 的 `Publish` 自动注入：payload 已带 `traceparent` 时原字节不动，未带时才在末尾追加顶层 `headers`；因此这两条通道的报文结构一致，消费端一次 `json.Unmarshal` 即可。
 - gRPC `PushChunkAsdu` 的 `streamevent.MsgBody` 同样包含 `traceId` 和 `headers` 字段。
+- 批量转发（`PushAsduChunkBytes` 合并多条 ASDU）时，批级转发 span 独立，不继承任何单条消息的 trace；逐条链路靠每条消息自己的 `headers` 续接。
 - 无有效 span context 时（如手动重发），`traceId` 和 `headers` 均缺省。
-- 消费端应把 `headers` 视为传输头，不应落入业务元数据。
+- 消费端应把 `headers` 视为传输头，不应落入业务元数据；跨服务续接请以消息体为准，不要依赖 broker header。
 
 > **注意**: handler 入口会把业务 `stationId` 写入普通 `context.Context`，供点位映射查询使用；它不属于 trace transport 字段。JSON payload 的 `metaData` 只来自 `IecServerConfig[].MetaData` 配置，配置含 `stationId` 时才会出现在 `metaData.stationId`。`traceId` 只用于链路观测，不要拿它做业务主键。
 
