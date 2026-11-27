@@ -37,21 +37,27 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		func(msgs []string) {
 			tid, _ := tool.SimpleUUID()
 			msgBodyList := msgbody.FromJSONBatch(msgs)
-
-			if len(msgBodyList) > 0 {
-				startTime := timex.Now()
-				_, err := streamEventCli.PushChunkAsdu(context.Background(), &streamevent.PushChunkAsduReq{
-					MsgBody: msgBodyList,
-					TId:     tid,
-				})
-				invokeflg := "success"
-				if err != nil {
-					invokeflg = "fail"
-					logx.Errorf("PushChunkAsdu failed, tId: %s, err: %v", tid, err)
-				}
-				duration := timex.Since(startTime)
-				logx.WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
+			if len(msgBodyList) == 0 {
+				return
 			}
+
+			ctx := context.Background()
+			logger := logx.WithContext(ctx).WithFields(
+				logx.Field("component", "iecstash.pusher"),
+				logx.Field("tId", tid),
+				logx.Field("asduCount", len(msgBodyList)),
+			)
+			startTime := timex.Now()
+			_, err := streamEventCli.PushChunkAsdu(ctx, &streamevent.PushChunkAsduReq{
+				MsgBody: msgBodyList,
+				TId:     tid,
+			})
+			duration := timex.Since(startTime)
+			if err != nil {
+				logger.WithDuration(duration).Errorf("PushChunkAsdu failed: %v", err)
+				return
+			}
+			logger.WithDuration(duration).Infof("PushChunkAsdu success")
 		},
 		c.PushAsduChunkBytes,
 	)
