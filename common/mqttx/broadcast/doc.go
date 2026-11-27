@@ -13,7 +13,7 @@
 //   - 广播方只需保证 client 已创建；ack 应答 router 由 NewBroadcaster 内部创建并
 //     AddReplyRouter 注册到 BroadcastAckTopic(prefix, instanceID)，BroadcastReply
 //     直接调用它的 RequestReply 等待 ack。
-//   - 消息采用 PublishWithTrace 发布（注入 trace header），消费侧由 mqttx 自动解包。
+//   - 消息统一走 Publish 发布，ctx 携带 span 时自动内联 trace 头，消费侧由 mqttx 自动续接。
 //
 // 用法示例（app 侧）：
 //

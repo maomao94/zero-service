@@ -1,6 +1,7 @@
 package mqttx
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,7 +15,38 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/zeromicro/go-zero/core/stat"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	oteltrace "go.opentelemetry.io/otel/trace"
 )
+
+var (
+	testTraceID = oteltrace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
+	testSpanID  = oteltrace.SpanID{17, 18, 19, 20, 21, 22, 23, 24}
+)
+
+// setupTestPropagator 使用 W3C TraceContext 传播器，避免依赖服务启动时注入的全局配置。
+func setupTestPropagator(t *testing.T) {
+	t.Helper()
+	old := otel.GetTextMapPropagator()
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	t.Cleanup(func() {
+		otel.SetTextMapPropagator(old)
+	})
+}
+
+// withTestSpanContext 构造带已采样 span context 的上下文，用于验证 trace 头的写入与恢复。
+func withTestSpanContext(ctx context.Context) context.Context {
+	return oteltrace.ContextWithSpanContext(ctx, oteltrace.NewSpanContext(oteltrace.SpanContextConfig{
+		TraceID:    testTraceID,
+		SpanID:     testSpanID,
+		TraceFlags: oteltrace.FlagsSampled,
+	}))
+}
+
+// testSpanTraceparent 返回 testTraceID/testSpanID 对应的 W3C traceparent。
+func testSpanTraceparent() string {
+	return "00-" + testTraceID.String() + "-" + testSpanID.String() + "-01"
+}
 
 // fakeToken 是 paho mqtt.Token 的测试实现，用于模拟超时与错误。
 type fakeToken struct {
@@ -497,25 +529,82 @@ func TestPublishGuardsConnectionAndReportsTokenErrors(t *testing.T) {
 	})
 }
 
-func TestPublishWithTraceWrapsPayload(t *testing.T) {
+// 覆盖 Publish 的自动注入：ctx 有 span 时对 JSON 对象追加 headers，原有字节保持不变。
+func TestPublishInlinesTraceHeaders(t *testing.T) {
+	setupTestPropagator(t)
+	ctx := withTestSpanContext(context.Background())
+
 	paho := newFakePahoClient(true)
 	c := newTestMqttClient(paho)
 
-	if _, err := c.PublishWithTrace(context.Background(), "device/1", []byte("hello")); err != nil {
-		t.Fatalf("PublishWithTrace returned error: %v", err)
+	const original = `{"a":1,"msg":"hi"}`
+	if err := c.Publish(ctx, "device/1", []byte(original)); err != nil {
+		t.Fatalf("Publish returned error: %v", err)
 	}
 
 	_, publishes := paho.snapshot()
 	if len(publishes) != 1 {
 		t.Fatalf("publish calls = %d, want 1", len(publishes))
 	}
-	var wrapped Message
-	if err := json.Unmarshal(publishes[0].payload, &wrapped); err != nil {
-		t.Fatalf("published payload is not a wrapped Message: %v", err)
+	sent := string(publishes[0].payload)
+	if !strings.HasPrefix(sent, original[:len(original)-1]) {
+		t.Fatalf("original bytes not preserved: %q", sent)
 	}
-	if wrapped.Topic != "device/1" || string(wrapped.Payload) != "hello" {
-		t.Fatalf("unexpected wrapped message: %+v", wrapped)
+
+	var envelope struct {
+		A       int               `json:"a"`
+		Msg     string            `json:"msg"`
+		Headers map[string]string `json:"headers"`
 	}
+	if err := json.Unmarshal(publishes[0].payload, &envelope); err != nil {
+		t.Fatalf("published payload is not valid json: %v", err)
+	}
+	if envelope.A != 1 || envelope.Msg != "hi" {
+		t.Fatalf("original fields lost after injection: %+v", envelope)
+	}
+	if envelope.Headers["traceparent"] != testSpanTraceparent() {
+		t.Fatalf("unexpected traceparent: %+v", envelope.Headers)
+	}
+
+	t.Run("no span context publishes as is", func(t *testing.T) {
+		paho := newFakePahoClient(true)
+		c := newTestMqttClient(paho)
+
+		if err := c.Publish(context.Background(), "device/1", []byte(original)); err != nil {
+			t.Fatalf("Publish returned error: %v", err)
+		}
+		_, publishes := paho.snapshot()
+		if len(publishes) != 1 || string(publishes[0].payload) != original {
+			t.Fatalf("payload must stay untouched without span: %q", string(publishes[0].payload))
+		}
+	})
+
+	t.Run("non-json payload sent as is", func(t *testing.T) {
+		paho := newFakePahoClient(true)
+		c := newTestMqttClient(paho)
+
+		if err := c.Publish(ctx, "device/1", []byte("hello")); err != nil {
+			t.Fatalf("Publish returned error: %v", err)
+		}
+		_, publishes := paho.snapshot()
+		if len(publishes) != 1 || string(publishes[0].payload) != "hello" {
+			t.Fatalf("unexpected publish: %+v", publishes)
+		}
+	})
+
+	t.Run("existing headers are not duplicated", func(t *testing.T) {
+		paho := newFakePahoClient(true)
+		c := newTestMqttClient(paho)
+
+		const withHeaders = `{"a":1,"headers":{"traceparent":"00-keep-me"}}`
+		if err := c.Publish(ctx, "device/1", []byte(withHeaders)); err != nil {
+			t.Fatalf("Publish returned error: %v", err)
+		}
+		_, publishes := paho.snapshot()
+		if len(publishes) != 1 || string(publishes[0].payload) != withHeaders {
+			t.Fatalf("payload with headers must not be rewritten: %q", string(publishes[0].payload))
+		}
+	})
 
 	t.Run("publish error", func(t *testing.T) {
 		paho := newFakePahoClient(true)
@@ -523,36 +612,36 @@ func TestPublishWithTraceWrapsPayload(t *testing.T) {
 		paho.publishToken = &fakeToken{err: publishErr}
 		c := newTestMqttClient(paho)
 
-		if _, err := c.PublishWithTrace(context.Background(), "device/1", []byte("hello")); !errors.Is(err, publishErr) {
-			t.Fatalf("PublishWithTrace error = %v, want publish error", err)
+		if err := c.Publish(ctx, "device/1", []byte(`{"a":1}`)); !errors.Is(err, publishErr) {
+			t.Fatalf("Publish error = %v, want publish error", err)
 		}
 	})
 }
 
-func TestProcessMessageDispatchesUnwrappedPayload(t *testing.T) {
+func TestProcessMessageDispatchesInlineTracePayload(t *testing.T) {
+	setupTestPropagator(t)
 	paho := newFakePahoClient(true)
 	c := newTestMqttClient(paho)
 	var gotPayload []byte
 	var gotTopic, gotTemplate string
-	c.handlerMgr.addHandler("device/+", ConsumeHandlerFunc(func(_ context.Context, payload []byte, topic string, topicTemplate string) error {
+	var gotTraceID string
+	c.handlerMgr.addHandler("device/+", ConsumeHandlerFunc(func(ctx context.Context, payload []byte, topic string, topicTemplate string) error {
 		gotPayload = append([]byte(nil), payload...)
 		gotTopic = topic
 		gotTemplate = topicTemplate
+		gotTraceID = oteltrace.SpanContextFromContext(ctx).TraceID().String()
 		return nil
 	}))
 
-	wrapped, err := json.Marshal(&Message{
-		Topic:   "device/1",
-		Payload: []byte("inner"),
-		Headers: map[string]string{"traceparent": "00-trace-span-01"},
-	})
-	if err != nil {
-		t.Fatalf("marshal wrapped message: %v", err)
-	}
-	c.processMessage(&fakeMessage{topic: "device/1", payload: wrapped, qos: 1, messageID: 7}, "device/+")
+	payload := []byte(`{"msg":"inner","headers":{"traceparent":"` + testSpanTraceparent() + `"}}`)
 
-	if string(gotPayload) != "inner" {
-		t.Fatalf("handler payload = %q, want inner payload", gotPayload)
+	c.processMessage(&fakeMessage{topic: "device/1", payload: payload, qos: 1, messageID: 7}, "device/+")
+
+	if !bytes.Equal(gotPayload, payload) {
+		t.Fatalf("handler payload = %q, want original payload", gotPayload)
+	}
+	if gotTraceID != testTraceID.String() {
+		t.Fatalf("handler traceId = %q, want %s", gotTraceID, testTraceID)
 	}
 	if gotTopic != "device/1" || gotTemplate != "device/+" {
 		t.Fatalf("handler topic args = (%q, %q), want (device/1, device/+)", gotTopic, gotTemplate)
@@ -624,29 +713,6 @@ func TestReplyRouterResolvesThroughSubscribedCallback(t *testing.T) {
 		t.Fatalf("RequestReply returned error: %v", err)
 	case <-time.After(time.Second):
 		t.Fatal("timed out waiting for reply")
-	}
-}
-
-func TestTryUnwrapPayload(t *testing.T) {
-	c := &mqttClient{}
-
-	wrapped, err := json.Marshal(&Message{Topic: "device/1", Payload: []byte("inner")})
-	if err != nil {
-		t.Fatalf("marshal wrapped message: %v", err)
-	}
-	msg, err := c.tryUnwrapPayload(wrapped)
-	if err != nil {
-		t.Fatalf("tryUnwrapPayload returned error: %v", err)
-	}
-	if msg.Topic != "device/1" || string(msg.Payload) != "inner" {
-		t.Fatalf("unexpected unwrapped message: %+v", msg)
-	}
-
-	if _, err := c.tryUnwrapPayload([]byte("not-json")); err == nil {
-		t.Fatal("expected error for raw payload")
-	}
-	if _, err := c.tryUnwrapPayload([]byte(`{"topic":"device/1"}`)); err == nil {
-		t.Fatal("expected error for message without payload")
 	}
 }
 
