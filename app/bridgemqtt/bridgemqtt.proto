@@ -8,10 +8,8 @@ option java_outer_classname = "BridgeMqttProto";
 
 // Bridge MQTT 服务
 service BridgeMqtt {
-  // 发布消息
+  // 发布消息。请求上下文携带 span 时由 mqttx 自动注入 trace 头，无需单独的带 trace 接口。
   rpc Publish(PublishReq) returns (PublishRes);
-  // 带 traceId 的发布消息 内部服务链路追踪
-  rpc PublishWithTrace(PublishWithTraceReq) returns (PublishWithTraceRes);
 }
 
 // -------------------- 通用请求/响应 --------------------
@@ -21,13 +19,4 @@ message PublishReq {
 }
 
 message PublishRes {
-}
-
-message PublishWithTraceReq {
-  string topic = 1 [json_name = "topic"];
-  bytes payload = 2 [json_name = "payload"];
-}
-
-message PublishWithTraceRes {
-  string trace_id = 1 [json_name = "traceId"];
 }

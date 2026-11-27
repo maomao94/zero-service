@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"zero-service/common/iec104"
 
 	"github.com/duke-git/lancet/v2/strutil"
@@ -43,107 +44,85 @@ type ClientHandler struct {
 	traceOpts iec104.FrameTraceOptions
 }
 
-// InterrogationHandler 总召唤回复
-func (h *ClientHandler) InterrogationHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
+// beginRecv 是所有接收回调的统一入口：开启接收 span、补齐日志字段、按需输出原始帧。
+// 返回的 finish 负责结束 span 并记录处理耗时，调用方必须 defer 调用。
+// 这些回调由 go-iecp5 的 handlerLoop 串行调用，处理同步完成后 finish 才会执行，
+// 因此 span 覆盖的区间与 metrics 记录的耗时都是"接收+处理"的完整时长。
+func (h *ClientHandler) beginRecv(rxAsdu *asdu.ASDU) (context.Context, func()) {
 	startTime := timex.Now()
-	defer h.metrics.Add(stat.Task{
-		Duration: timex.Since(startTime),
-	})
 	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
-	defer span.End()
 	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
 	logRawASDU(ctx, rxAsdu)
+
+	return ctx, func() {
+		span.End()
+		h.metrics.Add(stat.Task{
+			Duration: timex.Since(startTime),
+		})
+	}
+}
+
+// InterrogationHandler 总召唤回复
+func (h *ClientHandler) InterrogationHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
+	ctx, finish := h.beginRecv(rxAsdu)
+	defer finish()
+
 	return h.call.OnInterrogation(ctx, rxAsdu)
 }
 
 // CounterInterrogationHandler 总计数器回复
 func (h *ClientHandler) CounterInterrogationHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	startTime := timex.Now()
-	defer h.metrics.Add(stat.Task{
-		Duration: timex.Since(startTime),
-	})
-	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
-	defer span.End()
-	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
-	logRawASDU(ctx, rxAsdu)
+	ctx, finish := h.beginRecv(rxAsdu)
+	defer finish()
+
 	return h.call.OnCounterInterrogation(ctx, rxAsdu)
 }
 
 // ReadHandler 读定值回复
 func (h *ClientHandler) ReadHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	startTime := timex.Now()
-	defer h.metrics.Add(stat.Task{
-		Duration: timex.Since(startTime),
-	})
-	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
-	defer span.End()
-	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
-	logRawASDU(ctx, rxAsdu)
+	ctx, finish := h.beginRecv(rxAsdu)
+	defer finish()
+
 	return h.call.OnRead(ctx, rxAsdu)
 }
 
 // TestCommandHandler 测试下发回复
 func (h *ClientHandler) TestCommandHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	startTime := timex.Now()
-	defer h.metrics.Add(stat.Task{
-		Duration: timex.Since(startTime),
-	})
-	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
-	defer span.End()
-	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
-	logRawASDU(ctx, rxAsdu)
+	ctx, finish := h.beginRecv(rxAsdu)
+	defer finish()
+
 	return h.call.OnTestCommand(ctx, rxAsdu)
 }
 
 // ClockSyncHandler 时钟同步回复
 func (h *ClientHandler) ClockSyncHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	startTime := timex.Now()
-	defer h.metrics.Add(stat.Task{
-		Duration: timex.Since(startTime),
-	})
-	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
-	defer span.End()
-	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
-	logRawASDU(ctx, rxAsdu)
+	ctx, finish := h.beginRecv(rxAsdu)
+	defer finish()
+
 	return h.call.OnClockSync(ctx, rxAsdu)
 }
 
 // ResetProcessHandler 进程重置回复
 func (h *ClientHandler) ResetProcessHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	startTime := timex.Now()
-	defer h.metrics.Add(stat.Task{
-		Duration: timex.Since(startTime),
-	})
-	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
-	defer span.End()
-	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
-	logRawASDU(ctx, rxAsdu)
+	ctx, finish := h.beginRecv(rxAsdu)
+	defer finish()
+
 	return h.call.OnResetProcess(ctx, rxAsdu)
 }
 
 // DelayAcquisitionHandler 延迟获取回复
 func (h *ClientHandler) DelayAcquisitionHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	startTime := timex.Now()
-	defer h.metrics.Add(stat.Task{
-		Duration: timex.Since(startTime),
-	})
-	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
-	defer span.End()
-	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
-	logRawASDU(ctx, rxAsdu)
+	ctx, finish := h.beginRecv(rxAsdu)
+	defer finish()
+
 	return h.call.OnDelayAcquisition(ctx, rxAsdu)
 }
 
 // ASDUHandler ASDU上报，ASDU数据
 func (h *ClientHandler) ASDUHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	startTime := timex.Now()
-	defer h.metrics.Add(stat.Task{
-		Duration: timex.Since(startTime),
-	})
-	ctx, span := iec104.StartRecvSpan(context.Background(), rxAsdu, h.traceOpts)
-	defer span.End()
-	ctx = IecLogContext(ctx, rxAsdu, h.traceOpts)
-	logRawASDU(ctx, rxAsdu)
+	ctx, finish := h.beginRecv(rxAsdu)
+	defer finish()
+
 	return h.call.OnASDU(ctx, rxAsdu)
 }
 
@@ -197,6 +176,7 @@ func GetDataType(typeId asdu.TypeID) DataType {
 func IecLogContext(ctx context.Context, packet *asdu.ASDU, traceOpts iec104.FrameTraceOptions) context.Context {
 	ctx = context.WithValue(ctx, "stationId", traceOpts.StationId)
 	return logx.ContextWithFields(ctx,
+		logx.Field("component", "iec104"),
 		logx.Field("host", traceOpts.Host),
 		logx.Field("port", traceOpts.Port),
 		logx.Field("stationId", traceOpts.StationId),
@@ -209,13 +189,17 @@ func IecLogContext(ctx context.Context, packet *asdu.ASDU, traceOpts iec104.Fram
 	)
 }
 
+// logRawASDU 输出原始帧字节。Debugfn 只在 Debug 级别下执行闭包，
+// 避免高帧率场景下即使关闭 Debug 也白白序列化一次整帧。
 func logRawASDU(ctx context.Context, packet *asdu.ASDU) {
-	raw, err := packet.MarshalBinary()
-	if err != nil {
-		logx.WithContext(ctx).Errorf("marshal raw asdu failed: %v", err)
-		return
-	}
-	logx.WithContext(ctx).Debugf("ASDU Raw[% X]", raw)
+	logx.WithContext(ctx).Debugfn(func() any {
+		raw, err := packet.MarshalBinary()
+		if err != nil {
+			return fmt.Sprintf("marshal raw asdu failed: %v", err)
+		}
+
+		return fmt.Sprintf("ASDU Raw[% X]", raw)
+	})
 }
 
 func GenTypeName(typeId asdu.TypeID) string {

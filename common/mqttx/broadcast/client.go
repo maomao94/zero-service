@@ -183,7 +183,7 @@ func (b *broadcaster) wrapRequest(method string, payload []byte) (*BroadcastBody
 	}, nil
 }
 
-// publishBroadcast 将构造好的 broadcast body 以 PublishWithTrace 发布到广播主题。
+// publishBroadcast 将构造好的 broadcast body 发布到广播主题（trace 头由 Publish 按 ctx 自动注入）。
 func (b *broadcaster) publishBroadcast(ctx context.Context, body *BroadcastBody) error {
 	byteData, err := jsonx.Marshal(body)
 	if err != nil {
@@ -191,7 +191,7 @@ func (b *broadcaster) publishBroadcast(ctx context.Context, body *BroadcastBody)
 	}
 	pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	if _, err := b.client.PublishWithTrace(pushCtx, b.broadcastTopic(), byteData); err != nil {
+	if err := b.client.Publish(pushCtx, b.broadcastTopic(), byteData); err != nil {
 		return fmt.Errorf("publish broadcast to mqtt: %w", err)
 	}
 	return nil

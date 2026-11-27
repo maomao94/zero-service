@@ -57,7 +57,7 @@ Bridge 系列是一组将外部协议接入内部系统的桥接服务，包含 
 
 ## bridgemqtt — MQTT 桥接
 
-- 提供 `Publish` 与 `PublishWithTrace`（返回 OTel trace ID）两个发布 RPC。
+- 提供 `Publish` 单个发布 RPC。请求上下文携带 span 时，mqttx 会把 `traceparent` 内联进 JSON payload 的 `headers` 字段（与 Kafka record header 对齐），不再单独提供带 trace 的接口。
 - 订阅侧在连接就绪（OnReady）后按 `SubscribeTopics` 注册 handler，收到的消息双路 fan-out：
   1. 转发到 stream event gRPC（AI/实时事件服务）；
   2. 按 `EventMapping` 映射事件名广播到 socket push gRPC（WebSocket 房间）。

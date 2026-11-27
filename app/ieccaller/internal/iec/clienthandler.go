@@ -98,7 +98,6 @@ func (c *ClientCall) OnDelayAcquisition(ctx context.Context, packet *asdu.ASDU) 
 // 处理在接收回调内同步完成，不额外起并发：go-iecp5 的 handlerLoop 本身是单协程串行，
 // 这样同一从站的 ASDU 严格按到达顺序入队，配合下游按 key 分区才能保证同点位有序。
 func (c *ClientCall) OnASDU(ctx context.Context, packet *asdu.ASDU) error {
-	logx.WithContext(ctx).Debug("OnASDU")
 	ctx, cancel := c.newTaskContext(ctx)
 	defer cancel()
 	c.handleASDU(ctx, packet)

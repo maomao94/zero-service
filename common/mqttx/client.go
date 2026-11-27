@@ -1,6 +1,7 @@
 package mqttx
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -49,8 +50,9 @@ type Client interface {
 	AddHandlerFunc(topicTemplate string, fn func(context.Context, []byte, string, string) error) error
 	// AddReplyRouter 注册应答路由：登记分发（优先于普通 handler）并按需订阅模板。
 	AddReplyRouter(topicTemplate string, router ConsumeHandler) error
+	// Publish 发布消息。ctx 携带有效 span 时自动把 traceparent 内联进 JSON payload 的 headers 字段，
+	// 与 Kafka 的 record header 语义对齐，调用方无需区分是否跟踪。
 	Publish(ctx context.Context, topic string, payload []byte) error
-	PublishWithTrace(ctx context.Context, topic string, payload []byte) (string, error)
 	Close()
 	GetClientID() string
 }
@@ -470,11 +472,8 @@ func (c *mqttClient) processMessage(msg mqtt.Message, topicTemplate string) {
 	ctx := context.Background()
 	payload := msg.Payload()
 
-	// 尝试解析包装消息（用于链路追踪），只调用一次 msg.Payload()
-	if wrapped, err := c.tryUnwrapPayload(payload); err == nil {
-		payload = wrapped.Payload
-		ctx = c.extractTraceContext(ctx, wrapped)
-	}
+	// trace 头内联在 payload 顶层 headers 字段，与 Kafka record header 语义一致
+	ctx = c.extractInlineTraceContext(ctx, payload)
 
 	// 启动追踪 span
 	ctx, span := c.startSpan(ctx, msg, topicTemplate)
@@ -496,22 +495,21 @@ func (c *mqttClient) processMessage(msg mqtt.Message, topicTemplate string) {
 	c.dispatcher.dispatch(ctx, payload, msg.Topic(), topicTemplate)
 }
 
-// tryUnwrapPayload 尝试解析包装消息
-// 如果消息是 JSON 格式的 Message 结构，会提取其中的 payload
-func (c *mqttClient) tryUnwrapPayload(data []byte) (*Message, error) {
-	var wrapped Message
-	if err := json.Unmarshal(data, &wrapped); err != nil {
-		return nil, err
+// extractInlineTraceContext 从 payload 顶层的 headers 字段恢复链路上下文。
+// Publish 自动注入写入的就是该字段；解析失败或无 headers 时原样返回。
+func (c *mqttClient) extractInlineTraceContext(ctx context.Context, payload []byte) context.Context {
+	// 快速路径：绝大多数消息不带 trace 头（如业务自发的点位数据），不必解析
+	if !bytes.Contains(payload, traceparentMarker) {
+		return ctx
 	}
-	if wrapped.Payload == nil {
-		return nil, errors.New("invalid wrapped payload")
-	}
-	return &wrapped, nil
-}
 
-// extractTraceContext 从消息中提取链路追踪上下文
-func (c *mqttClient) extractTraceContext(ctx context.Context, msg *Message) context.Context {
-	return tracex.Extract(ctx, tracex.NewCarrier(msg.Headers))
+	var envelope struct {
+		Headers map[string]string `json:"headers"`
+	}
+	if err := json.Unmarshal(payload, &envelope); err != nil || len(envelope.Headers) == 0 {
+		return ctx
+	}
+	return tracex.Extract(ctx, tracex.NewCarrier(envelope.Headers))
 }
 
 // startSpan 启动追踪 span
@@ -529,24 +527,91 @@ func (c *mqttClient) startSpan(ctx context.Context, msg mqtt.Message, topicTempl
 	return ctx, span
 }
 
-// PublishWithTrace 发布消息并注入 OTel 链路追踪上下文。
-func (c *mqttClient) PublishWithTrace(ctx context.Context, topic string, payload []byte) (string, error) {
-	msg := NewMessage(topic, payload)
-	tracex.Inject(ctx, tracex.NewCarrier(msg.Headers))
-	jsonBytes, err := json.Marshal(msg)
-	if err != nil {
-		return "", fmt.Errorf("marshal trace message failed: %w", err)
+// traceparentMarker 用于快速判断 payload 是否已携带 trace 头（ASDU 每条点位报文都自带）。
+var traceparentMarker = []byte(`"traceparent"`)
+
+// injectTraceHeaders 在 payload 是 JSON 对象且尚未携带 trace 头时，把 traceparent 内联到顶层 headers。
+// MQTT 3.1.1 没有自定义 header 位，这是与 Kafka record header 对齐的等价载体：
+// 只在末尾追加字段，原有字节原样保留。
+//
+// 过滤顺序按成本递增：无 span → 非对象形态 → 已含 traceparent → JSON 结构探测。
+// 已含 traceparent 的判定是字面量扫描，可能被业务数据里的同名文本误命中断而放弃注入，
+// 这是为高频 ASDU 保留的零分配快速路径。
+func injectTraceHeaders(ctx context.Context, payload []byte) ([]byte, bool) {
+	if ctx == nil {
+		return nil, false
 	}
-	if err := c.Publish(ctx, topic, jsonBytes); err != nil {
-		return "", err
+	// 绝大多数消息没有 span，先挡掉，避免任何解析开销
+	if !oteltrace.SpanContextFromContext(ctx).IsValid() {
+		return nil, false
 	}
-	return trace.TraceIDFromContext(ctx), nil
+
+	// 便宜的形态判断：不是 JSON 对象（二进制、数组、标量、截断）直接原样发送
+	trimmed := bytes.TrimSpace(payload)
+	if len(trimmed) < 2 || trimmed[0] != '{' || trimmed[len(trimmed)-1] != '}' {
+		return nil, false
+	}
+
+	// 快速路径：已带 traceparent 的消息（如 ASDU）跳过解析，避免逐字段扫描
+	if bytes.Contains(trimmed, traceparentMarker) {
+		return nil, false
+	}
+
+	// 一次遍历同时完成两件事：payload 是否完整合法、顶层是否已占用 headers
+	var probe struct {
+		Headers json.RawMessage `json:"headers"`
+	}
+	if err := json.Unmarshal(trimmed, &probe); err != nil {
+		// 非法 JSON：不追加任何字段，坏数据原样发出，便于上游排查
+		return nil, false
+	}
+	// 业务已自带 headers（无论类型是否合法），不覆盖也不合并，避免破坏业务字段
+	if probe.Headers != nil {
+		return nil, false
+	}
+
+	headers := make(map[string]string)
+	tracex.Inject(ctx, tracex.NewCarrier(headers))
+	return appendJSONHeaders(trimmed, headers)
 }
 
-// Publish 发布消息到指定主题
+// appendJSONHeaders 在 JSON 对象末尾追加 headers 字段，原有字节原样保留。
+// payload 不是 JSON 对象（二进制、数组、标量）时返回 false。
+func appendJSONHeaders(payload []byte, headers map[string]string) ([]byte, bool) {
+	if len(headers) == 0 {
+		return nil, false
+	}
+
+	trimmed := bytes.TrimRight(payload, " \t\r\n")
+	if len(trimmed) < 2 || trimmed[0] != '{' || trimmed[len(trimmed)-1] != '}' {
+		return nil, false
+	}
+
+	encoded, err := json.Marshal(headers)
+	if err != nil {
+		return nil, false
+	}
+
+	out := make([]byte, 0, len(trimmed)+len(encoded)+16)
+	out = append(out, trimmed[:len(trimmed)-1]...)
+	if len(trimmed) > 2 {
+		out = append(out, ',')
+	}
+	out = append(out, `"headers":`...)
+	out = append(out, encoded...)
+	out = append(out, '}')
+	return out, true
+}
+
+// Publish 发布消息到指定主题。
+// ctx 携带有效 span 时自动注入 trace 头（见 injectTraceHeaders），无 span 或 payload 不可注入时原样发送。
 func (c *mqttClient) Publish(ctx context.Context, topic string, payload []byte) error {
 	if !c.client.IsConnected() {
 		return errors.New("cannot publish: client not connected")
+	}
+
+	if traced, ok := injectTraceHeaders(ctx, payload); ok {
+		payload = traced
 	}
 
 	timeout := time.Duration(c.cfg.Timeout) * time.Millisecond

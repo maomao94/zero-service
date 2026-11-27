@@ -80,9 +80,10 @@
 | gormx | [README](../common/gormx/README.md) | 多库 GORM 封装：回调、租户、软删、分页、日志与追踪 |
 | gisx/geos | [README](../common/gisx/geos/README.md) · [API 指南](../common/gisx/geos/API-GUIDE.md) | GEOS 几何引擎 CGO 封装与函数清单 |
 | livekitx | [README](../common/livekitx/README.md) | LiveKit Server SDK 封装：Twirp 管理 API、Token、Room、Webhook 验签 |
+| mqttx | [README](../common/mqttx/README.md) | MQTT 客户端封装：订阅分发、请求-应答、TLS、消息格式与 trace 自动注入 |
 | nacosx | [README](../common/nacosx/README.md) | Nacos 注册中心适配与 `nacos://` gRPC resolver |
 
-`common/gisx/geos` 是多文件指南，见上方入口；尚无独立说明的组件（例如 `iec104`、`djisdk`、`socketiox`、`mqttx`、`ossx`、`gtwx`、`errx`、`asynqx`）以包注释、源码和引用它们的专项文档为准。新增组件说明应先确认存在独立使用契约，再在组件目录补充 README，避免重复已有专项文档。
+`common/gisx/geos` 是多文件指南，见上方入口；尚无独立说明的组件（例如 `iec104`、`djisdk`、`socketiox`、`ossx`、`gtwx`、`errx`、`asynqx`）以包注释、源码和引用它们的专项文档为准。新增组件说明应先确认存在独立使用契约，再在组件目录补充 README，避免重复已有专项文档。
 
 ## Web 前端
 

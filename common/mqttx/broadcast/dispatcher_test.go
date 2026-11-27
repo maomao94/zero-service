@@ -57,10 +57,6 @@ func (m *mockMqttClient) AddHandlerFunc(topicTemplate string, fn func(context.Co
 	return nil
 }
 
-func (m *mockMqttClient) Publish(_ context.Context, _ string, _ []byte) error {
-	return nil
-}
-
 func (m *mockMqttClient) AddReplyRouter(topicTemplate string, router mqttx.ConsumeHandler) error {
 	if m.addReplyErr != nil {
 		return m.addReplyErr
@@ -77,7 +73,7 @@ func (m *mockMqttClient) replyRouter(topicTemplate string) mqttx.ConsumeHandler 
 	return m.replyRouters[topicTemplate]
 }
 
-func (m *mockMqttClient) PublishWithTrace(_ context.Context, topic string, payload []byte) (string, error) {
+func (m *mockMqttClient) Publish(_ context.Context, topic string, payload []byte) error {
 	m.mu.Lock()
 	m.published = append(m.published, publishedMessage{topic: topic, payload: payload})
 	onPublish := m.onPublish
@@ -86,7 +82,7 @@ func (m *mockMqttClient) PublishWithTrace(_ context.Context, topic string, paylo
 	if onPublish != nil {
 		onPublish(topic, payload)
 	}
-	return "mock-trace-id", err
+	return err
 }
 
 func (m *mockMqttClient) Close() {}

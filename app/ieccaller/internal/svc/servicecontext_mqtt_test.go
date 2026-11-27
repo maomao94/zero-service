@@ -66,10 +66,6 @@ func (f *fakeMqttClient) Publish(ctx context.Context, topic string, payload []by
 	return nil
 }
 
-func (f *fakeMqttClient) PublishWithTrace(context.Context, string, []byte) (string, error) {
-	return "", nil
-}
-
 func (f *fakeMqttClient) Close() {}
 
 func (f *fakeMqttClient) GetClientID() string { return "fake-mqtt-client" }
