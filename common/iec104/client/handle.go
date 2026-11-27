@@ -215,7 +215,7 @@ func logRawASDU(ctx context.Context, packet *asdu.ASDU) {
 		logx.WithContext(ctx).Errorf("marshal raw asdu failed: %v", err)
 		return
 	}
-	logx.WithContext(ctx).Infof("ASDU Raw[% X]", raw)
+	logx.WithContext(ctx).Debugf("ASDU Raw[% X]", raw)
 }
 
 func GenTypeName(typeId asdu.TypeID) string {

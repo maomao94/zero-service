@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"time"
 	"zero-service/app/ieccaller/internal/config"
 	"zero-service/app/ieccaller/internal/svc"
 	"zero-service/common/copierx"
@@ -15,14 +16,17 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/threading"
 )
 
+// asduTaskTimeout 单条 ASDU 处理的整体超时，仅作为兜底防止异常任务永久卡住接收回调。
+// 正常路径上各通道已有自己的短超时（Kafka 10s、MQTT 2s×topic 数），只有 DB 查询等环节
+// 可能长时间挂住，因此这里取宽松值，宁可晚释放也不误杀仍在推进的推送。
+const asduTaskTimeout = 5 * time.Minute
+
 type ClientCall struct {
-	svcCtx     *svc.ServiceContext
-	config     config.IecServerConfig
-	stationId  string
-	taskRunner *threading.TaskRunner
+	svcCtx    *svc.ServiceContext
+	config    config.IecServerConfig
+	stationId string
 }
 
 var _ client.ASDUCall = (*ClientCall)(nil)
@@ -36,10 +40,9 @@ func NewClientCall(svcCtx *svc.ServiceContext, config config.IecServerConfig) *C
 		}
 	}
 	return &ClientCall{
-		svcCtx:     svcCtx,
-		config:     config,
-		taskRunner: threading.NewTaskRunner(config.TaskConcurrency),
-		stationId:  stationId,
+		svcCtx:    svcCtx,
+		config:    config,
+		stationId: stationId,
 	}
 }
 
@@ -92,51 +95,63 @@ func (c *ClientCall) OnDelayAcquisition(ctx context.Context, packet *asdu.ASDU) 
 }
 
 // OnASDU 数据正体
+// 处理在接收回调内同步完成，不额外起并发：go-iecp5 的 handlerLoop 本身是单协程串行，
+// 这样同一从站的 ASDU 严格按到达顺序入队，配合下游按 key 分区才能保证同点位有序。
 func (c *ClientCall) OnASDU(ctx context.Context, packet *asdu.ASDU) error {
 	logx.WithContext(ctx).Debug("OnASDU")
-	c.taskRunner.Schedule(func() {
-		if packet.Type == asdu.C_RD_NA_1 {
-			c.onReadResponse(ctx, packet)
-			return
-		}
-		dataType := client.GetDataType(packet.Type)
-		// 读取设备数据
-		switch dataType {
-		case client.SinglePoint:
-			c.onSinglePoint(ctx, packet)
-		case client.DoublePoint:
-			c.onDoublePoint(ctx, packet)
-		case client.MeasuredValueScaled:
-			c.onMeasuredValueScaled(ctx, packet)
-		case client.MeasuredValueNormal:
-			c.onMeasuredValueNormal(ctx, packet)
-		case client.StepPosition:
-			c.onStepPosition(ctx, packet)
-		case client.BitString32:
-			c.onBitString32(ctx, packet)
-		case client.MeasuredValueFloat:
-			c.onMeasuredValueFloat(ctx, packet)
-		case client.IntegratedTotals:
-			c.onIntegratedTotals(ctx, packet)
-		case client.EventOfProtectionEquipment:
-			c.onEventOfProtectionEquipment(ctx, packet)
-		case client.PackedStartEventsOfProtectionEquipment:
-			c.onPackedStartEventsOfProtectionEquipment(ctx, packet)
-		case client.PackedOutputCircuitInfo:
-			c.onPackedOutputCircuitInfo(ctx, packet)
-		case client.PackedSinglePointWithSCD:
-			c.onPackedSinglePointWithSCD(ctx, packet)
-		case client.EndOfInitialization:
-			c.onEndOfInitialization(ctx, packet)
-		case client.SetSingleCommand, client.SetDoubleCommand, client.SetStepCommand,
-			client.SetSetpointNormalized, client.SetSetpointScaled,
-			client.SetSetpointFloat, client.SetBitstringCommand:
-			c.onCommandAck(ctx, packet)
-		default:
-			c.onUnknownASDU(ctx)
-		}
-	})
+	ctx, cancel := c.newTaskContext(ctx)
+	defer cancel()
+	c.handleASDU(ctx, packet)
 	return nil
+}
+
+// newTaskContext 在接收上下文上叠加单条 ASDU 的处理超时。
+func (c *ClientCall) newTaskContext(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(ctx, asduTaskTimeout)
+}
+
+// handleASDU 按 ASDU 类型分发到具体处理函数。
+func (c *ClientCall) handleASDU(ctx context.Context, packet *asdu.ASDU) {
+	if packet.Type == asdu.C_RD_NA_1 {
+		c.onReadResponse(ctx, packet)
+		return
+	}
+	dataType := client.GetDataType(packet.Type)
+	// 读取设备数据
+	switch dataType {
+	case client.SinglePoint:
+		c.onSinglePoint(ctx, packet)
+	case client.DoublePoint:
+		c.onDoublePoint(ctx, packet)
+	case client.MeasuredValueScaled:
+		c.onMeasuredValueScaled(ctx, packet)
+	case client.MeasuredValueNormal:
+		c.onMeasuredValueNormal(ctx, packet)
+	case client.StepPosition:
+		c.onStepPosition(ctx, packet)
+	case client.BitString32:
+		c.onBitString32(ctx, packet)
+	case client.MeasuredValueFloat:
+		c.onMeasuredValueFloat(ctx, packet)
+	case client.IntegratedTotals:
+		c.onIntegratedTotals(ctx, packet)
+	case client.EventOfProtectionEquipment:
+		c.onEventOfProtectionEquipment(ctx, packet)
+	case client.PackedStartEventsOfProtectionEquipment:
+		c.onPackedStartEventsOfProtectionEquipment(ctx, packet)
+	case client.PackedOutputCircuitInfo:
+		c.onPackedOutputCircuitInfo(ctx, packet)
+	case client.PackedSinglePointWithSCD:
+		c.onPackedSinglePointWithSCD(ctx, packet)
+	case client.EndOfInitialization:
+		c.onEndOfInitialization(ctx, packet)
+	case client.SetSingleCommand, client.SetDoubleCommand, client.SetStepCommand,
+		client.SetSetpointNormalized, client.SetSetpointScaled,
+		client.SetSetpointFloat, client.SetBitstringCommand:
+		c.onCommandAck(ctx, packet)
+	default:
+		c.onUnknownASDU(ctx)
+	}
 }
 
 func (c *ClientCall) pushASDU(ctx context.Context, data *types.MsgBody, ioa uint) error {
