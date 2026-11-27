@@ -146,7 +146,8 @@ print(key)  # 127.0.0.1_1_0x0007d1
 
 ### Kafka 消费建议
 
-- 使用消息 key 保证同一 `host`、`coa`、`ioa` 的事件落在同一分区。
+- `ieccaller` 生产端固定按消息 key 哈希选分区，同一 `host`、`coa`、`ioa` 的事件落在同一分区。
+- Kafka 只保证分区内有序，消费端需保证同分区串行处理（或按 key 固定 worker），否则同一 key 的数据仍会被并发处理打乱。
 - 以 `msgId` 做幂等处理，避免重试造成重复写入。
 - 按 `typeId` 或 `asdu` 分流，再按 `body.ioa` 更新点位状态。
 - 链路追踪信息位于 Kafka message headers，同时 JSON payload 顶层 `headers` 也为同一内容。

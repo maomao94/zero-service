@@ -5,6 +5,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 	"zero-service/app/ieccaller/internal/config"
 	"zero-service/app/ieccaller/internal/svc"
 	"zero-service/common/iec104"
@@ -117,6 +118,28 @@ func TestClientCallNewMsgBodyFillsCommonFields(t *testing.T) {
 	}
 	if meta["stationId"] != "station-1" {
 		t.Fatalf("expected config metadata stationId not to be mutated, got %v", meta["stationId"])
+	}
+}
+
+// 覆盖异步处理上下文：任务内带上整体超时的 deadline，并继承接收侧上下文的值。
+func TestClientCallTaskContextHasDeadlineAndInheritsValues(t *testing.T) {
+	clientCall := NewClientCall(&svc.ServiceContext{}, config.IecServerConfig{
+		ClientConfig: client.ClientConfig{Host: "127.0.0.1", Port: 2404},
+	})
+
+	parent := context.WithValue(context.Background(), "stationId", "station-1")
+	taskCtx, cancel := clientCall.newTaskContext(parent)
+	defer cancel()
+
+	deadline, ok := taskCtx.Deadline()
+	if !ok {
+		t.Fatal("expected task context to carry a deadline")
+	}
+	if remaining := time.Until(deadline); remaining <= 0 || remaining > asduTaskTimeout {
+		t.Fatalf("unexpected task deadline in %s", remaining)
+	}
+	if got := taskCtx.Value("stationId"); got != "station-1" {
+		t.Fatalf("expected task context to inherit stationId, got %v", got)
 	}
 }
 

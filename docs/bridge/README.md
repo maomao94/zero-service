@@ -26,6 +26,7 @@ Bridge 系列是一组将外部协议接入内部系统的桥接服务，包含 
 ## bridgekafka — Kafka 桥接
 
 - 单一 gRPC RPC `Publish(topic, key, value)`：按 topic 查找对应 pusher 发布消息，未配置的 topic 报错。
+- 发布端固定按 message key 哈希分区：带 key 时同一 key 落同一分区、按调用顺序投递；不带 key 时由 go-queue 注入纳秒时间戳作为 key，消息均匀分散到各分区，不保证顺序。key 必须是业务实体标识，禁止使用常量 key。
 - 消费侧通过 Kafka 消费者组（`KafkaConsumeConfig`）接收消息，由 TaskRunner 异步转发到 stream event gRPC 服务。
 - 发布与消费使用独立配置（`KafkaPushConfig` / `KafkaConsumeConfig`）。
 

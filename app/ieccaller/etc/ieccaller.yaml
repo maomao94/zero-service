@@ -43,6 +43,9 @@ MqttConfig:
   Username: "mqtt"
   Password: "password"
   Qos: 0
+  # 连接/订阅/发布超时（毫秒）。ASDU 按点位同步推送，超时会按点位累积，
+  # 不宜沿用默认 30000；内网 Broker 2000 足够，TLS 握手偏慢时可放宽到 3000~5000
+  Timeout: 2000
   # Broker 使用 ssl:// 等加密协议时启用；自签 CA 需与部署文件一起放到服务运行目录
   # TLS:
   #   CAFile: etc/cacert.pem

@@ -96,6 +96,7 @@ func newTestServiceContext(topics []string, isPush bool, client mqttx.Client) Se
 	var cfg config.Config
 	cfg.MqttConfig.Topic = topics
 	cfg.MqttConfig.IsPush = isPush
+	cfg.MqttConfig.Timeout = 2000
 	return ServiceContext{
 		Config:     cfg,
 		MqttClient: client,
@@ -156,7 +157,7 @@ func TestPushASDUPublishesEachGeneratedTopic(t *testing.T) {
 			t.Errorf("topic %q published without deadline", attempt.topic)
 			continue
 		}
-		if attempt.timeout <= 0 || attempt.timeout > 10*time.Second {
+		if attempt.timeout <= 0 || attempt.timeout > 2100*time.Millisecond {
 			t.Errorf("topic %q published with unexpected timeout %s", attempt.topic, attempt.timeout)
 		}
 		if attempt.err != nil {
@@ -307,5 +308,18 @@ func TestPushASDUNilMqttClientDoesNotPanic(t *testing.T) {
 
 	if err := svcCtx.PushASDU(context.Background(), newTestMsgBody(), testIoa); err != nil {
 		t.Fatalf("PushASDU failed: %v", err)
+	}
+}
+
+// 发布上下文超时跟随 MqttConfig.Timeout，未配置时与 mqttx 的 30s 兜底保持一致。
+func TestMqttPublishTimeoutFollowsConfig(t *testing.T) {
+	var svcCtx ServiceContext
+	if got := svcCtx.mqttPublishTimeout(); got != 30*time.Second {
+		t.Fatalf("default timeout: got %s, want %s", got, 30*time.Second)
+	}
+
+	svcCtx.Config.MqttConfig.Timeout = 2000
+	if got := svcCtx.mqttPublishTimeout(); got != 2*time.Second {
+		t.Fatalf("configured timeout: got %s, want %s", got, 2*time.Second)
 	}
 }
