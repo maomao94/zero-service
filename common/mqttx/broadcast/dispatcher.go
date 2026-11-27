@@ -88,7 +88,7 @@ func (b *broadcaster) ConsumeBroadcast(ctx context.Context, payload []byte, topi
 	return nil
 }
 
-// publishAck 向请求方的 ack 通道回发结果（PublishWithTrace，10s 推送超时）。
+// publishAck 向请求方的 ack 通道回发结果（Publish 自动注入 trace 头，10s 推送超时）。
 // 无 Tid 或 AckTopic 为空时无法关联，直接跳过。
 func (b *broadcaster) publishAck(ctx context.Context, ackTopic string, ack *BroadcastAckBody) {
 	if ack == nil || ack.Tid == "" || ackTopic == "" {
@@ -105,7 +105,7 @@ func (b *broadcaster) publishAck(ctx context.Context, ackTopic string, ack *Broa
 	}
 	pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	if _, err := b.client.PublishWithTrace(pushCtx, ackTopic, data); err != nil {
+	if err := b.client.Publish(pushCtx, ackTopic, data); err != nil {
 		logx.WithContext(pushCtx).Errorw("mqtt broadcast ack publish failed",
 			logx.Field("tid", ack.Tid),
 			logx.Field("method", ack.Method),

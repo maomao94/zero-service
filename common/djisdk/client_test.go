@@ -50,10 +50,6 @@ func (c *recordingMQTTClient) Subscribe(topic string) error {
 	return nil
 }
 
-func (c *recordingMQTTClient) PublishWithTrace(ctx context.Context, topic string, payload []byte) (string, error) {
-	return "", c.Publish(ctx, topic, payload)
-}
-
 func (c *recordingMQTTClient) Close() {}
 
 func (c *recordingMQTTClient) GetClientID() string {

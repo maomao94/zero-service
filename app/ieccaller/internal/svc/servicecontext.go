@@ -15,6 +15,7 @@ import (
 	"zero-service/common/iec104/client"
 	"zero-service/common/iec104/types"
 	"zero-service/common/iec104/util"
+	"zero-service/common/kqx"
 	"zero-service/common/mqttx"
 	"zero-service/common/mqttx/broadcast"
 	"zero-service/common/tool"
@@ -68,7 +69,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 	svcCtx.broadcastInstanceId = "iec-caller-" + uid
 	if len(c.KafkaConfig.Brokers) > 0 {
-		svcCtx.KafkaASDUPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.Topic)
+		// 按消息 key（host_coa_ioaHex）哈希分区，保证同一点位的数据落同一分区、按采集顺序投递。
+		svcCtx.KafkaASDUPusher = kqx.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.Topic, kqx.WithOrdered())
 	}
 	if svcCtx.IsBroadcast() {
 		svcCtx.broadcastPrefix = broadcast.Prefix("iec")
@@ -214,7 +216,8 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 			}
 
 			for _, topicPattern := range topics {
-				pushMqttCtx, cancel := context.WithTimeout(mqttCtx, 10*time.Second)
+				// 与 mqttx 客户端的等待上限保持一致：Timeout 同时约束连接与单次发布。
+				pushMqttCtx, cancel := context.WithTimeout(mqttCtx, svc.mqttPublishTimeout())
 				topic, genErr := util.GenerateTopic(topicPattern, data)
 				if genErr != nil {
 					logx.WithContext(pushMqttCtx).Debugf("failed to generate mqtt topic, pattern: %s, err: %v", topicPattern, genErr)
@@ -241,6 +244,16 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 		},
 	)
 	return nil
+}
+
+// mqttPublishTimeout 返回 MQTT 单次发布等待上限。
+// mqttx 客户端初始化时会把非正数兜底为 30s，这里保持一致，避免上下文立即失效。
+func (svc ServiceContext) mqttPublishTimeout() time.Duration {
+	const defaultTimeout = 30 * time.Second
+	if svc.Config.MqttConfig.Timeout <= 0 {
+		return defaultTimeout
+	}
+	return time.Duration(svc.Config.MqttConfig.Timeout) * time.Millisecond
 }
 
 // PushPbBroadcast 以 fire-and-forget 方式向集群广播 protobuf 命令（不等待 ack）。
